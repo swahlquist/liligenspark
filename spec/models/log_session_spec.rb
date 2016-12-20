@@ -794,6 +794,37 @@ describe LogSession, :type => :model do
       expect(s2.data['events'].length).to eq(2)
       expect(s2.data['events'].map{|e| e['button']['label'] }).to eq(['chicken', 'radish'])
     end
+    
+    it "should process a daily_use-type session" do
+      u = User.create
+      d = Device.create(:user => u)
+      res = LogSession.process_as_follow_on({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-01', 'active' => true},
+          {'date' => '2016-01-03', 'active' => false}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(res.log_type).to eq('daily_use')
+      expect(res.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => false}
+      })
+      res2 = LogSession.process_as_follow_on({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-03', 'active' => true},
+          {'date' => '2016-01-05', 'active' => false}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(res2).to eq(res)
+      expect(res2.log_type).to eq('daily_use')
+      expect(res2.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => true},
+        '2016-01-05' => {'date' => '2016-01-05', 'active' => false}
+      })
+    end
   end
 
   describe "process_params" do
@@ -1932,8 +1963,35 @@ describe LogSession, :type => :model do
   end
   
   describe "process_daily_use" do
-    it "should have specs" do
-      write_this_test
+    it "should process correctly" do
+      u = User.create
+      d = Device.create(:user => u)
+      s = LogSession.process_daily_use({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-01', 'active' => true},
+          {'date' => '2016-01-03', 'active' => false}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(s.log_type).to eq('daily_use')
+      expect(s.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => false}
+      })
+      s2 = LogSession.process_daily_use({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-03', 'active' => true},
+          {'date' => '2016-01-05', 'active' => false}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(s2).to eq(s)
+      expect(s2.log_type).to eq('daily_use')
+      expect(s2.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => true},
+        '2016-01-05' => {'date' => '2016-01-05', 'active' => false}
+      })
     end
   end
 end

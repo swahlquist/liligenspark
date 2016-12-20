@@ -30,7 +30,7 @@ class ButtonSound < ActiveRecord::Base
   end
   
   def protected?
-    false
+    !!self.settings['protected']
   end
   
   def process_params(params, non_user_params)

@@ -22,6 +22,7 @@ describe Converters::CoughDrop do
       expect(json['ext_coughdrop_settings']).to eq({
         'key' => b.key,
         'private' => true,
+        'protected' => false,
         'word_suggestions' => false
       })
     end
@@ -290,6 +291,54 @@ describe Converters::CoughDrop do
         'ext_coughdrop_apps' =>  {'web' => {'launch_url' => 'http://www.example.com'}}
       })
     end
+    
+    it "should mark the board as protected, and specify the authorized user" do
+      u = User.create
+      u.settings['email'] = 'bob@example.com'
+      u.save
+      b = Board.new(:user => u, :settings => {'name' => 'My Board'})
+      b.settings['protected'] = {
+        'vocabulary' => true
+      }
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'chicken', 'apps' => {'web' => {'launch_url' => 'http://www.example.com'}}}
+      ]
+      b.settings['grid'] = {
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [[1,nil],[nil,nil]]
+      }
+      b.save
+      file = Tempfile.new("stash")
+      Converters::CoughDrop.to_obf(b, file.path)
+      json = JSON.parse(file.read)
+      file.unlink
+      expect(json['ext_coughdrop_settings']).to eq({
+        'key' => b.key,
+        'private' => true,
+        'protected' => true,
+        'word_suggestions' => false
+      })
+      expect(json['protected_content_user_identifier']).to eq('bob@example.com')
+      expect(json['id']).to eq(b.global_id)
+      expect(json['name']).to eq('My Board')
+      expect(json['default_layout']).to eq('landscape')
+      expect(json['url']).to eq("#{JsonApi::Json.current_host}/no-name/my-board")
+      expect(json['grid']).to eq({
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [[1, nil], [nil, nil]]
+      })
+      expect(json['buttons'].length).to eq(1)
+      expect(json['buttons'][0]).to eq({
+        'id' => 1,
+        'label' => 'chicken', 
+        'border_color' => 'rgb(170, 170, 170)',
+        'background_color' => 'rgb(255, 255, 255)',
+        'url' => 'http://www.example.com',
+        'ext_coughdrop_apps' =>  {'web' => {'launch_url' => 'http://www.example.com'}}
+      })
+    end
   end
 
   describe "from_obf" do
@@ -403,6 +452,66 @@ describe Converters::CoughDrop do
       expect(button['apps']).to eq({'a' => 1})
     end
     
+    it "should not allow importing a protected board for a different user than the original user" do
+      u = User.create
+      u.settings['email'] = 'fred@example.com'
+      u.save
+      u2 = User.create
+      path = OBF::Utils.temp_path("stash")
+      shell = OBF::Utils.obf_shell
+      shell['id'] = '2345'
+      shell['name'] = "Cool Board"
+      shell['ext_coughdrop_settings'] = {
+        'protected' => true,
+        'key' => "#{u.user_name}/test"
+      }
+      shell['protected_content_user_identifier'] = 'bob@example.com'
+      shell['buttons'] = [{
+        'id' => '1',
+        'label' => 'hardly',
+        'url' => 'http://www.example.com',
+        'ext_coughdrop_apps' => {
+          'a' => 1
+        }
+      }]
+      File.open(path, 'w') do |f|
+        f.puts shell.to_json
+      end
+      expect{ Converters::CoughDrop.from_obf(path, {'user' => u2}) }.to raise_error("can't import protected boards to a different user")
+    end
+    
+    it "should allow importing a protected board to the same user" do
+      u = User.create
+      u.settings['email'] = 'fred@example.com'
+      u.save
+      path = OBF::Utils.temp_path("stash")
+      shell = OBF::Utils.obf_shell
+      shell['id'] = '2345'
+      shell['name'] = "Cool Board"
+      shell['protected_content_user_identifier'] = 'fred@example.com'
+      shell['ext_coughdrop_settings'] = {
+        'protected' => true,
+        'key' => "#{u.user_name}/test"
+      }
+      shell['buttons'] = [{
+        'id' => '1',
+        'label' => 'hardly',
+        'url' => 'http://www.example.com',
+        'ext_coughdrop_apps' => {
+          'a' => 1
+        }
+      }]
+      File.open(path, 'w') do |f|
+        f.puts shell.to_json
+      end
+      b = Converters::CoughDrop.from_obf(path, {'user' => u})
+      expect(b).to be_is_a(Board)
+      expect(b.settings['name']).to eq("Cool Board")
+      button = b.settings['buttons'][0]
+      expect(button).not_to eq(nil)
+      expect(button['url']).to eq(nil)
+      expect(button['apps']).to eq({'a' => 1})
+    end
   end
 
   describe "to_obz" do

@@ -906,6 +906,19 @@ describe Board, :type => :model do
       })
       expect(b.settings['grid']['order']).to eq([[nil,1,nil],[2,nil,3],[nil,nil,nil]])
     end
+    
+    it "should not allow referencing a protected boards as parent board" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      b2 = Board.create(:user => u)
+      b2.process({
+        'parent_board_id' => b.global_id
+      })
+      expect(b2.errored?).to eq(true)
+      expect(b2.processing_errors).to eq(['cannot copy protected boards'])
+    end
   end
 
   it "should securely serialize settings" do
@@ -1465,6 +1478,65 @@ describe Board, :type => :model do
       expect(b).to receive(:protected_material?).and_return(true)
       b.save
       expect(b.public).to eq(false)
+    end
+    
+    it "should allow demo boards to be public with protected material" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['protected'] = {'demo' => true, 'vocabulary' => true}
+      b.public = true
+      expect(b.protected_material?).to eq(true)
+      b.save
+      expect(b.public).to eq(true)
+    end
+    
+    it "should mark board as protected if referencing a protected image" do
+      u = User.create
+      bi = ButtonImage.create(:settings => {'protected' => true})
+      b = Board.create(:user => u)
+      expect(b.protected_material?).to eq(false)
+      b.process({
+        'buttons' => [
+          {'id' => 12, 'label' => 'course', 'image_id' => bi.global_id}
+        ]
+      })
+      expect(b.protected_material?).to eq(true)
+      expect(b.settings['protected']['media']).to eq(true)
+    end
+
+    it "should mark board as protected if referencing a protected sound" do
+      u = User.create
+      bs = ButtonSound.create(:settings => {'protected' => true})
+      b = Board.create(:user => u)
+      expect(b.protected_material?).to eq(false)
+      b.process({
+        'buttons' => [
+          {'id' => 12, 'label' => 'course', 'sound_id' => bs.global_id}
+        ]
+      })
+      expect(b.protected_material?).to eq(true)
+      expect(b.settings['protected']['media']).to eq(true)
+    end
+    
+    it "should clear a board's protected media status if no protected images or sounds" do
+      u = User.create
+      bi = ButtonImage.create(:settings => {'protected' => true})
+      b = Board.create(:user => u)
+      expect(b.protected_material?).to eq(false)
+      b.process({
+        'buttons' => [
+          {'id' => 12, 'label' => 'course', 'image_id' => bi.global_id}
+        ]
+      })
+      expect(b.protected_material?).to eq(true)
+      expect(b.settings['protected']['media']).to eq(true)
+      b.process({
+        'buttons' => [
+          {'id' => 12, 'label' => 'course'}
+        ]
+      })
+      expect(b.protected_material?).to eq(false)
+      expect(b.settings['protected']['media']).to eq(false)
     end
   end
   

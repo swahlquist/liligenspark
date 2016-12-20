@@ -52,6 +52,21 @@ describe Api::SearchController, :type => :controller do
     end
   end
   
+  describe "protected_symbols" do
+    it "should require api token" do
+      get :protected_symbols, params: {:q => 'hats'}
+      assert_missing_token
+    end
+    
+    it "should return a result" do
+      token_user
+      get :protected_symbols, params: {:q => 'hats'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json).to eq([])
+    end
+  end
+  
   describe "proxy" do
     it "should require api token" do
       get :proxy, params: {:url => 'http://www.example.com/pic.png'}

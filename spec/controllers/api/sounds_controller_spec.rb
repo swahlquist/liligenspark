@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Api::SoundsController, :type => :controller do
   describe "create" do
     it "should require api token" do
-      post :create, {}
+      post :create, params: {}
       assert_missing_token
     end
     

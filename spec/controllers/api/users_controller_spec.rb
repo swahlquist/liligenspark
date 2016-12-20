@@ -1318,6 +1318,7 @@ describe Api::UsersController, :type => :controller do
     
     it "should return a list of places" do
       token_user
+      expect(Geolocation).to receive(:find_places).with(nil, nil).and_return([])
       get 'places', params: {:user_id => @user.global_id}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -1325,9 +1326,52 @@ describe Api::UsersController, :type => :controller do
     end
   end
   
-  describe "daily_user" do
-    it "should have specs" do
-      write_this_test
+  describe "daily_use" do
+    it 'should require an access token' do
+      get 'daily_use', params: {:user_id => 'asdf'}
+      assert_missing_token
+    end
+    
+    it 'should require a valid user' do
+      token_user
+      get 'daily_use', params: {:user_id => 'asdf'}
+      assert_not_found('asdf')
+    end
+    
+    it 'should require admin permission' do
+      token_user
+      get 'daily_use', params: {:user_id => @user.global_id}
+      assert_unauthorized
+    end
+    
+    it 'should return nothing if data not available' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      get 'daily_use', params: {:user_id => @user.global_id}
+      assert_error('no data available', 400)
+    end
+
+    it 'should return data if available' do
+      token_user
+      d = Device.create(:user => @user)
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      log = LogSession.process_as_follow_on({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-01', 'active' => true},
+          {'date' => Date.today.iso8601, 'active' => true}
+        ]
+      }, {:device => d, :user => @user, :author => @user})
+      get 'daily_use', params: {:user_id => @user.global_id}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['log']).to_not eq(nil)
+      expect(json['log']['id']).to eq(log.global_id)
+      expect(json['log']['daily_use']).to eq([{
+        'date' => Date.today.iso8601, 'active' => true
+      }])
     end
   end
 end

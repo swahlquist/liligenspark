@@ -71,45 +71,6 @@ describe JsonApi::Log do
     
     it "should include data for known event types" do
       l = LogSession.new(data: {'hat' => 'black'}, started_at: Time.now, ended_at: Time.now)
-#       entry = {}
-#       entry['id'] = event['id']
-#       entry['timestamp'] = event['timestamp']
-#       entry['spoken'] = event['spoken']
-#       if event['button']
-#         entry['type'] = 'button'
-#         entry['summary'] = event['button']['label']
-#         entry['parts_of_speech'] = event['parts_of_speech']
-#         if event['button']['percent_x'] && event['button']['percent_y'] && event['button']['board']
-#           entry['touch_percent_x'] = event['button']['percent_x']
-#           entry['touch_percent_y'] = event['button']['percent_y']
-#           entry['board'] = event['button']['board']
-#         end
-#       elsif event['action']
-#         entry['type'] = 'action'
-#         entry['summary'] = "[#{event['action']['action']}]"
-#         if event['action']['action'] == 'open_board'
-#           entry['new_board'] = event['action']['new_id']
-#         end
-#       elsif event['utterance']
-#         entry['type'] = 'utterance'
-#         entry['summary'] = "[vocalize]"
-#       else
-#         entry['type'] = 'other'
-#         entry['summary'] = "unrecognized event"
-#       end
-#       if event['notes']
-#         entry['notes'] = event['notes'].map do |n|
-#           {
-#             'id' => n['id'],
-#             'note' => n['note'],
-#             'author' => {
-#               'id' => n['author']['id'],
-#               'user_name' => n['author']['user_name']
-#             }
-#           }
-#         end
-#       end
-#       json['log']['events'] << entry
       l.data['events'] = [
         {'id' => 1, 'timestamp' => 12345, 'button' => {'spoken' => true, 'label' => 'hat'}, 'parts_of_speech' => {}},
         {'id' => 2, 'timestamp' => 12346, 'button' => {'label' => 'hat', 'percent_x' => 0.5, 'percent_y' => 0.32, 'board' => {}}, 'parts_of_speech' => {}},
@@ -301,4 +262,20 @@ describe JsonApi::Log do
     end
   end
   
+  describe "days" do
+    it "should include daily use data for individual results" do
+      u = User.create
+      d = Device.create(:user => u)
+      days = {}
+      days[3.months.ago.to_date.iso8601] = {'a' => 1, 'date' => 5}
+      days[1.month.ago.to_date.iso8601] = {'a' => 2, 'date' => 4}
+      days[2.weeks.ago.to_date.iso8601] = {'a' => 3, 'date' => 3}
+      l = LogSession.new(data: {'days' => days}, :log_type => 'daily_use')
+      json = JsonApi::Log.as_json(l, :permissions => u, :wrapper => true)
+      expect(json['log']['daily_use']).to eq([
+        {'date' => 3, 'a' => 3},
+        {'date' => 4, 'a' => 2}
+      ])
+    end
+  end
 end

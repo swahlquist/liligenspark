@@ -7,10 +7,8 @@ module Geolocation
     # https://maps.googleapis.com/maps/api/place/nearbysearch/output?parameters
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=#{token}&location=#{lat.to_s},#{long.to_s}&radius=1000"
     res = Typhoeus.get(url)
-    puts res.body
     json = JSON.parse(res.body) rescue nil
     if json && json['results']
-      puts "json!"
       res = []
       json['results'].each do |place|
         res << {
