@@ -532,6 +532,74 @@
         </div>
       </div>
     </div>
+    {{#if model.preferences.device.scanning_prompt}}
+      <div class="form-group">
+        <label for="scanning_voice" class="col-sm-3 control-label">{{t "Scanning Voice" key='scanning_voice'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox">
+            <label>
+              {{input type="checkbox" checked=model.preferences.device.alternate_voice.enabled id="scanning_voice"}}
+              {{t "Use a Different Voice for Audio Prompts" key='scanning_voice'}}
+            </label>
+          </div>
+        </div>
+      </div>
+      {{#if model.preferences.device.alternate_voice.enabled}}
+        {{#if user_voice_list}}
+          <div class="form-group">
+            <label for="alternate_voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Scanning Voice" key='alternate_voiceURI'}}</label>
+            <div class="col-sm-3 col-xs-7">
+              {{bound-select select_class="form-control" select_id="voiceURI" content=user_voice_list selection=model.preferences.device.alternate_voice.voice_uri action=(action (mut model.preferences.device.alternate_voice.voice_uri)) }}
+            </div>
+          </div>
+        {{/if}}
+        <div class="form-group">
+          <label for="alternate_voice_rate" class="col-sm-3 col-xs-12 control-label">{{t "Scanning Voice Rate" key='alternate_voice_rate'}}</label>
+          <div class="col-sm-3 col-xs-7">
+            <div class="input-group">
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "minus" "model.preferences.device.alternate_voice.rate"}}>-</button>
+              </span>
+              {{input value=model.preferences.device.alternate_voice.rate class="form-control" id="alternate_voice_rate" placeholder="1.0"}}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "plus" "model.preferences.device.alternate_voice.rate"}}>+</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="alternate_voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Scanning Voice Pitch" key='voice_pitch'}}</label>
+          <div class="col-sm-3 col-xs-7">
+            <div class="input-group">
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "minus" "model.preferences.device.alternate_voice.pitch"}}>-</button>
+              </span>
+              {{input value=model.preferences.device.alternate_voice.pitch class="form-control" id="alternate_voice_pitch" placeholder="1.0"}}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "plus" "model.preferences.device.alternate_voice.pitch"}}>+</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="alternate_voice_volume" class="col-sm-3 col-xs-12 control-label">{{t "Scanning Voice Volume" key='alternate_voice_volume'}}</label>
+          <div class="col-sm-3 col-xs-7">
+            <div class="input-group">
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "minus" "model.preferences.device.alternate_voice.volume"}}>-</button>
+              </span>
+              {{input value=model.preferences.device.alternate_voice.volume class="form-control" id="alternate_voice_volume" placeholder="1.0"}}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" {{action "plus_minus" "plus" "model.preferences.device.alternate_voice.volume"}}>+</button>
+              </span>
+            </div>
+          </div>
+          <div class="col-sm-2 col-xs-5">
+            <button class='btn btn-default' {{action "test_voice" 'alternate'}}>{{t "Test Voice" key='test_voice'}}</button>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
     <div class="form-group">
       <label for="scanning_select_on_any_event" class="col-sm-3 control-label">{{t "Scanning Pseudo-Switch" key='psuedo-switch'}}</label>
       <div class="col-sm-5">

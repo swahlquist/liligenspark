@@ -161,7 +161,7 @@ export default Ember.Controller.extend({
       this.store.query('badge', {user_id: this.get('model.id'), earned: true, per_page: 4}).then(function(badges) {
         _this.set('model.badges', badges);
       }, function(err) {
-        if(!(!this.get('model.badges') || {}).length) {
+        if(!(_this.get('model.badges') || {}).length) {
           _this.set('model.badges', {error: true});
         }
       });
@@ -176,7 +176,7 @@ export default Ember.Controller.extend({
       this.store.query('goal', {user_id: this.get('model.id'), per_page: 3}).then(function(goals) {
         _this.set('model.goals', goals.content.mapBy('record').filter(function(g) { return g.get('active'); }));
       }, function(err) {
-        if(!(!this.get('model.goals') || {}).length) {
+        if(!(_this.get('model.goals') || {}).length) {
           _this.set('model.goals', {error: true});
         }
       });

@@ -62,6 +62,8 @@ module JsonApi::User
         json['preferences']['device'].merge!(user.settings['preferences']['devices'][args[:device].unique_device_key])
         json['preferences']['device']['name'] = args[:device].settings['name'] || json['preferences']['device']['name']
       end
+      json['preferences']['device']['voice'] ||= {}
+      json['preferences']['device']['alternate_voice'] ||= {}
 
       json['prior_home_boards'] = (user.settings['all_home_boards'] || []).reverse
       if user.settings['preferences']['home_board']

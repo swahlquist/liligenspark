@@ -227,9 +227,9 @@ export default Ember.Controller.extend({
       var max = 10;
       var min = 0.1;
       var empty_on_default = false;
-      if(attribute == 'model.preferences.device.voice.volume') {
+      if(attribute.match(/volume/)) {
         max = 2.0;
-      } else if(attribute == 'model.preferences.device.voice.pitch') {
+      } else if(attribute.match(/pitch/)) {
         max = 2.0;
       } else if(attribute == 'model.preferences.activation_cutoff') {
         min = 0;
@@ -352,8 +352,12 @@ export default Ember.Controller.extend({
       var _this = this;
       modal.open('premium-voices', {user: _this.get('model')});
     },
-    test_voice: function() {
-      utterance.test_voice(this.get('model.preferences.device.voice.voice_uri'), this.get('model.preferences.device.voice.rate'), this.get('model.preferences.device.voice.pitch'), this.get('model.preferences.device.voice.volume'));
+    test_voice: function(which) {
+      if(which == 'alternate') {
+        utterance.test_voice(this.get('model.preferences.device.alternate_voice.voice_uri'), this.get('model.preferences.device.alternate_voice.rate'), this.get('model.preferences.device.alternate_voice.pitch'), this.get('model.preferences.device.alternate_voice.volume'));
+      } else {
+        utterance.test_voice(this.get('model.preferences.device.voice.voice_uri'), this.get('model.preferences.device.voice.rate'), this.get('model.preferences.device.voice.pitch'), this.get('model.preferences.device.voice.volume'));
+      }
     },
     delete_logs: function() {
       modal.open('confirm-delete-logs', {user: this.get('model')});

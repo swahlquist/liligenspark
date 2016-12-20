@@ -63,7 +63,7 @@ var speecher = Ember.Object.extend({
     }
 //     this.ready = !!(!speecher.scope.speechSynthesis.voiceList || speecher.scope.speechSynthesis.voiceList.length > 0);
   },
-  set_voice: function(voice) {
+  set_voice: function(voice, alternate_voice) {
     this.pitch = voice.pitch;
     this.volume = voice.volume;
     this.rate = voice.rate;
@@ -77,6 +77,19 @@ var speecher = Ember.Object.extend({
         this.voiceURI = 'force_default';
       } else if(!this.voiceURI && voices.length > 0) {
         this.voiceURI = voices[0].voiceURI;
+      }
+    }
+    if(alternate_voice && && alternate_voice.enabled && alternate_voice.voice_uri) {
+      this.alternate_pitch = alternate_voice.pitch;
+      this.alternate_volume = alternate_voice.volume;
+      this.alternate_rate = alternate_voice.rate;
+      this.alternate_voiceURI = null;
+      var voices = speecher.get('voices');
+      var found_voice = voices.find(function(v) { return v.voiceURI == alternate_voice.voice_uri; });
+      if(found_voice) {
+        this.alternate_voiceURI = found_voice.voiceURI;
+      } else if(alternate_voice.voice_uri == 'force_default') {
+        this.alternate_voiceURI = 'force_default';
       }
     }
   },
@@ -140,7 +153,10 @@ var speecher = Ember.Object.extend({
     opts.rate = opts.rate || this.rate || this.default_rate();
     opts.volume = opts.volume || this.volume || 1.0;
     if(opts.alternate_voice) {
-      opts.volume = opts.volume * 0.75;
+      opts.volume = this.alternate_volume || (opts.volume * 0.75);
+      opts.pitch = this.alternate_pitch;
+      opts.rate = this.alternate_rate;
+      opts.voiceURI = this.alternate_voiceURI;
     }
     opts.pitch = opts.pitch || this.pitch || 1.0;
     opts.voiceURI = opts.voiceURI || this.voiceURI;

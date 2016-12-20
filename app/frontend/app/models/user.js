@@ -110,20 +110,35 @@ CoughDrop.User = DS.Model.extend({
     return notifs;
   }.property('notifications'),
   update_voice_uri: function() {
-    if(!this.get('preferences.device.voice')) { return; }
-    var voice = null;
-    var voices = speecher.get('voices');
-    var voiceURIs = this.get('preferences.device.voice.voice_uris') || [];
-    var finder = function(v) { return v.voiceURI == voiceURI; };
-    for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
-      var voiceURI = voiceURIs[idx];
-      voice = voices.find(finder);
-      if(voiceURI == 'force_default') {
-        voice = {voiceURI: 'force_default'};
+    if(this.get('preferences.device.voice')) {
+      var voice = null;
+      var voices = speecher.get('voices');
+      var voiceURIs = this.get('preferences.device.voice.voice_uris') || [];
+      var finder = function(v) { return v.voiceURI == voiceURI; };
+      for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
+        var voiceURI = voiceURIs[idx];
+        voice = voices.find(finder);
+        if(voiceURI == 'force_default') {
+          voice = {voiceURI: 'force_default'};
+        }
       }
+      this.set('preferences.device.voice.voice_uri', voice && voice.voiceURI);
     }
-    this.set('preferences.device.voice.voice_uri', voice && voice.voiceURI);
-  }.observes('preferences.device.voice.voice_uris'),
+    if(this.get('preferences.device.alternate_voice')) {
+      var voice = null;
+      var voices = speecher.get('voices');
+      var voiceURIs = this.get('preferences.device.alternate_voice.voice_uris') || [];
+      var finder = function(v) { return v.voiceURI == voiceURI; };
+      for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
+        var voiceURI = voiceURIs[idx];
+        voice = voices.find(finder);
+        if(voiceURI == 'force_default') {
+          voice = {voiceURI: 'force_default'};
+        }
+      }
+      this.set('preferences.device.alternate_voice.voice_uri', voice && voice.voiceURI);
+    }
+  }.observes('preferences.device.voice.voice_uris', 'preferences.device.alternate_voice.voice_uris'),
   stats: DS.attr('raw'),
   avatar_url_with_fallback: function() {
     var url = this.get('avatar_data_uri') || this.get('avatar_url');
