@@ -128,6 +128,7 @@ class UserBadge < ActiveRecord::Base
       level = self.user_goal.badge_level(self.level)
       self.data['image_url'] = level['image_url'] if level && level['image_url']
       self.data['sound_url'] = level['sound_url'] if level && level['sound_url']
+      self.data['badge_level'] = level
     end
   end
   
