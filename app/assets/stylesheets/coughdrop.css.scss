@@ -2538,18 +2538,35 @@ table tr.long_delay td {
     &:nth-child(49) {
       border-right-color: #aaa;
     }
-    &.level_10, &.level_9, &.level_8 {
+    &.level_10 {
       background: #428bca;
     }
-    &.level_7, &.level_6, &.level_5 {
+    &.level_9 {
+      background: #428bca;
+    }
+    &.level_8 {
+      background: #5195cf;
+    }
+    &.level_7 {
+      background: #60a0d6;
+    }
+    &.level_6 {
       background: #71ade0;
     }
-    &.level_4, &.level_3 {
+    &.level_5 {
+      background: #84b7e3;
+    }
+    &.level_4 {
       background: #9ac7ed;
     }
-    &.level_2, &.level_1 {
+    &.level_3 {
+      background: #a8ceed;
+    }
+    &.level_2 {
       background: #bddaf3;
-      
+    }
+    &.level_1 {
+      background: #d7e8f7;
     }
   }
   .time_block_top {

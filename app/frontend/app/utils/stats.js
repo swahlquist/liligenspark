@@ -123,11 +123,9 @@ CoughDrop.Stats = Ember.Object.extend({
   local_time_blocks: function() {
     var new_blocks = {};
     var offset = this.tz_offset() / 15;
-    var max = this.get('max_time_block') * 2;
+    var max = this.get('max_combined_time_block') || (this.get('max_time_block') * 2);
     if(this.get('ref_max_time_block')) {
-      // TODO: better combining, since we're adding two 15-minute blocks,
-      // the possible combined max will probably be less than double the single max
-      max = Math.max(max, this.get('ref_max_time_block') * 2);
+      max = Math.max(max, this.get('ref_max_combined_time_block') || (this.get('ref_max_time_block') * 2));
     }
     var blocks = this.get('time_offset_blocks');
     var mod = (7 * 24 * 4);

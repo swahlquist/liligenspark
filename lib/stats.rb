@@ -394,7 +394,15 @@ module Stats
       res[:max_touches] = res[:touch_locations].map(&:last).max
     end
     if res[:time_offset_blocks]
-      res[:max_time_block] = res[:time_offset_blocks].map(&:last).max
+      max = 0
+      combined_max = 0
+      res[:time_offset_blocks].each do |idx, val|
+        sum = val + [res[:time_offset_blocks][idx - 1] || 0, res[:time_offset_blocks][idx + 1] || 0].max
+        max = val if val > max
+        combined_max = sum if sum > combined_max
+      end
+      res[:max_time_block] = max
+      res[:max_combined_time_block] = combined_max
     end
     res[:words_per_utterance] += total_utterances > 0 ? (total_utterance_words / total_utterances) : 0.0
     res[:buttons_per_utterance] += total_utterances > 0 ? (total_utterance_buttons / total_utterances) : 0.0
