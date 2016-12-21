@@ -1,4 +1,2 @@
 #!/bin/sh
-git push heroku master
-
-rake extras:deploy_notification
+git push heroku master && heroku run rake db:migrate && rake extras:deploy_notification
