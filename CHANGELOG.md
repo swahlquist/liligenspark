@@ -2,6 +2,15 @@
 
 ## Master
 
+### 2016-12-21
+- fixed region-based scanning, added button-based scanning option
+- optional alternate voice for scanning audio prompts
+- support for generic place-based triggers on sidebar boards
+- track limited daily use for all users, even when logging is disabled
+- fix edited svgs not rendering correctly
+- upgrade ember, rails and related libraries
+- allow text-on-top for pdfs
+
 ### 2016-11-28
 - improved goals, including badge generation (feature flag)
 - got rid of "subscription" wording most places
