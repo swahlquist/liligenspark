@@ -44,6 +44,15 @@ export default modal.ModalController.extend({
       }
     }
   },
+  closing: function() {
+    if(!this.get('model.button.fenced')) {
+      this.set('model.button.highlight_type', null);
+      this.set('model.button.times', null);
+      this.set('model.button.geos', null);
+      this.set('model.button.places', null);
+      this.set('model.button.ssids', null);
+    }
+  },
   format_time: function(str) {
     var blocks = str.split(/:/).map(function(p) { return parseInt(p, 10); });
     var am = true;
