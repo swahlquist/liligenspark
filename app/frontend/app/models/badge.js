@@ -164,7 +164,7 @@ CoughDrop.Badge = DS.Model.extend({
     return res;
   }.property('completion_settings'),
   completion_explanation: function() {
-    if(!this.get('completion_settings') || this.get('earned')) { return null; }
+    if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     if(badge_level.watchlist) {
       var str = "";
