@@ -84,6 +84,7 @@ export default Ember.Controller.extend({
   scanningModeList: [
     {name: i18n.t('row_based', "Row-Based Scanning"), id: "row"},
     {name: i18n.t('column_based', "Column-Based Scanning"), id: "column"},
+    {name: i18n.t('button_based', "Button-Based Scanning"), id: "button"},
     {name: i18n.t('region_based', "Region-Based Scanning"), id: "region"}
   ],
   dwellList: [

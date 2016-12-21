@@ -79,7 +79,7 @@ var speecher = Ember.Object.extend({
         this.voiceURI = voices[0].voiceURI;
       }
     }
-    if(alternate_voice && && alternate_voice.enabled && alternate_voice.voice_uri) {
+    if(alternate_voice && alternate_voice.enabled && alternate_voice.voice_uri) {
       this.alternate_pitch = alternate_voice.pitch;
       this.alternate_volume = alternate_voice.volume;
       this.alternate_rate = alternate_voice.rate;
@@ -150,14 +150,14 @@ var speecher = Ember.Object.extend({
     next_piece();
   },
   speak_raw_text: function(text, collection_id, opts, callback) {
-    opts.rate = opts.rate || this.rate || this.default_rate();
-    opts.volume = opts.volume || this.volume || 1.0;
     if(opts.alternate_voice) {
-      opts.volume = this.alternate_volume || (opts.volume * 0.75);
+      opts.volume = this.alternate_volume || ((opts.volume || 1.0) * 0.75);
       opts.pitch = this.alternate_pitch;
       opts.rate = this.alternate_rate;
       opts.voiceURI = this.alternate_voiceURI;
     }
+    opts.rate = opts.rate || this.rate || this.default_rate();
+    opts.volume = opts.volume || this.volume || 1.0;
     opts.pitch = opts.pitch || this.pitch || 1.0;
     opts.voiceURI = opts.voiceURI || this.voiceURI;
     var _this = this;

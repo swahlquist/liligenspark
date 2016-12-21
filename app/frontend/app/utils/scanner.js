@@ -145,18 +145,20 @@ var scanner = Ember.Object.extend({
           }
         }
       } else if(options.scan_mode == 'region') {
-        var rows_per_chunk = options.rows_per_chunk || 3;
-        var columns_per_chunk = options.columns_per_chunk || 3;
+        var rows_per_chunk = options.rows_per_chunk;
+        var columns_per_chunk = options.columns_per_chunk;
         var sub_scan = options.sub_scan_mode || 'horizontal';
         var grid = editManager.controller.get('model.grid');
-        var vertical_chunks = options.vertical_chunks || Math.ceil(grid.rows / rows_per_chunk);
-        var horizontal_chunks = options.horizontal_chunks || Math.ceil(grid.columns / columns_per_chunk);
-        if(rows_per_chunk < grid.rows / vertical_chunks) {
-          rows_per_chunk = Math.ceil(grid.rows / vertical_chunks);
+        var vertical_chunks = options.vertical_chunks || Math.ceil(grid.rows / (rows_per_chunk || 3));
+        var horizontal_chunks = options.horizontal_chunks || Math.ceil(grid.columns / (columns_per_chunk || 3));
+        if(!rows_per_chunk || (rows_per_chunk < grid.rows / vertical_chunks)) {
+          rows_per_chunk = Math.max(Math.floor(grid.rows / vertical_chunks), 1);
         }
-        if(columns_per_chunk < grid.columns / horizontal_chunks) {
-          columns_per_chunk = Math.ceil(grid.columns / horizontal_chunks);
+        var leftover_rows = grid.rows - (rows_per_chunk * vertical_chunks);
+        if(!columns_per_chunk || (columns_per_chunk < grid.columns / horizontal_chunks)) {
+          columns_per_chunk = Math.max(Math.floor(grid.columns / horizontal_chunks), 1);
         }
+        var leftover_columns = grid.columns - (columns_per_chunk * horizontal_chunks);
         if(sub_scan == 'vertical' || true) {
           for(var idx = 0; idx < horizontal_chunks; idx++) {
             for(var jdx = 0; jdx < vertical_chunks; jdx++) {
@@ -165,8 +167,12 @@ var scanner = Ember.Object.extend({
                 dom: Ember.$(),
                 label: i18n.t('region_n', "Region %{n}", {n: ((idx * vertical_chunks) + jdx + 1)})
               };
-              for(var kdx = 0; kdx < columns_per_chunk; kdx++) {
-                for(var ldx = 0; ldx < rows_per_chunk; ldx++) {
+              var n_columns = columns_per_chunk;
+              if(idx == horizontal_chunks - 1) { n_columns = n_columns + leftover_columns; }
+              var n_rows = rows_per_chunk;
+              if(jdx == vertical_chunks - 1) { n_rows = n_rows + leftover_rows; }
+              for(var kdx = 0; kdx < n_columns; kdx++) {
+                for(var ldx = 0; ldx < n_rows; ldx++) {
                   var r = grid.order[(jdx * rows_per_chunk) + ldx];
                   if(r) {
                     var id = r[(idx * columns_per_chunk) + kdx];

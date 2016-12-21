@@ -69,6 +69,25 @@ describe('speecher', function() {
         expect(utterance.text).toEqual("hippo");
       });
     });
+    it("should speak using alternate voice settings if specified", function() {
+      var cancelled = false;
+      var utterance = null;
+      speecher.alternate_volume = 0.5;
+      speecher.alternate_pitch = 2.0;
+      speecher.alternate_voiceURI = 'bacon';
+
+      stub(window.speechSynthesis, 'speak', function(u) { utterance = u; });
+      stub(window.speechSynthesis, 'cancel', function() { cancelled = true; });
+      speecher.speak_text("hippo", 'asdf', {alternate_voice: true});
+      waitsFor(function() { return cancelled && utterance; });
+      runs(function() {
+        expect(cancelled).toEqual(true);
+        expect(utterance.voiceURI).toEqual('bacon');
+        expect(utterance.volume).toEqual(0.5);
+        expect(utterance.pitch).toEqual(2.0);
+        expect(utterance.text).toEqual("hippo");
+      });
+    });
   });
 
   describe("default_rate", function() {
@@ -107,6 +126,13 @@ describe('speecher', function() {
       speecher.set_voice({volume: 0.5, pitch: 2.0});
       expect(speecher.volume).toEqual(0.5);
       expect(speecher.pitch).toEqual(2.0);
+    });
+    it("should set alternate pitch and volume based on settings", function() {
+      speecher.set_voice({volume: 0.5, pitch: 2.0}, {volume: 0.2, pitch: 1.0});
+      expect(speecher.volume).toEqual(0.5);
+      expect(speecher.pitch).toEqual(2.0);
+      expect(speecher.alternate_volume).toEqual(0.5);
+      expect(speecher.alternate_pitch).toEqual(2.0);
     });
   });
 

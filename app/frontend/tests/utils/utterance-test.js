@@ -33,7 +33,9 @@ describe('utterance', function() {
       expect(utterance.get('rawButtonList')).toEqual(stashes.get('working_vocalization'));
     });
     it("should keep observe currentUser and keep speecher's voice settings up-to-date", function() {
-      var user = Ember.Object.create({
+      var user = Ember.Object.extend({
+        update_voice_uri: function() { }
+      }).create({
         preferences: {device: {voice: {pitch: 2.0, volume: 3.0}}}
       });
       app_state.set('currentUser', user);
