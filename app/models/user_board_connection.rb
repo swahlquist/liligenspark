@@ -5,6 +5,13 @@ class UserBoardConnection < ActiveRecord::Base
   
   def generate_defaults
     self.home ||= false
+    if self.board && self.board.parent_board_id
+      self.parent_board_id = self.board.parent_board_id
+    end
     true
+  end
+  
+  def root_board_id
+    self.parent_board_id || self.board_id
   end
 end

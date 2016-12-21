@@ -105,13 +105,22 @@ class Api::OrganizationsController < ApplicationController
       end
       counts = {}
       # TODO: sharding
-      home_connections.each{|c| counts[c.board_id] ||= 0; counts[c.board_id] += 1 }
-      board_ids = home_connections.map(&:board_id)
+      home_connections.each{|c| counts[c.root_board_id] ||= 0; counts[c.root_board_id] += 1 }
+      board_ids = home_connections.map(&:root_board_id)
       boards = Board.where(:id => board_ids)
+      boards_by_id = {}
+      boards.each{|b| boards_by_id[b.id] = b }
+      
       stats = {}
       boards.each do |board|
-        stats[board.key] = counts[board.id] || 0
+        ref = board
+        if board.parent_board_id && boards_by_id[board.parent_board_id]
+          ref = boards_by_id[board.parent_board_id]
+        end
+        stats[ref.key] ||= 0
+        stats[ref.key] += (counts[board.id] || 0)
       end
+      stats.each{|k, v| stats.delete(k) if stats[k] <= 1 }
     elsif params['report'].match(/recent_/)
       # logins signed up more than 3 weeks ago that have been used in the last week
       x = 3
