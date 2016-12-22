@@ -33,7 +33,8 @@ describe Stats do
         :utterances_per_minute => 0.0,
         :locations => [],
         :devices => [],
-        :max_time_block => nil,
+        :max_time_block => 0,
+        :max_combined_time_block => 0,
         :parts_of_speech => {},
         :parts_of_speech_combinations => {},
         :time_offset_blocks => {},
@@ -64,7 +65,8 @@ describe Stats do
         :words_per_utterance => 0.0,
         :started_at => nil,
         :ended_at => nil,
-        :max_time_block => nil,
+        :max_time_block => 0,
+        :max_combined_time_block => 0,
         :time_offset_blocks => {},
         :goals => []
       })

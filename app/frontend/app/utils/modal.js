@@ -162,16 +162,16 @@ var modal = Ember.Object.extend({
     });
   },
   warning: function(text, below_header) {
-    this.flash(text, 'warning', below_header);
+    modal.flash(text, 'warning', below_header);
   },
   error: function(text, below_header) {
-    this.flash(text, 'error', below_header);
+    modal.flash(text, 'error', below_header);
   },
   notice: function(text, below_header) {
-    this.flash(text, 'notice', below_header);
+    modal.flash(text, 'notice', below_header);
   },
   success: function(text, below_header) {
-    this.flash(text, 'success', below_header);
+    modal.flash(text, 'success', below_header);
   }
 }).create();
 

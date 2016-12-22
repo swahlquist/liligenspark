@@ -223,9 +223,9 @@ describe Board, :type => :model do
       expect(b.settings['uses']).to eq(4)
       expect(b.settings['recent_uses']).to eq(4)
       expect(b.settings['non_author_uses']).to eq(3)
-      expect(b.popularity).to eq(216)
+      expect(b.popularity).to eq(36)
       expect(b.any_upstream).to eq(false)
-      expect(b.home_popularity).to eq(19)
+      expect(b.home_popularity).to eq(34)
     end
   end
 

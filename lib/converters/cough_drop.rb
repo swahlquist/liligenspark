@@ -328,7 +328,7 @@ module Converters::CoughDrop
       end
     end
     
-    sleep 5
+    sleep 10
     
     content['boards'].each do |board|
       # TODO: content['images'] and content['sounds'] may be helpful
