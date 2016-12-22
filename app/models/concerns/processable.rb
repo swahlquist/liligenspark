@@ -19,6 +19,27 @@ module Processable
     end
   end
   
+  def edit_key
+    self.updated_at
+  end
+  
+  def same_edit_key(&block)
+    key = self.edit_key
+    block.call
+    rec = self.class.find(self.id).reload
+    return key == rec.edit_key
+  end
+  
+  def save_if_same_edit_key(&block)
+    same = same_edit_key(&block)
+    if same
+      self.save
+      true
+    else
+      false
+    end
+  end
+  
   def processing_errors
     @processing_errors || []
   end

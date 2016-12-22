@@ -139,7 +139,8 @@ module Converters::CoughDrop
         next unless hashes["#{list}_ids"].include?(item['id'])
         record = Converters::Utils.find_by_data_url(item['data_url'])
         if record
-          opts[list][item['id']] = record.global_id
+          obj[list][item['id']] = record.global_id
+          hashes[item['id']] = record.global_id
         elsif item['data']
           record = klass.create(:user => opts['user'])
           item['ref_url'] = item['data']
@@ -147,7 +148,7 @@ module Converters::CoughDrop
           record = klass.create(:user => opts['user'])
           item['ref_url'] = item['url']
         end
-        if record && (!opts[list] || !opts[list][item['id']])
+        if record && (!obj[list] || !obj[list][item['id']])
           item.delete('data')
           item.delete('url')
 
@@ -161,8 +162,8 @@ module Converters::CoughDrop
           if item['ref_url']
             record.upload_to_remote(item['ref_url']) if item['ref_url']
           end
-          opts[list] ||= {}
-          opts[list][item['id']] = record.global_id
+          obj[list] ||= {}
+          obj[list][item['id']] = record.global_id
           hashes[item['id']] = record.global_id
         end
       end
@@ -318,6 +319,7 @@ module Converters::CoughDrop
         board = Board.process_new(params, non_user_params)
       end
       if board
+        board.reload
         opts['boards'] ||= {}
         opts['boards'][obj['id']] = {
           'id' => board.global_id,
@@ -325,6 +327,8 @@ module Converters::CoughDrop
         }
       end
     end
+    
+    sleep 5
     
     content['boards'].each do |board|
       # TODO: content['images'] and content['sounds'] may be helpful

@@ -32,7 +32,7 @@ module Flusher
   end
   
   def self.flush_versions(record_db_id, record_class)
-      PaperTrail::Version.delete_all(:item_type => record_class, :item_id => record_db_id)
+      PaperTrail::Version.where(:item_type => record_class, :item_id => record_db_id).delete_all
   end
   
   def self.flush_leftovers
@@ -76,10 +76,10 @@ module Flusher
       
       if bi && full_flush
         # TODO: reach into affected boards and remove the dead links
-        BoardButtonImage.delete_all(:button_image_id => bi.id)
+        BoardButtonImage.where(:button_image_id => bi.id).delete_all
         flush_record(bi)
       else
-        BoardButtonImage.delete_all(:id => bbi.id)
+        BoardButtonImage.where(:id => bbi.id).delete_all
       end
     end
     # remove any button_sound records
@@ -93,10 +93,10 @@ module Flusher
       
       if bs && full_flush
         # TODO: reach into affected boards and remove the dead links
-        BoardButtonSound.delete_all(:button_sound_id => bs.id)
+        BoardButtonSound.where(:button_sound_id => bs.id).delete_all
         flush_record(bs)
       else
-        BoardButtonSound.delete_all(:id => bbs.id)
+        BoardButtonSound.where(:id => bbs.id).delete_all
       end
     end
     BoardDownstreamButtonSet.where(:board_id => board_db_id).each do |bs|

@@ -117,6 +117,7 @@ module UpstreamDownstream
       board = Board.find_by_global_id(self.global_id).reload
       changes.each do |key, vals|
         pre, post = vals
+        next if pre.to_json == post.to_json
         if board.settings[key] != pre
           Rails.logger.info("bad save, clobbering value for #{key}")
         end
@@ -184,6 +185,7 @@ module UpstreamDownstream
   end
   
   def add_upstream_board_id!(id)
+    self.reload
     self.settings ||= {}
     self.settings['immediately_upstream_board_ids'] ||= []
     self.settings['immediately_upstream_board_ids'] << id

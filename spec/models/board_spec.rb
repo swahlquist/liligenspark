@@ -1110,6 +1110,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb'}
       ]
+      b.save
       b.check_for_parts_of_speech
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
@@ -1124,6 +1125,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb'}
       ]
+      b.save
       b.check_for_parts_of_speech
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
@@ -1139,6 +1141,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb', 'suggested_part_of_speech' => 'noun'}
       ]
+      b.save
       b.check_for_parts_of_speech
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
@@ -1367,6 +1370,7 @@ describe Board, :type => :model do
       b = Board.create(:user => u)
       u.settings['preferences']['home_board'] = {'id' => b.global_id}
       u.save
+      Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       User.where(:id => u.id).update_all(:updated_at => 2.months.ago)

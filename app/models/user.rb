@@ -204,6 +204,7 @@ class User < ActiveRecord::Base
       self.settings['all_home_boards'] << self.settings['preferences']['home_board']
       self.settings['all_home_boards'] = self.settings['all_home_boards'].uniq
     end
+    self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
     self.settings['preferences']['devices'] ||= {}
     self.settings['preferences']['devices']['default'] ||= {}
     self.settings['preferences']['devices']['default']['name'] ||= "Web browser for Desktop"
@@ -236,6 +237,11 @@ class User < ActiveRecord::Base
     
     true
   end
+
+  def edit_key
+    self.settings['edit_key']
+  end
+
   
   def self.find_by_email(email)
     hash = User.generate_email_hash(email)

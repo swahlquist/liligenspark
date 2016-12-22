@@ -110,7 +110,7 @@ class Board < ActiveRecord::Base
   
   def generate_stats
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
-    child_board_ids = self.child_boards.map(&:id)
+    child_board_ids = self.child_boards.select('id').map(&:id)
     self.settings['forks'] = child_board_ids.length
     self.settings['home_forks'] = UserBoardConnection.where(:board_id => child_board_ids, :home => true).count
     self.settings['home_uses'] = UserBoardConnection.where(:board_id => self.id, :home => true).count
@@ -120,13 +120,14 @@ class Board < ActiveRecord::Base
     self.settings['recent_uses'] = UserBoardConnection.where(['board_id = ? AND updated_at > ?', self.id, 30.days.ago]).count
     self.settings['recent_forks'] = UserBoardConnection.where(:board_id => child_board_ids).where(['updated_at > ?', 30.days.ago]).count
     self.settings['non_author_uses'] = UserBoardConnection.where(['board_id = ? AND user_id != ?', self.id, self.user_id]).count
+    self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
     if self.settings['never_edited']
       self.popularity = -1
       self.home_popularity = -1
     else
       # TODO: a real algorithm perchance?
-      self.popularity = (self.settings['stars'] * 100) + self.settings['uses'] + (self.settings['forks'] * 2) + (self.settings['recent_uses'] * 3)
-      self.home_popularity = (self.any_upstream ? 0 : 1) + self.settings['home_uses'] + (self.settings['home_forks'] * 2) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
+      self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks'] * 2) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
+      self.home_popularity = (self.any_upstream ? 0 : 10) + (self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks'] * 2) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
     end
     self.any_upstream ||= false
     self.settings['total_buttons'] = (self.settings['buttons'] || []).length + (self.settings['total_downstream_buttons'] || 0)
@@ -136,6 +137,10 @@ class Board < ActiveRecord::Base
       self.home_popularity = 0
     end
     true
+  end
+
+  def edit_key
+    self.settings['edit_key']
   end
   
   def find_copies_by(user)
@@ -340,16 +345,18 @@ class Board < ActiveRecord::Base
   def update_self_references
     @update_self_references = false
     buttons = self.settings['buttons'] || []
-    self.settings['self_references_updated'] = true
-    buttons.each do |button|
-      if button['load_board'] && button['load_board']['id'] && button['load_board']['id'] == self.related_global_id(self.parent_board_id)
-        button['load_board']['id'] = self.global_id
-        button['load_board']['key'] = self.key
-        @buttons_changed = true
+    self.reload
+    save_if_same_edit_key do
+      self.settings['self_references_updated'] = true
+      buttons.each do |button|
+        if button['load_board'] && button['load_board']['id'] && button['load_board']['id'] == self.related_global_id(self.parent_board_id)
+          button['load_board']['id'] = self.global_id
+          button['load_board']['key'] = self.key
+          @buttons_changed = true
+        end
       end
+      self.settings['buttons'] = buttons
     end
-    self.settings['buttons'] = buttons
-    self.save
   end
   
   def update_affected_users(is_new_board)
@@ -388,12 +395,14 @@ class Board < ActiveRecord::Base
         result['license'] == "CC By" || result['repo_key'] == 'arasaac'
       end
       if icon && icon['image_url'] != DEFAULT_ICON
-        self.settings['image_url'] = icon['image_url']
-        self.settings['default_image_url'] = icon['image_url']
-        self.settings['default_image_details'] = icon
-        @skip_post_process = true
-        self.save_without_post_processing
-        @skip_post_process = false
+        # TODO race condition?
+        self.reload
+        same = same_edit_key do
+          self.settings['image_url'] = icon['image_url']
+          self.settings['default_image_url'] = icon['image_url']
+          self.settings['default_image_details'] = icon
+        end
+        self.save_without_post_processing if same
       end
     end
   end
@@ -432,12 +441,20 @@ class Board < ActiveRecord::Base
       protected_sounds = BoardButtonSound.sounds_for_board(self.id).select(&:protected?)
       self.settings ||= {}
       if (protected_images + protected_sounds).length > 0 && (self.settings['protected'] || {})['media'] != true
-        self.settings['protected'] ||= {}
-        self.settings['protected']['media'] = true
-        self.save_without_post_processing
+        # TODO: race condition?
+        self.reload
+        same = self.same_edit_key do
+          self.settings['protected'] ||= {}
+          self.settings['protected']['media'] = true
+        end
+        self.save_without_post_processing if same
       elsif (protected_images + protected_sounds).length == 0 && self.settings['protected'] && self.settings['protected']['media'] == true
-        self.settings['protected']['media'] = false if self.settings['protected']
-        self.save_without_post_processing
+        # TODO: race condition?
+        same = self.same_edit_key do
+          self.settings['protected']['media'] = false if self.settings['protected']
+          self.save_without_post_processing
+        end
+        self.save_without_post_processing if same
       end
     end
     @images_mapped_at = Time.now.to_i
@@ -525,21 +542,24 @@ class Board < ActiveRecord::Base
   def check_for_parts_of_speech
     if self.settings && self.settings['buttons']
       any_changed = false
-      self.settings['buttons'].each do |button|
-        word = button['vocalization'] || button['label']
-        if word && !button['part_of_speech']
-          speech ||= WordData.find_word(word)
-          if speech && speech['types'] && speech['types'].length > 0
-            button['part_of_speech'] = speech['types'][0]
-            button['suggested_part_of_speech'] = speech['types'][0]
-            any_changed = true
+      # TODO: race condition?
+      same = self.same_edit_key do
+        self.settings['buttons'].each do |button|
+          word = button['vocalization'] || button['label']
+          if word && !button['part_of_speech']
+            speech ||= WordData.find_word(word)
+            if speech && speech['types'] && speech['types'].length > 0
+              button['part_of_speech'] = speech['types'][0]
+              button['suggested_part_of_speech'] = speech['types'][0]
+              any_changed = true
+            end
+          elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
+            str = "#{button['vocalization'] || button['label']}-#{button['part_of_speech']}"
+            RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
           end
-        elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
-          str = "#{button['vocalization'] || button['label']}-#{button['part_of_speech']}"
-          RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
         end
       end
-      self.save if any_changed
+      self.save if any_changed && same
     end
   end
   

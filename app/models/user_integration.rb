@@ -47,6 +47,7 @@ class UserIntegration < ActiveRecord::Base
       self.device.save
     end
     if self.user
+      self.user.reload
       self.user.settings['has_user_integrations'] = true
       self.user.save
     end

@@ -79,9 +79,13 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       set.data['buttons'] = all_buttons
       set.save
-      board.reload
-      board.settings['board_downstream_button_set_id'] = set.global_id
-      board.save
+      if board.settings['board_downstream_button_set_id'] != set.global_id
+        # TODO: race condition?
+        board.reload
+        board.save_if_same_edit_key do
+          board.settings['board_downstream_button_set_id'] = set.global_id
+        end
+      end
       set
     end
   end
