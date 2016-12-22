@@ -439,6 +439,7 @@ CoughDrop.Board = DS.Model.extend({
     if(this.get('button_set') && !force) {
       return Ember.RSVP.resolve(this.get('button_set'));
     }
+    if(!this.get('id')) { return; }
     var button_set = CoughDrop.store.peekRecord('buttonset', this.get('id'));
     if(button_set && !force) {
       this.set('button_set', button_set);
