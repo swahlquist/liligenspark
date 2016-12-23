@@ -51,6 +51,8 @@ class Organization < ActiveRecord::Base
     user.save
     self.touch
     true
+  rescue ActiveRecord::StaleObjectError
+    self.schedule(:add_manager, user_key, full)
   end
   
   def remove_manager(user_key)
@@ -64,6 +66,8 @@ class Organization < ActiveRecord::Base
     user.save
     self.touch
     true
+  rescue ActiveRecord::StaleObjectError
+    self.schedule(:remove_manager, user_key)
   end
   
   def add_supervisor(user_key, pending=true)
@@ -87,6 +91,8 @@ class Organization < ActiveRecord::Base
     end
     self.touch
     true
+  rescue ActiveRecord::StaleObjectError
+    self.schedule(:add_supervisor, user_key, pending)
   end
   
   def approve_supervisor(user)
@@ -120,6 +126,8 @@ class Organization < ActiveRecord::Base
     }) unless pending
     OrganizationUnit.schedule(:remove_as_member, user_key, 'supervisor', self.global_id)
     true
+  rescue ActiveRecord::StaleObjectError
+    self.schedule(:remove_supervisor, user_key)
   end
 
   def add_subscription(user_key)
@@ -219,8 +227,8 @@ class Organization < ActiveRecord::Base
           'full_manager' => !!user.settings['full_manager']
         }
       end
-     user.settings.delete('full_manager')
-     user.managed_organization_id = nil
+      user.settings.delete('full_manager')
+      user.managed_organization_id = nil
       user.save
     end
     User.where('managing_organization_id IS NOT NULL').each do |user|

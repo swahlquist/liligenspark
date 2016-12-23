@@ -40,6 +40,32 @@ module Processable
     end
   end
   
+  def update_setting(key, value=nil, save_method=nil)
+    begin
+      if key.is_a?(Hash)
+        key.each do |k, v|
+          if v.is_a?(Hash)
+            self.settings[k] ||= {}
+            v.each do |k2, v2|
+              self.settings[k][k2] = v2
+            end
+          else
+            self.settings[k] = v
+          end
+        end
+      else
+        self.settings[key] = value
+      end
+      if save_method
+        self.send(save_method)
+      else
+        self.save
+      end
+    rescue ActiveRecord::StaleObjectError
+      schedule(:update_setting, key, value)
+    end
+  end
+  
   def processing_errors
     @processing_errors || []
   end

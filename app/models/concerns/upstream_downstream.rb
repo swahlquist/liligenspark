@@ -124,7 +124,9 @@ module UpstreamDownstream
         board.settings[key] = post
         self.settings[key] = post
       end
-      board.save_without_post_processing
+      updates = {}
+      changes.each{|k, vals| updates[k] = vals[1] }
+      board.update_setting(updates, nil, :save_without_post_processing)
       board.complete_stream_checks(already_visited_ids)
     end
     
@@ -190,8 +192,7 @@ module UpstreamDownstream
     self.settings['immediately_upstream_board_ids'] ||= []
     self.settings['immediately_upstream_board_ids'] << id
     self.settings['immediately_upstream_board_ids'] = self.settings['immediately_upstream_board_ids'].uniq.sort
-    self.any_upstream = true
-    self.save!
+    self.update_setting('immediately_upstream_board_ids', self.settings['immediately_upstream_board_ids'], :save!)
   end
   
   def update_any_upstream

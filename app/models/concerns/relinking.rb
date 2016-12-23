@@ -71,12 +71,12 @@ module Relinking
       # if the user's home board was replaced, update their preferences
       if user_home_changed
         new_home = user_home_changed
-        user.reload
-        user.settings['preferences']['home_board'] = {
-          'id' => new_home.global_id,
-          'key' => new_home.key
-        }
-        user.save
+        user.update_setting({
+          'preferences' => {'home_board' => {
+            'id' => new_home.global_id,
+            'key' => new_home.key
+          }}
+        })
       else
         home = Board.find_by_path(user.settings['preferences']['home_board']['id'])
         home.track_downstream_boards!

@@ -226,9 +226,7 @@ class UserGoal < ActiveRecord::Base
   
   def remove_if_primary
     if self.user && self.user.settings && self.user.settings['primary_goal'] && self.user.settings['primary_goal']['id'] == self.global_id
-      self.user.reload
-      self.user.settings['primary_goal'] = nil
-      self.user.save
+      self.user.update_setting({'primary_goal' => nil})
     end
     true
   end
@@ -251,11 +249,10 @@ class UserGoal < ActiveRecord::Base
         UserGoal.where(:id => self.id).update_all(:primary => true)
         if !self.user.settings || !self.user.settings['primary_goal'] || self.user.settings['primary_goal']['id'] != self.global_id
           self.user.reload
-          self.user.settings['primary_goal'] = {
+          self.user.update_setting('primary_goal', {
             'id' => self.global_id,
             'summary' => self.summary
-          }
-          self.user.save
+          })
         end
       end
     elsif @clear_primary
@@ -263,9 +260,7 @@ class UserGoal < ActiveRecord::Base
         # TODO: sharding
         UserGoal.where(:user_id => self.user_id).update_all(:primary => false)
         if self.user.settings && self.user.settings['primary_goal']
-          self.user.reload
-          self.user.settings['primary_goal'] = nil
-          self.user.save
+          self.user.update_setting({'primary_goal' => nil})
         end
       end
     end
@@ -276,9 +271,9 @@ class UserGoal < ActiveRecord::Base
     if self.primary
       user = self.user
       if user.settings && user.settings['primary_goal'] && user.settings['primary_goal']['id'] == self.global_id
-        self.user.reload
-        self.user.settings['primary_goal']['last_tracked'] = [self.user.settings['primary_goal']['last_tracked'] || '0', iso8601].max
-        self.user.save
+        self.user.update_setting({
+          'primary_goal' => {'last_tracked' => [self.user.settings['primary_goal']['last_tracked'] || '0', iso8601].max}
+        })
       end
     end
   end

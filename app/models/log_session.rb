@@ -876,8 +876,7 @@ class LogSession < ActiveRecord::Base
         # this user forever and notify at a random point in time when the tight bounds
         # finally fit
         else
-          user.next_notification_at = user.next_notification_schedule
-          user.save
+          User.where(:id => user.id).update_all(:next_notification_at => user.next_notification_schedule)
         end
       end
     end

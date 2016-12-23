@@ -206,6 +206,7 @@ class Board < ActiveRecord::Base
         @update_self_references = true
       end
     end
+    self.any_upstream = self.settings && self.settings['immediately_upstream_board_ids'] && self.settings['immediately_upstream_board_ids'].length > 0
     self.settings['grid'] ||= {}
     self.settings['grid']['rows'] = (self.settings['grid']['rows'] || 2).to_i
     self.settings['grid']['columns'] = (self.settings['grid']['columns'] || 4).to_i
@@ -396,13 +397,11 @@ class Board < ActiveRecord::Base
       end
       if icon && icon['image_url'] != DEFAULT_ICON
         # TODO race condition?
-        self.reload
-        same = same_edit_key do
-          self.settings['image_url'] = icon['image_url']
-          self.settings['default_image_url'] = icon['image_url']
-          self.settings['default_image_details'] = icon
-        end
-        self.save_without_post_processing if same
+        self.update_setting({
+          'image_url' => icon['image_url'],
+          'default_image_url' => icon['image_url'],
+          'default_image_details' => icon
+        }, nil, :save_without_post_processing)
       end
     end
   end
@@ -442,19 +441,16 @@ class Board < ActiveRecord::Base
       self.settings ||= {}
       if (protected_images + protected_sounds).length > 0 && (self.settings['protected'] || {})['media'] != true
         # TODO: race condition?
-        self.reload
-        same = self.same_edit_key do
-          self.settings['protected'] ||= {}
-          self.settings['protected']['media'] = true
-        end
-        self.save_without_post_processing if same
+        self.update_setting({
+          'protected' => {'media' => true}
+        }, nil, :save_without_post_processing)
       elsif (protected_images + protected_sounds).length == 0 && self.settings['protected'] && self.settings['protected']['media'] == true
         # TODO: race condition?
-        same = self.same_edit_key do
-          self.settings['protected']['media'] = false if self.settings['protected']
-          self.save_without_post_processing
+        if self.settings['protected']
+          self.update_setting({
+            'protected' => {'media' => false}
+          }, nil, :save_without_post_processing)
         end
-        self.save_without_post_processing if same
       end
     end
     @images_mapped_at = Time.now.to_i
@@ -543,24 +539,24 @@ class Board < ActiveRecord::Base
     if self.settings && self.settings['buttons']
       any_changed = false
       # TODO: race condition?
-      same = self.same_edit_key do
-        self.settings['buttons'].each do |button|
-          word = button['vocalization'] || button['label']
-          if word && !button['part_of_speech']
-            speech ||= WordData.find_word(word)
-            if speech && speech['types'] && speech['types'].length > 0
-              button['part_of_speech'] = speech['types'][0]
-              button['suggested_part_of_speech'] = speech['types'][0]
-              any_changed = true
-            end
-          elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
-            str = "#{button['vocalization'] || button['label']}-#{button['part_of_speech']}"
-            RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
+      self.settings['buttons'].each do |button|
+        word = button['vocalization'] || button['label']
+        if word && !button['part_of_speech']
+          speech ||= WordData.find_word(word)
+          if speech && speech['types'] && speech['types'].length > 0
+            button['part_of_speech'] = speech['types'][0]
+            button['suggested_part_of_speech'] = speech['types'][0]
+            any_changed = true
           end
+        elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
+          str = "#{button['vocalization'] || button['label']}-#{button['part_of_speech']}"
+          RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
         end
       end
-      self.save if any_changed && same
+      self.save if any_changed
     end
+  rescue ActiveRecord::StaleObjectError
+    self.schedule_once(:check_for_parts_of_speech)
   end
   
   def process_buttons(buttons, editor, secondary_editor=nil)

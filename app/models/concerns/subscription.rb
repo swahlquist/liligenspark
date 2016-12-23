@@ -60,6 +60,8 @@ module Subscription
       end
     end
     self.save
+  rescue ActiveRecord::StaleObjectError
+    self.schedule(:update_subscription_organization, org_id, pending, sponsored)
   end
   
   def transfer_subscription_to(user, skip_remote_update=false)
@@ -78,12 +80,14 @@ module Subscription
     if did_change && !skip_remote_update
       Purchasing.change_user_id(user.settings['subscription']['customer_id'], self.global_id, user.global_id)
     end
-    user.settings['subscription']['transferred_from'] ||= []
-    user.settings['subscription']['transferred_from'] << self.global_id
-    user.save
-    self.settings['subscription']['transferred_to'] ||= []
-    self.settings['subscription']['transferred_to'] << user.global_id
-    self.save
+    from_list = (user.settings['subscription']['transferred_from'] || []) + [self.global_id]
+    user.update_setting({
+      'subscription' => {'transferred_from' => from_list}
+    })
+    to_list = (self.settings['subscription']['transferred_to'] || []) + [user.global_id]
+    self.update_setting({
+      'subscription' => {'transferred_to' => to_list}
+    })
   end
   
   def update_subscription(args)
@@ -214,6 +218,8 @@ module Subscription
       res = false
     end
     res
+  rescue ActiveRecord::StaleObjectError
+    return false
   end
   
   def redeem_gift_token(code)
@@ -405,10 +411,9 @@ module Subscription
             last_message = Time.parse(user.settings['subscription']['last_approaching_notification']) rescue Time.at(0)
             if last_message < 1.week.ago
               SubscriptionMailer.deliver_message(:expiration_approaching, user.global_id)
-              user.reload
-              user.settings['subscription'] ||= {}
-              user.settings['subscription']['last_approaching_notification'] = Time.now.iso8601
-              user.save
+              user.update_setting({
+                'subscription' => {'last_approaching_notification' => Time.now.iso8601}
+              })
               alerts[:approaching_emailed] += 1
             end
           end
@@ -425,17 +430,15 @@ module Subscription
         last_week = Time.parse(user.settings['subscription']['last_expiring_week_notification']) rescue Time.at(0)
         if user.expires_at <= 36.hours.from_now && last_day < 1.week.ago
           SubscriptionMailer.deliver_message(:one_day_until_expiration, user.global_id)
-          user.reload
-          user.settings['subscription'] ||= {}
-          user.settings['subscription']['last_expiring_day_notification'] = Time.now.iso8601
-          user.save
+          user.update_setting({
+            'subscription' => {'last_expiring_day_notification' => Time.now.iso8601}
+          })
           alerts[:upcoming_emailed] += 1
         elsif user.expires_at > 4.days.from_now && last_week < 1.week.ago
           SubscriptionMailer.deliver_message(:one_week_until_expiration, user.global_id)
-          user.reload
-          user.settings['subscription'] ||= {}
-          user.settings['subscription']['last_expiring_week_notification'] = Time.now.iso8601
-          user.save
+          user.update_setting({
+            'subscription' => {'last_expiring_week_notification' => Time.now.iso8601}
+          })
           alerts[:upcoming_emailed] += 1
         end
       end
@@ -448,10 +451,9 @@ module Subscription
         last_expired = Time.parse(user.settings['subscription']['last_expired_notification']) rescue Time.at(0)
         if user.expires_at < Time.now && last_expired < 3.days.ago
           SubscriptionMailer.deliver_message(:subscription_expired, user.global_id)
-          user.reload
-          user.settings['subscription'] ||= {}
-          user.settings['subscription']['last_expired_notification'] = Time.now.iso8601
-          user.save          
+          user.update_setting({
+            'subscription' => {'last_expired_notification' => Time.now.iso8601}
+          })
           alerts[:expired_emailed] += 1
         end
       end
@@ -467,10 +469,9 @@ module Subscription
         last_reminded = Time.parse(user.settings['subscription']['last_logging_reminder_notification']) rescue Time.at(0)
         if last_reminded < 7.days.ago
           UserMailer.deliver_message(:usage_reminder, user.global_id)
-          user.reload
-          user.settings['subscription'] ||= {}
-          user.settings['subscription']['last_logging_reminder_notification'] = Time.now.iso8601
-          user.save
+          user.update_setting({
+            'subscription' => {'last_logging_reminder_notification' => Time.now.iso8601}
+          })
           alerts[:recent_less_active] += 1
         end
       end

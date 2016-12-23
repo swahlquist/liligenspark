@@ -7,9 +7,7 @@ class UserMailer < ActionMailer::Base
     hash = User.generate_email_hash(email)
     users = User.where(:email_hash => hash)
     users.each do |user|
-      user.reload
-      user.settings['email_disabled'] = true
-      user.save
+      user.update_setting('email_disabled', true)
     end
   end
   

@@ -153,7 +153,9 @@ module Supervising
         user.settings['supervisors'] << sup
         do_unlink = false
       end
-      user.save
+      user.update_setting({
+        'supervisors' => user.settings['supervisors']
+      })
       user.reload
       if do_unlink
         supervisor.settings['supervisees'] = (supervisor.settings['supervisees'] || []).select{|s| s['user_id'] != user.global_id }
@@ -167,7 +169,9 @@ module Supervising
           })
         end
         supervisor.schedule_once(:update_available_boards)
-        supervisor.save
+        supervisor.update_setting({
+          'supervisees' => supervisor.settings['supervisees']
+        })
       end
     end
     
@@ -188,7 +192,10 @@ module Supervising
       end
       user.settings['supervisors'] << sup
       user.settings['link_codes'] -= [code] if code
-      user.save
+      user.update_setting({
+        'supervisors' => user.settings['supervisors'],
+        'link_codes' => user.settings['link_codes']
+      })
       # first-time supervisors should automatically be set to the supporter role
       if !supervisor.settings['supporter_role_auto_set']
         supervisor.settings['supporter_role_auto_set'] = true
@@ -210,7 +217,9 @@ module Supervising
         'edit_permission' => editor
       }
       supervisor.schedule_once(:update_available_boards)
-      supervisor.save
+      supervisor.update_setting({
+        'supervisees' => supervisor.settings['supervisees']
+      })
     end
   end
 end

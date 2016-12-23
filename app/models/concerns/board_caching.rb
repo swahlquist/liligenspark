@@ -66,6 +66,8 @@ module BoardCaching
         sup.schedule_once(:update_available_boards)
       end
     end
+  rescue ActiveRecord::StaleObjectError
+    self.schedule_once(:update_available_boards)
   end
   
   def private_viewable_board_ids

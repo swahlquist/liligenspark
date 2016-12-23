@@ -304,9 +304,7 @@ class Api::UsersController < ApplicationController
       confirmed = false
       if params['code'] && user && params['code'] == user.registration_code
         confirmed = true
-        user.reload
-        user.settings['pending'] = false
-        user.save
+        user.update_setting('pending', false)
       end
       render json: {:confirmed => confirmed}.to_json
     end
