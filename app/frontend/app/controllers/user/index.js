@@ -323,6 +323,9 @@ export default Ember.Controller.extend({
     },
     nothing: function() {
     },
+    badge_popup: function(badge) {
+      modal.open('badge-awarded', {badge: badge});
+    },
     remove_board: function(action, board) {
       modal.open('confirm-remove-board', {action: action, board: board, user: this.get('model')});
     },

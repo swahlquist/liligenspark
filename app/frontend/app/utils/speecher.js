@@ -5,6 +5,7 @@ import tts_voices from './tts_voices';
 
 var speecher = Ember.Object.extend({
   beep_url: "https://opensymbols.s3.amazonaws.com/beep.mp3",
+  chimes_url: "https://opensymbols.s3.amazonaws.com/chimes.mp3",
   voices: [],
   refresh_voices: function() {
     var list = [];
@@ -263,22 +264,27 @@ var speecher = Ember.Object.extend({
     this.speak_audio(url, 'background');
   },
   load_beep: function() {
-    if(speecher.beep_url) {
-      if(speecher.beep_url.match(/^data:/)) { return Ember.RSVP.resolve(true); }
-      else if(!speecher.beep_url.match(/^http/)) { return Ember.RSVP.resolve(true); }
-      var find = persistence.find_url(speecher.beep_url, 'sound').then(function(data_uri) {
+    var p1 = this.load_sound('beep_url');
+    var p2 = this.load_sound('chimes_url');
+    return Ember.RSVP.all_wait([p1, p2]);
+  },
+  load_sound: function(attr) {
+    if(speecher[attr]) {
+      if(speecher[attr].match(/^data:/)) { return Ember.RSVP.resolve(true); }
+      else if(!speecher[attr].match(/^http/)) { return Ember.RSVP.resolve(true); }
+      var find = persistence.find_url(speecher[attr], 'sound').then(function(data_uri) {
         if(data_uri) {
-          speecher.beep_url = data_uri;
+          speecher[attr] = data_uri;
           return true;
         } else {
-          return persistence.store_url(speecher.beep_url, 'sound').then(function(data) {
-            speecher.beep_url = data.local_url || data.data_uri;
+          return persistence.store_url(speecher[attr], 'sound').then(function(data) {
+            speecher[attr] = data.local_url || data.data_uri;
             return true;
           });
         }
       }, function() {
-        return persistence.store_url(speecher.beep_url, 'sound').then(function(data) {
-          speecher.beep_url = data.local_url || data.data_uri;
+        return persistence.store_url(speecher[attr], 'sound').then(function(data) {
+          speecher[attr] = data.local_url || data.data_uri;
           return true;
         });
       });

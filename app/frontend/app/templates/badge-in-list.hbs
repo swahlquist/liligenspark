@@ -1,12 +1,12 @@
 <div style='float: left; padding: 5px; width: 25%; text-align: center;'>
   {{#if badge.global}}
-    {{#link-to 'goals.goal' badge.goal_id}}
+    <a style='#' {{action 'badge_popup' badge}}>
       <img src={{badge.image_url}} style='width: 70%;' />
-    {{/link-to}}
+    </a>
   {{else}}
-    {{#link-to 'user.goal' model.user_name badge.goal_id}}
+    <a style='#' {{action 'badge_popup' badge}}>
       <img src={{badge.image_url}} style='width: 70%;' />
-    {{/link-to}}
+    </a>
   {{/if}}
   <div style='height: 30px; overflow: hidden; line-height: 14px;'>
     {{#if badge.global}}

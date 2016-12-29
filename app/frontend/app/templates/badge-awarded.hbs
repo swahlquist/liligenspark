@@ -27,8 +27,8 @@
             <div style='border: 2px solid #444; background: #ff0; width: 30px; height: 30px; border-radius: 15px; position: absolute; top: 95px; left: 85px;'></div>
           </div>
         </div>
-        {{#if model.badge.sound_url}}
-          <audio src={{model.badge.sound_url}} autoplay='true' />
+        {{#if model.badge.sound_url_with_fallback}}
+          <audio src={{model.badge.sound_url_with_fallback}} autoplay='true' />
         {{/if}}
       {{else}}
         <div>

@@ -2,6 +2,7 @@ import Ember from 'ember';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
+import speecher from '../utils/speecher';
 
 CoughDrop.Badge = DS.Model.extend({
   name: DS.attr('string'),
@@ -19,6 +20,9 @@ CoughDrop.Badge = DS.Model.extend({
   ended: DS.attr('date'),
   completion_settings: DS.attr('raw'),
   permissions: DS.attr('raw'),
+  sound_url_with_fallback: function() {
+    return this.get('sound_url') || speecher.chimes_url;
+  }.property('sound_url'),
   progress_out_of_100: function() {
     return Math.min(Math.max(this.get('progress') || 0, 0) * 100, 100);
   }.property('progress'),
