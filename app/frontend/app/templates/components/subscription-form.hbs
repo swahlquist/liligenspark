@@ -1,5 +1,10 @@
 <form {{action "purchase" on="submit"}} class="row">
   <div class="form-group"><div class="col-sm-12">
+  {{#if trial_option}}
+    <div style='margin-bottom: 10px;'>
+      <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a full-featured 2-month trial, no credit card required" key='two_month_trial'}}</button>
+    </div>
+  {{/if}}
   <table class='subscription_table'>
     <tbody>
       <tr>
@@ -113,7 +118,6 @@
                 <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
               {{/if}}
             {{else}}
-
             {{#if subscription.gift_type}}
               <button class='btn btn-primary btn-sm'>{{t "I have a gift code" key='have_a_gift_code'}}</button>
               <div style='margin-top: 5px; text-align: center;'>
