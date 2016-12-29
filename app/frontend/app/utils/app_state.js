@@ -1117,7 +1117,7 @@ var app_state = Ember.Object.extend({
         } else if(obj && obj.vocalization && obj.vocalization.match(/^\+/)) {
           // don't home-return when spelling out words
         } else {
-          this.rootBoard({auto_home: true});
+          app_state.jump_to_root_board({auto_home: true});
         }
       }
     }
