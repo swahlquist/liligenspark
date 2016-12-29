@@ -70,6 +70,12 @@ export default modal.ModalController.extend({
     }
     return res;
   }.property('app_state.feature_flags.app_connections'),
+  tool_action_types: function() {
+    return [
+      {name: i18n.t('trigger_webhook', "Trigger an external action"), id: 'webhook'},
+      {name: i18n.t('render_page', "Load a tool-rendered page"), id: 'render'}
+    ];
+  }.property(),
   image_libraries: function() {
     var res = [
       {name: i18n.t('open_symbols', "opensymbols.org (default)"), id: 'opensymbols'}
@@ -409,9 +415,12 @@ export default modal.ModalController.extend({
       (this.get('user_integrations') || []).forEach(function(i) {
         Ember.set(i, 'selected', false);
       });
+      var action_type = (!tool.get('has_multiple_actions') && tool.get('render')) ? 'render' : 'webhook';
       this.set('model.integration', {
-        user_integration_id: tool.id
+        user_integration_id: tool.id,
+        action_type: action_type
       });
+      this.set('selected_integration', tool);
       Ember.set(tool, 'selected', true);
     }
   }

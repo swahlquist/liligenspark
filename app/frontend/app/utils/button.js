@@ -24,7 +24,11 @@ var Button = Ember.Object.extend({
     } else if(this.get('apps') != null) {
       this.set('buttonAction', 'app');
     } else if(this.get('integration') != null) {
-      this.set('buttonAction', 'integration');
+      if(this.get('integration.action_type') == 'render') {
+        this.set('buttonAction', 'folder');
+      } else {
+        this.set('buttonAction', 'integration');
+      }
     } else {
       this.set('buttonAction', 'talk');
     }
@@ -44,6 +48,8 @@ var Button = Ember.Object.extend({
     if(action == 'folder') {
       if(this.get('home_lock')) {
         return path('images/folder_home.png');
+      } else if(this.get('integration.action_type') == 'render') {
+        return path('images/folder_integration.png');
       } else {
         return path('images/folder.png');
       }
@@ -71,7 +77,7 @@ var Button = Ember.Object.extend({
     } else {
       return path('images/unknown_action.png');
     }
-  }.property('buttonAction', 'video.popup', 'home_lock', 'action_status', 'action_status.pending', 'action_status.errored', 'action_status.completed'),
+  }.property('buttonAction', 'video.popup', 'home_lock', 'action_status', 'action_status.pending', 'action_status.errored', 'action_status.completed', 'integration.action_type'),
   action_alt: function() {
     var path = Ember.templateHelpers.path;
     var action = this.get('buttonAction');
@@ -87,6 +93,8 @@ var Button = Ember.Object.extend({
       }
     } else if(action == 'app') {
       return i18n.t('app', "app");
+    } else if(action == 'integration') {
+      return i18n.t('integration', "integration");
     } else {
       return i18n.t('unknown_action', "unknown action");
     }

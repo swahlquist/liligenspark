@@ -18,7 +18,7 @@
           <div class="checkbox">
             <label>
               {{input checked=integration.with_button_url type="checkbox"}}
-              {{t "enable custom button actions via this tool" key='enable_button_actions'}}
+              {{t "enable custom button triggers via this tool" key='enable_button_actions'}}
             </label>
           </div>
         </div>
@@ -29,6 +29,28 @@
           <div class="col-sm-9">
             {{input value=integration.button_webhook_url class="form-control" id="integration_button_url" placeholder="Button Action URL"}}
             {{#if integration.insecure_button_webhook_url}}
+              <span class='text-danger'>{{t "please use https URLs to protect user information" key='https_only_please'}}</span>
+            {{/if}}
+          </div>
+        </div>
+      {{/if}}
+
+      <div class="form-group" style="margin-top: -15px;">
+        <div class="col-sm-8 col-sm-offset-3">
+          <div class="checkbox">
+            <label>
+              {{input checked=integration.with_board_url type="checkbox"}}
+              {{t "enable custom page renderings via this tool" key='enable_board_renders'}}
+            </label>
+          </div>
+        </div>
+      </div>
+      {{#if integration.with_board_url}}
+        <div class="form-group">
+          <label for="integration_button_url" class="col-sm-3 control-label">{{t "Event URL" key='event_url'}}</label>
+          <div class="col-sm-9">
+            {{input value=integration.board_render_url class="form-control" id="board_render_url" placeholder="Board Render URL"}}
+            {{#if integration.insecure_board_render_url}}
               <span class='text-danger'>{{t "please use https URLs to protect user information" key='https_only_please'}}</span>
             {{/if}}
           </div>

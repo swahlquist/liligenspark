@@ -91,6 +91,7 @@ class UserIntegration < ActiveRecord::Base
     self.settings['name'] = process_string(params['name']) if params['name']
     self.settings['custom_integration'] = params['custom_integration'] if params['custom_integration'] != nil
     self.settings['button_webhook_url'] = params['button_webhook_url'] if params['button_webhook_url']
+    self.settings['board_render_url'] = params['board_render_url'] if params['board_render_url']
     # list of known types, probably need a background job here to confirm any
     # credentials that are provided
     @install_default_webhooks = true

@@ -50,6 +50,7 @@ export default Ember.Route.extend({
     // call and it doesn't actually have all the information you need to render, so you
     // better reload. if ordered_buttons isn't set then that just means we need some
     // additional lookups
+    if(model.get('integration')) { return; }
     if(persistence.get('online') || (model.get('id') && (!controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined)))) {
       var reload = Ember.RSVP.resolve();
 

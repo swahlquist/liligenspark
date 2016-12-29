@@ -3,7 +3,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'messages', 'inbox', 'log', 'logs', 'session', 'sessions', 'imports', 
   'boards', 'users', 'groups', 'organizations', 'pages', 'people', 'videos', 
   'root', 'www', 'add', 'self', 'files', 'feeds', 
-  'dev', 'auth', 'config', 'jobs', 'ssl', 
+  'dev', 'auth', 'config', 'jobs', 'ssl', 'integration', 'integrations',
   'api', 'account', 'accounts', 'oauth', 'oauth_suggess', 'token', 
   'login', 'logout', 'register', 'profile', 'forgot_password', 
   'support', 'help', 'forum', 'talk', 'chat', 'feedback', 'faq', 
@@ -55,6 +55,7 @@ Coughdrop::Application.routes.draw do
       cache "/images/star_gray.png"
       cache "/images/folder.png"
       cache "/images/folder_home.png"
+      cache "/images/folder_integration.png"
       cache "/images/spinner.gif"
       cache "/images/talk.png"
       cache "/images/link.png"

@@ -19,6 +19,9 @@ export default modal.ModalController.extend({
       if(!integration.get('with_button_url')) {
         integration.set('button_webhook_url', null);
       }
+      if(!integration.get('with_board_url')) {
+        integration.set('board_render_url', null);
+      }
       var hooks = [];
       integration.save().then(function(res) {
         modal.close({created: true});

@@ -1,5 +1,16 @@
 {{#button-listener compute_height='compute_height' button_event='button_event'}}
-{{#if model.id}}
+{{#if model.integration}}
+  {{#if teaser_description}}
+    <div id="board_description">
+      IFRAME INTEGRATION
+    </div>
+  {{/if}}
+  {{#if model.embed_url}}
+    <iframe style={{board_style}} frameborder=0 src={{model.embed_url}} id='integration_frame'></iframe>
+  {{else}}
+    <p class='text-danger'>{{t "There was an error loading the tool's page, it appears to not be configured properly" key='misconfigured_integration'}}</p>
+  {{/if}}
+{{else if model.id}}
   {{#if teaser_description}}
     <div id="board_description">
       <span {{action "boardDetails"}}>

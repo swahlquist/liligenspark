@@ -13,6 +13,13 @@ class Api::IntegrationsController < ApplicationController
     render json: JsonApi::Integration.paginate(params, integrations)
   end
   
+  def show
+    integration = UserIntegration.find_by_path(params['id'])
+    return unless exists?(integration, params['id'])
+    return unless allowed?(integration, 'edit')
+    render json: JsonApi::Integration.as_json(integration, {wrapper: true, permissions: @api_user})
+  end
+  
   def create
     user = User.find_by_path(params['integration']['user_id'])
     return unless exists?(user, params['integration']['user_id'])

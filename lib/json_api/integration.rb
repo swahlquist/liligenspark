@@ -12,6 +12,9 @@ module JsonApi::Integration
     json['id'] = obj.global_id
     json['name'] = obj.settings['name']
     json['custom_integration'] = !!obj.settings['custom_integration']
+    json['webhook'] = !!obj.settings['button_webhook_url']
+    json['render'] = !!obj.settings['board_render_url']
+    json['render_url'] = obj.settings['board_render_url']
     
     if obj.settings['custom_integration']
       device_token = obj.device.token
