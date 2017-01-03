@@ -46,10 +46,12 @@ export default Ember.Component.extend({
           if(list.join) { list = list.join(','); }
           this.set('badge.string_list', list);
         }
-        this.set('badge.enable_watch_type_minimum', !!this.get('badge.watch_type_minimum'));
-        this.set('badge.enable_watch_total', !!this.get('badge.watch_total'));
-        this.set('badge.enable_watch_type_count', !!this.get('badge.watch_type_count'));
-        this.set('badge.enable_watch_type_interval', !!this.get('badge.watch_type_interval'));
+        this.setProperties({
+          'badge.enable_watch_type_minimum': !!this.get('badge.watch_type_minimum'),
+          'badge.enable_watch_total': !!this.get('badge.watch_total'),
+          'badge.enable_watch_type_count': !!this.get('badge.watch_type_count'),
+          'badge.enable_watch_type_interval': !!this.get('badge.watch_type_interval')
+        });
       }
     }
     if(this.get('badge.consecutive_units')) {
@@ -87,17 +89,50 @@ export default Ember.Component.extend({
     {name: i18n.t('unique_words', "Unique Word(s)"), id: 'unique_word'},
     {name: i18n.t('unique_buttons', "Unique Button(s)"), id: 'unique_button'},
   ],
-  criteria_type_list: [
-    {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
-    {name: i18n.t('every_day_in_a_sequence_for', "Every Day in a Sequence for"), id: 'consecutive_units'},
-    {name: i18n.t('multiple_days_at_least', "Multiple Days, at Least"), id: 'matching_units'},
-    {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
-  ],
+  criteria_type_list: function() {
+    if(this.get('badge.interval') == 'monthyear') {
+      return [
+        {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
+        {name: i18n.t('every_month_in_a_sequence_for', "Every Month in a Sequence for"), id: 'consecutive_units'},
+        {name: i18n.t('multiple_months_at_least', "Multiple Months, at Least"), id: 'matching_units'},
+        {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
+      ];
+    } else if(this.get('badge.interval') == 'biweekyear') {
+      return [
+        {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
+        {name: i18n.t('every_other_week_in_a_sequence_for', "Every Two Weeks in a Sequence for"), id: 'consecutive_units'},
+        {name: i18n.t('multiple_biweeks_at_least', "Multiple Bi-Weeks, at Least"), id: 'matching_units'},
+        {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
+      ];
+    } else if(this.get('badge.interval') == 'weekyear') {
+      return [
+        {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
+        {name: i18n.t('every_week_in_a_sequence_for', "Every Week in a Sequence for"), id: 'consecutive_units'},
+        {name: i18n.t('multiple_weeks_at_least', "Multiple Weeks, at Least"), id: 'matching_units'},
+        {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
+      ];
+    } else {
+      return [
+        {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
+        {name: i18n.t('every_day_in_a_sequence_for', "Every Day in a Sequence for"), id: 'consecutive_units'},
+        {name: i18n.t('multiple_days_at_least', "Multiple Days, at Least"), id: 'matching_units'},
+        {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
+      ];
+    }
+  }.property('badge.interval'),
   update_watch_type_values: function() {
-    this.set('badge.watch_total', this.get('badge.enable_watch_total') ? (this.get('badge.watch_total') || 1) : null);
-    this.set('badge.watch_type_minimum', this.get('badge.enable_watch_type_minimum') ? (this.get('badge.watch_type_minimum') || 1) : null);
-    this.set('badge.watch_type_count', this.get('badge.enable_watch_type_count') ? (this.get('badge.watch_type_count') || 1) : null);
-    this.set('badge.watch_type_interval', this.get('badge.enable_watch_type_interval') ? (this.get('badge.watch_type_interval') || 1) : null);
+    if(this.get('badge.enable_watch_total') !== undefined) {
+      this.set('badge.watch_total', this.get('badge.enable_watch_total') ? (this.get('badge.watch_total') || 1) : null);
+    }
+    if(this.get('badge.enable_watch_type_minimum') !== undefined) {
+      this.set('badge.watch_type_minimum', this.get('badge.enable_watch_type_minimum') ? (this.get('badge.watch_type_minimum') || 1) : null);
+    }
+    if(this.get('badge.enable_watch_type_count') !== undefined) {
+      this.set('badge.watch_type_count', this.get('badge.enable_watch_type_count') ? (this.get('badge.watch_type_count') || 1) : null);
+    }
+    if(this.get('badge.enable_watch_type_interval') !== undefined) {
+      this.set('badge.watch_type_interval', this.get('badge.enable_watch_type_interval') ? (this.get('badge.watch_type_interval') || 1) : null);
+    }
   }.observes('badge.enable_watch_total', 'badge.enable_watch_type_minimum', 'badge.enable_watch_type_count', 'badge.enable_watch_type_interval'),
   update_criteria_values: function() {
     if(this.get('badge.criteria_type') == 'consecutive_units') {
