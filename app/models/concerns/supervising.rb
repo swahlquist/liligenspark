@@ -216,10 +216,10 @@ module Supervising
         'user_name' => user.user_name,
         'edit_permission' => editor
       }
-      supervisor.schedule_once(:update_available_boards)
       supervisor.update_setting({
         'supervisees' => supervisor.settings['supervisees']
       })
+      supervisor.schedule_once(:update_available_boards)
     end
   end
 end
