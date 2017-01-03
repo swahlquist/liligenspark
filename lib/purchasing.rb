@@ -385,13 +385,14 @@ module Purchasing
   
   def self.unsubscribe(user)
     return false unless user
-    cancel_other_subscriptions(user, 'all')
     User.subscription_event({
       'unsubscribe' => true,
+      'manual_unsubscribe' => true,
       'user_id' => user.global_id,
       'customer_id' => user.settings['subscription']['customer_id'],
       'subscription_id' => user.settings['subscription']['subscription_id']
     })
+    cancel_other_subscriptions(user, 'all')
   end
   
   def self.cancel_other_subscriptions(user, except_subscription_id)
