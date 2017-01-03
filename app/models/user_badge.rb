@@ -452,7 +452,7 @@ class UserBadge < ActiveRecord::Base
       
       badge = nil
       if level != 0
-        badge = UserBadge.find_or_create_by(:user_id => user.id, :level => level, :user_goal_id => goal.id)
+        badge = UserBadge.find_or_initialize_by(:user_id => user.id, :level => level, :user_goal_id => goal.id)
       end
       if badge && !badge.earned
         if earned
@@ -461,7 +461,7 @@ class UserBadge < ActiveRecord::Base
           level += 1
           prior_earned = true
         else
-          badge.mark_progress!(progress, nil, badge_level)
+          badge.mark_progress!(progress, nil, badge_level) if progress > 0
           prior_earned = false
         end
       else

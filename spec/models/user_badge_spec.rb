@@ -52,8 +52,7 @@ describe UserBadge, type: :model do
 
       UserBadge.check_for(u.global_id)     
       badges = UserBadge.where(:user => u, :user_goal => g).order(:level)
-      expect(badges.count).to eq(1)
-      expect(badges[0].earned).to eq(false)
+      expect(badges.count).to eq(0)
     end
 
     it "should not award for outside the date range" do
@@ -80,10 +79,7 @@ describe UserBadge, type: :model do
 
       UserBadge.check_for(u.global_id)     
       badges = UserBadge.where(:user => u, :user_goal => g).order(:level)
-      expect(badges.count).to eq(1)
-      expect(badges[0].earned).to eq(false)
-      expect(badges[0].level).to eq(1)
-      expect(badges[0].data['name']).to eq("Good Goal")
+      expect(badges.count).to eq(0)
     end
     
     it "should award if inside the date range" do
@@ -590,11 +586,7 @@ describe UserBadge, type: :model do
 
       UserBadge.check_for(u.global_id)     
       badges = UserBadge.where(:user => u, :user_goal => g).order(:level)
-      expect(badges.count).to eq(1)
-      expect(badges[0].earned).to eq(false)
-      expect(badges[0].level).to eq(1)
-      expect(badges[0].data['name']).to eq("Good Goal")
-      expect(badges[0].current_progress).to eq(0.0)
+      expect(badges.count).to eq(0)
     end
     
     it "should not re-award an existing badge" do
@@ -667,10 +659,7 @@ describe UserBadge, type: :model do
 
       UserBadge.check_for(u.global_id)     
       badges = UserBadge.where(:user => u, :user_goal => g).order(:level)
-      expect(badges.count).to eq(1)
-      expect(badges[0].earned).to eq(false)
-      expect(badges[0].level).to eq(1)
-      expect(badges[0].data['name']).to eq("Good Goal")
+      expect(badges.count).to eq(0)
     end
     
     it "should track progress toward the assessment badge" do
