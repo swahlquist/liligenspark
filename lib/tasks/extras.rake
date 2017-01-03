@@ -41,7 +41,7 @@ task "extras:deploy_notification", [:system, :level, :version] => :environment d
       message += "\nit typically takes 7-10 days to get approved, so sit tight"
     end
     message += "\n<https://itunes.apple.com/us/app/coughdrop/id1021384570|app store link>"
-  elsif args[:system] && args[:system].downcase == 'kindle'
+  elsif args[:system] && (args[:system].downcase == 'kindle' || args[:system].downcase == 'amazon')
     message = "An update on the Amazon App Store is going live"
     message += " (#{args[:version]})" if args[:version]
     message += "\nif people start reporting bugs, that is probably why"
