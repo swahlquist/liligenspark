@@ -7,7 +7,7 @@ import editManager from '../utils/edit_manager';
 
 export default modal.ModalController.extend({
   opening: function() {
-    if(this.get('model.badge') && !this.get('model.badge.completion_settings')) {
+    if(this.get('model.badge.id') && !this.get('model.badge.completion_settings')) {
       this.get('model.badge').reload();
     }
     var list = [];

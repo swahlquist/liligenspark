@@ -4,8 +4,10 @@
     <h3>
       {{#if model.badge.earned}}
         {{t "Badge Awarded!" key='badge_awarded'}}
-      {{else}}
+      {{else if model.badge.id}}
         {{t "Badge In Progress" key='badge_in_progress'}}
+      {{else}}
+        {{t "Badge Details" key='badge_details'}}
       {{/if}}
     </h3>
   </div>
@@ -44,7 +46,7 @@
           {{t "earned " key='earned'}}
           {{date model.badge.earned 'short_day'}}
         </div>
-      {{else}}
+      {{else if model.badge.id}}
         <div style='color: #888; font-size: 14px; margin-top: 10px;'>
           {{#if model.badge.progress}}
             {{model.badge.time_left}}
