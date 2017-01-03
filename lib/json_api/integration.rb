@@ -14,7 +14,6 @@ module JsonApi::Integration
     json['custom_integration'] = !!obj.settings['custom_integration']
     json['webhook'] = !!obj.settings['button_webhook_url']
     json['render'] = !!obj.settings['board_render_url']
-    json['render_url'] = obj.settings['board_render_url']
     
     if obj.settings['custom_integration']
       device_token = obj.device.token
@@ -26,6 +25,14 @@ module JsonApi::Integration
       json['truncated_token'] = "...#{obj.settings['token'][-5, 5]}"
     end
 
+    json
+  end
+  
+  def self.extra_includes(obj, json, args={})
+    json['integration']['render_url'] = obj.settings['board_render_url']
+    if args[:permissions]
+      json['integration']['user_token'] = obj.user_token(args[:permissions])
+    end
     json
   end
 end

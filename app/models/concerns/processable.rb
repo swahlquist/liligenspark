@@ -56,6 +56,7 @@ module Processable
       else
         self.settings[key] = value
       end
+      self.settings = {}.merge(self.settings)
       if save_method
         self.send(save_method)
       else

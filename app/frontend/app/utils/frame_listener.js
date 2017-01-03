@@ -9,8 +9,8 @@ var frame_listener = Ember.Object.extend({
       this.listen(data);
     } else if(data.action == 'stop_listening') {
       this.stop_listening(data);
-    } else if(data.action == 'get_user_data') {
-      this.get_user_data(data);
+    } else if(data.action == 'status') {
+      this.status(data);
     } else if(data.action == 'add_text') {
       this.add_text(data);
     } else if(data.action == 'update_manifest') {
@@ -59,15 +59,14 @@ var frame_listener = Ember.Object.extend({
     }
     // propagate to active listeners
   },
-  get_user_data: function(data) {
-    var allowed = false;
-    if(allowed) {
-      data.respond({
-        user_name: app_state.get('currentUser.user_name')
-      });
-    } else {
-      data.respond({error: 'user data not authorized'});
-    }
+  status: function(data) {
+    var session_id = data.session_id;
+    var $elem = Ember.$("#integration_frame");
+    data.respond({
+      status: 'ready',
+      session_id: session_id,
+      user_token: $elem.attr('data-user_token')
+    });
   },
   add_text: function(data) {
     var obj = {
@@ -125,13 +124,20 @@ var frame_listener = Ember.Object.extend({
 
 window.on('message', function(event) {
   if(event.data && event.data.aac_shim) {
+    var $elem = Ember.$("#integration_frame");
     event.data.respond = function(obj) {
       obj.aac_shim = true;
       obj.callback_id = event.data.callback_id;
       event.source.postMessage(obj);
     };
     if(!event.data.session_id) {
-      event.data.response({error: 'session_id required, but not sent'});
+      event.data.respond({error: 'session_id required, but not sent'});
+      return;
+    } else if(!$elem[0]) {
+      event.data.respond({error: 'message came from unknown source'});
+      return;
+    } else if(event.source != $elem[0].contentWindow) {
+      event.data.respond({error: 'message came from wrong window'});
       return;
     }
     frame_listener.handle_action(event.data);

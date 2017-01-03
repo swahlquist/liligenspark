@@ -2,11 +2,11 @@
 {{#if model.integration}}
   {{#if teaser_description}}
     <div id="board_description">
-      IFRAME INTEGRATION
+      <span>{{model.integration_name}}</span>
     </div>
   {{/if}}
   {{#if model.embed_url}}
-    <iframe style={{board_style}} frameborder=0 src={{model.embed_url}} id='integration_frame'></iframe>
+    <iframe style={{board_style}} frameborder=0 src={{model.embed_url}} id='integration_frame' data-user_token={{model.user_token}}></iframe>
   {{else}}
     <p class='text-danger'>{{t "There was an error loading the tool's page, it appears to not be configured properly" key='misconfigured_integration'}}</p>
   {{/if}}
@@ -19,10 +19,8 @@
         {{/unless}}
         {{#if cc_license}}
           <img src="{{path "images/cc.png"}}" alt="cc license" style="opacity: 0.5;"/>
-        {{else}}
-          {{#if pd_license}}
+        {{else if pd_license}}
             <img src="{{path "images/pd.png"}}" alt="public domain" style="opacity: 0.5;"/>
-          {{/if}}
         {{/if}}
         {{teaser_description}}
       </span>
@@ -41,12 +39,10 @@
             {{suggestion}}
           </a>
         {{/each}}
+      {{else if suggestions.error}}
+        {{t "Word suggestions failed to load" key='word_suggestions_failed'}}
       {{else}}
-        {{#if suggestions.error}}
-          {{t "Word suggestions failed to load" key='word_suggestions_failed'}}
-        {{else}}
-          {{t "Loading word suggestions..." key='loading_word_suggestions'}}
-        {{/if}}
+        {{t "Loading word suggestions..." key='loading_word_suggestions'}}
       {{/if}}
     </div>
   {{/if}}

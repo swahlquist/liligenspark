@@ -36,6 +36,16 @@ class UserIntegration < ActiveRecord::Base
     Security.sha512('user integration security token', Security.nonce('integration_nonce'))
   end
   
+  def user_token(user)
+    salt = Security.nonce('user_integration_confirmation_token_nonce')[0, 20]
+    sig = self.class.user_token(user.global_id, self.global_id, salt)
+    "#{user.global_id}:#{self.global_id}:#{salt}:#{sig}"
+  end
+  
+  def self.user_token(user_id, integration_id, salt)
+    sig = Security.sha512("user_integration_confirmation_token_#{user_id}_#{integration_id}", salt)
+  end
+  
   def assert_device
     if !self.device
       self.device = Device.create(:user => user)
