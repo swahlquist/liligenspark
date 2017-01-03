@@ -367,7 +367,10 @@
           {{#if app_state.currentUser}}
             <img src={{app_state.currentUser.avatar_url_with_fallback}} />
             {{#if persistence.syncing}}
-              <span class="unread glyphicon glyphicon-refresh spinning"></span>
+              <span class='spinning unread'>
+                <span class="glyphicon glyphicon-refresh" style='z-index: 2;'></span>
+                <span class="glyphicon glyphicon-refresh" style='color: #fff; position: absolute; left: 2px; top: 2px;'></span>
+              </span>
             {{else if persistence.app_needs_update}}
               <span class="label label-danger unread">{{t "!" key='exclaim'}}</span>
             {{else if app_state.currentUser.unread_messages}}
