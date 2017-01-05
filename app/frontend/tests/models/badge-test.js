@@ -102,6 +102,11 @@ describe('Badge', function() {
       expect(b.get('completion_explanation')).toEqual('Use at least 1 nouns, or verbs at least 1 time every two weeks, with each speech type getting used at least 1 time, for 24 weeks in a row');
       b.set('completion_settings', {watchlist: true, parts_of_speech_list: ['noun', 'verb'], watch_type_count: 1, watch_total: 1, watch_type_minimum: 1, consecutive_units: 12, interval: 'biweekyear', watch_type_interval: 'biweekyear', watch_type_interval_count: 4});
       expect(b.get('completion_explanation')).toEqual('Use at least 1 nouns, or verbs at least 1 time every two weeks, with each speech type getting used at least 1 time (also use at least 4 different speech types from the list every two weeks), for 24 weeks in a row');
+
+      b.set('completion_settings', {watchlist: true, words_list: ['cuttlefish'], watch_total: 1, matching_instances: 3, interval: 'date'});
+      expect(b.get('completion_explanation')).toEqual('Use the word \"cuttlefish\" at least 1 time each day, for a total of 3 times');
+      b.set('completion_settings', {watchlist: true, words_list: ['cuttlefish'], matching_instances: 3, interval: 'date'});
+      expect(b.get('completion_explanation')).toEqual('Use the word \"cuttlefish\" each day, for a total of 3 times');
     });
   });
 });

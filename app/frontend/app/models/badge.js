@@ -157,7 +157,8 @@ CoughDrop.Badge = DS.Model.extend({
           res = res + i18n.t('in_a_row', " in a row");
         }
       } else if(badge_level.watchlist) {
-        return null;
+        res = res + i18n.t('for_a_total_of', " for a total of ");
+        res = res + i18n.t('n_times', "time", {count: badge_level.matching_instances});
       } else {
         res = res + i18n.t('for_a_total_of', " for a total of ");
         res = res + i18n.t('n_items', this.get('completion_type'), {count: badge_level.matching_instances});
