@@ -54,7 +54,12 @@ var frame_listener = Ember.Object.extend({
   raw_event: function(event) {
     for(var idx in raw_listeners) {
       if(raw_listeners[idx] && raw_listeners[idx].session_id == event.session_id && raw_listeners[idx].respond) {
-        raw_listeners[idx].respond(event);
+        raw_listeners[idx].respond({
+          type: event.type, // 'click', 'touch', 'gazedwell', 'scanselect', 'mousemove', 'gazelinger'
+          aac_type: event.aac_type, // 'start', 'select', 'over'
+          x_percent: event.x_percent, // 0.0 - 1.0
+          y_percent: event.y_percent // 0.0 - 1.0
+        });
       }
     }
     // propagate to active listeners
@@ -93,7 +98,8 @@ var frame_listener = Ember.Object.extend({
     var target = (this.get('targets') || []).find(function(t) { return t.session_id == ref.session_id && t.id == ref.id; });
     if(target && target.respond) {
       target.respond({
-        selected: true
+        type: 'select',
+        id: ref.id
       });
     }
   },
@@ -122,13 +128,13 @@ var frame_listener = Ember.Object.extend({
   }
 }).create({targets: []});
 
-window.on('message', function(event) {
+window.addEventListener('message', function(event) {
   if(event.data && event.data.aac_shim) {
     var $elem = Ember.$("#integration_frame");
     event.data.respond = function(obj) {
       obj.aac_shim = true;
       obj.callback_id = event.data.callback_id;
-      event.source.postMessage(obj);
+      event.source.postMessage(obj, '*');
     };
     if(!event.data.session_id) {
       event.data.respond({error: 'session_id required, but not sent'});
@@ -139,6 +145,9 @@ window.on('message', function(event) {
     } else if(event.source != $elem[0].contentWindow) {
       event.data.respond({error: 'message came from wrong window'});
       return;
+    }
+    if(!$elem.attr('data-session_id')) {
+      $elem.attr('data-session_id', event.data.session_id);
     }
     frame_listener.handle_action(event.data);
   }

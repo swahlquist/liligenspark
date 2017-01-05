@@ -2,6 +2,7 @@ import Ember from 'ember';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
+import CoughDrop from '../../app';
 
 export default Ember.Controller.extend({
   advance_options: [
@@ -20,7 +21,6 @@ export default Ember.Controller.extend({
       _this.set('user_badges', badges.content.mapBy('record'));
     }, function(err) {
     });
-
   }.observes('app_state.currentUser.id', 'model.id', 'model.badges'),
   mapped_badges: function() {
     var user_badges = this.get('user_badges');

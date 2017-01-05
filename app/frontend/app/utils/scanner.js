@@ -277,6 +277,24 @@ var scanner = Ember.Object.extend({
       selection_type: 'scanner'
     });
 
+    if(elem.dom && elem.dom.classList.contains('integration_target')) {
+      var rect = elem.dom.getBoundingClientRect();
+      var overlay = document.getElementById('integration_overlay');
+      if(overlay) {
+        var overlay_rect = overlay.getBoundingClientRect();
+        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
+        if(session_id) {
+          frame_listener.raw_event({
+            session_id: session_id,
+            type: 'scanselect',
+            aac_type: 'select',
+            x_percent: ((rect.left + (rect.width / 2)) - overlay_rect.left) / overlay_rect.width,
+            y_percent: ((rect.top + (rect.height / 2)) - overlay_rect.top) / overlay_rect.height
+          });
+        }
+      }
+    }
+
     if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
       var e = Ember.$.Event( "click" );
       e.pass_through = true;
@@ -368,6 +386,23 @@ var scanner = Ember.Object.extend({
     }
     if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && Ember.$("#hidden_input:focus").length === 0) {
       modal.warning(i18n.t('tap_first', "Your switch may not be completely enabled. Tap somewhere on the screen to finish enabling it."), true);
+    }
+    if(elem.dom.classList.contains('integration_target')) {
+      var rect = elem.dom.getBoundingClientRect();
+      var overlay = document.getElementById('integration_overlay');
+      if(overlay) {
+        var overlay_rect = overlay.getBoundingClientRect();
+        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
+        if(session_id) {
+          frame_listener.raw_event({
+            session_id: session_id,
+            type: 'scanover',
+            aac_type: 'over',
+            x_percent: ((rect.left + (rect.width / 2)) - overlay_rect.left) / overlay_rect.width,
+            y_percent: ((rect.top + (rect.height / 2)) - overlay_rect.top) / overlay_rect.height
+          });
+        }
+      }
     }
     modal.highlight(elem.dom, options).then(function() {
       scanner.pick();

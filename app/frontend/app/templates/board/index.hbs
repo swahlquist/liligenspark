@@ -6,7 +6,7 @@
     </div>
   {{/if}}
   {{#if model.embed_url}}
-    <iframe style={{board_style}} frameborder=0 src={{model.embed_url}} id='integration_frame' data-user_token={{model.user_token}}></iframe>
+    {{embed-frame board_style=board_style embed_url=model.embed_url user_token=model.user_token}}
   {{else}}
     <p class='text-danger'>{{t "There was an error loading the tool's page, it appears to not be configured properly" key='misconfigured_integration'}}</p>
   {{/if}}

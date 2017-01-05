@@ -867,7 +867,7 @@ Ember.$(window).bind('message', function(event) {
   event = event.originalEvent;
   if(event.data && event.data.match && event.data.match(/^data:image/)) {
     editManager.edited_image_received(event.data);
-  } else if(event.data && event.data.match(/state:{/)) {
+  } else if(event.data && event.data.match && event.data.match(/state:{/)) {
     var str = event.data.replace(/^state:/, '');
     try {
       var json = JSON.parse(str);

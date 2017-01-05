@@ -5,6 +5,7 @@ import capabilities from './capabilities';
 import app_state from './app_state';
 import scanner from './scanner';
 import stashes from './_stashes';
+import frame_listener from './frame_listener';
 
 // gotchas:
 // - text boxes in edit mode should be clickable
@@ -89,6 +90,7 @@ Ember.$(document).on('mousedown touchstart', function(event) {
   }
 }).on('gazedwell', function(event) {
   var element_wrap = buttonTracker.find_selectable_under_event(event);
+  buttonTracker.frame_event(event, 'select');
   if(element_wrap && element_wrap.button) {
     element_wrap.trigger('buttonselect');
   } else {
@@ -165,6 +167,7 @@ var buttonTracker = Ember.Object.extend({
       buttonTracker.initialTarget = button_wrap;
       if(buttonTracker.initialTarget) {
         buttonTracker.initialTarget.timestamp = (new Date()).getTime();
+        buttonTracker.initialTarget.event = event;
       }
       // doesn't need to be here, but since buttons are always using advanced_selection it's probably ok
       if(button_wrap) {
@@ -204,6 +207,11 @@ var buttonTracker = Ember.Object.extend({
       buttonTracker.dwell_linger(event);
     } else if(event.type == 'mousemove' && buttonTracker.dwell_enabled && buttonTracker.dwell_type == 'mouse_dwell') {
       buttonTracker.dwell_linger(event);
+    }
+    if(['gazelinger', 'mousemove', 'touchmove', 'scanover'].indexOf(event.type) != -1) {
+      buttonTracker.frame_event(event, 'over');
+    } else if(['mousedown', 'touchstart'].indexOf(event.type) != -1) {
+      buttonTracker.frame_event(event, 'start');
     }
     if(!buttonTracker.buttonDown && !app_state.get('edit_mode')) {
       var button_wrap = buttonTracker.find_selectable_under_event(event);
@@ -411,6 +419,8 @@ var buttonTracker = Ember.Object.extend({
 //       Ember.$(event.target).trigger('click');
     // TODO: if not advanced_selection, touch events (but not mouse events) should be
     // mapped to click events for faster activation. Maybe find a library for this..
+    } else {
+      buttonTracker.frame_event(event, 'select');
     }
     editManager.release_stroke();
     buttonTracker.stop_dragging();
@@ -444,6 +454,7 @@ var buttonTracker = Ember.Object.extend({
       // when not editing, use user's preferred selection logic for identifying and
       // selecting a button
       event.preventDefault();
+      var frame_event = event;
       var ts = (new Date()).getTime();
 
       if(event.type != 'gazelinger' && !event.dwell_linger) {
@@ -451,6 +462,7 @@ var buttonTracker = Ember.Object.extend({
         buttonTracker.activation_location = buttonTracker.activation_location || window.user_preferences.any_user.activation_location;
         if(buttonTracker.activation_location == 'start') {
           elem_wrap = buttonTracker.initialTarget;
+          event = elem_wrap.event;
         } else if(buttonTracker.activation_location == 'average') {
           // TODO: implement weighted average. Sample pointer location
           // from start to release and find the most likely target, ideally
@@ -465,6 +477,7 @@ var buttonTracker = Ember.Object.extend({
           elem_wrap = null;
         }
       }
+      buttonTracker.frame_event(event, 'select');
 
       buttonTracker.multi_touch = buttonTracker.multi_touch || {total: 0, multis: 0};
       buttonTracker.multi_touch.total++;
@@ -1126,6 +1139,33 @@ var buttonTracker = Ember.Object.extend({
     }
     stashes.last_selection = ls;
     buttonTracker.last_selection = ls;
+  },
+  frame_event: function(event, event_type) {
+    if(event.triggered_for == event_type) {
+      return;
+    }
+    var raw_event_type = event.type;
+    if(event.type == 'mouseup') {
+      raw_event_type = 'click';
+    }
+    event.triggered_for = event_type;
+    if(Ember.$(event.target).closest("#integration_overlay").length > 0) {
+      event.preventDefault();
+      var overlay = document.getElementById('integration_overlay');
+      if(overlay) {
+        var rect = overlay.getBoundingClientRect();
+        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
+        if(session_id) {
+          frame_listener.raw_event({
+            session_id: session_id,
+            type: raw_event_type,
+            aac_type: event_type, // over, select or start
+            x_percent: (event.clientX - rect.left) / rect.width,
+            y_percent: (event.clientY - rect.top) / rect.height
+          });
+        }
+      }
+    }
   },
   focus_tab: function(from_start) {
     if(!buttonTracker.focus_wrap) {

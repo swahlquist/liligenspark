@@ -9,6 +9,7 @@ import persistence from '../../utils/persistence';
 import i18n from '../../utils/i18n';
 import modal from '../../utils/modal';
 import Button from '../../utils/button';
+import frame_listener from '../../utils/frame_listener';
 
 var cached_images = {};
 var last_redraw = (new Date()).getTime();

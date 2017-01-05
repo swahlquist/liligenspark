@@ -590,9 +590,20 @@ footer .wide_links {
 #board_description span {
   cursor: pointer;
 }
-#integration_frame {
-  width: calc(100% + 40px);
-  margin: -10px -20px 0;
+.integration_container {
+  position: relative;
+  
+  #integration_frame {
+    width: calc(100% + 40px);
+    margin: -10px -20px 0;
+  }
+  
+  #integration_overlay {
+    width: calc(100% + 40px);
+    margin: -10px -20px 0;
+    position: absolute;
+    top: 0;
+  }
 }
 .board .board_status {
   margin: 20px 20px;
