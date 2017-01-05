@@ -1749,4 +1749,22 @@ describe User, :type => :model do
       expect(User.load_version(u.versions[-4])).to eq(nil)
     end
   end
+  
+  describe "record_locking" do
+    it "should not run an update on an out-of-date entry" do
+      u = User.create
+      a = 2.weeks.ago
+      User.where(:id => u.id).update_all(:updated_at => a)
+      expect(u.reload.updated_at).to eq(a)
+      b = 1.hour.ago
+      User.where(:id => u.id).update_all(:updated_at => b)
+      res = u.update_setting('asdf', 'bacon')
+      expect(u.settings['asdf']).to eq('bacon')
+      expect(res).to eq('pending')
+      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_setting', 'arguments' => ['asdf', 'bacon', nil]})).to eq(true)
+      expect(u.reload.settings['asdf']).to eq(nil)
+      Worker.process_queues
+      expect(u.reload.settings['asdf']).to eq('bacon')
+    end
+  end
 end

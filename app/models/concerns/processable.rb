@@ -57,14 +57,20 @@ module Processable
         self.settings[key] = value
       end
       self.settings = {}.merge(self.settings)
+      self.assert_current_record!
       if save_method
         self.send(save_method)
       else
         self.save
       end
     rescue ActiveRecord::StaleObjectError
-      schedule(:update_setting, key, value)
+      schedule(:update_setting, key, value, save_method)
+      'pending'
     end
+  end
+  
+  def assert_current_record!
+    raise ActiveRecord::StaleObjectError if self.updated_at.to_f != self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f
   end
   
   def processing_errors

@@ -59,6 +59,7 @@ module Subscription
         UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
       end
     end
+    self.assert_current_record!
     self.save
   rescue ActiveRecord::StaleObjectError
     self.schedule(:update_subscription_organization, org_id, pending, sponsored)
@@ -125,6 +126,7 @@ module Subscription
           end
           self.settings['pending'] = false unless self.settings['subscription']['free_premium']
           self.expires_at = nil
+          self.assert_current_record!
           self.save
           self.schedule(:remove_supervisors!) if self.free_premium?
         end
@@ -142,6 +144,7 @@ module Subscription
           self.settings['subscription'].delete(key)
         end
         self.settings['pending'] = false
+        self.assert_current_record!
         self.save
       else
         res = false
@@ -184,6 +187,7 @@ module Subscription
           self.expires_at += args['seconds_to_add']
         end
       
+        self.assert_current_record!
         self.save
       end
     elsif args['pause']
@@ -193,6 +197,7 @@ module Subscription
         res = Purchasing.pause_subscription(self)
         if res[:success]
           self.settings['subscription']['started'] = nil
+          self.assert_current_record!
           self.save
         elsif args['attempts'] && args['attempts'] > 5
           SubscriptionMailer.schedule_delivery(:subscription_pause_failed, self.global_id)
@@ -206,6 +211,7 @@ module Subscription
       res = Purchasing.resume_subscription(self)
       if res[:success]
         self.settings['subscription']['started'] = Time.now.iso8601
+        self.assert_current_record!
         self.save
       elsif args['attempts'] && args['attempts'] > 5
         SubscriptionMailer.schedule_delivery(:subscription_resume_failed, self.global_id)

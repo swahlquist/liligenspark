@@ -53,6 +53,7 @@ module Async
       obj = self
       if settings['id']
         obj = obj.find_by(:id => settings['id'].to_s)
+        obj.reload if obj
       end
       if !obj
         # record not found so there's nothing to do on it

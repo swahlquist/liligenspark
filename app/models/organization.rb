@@ -46,9 +46,10 @@ class Organization < ActiveRecord::Base
     user.settings ||= {}
     user.settings['manager_for'] ||= {}
     user.settings['manager_for'][self.global_id] = {'full_manager' => !!full, 'added' => Time.now.iso8601}
+    user.assert_current_record!
+    user.save
     self.attach_user(user, 'manager')
     # TODO: trigger notification
-    user.save
     self.touch
     true
   rescue ActiveRecord::StaleObjectError
@@ -63,6 +64,7 @@ class Organization < ActiveRecord::Base
     user.settings['manager_for'].delete(self.global_id)
     self.detach_user(user, 'manager')
     # TODO: trigger notification
+    user.assert_current_record!
     user.save
     self.touch
     true
@@ -79,8 +81,9 @@ class Organization < ActiveRecord::Base
     user.settings ||= {}
     user.settings['supervisor_for'] ||= {}
     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
-    self.attach_user(user, 'supervisor')
+    user.assert_current_record!
     user.save
+    self.attach_user(user, 'supervisor')
     if user.grace_period?
       user.update_subscription({
         'subscribe' => true,
@@ -116,8 +119,9 @@ class Organization < ActiveRecord::Base
     user.settings['supervisor_for'] ||= {}
     pending = user.settings['supervisor_for'][self.global_id] && user.settings['supervisor_for'][self.global_id]['pending']
     user.settings['supervisor_for'].delete(self.global_id)
-    self.detach_user(user, 'supervisor')
+    user.assert_current_record!
     user.save
+    self.detach_user(user, 'supervisor')
     self.touch
     notify('org_removed', {
       'user_id' => user.global_id,

@@ -26,6 +26,10 @@ module Worker
     Time.now.to_i
   end
   
+  def self.in_worker_process?
+    PaperTrail.whodunnit && PaperTrail.whodunnit.match(/^job/)
+  end
+  
   def self.perform_at(speed, *args)
     args_copy = [] + args
     klass_string = args_copy.shift

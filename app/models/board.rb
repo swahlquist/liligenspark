@@ -553,7 +553,10 @@ class Board < ActiveRecord::Base
           RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
         end
       end
-      self.save if any_changed
+      if any_changed
+        self.assert_current_record!
+        self.save 
+      end
     end
   rescue ActiveRecord::StaleObjectError
     self.schedule_once(:check_for_parts_of_speech)

@@ -1280,6 +1280,7 @@ describe Api::UsersController, :type => :controller do
       @user.settings['preferences']['sidebar_boards'] = [{'key' => b4.key}]
       @user.save
       Worker.process_queues
+      Worker.process_queues
       expect(b1.reload.settings['downstream_board_ids'].sort).to eq([b2.global_id, b3.global_id].sort)
       get 'board_revisions', params: {:user_id => @user.global_id}
       expect(response).to be_success
