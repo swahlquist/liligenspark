@@ -24,11 +24,7 @@ var Button = Ember.Object.extend({
     } else if(this.get('apps') != null) {
       this.set('buttonAction', 'app');
     } else if(this.get('integration') != null) {
-      if(this.get('integration.action_type') == 'render') {
-        this.set('buttonAction', 'folder');
-      } else {
-        this.set('buttonAction', 'integration');
-      }
+      this.set('buttonAction', 'integration');
     } else {
       this.set('buttonAction', 'talk');
     }
@@ -48,14 +44,14 @@ var Button = Ember.Object.extend({
     if(action == 'folder') {
       if(this.get('home_lock')) {
         return path('images/folder_home.png');
-      } else if(this.get('integration.action_type') == 'render') {
-        return path('images/folder_integration.png');
       } else {
         return path('images/folder.png');
       }
     } else if(action == 'integration') {
       var state = this.get('action_status') || {};
-      if(state.pending) {
+      if(this.get('integration.action_type') == 'render') {
+        return path('images/folder_integration.png');
+      } else if(state.pending) {
         return path('images/clock.png');
       } else if(state.errored) {
         return path('images/error.png');
@@ -390,7 +386,7 @@ Button.broken_image = function(image) {
 };
 
 Button.extra_actions = function(button) {
-  if(button && button.integration) {
+  if(button && button.integration && button.integration.action_type == 'webhook') {
     var user_id = app_state.get('currentUser.id');
     var board_id = app_state.get('currentBoardState.id');
     if(user_id && board_id) {

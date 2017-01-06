@@ -165,6 +165,7 @@ var buttonTracker = Ember.Object.extend({
       // location, depending on the user's settings
       var button_wrap = buttonTracker.find_selectable_under_event(event);
       buttonTracker.initialTarget = button_wrap;
+      buttonTracker.initialEvent = event;
       if(buttonTracker.initialTarget) {
         buttonTracker.initialTarget.timestamp = (new Date()).getTime();
         buttonTracker.initialTarget.event = event;
@@ -425,6 +426,7 @@ var buttonTracker = Ember.Object.extend({
     editManager.release_stroke();
     buttonTracker.stop_dragging();
     buttonTracker.initialTarget = null;
+    buttonTracker.initialEvent = null;
     app_state.get('board_virtual_dom').clear_touched();
     Ember.$('.touched').removeClass('touched');
   },
@@ -462,7 +464,7 @@ var buttonTracker = Ember.Object.extend({
         buttonTracker.activation_location = buttonTracker.activation_location || window.user_preferences.any_user.activation_location;
         if(buttonTracker.activation_location == 'start') {
           elem_wrap = buttonTracker.initialTarget;
-          event = elem_wrap.event;
+          frame_event = buttonTracker.initialEvent;
         } else if(buttonTracker.activation_location == 'average') {
           // TODO: implement weighted average. Sample pointer location
           // from start to release and find the most likely target, ideally
@@ -477,7 +479,7 @@ var buttonTracker = Ember.Object.extend({
           elem_wrap = null;
         }
       }
-      buttonTracker.frame_event(event, 'select');
+      buttonTracker.frame_event(frame_event, 'select');
 
       buttonTracker.multi_touch = buttonTracker.multi_touch || {total: 0, multis: 0};
       buttonTracker.multi_touch.total++;
@@ -532,6 +534,8 @@ var buttonTracker = Ember.Object.extend({
           Ember.$(elem_wrap.dom).trigger('select');
         } else if((elem_wrap.dom.className || "").match(/button/) || elem_wrap.virtual_button) {
           buttonTracker.button_release(elem_wrap, event);
+        } else if(elem_wrap.dom.classList.contains('integration_target')) {
+          frame_listener.trigger_target(elem_wrap.dom);
         } else {
           event.preventDefault();
           // click events are eaten by our listener above, unless you
@@ -828,6 +832,8 @@ var buttonTracker = Ember.Object.extend({
         return buttonTracker.element_wrap($target.closest(".btn,#button_list")[0]);
       } else if((region.className || "").match(/board/) || region.id == 'board_canvas') {
         return buttonTracker.button_from_point(event.clientX, event.clientY);
+      } else if(region.id == 'integration_overlay') {
+        return buttonTracker.element_wrap($target.closest(".integration_target")[0]);
       }
     }
     return null;
@@ -1145,26 +1151,19 @@ var buttonTracker = Ember.Object.extend({
       return;
     }
     var raw_event_type = event.type;
-    if(event.type == 'mouseup') {
+    // TODO: once aac_shim is updated, this manual change should be unnecessary
+    if(event_type == 'select' && (event.type == 'mouseup' || event.type == 'mousedown' || event.type == 'touchstart' || event.type == 'touchend')) {
       raw_event_type = 'click';
     }
     event.triggered_for = event_type;
     if(Ember.$(event.target).closest("#integration_overlay").length > 0) {
       event.preventDefault();
-      var overlay = document.getElementById('integration_overlay');
-      if(overlay) {
-        var rect = overlay.getBoundingClientRect();
-        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
-        if(session_id) {
-          frame_listener.raw_event({
-            session_id: session_id,
-            type: raw_event_type,
-            aac_type: event_type, // over, select or start
-            x_percent: (event.clientX - rect.left) / rect.width,
-            y_percent: (event.clientY - rect.top) / rect.height
-          });
-        }
-      }
+      frame_listener.raw_event({
+        type: raw_event_type,
+        aac_type: event_type,
+        clientX: event.clientX,
+        clientY: event.clientY
+      });
     }
   },
   focus_tab: function(from_start) {

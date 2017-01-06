@@ -603,6 +603,11 @@ footer .wide_links {
     margin: -10px -20px 0;
     position: absolute;
     top: 0;
+    overflow: hidden;
+    .integration_target {
+      position: absolute;
+      border: 2px dashed #f00;
+    }
   }
 }
 .board .board_status {

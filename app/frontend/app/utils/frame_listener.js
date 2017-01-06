@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import app_state from './app_state';
+import scanner from './scanner';
 
 var raw_listeners = {};
 var frame_listener = Ember.Object.extend({
@@ -52,14 +53,22 @@ var frame_listener = Ember.Object.extend({
     }
   },
   raw_event: function(event) {
-    for(var idx in raw_listeners) {
-      if(raw_listeners[idx] && raw_listeners[idx].session_id == event.session_id && raw_listeners[idx].respond) {
-        raw_listeners[idx].respond({
-          type: event.type, // 'click', 'touch', 'gazedwell', 'scanselect', 'mousemove', 'gazelinger'
-          aac_type: event.aac_type, // 'start', 'select', 'over'
-          x_percent: event.x_percent, // 0.0 - 1.0
-          y_percent: event.y_percent // 0.0 - 1.0
-        });
+    var overlay = document.getElementById('integration_overlay');
+    var session_id = event.session_id;
+    if(!session_id) {
+      session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
+    }
+    if(overlay) {
+      var rect = overlay.getBoundingClientRect();
+      for(var idx in raw_listeners) {
+        if(raw_listeners[idx] && raw_listeners[idx].session_id == session_id && raw_listeners[idx].respond) {
+          raw_listeners[idx].respond({
+            type: event.type, // 'click', 'touch', 'gazedwell', 'scanselect', 'mousemove', 'gazelinger'
+            aac_type: event.aac_type, // 'start', 'select', 'over'
+            x_percent: (event.clientX - rect.left) / rect.width, // 0.0 - 1.0
+            y_percent: (event.clientY - rect.top) / rect.height // 0.0 - 1.0
+          });
+        }
       }
     }
     // propagate to active listeners
@@ -95,7 +104,7 @@ var frame_listener = Ember.Object.extend({
     data.respond({error: 'not implemented'});
   },
   trigger_target: function(ref) {
-    var target = (this.get('targets') || []).find(function(t) { return t.session_id == ref.session_id && t.id == ref.id; });
+    var target = (this.get('targets') || []).find(function(t) { return ref == t.dom || (t.session_id == ref.session_id && t.id == ref.id); });
     if(target && target.respond) {
       target.respond({
         type: 'select',
@@ -105,16 +114,63 @@ var frame_listener = Ember.Object.extend({
   },
   add_target: function(data) {
     var targets = this.get('targets') || [];
-    targets = targets.filter(function(t) { return t.session_id != data.session_id || t.id != data.id; });
-    targets.push(data);
-    this.set('targets', targets);
-    data.respond({id: data.id});
+    this.clear_target({session_id: data.session_id, id: data.target.id});
+    var div = document.createElement('div');
+    div.id = "target_" + data.session_id + "_" + data.target.id;
+    div.classList.add('integration_target');
+    var overlay = document.getElementById('integration_overlay');
+    if(overlay) {
+      var rect = overlay.getBoundingClientRect();
+      div.style.width = (data.target.width_percent * rect.width) + "px";
+      div.style.height = (data.target.height_percent * rect.height) + "px";
+      div.style.left = (data.target.left_percent * rect.width) + "px";
+      div.style.top = (data.target.top_percent * rect.height) + "px";
+      overlay.appendChild(div);
+      targets.push({id: data.target.id, session_id: data.session_id, target: data.target, dom: div, respond: data.respond});
+      this.set('targets', targets);
+      data.respond({id: data.target.id});
+      if(scanner.scanning) {
+        scanner.reset();
+      }
+    }
   },
+  trigger_target_event: function(dom, type, aac_type, session_id) {
+    var rect = dom.getBoundingClientRect();
+    var overlay = document.getElementById('integration_overlay');
+    if(overlay) {
+      session_id = session_id || document.getElementById('integration_frame').getAttribute('data-session_id');
+      if(session_id) {
+        frame_listener.raw_event({
+          session_id: session_id,
+          type: type,
+          aac_type: aac_type,
+          clientX: rect.left + (rect.width / 2),
+          clientY: rect.top + (rect.height / 2)
+        });
+      }
+    }
+  },
+  size_targets: function() {
+    var overlay = document.getElementById('integration_overlay');
+    if(overlay) {
+      var rect = overlay.getBoundingClientRect();
+      (this.get('targets') || []).forEach(function(t) {
+        if(t && t.dom && t.target) {
+          t.dom.style.width = (t.target.width_percent * rect.width) + "px";
+          t.dom.style.height = (t.target.height_percent * rect.height) + "px";
+          t.dom.style.left = (t.target.left_percent * rect.width) + "px";
+          t.dom.style.top = (t.target.top_percent * rect.height) + "px";
+        }
+      });
+    }
+  }.observes('app_state.speak_mode'),
   clear_target: function(data) {
     var targets = this.get('targets') || [];
     targets = targets.filter(function(t) { return t.session_id != data.session_id || t.id != data.id; });
     this.set('targets', targets);
-    data.respond({id: data.id});
+    if(data.respond) {
+      data.respond({id: data.id});
+    }
   },
   clear_targets: function(data) {
     var targets = this.get('targets') || [];
@@ -125,6 +181,13 @@ var frame_listener = Ember.Object.extend({
     }
     this.set('targets', targets);
     data.respond({cleared: true});
+  },
+  visible: function() {
+    return !!document.getElementById('integration_overlay');
+  },
+  active_targets: function() {
+    var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
+    return (this.get('targets') || []).filter(function(t) { return t.session_id == session_id; });
   }
 }).create({targets: []});
 
@@ -151,6 +214,10 @@ window.addEventListener('message', function(event) {
     }
     frame_listener.handle_action(event.data);
   }
+});
+
+window.addEventListener('resize', function() {
+  Ember.run.debounce(frame_listener, frame_listener.size_targets, 100);
 });
 
 export default frame_listener;

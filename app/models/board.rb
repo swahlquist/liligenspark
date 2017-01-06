@@ -697,7 +697,7 @@ class Board < ActiveRecord::Base
       res = []
       if button && button['integration'] && button['integration']['user_integration_id'] && user && self.allows?(user, 'view')
         ui = UserIntegration.find_by_path(button['integration']['user_integration_id'])
-        res << ui.record_code if ui
+        res << ui.record_code if ui && ui.settings['button_webhook_url']
       end
       res
     else
@@ -714,7 +714,7 @@ class Board < ActiveRecord::Base
         ui = UserIntegration.find_by_path(button['integration']['user_integration_id'])
         associated_user = additional_args && User.find_by_path(additional_args['associated_user_id'])
         associated_user = nil if associated_user && !associated_user.allows?(user, 'supervise')
-        if ui && user
+        if ui && user && ui.settings['button_webhook_url']
           placement_code = ui.placement_code(self.global_id, button['id'].to_s)
           ref_user = associated_user || user
           user_code = ui.placement_code(ref_user.global_id)

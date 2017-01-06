@@ -223,8 +223,9 @@ var app_state = Ember.Object.extend({
     var id = app_state.get('latest_board_id');
     if(id) {
       var $board = Ember.$(".board[data-id='" + id + "']");
+      var $integration = Ember.$("#integration_frame");
       var _this = this;
-      if($board.length && $board.find(".button_row,canvas").length) {
+      if($integration.length || ($board.length && $board.find(".button_row,canvas").length)) {
         Ember.run.later(function() {
           buttonTracker.transitioning = false;
         }, delay);
@@ -1005,7 +1006,7 @@ var app_state = Ember.Object.extend({
     if(obj.label) {
       if(app_state.get('speak_mode')) {
         if(app_state.get('currentUser.preferences.vocalize_buttons') || (!app_state.get('currentUser') && window.user_preferences.any_user.vocalize_buttons)) {
-          if((button.load_board || button_to_speak.special) && !app_state.get('currentUser.preferences.vocalize_linked_buttons') && !button.add_to_vocalization) {
+          if((button.load_board || button_to_speak.special || (button.integration && button.integration.action_type == 'render')) && !app_state.get('currentUser.preferences.vocalize_linked_buttons') && !button.add_to_vocalization) {
             // don't say it...
           } else if(button_to_speak.in_progress && app_state.get('currentUser.preferences.silence_spelling_buttons')) {
             // don't say it...
@@ -1025,12 +1026,12 @@ var app_state = Ember.Object.extend({
     }
 //    console.log(obj);
     stashes.log(obj);
+    var _this = this;
 
     if(button.load_board && button.load_board.key) {
       if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
         modal.warning(i18n.t('sticky_board_notice', "Board lock is enabled, disable to leave this board."), true);
       } else {
-        var _this = this;
 
 //     var $button = Ember.$(".button[data-id='" + button.id + "']").parent();
 //     if($button.length) {
@@ -1103,10 +1104,17 @@ var app_state = Ember.Object.extend({
         }
       }
     } else {
-      if(button.integration) {
+      if(button.integration && button.integration.action_type == 'webhook') {
         Button.extra_actions(button);
-      }
-      if(app_state.get('speak_mode') && ((!app_state.get('currentUser') && window.user_preferences.any_user.auto_home_return) || app_state.get('currentUser.preferences.auto_home_return'))) {
+      } else if(button.integration && button.integration.action_type == 'render') {
+        Ember.run.later(function() {
+        _this.jump_to_board({
+          id: "i" + button.integration.user_integration_id,
+          key: "integrations/" + button.integration.user_integration_id + ":" + button.integration.action,
+          home_lock: button.home_lock
+        }, obj.board);
+        }, 100);
+      } else if(app_state.get('speak_mode') && ((!app_state.get('currentUser') && window.user_preferences.any_user.auto_home_return) || app_state.get('currentUser.preferences.auto_home_return'))) {
         if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
           var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
           var current = app_state.get('currentBoardState');

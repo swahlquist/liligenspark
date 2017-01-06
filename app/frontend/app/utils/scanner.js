@@ -6,6 +6,7 @@ import app_state from './app_state';
 import i18n from './i18n';
 import speecher from './speecher';
 import buttonTracker from './raw_events';
+import frame_listener from './frame_listener';
 
 var scanner = Ember.Object.extend({
   setup: function(controller) {
@@ -93,72 +94,78 @@ var scanner = Ember.Object.extend({
 
         rows.push(row);
       }
+      var content = scanner.scan_content();
 
       if(options.scan_mode == 'row' || options.scan_mode == 'button') {
-        var grid = editManager.controller.get('model.grid');
-        for(var idx = 0; idx < grid.rows; idx++) {
+        for(var idx = 0; idx < content.rows; idx++) {
           row = {
             children: [],
             dom: Ember.$(),
             label: i18n.t('row_n', "Row %{n}", {n: (idx + 1)})
           };
-          for(var jdx = 0; jdx < grid.columns; jdx++) {
-            var $button = Ember.$(".button[data-id='" + grid.order[idx][jdx] + "']:not(.hidden_button)");
+          for(var jdx = 0; jdx < content.columns; jdx++) {
+            var $button = content.order[idx][jdx];
             if($button.length) {
-              var button = editManager.find_button(grid.order[idx][jdx]);
-              var label = (button && (button.get('vocalization') || button.get('label'))) || "";
               row.dom = row.dom.add($button);
               row.children.push({
                 dom: $button,
-                label: label,
-                sound: button && button.get('sound')
+                label: $button.label,
+                sound: $button.sound
               });
             }
           }
           if(row.children.length > 0) {
+            if(row.children.length == 1) {
+              row = row.children[0];
+            }
             rows.push(row);
           }
         }
+        if(rows.length == 1) {
+          rows = rows[0].children;
+        }
       } else if(options.scan_mode == 'column') {
-        var grid = editManager.controller.get('model.grid');
-        for(var idx = 0; idx < grid.columns; idx++) {
+        for(var idx = 0; idx < content.columns; idx++) {
           var column = {
             children: [],
             dom: Ember.$(),
             label: i18n.t('column_n', "Column %{n}", {n: (idx + 1)})
           };
-          for(var jdx = 0; jdx < grid.rows; jdx++) {
-            var $button = Ember.$(".button[data-id='" + grid.order[jdx][idx] + "']:not(.hidden_button)");
+          for(var jdx = 0; jdx < content.rows; jdx++) {
+            var $button = content.order[jdx][idx];
             if($button.length) {
-              var button = editManager.find_button(grid.order[idx][jdx]);
-              var label = (button && (button.get('vocalization') || button.get('label'))) || "";
               column.dom = column.dom.add($button);
               column.children.push({
                 dom: $button,
-                label: label,
-                sound: button && button.get('sound')
+                label: $button.label,
+                sound: $button.sound
               });
             }
           }
           if(column.children.length > 0) {
+            if(column.children.length == 1) {
+              column = column.children[0];
+            }
             rows.push(column);
           }
+        }
+        if(rows.length == 1) {
+          rows = rows[0].children;
         }
       } else if(options.scan_mode == 'region') {
         var rows_per_chunk = options.rows_per_chunk;
         var columns_per_chunk = options.columns_per_chunk;
         var sub_scan = options.sub_scan_mode || 'horizontal';
-        var grid = editManager.controller.get('model.grid');
-        var vertical_chunks = options.vertical_chunks || Math.ceil(grid.rows / (rows_per_chunk || 3));
-        var horizontal_chunks = options.horizontal_chunks || Math.ceil(grid.columns / (columns_per_chunk || 3));
-        if(!rows_per_chunk || (rows_per_chunk < grid.rows / vertical_chunks)) {
-          rows_per_chunk = Math.max(Math.floor(grid.rows / vertical_chunks), 1);
+        var vertical_chunks = Math.min(content.rows, options.vertical_chunks || Math.ceil(content.rows / (rows_per_chunk || 3)));
+        var horizontal_chunks = Math.min(content.columns, options.horizontal_chunks || Math.ceil(content.columns / (columns_per_chunk || 3)));
+        if(!rows_per_chunk || (rows_per_chunk < content.rows / vertical_chunks)) {
+          rows_per_chunk = Math.max(Math.floor(content.rows / vertical_chunks), 1);
         }
-        var leftover_rows = grid.rows - (rows_per_chunk * vertical_chunks);
-        if(!columns_per_chunk || (columns_per_chunk < grid.columns / horizontal_chunks)) {
-          columns_per_chunk = Math.max(Math.floor(grid.columns / horizontal_chunks), 1);
+        var leftover_rows = Math.max(content.rows - (rows_per_chunk * vertical_chunks), 0);
+        if(!columns_per_chunk || (columns_per_chunk < content.columns / horizontal_chunks)) {
+          columns_per_chunk = Math.max(Math.floor(content.columns / horizontal_chunks), 1);
         }
-        var leftover_columns = grid.columns - (columns_per_chunk * horizontal_chunks);
+        var leftover_columns = Math.max(content.columns - (columns_per_chunk * horizontal_chunks), 0);
         if(sub_scan == 'vertical' || true) {
           for(var idx = 0; idx < horizontal_chunks; idx++) {
             for(var jdx = 0; jdx < vertical_chunks; jdx++) {
@@ -173,19 +180,17 @@ var scanner = Ember.Object.extend({
               if(jdx == vertical_chunks - 1) { n_rows = n_rows + leftover_rows; }
               for(var kdx = 0; kdx < n_columns; kdx++) {
                 for(var ldx = 0; ldx < n_rows; ldx++) {
-                  var r = grid.order[(jdx * rows_per_chunk) + ldx];
+                  var r = content.order[(jdx * rows_per_chunk) + ldx];
                   if(r) {
-                    var id = r[(idx * columns_per_chunk) + kdx];
-                    if(id) {
-                      var $button = Ember.$(".button[data-id='" + id + "']:not(.hidden_button)");
+                    var elem = r[(idx * columns_per_chunk) + kdx];
+                    if(elem) {
+                      var $button = elem;
                       if($button.length) {
-                        var button = editManager.find_button(id);
-                        var label = (button && (button.get('vocalization') || button.get('label'))) || "";
                         chunk.dom = chunk.dom.add($button);
                         chunk.children.push({
                           dom: $button,
-                          label: label,
-                          sound: button && button.get('sound')
+                          label: $button.label,
+                          sound: $button.sound
                         });
                       }
                     }
@@ -193,6 +198,9 @@ var scanner = Ember.Object.extend({
                 }
               }
               if(chunk.children.length > 0) {
+                if(chunk.children.length == 1) {
+                  chunk = chunk.children[0];
+                }
                 rows.push(chunk);
               }
             }
@@ -207,19 +215,18 @@ var scanner = Ember.Object.extend({
               };
               for(var kdx = 0; kdx < rows_per_chunk; kdx++) {
                 for(var ldx = 0; ldx < columns_per_chunk; ldx++) {
-                  var r = grid.order[(idx * rows_per_chunk) + kdx];
+                  var r = content.order[(idx * rows_per_chunk) + kdx];
                   if(r) {
-                    var id = r[(jdx * columns_per_chunk) + ldx];
-                    if(id) {
-                      var $button = Ember.$(".button[data-id='" + id + "']:not(.hidden_button)");
+                    var elem = r[(jdx * columns_per_chunk) + ldx];
+                    if(elem) {
+                      var $button = elem;
                       if($button.length) {
-                        var button = editManager.find_button(id);
-                        var label = (button && (button.get('vocalization') || button.get('label'))) || "";
+                        var label = $button.label || "";
                         chunk.dom = chunk.dom.add($button);
                         chunk.children.push({
                           dom: $button,
-                          label: label,
-                          sound: button && button.get('sound')
+                          label: $button.label,
+                          sound: $button.sound
                         });
                       }
                     }
@@ -227,10 +234,16 @@ var scanner = Ember.Object.extend({
                 }
               }
               if(chunk.children.length > 0) {
+                if(chunk.children.length == 1) {
+                  chunk = chunk.children[0];
+                }
                 rows.push(chunk);
               }
             }
           }
+        }
+        if(rows.length == 1) {
+          rows = rows[0].children;
         }
       }
       if(options.scan_mode == 'button') {
@@ -249,6 +262,39 @@ var scanner = Ember.Object.extend({
     }
     this.scanning = true;
     this.scan_elements(rows, options);
+  },
+  scan_content: function() {
+    if(frame_listener.visible()) {
+      var res = {};
+      res.rows = 1;
+      var items = frame_listener.active_targets() || [];
+      res.columns = items.length;
+      res.order = [];
+      res.order[0] = [];
+      items.forEach(function(item, idx) {
+        var $elem = Ember.$(item.dom);
+        $elem.label = item.target.prompt || i18n.t('target_n', "target %{n}", {n: idx + 1});
+        res.order[0].push($elem);
+      });
+      return res;
+    } else {
+      var grid = editManager.controller.get('model.grid');
+      var res = {};
+      res.rows = grid.rows;
+      res.columns = grid.columns;
+      res.order = [];
+      for(var idx = 0; idx < grid.order.length; idx++) {
+        res.order[idx] = [];
+        for(var jdx = 0; jdx < grid.order[idx].length; jdx++) {
+          var $button = Ember.$(".button[data-id='" + grid[idx][jdx] + "']:not(.hidden_button)");
+          var button = editManager.find_button(grid[idx][jdx]);
+          $button.label = (button && (button.get('vocalization') || button.get('label'))) || "";
+          $button.soudn = button && button.get('sound');
+          res.order[idx][jdx] = $button;
+        }
+      }
+      return res;
+    }
   },
   reset: function() {
     Ember.run.cancel(scanner.interval);
@@ -277,22 +323,8 @@ var scanner = Ember.Object.extend({
       selection_type: 'scanner'
     });
 
-    if(elem.dom && elem.dom.classList.contains('integration_target')) {
-      var rect = elem.dom.getBoundingClientRect();
-      var overlay = document.getElementById('integration_overlay');
-      if(overlay) {
-        var overlay_rect = overlay.getBoundingClientRect();
-        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
-        if(session_id) {
-          frame_listener.raw_event({
-            session_id: session_id,
-            type: 'scanselect',
-            aac_type: 'select',
-            x_percent: ((rect.left + (rect.width / 2)) - overlay_rect.left) / overlay_rect.width,
-            y_percent: ((rect.top + (rect.height / 2)) - overlay_rect.top) / overlay_rect.height
-          });
-        }
-      }
+    if(elem.dom && elem.dom.hasClass('integration_target')) {
+      frame_listener.trigger_target_event(elem.dom[0], 'scanselect', 'select');
     }
 
     if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
@@ -321,6 +353,8 @@ var scanner = Ember.Object.extend({
         var app = app_state.controller;
         var board = app.get('board.model');
         app.activateButton(button, {image: button.get('image'), sound: button.get('sound'), board: board});
+      } else if(elem.dom.hasClass('integration_target')) {
+        frame_listener.trigger_target(elem.dom[0]);
       } else if(elem.dom.hasClass('button_list')) {
         elem.dom.select();
       } else {
@@ -387,22 +421,8 @@ var scanner = Ember.Object.extend({
     if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && Ember.$("#hidden_input:focus").length === 0) {
       modal.warning(i18n.t('tap_first', "Your switch may not be completely enabled. Tap somewhere on the screen to finish enabling it."), true);
     }
-    if(elem.dom.classList.contains('integration_target')) {
-      var rect = elem.dom.getBoundingClientRect();
-      var overlay = document.getElementById('integration_overlay');
-      if(overlay) {
-        var overlay_rect = overlay.getBoundingClientRect();
-        var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
-        if(session_id) {
-          frame_listener.raw_event({
-            session_id: session_id,
-            type: 'scanover',
-            aac_type: 'over',
-            x_percent: ((rect.left + (rect.width / 2)) - overlay_rect.left) / overlay_rect.width,
-            y_percent: ((rect.top + (rect.height / 2)) - overlay_rect.top) / overlay_rect.height
-          });
-        }
-      }
+    if(elem.dom.hasClass('integration_target')) {
+      frame_listener.trigger_target_event(elem.dom[0], 'scanover', 'over');
     }
     modal.highlight(elem.dom, options).then(function() {
       scanner.pick();

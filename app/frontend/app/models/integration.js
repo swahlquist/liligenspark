@@ -12,6 +12,7 @@ CoughDrop.Integration = DS.Model.extend({
   render_url: DS.attr('string'),
   user_token: DS.attr('string'),
   button_webhook_url: DS.attr('string'),
+  board_render_url: DS.attr('string'),
   insecure_button_webhook_url: function() {
     var url = this.get('button_webhook_url');
     return url && url.match(/^http:/);

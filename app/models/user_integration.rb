@@ -27,7 +27,7 @@ class UserIntegration < ActiveRecord::Base
     self.settings['token'] ||= self.class.security_token
     self.settings['static_token'] ||= self.class.security_token
     self.settings['permission_scopes'] ||= ['read_profile']
-    self.for_button = !!self.settings['button_webhook_url']
+    self.for_button = !!(self.settings['button_webhook_url'] || self.settings['board_render_url'])
     self.assert_device
     # TODO: assert device
   end
