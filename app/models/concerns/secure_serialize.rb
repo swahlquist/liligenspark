@@ -89,6 +89,33 @@ module SecureSerialize
       after_initialize :load_secure_object
     end
     
+    def user_versions(global_id)
+      # TODO: sharding
+      local_id = self.local_ids([global_id])[0]
+      current = self.find_by_global_id(global_id)
+      versions = []
+      all_versions = PaperTrail::Version.where(:item_type => self.to_s, :item_id => local_id).order('id DESC')
+
+      all_versions.each_with_index do |v, idx|
+        next if versions.length >= 30
+        if v.whodunnit && !v.whodunnit.match(/^job/)
+          later_version = all_versions[idx - 1]
+          later_object = current
+          if later_version
+            later_object = self.load_version(later_version) rescue nil
+            if later_object && !later_object.settings
+              later_object.load_secure_object rescue nil
+            end
+          end
+          if later_object
+            v.instance_variable_set('@later_object', later_object)
+          end
+          versions << v
+        end
+      end
+      versions
+    end
+
     def load_version(v)
       model = v.item
       attrs = v.object_deserialized

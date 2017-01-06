@@ -96,6 +96,12 @@ class Device < ActiveRecord::Base
     end
   end
   
+  def invalidate_keys!
+    self.settings ||= {}
+    self.settings['keys'] = []
+    self.save
+  end
+  
   def clean_old_keys
     self.settings ||= {}
     keys = self.settings['keys'] || []

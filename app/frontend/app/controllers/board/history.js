@@ -24,5 +24,8 @@ export default Ember.Controller.extend({
     });
     res = Utils.uniq(res, function(b) { return b.id; });
     return res;
+  }.property('versions'),
+  maybe_more: function() {
+    return this.get('versions.length') >= 25;
   }.property('versions')
 });

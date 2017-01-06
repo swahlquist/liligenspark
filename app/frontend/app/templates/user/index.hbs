@@ -525,6 +525,7 @@
           </div>
         {{else}}
           <a href="#" {{action 'reset_password'}} class="btn btn-default">{{t "Reset Password" key='reset_password'}}</a>
+          {{#link-to 'user.history' model.user_name class='btn btn-default'}}{{t "Edit History" key='edit_history'}}{{/link-to}}
         {{/if}}
         {{#if model.permissions.admin_support_actions}}
           <h5 style="margin-top: 20px;">{{t "Subscription:" key='subscription_colon'}}</h5>
@@ -566,6 +567,7 @@
                   <li><a href="#" {{action 'set_subscription' 'communicator_trial'}}>{{t "Set as Free Trial Communicator" key='set_as_free_trial_communicator'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'add_1'}}>{{t "Add 1 Month" key='add_one_month'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'add_voice'}}>{{t "Add Premium Voice" key='add_premium_voice'}}</a></li>
+                  <li><a href="#" {{action 'set_subscription' 'force_logout'}}>{{t "Force Logout" key='force_logout'}}</a></li>
                 </ul>
               </div>
             {{/if}}

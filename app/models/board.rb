@@ -609,32 +609,6 @@ class Board < ActiveRecord::Base
     self.settings['image_url'].blank? ? fallback : self.settings['image_url']
   end
   
-  def self.user_versions(global_id)
-    # TODO: sharding
-    local_id = Board.local_ids([global_id])[0]
-    current = Board.find_by_global_id(global_id)
-    versions = []
-    all_versions = PaperTrail::Version.where(:item_type => 'Board', :item_id => local_id).order('id DESC')
-
-    all_versions.each_with_index do |v, idx|
-      if v.whodunnit && !v.whodunnit.match(/^job/)
-        later_version = all_versions[idx - 1]
-        later_object = current
-        if later_version
-          later_object = Board.load_version(later_version)
-          if later_object && !later_object.settings
-            later_object.load_secure_object rescue nil
-          end
-        end
-        if later_object
-          v.instance_variable_set('@later_object', later_object)
-        end
-        versions << v
-      end
-    end
-    versions
-  end
-  
   def flush_related_records
     DeletedBoard.process(self)
   end

@@ -9,7 +9,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'support', 'help', 'forum', 'talk', 'chat', 'feedback', 'faq', 
   'about', 'contact', 'info', 'docs', 'purchase', 'pricing', 'careers', 
   'news', 'styleguide', 'tour', 'compare', 'guides', 'partners', 
-  'privacy', 'terms', 'hipaa', 'accessibility', 
+  'privacy', 'terms', 'hipaa', 'accessibility', 'history',
   'js', 'css', 'scripts', 'script', 'pics', 'images',
   'find', 'unknown', 'nobody', 'goals', 'notes', 'rooms', 'coughdrop', 'cough_drop',
   'mycoughdrop'
@@ -167,6 +167,7 @@ Coughdrop::Application.routes.draw do
     
     get "buttonsets/:id" => "button_sets#show"
     get "boardversions" => "boards#history"
+    get "userversions" => "users#history"
     
     resources :gifts
     
@@ -195,6 +196,8 @@ Coughdrop::Application.routes.draw do
       get 'logs'
       get 'stats'
       get 'admin_reports'
+      get 'blocked_emails'
+      post 'extra_action'
     end
     
     resources :utterances do

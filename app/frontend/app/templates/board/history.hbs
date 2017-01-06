@@ -52,4 +52,7 @@
       {{/each}}
     </tbody>
   </table>
+  {{#if maybe_more}}
+    <p>{{t "NOTE: there may be more results not shown" key='maybe_more'}}</p>
+  {{/if}}
 {{/if}}

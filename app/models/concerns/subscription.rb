@@ -252,6 +252,8 @@ module Subscription
       })
     elsif type == 'add_voice'
       self.allow_additional_premium_voice!
+    elsif type == 'force_logout'
+      self.devices.each{|d| d.invalidate_keys! }
     elsif type == 'add_1' || type == 'communicator_trial'
       if type == 'communicator_trial'
         self.settings['preferences']['role'] = 'communicator'

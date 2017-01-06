@@ -60,6 +60,7 @@ Router.map(function() {
   this.route('organization', { path: '/organizations/:id' }, function() {
     this.route('reports');
     this.route('subscription');
+    this.route('extras');
     this.route('rooms');
     this.route('room', { path: '/rooms/:room_id' });
   });
@@ -81,6 +82,7 @@ Router.map(function() {
     this.route('log', { path: '/logs/:log_id' });
     this.route('badges');
     this.route('device');
+    this.route('history');
     this.route('confirm_registration', { path: '/confirm_registration/:code' });
     this.route('password_reset', { path: '/password_reset/:code' });
   });

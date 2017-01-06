@@ -1,0 +1,27 @@
+{{#if model.admin}}
+  {{#if model.permissions.manage}}
+    <h2>{{t "Admin Actions" key='admin_actions'}}</h2>
+    <h4>{{t "Blocked Emails" key='blocked_emails'}}</h4>
+    {{#if blocked_emails.loading}}
+      <p>{{t "Loading..." key='loading'}}</p>
+    {{else if blocked_emails.error}}
+      <p>{{t "There was an error loading blocked emails" key='error_loading_blocked_emails'}}</p>
+    {{else if blocked_emails}}
+      <div class='list-group' style='max-width: 400px;'>
+        {{#each blocked_emails as |email|}}
+          <a class='list-group-item'>{{email}}</a>
+        {{/each}}
+      </div>
+    {{else}}
+      <p>{{t "No data available" key='no_data_available'}}</p>
+    {{/if}}
+    <div style='margin-top: -15px;'>
+      {{input value=blocked_email_address placeholder="email address" class="form-control inline inline-masquerade input-sm"}}
+      <button class="btn btn-default btn-sm" {{action "block_email"}}>{{t "Block Email Address" key='block_email_address'}}</button>
+    </div>
+  {{else}}
+    <p>{{t "Not authorized" key='not_authorized'}}</p>
+  {{/if}}
+{{else}}
+  {{t "No information available" key='no_information_available'}}
+{{/if}}

@@ -22,6 +22,11 @@ class Setting < ActiveRecord::Base
     hash[email] == true
   end
   
+  def self.blocked_emails
+    hash = self.get('blocked_emails') || {}
+    hash.map{|k, v| k }.sort
+  end
+  
   def self.block_email!(email)
     email = email.downcase
     setting = self.find_or_create_by(:key => 'blocked_emails')

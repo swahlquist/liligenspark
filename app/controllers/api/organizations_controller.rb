@@ -239,6 +239,29 @@ class Api::OrganizationsController < ApplicationController
     render json: JsonApi::Log.paginate(params, logs, {:prefix => prefix})
   end
   
+  def blocked_emails
+    if !@org.admin
+      return allowed?(@org, 'never_allowed')
+    end
+    render json: {emails: Setting.blocked_emails}
+  end
+  
+  def extra_action
+    if !@org.admin
+      return allowed?(@org, 'never_allowed')
+    end
+    success = params['extra_action'].to_json
+    if params['extra_action'] == 'block_email'
+      success = "found action"
+      if params['email']
+        success = "found email"
+        Setting.block_email!(params['email'])        
+        success = true
+      end
+    end
+    render json: {success: success}
+  end
+  
   def index
     admin_org = Organization.admin
     return unless allowed?(admin_org, 'edit')

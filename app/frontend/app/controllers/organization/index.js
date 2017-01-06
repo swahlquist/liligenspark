@@ -169,13 +169,17 @@ export default Ember.Controller.extend({
       var model = this.get('model');
       var _this = this;
       _this.set('missing_user_name', null);
+      var cleanup = function() { };
       if(!user_name) {
         if(action == 'add_manager' || action == 'add_assistant') {
           user_name = this.get('manager_user_name');
+          cleanup = function() { _this.set('manager_user_name', ''); };
         } else if(action == 'add_supervisor') {
           user_name = this.get('supervisor_user_name');
+          cleanup = function() { _this.set('supervisor_user_name', ''); };
         } else if(action == 'add_user' || action == 'add_unsponsored_user') {
           user_name = this.get('user_user_name');
+          cleanup = function() { _this.set('user_user_name', ''); };
         }
       }
       if(!user_name) { return; }
@@ -188,6 +192,7 @@ export default Ember.Controller.extend({
         } else if(action.match(/supervisor/)) {
           _this.refresh_supervisors();
         }
+        cleanup();
       }, function(err) {
         console.log(err);
         if(err && err.errors && err.errors.length === 1 && err.errors[0].match(/invalid user/)) {

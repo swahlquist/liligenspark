@@ -200,6 +200,20 @@ class Api::UsersController < ApplicationController
       api_error 400, {error: 'matching device not found'}
     end
   end
+
+  def history
+    user_id = nil
+    user = User.find_by_path(params['user_id'])
+    if user
+      return unless allowed?(user, 'admin_support_actions')
+      user_id = user.global_id
+    elsif @api_user.allows?(@api_user, 'admin_support_action')
+      user_id = params['user_id']
+    end
+    return unless exists?(user_id)
+    versions = User.user_versions(user_id)
+    render json: JsonApi::UserVersion.paginate(params, versions, {:admin => Organization.admin_manager?(@api_user)})
+  end
   
   def supervisors
     user = User.find_by_path(params['user_id'])
@@ -229,7 +243,7 @@ class Api::UsersController < ApplicationController
     if params['type'] == 'gift_code'
       return unless allowed?(user, 'edit')
       progress = Progress.schedule(user, :redeem_gift_token, token['code'])
-    elsif ['never_expires', 'eval', 'add_1', 'manual_supporter', 'add_voice', 'communicator_trial'].include?(params['type'])
+    elsif ['never_expires', 'eval', 'add_1', 'manual_supporter', 'add_voice', 'communicator_trial', 'force_logout'].include?(params['type'])
       return unless allowed?(user, 'admin_support_actions')
       progress = Progress.schedule(user, :subscription_override, params['type'], @api_user && @api_user.global_id)
     else
