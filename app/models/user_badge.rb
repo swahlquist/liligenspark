@@ -200,10 +200,10 @@ class UserBadge < ActiveRecord::Base
         badge_level['watchlist'] = true
         if badge['words_list']
           badge_level['words_list'] = badge['words_list']
-          badge_level['words_list'] = badge_level['words_list'].split(',') if badge_level['words_list'].is_a?(String)
+          badge_level['words_list'] = badge_level['words_list'].split(',').compact.map(&:strip).select{|w| w.length > 0 } if badge_level['words_list'].is_a?(String)
         elsif badge['parts_of_speech_list']
           badge_level['parts_of_speech_list'] = badge['parts_of_speech_list']
-          badge_level['parts_of_speech_list'] = badge_level['parts_of_speech_list'].split(',') if badge_level['parts_of_speech_list'].is_a?(String)
+          badge_level['parts_of_speech_list'] = badge_level['parts_of_speech_list'].split(',').compact.map(&:strip).select{|w| w.length > 0 } if badge_level['parts_of_speech_list'].is_a?(String)
         end
         
         ['watch_type_minimum', 'watch_total', 'watch_type_count'].each do |key|
@@ -481,12 +481,29 @@ class UserBadge < ActiveRecord::Base
     if badge_level['watchlist']
       matches = []
       if badge_level['words_list'] && data['all_word_counts']
-        words = data['all_word_counts'].select{|k, v| badge_level['words_list'].include?(k) }
-        words.each do |word, val|
-          matches << {
-            value: word,
-            count: val
-          }
+        if data['all_word_sequences'] && data['all_word_sequences'].length > 0
+          word_hits = {}
+          data['all_word_sequences'].each do |sequence|
+            str = sequence.join(' ')
+            badge_level['words_list'].each do |word|
+              words = str.scan(Regexp.new(word, 'i'))
+              word_hits[word] = (word_hits[word] || 0) + words.length
+            end
+          end
+          word_hits.each do |key, cnt|
+            matches << {
+              value: key,
+              count: cnt
+            }
+          end
+        else
+          words = data['all_word_counts'].select{|k, v| badge_level['words_list'].include?(k) }
+          words.each do |word, val|
+            matches << {
+              value: word,
+              count: val
+            }
+          end
         end
       elsif badge_level['parts_of_speech_list'] && data['parts_of_speech']
         parts = data['parts_of_speech'].each do |k, v| 
@@ -627,6 +644,7 @@ class UserBadge < ActiveRecord::Base
       monthyear: next_monthyear
     }
   end
+  
     # possible goals:
     # - speaking streak, consecutive days spoken in a row
     # - praactical goals, multiple levels

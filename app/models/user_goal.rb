@@ -476,6 +476,20 @@ class UserGoal < ActiveRecord::Base
       goal.save
     end
   end
+
+  def sanitize!
+    if self.settings['assessment_badge']
+      self.settings['assessment_badge']['words_list'].map!(&:strip).select!{|w| w.length > 0 } if self.settings['assessment_badge']['words_list']
+      self.settings['assessment_badge']['parts_of_speech_list'].map!(&:strip).select!{|w| w.length > 0 } if self.settings['assessment_badge']['parts_of_speech_list']
+    end
+    if self.settings['badges']
+      self.settings['badges'].each do |badge|
+        badge['words_list'].map!(&:strip).select!{|w| w.length > 0 } if badge['words_list']
+        badge['parts_of_speech_list'].map!(&:strip).select!{|w| w.length > 0 } if badge['parts_of_speech_list']
+      end
+    end
+    self.save!
+  end
   
   def advance!
     return true unless self.active && self.advance_at && self.advance_at < Time.now && self.settings && self.settings['template_id']

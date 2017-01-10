@@ -234,6 +234,7 @@ class LogSession < ActiveRecord::Base
     self.data['stats']['all_boards'] = []
     self.data['stats']['all_button_counts'] = {}
     self.data['stats']['all_word_counts'] = {}
+    self.data['stats']['all_word_sequence'] = []
     self.data['stats']['modeled_button_counts'] = {}
     self.data['stats']['modeled_word_counts'] = {}
     self.data['stats']['all_board_counts'] = {}
@@ -267,6 +268,7 @@ class LogSession < ActiveRecord::Base
                   button['text'].split(/\s+/).each do |word|
                     self.data['stats']['all_word_counts'][word] ||= 0
                     self.data['stats']['all_word_counts'][word] += 1
+                    self.data['stats']['all_word_sequence'] << word
                   end
                 end
             
