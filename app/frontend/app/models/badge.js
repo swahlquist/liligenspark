@@ -150,7 +150,7 @@ CoughDrop.Badge = DS.Model.extend({
         if(n == 1) {
           res = res + i18n.t('at_least_once', " at least once");
         } else {
-          res = res + i18n.t('for', " for ");
+          res = res + i18n.t('for_any', " for any ");
           res = res + i18n.t('n_units', interval.unit, {count: interval.total});
         }
         if(badge_level.consecutive_units && n > 1) {
@@ -194,7 +194,7 @@ CoughDrop.Badge = DS.Model.extend({
       } else {
         if(badge_level.words_list) {
           if(badge_level.words_list.length > 1) {
-            str = i18n.t('use_the_words', "Use the words");
+            str = i18n.t('use_the_words', "Use the words ");
             str = str + this.get('completion_watch_list');
           } else {
             str = i18n.t('use_the_word_wrd', "Use the word \"%{wrd}\"", {wrd: badge_level.words_list[0]});
