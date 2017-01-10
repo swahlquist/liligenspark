@@ -107,7 +107,11 @@
                 <span>
                 <span class={{refreshing_class}}></span>
                 {{#if persistence.sync_succeeded}}
-                  {{t "Sync Done!" key='sync_done'}}
+                  {{#if session.invalid_token}}
+                    {{t "Please re-login and sync again" key='sync_done'}}
+                  {{else}}
+                    {{t "Sync Done!" key='sync_done'}}
+                  {{/if}}
                 {{else}}
                   {{#if persistence.sync_failed}}
                     {{t "Sync Failed, see details below" key='sync_failed'}}
@@ -275,7 +279,20 @@
     </div>
     <div class="col-sm-6 col-md-4 col faded_back" style="margin-bottom: 20px;">
       <div class="wrapper middle_column">
-        {{#if no_intro}}
+        {{#if session.invalid_token}}
+          <div style="margin-bottom: 20px; text-align: center;">
+            <h2>
+              <span class="glyphicon glyphicon-log-out"></span>
+              {{t "Please Re-Login" key='please_relogin'}}
+            </h2>
+            <div style='text-align: left;'>
+              {{t "It appears there is an issue with your current session, please log out and back in to correct the problem." key='please_log_out_and_back_in'}}
+            </div>
+            <div style='margin: 10px 0 40px;'>
+              <button class='btn btn-primary' {{action 'invalidateSession'}}>{{t "Sign Out" key='sign_out'}}</button>
+            </div>
+          </div>
+        {{else if no_intro}}
           <div style="margin-bottom: 20px; text-align: center;">
             <h2>
               <span class="glyphicon glyphicon-book"></span>

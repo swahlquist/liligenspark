@@ -77,7 +77,7 @@
       {{#unless pricing_only}}
         <tr>
           <td style='width: 25%;'>
-            <button style='width: 100%;' class={{communicator_monthly_subscription_class}} type="button" {{action "set_subscription_type" 'monthly_communicator'}}>
+            <button style='width: 100%;' rel='monthly' class={{communicator_monthly_subscription_class}} type="button" {{action "set_subscription_type" 'monthly_communicator'}}>
               <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
               {{#if subscription.much_cheaper_offer}}
                 {{t "$3 per month" key='3_per_month'}}
@@ -87,7 +87,7 @@
             </button>
           </td>
           <td style='width: 25%;'>
-            <button style='width: 100%;' class={{communicator_long_term_subscription_class}} type="button" {{action "set_subscription_type" 'long_term_communicator'}}>
+            <button style='width: 100%;' rel='long_term' class={{communicator_long_term_subscription_class}} type="button" {{action "set_subscription_type" 'long_term_communicator'}}>
               <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
               {{#if subscription.much_cheaper_offer}}
                 {{t "$100 purchase" key='100_purchase'}}
@@ -99,13 +99,13 @@
             </button>
           </td>
           <td class='separator dim' style='width: 25%;'>
-            <button type="button" class={{slp_monthly_free_class}} {{action "set_subscription" 'slp_monthly_free'}}>
+            <button type="button" rel='slp_free' class={{slp_monthly_free_class}} {{action "set_subscription" 'slp_monthly_free'}}>
               <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
               {{t "free supporter" key='free_for_supporters'}}
             </button>
           </td>
           <td class='dim' style='width: 25%;'>
-            <button type="button" class={{slp_long_term_50_class}} {{action "set_subscription" 'slp_long_term_50'}}>
+            <button type="button" rel='slp_paid' class={{slp_long_term_50_class}} {{action "set_subscription" 'slp_long_term_50'}}>
               <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
               {{t "$50 donation" key='50_donation'}}
             </button>
@@ -115,7 +115,7 @@
           <td colspan="2" style='text-align: right;'>
             {{#if move_gift_option}}
               {{#if trial_option}}
-                <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
+                <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
               {{/if}}
             {{else}}
             {{#if subscription.gift_type}}
@@ -130,7 +130,7 @@
                 {{/if}}
               </div>
             {{else if trial_moves_gift_option}}
-              <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
+              <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
             {{else}}
               <a href="#" {{action 'set_subscription_type' 'gift_code'}}>
                 {{t "I have a gift code" key='have_a_gift_code'}}
@@ -172,7 +172,10 @@
   {{else}}
     <div class="form-group">
       <div class="col-sm-9" style='margin-top: 20px;'>
-        <button type="submit" class="btn btn-lg btn-primary">
+        {{#if not_authenticated}}
+          <p class='text-danger'>{{t "There appears to be an issue with your session that could prevent your purchase from completing. Please try logging out and back in. If that doesn't correct the problem, please try a different browser or contact our support team." key='error_subscription_wont_word'}}</p>
+        {{/if}}
+        <button type="submit" rel='activate' class="btn btn-lg btn-primary">
           {{#if subscription.user.subscription.grace_period}}
             {{t "Activate Account" key='activate_account'}}
           {{else}}
@@ -181,14 +184,14 @@
         </button>
         {{#if trial_option}}
           {{#if subscription.user.really_expired}}
-            &nbsp;&nbsp;<a href="#" class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "I need more time" key='i_need_more_time'}}</a>
+            &nbsp;&nbsp;<a href="#" rel='skip_subscription' class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "I need more time" key='i_need_more_time'}}</a>
           {{else if subscription.user.really_really_expired}}
             &nbsp;&nbsp;<a href="#" class='btn btn-default btn-lg' {{action 'reload'}}>{{t "Reload, I've updated by subscription" key='reload_subscription_updated'}}</a>
           {{else}}
-            &nbsp;&nbsp;<a href="#" class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</a>
+            &nbsp;&nbsp;<a href="#" rel='free_trial' class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</a>
           {{/if}}
         {{else}}
-          <button type="button" class="btn btn-lg btn-default" {{action "reset"}}>{{t "Cancel Changes" key='cancel_changes'}}</button>
+          <button type="button" rel='cancel' class="btn btn-lg btn-default" {{action "reset"}}>{{t "Cancel Changes" key='cancel_changes'}}</button>
         {{/if}}
       </div>
     </div>

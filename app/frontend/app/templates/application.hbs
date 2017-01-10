@@ -366,7 +366,9 @@
         <a class='btn btn-default' id='identity_button' href="#" data-toggle="dropdown">
           {{#if app_state.currentUser}}
             <img src={{app_state.currentUser.avatar_url_with_fallback}} />
-            {{#if persistence.syncing}}
+            {{#if session.invalid_token}}
+              <span class="label label-danger unread">{{t "!" key='exclaim'}}</span>
+            {{else if persistence.syncing}}
               <span class='spinning unread'>
                 <span class="glyphicon glyphicon-refresh" style='z-index: 2;'></span>
                 <span class="glyphicon glyphicon-refresh" style='color: #fff; position: absolute; left: 2px; top: 2px;'></span>
@@ -413,7 +415,14 @@
               {{/if}}
             {{/unless}}
           {{/if}}
-          {{#if persistence.app_needs_update}}
+          {{#if session.invalid_token}}
+            <li role="presentation">
+              <a href="#" {{action "invalidateSession"}}>
+                <span class='label label-danger'>{{t "!" key='exclaim'}}</span>
+                {{t "Please Re-Login" key="please_relogin"}}
+              </a>
+            </li>
+          {{else if persistence.app_needs_update}}
             <li role="presentation">
               <a href="#" {{action "confirm_update"}}>
                 <span class='label label-danger'>{{t "!" key='exclaim'}}</span>

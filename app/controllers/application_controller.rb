@@ -39,7 +39,7 @@ class ApplicationController < ActionController::Base
         if !@api_device || !@api_device.valid_token?(token, request.headers['X-CoughDrop-Version'])
           @api_device = nil
           set_browser_token_header
-          api_error 400, {error: (@api_device ? "Expired token" : "Invalid token"), token: token}
+          api_error 400, {error: (@api_device ? "Expired token" : "Invalid token"), token: token, invalid_token: true}
           return false
         elsif @api_device && @api_device.disabled?
           @api_device = nil
@@ -87,7 +87,13 @@ class ApplicationController < ActionController::Base
   
   def require_api_token
     if !@api_user
-      api_error 400, {error: "Access token required for this endpoint"}
+      if !@token || @token.length == 0
+        api_error 400, {error: "Access token required for this endpoint: missing token"}
+      elsif !@api_device
+        api_error 400, {error: "Access token required for this endpoint: couldn't find matching device"}
+      else
+        api_error 400, {error: "Access token required for this endpoint: couldn't find matching user"}
+      end
     end
   end
   

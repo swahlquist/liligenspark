@@ -45,6 +45,7 @@ export default Ember.Controller.extend({
       _this.set('status', {saving: true});
       goal.save().then(function(goal) {
         _this.set('new_goal', null);
+        _this.set('status', null);
         _this.transitionToRoute('goals.goal', goal.get('id'));
       }, function(err) {
         _this.set('status', {error: true});

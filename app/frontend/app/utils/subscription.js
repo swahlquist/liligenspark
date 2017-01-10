@@ -371,10 +371,12 @@ Subscription.reopenClass({
             console.error('purchase_modal_closed');
             var d = Subscription.handler.defer;
             Ember.run.later(function() {
-              if(Subscription.handler.defer == d) {
+              if(d && Subscription.handler.defer == d) {
                 console.error('purchase_modal_not_resolved');
-                Subscription.handler.defer.reject();
-                Subscription.handler.defer = null;
+                if(Subscription.handler.defer) {
+                  Subscription.handler.defer.reject();
+                  Subscription.handler.defer = null;
+                }
               }
             }, 1000);
           },

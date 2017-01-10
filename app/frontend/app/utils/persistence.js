@@ -935,6 +935,11 @@ var persistence = Ember.Object.extend({
           sync_promises.push(Ember.RSVP.reject({error: "db not initialized"}));
         }
 
+        // Step 0.5: Check for an invalidated token
+        if(CoughDrop.session && !CoughDrop.session.get('invalid_token')) {
+          CoughDrop.session.check_token(false);
+        }
+
         // Step 1: If online
         // if there are any pending transactions, save them one by one
         // (needs to also support s3 uploading for locally-saved images/sounds)
@@ -1660,7 +1665,15 @@ var persistence = Ember.Object.extend({
             if(!_this.get('last_sync_stamp') || res.sync_stamp != _this.get('last_sync_stamp')) {
               persistence.sync('self').then(null, function() { });
             }
-          }, function() { });
+          }, function(err) {
+            if(err && err.result && err.result.invalid_token) {
+              if(stashes.get('auth_settings') && !Ember.testing) {
+                if(CoughDrop.session && !CoughDrop.session.get('invalid_token')) {
+                  CoughDrop.session.check_token(false);
+                }
+              }
+            }
+          });
           return true;
         }
       }
@@ -1709,13 +1722,16 @@ persistence.DSExtend = {
     var _this = this;
     var _super = this._super;
 
-    var find = persistence.find(type.modelName, id, true);
+    var original_find = persistence.find(type.modelName, id, true);
+    var find = original_find;
 
     var full_id = type.modelName + "_" + id;
+    // force_reload should always hit the server, though it can return local data if there's a token error (i.e. session expired)
     if(persistence.force_reload == full_id) { find.then(null, function() { }); find = Ember.RSVP.reject(); }
-    else if(!stashes.get('enabled')) { find.then(null, function() { }); find = Ember.RSVP.reject(); }
+    // private browsing mode gets really messed up when you try to query local db, so just don't.
+    else if(!stashes.get('enabled')) { find.then(null, function() { }); find = Ember.RSVP.reject(); original_find = Ember.RSVP.reject(); }
 
-    return find.then(function(data) {
+    var local_processed = function(data) {
       data.meta = data.meta || {};
       data.meta.local_result = true;
       if(data[type.modelName] && data.meta && data.meta.local_result) {
@@ -1728,7 +1744,10 @@ persistence.DSExtend = {
         meta: data.meta
       });
       return Ember.RSVP.resolve(data);
-    }, function() {
+    };
+
+
+    return find.then(local_processed, function() {
       // TODO: records created locally but not remotely should have a tmp_* id
       if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
         persistence.remember_access('find', type.modelName, id);
@@ -1753,6 +1772,13 @@ persistence.DSExtend = {
           }, function() {
             return Ember.RSVP.reject({error: "failed to delayed-persist to local db"});
           });
+        }, function(err) {
+           // TODO: only do this when the error is for an expired token, not any invalid token
+          if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
+            return original_find.then(local_processed);
+          } else {
+            return Ember.RSVP.reject(err);
+          }
         });
       } else {
         return persistence.offline_reject();

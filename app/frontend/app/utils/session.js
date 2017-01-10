@@ -54,6 +54,48 @@ var session = Ember.Object.extend({
     res.then(null, function() { });
     return res;
   },
+  check_token: function(allow_invalidate) {
+    var store_data = stashes.get_object('auth_settings', true) || {};
+    var key = store_data.access_token || "none";
+    persistence.tokens = persistence.tokens || {};
+    persistence.tokens[key] = true;
+    var url = '/api/v1/token_check?access_token=' + store_data.access_token;
+    if(store_data.as_user_id) {
+      url = url + "&as_user_id=" + store_data.as_user_id;
+    }
+    persistence.ajax(url, {
+      type: 'GET'
+    }).then(function(data) {
+      if(data.authenticated !== true) {
+        session.set('invalid_token', true);
+        if(allow_invalidate) {
+          session.invalidate(true);
+        }
+      } else {
+        session.set('invalid_token', false);
+      }
+      if(data.user_name) {
+        session.set('user_name', data.user_name);
+      }
+      if(data.sale !== undefined) {
+        CoughDrop.sale = parseInt(data.sale, 10) || false;
+      }
+      if(data.meta && data.meta.fakeXHR && data.meta.fakeXHR.browserToken) {
+        persistence.set('browserToken', data.meta.fakeXHR.browserToken);
+      }
+    }, function(data) {
+      if(!persistence.get('online')) {
+        return;
+      }
+      if(data.fakeXHR && data.fakeXHR.browserToken) {
+        persistence.set('browserToken', data.fakeXHR.browserToken);
+      }
+      if(data.result && data.result.error == "not online") {
+        return;
+      }
+      persistence.tokens[key] = false;
+    });
+  },
   restore: function(force_check_for_token) {
     if(!stashes.get('enabled')) { return {}; }
     var store_data = stashes.get_object('auth_settings', true) || {};
@@ -67,40 +109,9 @@ var session = Ember.Object.extend({
     } else if(!store_data.access_token) {
       session.invalidate();
     }
-    if(persistence.tokens[key] == null && !Ember.testing && persistence.get('online')) {
+    if(force_check_for_token || (persistence.tokens[key] == null && !Ember.testing && persistence.get('online'))) {
       if(store_data.access_token || force_check_for_token) { // || !persistence.get('browserToken')) {
-        persistence.tokens[key] = true;
-        var url = '/api/v1/token_check?access_token=' + store_data.access_token;
-        if(store_data.as_user_id) {
-          url = url + "&as_user_id=" + store_data.as_user_id;
-        }
-        persistence.ajax(url, {
-          type: 'GET'
-        }).then(function(data) {
-          if(data.authenticated !== true) {
-            session.invalidate(true);
-          }
-          if(data.user_name) {
-            session.set('user_name', data.user_name);
-          }
-          if(data.sale !== undefined) {
-            CoughDrop.sale = parseInt(data.sale, 10) || false;
-          }
-          if(data.meta && data.meta.fakeXHR && data.meta.fakeXHR.browserToken) {
-            persistence.set('browserToken', data.meta.fakeXHR.browserToken);
-          }
-        }, function(data) {
-          if(!persistence.get('online')) {
-            return;
-          }
-          if(data.fakeXHR && data.fakeXHR.browserToken) {
-            persistence.set('browserToken', data.fakeXHR.browserToken);
-          }
-          if(data.result && data.result.error == "not online") {
-            return;
-          }
-          persistence.tokens[key] = false;
-        });
+        session.check_token(true);
       } else {
         session.set('tokenConfirmed', false);
       }

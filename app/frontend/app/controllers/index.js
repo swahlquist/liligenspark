@@ -3,6 +3,7 @@ import CoughDrop from '../app';
 import persistence from '../utils/persistence';
 import capabilities from '../utils/capabilities';
 import app_state from '../utils/app_state';
+import session from '../utils/session';
 import modal from '../utils/modal';
 import stashes from '../utils/_stashes';
 
@@ -246,6 +247,9 @@ export default Ember.Controller.extend({
     }
   }.observes('app_state.sessionUser'),
   actions: {
+    invalidateSession: function() {
+      session.invalidate(true);
+    },
     reload: function() {
       location.reload();
     },
