@@ -89,13 +89,14 @@ class Api::OrganizationsController < ApplicationController
     elsif params['report'] == 'free_supervisor_without_supervisees'
       # logins that have changed to a free subscription after their trial but don't have any supervisees
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? }
+      users = users.select{|u| !Organization.supervisor?(u) && !Organization.manager?(u) }
     elsif params['report'] == 'free_supervisor_with_supervisors'
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && !u.supervisor_user_ids.blank? }
     elsif params['report'] == 'active_free_supervisor_without_supervisees_or_org'
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? && !Organization.supervisor?(u) }
       # TODO: sharding
       active_user_ids = Device.where(:user_id => users.map(&:id)).where(['updated_at > ?', 2.weeks.ago]).map(&:user_id).uniq
-      users = users.select{|u| active_user_ids.include?(u.id) }
+      users = users.select{|u| active_user_ids.include?(u.id) && !Organization.supervisor?(u) && !Organization.manager?(u) }
     elsif params['report'] == 'eval_accounts'
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['plan_id'] == 'eval_monthly_free' }
     elsif params['report'].match(/home_boards/)
@@ -243,6 +244,7 @@ class Api::OrganizationsController < ApplicationController
     if !@org.admin
       return allowed?(@org, 'never_allowed')
     end
+    return unless allowed?(@org, 'manage')
     render json: {emails: Setting.blocked_emails}
   end
   
@@ -250,7 +252,8 @@ class Api::OrganizationsController < ApplicationController
     if !@org.admin
       return allowed?(@org, 'never_allowed')
     end
-    success = params['extra_action'].to_json
+    return unless allowed?(@org, 'manage')
+    success = false
     if params['extra_action'] == 'block_email'
       success = "found action"
       if params['email']

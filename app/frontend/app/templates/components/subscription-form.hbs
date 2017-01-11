@@ -176,7 +176,7 @@
           <p class='text-danger'>{{t "There appears to be an issue with your session that could prevent your purchase from completing. Please try logging out and back in. If that doesn't correct the problem, please try a different browser or contact our support team." key='error_subscription_wont_word'}}</p>
         {{/if}}
         <button type="submit" rel='activate' class="btn btn-lg btn-primary">
-          {{#if subscription.user.subscription.grace_period}}
+          {{#if subscription.user.grace_period}}
             {{t "Activate Account" key='activate_account'}}
           {{else}}
             {{t "Update Account" key='update_account'}}

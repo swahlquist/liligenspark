@@ -183,6 +183,7 @@ class UserMailer < ActionMailer::Base
     @logging_disabled = !@user.settings['preferences']['logging']
     @no_recent_activity = @user.devices.all?{|d| d.updated_at < 4.days.ago}
     @no_home_board = @user.settings['preferences']['home_board']
+    @supporter = @user.settings['preferences']['role'] == 'supporter'
     @supporter_no_supervisees = @user.settings['preferences']['role'] == 'supporter' && @user.supervised_user_ids.empty?
     @no_subscription = @user.grace_period?
 

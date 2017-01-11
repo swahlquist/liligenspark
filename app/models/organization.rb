@@ -46,10 +46,19 @@ class Organization < ActiveRecord::Base
     user.settings ||= {}
     user.settings['manager_for'] ||= {}
     user.settings['manager_for'][self.global_id] = {'full_manager' => !!full, 'added' => Time.now.iso8601}
+    user.settings['preferences']['role'] = 'supporter'
     user.assert_current_record!
     user.save
     self.attach_user(user, 'manager')
     # TODO: trigger notification
+    if user.grace_period? && !Organization.managed?(user)
+      user.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => 'free_auto_adjusted',
+        'token_summary' => "Automatically-set Supporter Account",
+        'plan_id' => 'slp_monthly_free'
+      })
+    end
     self.touch
     true
   rescue ActiveRecord::StaleObjectError
@@ -81,10 +90,11 @@ class Organization < ActiveRecord::Base
     user.settings ||= {}
     user.settings['supervisor_for'] ||= {}
     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
+    user.settings['preferences']['role'] = 'supporter'
     user.assert_current_record!
     user.save
     self.attach_user(user, 'supervisor')
-    if user.grace_period?
+    if user.grace_period? && !Organization.managed?(user)
       user.update_subscription({
         'subscribe' => true,
         'subscription_id' => 'free_auto_adjusted',

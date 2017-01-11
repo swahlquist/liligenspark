@@ -482,13 +482,12 @@ class User < ActiveRecord::Base
     process_device(params['preferences']['device'], non_user_params) if params['preferences'] && params['preferences']['device']
     
     if non_user_params['premium_until']
+      self.clear_existing_subscription
       if non_user_params['premium_until'] == 'forever'
-        self.expires_at = Date.today >> (100 * 12)
-        self.settings['subscription'] ||= {}
         self.settings['subscription']['never_expires'] = true
       else
+        raise "there are better channels for this now"
         self.expires_at = non_user_params['premium_until']
-        self.settings['subscription'].delete('never_expires') if self.settings['subscription']
       end
     end
     

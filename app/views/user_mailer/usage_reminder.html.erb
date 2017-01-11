@@ -10,7 +10,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
   show up on your dashboard, including notifications, recent logs, and quick actions for
   things like loading their boards and reports, or even firing off a quick assessment! We're
   always working to make things better, so keep an eye out for additional improvements here.
-  <span style="clear: left;"></span>
+  <span style="clear: right;"></span>
   <br/><br/>
 <% elsif @no_recent_activity || @no_home_board %>
   <h3>Getting Started</h3>
@@ -21,7 +21,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
   talking! You can always use one of the suggested starter boards, or create your own.
   And don't forget that you can connect supervisors to a communicator's account, and 
   then everyone can see the boards and reports on their own devices too!
-  <span style="clear: left;"></span>
+  <span style="clear: right;"></span>
   <br/><br/>
 <% else %>
   <h3>Doing More</h3>
@@ -33,7 +33,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
   with experts to find ways to
   improve the app to better support the many different communication strategies that are out
   there. If you have any thoughts or suggestions, please don't hesitate to share!
-  <span style="clear: left;"></span>
+  <span style="clear: right;"></span>
   <br/><br/>
 <% end %>
 
@@ -54,8 +54,8 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
 <% if @no_subscription %>
   <h3>Subscription</h3>
   If you like what you're seeing with CoughDrop, feel free to 
-  <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription">update your subscription settings</a> 
-  to be able to keep using CoughDrop for the long-term!<br/><br/>
+  <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription">update your account settings</a> 
+  to keep using all of CoughDrop's features for the long-term!<br/><br/>
 <% end %>
 
 We hope this was a helpful check-in! If you have any questions or concerns, please 

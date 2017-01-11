@@ -224,12 +224,14 @@ export default Ember.Controller.extend({
     }
   }.observes('app_state.currentUser.preferences.auto_open_speak_mode'),
   subscription_check: function() {
+    // if the user is in the free trial or is really expired, they need the subscription
+    // modal to pop up
     if(this.get('app_state.sessionUser') && !this.get('app_state.installed_app')) {
       var progress = this.get('app_state.sessionUser.preferences.progress');
-      var subscription = this.get('app_state.sessionUser.subscription');
+      var user = this.get('app_state.sessionUser');
       var needs_subscribe_modal = false;
       if(!progress || (!progress.skipped_subscribe_modal && !progress.setup_done)) {
-        if(!subscription || subscription.grace_period) {
+        if(user.get('grace_period')) {
           if(modal.route) {
             needs_subscribe_modal = true;
           }
@@ -241,7 +243,7 @@ export default Ember.Controller.extend({
         if(!this.get('app_state.installed_app')) {
           modal.open('subscribe');
         } else {
-
+          // TODO: ...
         }
       }
     }

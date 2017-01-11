@@ -43,40 +43,51 @@ describe JsonApi::Unit do
       u1 = User.create
       u2 = User.create
       u3 = User.create
+      u4 = User.create
       o = Organization.create
       u = OrganizationUnit.create(:settings => {'name' => 'Roomy'}, :organization => o)
       o.add_user(u1.global_id, false, false)
       o.add_user(u3.global_id, false, false)
       o.add_supervisor(u2.global_id, true)
-      o.add_supervisor(u3.global_id, true)
+      o.add_supervisor(u4.global_id, true)
+      o.reload
+      expect(o.managed_user?(u1.reload)).to eq(true)
+      expect(o.managed_user?(u2.reload)).to eq(false)
+      expect(o.managed_user?(u3.reload)).to eq(true)
+      expect(o.managed_user?(u4.reload)).to eq(false)
+      expect(o.supervisor?(u1)).to eq(false)
+      expect(o.supervisor?(u2)).to eq(true)
+      expect(o.supervisor?(u3)).to eq(false)
+      expect(o.supervisor?(u4)).to eq(true)
       
       u.add_communicator(u1.global_id)
       u.add_supervisor(u2.global_id)
-      u.add_supervisor(u3.global_id, true)
+      u.add_supervisor(u4.global_id, true)
       u.add_communicator(u3.global_id)
       json = JsonApi::Unit.build_json(u)
       expect(json['id']).to eq(u.global_id)
       expect(json['name']).to eq('Roomy')
-      expect(json['communicators']).to_not eq(nil)
-      expect(json['communicators'].length).to eq(2)
       expect(json['supervisors']).to_not eq(nil)
       expect(json['supervisors'].length).to eq(2)
+      expect(json['communicators']).to_not eq(nil)
+      expect(json['communicators'].length).to eq(2)
     end
     
     it "should mark supervisors as having edit permission if that's true" do
       u1 = User.create
       u2 = User.create
       u3 = User.create
+      u4 = User.create
       o = Organization.create
       u = OrganizationUnit.create(:settings => {'name' => 'Roomy'}, :organization => o)
       o.add_user(u1.global_id, false, false)
       o.add_user(u3.global_id, false, false)
       o.add_supervisor(u2.global_id, true)
-      o.add_supervisor(u3.global_id, true)
+      o.add_supervisor(u4.global_id, true)
 
       u.add_communicator(u1.global_id)
       u.add_supervisor(u2.global_id)
-      u.add_supervisor(u3.global_id, true)
+      u.add_supervisor(u4.global_id, true)
       u.add_communicator(u3.global_id)
       json = JsonApi::Unit.build_json(u)
       expect(json['id']).to eq(u.global_id)
@@ -85,7 +96,7 @@ describe JsonApi::Unit do
       expect(json['communicators'].length).to eq(2)
       expect(json['supervisors']).to_not eq(nil)
       expect(json['supervisors'].length).to eq(2)
-      expect(json['supervisors'][1]['user_name']).to eq(u3.user_name)
+      expect(json['supervisors'][1]['user_name']).to eq(u4.user_name)
       expect(json['supervisors'][1]['org_unit_edit_permission']).to eq(true)
       expect(json['supervisors'][0]['org_unit_edit_permission']).to eq(false)
     end

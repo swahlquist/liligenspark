@@ -157,22 +157,39 @@ CoughDrop.User = DS.Model.extend({
     return !this.get('expired') && !this.get('free_premium');
   }.property('expired', 'free_premium'),
   full_premium_or_trial_period: function() {
-    return this.get('full_premium') || (this.get('free_premium') && !this.get('subscription.limited_supervisor'));
-  }.property('full_premium', 'free_premium', 'subscription.limited_supervisor'),
+    return this.get('full_premium') || (this.get('free_premium') && this.get('grace_period'));
+  }.property('full_premium', 'free_premium', 'grace_period'),
+  // limited_supervisor means they aren't tied to an org or any non-expired supervisees, so
+  // they need a little bit of reminding of the purpose of supervisor accounts.
+  limited_supervisor: function() {
+    return !!this.get('subscription.limited_supervisor');
+  }.property('subscription.limited_supervisor'),
   // free premium means limited functionality, as in a free supporter
   free_premium: function() {
-    return !!this.get('subscription.free_premium');
-  }.property('subscription.free_premium'),
-  expired: function() {
-    if(this.get('membership_type') != 'premium') { return true; }
+    if(this.get('subscription.free_premium')) { return true; }
+    // auto-convert a free-trial supporter to free_premium when their trial expires
+    if(this.get('supporter_role')) {
+      if(this.get('expiration_passed')) { return true; }
+    }
+    else if(!this.get('supporter_role') && this.get('fully_purchased') && this.get('expiration_passed')) { return true; }
+    return false;
+  }.property('subscription.free_premium', 'supporter_role', 'expiration_passed', 'fully_purchased'),
+  expiration_passed: function() {
     if(!this.get('subscription.expires')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires'));
-    return (expires < now);
-  }.property('membership_type', 'app_state.refresh_stamp', 'subscription.expires'),
+    return expires < now;
+  }.property('subscription.expires', 'app_state.refresh_stamp'),
+  expired: function() {
+    if(this.get('membership_type') != 'premium') { return true; }
+    var passed = this.get('expiration_passed');
+    if(!passed) { return false }
+    if(this.get('supporter_role')) { return false }
+    return !!passed;
+  }.property('expiration_passed', 'membership_type', 'supporter_role'),
   expired_or_limited_supervisor: function() {
-    return !!(this.get('expired') || this.get('subscription.limited_supervisor'));
-  }.property('expired', 'subscription.limited_supervisor'),
+    return !!(this.get('expired') || this.get('limited_supervisor'));
+  }.property('expired', 'limited_supervisor'),
   joined_within_24_hours: function() {
     var one_day_ago = window.moment().add(-1, 'day');
     if(this.get('joined') && this.get('joined') > one_day_ago) {
@@ -182,19 +199,30 @@ CoughDrop.User = DS.Model.extend({
   }.property('app_state.refresh_stamp', 'joined'),
   really_expired: function() {
     if(!this.get('expired')) { return false; }
+    if(this.get('fully_purchased')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(14, 'day');
     return (expires < now);
-  }.property('expired', 'subscription.expires'),
+  }.property('expired', 'subscription.expires', 'fully_purchased'),
   really_really_expired: function() {
     if(!this.get('expired')) { return false; }
+    if(this.get('fully_purchased')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(5, 'year');
     return (expires < now);
-  }.property('expired', 'subscription.expires'),
+  }.property('expired', 'subscription.expires', 'fully_purchased'),
+  fully_purchased: function() {
+    return !!this.get('subscription.fully_purchased');
+  }.property('subscription.fully_purchased'),
+  grace_period: function() {
+    if(this.get('supporter_role') && this.get('expiration_passed')) { return false; }
+    else if(!this.get('subscription.grace_period')) { return false; }
+    else if(this.get('expiration_passed')) { return false; }
+    else { return true; }
+  }.property('subscription.grace_period', 'supporter_role', 'expiration_passed'),
   expired_or_grace_period: function() {
-    return !!(this.get('expired') || this.get('subscription.grace_period'));
-  }.property('expired', 'subscription.grace_period'),
+    return !!(this.get('expired') || this.get('grace_period'));
+  }.property('expired', 'grace_period'),
   supporter_role: function() {
     return this.get('preferences.role') == 'supporter';
   }.property('preferences.role'),

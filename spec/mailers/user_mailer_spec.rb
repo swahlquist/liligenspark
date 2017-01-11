@@ -337,11 +337,11 @@ describe UserMailer, :type => :mailer do
 
       html = message_body(m, :html)
       expect(html).to match(/Hello again/)
-      expect(html).to match(/keep using CoughDrop/)
+      expect(html).to match(/keep using all of CoughDrop/)
       
       text = message_body(m, :text)
       expect(text).to match(/Hello again/)
-      expect(text).to match(/keep using CoughDrop/)
+      expect(text).to match(/keep using all the features of CoughDrop/)
       
       u.expires_at = nil
       u.save
@@ -351,11 +351,11 @@ describe UserMailer, :type => :mailer do
 
       html = message_body(m, :html)
       expect(html).to match(/Hello again/)
-      expect(html).not_to match(/keep using CoughDrop/)
+      expect(html).not_to match(/keep using all of CoughDrop/)
       
       text = message_body(m, :text)
       expect(text).to match(/Hello again/)
-      expect(text).not_to match(/keep using CoughDrop/)      
+      expect(text).not_to match(/keep using all the features of CoughDrop/)      
     end
   end
   

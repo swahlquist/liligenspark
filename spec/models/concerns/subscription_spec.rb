@@ -114,88 +114,256 @@ describe Subscription, :type => :model do
       expect(u.premium?).to eq(true)
     end
   end
-
-  describe "update_organization" do
-    it "should update user settings on paused subscription" do
-      u = User.create(:settings => {'subscription' => {'started' => Time.now}})
-      expect(Purchasing).to receive(:pause_subscription).with(u).and_return({:success => true})
-      u.update_subscription('pause' => true)
-      expect(u.settings['subscription']['started']).to eq(nil)
+  
+  describe "auto-expire" do
+    it "should correctly auto-expire a supporter role into a free_premium role" do
+      u = User.create(:settings => {'preferences' => {'role' => 'supporter'}})
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(true)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.expires_at = 2.days.ago
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(true)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
     end
-    
-    it "should retry on failed paused subscription" do
-      u = User.create(:settings => {'subscription' => {'started' => Time.now}})
-      expect(Purchasing).to receive(:pause_subscription).with(u).and_return({:success => false})
-      u.update_subscription('pause' => true)
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'pause' => true, 'attempts' => 1}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).to eq(true)
-
-      expect(Purchasing).to receive(:pause_subscription).with(u).and_return({:success => false})
-      Worker.process_queues
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'pause' => true, 'attempts' => 2}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).to eq(true)
-    end
-    
-    it "should send an error message on too many failed pause attempts" do
-      u = User.create(:settings => {'subscription' => {'started' => Time.now}})
-      expect(Purchasing).to receive(:pause_subscription).with(u).and_return({:success => false})
-      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:subscription_pause_failed, u.global_id)
-      u.update_subscription('pause' => true, 'attempts' => 10)
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'pause' => true, 'attempts' => 11}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).not_to eq(true)
-    end
-    
-    it "should update user settings on resumed subscription" do
+  
+    it "should correctly auto-expire a communicator role into needing a subscription" do
       u = User.create
-      expect(Purchasing).to receive(:resume_subscription).with(u).and_return({:success => true})
-      u.update_subscription('resume' => true)
-      expect(u.settings['subscription']['started']).to eq(Time.now.iso8601)
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(true)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.expires_at = 2.days.ago
+      expect(u.premium?).to eq(false)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
     end
     
-    it "should retry on failed resumed subscription" do
-      u = User.create(:settings => {'subscription' => {'started' => Time.now}})
-      expect(Purchasing).to receive(:resume_subscription).with(u).and_return({:success => false})
-      u.update_subscription('resume' => true)
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'resume' => true, 'attempts' => 1}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).to eq(true)
+    it "should give a communicator that has purchased the app and expires, ongoing limited permissions" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_150',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(true)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.expires_at = 2.days.ago
+      expect(u.premium?).to eq(false)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
 
-      expect(Purchasing).to receive(:resume_subscription).with(u).and_return({:success => false})
-      Worker.process_queues
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'resume' => true, 'attempts' => 2}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).to eq(true)
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_150',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 2.years.to_i
+      })
+      expect(Time).to receive(:now).and_return(3.years.from_now).at_least(1).times
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(true)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
     end
     
-    it "should send an error message on too many failed resume attempts" do
-      u = User.create(:settings => {'subscription' => {'started' => Time.now}})
-      expect(Purchasing).to receive(:resume_subscription).with(u).and_return({:success => false})
-      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:subscription_resume_failed, u.global_id)
-      u.update_subscription('resume' => true, 'attempts' => 10)
-      settings = {
-        'id' => u.id,
-        'method' => 'update_subscription',
-        'arguments' => [{'resume' => true, 'attempts' => 11}]
-      }
-      expect(Worker.scheduled?(User, :perform_action, settings)).not_to eq(true)
+    it "should give a communicator ongoing limited permissions only after they've subscribed for a while" do
+      u = User.create
+      res = u.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(true)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.settings['subscription']['started'] = 23.months.ago.iso8601
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(true)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.settings['subscription']['started'] = 2.years.ago.iso8601
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(true)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(true)
+      
+      res = u.update_subscription({
+        'unsubscribe' => true,
+        'subscription_id' => '12345'
+      })
+      expect(u.premium?).to eq(true)
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.free_premium?).to eq(true)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(true)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+    end
+    
+    it "should give a communicator that hasn't expired correct cloud extra permissions" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_150',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(true)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+    end
+    
+    it "should give a communicator that has a current subscription correct cloud extra permissions" do
+      u = User.create
+      res = u.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(true)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+    end
+    
+    it "should give a supporter that paid cloud extra permissions" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'slp_long_term_50',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.expires_at).to_not eq(nil)
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(true)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.expires_at = 2.days.ago
+      expect(u.premium?).to eq(true)
+      expect(u.free_premium?).to eq(true)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
     end
   end
 
@@ -219,7 +387,8 @@ describe Subscription, :type => :model do
       u = User.create(:expires_at => 1000.seconds.from_now)
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_assigned, u.global_id, nil)
       u.update_subscription_organization(-1)
-      expect(u.settings['subscription']['seconds_left']).to eq(1000)
+      expect(u.settings['subscription']['seconds_left']).to be > 995
+      expect(u.settings['subscription']['seconds_left']).to be < 1001
     end
     
     it "should update settings when assigning to an org" do
@@ -258,7 +427,7 @@ describe Subscription, :type => :model do
     end
     
     it "should always give at least a grace period when removing from an org" do
-      u = User.create(:settings => {'subscription' => {'seconds_left' => 10.minutes.to_i}})
+      u = User.create(:settings => {'subscription' => {'seconds_left' => 10.minutes.to_i}}, :expires_at => 2.hours.from_now)
       o = Organization.create
       u.settings['managed_by'] = {}
       u.settings['managed_by'][o.global_id] = {'pending' => false, 'sponsored' => true}
@@ -563,6 +732,8 @@ describe Subscription, :type => :model do
         expect(u.settings['subscription']['started']).to eq(nil)
         expect(u.settings['subscription']['last_purchase_id']).to eq('23456')
         expect(u.settings['subscription']['prior_purchase_ids']).to eq([])
+        expect(u.settings['subscription']['subscription_id']).to eq(nil)
+        expect(u.settings['subscription']['prior_subscription_ids']).to eq(['12345', '123456'])
         expect(u.expires_at).to_not eq(nil)
         
         res = u.update_subscription({
@@ -573,7 +744,7 @@ describe Subscription, :type => :model do
         expect(res).to eq(false)
         expect(u.expires_at).to_not eq(nil)
         expect(u.settings['subscription']['started']).to eq(nil)
-        expect(u.settings['subscription']['subscription_id']).to eq('123456')
+        expect(u.settings['subscription']['subscription_id']).to eq(nil)
         expect(u.settings['subscription']['prior_subscription_ids']).to eq(['12345', '123456'])
       end
     end
@@ -858,8 +1029,8 @@ describe Subscription, :type => :model do
         expect(u.settings['subscription']['started']).to_not eq(nil)
         expect(u.settings['subscription']['subscription_id']).to eq('12345')
         expect(u.settings['subscription']['prior_subscription_ids']).to eq(['12345'])
-        expect(u.settings['subscription']['last_purchase_id']).to eq('23456')
-        expect(u.settings['subscription']['prior_purchase_ids']).to eq([])
+        expect(u.settings['subscription']['last_purchase_id']).to eq(nil)
+        expect(u.settings['subscription']['prior_purchase_ids']).to eq(['23456'])
         expect(u.expires_at).to eq(nil)
 
         res = u.update_subscription({
@@ -872,8 +1043,8 @@ describe Subscription, :type => :model do
         expect(res).to eq(false)
         expect(u.settings['subscription']).not_to eq(nil)
         expect(u.settings['subscription']['started']).to_not eq(nil)
-        expect(u.settings['subscription']['last_purchase_id']).to eq('23456')
-        expect(u.settings['subscription']['prior_purchase_ids']).to eq([])
+        expect(u.settings['subscription']['last_purchase_id']).to eq(nil)
+        expect(u.settings['subscription']['prior_purchase_ids']).to eq(['23456'])
         expect(u.expires_at).to eq(nil)
       end
     end
@@ -1075,6 +1246,57 @@ describe Subscription, :type => :model do
       expect(res[:expired_emailed]).to eq(1)
     end
     
+    it "should not notify supervisors that are tied to an org" do
+      u1 = User.create(:expires_at => 6.days.from_now)
+      u2 = User.create(:expires_at => 25.hours.from_now)
+      u3 = User.create(:expires_at => 2.days.from_now)
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      o.add_supervisor(u1.user_name, false)
+      o.add_manager(u2.user_name, true)
+      
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_week_until_expiration, u1.global_id)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_day_until_expiration, u2.global_id)
+      res = User.check_for_subscription_updates
+      
+      expect(res).not_to eq(nil)
+      expect(res[:upcoming]).to eq(1)
+      expect(res[:upcoming_emailed]).to eq(0)
+    end
+    
+    it "should not notify communicators that are tied to an org" do
+      u1 = User.create(:expires_at => 6.days.from_now)
+      u2 = User.create(:expires_at => 25.hours.from_now)
+      u3 = User.create(:expires_at => 2.days.from_now)
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      u1.update_subscription_organization(o.global_id, true, true)
+      u2.update_subscription_organization(o.global_id, true, true)
+      
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_week_until_expiration, u1.global_id)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_day_until_expiration, u2.global_id)
+      res = User.check_for_subscription_updates
+      
+      expect(res).not_to eq(nil)
+      expect(res[:upcoming]).to eq(1)
+      expect(res[:upcoming_emailed]).to eq(0)
+    end
+    
+    it "should not notify supervisors" do
+      u1 = User.create(:expires_at => 6.days.from_now, :settings => {'preferences' => {'role' => 'supporter'}})
+      u2 = User.create(:expires_at => 25.hours.from_now, :settings => {'preferences' => {'role' => 'supporter'}})
+      u3 = User.create(:expires_at => 2.days.from_now)
+      expect(u1.communicator_role?).to eq(false)
+      expect(u2.communicator_role?).to eq(false)
+      expect(u3.communicator_role?).to eq(true)
+      
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_week_until_expiration, u1.global_id)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_day_until_expiration, u2.global_id)
+      res = User.check_for_subscription_updates
+      
+      expect(res).not_to eq(nil)
+      expect(res[:upcoming]).to eq(1)
+      expect(res[:upcoming_emailed]).to eq(0)
+    end
+    
     it "should notify recently-created inactive users" do
       u1 = User.create
       b = Board.create(:user => u1, :public => true)
@@ -1185,6 +1407,27 @@ describe Subscription, :type => :model do
       u.subscription_override('manual_supporter')
       expect(u.subscription_override('communicator_trial')).to eq(true)
       expect(u.grace_period?).to eq(true)
+    end
+    
+    it "should allow adding a voice" do
+      u = User.create
+      expect(u.settings['premium_voices']).to eq(nil)
+      expect(u.subscription_override('add_voice')).to eq(true)
+      expect(u.settings['premium_voices']).to_not eq(nil)
+      expect(u.settings['premium_voices']['allowed']).to eq(1)
+    end
+
+    it "should allow forcing logouts" do
+      u = User.create
+      d = Device.create(:user => u)
+      d.generate_token!
+      d2 = Device.create(:user => u)
+      d.generate_token!
+      expect(d.reload.settings['keys']).to_not eq([])
+      expect(d2.reload.settings['keys']).to_not eq([])
+      expect(u.subscription_override('force_logout')).to eq(true)
+      expect(d.reload.settings['keys']).to eq([])
+      expect(d2.reload.settings['keys']).to eq([])
     end
   end
   

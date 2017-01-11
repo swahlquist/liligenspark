@@ -317,8 +317,8 @@ var Subscription = Ember.Object.extend({
     if(!plan) {
       if(this.get('user.subscription.never_expires')) {
         return "free forever";
-      } else if(this.get('user.subscription.org_sponsored')) {
-        return "sponsored by " + this.get('user.subscription.managing_org_name');
+      } else if(this.get('user.is_sponsored')) {
+        return "sponsored by " + this.get('user.managing_org.name');
       } else {
         return "no plan";
       }

@@ -405,7 +405,7 @@ describe Organization, :type => :model do
       o = Organization.create(:settings => {'total_licenses' => 1})
       u = User.create(:expires_at => Time.now + 100, :settings => {'subscription' => {'org_sponsored' => false, 'seconds_left' => 3.weeks.to_i}})
       u.settings['managed_by'] = {}
-      u.settings['managed_by'][o.global_id] = {'sponsored' => true, 'pending' => false}
+      u.settings['managed_by'][o.global_id] = {'sponsored' => false, 'pending' => false}
       u.save
       o.remove_user(u.user_name)
       u.reload
