@@ -93,15 +93,24 @@ context('Button', function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
       persistence.set('online', false);
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       Button.extra_actions(b);
       expect(b.get('action_status.errored')).toEqual(true);
+    });
+
+    it("should not trigger an error for a non-webhook integration", function() {
+      app_state.set('sessionUser', Ember.Object.create({id: '123'}));
+      app_state.set('currentBoardState', {id: '234'});
+      persistence.set('online', false);
+      var b = Button.create({integration: {action_type: 'render'}});
+      Button.extra_actions(b);
+      expect(b.get('action_status.errored')).toEqual(null);
     });
 
     it("should trigger a remote call for integration buttons", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -121,7 +130,7 @@ context('Button', function() {
     it("should handle ajax errors for remote calls", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -143,7 +152,7 @@ context('Button', function() {
     it("should handle missing progress response", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -165,7 +174,7 @@ context('Button', function() {
     it("should track progress for remote calls", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -193,7 +202,7 @@ context('Button', function() {
     it("should handle errors on progress tracking", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -224,7 +233,7 @@ context('Button', function() {
     it("should mark successful progresses with no responses as failed", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -254,7 +263,7 @@ context('Button', function() {
     it("should mark successful progresses with any error codes as failed", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
@@ -284,7 +293,7 @@ context('Button', function() {
     it("should mark successful progresses with success codes as succeeded", function() {
       app_state.set('sessionUser', Ember.Object.create({id: '123'}));
       app_state.set('currentBoardState', {id: '234'});
-      var b = Button.create({integration: {}});
+      var b = Button.create({integration: {action_type: 'webhook'}});
       persistence.set('online', true);
       var ajax_opts = null;
       var ajax_url = null;
