@@ -40,16 +40,16 @@ describe('Badge', function() {
       b.set('completion_settings', {instance_count: 5, word_instances: 5, consecutive_units: 3});
       expect(b.get('completion_explanation')).toEqual('Use at least 5 words per day for 3 days in a row');
       b.set('completion_settings', {instance_count: 5, word_instances: 5, matching_units: 3});
-      expect(b.get('completion_explanation')).toEqual('Use at least 5 words per day for 3 days');
+      expect(b.get('completion_explanation')).toEqual('Use at least 5 words per day for any 3 days');
       b.set('completion_settings', {instance_count: 5, word_instances: 5, matching_instances: 12});
       expect(b.get('completion_explanation')).toEqual('Use at least 5 words per day for a total of 12 words');
       b.set('completion_settings', {instance_count: 1, interval: "date", level: 3, matching_units: 30, word_instances: 1});
-      expect(b.get('completion_explanation')).toEqual('Use at least 1 word per day for 30 days');
+      expect(b.get('completion_explanation')).toEqual('Use at least 1 word per day for any 30 days');
 
       b.set('completion_settings', {instance_count: 1, button_instances: 1, consecutive_units: 3});
       expect(b.get('completion_explanation')).toEqual('Hit at least 1 button per day for 3 days in a row');
       b.set('completion_settings', {instance_count: 4, session_instances: 6, matching_units: 2, interval: 'weekyear'});
-      expect(b.get('completion_explanation')).toEqual('Have at least 4 sessions per week for 2 weeks');
+      expect(b.get('completion_explanation')).toEqual('Have at least 4 sessions per week for any 2 weeks');
       b.set('completion_settings', {instance_count: 3, modeled_button_instances: 3, matching_instances: 20, interval: 'biweekyear'});
       expect(b.get('completion_explanation')).toEqual('Have modeled at least 3 buttons every two weeks for a total of 20 modeled buttons');
       b.set('completion_settings', {instance_count: 5, modeled_word_instances: 5, consecutive_units: 3, interval: 'date'});
@@ -63,7 +63,7 @@ describe('Badge', function() {
       b.set('completion_settings', {instance_count: 1, word_instances: 1, matching_units: 1, interval: 'date'});
       expect(b.get('completion_explanation')).toEqual('Use at least 1 word per day at least once');
       b.set('completion_settings', {instance_count: 18, word_instances: 18, matching_units: 5, interval: 'biweekyear'});
-      expect(b.get('completion_explanation')).toEqual('Use at least 18 words every two weeks for 10 weeks');
+      expect(b.get('completion_explanation')).toEqual('Use at least 18 words every two weeks for any 10 weeks');
 
       b.set('completion_settings', {watchlist: true, words_list: ['cat', 'sat', 'hat'], watch_type_count: 5, consecutive_units: 4});
       expect(b.get('completion_explanation')).toEqual('Use at least 5 of the words "cat", "sat", or "hat" per day, for 4 days in a row');

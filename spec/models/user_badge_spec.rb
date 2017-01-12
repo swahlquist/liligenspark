@@ -403,7 +403,60 @@ describe UserBadge, type: :model do
       expect(badges[2].current_progress).to eq(15.0 / 21.0)
       expect(badges[2].data['name']).to eq("Good Goal")
     end
-    
+
+    it "should award a partial badge for using at least 2 of the multi-part watchwords once every day for 3 weeks, with at least 2 different watchwords each week" do
+      u = User.create
+      d = Device.create(:user => u)
+      expect(Date).to receive(:today).and_return(Date.parse("June 28, 2016")).at_least(1).times
+      ts = 1465279200
+      21.times do |i|
+        if i % 2 == 0
+          s1 = LogSession.process_new({'events' => [
+            {'type' => 'button', 'button' => {'label' => 'cat rat fat', 'button_id' => 1, 'spoken' => true, 'board' => {'id' => '1_1'}}, 'timestamp' => ts + 1}
+          ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+          s2 = LogSession.process_new({'events' => [
+            {'type' => 'button', 'button' => {'label' => 'fat rat cat', 'button_id' => 1, 'spoken' => true, 'board' => {'id' => '1_1'}}, 'timestamp' => ts + 512}
+          ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+        else
+          s1 = LogSession.process_new({'events' => [
+            {'type' => 'button', 'button' => {'label' => 'sat mat fat splat', 'button_id' => 1, 'spoken' => true, 'board' => {'id' => '1_1'}}, 'timestamp' => ts + 1}
+          ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+          s2 = LogSession.process_new({'events' => [
+            {'type' => 'button', 'button' => {'label' => 'splat sat on the mat with fat', 'button_id' => 1, 'spoken' => true, 'board' => {'id' => '1_1'}}, 'timestamp' => ts + 512}
+          ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+        end
+        if i > 5
+          s4 = LogSession.process_new({'events' => [
+            {'type' => 'button', 'button' => {'label' => 'fat cat rat sat mat pat dat dat dat', 'button_id' => 1, 'spoken' => true, 'board' => {'id' => '1_1'}}, 'timestamp' => ts + 800}
+          ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+        end
+        WeeklyStatsSummary.update_for(s1.global_id)
+        ts = (Time.at(ts) + 24.hours).to_i
+      end
+
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        badges: [
+          {'watchlist' => true, 'words_list' => ['cat rat', 'fat rat', 'sat mat', 'fat cat'], 'watch_type_minimum' => 1, 'watch_type_count' => 1, 'interval' => 'date', 'consecutive_units' => 21, 'watch_type_interval' => 'weekyear', 'watch_type_interval_count' => 2},
+          {'watchlist' => true, 'words_list' => ['cat rat', 'fat rat', 'sat mat', 'fat cat'], 'watch_type_minimum' => 1, 'watch_type_count' => 2, 'interval' => 'date', 'consecutive_units' => 21, 'watch_type_interval' => 'weekyear', 'watch_type_interval_count' => 2},
+          {'watchlist' => true, 'words_list' => ['cat rat', 'fat rat', 'sat mat', 'fat cat'], 'watch_type_minimum' => 2, 'watch_type_count' => 3, 'interval' => 'date', 'consecutive_units' => 21, 'watch_type_interval' => 'weekyear', 'watch_type_interval_count' => 2},
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+
+      UserBadge.check_for(u.global_id)     
+      badges = UserBadge.where(:user => u, :user_goal => g).order(:level)
+      expect(badges.count).to eq(2)
+      expect(badges[0].earned).to eq(true)
+      expect(badges[0].level).to eq(1)
+      expect(badges[0].data['name']).to eq("Good Goal")
+      expect(badges[1].earned).to eq(false)
+      expect(badges[1].level).to eq(2)
+      expect(badges[1].data['name']).to eq("Good Goal")
+      expect(badges[1].data['percent']).to eq(15.0 / 21.0)
+    end    
     it "should award a badge for using at least 3 different parts of speech at least 5 days" do
       u = User.create
       d = Device.create(:user => u)

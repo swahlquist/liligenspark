@@ -150,7 +150,11 @@ CoughDrop.Badge = DS.Model.extend({
         if(n == 1) {
           res = res + i18n.t('at_least_once', " at least once");
         } else {
-          res = res + i18n.t('for_any', " for any ");
+          if(badge_level.consecutive_units) {
+            res = res + i18n.t('for', " for ");
+          } else {
+            res = res + i18n.t('for_any', " for any ");
+          }
           res = res + i18n.t('n_units', interval.unit, {count: interval.total});
         }
         if(badge_level.consecutive_units && n > 1) {
