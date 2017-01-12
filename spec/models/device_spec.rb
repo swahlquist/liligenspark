@@ -335,4 +335,16 @@ describe Device, :type => :model do
       expect(d.inactivity_timeout(true)).to eq(6.months.to_i)
     end
   end
+  
+  describe "invalidate_keys!" do
+    it "should invalidate keys" do
+      d = Device.create
+      d.generate_token!
+      expect(d.settings['keys']).not_to be_nil
+      expect(d.settings['keys'].length).to eq(1)
+      
+      d.invalidate_keys!
+      expect(d.reload.settings['keys']).to eq([])
+    end
+  end
 end

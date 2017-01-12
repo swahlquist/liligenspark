@@ -1268,7 +1268,7 @@ describe Board, :type => :model do
       u2 = User.create
       u3 = User.create
       b = Board.create(:user => u)
-      ui = UserIntegration.create(:user => u3)
+      ui = UserIntegration.create(:user => u3, :settings => {'button_webhook_url' => 'http://www.example.com'})
       b.settings['buttons'] = [{}, {
         'id' => 'hat',
         'integration' => {'user_integration_id' => ui.global_id}
@@ -1294,7 +1294,7 @@ describe Board, :type => :model do
     it "should return button action information for a valid, authorized integration button" do
       u = User.create
       b = Board.create(:user => u)
-      ui = UserIntegration.create(:user => u)
+      ui = UserIntegration.create(:user => u, :settings => {'button_webhook_url' => 'http://www.example.com'})
       b.settings['buttons'] = [{}, {
         'id' => '123',
         'integration' => {'user_integration_id' => ui.global_id}

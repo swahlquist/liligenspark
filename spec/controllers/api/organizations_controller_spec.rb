@@ -977,4 +977,104 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json['stats']).to_not eq(nil)
     end
   end
+  
+  describe "blocked_emails" do
+    it 'should require api token' do
+      get 'blocked_emails', :params => {'organization_id' => 'asdf'}
+      assert_missing_token
+    end
+    
+    it 'should require a valid org' do
+      token_user
+      get 'blocked_emails', :params => {'organization_id' => 'asdf'}
+      assert_not_found('asdf')
+    end
+    
+    it 'should require an admin org' do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name, true)
+      get 'blocked_emails', :params => {'organization_id' => o.global_id}
+      assert_unauthorized
+    end
+    
+    it 'should require admin permission' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name)
+      get 'blocked_emails', :params => {'organization_id' => o.global_id}
+      assert_unauthorized
+    end
+    
+    it 'should return a list of blocked emails' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      Setting.block_email!('fred@example.com')
+      Setting.block_email!('alice@example.com')
+      get 'blocked_emails', :params => {'organization_id' => o.global_id}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json).to eq({'emails' => ['alice@example.com', 'fred@example.com']})
+    end
+  end
+  
+  describe "extra_action" do
+    it 'should require api token' do
+      post 'extra_action', :params => {'organization_id' => 'asdf'}
+      assert_missing_token
+    end
+
+    it 'should require a valid org' do
+      token_user
+      post 'extra_action', :params => {'organization_id' => 'asdf'}
+      assert_not_found('asdf')
+    end
+    
+    it 'should require an admin org' do
+      token_user
+      o = Organization.create()
+      o.add_manager(@user.user_name, true)
+      post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'block_email', 'email' => 'susan@example.com'}
+    end
+    
+    it 'should require admin permission' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name)
+      post 'extra_action', :params => {'organization_id' => o.global_id}
+      assert_unauthorized
+    end
+    
+    it 'should return success when succeeded' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'block_email', 'email' => 'susan@example.com'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['success']).to eq(true)
+    end
+    
+    it 'should block an email address' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'block_email', 'email' => 'susan@example.com'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['success']).to eq(true)
+      expect(Setting.blocked_email?('SUSAN@example.com')).to eq(true)
+    end
+    
+    it 'should return false when not succeeded' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'something_else', 'email' => 'susan@example.com'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['success']).to eq(false)
+    end
+  end
 end

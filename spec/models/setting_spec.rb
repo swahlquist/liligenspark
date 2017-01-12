@@ -42,5 +42,11 @@ describe Setting, :type => :model do
       expect(Setting.blocked_email?('suE@hoTmAiL.com')).to eq(true)
       expect(Setting.blocked_email?('fido@juno.com')).to eq(false)
     end
+    
+    it "should return a list of blocked emails" do
+      Setting.block_email!('Boy@yahoo.COM')
+      Setting.block_email!('afred@example.com')
+      expect(Setting.blocked_emails).to eq(['afred@example.com', 'boy@yahoo.com'])
+    end
   end
 end

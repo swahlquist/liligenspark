@@ -64,7 +64,7 @@ def assert_broken
 end
 
 def assert_missing_token
-  assert_error("Access token required for this endpoint", 400)
+  assert_error("Access token required for this endpoint: missing token", 400)
 end
 
 def assert_not_found(id=nil)

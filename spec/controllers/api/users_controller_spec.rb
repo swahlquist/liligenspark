@@ -1375,4 +1375,34 @@ describe Api::UsersController, :type => :controller do
       }])
     end
   end
+  
+  describe "history" do
+    it 'should require api token' do
+      get 'history', :params => {'user_id' => 'asdf'}
+      assert_missing_token
+    end
+    
+    it 'should require a valid user' do
+      token_user
+      get 'history', :params => {'user_id' => 'asdf'}
+      assert_not_found('asdf')
+    end
+    
+    it 'should require admin authorization' do
+      token_user
+      get 'history', :params => {'user_id' => @user.global_id}
+      assert_unauthorized
+    end
+    
+    it 'should return a list of versions' do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+      u = User.create
+      get 'history', :params => {'user_id' => u.global_id}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['userversion']).to eq([])
+    end
+  end
 end

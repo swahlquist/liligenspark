@@ -1673,6 +1673,22 @@ describe User, :type => :model do
       expect(u.errored?).to eq(true)
       expect(u.processing_errors).to eq(['blocked email address'])
     end
+    
+    it "should allow someone already created with a blocked email to continue updating their account" do
+      u = User.process_new({'email' => 'bob@yahoo.com'})
+      expect(u.id).to_not eq(nil)
+      expect(u.errored?).to eq(false)
+      Setting.block_email!('BOB@yahoo.com')
+
+      u.process({'email' => 'bob@yahoo.com', 'name' => 'Bob Dude'})
+      expect(u.errored?).to eq(false)
+      
+      Setting.block_email!('bob@yahoo.com')
+      u = User.process_new({'email' => 'Bob@yahoo.com'})
+      expect(u.id).to eq(nil)
+      expect(u.errored?).to eq(true)
+      expect(u.processing_errors).to eq(['blocked email address'])
+    end
   end
   
   def self.find_for_login(user_name)
