@@ -9,22 +9,31 @@ module SentencePic
       filename = OBF::Utils.save_image({'url' => url})
       images[url] = filename
     end
-    image_commands = []
-    utterance.data['button_list'].each do |button|
-      filename = images[button['image']]
-      image_commands << "-label \"#{(button['label'] || button['vocalization'] || '').gsub("\"", "\\\"")}\" #{filename}"
-    end
     montage = OBF::Utils.temp_path('montage') + '.png'
-    rows = (image_commands.length.to_f / PER_ROW.to_f).ceil
+    
+    rows = (utterance.data['button_list'].length.to_f / PER_ROW.to_f).ceil
     columns = PER_ROW
     width = 70
     height = 70
-    if image_commands.length < PER_ROW
-      columns = image_commands.length
+    if utterance.data['button_list'].length < PER_ROW
+      columns = utterance.data['button_list'].length
       width = [420 / columns, 200].min
       height = width
-    elsif image_commands.length < PER_ROW * 2
-      columns = (image_commands.length.to_f / 2.0).ceil
+    elsif utterance.data['button_list'].length < PER_ROW * 2
+      columns = (utterance.data['button_list'].length.to_f / 2.0).ceil
+    end
+
+    image_commands = []
+    text_limit = 25
+    text_limit = 20 if columns == 2
+    text_limit = 10 if columns > 2
+    utterance.data['button_list'].each do |button|
+      filename = images[button['image']]
+      label = (button['label'] || button['vocalization'] || '').gsub("\"", "\\\"")
+      if label.length > text_limit
+        label = label[0, text_limit - 2] + ".."
+      end
+      image_commands << "-label \"#{label}\" #{filename}"
     end
     
     `montage #{image_commands.join(' ')} -tile #{columns}x#{rows} -shadow -pointsize 16 -geometry #{width}x#{height}+3+10 -border 2 -bordercolor "#888" #{montage}`

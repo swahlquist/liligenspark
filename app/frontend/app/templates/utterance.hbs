@@ -49,12 +49,12 @@
         </div>
       </div>
       <div class="form-group">
-        <div class="col-sm-8">
+        <div class="col-sm-12">
           <p class="form-control-static">
             {{t "In some web sites, an image preview will be shown. You can select the image you would like to appear in these cases." key='preview_symbol'}}<br/>
             <button type='button' {{action 'change_image' 'prev'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-left'></span></button>
-            <span style="width: 200px; height: 200px; display: inline-block; overflow: hidden; vertical-align: middle;">
-            <img src={{image_url}} style="max-height: 200px; width: 200px;" alt="preview symbol"/>
+            <span style="width: 400px; height: 200px; display: inline-block; overflow: hidden; vertical-align: middle; text-align: center;">
+            <img src={{image_url}} style="max-height: 200px; max-width: 400px;" alt="preview symbol"/>
             </span>
             <button type='button' {{action 'change_image' 'next'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-right'></span></button>
           </p>
