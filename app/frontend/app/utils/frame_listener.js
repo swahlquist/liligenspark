@@ -24,6 +24,8 @@ var frame_listener = Ember.Object.extend({
       this.clear_target(data);
     } else if(data.action == 'clear_targets') {
       this.clear_targets(data);
+    } else {
+      data.respond({error: 'unrecognized action, ' + data.action});
     }
   },
   unload: function() {
@@ -32,24 +34,27 @@ var frame_listener = Ember.Object.extend({
   },
   listen: function(data) {
     var id = (new Date().getTime()) + "_" + Math.random();
-    raw_listeners[data.session_id + id] = data;
+    frame_listener.raw_listeners[data.session_id + id] = data;
     data.respond({listen_id: id});
   },
   stop_listening: function(data) {
     if(data == 'all') {
-      for(var idx in raw_listeners) {
-        if(raw_listeners[idx]) {
-          delete raw_listeners[idx];
+      for(var idx in frame_listener.raw_listeners) {
+        if(frame_listener.raw_listeners[idx]) {
+          delete frame_listener.raw_listeners[idx];
         }
       }
     } else if(data.listen_id == 'all') {
-      for(var idx in raw_listeners) {
-        if(raw_listeners[idx] && data.session_id && idx.index_of(data.session_id) === 0) {
-          delete raw_listeners[idx];
+      for(var idx in frame_listener.raw_listeners) {
+        if(frame_listener.raw_listeners[idx] && data.session_id && idx.indexOf(data.session_id) === 0) {
+          delete frame_listener.raw_listeners[idx];
         }
       }
     } else {
-      delete raw_listeners[data.session_id + data.listen_id];
+      delete frame_listener.raw_listeners[data.session_id + data.listen_id];
+    }
+    if(data && data.respond) {
+      data.respond({cleared: true});
     }
   },
   raw_event: function(event) {
@@ -60,9 +65,9 @@ var frame_listener = Ember.Object.extend({
     }
     if(overlay) {
       var rect = overlay.getBoundingClientRect();
-      for(var idx in raw_listeners) {
-        if(raw_listeners[idx] && raw_listeners[idx].session_id == session_id && raw_listeners[idx].respond) {
-          raw_listeners[idx].respond({
+      for(var idx in frame_listener.raw_listeners) {
+        if(frame_listener.raw_listeners[idx] && frame_listener.raw_listeners[idx].session_id == session_id && frame_listener.raw_listeners[idx].respond) {
+          frame_listener.raw_listeners[idx].respond({
             type: event.type, // 'click', 'touch', 'gazedwell', 'scanselect', 'mousemove', 'gazelinger'
             aac_type: event.aac_type, // 'start', 'select', 'over'
             x_percent: (event.clientX - rect.left) / rect.width, // 0.0 - 1.0
@@ -94,7 +99,7 @@ var frame_listener = Ember.Object.extend({
 
     app_state.activate_button({}, obj);
 
-    data.respond({error: 'not implemented'});
+    data.respond({added: true});
   },
   update_manifest: function(data) {
     // { html_url: '', script_url: '', state: {key: 'values', only: 'folks'}, objects: [{url: '', type: 'image'}] }
@@ -104,11 +109,11 @@ var frame_listener = Ember.Object.extend({
     data.respond({error: 'not implemented'});
   },
   trigger_target: function(ref) {
-    var target = (this.get('targets') || []).find(function(t) { return ref == t.dom || (t.session_id == ref.session_id && t.id == ref.id); });
+    var target = (this.get('targets') || []).find(function(t) { return (t.dom && ref == t.dom) || (t.session_id == ref.session_id && t.id == ref.id); });
     if(target && target.respond) {
       target.respond({
         type: 'select',
-        id: ref.id
+        id: target.id
       });
     }
   },
@@ -190,6 +195,7 @@ var frame_listener = Ember.Object.extend({
     return (this.get('targets') || []).filter(function(t) { return t.session_id == session_id; });
   }
 }).create({targets: []});
+frame_listener.raw_listeners = raw_listeners;
 
 window.addEventListener('message', function(event) {
   if(event.data && event.data.aac_shim) {
