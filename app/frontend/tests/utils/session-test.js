@@ -501,4 +501,170 @@ describe('session', function() {
       });
     });
   });
+
+  describe('check_token', function() {
+    it('should query remotely', function() {
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=undefined');
+        called = true;
+        opts = o;
+        return Ember.RSVP.reject({});
+      });
+      session.check_token();
+      waitsFor(function() { return called; })
+      runs();
+    });
+
+    it('should include as_user_id if specified', function() {
+      stub(stashes, 'get_object', function(key, bool) {
+        if(key == 'auth_settings') {
+          return {access_token: 'happy_token', as_user_id: 'whatever'};
+        }
+      });
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=happy_token&as_user_id=whatever');
+        called = true;
+        opts = o;
+        return Ember.RSVP.reject({});
+      });
+      session.check_token();
+      waitsFor(function() { return called; })
+      runs();
+    });
+
+    it('should do nothing on error if offline', function() {
+      var called = false;
+      var opts = {};
+      persistence.set('online', false);
+      persistence.tokens['none'] = 'asdf';
+      stub(persistence, 'ajax', function(url, o) {
+        called = true;
+        return Ember.RSVP.reject({});
+      });
+      session.check_token();
+      waitsFor(function() { return called; })
+      runs(function() {
+        expect(persistence.tokens['none']).toEqual(true);
+      });
+    });
+
+    it('should set the browser token on error result providing token', function() {
+      var called = false;
+      var opts = {};
+      persistence.set('online', true);
+      stub(persistence, 'ajax', function(url, o) {
+        called = true;
+        return Ember.RSVP.reject({fakeXHR: {browserToken: 'tokeny'}});
+      });
+      session.check_token();
+      waitsFor(function() { return persistence.get('browserToken') == 'tokeny'; })
+      runs();
+    });
+
+    it('should clear the key cache on any other error', function() {
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        called = true;
+        return Ember.RSVP.reject({});
+      });
+      session.check_token();
+      waitsFor(function() { return persistence.tokens['none'] === false; })
+      runs();
+    });
+
+    it('should set as invalid token if returned as such', function() {
+      stub(stashes, 'get_object', function(key, bool) {
+        if(key == 'auth_settings') {
+          return {access_token: 'happy_token'};
+        }
+      });
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=happy_token');
+        called = true;
+        opts = o;
+        return Ember.RSVP.resolve({authenticated: false});
+      });
+      session.check_token();
+      waitsFor(function() { return session.get('invalid_token'); })
+      runs();
+    });
+
+    it('should set browserToken if returned on success', function() {
+      stub(stashes, 'get_object', function(key, bool) {
+        if(key == 'auth_settings') {
+          return {access_token: 'happy_token'};
+        }
+      });
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=happy_token');
+        called = true;
+        opts = o;
+        return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
+      });
+      session.check_token();
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      runs(function() {
+        expect(persistence.get('browserToken')).toEqual('jorb');
+      });
+    });
+
+    it('should invalidate the session if allowed', function() {
+      var invalidated = false;
+      stub(session, 'invalidate', function() {
+        invalidated = true;
+      });
+      stub(stashes, 'get_object', function(key, bool) {
+        if(key == 'auth_settings') {
+          return {access_token: 'happy_token'};
+        }
+      });
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=happy_token');
+        called = true;
+        opts = o;
+        return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
+      });
+      session.check_token(true);
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      runs(function() {
+        expect(invalidated).toEqual(true);
+      });
+    });
+
+    it('should not invalidate the session if not allowed', function() {
+      var invalidated = false;
+      stub(session, 'invalidate', function() {
+        invalidated = true;
+      });
+      stub(stashes, 'get_object', function(key, bool) {
+        if(key == 'auth_settings') {
+          return {access_token: 'happy_token'};
+        }
+      });
+      var called = false;
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        expect(url).toEqual('/api/v1/token_check?access_token=happy_token');
+        called = true;
+        opts = o;
+        return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
+      });
+      session.check_token();
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      runs(function() {
+        expect(invalidated).toEqual(false);
+      });
+    });
+  });
 });
