@@ -3052,6 +3052,7 @@ describe("persistence-sync", function() {
             '179': 'current'
           });
         }
+        return Ember.RSVP.reject({});
       });
 
       var stores = [];
@@ -3223,6 +3224,7 @@ describe("persistence-sync", function() {
             '179': 'current'
           });
         }
+        return Ember.RSVP.reject({});
       });
 
       var stores = [];
