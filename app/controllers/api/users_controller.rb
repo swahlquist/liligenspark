@@ -204,6 +204,7 @@ class Api::UsersController < ApplicationController
   def history
     user_id = nil
     user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
     if user
       return unless allowed?(user, 'admin_support_actions')
       user_id = user.global_id
