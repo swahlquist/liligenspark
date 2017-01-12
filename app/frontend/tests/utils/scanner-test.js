@@ -383,6 +383,8 @@ describe('scanner', function() {
 //         var app = app_state.controller;
 //         var board = app.get('board.model');
 //         app.activateButton(button, {image: button.get('image'), sound: button.get('sound'), board: board});
+//       } else if(elem.dom.hasClass('integration_target')) {
+//         frame_listener.trigger_target(elem.dom[0]);
 //       } else if(elem.dom.hasClass('button_list')) {
 //         elem.dom.select();
 //       } else {
