@@ -2,6 +2,12 @@
 
 ## Master
 
+### 2017-01-13
+- show badge completion requirements for all badge popups
+- fixes for race conditions when updating users and boards
+- sound effects for badges
+- support for frame-rendered integrations, with callbacks via aac_shim
+
 ### 2016-12-21
 - fixed region-based scanning, added button-based scanning option
 - optional alternate voice for scanning audio prompts
