@@ -322,6 +322,7 @@ describe("persistence", function() {
         });
       });
     });
+
     it("should mark retrieved attribute for sideloaded results", function() {
       db_wait(function() {
         var record = null;
@@ -881,6 +882,44 @@ describe("persistence", function() {
             expect(ajax_called).toEqual(null);
             expect(result.get('id')).toEqual('9876');
             expect(result.get('name')).toEqual('Cool Board');
+          });
+        });
+      });
+
+      it("should skip use the local copy when online but getting a token error", function() {
+        db_wait(function() {
+          queryLog.real_lookup = true;
+          persistence.set('online', true);
+          var ajax_called = null;
+          stub(Ember.$, 'realAjax', function(options) {
+            ajax_called = true;
+            return Ember.RSVP.reject({responseJSON: {invalid_token: true, error: {invalid_token: true, error: 'invalid token'}}});
+          });
+          stub(persistence, 'find', function(store, key) {
+            return Ember.RSVP.resolve({board: {
+                id: '9876',
+                name: 'Cool Board'
+            }});
+          });
+
+          var result = null;
+          var reload_result = null;
+          CoughDrop.store.findRecord('board', '9876').then(function(res) {
+            result = res;
+          });
+          waitsFor(function() { return result; });
+          runs(function() {
+            expect(result.get('id')).toEqual('9876');
+            expect(result.get('name')).toEqual('Cool Board');
+            result.reload().then(function(res) {
+              reload_result = res;
+            });
+          });
+          waitsFor(function() { return reload_result; });
+          runs(function() {
+            expect(ajax_called).toEqual(true);
+            expect(reload_result.get('id')).toEqual('9876');
+            expect(reload_result.get('name')).toEqual('Cool Board');
           });
         });
       });
