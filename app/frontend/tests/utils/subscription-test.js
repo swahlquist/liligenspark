@@ -475,7 +475,7 @@ describe('subscription', function() {
     it('should flag long-term purchasers correctly', function() {
       var user = CoughDrop.store.createRecord('user');
       var exp = window.moment().add(6, 'day').toISOString();
-      user.set('subscription', {expires: exp, free_premium: false, grace_period: true, active: true, purchased: true, plan_id: 'long_term_150', free_premium: false});
+      user.set('subscription', {expires: exp, free_premium: false, grace_period: true, active: true, purchased: true, plan_id: 'long_term_150'});
       user.set('membership_type', 'premium');
       expect(user.get('full_premium')).toEqual(true);
       expect(user.get('full_premium_or_trial_period')).toEqual(true);
@@ -538,7 +538,7 @@ describe('subscription', function() {
     it('should flag paid supporters correctly', function() {
       var user = CoughDrop.store.createRecord('user');
       var exp = window.moment().add(6, 'day').toISOString();
-      user.set('subscription', {expires: exp, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'slp_long_term_50', free_premium: false});
+      user.set('subscription', {expires: exp, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'slp_long_term_50'});
       user.set('preferences', {role: 'supporter'});
       user.set('membership_type', 'premium');
       expect(user.get('full_premium')).toEqual(true);
@@ -622,7 +622,7 @@ describe('subscription', function() {
     it('should flag subscribers correctly', function() {
       var user = CoughDrop.store.createRecord('user');
       var exp = window.moment().add(6, 'day').toISOString();
-      user.set('subscription', {expires: null, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'monthly_6', free_premium: false});
+      user.set('subscription', {expires: null, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'monthly_6'});
       user.set('membership_type', 'premium');
       expect(user.get('full_premium')).toEqual(true);
       expect(user.get('full_premium_or_trial_period')).toEqual(true);

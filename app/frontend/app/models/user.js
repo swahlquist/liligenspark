@@ -183,8 +183,8 @@ CoughDrop.User = DS.Model.extend({
   expired: function() {
     if(this.get('membership_type') != 'premium') { return true; }
     var passed = this.get('expiration_passed');
-    if(!passed) { return false }
-    if(this.get('supporter_role')) { return false }
+    if(!passed) { return false; }
+    if(this.get('supporter_role')) { return false; }
     return !!passed;
   }.property('expiration_passed', 'membership_type', 'supporter_role'),
   expired_or_limited_supervisor: function() {

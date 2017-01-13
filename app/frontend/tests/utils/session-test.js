@@ -513,7 +513,7 @@ describe('session', function() {
         return Ember.RSVP.reject({});
       });
       session.check_token();
-      waitsFor(function() { return called; })
+      waitsFor(function() { return called; });
       runs();
     });
 
@@ -532,7 +532,7 @@ describe('session', function() {
         return Ember.RSVP.reject({});
       });
       session.check_token();
-      waitsFor(function() { return called; })
+      waitsFor(function() { return called; });
       runs();
     });
 
@@ -546,7 +546,7 @@ describe('session', function() {
         return Ember.RSVP.reject({});
       });
       session.check_token();
-      waitsFor(function() { return called; })
+      waitsFor(function() { return called; });
       runs(function() {
         expect(persistence.tokens['none']).toEqual(true);
       });
@@ -561,7 +561,7 @@ describe('session', function() {
         return Ember.RSVP.reject({fakeXHR: {browserToken: 'tokeny'}});
       });
       session.check_token();
-      waitsFor(function() { return persistence.get('browserToken') == 'tokeny'; })
+      waitsFor(function() { return persistence.get('browserToken') == 'tokeny'; });
       runs();
     });
 
@@ -573,7 +573,7 @@ describe('session', function() {
         return Ember.RSVP.reject({});
       });
       session.check_token();
-      waitsFor(function() { return persistence.tokens['none'] === false; })
+      waitsFor(function() { return persistence.tokens['none'] === false; });
       runs();
     });
 
@@ -592,7 +592,7 @@ describe('session', function() {
         return Ember.RSVP.resolve({authenticated: false});
       });
       session.check_token();
-      waitsFor(function() { return session.get('invalid_token'); })
+      waitsFor(function() { return session.get('invalid_token'); });
       runs();
     });
 
@@ -611,7 +611,7 @@ describe('session', function() {
         return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
       });
       session.check_token();
-      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; });
       runs(function() {
         expect(persistence.get('browserToken')).toEqual('jorb');
       });
@@ -636,7 +636,7 @@ describe('session', function() {
         return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
       });
       session.check_token(true);
-      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; });
       runs(function() {
         expect(invalidated).toEqual(true);
       });
@@ -661,7 +661,7 @@ describe('session', function() {
         return Ember.RSVP.resolve({authenticated: false, meta: {fakeXHR: {browserToken: 'jorb'}}});
       });
       session.check_token();
-      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; })
+      waitsFor(function() { return session.get('invalid_token') && persistence.get('browserToken') == 'jorb'; });
       runs(function() {
         expect(invalidated).toEqual(false);
       });
