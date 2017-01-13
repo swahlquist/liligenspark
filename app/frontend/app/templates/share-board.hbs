@@ -129,7 +129,11 @@
               <div style="margin-top: 5px;">
                 <button type="submit" class="btn btn-default">{{t "Share This Board" key='share_board'}}</button>
                 {{#if supervisee_share}}
-                  <button class='btn btn-default' {{action 'copy_board'}} disabled={{not_copyable}}>{{t "Make a Copy For %{user_name}" key='make_a_copy_for_user' user_name=share_user_name}}</button>
+                  {{#if not_copyable}}
+                    <span class='text-muted'>{{t "You are a read-only supervisor for this user" key='read_only_supervisor'}}</span>
+                  {{else}}
+                    <button class='btn btn-default' {{action 'copy_board'}} disabled={{not_copyable}}>{{t "Make a Copy For %{user_name}" key='make_a_copy_for_user' user_name=share_user_name}}</button>
+                  {{/if}}
                 {{/if}}
               </div>
             </div>
