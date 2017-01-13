@@ -12,8 +12,11 @@ var scanner = Ember.Object.extend({
   setup: function(controller) {
     this.controller = controller;
   },
+  find_elem: function(search) {
+    return Ember.$(search);
+  },
   start: function(options) {
-    if(Ember.$("header #speak").length === 0) {
+    if(scanner.find_elem("header #speak").length === 0) {
       console.debug("scanning currently only works in speak mode...");
       scanner.stop();
       return;
@@ -32,7 +35,7 @@ var scanner = Ember.Object.extend({
         dom: Ember.$("header"),
         label: i18n.t('header', "Header")
       };
-      Ember.$("header #speak").find("button:visible,#button_list,a.btn").each(function() {
+      scanner.find_elem("header #speak").find("button:visible,#button_list,a.btn").each(function() {
         var id_labels = {
           'home_button': i18n.t('home', "Home"),
           'back_button': i18n.t('back', "Back"),
@@ -41,7 +44,7 @@ var scanner = Ember.Object.extend({
           'backspace_button': i18n.t('backspace', "Backspace"),
           'clear_button': i18n.t('clear', "Clear")
         };
-        var $elem = Ember.$(this);
+        var $elem = scanner.find_elem(this);
         if($elem.attr('id') != 'speak_options') {
           var label = id_labels[$elem.attr('id')] || "";
           row.children.push({
@@ -52,12 +55,12 @@ var scanner = Ember.Object.extend({
       });
 
       var menu = {
-        dom: Ember.$("#identity a.btn"),
+        dom: scanner.find_elem("#identity a.btn"),
         label: i18n.t('menu', "Menu"),
         children: []
       };
-      Ember.$("#identity .dropdown-menu a").each(function() {
-        var $option = Ember.$(this);
+      scanner.find_elem("#identity .dropdown-menu a").each(function() {
+        var $option = scanner.find_elem(this);
         menu.children.push({
           dom: $option,
           label: $option.text()
@@ -67,21 +70,21 @@ var scanner = Ember.Object.extend({
 
       // TODO: figure out sidebar, when teaser is visible and also when the
       // whole sidebar is visible, including toggling between the two
-  //     if(Ember.$("#sidebar_tease:visible").length) {
+  //     if(scanner.find_elem("#sidebar_tease:visible").length) {
   //       row.children.push({
-  //         dom: Ember.$("#sidebar_tease")
+  //         dom: scanner.find_elem("#sidebar_tease")
   //       });
   //     }
       rows.push(row);
-      if(Ember.$("#word_suggestions").length) {
+      if(scanner.find_elem("#word_suggestions").length) {
         var row = {
           children: [],
-          dom: Ember.$("#word_suggestions"),
+          dom: scanner.find_elem("#word_suggestions"),
           label: i18n.t('suggestions', "Suggestions"),
           reload_children: function() {
             var res = [];
-            Ember.$("#word_suggestions").find(".suggestion").each(function() {
-              var $elem = Ember.$(this);
+            scanner.find_elem("#word_suggestions").find(".suggestion").each(function() {
+              var $elem = scanner.find_elem(this);
               res.push({
                 dom: $elem,
                 label: $elem.text()
@@ -100,7 +103,7 @@ var scanner = Ember.Object.extend({
         for(var idx = 0; idx < content.rows; idx++) {
           row = {
             children: [],
-            dom: Ember.$(),
+            dom: scanner.find_elem(),
             label: i18n.t('row_n', "Row %{n}", {n: (idx + 1)})
           };
           for(var jdx = 0; jdx < content.columns; jdx++) {
@@ -128,7 +131,7 @@ var scanner = Ember.Object.extend({
         for(var idx = 0; idx < content.columns; idx++) {
           var column = {
             children: [],
-            dom: Ember.$(),
+            dom: scanner.find_elem(),
             label: i18n.t('column_n', "Column %{n}", {n: (idx + 1)})
           };
           for(var jdx = 0; jdx < content.rows; jdx++) {
@@ -171,7 +174,7 @@ var scanner = Ember.Object.extend({
             for(var jdx = 0; jdx < vertical_chunks; jdx++) {
               var chunk = {
                 children: [],
-                dom: Ember.$(),
+                dom: scanner.find_elem(),
                 label: i18n.t('region_n', "Region %{n}", {n: ((idx * vertical_chunks) + jdx + 1)})
               };
               var n_columns = columns_per_chunk;
@@ -210,7 +213,7 @@ var scanner = Ember.Object.extend({
             for(var jdx = 0; jdx < horizontal_chunks; jdx++) {
               var chunk = {
                 children: [],
-                dom: Ember.$(),
+                dom: scanner.find_elem(),
                 label: i18n.t('region_n', "Region %{n}", {n: ((idx * horizontal_chunks) + jdx + 1)})
               };
               for(var kdx = 0; kdx < rows_per_chunk; kdx++) {
@@ -272,7 +275,7 @@ var scanner = Ember.Object.extend({
       res.order = [];
       res.order[0] = [];
       items.forEach(function(item, idx) {
-        var $elem = Ember.$(item.dom);
+        var $elem = scanner.find_elem(item.dom);
         $elem.label = item.target.prompt || i18n.t('target_n', "target %{n}", {n: idx + 1});
         res.order[0].push($elem);
       });
@@ -286,10 +289,10 @@ var scanner = Ember.Object.extend({
       for(var idx = 0; idx < grid.order.length; idx++) {
         res.order[idx] = [];
         for(var jdx = 0; jdx < grid.order[idx].length; jdx++) {
-          var $button = Ember.$(".button[data-id='" + grid[idx][jdx] + "']:not(.hidden_button)");
-          var button = editManager.find_button(grid[idx][jdx]);
+          var $button = scanner.find_elem(".button[data-id='" + grid.order[idx][jdx] + "']:not(.hidden_button)");
+          var button = editManager.find_button(grid.order[idx][jdx]);
           $button.label = (button && (button.get('vocalization') || button.get('label'))) || "";
-          $button.soudn = button && button.get('sound');
+          $button.sound = (button && button.get('sound')) || null;
           res.order[idx][jdx] = $button;
         }
       }
@@ -331,9 +334,9 @@ var scanner = Ember.Object.extend({
       var e = Ember.$.Event( "click" );
       e.pass_through = true;
       e.switch_activated = true;
-      Ember.$(elem.dom).trigger(e);
+      scanner.find_elem(elem.dom).trigger(e);
       setTimeout(function() {
-        Ember.$("#home_button").focus().select();
+        scanner.find_elem("#home_button").focus().select();
       }, 100);
     }
 
@@ -360,7 +363,7 @@ var scanner = Ember.Object.extend({
       } else {
         var e = Ember.$.Event( "click" );
         e.pass_through = true;
-        Ember.$(elem.dom).trigger(e);
+        scanner.find_elem(elem.dom).trigger(e);
       }
       Ember.run.later(function() {
         scanner.reset();
@@ -401,7 +404,7 @@ var scanner = Ember.Object.extend({
       }
     }
     scanner.current_element = elem;
-    var options = scanner.options;
+    var options = scanner.options || {};
     options.prevent_close = true;
     options.overlay = false;
     options.select_anywhere = true;
@@ -418,7 +421,7 @@ var scanner = Ember.Object.extend({
         speecher.speak_text(clean_label, false, {alternate_voice: true, interrupt: false});
       }
     }
-    if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && Ember.$("#hidden_input:focus").length === 0) {
+    if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && scanner.find_elem("#hidden_input:focus").length === 0) {
       modal.warning(i18n.t('tap_first', "Your switch may not be completely enabled. Tap somewhere on the screen to finish enabling it."), true);
     }
     if(elem.dom.hasClass('integration_target')) {
@@ -431,7 +434,7 @@ var scanner = Ember.Object.extend({
       if(scanner.current_element == elem) {
         scanner.next();
       }
-    }, this.options.interval);
+    }, options.interval || 1000);
   }
 }).create();
 
