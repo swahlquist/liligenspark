@@ -71,7 +71,7 @@ var frame_listener = Ember.Object.extend({
             type: event.type, // 'click', 'touch', 'gazedwell', 'scanselect', 'mousemove', 'gazelinger'
             aac_type: event.aac_type, // 'start', 'select', 'over'
             x_percent: (event.clientX - rect.left) / rect.width, // 0.0 - 1.0
-            y_percent: (event.clientY - rect.top) / rect.height // 0.0 - 1.0
+            y_percent: (event.clientY - rect.top ) / rect.height // 0.0 - 1.0
           });
         }
       }
@@ -118,6 +118,9 @@ var frame_listener = Ember.Object.extend({
     }
   },
   add_target: function(data) {
+    if(!data.target) {
+      return data.respond({error: 'target attribute missing'});
+    }
     var targets = this.get('targets') || [];
     this.clear_target({session_id: data.session_id, id: data.target.id});
     var div = document.createElement('div');
@@ -137,6 +140,8 @@ var frame_listener = Ember.Object.extend({
       if(scanner.scanning) {
         scanner.reset();
       }
+    } else {
+      data.respond({error: 'not ready'});
     }
   },
   trigger_target_event: function(dom, type, aac_type, session_id) {
@@ -171,21 +176,39 @@ var frame_listener = Ember.Object.extend({
   }.observes('app_state.speak_mode'),
   clear_target: function(data) {
     var targets = this.get('targets') || [];
+    var matches = targets.filter(function(t) { return t.session_id == data.session_id && t.id == data.id; });
+    matches.forEach(function(m) {
+      if(m.dom && m.dom.parentNode) {
+        m.dom.parentNode.removeChild(m.dom);
+      }
+    });
     targets = targets.filter(function(t) { return t.session_id != data.session_id || t.id != data.id; });
     this.set('targets', targets);
     if(data.respond) {
-      data.respond({id: data.id});
+      data.respond({id: data.id, cleared: true});
     }
   },
   clear_targets: function(data) {
     var targets = this.get('targets') || [];
+    var matches = [];
     if(data == 'all') {
+      matches = targets;
       targets = [];
     } else {
-      targets = targets.filter(function(t) { return t.session_id != data.session_id; });
+      matches = targets.filter(function(t) { return t.session_id == data.session_id && (!data.ids || data.ids.indexOf(t.id) != -1); });
+      targets = targets.filter(function(t) { return t.session_id != data.session_id || (data.ids && data.ids.indexOf(t.id) == -1); });
     }
+    var ids = [];
+    matches.forEach(function(m) {
+      ids.push(m.id);
+      if(m.dom && m.dom.parentNode) {
+        m.dom.parentNode.removeChild(m.dom);
+      }
+    });
     this.set('targets', targets);
-    data.respond({cleared: true});
+    if(data.respond) {
+      data.respond({cleared: true, ids: ids});
+    }
   },
   visible: function() {
     return !!document.getElementById('integration_overlay');
@@ -193,30 +216,39 @@ var frame_listener = Ember.Object.extend({
   active_targets: function() {
     var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
     return (this.get('targets') || []).filter(function(t) { return t.session_id == session_id; });
+  },
+  respond: function(source, message) {
+    if(source && message) {
+      source.postMessage(message, '*');
+    }
+  },
+  session_window: function(session_id) {
+    var $elem = Ember.$("#integration_frame");
+    if(!$elem.attr('data-session_id')) {
+      $elem.attr('data-session_id', session_id);
+    }
+    return $elem[0] && $elem[0].contentWindow;
   }
 }).create({targets: []});
 frame_listener.raw_listeners = raw_listeners;
 
 window.addEventListener('message', function(event) {
   if(event.data && event.data.aac_shim) {
-    var $elem = Ember.$("#integration_frame");
+    var session_window = frame_listener.session_window(event.data.session_id);
     event.data.respond = function(obj) {
       obj.aac_shim = true;
       obj.callback_id = event.data.callback_id;
-      event.source.postMessage(obj, '*');
+      frame_listener.respond(event.source, obj);
     };
     if(!event.data.session_id) {
       event.data.respond({error: 'session_id required, but not sent'});
       return;
-    } else if(!$elem[0]) {
+    } else if(!session_window) {
       event.data.respond({error: 'message came from unknown source'});
       return;
-    } else if(event.source != $elem[0].contentWindow) {
+    } else if(event.source != session_window) {
       event.data.respond({error: 'message came from wrong window'});
       return;
-    }
-    if(!$elem.attr('data-session_id')) {
-      $elem.attr('data-session_id', event.data.session_id);
     }
     frame_listener.handle_action(event.data);
   }

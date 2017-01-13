@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } fro
 import { db_wait } from 'frontend/tests/helpers/ember_helper';
 import capabilities from '../../utils/capabilities';
 import app_state from '../../utils/app_state';
+import scanner from '../../utils/scanner';
 import frame_listener from '../../utils/frame_listener';
 import Ember from 'ember';
 import CoughDrop from '../../app';
@@ -192,13 +193,15 @@ describe("frame_listener", function() {
           session_id: 'qwer'
         }
       };
-      frame_listener.raw_event({ session_id: 'asdf', type: 'click', aac_type: 'select', clientX: 100, clientY: 100 });
+      var rect = overlay.getBoundingClientRect();
+      frame_listener.raw_event({ session_id: 'asdf', type: 'click', aac_type: 'select', clientX: rect.left, clientY: rect.top });
       expect(a).toEqual(null);
       expect(b).toEqual(null);
       expect(t).toEqual(null);
     });
 
     it('should trigger the event for all matching listeners', function() {
+      document.documentElement.scrollTop = 75;
       var a = null;
       var b = null;
       var t = null;
@@ -216,7 +219,8 @@ describe("frame_listener", function() {
           session_id: 'qwer'
         }
       };
-      frame_listener.raw_event({ session_id: 'asdf', type: 'click', aac_type: 'select', clientX: 100, clientY: 100 });
+      var rect = overlay.getBoundingClientRect();
+      frame_listener.raw_event({ session_id: 'asdf', type: 'click', aac_type: 'select', clientX: rect.left, clientY: rect.top });
       expect(a).toNotEqual(null);
       expect(a).toEqual({aac_type: 'select', type: 'click', x_percent: 0, y_percent: 0});
       expect(b).toNotEqual(null);
@@ -243,7 +247,8 @@ describe("frame_listener", function() {
         }
       };
       frame.setAttribute('data-session_id', 'qwer');
-      frame_listener.raw_event({ type: 'click', aac_type: 'select', clientX: 150, clientY: 125 });
+      var rect = overlay.getBoundingClientRect();
+      frame_listener.raw_event({ type: 'click', aac_type: 'select', clientX: rect.left + 50, clientY: rect.top + 25 });
       expect(a).toEqual(null);
       expect(b).toEqual(null);
       expect(t).toNotEqual(null);
@@ -342,188 +347,377 @@ describe("frame_listener", function() {
     });
   });
 
-//   add_target: function(data) {
-//     var targets = this.get('targets') || [];
-//     this.clear_target({session_id: data.session_id, id: data.target.id});
-//     var div = document.createElement('div');
-//     div.id = "target_" + data.session_id + "_" + data.target.id;
-//     div.classList.add('integration_target');
-//     var overlay = document.getElementById('integration_overlay');
-//     if(overlay) {
-//       var rect = overlay.getBoundingClientRect();
-//       div.style.width = (data.target.width_percent * rect.width) + "px";
-//       div.style.height = (data.target.height_percent * rect.height) + "px";
-//       div.style.left = (data.target.left_percent * rect.width) + "px";
-//       div.style.top = (data.target.top_percent * rect.height) + "px";
-//       overlay.appendChild(div);
-//       targets.push({id: data.target.id, session_id: data.session_id, target: data.target, dom: div, respond: data.respond});
-//       this.set('targets', targets);
-//       data.respond({id: data.target.id});
-//       if(scanner.scanning) {
-//         scanner.reset();
-//       }
-//     }
-//   },
   describe('add_target', function() {
     it('should create a target element and add it to the DOM', function() {
+      var target = {
+        id: 'asder',
+        top_percent: 0.5,
+        left_percent: 0.5,
+        width_percent: 0.1,
+        height_percent: 0.2
+      };
+      frame_listener.handle_action({
+        action: 'add_target',
+        target: target
+      });
+      var targets = frame_listener.get('targets');
+      expect(targets.length).toEqual(1);
+      expect(targets[0].target).toEqual(target);
+      expect(targets[0].dom).toNotEqual(undefined);
+      expect(targets[0].dom.style.top).toEqual('50px');
+      expect(targets[0].dom.style.left).toEqual('50px');
+      expect(targets[0].dom.style.width).toEqual('10px');
+      expect(targets[0].dom.style.height).toEqual('20px');
     });
 
     it('should reset scanning', function() {
+      var reset = false;
+      var done = false;
+      stub(scanner, 'scanning', true);
+      stub(scanner, 'reset', function() { reset = true; });
+      frame_listener.handle_action({
+        action: 'add_target',
+        respond: function() { done = true; },
+        target: {
+          id: 'bob',
+          top_percent: 0.1,
+          left_percent: 0.1,
+          width_percent: 0.1,
+          height_percent: 0.1
+        }
+      });
+      waitsFor(function() { return done; });
+      runs(function() {
+        expect(reset).toEqual(true);
+      });
+    });
+
+    it('should return an error if missing settings', function() {
+      overlay.parentNode.removeChild(overlay);
+      var result = null;
+      frame_listener.add_target({
+        respond: function(res) { result = res; }
+      });
+      expect(result).toEqual({error: 'target attribute missing'});
+    });
+
+    it('should return an error if no overlay found', function() {
+      overlay.parentNode.removeChild(overlay);
+      var result = null;
+      frame_listener.add_target({
+        target: {},
+        respond: function(res) { result = res; }
+      });
+      expect(result).toEqual({error: 'not ready'});
     });
 
     it('should add the target to the tracked list', function() {
+      var target = {
+        id: 'asder',
+        top_percent: 0.5,
+        left_percent: 0.5,
+        width_percent: 0.1,
+        height_percent: 0.2
+      };
+      frame_listener.handle_action({
+        action: 'add_target',
+        target: target
+      });
+      var targets = frame_listener.get('targets');
+      expect(targets.length).toEqual(1);
+      expect(targets[0].target).toEqual(target);
     });
 
     it('should respond with the target id', function() {
+      var result = null;
+      var target = {
+        id: 'asder',
+        top_percent: 0.5,
+        left_percent: 0.5,
+        width_percent: 0.1,
+        height_percent: 0.2
+      };
+      frame_listener.handle_action({
+        action: 'add_target',
+        respond: function(res) { result = res; },
+        target: target
+      });
+      var targets = frame_listener.get('targets');
+      expect(targets.length).toEqual(1);
+      expect(targets[0].target).toEqual(target);
+      expect(result).toEqual({id: 'asder'});
     });
   });
 
-//   trigger_target_event: function(dom, type, aac_type, session_id) {
-//     var rect = dom.getBoundingClientRect();
-//     var overlay = document.getElementById('integration_overlay');
-//     if(overlay) {
-//       session_id = session_id || document.getElementById('integration_frame').getAttribute('data-session_id');
-//       if(session_id) {
-//         frame_listener.raw_event({
-//           session_id: session_id,
-//           type: type,
-//           aac_type: aac_type,
-//           clientX: rect.left + (rect.width / 2),
-//           clientY: rect.top + (rect.height / 2)
-//         });
-//       }
-//     }
-//   },
   describe('trigger_target_event', function() {
     it('should call raw_event for any matching sessions', function() {
+      document.documentElement.scrollTop = Math.random() * 100;
+      var calls = [];
+      stub(frame_listener, 'raw_event', function(opts) {
+        calls.push(opts);
+      });
+      frame_listener.trigger_target_event(overlay, 'click', 'select', 'asdf');
+      var rect = overlay.getBoundingClientRect();
+      expect(calls.length).toEqual(1);
+      expect(calls[0]).toEqual({
+        session_id: 'asdf',
+        type: 'click',
+        aac_type: 'select',
+        clientX: rect.left + (rect.width / 2),
+        clientY: rect.top  + (rect.height / 2)
+      });
+
+      frame_listener.trigger_target_event(overlay, 'click', 'select');
+      expect(calls.length).toEqual(1);
+
+      frame.setAttribute('data-session_id', 'sessiony');
+      frame_listener.trigger_target_event(overlay, 'click', 'select');
+      expect(calls.length).toEqual(2);
+      expect(calls[1]).toEqual({
+        session_id: 'sessiony',
+        type: 'click',
+        aac_type: 'select',
+        clientX: rect.left + (rect.width / 2),
+        clientY: rect.top  + (rect.height / 2)
+      });
     });
   });
 
-//   size_targets: function() {
-//     var overlay = document.getElementById('integration_overlay');
-//     if(overlay) {
-//       var rect = overlay.getBoundingClientRect();
-//       (this.get('targets') || []).forEach(function(t) {
-//         if(t && t.dom && t.target) {
-//           t.dom.style.width = (t.target.width_percent * rect.width) + "px";
-//           t.dom.style.height = (t.target.height_percent * rect.height) + "px";
-//           t.dom.style.left = (t.target.left_percent * rect.width) + "px";
-//           t.dom.style.top = (t.target.top_percent * rect.height) + "px";
-//         }
-//       });
-//     }
-//   }.observes('app_state.speak_mode'),
   describe('size_targets', function() {
     it('should resize visible targets based on window size', function() {
+      var d = document.createElement('div');
+      frame_listener.set('targets', [
+        {
+          dom: d,
+          target: {
+            width_percent: 0.25,
+            height_percent: 0.2,
+            left_percent: 0.1,
+            top_percent: 0
+          }
+        }
+      ]);
+      frame_listener.size_targets();
+      expect(d.style.width).toEqual('25px');
+      expect(d.style.height).toEqual('20px');
+      expect(d.style.left).toEqual('10px');
+      expect(d.style.top).toEqual('0px');
     });
   });
 
-//   clear_target: function(data) {
-//     var targets = this.get('targets') || [];
-//     targets = targets.filter(function(t) { return t.session_id != data.session_id || t.id != data.id; });
-//     this.set('targets', targets);
-//     if(data.respond) {
-//       data.respond({id: data.id});
-//     }
-//   },
   describe('clear_target', function() {
     it('should clear the specified target, if any', function() {
+      var d = document.createElement('div');
+      var e = document.createElement('div');
+      d.appendChild(e);
+      expect(d.children.length).toEqual(1);
+      frame_listener.set('targets', [ {},
+        {session_id: 'asdf', id: 'bob', dom: e}
+      ]);
+      frame_listener.handle_action({action: 'clear_target', session_id: 'asdf', id: 'bob'});
+      expect(frame_listener.get('targets')).toEqual([{}]);
+      expect(d.children.length).toEqual(0);
     });
 
     it('should remove the target from the DOM', function() {
+      var d = document.createElement('div');
+      var e = document.createElement('div');
+      d.appendChild(e);
+      expect(d.children.length).toEqual(1);
+      frame_listener.set('targets', [ {},
+        {session_id: 'asdf', id: 'bob', dom: e}
+      ]);
+      frame_listener.handle_action({action: 'clear_target', session_id: 'asdf', id: 'bob'});
+      expect(frame_listener.get('targets')).toEqual([{}]);
+      expect(d.children.length).toEqual(0);
     });
 
     it('should respond with the target id', function() {
+      var d = document.createElement('div');
+      var e = document.createElement('div');
+      d.appendChild(e);
+      expect(d.children.length).toEqual(1);
+      frame_listener.set('targets', [ {},
+        {session_id: 'asdf', id: 'bob', dom: e}
+      ]);
+      var result = null;
+      frame_listener.clear_target({session_id: 'asdf', id: 'bob', respond: function(r) { result = r; }});
+      expect(frame_listener.get('targets')).toEqual([{}]);
+      expect(result).toEqual({cleared: true, id: 'bob'});
     });
   });
 
-//   clear_targets: function(data) {
-//     var targets = this.get('targets') || [];
-//     if(data == 'all') {
-//       targets = [];
-//     } else {
-//       targets = targets.filter(function(t) { return t.session_id != data.session_id; });
-//     }
-//     this.set('targets', targets);
-//     data.respond({cleared: true});
-//   },
   describe('clear_targets', function() {
     it('should clear all targets if specified', function() {
+      frame_listener.set('targets', [{}, {}, {}]);
+      frame_listener.clear_targets('all');
+      expect(frame_listener.get('targets')).toEqual([]);
     });
 
     it('should remove targets by ids if specified', function() {
+      frame_listener.set('targets', [
+        {id: '1', session_id: '1'},
+        {id: '2', session_id: '1'},
+        {id: '1', session_id: '2'}
+      ]);
+      frame_listener.handle_action({action: 'clear_targets', session_id: '1', ids: ['1']});
+      expect(frame_listener.get('targets')).toEqual([
+        {id: '2', session_id: '1'},
+        {id: '1', session_id: '2'}
+      ]);
+    });
+
+    it('should remove targets by session_id if no ids specified', function() {
+      frame_listener.set('targets', [
+        {id: '1', session_id: '1'},
+        {id: '2', session_id: '1'},
+        {id: '1', session_id: '2'}
+      ]);
+      frame_listener.handle_action({action: 'clear_targets', session_id: '1'});
+      expect(frame_listener.get('targets')).toEqual([
+        {id: '1', session_id: '2'}
+      ]);
     });
 
     it('should remove cleared targets from the DOM', function() {
+      var d = document.createElement('div');
+      var a = document.createElement('div');
+      d.appendChild(a);
+      var b = document.createElement('div');
+      d.appendChild(b);
+      var c = document.createElement('div');
+      d.appendChild(c);
+      expect(d.children.length).toEqual(3);
+      frame_listener.set('targets', [
+        {id: 'a', session_id: '1', dom: a},
+        {id: 'b', session_id: '1', dom: b},
+        {id: 'c', session_id: '2', dom: c}
+      ]);
+      var done = false;
+      frame_listener.handle_action({action: 'clear_targets', session_id: '1', respond: function() { done = true; }});
+      waitsFor(function() { return done; });
+      runs(function() {
+        expect(d.children.length).toEqual(1);
+        expect(d.children[0]).toEqual(c);
+      });
     });
 
     it('should respond on success', function() {
+      var d = document.createElement('div');
+      var a = document.createElement('div');
+      d.appendChild(a);
+      var b = document.createElement('div');
+      d.appendChild(b);
+      var c = document.createElement('div');
+      d.appendChild(c);
+      frame_listener.set('targets', [
+        {id: 'a', session_id: '1'},
+        {id: 'b', session_id: '1'},
+        {id: 'c', session_id: '2'}
+      ]);
+      var result = null;
+      frame_listener.handle_action({action: 'clear_targets', session_id: '1', respond: function(r) { result = r; }});
+      waitsFor(function() { return result; });
+      runs(function() {
+        expect(result).toEqual({cleared: true, ids: ['a', 'b']});
+      });
     });
   });
 
-//   visible: function() {
-//     return !!document.getElementById('integration_overlay');
-//   },
   describe('visible', function() {
     it('should return the correct value', function() {
+      expect(frame_listener.visible()).toEqual(true);
+      overlay.parentNode.removeChild(overlay);
+      expect(frame_listener.visible()).toEqual(false);
     });
   });
 
-//   active_targets: function() {
-//     var session_id = document.getElementById('integration_frame').getAttribute('data-session_id');
-//     return (this.get('targets') || []).filter(function(t) { return t.session_id == session_id; });
-//   }
   describe('active_targets', function() {
     it('should return a list of targets for the current session', function() {
+      frame.setAttribute('data-session_id', 'asdf');
+      frame_listener.set('targets', [
+        {}, {}, {id: 1}, {id: 2}, {id: 3, session_id: 'asdf'}, {id: 4, session_id: 'asdf'}
+      ]);
+      var res = frame_listener.active_targets();
+      expect(res).toEqual([{id: 3, session_id: 'asdf'}, {id: 4, session_id: 'asdf'}]);
     });
   });
 
-// window.addEventListener('resize', function() {
-//   Ember.run.debounce(frame_listener, frame_listener.size_targets, 100);
-// });
   describe('window resizing', function() {
     it('should call size_targets on window resize', function() {
+      var sized = false;
+      stub(frame_listener, 'size_targets', function() { sized = true; });
+
+      window.dispatchEvent(new window.CustomEvent(
+        'resize',
+        {
+          detail: {
+          },
+          bubbles: true,
+          cancelable: true
+        }
+      ));
+
+      waitsFor(function() { return sized; });
+      runs();
     });
   });
 
-// window.addEventListener('message', function(event) {
-//   if(event.data && event.data.aac_shim) {
-//     var $elem = Ember.$("#integration_frame");
-//     event.data.respond = function(obj) {
-//       obj.aac_shim = true;
-//       obj.callback_id = event.data.callback_id;
-//       event.source.postMessage(obj, '*');
-//     };
-//     if(!event.data.session_id) {
-//       event.data.respond({error: 'session_id required, but not sent'});
-//       return;
-//     } else if(!$elem[0]) {
-//       event.data.respond({error: 'message came from unknown source'});
-//       return;
-//     } else if(event.source != $elem[0].contentWindow) {
-//       event.data.respond({error: 'message came from wrong window'});
-//       return;
-//     }
-//     if(!$elem.attr('data-session_id')) {
-//       $elem.attr('data-session_id', event.data.session_id);
-//     }
-//     frame_listener.handle_action(event.data);
-//   }
-// });
   describe('postMessage handling', function() {
     it('should ignore if not an aac_shim event', function() {
+      var responded = false;
+      stub(frame_listener, 'respond', function(r) { responded = true; });
+      window.postMessage('asdf', '*');
+      var waited = false;
+      setTimeout(function() { waited = true; }, 200);
+      waitsFor(function() { return waited; });
+      runs(function() {
+        expect(responded).toEqual(false);
+      });
     });
 
     it('should respond with an error if no session_id sent', function() {
+      var response = null;
+      stub(frame_listener, 'respond', function(source, r) { response = r; });
+      window.postMessage({aac_shim: true}, '*');
+      waitsFor(function() { return response; });
+      runs(function() {
+        expect(response).toEqual({callback_id: undefined, aac_shim: true, error: 'session_id required, but not sent'});
+      });
     });
 
     it('should respond with an error if no frame loaded', function() {
+      frame.parentNode.removeChild(frame);
+      var response = null;
+      stub(frame_listener, 'respond', function(source, r) { response = r; });
+      window.postMessage({aac_shim: true, session_id: 'asdf'}, '*');
+      waitsFor(function() { return response; });
+      runs(function() {
+        expect(response).toEqual({callback_id: undefined, aac_shim: true, error: 'message came from unknown source'});
+      });
     });
 
     it('should respond with an error if not from the frame', function() {
+      var response = null;
+      stub(frame_listener, 'session_window', function() { return {}; });
+      stub(frame_listener, 'respond', function(source, r) { response = r; });
+      window.postMessage({aac_shim: true, session_id: 'asdf'}, '*');
+      waitsFor(function() { return response; });
+      runs(function() {
+        expect(response).toEqual({callback_id: undefined, aac_shim: true, error: 'message came from wrong window'});
+      });
     });
 
     it('should call handle_action with the correct data', function() {
+      var response = null;
+      stub(frame_listener, 'session_window', function() { return window; });
+      stub(frame_listener, 'respond', function(source, r) { response = r; });
+      window.postMessage({aac_shim: true, session_id: 'asdf', action: 'status'}, '*');
+      waitsFor(function() { return response; });
+      runs(function() {
+        expect(response).toEqual({callback_id: undefined, aac_shim: true, status: 'ready', session_id: 'asdf', user_token: undefined});
+      });
+
     });
   });
 });
