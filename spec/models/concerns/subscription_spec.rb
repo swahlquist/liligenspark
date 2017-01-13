@@ -1151,21 +1151,6 @@ describe Subscription, :type => :model do
       expect(u.subscription_hash['purchased']).to eq(true)
       expect(u.subscription_hash['grace_period']).to eq(false)
     end
-    
-    it "should include org information even for non-sponsored org users" do
-      o = Organization.create(:settings => {'total_licenses' => 1})
-      u = User.create
-    
-      res = o.add_user(u.user_name, false, false)
-      u.reload
-      expect(o.managed_user?(u)).to eq(true)
-      expect(o.sponsored_user?(u)).to eq(false)
-      
-      expect(u.subscription_hash).not_to eq(nil)
-      expect(u.subscription_hash['is_managed']).to eq(true)
-      expect(u.subscription_hash['org_pending']).to eq(false)
-      expect(u.subscription_hash['org_sponsored']).to eq(false)
-    end
   end
   
   describe "check_for_subscription_updates" do

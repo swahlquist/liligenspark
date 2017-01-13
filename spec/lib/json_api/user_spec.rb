@@ -208,14 +208,8 @@ describe JsonApi::User do
         u.reload
         u.settings['subscription']['never_expires'] = false
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['is_managed']).to eq(true)
         expect(json['subscription']).to eq({
           'active' => true,
-          'is_managed' => true,
-          'managing_org_name' => o.settings['name'],
-          'added_to_organization' => u.settings['subscription']['added_to_organization'],
-          'org_pending' => false,
-          'org_sponsored' => true
         })
         
         o.remove_user(u.user_name)
