@@ -72,7 +72,7 @@ class Api::GoalsController < ApplicationController
     return unless exists?(goal, params['id'])
     return unless allowed?(goal, 'comment')
     
-    if !goal.allows?(@api_user, 'supervise')
+    if !goal.allows?(@api_user, 'edit')
       new_params = {
         'comment' => params['goal']['comment']
       }

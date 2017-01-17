@@ -905,24 +905,6 @@ describe UserBadge, type: :model do
        expect(u.settings['user_notifications'][-1]['badge_name']).to eq('Unnamed Badge')
        expect(u.settings['user_notifications'][-1]['badge_level']).to eq(1)
     end
-    
-    it "should not send notifications to people who aren't feature-flag-enabled" do
-       u = User.create
-       u.disable_feature('goals')
-       u.save
-       b = UserBadge.create(:user => u)
-       b.award!({
-        :started => 2.days.ago,
-        :ended => 1.day.ago,
-        :tally => 4
-       })
-       expect(Worker.scheduled?(UserBadge, 'perform_action', {'id' => b.id, 'method' => 'notify_on_earned', 'arguments' => [true]})).to eq(true)
-       Worker.process_queues
-       expect(Worker.scheduled?(Webhook, 'notify_all_with_code', b.record_code, 'badge_awarded', nil)).to eq(true)
-       Worker.process_queues
-       expect(Worker.scheduled?(UserMailer, 'deliver_message', 'badge_awarded', u.global_id, b.global_id)).to eq(false)
-       expect(u.reload.settings['user_notifications']).to eq(nil)
-    end
   end
 
   describe "award!" do
