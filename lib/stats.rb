@@ -827,5 +827,49 @@ module Stats
     lines.join("\n") + "\n"
   end
   
+  def self.totals(date)
+    date = Date.parse(date) if date.is_a?(String)
+    date ||= Date.today
+    res = {}
+    puts "querying..."
+    res[:users] = User.where(['created_at < ?', date]).count
+    puts "users: #{res[:users]}"
+    res[:boards] = Board.where(['created_at < ?', date]).count
+    puts "boards: #{res[:boards]}"
+    res[:logs] = LogSession.where(['created_at < ?', date]).count
+    puts "logs: #{res[:logs]}"
+    res[:premium_users] = User.where(['created_at < ?', date]).where(:possibly_full_premium => true).select(&:full_premium?).count
+    puts "premium_users: #{res[:premium_users]}"
+    res[:communicators] = 0
+    User.where(['created_at < ?', date]).find_in_batches(:batch_size => 100).each do |batch|
+      res[:communicators] += batch.select(&:communicator_role?).count
+    end
+    puts "communicators: #{res[:communicators]}"
+    maps = {:android => [], :ios => [], :windows => [], :browser => []}
+    Device.where(['created_at < ?', date]).find_in_batches(:batch_size => 100).each do |batch|
+      batch.each do |device|
+        agent = device.settings['user_agent'] || ''
+        if agent.match(/android/i) && agent.match(/chrome/i)
+          maps[:android] << device.user_id
+          maps[:android].uniq!
+        elsif agent.match(/ios|iphone|ipad|ipod/i)
+          maps[:ios] << device.user_id
+          maps[:ios].uniq!
+        elsif agent.match(/coughdrop/i) && agent.match(/desktop/i)
+          maps[:windows] << device.user_id
+          maps[:windows].uniq!
+        elsif agent.match(/mozilla/i)
+          maps[:browser] << device.user_id
+          maps[:browser].uniq!
+        end
+      end
+    end
+    maps.each do |key, list|
+      res["#{key}_users"] = list.length
+      puts "#{key} users: #{list.length}"
+    end
+    res
+  end
+  
   class StatsError < StandardError; end
 end
