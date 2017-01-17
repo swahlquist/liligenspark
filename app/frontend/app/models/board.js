@@ -4,6 +4,7 @@ import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import modal from '../utils/modal';
+import app_state from '../utils/modal';
 
 CoughDrop.Board = DS.Model.extend({
   didLoad: function() {
@@ -330,7 +331,12 @@ CoughDrop.Board = DS.Model.extend({
       grid: this.get('grid'),
       for_user_id: (user && user.get('id'))
     });
-    return board.save();
+    var _this = this;
+    var res = board.save();
+    res.then(function() {
+      _this.rollbackAttributes();
+    });
+    return res;
   },
   add_button: function(button) {
     var buttons = this.get('buttons') || [];

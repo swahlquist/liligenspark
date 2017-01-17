@@ -4,6 +4,7 @@ import word_suggestions from '../../utils/word_suggestions';
 import editManager from '../../utils/edit_manager';
 import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
+import stashes from '../../utils/_stashes';
 import capabilities from '../../utils/capabilities';
 import persistence from '../../utils/persistence';
 import i18n from '../../utils/i18n';
@@ -80,7 +81,7 @@ export default Ember.Controller.extend({
       _this.set('suggestions.list', []);
     });
   }.observes('app_state.button_list', 'app_state.button_list.[]'),
-  saveButtonChanges: function() {
+  saveButtonChanges: function(decision) {
     var state = editManager.process_for_saving();
 
     if(this.get('model.license')) {
@@ -91,6 +92,13 @@ export default Ember.Controller.extend({
     this.set('model.grid', state.grid);
     boundClasses.setup(true);
     this.processButtons();
+
+    if(app_state.get('currentBoardState.id') && stashes.get('copy_on_save') == app_state.get('currentBoardState.id')) {
+      app_state.controller.send('tweakBoard');
+      return;
+    }
+    app_state.toggle_mode('edit');
+
     var board = this.get('model');
     board.save().then(null, function(err) {
       console.error(err);

@@ -290,6 +290,9 @@ export default Ember.Controller.extend({
     tweakBoard: function(decision) {
       var _this = this;
       app_state.check_for_really_expired(app_state.get('sessionUser')).then(function() {
+        if(app_state.get('edit_mode')) {
+          app_state.toggle_mode('edit');
+        }
         _this.copy_board(decision).then(function(board) {
           if(board) {
             app_state.jump_to_board({
@@ -309,7 +312,6 @@ export default Ember.Controller.extend({
       modal.open('download-board', {type: 'pdf', has_links: has_links, id: this.get('board.model.id')});
     },
     saveBoard: function() {
-      this.toggleMode('edit');
       this.get('board').saveButtonChanges();
     },
     resetBoard: function() {

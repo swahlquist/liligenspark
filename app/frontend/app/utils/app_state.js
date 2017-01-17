@@ -354,8 +354,15 @@ var app_state = Ember.Object.extend({
   },
   toggle_edit_mode: function(decision) {
     editManager.clear_history();
-    if(decision == null && !app_state.get('edit_mode') && this.controller && this.controller.get('board').get('model').get('could_be_in_use')) {
-      var _this = this;
+    var _this = this;
+    if(!this.get('controller.board.model.permissions.edit')) {
+      modal.open('confirm-needs-copying', {board: this.controller.get('board.model')}).then(function(res) {
+        if(res == 'confirm') {
+          _this.toggle_mode('edit', {copy_on_save: true});
+        }
+      });
+      return;
+    } else if(decision == null && !app_state.get('edit_mode') && this.controller && this.controller.get('board').get('model').get('could_be_in_use')) {
       modal.open('confirm-edit-board', {board: this.controller.get('board').get('model')}).then(function(res) {
         if(res == 'tweak') {
           _this.controller.send('tweakBoard');
@@ -393,9 +400,13 @@ var app_state = Ember.Object.extend({
         stashes.persist('current_mode', 'default');
       }
       stashes.persist('last_mode', null);
+      stashes.persist('copy_on_save', null);
     } else {
       if(mode == 'edit') {
         stashes.persist('last_mode', stashes.get('current_mode'));
+        if(opts.copy_on_save) {
+          stashes.persist('copy_on_save', app_state.get('currentBoardState.id'));
+        }
       } else if(mode == 'speak') {
         var already_speaking_as_someone_else = app_state.get('speakModeUser.id') && app_state.get('speakModeUser.id') != app_state.get('sessionUser.id');
         if(app_state.get('currentUser') && !opts.reminded && app_state.get('currentUser.expired_or_limited_supervisor') && !already_speaking_as_someone_else) {

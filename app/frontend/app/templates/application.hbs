@@ -277,13 +277,17 @@
                 <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
                   <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
                 </a>
-              {{else if app_state.current_board_in_extended_board_set}}
-                <a class='btn btn-default not_really_skinny' href="#" {{action "copy_and_edit_board"}}>
-                  <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
-                </a>
               {{else if board.model.for_sale}}
                 <a class='btn btn-default not_really_skinny' href="#" {{action "purchase_board"}}>
                   <span class="wide">{{t "Purchase Board" key="purchase_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-usd"></span>
+                </a>
+              {{else if app_state.feature_flags.edit_before_copying}}
+                <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
+                  <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
+                </a>
+              {{else if app_state.current_board_in_extended_board_set}}
+                <a class='btn btn-default not_really_skinny' href="#" {{action "copy_and_edit_board"}}>
+                  <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
                 </a>
               {{else}}
                 <a class='btn btn-default not_really_skinny' href="#" {{action "tweakBoard"}}>
