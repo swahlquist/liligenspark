@@ -7,9 +7,9 @@ export default Ember.Component.extend({
     this.draw();
   },
   draw: function() {
-    var total = this.get('total');
-    var tracked = this.get('tracked');
-    var untracked = this.get('untracked');
+    var total = this.get('total'); // all users
+    var tracked = this.get('tracked'); // having goal set that has been tracked recently
+    var untracked = this.get('set') - tracked; // having goal set but not tracked recently
     var elem = this.get('element').getElementsByClassName('recent_goals')[0];
 
     CoughDrop.Visualizations.wait('pie-chart', function() {
@@ -17,10 +17,9 @@ export default Ember.Component.extend({
         var table = [
           ['Type', 'Total']
         ];
-        var no_goal = total - untracked;
         table.push([i18n.t('goal_tracked', "Tracked Goal"), tracked]);
-        table.push([i18n.t('untracked_goal', "Untracked Goal"), untracked - tracked]);
-        table.push([i18n.t('no_goal', "No Goal Set"), total - untracked]);
+        table.push([i18n.t('untracked_goal', "Untracked Goal"), untracked]);
+        table.push([i18n.t('no_goal', "No Goal Set"), total - untracked - tracked]);
         var data = window.google.visualization.arrayToDataTable(table);
 
         var options = {

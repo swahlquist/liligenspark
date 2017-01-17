@@ -52,7 +52,7 @@ class Api::GoalsController < ApplicationController
     params['goal']['user_id'] ||= @api_user.global_id
     user = User.find_by_global_id(params['goal']['user_id'])
     return unless exists?(user, params['goal']['user_id'])
-    return unless allowed?(user, 'edit')
+    return unless allowed?(user, 'supervise')
     
     if params['goal']['template_header']
       admin_org = Organization.admin
@@ -72,7 +72,7 @@ class Api::GoalsController < ApplicationController
     return unless exists?(goal, params['id'])
     return unless allowed?(goal, 'comment')
     
-    if !goal.allows?(@api_user, 'edit')
+    if !goal.allows?(@api_user, 'supervise')
       new_params = {
         'comment' => params['goal']['comment']
       }

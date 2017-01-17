@@ -58,7 +58,7 @@
       {{#if app_state.feature_flags.goals}}
         {{#if user_counts}}
           <div class="col-sm-3" style="padding: 0;">
-            {{stats/recent-goals total=model.total_users tracked=user_counts.goal_set untracked=user_counts.goal_recently_logged}}
+            {{stats/recent-goals total=model.total_users set=user_counts.goal_set tracked=user_counts.goal_recently_logged}}
           </div>
         {{/if}}
       {{/if}}
