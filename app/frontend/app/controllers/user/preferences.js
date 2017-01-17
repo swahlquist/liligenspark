@@ -10,11 +10,13 @@ import Button from '../../utils/button';
 export default Ember.Controller.extend({
   application: Ember.inject.controller(),
   buttonSpacingList: [
-    {name: i18n.t('extra_small', "Extra-Small (5px)"), id: "extra-small"},
-    {name: i18n.t('small', "Small (10px)"), id: "small"},
-    {name: i18n.t('medium', "Medium (15px)"), id: "medium"},
-    {name: i18n.t('large', "Large (25px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (50px)"), id: "huge"}
+    {name: i18n.t('minimal', "Minimal (1px)"), id: "minimal"},
+    {name: i18n.t('extra_small', "Extra-Small (2px)"), id: "extra-small"},
+    {name: i18n.t('small', "Small (5px)"), id: "small"},
+    {name: i18n.t('medium', "Medium (10px)"), id: "medium"},
+    {name: i18n.t('large', "Large (20px)"), id: "large"},
+    {name: i18n.t('huge', "Huge (45px)"), id: "huge"}
+    {name: i18n.t('none', "None"), id: "none"}
   ],
   buttonBorderList: [
     {name: i18n.t('none', "None"), id: "none"},

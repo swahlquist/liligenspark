@@ -627,8 +627,13 @@ var app_state = Ember.Object.extend({
   }.property('default_mode', 'currentBoardState', 'hide_search'),
   header_size: function() {
     var size = this.get('currentUser.preferences.device.vocalization_height') || window.user_preferences.device.vocalization_height;
+    if(window.innerHeight < 400) {
+      size = 'tiny'
+    } else if(window.innerHeight < 600 && size != 'tiny') {
+      size = 'small';
+    }
     return size;
-  }.property('currentUser.preferences.device.vocalization_height'),
+  }.property('currentUser.preferences.device.vocalization_height', 'window_inner_width'),
   header_height: function() {
     if(this.get('speak_mode')) {
       var size = this.get('header_size');
@@ -797,6 +802,9 @@ var app_state = Ember.Object.extend({
     // TODO: does this need to trigger board resize event? maybe...
     return this.get('speak_mode') && (stashes.get('sidebarEnabled') || this.get('currentUser.preferences.quick_sidebar'));
   }.property('speak_mode', 'stashes.sidebarEnabled', 'currentUser', 'currentUser.preferences.quick_sidebar'),
+  sidebar_relegated: function() {
+    return this.get('speak_mode') && this.get('window_inner_width') < 750;
+  }.property('speak_mode', 'window_inner_width'),
   time_string: function(timestamp) {
     return window.moment(timestamp).format("HH:mm");
   },

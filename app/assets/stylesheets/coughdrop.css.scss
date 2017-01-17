@@ -262,6 +262,11 @@ header .btn {
     top: 40px; 
     border-radius: 5px;
   }
+  .dropdown {
+    .big {
+      font-size: 20px;
+    }
+  }
 }
 header.speaking #identity {
   width: auto;
@@ -1129,17 +1134,24 @@ body.pretty_loader #loading_box {
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
 }
-#sidebar > a {
+#sidebar .holder {
+  position: relative;
+  width: 100%;
+}
+#sidebar a.sidebar_item {
   display: block;
-  width: 90px;
+  width: 90%;
+  position: relative;
+  height: 0;
+    
   border: 1px solid #ccc;
   background: #eee;
-  margin: 5px;
+  margin: 5px auto;
   border-radius: 3px;
-  padding: 10px 5px;
-  height: 90px;
+  padding: 10px 5px 75% 5px;
   text-align: center;
-  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
   .glyphicon {
     position: absolute;
     top: 10px;
@@ -1149,6 +1161,11 @@ body.pretty_loader #loading_box {
   .glyphicon.glyphicon-map-marker {
     left: -67px;
     font-size: 20px;
+  }
+  .pic {
+    display: block;
+    width: 60%;
+    margin: 0 auto;
   }
 }
 #sidebar > a:hover {
@@ -1236,17 +1253,24 @@ body.pretty_loader #loading_box {
 .board.text_none .button .button-label {
   display: none;
 }
-.button.small_text span.button-label {
-  vertical-align: bottom;
-  font-size: 12px;
-  height: 12px;
+.board .button.small_text {
+  span.button-label {
+    vertical-align: top;
+    font-size: 12px;
+    height: 12px;
+  }
 }
-.button.really_small_text span.button-label {
-  font-size: 12px;
-  height: 12px;
-  padding: 3px 10px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 3px;
+.board .button.really_small_text {
+  .button-label-holder {
+    height: 16px;
+  }
+  span.button-label {
+    font-size: 12px;
+    height: 12px;
+    padding: 3px 10px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+  }
 }
 .button input.button-label {
   background: rgba(0,0,0,0.0);
@@ -1281,7 +1305,7 @@ body.pretty_loader #loading_box {
   display: block;
   margin-left: 10%;
 }
-.button.really_small_text .action_container, .button.really_small_text .action_container .action {
+.button.small_text .action_container, .button.small_text .action_container .action, .button.really_small_text .action_container, .button.really_small_text .action_container .action {
   width: 10px;
   height: 10px;
 }
@@ -1297,7 +1321,9 @@ body.pretty_loader #loading_box {
   height: 30px;
   width: 30px;
   display: inline-block;
-  
+  img {
+    vertical-align: top;
+  }
 }
 .hidden_button .action_container .action {
   display: none;
@@ -2867,6 +2893,18 @@ body:-ms-fullscreen {
       &:nth-child(2n + 1) {
         visibility: hidden;
       }
+    }
+  }
+  #identity .dropdown .dropdown-menu {
+    font-size: 12px;
+    .big {
+      font-size: 16px;
+    }
+  }
+  #sidebar {
+    width: 75px;
+    .sidebar_item {
+      font-size: 12px;
     }
   }
 }

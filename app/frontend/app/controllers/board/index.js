@@ -168,7 +168,7 @@ export default Ember.Controller.extend({
 
     var currentLabelHeight = this.get('base_text_height') - 3;
     this.set('model.text_size', 'normal');
-    if(starting_height < 45) {
+    if(starting_height < 35) {
       this.set('model.text_size', 'really_small_text');
     } else if(starting_height < 75) {
       this.set('model.text_size', 'small_text');
@@ -482,7 +482,11 @@ export default Ember.Controller.extend({
   }.property('ordered_buttons'),
   extra_pad: function() {
     var spacing = app_state.get('currentUser.preferences.device.button_spacing') || window.user_preferences.device.button_spacing;
-    if(spacing == "extra-small") {
+    if(spacing == 'none') {
+      return 0;
+    } else if(spacing == 'minimal' || app_state.get('window_inner_width') < 600) {
+      return 1;
+    } else if(spacing == "extra-small" || app_state.get('window_inner_width') < 750) {
       return 2;
     } else if(spacing == "medium") {
       return 10;
@@ -493,12 +497,14 @@ export default Ember.Controller.extend({
     } else {
       return 5;
     }
-  }.property('app_state.currentUser.preferences.device.button_spacing'),
+  }.property('app_state.currentUser.preferences.device.button_spacing', 'app_state.window_inner_width'),
   inner_pad: function() {
     var spacing = app_state.get('currentUser.preferences.device.button_border') || window.user_preferences.device.button_border;
     if(spacing == "none") {
       return 0;
-    } else if(spacing == "medium") {
+    } else if(app_state.get('window_inner_width') < 600) {
+      return 1;
+    } else if(spacing == "medium" || app_state.get('window_inner_width') < 750) {
       return 2;
     } else if(spacing == "large") {
       return 5;
@@ -507,7 +513,7 @@ export default Ember.Controller.extend({
     } else {
       return 1;
     }
-  }.property('app_state.currentUser.preferences.device.button_border'),
+  }.property('app_state.currentUser.preferences.device.button_border', 'window_inner_width'),
   base_text_height: function() {
     var spacing = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
     var position = app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position;
@@ -524,11 +530,18 @@ export default Ember.Controller.extend({
     }
   }.property('app_state.currentUser.preferences.device.button_text', 'app_state.currentUser.preferences.device.button_text'),
   text_style: function() {
-    var spacing = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
+    var size = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
     if(app_state.get('currentUser.preferences.device.button_text_position') == 'none') {
-      spacing = 'none';
+      size = 'none';
     }
-    return "text_" + spacing;
+    if(size != 'none') {
+      if(app_state.get('window_inner_width') < 600) {
+        size = 'small';
+      } else if(app_state.get('window_inner_width') < 750 && size != 'small') {
+        size = 'medium';
+      }
+    }
+    return "text_" + size;
   }.property('app_state.currentUser.preferences.device.button_text', 'app_state.currentUser.preferences.device.button_text_position'),
   text_position: function() {
     return "text_position_" + (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
