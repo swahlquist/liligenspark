@@ -1164,7 +1164,7 @@ var persistence = Ember.Object.extend({
           }
         } else {
           board_statuses.push({id: id, key: record.get('key'), status: 'downloaded'});
-          return record;
+          return record.reload();
         }
       });
       if(!lookups[id]) {
