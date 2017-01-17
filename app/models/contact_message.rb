@@ -49,7 +49,7 @@ class ContactMessage < ActiveRecord::Base
     end
     body += (self.settings['ip_address'] ? "ip address: #{self.settings['ip_address']}" : 'no IP address found') + '<br/>'
     body += (self.settings['version'] ? "app version: #{self.settings['version']}" : 'no app version found') + '<br/>'
-    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agend']}" : 'no user agent found') + "</span>"
+    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span>"
     basic_auth = "#{ENV['ZENDESK_USER']}/token:#{ENV['ZENDESK_TOKEN']}"
     endpoint = "https://#{ENV['ZENDESK_DOMAIN']}/api/v2/tickets.json"
     json = {
