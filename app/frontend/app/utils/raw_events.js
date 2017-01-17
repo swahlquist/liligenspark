@@ -153,6 +153,9 @@ var buttonTracker = Ember.Object.extend({
       // this is to prevent ugly selected boxes that happen with dragging
       if(app_state.get('edit_mode') || app_state.get('speak_mode')) {
         if(!buttonTracker.ignored_region(event)) {
+          // TODO: this is causing errors when emulating mobile device and touching
+          // the screen in chrome. I have no listeners set to passive, but it claims
+          // that's the reason for the error.
           event.preventDefault();
         }
         if(app_state.get('edit_mode')) {
