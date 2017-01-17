@@ -4,6 +4,9 @@ import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
 
 export default modal.ModalController.extend({
+  ios: function() {
+    return window.navigator.userAgent.match(/ipad|ipod|iphone/i);
+  }.property(),
   actions: {
     submit_message: function() {
       if(!this.get('email') && !app_state.get('currentUser')) { return; }
@@ -30,7 +33,7 @@ export default modal.ModalController.extend({
         _this.set('error', true);
         _this.set('disabled', false);
       });
-      
+
     }
   }
 });

@@ -15,7 +15,7 @@ export default Ember.Controller.extend({
     {name: i18n.t('small', "Small (5px)"), id: "small"},
     {name: i18n.t('medium', "Medium (10px)"), id: "medium"},
     {name: i18n.t('large', "Large (20px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (45px)"), id: "huge"}
+    {name: i18n.t('huge', "Huge (45px)"), id: "huge"},
     {name: i18n.t('none', "None"), id: "none"}
   ],
   buttonBorderList: [

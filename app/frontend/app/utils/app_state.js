@@ -639,7 +639,7 @@ var app_state = Ember.Object.extend({
   header_size: function() {
     var size = this.get('currentUser.preferences.device.vocalization_height') || window.user_preferences.device.vocalization_height;
     if(window.innerHeight < 400) {
-      size = 'tiny'
+      size = 'tiny';
     } else if(window.innerHeight < 600 && size != 'tiny') {
       size = 'small';
     }
