@@ -1,6 +1,7 @@
 import Ember from 'ember';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
+import Utils from '../../utils/misc';
 import i18n from '../../utils/i18n';
 
 export default Ember.Controller.extend({
@@ -95,7 +96,7 @@ export default Ember.Controller.extend({
     var _this = this;
     if(this.get('model.admin')) {
       this.set('orgs.loading', true);
-      this.store.query('organization', {q: 'all'}).then(function(res) {
+      Utils.all_pages('organization', {q: 'all'}).then(function(res) {
         _this.set('orgs.loading', null);
         _this.set('orgs.data', res);
       }, function() {
