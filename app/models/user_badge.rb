@@ -166,7 +166,7 @@ class UserBadge < ActiveRecord::Base
     badged_goals.each do |goal|
       earned_goal_badges = badges.select{|b| b.earned && b.user_goal_id == goal.id }.sort_by(&:level)
       max_level = earned_goal_badges[-1] ? earned_goal_badges[-1].level : 0
-      next if max_level >= goal.settings['max_badge_level']
+      next if max_level >= goal.settings['max_badge_level'] && !goal.settings['assessment_badge']
       check_goal_badges(user, goal, max_level, stats_start, allow_forever_check)
     end
   end
