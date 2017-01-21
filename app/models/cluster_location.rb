@@ -11,8 +11,8 @@ class ClusterLocation < ActiveRecord::Base
   include SecureSerialize
   belongs_to :user
   after_save :generate_stats
-  has_many :ip_sessions, :class_name => 'LogSession', :foreign_key => 'ip_cluster_id'
-  has_many :geo_sessions, :class_name => 'LogSession', :foreign_key => 'geo_cluster_id'
+#   has_many :ip_sessions, :class_name => 'LogSession', :foreign_key => 'ip_cluster_id'
+#   has_many :geo_sessions, :class_name => 'LogSession', :foreign_key => 'geo_cluster_id'
   replicated_model  
   
   add_permissions('view', 'edit') {|user| user.id == self.user_id || (self.user && self.user.allows?(user, 'edit')) }
@@ -37,6 +37,16 @@ class ClusterLocation < ActiveRecord::Base
   
   def ip_address?
     self.cluster_type == 'ip_address'
+  end
+  
+  def ip_sessions
+    # TODO: sharding
+    LogSession.where(:ip_cluster_id => self.id)
+  end
+  
+  def geo_sessions
+    # TODO: sharding
+    LogSession.where(:geo_cluster_id => self.id)
   end
   
   def generate_stats(frd=false)

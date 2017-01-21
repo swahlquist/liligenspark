@@ -268,7 +268,7 @@ class LogSession < ActiveRecord::Base
                   button['text'].split(/\s+/).each do |word|
                     self.data['stats']['all_word_counts'][word] ||= 0
                     self.data['stats']['all_word_counts'][word] += 1
-                    self.data['stats']['all_word_sequence'] << word
+                    self.data['stats']['all_word_sequence'] << word if word
                   end
                 end
             

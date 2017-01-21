@@ -283,7 +283,7 @@ module Stats
     total_words = 0
     total_buttons = 0
     all_button_counts = {}
-    all_word_sequences = []
+#    all_word_sequences = []
     all_word_counts = {}
     all_devices = nil
     all_locations = nil
@@ -323,7 +323,7 @@ module Stats
         all_word_counts[word] += cnt
       end
       if stats[:all_word_sequence]
-        all_word_sequences << stats[:all_word_sequence].join(' ')
+#        all_word_sequences << stats[:all_word_sequence].join(' ')
       end
       
       merge_sensor_stats!(res, stats)

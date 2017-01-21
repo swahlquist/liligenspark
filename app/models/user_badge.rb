@@ -483,7 +483,7 @@ class UserBadge < ActiveRecord::Base
       if badge_level['words_list'] && data['all_word_counts']
         if data['all_word_sequences'] && data['all_word_sequences'].length > 0
           word_hits = {}
-          data['all_word_sequences'].each do |sequence|
+          data['all_word_sequences'].compact.each do |sequence|
             str = sequence.join(' ')
             badge_level['words_list'].each do |word|
               words = str.scan(Regexp.new(word, 'i'))
