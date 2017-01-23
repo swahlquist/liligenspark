@@ -1035,8 +1035,13 @@ footer .wide_links {
 .button.hidden_button, .button.empty {
   visibility: hidden;
 }
+.board.hint_hidden_buttons .button.hidden_button {
+  visibility: visible;
+  opacity: 0.2;
+}
 .board.show_all_buttons .button.hidden_button {
   visibility: visible;
+  opacity: 1.0;
 }
 .button.swapping {
   opacity: 0.5;

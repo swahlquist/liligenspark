@@ -588,6 +588,8 @@ export default Ember.Controller.extend({
     }
     if(this.get('stashes.all_buttons_enabled')) {
       res = res + 'show_all_buttons ';
+    } else if(app_state.get('currenUser.preferences.hint_hidden_buttons')) {
+      res = res + 'hint_hidden_buttons ';
     }
     if(this.get('paint_mode')) {
       res = res + "paint ";
