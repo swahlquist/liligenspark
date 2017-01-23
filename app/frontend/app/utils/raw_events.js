@@ -1150,7 +1150,7 @@ var buttonTracker = Ember.Object.extend({
     buttonTracker.last_selection = ls;
   },
   frame_event: function(event, event_type) {
-    if(event.triggered_for == event_type) {
+    if(!event || event.triggered_for == event_type) {
       return;
     }
     var raw_event_type = event.type;
