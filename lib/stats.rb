@@ -827,6 +827,25 @@ module Stats
     lines.join("\n") + "\n"
   end
   
+  def self.recently_used_boards
+    sessions = LogSession.where(:log_type => 'session').where(['started_at > ?', 3.months.ago]); 12
+    keys = {}
+    idx = 0
+    sessions.find_in_batches(:batch_size => 10) do |batch|
+      idx += 1
+      puts idx
+      batch.each do |log|
+        (log.data['events'] || []).each do |event|
+          if event['type'] == 'button' && event['button'] && event['button']['board']
+            key = event['button']['board']['key']
+            keys[key] = (keys[key] || 0) + 1
+          end
+        end
+      end
+    end
+    keys
+  end
+  
   def self.totals(date)
     date = Date.parse(date) if date.is_a?(String)
     date ||= Date.today
