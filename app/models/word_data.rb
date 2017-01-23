@@ -51,21 +51,39 @@ class WordData < ActiveRecord::Base
     end
     
     # API call to look up all missing strings
-    query_translations(missing).each do |obj|
-      res[:translations][obj[:text]] = obj[:translation]
-      # schedule(:persist_translation, text, translation, source_lang, dest_lang, type)
+    query_translations(missing, source_lang, dest_lang).each do |obj|
+      if obj[:translation]
+        res[:translations][obj[:text]] = obj[:translation]
+        # schedule(:persist_translation, text, translation, source_lang, dest_lang, type)
+      end
     end
     
     return res
   end
   
-  def self.query_translations(words)
+  def self.query_translations(words, source_lang, dest_lang)
+    return [] unless ENV['GOOGLE_TRANSLATE_TOKEN']
+    idx = 0
     res = []
-    missing.each do |obj|
-      text = obj[:text]
-      type = obj[:type]
-      obj[:translation] = text.reverse 
-      res << obj
+    while idx < words.length
+      list = words[idx, 20]
+      # https://translation.googleapis.com/language/translate/v2?api_key=KEY&target=dest_lang
+      strings = list.map{|obj| obj[:text] }
+      key = ENV['GOOGLE_TRANSLATE_TOKEN']
+      url = "https://translation.googleapis.com/language/translate/v2?key=#{key}&target=#{dest_lang}&source=#{source_lang}&format=text"
+      url += '&' + strings.map{|str| "q=#{CGI.escape(str || '')}" }.join('&')
+      data = Typhoeus.get(url)
+      json = data && JSON.parse(data.body) rescue nil
+      if json && json['data'] && json['data']['translations']
+        json['data']['translations'].each_with_index do |trans, idx|
+          obj = list[idx]
+          if obj
+            obj[:translation] = trans['translatedText']
+            res << obj
+          end
+        end
+      end
+      idx += 20
     end
     res
   end

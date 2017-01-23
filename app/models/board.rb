@@ -650,7 +650,7 @@ class Board < ActiveRecord::Base
       brd.translate_set(translations, source_lang, dest_lang, board_ids, user_local_id, visited_board_ids)
       visited_board_ids << brd.global_id
     end
-    {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids}
+    {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids, updated: visited_board_ids}
   end
   
   def default_listeners(notification_type)

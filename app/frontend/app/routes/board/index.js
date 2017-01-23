@@ -41,6 +41,7 @@ export default Ember.Route.extend({
       controller.send(action, id, extra);
     });
     contentGrabbers.board_controller = controller;
+    var prior_revision = model.get('current_revision');
     model.without_lookups(function() {
       controller.processButtons();
     });
@@ -51,23 +52,26 @@ export default Ember.Route.extend({
     // better reload. if ordered_buttons isn't set then that just means we need some
     // additional lookups
     if(model.get('integration')) { return; }
-    if(persistence.get('online') || (model.get('id') && (!controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined)))) {
+    var insufficient_data = model.get('id') && (!controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
+    if(persistence.get('online') || insufficient_data) {
       var reload = Ember.RSVP.resolve();
-
       // if we're online then we should reload, but do it softly if we're in speak mode
       if(persistence.get('online')) {
-        // reload(false) says "hey, reload but you can use the local copy if you need to"
+        // reload(false) says "hey, reload but you can use the local copy if you need to" (default behavior)
+        // reload(true) says "definitely ping the server"
         // TODO: this is failing when the board is available locally but the image isn't available locally
         // looks like this (usually, handle both cases) happens if it's stored in the local db but not
         // yet loaded into ember-data
-        reload = model.reload(!app_state.get('speak_mode'));
+        var force_fetch = !app_state.get('speak_mode');
+        if(persistence.get('syncing') && !insufficient_data) { force_fetch = false; }
+        reload = model.reload(force_fetch);
       // if we're offline, then we should only reload if we absolutely have to (i.e. ordered_buttons isn't set)
       } else if(!controller.get('ordered_buttons')) {
         reload = model.reload(false);
       }
 
-      reload.then(function() {
-        if(!controller.get('ordered_buttons')) {
+      reload.then(function(updated) {
+        if(!controller.get('ordered_buttons') || updated.get('current_revision') != prior_revision) {
           controller.processButtons();
         }
       }, function(error) {

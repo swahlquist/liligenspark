@@ -88,9 +88,8 @@ if(capabilities.wait_for_deviceready) {
 loadInitializers(CoughDrop, config.modulePrefix);
 
 DS.Model.reopen({
-  reload: function(allow_local) {
-    if(allow_local !== false) { allow_local = true; }
-    if(allow_local) {
+  reload: function(ignore_local) {
+    if(ignore_local) {
       persistence.force_reload = this._internalModel.modelName + "_" + this.get('id');
     }
     return this._super();

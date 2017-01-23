@@ -73,9 +73,11 @@ export default modal.ModalController.extend({
     var locale = this.get('model.locale');
     var board_ids = this.get('model.old_board_ids_to_translate');
     var translations = this.get('translations') || {};
+    var original_board_id = this.get('model.board.id');
     words.forEach(function(b, idx) {
       if(locale && b.locale && b.locale == locale) { return; }
       if(board_ids && board_ids.indexOf(b.board_id) == -1) { return; }
+      if(!board_ids && b.board_id != original_board_id) { return; }
       b.label = b.vocalization || b.label;
       words.forEach(function(b2, idx2) {
         b2.label = b2.vocalization || b2.label;

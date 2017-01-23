@@ -385,7 +385,7 @@ CoughDrop.Board = DS.Model.extend({
     CoughDrop.store.peekAll('board').content.mapBy('record').forEach(function(brd) {
       if(brd && affected_board_ids && affected_board_ids.indexOf(brd.get('id')) != -1) {
         if(!brd.get('isLoading') && !brd.get('isNew')) {
-          brd.reload();
+          brd.reload(true);
         }
         found_board_ids.push(brd.get('id'));
       }

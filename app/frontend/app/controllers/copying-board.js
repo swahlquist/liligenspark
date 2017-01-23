@@ -66,8 +66,9 @@ export default modal.ModalController.extend({
             };
             return modal.open('button-set', translate_opts).then(function(res) {
               if(res && res.translated) {
-                board.reload();
-                return Ember.RSVP.resolve({translated: true});
+                return board.reload(true).then(function() {
+                  return Ember.RSVP.resolve({translated: true});
+                });
               } else {
                 return Ember.RSVP.reject(i18n.t('translation_canceled', "Translation was canceled"));
               }
