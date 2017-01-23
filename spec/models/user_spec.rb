@@ -212,6 +212,22 @@ describe User, :type => :model do
       u.generate_defaults
       expect(u.settings['preferences']['auto_open_speak_mode']).to eq(true)
     end
+    
+    it "should set word_suggestion_images to the correct default based on signup date" do
+      u = User.new
+      u.generate_defaults
+      expect(u.settings['preferences']['word_suggestion_images']).to eq(true)
+      
+      u = User.new
+      u.created_at = Date.parse('Jan 1, 2000')
+      u.generate_defaults
+      expect(u.settings['preferences']['word_suggestion_images']).to eq(false)
+      
+      u = User.new
+      u.created_at = Date.parse('Feb 1, 2017')
+      u.generate_defaults
+      expect(u.settings['preferences']['word_suggestion_images']).to eq(true)
+    end
   end
 
   describe "generate_email_hash" do

@@ -30,6 +30,9 @@ module JsonApi::User
       end
       json['preferences']['home_board'] = user.settings['preferences']['home_board']
       json['preferences']['progress'] = user.settings['preferences']['progress']
+      if FeatureFlags.user_created_after?(user, 'word_suggestion_images')
+        json['preferences']['word_suggestion_images'] = true if user.settings['preferences']['word_suggestion_images'] == nil
+      end
       json['feature_flags'] = FeatureFlags.frontend_flags_for(user)
       json['prior_avatar_urls'] = user.prior_avatar_urls
       
@@ -74,12 +77,9 @@ module JsonApi::User
       json['terms_agree'] = !!user.settings['terms_agreed']
       json['subscription'] = user.subscription_hash
       json['organizations'] = user.organization_hash
-      json['is_managed'] = !!json['subscription']['is_managed'] # TODO: remove in later API revision, after like July 2016
       json['pending_board_shares'] = (user.settings['boards_shared_with_me'] || []).select{|s| s['pending'] }.each do |share|
         share['user_name'] ||= (share['board_key'] || '').split(/\//)[0]
       end
-      
-      json['has_management_responsibility'] = Organization.manager?(user) # TODO: remove in later API revision, after like July 2016
       
       supervisors = user.supervisors
       supervisees = user.supervisees

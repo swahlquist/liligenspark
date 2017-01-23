@@ -155,6 +155,29 @@
     </div>
   </div>
 </div>
+<div class="form-group">
+  <label for="word_suggestion_images" class="col-sm-3 control-label">{{t "Keyboard Suggestions" key='keyboard_suggestions'}}</label>
+  <div class="col-sm-5">
+    <div class="checkbox">
+      <label>
+        {{input type="checkbox" checked=model.preferences.word_suggestion_images id="word_suggestion_images"}}
+        {{t "Show images for keyboard suggestions" key='word_suggestion_images'}}
+      </label>
+    </div>
+  </div>
+</div>
+<div class="form-group">
+  <label for="hint_hidden_buttons" class="col-sm-3 control-label">{{t "Hidden Buttons" key='hint_hidden_buttons'}}</label>
+  <div class="col-sm-5">
+    <div class="checkbox">
+      <label>
+        {{input type="checkbox" checked=model.preferences.hint_hidden_buttons id="hint_hidden_buttons"}}
+        {{t "Don't hide, just dim hidden buttons" key='hint_hidden_buttons'}}
+      </label>
+    </div>
+  </div>
+</div>
+
 {{#if app_state.feature_flags.modeling}}
 <div class="form-group">
   <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Modeling" key='modeling'}}</label>

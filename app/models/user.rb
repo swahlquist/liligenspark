@@ -179,7 +179,8 @@ class User < ActiveRecord::Base
         'sharing' => true,
         'board_jump_delay' => 500,
         'default_sidebar_boards' => default_sidebar_boards,
-        'blank_status' => false
+        'blank_status' => false,
+        'word_suggestion_images' => true
       },
       'authenticated_user' => {
         'long_press_edit' => true,
@@ -214,6 +215,9 @@ class User < ActiveRecord::Base
       end
     end
     self.settings['preferences']['disable_quick_sidebar'] = false if self.settings['preferences']['quick_sidebar']
+    if !FeatureFlags.user_created_after?(self, 'word_suggestion_images')
+      self.settings['preferences']['word_suggestion_images'] = false if self.settings['preferences']['word_suggestion_images'] == nil
+    end
     User.preference_defaults['any_user'].each do |attr, val|
       self.settings['preferences'][attr] = val if self.settings['preferences'][attr] == nil
     end
@@ -420,7 +424,7 @@ class User < ActiveRecord::Base
       'board_background', 'vocalization_height', 'role', 'auto_open_speak_mode',
       'canvas_render', 'blank_status', 'share_notifications', 'notification_frequency',
       'skip_supervisee_sync', 'sync_refresh_interval', 'multi_touch_modeling',
-      'goal_notifications']
+      'goal_notifications', 'word_suggestion_images', 'hint_hidden_buttons']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 'home_board_set', 'app_added', 'skipped_subscribe_modal']
   def process_params(params, non_user_params)

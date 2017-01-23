@@ -187,4 +187,62 @@ describe Uploader do
     end
     
   end
+  
+  describe 'find_image' do
+    it 'should return nothing for unknown libraries' do
+      expect(Uploader.find_image('bacon', 'cool-pics', nil)).to eq(nil)
+      expect(Uploader.find_image('bacon', '', nil)).to eq(nil)
+      expect(Uploader.find_image('bacon', nil, nil)).to eq(nil)
+      expect(Uploader.find_image('bacon', '   ', nil)).to eq(nil)
+    end
+    
+    it 'should return nothing for empty queries' do
+      expect(Uploader.find_image(nil, 'arasaac', nil)).to eq(nil)
+      expect(Uploader.find_image('', 'arasaac', nil)).to eq(nil)
+      expect(Uploader.find_image('    ', 'arasaac', nil)).to eq(nil)
+    end
+    
+    it 'should make a remote request' do
+      res = OpenStruct.new(body: [
+      ].to_json)
+      expect(Typhoeus).to receive(:get).with('https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac', :ssl_verifypeer => false).and_return(res)
+      image = Uploader.find_image('bacon', 'arasaac', nil)
+      expect(image).to eq(nil)
+    end
+    
+    it 'should parse results' do
+      res = OpenStruct.new(body: [
+        {
+          'image_url' => 'http://www.example.com/pic.png',
+          'extension' => 'png',
+          'width' => '200',
+          'height' => '200',
+          'id' => '123',
+          'license' => 'public_domain',
+          'license_url' => 'http://www.example.com/cc0',
+          'source_url' => 'http://www.example.com/pics',
+          'author' => 'bob',
+          'author_url' => 'http://www.example.com/bob'
+        }
+      ].to_json)
+      expect(Typhoeus).to receive(:get).with('https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac', :ssl_verifypeer => false).and_return(res)
+      image = Uploader.find_image('bacon', 'arasaac', nil)
+      expect(image).to eq({
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png',
+        'width' => '200',
+        'height' => '200',
+        'external_id' => '123',
+        'public' => true,
+        'license' => {
+          'type' => 'public_domain',
+          'copyright_notice_url' => 'http://www.example.com/cc0',
+          'source_url' => 'http://www.example.com/pics',
+          'author_name' => 'bob',
+          'author_url' => 'http://www.example.com/bob',
+          'uneditable' => true
+        }
+      })
+    end
+  end
 end

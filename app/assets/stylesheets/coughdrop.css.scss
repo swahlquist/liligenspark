@@ -696,6 +696,64 @@ footer .wide_links {
     font-family: "ArchitectsDaughter", Arial, sans-serif;
   }
 }
+#word_suggestions {
+  text-align: center;
+  white-space: nowrap;
+}
+#word_suggestions .suggestion {
+  display: inline-block;
+  border: 1px solid #ccc;
+  padding: 12px 30px;
+  margin: -6px 10px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  background: #fff;
+}
+#word_suggestions .suggestion:hover, #word_suggestions .suggestion:focus {
+  padding: 11px 29px;
+  border-width: 2px;
+  background: #eee;
+}
+#word_suggestions {
+  .suggestion .image_holder {
+    display: block; 
+    height: 50px; 
+    overflow: hidden;
+  }
+  .suggestion img {
+    height: 50px;
+    max-width: 75px;
+  }
+  a.suggestion {
+    color: #000;
+    text-decoration: none;
+  }
+  &.upper .suggestion {
+    text-transform: uppercase;
+  }
+  &.lower .suggestion {
+    text-transform: lowercase;
+  }
+  &.comic_sans .suggestion {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+  }
+  &.open_dyslexic .suggestion {
+    font-family: "OpenDyslexic", Arial, sans-serif;
+  }
+  &.architects_daughter .suggestion {
+    font-family: "ArchitectsDaughter", Arial, sans-serif;
+  }
+  font-size: 18px;
+  &.text_small .suggestion {
+    font-size: 14px;
+  }
+  &.text_large .suggestion {
+    font-size: 22px;
+  }
+  &.text_huge .suggestion {
+    font-size: 35px;
+  }
+}
 .goal {
   .summary {
     font-weight: bold;
@@ -2044,25 +2102,6 @@ video.button_image {
 .form-control.inline-licenses {
   width: 50px; 
   display: inline;
-}
-#word_suggestions {
-  text-align: center;
-  height: 50px;
-  white-space: nowrap;
-}
-#word_suggestions .suggestion {
-  display: inline-block;
-  border: 1px solid #ccc;
-  padding: 12px 30px;
-  margin: -6px 10px 10px;
-  cursor: pointer;
-  border-radius: 3px;
-  background: #fff;
-}
-#word_suggestions .suggestion:hover, #word_suggestions .suggestion:focus {
-  padding: 11px 29px;
-  border-width: 2px;
-  background: #eee;
 }
 table#pin td a {
   display: block;

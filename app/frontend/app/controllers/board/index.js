@@ -74,13 +74,15 @@ export default Ember.Controller.extend({
 
     word_suggestions.lookup({
       last_finished_word: last_finished_word,
-      word_in_progress: word_in_progress
+      word_in_progress: word_in_progress,
+      button_set: this.get('model.button_set'),
+      board_id: this.get('model.id')
     }).then(function(result) {
       _this.set('suggestions.list', result);
     }, function() {
       _this.set('suggestions.list', []);
     });
-  }.observes('app_state.button_list', 'app_state.button_list.[]'),
+  }.observes('app_state.button_list', 'app_state.button_list.[]', 'app_state.currentUser'),
   saveButtonChanges: function(decision) {
     var state = editManager.process_for_saving();
 
@@ -127,7 +129,16 @@ export default Ember.Controller.extend({
     var sidebarTopHeight = topHeight;
     this.set('show_word_suggestions', this.get('model.word_suggestions') && app_state.get('speak_mode'));
     if(this.get('show_word_suggestions')) {
-      topHeight = topHeight + 50;
+      topHeight = topHeight + 55;
+      var style = this.get('get_style');
+      var position = this.get('text_position');
+      if(style == 'text_small') { topHeight = topHeight - 4; }
+      else if(style == 'text_large') { topHeight = topHeight + 4; }
+      else if(style == 'text_huge') { topHeight = topHeight + 17; }
+      if(this.get('app_state.currentUser.preferences.word_suggestion_images') !== false && position != 'text_only') {
+        topHeight = topHeight + 50;
+        this.set('show_word_suggestion_images', true);
+      }
     }
     if((!this.get('model.public') || this.get('model.license.type') != 'private') && !app_state.get('edit_mode') && !app_state.get('speak_mode')) {
       show_description = show_description || this.get('model.name');
@@ -146,7 +157,7 @@ export default Ember.Controller.extend({
       'width': width,
       'teaser_description': show_description
     });
-  }.observes('app_state.speak_mode', 'app_state.edit_mode', 'model.description', 'app_state.sidebar_pinned'),
+  }.observes('app_state.speak_mode', 'app_state.edit_mode', 'model.word_suggestions', 'model.description', 'app_state.sidebar_pinned', 'app_state.currentUser.preferences.word_suggestion_images', 'text_position'),
   board_style: function() {
     return new Ember.String.htmlSafe("position: relative; height: " + (this.get('height') + 5) + "px");
   }.property('height'),
@@ -523,15 +534,15 @@ export default Ember.Controller.extend({
     }
   }.property('app_state.currentUser.preferences.device.button_border', 'window_inner_width'),
   base_text_height: function() {
-    var spacing = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
+    var text = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
     var position = app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position;
-    if(spacing == "small") {
+    if(text == "small") {
       return 14;
-    } else if(spacing == "none" || position == "none") {
+    } else if(text == "none" || position == "none") {
       return 0;
-    } else if(spacing == "large") {
+    } else if(text == "large") {
       return 22;
-    } else if(spacing == "huge") {
+    } else if(text == "huge") {
       return 35;
     } else {
       return 18;
@@ -602,7 +613,29 @@ export default Ember.Controller.extend({
       }
     }
     return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target'),
+  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'app_state.currentUser.preferences.hint_hidden_buttons'),
+  suggestion_class: function() {
+    var res = "advanced_selection ";
+    if(this.get('text_style')) {
+      res = res + this.get('text_style') + " ";
+    }
+    if(this.get('text_position')) {
+      res = res + this.get('text_position') + " ";
+    }
+    if(this.get('button_style')) {
+      var style = Button.style(this.get('button_style'));
+      if(style.upper) {
+        res = res + "upper ";
+      } else if(style.lower) {
+        res = res + "lower ";
+      }
+      if(style.font_class) {
+        res = res + style.font_class + " ";
+      }
+    }
+    res = res + this.get('text_style') + " ";
+    return res;
+  }.property('text_style', 'button_style', 'text_style'),
   button_symbol_class: function() {
     var res = "button-label-holder ";
     if(this.get('app_state.currentUser.hide_symbols')) {
@@ -652,10 +685,12 @@ export default Ember.Controller.extend({
     buttonPaint: function(id) {
       editManager.paint_button(id);
     },
-    complete_word: function(text) {
+    complete_word: function(word) {
+      var text = word.word;
       var button = editManager.fake_button();
       button.label = ":complete";
       button.completion = text;
+      button.image = word.original_image;
 
       var controller = this;
       var board = this.get('model');

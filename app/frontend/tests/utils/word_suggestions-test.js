@@ -2,11 +2,18 @@ import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } fro
 import { fakeRecorder, fakeMediaRecorder, fakeCanvas, queryLog, easyPromise, queue_promise } from 'frontend/tests/helpers/ember_helper';
 import app_state from '../../utils/app_state';
 import word_suggestions from '../../utils/word_suggestions';
+import persistence from '../../utils/persistence';
 import Ember from 'ember';
 
 describe('word_suggestions', function() {
+  beforeEach(function() {
+    word_suggestions.last_finished_word = null;
+    word_suggestions.last_result = null;
+    word_suggestions.word_in_progress = null;
+  });
   describe("lookup", function() {
     it("should suggest words", function() {
+      stub(word_suggestions, 'fallback_url', function() { return Ember.RSVP.reject(); });
       word_suggestions.ngrams = {
         "": [['jump', -1.5], ['friend', -1.2], ['fancy', -1.0], ['for', -2.5]]
       };
@@ -14,10 +21,33 @@ describe('word_suggestions', function() {
       word_suggestions.lookup({word_in_progress: 'f'}).then(function(r) { res = r; });
       waitsFor(function() { return res; });
       runs(function() {
-        expect(res).toEqual(['friend', 'fancy', 'for']);
+        expect(res).toEqual([{word: 'friend'}, {word: 'fancy'}, {word: 'for'}]);
       });
     });
+
+    it('should provide images for words if available', function() {
+      stub(word_suggestions, 'fallback_url', function() { return Ember.RSVP.resolve('data:stuff'); });
+      word_suggestions.ngrams = {
+        "": [['jump', -1.5], ['friend', -1.2], ['fancy', -1.0], ['for', -2.5]]
+      };
+      var res = null;
+      word_suggestions.lookup({word_in_progress: 'f'}).then(function(r) { res = r; });
+      waitsFor(function() { return res; });
+      runs(function() {
+        expect(res[0].word).toEqual('friend');
+        expect(res[1].word).toEqual('fancy');
+        expect(res[2].word).toEqual('for');
+      });
+      waitsFor(function() { return res && res[0].image; });
+      runs(function() {
+        expect(res[0].image).toEqual('data:stuff');
+        expect(res[1].image).toEqual('data:stuff');
+        expect(res[2].image).toEqual('data:stuff');
+      });
+    });
+
     it("should suggest even if past a misspelling", function() {
+      stub(word_suggestions, 'fallback_url', function() { return Ember.RSVP.reject(); });
       word_suggestions.ngrams = {
         "": [['jump', -1.5], ['friend', -1.2], ['fancy', -1.0], ['for', -2.5]]
       };
@@ -25,11 +55,12 @@ describe('word_suggestions', function() {
       word_suggestions.lookup({word_in_progress: 'frend'}).then(function(r) { res = r; });
       waitsFor(function() { return res; });
       runs(function() {
-        expect(res).toEqual(['friend', 'fancy', 'for', 'jump']);
+        expect(res).toEqual([{word: 'friend'}, {word: 'fancy'}, {word: 'for'}, {word: 'jump'}]);
       });
     });
 
     it("should not suggest swear words", function() {
+      stub(word_suggestions, 'fallback_url', function() { return Ember.RSVP.reject(); });
       word_suggestions.ngrams = {
         "": [['fuck', -1.5], ['friend', -1.2], ['fancy', -1.0], ['for', -2.5]]
       };
@@ -37,7 +68,42 @@ describe('word_suggestions', function() {
       word_suggestions.lookup({word_in_progress: 'f'}).then(function(r) { res = r; });
       waitsFor(function() { return res; });
       runs(function() {
-        expect(res).toEqual(['friend', 'fancy', 'for']);
+        expect(res).toEqual([{word: 'friend'}, {word: 'fancy'}, {word: 'for'}]);
+      });
+    });
+
+    it("should set the result's image to the matching button's image if found", function() {
+      stub(word_suggestions, 'fallback_url', function() { return Ember.RSVP.resolve('data:stuff'); });
+      word_suggestions.ngrams = {
+        "": [['jump', -1.5], ['friend', -1.2], ['fancy', -1.0], ['for', -2.5]]
+      };
+      var res = null;
+      var calls = 0;
+      var bs = {
+        find_buttons: function(word, board_id, user, include_home) {
+          calls++;
+          if(word == 'fancy') {
+            return Ember.RSVP.resolve([
+              {label: 'fancy', image: 'data:fancy'}
+            ]);
+          } else if(word == 'for') {
+            return Ember.RSVP.resolve([{label: 'ford', image: 'data:ford'}]);
+          }
+          return Ember.RSVP.reject();
+        }
+      };
+      word_suggestions.lookup({word_in_progress: 'f', button_set: bs}).then(function(r) { res = r; });
+      waitsFor(function() { return res; });
+      runs(function() {
+        expect(res[0].word).toEqual('friend');
+        expect(res[1].word).toEqual('fancy');
+        expect(res[2].word).toEqual('for');
+      });
+      waitsFor(function() { return res && calls >= 3; });
+      runs(function() {
+        expect(res[0].image).toEqual('data:stuff');
+        expect(res[1].image).toEqual('data:fancy');
+        expect(res[2].image).toEqual('data:stuff');
       });
     });
   });

@@ -32,11 +32,18 @@
     <span style="clear: left;"></span>
   </div>
   {{#if show_word_suggestions}}
-    <div id="word_suggestions" class="advanced_selection">
+    <div id="word_suggestions" class={{suggestion_class}}>
       {{#if suggestions.ready}}
         {{#each suggestions.list as |suggestion|}}
           <a href='#' class="suggestion" {{action "complete_word" suggestion}}>
-            {{suggestion}}
+            {{#if show_word_suggestion_images}}
+              <span class='image_holder'>
+                {{#if suggestion.image}}
+                  <img src={{suggestion.image}}/>
+                {{/if}}
+              </span>
+            {{/if}}
+            {{suggestion.word}}
           </a>
         {{/each}}
       {{else if suggestions.error}}

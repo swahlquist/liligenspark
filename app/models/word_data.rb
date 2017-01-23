@@ -104,8 +104,40 @@ class WordData < ActiveRecord::Base
   end
   
   def self.core_for?(word, user)
+    self.core_list_for(user).map(&:downcase).include?(word.downcase.sub(/[^\w]+$/, ''))
+  end
+  
+  def self.core_list_for(user)
     # TODO: users can choose a custom core word list if desired
-    default_core_list.include?(word.downcase.sub(/[^\w]+$/, ''))
+    self.default_core_list
+  end
+  
+  def self.reachable_core_list_for(user)
+    list = self.core_list_for(user)
+    board_ids = []
+    if user.settings['preferences'] && user.settings['preferences']['home_board']
+      board_ids << user.settings['preferences']['home_board']['id']
+    end
+    board_ids += user.sidebar_boards.map{|b| b['key'] }
+    boards = Board.find_all_by_path(board_ids).uniq
+    
+    button_sets = boards.map{|b| b.board_downstream_button_set }.compact.uniq
+    reachable_words = button_sets.map{|bs| 
+      bs.data['buttons'].map{|b| 
+        if b['hidden']
+          nil
+        elsif b['linked_board_id'] && !b['link_disabled']
+          nil
+        else
+          b['label'] || b['vocalization']
+        end
+      }.compact
+    }.flatten.map{|w| w.downcase.sub(/[^\w]+$/, '') }.uniq
+    res = []
+    list.each do |word|
+      res << word if reachable_words.include?(word.downcase.sub(/[^\w]+$/, ''))
+    end
+    res
   end
   
   def self.default_core_list

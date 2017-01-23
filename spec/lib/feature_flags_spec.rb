@@ -34,4 +34,21 @@ describe FeatureFlags do
       expect(flags).to eq({'b' => true, 'c' => true})
     end
   end
+  
+  describe "user_created_after?" do
+    it "should return the correct response" do
+      u = User.new
+      expect(FeatureFlags.user_created_after?(u, 'word_suggestion_images')).to eq(true)
+      u.created_at = Date.parse("Jan 1, 2000")
+      expect(FeatureFlags.user_created_after?(u, 'word_suggestion_images')).to eq(false)
+      u.created_at = Date.parse("Jan 1, 2020")
+      expect(FeatureFlags.user_created_after?(u, 'word_suggestion_images')).to eq(true)
+      u.created_at = Date.parse("Jan 1, 2020")
+      expect(FeatureFlags.user_created_after?(u, 'bacon')).to eq(false)
+      u.created_at = 2.days.ago
+      expect(FeatureFlags.user_created_after?(u, 'bacon')).to eq(false)
+      u.created_at = nil
+      expect(FeatureFlags.user_created_after?(u, 'bacon')).to eq(false)
+    end
+  end
 end

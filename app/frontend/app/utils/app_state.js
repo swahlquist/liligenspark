@@ -355,7 +355,7 @@ var app_state = Ember.Object.extend({
   toggle_edit_mode: function(decision) {
     editManager.clear_history();
     var _this = this;
-    if(!this.get('controller.board.model.permissions.edit')) {
+    if(!this.get('controller.board.model.permissions.edit') && this.get('feature_flags.edit_before_copying')) {
       modal.open('confirm-needs-copying', {board: this.controller.get('board.model')}).then(function(res) {
         if(res == 'confirm') {
           _this.toggle_mode('edit', {copy_on_save: true});

@@ -179,6 +179,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       matching_buttons.forEach(function(button) {
         Ember.set(button, 'current_depth', (button.pre_buttons || []).length);
         if(button.image && button.image.match(/^http/)) {
+          Ember.set(button, 'original_image', button.image);
           var promise = persistence.find_url(button.image, 'image').then(function(data_uri) {
             Ember.set(button, 'image', data_uri);
           }, function() { });

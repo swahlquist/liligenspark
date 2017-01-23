@@ -115,6 +115,7 @@ var utterance = Ember.Object.extend({
     } else if(text == ':complete') {
       altered.vocalization = addition.completion;
       altered.label = addition.completion;
+      if(addition.image) { altered.image = addition.image; }
       altered.in_progress = false;
     } else if(text == ':plural' || text == ':pluralize') {
       altered.vocalization = i18n.pluralize(prior_text);

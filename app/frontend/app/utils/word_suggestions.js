@@ -1,6 +1,8 @@
 import Ember from 'ember';
 import persistence from './persistence';
 import capabilities from './capabilities';
+import Utils from './misc';
+import app_state from './app_state';
 
 var word_suggestions = Ember.Object.extend({
   load: function() {
@@ -167,6 +169,7 @@ var word_suggestions = Ember.Object.extend({
     wanky:1,whoar:1,whore:1,willies:1,willy:1,xrated:1,xxx:1
   },
   lookup: function(options) {
+//  find_buttons: function(str, from_board_id, user, include_home_and_sidebar) {
     var _this = this;
     return this.load().then(function() {
       var last_finished_word = options.last_finished_word;
@@ -183,10 +186,10 @@ var word_suggestions = Ember.Object.extend({
             if(!_this.filtered_words[str.toLowerCase()]) {
               if(word_in_progress) {
                 if(str.substring(0, word_in_progress.length) == word_in_progress) {
-                  result.push(list[idx][0]);
+                  result.push({word: list[idx][0]});
                 }
               } else if(str[0] != "<") {
-                result.push(list[idx][0]);
+                result.push({word: list[idx][0]});
               }
             }
           }
@@ -211,18 +214,47 @@ var word_suggestions = Ember.Object.extend({
           });
           edits.forEach(function(e) {
             if(result.length < _this.max_results) {
-              result.push(e[0]);
+              result.push({word: e[0]});
             }
           });
         }
         //if(result.length < _this.max_results) { find_lookups(Ember.keys(_this.ngrams)); }
-        result = result.uniq();
+        result = Utils.uniq(result, 'word');
         _this.last_result = result;
+        _this.fallback_url().then(function(url) {
+          result.forEach(function(word) {
+            if(!Ember.get(word, 'image')) {
+              Ember.set(word, 'image', url);
+            }
+          });
+        }, function() { });
+        if(options.button_set) {
+          result.forEach(function(word) {
+            options.button_set.find_buttons(word.word, options.board_id, app_state.get('currentUser'), true).then(function(buttons) {
+              var button = buttons[0];
+              if(button && button.label == word.word && button.image && (button.image.match(/^data/) || !button.image.match(/^http/))) {
+                Ember.set(word, 'original_image', button.original_image);
+                Ember.set(word, 'image', button.image);
+              }
+            });
+          });
+        }
         return Ember.RSVP.resolve(result);
       } else {
         return Ember.RSVP.resolve(_this.last_result);
       }
     });
+  },
+  fallback_url: function() {
+    if(this.fallback_url) {
+      return this.fallback_url;
+    } else {
+      var _this = this;
+      persistence.find_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg').then(function(url) {
+        _this.fallback_url = url;
+        return url;
+      }, function() { });
+    }
   },
   edit_distance: function(a, b) {
     // Compute the edit distance between the two given strings

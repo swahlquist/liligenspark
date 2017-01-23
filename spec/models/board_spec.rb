@@ -1617,5 +1617,268 @@ describe Board, :type => :model do
       expect(b4.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top'])
       expect(b5.reload.settings['buttons'].map{|b| b['label'] }).to eq(['hat'])
     end
+
+    it "should not recurse beyond an unrecognized board" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b4 = Board.create(:user => u)
+      b5 = Board.create(:user => u)
+      b1.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => 2, 'label' => 'cat', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => 2, 'label' => 'rat', 'load_board' => {'id' => b5.global_id, 'key' => b5.key}}
+      ]
+      b1.save
+      b2.settings['buttons'] = [
+        {'id' => 1, 'label' => 'fat', 'load_board' => {'id' => b4.global_id, 'key' => b4.key}}
+      ]
+      b2.save
+      b3.settings['buttons'] = [
+        {'id' => 1, 'label' => 'cheese', 'vocalization' => 'hat'}
+      ]
+      b3.save
+      b4.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b1.global_id, 'key' => b1.key}}
+      ]
+      b4.save
+      b5.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat'}
+      ]
+      b5.save
+      
+      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, 'en', 'es', [b1.global_id, b3.global_id, b4.global_id])
+      expect(res[:done]).to eq(true)
+      expect(b1.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
+      expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat'])
+      expect(b3.reload.settings['buttons'].map{|b| b['label'] }).to eq(['cheese'])
+      expect(b3.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq(['top'])
+      expect(b4.reload.settings['buttons'].map{|b| b['label'] }).to eq(['hat'])
+      expect(b5.reload.settings['buttons'].map{|b| b['label'] }).to eq(['hat'])
+    end
+  end
+  
+  describe 'swap_images' do
+    it 'should return on an empty library' do
+      b = Board.new
+      expect(b.swap_images(nil, nil, nil)).to eq({done: true, swapped: false, reason: 'no library specified'})
+      expect(b.swap_images('', nil, nil)).to eq({done: true, swapped: false, reason: 'no library specified'})
+    end
+    
+    it 'should return on a mismatched board' do
+      b = Board.new
+      expect(b.swap_images('arasaac', nil, [], 'asdf')).to eq({done: true, swapped: false, reason: 'mismatched user'})
+    end
+    
+    it 'should call Uploader.find_image for all image buttons' do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
+      ]
+      b.save
+      expect(Uploader).to receive(:find_image).with('hats', 'bacon', u).and_return(nil)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png'
+      })
+      res = b.swap_images('bacon', u, [])
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+    end
+    
+    it 'should create and set button images for changed images, including creating board_button_image connections' do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
+      ]
+      b.save
+      expect(Uploader).to receive(:find_image).with('hats', 'bacon', u).and_return(nil)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png'
+      })
+      res = b.swap_images('bacon', u, [])
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      img = ButtonImage.last
+      expect(b.reload.button_images.to_a).to eq([img])
+      expect(b.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
+      ])
+    end
+    
+    it 'should do nothing when no images found' do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
+      ]
+      b.save
+      expect(b).to_not receive(:save)
+      expect(Uploader).to receive(:find_image).with('hats', 'bacon', u).and_return(nil)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return(nil)
+      res = b.swap_images('bacon', u, [])
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+    end
+    
+    it 'should not error on buttons with no images' do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hats'},
+        {'id' => 2, 'label' => 'cats'}
+      ]
+      b.save
+      expect(Uploader).to receive(:find_image).with('hats', 'bacon', u).and_return(nil)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png'
+      })
+      res = b.swap_images('bacon', u, [])
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      img = ButtonImage.last
+      expect(b.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'hats'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
+      ])
+    end
+    
+    it 'should recursively find boards' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_image).with('hats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
+      })
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      })
+      expect(Uploader).to_not receive(:find_image).with('flats', 'bacon', u)
+      res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
+      bis = b.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(1)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(b.reload.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.settings['buttons']).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => bi2.global_id, 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(b3.reload.settings['buttons']).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+    
+    it 'should stop when the user no longer matches' do
+      u = User.create
+      u2 = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u2)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to_not receive(:find_image).with('hats', 'bacon', u)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      })
+      expect(Uploader).to_not receive(:find_image).with('flats', 'bacon', u)
+      res = b.swap_images('bacon', u, [b.global_id, b2.global_id, b3.global_id])
+      bis = b.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(b.reload.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.settings['buttons']).to eq([
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(b3.reload.settings['buttons']).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+    
+    it 'should only find boards it can access' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to_not receive(:find_image).with('hats', 'bacon', u)
+      expect(Uploader).to receive(:find_image).with('cats', 'bacon', u).and_return({
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      })
+      expect(Uploader).to_not receive(:find_image).with('flats', 'bacon', u)
+      res = b.swap_images('bacon', u, [b.global_id, b3.global_id])
+      bis = b.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(b.reload.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.settings['buttons']).to eq([
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(b3.reload.settings['buttons']).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
   end
 end
