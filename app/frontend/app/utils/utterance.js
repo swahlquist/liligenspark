@@ -233,11 +233,13 @@ var utterance = Ember.Object.extend({
   alert: function() {
     speecher.beep();
   },
-  clear: function(auto_cleared) {
+  clear: function(auto_cleared, skip_logging) {
     this.set('rawButtonList', []);
-    stashes.log({
-      action: 'clear'
-    });
+    if(!skip_logging) {
+      stashes.log({
+        action: 'clear'
+      });
+    }
     if(!auto_cleared) {
       speecher.stop('all');
     }

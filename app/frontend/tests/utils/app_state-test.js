@@ -12,6 +12,7 @@ import session from '../../utils/session';
 import capabilities from '../../utils/capabilities';
 import utterance from '../../utils/utterance';
 import geo from '../../utils/geo';
+import speecher from '../../utils/speecher';
 import CoughDrop from '../../app';
 
 describe('app_state', function() {
@@ -167,6 +168,44 @@ describe('app_state', function() {
       waitsFor(function() { return polling; });
       runs();
     });
+
+//         if(this.get('currentUser.preferences.speak_on_speak_mode')) {
+//           Ember.run.later(function() {
+//             speecher.speak_text(i18n.t('here_we_go', "here we go"), null, {volume: 0.1});
+//           }, 200);
+//         }
+
+    it("should not trigger an init vocalization by default", function() {
+      var called = false;
+      stub(speecher, 'speak_text', function(str, opts) {
+        called = true;
+      });
+      var done = false;
+      stashes.set('current_mode', 'speak');
+      app_state.set('currentUser', Ember.Object.create({}));
+      app_state.set('currentBoardState', {key: 'trade', id: '1_1'});
+      setTimeout(function() { done = true; }, 500);
+      waitsFor(function() { return done; });
+      runs(function() {
+        expect(called).toEqual(false);
+      });
+    });
+
+    it("should trigger an init vocalization if specified", function() {
+      var called = false;
+      stub(speecher, 'speak_text', function(str, id, opts) {
+        expect(str).toEqual('here we go');
+        expect(opts).toEqual({volume: 0.1});
+        called = true;
+      });
+      var done = false;
+      stashes.set('current_mode', 'speak');
+      app_state.set('currentUser', Ember.Object.create({preferences: {speak_on_speak_mode: true}}));
+      app_state.set('currentBoardState', {key: 'trade', id: '1_1'});
+      setTimeout(function() { done = true; }, 500);
+      waitsFor(function() { return called; });
+      runs();
+    });
   });
 
   describe('refresh_user', function() {
@@ -261,6 +300,16 @@ describe('app_state', function() {
       stub(app_state, 'home_in_speak_mode', function() { });
       app_state.toggle_speak_mode('heart');
       expect(closed).toEqual(true);
+    });
+
+    it("should clear the utterance in a non-logged way", function() {
+      var called = false;
+      stub(utterance, 'clear', function(meh, non_logged) {
+        called = true;
+        expect(non_logged).toEqual(true);
+      });
+      app_state.toggle_speak_mode();
+      expect(called).toEqual(true);
     });
 
     it("should launch the home board in speak mode if not currently on a board", function() {
@@ -510,6 +559,7 @@ describe('app_state', function() {
       });
       stub(editManager, 'clear_history', function() {
       });
+      app_state.set('controller.board', {model: {permissions: {edit: true}}});
       app_state.toggle_edit_mode();
       expect(toggle_called).toEqual(true);
     });

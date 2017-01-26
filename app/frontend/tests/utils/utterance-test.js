@@ -152,6 +152,37 @@ describe('utterance', function() {
       expect(result.label).toEqual("cow");
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(1);
+      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+    });
+
+    it("should use the completion image for a word completion", function() {
+      var result = utterance.modify_button({label: "cow", in_progress: true}, {vocalization: "+s"});
+      expect(result.label).toEqual("cows");
+      expect(result.modified).toEqual(true);
+      expect(result.modifications.length).toEqual(1);
+      result = utterance.modify_button(result, {label: "+zoo"});
+      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg');
+      expect(result.label).toEqual("cowszoo");
+      expect(result.modified).toEqual(true);
+      expect(result.modifications.length).toEqual(2);
+      result = utterance.modify_button(result, {label: ":complete", completion: "cowszoofill"});
+      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+      expect(result.label).toEqual("cowszoofill");
+    });
+
+    it("should use the addition's image if for a word completion", function() {
+      var result = utterance.modify_button({label: "cow", in_progress: true}, {vocalization: "+s"});
+      expect(result.label).toEqual("cows");
+      expect(result.modified).toEqual(true);
+      expect(result.modifications.length).toEqual(1);
+      result = utterance.modify_button(result, {label: "+zoo"});
+      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg');
+      expect(result.label).toEqual("cowszoo");
+      expect(result.modified).toEqual(true);
+      expect(result.modifications.length).toEqual(2);
+      result = utterance.modify_button(result, {label: ":complete", completion: "cowszoofill", image: "http://www.example.com/pic.png"});
+      expect(result.image).toEqual('http://www.example.com/pic.png');
+      expect(result.label).toEqual("cowszoofill");
     });
   });
 
@@ -247,6 +278,12 @@ describe('utterance', function() {
       stub(stashes, 'log', function(obj) { logged = obj.action == 'clear'; });
       utterance.clear();
       expect(logged).toEqual(true);
+    });
+    it("should not log a clear event if specified", function() {
+      var logged = false;
+      stub(stashes, 'log', function(obj) { logged = obj.action == 'clear'; });
+      utterance.clear(null, true);
+      expect(logged).toEqual(false);
     });
   });
 
