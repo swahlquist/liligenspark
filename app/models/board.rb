@@ -626,8 +626,9 @@ class Board < ActiveRecord::Base
 
   def translate_set(translations, source_lang, dest_lang, board_ids, user_local_id=nil, visited_board_ids=[])
     user_local_id ||= self.user_id
-    return {done: true, translated: false} if user_local_id != self.user_id
-    if self.settings['locale'] != dest_lang && (board_ids.blank? || board_ids.include?(self.global_id))
+    return {done: true, translated: false, reason: 'mismatched user'} if user_local_id != self.user_id
+    if self.settings['locale'] == dest_lang
+    elsif board_ids.blank? || board_ids.include?(self.global_id)
       self.settings['locale'] = dest_lang
       if self.settings['name'] && translations[self.settings['name']]
         self.settings['name'] = translations[self.settings['name']]
@@ -643,6 +644,8 @@ class Board < ActiveRecord::Base
         end
       end
       self.save
+    else
+      return {done: true, translated: false, reason: 'board not in list'}
     end
     visited_board_ids << self.global_id
     downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
@@ -653,13 +656,15 @@ class Board < ActiveRecord::Base
     {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids, updated: visited_board_ids}
   end
   
-  def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[])
+  def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
-    return {done: true, swapped: false} if user_local_id != self.user_id || !library || library.blank?
+    return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
+    return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
     if (board_ids.blank? || board_ids.include?(self.global_id))
+      updated_board_ids << self.global_id
       self.settings['buttons'].each do |button|
-        if button['image_id'] && (button['label'] || button['vocalization'])
+        if button['label'] || button['vocalization']
           image_data = Uploader.find_image(button['label'] || button['vocalization'], library, author)
           if image_data
             bi = ButtonImage.process_new(image_data, {user: author})
@@ -668,16 +673,19 @@ class Board < ActiveRecord::Base
           end
         end
       end
-      self.save
+      self.save if @buttons_changed
+    else
+      return {done: true, swapped: false, reason: 'board not in list'}
     end
     visited_board_ids << self.global_id
     downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
-      brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids)
+      brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
       visited_board_ids << brd.global_id
     end
-    {done: true, library: library, board_ids: board_ids, updated: visited_board_ids}
+    {done: true, library: library, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
   end  
+  
   def default_listeners(notification_type)
     if notification_type == 'board_buttons_changed'
       ubc = UserBoardConnection.where(:board_id => self.id)

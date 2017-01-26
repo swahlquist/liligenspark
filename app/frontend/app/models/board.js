@@ -335,7 +335,7 @@ CoughDrop.Board = DS.Model.extend({
     var res = board.save();
     res.then(function() {
       _this.rollbackAttributes();
-    });
+    }, function() { });
     return res;
   },
   add_button: function(button) {

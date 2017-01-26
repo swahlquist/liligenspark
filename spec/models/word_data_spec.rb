@@ -58,30 +58,80 @@ RSpec.describe WordData, :type => :model do
 
   describe "translate" do
     it "should translate individual words" do
-      expect(WordData).to receive(:query_translations).with([{:text => 'hat', :type => nil}]).and_return([{:text => 'hat', :type => nil, :translation => 'cap'}])
+      expect(WordData).to receive(:query_translations).with([{:text => 'hat', :type => nil}], 'en', 'es').and_return([{:text => 'hat', :type => nil, :translation => 'cap'}])
       expect(WordData.translate('hat', 'en', 'es')).to eq('cap')
     end
+    
+    it "should persist found translations" do
+      expect(WordData).to receive(:query_translations).with([{:text => 'hat', :type => nil}], 'en', 'es').and_return([{:text => 'hat', :type => nil, :translation => 'cap'}])
+      expect(WordData.translate('hat', 'en', 'es')).to eq('cap')
+      Worker.process_queues
+      w = WordData.last
+      expect(w.locale).to eq('es')
+      expect(w.data).to eq({
+        'word' => 'cap',
+        'translations' => {'en' => 'hat'},
+        'types' => ['noun']
+      })
+      w2 = WordData.where(:word => 'hat', :locale => 'en').first
+      expect(w2).to_not eq(nil)
+      expect(w2.data).to eq({
+        'word' => 'hat',
+        'translations' => {'es' => 'cap'},
+        'types' => ['noun', 'verb', 'usu participle verb']
+      })
+    end
   end
-#   def self.translate(text, source_lang, dest_lang, type=nil)
-#     batch = translate_batch([{text: text, type: type}], source_lang, dest_lang)
-#     batch[:translations][text]
-#   end  
-
-#   def self.query_translations(words)
-#     res = []
-#     missing.each do |obj|
-#       text = obj[:text]
-#       type = obj[:type]
-#       obj[:translation] = text.reverse 
-#       res << obj
-#     end
-#     res
-#   end
+  
+  describe "query_translations" do
+    it "should return an empty list of no search available" do
+      ENV['GOOGLE_TRANSLATE_TOKEN'] = nil
+      expect(Typhoeus).to_not receive(:get)
+      res = WordData.query_translations([{text: 'hat'}], 'en', 'es')
+      expect(res).to eq([])
+    end
+    
+    it "should query translations" do
+      ENV['GOOGLE_TRANSLATE_TOKEN'] = 'secrety'
+      response = OpenStruct.new(body: {
+        data: {
+          translations: [
+            {translatedText: 'top'},
+            {translatedText: 'meow'}
+          ]
+        }
+      }.to_json)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat').and_return(response)
+      res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
+      expect(res).to eq([
+        {text: 'hat', translation: 'top'},
+        {text: 'cat', translation: 'meow'}
+      ])
+    end
+    
+    it "should only return results that have a translation" do
+      ENV['GOOGLE_TRANSLATE_TOKEN'] = 'secrety'
+      response = OpenStruct.new(body: {
+        data: {
+          translations: [
+            {translatedText: 'top'},
+            {translatedText: 'cat'}
+          ]
+        }
+      }.to_json)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat').and_return(response)
+      res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
+      expect(res).to eq([
+        {text: 'hat', translation: 'top'}
+      ])
+    end
+  end
+  
   describe "translate_batch" do
     it "should translate a batch of words as well as possible" do
       a = WordData.create(:word => "troixlet", :locale => 'en', :data => {'a' => 'b', 'translations' => {'es' => 'trunket'}})
       b = WordData.create(:word => "runshkable", :locale => 'en', :data => {'a' => 'b', 'translations' => {'es-US' => 'rushef'}})
-      expect(WordData).to receive(:query_translations).with([{:text => 'forshdeg'}, {:text => 'wilmerding'}]).and_return([{:text => 'forshdeg', :type => nil, :translation => 'milnar'}])
+      expect(WordData).to receive(:query_translations).with([{:text => 'forshdeg'}, {:text => 'wilmerding'}], 'en', 'es-US').and_return([{:text => 'forshdeg', :type => nil, :translation => 'milnar'}])
       res = WordData.translate_batch([
         {:text => 'troixlet'},
         {:text => 'runshkable'},
@@ -124,6 +174,107 @@ RSpec.describe WordData, :type => :model do
       expect(w1).to_not eq(nil)
       expect(w1.data['translations']).to eq({'en' => 'runshkable'})
       expect(w1.data['types']).to eq(['something'])
+    end
+  end
+  
+  describe "core_list_for" do
+    it "should return the default core list" do
+      expect(WordData).to receive(:default_core_list).and_return('list!');
+      expect(WordData.core_list_for(nil)).to eq('list!')
+    end
+  end
+  
+  describe "reachable_core_list_for" do
+    it "should return a list of words" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'you'},
+          {'id' => 2, 'label' => 'he'},
+          {'id' => 3, 'label' => 'I'},
+          {'id' => 4, 'label' => 'like'},
+          {'id' => 5, 'label' => 'snooze'},
+          {'id' => 6, 'label' => 'pretend'},
+          {'id' => 7, 'label' => 'wonder'},
+          {'id' => 8, 'label' => 'think'},
+          {'id' => 9, 'label' => 'favorite'},
+        ]
+      })
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
+      u.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(WordData.reachable_core_list_for(u)).to eq(["he", "i", "you", "favorite", "like", "pretend", "think"])
+    end
+    
+    it "should return words available from the root board" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'you'},
+          {'id' => 2, 'label' => 'he'},
+          {'id' => 3, 'label' => 'I'},
+          {'id' => 4, 'label' => 'like'},
+          {'id' => 5, 'label' => 'snooze'},
+          {'id' => 6, 'label' => 'pretend'},
+          {'id' => 7, 'label' => 'wonder'},
+          {'id' => 8, 'label' => 'think'},
+          {'id' => 9, 'label' => 'favorite'},
+        ]
+      })
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
+      u.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(WordData.reachable_core_list_for(u)).to eq(["he", "i", "you", "favorite", "like", "pretend", "think"])
+    end
+    
+    it "should return words available from the sidebar" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'yes'},
+          {'id' => 2, 'label' => 'no'},
+          {'id' => 3, 'label' => 'I'},
+          {'id' => 4, 'label' => 'like'},
+          {'id' => 5, 'label' => 'snooze'},
+          {'id' => 6, 'label' => 'pretend'},
+          {'id' => 7, 'label' => 'wonder'},
+          {'id' => 8, 'label' => 'think'},
+          {'id' => 9, 'label' => 'favorite'},
+        ]
+      })
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
+      u.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(WordData.reachable_core_list_for(u)).to eq(["i", "favorite", "like", "pretend", "think", "yes", "no"])
+    end
+    
+    it "should not return words that aren't accessible, even if they're core words" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'you'},
+          {'id' => 2, 'label' => 'bacon'},
+          {'id' => 3, 'label' => 'radish'},
+          {'id' => 4, 'label' => 'like'},
+          {'id' => 5, 'label' => 'snooze'},
+          {'id' => 6, 'label' => 'watercolor'},
+          {'id' => 7, 'label' => 'wonder'},
+          {'id' => 8, 'label' => 'splendid'},
+          {'id' => 9, 'label' => 'favorite'},
+        ]
+      })
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
+      u.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(WordData.reachable_core_list_for(u)).to eq(["you", "favorite", "like"])
     end
   end
 end

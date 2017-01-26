@@ -118,15 +118,18 @@ module Uploader
   end
   
   def self.find_image(keyword, library, user)
+    return nil if (keyword || '').strip.blank? || (library || '').strip.blank?
     if library == 'ss'
     elsif library == 'lp'
-    else
+    elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol'].include?(library)
       str = "#{keyword} repo:#{library}"
       res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}", :ssl_verifypeer => false)
       results = JSON.parse(res.body)
       results.each do |result|
-        type = MIME::Types.type_for(result['extension'])[0]
-        result['content_type'] = type.content_type
+        if result['extension']
+          type = MIME::Types.type_for(result['extension'])[0]
+          result['content_type'] = type.content_type
+        end
       end
       return nil if results.empty?
       obj = results[0]

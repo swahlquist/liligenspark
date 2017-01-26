@@ -54,7 +54,7 @@ class WordData < ActiveRecord::Base
     query_translations(missing, source_lang, dest_lang).each do |obj|
       if obj[:translation]
         res[:translations][obj[:text]] = obj[:translation]
-        schedule(:persist_translation, text, translation, source_lang, dest_lang, type)
+        schedule(:persist_translation, obj[:text], obj[:translation], source_lang, dest_lang, obj[:type])
       end
     end
     
@@ -77,7 +77,7 @@ class WordData < ActiveRecord::Base
       if json && json['data'] && json['data']['translations']
         json['data']['translations'].each_with_index do |trans, idx|
           obj = list[idx]
-          if obj
+          if obj && trans['translatedText'] != obj[:text]
             obj[:translation] = trans['translatedText']
             res << obj
           end
@@ -98,10 +98,9 @@ class WordData < ActiveRecord::Base
       word.data['translations'][dest_lang.split(/-/)[0]] ||= translation
       word.save
     end
-    
     # record the reverse translation on the 
     backwards_word = find_word_record(translation, dest_lang)
-    backwards_word ||= WordData.new(:word => translation.downcase.strip, :locale => dest_lang, :data => {:word => text.downcase.strip})
+    backwards_word ||= WordData.new(:word => translation.downcase.strip, :locale => dest_lang, :data => {:word => translation.downcase.strip})
     if backwards_word && backwards_word.data
       backwards_word.data['translations'] ||= {}
       backwards_word.data['translations'][source_lang] ||= text
@@ -136,7 +135,7 @@ class WordData < ActiveRecord::Base
     if user.settings['preferences'] && user.settings['preferences']['home_board']
       board_ids << user.settings['preferences']['home_board']['id']
     end
-    board_ids += user.sidebar_boards.map{|b| b['key'] }
+    board_ids += user.sidebar_boards.map{|b| b[:key] }
     boards = Board.find_all_by_path(board_ids).uniq
     
     button_sets = boards.map{|b| b.board_downstream_button_set }.compact.uniq

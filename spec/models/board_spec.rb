@@ -1549,7 +1549,7 @@ describe Board, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       res = b.translate_set({}, 'en', 'es', [b.global_id], 1234)
-      expect(res).to eq({done: true, translated: false})
+      expect(res).to eq({done: true, translated: false, reason: 'mismatched user'})
     end
     
     it "should do nothing if the board's locale already matches the desired locale" do
@@ -1611,7 +1611,7 @@ describe Board, :type => :model do
       res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, 'en', 'es', [b1.global_id, b2.global_id, b3.global_id, b4.global_id])
       expect(res[:done]).to eq(true)
       expect(b1.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
-      expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat'])
+      expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat']) # already translated
       expect(b3.reload.settings['buttons'].map{|b| b['label'] }).to eq(['cheese'])
       expect(b3.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq(['top'])
       expect(b4.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top'])

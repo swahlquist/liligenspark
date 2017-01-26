@@ -291,7 +291,9 @@ class Api::BoardsController < ApplicationController
     return unless allowed?(board, 'edit')
     ids = params['board_ids_to_translate'] || []
     ids << board.global_id
-    progress = Progress.schedule(board, :translate_set, params['translations'].to_unsafe_h, params['source_lang'], params['destination_lang'], ids)
+    translations = params['translations']
+    translations = translations.to_unsafe_h if translations.respond_to?(:to_unsafe_h)
+    progress = Progress.schedule(board, :translate_set, translations, params['source_lang'], params['destination_lang'], ids)
     render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
   end
 

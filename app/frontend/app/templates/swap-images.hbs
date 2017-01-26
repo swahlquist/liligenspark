@@ -1,0 +1,45 @@
+{{#modal-dialog action="close" opening='opening' closing='closing'}}
+  <div class="modal-header">
+    <button type="button" class="close" {{action 'close'}}>&times;</button>
+    <h3>{{t "Swap Board Images" key='swap_board_images'}}</h3>
+  </div>
+  <div class="modal-body">
+    <p>{{t "Select the boards you would like modified and an image library to use for image replacements. If no results are found in that library, the image will not be changed." key='swap_instructions'}}</p>
+    <form class="form-horizontal" {{action "nothing" on="submit"}}>
+      <div class="form-group">
+        <label for="boards" class="col-sm-3 control-label">{{t "Boards" key='boards'}}</label>
+        <div class="col-sm-9">
+          {{#if hierarchy.loading}}
+            {{t "Loading linked boards..." key='loading_linked_boards'}}
+          {{else if hierarchy.error}}
+            {{t "There was an error trying to retrieve linked boards" key='error_getting_linked_boards'}}
+          {{else}}
+            <div style='margin-top: 5px;'>
+              {{board-hierarchy hierarchy=hierarchy selectable=true}}
+            </div>
+          {{/if}}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="library">
+          {{t "Library" key='library'}}
+        </label>
+        <div class="col-sm-9">
+          {{bound-select select_class="form-control" select_id="libraries" content=libraries selection=library action=(action (mut library)) }}
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button class='btn btn-primary' {{action 'swap'}} disabled={{status.loading}}>
+      {{#if status.loading}}
+        {{t "Swapping Images..." key='swapping_images'}}
+      {{else if status.error}}
+        {{t "Swapping Images Failed" key='swapping_images_failed'}}
+      {{else}}
+        {{t "Swap Images" key='swap_images'}}
+      {{/if}}
+    </button>
+    <a href="#" class="btn btn-default" {{action 'close'}}>{{t "Cancel" key='cancel'}}</a>
+  </div>
+{{/modal-dialog}}
