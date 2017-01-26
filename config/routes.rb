@@ -132,6 +132,7 @@ Coughdrop::Application.routes.draw do
       post 'share_response' => 'boards#share_response'
       get 'copies' => 'boards#copies'
       post 'translate' => 'boards#translate'
+      post 'swap_images' => 'boards#swap_images'
     end
     
     

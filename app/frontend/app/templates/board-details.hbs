@@ -109,6 +109,12 @@
           {{/unless}}
         </dd>
     </dl>
+    {{#if model.permissions.edit}}
+      {{#if app_state.feature_flags.translation}}
+        <button class='btn btn-default' {{action 'translate'}}>{{t "Translate this Board" key='translate_this_board'}}</button>
+        <button class='btn btn-default' {{action 'swap_images'}}>{{t "Swap Images for this Board" key='swap_images_for_this_board'}}</button>
+      {{/if}}
+    {{/if}}
   </div>
   <div class="modal-footer">
     <a href="#" class="btn" {{action 'close'}}>{{t "Close" key='close'}}</a>

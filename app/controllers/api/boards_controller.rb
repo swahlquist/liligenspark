@@ -295,6 +295,16 @@ class Api::BoardsController < ApplicationController
     render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
   end
 
+  def swap_images
+    board = Board.find_by_path(params['board_id'])
+    return unless exists?(board, params['board_id'])
+    return unless allowed?(board, 'edit')
+    ids = params['board_ids_to_convert'] || []
+    ids << board.global_id
+    progress = Progress.schedule(board, :swap_images, params['library'], @api_user.global_id, ids)
+    render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
+  end
+
   protected
   def star_or_unstar(star)
     board = Board.find_by_path(params['board_id'])

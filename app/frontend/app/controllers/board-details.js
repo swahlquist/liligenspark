@@ -35,6 +35,12 @@ export default modal.ModalController.extend({
     },
     button_set_words: function() {
       modal.open('button-set', {board: this.get('model'), button_set: this.get('model.button_set')});
+    },
+    translate: function() {
+      modal.open('translation-select', {board: this.get('model'), button_set: this.get('model.button_set')});
+    },
+    swap_images: function() {
+      modal.open('swap-images', {board: this.get('model'), button_set: this.get('model.button_set')});
     }
   }
 });

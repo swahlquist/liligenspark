@@ -39,7 +39,7 @@ export default Ember.Controller.extend({
       });
     }
     editManager.process_for_displaying();
-  },
+  }.observes('app_state.board_reload_key'),
   check_for_share_approval: function() {
     var board_id = this.get('model.id');
     var _this = this;

@@ -653,6 +653,31 @@ class Board < ActiveRecord::Base
     {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids, updated: visited_board_ids}
   end
   
+  def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[])
+    author = User.find_by_global_id(author) if author && author.is_a?(String)
+    user_local_id ||= self.user_id
+    return {done: true, swapped: false} if user_local_id != self.user_id || !library || library.blank?
+    if (board_ids.blank? || board_ids.include?(self.global_id))
+      self.settings['buttons'].each do |button|
+        if button['image_id'] && (button['label'] || button['vocalization'])
+          image_data = Uploader.find_image(button['label'] || button['vocalization'], library, author)
+          if image_data
+            bi = ButtonImage.process_new(image_data, {user: author})
+            button['image_id'] = bi.global_id
+            @buttons_changed = true
+          end
+        end
+      end
+      self.save
+    end
+    visited_board_ids << self.global_id
+    downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
+    Board.find_all_by_path(downstreams).each do |brd|
+      brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids)
+      visited_board_ids << brd.global_id
+    end
+    {done: true, library: library, board_ids: board_ids, updated: visited_board_ids}
+  end  
   def default_listeners(notification_type)
     if notification_type == 'board_buttons_changed'
       ubc = UserBoardConnection.where(:board_id => self.id)

@@ -48,6 +48,11 @@ var BoardHierarchy = Ember.Object.extend({
           this.set('parent.open', true);
         }
       });
+      hierarchy_board.addObserver('disabled', function() {
+        if(this.get('children')) {
+          this.get('children').forEach(function(c) { c.set('disabled', true); });
+        }
+      });
       hierarchy_board.set('visible', !!button_set.get('buttons').find(function(b) { return b.board_id == board_id; }));
       var linked_buttons = button_set.get('buttons').filter(function(b) { return b.board_id == board_id && b.linked_board_id; });
       linked_buttons.forEach(function(btn) {
@@ -57,6 +62,14 @@ var BoardHierarchy = Ember.Object.extend({
           sub_board.set('parent', hierarchy_board);
           if(sub_board.get('user_name') != hierarchy_board.get('user_name')) {
             hierarchy_board.set('open', true);
+            if(_this.get('options.deselect_on_different')) {
+              sub_board.set('selected', false);
+            }
+            if(_this.get('options.prevent_different')) {
+              sub_board.set('disabled', true);
+            }
+          } else if(!hierarchy_board.get('selected')) {
+            sub_board.set('selected', false);
           }
           traversed_boards[board_id].get('children').push(sub_board);
         } else {
@@ -64,7 +77,8 @@ var BoardHierarchy = Ember.Object.extend({
             already_linked: true,
             id: linked_board.get('id'),
             key: linked_board.get('key'),
-            selected: linked_board.get('selected')
+            selected: linked_board.get('selected'),
+            disabled: true
           });
           linked_board.get('clones').push(clone);
           hierarchy_board.get('children').push(clone);
@@ -82,7 +96,7 @@ var BoardHierarchy = Ember.Object.extend({
   selected_board_ids: function() {
     var ids = [];
     this.get('all_boards').forEach(function(b) {
-      if(b.get('selected') && !b.get('already_linked')) {
+      if(b.get('selected') && !b.get('disabled')) {
         ids.push(b.get('id'));
       }
     });
@@ -108,7 +122,7 @@ var BoardHierarchy = Ember.Object.extend({
     });
   }
 });
-BoardHierarchy.load_with_button_set = function(board) {
+BoardHierarchy.load_with_button_set = function(board, opts) {
   var reload_board = board.reload().then(null, function() {
   }, function(err) {
     return Ember.RSVP.reject(i18n.t('loading_board_failed', "Failed loading board for copying"));
@@ -126,7 +140,9 @@ BoardHierarchy.load_with_button_set = function(board) {
     if(!button_set) {
       return Ember.RSVP.resolve(null);
     }
-    return Ember.RSVP.resolve(BoardHierarchy.create({board: board, button_set: button_set}));
+    opts = opts || {};
+
+    return Ember.RSVP.resolve(BoardHierarchy.create({board: board, button_set: button_set, options: opts}));
   }, function() {
     return Ember.RSVP.reject(i18n.t('loading_board_failed', "Failed loading board links for copying"));
   });

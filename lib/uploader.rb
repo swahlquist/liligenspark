@@ -116,4 +116,36 @@ module Uploader
     res ||= url.match(/^https:\/\/s3\.amazonaws\.com\/#{ENV['UPLOADS_S3_BUCKET']}\//)
     !!res
   end
+  
+  def self.find_image(keyword, library, user)
+    if library == 'ss'
+    elsif library == 'lp'
+    else
+      str = "#{keyword} repo:#{library}"
+      res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}", :ssl_verifypeer => false)
+      results = JSON.parse(res.body)
+      results.each do |result|
+        type = MIME::Types.type_for(result['extension'])[0]
+        result['content_type'] = type.content_type
+      end
+      return nil if results.empty?
+      obj = results[0]
+      return {
+        'url' => obj['image_url'],
+        'content_type' => obj['content_type'],
+        'width' => obj['width'],
+        'height' => obj['height'],
+        'external_id' => obj['id'],
+        'public' => true,
+        'license' => {
+          'type' => obj['license'],
+          'copyright_notice_url' => obj['license_url'],
+          'source_url' => obj['source_url'],
+          'author_name' => obj['author'],
+          'author_url' => obj['author_url'],
+          'uneditable' => true
+        }
+      }
+    end
+  end
 end
