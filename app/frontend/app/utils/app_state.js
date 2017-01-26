@@ -10,6 +10,7 @@ import buttonTracker from './raw_events';
 import capabilities from './capabilities';
 import scanner from './scanner';
 import session from './session';
+import speecher from './speecher';
 import geolocation from './geo';
 import i18n from './i18n';
 import Button from './button';
@@ -379,7 +380,7 @@ var app_state = Ember.Object.extend({
   },
   toggle_mode: function(mode, opts) {
     opts = opts || {};
-    utterance.clear();
+    utterance.clear(null, true);
     var current_mode = stashes.get('current_mode');
     var temporary_root_state = null;
     if(opts && opts.force) { current_mode = null; }
@@ -626,7 +627,7 @@ var app_state = Ember.Object.extend({
   feature_flags: function() {
     var res = this.get('currentUser.feature_flags') || {};
     (window.enabled_frontend_features || []).forEach(function(feature) {
-      res[feature] = true;
+      Ember.set(res, feature, true);
     });
     return res;
   }.property('currentUser.feature_flags'),
@@ -683,6 +684,7 @@ var app_state = Ember.Object.extend({
   },
   speak_mode_handlers: function() {
     if(this.get('speak_mode')) {
+
       stashes.set('logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.logging')));
       stashes.set('geo_logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.geo_logging')));
       stashes.set('speaking_user_id', this.get('currentUser.id'));
@@ -695,6 +697,11 @@ var app_state = Ember.Object.extend({
       // this method is getting called again on every board load, even if already in speak mode. This check
       // limits the following block to once per speak-mode-activation.
       if(!this.get('last_speak_mode')) {
+        if(this.get('currentUser.preferences.speak_on_speak_mode')) {
+          Ember.run.later(function() {
+            speecher.speak_text(i18n.t('here_we_go', "here we go"), null, {volume: 0.1});
+          }, 200);
+        }
         if(this.get('currentUser.preferences.device.wakelock') !== false) {
           capabilities.wakelock('speak', true);
         }

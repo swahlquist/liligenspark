@@ -156,6 +156,17 @@
   </div>
 </div>
 <div class="form-group">
+  <label for="speak_on_speak_mode" class="col-sm-3 control-label">{{t "Speak Mode" key='speak_mode'}}</label>
+  <div class="col-sm-5">
+    <div class="checkbox">
+      <label>
+        {{input type="checkbox" checked=model.preferences.speak_on_speak_mode id="speak_on_speak_mode"}}
+        {{t "Speak a phrase when entering Speak Mode to warm up the speech engine" key='speak_on_speak_mode'}}
+      </label>
+    </div>
+  </div>
+</div>
+<div class="form-group">
   <label for="word_suggestion_images" class="col-sm-3 control-label">{{t "Keyboard Suggestions" key='keyboard_suggestions'}}</label>
   <div class="col-sm-5">
     <div class="checkbox">
