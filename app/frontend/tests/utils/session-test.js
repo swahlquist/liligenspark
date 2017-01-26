@@ -503,6 +503,15 @@ describe('session', function() {
   });
 
   describe('check_token', function() {
+    it('should return a promise', function() {
+      var opts = {};
+      stub(persistence, 'ajax', function(url, o) {
+        return Ember.RSVP.reject({});
+      });
+      var res = session.check_token();
+      expect(res.then).toNotEqual(undefined);
+    });
+
     it('should query remotely', function() {
       var called = false;
       var opts = {};

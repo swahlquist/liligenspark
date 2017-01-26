@@ -63,7 +63,7 @@ var session = Ember.Object.extend({
     if(store_data.as_user_id) {
       url = url + "&as_user_id=" + store_data.as_user_id;
     }
-    persistence.ajax(url, {
+    return persistence.ajax(url, {
       type: 'GET'
     }).then(function(data) {
       if(data.authenticated !== true) {
@@ -83,17 +83,19 @@ var session = Ember.Object.extend({
       if(data.meta && data.meta.fakeXHR && data.meta.fakeXHR.browserToken) {
         persistence.set('browserToken', data.meta.fakeXHR.browserToken);
       }
+      return Ember.RSVP.resolve({browserToken: persistence.get('browserToken')});
     }, function(data) {
       if(!persistence.get('online')) {
         return;
       }
-      if(data.fakeXHR && data.fakeXHR.browserToken) {
+      if(data && data.fakeXHR && data.fakeXHR.browserToken) {
         persistence.set('browserToken', data.fakeXHR.browserToken);
       }
-      if(data.result && data.result.error == "not online") {
+      if(data && data.result && data.result.error == "not online") {
         return;
       }
       persistence.tokens[key] = false;
+      return Ember.RSVP.resolve({browserToken: persistence.get('browserToken')});
     });
   },
   restore: function(force_check_for_token) {

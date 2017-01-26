@@ -1775,29 +1775,12 @@ describe('app_state', function() {
       });
     });
 
-    it("should trigger check_for_needs_sync", function() {
-      var o = Ember.Object.create();
-      stub(window, 'persistence', o);
-      var called = false;
-      stub(o, 'check_for_needs_sync', function() { called = true; });
-      app_state.set('sessionUser', Ember.Object.create({sync_stamp: 'asdf'}));
-      waitsFor(function() { return o.get('last_sync_stamp') == 'asdf'; });
-      runs(function() {
-        expect(o.get('last_sync_stamp_interval')).toEqual(15 * 60 * 1000);
-        expect(called).toEqual(true);
-      });
-    });
-
     it("should use the user's interval preference if defined", function() {
       var o = Ember.Object.create();
-      stub(window, 'persistence', o);
-      var called = false;
-      stub(o, 'check_for_needs_sync', function() { called = true; });
       app_state.set('sessionUser', Ember.Object.create({sync_stamp: 'asdf', preferences: {'sync_refresh_interval': 10}}));
-      waitsFor(function() { return o.get('last_sync_stamp') == 'asdf'; });
+      waitsFor(function() { return window.persistence.get('last_sync_stamp') == 'asdf'; });
       runs(function() {
-        expect(o.get('last_sync_stamp_interval')).toEqual(10000);
-        expect(called).toEqual(true);
+        expect(window.persistence.get('last_sync_stamp_interval')).toEqual(10000);
       });
     });
   });

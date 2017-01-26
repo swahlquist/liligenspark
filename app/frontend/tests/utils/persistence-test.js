@@ -7,6 +7,7 @@ import coughDropExtras from '../../utils/extras';
 import app_state from '../../utils/app_state';
 import modal from '../../utils/modal';
 import stashes from '../../utils/_stashes';
+import session from '../../utils/session';
 import editManager from '../../utils/edit_manager';
 import capabilities from '../../utils/capabilities';
 import contentGrabbers from '../../utils/content_grabbers';
@@ -801,7 +802,7 @@ describe("persistence", function() {
   });
 
   describe("DSAdapter", function() {
-    describe("find", function() {
+    describe("findRecord", function() {
       it("should return a promise", function() {
         var res = CoughDrop.store.find('board', '1234');
         expect(res.then).not.toEqual(null);
@@ -886,7 +887,59 @@ describe("persistence", function() {
         });
       });
 
-      it("should skip use the local copy when online but getting a token error", function() {
+      it("should not wait for remote response nonsense when finding after getting a local result", function() {
+        db_wait(function() {
+          queryLog.real_lookup = true;
+          persistence.set('online', true);
+          var ajax_called = null;
+          var defer = null;
+          stub(Ember.$, 'realAjax', function(options) {
+            ajax_called = true;
+            defer = Ember.RSVP.defer();
+            return defer.promise;
+          });
+          stub(persistence, 'find', function(store, key) {
+            return Ember.RSVP.resolve({board: {
+                id: '9876',
+                name: 'Cool Board'
+            }});
+          });
+
+          var result = null;
+          CoughDrop.store.find('board', '9876').then(function(res) {
+            result = res;
+          });
+          waitsFor(function() { return result; });
+          runs(function() {
+            expect(ajax_called).toEqual(null);
+            expect(result.get('id')).toEqual('9876');
+            expect(result.get('name')).toEqual('Cool Board');
+            result.reload();
+          });
+
+          var second_result = null;
+          waitsFor(function() { return defer; });
+          runs(function() {
+            expect(ajax_called).toEqual(true);
+            CoughDrop.store.findRecord('board', '9876').then(function(res) {
+              second_result = res;
+              expect(res.get('name')).toEqual('Cool Board');
+              defer.resolve({board: {
+                id: '9876',
+                name: 'Awesome Board'
+              }});
+            });
+          });
+
+          waitsFor(function() { return second_result; });
+          runs(function() {
+            expect(result.get('name')).toEqual('Awesome Board');
+            expect(second_result.get('name')).toEqual('Awesome Board');
+          });
+        });
+      });
+
+      it("should use the local copy when online but getting a token error", function() {
         db_wait(function() {
           queryLog.real_lookup = true;
           persistence.set('online', true);
@@ -1971,6 +2024,26 @@ describe("persistence", function() {
     });
 
     it("should not sync if last_sync_event_at is sooner than the user's interval", function() {
+      stub(session, 'restore', function() { });
+      persistence.set('online');
+      stub(persistence, 'sync', function() {
+        return Ember.RSVP.reject();
+      });
+      stub(persistence, 'ajax', function(url, opts) {
+        return Ember.RSVP.reject();
+      });
+      stub(Ember, 'testing', false);
+      stashes.set('auth_settings', {});
+      persistence.set('last_sync_event_at', (new Date()).getTime() - 100);
+      persistence.set('last_sync_stamp_interval', 10000);
+      persistence.set('last_sync_at', (new Date()).getTime() - 100);
+      var res = persistence.check_for_needs_sync();
+      expect(res).toEqual(false);
+    });
+
+    it("should sync if force is true", function() {
+      stub(session, 'restore', function() { });
+      persistence.set('online');
       stub(persistence, 'sync', function() {
         return Ember.RSVP.reject();
       });
@@ -1983,7 +2056,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', (new Date()).getTime() - 100);
       var res = persistence.check_for_needs_sync(true);
-      expect(res).toEqual(false);
+      expect(res).toEqual(true);
     });
 
     it("should not sync if offline", function() {
@@ -1999,7 +2072,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', 1);
       persistence.set('online', false);
-      var res = persistence.check_for_needs_sync(true);
+      var res = persistence.check_for_needs_sync();
       expect(res).toEqual(false);
     });
 
@@ -2016,7 +2089,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', 1);
       persistence.set('syncing', true);
-      var res = persistence.check_for_needs_sync(true);
+      var res = persistence.check_for_needs_sync();
       expect(res).toEqual(false);
     });
 
@@ -2053,7 +2126,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', (new Date()).getTime() - 100);
       persistence.set('last_sync_stamp', 'asdf');
-      var res = persistence.check_for_needs_sync(true);
+      var res = persistence.check_for_needs_sync();
       waitsFor(function() { return called; });
       runs(function() {
         expect(res).toEqual(true);
@@ -2074,7 +2147,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', (new Date()).getTime() - 100);
       persistence.set('last_sync_stamp', null);
-      var res = persistence.check_for_needs_sync(true);
+      var res = persistence.check_for_needs_sync();
       expect(res).toEqual(false);
     });
 
@@ -2094,7 +2167,7 @@ describe("persistence", function() {
       persistence.set('last_sync_stamp_interval', 10000);
       persistence.set('last_sync_at', (new Date()).getTime() - 100);
       persistence.set('last_sync_stamp', 'asdf');
-      var res = persistence.check_for_needs_sync(true);
+      var res = persistence.check_for_needs_sync();
       waitsFor(function() { return called; });
       runs(function() {
         expect(res).toEqual(true);

@@ -10,6 +10,7 @@ import modal from './modal';
 import capabilities from './capabilities';
 
 var valid_stores = ['user', 'board', 'image', 'sound', 'settings', 'dataCache', 'buttonset'];
+var loaded = (new Date()).getTime() / 1000;
 var persistence = Ember.Object.extend({
   setup: function(application) {
     application.register('cough_drop:persistence', persistence, { instantiate: false, singleton: true });
@@ -29,10 +30,8 @@ var persistence = Ember.Object.extend({
     if(stashes.get_object('just_logged_in', false) && stashes.get('auth_settings') && !Ember.testing) {
       stashes.persist_object('just_logged_in', null, false);
       Ember.run.later(function() {
-        if(!persistence.get('syncing')) {
-          persistence.sync('self').then(null, function() { });
-        }
-      }, 10000);
+        persistence.check_for_needs_sync(true);
+      }, 10 * 1000);
     }
     coughDropExtras.advance.watch('device', function() {
       if(!CoughDrop.ignore_filesystem) {
@@ -863,9 +862,6 @@ var persistence = Ember.Object.extend({
     // TODO: this could move to bg.js, that way it can run in the background
     // even if the app itself isn't running. whaaaat?! yeah.
 
-    // TODO: there should be a user preference to say, when I sync as 'self'
-    // go ahead and sync all the boards for all my linked users as well.
-
     var sync_promise = new Ember.RSVP.Promise(function(sync_resolve, sync_reject) {
       if(!user_id) {
         sync_reject({error: "failed to retrieve user, missing id"});
@@ -937,7 +933,9 @@ var persistence = Ember.Object.extend({
 
         // Step 0.5: Check for an invalidated token
         if(CoughDrop.session && !CoughDrop.session.get('invalid_token')) {
-          CoughDrop.session.check_token(false);
+          if(persistence.get('sync_progress.root_user') == user_id) {
+            CoughDrop.session.check_token(false);
+          }
         }
 
         // Step 1: If online
@@ -1148,10 +1146,11 @@ var persistence = Ember.Object.extend({
     } else {
       find_board = CoughDrop.store.findRecord('board', lookup_id);
       find_board = find_board.then(function(record) {
-        if(!record.get('fresh') || key_for_id || partial_load) {
+        var cache_mismatch = fresh_board_revisions && fresh_board_revisions[id] && fresh_board_revisions[id] != record.get('current_revision');
+        var fresh = record.get('fresh') && !cache_mismatch;
+        if(!fresh || key_for_id || partial_load) {
           local_full_set_revision = record.get('full_set_revision');
           // If the board is in the list of already-up-to-date, don't call reload
-          var cache_mismatch = fresh_board_revisions && fresh_board_revisions[id] && fresh_board_revisions[id] != record.get('current_revision');
           if(record.get('permissions') && safely_cached_boards[id] && !cache_mismatch) {
             board_statuses.push({id: id, key: record.get('key'), status: 'cached'});
             return record;
@@ -1164,7 +1163,7 @@ var persistence = Ember.Object.extend({
           }
         } else {
           board_statuses.push({id: id, key: record.get('key'), status: 'downloaded'});
-          return record.reload();
+          return record;
         }
       });
       if(!lookups[id]) {
@@ -1640,8 +1639,10 @@ var persistence = Ember.Object.extend({
       }, 500);
     }
   }.observes('online'),
-  check_for_needs_sync: function(force) {
+  check_for_needs_sync: function(ref) {
+    var force = (ref === true);
     var _this = this;
+
     if(stashes.get('auth_settings') && window.coughDropExtras && window.coughDropExtras.ready) {
       var synced = _this.get('last_sync_at') || 1;
       var syncable = persistence.get('online') && !Ember.testing && !persistence.get('syncing');
@@ -1652,14 +1653,19 @@ var persistence = Ember.Object.extend({
         syncable = syncable && (this.get('last_sync_event_at') < ((new Date()).getTime() - interval));
       }
       var now = (new Date()).getTime() / 1000;
-      // if we haven't synced in 48 hours and we're online, do a background sync
-      if((now - synced) > (48 * 60 * 60) && syncable) {
+      if(!Ember.testing && capabilities.mobile && !force && loaded && (now - loaded) < (2 * 60) && synced > 1) {
+        // on mobile, don't auto-sync until 2 minutes after bootup, unless it's never been synced
+        // NOTE: the db is keyed to the user, so you'll always have a user-specific last_sync_at
+        return false;
+      } else if((now - synced) > (48 * 60 * 60) && syncable) {
+        // if we haven't synced in 48 hours and we're online, do a background sync
+        console.debug('syncing because it has been more than 48 hours');
         persistence.sync('self').then(null, function() { });
         return true;
-      } else if(force && syncable && _this.get('last_sync_stamp')) {
+      } else if(force || (syncable && _this.get('last_sync_stamp'))) {
         // don't check sync_stamp more than once every 15 minutes
         var last_check = persistence.get('last_sync_stamp_check');
-        if(!last_check || (last_check < (new Date()).getTime() - interval)) {
+        if(force || !last_check || (last_check < (new Date()).getTime() - interval)) {
           persistence.set('last_sync_stamp_check', (new Date()).getTime());
           persistence.ajax('/api/v1/users/self/sync_stamp', {type: 'GET'}).then(function(res) {
             if(!_this.get('last_sync_stamp') || res.sync_stamp != _this.get('last_sync_stamp')) {
@@ -1774,15 +1780,28 @@ persistence.DSExtend = {
             return Ember.RSVP.reject({error: "failed to delayed-persist to local db"});
           });
         }, function(err) {
-           // TODO: only do this when the error is for an expired token, not any invalid token
+          var local_fallback = false;
           if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
-            return original_find.then(local_processed);
+            local_fallback = true;
+          } else if(err && err.errors && err.errors[0] && err.errors[0].status && err.errors[0].status.substring(0, 1) == '5') {
+            local_fallback = true;
+          } else if(err && err.fakeXHR && err.fakeXHR.status === 0) {
+            local_fallback = true;
+          } else if(err && err.fakeXHR && err.fakeXHR.status && err.fakeXHR.status.toString().substring(0, 1) == '5') {
+            local_fallback = true;
+          } else {
+            // for 500 errors and 0 status errors it's probably ok too
+            debugger;
+          }
+           // TODO: only do this when the error is for an expired token, not any invalid token
+          if(local_fallback) {
+            return original_find.then(local_processed, function() { return Ember.RSVP.reject(err); });
           } else {
             return Ember.RSVP.reject(err);
           }
         });
       } else {
-        return persistence.offline_reject();
+        return original_find.then(local_processed, persistence.offline_reject);
       }
     });
   },

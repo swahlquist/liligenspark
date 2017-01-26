@@ -2897,6 +2897,7 @@ describe("persistence-sync", function() {
           return Ember.RSVP.resolve({
           });
         }
+        return Ember.RSVP.reject();
       });
 
       var stores = [];
@@ -3402,10 +3403,12 @@ describe("persistence-sync", function() {
       stub(CoughDrop.store, 'findRecord', function(type, id) {
         if(type == 'board' && id == '1_00') {
           lookups++;
-          return Ember.RSVP.resolve(Ember.Object.create({
+          var obj = Ember.Object.create({
             fresh: true,
-            permissions: {}
-          }));
+            permissions: {},
+          });
+          obj.reload = function() { return Ember.RSVP.resolve(obj); };
+          return Ember.RSVP.resolve(obj);
         }
       });
       var dones = 0;
@@ -3523,7 +3526,8 @@ describe("persistence-sync", function() {
     it("should not reload if fresh, numerical id and not peeked", function() {
       persistence.set('sync_progress', {});
       var rec = Ember.Object.create({
-        fresh: true
+        fresh: true,
+        current_revision: 'asdf'
       });
       stub(rec, 'reload', function() {
         rec.reloaded = true;
@@ -3536,7 +3540,7 @@ describe("persistence-sync", function() {
         }
       });
       var done = false;
-      persistence.board_lookup('1_00', {}).then(function() {
+      persistence.board_lookup('1_00', {}, {'1_00': 'asdf'}).then(function() {
         done = true;
       });
       waitsFor(function() { return done; });

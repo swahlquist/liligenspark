@@ -987,8 +987,9 @@ var app_state = Ember.Object.extend({
     if(this.get('sessionUser')) {
       var interval = (this.get('sessionUser.preferences.sync_refresh_interval') || (15 * 60)) * 1000;
       if(window.persistence) {
-        window.persistence.set('last_sync_stamp_interval', interval);
-        window.persistence.check_for_needs_sync(true);
+        if(window.persistence.get('last_sync_stamp_interval') != interval) {
+          window.persistence.set('last_sync_stamp_interval', interval);
+        }
       } else {
         console.error('persistence needed for checking user status');
       }
