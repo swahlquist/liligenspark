@@ -54,7 +54,7 @@ class WordData < ActiveRecord::Base
     query_translations(missing, source_lang, dest_lang).each do |obj|
       if obj[:translation]
         res[:translations][obj[:text]] = obj[:translation]
-        # schedule(:persist_translation, text, translation, source_lang, dest_lang, type)
+        schedule(:persist_translation, text, translation, source_lang, dest_lang, type)
       end
     end
     
