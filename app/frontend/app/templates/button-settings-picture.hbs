@@ -43,6 +43,9 @@
   {{#if image_preview}}
     {{#if image_preview.error}}
       {{image_preview.error}}
+      <div style='margin-top: 10px;'>
+        <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
+      </div>
     {{else}}
       <div style="text-align: center;">
         {{#if image_preview.editor}}
@@ -71,6 +74,9 @@
   {{else}}
     {{#if image_search.error}}
       {{image_search.error}}
+      <div style='margin-top: 10px;'>
+        <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
+      </div>
     {{else}}
       {{#if image_search.previews}}
         <div style="margin: 10px 0 10px 0;">
