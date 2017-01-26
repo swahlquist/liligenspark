@@ -8,7 +8,7 @@ describe LogSession, :type => :model do
   describe "generate_defaults" do
     it "should generate default values" do
       s = LogSession.new
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['events']).to eq([])
       expect(s.data['geo']).to eq(nil)
       expect(s.processed).to eq(false)
@@ -22,7 +22,7 @@ describe LogSession, :type => :model do
         {'geo' => ['1', '3'], 'timestamp' => 8.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'board' => {'id' => '1_1'}}}
       ]
       s.processed = true
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['events'].length).to eq(2)
       expect(s.data['geo']).to eq([1.0, 2.5, 0.0])
       expect(s.processed).to eq(true)
@@ -37,7 +37,7 @@ describe LogSession, :type => :model do
         {'geo' => ['1', '2'], 'timestamp' => time1.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}},
         {'geo' => ['1', '2'], 'timestamp' => time2.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'board' => {'id' => '1_1'}}}
       ]
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['button_count']).to eq(2)
       expect(s.data['utterance_count']).to eq(0)
       expect(s.data['utterance_word_count']).to eq(0)
@@ -53,7 +53,7 @@ describe LogSession, :type => :model do
       s.data['note'] = {
         'text' => "I am happy"
       }
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['button_count']).to eq(0)
       expect(s.data['utterance_count']).to eq(0)
       expect(s.data['utterance_word_count']).to eq(0)
@@ -77,7 +77,7 @@ describe LogSession, :type => :model do
         {'timestamp' => time1.to_i, 'button' => {'percent_x' => 0.6, 'percent_y' => 0.053, 'board' => {'id' => '1_1'}}},
         {'timestamp' => time1.to_i, 'button' => {'percent_x' => 0.899, 'percent_y' => 0.054, 'board' => {'id' => '1_1'}}},
       ]
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['touch_locations']).to eq({
         '1_1' => {
           0.6 => {
@@ -100,7 +100,7 @@ describe LogSession, :type => :model do
           }
         }
       })
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['event_summary']).to eq('Note by no-name: recording (1m) - cool stuff')
     end
 
@@ -111,7 +111,7 @@ describe LogSession, :type => :model do
           'status' => 0
         }
       })
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['goal']).to eq({
         'status' => 0,
         'positives' => 0,
@@ -123,7 +123,7 @@ describe LogSession, :type => :model do
           'status' => 3
         }
       })
-      s2.generate_defaults
+      s2.generate_defaults rescue nil
       expect(s2.data['goal']).to eq({
         'status' => 3,
         'positives' => 1,
@@ -141,7 +141,7 @@ describe LogSession, :type => :model do
           }
         }
       })
-      s3.generate_defaults
+      s3.generate_defaults rescue nil
       expect(s3.data['goal']).to eq({
         'status' => 0,
         'positives' => 7,
@@ -149,8 +149,7 @@ describe LogSession, :type => :model do
       })
     end
     
-    it "should schedule log session tracking if goal attached" do
-    end
+    it "should schedule log session tracking if goal attached"
     
     it "should mark as needing push if that's true" do
       s = LogSession.new
@@ -166,7 +165,7 @@ describe LogSession, :type => :model do
         {'action' => {'action' => 'home'}, 'timestamp' => time3.to_i, 'type' => 'action'}
       ]
       expect(s.needs_remote_push).to eq(nil)
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.needs_remote_push).to eq(true)
     end
     
@@ -182,7 +181,7 @@ describe LogSession, :type => :model do
         {'action' => {'action' => 'auto_home'}, 'timestamp' => time3.to_i, 'type' => 'action'},
         {'action' => {'action' => 'home'}, 'timestamp' => time3.to_i, 'type' => 'action'}
       ]
-      s.generate_defaults
+      s.generate_defaults rescue nil
       expect(s.data['button_count']).to eq(2)
       expect(s.data['utterance_count']).to eq(0)
       expect(s.data['utterance_word_count']).to eq(0)
@@ -420,7 +419,7 @@ describe LogSession, :type => :model do
         {'type' => 'button', 'button' => {'button_id' => 1, 'board' => {'id' => '1'}, 'label' => 'radish', 'spoken' => true}, 'timestamp' => time + 59},
         {'type' => 'button', 'button' => {'button_id' => 3, 'board' => {'id' => '1'}, 'label' => 'cheese'}, 'timestamp' => time + 100}
       ]
-      s.generate_defaults
+      s.generate_defaults rescue nil
       s.generate_stats
       expect(s.data['stats']['session_seconds']).to eql(100)
       expect(s.data['stats']['utterances']).to eql(3.0)
@@ -644,8 +643,8 @@ describe LogSession, :type => :model do
       
       LogSession.process_as_follow_on({
         'events' => [
-          {'geo' => ['2', '3'], 'timestamp' => 3.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'chicken', 'board' => {'id' => '1_1'}}},
-          {'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
+          {'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 3.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'chicken', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
       Worker.process_queues
@@ -740,12 +739,12 @@ describe LogSession, :type => :model do
           {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      Worker.process_queues
+      expect { Worker.process_queues }.to raise_error('no valid events to process')
       
       s.reload
-      expect(s.data['events'].length).to eq(4)
+      expect(s.data['events'].length).to eq(2)
       expect(s.user_id).to eq(u.id)
-      expect(s.data['events'].map{|e| e['button']['label'] }).to eq(['hat', 'cow', 'chicken', 'radish'])
+      expect(s.data['events'].map{|e| e['button']['label'] }).to eq(['hat', 'cow'])
       expect(LogSession.count).to eq(1)
 
       Worker.process_queues
@@ -760,7 +759,9 @@ describe LogSession, :type => :model do
       d = Device.create
       u = User.create
       u2 = User.create
-      expect_any_instance_of(User).to receive(:allows?).with(u, 'supervise').and_return(true)
+      User.link_supervisor_to_user(u, u2)
+      u.reload
+      u2.reload
       s = LogSession.new(:device => d, :user => u, :author => u)
       s.data = {}
       s.data['events'] = [
@@ -824,6 +825,90 @@ describe LogSession, :type => :model do
         '2016-01-03' => {'date' => '2016-01-03', 'active' => true},
         '2016-01-05' => {'date' => '2016-01-05', 'active' => false}
       })
+    end
+    
+    it "should put log events on the right user, even if the wrong user is specified first" do
+      u1 = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u1, u2)
+      u1.reload
+      u2.reload
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'events' => [
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 8.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'paste', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 7.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'together', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u1.global_id, 'geo' => ['2', '3'], 'timestamp' => 3.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'chicken', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u1.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {device: d, author: u1, user: u1})
+      
+      expect(s.user).to eq(nil)
+      Worker.process_queues
+      Worker.process_queues
+      
+      s1 = LogSession.where(:user_id => u1.id).last
+      expect(s1).to_not eq(nil)
+      expect(s1.data['events'].length).to eq(2)
+      expect(s1.user_id).to eq(u1.id)
+      expect(s1.author_id).to eq(u1.id)
+      expect(s1.device_id).to eq(d.id)
+      expect(s1.data['events'].map{|e| e['button']['label'] }).to eq(['chicken', 'radish'])
+      expect(LogSession.count).to eq(2)
+      s2 = LogSession.where(:user_id => u2.id).last
+      expect(s2).to_not eq(nil)
+      expect(s2.user_id).to eq(u2.id)
+      expect(s2.author_id).to eq(u1.id)
+      expect(s2.device_id).to eq(d.id)
+      expect(s2.data['events'].length).to eq(2)
+      expect(s2.data['events'].map{|e| e['button']['label'] }).to eq(['paste', 'together'])
+    end
+    
+    it "should filter to only events for users the author has supervise permissions for" do
+      u1 = User.create
+      u2 = User.create
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'events' => [
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 8.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'paste', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 7.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'together', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u1.global_id, 'geo' => ['2', '3'], 'timestamp' => 3.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'chicken', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u1.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {device: d, author: u1, user: u1})
+      
+      expect(s.user).to eq(nil)
+      Worker.process_queues
+      Worker.process_queues
+      
+      s1 = LogSession.where(:user_id => u1.id).last
+      expect(s1).to_not eq(nil)
+      expect(s1.data['events'].length).to eq(2)
+      expect(s1.user_id).to eq(u1.id)
+      expect(s1.author_id).to eq(u1.id)
+      expect(s1.device_id).to eq(d.id)
+      expect(s1.data['events'].map{|e| e['button']['label'] }).to eq(['chicken', 'radish'])
+      expect(LogSession.count).to eq(1)
+      s2 = LogSession.where(:user_id => u2.id).last
+      expect(s2).to eq(nil)
+    end
+    
+    it "should error if all events are filtered out" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'events' => [
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 8.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'paste', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 7.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'together', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u3.global_id, 'geo' => ['2', '3'], 'timestamp' => 3.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'chicken', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u3.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {device: d, author: u1, user: u1})
+      
+      expect(s.user).to eq(nil)
+      expect { Worker.process_queues }.to raise_error('no valid events to process')
     end
   end
 
@@ -1230,7 +1315,7 @@ describe LogSession, :type => :model do
   
   it "should securely serialize settings" do
     l = LogSession.new(:user => User.create, :device => Device.create, :author => User.create)
-    l.generate_defaults
+    l.generate_defaults rescue nil
     expect(SecureJson).to receive(:dump).with(l.data)
     l.save
   end

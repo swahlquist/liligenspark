@@ -211,7 +211,7 @@ class LogSession < ActiveRecord::Base
     
     self.processed ||= false
     self.needs_remote_push = !!(self.log_type == 'session' && self.user_id) if self.needs_remote_push == nil
-    return false unless self.user_id && self.author_id && self.device_id
+    throw(:abort) unless self.user_id && self.author_id && self.device_id
     true
   end
   
@@ -602,8 +602,19 @@ class LogSession < ActiveRecord::Base
     raise "author required" if !non_user_params[:author]
     raise "device required" if !non_user_params[:device]
     
+    # filter to only those users and events the author has supervise permissions for
+    valid_events = []
+    user_ids = (params['events'] || []).map{|e| e['user_id'] }.compact.uniq
+    users = User.find_all_by_global_id(user_ids)
+    valid_users = {}
+    users.each{|u| valid_users[u.global_id] = u if u.allows?(non_user_params[:author], 'supervise') }
+    valid_events = (params['events'] || []).select{|e| valid_users[e['user_id']] }
+    raise "no valid events to process" if valid_events.blank?
+    non_user_params[:user] = valid_users[valid_events[0]['user_id']]
+    
     active_session = LogSession.all.where(['log_type = ? AND device_id = ? AND author_id = ? AND user_id = ? AND ended_at > ?', 'session', non_user_params[:device].id, non_user_params[:author].id, non_user_params[:user].id, 1.hour.ago]).order('ended_at DESC').first
     if params['events']
+      params['events'] = valid_events
       if active_session && !non_user_params['imported']
         active_session.process(params, non_user_params)
         active_session.schedule(:check_for_merger)
