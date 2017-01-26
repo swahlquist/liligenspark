@@ -31,6 +31,7 @@ export default modal.ModalController.extend({
           modal.close();
           if(persistence.get('online')) {
             Ember.run.later(function() {
+              console.debug('syncing because set as home');
               persistence.sync('self').then(null, function() { });
             }, 1000);
           }

@@ -68,6 +68,7 @@ export default modal.ModalController.extend({
         _this.set('loading', false);
         if(persistence.get('online')) {
           Ember.run.later(function() {
+            console.debug('syncing because sidebar updated');
             persistence.sync('self').then(null, function() { });
           }, 1000);
         }

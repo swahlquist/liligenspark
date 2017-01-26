@@ -259,6 +259,7 @@ export default Ember.Controller.extend({
   }.observes('selected', 'persistence.online'),
   actions: {
     sync: function() {
+      console.debug('syncing because manually triggered');
       persistence.sync(this.get('model.id'), 'all_reload').then(null, function() { });
     },
     quick_assessment: function() {

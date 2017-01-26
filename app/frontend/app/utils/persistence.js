@@ -1663,6 +1663,7 @@ var persistence = Ember.Object.extend({
           persistence.set('last_sync_stamp_check', (new Date()).getTime());
           persistence.ajax('/api/v1/users/self/sync_stamp', {type: 'GET'}).then(function(res) {
             if(!_this.get('last_sync_stamp') || res.sync_stamp != _this.get('last_sync_stamp')) {
+              console.debug('syncing because sync_stamp has changed');
               persistence.sync('self').then(null, function() { });
             }
           }, function(err) {
