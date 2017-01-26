@@ -94,7 +94,7 @@
           {{#unless webcam}}
             {{#if model.image.url}}
               <div style="text-align: center; margin-bottom: 10px;">
-                <img src={{model.image.url}} class="button_image"/>
+                <img src={{model.image.best_url}} class="button_image"/>
               </div>
               {{pick-license license=model.image.license}}
               <div style="margin-top: 10px;">
