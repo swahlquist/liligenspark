@@ -40,7 +40,7 @@ gem 'newrelic_rpm'
 gem 'rack-timeout'
 gem 'pg_search'
 # TODO: pinned to master because wasn't working with rails 5
-gem 'ar-octopus', require: 'octopus', git: 'https://github.com/thiagopradi/octopus'
+gem 'ar-octopus', require: 'octopus', git: 'https://github.com/whitmer/octopus'
 # TODO: getting errors on load for rails 5, so pinned to beta, this isn't actually a core dependency
 gem 'sinatra', '~> 2.0.0.beta2'
 gem 'sanitize'

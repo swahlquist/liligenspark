@@ -6,10 +6,10 @@ GIT
       coffee-rails
 
 GIT
-  remote: https://github.com/thiagopradi/octopus
-  revision: 578be91af8be5ed2e8d46cf36097af324d620336
+  remote: https://github.com/whitmer/octopus
+  revision: fa9e5a71a59bdcd8348de4d385dc758a65014257
   specs:
-    ar-octopus (0.8.6)
+    ar-octopus (0.9.0)
       activerecord (>= 4.0.0)
       activesupport (>= 4.0.0)
 
@@ -91,7 +91,7 @@ GEM
     ethon (0.10.1)
       ffi (>= 1.3.0)
     execjs (2.7.0)
-    ffi (1.9.14)
+    ffi (1.9.17)
     formatador (0.2.5)
     geokit (1.10.0)
     globalid (0.3.7)
