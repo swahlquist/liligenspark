@@ -881,6 +881,15 @@ var capabilities;
         }
         return res;
       },
+      window_open: function(url, target) {
+        // TODO: find a way to style the in-app browser better
+        if(window.cordova && window.cordova.InAppBrowser && window.cordova.InAppBrowser.open) {
+          window.cordova.InAppBrowser.open(url, target);
+        } else {
+          if(target == '_system') { target = '_blank'; }
+          window.open(url, target);
+        }
+      },
       storage_clear: function(options) {
         var promise = capabilities.mini_promise();
         if(capabilities.dbman.not_ready(capabilities.storage_clear, options, promise)) { return promise; }

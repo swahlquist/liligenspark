@@ -1100,7 +1100,7 @@ var app_state = Ember.Object.extend({
           if((!app_state.get('currentUser') && window.user_preferences.any_user.confirm_external_links) || app_state.get('currentUser.preferences.confirm_external_links')) {
             modal.open('confirm-external-link', {url: button.url});
           } else {
-            window.open(button.url, '_blank');
+            capabilities.window_open(button.url, '_blank');
           }
         }
       }
@@ -1112,11 +1112,11 @@ var app_state = Ember.Object.extend({
           modal.open('confirm-external-app', {apps: button.apps});
         } else {
           if(capabilities.system == 'iOS' && button.apps.ios && button.apps.ios.launch_url) {
-            window.open(button.apps.ios.launch_url, '_blank');
+            capabilities.window_open(button.apps.ios.launch_url, '_blank');
           } else if(capabilities.system == 'Android' && button.apps.android && button.apps.android.launch_url) {
-            window.open(button.apps.android.launch_url, '_blank');
+            capabilities.window_open(button.apps.android.launch_url, '_blank');
           } else if(button.apps.web && button.apps.web.launch_url) {
-            window.open(button.apps.web.launch_url, '_blank');
+            capabilities.window_open(button.apps.web.launch_url, '_blank');
           } else {
             // TODO: handle this edge case smartly I guess
           }

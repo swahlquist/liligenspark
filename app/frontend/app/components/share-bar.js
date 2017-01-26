@@ -68,11 +68,11 @@ export default Ember.Component.extend({
       if(this.get('native.' + medium)) {
         capabilities.sharing.share(medium, this.get('text'), this.get('url'), this.get('utterance.best_image_url'));
       } else if(medium == 'facebook') {
-        window.open(this.get('facebook_url'));
+        capabilities.window_open(this.get('facebook_url'));
       } else if(medium == 'twitter') {
-        window.open(this.get('twitter_url'));
+        capabilities.window_open(this.get('twitter_url'));
       } else if(medium == 'google_plus') {
-        window.open(this.get('google_plus_url'));
+        capabilities.window_open(this.get('google_plus_url'));
       } else if(medium == 'email') {
         modal.open('share-email', {url: this.get('url'), text: this.get('text'), utterance_id: this.get('utterance.id') });
       } else if(medium == 'clipboard' && this.get('clipboard_enabled')) {

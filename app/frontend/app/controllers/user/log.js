@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import i18n from '../../utils/i18n';
+import capabilities from '../../utils/capabilities';
 import CoughDrop from '../../app';
 
 export default Ember.Controller.extend({
@@ -86,7 +87,7 @@ export default Ember.Controller.extend({
   }.observes('model.geo', 'user'),
   actions: {
     lam_export: function() {
-      window.open('/api/v1/logs/' + this.get('model.id') + '/lam?nonce=' + this.get('model.nonce'));
+      capabilities.window_open('/api/v1/logs/' + this.get('model.id') + '/lam?nonce=' + this.get('model.nonce'), '_system');
     },
     toggle_notes: function(id, action) {
       this.get('model').toggle_notes(id);

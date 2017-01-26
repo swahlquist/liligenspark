@@ -120,7 +120,7 @@ Ember.$(document).on('mousedown touchstart', function(event) {
 Ember.$(document).on('click', "a[target='_blank']", function(event) {
   if(capabilities.installed_app) {
     event.preventDefault();
-    window.open(event.target.href, capabilities.mobile ? '_system' : '_blank');
+    capabilities.window_open(event.target.href, '_system');
   }
 });
 Ember.$(window).on('blur', function(event) {
