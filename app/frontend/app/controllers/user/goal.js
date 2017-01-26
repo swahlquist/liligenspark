@@ -123,8 +123,18 @@ export default Ember.Controller.extend({
       }
     },
     badge_popup: function(badge) {
-      if(badge.user_badge) {
-        modal.open('badge-awarded', {badge: badge.user_badge});
+      var ub = badge.user_badge;
+      if(!badge.user_badge) {
+        ub = CoughDrop.store.createRecord('badge', {
+          name: this.get('model.badge_name') || this.get('model.summary'),
+          level: badge.level,
+          image_url: badge.image_url,
+          sound_url: badge.sound_url,
+          completion_settings: badge
+        });
+      }
+      if(ub) {
+        modal.open('badge-awarded', {badge: ub});
       }
     }
   }
