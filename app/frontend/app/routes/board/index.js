@@ -57,8 +57,8 @@ export default Ember.Route.extend({
       var reload = Ember.RSVP.resolve();
       // if we're online then we should reload, but do it softly if we're in speak mode
       if(persistence.get('online')) {
-        // reload(false) says "hey, reload but you can use the local copy if you need to" (default behavior)
-        // reload(true) says "definitely ping the server"
+        // reload(false) says "hey, reload but you can use the local copy if you need to"
+        // reload(true) says "definitely ping the server" (same as reload() )
         // TODO: this is failing when the board is available locally but the image isn't available locally
         // looks like this (usually, handle both cases) happens if it's stored in the local db but not
         // yet loaded into ember-data
