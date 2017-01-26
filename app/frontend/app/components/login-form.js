@@ -10,9 +10,11 @@ export default Ember.Component.extend({
   willInsertElement: function() {
     var _this = this;
     this.set('stashes', stashes);
+    this.set('checking_for_secret', false);
     this.browserTokenChange = function() {
       _this.set('client_id', 'browser');
       _this.set('client_secret', persistence.get('browserToken'));
+      _this.set('checking_for_secret', false);
     };
     persistence.addObserver('browserToken', this.browserTokenChange);
     this.set('long_token', false);
@@ -21,14 +23,36 @@ export default Ember.Component.extend({
       this.set('client_id', 'browser');
       this.set('client_secret', token);
     } else {
+      this.set('checking_for_secret', true);
+      Ember.run.later(function() {
+        _this.check_for_missing_token();
+      }, 2000);
       session.restore(true);
     }
     if(this.get('set_overflow')) {
       Ember.$("html,body").css('overflow', 'hidden');
     }
   },
+  check_for_missing_token: function() {
+    var _this = this;
+    _this.set('checking_for_secret', false);
+    if(!_this.get('client_secret')) {
+      session.check_token().then(function() {
+        Ember.run.later(function() {
+          _this.check_for_missing_token();
+        }, 2000);
+      }, function() {
+        Ember.run.later(function() {
+          _this.check_for_missing_token();
+        }, 2000);
+      });
+    }
+  },
   app_state: function() {
     return app_state;
+  }.property(),
+  persistence: function() {
+    return persistence;
   }.property(),
   willDestroyElement: function() {
     persistence.removeObserver('browserToken', this.browserTokenChange);

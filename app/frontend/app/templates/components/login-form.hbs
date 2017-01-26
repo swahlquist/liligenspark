@@ -28,7 +28,15 @@
         <div class="form-group">
           <button type="submit" class='btn btn-primary btn-lg' disabled={{noSubmit}}>
             {{#if noSecret}}
-              {{t "Not Online" key='not_connected'}}
+              {{#if checking_for_secret}}
+                {{t "Initializing..." key='initializing'}}
+              {{else}}
+                {{#if persistence.online}}
+                  {{t "Not Ready" key='not_ready'}}
+                {{else}}
+                  {{t "Not Online" key='not_connected'}}
+                {{/if}}
+              {{/if}}
             {{else}}
               {{#if logging_in}}
                 {{t "Signing In..." key='logging_in'}}
