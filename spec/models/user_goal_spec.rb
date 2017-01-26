@@ -47,6 +47,25 @@ describe UserGoal, type: :model do
       g.generate_defaults
       expect(g.settings['old_template_header_id']).to eq('asdf')
     end
+    
+    it "should store the lower badge image url for reference" do
+      u = User.create
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        assessment_badge: {'instance_count' => 10, 'button_instances' => 10},
+        badges: [
+          {'image_url' => 'http://www.example.com/pic1.png', 'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 1},
+          {'image_url' => 'http://www.example.com/pic2.png', 'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 5},
+          {'image_url' => 'http://www.example.com/pic3.png', 'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 10},
+          {'image_url' => 'http://www.example.com/pic4.png', 'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 15},
+          {'image_url' => 'http://www.example.com/pic5.png', 'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 20}
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+      expect(g.settings['badge_image_url']).to eq('http://www.example.com/pic1.png')
+    end
   end
  
   describe "generate_stats" do
@@ -81,6 +100,7 @@ describe UserGoal, type: :model do
         },
         'percent_positive' => 0,
         'sessions' => 0,
+        'badges' => 0,
         'suggested_level' => 'daily',
         'weighted_average_status' => 0,
         'weighted_percent_positive' => 0
@@ -155,18 +175,18 @@ describe UserGoal, type: :model do
     it "should generate template stats" do
       u = User.create
       g = UserGoal.create(:user => u, :template_header => true)
-      expect(g.settings['template_stats']).to eq({'goals' => 1, 'loop' => nil})
+      expect(g.settings['template_stats']).to eq({'goals' => 1, 'loop' => nil, 'badges' => 0})
       g2 = UserGoal.create(:user => u, :template => true, :settings => {'goal_duration' => 2.weeks.to_i})
       g3 = UserGoal.create(:user => u, :template => true, :settings => {'goal_duration' => 3.weeks.to_i})
       g.settings['linked_template_ids'] = [g.global_id, g2.global_id, g3.global_id]
       g.generate_stats
-      expect(g.settings['template_stats']).to eq({'goals' => 3, 'total_duration' => 5.weeks.to_i, 'loop' => false})
+      expect(g.settings['template_stats']).to eq({'goals' => 3, 'total_duration' => 5.weeks.to_i, 'loop' => false, 'badges' => 0})
       g3.settings['next_template_id'] = g.global_id
       g3.save
       g.reload
       g.settings['linked_template_ids'] = [g.global_id, g2.global_id, g3.global_id]
       g.generate_stats
-      expect(g.settings['template_stats']).to eq({'goals' => 3, 'total_duration' => 5.weeks.to_i, 'loop' => true})
+      expect(g.settings['template_stats']).to eq({'goals' => 3, 'total_duration' => 5.weeks.to_i, 'loop' => true, 'badges' => 0})
     end
   end
   

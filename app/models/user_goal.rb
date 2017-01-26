@@ -36,6 +36,7 @@ class UserGoal < ActiveRecord::Base
       self.settings['template_header_id'] = nil
     end
     self.settings['max_badge_level'] = self.settings['badges'].length if self.settings['badges']
+    self.settings['badge_image_url'] = ((self.settings['badges'] || [])[0] || {})['image_url']
     self.settings['old_template_header_id'] = self.settings['template_header_id'] if self.settings['template_header_id']
     if (self.active || self.global) && !self.settings['started_at']
       self.settings['started_at'] = Time.now.iso8601
@@ -113,6 +114,7 @@ class UserGoal < ActiveRecord::Base
       duration = goals.map{|g| g.settings['goal_duration'] || 0 }.sum
       self.settings['template_stats']['total_duration'] = duration if duration > 0
       self.settings['template_stats']['loop'] = self.id && goals.any?{|g| g.settings['next_template_id'] == self.global_id }
+      self.settings['template_stats']['badges'] = goals.map{|g| (g.settings && g.settings['stats'] && g.settings['stats']['badges']) || 0 }.sum
     end
     stats = {}
     # TODO: sharding
@@ -186,6 +188,7 @@ class UserGoal < ActiveRecord::Base
     stats['weighted_percent_positive'] = positive_total > 0 ? (positive_tally.to_f / positive_total.to_f * 100.0) : 0
     stats['weighted_average_status'] = status_total > 0 ? (status_tally.to_f / status_total.to_f) : 0
     stats['sessions'] = sessions.length
+    stats['badges'] = ((self.settings && self.settings['badges']) || []).length
     stats['suggested_level'] = suggested_level
     self.settings ||= {}
     self.settings['stats'] = stats

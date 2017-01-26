@@ -767,6 +767,70 @@ describe UserBadge, type: :model do
       expect(auto_tracks.map{|s| s.data['assessment']['automatic']}).to eq([true, true, true, true, true])
       expect(auto_tracks.map{|s| s.data['assessment']['manual']}).to eq([false, false, false, false, false])
     end
+
+    it "should not call check_goal_badges if earned up to the badge's max level" do
+      u = User.create
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        badges: [
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 1},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 5},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 10},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 15},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 20}
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+      expect(g.badged?).to eq(true)
+      expect(g.settings['max_badge_level']).to eq(5)
+      b = UserBadge.create(:user => u, :user_goal => g, level: 5, earned: true)
+            
+      expect(UserBadge).to_not receive(:check_goal_badges)
+      UserBadge.check_for(u.global_id)
+    end
+    
+    it "should call check_goal_badges if there's an assessment badge but no other badges" do
+      u = User.create
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        assessment_badge: {'instance_count' => 10, 'button_instances' => 10},
+        badges: [],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+      expect(g.badged?).to eq(true)
+      expect(g.settings['max_badge_level']).to eq(0)
+            
+      expect(UserBadge).to receive(:check_goal_badges).with(u, g, 0, nil, false)
+      UserBadge.check_for(u.global_id)
+    end
+    
+    it "should call check_goal_badges if there's an assessment badge and the other badges have all been earned" do
+      u = User.create
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        assessment_badge: {'instance_count' => 10, 'button_instances' => 10},
+        badges: [
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 1},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 5},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 10},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 15},
+          {'instance_count' => 10, 'button_instances' => 10, 'interval' => 'date', 'consecutive_units' => 20}
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+      expect(g.badged?).to eq(true)
+      expect(g.settings['max_badge_level']).to eq(5)
+      b = UserBadge.create(:user => u, :user_goal => g, level: 5, earned: true)
+            
+      expect(UserBadge).to receive(:check_goal_badges).with(u, g, 5, nil, false)
+      UserBadge.check_for(u.global_id)
+    end
   end
   
   describe "generate_defaults" do

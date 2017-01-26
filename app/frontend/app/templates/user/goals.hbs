@@ -10,6 +10,8 @@
       {{#with primary_goal as |goal|}}
         {{partial "goal_in_list"}}
       {{/with}}
+    {{else if any_goal}}
+      <p>{{t "No primary goal set" key='no_primary_goal_set'}}</p>
     {{else}}
       <div style='max-width: 600px;'>
         <p>{{t "Goals are a way to help the communicator and their support team keep their current strategies top of mind. They can be general like \"Remember to use core words!\" or specific like \"Use greetings when entering a new setting\". Remember, these can be goals for the communicator (\"Answer questions with yes or no\"), <strong>or</strong> for the support team around the communicator (\"Use a prompting hierarchy\")." key='goals_explainer1'}}</p>

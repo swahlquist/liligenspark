@@ -38,11 +38,21 @@
           </div>
         {{/if}}
         <div class="form-group">
+          <div class='col-sm-10 col-sm-offset-2'>
+            {{#if goal.badge_image_url}}
+              <img src={{goal.badge_image_url}} style='widht: 50px; max-height: 50px; opacity: 0.8;' />
+            {{else}}
+              <span class='glyphicon glyphicon-flag' style='margin-top: 10px; font-size: 50px; '></span>
+            {{/if}}
+          </div>
+        </div>
+        <div class="form-group">
           <label for="new_goal_summary" class="col-sm-2 control-label">{{t "Summary" key='summary'}}</label>
           <div class="col-sm-10">
             <p class='form-control-static'>{{selected_goal.current_template.summary}}</p>
           </div>
         </div>
+
         <div class="form-group">
           <label for="new_goal_description" class="col-sm-2 control-label">{{t "Description" key='description'}}</label>
           <div class="col-sm-10">
@@ -58,9 +68,17 @@
           </div>
         {{else if selected_goal.current_template.advance}}
           <div class="form-group">
-            <label for="new_goal_duration" class="col-sm-2 control-label">{{t "Changes" key='changes'}}</label>
+            <label for="new_goal_changes" class="col-sm-2 control-label">{{t "Changes" key='changes'}}</label>
             <div class="col-sm-10">
               <p class='form-control-static'>{{date selected_goal.current_template.advance}}</p>
+            </div>
+          </div>
+        {{/if}}
+        {{#if selected_goal.current_template.stats.badges}}
+          <div class="form-group">
+            <label for="badges_total" class="col-sm-2 control-label">{{t "Badges" key='abdges'}}</label>
+            <div class="col-sm-10">
+              <p class='form-control-static'>{{t "badge" count=selected_goal.current_template.stats.badges key='n_badges'}}</p>
             </div>
           </div>
         {{/if}}
@@ -82,12 +100,24 @@
       {{#if goals}}
         {{#each goals as |goal|}}
           <div class='well goal' {{action 'select_goal' goal}} style='cursor: pointer;'>
+            <div style='float: left; width: 50px; height: 65px; overflow: hidden; margin-right: 10px; font-size: 40px; text-align: center; line-height: 20px;'>
+              {{#if goal.badge_image_url}}
+                <img src={{goal.badge_image_url}} style='widht: 50px; max-height: 50px; opacity: 0.8;' />
+              {{else}}
+                <span class='glyphicon glyphicon-flag' style='margin-top: 0px;'></span>
+              {{/if}}
+            </div>
             {{goal.high_level_summary}}
             {{#if goal.sequence}}
               <div class='details'>
                 {{t "sequence of" key='sequence_of'}}
                 {{t "goal" key='n_goals' count=goal.template_stats.goals}}
+                {{#if goal.template_stats.badges}}{{t "with" key='with'}}{{t "badge" count=goal.template_stats.badges key='n_badges'}}{{/if}}
                 {{#if goal.template_stats.loop}}{{t "(repeating sequence)" key='repeating_sequence'}}{{/if}}
+              </div>
+            {{else if goal.stats.badges}}
+              <div class='details'>
+                {{t "badge" count=goal.stats.badges key='n_badges'}}
               </div>
             {{/if}}
             <div class='description text-muted'>
@@ -162,6 +192,14 @@
           {{badge-settings badge=goal.assessment_badge assessment=true}}
         {{/if}}
 
+        <div class="form-group">
+          <label class="col-sm-2 control-label">{{t "Badges" key='badges'}}</label>
+          <div class="col-sm-10">
+            <div class="checkbox">
+              <em style='padding-left: 20px;'>{{t "You can add badges after the goal has been created" key='add_badges_later'}}</em>
+            </div>
+          </div>
+        </div>
         <div class="form-group">
           <fieldset>
             <label class="col-sm-2 control-label">{{t "Primary" key='primary'}}</label>

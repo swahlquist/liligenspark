@@ -40,6 +40,7 @@ CoughDrop.Goal = DS.Model.extend({
   template_header_id: DS.attr('string'),
   template_stats: DS.attr('raw'),
   badge_name: DS.attr('string'),
+  badge_image_url: DS.attr('string'),
   badges: DS.attr('raw'),
   assessment_badge: DS.attr('raw'),
   goal_advances_at: DS.attr('string'),
@@ -308,7 +309,8 @@ CoughDrop.Goal = DS.Model.extend({
     this.get('badges').pushObject(badge);
   },
   check_badges: function() {
-    this.set('badges_enabled', !!this.get('badges'));
+    var badges = this.get('badges') || [];
+    this.set('badges_enabled', !!(badges.length > 0 && badges[badges.length - 1].level > 0));
   }.observes('badges'),
   set_zero_badge: function(obj, changed) {
     if(changed == 'auto_assessment' && this.get('auto_assessment') === false) {

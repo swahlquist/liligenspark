@@ -41,7 +41,7 @@ module JsonApi::Goal
     end
     json['global'] = true if goal.global
 
-    ['summary', 'description'].each do |key|
+    ['summary', 'description', 'badge_image_url'].each do |key|
       json[key] = goal.settings[key]
     end
     json['started'] = goal.settings['started_at']

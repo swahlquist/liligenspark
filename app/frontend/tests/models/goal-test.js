@@ -643,4 +643,17 @@ describe('Goal', function() {
       expect(g.get('auto_assessment')).toEqual(true);
     });
   });
+
+  describe('check_badges', function() {
+    it('should set enabled only if true', function() {
+      var g = CoughDrop.store.createRecord('goal');
+      expect(g.get('badges_enabled')).toEqual(undefined);
+      g.set('badges', []);
+      expect(g.get('badges_enabled')).toEqual(false);
+      g.set('badges', [{level: 0}]);
+      expect(g.get('badges_enabled')).toEqual(false);
+      g.set('badges', [{level: 0}, {level: 1}]);
+      expect(g.get('badges_enabled')).toEqual(true);
+    });
+  });
 });
