@@ -124,8 +124,8 @@ describe('stats', function() {
       expect(blocks[0].day).toEqual('Su');
       expect(blocks[0].blocks.length).toEqual(24*2);
       expect(blocks[0].blocks[0]).toEqual({val: 0, tooltip: "", style_class: "time_block"});
-      expect(blocks[1].blocks[22]).toEqual({val: 24, tooltip: "M 11:00, 24 events", style_class: "time_block level_10"});
-      expect(blocks[1].blocks[34]).toEqual({val: 18, tooltip: "M 17:00, 18 events", style_class: "time_block level_8"});
+      expect(blocks[1].blocks[22]).toEqual({val: 24, tooltip: "M 11:00, 24 events", style_class: "time_block level_5"});
+      expect(blocks[1].blocks[34]).toEqual({val: 18, tooltip: "M 17:00, 18 events", style_class: "time_block level_4"});
       expect(blocks[3].blocks[29]).toEqual({val: 1, tooltip: "W 14:30, 1 event", style_class: "time_block level_1"});
       expect(blocks[3].blocks[30]).toEqual({val: 2, tooltip: "W 15:00, 2 events", style_class: "time_block level_1"});
       expect(blocks[5].blocks[1]).toEqual({val: 2, tooltip: "F 0:30, 2 events", style_class: "time_block level_1"});
