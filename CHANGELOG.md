@@ -2,6 +2,13 @@
 
 ## Master
 
+### 2017-01-27
+- fixes for goals/badges browsing and selection interfaces
+- option to faintly show hidden buttons in speak mode
+- interface to swap images in batch (feature flag)
+- backend support for batch translations (feature flag)
+- fix issue with logs not going to supervisees correctly
+
 ### 2017-01-13
 - show badge completion requirements for all badge popups
 - fixes for race conditions when updating users and boards
