@@ -37,7 +37,7 @@ export default modal.ModalController.extend({
     },
     video: function() {
       if(window.ga) {
-        return window.ga('send', 'event', 'Intro', 'video', 'Intro Video Opened');
+        window.ga('send', 'event', 'Intro', 'video', 'Intro Video Opened');
       }
       modal.open('inline-video', {video: {url: "https://www.youtube.com/embed/gsxfLVhUbus?rel=0"}, hide_overlay: true});
     }
