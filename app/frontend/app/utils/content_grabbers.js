@@ -572,6 +572,12 @@ var pictureGrabber = Ember.Object.extend({
         search = _this.flickr_search;
       } else if(this.controller.get('image_library') == 'public_domain') {
         search = _this.public_domain_image_search;
+      } else if(this.controller.get('image_library') == 'pixabay_photos') {
+        search = function(str) { return _this.pixabay_search(str, 'photo'); };
+      } else if(this.controller.get('image_library') == 'pixabay_vectors') {
+        search = function(str) { return _this.pixabay_search(str, 'vector'); };
+      } else if(this.controller.get('image_library') == 'openclipart') {
+        search = _this.openclipart_search;
       } else if(this.controller.get('image_library') && this.controller.get('image_library').match(/^protected/)) {
         search = _this.protected_search;
       }
@@ -643,11 +649,37 @@ var pictureGrabber = Ember.Object.extend({
       return i18n.t('not_available', "Image retrieval failed unexpectedly.");
     });
   },
-  pixabay_search: function(text) {
+  openclipart_search: function(text) {
+    return persistence.ajax('https://openclipart.org/search/json/?query=' + text + '&amount=30', {type: 'GET'
+    }).then(function(data) {
+      var res = [];
+      ((data || {}).payload || []).forEach(function(hit) {
+        res.push({
+          image_url: hit.svg.url,
+          content_type: 'image/svg',
+          width: hit.dimensions.png_thumb.width,
+          height: hit.dimensions.png_thumb.height,
+          license: 'public domain',
+          author: hit.uploader,
+          author_url: 'https://creativecommons.org/publicdomain/zero/1.0/',
+          license_url: 'https://creativecommons.org/publicdomain/zero/1.0/',
+          source_url: hit.detail_link,
+          extension: 'jpg'
+        });
+      });
+      console.log(res);
+      return res;
+    }, function(xhr, message) {
+      return i18n.t('not_available', "Image retrieval failed unexpectedly.");
+    });
+  },
+  pixabay_search: function(text, filter) {
     if(!window.pixabay_key) {
       return Ember.RSVP.reject(i18n.t('pixabay_not_configured', "Pixabay hasn't been properly configured for CoughDrop"));
     }
-    return persistence.ajax('https://pixabay.com/api/?key=' + window.pixabay_key + '&q=' + text + '&image_type=photo&per_page=30&safesearch=true', { type: 'GET'
+    var type = 'photo';
+    if(filter == 'vector') { type = 'vector'; }
+    return persistence.ajax('https://pixabay.com/api/?key=' + window.pixabay_key + '&q=' + text + '&image_type=' + type + '&per_page=30&safesearch=true', { type: 'GET'
     }).then(function(data) {
       var res = [];
       ((data || {}).hits || []).forEach(function(hit) {

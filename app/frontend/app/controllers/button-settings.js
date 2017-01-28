@@ -86,6 +86,12 @@ export default modal.ModalController.extend({
     if(window.custom_search_key) {
       res.push({name: i18n.t('public_domain', "Public Domain Images"), id: 'public_domain'});
     }
+    if(window.pixabay_key) {
+      res.push({name: i18n.t('pixabay_photos', "Pixabay Photos"), id: 'pixabay_photos'});
+      res.push({name: i18n.t('pixabay_photos', "Pixabay Vector Images"), id: 'pixabay_vectors'});
+    }
+//    res.push({name: i18n.t('openclipart', "OpenClipart"), id: 'openclipart'});
+
     if(res.length == 1) { return []; }
     return res;
   }.property(),
