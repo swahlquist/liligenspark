@@ -126,7 +126,11 @@ var speecher = Ember.Object.extend({
     var pieces = text.split(/\.\.\./);
     var next_piece = function() {
       var piece_text = pieces.shift();
-      if(piece_text.length === 0 || piece_text.match(/^\s+$/)) {
+      if(!piece_text) {
+        if(_this.last_speak_id == speak_id) {
+          _this.speak_end_handler(speak_id);
+        }
+      } else if(piece_text.length === 0 || piece_text.match(/^\s+$/)) {
         Ember.run.later(function() {
           if(_this.last_speak_id == speak_id) {
             next_piece();
