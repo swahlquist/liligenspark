@@ -399,7 +399,11 @@ var dbman = {
     var promise = capabilities.mini_promise();
 
     if(dbman.db_type == 'indexeddb') {
-      capabilities.idb.deleteDatabase(db_name);
+      try {
+        capabilities.idb.deleteDatabase(db_name);
+      } catch(e) {
+        promise.reject({error: 'unexpected error deleting database'});
+      }
       if(capabilities.db_name == db_name) {
         capabilities.db = false;
         capabilities.db_name = null;
@@ -451,7 +455,7 @@ var dbman = {
           console.log('COUGHDROP: db failed once, trying again');
           dbman.setup_database.already_tried = true;
           setTimeout(function() {
-            dbman.setup_database(key, promise);
+            dbman.setup_database(key, version, promise);
           }, 1000);
         } else {
           console.log(event);
@@ -460,7 +464,7 @@ var dbman = {
             dbman.delete_database(key);
             dbman.setup_database.already_tried_deleting = true;
             setTimeout(function() {
-              dbman.setup_database(key, promise);
+              dbman.setup_database(key, version, promise);
             }, 500);
           } else {
             if(!dbman.setup_database.already_tried_deleting_all) {
@@ -478,8 +482,11 @@ var dbman = {
                     }
                     if(count > 0) {
                       setTimeout(function() {
-                        dbman.setup_database(key, promise);
+                        dbman.setup_database(key, version, promise);
                       }, 500);
+                    } else {
+                      console.error("COUGHDROP: db failed to initialize after repeated attempts");
+                      promise.reject("db failed after repeated attempts");
                     }
                   }
                 };
@@ -567,7 +574,6 @@ var dbman = {
     } else {
       promise.reject({error: "unrecognized db_type, " + dbman.db_type});
     }
-
     return promise;
   },
   upgrade_database: function(db, old_version, new_version, promise) {

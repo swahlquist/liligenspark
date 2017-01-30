@@ -1155,7 +1155,8 @@ var capabilities;
 
     var promise = capabilities.mini_promise();
 
-    capabilities.dbman.setup_database(key, 2).then(function(db) {
+    var setup = capabilities.dbman.setup_database(key, 2);
+    setup.then(function(db) {
       stashes.db_connect(capabilities);
       setTimeout(function() {
         (capabilities.queued_db_actions || []).forEach(function(m) {

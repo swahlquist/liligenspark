@@ -293,6 +293,10 @@ import capabilities from './capabilities';
     capabilities.invoke({type: 'coughDropExtras', method: 'init'}).then(function(res) {
       extras.enable();
     }, function(err) {
+      // TODO: this happens when there is no db, in which case the web site should still
+      // work, but we should really keep track of whether extras happened correctly, since
+      // it could affect the interface.
+      extras.enable();
     });
   });
 })();
