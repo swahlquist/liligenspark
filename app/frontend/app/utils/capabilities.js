@@ -1128,13 +1128,15 @@ var capabilities;
     setInterval(capabilities.update_brightness, 2000);
     var LightSensor = window.LightSensor || window.AmbientLightSensor;
     if(LightSensor) {
-      // TODO: only track while in speak mode
-      var s = new LightSensor();
-      s.start();
-      s.onchange = function(event) {
-        capabilities.last_lux = event.reading && event.reading.illuminance;
-        stashes.ambient_light = capabilities.last_lux;
-      };
+      try {
+        // TODO: only track while in speak mode
+        var s = new LightSensor();
+        s.start();
+        s.onchange = function(event) {
+          capabilities.last_lux = event.reading && event.reading.illuminance;
+          stashes.ambient_light = capabilities.last_lux;
+        };
+      } catch(e) { }
     }
     window.addEventListener('devicelight', function(event) {
       capabilities.last_lux = event.lux || event.value;

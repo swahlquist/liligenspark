@@ -6,7 +6,9 @@
     Loading CoughDrop<%= " Demo" if params['embed'] %>...
     <span id="loading_message" style="display: none; font-size: 14px; font-weight: normal;">(this may take a little while...)</span>
   </h2>
-  <%= render 'shared/footer' %>
+  <% unless params['embed'] %>
+    <%= render 'shared/footer' %>
+  <% end %>
 </div>
 <!-- TODO: i18n this ^ ERB-style -->
 
