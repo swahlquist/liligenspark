@@ -117,10 +117,43 @@ module Uploader
     !!res
   end
   
-  def self.find_image(keyword, library, user)
-    return nil if (keyword || '').strip.blank? || (library || '').strip.blank?
+  def self.find_images(keyword, library, user)
+    return [] if (keyword || '').strip.blank? || (library || '').strip.blank?
     if library == 'ss'
+      return []
     elsif library == 'lp'
+      return []
+    elsif ['pixabay_vectors', 'pixabay_photos'].include?(library)
+      type = library.match(/vector/) ? 'vector' : 'photo'
+      key = ENV['PIXABAY_KEY']
+      return [] unless key
+      url = "https://pixabay.com/api/?key=#{key}&q=#{CGI.escape(keyword)}&image_type=#{type}&per_page=30&safesearch=true"
+      puts url
+      req = Typhoeus.get(url, :ssl_verifypeer => false)
+      results = JSON.parse(req.body) rescue nil
+      return [] unless results && results['hits']
+      list = []
+      results['hits'].each do |obj|
+        ext = obj['webformatURL'].split(/\./)[-1]
+        type = MIME::Types.type_for(ext)[0]
+        list << {
+          'url' => obj['webformatURL'],
+          'content_type' => (type && type.content_type) || 'image/jpeg',
+          'width' => obj['webformatWidth'],
+          'height' => obj['webformatHeight'],
+          'external_id' => obj['id'],
+          'public' => true,
+          'license' => {
+            'type' => 'public_domain',
+            'copyright_notice_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+            'source_url' => obj['pageURL'],
+            'author_name' => 'unknown',
+            'author_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+            'uneditable' => true
+          }          
+        }
+      end
+      return list
     elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol'].include?(library)
       str = "#{keyword} repo:#{library}"
       res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}", :ssl_verifypeer => false)
@@ -131,24 +164,28 @@ module Uploader
           result['content_type'] = type.content_type
         end
       end
-      return nil if results.empty?
-      obj = results[0]
-      return {
-        'url' => obj['image_url'],
-        'content_type' => obj['content_type'],
-        'width' => obj['width'],
-        'height' => obj['height'],
-        'external_id' => obj['id'],
-        'public' => true,
-        'license' => {
-          'type' => obj['license'],
-          'copyright_notice_url' => obj['license_url'],
-          'source_url' => obj['source_url'],
-          'author_name' => obj['author'],
-          'author_url' => obj['author_url'],
-          'uneditable' => true
-        }
-      }
+      return [] if results.empty?
+      list = []
+      results.each do |obj|
+        list << {
+          'url' => obj['image_url'],
+          'content_type' => obj['content_type'],
+          'width' => obj['width'],
+          'height' => obj['height'],
+          'external_id' => obj['id'],
+          'public' => true,
+          'license' => {
+            'type' => obj['license'],
+            'copyright_notice_url' => obj['license_url'],
+            'source_url' => obj['source_url'],
+            'author_name' => obj['author'],
+            'author_url' => obj['author_url'],
+            'uneditable' => true
+          }
+        }        
+      end
+      return list
     end
+    return []
   end
 end

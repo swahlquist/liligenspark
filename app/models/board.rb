@@ -665,7 +665,7 @@ class Board < ActiveRecord::Base
       updated_board_ids << self.global_id
       self.settings['buttons'].each do |button|
         if button['label'] || button['vocalization']
-          image_data = Uploader.find_image(button['label'] || button['vocalization'], library, author)
+          image_data = Uploader.find_images(button['label'] || button['vocalization'], library, author)[0]
           if image_data
             bi = ButtonImage.process_new(image_data, {user: author})
             button['image_id'] = bi.global_id

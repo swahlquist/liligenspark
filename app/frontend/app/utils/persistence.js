@@ -1791,7 +1791,7 @@ persistence.DSExtend = {
             local_fallback = true;
           } else {
             // for 500 errors and 0 status errors it's probably ok too
-            debugger;
+            // debugger;
           }
            // TODO: only do this when the error is for an expired token, not any invalid token
           if(local_fallback) {

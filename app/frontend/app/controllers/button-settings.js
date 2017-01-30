@@ -88,7 +88,7 @@ export default modal.ModalController.extend({
     }
     if(window.pixabay_key) {
       res.push({name: i18n.t('pixabay_photos', "Pixabay Photos"), id: 'pixabay_photos'});
-      res.push({name: i18n.t('pixabay_photos', "Pixabay Vector Images"), id: 'pixabay_vectors'});
+      res.push({name: i18n.t('pixabay_vectors', "Pixabay Vector Images"), id: 'pixabay_vectors'});
     }
 //    res.push({name: i18n.t('openclipart', "OpenClipart"), id: 'openclipart'});
 

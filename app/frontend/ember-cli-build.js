@@ -5,7 +5,7 @@ module.exports = function(defaults) {
   var app = new EmberApp(defaults, {
     sourcemaps: {
       enabled: false
-    }
+    },
     storeConfigInMeta: false,
 //    vendorFiles: {
 //      'handlebars.js': null,

@@ -188,26 +188,28 @@ describe Uploader do
     
   end
   
-  describe 'find_image' do
+  describe 'find_images' do
     it 'should return nothing for unknown libraries' do
-      expect(Uploader.find_image('bacon', 'cool-pics', nil)).to eq(nil)
-      expect(Uploader.find_image('bacon', '', nil)).to eq(nil)
-      expect(Uploader.find_image('bacon', nil, nil)).to eq(nil)
-      expect(Uploader.find_image('bacon', '   ', nil)).to eq(nil)
+      expect(Typhoeus).to_not receive(:get)
+      expect(Uploader.find_images('bacon', 'cool-pics', nil)).to eq([])
+      expect(Uploader.find_images('bacon', '', nil)).to eq([])
+      expect(Uploader.find_images('bacon', nil, nil)).to eq([])
+      expect(Uploader.find_images('bacon', '   ', nil)).to eq([])
     end
     
     it 'should return nothing for empty queries' do
-      expect(Uploader.find_image(nil, 'arasaac', nil)).to eq(nil)
-      expect(Uploader.find_image('', 'arasaac', nil)).to eq(nil)
-      expect(Uploader.find_image('    ', 'arasaac', nil)).to eq(nil)
+      expect(Typhoeus).to_not receive(:get)
+      expect(Uploader.find_images(nil, 'arasaac', nil)).to eq([])
+      expect(Uploader.find_images('', 'arasaac', nil)).to eq([])
+      expect(Uploader.find_images('    ', 'arasaac', nil)).to eq([])
     end
     
     it 'should make a remote request' do
       res = OpenStruct.new(body: [
       ].to_json)
       expect(Typhoeus).to receive(:get).with('https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac', :ssl_verifypeer => false).and_return(res)
-      image = Uploader.find_image('bacon', 'arasaac', nil)
-      expect(image).to eq(nil)
+      images = Uploader.find_images('bacon', 'arasaac', nil)
+      expect(images).to eq([])
     end
     
     it 'should parse results' do
@@ -226,8 +228,8 @@ describe Uploader do
         }
       ].to_json)
       expect(Typhoeus).to receive(:get).with('https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac', :ssl_verifypeer => false).and_return(res)
-      image = Uploader.find_image('bacon', 'arasaac', nil)
-      expect(image).to eq({
+      images = Uploader.find_images('bacon', 'arasaac', nil)
+      expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png',
         'width' => '200',
@@ -242,7 +244,74 @@ describe Uploader do
           'author_url' => 'http://www.example.com/bob',
           'uneditable' => true
         }
-      })
+      }])
+    end
+    
+# 
+#           'url' => obj['webformatURL'],
+#           'content_type' => (type && type.content_type) || 'image/jpeg',
+#           'width' => obj['webformatWidth'],
+#           'height' => obj['webformatHeight'],
+#           'external_id' => obj['id'],
+#           'public' => true,
+#           'license' => {
+#             'type' => 'public_domain',
+#             'copyright_notice_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+#             'source_url' => obj['pageURL'],
+#             'author_name' => 'unknown',
+#             'author_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+#             'uneditable' => true
+#           }          
+# 
+    it 'should handle pixabay searches' do
+      ENV['PIXABAY_KEY'] = 'pixkey'
+      res = OpenStruct.new(body: {'hits' => [
+        {
+          'webformatURL' => 'http://www.example.com/pic.png',
+          'webformatWidth' => 200,
+          'webformatHeight' => 200,
+          'id' => '123',
+          'pageURL' => 'http://www.example.com/pics',
+        }, {
+          'webformatURL' => 'http://www.example.com/pic2.jpg',
+          'webformatWidth' => 123,
+          'webformatHeight' => 234,
+          'id' => '1234',
+          'pageURL' => 'http://www.example.com/pics2',
+        }]}.to_json)
+      expect(Typhoeus).to receive(:get).with('https://pixabay.com/api/?key=pixkey&q=bacon&image_type=vector&per_page=30&safesearch=true', :ssl_verifypeer => false).and_return(res)
+      images = Uploader.find_images('bacon', 'pixabay_vectors', nil)
+      expect(images).to eq([{
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png',
+        'width' => 200,
+        'height' => 200,
+        'external_id' => '123',
+        'public' => true,
+        'license' => {
+          'type' => 'public_domain',
+          'copyright_notice_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+          'source_url' => 'http://www.example.com/pics',
+          'author_name' => 'unknown',
+          'author_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+          'uneditable' => true
+        }
+      }, {
+        'url' => 'http://www.example.com/pic2.jpg',
+        'content_type' => 'image/jpeg',
+        'width' => 123,
+        'height' => 234,
+        'external_id' => '1234',
+        'public' => true,
+        'license' => {
+          'type' => 'public_domain',
+          'copyright_notice_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+          'source_url' => 'http://www.example.com/pics2',
+          'author_name' => 'unknown',
+          'author_url' => 'https://creativecommons.org/publicdomain/zero/1.0/',
+          'uneditable' => true
+        }
+      }])
     end
   end
 end

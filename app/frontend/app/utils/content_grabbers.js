@@ -683,16 +683,20 @@ var pictureGrabber = Ember.Object.extend({
     }).then(function(data) {
       var res = [];
       ((data || {}).hits || []).forEach(function(hit) {
+        var content_type = 'image/jpeg';
+        if(hit.webformatURL && hit.webformatURL.match(/png$/)) {
+          content_type = 'image/png';
+        }
         res.push({
           image_url: hit.webformatURL,
-          content_type: 'image/jpeg',
+          content_type: content_type,
           width: hit.webformatWidth,
           height: hit.webformatHeight,
           license: 'public domain',
           author: 'unknown',
           author_url: 'https://creativecommons.org/publicdomain/zero/1.0/',
           license_url: 'https://creativecommons.org/publicdomain/zero/1.0/',
-          source_url: hit.webformatURL,
+          source_url: hit.pageURL,
           extension: 'jpg'
         });
       });
