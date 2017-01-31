@@ -870,7 +870,11 @@ var persistence = Ember.Object.extend({
       var prime_caches = persistence.prime_caches(true).then(null, function() { return Ember.RSVP.resolve(); });
 
       var find_user = prime_caches.then(function() {
-        return CoughDrop.store.findRecord('user', user_id).then(null, function() {
+        return CoughDrop.store.findRecord('user', user_id).then(function(user) {
+          return user.reload().then(null, function() {
+            sync_reject({error: "failed to retrieve user details"});
+          });
+        }, function() {
           sync_reject({error: "failed to retrieve user details"});
         });
       });
