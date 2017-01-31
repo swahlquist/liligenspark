@@ -1651,11 +1651,11 @@ var persistence = Ember.Object.extend({
     if(stashes.get('auth_settings') && window.coughDropExtras && window.coughDropExtras.ready) {
       var synced = _this.get('last_sync_at') || 1;
       var syncable = persistence.get('online') && !Ember.testing && !persistence.get('syncing');
-      var interval = (persistence.get('last_sync_stamp_interval') || (15 * 60 * 1000)) * (Math.random() * 1.3);
+      var interval = persistence.get('last_sync_stamp_interval') || (30 * 60 * 1000);
       interval = interval + (0.2 * interval * Math.random()); // jitter
-      if(this.get('last_sync_event_at')) {
-        // don't background sync more than once every 15 minutes
-        syncable = syncable && (this.get('last_sync_event_at') < ((new Date()).getTime() - interval));
+      if(_this.get('last_sync_event_at')) {
+        // don't background sync more than once every 30 minutes
+        syncable = syncable && (_this.get('last_sync_event_at') < ((new Date()).getTime() - interval));
       }
       var now = (new Date()).getTime() / 1000;
       if(!Ember.testing && capabilities.mobile && !force && loaded && (now - loaded) < (2 * 60) && synced > 1) {
