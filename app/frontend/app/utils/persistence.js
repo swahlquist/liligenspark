@@ -1396,6 +1396,7 @@ var persistence = Ember.Object.extend({
         }
         // threaded lookups, though a polling pool would probably be better since all
         // could resolve and then the final one finds a ton more boards
+        var n_threads = capabilities.mobile ? 1 : 2;
         for(var threads = 0; threads < 2; threads++) {
           var defer = Ember.RSVP.defer();
           nextBoard(defer);
