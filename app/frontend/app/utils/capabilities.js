@@ -46,6 +46,7 @@ var capabilities;
   if(!capabilities.system) {
     capabilities.system = "Desktop";
     capabilities.browser = "Web browser";
+    capabilities.mobile = false;
     if(navigator.userAgent.match(/ipod|ipad|iphone/i)) {
       capabilities.mobile = true;
       capabilities.system = "iOS";

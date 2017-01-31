@@ -296,6 +296,7 @@ import capabilities from './capabilities';
       // TODO: this happens when there is no db, in which case the web site should still
       // work, but we should really keep track of whether extras happened correctly, since
       // it could affect the interface.
+      extras.set('offline_available', false);
       extras.enable();
     });
   });
