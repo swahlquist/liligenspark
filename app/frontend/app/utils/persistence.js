@@ -1316,7 +1316,6 @@ var persistence = Ember.Object.extend({
                 var already_going_to_visit = to_visit_boards.find(function(b) { return (b.id == board.id || b.key == board.key) && (!board.link_disabled || board.link_disabled == b.link_disabled); });
 
                 if(!already_visited && !already_going_to_visit) {
-                  if(!prior_board.get('key') && !prior_board.get('id')) { debugger }
                   to_visit_boards.push({id: board.id, key: board.key, depth: next.depth + 1, link_disabled: board.link_disabled, visit_source: (Ember.get(prior_board, 'key') || Ember.get(prior_board, 'id'))});
                 }
                 if(safely_cached) {
