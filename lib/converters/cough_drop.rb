@@ -270,7 +270,7 @@ module Converters::CoughDrop
     lookup_boards = [board]
     board.settings['downstream_board_ids'].each do |id|
       b = Board.find_by_path(id)
-      if b.allows?(opts['user'], 'view')
+      if b && b.allows?(opts['user'], 'view')
         lookup_boards << b
       end
     end
