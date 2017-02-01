@@ -17,6 +17,7 @@ module SentencePic
     height = 70
     if utterance.data['button_list'].length < PER_ROW
       columns = utterance.data['button_list'].length
+      columns = 1 if !columns || columns == 0
       width = [420 / columns, 200].min
       height = width
     elsif utterance.data['button_list'].length < PER_ROW * 2

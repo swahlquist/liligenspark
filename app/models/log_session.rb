@@ -105,6 +105,8 @@ class LogSession < ActiveRecord::Base
             RedisInit.default.hincrby('missing_words', word.to_s, 1) if RedisInit.default
           end
         end
+        speech = nil unless speech && speech['types']
+        speech = speech.slice('types', 'word') if speech
         event['parts_of_speech'] = speech
         event['core_word'] = WordData.core_for?(word, self.user)
       end

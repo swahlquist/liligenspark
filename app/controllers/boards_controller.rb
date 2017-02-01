@@ -74,7 +74,11 @@ class BoardsController < ApplicationController
   
   def icon
     board = Board.find_by_path(params['id'])
-    redirect_to board.icon_url_or_fallback
+    if board
+      redirect_to board.icon_url_or_fallback
+    else
+      redirect_to Board::DEFAULT_ICON
+    end
   end
   
   def utterance

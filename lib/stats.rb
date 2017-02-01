@@ -647,9 +647,9 @@ module Stats
           prior_parts = []
         elsif event['modified_by_next']
         else
-          if event['parts_of_speech']
+          if event['parts_of_speech'] && event['parts_of_speech']['types']
             current_part = event['parts_of_speech']
-            if prior_parts[-1] && prior_parts[-2]
+            if prior_parts[-1] && prior_parts[-1]['types'] && prior_parts[-2] && prior_parts[-2]['types']
               from_from = prior_parts[-2]['types'][0]
               from = prior_parts[-1]['types'][0]
               to = current_part['types'][0]
@@ -659,7 +659,7 @@ module Stats
               sequences.delete(from_from + "," + from) if sequences[from_from + "," + from] == 0
               sequences[from + "," + to] ||= 0
               sequences[from + "," + to] += 1
-            elsif prior_parts[-1]
+            elsif prior_parts[-1] && prior_parts[-1]['types']
               from = prior_parts[-1]['types'][0]
               to = current_part['types'][0]
               sequences[from + "," + to] ||= 0

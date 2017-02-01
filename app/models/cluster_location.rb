@@ -146,7 +146,7 @@ class ClusterLocation < ActiveRecord::Base
     found = false
     clusters.where(:cluster_type => 'geo').find_in_batches(batch_size: 10) do |batch|
       batch.each do |cluster|
-        if !found && session.data['geo'] && cluster.data['geo']
+        if !found && session.data && session.data['geo'] && cluster.data && cluster.data['geo']
           session_geo = session.geo_object
           cluster_geo = cluster.geo_object
           if session_geo.distance_to(cluster_geo) < cluster.distance_tolerance
@@ -165,7 +165,7 @@ class ClusterLocation < ActiveRecord::Base
     found = false
     clusters.where(:cluster_type => 'ip_address').find_in_batches(batch_size: 10) do |batch|
       batch.each do |cluster|
-        if !found && session.data['ip_address'] && cluster.data['ip_address']
+        if !found && session.data && session.data['ip_address'] && cluster.data && cluster.data['ip_address']
           if session.data['ip_address'] == cluster.data['ip_address']
             session.ip_cluster_id = cluster.id
             session.save
