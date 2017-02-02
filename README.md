@@ -35,23 +35,54 @@ without having to dig around in the database.
 
 ### Technical Notes
 
-CoughDrop has a Rails backend (`/`) and an Ember frontend (`/app/frontend`), which are both contained in this
+CoughDrop has a Rails backend (`/`) and an Ember frontend (`/app/frontend`), which are 
+both contained in this
 repository. If you're familiar with those frameworks then hopefully nothing here will
-embarrass me too much -- I mean, hopefully you'll be able to pick up pretty quickly
+embarrass me too much -- ...I mean, hopefully you'll be able to pick up pretty quickly
 the basic makeup of the app. These notes are not comprehensive, Feel free to help
 me flesh them out if that's your thing.
 
 The frontend and backend communicate via the open and completely-undocumented API.
 
-The backend relies on Redis and Postgres both being installed. It might mostly work
-without Redis, but I that probably won't be true for much longer. Also there are a 
-number of assumed environment variables (eventually I'd love to make some of these
-optional, but right now there's no guaranteeing what will happen if they aren't set),
-you can see them listed out in `.env.example`.
+#### Backend Setup
 
-You'll also need to configure Postgres using `database.yml` or something similar.
+The backend relies on Redis and Postgres both being installed. Both are required. If 
+you have ruby installed in your environment, running `bundle install` should get all
+the backend dependencies you'll need.
 
-You can use foreman to run the server, worker and ember watcher at the same time.
+After that copy `.env.example` to `.env` and make sure to uncomment all the
+appropriate environment variables. For the `REDIS_URL` line,
+enter a valid redis url (default would be `REDIS_URL=redis://localhost:6379/`). 
+Then update
+`config/database.yml` to match your settings (the defaults may work fine).
+
+<i>Redis quickstart: https://redis.io/topics/quickstart</i>
+
+Next you'll want to setup your database. You can run `rails db:create` to create an 
+empty database, or run `rails db:setup` to populate with some bootstrap data including
+a login, `example` and `password`.
+
+Once the database is created, you can start the server. If you run `rails server` you
+can start a single server process and hit it up in your browser at the default address
+(`http://localhost:3000` or whatever you changed it to). This will work for basic
+usage, but you really need a background process running to handle jobs. You can look in 
+`Procfile` for the commands we use to run a web server, or a resque (background job) server.
+If you `gem install foreman` then you can just type `foreman start` to start an instance
+of each of the Procfile processes all in one, which is nice. That will also start
+an ember server, which is nice for development because it'll automatically convert 
+your templates to javascript so you can just reload to get any code changes.
+
+#### Frontend Setup
+
+The frontend is an ember app. I recommend installing ember-cli (https://ember-cli.com/user-guide/)
+to make your life easier. If you `cd app/frontend` then you can run `ember init` to 
+download all the app dependencies at once. It'll ask you about modifying files, check the
+diff and if it looks like CoughDrop has content in the file then don't replace it with the
+default unless you know what you're doing.
+
+Once you have the dependencies downloaded, then any code changes within `frontend` should
+automatically regenerate `frontend.js` which is what the Rails app makes sure to deliver
+to the browser.
 
 ### License
 

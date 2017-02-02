@@ -17,6 +17,7 @@ user1 = User.process_new({
 }, { 
   is_admin: true
 })
+org = Organization.create(:admin => true, :settings => {:name => "Admin Organization"})
 image1 = ButtonImage.process_new({
   license: {
     type: "private"
