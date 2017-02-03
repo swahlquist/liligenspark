@@ -1481,6 +1481,7 @@ var persistence = Ember.Object.extend({
           } else if(item.store == 'board' || item.store == 'image' || item.store == 'sound' || item.store == 'user') {
             var find_record = null;
             var object = item.data.raw[item.store] || item.data.raw;
+            var object_id = object.id;
             var tmp_id = null;
             if(object.id.match(/^tmp_/)) {
               tmp_id = object.id;
@@ -1514,7 +1515,7 @@ var persistence = Ember.Object.extend({
               }
               return Ember.RSVP.resolve();
             }, function() {
-              return Ember.RSVP.reject({error: "failed to save " + item.store + " " + object.id});
+              return Ember.RSVP.reject({error: "failed to save offline record, " + item.store + " " + object_id});
             });
 
             update_promises.push(result);
@@ -1854,10 +1855,11 @@ persistence.DSExtend = {
       if(record[type.modelName].key && record[type.modelName].key.match(/^tmp_/)) {
         record[type.modelName].tmp_key = record[type.modelName].key;
       }
-      // TODO: needs temporary id and replace mechanism once assigned a valid id
-      // need raw object
+      if(record.get('id').match(/^tmp/) && ['board', 'image', 'sound'].indexOf(type.modelName) == -1) {
+        // only certain record types can be created offline
+        return persistence.offline_reject();
+      }
       return persistence.store(type.modelName, record).then(function() {
-        // TODO: what server-side computations are done that need to be recreated here, if any?
         return Ember.RSVP.resolve(record);
       }, function() {
         return persistence.offline_reject();
