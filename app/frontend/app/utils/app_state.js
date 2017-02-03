@@ -1027,7 +1027,8 @@ var app_state = Ember.Object.extend({
     var specialty = utterance.specialty_button(obj);
     if(button.load_board && button.load_board.key && !button.add_to_vocalization) {
     } else if(specialty) {
-      button_to_speak = specialty;
+      button_to_speak = Ember.$.extend({}, specialty);
+      button_to_speak.special = true;
     } else {
       button_to_speak = utterance.add_button(obj, button);
     }
@@ -1132,6 +1133,20 @@ var app_state = Ember.Object.extend({
             // TODO: handle this edge case smartly I guess
           }
         }
+      }
+    } else if(button_to_speak.special) {
+      if(button.vocalization == ':clear') {
+        app_state.controller.send('clear');
+      } else if(button.vocalization == ':beep') {
+        app_state.controller.send('alert');
+      } else if(button.vocalization == ':home') {
+        app_state.controller.send('home');
+      } else if(button.vocalization == ':back') {
+        app_state.controller.send('back');
+      } else if(button.vocalization == ':speak') {
+        app_state.controller.send('vocalize');
+      } else if(button.vocalization == ':backspace') {
+        app_state.controller.send('backspace');
       }
     } else {
       if(button.integration && button.integration.action_type == 'webhook') {

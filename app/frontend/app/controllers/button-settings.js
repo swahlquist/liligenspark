@@ -185,6 +185,25 @@ export default modal.ModalController.extend({
   soundState: function() {
     return this.get('state') == 'sound';
   }.property('state'),
+  special_modifier: function() {
+    var voc = this.get('model.vocalization');
+    if([':clear', ':home', ':back', ':backspace', ':beep', ':speak'].indexOf(voc) >= 0) {
+      if(voc == ':clear') {
+        return i18n.t('clear_utterance', "Clear the current utterance");
+      } else if(voc == ':home') {
+        return i18n.t('home', "Jump to the current home board");
+      } else if(voc == ':back') {
+        return i18n.t('back', "Go back one board");
+      } else if(voc == ':backspace') {
+        return i18n.t('backspace', "Erase the last button from the utterance");
+      } else if(voc == ':beep') {
+        return i18n.t('beep', "Beep");
+      } else if(voc == ':speak') {
+        return i18n.t('speak', "Speak the full utterance");
+      }
+    }
+    return null;
+  }.property('model.vocalization'),
   modifier: function() {
     var str = Ember.get(this, 'model.vocalization') || Ember.get(this, 'model.label') || "";
     return str.match(/^\+|:/) && str;

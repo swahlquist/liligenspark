@@ -159,7 +159,7 @@ var utterance = Ember.Object.extend({
     return altered;
   },
   specialty_button: function(button) {
-    if(button.vocalization == ":beep" || button.vocalization == ":home" || button.vocalization == ":back") {
+    if(button.vocalization == ":beep" || button.vocalization == ":home" || button.vocalization == ":back" || button.vocalization == ":clear" || button.vocalization == ":speak" || button.vocalization == ":backspace") {
       return button;
     }
     return null;
