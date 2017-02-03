@@ -237,7 +237,7 @@ class Board < ActiveRecord::Base
     end
     
     self.settings['license'] ||= {type: 'private'}
-    self.name = self.settings['name']
+    # self.name = self.settings['name']
     if self.protected_material?
       self.public = false unless self.settings['protected'] && self.settings['protected']['demo'] && !self.parent_board_id
     elsif self.public == nil
@@ -249,7 +249,7 @@ class Board < ActiveRecord::Base
     end
           
     # TODO: encrypted search, lol
-    self.settings['search_string'] = "#{self.name} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
+    self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
     self.search_string = self.public ? self.settings['search_string'] : nil
     true
   end
