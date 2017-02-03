@@ -37,6 +37,11 @@ export default Ember.Controller.extend({
     {name: i18n.t('on_bottom', "Text Below Images"), id: "bottom"},
     {name: i18n.t('text_only', "Text Only (No Images)"), id: "text_only"}
   ],
+  hiddenButtonsList: [
+    {name: i18n.t('show_grid', "Show Grid Lines"), id: "grid"},
+    {name: i18n.t('show_dim', "Show as Dimmed Out"), id: "hint"},
+    {name: i18n.t('hide_complete', "Hide Completely"), id: "hide"}
+  ],
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
     {name: i18n.t('default_font_caps', "Default Font, All Uppercase"), id: "default_caps"},

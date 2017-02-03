@@ -996,6 +996,9 @@ var app_state = Ember.Object.extend({
     }
   }.observes('short_refresh_stamp', 'sessionUser'),
   activate_button: function(button, obj) {
+    if(button.hidden && !this.get('edit_mode') && this.get('currentUser.preferences.hidden_buttons') == 'grid') {
+      return;
+    }
     if(app_state.get('modeling')) {
       obj.modeling = true;
     } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > ((new Date()).getTime() - 500)) {

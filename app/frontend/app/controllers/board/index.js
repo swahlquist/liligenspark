@@ -588,8 +588,13 @@ export default Ember.Controller.extend({
     }
     if(this.get('stashes.all_buttons_enabled')) {
       res = res + 'show_all_buttons ';
-    } else if(app_state.get('currenUser.preferences.hint_hidden_buttons')) {
+    } else if(app_state.get('currentUser.preferences.hidden_buttons') == 'hint') {
       res = res + 'hint_hidden_buttons ';
+    } else if(app_state.get('currentUser.preferences.hidden_buttons') == 'grid') {
+      res = res + 'grid_hidden_buttons ';
+    }
+    if(app_state.get('currentUser.hide_symbols')) {
+      res = res + 'show_labels ';
     }
     if(this.get('paint_mode')) {
       res = res + "paint ";
@@ -615,7 +620,7 @@ export default Ember.Controller.extend({
       }
     }
     return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'app_state.currentUser.preferences.hint_hidden_buttons'),
+  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols'),
   suggestion_class: function() {
     var res = "advanced_selection ";
     if(this.get('text_style')) {

@@ -18,8 +18,6 @@
     <audio style="display: none;" preload="auto" src={{button.sound.best_url}} rel={{unbound button.sound.url}}></audio>
   {{/if}}
   <div class={{button_symbol_class}}>
-    {{#unless button.hide_label}}
-      <span class="button-label">{{unbound button.label}}</span>
-    {{/unless}}
+    <span class={{if button.hide_label "button-label hide-label" "button-label"}}>{{unbound button.label}}</span>
   </div>
 </div>

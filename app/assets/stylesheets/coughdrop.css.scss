@@ -631,10 +631,16 @@ footer .wide_links {
 }
 .board .button:hover {
   border-width: 2px;
+  &.hidden_button {
+    border-width: 1px;
+  }
 }
 .board .button.touched, .board .button:focus {
   padding-top: 0px;
-  border-width: 5px
+  border-width: 5px;
+  &.hidden_button {
+    border-width: 1px;
+  }
 }
 .board .button.touched .symbol, .board .button:focus .symbol {
   margin-top: -4px;
@@ -644,40 +650,64 @@ footer .wide_links {
 }
 .board.border_none .button:hover {
   border-width: 2px;
+  &:hidden_button {
+    border-width: 0;
+  }
 }
 .board.border_none .button.touched, .board.border_none .button:focus {
   padding-top: 0px;
-  border-width: 5px
+  border-width: 5px;
+  &:hidden_button {
+    border-width: 0;
+  }
 }
 .board.border_medium .button {
   border-width: 2px;
 }
 .board.border_medium .button:hover {
   border-width: 4px;
+  &:hidden_button {
+    border-width: 2px;
+  }
 }
 .board.border_medium .button.touched, .board.border_medium .button:focus {
   padding-top: 0px;
-  border-width: 5px
+  border-width: 5px;
+  &:hidden_button {
+    border-width: 2px;
+  }
 }
 .board.border_large .button {
   border-width: 5px;
 }
 .board.border_large .button:hover {
   border-width: 7px;
+  &:hidden_button {
+    border-width: 5px;
+  }
 }
 .board.border_large .button.touched, .board.border_large .button:focus {
   padding-top: 0px;
-  border-width: 10px
+  border-width: 10px;
+  &:hidden_button {
+    border-width: 5px;
+  }
 }
 .board.border_huge .button {
   border-width: 10px;
 }
 .board.border_huge .button:hover {
   border-width: 12px;
+  &:hidden_button {
+    border-width: 10px;
+  }
 }
 .board.border_huge .button.touched, .board.border_huge .button:focus {
   padding-top: 0px;
-  border-width: 14px
+  border-width: 14px;
+  &:hidden_button {
+    border-width: 10px;
+  }
 }
 .board {
   &.upper .button .button-label {
@@ -1035,9 +1065,20 @@ footer .wide_links {
 .button.hidden_button, .button.empty {
   visibility: hidden;
 }
-.board.hint_hidden_buttons .button.hidden_button {
+.board.grid_hidden_buttons:not(.edit) .button.hidden_button {
+  visibility: visible;
+  * {
+    visibility: hidden;
+  }
+  background: #fff;
+  border-color: #aaa;
+}
+.board.hint_hidden_buttons:not(.edit) .button.hidden_button {
   visibility: visible;
   opacity: 0.2;
+  .action_container .action {
+    display: block;
+  }
 }
 .board.show_all_buttons .button.hidden_button {
   visibility: visible;
@@ -1240,6 +1281,9 @@ body.pretty_loader #loading_box {
 .board.edit .button.hidden_button {
   visibility: visible;
   opacity: 0.5;
+  .action_container .action {
+    display: block;
+  }
 }
 .board.edit .button.empty {
   visibility: visible;
@@ -1274,7 +1318,11 @@ body.pretty_loader #loading_box {
   bottom: inherit;
   top: -2px;
 }
-
+.board:not(.show_labels) {
+  .button span.button-label.hide-label {
+    display: none;
+  }
+}
 .button span.button-label {
   height: 18px;
   font-family: serif;

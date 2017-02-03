@@ -178,14 +178,9 @@
   </div>
 </div>
 <div class="form-group">
-  <label for="hint_hidden_buttons" class="col-sm-3 control-label">{{t "Hidden Buttons" key='hint_hidden_buttons'}}</label>
+  <label for="hidden_buttons" class="col-sm-3 control-label">{{t "Hidden Buttons" key='hidden_buttons'}}</label>
   <div class="col-sm-5">
-    <div class="checkbox">
-      <label>
-        {{input type="checkbox" checked=model.preferences.hint_hidden_buttons id="hint_hidden_buttons"}}
-        {{t "Don't hide, just dim hidden buttons" key='hint_hidden_buttons'}}
-      </label>
-    </div>
+    {{bound-select select_class="form-control" select_id="hidden_buttons" content=hiddenButtonsList selection=model.preferences.hidden_buttons action=(action (mut model.preferences.hidden_buttons)) }}
   </div>
 </div>
 
