@@ -117,18 +117,43 @@ module Uploader
     !!res
   end
   
+  def self.lessonpix_credentials(user)
+  end
+  
   def self.find_images(keyword, library, user)
     return [] if (keyword || '').strip.blank? || (library || '').strip.blank?
     if library == 'ss'
       return []
-    elsif library == 'lp'
-      return []
+    elsif library == 'lessonpix'
+      cred = lessonpix_credentials(user)
+      return [] unless cred
+      url = "http://lessonpix.com/api/Search?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&query=#{CGI.escape(keyword)}"
+      req = Typhoeus.get(url)
+      results = JSON.parse(req.body) rescue nil
+      list = []
+      results.each do |obj|
+        list << {
+          'url' => "/api/v1/users/#{user.global_id}/lessonpix/#{obj['id']}",
+          'content_type' => 'image/png',
+          'width' => 200,
+          'height' => 200,
+          'external_id' => obj['id'],
+          'public' => true,
+          'license' => {
+            'type' => 'private',
+            'source_url' => "http://lessonpix.com/pictures/#{obj['id']}/#{obj['label']}",
+            'author_name' => 'LessonPix',
+            'author_url' => 'http://lessonpix.com',
+            'uneditable' => true
+          }          
+        }
+      end
+      return list
     elsif ['pixabay_vectors', 'pixabay_photos'].include?(library)
       type = library.match(/vector/) ? 'vector' : 'photo'
       key = ENV['PIXABAY_KEY']
       return [] unless key
       url = "https://pixabay.com/api/?key=#{key}&q=#{CGI.escape(keyword)}&image_type=#{type}&per_page=30&safesearch=true"
-      puts url
       req = Typhoeus.get(url, :ssl_verifypeer => false)
       results = JSON.parse(req.body) rescue nil
       return [] unless results && results['hits']

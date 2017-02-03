@@ -451,7 +451,15 @@ var persistence = Ember.Object.extend({
       resolve(obj);
     });
   },
+  normalize_url: function(url) {
+    if(url && url.match(/user_token=\w+$/)) {
+      return url.replace(/[\?\&]user_token=\w+$/, '');
+    } else {
+      return url;
+    }
+  },
   find_url: function(url, type) {
+    url = this.normalize_url(url);
     if(this.url_cache && this.url_cache[url]) {
       return Ember.RSVP.resolve(this.url_cache[url]);
     } else if(this.url_uncache && this.url_uncache[url]) {
@@ -584,6 +592,7 @@ var persistence = Ember.Object.extend({
   },
   url_cache: {},
   store_url: function store_url(url, type, keep_big, force_reload) {
+    url = persistence.normalize_url(url);
     persistence.urls_to_store = persistence.urls_to_store || [];
     var defer = Ember.RSVP.defer();
     var opts = {

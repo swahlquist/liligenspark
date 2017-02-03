@@ -404,6 +404,17 @@ class Api::UsersController < ApplicationController
     end
   end
   
+  def lessonpix_image
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    verifier = 'asdf'
+    if verifier != params['verifier']
+      return unless allowed?(user, 'never_allowed')
+    end
+    cred = Uploader.lessonpix_credentials(user)
+    cred ||= Uploader.lessonpix_credentials(@api_user)
+  end
+  
   def translate
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])

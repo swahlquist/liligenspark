@@ -1,0 +1,49 @@
+{{#modal-dialog action="close" opening='opening' closing='closing'}}
+  <div class="modal-header">
+      <button type="button" class="close" {{action 'close'}}>&times;</button>
+    <h3>
+      {{t "Browse Tools" key='browse_tools'}}
+    </h3>
+  </div>
+  <div class="modal-body">
+    {{#if selected_tool}}
+      <img src={{selected_tool.icon_url}} />
+      {{selected_tool.name}}<br/><br/>
+      {{selected_tool.description}}
+      {{#each selected_tool.parameters as |param|}}
+        {{param.label}}: {{param.name}}
+      {{/each}}
+    {{else}}
+      {{#if tools.loading}}
+        <p>{{t "Loading tools..." key='loading_tools'}}</p>
+      {{else if tools.error}}
+        <p>{{t "Error loading tools" key='error_loading_tools'}}</p>
+      {{else if tools}}
+        {{#each tools as |tool|}}
+          <div class='well' {{action 'select_tool' tool}}>
+            <img src={{tool.icon_url}} />
+            {{tool.name}}<br/><br/>
+            {{tool.description}}
+          </div>
+        {{/each}}
+      {{else}}
+        <p>{{t "No tools available" key='no_tools_available'}}</p>
+      {{/if}}
+    {{/if}}
+  </div>
+  <div class="modal-footer">
+    {{#if selected_tool}}
+      <button {{action 'install'}} disabled={{not_ready}} class='btn btn-primary'>
+        {{#if selected_tool.installing}}
+          {{t "Installing Tool..." key='installing_tool'}}
+        {{else if selected_tool.error}}
+          {{t "Error Installing Tool" key='error_installing_tool'}}
+        {{else}}
+          {{t "Install Tool" key='install_tool'}}
+        {{/if}}
+      </button>
+      <button {{action 'browse'}} class='btn btn-default'>{{t "Back to List" key='back_to_list'}}</button>
+    {{/if}}
+    <button {{action "close"}} class="btn btn-default">{{t "Cancel" key='cancel'}}</button>
+  </div>
+{{/modal-dialog}}

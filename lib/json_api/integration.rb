@@ -15,6 +15,14 @@ module JsonApi::Integration
     json['webhook'] = !!obj.settings['button_webhook_url']
     json['render'] = !!obj.settings['board_render_url']
     
+    if obj.template
+      json['integration_key'] = obj.integration_key
+      json['template'] = true
+    end
+    ['icon_url', 'description'].each do |key|
+      json[key] = obj.settings[key]
+    end
+    
     if obj.settings['custom_integration']
       device_token = obj.device.token
       if obj.created_at > 24.hours.ago && obj.device

@@ -92,7 +92,7 @@
           {{else}}
             <ul class="list-unstyled">
             {{#each images_with_license as |image|}}
-              <li><img src={{image.url}} alt={{image.filename}} title={{image.filename}} style="width: 30px;"/>
+              <li><img src={{image.personalized_url}} alt={{image.filename}} title={{image.filename}} style="width: 30px;"/>
               {{license-attribution license=image.license}}
               </li>
             {{/each}}

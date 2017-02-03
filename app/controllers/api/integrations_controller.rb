@@ -2,13 +2,16 @@ class Api::IntegrationsController < ApplicationController
   before_action :require_api_token
   
   def index
-    user = User.find_by_path(params['user_id'])
-    return unless exists?(user, params['user_id'])
-    return unless allowed?(user, 'supervise')
-    # TODO: sharding
-    integrations = UserIntegration.where(:user_id => user.id).order('id DESC')
-    if params['for_button']
-      integrations = integrations.where(:for_button => true)
+    integrations = UserIntegration.where(:template => true).order('id ASC')
+    if params['user_id']
+      user = User.find_by_path(params['user_id'])
+      return unless exists?(user, params['user_id'])
+      return unless allowed?(user, 'supervise')
+      # TODO: sharding
+      integrations = UserIntegration.where(:user_id => user.id).order('id DESC')
+      if params['for_button']
+        integrations = integrations.where(:for_button => true)
+      end
     end
     render json: JsonApi::Integration.paginate(params, integrations)
   end

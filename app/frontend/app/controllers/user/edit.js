@@ -36,6 +36,13 @@ export default Ember.Controller.extend({
       _this.set('webhooks', {error: true});
     });
   },
+  tools: function() {
+    if(this.get('integrations') && this.get('integrations').length > 0) {
+      return this.get('integrations').filter(function(i) { return i.get('icon_url'); });
+    } else {
+      return null;
+    }
+  }.property('integrations'),
   load_integrations: function() {
     var _this = this;
     _this.set('integrations', {loading: true});
@@ -45,7 +52,7 @@ export default Ember.Controller.extend({
     }, function(err) {
       _this.set('integrations', {error: true});
     });
-  },
+  }.observes('model.id'),
   actions: {
     pick_avatar: function() {
       modal.open('pick-avatar', {user: this.get('model')});
@@ -79,7 +86,6 @@ export default Ember.Controller.extend({
       this.set('managing_connections', !this.get('managing_connections'));
       if(this.get('managing_connections')) {
         this.load_webhooks();
-        this.load_integrations();
       }
     },
     add_webhook: function() {
@@ -106,6 +112,15 @@ export default Ember.Controller.extend({
       var _this = this;
       modal.open('add-integration', {user: this.get('model')}).then(function(res) {
         if(res && res.created) {
+          _this.load_integrations();
+          _this.load_webhooks();
+        }
+      });
+    },
+    browse_tools: function() {
+      var _this = this;
+      modal.open('add-tool', {user: this.get('model')}).then(function(res) {
+        if(res && res.added) {
           _this.load_integrations();
           _this.load_webhooks();
         }

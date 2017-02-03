@@ -435,7 +435,7 @@ export default Ember.Controller.extend({
     var obj = {
       label: button.label,
       vocalization: button.vocalization,
-      image: (image && image.get('url')) || button.image,
+      image: (image && image.get('personalized_url')) || button.image,
       button_id: button.id,
       sound: (sound && sound.get('url')),
       board: oldState,

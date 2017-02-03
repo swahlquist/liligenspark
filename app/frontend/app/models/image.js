@@ -3,10 +3,12 @@ import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import app_state from '../utils/app_state';
 
 CoughDrop.Image = DS.Model.extend({
   didLoad: function() {
     this.checkForDataURL().then(null, function() { });
+    this.set('app_state', app_state);
     this.clean_license();
   },
   url: DS.attr('string'),
@@ -72,14 +74,17 @@ CoughDrop.Image = DS.Model.extend({
       this.set('license.uneditable', true);
     }
   }.observes('license', 'id', 'permissions.edit'),
+  personalized_url: function() {
+    return CoughDrop.Image.personalize_url(this.get('url'), app_state.get('current_user.user_token'));
+  }.property('url', 'app_state.currentUser.user_token'),
   best_url: function() {
-    return this.get('data_url') || this.get('url') || "";
-  }.property('url', 'data_url'),
+    return this.get('data_url') || this.get('personalized_url') || "";
+  }.property('personalized_url', 'data_url'),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var _this = this;
-    if(!this.get('data_url') && this.get('url') && this.get('url').match(/^http/)) {
-      return persistence.find_url(this.get('url'), 'image').then(function(data_uri) {
+    if(!this.get('data_url') && this.get('personalized_url') && this.get('personalized_url').match(/^http/)) {
+      return persistence.find_url(this.get('personalized_url'), 'image').then(function(data_uri) {
         _this.set('data_url', data_uri);
         if(data_uri && data_uri.match(/^file/)) {
           var img = new Image();
@@ -94,10 +99,17 @@ CoughDrop.Image = DS.Model.extend({
   },
   checkForDataURLOnChange: function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('url')
+  }.observes('personalized_url')
 });
 
 CoughDrop.Image.reopenClass({
+  personalize_url: function(url, token) {
+    url = url || '';
+    if(url.match(/api\/v1\//) && url.match(/lessonpix/)) {
+      return url + "?user_token=" + token;
+    }
+    return url;
+  },
   mimic_server_processing: function(record, hash) {
     if(record.get('data_url')) {
       hash.image.url = record.get('data_url');

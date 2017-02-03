@@ -59,6 +59,9 @@ CoughDrop.Buttonset = DS.Model.extend({
       if(!button.hidden || all_buttons_enabled) {
         if((button.label && button.label.match(re)) || (button.vocalization && button.vocalization.match(re))) {
           button = Ember.$.extend({}, button);
+          if(button.image) {
+            button.image = CoughDrop.Image.personalize_url(button.image, app_state.get('currentUser.user_token'));
+          }
           var image = images.findBy('id', button.image_id);
           if(image) {
             button.image = image.get('best_url');
