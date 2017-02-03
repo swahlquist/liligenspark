@@ -26,6 +26,26 @@ class WordData < ActiveRecord::Base
     word
   end
   
+  def self.update_word_type(text, locale, type)
+    wd = find_word_record(text, locale)
+    locales = []
+    raise "word not found" unless wd
+    if wd.data['types']
+      wd.data['types'] = ([type] + wd.data['types']).uniq
+      wd.save
+      locales << locale
+    end
+    (wd.data['translations'] || {}).each do |loc, str|
+      trans = find_word_record(str, loc)
+      if trans.data['types']
+        trans.data['types'] = ([type] | trans.data['types']).uniq
+        trans.save
+        locales << loc
+      end
+    end
+    locales
+  end
+  
   def self.translate(text, source_lang, dest_lang, type=nil)
     batch = translate_batch([{text: text, type: type}], source_lang, dest_lang)
     batch[:translations][text]
