@@ -1908,7 +1908,7 @@ describe("persistence-sync", function() {
       waitsFor(function() { return final_record; });
       runs(function() {
         expect(final_record.name).toEqual("My Gnarly Board");
-        expect(error.error).toEqual("failed to save board 1234");
+        expect(error.error).toEqual("failed to save offline record, board 1234");
       });
     });
   });
@@ -1973,7 +1973,7 @@ describe("persistence-sync", function() {
       var removed = false;
       waitsFor(function() { return error; });
       runs(function() {
-        expect(error.error).toEqual('failed to save board null');
+        expect(!!error.error.match(/failed to save offline record, board tmp_/)).toEqual(true);
       });
     });
   });

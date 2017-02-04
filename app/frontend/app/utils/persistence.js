@@ -1855,7 +1855,7 @@ persistence.DSExtend = {
       if(record[type.modelName].key && record[type.modelName].key.match(/^tmp_/)) {
         record[type.modelName].tmp_key = record[type.modelName].key;
       }
-      if(record.get('id').match(/^tmp/) && ['board', 'image', 'sound'].indexOf(type.modelName) == -1) {
+      if(record[type.modelName].id.match(/^tmp/) && ['board', 'image', 'sound'].indexOf(type.modelName) == -1) {
         // only certain record types can be created offline
         return persistence.offline_reject();
       }
