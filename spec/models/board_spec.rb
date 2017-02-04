@@ -861,6 +861,14 @@ describe Board, :type => :model do
       b.process_params({}, {})
       expect(b.settings['last_updated']).to eq(Time.now.iso8601)
     end
+
+    it "should not set name column" do
+      u = User.create
+      b = Board.new(:user => u)
+      b.process_params({'name' => 'bacon cheese'}, {})
+      expect(b.name).to eq(nil)
+      expect(b.settings['name']).to eq('bacon cheese')
+    end
     
     it "should set settings" do
       u = User.create

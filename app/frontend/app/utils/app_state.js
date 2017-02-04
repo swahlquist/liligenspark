@@ -997,7 +997,7 @@ var app_state = Ember.Object.extend({
   }.observes('short_refresh_stamp', 'sessionUser'),
   activate_button: function(button, obj) {
     if(button.hidden && !this.get('edit_mode') && this.get('currentUser.preferences.hidden_buttons') == 'grid') {
-      return;
+      return false;
     }
     if(app_state.get('modeling')) {
       obj.modeling = true;
@@ -1174,6 +1174,7 @@ var app_state = Ember.Object.extend({
         }
       }
     }
+    return true;
   },
   board_virtual_dom: function() {
     var _this = this;

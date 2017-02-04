@@ -1965,4 +1965,13 @@ describe('app_state', function() {
       runs();
     });
   });
+
+  describe('activate_button', function() {
+    it('should return immediately for a hidden button when preferences are set to grid', function() {
+      app_state.set('currentUser', Ember.Object.create({preferences: {hidden_buttons: 'grid'}}));
+      expect(app_state.get('edit_mode')).toEqual(false);
+      var res = app_state.activate_button({hidden: true});
+      expect(res).toEqual(false);
+    });
+  });
 });
