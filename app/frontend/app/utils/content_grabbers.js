@@ -784,6 +784,21 @@ var pictureGrabber = Ember.Object.extend({
       _this.edit_image_preview();
     });
   },
+  word_art: function(word) {
+    var _this = this;
+    editManager.stash_image({word: word});
+    _this.controller.set('image_preview', {
+      editor: true,
+      word_editor: true,
+      license: {
+        type: 'CC By',
+        copyright_notice_url: 'https://creativecommons.org/licenses/by/3.0/us/',
+        author_name: 'CoughDrop',
+        author_url: 'https://www.mycoughdrop.com',
+        uneditable: true
+      }
+    });
+  },
   save_image: function(data_url) {
     var content_type = null;
     if(data_url.match(/^data:/)) {
@@ -821,7 +836,7 @@ var pictureGrabber = Ember.Object.extend({
   },
   select_image_preview: function(url, force_content_type) {
     var preview = this.controller && this.controller.get('image_preview');
-    if(!preview || !preview.url) { return; }
+    if(!preview || (!preview.url && !preview.word_editor)) { return; }
     this.controller.set('model.pending_image', true);
     var _this = this;
 

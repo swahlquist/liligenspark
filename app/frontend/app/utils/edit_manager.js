@@ -878,6 +878,9 @@ Ember.$(window).bind('message', function(event) {
   } else if(event.data == 'imageDataRequest' && editManager.stashedImage) {
     editManager.imageEditorSource = event.source;
     event.source.postMessage(editManager.stashedImage.url, '*');
+  } else if(event.data == 'wordStateRequest' && editManager.stashedImage) {
+    editManager.imageEditorSource = event.source;
+    event.source.postMessage("state:" + JSON.stringify(editManager.stashedImage), '*');
   } else if(event.data == 'imageURLRequest' && editManager.stashedBadge) {
     editManager.badgeEditorSource = event.source;
     if(editManager.stashedBadge && editManager.stashedBadge.image_url) {

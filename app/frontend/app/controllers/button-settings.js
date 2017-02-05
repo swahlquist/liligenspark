@@ -372,6 +372,10 @@ export default modal.ModalController.extend({
     edit_image: function() {
       contentGrabbers.pictureGrabber.edit_image();
     },
+    word_art: function() {
+      var text = this.get('model.image_field') || this.get('model.vocalization') || this.get('model.label');
+      contentGrabbers.pictureGrabber.word_art(text);
+    },
     clear_image: function() {
       contentGrabbers.pictureGrabber.clear_image();
     },
