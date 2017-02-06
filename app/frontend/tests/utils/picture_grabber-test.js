@@ -683,4 +683,36 @@ describe('pictureGrabber', function() {
       });
     });
   });
+
+  describe('word_art', function() {
+    it('should set the correct parameters', function() {
+      var controller = Ember.Object.create();
+      editManager.controller = controller;
+      contentGrabbers.pictureGrabber.controller = controller;
+      contentGrabbers.pictureGrabber.word_art('bacon');
+      expect(editManager.stashedImage).toEqual({word: 'bacon'});
+      expect(editManager.controller.get('image_preview')).toEqual({
+        editor: true,
+        word_editor: true,
+        license: {
+          type: 'CC By',
+          copyright_notice_url: 'https://creativecommons.org/licenses/by/3.0/us/',
+          author_name: 'CoughDrop',
+          author_url: 'https://www.mycoughdrop.com',
+          uneditable: true
+        }
+      });
+      expect(controller.get('image_preview')).toEqual({
+        editor: true,
+        word_editor: true,
+        license: {
+          type: 'CC By',
+          copyright_notice_url: 'https://creativecommons.org/licenses/by/3.0/us/',
+          author_name: 'CoughDrop',
+          author_url: 'https://www.mycoughdrop.com',
+          uneditable: true
+        }
+      });
+    });
+  });
 });
