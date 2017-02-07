@@ -161,7 +161,9 @@ describe UserGoal, type: :model do
         'negatives' => 0,
         'statuses' => [4]
       })
-      expect(g.settings['stats']['weekly']["#{time1.utc.to_date.cwyear}-#{time1.utc.to_date.cweek}"]).to eq({
+      cweek = time1.utc.to_date.cweek.to_s
+      cweek = ('0' + cweek) if cweek.length == 1
+      expect(g.settings['stats']['weekly']["#{time1.utc.to_date.cwyear}-#{cweek}"]).to eq({
         'sessions' => 1,
         'positives' => 5,
         'negatives' => 6,
