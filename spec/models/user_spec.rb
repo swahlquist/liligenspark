@@ -1799,4 +1799,16 @@ describe User, :type => :model do
       expect(u.reload.settings['asdf']).to eq('bacon')
     end
   end
+  
+  describe "external_email_allowed?" do
+    it "should return the correct values" do
+      u = User.new
+      expect(u.external_email_allowed?).to eq(true)
+      u.settings['authored_organization_id'] = '1234'
+      expect(u.external_email_allowed?).to eq(false)
+      u.settings['authored_organization_id'] = nil
+      expect(Organization).to receive(:managed?).with(u).and_return(true)
+      expect(u.external_email_allowed?).to eq(false)
+    end
+  end
 end

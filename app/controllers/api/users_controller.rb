@@ -92,6 +92,7 @@ class Api::UsersController < ApplicationController
     end
     UserMailer.schedule_delivery(:confirm_registration, user.global_id)
     UserMailer.schedule_delivery(:new_user_registration, user.global_id)
+    ExternalTracker.track_new_user(user)
 
     d = Device.find_or_create_by(:user_id => user.id, :device_key => 'default', :developer_key_id => 0)
     d.settings['ip_address'] = request.remote_ip

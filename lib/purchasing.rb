@@ -194,7 +194,7 @@ module Purchasing
           :currency => 'usd',
           :source => token['id'],
           :description => description,
-          :receipt_email => (user && user.settings && user.settings['email']),
+          :receipt_email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil,
           :metadata => {
             'user_id' => user.global_id,
             'plan_id' => plan_id
@@ -254,7 +254,7 @@ module Purchasing
             :metadata => {
               'user_id' => user.global_id
             },
-            :email => (user && user.settings && user.settings['email']),
+            :email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil,
             :plan => plan_id,
             :source => token['id']
           })

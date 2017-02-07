@@ -419,6 +419,49 @@ describe Purchasing do
         Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
       end
 
+      it "should add the email when creating a customer" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        subs = []
+        expect(Stripe::Customer).to receive(:create).with({
+          :metadata => {'user_id' => u.global_id},
+          :plan => 'monthly_6',
+          :email => 'testing@example.com',
+          :source => 'token'
+        }).and_return(OpenStruct.new({
+          subscriptions: {
+            'data' => [
+              {'status' => 'broken', 'id' => 'sub1'},
+              {'status' => 'active', 'id' => 'sub2'}
+            ]
+          }
+        }))
+        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
+      end
+
+      it "should not add the email when creating a customer if protected" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.settings['authored_organization_id'] = 'asdf'
+        u.save
+        subs = []
+        expect(Stripe::Customer).to receive(:create).with({
+          :metadata => {'user_id' => u.global_id},
+          :plan => 'monthly_6',
+          :email => nil,
+          :source => 'token'
+        }).and_return(OpenStruct.new({
+          subscriptions: {
+            'data' => [
+              {'status' => 'broken', 'id' => 'sub1'},
+              {'status' => 'active', 'id' => 'sub2'}
+            ]
+          }
+        }))
+        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
+      end
+
       it "should trigger a subscription event for a new customer" do
         u = User.create
         subs = []
@@ -476,6 +519,51 @@ describe Purchasing do
     describe "long-term purchase" do
       it "should create a charge record" do
         u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 15000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'communicator long-term purchase $150',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_150'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+      end
+
+      it "should create specify the email" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 15000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'communicator long-term purchase $150',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_150'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+      end
+
+      it "should should not specify the email if protected" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.settings['authored_organization_id'] = 'asdf'
+        u.save
         expect(Stripe::Charge).to receive(:create).with({
           :amount => 15000,
           :currency => 'usd',

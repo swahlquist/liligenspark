@@ -305,6 +305,12 @@ describe Api::UsersController, :type => :controller do
       expect(json['errors']).to eq(["bacon"])
     end
     
+    it "should track the new user externally" do
+      expect(ExternalTracker).to receive(:track_new_user)
+      post :create, params: {:user => {'name' => 'fred'}}
+      expect(response).to be_success
+    end
+    
     it "should throttle or captcha or something to prevent abuse"
   end
   

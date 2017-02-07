@@ -60,6 +60,11 @@ class User < ActiveRecord::Base
   def named_email
     "#{self.settings['name']} <#{self.settings['email']}>"
   end
+
+  def external_email_allowed?
+    self.settings ||= {}
+    return !self.settings['authored_organization_id'] && !Organization.managed?(self)
+  end
   
   def prior_named_email
     email = self.settings['old_emails'][-1]
