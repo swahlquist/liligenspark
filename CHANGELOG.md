@@ -2,6 +2,15 @@
 
 ## Master
 
+### 2017-02-07
+- support for searching Pixabay for images
+- fixed syncing to be less eager, more effective
+- faster startup on mobile apps due to better syncing
+- options for what to do with hidden buttons
+- additional modifiers (":clear", ":home", etc.) on buttons
+- option to create word art for button images
+- option to externally track user signups
+
 ### 2017-01-27
 - fixes for goals/badges browsing and selection interfaces
 - option to faintly show hidden buttons in speak mode
