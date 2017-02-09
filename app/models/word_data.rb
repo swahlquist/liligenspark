@@ -16,6 +16,7 @@ class WordData < ActiveRecord::Base
   
   def self.find_word_record(text, locale='en')
     return nil if text && text.match(/^[\+\:]/)
+    locale ||= 'en'
     word = self.find_by(:word => text.downcase, :locale => locale)
     word ||= self.find_by(:word => text.downcase.gsub(/[^A-Za-z0-9'\s]/, ''), :locale => locale)
     if !word && locale.match(/-/)
@@ -24,6 +25,18 @@ class WordData < ActiveRecord::Base
       word ||= self.find_by(:word => text.downcase.gsub(/[^A-Za-z0-9'\s]/, ''), :locale => locale)
     end
     word
+  end
+  
+  def self.add_suggestion(word, sentence, locale='en')
+    word = find_word_record(word, locale)
+    return false unless word
+    word.data['sentences'] ||= []
+    word.data['sentences'] << {
+      'sentence' => sentence,
+      'approved' => true
+    }
+    word.save
+    true
   end
   
   def self.update_word_type(text, locale, type)
@@ -145,8 +158,13 @@ class WordData < ActiveRecord::Base
   end
   
   def self.core_list_for(user)
-    # TODO: users can choose a custom core word list if desired
-    self.default_core_list
+    template = UserIntegration.find_by(:template => true, :integration_key => 'core_word_list')
+    ui = template && UserIntegration.find_by(:template_integration => template, :user => user)
+    if ui
+      ui.settings['core_word_list']['words']
+    else
+      self.default_core_list
+    end
   end
   
   def self.reachable_core_list_for(user)
@@ -180,11 +198,23 @@ class WordData < ActiveRecord::Base
   def self.default_core_list
     @@default_core_list ||= nil
     return @@default_core_list if @@default_core_list
-    json = JSON.parse(File.read('./lib/core_lists.json')) rescue nil
-    if json
-      @@default_core_list = json[0]['words']
+    lists = self.core_lists || []
+    if lists
+      @@default_core_list = lists[0]['words']
     end
     @@default_core_list ||= []
     @@default_core_list
+  end
+  
+  # see also, http://praacticalaac.org/praactical/aac-vocabulary-lists/
+  def self.core_lists
+    @@core_lists ||= nil
+    return @@core_lists if @@core_lists
+    json = JSON.parse(File.read('./lib/core_lists.json')) rescue nil
+    if json
+      @@core_lists = json
+    end
+    @@core_lists ||= []
+    @@core_lists
   end
 end

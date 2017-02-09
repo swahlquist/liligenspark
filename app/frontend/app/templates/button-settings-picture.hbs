@@ -90,7 +90,11 @@
         <button type='button' class='btn btn-default' {{action 'word_art'}}>{{t "Make Word Art" key='make_word_art'}}</button>
         <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
       {{else if image_search.previews_loaded}}
-        {{t "No results found for %{term}" key='no_image_results_for' term=image_search.term}}
+        <div style="margin: 10px 0 10px 0;">
+          {{t "No results found for %{term}" key='no_image_results_for' term=image_search.term}}
+        </div>
+        <button type='button' class='btn btn-default' {{action 'word_art'}}>{{t "Make Word Art" key='make_word_art'}}</button>
+        <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
       {{else}}
         {{#if image_search.term}}
           {{t "Finding symbols for %{term}..." key='finding_symbols_for' term=image_search.term}}

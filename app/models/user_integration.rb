@@ -8,6 +8,7 @@ class UserIntegration < ActiveRecord::Base
 
   belongs_to :user
   belongs_to :device
+  belongs_to :template_integration, :class_name => 'UserIntegration'
   before_save :generate_defaults
   after_save :assert_device
   after_save :assert_webhooks

@@ -16,6 +16,7 @@ export default Ember.Route.extend({
     controller.set('model', model);
     if(model.get('preferences.logging')) {
       controller.load_charts();
+      controller.load_core();
     }
     controller.load_snapshots();
   }

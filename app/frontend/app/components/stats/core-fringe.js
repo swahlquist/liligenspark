@@ -22,23 +22,30 @@ export default Ember.Component.extend({
   }.property('right_side'),
   draw: function() {
     var stats = this.get('usage_stats');
-    var elem = this.get('element').getElementsByClassName('parts_of_speech')[0];
+    var elem = this.get('element').getElementsByClassName('core_words')[0];
 
     CoughDrop.Visualizations.wait('pie-chart', function() {
-      if(elem && stats && stats.get('parts_of_speech')) {
+      if(elem && stats && stats.get('core_words')) {
         var table = [
-          ['Task', 'Instances']
+          ['Type', 'Instances']
         ];
-        var parts = stats.get('parts_of_speech');
+        var parts = stats.get('core_words');
         var slice_idx = 0;
         var slices = {};
         var color_check = function(c) { return c.types.indexOf(idx) >= 0; };
-        for(var idx in parts) {
-          table.push([idx, parts[idx]]);
-          var color = CoughDrop.keyed_colors.find(color_check);
-          slices[slice_idx] = {color: window.tinycolor((color || {fill: "#ccc"}).fill).saturate(10).darken(20).toHexString()};
+        ['core', 'not_core'].forEach(function(key) {
+          var str = key;
+          if(str == 'not_core') { str = 'fringe'; }
+          table.push([str, parts[key] || 0]);
+          var color = '#ccc;'
+          if(key == 'core') {
+            color = '#49c7e8';
+          } else if(key == 'not_core') {
+            color = '#e5cea2';
+          }
+          slices[slice_idx] = {color: color};
           slice_idx++;
-        }
+        });
         var data = window.google.visualization.arrayToDataTable(table);
 
         var options = {

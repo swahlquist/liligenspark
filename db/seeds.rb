@@ -200,6 +200,8 @@ s19 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'la
 s20 = LogSession.process_new({'events' => [{'type' => 'utterance', 'utterance' => {'text' => 'this is fun', 'buttons' => []}, 'geo' => [lat, long], 'timestamp' => ts + 60}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
 s21 = LogSession.process_new({'events' => [{'type' => 'utterance', 'utterance' => {'text' => 'this is fun', 'buttons' => []}, 'geo' => [lat + 0.0001, long], 'timestamp' => ts + 61}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
 
+puts "==== Addings Parts-of-Speech Data ===="
+MobyParser.import_words
 
 #     CoughDrop.Board.FIXTURES = [
 #       {

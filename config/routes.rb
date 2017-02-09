@@ -160,6 +160,8 @@ Coughdrop::Application.routes.draw do
       get 'board_revisions' => 'users#board_revisions'
       get 'places' => 'users#places'
       get 'daily_use' => 'users#daily_use'
+      get 'core_lists' => 'users#core_lists'
+      put 'core_list' => 'users#update_core_list'
     end
     
     resources :images do

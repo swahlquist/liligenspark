@@ -261,6 +261,11 @@ class Api::OrganizationsController < ApplicationController
         Setting.block_email!(params['email'])        
         success = true
       end
+    elsif params['extra_action'] == 'add_sentence_suggestion'
+      success = false
+      if params['word'] && params['sentence']
+        success = WordData.add_suggestion(params['word'], params['sentence'], params['locale'])
+      end
     end
     render json: {success: success}
   end

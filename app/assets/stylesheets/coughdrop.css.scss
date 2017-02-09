@@ -2789,6 +2789,7 @@ table tr.long_delay td {
 }
 .weighted_word {
   color: #aaa;
+  text-decoration: none;
   &.weight_10, &.weight_9 {
     font-size: 19px;
     font-weight: bold;
@@ -2806,6 +2807,13 @@ table tr.long_delay td {
   &.weight_4, &.weight_3 {
     font-size: 15px;
     color: #888;
+  }
+  &.weight_0 {
+    color: #eee;
+  }
+  &:hover {
+    cursor: pointer;
+    color: #444;
   }
 }
 

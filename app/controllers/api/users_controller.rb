@@ -371,6 +371,36 @@ class Api::UsersController < ApplicationController
     end
   end
   
+  def core_lists
+    res = {defaults: WordData.core_lists}
+    if params['user_id'] != 'none'
+      user = User.find_by_path(params['user_id'])
+      return unless exists?(user, params['user_id'])
+      return unless allowed?(user, 'edit')
+      res[:for_user] = WordData.core_list_for(user)
+      res[:reachable_for_user] = WordData.reachable_core_list_for(user)
+    end
+    render json: res
+  end
+  
+  def update_core_list
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'edit')
+    template = UserIntegration.find_by(:template => true, :integration_key => 'core_word_list')
+    if !template
+      return api_error 400, {error: 'no core word list integration defined'}
+    end
+    
+    ui = UserIntegration.find_or_create_by(:template_integration => template, :user => user)
+    ui.settings['core_word_list'] = {
+      id: params['id'],
+      words: params['words']
+    }
+    ui.save
+    render json: {updated: true, words: ui.settings['core_word_list']}
+  end
+  
   def daily_stats
     user = User.find_by_path(params['user_id'])
     return unless allowed?(user, 'supervise')

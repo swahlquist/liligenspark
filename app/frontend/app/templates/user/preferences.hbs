@@ -166,37 +166,7 @@
     </div>
   </div>
 </div>
-<div class="form-group">
-  <label for="word_suggestion_images" class="col-sm-3 control-label">{{t "Keyboard Suggestions" key='keyboard_suggestions'}}</label>
-  <div class="col-sm-5">
-    <div class="checkbox">
-      <label>
-        {{input type="checkbox" checked=model.preferences.word_suggestion_images id="word_suggestion_images"}}
-        {{t "Show images for keyboard suggestions" key='word_suggestion_images'}}
-      </label>
-    </div>
-  </div>
-</div>
-<div class="form-group">
-  <label for="hidden_buttons" class="col-sm-3 control-label">{{t "Hidden Buttons" key='hidden_buttons'}}</label>
-  <div class="col-sm-5">
-    {{bound-select select_class="form-control" select_id="hidden_buttons" content=hiddenButtonsList selection=model.preferences.hidden_buttons action=(action (mut model.preferences.hidden_buttons)) }}
-  </div>
-</div>
 
-{{#if app_state.feature_flags.modeling}}
-<div class="form-group">
-  <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Modeling" key='modeling'}}</label>
-  <div class="col-sm-5">
-    <div class="checkbox">
-      <label>
-        {{input type="checkbox" checked=model.preferences.multi_touch_modeling id="multi_touch_modeling"}}
-        {{t "Mark two-finger touches as modeling events, not user selections" key='multi_touch_modeling'}}
-      </label>
-    </div>
-  </div>
-</div>
-{{/if}}
 <div class="form-group">
   <label for="external_links" class="col-sm-3 control-label">{{t "External Links" key='external_links'}}</label>
   <div class="col-sm-5">
@@ -310,6 +280,70 @@
   - When to Select (when I release my touch/click|after I hold for 1/2 second|after I hold 1 second)
   - Which to Select (where I started|where I ended|where I spent the most time)
 -->
+<h2 style="margin: 50px 0 20px 0;">{{t "Core & Modeling" key='sidebar_layout'}}</h2>
+<div class="form-group">
+  <label for="core_word_list" class="col-sm-3 control-label">{{t "Core Word List" key='core_word_list'}}</label>
+  <div class='col-sm-6'>
+    {{#if core_lists.loading}}
+      <p class='form-control-static'>{{t "Loading..." key='loading'}}</p>
+    {{else if core_lists.error}}
+      <p class='form-control-static'>{{t "Error loading core word list" key='error_loading_core_word_list'}}</p>
+    {{else if core_lists}}
+      <p class='form-control-static'><em>{{t "Core words are the most common words in a language, and often express multiple intents or meanings. The following list of words will be marked as \"core\" (as opposed to \"fringe\") for this user." key='core_words_explainer'}}</em></p>
+      <div style='max-height: 100px; overflow: auto; padding: 5px 15px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; margin-bottom: 5px;'>
+        {{#each core_lists.for_user as |word|}}
+          <span style='padding-right: 5px;'>{{word}}</span>
+        {{/each}}
+      </div>
+      <button type='button' {{action 'modify_core'}} class='btn btn-default'>{{t "Modify Core Word List" key='modify_core_word_list'}}</button>
+      <span style='padding-left: 10px;'>
+        {{t "core word" count=core_lists.for_user.length}}
+        {{t "listed" key='listed'}}
+      </span>
+    {{else}}
+      <p class='form-control-static'>{{t "None available" key='none_available'}}</p>
+    {{/if}}
+  </div>
+</div>
+{{#unless advanced}}
+<div class="form-group">
+  <div class="col-sm-5 col-sm-offset-3">
+    <a href="#" {{action 'toggle_advanced'}}>{{t "more options" key='more_options'}}</a>
+  </div>
+</div>
+{{else}}
+  {{#if app_state.feature_flags.modeling}}
+  <div class="form-group">
+    <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Modeling" key='modeling'}}</label>
+    <div class="col-sm-5">
+      <div class="checkbox">
+        <label>
+          {{input type="checkbox" checked=model.preferences.multi_touch_modeling id="multi_touch_modeling"}}
+          {{t "Mark two-finger touches as modeling events, not user selections" key='multi_touch_modeling'}}
+        </label>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+  <div class="form-group">
+    <label for="word_suggestion_images" class="col-sm-3 control-label">{{t "Keyboard Suggestions" key='keyboard_suggestions'}}</label>
+    <div class="col-sm-5">
+      <div class="checkbox">
+        <label>
+          {{input type="checkbox" checked=model.preferences.word_suggestion_images id="word_suggestion_images"}}
+          {{t "Show images for keyboard suggestions" key='word_suggestion_images'}}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="hidden_buttons" class="col-sm-3 control-label">{{t "Hidden Buttons" key='hidden_buttons'}}</label>
+    <div class="col-sm-5">
+      {{bound-select select_class="form-control" select_id="hidden_buttons" content=hiddenButtonsList selection=model.preferences.hidden_buttons action=(action (mut model.preferences.hidden_buttons)) }}
+    </div>
+  </div>
+{{/unless}}
+
 <h2 style="margin: 50px 0 20px 0;">{{t "Sidebar Layout" key='sidebar_layout'}}</h2>
 <div class="form-group">
   <label for="quick_sidebar" class="col-sm-3 control-label">{{t "Quick Actions" key='quick_actions'}}</label>

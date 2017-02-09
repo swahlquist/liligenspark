@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170203202414) do
+ActiveRecord::Schema.define(version: 20170209185141) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -128,7 +128,7 @@ ActiveRecord::Schema.define(version: 20170203202414) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -325,12 +325,14 @@ ActiveRecord::Schema.define(version: 20170203202414) do
     t.integer  "device_id"
     t.boolean  "template"
     t.text     "settings"
-    t.datetime "created_at",      null: false
-    t.datetime "updated_at",      null: false
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
     t.boolean  "for_button"
     t.string   "integration_key"
+    t.integer  "template_integration_id"
     t.index ["integration_key"], name: "index_user_integrations_on_integration_key", unique: true, using: :btree
     t.index ["template"], name: "index_user_integrations_on_template", using: :btree
+    t.index ["template_integration_id", "user_id"], name: "index_user_integrations_on_template_integration_id_and_user_id", using: :btree
     t.index ["user_id", "created_at"], name: "index_user_integrations_on_user_id_and_created_at", using: :btree
     t.index ["user_id", "for_button"], name: "index_user_integrations_on_user_id_and_for_button", using: :btree
   end

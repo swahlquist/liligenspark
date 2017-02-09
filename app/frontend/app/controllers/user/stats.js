@@ -103,6 +103,15 @@ export default Ember.Controller.extend({
     });
     return matches;
   },
+  load_core: function() {
+    var _this = this;
+    if(!this.get('model.core_lists')) {
+      persistence.ajax('/api/v1/users/' + this.get('model.id') + '/core_lists', {type: 'GET'}).then(function(res) {
+        _this.set('model.core_lists', res);
+      }, function(err) {
+      });
+    }
+  },
   load_snapshots: function() {
     var _this = this;
     Utils.all_pages('snapshot', {user_id: this.get('model.id')}, function(res) {
@@ -289,7 +298,9 @@ export default Ember.Controller.extend({
     },
     word_cloud_right: function() {
       modal.open('word-cloud', {stats: this.get('usage_stats'), stats2: this.get('usage_stats2'), user: this.get('model')});
-//       modal.open('word-cloud', {stats: this.get('usage_stats2'), user: this.get('model')});
+    },
+    word_data: function(word) {
+      modal.open('word-data', {word: word, usage_stats: this.get('usage_stats'), user: this.get('model')});
     },
     save_snapshot: function() {
       var _this = this;

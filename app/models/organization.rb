@@ -416,7 +416,8 @@ class Organization < ActiveRecord::Base
           'name' => org.settings['name'],
           'type' => 'manager',
           'added' => opts['added'],
-          'full_manager' => !!opts['full_manager']
+          'full_manager' => !!opts['full_manager'],
+          'admin' => org.admin,
         }
         e['org'] = org if include_org
         res << e if org

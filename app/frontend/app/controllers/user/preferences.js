@@ -5,6 +5,7 @@ import utterance from '../../utils/utterance';
 import capabilities from '../../utils/capabilities';
 import buttonTracker from '../../utils/raw_events';
 import modal from '../../utils/modal';
+import persistence from '../../utils/persistence';
 import Button from '../../utils/button';
 
 export default Ember.Controller.extend({
@@ -121,6 +122,16 @@ export default Ember.Controller.extend({
   title: function() {
     return "Preferences for " + this.get('model.user_name');
   }.property('model.user_name'),
+  check_core_words: function() {
+    var _this = this;
+    _this.set('core_lists', {loading: true});
+    persistence.ajax('/api/v1/users/' + this.get('model.id') + '/core_lists', {type: 'GET'}).then(function(res) {
+      _this.set('core_lists', res);
+      _this.set('model.core_lists', res);
+    }, function(err) {
+      _this.set('core_lists', {error: true});
+    });
+  },
   check_voices_available: function() {
     var _this = this;
     if(capabilities.installed_app) {
@@ -372,6 +383,12 @@ export default Ember.Controller.extend({
     },
     toggle_advanced: function() {
       this.set('advanced', !this.get('advanced'));
+    },
+    modify_core: function() {
+      var _this = this;
+      modal.open('modify-core-words', {user: this.get('model')}).then(function() {
+        _this.check_core_words();
+      });
     }
   }
 });
