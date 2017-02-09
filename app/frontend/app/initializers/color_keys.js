@@ -1,11 +1,10 @@
 import Ember from 'ember';
-import CoughDrop from '../app';
 import app_state from '../utils/app_state';
 
 export default {
   name: 'color_keys',
   initialize: function() {
-    CoughDrop.keyed_colors.forEach(function(r) {
+    window.CoughDrop.keyed_colors.forEach(function(r) {
       if(!r.border) {
         var fill = window.tinycolor(r.fill);
         var border = fill.darken(30);

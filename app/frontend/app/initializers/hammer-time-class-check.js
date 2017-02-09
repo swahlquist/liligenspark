@@ -1,5 +1,3 @@
-import CoughDrop from '../app';
-
 export default {
   name: 'hammer-time-class-check',
   initialize: function(app) {

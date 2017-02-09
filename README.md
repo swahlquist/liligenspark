@@ -58,31 +58,44 @@ Then update
 
 <i>Redis quickstart: https://redis.io/topics/quickstart</i>
 
-Next you'll want to setup your database. You can run `rails db:create` to create an 
-empty database, or run `rails db:setup` to populate with some bootstrap data including
-a login, `example` and `password`.
+Next you'll want to setup your database. Before you can do that, you'll need to address
+a couple of dangling symbolic links. Here's the sequence that should word:
+
+```
+rails extras:assert_js
+rails db:create
+rails db:migrate
+rails db:seed
+```
+
+You can skip the last step if you want, but it'll populate with some bootstrap data including
+a login, `example` and `password` to get you started.
 
 Once the database is created, you can start the server. If you run `rails server` you
 can start a single server process and hit it up in your browser at the default address
 (`http://localhost:3000` or whatever you changed it to). This will work for basic
-usage, but you really need a background process running to handle jobs. You can look in 
-`Procfile` for the commands we use to run a web server, or a resque (background job) server.
-If you `gem install foreman` then you can just type `foreman start` to start an instance
-of each of the Procfile processes all in one, which is nice. That will also start
-an ember server, which is nice for development because it'll automatically convert 
-your templates to javascript so you can just reload to get any code changes.
+usage, but you really need a background process running to handle jobs. More on that in
+a minute.
 
 #### Frontend Setup
 
 The frontend is an ember app. I recommend installing ember-cli (https://ember-cli.com/user-guide/)
 to make your life easier. If you `cd app/frontend` then you can run `ember init` to 
 download all the app dependencies at once. It'll ask you about modifying files, check the
-diff and if it looks like CoughDrop has content in the file then don't replace it with the
-default unless you know what you're doing.
+diff and in general you can hit "n" to not replace files with the
+defaults unless you know what you're doing.
 
 Once you have the dependencies downloaded, then any code changes within `frontend` should
 automatically regenerate `frontend.js` which is what the Rails app makes sure to deliver
 to the browser.
+
+#### Running the Full System
+CoughDrop has more than one process needed for things to run correctly. You can look in 
+`Procfile` for the commands we use to run a web server, or a resque (background job) server.
+The ember process is for development. It auto-compiles code as it's written, and shouldn't
+be run in production.
+If you `gem install foreman` then you can just type `foreman start` to start an instance
+of each of the Procfile processes all in one, which is nice and simple.
 
 ### License
 

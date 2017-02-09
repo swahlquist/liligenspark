@@ -1,5 +1,4 @@
 import Ember from 'ember';
-import CoughDrop from '../app';
 import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import coughDropExtras from '../utils/extras';
@@ -10,7 +9,7 @@ import capabilities from '../utils/capabilities';
 export default {
   name: 'session',
   initialize: function(app) {
-    CoughDrop.app = app;
+    window.CoughDrop.app = app;
     session.setup(app);
     session.restore();
     persistence.setup(app);

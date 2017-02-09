@@ -8,6 +8,12 @@ task "extras:copy_terms" => :environment do
   end
 end
 
+task "extras:assert_js" do
+  `mkdir -p ./app/frontend/dist/assets`
+  `cp -n ./app/frontend/frontend-placeholder.js ./app/frontend/dist/assets/frontend.js`
+  `touch ./app/frontend/dist/assets/vendor.js`
+end
+
 task "extras:clear_report_tallies" => :environment do
   RedisInit.default.del('missing_words')
   RedisInit.default.del('missing_symbols')
