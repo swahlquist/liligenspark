@@ -32,12 +32,11 @@ export default Ember.Component.extend({
         var parts = stats.get('core_words');
         var slice_idx = 0;
         var slices = {};
-        var color_check = function(c) { return c.types.indexOf(idx) >= 0; };
         ['core', 'not_core'].forEach(function(key) {
           var str = key;
           if(str == 'not_core') { str = 'fringe'; }
           table.push([str, parts[key] || 0]);
-          var color = '#ccc;'
+          var color = '#ccc;';
           if(key == 'core') {
             color = '#49c7e8';
           } else if(key == 'not_core') {

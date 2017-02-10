@@ -46,6 +46,8 @@ The frontend and backend communicate via the open and completely-undocumented AP
 
 #### Backend Setup
 
+Dev dependencies: ruby, Redis, Postgres, Node, ember-cli
+
 The backend relies on Redis and Postgres both being installed. Both are required. If 
 you have ruby installed in your environment, running `bundle install` should get all
 the backend dependencies you'll need.
@@ -68,7 +70,7 @@ rails db:migrate
 rails db:seed
 ```
 
-You can skip the last step if you want, but it'll populate with some bootstrap data including
+You can skip the last command if you want, but it'll populate with some bootstrap data including
 a login, `example` and `password` to get you started.
 
 Once the database is created, you can start the server. If you run `rails server` you
@@ -97,8 +99,12 @@ be run in production.
 If you `gem install foreman` then you can just type `foreman start` to start an instance
 of each of the Procfile processes all in one, which is nice and simple.
 
+After you start the ember process, it'll probably take around a minute or so for
+it to compile the javascript for the first time. You should see some notes on the console
+about a successful build, then you can reload your browser and go nuts.
+
 ### License
 
-Copyright (C) 2014-2016 CoughDrop, Inc.
+Copyright (C) 2014-2017 CoughDrop, Inc.
 
 Licensed under the AGPLv3 license.
