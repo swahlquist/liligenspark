@@ -85,6 +85,12 @@
     {{#if model.preferences.logging}}
       <div class="checkbox">
         <label>
+          {{input type="checkbox" checked=model.preferences.allow_log_reports id="allow_log_reports"}}
+          {{t "Allow anonymized log data to be used for AAC research purposes" key='allow_log_reports'}}
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
           {{input type="checkbox" checked=model.preferences.geo_logging id="geo_logging"}}
           {{t "Include geolocation in Speak Mode logs" key='include_geo_in_logs'}}
         </label>
