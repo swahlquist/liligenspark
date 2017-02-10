@@ -137,7 +137,7 @@ In order to support generating utterances for sharing,  downloading pdfs, and up
 images, you'll need to have
 ImageMagick (`convert`, `identify`, `montage`) and Node (`node`) 
 installed in the execution path. There are also a number of server-side integrations you
-can install that require secure keys, there are listed in `.env.example` with explanations
+can install that require secure keys, they are listed in `.env.example` with explanations
 of where they are required. Note that if you're trying to run a production environment, 
 not all functionality will degrade gracefully without these environment variables.
 
