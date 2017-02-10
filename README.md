@@ -50,19 +50,37 @@ Dev dependencies: ruby, Postgres, Redis, Node, ember-cli
 
 The backend relies on Redis and Postgres both being installed. Both are required in 
 development and production. If 
-you have ruby installed in your environment, running `bundle install` should get all
-the backend dependencies you'll need.
+you have ruby installed in your environment, you'll need the bundler gem:
 
-After that copy `.env.example` to `.env` and make sure to uncomment all the
-appropriate environment variables. For the `REDIS_URL` line,
+```
+gem install bundler
+```
+
+After that you can install ruby dependencies with:
+
+```
+bundle install
+```
+
+Next, you'll need to set some environment variables. The easiest way to do this
+is with a `.env` file:
+
+```
+cp .env.example .env
+```
+
+You'll need to uncomment (remove the "# " at the beinning of) 
+the first group of variables since they're required. For the `REDIS_URL` line,
 enter a valid redis url (default would be `REDIS_URL=redis://localhost:6379/`). 
 Then update
-`config/database.yml` to match your settings (the defaults may work fine).
+`config/database.yml` to match your settings (the defaults may work fine) if you
+setup a vanilla postgres instance.
 
 <i>Redis quickstart: https://redis.io/topics/quickstart</i>
 
 Next you'll want to setup your database. Before you can do that, you'll need to address
-a couple of dangling symbolic links. Here's the sequence that should word:
+a couple of dangling symbolic links, but we have a command to help with that. 
+Here's the sequence that should work:
 
 ```
 rails extras:assert_js
@@ -71,22 +89,26 @@ rails db:migrate
 rails db:seed
 ```
 
-You can skip the last command if you want, but it'll populate with some bootstrap data including
+You can skip the last command if you want, it'll populate with some bootstrap data including
 a login, `example` and `password` to get you started.
 
 Once the database is created, you can start the server. If you run `rails server` you
 can start a single server process and hit it up in your browser at the default address
-(`http://localhost:3000` or whatever you changed it to). This will work for basic
-usage, but you really need a background process running to handle jobs. More on that in
-a minute.
+(`http://localhost:3000` or whatever you changed it to). You'll be stuck on the
+loading page because the frontend hasn't compiled the frontend javascript yet.
 
 #### Frontend Setup
 
 The frontend is an ember app. I recommend installing ember-cli (https://ember-cli.com/user-guide/)
-to make your life easier. If you `cd app/frontend` then you can run `ember init` to 
-download all the app dependencies at once. It'll ask you about modifying files, check the
-diff and in general you can hit "n" to not replace files with the
-defaults unless you know what you're doing.
+to make your life easier. Once you've got ember-cli installed, run:
+
+```
+cd app/frontend
+ember init
+```
+To download all the app dependencies at once. It'll ask you about modifying files, 
+if you're not sure what to do enter "n" if it asks about replacing a file. Otherwise
+you can check the diffs and see what you'd like to keep/change.
 
 Once you have the dependencies downloaded, then any code changes within `frontend` should
 automatically regenerate `frontend.js` which is what the Rails app makes sure to deliver
@@ -94,15 +116,20 @@ to the browser.
 
 #### Running the Full System
 CoughDrop has more than one process needed for things to run correctly. You can look in 
-`Procfile` for the commands we use to run a web server, or a resque (background job) server.
+`Procfile` for the commands we use to run a web server or a resque (background job) server.
 The ember process is for development. It auto-compiles code as it's written, and shouldn't
-be run in production.
-If you `gem install foreman` then you can just type `foreman start` to start an instance
-of each of the Procfile processes all in one, which is nice and simple.
+be run in production. The easiest way to get things up and running is with the foreman gem:
 
-After you start the ember process, it'll probably take around a minute or so for
+```
+gem install foreman
+foreman start
+```
+
+That'll run one instance of each process in the Procfile, which is more than you need
+but it'll work. After you start the ember process, it'll probably take around a minute or so for
 it to compile the javascript for the first time. You should see some notes on the console
-about a successful build, then you can reload your browser and go nuts.
+about a successful build, then you can reload your browser and see the welcome page. You
+should be able to log in and go to town.
 
 ##### Additional Dependencies
 
@@ -110,7 +137,9 @@ In order to support generating utterances for sharing,  downloading pdfs, and up
 images, you'll need to have
 ImageMagick (`convert`, `identify`, `montage`) and Node (`node`) 
 installed in the execution path. There are also a number of server-side integrations you
-can install that require secure keys, there are listed in `.env.example`
+can install that require secure keys, there are listed in `.env.example` with explanations
+of where they are required. Note that if you're trying to run a production environment, 
+not all functionality will degrade gracefully without these environment variables.
 
 ### License
 
