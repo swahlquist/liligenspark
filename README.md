@@ -46,9 +46,10 @@ The frontend and backend communicate via the open and completely-undocumented AP
 
 #### Backend Setup
 
-Dev dependencies: ruby, Redis, Postgres, Node, ember-cli
+Dev dependencies: ruby, Postgres, Redis, Node, ember-cli
 
-The backend relies on Redis and Postgres both being installed. Both are required. If 
+The backend relies on Redis and Postgres both being installed. Both are required in 
+development and production. If 
 you have ruby installed in your environment, running `bundle install` should get all
 the backend dependencies you'll need.
 
@@ -102,6 +103,11 @@ of each of the Procfile processes all in one, which is nice and simple.
 After you start the ember process, it'll probably take around a minute or so for
 it to compile the javascript for the first time. You should see some notes on the console
 about a successful build, then you can reload your browser and go nuts.
+
+##### Additional Dependencies
+
+For generating utterances for sharing and for downloading pdfs, you'll need to have
+ImageMagick (`convert`, `identify`) and Node (`node`) installed in the execution path.
 
 ### License
 
