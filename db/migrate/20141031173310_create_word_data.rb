@@ -7,6 +7,5 @@ class CreateWordData < ActiveRecord::Migration
       t.timestamps
     end
     add_index :word_data, [:word, :locale]
-    MobyParser.import_words
   end
 end
