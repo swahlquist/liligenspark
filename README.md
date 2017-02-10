@@ -106,8 +106,11 @@ about a successful build, then you can reload your browser and go nuts.
 
 ##### Additional Dependencies
 
-For generating utterances for sharing and for downloading pdfs, you'll need to have
-ImageMagick (`convert`, `identify`) and Node (`node`) installed in the execution path.
+In order to support generating utterances for sharing,  downloading pdfs, and uploading
+images, you'll need to have
+ImageMagick (`convert`, `identify`, `montage`) and Node (`node`) 
+installed in the execution path. There are also a number of server-side integrations you
+can install that require secure keys, there are listed in `.env.example`
 
 ### License
 
