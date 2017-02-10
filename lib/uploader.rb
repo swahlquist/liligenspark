@@ -117,7 +117,24 @@ module Uploader
     !!res
   end
   
-  def self.lessonpix_credentials(user)
+  def self.lessonpix_credentials(opts)
+    return nil unless ENV['LESSONPIX_PID'] && ENV['LESSONPIX_SECRET']
+    username = nil
+    password_md5 = nil
+    if opts.is_a?(User)
+      ui = UserIntegration
+      username = nil
+    elsif opts.is_a?(Hash)
+      username = opts['username']
+      password_md5 = Digest::MD5.hexdigest(opts['password'])
+    else
+      return nil
+    end
+    {
+      'pid' => ENV['LESSONPIX_PID'],
+      'username' => username,
+      'token' => Digest::MD5.hexdigest(password_md5 + ENV['LESSONPIX_SECRET'])
+    }
   end
   
   def self.find_images(keyword, library, user)
