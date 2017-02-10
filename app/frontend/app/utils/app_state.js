@@ -214,6 +214,14 @@ var app_state = Ember.Object.extend({
       }
     }
   },
+  check_for_protected_usage: function() {
+    var protect_user = !!this.get('currentUser.preferences.protected_usage');
+    if(window._trackJs) {
+      window._trackJs.disabled = protect_user;
+    }
+    CoughDrop.protected_user = protect_user;
+    stashes.persist('protected_user', protect_user);
+  }.observes('currentUser.preferences.protected_usage'),
   set_latest_board_id: function() {
     this.set('latest_board_id', this.get('currentBoardState.id'));
   }.observes('currentBoardState.id'),

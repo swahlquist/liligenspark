@@ -107,8 +107,8 @@ import capabilities from './capabilities';
       }
     },
     track_error: function(message) {
-      if(window.trackJs) {
-        window.trackJs.track(message);
+      if(window._trackJs) {
+        window._trackJs.track(message);
       }
     }
   }).create();
@@ -177,6 +177,10 @@ import capabilities from './capabilities';
           options.headers['Authorization'] = "Bearer " + capabilities.access_token;
           options.headers['X-Device-Id'] = device_id;
           options.headers['X-CoughDrop-Version'] = window.CoughDrop.VERSION;
+        }
+        if(CoughDrop.protected_user || stashes.get('protected_user')) {
+          options.headers = options.headers || {};
+          options.headers['X-SILENCE-LOGGER'] = 'true';
         }
         if(CoughDrop.session && CoughDrop.session.get('as_user_id')) {
           options.headers = options.headers || {};

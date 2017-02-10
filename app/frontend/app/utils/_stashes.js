@@ -71,7 +71,8 @@ var stashes = Ember.Object.extend({
       'ghost_utterance': false,
       'recent_boards': [],
       'logging_paused_at': null,
-      'last_stream_id': null
+      'last_stream_id': null,
+      'protected_user': false
     };
     // TODO: some of these will want to be retrieved from server stash, not just localstorage
     for(var idx in defaults) {
