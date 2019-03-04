@@ -989,6 +989,11 @@ class User < ActiveRecord::Base
         end
         self.save
       end
+      share_index = (record.data['share_user_ids'] || []).index(self.global_id)
+      id = record.global_id
+      if share_index && record.reply_nonce
+        id = "#{record.global_id}x#{record.reply_nonce}#{Utterance.to_alpha_code(share_index)}"
+      end
       self.add_user_notification({
         :id => record.global_id,
         :type => notification_type,
