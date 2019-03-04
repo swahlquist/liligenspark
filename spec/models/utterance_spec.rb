@@ -108,7 +108,7 @@ describe Utterance, :type => :model do
         'supervisor_id' => u2.global_id
       }, u1)
       expect(res).to eq({:to => u2.global_id, :from => u1.global_id, :type => 'utterance'})
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'user_id' => u2.global_id,
         'sharer_id' => u1.global_id,
         'share_index' => 0
@@ -166,7 +166,7 @@ describe Utterance, :type => :model do
         'user_id' => u3.global_id
       }, u2)
       expect(res).to eq({:to => u3.global_id, :from => u2.global_id, :type => 'utterance'})
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'user_id' => u3.global_id,
         'sharer_id' => u2.global_id,
         'share_index' => 0
@@ -188,7 +188,7 @@ describe Utterance, :type => :model do
         'message' => 'hat cat scat'
       }, u1)
       expect(res).to eq({:from => u1.global_id, :to => 'bob@example.com', :type => 'email'})
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         "sharer_id" => u1.global_id,
         "email" => "bob@example.com",
         "share_index" => 0,
@@ -212,7 +212,7 @@ describe Utterance, :type => :model do
         'message' => 'hat cat scat'
       }, u1)
       expect(res).to eq({:from => u1.global_id, :to => 'bob@example.com', :type => 'email'})
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'sharer_id' => u1.global_id,
         'email' => 'bob@example.com',
         'share_index' => 0,

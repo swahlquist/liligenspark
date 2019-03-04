@@ -93,7 +93,11 @@ class Utterance < ActiveRecord::Base
         contact = sup.lookup_contact(user_id)
         if contact || (my_supervisor_ids + my_supervisees_contact_ids).include?(user_id)
           # message from a communicator to a supervisor
-          self.schedule(:deliver_to, {'user_id' => user_id, 'sharer_id' => sharer.global_id, 'share_index' => share_index})
+          Worker.schedule_for(:priority, Utterance, :perform_action, {
+            'id' => self.id,
+            'method' => 'deliver_to',
+            'arguments' => [{'user_id' => user_id, 'sharer_id' => sharer.global_id, 'share_index' => share_index}]
+          })
         elsif my_supervisee_ids.include?(user_id)
           # message from a supervisor to a communicator
           return false unless LogSession.message({
@@ -108,12 +112,16 @@ class Utterance < ActiveRecord::Base
         return {to: user_id, from: sharer.global_id, type: 'utterance'}
       end
     elsif params['email']
-      self.schedule(:deliver_to, {
-        'sharer_id' => sharer.global_id,
-        'email' => params['email'],
-        'share_index' => self.data['share_user_ids'].length - 1,
-        'subject' => params['subject'] || params['message'] || params['sentence'],
-        'message' => params['message'] || params['sentence']
+      Worker.schedule_for(:priority, Utterance, :perform_action, {
+        'id' => self.id,
+        'method' => 'deliver_to',
+        'arguments' => [{
+          'sharer_id' => sharer.global_id,
+          'email' => params['email'],
+          'share_index' => self.data['share_user_ids'].length - 1,
+          'subject' => params['subject'] || params['message'] || params['sentence'],
+          'message' => params['message'] || params['sentence']
+        }]
       })
       return {to: params['email'], from: sharer.global_id, type: 'email'}
     end
