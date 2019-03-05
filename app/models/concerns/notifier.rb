@@ -11,6 +11,8 @@ module Notifier
   def notify(notification_type, additional_args=nil)
     if additional_args && additional_args['immediate']
       Webhook.notify_all_with_code(self.record_code, notification_type, additional_args)
+    elsif additional_args && additional_args['priority']
+      Worker.schedule_for(:priority, Webhook, :notify_all_with_code, self.record_code, notification_type, additional_args)
     else
       Worker.schedule(Webhook, :notify_all_with_code, self.record_code, notification_type, additional_args)
     end

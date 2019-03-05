@@ -1345,7 +1345,7 @@ class LogSession < ActiveRecord::Base
   
   def push_notification
     if @push_message
-      notify('push_message')
+      notify('push_message', {'priority' => true})
       @push_message = false
       @pushed_message = true
     end
