@@ -17,9 +17,9 @@ export default Component.extend({
   }.property('side_by_side'),
   elem_style: function() {
     if(this.get('right_side')) {
-      return htmlSafe('border-left: 1px solid #eee;');
+      return htmlSafe('break-inside: avoid; border-left: 1px solid #eee;');
     } else {
-      return htmlSafe('');
+      return htmlSafe('break-inside: avoid;');
     }
   }.property('right_side'),
   draw: function() {
