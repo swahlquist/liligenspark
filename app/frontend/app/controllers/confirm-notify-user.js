@@ -42,6 +42,9 @@ export default modal.ModalController.extend({
       }
       var _this = this;
       _this.set('loading', true);
+      if(app_state.get('referenced_user')) {
+        app_state.set('referenced_user.last_share', (new Date()).getTime());
+      }
       var fallback = function() {
         if(_this.get('model.raw')) {
           stashes.log_event({

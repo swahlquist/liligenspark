@@ -145,6 +145,34 @@ describe Api::UtterancesController, :type => :controller do
       expect(json).to eq({'from' => u.global_id, 'to' =>  u.global_id, 'sent' => true})
     end
 
+    it "should increment unread_alerts when a contact replies to a text" do
+      token_user
+      @user.process({'offline_actions' => [{'action' => 'add_contact', 'value' => {'contact' => '12345', 'name' => 'Dad'}}]})
+      hash = @user.settings['contacts'][0]['hash']
+      contact_code = "#{@user.global_id}x#{hash}"
+      utterance = Utterance.create(user: @user, data: {'sentence' => 'howdy'})
+      post :share, params: {utterance_id: utterance.global_id, user_id: contact_code, sharer_id: @user.global_id}
+      json = assert_success_json
+      expect(json['shared']).to eq(true)
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => utterance.id, 'method' => 'deliver_to', 'arguments' => [{
+        'user_id' => contact_code,
+        'sharer_id' => @user.global_id,
+        'share_index' => 0
+      }]})).to eq(true)
+      expect(Pusher).to receive(:sms).with("12345", "from #{@user.settings['name']} - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A").and_return(true)
+      Worker.process_queues
+      Worker.process_queues
+
+      expect(@user.reload.settings['unread_alerts']).to eq(nil)
+
+      post :reply, params: {utterance_id: "#{utterance.global_id}x#{utterance.reply_nonce}A", message: "good on ya!", reply_code: "#{utterance.reply_nonce}A"}
+      json = assert_success_json
+      expect(json['sent']).to eq(true)
+      s = LogSession.last
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('good on ya!')
+      Worker.process_queues
+    end
 
   end
   

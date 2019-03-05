@@ -1399,22 +1399,29 @@ var app_state = EmberObject.extend({
     }
   }.observes('speak_mode_started', 'medium_refresh_stamp'),
   check_inbox: function() {
-    if(window.persistence && window.persistence.get('online') && app_state.get('speak_mode') && app_state.get('referenced_user')) {
-      var last_check = app_state.get('referenced_user.last_sync_stamp_check') || 0;
-      // Don't check more often than once ever 4 minutes
-      if((new Date()).getTime() - last_check > (4 * 60 * 1000)) {
-        window.persistence.ajax('/api/v1/users/' + app_state.get('referenced_user.id') + '/sync_stamp', {type: 'GET'}).then(function(res) {
-          app_state.set('referenced_user.last_sync_stamp_check', (new Date()).getTime());
-          if(res.unread_messages != null) {
-            app_state.set('referenced_user.unread_messages', res.unread_messages);
-          }
-          if(res.unread_alerts != null) {
-            app_state.set('referenced_user.unread_alerts', res.unread_alerts);
-          }
+    var ref_user = app_state.get('referenced_user');
+    if(window.persistence && window.persistence.get('online') && app_state.get('speak_mode') && ref_user) {
+      var last_share = ref_user.get('last_share') || 0;
+      var last_check = ref_user.get('retrieved') || ref_user.get('last_sync_stamp.checked') || 1;
+      var now = (new Date()).getTime();
+
+      // but default check for new messages once every 10 minutes
+      var cutoff = now - (10 * 60 * 1000);
+      if(ref_user.get('last_sync_stamp.user_id') != ref_user.get('id')) {
+        // after switching communicators, make sure you have the latest
+        cutoff = now - (5 * 60 * 1000);
+      }
+      if(now - last_share < (15 * 60 * 1000)) {
+        // after a messaging share, check more frequently for the next 15 minutes
+        cutoff = now - (60 * 1000);
+      }
+      if(last_check < cutoff) {
+        ref_user.set('last_sync_stamp', {user_id: ref_user.get('id'), checked: (new Date()).getTime()});
+        ref_user.reload().then(function(res) {
         }, function() { });
       }
     }
-  }.observes('refresh_stamp'),
+  }.observes('referenced_user.id', 'medium_refresh_stamp'),
   current_board_name: function() {
     var state = this.get('currentBoardState');
     if(state && state.key) {
