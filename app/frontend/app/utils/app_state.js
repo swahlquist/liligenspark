@@ -1414,6 +1414,9 @@ var app_state = EmberObject.extend({
       if(now - last_share < (15 * 60 * 1000)) {
         // after a messaging share, check more frequently for the next 15 minutes
         cutoff = now - (60 * 1000);
+      } else if(now - last_share < (60 * 60 * 1000)) {
+        // for a while after, check a little more frequently
+        cutoff = now - (3 * 60 * 1000);
       }
       if(last_check < cutoff) {
         ref_user.set('last_sync_stamp', {user_id: ref_user.get('id'), checked: (new Date()).getTime()});
