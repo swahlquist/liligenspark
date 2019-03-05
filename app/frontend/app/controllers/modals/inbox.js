@@ -36,6 +36,7 @@ export default modal.ModalController.extend({
     });
   }.observes('app_state.referenced_user'),
   update_inbox: function(updates) {
+    var _this = this;
     stashes.push_log();
     var fetched_inbox = _this.get('fetched_inbox');
     if(updates.clears) {
