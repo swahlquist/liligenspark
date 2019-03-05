@@ -8,14 +8,14 @@
       {{/if}}
     </h2>
     {{#if usage_stats}}
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{stats/data-filter usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2 app_state=app_state snapshots=snapshots compare_to='compare_to' clear_side='clear_left_side' update_filter='update_left_filter'}}
         {{#if usage_stats2}}
           {{stats/data-filter usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true snapshots=snapshots right_side=true clear_side='clear_right_side' update_filter='update_right_filter'}}
         {{/if}}
       </div>
     {{/if}}
-    <div class="row">
+    <div class="row" style='page-break-inside: avoid;'>
       {{stats/load-status status=status ref_status=status2 side_by_side=usage_stats2}}
       {{#if usage_stats2}}
         {{stats/load-status status=status2 ref_status=status side_by_side=true right_side=true}}
@@ -32,7 +32,7 @@
       {{/if}}
     </div>
     {{#if some_data}}
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{stats/nums-row3 usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2}}
         {{#if usage_stats2}}
           {{stats/nums-row3 usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true}}
@@ -42,7 +42,7 @@
           {{stats/nums-row4 usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true}}
         {{/if}}
       </div>
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{stats/word-usage usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2 show_logs='show_logs'}}
         {{#if usage_stats2}}
           {{stats/word-usage usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true show_logs='show_logs'}}
@@ -58,7 +58,7 @@
           {{/if}}
         {{/if}}
       </div>
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{#if app_state.feature_flags.core_reports}}
           {{stats/core-list core=model.core_lists usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2 word_cloud='word_cloud_left' word_data='word_data' edit_permission=model.permissions.edit modify_core='modify_core'}}
           {{#if usage_stats2}}
@@ -79,7 +79,7 @@
           {{stats/parts-of-speech-pie usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true}}
         {{/if}}
       </div>
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{stats/time-of-day usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2}}
         {{#if usage_stats2}}
           {{stats/time-of-day usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true}}
@@ -89,7 +89,7 @@
           {{stats/weighted-words usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true word_cloud='word_cloud_right' word_data='word_data'}}
         {{/if}}
       </div>
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{#if model.preferences.geo_logging }}
           {{stats/geo-locations usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2 filter='update_left_filter' snapshots=filter_list}}
           {{#if usage_stats2}}
@@ -106,7 +106,7 @@
           {{/if}}
         {{/if}}
       </div>
-      <div class="row">
+      <div class="row" style='page-break-inside: avoid;'>
         {{stats/heat-map usage_stats=usage_stats ref_stats=usage_stats2 side_by_side=usage_stats2}}
         {{#if usage_stats2}}
           {{stats/heat-map usage_stats=usage_stats2 ref_stats=usage_stats side_by_side=true right_side=true}}
