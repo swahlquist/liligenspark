@@ -1418,7 +1418,7 @@ var app_state = EmberObject.extend({
         // for a while after, check a little more frequently
         cutoff = now - (3 * 60 * 1000);
       }
-      if(last_check < cutoff) {
+      if(last_check < (cutoff + 5000)) {
         ref_user.set('last_sync_stamp', {user_id: ref_user.get('id'), checked: (new Date()).getTime()});
         ref_user.reload().then(function(res) {
         }, function() { });
