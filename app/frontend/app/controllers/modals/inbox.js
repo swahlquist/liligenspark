@@ -4,6 +4,7 @@ import stashes from '../../utils/_stashes';
 import persistence from '../../utils/persistence';
 import app_state from '../../utils/app_state';
 import i18n from '../../utils/i18n';
+import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
 
 export default modal.ModalController.extend({
@@ -47,6 +48,14 @@ export default modal.ModalController.extend({
     }
     persistence.fetch_inbox(app_state.get('referenced_user'), {persist: fetched_inbox}).then(null, function(err) { debugger });
   },
+  current_class: function() {
+    var str = this.get('current.text') || '';
+    if(str.length < 25) {
+      return htmlSafe('big');
+    } else if(str.length < 140) {
+      return htmlSafe('medium');
+    }
+  }.property('current.text'),
   actions: {
     clear: function(which) {
       var alerts = [which];

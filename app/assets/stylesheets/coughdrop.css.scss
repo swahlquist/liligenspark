@@ -2627,8 +2627,15 @@ video.button_image {
 }
 #alert_message {
   white-space: pre-line;
-  padding: 10px 0 20px;
+  padding: 20px 0 20px;
   font-size: 20px;
+  .big {
+    font-size: 40px;
+    padding: 30px 0 20px;
+  }
+  .medium {
+    font-size: 30px;
+  }
 }
 .alerts {
   .btn.unread {
