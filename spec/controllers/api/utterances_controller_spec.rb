@@ -319,7 +319,27 @@ describe Api::UtterancesController, :type => :controller do
       post :share, params: {:utterance_id => utterance.global_id, :user_id => @user.global_id}
       assert_unauthorized
     end
+
+    it 'should mention the right sender in the text' do
+      token_user
+      @user.process({'offline_actions' => [{'action' => 'add_contact', 'value' => {'contact' => '12345', 'name' => 'Dad'}}]})
+      hash = @user.settings['contacts'][0]['hash']
+      contact_code = "#{@user.global_id}x#{hash}"
+      utterance = Utterance.create(user: @user, data: {'sentence' => 'howdy'})
+      post :share, params: {utterance_id: utterance.global_id, user_id: contact_code, sharer_id: @user.global_id}
+      json = assert_success_json
+      expect(json['shared']).to eq(true)
+      expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => utterance.id, 'method' => 'deliver_to', 'arguments' => [{
+        'user_id' => contact_code,
+        'sharer_id' => @user.global_id,
+        'share_index' => 0
+      }]})).to eq(true)
+      expect(Pusher).to receive(:sms).with("12345", "from #{@user.settings['name']} - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A").and_return(true)
+      Worker.process_queues
+      Worker.process_queues
+    end
   end
+  
   
   describe "GET show" do
     it "should not require api token" do

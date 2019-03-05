@@ -79,7 +79,6 @@ class Utterance < ActiveRecord::Base
       self.data['reply_ids'][share_index.to_s] = params['reply_id']
     end
     self.save
-
     if user_id
       message = params['message'] || params['sentence'] || self.data['sentence']
       my_supervisor_ids = sharer.supervisor_user_ids
@@ -170,7 +169,7 @@ class Utterance < ActiveRecord::Base
         contact = user.lookup_contact(args['user_id'])
         if contact
           self.deliver_message(contact['contact_type'], nil, {
-            'sharer' => {'user_name' => sharer.user_name, 'user_id' => args['user_id'], 'name' => contact['name'] || sharer.settings['name']},
+            'sharer' => {'user_name' => sharer.user_name, 'user_id' => args['user_id'], 'name' => sharer.settings['name']},
             'email' => contact['email'],
             'cell_phone' => contact['cell_phone'],
             'reply_id' => reply_id,

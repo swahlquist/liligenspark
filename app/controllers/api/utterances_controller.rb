@@ -48,7 +48,7 @@ class Api::UtterancesController < ApplicationController
       sharer = user
     end
     if params['user_id'] && !sharer.premium?
-      return allowed?(user, 'premium_access')      
+      return allowed?(user, 'premium_access_required')      
     end
     res = utterance.share_with(params, sharer, @api_user.global_id)
     if res
