@@ -1427,10 +1427,10 @@ var persistence = EmberObject.extend({
           object: force.persist
         };
         persistence.find('dataCache', url).then(null, function() { RSVP.resolve({object: {}}); }).then(function(data) {
-          if(data.object.clears) {
+          if(data && data.object && data.object.clears) {
             object.object.clears = (object.object.clears || []).concat(data.object.clears || []).uniq();
           }
-          if(data.object.alerts) {
+          if(data && data.object && data.object.alerts) {
             object.object.alerts = (object.object.alerts || []).concat(data.object.alerts || []).uniq();
           }
           persistence.store('dataCache', object, object.url).then(function() {
