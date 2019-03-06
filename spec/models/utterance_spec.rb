@@ -272,9 +272,9 @@ describe Utterance, :type => :model do
       Worker.process_queues
       utterance.reload
       expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '98765', 'pushed' => true, 'text' => "from Mom - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+        {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
       )
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from Mom - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
+      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
       expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
     end    
   end
@@ -368,7 +368,8 @@ describe Utterance, :type => :model do
       })
 
       expect(utterance).to receive(:deliver_message).with('sms', nil, {
-        'sharer' => {'name' => 'Fred', 'user_name' => u.user_name, 'user_id' => contact_id},
+        'sharer' => {'name' => 'No name', 'user_name' => u.user_name, 'user_id' => u.global_id},
+        'recipient_id' => contact_id,
         'email' => false,
         'cell_phone' => '5558675309',
         'reply_id' => Webhook.get_record_code(session),
@@ -455,9 +456,9 @@ describe Utterance, :type => :model do
       Worker.process_queues
       utterance.reload
       expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '98765', 'pushed' => true, 'text' => "from Mom - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+        {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
       )
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from Mom - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
+      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
       expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
     end
 
@@ -496,12 +497,12 @@ describe Utterance, :type => :model do
       expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
       expect(UserMailer).to receive(:schedule_delivery).with(:utterance_share, {
         'subject' => 'whatevs',
-        'sharer_id' => "#{u.global_id}x48toytn4ta84ty",
-        'sharer_name' => 'Mom',
+        'sharer_id' => u.global_id,
+        'sharer_name' => 'No name',
         'message' => 'whatevs',
         'utterance_id' => utterance.global_id,
         'reply_id' => nil,
-        'recipient_id' => nil,
+        'recipient_id' => "#{u.global_id}x48toytn4ta84ty",
         'to' => 'mom@example.com',
         'reply_url' => "#{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"
       })

@@ -169,7 +169,8 @@ class Utterance < ActiveRecord::Base
         contact = user.lookup_contact(args['user_id'])
         if contact
           self.deliver_message(contact['contact_type'], nil, {
-            'sharer' => {'user_name' => sharer.user_name, 'user_id' => args['user_id'], 'name' => sharer.settings['name']},
+            'sharer' => {'user_name' => sharer.user_name, 'user_id' => sharer.global_id, 'name' => sharer.settings['name']},
+            'recipient_id' => args['user_id'],
             'email' => contact['email'],
             'cell_phone' => contact['cell_phone'],
             'reply_id' => reply_id,
@@ -213,7 +214,7 @@ class Utterance < ActiveRecord::Base
       UserMailer.schedule_delivery(:utterance_share, {
         'subject' => args['subject'] || args['text'] || self.data['sentence'],
         'sharer_id' => args['sharer_id'] || args['sharer']['user_id'],
-        'recipient_id' => recipient_user && recipient_user.global_id,
+        'recipient_id' => args['recipient_id'] || (recipient_user && recipient_user.global_id),
         'sharer_name' => args['sharer']['name'] || args['sharer']['user_name'],
         'message' => args['text'] || args['message'] || self.data['sentence'],
         'utterance_id' => args['utterance_id'] || self.global_id,
