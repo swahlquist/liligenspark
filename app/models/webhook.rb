@@ -143,6 +143,12 @@ class Webhook < ActiveRecord::Base
         if callback['include_content'] && record && record.respond_to?(:webhook_content)
           body[:content] = record.webhook_content(notification_type, callback['content_type'], additional_args)
         end
+        if body[:content] && url.match(/\{code\}/)
+          json = JSON.parse(body[:content]) rescue nil
+          if json && json['action']
+            url = url.gsub(/\{code\}/, URI.encode_www_form_component(json['action']))
+          end
+        end
         res = nil
         s = 10
         begin

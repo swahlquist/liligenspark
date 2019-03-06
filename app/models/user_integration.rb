@@ -14,7 +14,6 @@ class UserIntegration < ActiveRecord::Base
   after_save :assert_webhooks
   after_destroy :disable_device
   after_destroy :delete_webhooks
-#  has_paper_trail :only => [:settings]
   secure_serialize :settings
   replicated_model
   
@@ -193,6 +192,14 @@ class UserIntegration < ActiveRecord::Base
         res = Uploader.find_images('hat', 'lessonpix', self)
         if res == false
           add_processing_error('invalid user credentials')
+          return false
+        end
+      elsif params['integration_key'] == 'ifttt' && user_params['webhook_url']
+        match = user_params['webhook_url']['value'].strip.match(/^https\:\/\/maker\.ifttt\.com\/use\/([^\?]+)$/)
+        if match 
+          self.settings['button_webhook_url'] = "https://maker.ifttt.com/trigger/{code}/with/key/#{match[1]}"
+        else
+          add_processing_error('invalid IFTTT Webhook URL')
           return false
         end
       end

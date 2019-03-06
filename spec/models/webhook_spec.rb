@@ -267,6 +267,28 @@ describe Webhook, :type => :model do
       expect(Typhoeus).to receive(:post).with('http://www.example.com/3', body: {token: token, notification: 'bacon', record: h.record_code, content: h.webhook_content(nil, nil, nil)}).and_return(res)
       h.notify('bacon', h, {})
     end
+
+    it "should update parameterized url if available from the content" do
+      h = Webhook.create
+      h.settings = {
+        'notifications' => {
+          'bacon' => [
+            {'callback' => 'http://www.example.com/{code}/3', 'include_content' => true}
+          ],
+          'friend' => [
+            {'callback' => 'http://www.example.com/4'}
+          ]
+        },
+        'callback_token' => 'abcdefg'
+      }
+      json = {action: 'baconator'}.to_json
+      expect(h).to receive(:webhook_content).with('bacon', nil, {}).and_return(json)
+      
+      token = 'abcdefg'
+      res = OpenStruct.new
+      expect(Typhoeus).to receive(:post).with('http://www.example.com/baconator/3', body: {token: token, notification: 'bacon', record: h.record_code, content: json}).and_return(res)
+      h.notify('bacon', h, {})
+    end
     
     it "should include api_url if defined" do
       h = Webhook.create

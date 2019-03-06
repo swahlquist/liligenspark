@@ -73,6 +73,9 @@ export default modal.ModalController.extend({
       tool.set('installing', null);
       tool.set('error', null);
       this.set('selected_tool', tool);
+      if(!tool.get('permissions')) {
+        tool.reload();
+      }
     },
     browse: function() {
       this.set('selected_tool', null);

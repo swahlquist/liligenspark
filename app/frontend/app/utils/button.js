@@ -804,7 +804,8 @@ Button.extra_actions = function(button) {
       // Local URLs can be requested by the device, instead of as a webhook
       update_state(null);
       update_state({pending: true});
-      var url = button.integration.local_url || "https://www.yahoo.com";
+      var url = button.integration.local_url || "https://www.example.com";
+      url = url.replace(/\{code\}/g, encodeURIComponent(button.integration.action));
       persistence.ajax(url, {
         type: 'POST',
         data: {

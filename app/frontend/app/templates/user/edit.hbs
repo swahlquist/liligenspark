@@ -241,6 +241,14 @@
                         {{else}}
                           {{t "recognized tool" key='known_tool'}}
                         {{/if}}
+                        <div>
+                          {{#if integration.webhook}}
+                            <span class='label label-default'>{{t "button" key='for_buttons'}}</span>
+                          {{/if}}
+                          {{#if integration.render}}
+                            <span class='label label-default'>{{t "launch" key='for_buttons'}}</span>
+                          {{/if}}
+                        </div>
                       </td>
                       {{#if model.permissions.edit}}
                         <td>
