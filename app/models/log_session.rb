@@ -958,6 +958,7 @@ class LogSession < ActiveRecord::Base
       non_user_params[:user_id] = user.global_id
       non_user_params[:author_id] = author.global_id
       non_user_params[:device_id] = device.global_id
+      Rails.logger.warn("posted log size: #{params.to_json.length}")
       stash = JobStash.create(data: params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params)
       res.data['stash_id'] = stash.global_id
       Rails.logger.warn('scheduling process')

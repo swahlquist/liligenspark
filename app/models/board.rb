@@ -768,7 +768,7 @@ class Board < ActiveRecord::Base
   # TODO: this is wrongly-named, it should be images_and_sounds_for
   def buttons_and_images_for(user)
     key = "buttons_and_images/#{user ? user.cache_key : 'nobody'}"
-    res = get_cached(key)
+    res = nil #get_cached(key)
     return res if res
     res = {}
     bis = self.button_images
@@ -777,7 +777,7 @@ class Board < ActiveRecord::Base
     
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
     res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }
-    set_cached(key, res)
+    # set_cached(key, res)
     res
   end
 

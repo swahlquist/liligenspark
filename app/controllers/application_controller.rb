@@ -7,7 +7,10 @@ class ApplicationController < ActionController::Base
   before_bugsnag_notify :add_user_info_to_bugsnag
   
   def set_host
-    Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID'] || request.uuid} #{request.headers['X-Request-Start']}")
+    Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID'] || request.request_id} #{request.headers['X-Request-Start']} #{}")
+    if request.headers['X-SILENCE-LOGGER']
+      Rails.logger.info("APP LOGS DISABLED, user has opted out of tracking")
+    end
     JsonApi::Json.set_host("#{request.protocol}#{request.host_with_port}")
   end
   

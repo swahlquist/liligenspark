@@ -83,18 +83,6 @@ module Sharing
         res << link['user_id'] if link['state'] && link['state']['allow_editing']
       end
     end
-#     author = self.user
-#     res = []
-#     res << author.global_id if author
-#     if author && author.settings && author.settings['boards_i_shared'] && author.settings['boards_i_shared'][self.global_id]
-#       author.settings['boards_i_shared'][self.global_id].each do |share|
-#         if plus_downstream_editing
-#           res << share['user_id'] if share['allow_editing'] && share['include_downstream'] && !share['pending']
-#         else
-#           res << share['user_id'] if share['allow_editing']
-#         end
-#       end
-#     end
     res
   end
   
@@ -282,48 +270,6 @@ module Sharing
       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
       user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
       all_board_ids
-
-
-#       return [] if (user.settings['boards_shared_with_me'] || []).length == 0 && (user.settings['boards_i_shared'] || []).length == 0
-#       
-#       cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
-#       return cached if cached
-#       
-#       # all explicitly-shared boards
-#       shallow_board_ids = (user.settings['boards_shared_with_me'] || []).select{|b| plus_editing ? b['allow_editing'] : b }.map{|b| b['board_id'] }
-#       
-#       # all explicitly-shared boards that are set to include downstream
-#       deep_board_ids = (user.settings['boards_shared_with_me'] || []).select{|b| plus_editing ? (b['allow_editing'] && !b['pending']) : b }.select{|b| b['include_downstream'] }.map{|b| b['board_id'] }
-#       deep_board_ids += (user.settings['boards_i_shared'] || []).map{|id, list| id if list.any?{|s| s['include_downstream'] && s['allow_editing'] && !s['pending'] } }
-# 
-#       # get all those boards
-#       boards = Board.find_all_by_global_id(deep_board_ids)
-#       valid_deep_board_authors = {}
-#       # for each explicitly-shared including-downstream board, mark all downstream boards
-#       # as possibly-shared if they were authored by any of the root board's authors
-#       boards.each do |b| 
-#         b.author_ids(plus_editing).each do |author_id|
-#           valid_deep_board_authors[b.global_id] ||= []; valid_deep_board_authors[b.global_id] << author_id
-#           (b.settings['downstream_board_ids'] || []).each do |id|
-#             valid_deep_board_authors[id] ||= []; valid_deep_board_authors[id] << author_id
-#           end
-#         end
-#       end
-#       # get the list of all possible downstream boards
-#       all_deep_board_ids = boards.map{|b| b.settings['downstream_board_ids'] || [] }.flatten.compact.uniq
-#       
-#       valid_deep_board_ids = []
-#       # for every downstream board, mark it as shared if one of the current board's authors
-#       # matches one of the root-board authors, which would implicitly grant access
-#       Board.find_all_by_global_id(all_deep_board_ids).each do |b|
-#         b.author_ids.each do |author_id|
-#           valid_deep_board_ids << b.global_id if valid_deep_board_authors[b.global_id].include?(author_id)
-#         end
-#       end
-#       
-#       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
-#       user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
-#       all_board_ids
     end
   end
 end
