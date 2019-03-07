@@ -386,7 +386,7 @@ class WordData < ActiveRecord::Base
     res[:for_user] = WordData.core_list_for(user)
     button_sets = BoardDownstreamButtonSet.for_user(user)
     cache_key = "reachable_phrases_and_words/#{user.cache_key}/#{button_sets.map(&:cache_key).join('/')}"
-    # hashes = user.get_cached(cache_key)
+    hashes = nil #user.get_cached(cache_key)
     if !hashes
       hashes = {}
       # These lists don't contain any user-specific information and so can be safely
