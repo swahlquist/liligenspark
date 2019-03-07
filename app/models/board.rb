@@ -765,9 +765,8 @@ class Board < ActiveRecord::Base
     DeletedBoard.process(self)
   end
   
-  # TODO: this is wrongly-named, it should be images_and_sounds_for
-  def buttons_and_images_for(user)
-    key = "buttons_and_images/#{user ? user.cache_key : 'nobody'}"
+  def images_and_sounds_for(user)
+    key = "images_and_sounds_for/#{user ? user.cache_key : 'nobody'}"
     res = nil #get_cached(key)
     return res if res
     res = {}

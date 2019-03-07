@@ -558,18 +558,18 @@ describe Board, :type => :model do
     it "should return a cached value if there is one" do
       b = Board.new
       expect(b).to receive(:get_cached).with('buttons_and_images/nobody').and_return({a: 1})
-      expect(b.buttons_and_images_for(nil)).to eq({a: 1})
+      expect(b.images_and_sounds_for(nil)).to eq({a: 1})
 
       u = User.create
       expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return({b: 1})
-      expect(b.buttons_and_images_for(u)).to eq({b: 1})
+      expect(b.images_and_sounds_for(u)).to eq({b: 1})
     end
 
     it "should call cached_copy_urls to check for cached urls" do
       b = Board.new
       expect(b).to receive(:get_cached).with('buttons_and_images/nobody').and_return(nil)
       expect(ButtonImage).to receive(:cached_copy_urls).with([], nil, nil, [])
-      b.buttons_and_images_for(nil)
+      b.images_and_sounds_for(nil)
     end
 
     it "should map images and sounds to json and return the result" do
@@ -586,7 +586,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
-      expect(b.buttons_and_images_for(u)).to eq({
+      expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}
         ],
@@ -611,7 +611,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
-      expect(b.buttons_and_images_for(u)).to eq({
+      expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}
         ],
@@ -636,7 +636,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
-      expect(b.buttons_and_images_for(u)).to eq({
+      expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}
         ],
@@ -664,7 +664,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['pcs']).and_return({'bi3' => true})
       expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
-      expect(b.buttons_and_images_for(u)).to eq({
+      expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}, {'bi3' => true}
         ],

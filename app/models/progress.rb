@@ -4,7 +4,6 @@ class Progress < ActiveRecord::Base
   protect_global_id
   secure_serialize :settings
   before_save :generate_defaults
-  replicated_model
   
   include Permissions
   add_permissions('view' ,['*']) { true }
