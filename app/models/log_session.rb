@@ -701,11 +701,13 @@ class LogSession < ActiveRecord::Base
               if current_chain.length >= 3
                 sequence = current_chain[-3, 3]
                 sequence_key = sequence.join(', ')
-                self.data['stats']['buttons_used']['button_chains'][sequence_key] = (self.data['stats']['buttons_used']['button_chains'][sequence_key] || 0) + 1
-                if current_chain.length >= 4
-                  sequence = current_chain[-4, 4]
-                  sequence_key = sequence.join(', ')
+                if sequence.length < 100
                   self.data['stats']['buttons_used']['button_chains'][sequence_key] = (self.data['stats']['buttons_used']['button_chains'][sequence_key] || 0) + 1
+                  if current_chain.length >= 4
+                    sequence = current_chain[-4, 4]
+                    sequence_key = sequence.join(', ')
+                    self.data['stats']['buttons_used']['button_chains'][sequence_key] = (self.data['stats']['buttons_used']['button_chains'][sequence_key] || 0) + 1
+                  end
                 end
               end
             end
