@@ -11,6 +11,14 @@ class Api::ButtonSetsController < ApplicationController
   end
   
   def show
+    # TODO: don't stream through the app as these can get big
+    # (up to 4 Mb), upload them to a remote server keyed off of
+    # the allowed board_ids for the user that intersect with the
+    # button set's board_ids and an updated_at stamp on the
+    # button_set, using a secured url.
+    # The uploaded files should auto-delete.
+    # TODO: sharding
+
     Rails.logger.warn('looking up board')
     board = nil
     button_set = nil
@@ -25,13 +33,7 @@ class Api::ButtonSetsController < ApplicationController
     allowed = false
     Rails.logger.warn('permission check')
     self.class.trace_execution_scoped(['button_set/board/permission_check']) do
-      #if board.button_set_id == params['id']
-        # TODO: this will never be reached, because the button_set_id
-        # does NOT match the board_id, which is our starting lookup point.
-        #allowed = true
-      #else
-        allowed = allowed?(board, 'view')
-      #end
+      allowed = allowed?(board, 'view')
     end
     return unless allowed
     json = {}

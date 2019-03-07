@@ -937,11 +937,14 @@ class LogSession < ActiveRecord::Base
     # track pass/fail while the student uses the device to communicate. WHAAAAT?!
     if params['note']
       params['events'] = nil
+      Rails.logger.warn('processing note creation in client request')
       self.process_new(params, non_user_params)
     elsif params['assessment']
       params['events'] = nil
+      Rails.logger.warn('processing assessment creation in client request')
       self.process_new(params, non_user_params)
     elsif params['type'] == 'daily_use'
+      Rails.logger.warn('processing daily_use creation in client request')
       self.process_daily_use(params, non_user_params)
     else
       res = LogSession.new(:data => {})

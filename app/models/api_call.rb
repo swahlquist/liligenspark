@@ -4,8 +4,9 @@ class ApiCall < ActiveRecord::Base
   replicated_model
   
   def self.log(token, user, request, response, time)
+    # TODO: log all calls from external developer keys
     return true if ENV['DISABLE_API_CALL_LOGGING']
-    # TODO: is there a better way to log this? It's too huge to actually use
+    return true if ENV['DISABLE_SHORT_API_CALL_LOGGING'] && (!time || time < 15)
     if request && request.path && request.path.match(/^\/api\/v\d+/) && token && user && response
       call = ApiCall.new
       call.user_id = user.id

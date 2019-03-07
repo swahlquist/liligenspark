@@ -423,6 +423,8 @@ class Api::UsersController < ApplicationController
       user = User.find_by_path(params['user_id'])
       return unless exists?(user, params['user_id'])
       return unless allowed?(user, 'supervise')
+      # TODO: move this to a progress call and return 
+      # an auto-deleting download link
       res.merge!(WordData.core_and_fringe_for(user))
     end
     render json: res

@@ -6,8 +6,8 @@ class ApplicationController < ActionController::Base
   after_action :log_api_call
   before_bugsnag_notify :add_user_info_to_bugsnag
   
-  # TODO: do we need a cache buster? Not for ember renders obviously, but for APIs?
   def set_host
+    Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID']} #{request.headers['X-Request-Start']}")
     JsonApi::Json.set_host("#{request.protocol}#{request.host_with_port}")
   end
   
@@ -75,7 +75,6 @@ class ApplicationController < ActionController::Base
           api_error 400, {error: "Invalid masquerade attempt", token: token, user_id: as_user}
         end
       end
-      
     end
   end
   
