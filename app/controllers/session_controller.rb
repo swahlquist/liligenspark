@@ -135,7 +135,7 @@ class SessionController < ApplicationController
       if params['client_id'] == 'browser' && GoSecure.valid_browser_token?(params['client_secret'])
         u = pending_u
       else
-        return api_erorr 400, { error: "Invalid client_secret for client_id", client_id: params['client_id'] }
+        return api_error 400, { error: "Invalid client_secret for client_id", client_id: params['client_id'] }
       end
       if u && u.valid_password?(params['password'])
         # generated based on request headers
