@@ -16,7 +16,7 @@ unless ENV['SKIP_VALIDATIONS']
    # Custom CoughDrop code...
   raise "not allowed, HIPAA-style" if ['db', 'dbconsole'].include?(command) && Rails.env.production?
   if !ENV['USER_KEY'] && ['runner', 'r', 'console', 'c'].include?(command)
-    raise "need ENV['USER_KEY'] for console logging"
+    raise "need ENV['USER_KEY'] for console logging with \"#{INIT_ARGS.join(' ')}\""
   end
   if ENV['USER_KEY']
     PaperTrail.request.whodunnit = "admin:#{ENV['USER_KEY']}"
