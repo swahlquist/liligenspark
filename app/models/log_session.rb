@@ -949,6 +949,7 @@ class LogSession < ActiveRecord::Base
       Rails.logger.warn('processing daily_use creation in client request')
       self.process_daily_use(params, non_user_params)
     else
+      Rails.logger.warn('generating stash')
       res = LogSession.new(:data => {})
       # background-job it, too much processing for in-request!
       user = non_user_params.delete(:user)
@@ -959,7 +960,9 @@ class LogSession < ActiveRecord::Base
       non_user_params[:device_id] = device.global_id
       stash = JobStash.create(data: params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params)
       res.data['stash_id'] = stash.global_id
+      Rails.logger.warn('scheduling process')
       schedule(:process_delayed_follow_on, stash.global_id, non_user_params)
+      Rails.logger.warn('done with process_as_follow_on')
       res
     end
   end
