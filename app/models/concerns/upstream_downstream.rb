@@ -50,8 +50,10 @@ module UpstreamDownstream
       id = unfound_boards.shift
       board = top_board 
       if id != "self"
-        board = Board.find_by_path(id)
-        board.reload if board
+        Octopus.using(:master) do
+          board = Board.find_by_path(id)
+          board.reload if board
+        end
       end
       if board
         children_ids = []
@@ -118,7 +120,10 @@ module UpstreamDownstream
       Rails.logger.info('saving because downstream buttons changed') if downstream_buttons_changed
       Rails.logger.info('saving because downstream boards changed') if downstream_boards_changed
       @track_downstream_boards = false
-      board = Board.find_by_global_id(self.global_id).reload
+      board = nil
+      Octopus.using(:master) do
+        board = Board.find_by_global_id(self.global_id).reload
+      end
       changes.each do |key, vals|
         pre, post = vals
         next if pre.to_json == post.to_json
@@ -198,7 +203,9 @@ module UpstreamDownstream
   end
   
   def add_upstream_board_id!(id)
-    self.reload
+    Octopus.using(:master) do
+      self.reload
+    end
     self.settings ||= {}
     self.settings['immediately_upstream_board_ids'] ||= []
     self.settings['immediately_upstream_board_ids'] << id

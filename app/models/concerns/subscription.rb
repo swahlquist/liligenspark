@@ -133,7 +133,9 @@ module Subscription
           UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
         end
       end
-      self.reload
+      Octopus.using(:master) do
+        self.reload
+      end
       self.settings['subscription'] ||= {}
       self.clear_existing_subscription(:allow_grace_period => true) if was_sponsored && !self.org_sponsored?
       self.save

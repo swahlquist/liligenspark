@@ -977,9 +977,11 @@ class LogSession < ActiveRecord::Base
       params = stash.data
     end
     non_user_params = non_user_params.with_indifferent_access
-    non_user_params[:user] = User.find_by_global_id(non_user_params[:user_id])
-    non_user_params[:author] = User.find_by_global_id(non_user_params[:author_id])
-    non_user_params[:device] = Device.find_by_global_id(non_user_params[:device_id])
+    Octopus.usin(:master) do
+      non_user_params[:user] = User.find_by_global_id(non_user_params[:user_id])
+      non_user_params[:author] = User.find_by_global_id(non_user_params[:author_id])
+      non_user_params[:device] = Device.find_by_global_id(non_user_params[:device_id])
+    end
     raise "user required" if !non_user_params[:user]
     raise "author required" if !non_user_params[:author]
     raise "device required" if !non_user_params[:device]

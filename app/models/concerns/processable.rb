@@ -26,7 +26,10 @@ module Processable
   def same_edit_key(&block)
     key = self.edit_key
     block.call
-    rec = self.class.find(self.id).reload
+    rec = nil
+    Octopus.using(:master) do
+      rec = self.class.find(self.id).reload
+    end
     return key == rec.edit_key
   end
   
