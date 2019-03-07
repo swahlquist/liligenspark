@@ -8,6 +8,7 @@ class Api::BoardsController < ApplicationController
       conn = (Octopus.config[Rails.env] || {}).keys.sample
       boards = boards.using(conn) if conn
     end
+    Rails.logger.warn('filtering by user')
     self.class.trace_execution_scoped(['boards/user_filter']) do
       if params['user_id']
         user = User.find_by_path(params['user_id'])
@@ -46,6 +47,7 @@ class Api::BoardsController < ApplicationController
     end
     
     # TODO: where(:public => true) as the cancellable default
+    Rails.logger.warn('checking key')
     self.class.trace_execution_scoped(['boards/key_check']) do
       if params['key']
         keys = [params['key']]
@@ -56,6 +58,7 @@ class Api::BoardsController < ApplicationController
       end
     end
     
+    Rails.logger.warn('public query')
     self.class.trace_execution_scoped(['boards/public_query']) do
       if params['q'] && params['q'].length > 0 && params['public']
         q = CGI.unescape(params['q']).downcase
@@ -66,6 +69,7 @@ class Api::BoardsController < ApplicationController
       end
     end
 
+    Rails.logger.warn('public check')
     self.class.trace_execution_scoped(['boards/public_check']) do
       if params['public']
         boards = boards.where(:public => true)
@@ -74,6 +78,7 @@ class Api::BoardsController < ApplicationController
     
     # TODO: filter public board searches by locale in addition to query string
 
+    Rails.logger.warn('sort board')
     self.class.trace_execution_scoped(['boards/sort']) do
       if params['sort']
         if params['sort'] == 'popularity'
@@ -88,6 +93,7 @@ class Api::BoardsController < ApplicationController
       end
     end
     
+    Rails.logger.warn('starred filter')
     if params['exclude_starred']
       user = User.find_by_path(params['exclude_starred'])
       exclude_board_ids = []
@@ -97,6 +103,7 @@ class Api::BoardsController < ApplicationController
       boards = boards.limit(100)[0, 100].select{|b| !exclude_board_ids.include?(b.global_id) }
     end
     
+    Rails.logger.warn('category filter')
     self.class.trace_execution_scoped(['boards/category']) do
       if params['category']
         boards = boards.limit(100) if boards.respond_to?(:limit)
@@ -111,6 +118,7 @@ class Api::BoardsController < ApplicationController
     # leakage of private information. This iterative method is slower than a db clause
     # but the number of private boards is probably going to be small enough that it's ok.
     # TODO: assumptions containing the word "probably" tend to break sooner than you think
+    Rails.logger.warn('private query')
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['q'] && params['q'].length > 0 && !params['public']
         boards = boards.select{|b| (b.settings['search_string'] || "").match(/#{CGI.unescape(params['q']).downcase}/i) }
@@ -118,6 +126,7 @@ class Api::BoardsController < ApplicationController
     end
     
     json = nil
+    Rails.logger.warn('start paginated result')
     self.class.trace_execution_scoped(['boards/json_paginate']) do
       json = JsonApi::Board.paginate(params, boards)
     end
