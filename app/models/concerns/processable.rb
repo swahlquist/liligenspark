@@ -70,7 +70,7 @@ module Processable
   end
   
   def assert_current_record!
-    raise ActiveRecord::StaleObjectError if self.updated_at.to_f != self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f
+    raise ActiveRecord::StaleObjectError if self && self.updated_at.to_f != self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f
   end
   
   def processing_errors

@@ -1,7 +1,6 @@
 class JobStash < ApplicationRecord
   include GlobalId
   include SecureSerialize
-  replicated_model
 
   secure_serialize :data
 
