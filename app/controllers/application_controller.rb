@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
   before_bugsnag_notify :add_user_info_to_bugsnag
   
   def set_host
-    Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID']} #{request.headers['X-Request-Start']}")
+    Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID'] || request.uuid} #{request.headers['X-Request-Start']}")
     JsonApi::Json.set_host("#{request.protocol}#{request.host_with_port}")
   end
   
