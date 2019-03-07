@@ -229,9 +229,14 @@ module Sharing
     def all_shared_board_ids_for(user, plus_editing=false)
       links = UserLink.links_for(user).select{|l| l['type'] == 'board_share' }
       return [] if links.length == 0
+      user.settings['all_shared_board_ids'] ||= {}
+      sub_key = plus_editing ? 'editing' : 'viewing'
+      if user.settings['all_shared_board_ids'][sub_key] && user.settings['all_shared_board_ids'][sub_key]['timestamp'] >= user.updated_at.to_f
+        return user.settings['all_shared_board_ids'][sub_key]['list']
+      end
       
-      cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
-      return cached if cached
+      # cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
+      # return cached if cached
 
       # all explicitly-shared boards
       shallow_board_ids = links.select{|l| plus_editing ? (l['state'] && l['state']['allow_editing']) : true }.map{|l| l['record_code'].split(/:/)[1] }
@@ -268,7 +273,13 @@ module Sharing
       end
       
       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
-      user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
+
+      user.settings['all_shared_board_ids'][sub_key] = {
+        'timestamp' => user.updated_at.to_f,
+        'list' => all_board_ids
+      }
+      user.save
+
       all_board_ids
     end
   end
