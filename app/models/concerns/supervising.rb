@@ -179,13 +179,13 @@ module Supervising
       user.update_setting({
         'supervisors' => user.settings['supervisors']
       })
-      Octopus.using(:master) do
+#      Octopus.using(:master) do
         user.reload
-      end
+#      end
       if do_unlink
-        Octopus.using(:master) do
+#        Octopus.using(:master) do
           supervisor.reload
-        end
+#        end
         supervisor.settings['supervisees'] = (supervisor.settings['supervisees'] || []).select{|s| s['user_id'] != user.global_id }
         # If a user was auto-subscribed for being added as a supervisor, un-subscribe them when removed
         if supervisor.settings['supervisees'].empty? && supervisor.settings && supervisor.settings['subscription'] && supervisor.settings['subscription']['subscription_id'] == 'free_auto_adjusted'
@@ -236,9 +236,9 @@ module Supervising
 #         'link_codes' => user.settings['link_codes']
 #       })
 
-      Octopus.using(:master) do
+#      Octopus.using(:master) do
         supervisor.reload
-      end
+#      end
       # first-time supervisors should automatically be set to the supporter role
       if !supervisor.settings['supporter_role_auto_set']
         supervisor.settings['supporter_role_auto_set'] = true

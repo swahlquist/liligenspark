@@ -977,11 +977,11 @@ class LogSession < ActiveRecord::Base
       params = stash.data
     end
     non_user_params = non_user_params.with_indifferent_access
-    Octopus.using(:master) do
+#    Octopus.using(:master) do
       non_user_params[:user] = User.find_by_global_id(non_user_params[:user_id])
       non_user_params[:author] = User.find_by_global_id(non_user_params[:author_id])
       non_user_params[:device] = Device.find_by_global_id(non_user_params[:device_id])
-    end
+#    end
     raise "user required" if !non_user_params[:user]
     raise "author required" if !non_user_params[:author]
     raise "device required" if !non_user_params[:device]
@@ -1120,7 +1120,7 @@ class LogSession < ActiveRecord::Base
       ref_ids[r['ref_id']] = true;
       ref_ids[r['log_id']] = true;
     }
-    Octopus.using(:master) do
+#    Octopus.using(:master) do
       LogSession.where(id: log_ids).each do |session|
         session.schedule_once(:check_for_merger)
       end
@@ -1136,7 +1136,7 @@ class LogSession < ActiveRecord::Base
         log_ids << log.id
       end
       LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
-    end
+#    end
     log_ids.length
   end
 
