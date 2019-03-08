@@ -292,7 +292,7 @@ class UserLink < ApplicationRecord
   end
   
   def self.assert_links(record)
-    record = Webhook.get_record(record) if record.is_a?(String)
+    record = Webhook.find_record(record) if record.is_a?(String)
     return false unless record
     links = links_for(record, true).select{|l| l['old_school'] }
     links.each do |link|
