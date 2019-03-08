@@ -1119,21 +1119,23 @@ class LogSession < ActiveRecord::Base
       ref_ids[r['ref_id']] = true;
       ref_ids[r['log_id']] = true;
     }
-    LogSession.where(id: log_ids).each do |session|
-      session.schedule_once(:check_for_merger)
-    end
-    merged_ids = {}
-    LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).each do |merger|
-      merger.started = true
-      merger.save
-      next if merged_ids[merger.log_session_id]
+    Octopus.using(:master) do
+      LogSession.where(id: log_ids).each do |session|
+        session.schedule_once(:check_for_merger)
+      end
+      merged_ids = {}
+      LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).each do |merger|
+        merger.started = true
+        merger.save
+        next if merged_ids[merger.log_session_id]
 
-      merged_ids[merger.log_session_id] = true
-      log = merger.log_session
-      log.schedule_once(:check_for_merger, true)
-      log_ids << log.id
+        merged_ids[merger.log_session_id] = true
+        log = merger.log_session
+        log.schedule_once(:check_for_merger, true)
+        log_ids << log.id
+      end
+      LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
     end
-    LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
     log_ids.length
   end
 
