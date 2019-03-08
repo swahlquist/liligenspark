@@ -389,9 +389,7 @@ class Board < ActiveRecord::Base
   def update_self_references
     @update_self_references = false
     buttons = self.settings['buttons'] || []
-    Octopus.using(:master) do
-      self.reload
-    end      
+    self.using(:master).reload
     save_if_same_edit_key do
       self.settings['self_references_updated'] = true
       buttons.each do |button|
