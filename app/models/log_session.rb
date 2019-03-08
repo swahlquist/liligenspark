@@ -996,6 +996,7 @@ class LogSession < ActiveRecord::Base
     modeling_events = valid_events.select{|e| e['type'] == 'modeling_activity'}
     valid_events -= modeling_events
     modeling_events.each{|e| process_modeling_event(e, non_user_params) }
+    return if modeling_events.length > 0 && valid_events.blank?
     raise "no valid events to process" if valid_events.blank?
     non_user_params[:user] = valid_users[valid_events[0]['user_id']]
     
