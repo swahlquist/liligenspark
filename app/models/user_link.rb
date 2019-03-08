@@ -53,6 +53,12 @@ class UserLink < ApplicationRecord
     links.each{|l| l.destroy }
     true
   end
+
+  def self.invalidate_cache_for(record)
+    return nil unless record && record.id
+    cache_key = "links/for/#{Webhook.get_record_code(record)}/#{record.updated_at.to_f}"
+    Permissable.permissions_redis.del(cache_key)
+  end
   
   def self.links_for(record, force=false)
     return [] unless record && record.id

@@ -266,6 +266,7 @@ class Board < ActiveRecord::Base
         self.public = true
       end
     end
+    UserLink.invalidate_cache_for(self)
           
     # TODO: encrypted search, lol
     self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
