@@ -17,12 +17,15 @@ class UserLink < ApplicationRecord
   end
   
   def touch_connections
+    simple_hash = {updated_at: Time.now}
+    board_hash = {updated_at: Time.now, boards_updated_at:  Time.now}
+    board_share = self.data['type'] == 'board_share'
     # TODO: sharding
-    User.where(id: [self.user_id, self.secondary_user_id].compact).update_all(updated_at: Time.now)
+    User.where(id: [self.user_id, self.secondary_user_id].compact).update_all(board_share ? board_hash : simple_hash)
     r = self.record
     if r
       # TODO: sharding
-      r.class.where(id: r.id).update_all(updated_at: Time.now)
+      r.class.where(id: r.id).update_all(r.is_a?(User) && board_share ? board_hash : simple_hash)
     end
     true
   end
@@ -54,16 +57,23 @@ class UserLink < ApplicationRecord
     true
   end
 
-  def self.invalidate_cache_for(record)
-    return nil unless record && record.id
-    cache_key = "links/for/#{Webhook.get_record_code(record)}/#{record.updated_at.to_f}"
+  def self.invalidate_cache_for(record, timestamp=nil)
+    record_code = nil
+    if record.is_a?(String) && timestamp
+      record_code = record
+    else
+      record_code = Webhook.get_record_code(record)
+      timestamp = record.updated_at.to_f
+    end
+    return nil unless record_code && timestamp
+    cache_key = "links/for/#{record_code}/#{timestamp.round(2)}"
     Permissable.permissions_redis.del(cache_key)
   end
   
   def self.links_for(record, force=false)
     return [] unless record && record.id
     record_code = Webhook.get_record_code(record)
-    cache_key = "links/for/#{record_code}/#{record.updated_at.to_f}"
+    cache_key = "links/for/#{record_code}/#{record.updated_at.to_f.round(2)}"
     cached_data = Permissable.permissions_redis.get(cache_key)
     if !force
       cache = JSON.parse(cached_data) rescue nil

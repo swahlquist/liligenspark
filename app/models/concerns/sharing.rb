@@ -43,14 +43,6 @@ module Sharing
     links.each do |link|
       res << link['user_id']
     end
-#     author = self.user
-#     res = []
-#     res << author.global_id if author
-#     if author && author.settings && author.settings['boards_i_shared'] && author.settings['boards_i_shared'][self.global_id]
-#       author.settings['boards_i_shared'][self.global_id].each do |share|
-#         res << share['user_id']
-#       end
-#     end
     res
   end
   
@@ -61,14 +53,6 @@ module Sharing
     links.each do |link|
       res << link['user_id'] if link['state'] && link['state']['include_downstream'] && !link['state']['pending']
     end
-#     author = self.user
-#     res = []
-#     res << author.global_id if author
-#     if author && author.settings && author.settings['boards_i_shared'] && author.settings['boards_i_shared'][self.global_id]
-#       author.settings['boards_i_shared'][self.global_id].each do |share|
-#         res << share['user_id'] if share['include_downstream'] && !share['pending']
-#       end
-#     end
     res
   end
   
@@ -231,7 +215,7 @@ module Sharing
       return [] if links.length == 0
       user.settings['all_shared_board_ids'] ||= {}
       sub_key = plus_editing ? 'editing' : 'viewing'
-      if user.settings['all_shared_board_ids'][sub_key] && user.settings['all_shared_board_ids'][sub_key]['timestamp'] >= user.updated_at.to_f
+      if user.settings['all_shared_board_ids'][sub_key] && user.settings['all_shared_board_ids'][sub_key]['timestamp'] >= user.boards_updated_at.to_f.round(2)
         return user.settings['all_shared_board_ids'][sub_key]['list']
       end
       
@@ -274,8 +258,9 @@ module Sharing
       
       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
 
+      user.boards_updated_at = Time.now
       user.settings['all_shared_board_ids'][sub_key] = {
-        'timestamp' => user.updated_at.to_f,
+        'timestamp' => boards_updated_at.to_f.round(2),
         'list' => all_board_ids
       }
       user.save

@@ -422,8 +422,7 @@ class User < ActiveRecord::Base
     
     if board_added || orphan_board_ids.length > 0
       # TODO: sharding
-      # TODO: finer-grained control, user.content_changed_at instead of updated_at
-      User.where(:id => self.id).update_all(:updated_at => Time.now)
+      User.where(:id => self.id).update_all(:updated_at => Time.now, :boards_updated_at => Time.now)
     end
     
     UserBoardConnection.where(:user_id => self.id, :board_id => orphan_board_ids).delete_all
