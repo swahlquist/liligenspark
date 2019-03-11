@@ -213,25 +213,6 @@ module Supervising
       link.secondary_user_id = supervisor.id
       link.save!
 
-
-#      user.settings['supervisors'] = (user.settings['supervisors'] || []).select{|s| s['user_id'] != supervisor.global_id }
-#       sup = {
-#         'user_id' => supervisor.global_id,
-#         'user_name' => supervisor.user_name,
-#         'edit_permission' => editor,
-#         'organization_unit_ids' => org_unit_ids
-#       }
-#       if organization_unit_id
-#         sup['organization_unit_ids'] << organization_unit_id 
-#         sup['organization_unit_ids'].uniq!
-#       end
-#       user.settings['supervisors'] << sup
-#       user.settings['link_codes'] -= [code] if code
-#       user.update_setting({
-#         'supervisors' => user.settings['supervisors'],
-#         'link_codes' => user.settings['link_codes']
-#       })
-
       supervisor.using(:master).reload
       # first-time supervisors should automatically be set to the supporter role
       if !supervisor.settings['supporter_role_auto_set']
@@ -247,15 +228,6 @@ module Supervising
           'plan_id' => 'slp_monthly_free'
         })
       end
-#       supervisor.settings['supervisees'] = (supervisor.settings['supervisees'] || []).select{|s| s['user_id'] != user.global_id }
-#       supervisor.settings['supervisees'] << {
-#         'user_id' => user.global_id,
-#         'user_name' => user.user_name,
-#         'edit_permission' => editor
-#       }
-#       supervisor.update_setting({
-#         'supervisees' => supervisor.settings['supervisees']
-#       })
       supervisor.schedule_once(:update_available_boards)
       user.save
       supervisor.save

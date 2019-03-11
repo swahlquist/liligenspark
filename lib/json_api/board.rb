@@ -86,16 +86,17 @@ module JsonApi::Board
     json['board']['protected_settings'] = board.settings['protected'] if board.protected_material?
     self.trace_execution_scoped(['json/board/images_and_sounds']) do
       hash = board.images_and_sounds_for(args[:permissions])
+      # TODO: caching: remove these
       json['images'] = hash['images']
       json['sounds'] = hash['sounds']
       json['board'] ||= {}
       json['board']['image_urls'] = {}
       json['board']['sound_urls'] = {}
-      json['images'].each{|i| 
+      hash['images'].each{|i| 
         json['board']['image_urls'][i['id']] = i['url'] 
         json['board']['has_fallbacks'] = true if i['fallback']
       }
-      json['sounds'].each{|i| 
+      hash['sounds'].each{|i| 
         json['board']['sound_urls'][i['id']] = i['url'] 
         json['board']['has_fallbacks'] = true if i['fallback']
       }

@@ -62,6 +62,7 @@ class UserLink < ApplicationRecord
     if record.is_a?(String) && timestamp
       record_code = record
     else
+      return nil unless record && record.id
       record_code = Webhook.get_record_code(record)
       timestamp = record.updated_at.to_f
     end
