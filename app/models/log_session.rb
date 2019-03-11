@@ -1131,7 +1131,7 @@ class LogSession < ActiveRecord::Base
         next if merged_ids[merger.log_session_id]
 
         merged_ids[merger.log_session_id] = true
-        log = merger.log_session
+        log = LogSession.using(:master).find_by(id: merger.log_session_id)
         log.schedule_once(:check_for_merger, true)
         log_ids << log.id
       end
