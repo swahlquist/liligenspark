@@ -1,5 +1,5 @@
 This is a notice that the gift you purchased, <b><%= @gift.code %></b> has been redeemed
-by the user <b><%= @recipient.user_name %></b>. This gift allows them to use the
+by the user <b><%= @recipient ? @recipient.user_name : 'unknown' %></b>. This gift allows them to use the
 "cloud extras" features of CoughDrop like reports and logging free for <%= @gift.duration %>.<br/><br/>
 
 If this gift was redeemed in error or if you have any questions, please 

@@ -3,6 +3,7 @@ module General
   
   def mail_message(user, subject, channel_type=nil)
     channel_type ||= caller_locations(1,1)[0].label
+    return nil unless user
     user.channels_for(channel_type).each do |path|
       mail(to: path, subject: "CoughDrop - #{subject}")
     end
