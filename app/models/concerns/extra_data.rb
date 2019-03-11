@@ -100,7 +100,7 @@ module ExtraData
     # directly from the client, instead of having to hold up the server request
     url = self.extra_data_private_url
     if url && !self.data[self.extra_data_attribute]
-      req = Typhoeus.get(url)
+      req = Typhoeus.get(url, timeout: 10)
       data = JSON.parse(req.body)
       self.data[self.extra_data_attribute] = data
     end

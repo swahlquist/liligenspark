@@ -25,7 +25,7 @@ class SubscriptionMailer < ActionMailer::Base
     if ip && ENV['IPSTACK_KEY']
       url = "http://api.ipstack.com/#{ip}?access_key=#{ENV['IPSTACK_KEY']}"
       begin
-        res = Typhoeus.get(url)
+        res = Typhoeus.get(url, timeout: 5)
         json = JSON.parse(res.body)
         @location = json && "#{json['city']}, #{json['region_name']}, #{json['country_code']}"
       rescue => e

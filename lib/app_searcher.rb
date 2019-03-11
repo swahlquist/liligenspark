@@ -42,7 +42,7 @@ module AppSearcher
       results
     elsif os == 'ios'
       url = "https://itunes.apple.com/search?term=#{CGI.escape(q)}&media=software"
-      response = Typhoeus.get(url)
+      response = Typhoeus.get(url, timeout: 3)
       json = JSON.parse(response.body)
       results = []
       json['results'][0, 15].each do |record|

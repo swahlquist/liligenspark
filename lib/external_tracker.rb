@@ -17,7 +17,7 @@ module ExternalTracker
     if ip && ENV['IPSTACK_KEY']
       url = "http://api.ipstack.com/#{ip}?access_key=#{ENV['IPSTACK_KEY']}"
       begin
-        res = Typhoeus.get(url)
+        res = Typhoeus.get(url, timeout: 5)
         location = JSON.parse(res.body)
       rescue => e
       end

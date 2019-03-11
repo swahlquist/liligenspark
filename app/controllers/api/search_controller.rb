@@ -15,7 +15,7 @@ class Api::SearchController < ApplicationController
         return api_error 400, {error: 'premium search not allowed'}
       end
     end
-    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}", :ssl_verifypeer => false)
+    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}", :timeout => 3, :ssl_verifypeer => false)
     results = JSON.parse(res.body)
     results.each do |result|
       type = MIME::Types.type_for(result['extension'])[0]
@@ -139,7 +139,7 @@ class Api::SearchController < ApplicationController
   end
   
   def audio
-    req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=en&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
+    req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=en&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     response.headers['Content-Type'] = req.headers['Content-Type']
     send_data req.body, :type => req.headers['Content-Type'], :disposition => 'inline'
   end

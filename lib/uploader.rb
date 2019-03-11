@@ -311,7 +311,7 @@ module Uploader
       cred = lessonpix_credentials(user)
       return false unless cred
       url = "http://lessonpix.com/apiKWSearch.php?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&word=#{CGI.escape(keyword)}&fmt=json&allstyles=n&limit=30"
-      req = Typhoeus.get(url)
+      req = Typhoeus.get(url, timeout: 5)
       return false if req.body && (req.body.match(/Token Mismatch/) || req.body.match(/Unkonwn User/) || req.body.match(/Unknown User/))
       results = JSON.parse(req.body) rescue nil
       list = []
@@ -348,7 +348,7 @@ module Uploader
       key = ENV['PIXABAY_KEY']
       return false unless key
       url = "https://pixabay.com/api/?key=#{key}&q=#{CGI.escape(keyword)}&image_type=#{type}&per_page=30&safesearch=true"
-      req = Typhoeus.get(url, :ssl_verifypeer => false)
+      req = Typhoeus.get(url, timeout: 5, :ssl_verifypeer => false)
       results = JSON.parse(req.body) rescue nil
       return [] unless results && results['hits']
       list = []
@@ -377,7 +377,7 @@ module Uploader
     elsif ['giphy_asl'].include?(library)
       str = "#asl #{keyword}"
       key = ENV['GIPHY_KEY']
-      res = Typhoeus.get("http://api.giphy.com/v1/gifs/search?q=#{CGI.escape(str)}&api_key=#{key}")
+      res = Typhoeus.get("http://api.giphy.com/v1/gifs/search?q=#{CGI.escape(str)}&api_key=#{key}", timeout: 5)
       results = JSON.parse(res.body)
       list = []
       results['data'].each do |result|
@@ -410,7 +410,7 @@ module Uploader
         token += ":pcs"
         protected_source = 'pcs'
       end
-      res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}&search_token=#{token}", :ssl_verifypeer => false)
+      res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}&search_token=#{token}", :ssl_verifypeer => false, timeout: 5)
       results = JSON.parse(res.body)
       results.each do |result|
         if result['extension']
@@ -450,7 +450,7 @@ module Uploader
     tarheel_prefix = "https://tarheelreader.org" #ENV['TARHEEL_PROXY'] || "https://images.weserv.nl/?url=tarheelreader.org"
     if source == 'tarheel'
       url = "https://tarheelreader.org/find/?search=#{CGI.escape(query)}&category=&reviewed=R&audience=E&language=en&page=1&json=1"
-      res = Typhoeus.get(url)
+      res = Typhoeus.get(url, timeout: 5)
       results = JSON.parse(res.body)
       list = []
       results['books'].each do |book|

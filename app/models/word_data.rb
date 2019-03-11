@@ -164,7 +164,7 @@ class WordData < ActiveRecord::Base
       word = suggestion['word']
       next unless available_words.include?(word)
       locale = suggestion['locale'] || 'en'
-      req = Typhoeus.get("https://workshop.openaac.org/api/v1/words/#{CGI.escape(word + ":" + locale)}")
+      req = Typhoeus.get("https://workshop.openaac.org/api/v1/words/#{CGI.escape(word + ":" + locale)}", timeout: 10)
       json = JSON.parse(req.body) rescue nil
       word = json && json['word']
       if word && !word['pending']
@@ -329,7 +329,7 @@ class WordData < ActiveRecord::Base
 
       url = "https://translation.googleapis.com/language/translate/v2?key=#{key}&target=#{dest_lang}&source=#{source_lang}&format=text"
       url += '&' + strings.map{|str| "q=#{CGI.escape(str || '')}" }.join('&')
-      data = Typhoeus.get(url)
+      data = Typhoeus.get(url, timeout: 10)
       json = data && JSON.parse(data.body) rescue nil
       if json && json['data'] && json['data']['translations']
         json['data']['translations'].each_with_index do |trans, idx|

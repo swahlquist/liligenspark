@@ -570,9 +570,9 @@ class Api::UsersController < ApplicationController
   protected
   def grab_url(url)
     url = url.sub(/^https/, 'http') if url.match(/lessonpix/)
-    res = Typhoeus.get(url)
+    res = Typhoeus.get(url, timeout: 3)
     if res.headers['Location']
-      res = Typhoeus.get(URI.escape(res.headers['Location']))
+      res = Typhoeus.get(URI.escape(res.headers['Location']), timeout: 3)
     end
     res
   end
