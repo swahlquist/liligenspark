@@ -1026,11 +1026,12 @@ describe Sharing, :type => :model do
       b.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b2.global_id}}, {'id' => 2, 'load_board' => {'id' => b3.global_id}}]
       b.save
       Worker.process_queues
-      expect(b.allows?(u, 'view')).to eq(true)
+      Worker.process_queues
+      expect(b.allows?(u.reload, 'view')).to eq(true)
       expect(b.allows?(u, 'edit')).to eq(true)
       expect(b.allows?(u, 'delete')).to eq(true)
       expect(b.allows?(u, 'share')).to eq(true)
-      expect(b.allows?(u2, 'view')).to eq(true)
+      expect(b.allows?(u2.reload, 'view')).to eq(true)
       expect(b.allows?(u2, 'edit')).to eq(true)
       expect(b.allows?(u2, 'delete')).to eq(true)
       expect(b.allows?(u2, 'share')).to eq(true)
@@ -1062,11 +1063,12 @@ describe Sharing, :type => :model do
       b.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b2.global_id}}]
       b.save
       Worker.process_queues
-      expect(b.allows?(u, 'view')).to eq(true)
+      Worker.process_queues
+      expect(b.allows?(u.reload, 'view')).to eq(true)
       expect(b.allows?(u, 'edit')).to eq(true)
       expect(b.allows?(u, 'delete')).to eq(true)
       expect(b.allows?(u, 'share')).to eq(true)
-      expect(b.allows?(u2, 'view')).to eq(true)
+      expect(b.allows?(u2.reload, 'view')).to eq(true)
       expect(b.allows?(u2, 'edit')).to eq(true)
       expect(b.allows?(u2, 'delete')).to eq(true)
       expect(b.allows?(u2, 'share')).to eq(true)
@@ -1093,6 +1095,8 @@ describe Sharing, :type => :model do
       expect(b.allows?(u2, 'edit')).to eq(false)
       
       b.share_with(u2, true, true)
+      Worker.process_queues
+      Worker.process_queues
       u2.reload
       u.reload
       expect(b2.allows?(u, 'view')).to eq(true)
@@ -1100,7 +1104,7 @@ describe Sharing, :type => :model do
       expect(b.allows?(u2, 'edit')).to eq(true)
 
       b.reload.update_shares_for(u2.reload, true)
-#      Worker.process_queues
+      Worker.process_queues
       u2.reload
       u.reload
       expect(b2.reload.allows?(u, 'view')).to eq(true)
@@ -1155,6 +1159,7 @@ describe Sharing, :type => :model do
       User.link_supervisor_to_user(u, u4)
       b.share_with(u4, true, false)
       Worker.process_queues
+      Worker.process_queues
       expect(b.allows?(u.reload, 'view')).to eq(true)
       expect(b.allows?(u4.reload, 'view')).to eq(true)
       expect(b.allows?(u5.reload, 'view')).to eq(false)
@@ -1169,6 +1174,7 @@ describe Sharing, :type => :model do
       expect(b4.allows?(u5, 'view')).to eq(false)
 
       User.link_supervisor_to_user(u5, u4)
+      Worker.process_queues
       expect(b.allows?(u.reload, 'view')).to eq(true)
       expect(b.allows?(u4.reload, 'view')).to eq(true)
       expect(b.allows?(u5.reload, 'view')).to eq(true)

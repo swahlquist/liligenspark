@@ -112,7 +112,223 @@ describe Board, :type => :model do
         'view' => true
       })
     end
-    
+
+    it 'should allow viewing a board that was shared with me' do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      b.share_with(u1)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true
+      })
+      expect(b.permissions_for(u2.reload)).to eq({
+        'user_id' => u2.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+    end
+
+    it 'should allow edit-shared users to edit' do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      b.share_with(u1, false, true)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+      expect(b.permissions_for(u2.reload)).to eq({
+        'user_id' => u2.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+    end
+
+    it 'should allow supervisors to view boards that have been shared with their supervisees' do
+      sup = User.create
+      com = User.create
+      random = User.create
+      User.link_supervisor_to_user(sup, com, nil, true)
+      b = Board.create(user: random)
+      b.share_with(com)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.permissions_for(sup.reload)).to eq({
+        'user_id' => sup.global_id,
+        'view' => true
+      })
+      expect(b.permissions_for(com.reload)).to eq({
+        'user_id' => com.global_id,
+        'view' => true
+      })
+    end
+
+    it 'should allow access to downstream shares' do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      b1.share_with(u1, true)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true
+      })
+    end
+
+    it 'should not allow access to downstream shares if not downstream share' do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      b1.share_with(u1)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id
+      })
+    end
+
+    it 'should allow edit access to downstream shares authored by the sharer' do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      b1.share_or_unshare(u1, true, :include_downstream => true, :allow_editing => true, :pending_allow_editing => false)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+    end
+
+    it "should not allow access to downstream shares by the sharer's supervisees" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      b3 = Board.create(user: u3)
+      User.link_supervisor_to_user(u2, u3, nil, true)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      b1.share_or_unshare(u1, true, :include_downstream => true, :allow_editing => true, :pending_allow_editing => false)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+      expect(b3.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id
+      })
+      expect(b2.reload.permissions_for(u2.reload)).to eq({
+        'user_id' => u2.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+    end
+
+    it "should not allow edit access to downstream shares if not granted" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      b1.share_or_unshare(u1, true, :include_downstream => true, :allow_editing => true, :pending_allow_editing => true)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u1.reload)).to eq({
+        'user_id' => u1.global_id,
+        'view' => true
+      })
+    end
+
+    it "should not allow org admins to view boards outside the org that have been shared with people in their org (unless you can find a way to make this performant)" do
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      u = User.create
+      m = User.create
+      
+      o.add_manager(m.user_name, true)
+      o.add_user(u.user_name, false)
+      m.reload
+      u.reload
+      b = Board.create(user: u)
+      
+      expect(b.allows?(m, 'view')).to eq(true)
+      expect(b.allows?(m, 'edit')).to eq(true)
+      expect(b.allows?(m, 'delete')).to eq(true)
+
+      u2 = User.create
+      b2 = Board.create(user: u2)
+      b2.share_with(u, false, true)
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2.reload.permissions_for(u.reload)).to eq({
+        'user_id' => u.global_id,
+        'view' => true,
+        'edit' => true,
+        'delete' => true,
+        'share' => true
+      })
+      expect(b2.reload.permissions_for(m.reload)).to eq({
+        'user_id' => m.global_id
+      })
+    end
+
     it "should not allow recursive permissions (I shouldn't be able to see the supervisee of my supervisee" do
       communicator = User.create
       supervisor = User.create
