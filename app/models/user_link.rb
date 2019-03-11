@@ -6,7 +6,7 @@ class UserLink < ApplicationRecord
   
   belongs_to :user
   secure_serialize :data
-  replicated_model
+#  replicated_model
 
   before_save :generate_defaults
   after_save :touch_connections

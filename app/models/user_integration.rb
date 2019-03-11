@@ -15,7 +15,7 @@ class UserIntegration < ActiveRecord::Base
   after_destroy :disable_device
   after_destroy :delete_webhooks
   secure_serialize :settings
-  replicated_model
+#  replicated_model
   
   add_permissions('view', ['*']) { self.settings['global'] || self.template }
   add_permissions('view', ['read_profile']) {|user| self.user_id == user.id }

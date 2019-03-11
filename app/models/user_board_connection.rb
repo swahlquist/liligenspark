@@ -2,7 +2,7 @@ class UserBoardConnection < ActiveRecord::Base
   before_save :generate_defaults
   belongs_to :board
   belongs_to :user
-  replicated_model
+#  replicated_model
   
   def generate_defaults
     self.home ||= false

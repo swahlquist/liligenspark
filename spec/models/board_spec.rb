@@ -100,7 +100,10 @@ describe Board, :type => :model do
       User.link_supervisor_to_user(supervisor, communicator, nil, true)
       b = Board.create(:user => random)
       b.share_with(communicator)
-      expect(b.permissions_for(communicator)).to eq({
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.permissions_for(communicator.reload)).to eq({
         'user_id' => communicator.global_id,
         'view' => true
       })
