@@ -117,7 +117,7 @@ class LogSession < ActiveRecord::Base
         speech ||= WordData.find_word(word)
         if !speech && !event['modified_by_next'] && (event['spelling'] || event['button']['completion'] || !(event['button']['vocalization'] || "").strip.match(/^[\+:]/))
           speech = {'types' => ['other']}
-          if event['button'] && event['button']['type'] == 'speak'
+          if event['button'] && event['button']['type'] == 'speak' && !word.match(/\s/)
             RedisInit.default.hincrby('missing_words', word.to_s, 1) if RedisInit.default
           end
         end
