@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190309003636) do
+ActiveRecord::Schema.define(version: 20190311193943) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -74,13 +74,8 @@ ActiveRecord::Schema.define(version: 20190309003636) do
     t.datetime "updated_at"
     t.string   "current_revision", limit: 255
     t.boolean  "any_upstream"
-    t.index ["home_popularity"], name: "index_boards_on_home_popularity", using: :btree
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
-    t.index ["popularity", "any_upstream"], name: "index_boards_on_popularity_and_any_upstream", using: :btree
-    t.index ["popularity"], name: "index_boards_on_popularity", using: :btree
-    t.index ["public", "popularity", "any_upstream", "id"], name: "index_boards_on_public_and_popularity_and_any_upstream_and_id", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
-    t.index ["search_string"], name: "index_boards_on_search_string", using: :btree
   end
 
   create_table "button_images", force: :cascade do |t|
@@ -100,7 +95,6 @@ ActiveRecord::Schema.define(version: 20190309003636) do
     t.boolean  "removable"
     t.index ["file_hash"], name: "index_button_images_on_file_hash", using: :btree
     t.index ["removable"], name: "index_button_images_on_removable", using: :btree
-    t.index ["url"], name: "index_button_images_on_url", using: :btree
   end
 
   create_table "button_sounds", force: :cascade do |t|
@@ -231,8 +225,6 @@ ActiveRecord::Schema.define(version: 20190309003636) do
     t.index ["needs_remote_push"], name: "index_log_sessions_on_needs_remote_push", using: :btree
     t.index ["user_id", "goal_id"], name: "index_log_sessions_on_user_id_and_goal_id", using: :btree
     t.index ["user_id", "highlighted"], name: "index_log_sessions_on_user_id_and_highlighted", using: :btree
-    t.index ["user_id", "log_type", "has_notes", "started_at"], name: "log_sessions_noted_index", using: :btree
-    t.index ["user_id", "log_type", "started_at"], name: "index_log_sessions_on_user_id_and_log_type_and_started_at", using: :btree
     t.index ["user_id", "started_at"], name: "index_log_sessions_on_user_id_and_started_at", using: :btree
   end
 
