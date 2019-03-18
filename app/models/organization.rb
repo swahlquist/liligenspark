@@ -300,7 +300,11 @@ class Organization < ActiveRecord::Base
   
   def self.manager?(user)
     links = UserLink.links_for(user)
-    !!links.detect{|l| l['type'] == 'org_manager' }
+    res = !!links.detect{|l| l['type'] == 'org_manager' }
+    if res && !user.settings['possible_admin']
+      user.schedule(:update_setting, 'possible_admin', true)
+    end
+    res
   end
   
 #   def self.upgrade_management_settings

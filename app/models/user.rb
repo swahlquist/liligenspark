@@ -34,18 +34,20 @@ class User < ActiveRecord::Base
 
   # cache should be invalidated if:
   # - a supervisor is added or removed
+  # super-fast lookups, already have the data
   add_permissions('view_existence', ['*']) { true } # anyone can get basic information
   add_permissions('view_existence', 'view_detailed', 'view_deleted_boards', 'view_word_map', ['*']) {|user| user.id == self.id }
   add_permissions('view_existence', 'view_detailed', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards') {|user| user.id == self.id }
   add_permissions('view_existence', 'view_detailed', ['*']) { self.settings && self.settings['public'] == true }
+  add_permissions('set_goals', ['basic_supervision']) {|user| user.id == self.id }
+
   add_permissions('edit', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, true) }
   add_permissions('edit', 'edit_boards', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, false) }
   add_permissions('view_existence', 'view_detailed', 'supervise', 'view_deleted_boards') {|user| user.supervisor_for?(self) }
+  add_permissions('view_detailed', 'view_deleted_boards', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) }
+  add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
   add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) }
   add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
-  add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
-  add_permissions('view_detailed', 'view_deleted_boards', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) }
-  add_permissions('set_goals', ['basic_supervision']) {|user| user.id == self.id }
   cache_permissions
   
   def self.find_for_login(user_name)
@@ -194,7 +196,11 @@ class User < ActiveRecord::Base
       self.settings['anonymized_identifier'] = GoSecure.nonce('user_pseudonymization')
       self.save
     end
-    GoSecure.hmac("#{self.global_id}:#{self.created_at.iso8601}:#{str}", self.settings['anonymized_identifier'], 1)
+    GoSecure.lite_hmac("#{self.global_id}:#{self.created_at.iso8601}:#{str}", self.settings['anonymized_identifier'], 1)
+  end
+
+  def possible_admin?
+    !!(self.settings && self.settings['possible_admin'])
   end
   
   def self.preference_defaults

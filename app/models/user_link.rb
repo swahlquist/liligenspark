@@ -67,14 +67,14 @@ class UserLink < ApplicationRecord
       timestamp = record.updated_at.to_f
     end
     return nil unless record_code && timestamp
-    cache_key = "links/for/#{record_code}/#{timestamp.round(2)}"
+    cache_key = "links/for/#{record_code}/#{timestamp.round(3)}"
     Permissable.permissions_redis.del(cache_key)
   end
   
   def self.links_for(record, force=false)
     return [] unless record && record.id
     record_code = Webhook.get_record_code(record)
-    cache_key = "links/for/#{record_code}/#{record.updated_at.to_f.round(2)}"
+    cache_key = "links/for/#{record_code}/#{record.updated_at.to_f.round(3)}"
     cached_data = Permissable.permissions_redis.get(cache_key)
     if !force
       cache = JSON.parse(cached_data) rescue nil
