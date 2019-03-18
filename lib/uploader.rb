@@ -36,6 +36,16 @@ module Uploader
     # then return the existing record URL
   end
 
+  def self.remote_touch(path)
+    config = remote_upload_config
+    service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret])    
+    bucket = service.buckets.find(config[:bucket_name])
+    object = bucket.objects.find(path) rescue nil
+    return false unless object
+    res = object.copy(:key => path, :bucket => bucket) rescue nil
+    !!res
+  end
+
   def self.remote_remove(url)
     remote_path = url.sub(/^https:\/\/#{ENV['UPLOADS_S3_BUCKET']}\.s3\.amazonaws\.com\//, '')
     remote_path = remote_path.sub(/^https:\/\/s3\.amazonaws\.com\/#{ENV['UPLOADS_S3_BUCKET']}\//, '')
