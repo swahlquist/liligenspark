@@ -9,7 +9,9 @@ class ApplicationController < ActionController::Base
   def set_host
     Rails.logger.info("Request ID #{request.headers['X-Request-Id'] || request.headers['X-Request-ID'] || request.request_id} #{request.headers['X-Request-Start']} #{}")
     if request.headers['X-SILENCE-LOGGER']
-      Rails.logger.info("APP LOGS DISABLED, user has opted out of tracking")
+      Rails.logger.silence(Logger::INFO) do
+        Rails.logger.info("APP LOGS DISABLED, user has opted out of tracking")
+      end
     end
     JsonApi::Json.set_host("#{request.protocol}#{request.host_with_port}")
   end
