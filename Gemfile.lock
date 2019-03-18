@@ -762,7 +762,7 @@ GEM
     geokit (1.13.1)
     globalid (0.4.1)
       activesupport (>= 4.2.0)
-    go_secure (0.66)
+    go_secure (0.67)
       oj
     google_play_search (0.0.24)
       httpclient (~> 2.7)
@@ -843,7 +843,7 @@ GEM
       prawn
       rubyzip
       typhoeus
-    oj (3.7.4)
+    oj (3.7.9)
     paper_trail (10.1.0)
       activerecord (>= 4.2, < 6.0)
       request_store (~> 1.1)
