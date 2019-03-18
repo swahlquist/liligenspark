@@ -53,6 +53,7 @@ class Organization < ActiveRecord::Base
 #     user.settings['manager_for'] ||= {}
 #     user.settings['manager_for'][self.global_id] = {'full_manager' => !!full, 'added' => Time.now.iso8601}
     user.settings['preferences']['role'] = 'supporter'
+    user.settings['possible_admin'] = true
     user.assert_current_record!
     user.save
 #     self.attach_user(user, 'manager')

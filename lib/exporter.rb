@@ -285,7 +285,7 @@ More information about the file formats being used is available at https://www.o
             if next_event['action']['new_id']
               dest_id = next_event['action']['new_id']['id']
               dest_id ||= Board.where(key: next_event['action']['new_id']['key']).select('id').first.global_id if next_event['action']['new_id']['key']
-              action[:destination_board_id] = next_event['action']['new_id']['id']
+              action[:destination_board_id] = anon(next_event['action']['new_id']['id'])
             end
             e['actions'] << action
           end
@@ -308,7 +308,7 @@ More information about the file formats being used is available at https://www.o
           # TODO: record the missing board id when saving the log rather than when 
           # generating the log file for better accuracy
           dest_id ||= Board.where(key: event['action']['new_id']['key']).select('id').first.global_id if event['action']['new_id']['key']
-          e['destination_board_id'] = dest_id if dest_id
+          e['destination_board_id'] = anon(dest_id) if dest_id
         end
       elsif event['type'] == 'utterance'
         e['type'] = 'utterance'
@@ -325,7 +325,7 @@ More information about the file formats being used is available at https://www.o
             sentence << (button['vocalization'] || button['label'])
             res = {
               id: button['button_id'],
-              board_id: (button['board'] || {})['id'] || 'none',
+              board_id: anon((button['board'] || {})['id'] || 'none'),
               label: button['label'],
             }
             res[:vocalization] = button['vocalization'] if button['vocalization']

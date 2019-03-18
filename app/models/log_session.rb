@@ -259,7 +259,7 @@ class LogSession < ActiveRecord::Base
       self.data['anonymized_identifier'] = GoSecure.nonce('log_pseudonymization')
       self.save
     end
-    GoSecure.hmac("#{self.global_id}:#{self.created_at.iso8601}", self.data['anonymized_identifier'], 1)
+    GoSecure.lite_hmac("#{self.global_id}:#{self.created_at.iso8601}", self.data['anonymized_identifier'], 1)
   end
   
   def require_nonce
