@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190311193943) do
+ActiveRecord::Schema.define(version: 20190312191320) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -75,6 +75,7 @@ ActiveRecord::Schema.define(version: 20190311193943) do
     t.string   "current_revision", limit: 255
     t.boolean  "any_upstream"
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
+    t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
   end
 
