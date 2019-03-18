@@ -233,21 +233,15 @@ describe OrganizationUnit, :type => :model do
       ou.settings['communicators'] = []
       ou.save
       expect(ou.all_user_ids).to eq([])
-      ou.settings['supervisors'] = [{'user_id' => 'asdf'}]
-      ou.save
-      expect(ou.all_user_ids).to eq(['asdf'])
-      ou.settings['communicators'] = [{'user_id' => 'asdf'}, {'user_id' => 'jkl'}]
-      ou.save
-      expect(ou.all_user_ids).to eq(['asdf', 'jkl'])
-      ou.save
       u1 = User.create
       o.add_supervisor(u1.global_id, false)
       expect(ou.add_supervisor(u1.global_id)).to eq(true)
-      expect(ou.all_user_ids).to eq([u1.global_id, 'asdf', 'jkl'])
+      Worker.process_queues
+      expect(ou.reload.all_user_ids).to eq([u1.global_id])
       u2 = User.create
       o.add_user(u2.global_id, false, false)
       expect(ou.add_communicator(u2.global_id)).to eq(true)
-      expect(ou.reload.all_user_ids.sort).to eq([u1.global_id, u2.global_id, 'asdf', 'jkl'])
+      expect(ou.reload.all_user_ids.sort).to eq([u1.global_id, u2.global_id])
     end
   end
   
