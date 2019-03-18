@@ -12,9 +12,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   
   def generate_defaults
     self.data ||= {}
+    self.data['remote_salt'] = GoSecure.nonce('remote_salt')
     @buttons = nil
     unless skip_extra_data_processing?
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
+      self.data['public_board_ids'] = Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
       self.data['button_count'] = self.buttons.length
       self.data['board_count'] = self.buttons.map{|b| b['board_id'] }.uniq.length
@@ -99,6 +101,126 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   def has_buttons_defined?
     self.data && (self.data['buttons'] || self.data['extra_url'])
   end
+
+  def url_for(user)
+    allowed_ids = {}
+    button_set = self
+    if button_set.data['source_id']
+      button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+    end
+    public_board_ids = button_set.data['public_board_ids'] || Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
+    public_board_ids.each{|id| allowed_ids[id] = true }
+    if user
+      user.private_viewable_board_ids.each do |id|
+        allowed_ids[id] = true
+      end
+      if user.possible_admin?
+        if Organization.admin_manager?(user)
+          button_set.data['board_ids'].each{|id| allowed_ids[id] = true }
+        end
+      end
+    end
+    @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
+    return button_set.extra_data_private_url if @unviewable_ids.blank?
+
+    if !button_set.data['remote_salt']
+      button_set.generate_defaults
+      button_set.save
+    end
+
+    @remote_hash = GoSecure.sha512(@unviewable_ids.sort.to_json, button_set.data['remote_salt'])
+    if (((button_set.data['remote_paths'] || {})[@remote_hash] || {})['expires'] || 0) > Time.now.to_i
+      if button_set.data['remote_paths'][@remote_hash]['expires'] < 2.weeks.from_now.to_i
+        button_set.schedule_once(:touch_remote, @remote_hash)
+      end
+      # remote check to see if the path exists
+      return "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][@remote_hash]['path']}"
+    end
+    @remote_path = "extras/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
+    return nil
+  end
+
+  def touch_remote(hash)
+    if self.data['remote_paths'] && self.data['remote_paths'][hash]
+      res = Uploader.remote_touch(self.data['remote_paths'][hash]['path'])
+      if res
+        self.data['remote_paths'][hash]['expires'] = 5.months.from_now.to_i
+        self.save
+      else
+        self.data['remote_paths'].delete(hash)
+        self.save
+      end
+      # TODO: remote call to update 
+    end
+  end
+
+  def self.generate_for(board_id, user_id)
+    board = Board.find_by_global_id(board_id)
+    user = user_id && User.find_by_global_id(user_id)
+    return {success: false, error: 'missing board or user'} unless board && user
+    button_set = board.board_downstream_button_set
+    if !button_set
+      self.update_for(board_id, true)
+      button_set = board.reload.board_downstream_button_set
+    end
+    return {success: false, error: 'could not generate button set'} unless button_set
+    if button_set.data['source_id']
+      button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+    end
+    url = button_set.url_for(user)
+    return {success: true, url: url} if url
+    unviewable_ids = button_set.instance_variable_get('@unviewable_ids')
+    remote_path = button_set.instance_variable_get('@remote_path')
+    remote_hash = button_set.instance_variable_get('@remote_hash')
+    if !button_set.data['extra_data_nonce']
+      # If the button set has never been detached, do that part
+      button_set.detach_extra_data
+      return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank?
+    end
+    button_set.data['remote_paths'] ||= {}
+    if button_set.data['remote_paths'][remote_hash] && !button_set.data['remote_paths'][remote_hash]['path'] && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
+      # Don't allow repeated regeneration attempts to bog things down
+      return {success: false, error: 'button set failed to generate, waiting for cool-down period'}
+    end
+
+    button_set.generate_defaults
+    bad_ids = {}
+    unviewable_ids.each{|id| bad_ids[id] = true }
+    button_set.assert_extra_data
+    available_buttons = button_set.data['buttons'].select{|b| !bad_ids[b['board_id']] }
+
+    path = remote_path
+    button_set.data['remote_paths'][remote_hash] = {'generated' => Time.now.to_i, 'path' => path, 'expires' => 5.months.from_now.to_i}
+    begin
+      file = Tempfile.new("stash")
+      file.write(available_buttons.to_json)
+      file.close
+      Uploader.remote_upload(remote_path, file.path, 'text/json')
+    rescue => e
+      button_set.data['remote_paths'][remote_hash]['path'] = false
+      button_set.data['remote_paths'][remote_hash]['error'] = e.message
+    end
+    button_set.save
+    return {success: false, error: 'button set failed to generate'} unless button_set.data['remote_paths'][remote_hash]['path']
+    {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
+  end
+
+  def self.flush_caches(board_ids, timestamp)
+    board_ids.each do |board_id|
+      board = Board.find_by_global_id(board_id)
+      bs = board && board.board_downstream_button_set
+      if bs && bs.data['remote_paths']
+        bs.data['remote_paths'].each do |hash, obj|
+          if obj['generated'] < timestamp
+            path = obj['path']
+            Uploader.remote_remove(path)
+            bs.data['remote_paths'].delete(hash)
+          end
+        end
+        bs.save
+      end
+    end
+  end
   
   def self.update_for(board_id, immediate_update=false, traversed_ids=[])
     traversed_ids ||= []
@@ -132,7 +254,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           # legacy lists don't correctly filter linked board ids
           valid_button = bs.buttons.detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
           if valid_button && bs != set
-            do_update = true if bs.updated_at < set.updated_at
+            do_update = true if bs.updated_at <= set.updated_at
             set.data['source_id'] = bs.global_id
             set.data['buttons'] = nil
             set.save
@@ -145,7 +267,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           if valid_button && bs.data['source_id'] != set.global_id
             source = BoardDownstreamButtonSet.find_by_global_id(bs.data['source_id'])
             if source
-              do_update = true if source.updated_at < set.updated_at
+              do_update = true if source.updated_at <= set.updated_at
               source_board_id = source.related_global_id(source.board_id) if source
               set.data['source_id'] = bs.data['source_id']
               set.data['buttons'] = nil
@@ -156,7 +278,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         if source_board_id
           # If pointing to a source, go ahead and update that source
           # as part of the update process for this button set
-          if do_update
+          if do_update && !traversed_ids.include?(source_board_id)
             if immediate_update
               BoardDownstreamButtonSet.update_for(source_board_id, true, traversed_ids)
             else
@@ -245,15 +367,19 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
       set.save
+
+      board_ids_to_flush = [board.global_id]
       lost_board_ids = existing_board_ids - set.data['linked_board_ids']
-      # Any boards that we no longer reference are going to need their
+      # Any boards that we no longer referenced are going to need their
       # own button data instead of using this button set as their source
       lost_board_ids.each do |id|
         BoardDownstreamButtonSet.schedule_update(id, traversed_ids)
+        board_ids_to_flush << id
       end
 
       # Retrieve all linked boards and set them to this source
       Board.find_batches_by_global_id(set.data['linked_board_ids'] || [], :batch_size => 3) do |brd|
+        board_ids_to_flush << brd.global_id
         bs = brd.board_downstream_button_set
         # TODO: it was too expensive updating everyone with the wrong source,
         # so I changed it to only update everyone with no source, since 
@@ -264,6 +390,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           bs.save
         end
       end
+      # TODO: clear out existing caches for a button set (and maybe lost boards and source_id board on update
+      BoardDownstreamButtonSet.schedule_once(:flush_caches, board_ids_to_flush, Time.now.to_i)
 
       if board.settings['board_downstream_button_set_id'] != set.global_id
         # TODO: race condition?
@@ -274,6 +402,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   end
 
   def self.schedule_update(board_id, traversed_ids)
+    # This appears to be here to prevent multiple updates happening
+    # independently from updating button sets when they don't have to.
     key = "traversed/button_set/#{board_id}"
     traversed = JSON.parse(RedisInit.default.get(key)) rescue nil
     traversed ||= []

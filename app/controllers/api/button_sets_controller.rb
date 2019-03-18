@@ -54,22 +54,17 @@ class Api::ButtonSetsController < ApplicationController
     board = nil
     button_set = nil
     board = Board.find_by_path(params['id'])
-    button_set = board && board.board_downstream_button_set
     return unless exists?(board, params['id'])
-    allowed = false
-    # Button sets have a nonce, so if 
-    #if board.button_set_id == params['id']
-      # TODO: see above, button_set_id will never match board.global_id
-      #allowed = true
-    #else
-      allowed = allowed?(board, 'view')
-    #end
-    return unless allowed
-    if button_set
-      render json: {exists: true, id: params['id']}
+    button_set = board && board.board_downstream_button_set
+    return unless allowed?(board, 'view')
+    download_url = button_set && button_set.url_for(@api_user)
+    if button_set && download_url
+      render json: {exists: true, id: params['id'], url: download_url}
       return
+    else
+      user_id = @api_user ? @api_user.global_id : nil
+      progress = Progress.schedule(BoardDownstreamButtonSet, :generate_for, board.global_id, user_id)
+      render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
     end
-    progress = Progress.schedule(BoardDownstreamButtonSet, :update_for, board.global_id, true)
-    render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
   end
 end

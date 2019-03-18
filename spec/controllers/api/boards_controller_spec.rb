@@ -1114,6 +1114,8 @@ describe Api::BoardsController, :type => :controller do
       u = User.create
       b = Board.create(:user => u)
       b.share_with(@user, true, true)
+      Worker.process_queues
+      Worker.process_queues
       post :share_response, params: {:board_id => b.key, :approve => 'true'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -1126,6 +1128,8 @@ describe Api::BoardsController, :type => :controller do
       u = User.create
       b = Board.create(:user => u)
       b.share_with(@user, true, true)
+      Worker.process_queues
+      Worker.process_queues
       post :share_response, params: {:board_id => b.key, :approve => 'false'}
       expect(response).to be_success
       json = JSON.parse(response.body)

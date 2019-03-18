@@ -188,6 +188,75 @@ describe Uploader do
     end
     
   end
+
+  describe 'remote_touch' do
+    it 'should copy the path to the same location' do
+      object = OpenStruct.new
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(object)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      expect(Uploader.remote_touch('images/abcdefg/asdf-asdf.asdf')).to eq(true)
+    end
+
+    it 'should return false on failed update' do
+      object = OpenStruct.new
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(object)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_raise("bacon")
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      expect(Uploader.remote_touch('images/abcdefg/asdf-asdf.asdf')).to eq(false)
+    end
+
+    it 'should return false on missing path' do
+      object = OpenStruct.new
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_raise("nope")
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      expect(Uploader.remote_touch('images/abcdefg/asdf-asdf.asdf')).to eq(false)
+    end
+
+    it 'should return true on success' do
+      object = OpenStruct.new
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(object)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      expect(Uploader.remote_touch('images/abcdefg/asdf-asdf.asdf')).to eq(true)
+    end
+  end
   
   describe 'find_images' do
     it 'should return nothing for unknown libraries' do
@@ -208,7 +277,7 @@ describe Uploader do
     it 'should make a remote request' do
       res = OpenStruct.new(body: [
       ].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'arasaac', nil)
       expect(images).to eq([])
     end

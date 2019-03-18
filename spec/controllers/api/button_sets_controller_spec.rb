@@ -1,6 +1,12 @@
 require 'spec_helper'
 
 describe Api::ButtonSetsController, :type => :controller do
+  before(:each) do
+    @pre_env = ENV['REMOTE_EXTRA_DATA']
+  end
+  after(:each) do
+    ENV['REMOTE_EXTRA_DATA'] = @pre_env
+  end
   describe "show" do
     it "should not require api token" do
       get :show, params: {:id => 'asdf'}
@@ -30,7 +36,7 @@ describe Api::ButtonSetsController, :type => :controller do
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json['buttonset']['id']).to eq(b.global_id)
-      expect(json['buttonset']['buttons']).to eq([])
+      expect(json['buttonset']['key']).to eq(b.key)
     end
   end
   
@@ -88,13 +94,18 @@ describe Api::ButtonSetsController, :type => :controller do
       assert_unauthorized
     end
 
-    it "should return exists message if true" do
+    it "should return exists message if true, including URL" do
       token_user
       b = Board.create(user: @user)
-      BoardDownstreamButtonSet.update_for(b.global_id,)
+      BoardDownstreamButtonSet.update_for(b.global_id,true)
+      b.reload
+      expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b)
+      bs = b.board_downstream_button_set
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:extra_data_private_url).and_return("asdf")
       post :generate, params: {'id' => b.global_id}
       json = assert_success_json
-      expect(json).to eq({'exists' => true, 'id' => b.global_id})
+      expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'asdf'})
     end
 
     it "should return a progress response if not yet generated" do
@@ -105,8 +116,58 @@ describe Api::ButtonSetsController, :type => :controller do
       expect(json['progress']).to_not eq(nil)
       p = Progress.find_by_global_id(json['progress']['id'])
       expect(p.settings['class']).to eq('BoardDownstreamButtonSet')
-      expect(p.settings['method']).to eq('update_for')
-      expect(p.settings['arguments']).to eq([b.global_id, true])
+      expect(p.settings['method']).to eq('generate_for')
+      expect(p.settings['arguments']).to eq([b.global_id, @user.global_id])
+    end
+
+    it "should return a progress response if exists but no valid url for the given user" do
+      token_user
+      u = User.create
+      b = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b.share_with(@user)
+      @user.reload
+      b.process({'buttons' => [{'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}]}, {user: u})
+      b2.process({'buttons' => [{'id' => 2, 'label' => 'scat'}]}, {user: u})
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      b.reload
+      bs = b.board_downstream_button_set
+      expect(bs).to_not eq(nil)
+      expect(bs.data['board_ids']).to eq([b.global_id, b2.global_id])
+      expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to_not receive(:extra_data_private_url)
+      post :generate, params: {'id' => b.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.find_by_global_id(json['progress']['id'])
+      expect(p.settings['class']).to eq('BoardDownstreamButtonSet')
+      expect(p.settings['method']).to eq('generate_for')
+      expect(p.settings['arguments']).to eq([b.global_id, @user.global_id])
+    end
+
+    it "should return a url on progress completion" do
+      token_user
+      b = Board.create(user: @user)
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      post :generate, params: {'id' => b.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.find_by_global_id(json['progress']['id'])
+      expect(p.settings['class']).to eq('BoardDownstreamButtonSet')
+      expect(p.settings['method']).to eq('generate_for')
+      expect(p.settings['arguments']).to eq([b.global_id, @user.global_id])
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      bs = b.reload.board_downstream_button_set
+      expect(bs).to_not eq(nil)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:url_for).with(@user).and_return("asdf")
+      Progress.perform_action(p.id)
+      expect(p.reload.settings['result']).to eq({'success' => true, 'url' => 'asdf'})
     end
   end
 end

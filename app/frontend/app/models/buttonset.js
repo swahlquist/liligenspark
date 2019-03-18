@@ -18,18 +18,17 @@ var button_set_cache = {};
 
 CoughDrop.Buttonset = DS.Model.extend({
   key: DS.attr('string'),
-  buttons_json: DS.attr('raw'),
+  root_url: DS.attr('string'),
   buttons: DS.attr('raw'),
-  board_ids: DS.attr('raw'),
   name: DS.attr('string'),
   full_set_revision: DS.attr('string'),
-  set_buttons: function() {
-    var buttons = null;
-    try {
-      buttons = JSON.parse(this.get('buttons_json'));
-    } catch(e) { }
-    this.set('buttons', buttons);
-  }.observes('buttons_json'),
+  board_ids: function() {
+    var hash = {};
+    this.get('buttons').forEach(function(b) { hash[b.board_id] = true; });
+    var res = [];
+    for(var id in hash) { res.push(id); }
+    return res;
+  }.property('buttons'),
   buttons_for_level: function(board_id, level) {
     var board_ids = {};
     var boards_to_check = [{id: board_id}];
@@ -649,31 +648,66 @@ CoughDrop.Buttonset.load_button_set = function(id) {
   }
   if(found) { return RSVP.resolve(found); }
   
+  var generate = function(id) {
+    return new RSVP.Promise(function(resolve, reject) {
+      persistence.ajax('/api/v1/buttonsets/' + id + '/generate', {
+        type: 'POST',
+        data: { }
+      }).then(function(data) {
+        progress_tracker.track(data.progress, function(event) {
+          if(event.status == 'errored') {
+            reject({error: 'error while generating button set'});
+          } else if(event.status == 'finished') {
+            var url = event.result.url;
+            CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
+              if(!button_set.get('root_url')) {
+                button_set.set('root_url', url);
+              }
+              retrieve_buttons(button_set).then(function() {
+                resolve(button_set);
+              }, function(err) {
+                reject(err); 
+              });
+            }, function(err) {
+              reject({error: 'error while retrieving generated button set'});
+            });
+          }
+        });
+      }, function(err) {
+        reject({error: "button set missing and could not be generated"});
+      });
+    });
+  }
+  var retrieve_buttons = function(bs) {
+    return new RSVP.Promise(function(resolve, reject) {
+      if(bs.get('root_url')) {
+        persistence.get(bs.get('root_url'), {type: 'GET'}).then(function(json) {
+          bs.set('buttons', json);
+          resolve();
+        }, function(err) {
+          // TODO: if the url doesn't exist, we may need to try
+          // generating one more time...
+          reject(err);
+        });
+      } else if(bs.get('buttons')) {
+        resolve();
+      } else {
+        reject({error: 'root url not available'});
+      }
+    });
+  };
   var res = CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-    return button_set;
+    if(!button_set.get('root_url')) {
+      // if root_url not available for the user, try to build one
+      return generate(id);
+    } else {
+      // otherwise you should be good to go
+      return retrieve_buttons(button_set);
+    }
   }, function(err) {
     // if not found error, it may need to be regenerated
     if(err.error == 'Record not found' && err.id && err.id.match(/^\d/)) {
-      return new RSVP.Promise(function(resolve, reject) {
-        persistence.ajax('/api/v1/buttonsets/' + id + '/generate', {
-          type: 'POST',
-          data: { }
-        }).then(function(data) {
-          progress_tracker.track(data.progress, function(event) {
-            if(event.status == 'errored') {
-              reject({error: 'error while generating button set'});
-            } else if(event.status == 'finished') {
-              CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-                resolve(button_set);
-              }, function(err) {
-                reject({error: 'error while retrieving generated button set'});
-              });
-            }
-          });
-        }, function(err) {
-          reject({error: "button set missing and could not be generated"});
-        });
-      });
+      return generate(id);
     } else {
       return RSVP.reject(err);
     }

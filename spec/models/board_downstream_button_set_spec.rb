@@ -585,6 +585,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       b2.process({'buttons' => [
         {'id' => 2, 'label' => 'shoes'}
       ]}, {'user' => u})
+      BoardDownstreamButtonSet.where(id: bs1.id).update_all(updated_at: 60.seconds.ago)
       BoardDownstreamButtonSet.update_for(b2.global_id, true)
       bs1.reload
       expect(bs1.data['buttons'].length).to eq(2)
@@ -673,6 +674,25 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs2.reload.data['source_id']).to eq(bs1.global_id)
       expect(bs3.reload.data['source_id']).to eq(bs1.global_id)
       expect(bs4.reload.data['source_id']).to eq(bs1.global_id)
+    end
+
+    it "should schedule a flush for the button set when updated" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      bs1 = BoardDownstreamButtonSet.update_for(b1.global_id)
+      bs2 = BoardDownstreamButtonSet.update_for(b2.global_id)
+      bs1.data['source_id'] = bs2.global_id
+      bs1.save
+      bs2.data['source_id'] = bs1.global_id
+      bs2.save
+      expect(BoardDownstreamButtonSet).to receive(:schedule_once) do |method, list, ts|
+        expect(method).to eq(:flush_caches)
+        expect(list).to eq([b2.global_id])
+        expect(ts).to be > 5.seconds.ago.to_i
+        expect(ts).to be < 5.seconds.from_now.to_i
+      end
+      BoardDownstreamButtonSet.update_for(b2.global_id)
     end
   end
   
@@ -850,42 +870,393 @@ describe BoardDownstreamButtonSet, :type => :model do
     end
   end
 
-  describe "reconcile" do
-    it "should have specs" do
-      # write_this_test
+  describe "url_for" do
+    it "should return the private url if the user has access to all board" do
+      bs = BoardDownstreamButtonSet.create
+      u = User.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      expect(u).to receive(:private_viewable_board_ids).and_return(['3', '4'])
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
+      expect(bs.url_for(u)).to eq('qwer')
+    end
+
+    it "should return the private url if no user but everything is public" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
+      expect(bs.url_for(nil)).to eq('qwer')
+    end
+
+    it "should return nil if it needs a custom url but none is available" do
+      bs = BoardDownstreamButtonSet.create
+      u = User.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
+      expect(bs).to_not receive(:extra_data_private_url)
+      expect(bs.url_for(u)).to eq(nil)
+    end
+
+    it "should return the private url if the user is a global admin" do
+      u = User.create
+      expect(u).to receive(:possible_admin?).and_return(true)
+      expect(Organization).to receive(:admin_manager?).with(u).and_return(true)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
+      expect(bs.url_for(u)).to eq('qwer')
+    end
+
+    it "should return the cached path if it exists already for the user's viewable set" do
+      bs = BoardDownstreamButtonSet.create
+      u = User.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      ids = ['4']
+      hash = GoSecure.sha512(ids.sort.to_json, bs.data['remote_salt'])
+      bs.data['remote_paths'] = {}
+      expect(bs).to_not receive(:schedule_once).with(:touch_remote, hash)
+      bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 6.months.from_now.to_i}
+
+      expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
+      expect(bs).to_not receive(:extra_data_private_url)
+      expect(bs.url_for(u)).to eq("#{ENV['UPLOADS_S3_CDN']}/zxcv")
+    end
+
+    it "should schedule a remote touch if expiring soon" do
+      bs = BoardDownstreamButtonSet.create
+      u = User.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      ids = ['4']
+      hash = GoSecure.sha512(ids.sort.to_json, bs.data['remote_salt'])
+      bs.data['remote_paths'] = {}
+      expect(bs).to receive(:schedule_once).with(:touch_remote, hash)
+      bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 1.hour.from_now.to_i}
+
+      expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
+      expect(bs).to_not receive(:extra_data_private_url)
+      expect(bs.url_for(u)).to eq("#{ENV['UPLOADS_S3_CDN']}/zxcv")
+    end
+
+    it "should use the source button set if one is defined" do
+      bs = BoardDownstreamButtonSet.create
+      bs2 = BoardDownstreamButtonSet.create
+      bs2.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs2.data['board_ids'] = ['1', '2', '3', '4']
+      expect(bs2).to receive(:skip_extra_data_processing?).and_return(true).at_least(1).times
+      bs2.save
+      expect(bs2.data['board_ids']).to eq(['1', '2', '3', '4'])
+      bs.data['source_id'] = bs2.global_id
+      expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs2.global_id).and_return(bs2)
+      expect(bs2).to receive(:extra_data_private_url).and_return('qwer')
+      expect(bs.url_for(nil)).to eq('qwer')
+    end
+  end
+
+  describe "touch_remote" do
+    it "should do nothing if remote_paths not set" do
+      bs = BoardDownstreamButtonSet.create
+      expect(Uploader).to_not receive(:remote_touch)
+      bs.touch_remote('asdf')
+    end
+
+    it "should call remote_touch on generated paths" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['remote_paths'] = {
+        'asdf' => {'generated' => 6.hours.ago.to_i, 'expires' => 6.hours.from_now.to_i, 'path' => 'asdf.asdf'},
+        'jkl' => {'generated' => 12.months.ago.to_i, 'expires' => 4.months.ago.to_i, 'path' => 'jkl.jkl'}
+      }
+      expect(bs.data['remote_paths']['asdf']['expires']).to be < 4.months.from_now.to_i
+      expect(Uploader).to receive(:remote_touch).with('asdf.asdf').and_return(true)
+      bs.touch_remote('asdf')
+      expect(bs.data['remote_paths'].keys).to eq(['asdf', 'jkl'])
+      expect(bs.data['remote_paths']['asdf']['expires']).to be > 4.months.from_now.to_i
+    end
+
+    it "should update the expiration on successfully touched paths" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['remote_paths'] = {
+        'asdf' => {'generated' => 6.hours.ago.to_i, 'expires' => 6.hours.from_now.to_i, 'path' => 'asdf.asdf'},
+        'jkl' => {'generated' => 12.months.ago.to_i, 'expires' => 4.months.ago.to_i, 'path' => 'jkl.jkl'}
+      }
+      expect(bs.data['remote_paths']['asdf']['expires']).to be < 4.months.from_now.to_i
+      expect(Uploader).to receive(:remote_touch).with('asdf.asdf').and_return(true)
+      bs.touch_remote('asdf')
+      expect(bs.data['remote_paths'].keys).to eq(['asdf', 'jkl'])
+      expect(bs.data['remote_paths']['asdf']['expires']).to be > 4.months.from_now.to_i
+    end
+
+    it "should remove unsuccessfully touched paths" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['remote_paths'] = {
+        'asdf' => {'generated' => 6.hours.ago.to_i, 'expires' => 6.hours.from_now.to_i, 'path' => 'asdf.asdf'},
+        'jkl' => {'generated' => 12.months.ago.to_i, 'expires' => 4.months.ago.to_i, 'path' => 'jkl.jkl'}
+      }
+      expect(bs.data['remote_paths']['asdf']['expires']).to be < 4.months.from_now.to_i
+      expect(Uploader).to receive(:remote_touch).with('asdf.asdf').and_return(false)
+      bs.touch_remote('asdf')
+      expect(bs.data['remote_paths'].keys).to eq(['jkl'])
+    end
+  end
+
+  describe "generate_for" do
+    it "should return false without a user" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, nil)).to eq({error: 'missing board or user', success: false})
+    end
+
+    it "should return false without a board" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardDownstreamButtonSet.generate_for(nil, u.global_id)).to eq({error: 'missing board or user', success: false})
+    end
+
+    it "should generate a missing button set" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardDownstreamButtonSet).to receive(:update_for).with(b.global_id, true)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({error: 'could not generate button set', success: false})
+    end
+
+    it "should return false if it can't generate a button set" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardDownstreamButtonSet).to receive(:update_for).with(b.global_id, true).and_return(false)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({error: 'could not generate button set', success: false})
+    end
+
+    it "should return the source button set's url" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      bs2 = BoardDownstreamButtonSet.create
+      expect(bs2).to receive(:skip_extra_data_processing?).and_return(true).at_least(1).times
+      bs2.data['source_id'] = bs.global_id
+      bs2.save
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs2)
+      expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs.global_id).and_return(bs)
+      expect(bs).to receive(:url_for).with(u).and_return('asdf')
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+    end
+
+    it "should return the existing url if there is one" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:url_for).with(u).and_return('asdf')
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+    end
+
+    it "should generate the default extra_data if there isn't one" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:detach_extra_data)
+      expect(bs).to receive(:url_for).with(u).and_return(nil)
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+    end
+
+    it "should return the newly-generated default extra_data if it matches for the user" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:detach_extra_data)
+      expect(bs).to receive(:url_for).with(u).and_return(nil)
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+    end
+
+    it "should not try to generate again less than 12 hours after a failed generation attempt" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['board_ids'] = ['1', '2', '3']
+      hash = GoSecure.sha512(['1', '2', '3'].to_json, bs.data['remote_salt'])
+      bs.data['remote_paths'] = {}
+      bs.data['remote_paths'][hash] = {'generated' => 2.hours.ago.to_i}
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:detach_extra_data)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: false, error: 'button set failed to generate, waiting for cool-down period'})
+    end
+
+    it "should remote upload only the available boards based on the user" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['board_ids'] = ['1', '2', '3']
+      hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
+      bs.data['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
+        {'id' => 1, 'label' => 'rat', 'board_id' => '2'},
+        {'id' => 1, 'label' => 'splat', 'board_id' => '3'},
+      ]
+      expect(User).to receive(:find_by_global_id).with(u.global_id).and_return(u)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
+      expect(bs).to receive(:detach_extra_data).at_least(1).times
+      expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
+        expect(type).to eq('text/json')
+        json = JSON.parse(File.read(file_path))
+        expect(json.is_a?(Array)).to eq(true)
+        expect(json.length).to eq(2)
+        expect(json[0]['label']).to eq('hat')
+        expect(json[1]['label']).to eq('rat')
+        expect(path).to eq(bs.data['remote_paths'][hash]['path'])
+      end
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(bs.data['remote_paths'][hash]['path']).to_not eq(nil)
+      expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['expires']).to be < 6.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be < 10.seconds.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be > 10.seconds.ago.to_i
+    end
+
+    it "should record an error on upload fail" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['board_ids'] = ['1', '2', '3']
+      hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
+      bs.data['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
+        {'id' => 1, 'label' => 'rat', 'board_id' => '2'},
+        {'id' => 1, 'label' => 'splat', 'board_id' => '3'},
+      ]
+      expect(User).to receive(:find_by_global_id).with(u.global_id).and_return(u)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
+      expect(bs).to receive(:detach_extra_data).at_least(1).times
+      expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
+        expect(type).to eq('text/json')
+        json = JSON.parse(File.read(file_path))
+        expect(json.is_a?(Array)).to eq(true)
+        expect(json.length).to eq(2)
+        expect(json[0]['label']).to eq('hat')
+        expect(json[1]['label']).to eq('rat')
+        expect(path).to eq(bs.data['remote_paths'][hash]['path'])
+        throw("nope")
+      end
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: false, error: "button set failed to generate"})
+      expect(bs.data['remote_paths'][hash]['path']).to eq(false)
+      expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['expires']).to be < 6.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be < 10.seconds.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be > 10.seconds.ago.to_i
+    end
+
+    it "should return the URL on a successful generation" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['board_ids'] = ['1', '2', '3']
+      hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
+      bs.data['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
+        {'id' => 1, 'label' => 'rat', 'board_id' => '2'},
+        {'id' => 1, 'label' => 'splat', 'board_id' => '3'},
+      ]
+      expect(User).to receive(:find_by_global_id).with(u.global_id).and_return(u)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
+      expect(bs).to receive(:detach_extra_data).at_least(1).times
+      expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
+        expect(type).to eq('text/json')
+        json = JSON.parse(File.read(file_path))
+        expect(json.is_a?(Array)).to eq(true)
+        expect(json.length).to eq(2)
+        expect(json[0]['label']).to eq('hat')
+        expect(json[1]['label']).to eq('rat')
+        expect(path).to eq(bs.data['remote_paths'][hash]['path'])
+      end
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+    end
+  end
+
+  describe "flush_caches" do
+    it "should not error on bad board ids" do
+      BoardDownstreamButtonSet.flush_caches([], 0)
+      BoardDownstreamButtonSet.flush_caches(['a', 'b', 'c'], 111)
+    end
+
+    it "should not error on missing button sets for existing boards" do
+      u = User.create
+      b = Board.create(user: u)
+      BoardDownstreamButtonSet.flush_caches([b.global_id], u.created_at.to_i)
+    end
+
+    it "should call Uploader.remote_remove for expired paths" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'jump'}
+      ]})
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      bs = b.reload.board_downstream_button_set
+      bs.data['remote_paths'] = {
+        'asdf' => {'path' => 'asdf.asdf', 'generated' => 1234, 'expires' => 4.weeks.from_now.to_i},
+        'jkl' => {'path' => 'jkl.jkl', 'generated' => 12345, 'expires' => 3.weeks.ago.to_i}
+      }
+      bs.save
+      expect(Uploader).to receive(:remote_remove).with('asdf.asdf').and_return(true)
+      expect(Uploader).to receive(:remote_remove).with('jkl.jkl').and_return(true)
+      BoardDownstreamButtonSet.flush_caches([b.global_id], Time.now.to_i)
+    end
+
+    it "should remote path data for expired paths" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'jump'}
+      ]})
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      bs = b.reload.board_downstream_button_set
+      bs.data['remote_paths'] = {
+        'asdf' => {'path' => 'asdf.asdf', 'generated' => 1234, 'expires' => 4.weeks.from_now.to_i},
+        'jkl' => {'path' => 'jkl.jkl', 'generated' => 12345, 'expires' => 3.weeks.ago.to_i}
+      }
+      bs.save
+      expect(Uploader).to receive(:remote_remove).with('asdf.asdf').and_return(true)
+      expect(Uploader).to receive(:remote_remove).with('jkl.jkl').and_return(true)
+      BoardDownstreamButtonSet.flush_caches([b.global_id], Time.now.to_i)
+      bs.reload
+      expect(bs.data['remote_paths'].keys).to eq([])
+    end
+
+    it "should not clear information for paths generated after the call was initiated" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'jump'}
+      ]})
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      bs = b.reload.board_downstream_button_set
+      bs.data['remote_paths'] = {
+        'asdf' => {'path' => 'asdf.asdf', 'generated' => 1234, 'expires' => 4.weeks.from_now.to_i},
+        'jkl' => {'path' => 'jkl.jkl', 'generated' => 3.hours.from_now.to_i, 'expires' => 3.weeks.ago.to_i}
+      }
+      bs.save
+      expect(Uploader).to receive(:remote_remove).with('asdf.asdf').and_return(true)
+      expect(Uploader).to_not receive(:remote_remove).with('jkl.jkl')
+      BoardDownstreamButtonSet.flush_caches([b.global_id], Time.now.to_i)
+      bs.reload
+      expect(bs.data['remote_paths'].keys).to eq(['jkl'])
     end
   end
 end
-
-# def self.reconcile
-#   wasted = 0
-#   destroyed = 0
-#   BoardDownstreamButtonSet.where('id > 7000').find_in_batches(batch_size: 10) do |batch|
-#     batch.each do |button_set|
-#       if button_set.data['buttons']
-#         size = button_set.data.to_json.length
-#         board = button_set.board
-#         puts "#{button_set.global_id} #{board ? board.key : 'NO BOARD'} #{size}"
-#         if !board
-#           puts "  no board!"
-#           button_set.destroy
-#           destroyed += size
-#         elsif (board.settings['immediately_upstream_board_ids'] || []).length > 0
-#           if size > 20000
-#             if button_set.data['source_id'] == button_set.global_id
-#               button_set.data['source_id'] = nil 
-#               button_set.save
-#               bs = BoardDownstreamButtonSet.update_for(board.global_id)                
-#             end
-#             # bs = BoardDownstreamButtonSet.update_for(board.global_id)
-#             # bs_size = bs.data.to_json.length
-#             # if bs_size < size
-#             #   puts "  -#{size - bs_size}"
-#             #   wasted += size - bs_size
-#             # end
-#           end
-#         end
-#       end
-#     end
-#   end
-# end
