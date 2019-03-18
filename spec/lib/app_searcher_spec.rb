@@ -178,7 +178,7 @@ describe AppSearcher do
           }
         ]}.to_json
       })
-      expect(Typhoeus).to receive(:get).with("https://itunes.apple.com/search?term=hat&media=software").and_return(obj)
+      expect(Typhoeus).to receive(:get).with("https://itunes.apple.com/search?term=hat&media=software", {timeout: 3}).and_return(obj)
       expect(AppSearcher.find('hat', 'ios')).to eq([{
         'name' => 'awesome',
         'author_name' => 'somebody',
@@ -223,7 +223,7 @@ describe AppSearcher do
       obj = OpenStruct.new({
         body: {'results' => results}.to_json
       })
-      expect(Typhoeus).to receive(:get).with("https://itunes.apple.com/search?term=hat&media=software").and_return(obj)
+      expect(Typhoeus).to receive(:get).with("https://itunes.apple.com/search?term=hat&media=software", {timeout: 3}).and_return(obj)
       res = AppSearcher.find('hat', 'ios')
       expect(res.length).to eq(15)
     end

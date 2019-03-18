@@ -101,7 +101,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat').and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
       expect(res).to eq([
         {text: 'hat', translation: 'top'},
@@ -119,7 +119,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat').and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
       expect(res).to eq([
         {text: 'hat', translation: 'top'}
@@ -136,7 +136,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=zh-CN&source=en&format=text&q=hat&q=cat').and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=zh-CN&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en_US', 'zh')
       expect(res).to eq([
         {text: 'hat', translation: 'top'}
@@ -766,7 +766,7 @@ RSpec.describe WordData, :type => :model do
       })
       expect(WordData).to receive(:rand).and_return(1.0).at_least(1).times
 
-      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/about%3Aen").and_return(OpenStruct.new(body: {
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/about%3Aen", {timeout: 10}).and_return(OpenStruct.new(body: {
         'word' => {
           'word' => 'about',
           'locale' => 'en',
@@ -778,7 +778,7 @@ RSpec.describe WordData, :type => :model do
           'send_homes' => [{'id' => 'sh1'}]
         }
       }.to_json))
-      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/want%3Aen").and_return(OpenStruct.new(body: {
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/want%3Aen", {timeout: 10}).and_return(OpenStruct.new(body: {
         'word' => {
           'word' => 'want',
           'locale' => 'en',
@@ -790,9 +790,9 @@ RSpec.describe WordData, :type => :model do
           'send_homes' => [{'id' => 'sh2'}]
         }
       }.to_json))
-      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/more%3Aen").and_return(OpenStruct.new(body: {
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/more%3Aen", {timeout: 10}).and_return(OpenStruct.new(body: {
       }.to_json))
-      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/like%3Aen").and_return(OpenStruct.new(body: {
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/words/like%3Aen", {timeout: 10}).and_return(OpenStruct.new(body: {
       }.to_json))
       res = WordData.update_activities_for(u.global_id, false)
       expect(u.reload.settings['target_words']['activities']).to eq({

@@ -14,7 +14,7 @@ describe Api::SearchController, :type => :controller do
         {'extension' => 'gif', 'name' => 'fred'}
       ]
       res = OpenStruct.new(:body => list.to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 3, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -34,8 +34,8 @@ describe Api::SearchController, :type => :controller do
       ]
       res = OpenStruct.new(:body => list.to_json)
       res2 = OpenStruct.new(:body => list2.to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hats&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res2)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 3, :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hats&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 3, :ssl_verifypeer => false).and_return(res2)
       get :symbols, params: {:q => 'hat'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -70,7 +70,7 @@ describe Api::SearchController, :type => :controller do
         {'extension' => 'gif', 'name' => 'fred'}
       ]
       res = OpenStruct.new(:body => list.to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 3, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat premium_repo:pcs'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -88,7 +88,7 @@ describe Api::SearchController, :type => :controller do
         {'extension' => 'gif', 'name' => 'fred'}
       ]
       res = OpenStruct.new(:body => list.to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 3, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat premium_repo:pcs'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -138,7 +138,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30").and_return(OpenStruct.new({body: [
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
       ].to_json}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
@@ -462,7 +462,7 @@ describe Api::SearchController, :type => :controller do
     end
 
     it 'should make an external call' do
-      expect(Typhoeus).to receive(:get).with("http://translate.google.com/translate_tts?id=UTF-8&tl=en&q=#{URI.escape('bacon')}&total=1&idx=0&textlen=#{('bacon').length}&client=tw-ob", headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"}).and_return(OpenStruct.new({
+      expect(Typhoeus).to receive(:get).with("http://translate.google.com/translate_tts?id=UTF-8&tl=en&q=#{URI.escape('bacon')}&total=1&idx=0&textlen=#{('bacon').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"}).and_return(OpenStruct.new({
         headers: {
           'Content-Type' => 'audio/mp3'
         },

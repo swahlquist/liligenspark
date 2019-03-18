@@ -285,7 +285,7 @@ describe Uploader do
     it 'should pass the search token' do
       res = OpenStruct.new(body: [
       ].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'arasaac', nil)
       expect(images).to eq([])
     end
@@ -293,7 +293,7 @@ describe Uploader do
     it 'should allow searching all public images via opensymbols key' do
       res = OpenStruct.new(body: [
       ].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'opensymbols', nil)
       expect(images).to eq([])
     end
@@ -302,7 +302,7 @@ describe Uploader do
       res = OpenStruct.new(body: [
       ].to_json)
       u = User.create
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', u)
       expect(images).to eq([])
     end
@@ -325,7 +325,7 @@ describe Uploader do
       u = User.create
       User.purchase_extras({'user_id' => u.global_id})
       u.reload
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', u)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
@@ -357,7 +357,7 @@ describe Uploader do
       u.reload
       u2.reload
 
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', u)
       expect(images).to eq([])
     end
@@ -377,7 +377,7 @@ describe Uploader do
           'author_url' => 'http://www.example.com/bob'
         }
       ].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'arasaac', nil)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
@@ -416,7 +416,7 @@ describe Uploader do
           'id' => '1234',
           'pageURL' => 'http://www.example.com/pics2',
         }]}.to_json)
-      expect(Typhoeus).to receive(:get).with('https://pixabay.com/api/?key=pixkey&q=bacon&image_type=vector&per_page=30&safesearch=true', :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with('https://pixabay.com/api/?key=pixkey&q=bacon&image_type=vector&per_page=30&safesearch=true', timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pixabay_vectors', nil)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
@@ -463,10 +463,10 @@ describe Uploader do
         'pid' => '99999',
         'token' => 'for_the_team'
       }).exactly(2).times
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30").and_return(OpenStruct.new(body: 'Token Mismatch'))
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: 'Token Mismatch'))
       expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
 
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30").and_return(OpenStruct.new(body: [
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
         {
           'image_id' => '2345',
@@ -499,7 +499,7 @@ describe Uploader do
 
     it "should handle giphy searches" do
       ENV['GIPHY_KEY'] = 'giphy'
-      expect(Typhoeus).to receive(:get).with("http://api.giphy.com/v1/gifs/search?q=%23asl+bacon&api_key=giphy").and_return(OpenStruct.new({
+      expect(Typhoeus).to receive(:get).with("http://api.giphy.com/v1/gifs/search?q=%23asl+bacon&api_key=giphy", {timeout: 5}).and_return(OpenStruct.new({
         body: {
           data: [
             {
@@ -607,10 +607,10 @@ describe Uploader do
         'pid' => '99999',
         'token' => 'for_the_team'
       }).exactly(2).times
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30").and_return(OpenStruct.new(body: 'Token Mismatch'))
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: 'Token Mismatch'))
       expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
 
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30").and_return(OpenStruct.new(body: [
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
         {
           'image_id' => '2345',
@@ -869,7 +869,7 @@ describe Uploader do
     end
     
     it 'should search for tarheel results' do
-      expect(Typhoeus).to receive(:get).with("https://tarheelreader.org/find/?search=bacon&category=&reviewed=R&audience=E&language=en&page=1&json=1").and_return(OpenStruct.new(body: {
+      expect(Typhoeus).to receive(:get).with("https://tarheelreader.org/find/?search=bacon&category=&reviewed=R&audience=E&language=en&page=1&json=1", {timeout: 5}).and_return(OpenStruct.new(body: {
         books: [
           {
             'link' => '/bacon1',
