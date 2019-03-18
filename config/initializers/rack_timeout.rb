@@ -1,1 +1,1 @@
-Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 15
+Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 16
