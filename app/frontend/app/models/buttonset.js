@@ -691,14 +691,17 @@ CoughDrop.Buttonset.load_button_set = function(id) {
           } else if(event.status == 'finished') {
             var url = event.result.url;
             CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-              button_set.reload();
+              var reload = RSVP.resolve();
               if(!button_set.get('root_url')) {
+                reload = button_set.reload().then(null, function() { return RSVP.resolve(); });
                 button_set.set('root_url', url);
               }
-              button_set.load_buttons().then(function() {
-                resolve(button_set);
-              }, function(err) {
-                reject(err); 
+              reload.then(function() {
+                button_set.load_buttons().then(function() {
+                  resolve(button_set);
+                }, function(err) {
+                  reject(err); 
+                });
               });
             }, function(err) {
               reject({error: 'error while retrieving generated button set'});
