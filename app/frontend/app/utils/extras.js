@@ -205,6 +205,7 @@ import capabilities from './capabilities';
           options.headers['X-SILENCE-LOGGER'] = 'true';
         }
         // TODO: remove this when no longer needed
+        options.headers = options.headers || {};
         options.headers['X-SUPPORTS-REMOTE-BUTTONSET'] = 'true';
         if(CoughDrop.session && CoughDrop.session.get('as_user_id')) {
           options.headers = options.headers || {};
