@@ -776,7 +776,11 @@ class Board < ActiveRecord::Base
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
-    res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }
+    if (self.settings['buttons'] || []).detect{|b| b && b['sound_id']}
+      res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }
+    else
+      res['sounds'] = []
+    end
     set_cached(key, res)
     res
   end
