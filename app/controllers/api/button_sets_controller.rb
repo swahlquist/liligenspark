@@ -7,7 +7,7 @@ class Api::ButtonSetsController < ApplicationController
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
     button_sets = BoardDownstreamButtonSet.for_user(user)
-    render json: JsonApi::ButtonSet.paginate(params, button_sets)
+    render json: JsonApi::ButtonSet.paginate(params, button_sets, :remote_support => !!request.headers['X-SUPPORTS-REMOTE-BUTTONSET'])
   end
   
   def show
@@ -40,7 +40,7 @@ class Api::ButtonSetsController < ApplicationController
     json_str = "null"
     Rails.logger.warn('rendering json')
     self.class.trace_execution_scoped(['button_set/board/json_render']) do
-      json = JsonApi::ButtonSet.as_json(button_set, :wrapper => true, :permissions => @api_user, :nocache => true)
+      json = JsonApi::ButtonSet.as_json(button_set, :wrapper => true, :permissions => @api_user, :nocache => true, :remote_support => !!request.headers['X-SUPPORTS-REMOTE-BUTTONSET'])
     end
     self.class.trace_execution_scoped(['button_set/board/json_stringify']) do
       json_str = json.is_a?(String) ? json : json.to_json

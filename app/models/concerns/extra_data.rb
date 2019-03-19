@@ -64,7 +64,7 @@ module ExtraData
   def extra_data_private_url
     return nil unless self.data && self.data['extra_data_nonce']
     path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, self.data['extra_data_version'] || 0)[0]
-    "https://s3.amazonaws.com/#{ENV['UPLOADS_S3_BUCKET']}/#{path}"
+    "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/#{path}"
   end
 
   def skip_extra_data_processing?

@@ -20,6 +20,7 @@ CoughDrop.Buttonset = DS.Model.extend({
   key: DS.attr('string'),
   root_url: DS.attr('string'),
   buttons: DS.attr('raw'),
+  remote_enabled: DS.attr('boolean'),
   name: DS.attr('string'),
   full_set_revision: DS.attr('string'),
   board_ids: function() {
@@ -61,6 +62,36 @@ CoughDrop.Buttonset = DS.Model.extend({
       });
     }
     return count;
+  },
+  load_buttons: function() {
+    var bs = this;
+    return new RSVP.Promise(function(resolve, reject) {
+      if(bs.get('root_url') && !bs.get('buttons_loaded')) {
+        var process_data_uri = function(data_uri) {
+          try {
+            var buttons = JSON.parse(atob(data_uri.split(/,/)[1]));
+            bs.set('buttons_loaded', true);
+            bs.set('buttons', buttons);
+            resolve();
+          } catch(e) {
+            reject({error: "invalid JSON at root url"});
+          }
+        };
+        persistence.find_url(bs.get('root_url'), 'json').then(function(res) {
+          process_data_uri(res.data_uri);
+        }, function() {
+          persistence.store_url(bs.get('root_url'), 'json').then(function(res) {
+            process_data_uri(res.data_uri);
+          }, function(err) {
+            reject(err);
+          });
+        });
+      } else if(bs.get('buttons')) {
+        resolve();
+      } else {
+        reject({error: 'root url not available'});
+      }
+    });
   },
   redepth: function(from_board_id) {
     var buttons = this.get('buttons') || [];
@@ -646,7 +677,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
       }
     });
   }
-  if(found) { return RSVP.resolve(found); }
+  if(found) { found.load_buttons(); return RSVP.resolve(found); }
   
   var generate = function(id) {
     return new RSVP.Promise(function(resolve, reject) {
@@ -663,7 +694,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
               if(!button_set.get('root_url')) {
                 button_set.set('root_url', url);
               }
-              retrieve_buttons(button_set).then(function() {
+              button_set.load_buttons().then(function() {
                 resolve(button_set);
               }, function(err) {
                 reject(err); 
@@ -678,31 +709,14 @@ CoughDrop.Buttonset.load_button_set = function(id) {
       });
     });
   }
-  var retrieve_buttons = function(bs) {
-    return new RSVP.Promise(function(resolve, reject) {
-      if(bs.get('root_url')) {
-        persistence.get(bs.get('root_url'), {type: 'GET'}).then(function(json) {
-          bs.set('buttons', json);
-          resolve();
-        }, function(err) {
-          // TODO: if the url doesn't exist, we may need to try
-          // generating one more time...
-          reject(err);
-        });
-      } else if(bs.get('buttons')) {
-        resolve();
-      } else {
-        reject({error: 'root url not available'});
-      }
-    });
-  };
+
   var res = CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-    if(!button_set.get('root_url')) {
+    if(!button_set.get('root_url') && button_set.get('remote_enabled')) {
       // if root_url not available for the user, try to build one
       return generate(id);
     } else {
       // otherwise you should be good to go
-      return retrieve_buttons(button_set);
+      return button_set.load_buttons();
     }
   }, function(err) {
     // if not found error, it may need to be regenerated
