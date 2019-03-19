@@ -691,6 +691,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
           } else if(event.status == 'finished') {
             var url = event.result.url;
             CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
+              button_set.reload();
               if(!button_set.get('root_url')) {
                 button_set.set('root_url', url);
               }
