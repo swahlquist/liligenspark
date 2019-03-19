@@ -1062,7 +1062,8 @@ class LogSession < ActiveRecord::Base
 
     user_id = GoSecure.hmac("#{self.user.global_id}:#{self.user.created_at.iso8601}", Digest::MD5.hexdigest(self.global_id), 1)[0, 10]
     # TODO: should we anonymize the user id and provide it in the login process to match it up?
-    self.data['events'].each do |event|
+    self.assert_extra_data
+    (self.data['events'] || []).each do |event|
       if !event['external_processed']
         event['external_processed'] = true
         updates << {
@@ -1101,6 +1102,7 @@ class LogSession < ActiveRecord::Base
     raise "only valid for modeling_activities log types" unless self.log_type == 'modeling_activities'
     activities = {}
     skip_cutoff = 6.months.ago.to_i
+    self.assert_extra_data
     self.data['events'].each do |event|
       if event['modeling_activity_id'] && ((event['timestamp'] || 0) > skip_cutoff || event['modeling_action'] == 'complete')
         activities[event['modeling_activity_id']] = event
