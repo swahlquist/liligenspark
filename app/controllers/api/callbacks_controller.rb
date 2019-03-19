@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-sns'
 
 class Api::CallbacksController < ApplicationController
   def callback

@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-elastictranscoder'
 
 module Transcoder
   def self.handle_event(args)

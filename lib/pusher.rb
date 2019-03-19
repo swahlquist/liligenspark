@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-sns'
 
 module Pusher
   def self.sms(phone, message)

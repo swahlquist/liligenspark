@@ -13,7 +13,7 @@ group :development, :test do
   gem 'rails-controller-testing'
 end
 
-gem 'rails', '5.0.0'
+gem 'rails', '5.0.7.2'
 gem 'pg', '0.19.0' #, '>=1.1.3'
 gem 'sass-rails'
 gem 'uglifier', '>= 1.3.0'
@@ -21,7 +21,10 @@ gem 'uglifier', '>= 1.3.0'
 gem 'typhoeus'
 gem 'coffee-rails'
 gem 'aws-ses'
-gem 'aws-sdk'
+gem 'aws-sdk-sns', '~> 1'
+gem 'aws-sdk-ses', '~> 1'
+gem 'aws-sdk-elastictranscoder', '~> 1'
+gem 'http-2'
 gem 'resque'
 gem 'rails_12factor', group: :production
 gem 'heroku-deflater', :group => :production
