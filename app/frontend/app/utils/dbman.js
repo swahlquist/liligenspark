@@ -562,7 +562,9 @@ var dbman = {
       request.onupgradeneeded = function(event) {
         var db = event.target.result;
         db.request = request;
-        dbman.upgrade_database(db, event.oldVersion, version, promise);
+        setTimeout(function() {
+          dbman.upgrade_database(db, event.oldVersion, version, promise);
+        }, 200);
       };
 
       request.onblocked = function(event) {
