@@ -502,11 +502,13 @@ var persistence = EmberObject.extend({
         }
         if(store == 'board' && obj.images) {
           obj.images.forEach(function(img) {
+            // TODO: I don't think we need these anymore
             promises.push(store_method('image', img, null));
           });
         }
         if(store == 'board' && obj.sounds) {
           obj.sounds.forEach(function(snd) {
+            // TODO: I don't think we need these anymore
             promises.push(store_method('sound', snd, null));
           });
         }

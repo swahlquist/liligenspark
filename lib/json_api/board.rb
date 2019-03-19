@@ -10,6 +10,7 @@ module JsonApi::Board
     json = {} #board.settings
     json['id'] = board.global_id
     json['key'] = board.key
+    json['simple_refs'] = true if args[:skip_subs]
     ['grid', 'name', 'description', 'image_url', 'buttons', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories', 'intro'].each do |key|
       json[key] = board.settings[key]
     end
@@ -86,9 +87,10 @@ module JsonApi::Board
     json['board']['protected_settings'] = board.settings['protected'] if board.protected_material?
     self.trace_execution_scoped(['json/board/images_and_sounds']) do
       hash = board.images_and_sounds_for(args[:permissions])
-      # TODO: caching: remove these
-      json['images'] = hash['images']
-      json['sounds'] = hash['sounds']
+      unless json['board']['simple_refs']
+        json['images'] = hash['images']
+        json['sounds'] = hash['sounds']
+      end
       json['board'] ||= {}
       json['board']['image_urls'] = {}
       json['board']['sound_urls'] = {}

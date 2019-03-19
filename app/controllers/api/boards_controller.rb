@@ -166,7 +166,7 @@ class Api::BoardsController < ApplicationController
     json = {}
     Rails.logger.warn('rendering json')
     self.class.trace_execution_scoped(['boards/board/json_render']) do
-      json = JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user)
+      json = JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user, :skip_subs => !!request.headers['X-SUPPORTS-REMOTE-BUTTONSET'])
     end
     Rails.logger.warn('rails render')
     render json: json.to_json

@@ -343,6 +343,7 @@ var Button = EmberObject.extend({
         // TODO: if in Speak Mode, this shouldn't hold up the rendering
         // process, so if it has to make a remote call then consider
         // killing it or coming back to it somehow. Same applies for Sound records.
+        console.error("had to revert to image record lookup");
         return CoughDrop.store.findRecord('image', _this.image_id).then(function(image) {
           // There was a runLater of 100ms here, I have no idea why but
           // it seemed like a bad idea so I removed it.
@@ -351,6 +352,9 @@ var Button = EmberObject.extend({
         });
       }
     } else {
+      if(!image.get('incomplete')) {
+        console.error("used retrieved image", image);
+      }
       return check_image(image);
     }
   },
