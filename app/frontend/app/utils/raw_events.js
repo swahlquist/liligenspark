@@ -48,7 +48,7 @@ var eat_events = function(event) {
   }
 };
 window.addEventListener('touchforcechange', function() {
-  alert('uo');
+  // alert('uo');
 });
 document.addEventListener('touchstart', eat_events, {passive: false});
 document.addEventListener('mousedown', eat_events, {passive: false});
