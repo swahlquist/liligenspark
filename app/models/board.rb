@@ -767,9 +767,17 @@ class Board < ActiveRecord::Base
   end
   
   def images_and_sounds_for(user)
+    # TODO: this is silly, it won't repeat often enough for a cache. We need to cache it
+    # on the board, but not the user, and include both the protected URL and the fallback
+    # and then in-process we can decide which one to show. Even that won't be too 
+    # often but at least it'll work across users
+    # TODO: can we cache both the protected URL and the fallback on the db record itself,
+    # based on boards_updated_at, and then we could skip the lookup entirely 
+    # (how long is the lookup taking??? is this worth the effort?)
     key = "images_and_sounds_for/#{user ? user.cache_key : 'nobody'}"
     res = get_cached(key)
     return res if res
+    Rails.logger.warn('start images_and_sounds lookup')
     res = {}
     bis = self.button_images
     protected_sources = (user && user.enabled_protected_sources(true)) || []
@@ -781,6 +789,7 @@ class Board < ActiveRecord::Base
     else
       res['sounds'] = []
     end
+    Rails.logger.warn('end images_and_sounds lookup')
     set_cached(key, res)
     res
   end
