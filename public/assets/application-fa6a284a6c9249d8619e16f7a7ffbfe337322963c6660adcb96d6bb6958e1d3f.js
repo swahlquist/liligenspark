@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.03.20b";
+window.app_version = "2019.03.20c";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9026,8 +9026,7 @@ for(var r=0;r<t.board.grid.columns;r++)t.board.grid.order[o][r]=t.board.grid.ord
 t.board.grid.order[o].length>t.board.grid.columns&&(t.board.grid.order[o]=t.board.grid.order[o].slice(0,t.board.grid.columns))}return t.board.grid.order.length>t.board.grid.rows&&(t.board.grid.order=t.board.grid.order.slice(0,t.board.grid.rows)),t}}),e.default=n.default.Board}),define("frontend/models/boardversion",["exports","ember-data","frontend/app"],function(e,t,n){Object.defineProperty(e,"__esModule",{value:!0}),n.default.Boardversion=t.default.Model.extend({modifier:t.default.attr("raw"),created:t.default.attr("date"),stats:t.default.attr("raw"),action:t.default.attr("string"),summary:t.default.attr("string"),button_labels:t.default.attr("raw"),grid:t.default.attr("raw"),immediately_upstream_boards:t.default.attr("raw"),recent:function(){var e=window.moment().add(-7,"day")
 return this.get("created")&&this.get("created")>e}.property("app_state.refresh_stamp","created"),button_labels_list:function(){return this.get("button_labels")&&this.get("button_labels").length>0?this.get("button_labels").join(", "):""}.property("button_labels")}),e.default=n.default.Boardversion}),define("frontend/models/buttonset",["exports","ember-data","frontend/app","frontend/models/image","frontend/utils/i18n","frontend/utils/persistence","frontend/utils/app_state","frontend/utils/_stashes","frontend/utils/word_suggestions","frontend/utils/progress_tracker","frontend/utils/misc"],function(e,t,n,s,a,o,r,l,i,d,u){Object.defineProperty(e,"__esModule",{value:!0})
 var c={}
-n.default.Buttonset=t.default.Model.extend({key:t.default.attr("string"),root_url:t.default.attr("string"),buttons:t.default.attr("raw"),remote_enabled:t.default.attr("boolean"),name:t.default.attr("string"),full_set_revision:t.default.attr("string"),board_ids:function(){var e={}
-this.get("buttons").forEach(function(t){e[t.board_id]=!0})
+n.default.Buttonset=t.default.Model.extend({key:t.default.attr("string"),root_url:t.default.attr("string"),buttons:t.default.attr("raw"),remote_enabled:t.default.attr("boolean"),name:t.default.attr("string"),full_set_revision:t.default.attr("string"),board_ids:function(){var e={};(this.get("buttons")||[]).forEach(function(t){e[t.board_id]=!0})
 var t=[]
 for(var n in e)t.push(n)
 return t}.property("buttons"),buttons_for_level:function(e,t){for(var n={},s=[{id:e}],a=this.get("buttons")||[],o=0;s.length>0;){var r=s.shift()
@@ -11136,8 +11135,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+6ef41704"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+6ef41704"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+e9bd9b2f"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+e9bd9b2f"})
 ;
 
 
