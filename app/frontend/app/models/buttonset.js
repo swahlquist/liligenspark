@@ -25,7 +25,7 @@ CoughDrop.Buttonset = DS.Model.extend({
   full_set_revision: DS.attr('string'),
   board_ids: function() {
     var hash = {};
-    this.get('buttons').forEach(function(b) { hash[b.board_id] = true; });
+    (this.get('buttons') || []).forEach(function(b) { hash[b.board_id] = true; });
     var res = [];
     for(var id in hash) { res.push(id); }
     return res;
