@@ -83,7 +83,7 @@ export default Controller.extend({
     if(this.get('board.model')) {
       this.get('board.model').load_button_set().then(function(bs) {
         _this.set('level_buttons', bs.buttons_for_level(_this.get('board.model.id'), _this.get('board.current_level')));
-      });
+      }, function() { });
     }
   }.observes('board.current_level', 'board.model.button_set'),
   show_board_intro: function() {

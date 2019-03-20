@@ -42,7 +42,7 @@ export default Component.extend({
     if(this.get('current_board.id')) {
       this.get('current_board').load_button_set().then(function(bs) {
         _this.set('level_buttons', bs.buttons_for_level(_this.get('current_board.id'), _this.get('current_level') || _this.get('base_level')));
-      })
+      }, function() { });
     }
   }.observes('current_board', 'base_level', 'current_level'),
   update_current_board: function() {

@@ -77,8 +77,8 @@ CoughDrop.Buttonset = DS.Model.extend({
             reject({error: "invalid JSON at root url"});
           }
         };
-        persistence.find_url(bs.get('root_url'), 'json').then(function(res) {
-          process_data_uri(res.data_uri);
+        persistence.find_url(bs.get('root_url'), 'json').then(function(data_uri) {
+          process_data_uri(data_uri);
         }, function() {
           persistence.store_url(bs.get('root_url'), 'json').then(function(res) {
             process_data_uri(res.data_uri);
