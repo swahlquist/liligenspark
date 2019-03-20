@@ -211,6 +211,7 @@ class User < ActiveRecord::Base
         'button_border' => 'small',
         'button_text' => 'medium',
         'button_text_position' => 'top',
+        'utterance_text_only' => false,
         'vocalization_height' => 'small',
         'wakelock' => true
       },

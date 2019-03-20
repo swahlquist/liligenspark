@@ -534,9 +534,54 @@ footer .wide_links {
   overflow-x: auto;
   overflow-y: scroll;
   position: relative;
-  &.text_only {
-    .history_button img {
-      visibility: hidden;
+  &#button_list.text_only {
+    text-align: left;
+    padding: 5px;
+    &.upper .text {
+      text-transform: uppercase;
+    }
+    &.lower .text {
+      text-transform: lowercase;
+    }
+    &.comic_sans .text {
+      font-family: "Comic Sans MS", cursive, sans-serif;
+    }
+    &.open_dyslexic .text {
+      font-family: "OpenDyslexic", Arial, sans-serif;
+    }
+    &.architects_daughter .text {
+      font-family: "ArchitectsDaughter", Arial, sans-serif;
+    }
+    .text {
+      font-size: 14px;
+    }
+    &.text_small .text {
+      font-size: 12px;
+    }
+    &.text_large .text {
+      font-size: 20px;
+    }
+    &.text_huge .text {
+      font-size: 30px;
+    }
+    
+    .history_button {
+      max-width: none;
+      width: auto;
+      height: auto;
+      margin: 0;
+      padding: 0;
+      img {
+        display: none;
+      }
+      .text {
+        display: inline;
+        &::after {
+          content: "";
+          display: inline;
+          white-space: pre;
+        }
+      }
     }
   }
 }

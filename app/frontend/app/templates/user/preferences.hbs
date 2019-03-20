@@ -625,13 +625,26 @@
     </div>
   </div>
   {{#if advanced}}
-  <div class="form-group">
-    <label for="button_text" class="col-sm-3 control-label">{{t "Button Text Style" key='button_style'}}</label>
-    <div class="col-sm-5">
-      {{bound-select select_class="form-control" select_id="button_style" content=buttonStyleList selection=model.preferences.device.button_style action=(action (mut model.preferences.device.button_style)) }}
-      <div class={{text_sample_class}} style="margin-left: 20px; margin-top: 5px;">{{t "This is a Text Sample" key='this_is_a_text_sample'}}</div>
+    {{#unless text_only_button_text_position}}
+      <div class="form-group">
+        <label for="utterance_text_only" class="col-sm-3 control-label">{{t "Vocalization Box Text" key='vocalization_box_text'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox">
+            <label>
+              {{input type="checkbox" checked=model.preferences.device.utterance_text_only id="utterance_text_only"}}
+              {{t "Show only text in the vocalization box" key='utterance_text_only'}}
+            </label>
+          </div>
+        </div>
+      </div>
+    {{/unless}}
+    <div class="form-group">
+      <label for="button_style" class="col-sm-3 control-label">{{t "Button Text Style" key='button_style'}}</label>
+      <div class="col-sm-5">
+        {{bound-select select_class="form-control" select_id="button_style" content=buttonStyleList selection=model.preferences.device.button_style action=(action (mut model.preferences.device.button_style)) }}
+        <div class={{text_sample_class}} style="margin-left: 20px; margin-top: 5px;">{{t "This is a Text Sample" key='this_is_a_text_sample'}}</div>
+      </div>
     </div>
-  </div>
   {{/if}}
   {{#if fullscreen_capable}}
     <div class="form-group">

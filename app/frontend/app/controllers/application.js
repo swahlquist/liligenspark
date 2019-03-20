@@ -1022,12 +1022,28 @@ export default Controller.extend({
       res = res + "rtl ";
     }
     var text_position = (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
-    if(text_position == 'text_only') {
+    var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
+    if(text_position == 'text_only' || show_always) {
       res = res + "text_only ";
     }
 
+    if(this.get('board.text_style')) {
+      res = res + this.get('board.text_style') + " ";
+    }
+    if(this.get('board.button_style')) {
+      var style = Button.style(this.get('board.button_style'));
+      if(style.upper) {
+        res = res + "upper ";
+      } else if(style.lower) {
+        res = res + "lower ";
+      }
+      if(style.font_class) {
+        res = res + style.font_class + " ";
+      }
+    }
+
     return htmlSafe(res);
-  }.property('stashes.ghost_utterance', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position'),
+  }.property('stashes.ghost_utterance', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style'),
   no_paint_mode_class: function() {
     var res = "btn ";
     if(this.get('board.paint_mode')) {

@@ -212,6 +212,9 @@ export default Controller.extend({
       _this.set('more_voices_available', false);
     }
   },
+  text_only_button_text_position: function() {
+    return this.get('model.preferences.device.button_text_position') == 'text_only';
+  }.property('model.preferences.device.button_text_position'),
   non_communicator: function() {
     return this.get('model.preferences.role') != 'communicator';
   }.property('model.preferences.role'),
