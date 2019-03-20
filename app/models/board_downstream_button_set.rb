@@ -107,6 +107,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     button_set = self
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+      button_set ||= self
     end
     public_board_ids = button_set.data['public_board_ids'] || Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
     public_board_ids.each{|id| allowed_ids[id] = true }

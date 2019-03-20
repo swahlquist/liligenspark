@@ -306,18 +306,6 @@ module Uploadable
     
     def cached_copy_url(url, user, allow_fallbacks=true)
       cached_copy_urls([url], user, allow_fallbacks)[url]
-#       if url && Uploader.protected_remote_url?(url)
-#         ref = self.cached_copy_identifiers(url)
-#         if ref[:library] == 'lessonpix'
-#           return nil unless user && Uploader.lessonpix_credentials(user)
-#         else
-#           return nil
-#         end
-#         bi = ButtonImage.find_by_url(ref[:url])
-#         return bi && bi.settings['cached_copy_url']
-#       else
-#         nil
-#       end
     end
 
     def cached_copy_identifiers(url)
