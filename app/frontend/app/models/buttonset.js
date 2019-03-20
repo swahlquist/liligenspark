@@ -72,7 +72,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             var buttons = JSON.parse(atob(data_uri.split(/,/)[1]));
             bs.set('buttons_loaded', true);
             bs.set('buttons', buttons);
-            resolve();
+            resolve(bs);
           } catch(e) {
             reject({error: "invalid JSON at root url"});
           }
@@ -87,7 +87,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           });
         });
       } else if(bs.get('buttons')) {
-        resolve();
+        resolve(bs);
       } else {
         reject({error: 'root url not available'});
       }
