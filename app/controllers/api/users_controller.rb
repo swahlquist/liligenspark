@@ -510,7 +510,7 @@ class Api::UsersController < ApplicationController
       end
       return redirect_to '/images/square.svg'
     else
-      users = [user, api_user]
+      users = [user, api_user].uniq
       users.each do |user|
         next if valid_result || !user
         safe_url = ButtonImage.cached_copy_url(request.original_url, user, false)

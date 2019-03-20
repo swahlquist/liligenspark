@@ -8,45 +8,7 @@ class Api::BoardsController < ApplicationController
       conn = (Octopus.config[Rails.env] || {}).keys.sample
       boards = boards.using(conn) if conn
     end
-    Rails.logger.warn('filtering by user')
-    self.class.trace_execution_scoped(['boards/user_filter']) do
-      if params['user_id']
-        user = User.find_by_path(params['user_id'])
-        return unless allowed?(user, 'view_detailed')
-        unless params['starred']
-          if params['shared']
-            arel = Board.arel_table
-            shared_board_ids = Board.all_shared_board_ids_for(user)
-            # TODO: fix when sharding actually happens
-            boards = boards.where(arel[:id].in(Board.local_ids(shared_board_ids)))
-          elsif params['include_shared']
-            arel = Board.arel_table
-            shared_board_ids = Board.all_shared_board_ids_for(user)
-            # TODO: fix when sharding actually happens
-            boards = boards.where(arel[:user_id].eq(user.id).or(arel[:id].in(Board.local_ids(shared_board_ids))))
-          else
-            boards = boards.where(:user_id => user.id)
-          end
-        end
-        if !params['public']
-          return unless allowed?(user, 'supervise')
-        end
-        if params['private']
-          boards = boards.where(:public => false)
-        end
-        if params['starred']
-          # TODO: this still won't include boards of people I supervise... (because it shouldn't)
-          boards = boards.where(['user_id = ? OR public = ?', user.id, true])
-          ids = (user.settings['starred_board_ids'] || [])
-          # TODO: fix when sharding actually happens
-          boards = boards.where(:id => Board.local_ids(ids))
-        end
-      else
-        params['public'] = true
-      end
-    end
-    
-    # TODO: where(:public => true) as the cancellable default
+
     Rails.logger.warn('checking key')
     self.class.trace_execution_scoped(['boards/key_check']) do
       if params['key']
@@ -55,6 +17,53 @@ class Api::BoardsController < ApplicationController
           keys << "#{@api_user.user_name}/#{params['key']}"
         end
         boards = boards.where(:key => keys)
+      end
+    end
+    
+    Rails.logger.warn('filtering by user')
+    # TODO: where(:public => true) as the cancellable default
+    self.class.trace_execution_scoped(['boards/user_filter']) do
+      if params['user_id']
+        user = User.find_by_path(params['user_id'])
+        return unless allowed?(user, 'view_detailed')
+        unless params['starred']
+          if params['shared']
+            Rails.logger.warn('looking up shared board ids')
+            arel = Board.arel_table
+            shared_board_ids = Board.all_shared_board_ids_for(user)
+            # TODO: fix when sharding actually happens
+            Rails.logger.warn('filtering by shared board ids')
+            boards = boards.where(arel[:id].in(Board.local_ids(shared_board_ids)))
+          elsif params['include_shared']
+            arel = Board.arel_table
+            Rails.logger.warn('looking up shared board ids')
+            shared_board_ids = Board.all_shared_board_ids_for(user)
+            # TODO: fix when sharding actually happens
+            Rails.logger.warn('filtering by share board ids')
+            boards = boards.where(arel[:user_id].eq(user.id).or(arel[:id].in(Board.local_ids(shared_board_ids))))
+          else
+            boards = boards.where(:user_id => user.id)
+          end
+        end
+        if !params['public']
+          Rails.logger.warn('checking for supervision permission')
+          return unless allowed?(user, 'supervise')
+        end
+        if params['private']
+          Rails.logger.warn('checking for publicness')
+          boards = boards.where(:public => false)
+        end
+        if params['starred']
+          Rails.logger.warn('filtering by user or public')
+          # TODO: this still won't include boards of people I supervise... (because it shouldn't)
+          boards = boards.where(['user_id = ? OR public = ?', user.id, true])
+          ids = (user.settings['starred_board_ids'] || [])
+          # TODO: sharding
+          Rails.logger.warn('filtering by starred board ids')
+          boards = boards.where(:id => Board.local_ids(ids))
+        end
+      else
+        params['public'] = true
       end
     end
     
