@@ -13,7 +13,7 @@
     {{#if button.sound}}
       <audio style="display: none;" preload="auto" src={{button.sound}}></audio>
     {{/if}}
-    <div class='text'>
+    <div class={{if button.modeling 'text modeled' 'text'}}>
       {{ button.label }}
     </div>
   </div>

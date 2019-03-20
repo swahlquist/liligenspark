@@ -571,11 +571,17 @@ footer .wide_links {
       height: auto;
       margin: 0;
       padding: 0;
+      .modeling {
+        display: none;
+      }
       img {
         display: none;
       }
       .text {
         display: inline;
+        &.modeled {
+          text-decoration: underline;
+        }
         &::after {
           content: "";
           display: inline;
