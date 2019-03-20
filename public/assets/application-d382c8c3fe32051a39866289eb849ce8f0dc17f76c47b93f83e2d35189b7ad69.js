@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.03.20a";
+window.app_version = "2019.03.20b";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9034,8 +9034,8 @@ return t}.property("buttons"),buttons_for_level:function(e,t){for(var n={},s=[{i
 n[r.id]=!0,a.forEach(function(e){if(e.board_id==r.id){var a=!e.hidden,l=!!e.link_disabled
 e.visible_level&&(a=e.visible_level<=t),e.linked_level&&(l=e.linked_level<=t),a&&(e.linked_board_id&&l?n[e.linked_board_id]||(n[e.linked_board_id]=!0,s.push({id:e.linked_board_id})):o++)}})}return o},load_buttons:function(){var e=this
 return new Ember.RSVP.Promise(function(t,n){if(e.get("root_url")&&!e.get("buttons_loaded")){var s=function(s){try{var a=JSON.parse(atob(s.split(/,/)[1]))
-e.set("buttons_loaded",!0),e.set("buttons",a),t()}catch(e){n({error:"invalid JSON at root url"})}}
-o.default.find_url(e.get("root_url"),"json").then(function(e){s(e)},function(){o.default.store_url(e.get("root_url"),"json").then(function(e){s(e.data_uri)},function(e){n(e)})})}else e.get("buttons")?t():n({error:"root url not available"})})},redepth:function(e){for(var t=this.get("buttons")||[],n=[],s=[{id:e,depth:0}],a=[],o=function(e){if(e.board_id==r.id){var t=Ember.$.extend({},e,{depth:r.depth})
+e.set("buttons_loaded",!0),e.set("buttons",a),t(e)}catch(e){n({error:"invalid JSON at root url"})}}
+o.default.find_url(e.get("root_url"),"json").then(function(e){s(e)},function(){o.default.store_url(e.get("root_url"),"json").then(function(e){s(e.data_uri)},function(e){n(e)})})}else e.get("buttons")?t(e):n({error:"root url not available"})})},redepth:function(e){for(var t=this.get("buttons")||[],n=[],s=[{id:e,depth:0}],a=[],o=function(e){if(e.board_id==r.id){var t=Ember.$.extend({},e,{depth:r.depth})
 n.push(t),e.linked_board_id&&-1==a.indexOf(e.linked_board_id)&&(a.push(e.linked_board_id),s.push({id:e.linked_board_id,depth:r.depth+1}))}};s.length>0;){var r=s.shift()
 t.forEach(o),s.sort(function(e,t){return t.depth-e.depth})}return t=n},button_steps:function(e,t,n,s,a){var o=!0
 if(e==t)return{buttons:[],steps:0,final_board_id:t}
@@ -11136,8 +11136,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+25e2dee8"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+25e2dee8"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+6ef41704"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+6ef41704"})
 ;
 
 
