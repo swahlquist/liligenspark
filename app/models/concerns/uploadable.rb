@@ -143,7 +143,9 @@ module Uploadable
       self.settings['source_url'] = url
       res = Typhoeus.get(Uploader.sanitize_url(URI.escape(url)))
       if res.headers['Location']
-        res = Typhoeus.get(Uploader.sanitize_url(URI.escape(res.headers['Location'])))
+        redirect_url = res.headers['Location']
+        redirect_url = redirect_url.sub(/\?/, "%3F") if redirect_url.match(/lessonpix\.com/) && redirect_url.match(/\?.*\.png/)
+        res = Typhoeus.get(Uploader.sanitize_url(URI.escape(redirect_url)))
       end
       # TODO: regex depending on self.file_type
       re = /^audio/
@@ -211,7 +213,7 @@ module Uploadable
       if url && Uploader.protected_remote_url?(url)
         ref = self.cached_copy_identifiers(url)
         return false unless ref
-        bi = ButtonImage.find_by_url(ref[:url])
+        bi = ButtonImage.find_by(url: ref[:url])
         if bi && (bi.settings['copy_attempts'] || []).select{|a| a > 24.hours.ago.to_i }.length > 2
           return false
         end
