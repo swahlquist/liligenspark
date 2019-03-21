@@ -2411,7 +2411,11 @@ persistence.DSExtend = {
             return RSVP.resolve(record);
           }
         }, function() {
-          return RSVP.reject({error: "failed to create in local db"});
+          if(capabilities.installed_app || persistence.get('auto_sync')) {
+            return RSVP.reject({error: "failed to create in local db"});
+          } else {
+            return RSVP.resolve(record);
+          }
         });
       });
     } else {
