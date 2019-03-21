@@ -562,9 +562,7 @@ var dbman = {
       request.onupgradeneeded = function(event) {
         var db = event.target.result;
         db.request = request;
-        setTimeout(function() {
-          dbman.upgrade_database(db, event.oldVersion, version, promise);
-        }, 200);
+        dbman.upgrade_database(db, event.oldVersion, version, promise);
       };
 
       request.onblocked = function(event) {
@@ -649,10 +647,14 @@ var dbman = {
               });
             }
           });
-          var transaction = db.transaction(['settings'], 'readwrite');
-          try {
-            var res = transaction.objectStore('settings').delete('lastSync');
-          } catch(e) { debugger; }
+          setTimeout(function() {
+            if(dbman.db) {
+              var transaction = db.transaction(['settings'], 'readwrite');
+              try {
+                var res = transaction.objectStore('settings').delete('lastSync');
+              } catch(e) { debugger; }
+            }
+          }, 2000);
         } catch(e) {
           console.error("COUGHDROP: db migrations failed");
           console.error(e);
