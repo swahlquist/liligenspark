@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.03.20e";
+window.app_version = "2019.03.21";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -10101,7 +10101,7 @@ if("indexeddb"==o.db_type){try{t.default.idb.deleteDatabase(e)}catch(e){n.reject
 return n},setup_database:function(e,n,s){if(s=s||t.default.mini_promise(),o.db_type="indexeddb",window.sqlitePlugin&&(o.sqlite=window.sqlitePlugin||window,o.db_type="sqlite_plugin"),"indexeddb"==o.db_type){var a={},r=!1
 try{a=t.default.idb.open(e,n)}catch(e){console.error("COUGHDROP: unexpected db throw"),console.log(e),r=!0}(a=a||{}).onerror=function(a){o.setup_database.already_tried?(console.log(a),o.setup_database.already_tried_deleting?o.setup_database.already_tried_deleting_all?(console.error("COUGHDROP: db failed to initialize after repeated attempts"),s.reject("db failed after repeated attempts")):(console.error("COUGHDROP: db failed to initialize even after deleting, deleting other databases"),o.setup_database.already_tried_deleting_all=!0,t.default.idb.webkitGetDatabaseNames?t.default.idb.webkitGetDatabaseNames().onsuccess=function(t){if(t&&t.target&&t.target.result){for(var a=t.target.result.length,r=0;r<a;r++){var l=t.target.result[r]
 l&&l.match(/^coughDropStorage/)&&o.delete_database(l)}a>0?setTimeout(function(){o.setup_database(e,n,s)},500):(console.error("COUGHDROP: db failed to initialize after repeated attempts"),s.reject("db failed after repeated attempts"))}}:(console.error("COUGHDROP: db failed to initialize after repeated attempts"),s.reject("db failed after repeated attempts"))):(console.error("COUGHDROP: db failed to initialize, deleting database.."),o.delete_database(e),o.setup_database.already_tried_deleting=!0,setTimeout(function(){o.setup_database(e,n,s)},500)),o.db_error_event=a,o.db=!1,t.default.db=!1):(console.log("COUGHDROP: db failed once, trying again"),o.setup_database.already_tried=!0,setTimeout(function(){o.setup_database(e,n,s)},1e3))},a.onsuccess=function(e){console.log("COUGHDROP: db succeeded"),o.db=a.result,t.default.db=a.result,setTimeout(function(){o.use_database(o.db,s)},10)},a.onupgradeneeded=function(e){var t=e.target.result
-t.request=a,setTimeout(function(){o.upgrade_database(t,e.oldVersion,n,s)},200)},a.onblocked=function(e){alert("Please close all other tabs with this site open!")},r&&a.onerror()}else if("sqlite_plugin"==o.db_type){var l=function e(t){if(!e.called){e.called=!0,window.db=t
+t.request=a,o.upgrade_database(t,e.oldVersion,n,s)},a.onblocked=function(e){alert("Please close all other tabs with this site open!")},r&&a.onerror()}else if("sqlite_plugin"==o.db_type){var l=function e(t){if(!e.called){e.called=!0,window.db=t
 var a=!1,r=null
 t.transaction(function(e){e.executeSql("CREATE TABLE IF NOT EXISTS version (version TEXT)"),e.executeSql("SELECT * FROM version",[],function(e,t){var s=null
 t.rows&&t.rows.length>0&&(s=t.rows.item(0)),(r=s&&s.version)&&r==n||(a=!0)})},function(e){console.log(e),s.reject({error:e.message})},function(){a?o.upgrade_database(t,r,n,s):o.use_database(t,s)})}},i=[{name:e,location:"default"},l,function(e){s.reject(e)}]
@@ -10113,9 +10113,8 @@ console.log("COUGHDROP: db upgrade needed from "+(s||0))
 try{var d=e.objectStoreNames||[],u=[]
 for(var c in n)u.push(c)
 u.forEach(function(t){var s=n[t]
-if(!d.contains(s.key)){var a=e.createObjectStore(s.key,{keyPath:s.key_path}),o=a.indexNames||[];(s.indexes||[]).forEach(function(e){!o.contains(e)&&l&&a.createIndex(e,e,{unique:!1})})}})
-var p=e.transaction(["settings"],"readwrite")
-try{p.objectStore("settings").delete("lastSync")}catch(e){}}catch(t){console.error("COUGHDROP: db migrations failed"),console.error(t),e.request.onerror(),e=null}e&&i&&setTimeout(function(){o.db||(o.db=e,t.default.db=e,console.log("COUGHDROP: db succeeded through onupgradeneeded"),o.use_database(o.db,r))},100)}else"sqlite_plugin"==o.db_type?(console.log("COUGHDROP: db upgrade needed from "+(s||0)),e.transaction(function(e){e.executeSql("CREATE TABLE IF NOT EXISTS version (version VARCHAR)")
+if(!d.contains(s.key)){var a=e.createObjectStore(s.key,{keyPath:s.key_path}),o=a.indexNames||[];(s.indexes||[]).forEach(function(e){!o.contains(e)&&l&&a.createIndex(e,e,{unique:!1})})}}),setTimeout(function(){if(o.db){var t=e.transaction(["settings"],"readwrite")
+try{t.objectStore("settings").delete("lastSync")}catch(e){}}},2e3)}catch(t){console.error("COUGHDROP: db migrations failed"),console.error(t),e.request.onerror(),e=null}e&&i&&setTimeout(function(){o.db||(o.db=e,t.default.db=e,console.log("COUGHDROP: db succeeded through onupgradeneeded"),o.use_database(o.db,r))},100)}else"sqlite_plugin"==o.db_type?(console.log("COUGHDROP: db upgrade needed from "+(s||0)),e.transaction(function(e){e.executeSql("CREATE TABLE IF NOT EXISTS version (version VARCHAR)")
 var t=[]
 for(var s in n)t.push(s)
 t.forEach(function(t){var s=n[t]
@@ -10613,7 +10612,7 @@ return i.then(u,function(){return p.get("online")&&!a.match(/^tmp[_\/]/)?(p.reme
 var n=(new Date).getTime()
 e[t.modelName].retrieved=n,e.images&&e.images.forEach(function(e){e.retrieved=n}),e.sounds&&e.sounds.forEach(function(e){e.retrieved=n})}var s=null
 return"user"==t.modelName&&"self"==a&&(s="self"),p.store_eventually(t.modelName,e,s).then(function(){return Ember.RSVP.resolve(e)},function(){return Ember.RSVP.reject({error:"failed to delayed-persist to local db"})})},function(e){var t=!1
-return e&&(e.invalid_token||e.result&&e.result.invalid_token)?t=!0:e&&e.errors&&e.errors[0]&&e.errors[0].status&&"5"==e.errors[0].status.substring(0,1)?t=!0:e&&e.fakeXHR&&0===e.fakeXHR.status?t=!0:e&&e.fakeXHR&&e.fakeXHR.status&&"5"==e.fakeXHR.status.toString().substring(0,1)&&(t=!0),t?l.then(u,function(){return Ember.RSVP.reject(e)}):Ember.RSVP.reject(e)})):l.then(u,p.offline_reject)})},createRecord:function(e,t,n){if(p.get("online")){return this._super(e,t,n).then(function(e){return n.record&&n.record.tmp_key&&(e[t.modelName].tmp_key=n.record.tmp_key),p.store(t.modelName,e).then(function(){return Ember.RSVP.resolve(e)},function(){return Ember.RSVP.reject({error:"failed to create in local db"})})})}var s=p.convert_model_to_json(e,t.modelName,n)
+return e&&(e.invalid_token||e.result&&e.result.invalid_token)?t=!0:e&&e.errors&&e.errors[0]&&e.errors[0].status&&"5"==e.errors[0].status.substring(0,1)?t=!0:e&&e.fakeXHR&&0===e.fakeXHR.status?t=!0:e&&e.fakeXHR&&e.fakeXHR.status&&"5"==e.fakeXHR.status.toString().substring(0,1)&&(t=!0),t?l.then(u,function(){return Ember.RSVP.reject(e)}):Ember.RSVP.reject(e)})):l.then(u,p.offline_reject)})},createRecord:function(e,t,n){if(p.get("online")){return this._super(e,t,n).then(function(e){return n.record&&n.record.tmp_key&&(e[t.modelName].tmp_key=n.record.tmp_key),p.store(t.modelName,e).then(function(){return Ember.RSVP.resolve(e)},function(){return d.default.installed_app||p.get("auto_sync")?Ember.RSVP.reject({error:"failed to create in local db"}):Ember.RSVP.resolve(e)})})}var s=p.convert_model_to_json(e,t.modelName,n)
 return s[t.modelName].changed=!0,s[t.modelName].key&&s[t.modelName].key.match(/^tmp_/)&&(s[t.modelName].tmp_key=s[t.modelName].key),s[t.modelName].id.match(/^tmp/)&&-1==["board","image","sound"].indexOf(t.modelName)?p.offline_reject():p.store(t.modelName,s).then(function(){return Ember.RSVP.resolve(s)},function(){return p.offline_reject()})},updateRecord:function(e,t,n){if(p.get("online"))return n.id.match(/^tmp[_\/]/)?this.createRecord(e,t,n):this._super(e,t,n).then(function(e){return p.store(t.modelName,e).then(function(){return Ember.RSVP.resolve(e)},function(){return Ember.RSVP.reject({error:"failed to update to local db"})})})
 var s=p.convert_model_to_json(e,t.modelName,n)
 return s[t.modelName].changed=!0,p.store(t.modelName,s).then(function(){Ember.RSVP.resolve(s)},function(){return p.offline_reject()})},deleteRecord:function(e,t,n){if(p.get("online"))return this._super(e,t,n).then(function(e){return p.remove(t.modelName,e).then(function(){return Ember.RSVP.resolve(e)},function(){return Ember.RSVP.reject({error:"failed to delete in local db"})})})
@@ -11138,8 +11137,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+2feb546d"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+2feb546d"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+ebf8b893"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+ebf8b893"})
 ;
 
 
