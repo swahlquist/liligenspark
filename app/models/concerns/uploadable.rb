@@ -288,7 +288,11 @@ module Uploadable
       if lookups.keys.length > 0 || fallbacks.keys.length > 0
         if lookups.keys.length > 0
           ButtonImage.where(:url => lookups.keys).each do |bi|
-            caches[lookups[bi.url]] = bi.settings['cached_copy_url'] if bi.settings['cached_copy_url']
+            if bi.settings['cached_copy_url']
+              caches[lookups[bi.url]] = bi.settings['cached_copy_url'] 
+            elsif bi && (bi.settings['copy_attempts'] || []).select{|a| a > 48.hours.ago.to_i }.length == 0
+              bi.schedule(:assert_cached_copy)
+            end
           end
         end
         records.each do |record|

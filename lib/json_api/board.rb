@@ -47,8 +47,15 @@ module JsonApi::Board
     json['immediately_upstream_boards'] = (board.settings['immediately_upstream_board_ids'] || []).length
     json['user_name'] = board.cached_user_name
     self.trace_execution_scoped(['json/board/parent_board']) do
-      json['parent_board_id'] = board.parent_board && board.parent_board.global_id
-      json['parent_board_key'] = board.parent_board && board.parent_board.key
+      parent_board = nil
+      if defined?(Octopus)
+        conn = (Octopus.config[Rails.env] || {}).keys.sample
+        ref = board.using(conn).parent_board if conn
+      else
+        parent_board = board.parent_board
+      end
+      json['parent_board_id'] = parent_board && parent_board.global_id
+      json['parent_board_key'] = parent_board && parent_board.key
     end
     json['link'] = "#{JsonApi::Json.current_host}/#{board.key}"
     

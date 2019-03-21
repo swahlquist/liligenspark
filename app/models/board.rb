@@ -156,7 +156,12 @@ class Board < ActiveRecord::Base
     if user
       ids = [user.id] + self.class.local_ids(user.supervised_user_ids || [])
       # TODO: sharding
-      Board.where(:parent_board_id => self.id, :user_id => ids).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
+      boards = Board
+      if defined?(Octopus)
+        conn = (Octopus.config[Rails.env] || {}).keys.sample
+        boards = Board.using(conn) if conn
+      end
+      boards.where(:parent_board_id => self.id, :user_id => ids).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
     else
       []
     end
