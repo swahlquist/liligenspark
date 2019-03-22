@@ -69,7 +69,8 @@ describe Subscription, :type => :model do
     link.data['state']['added'] = added.iso8601
     link.save
     expect(u.reload.org_sponsored?).to eq(true)
-    expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+    expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 100)
+    expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 100)
   end
   
   describe "long_term_purchase?" do
@@ -1918,7 +1919,8 @@ describe Subscription, :type => :model do
       cutoff = 3.weeks
       u.settings['subscription']['last_purchased'] = (Time.now - cutoff).iso8601
       expect(u.long_term_purchase?).to eq(true)
-      expect(u.purchase_credit_duration).to eq(cutoff.to_i)
+      expect(u.purchase_credit_duration).to be <= (cutoff.to_i + 3600)
+      expect(u.purchase_credit_duration).to be >= (cutoff.to_i - 3600)
     end
     
     it "should include org sponsorship" do
@@ -1955,7 +1957,8 @@ describe Subscription, :type => :model do
       u.settings['subscription']['last_purchase_plan_id'] = 'asdf'
       cutoff = 3.weeks
       u.settings['subscription']['last_purchased'] = (Time.now - cutoff).iso8601
-      expect(u.purchase_credit_duration).to eq(1.week.to_i)
+      expect(u.purchase_credit_duration).to be >= (1.week.to_i - 3600)
+      expect(u.purchase_credit_duration).to be <= (1.week.to_i + 3600)
     end
   end
 end

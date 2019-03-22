@@ -52,6 +52,7 @@ RSpec.configure do |config|
     Worker.flush_queues
     PaperTrail.request.whodunnit = nil
     RedisInit.cache_token = "#{rand(999)}.#{Time.now.to_f}"
+    ENV['REMOTE_EXTRA_DATA'] = nil
     Permissable.set_redis(RedisInit.permissions, RedisInit.cache_token)
   end
 end

@@ -316,10 +316,10 @@ describe Uploadable, :type => :model do
       i = ButtonImage.new(url: 'http://www.example.com/pic.svg')
       bi = ButtonImage.create(url: 'bacon')
       expect(Uploader).to receive(:protected_remote_url?).with('http://www.example.com/pic.svg').and_return(true)
-      expect(Uploader).to receive(:protected_remote_url?).with('bacon').and_return(false)
+      expect(Uploader).to receive(:protected_remote_url?).with('bacon').and_return(false).at_least(1).times
       expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/pic.svg').and_return({url: 'bacon'})
       expect(Uploader).to receive(:found_image_url).and_return('http://www.example.com/cache/pic.svg')
-      expect(ButtonImage).to receive(:find_by_url).with('bacon').and_return(bi)
+      expect(ButtonImage).to receive(:find_by).with(url: 'bacon').and_return(bi)
       expect(bi).to receive(:upload_to_remote) do |url|
         bi.settings['errored_pending_url'] = 'http://something'
         expect(url).to eq('http://www.example.com/cache/pic.svg')
@@ -377,12 +377,13 @@ describe Uploadable, :type => :model do
         url: 'coughdrop://something.png'
       })
       expect(Uploader).to receive(:found_image_url).with('12345', 'lessonpix', u).and_return('http://www.example.com/pics/pic.png')
-      expect(ButtonImage).to receive(:find_by_url).with('coughdrop://something.png').and_return(bi2)
+      expect(ButtonImage).to receive(:find_by).with(url: 'coughdrop://something.png').and_return(bi2)
       expect(bi2).to receive(:upload_to_remote){|url|
         expect(url).to eq('http://www.example.com/pics/pic.png')
         bi2.url = 'http://www.example.com/uploads/pic.png'
         bi2.save
       }.and_return(true)
+      expect(bi.settings['errored_pending_url']).to eq(nil)
       expect(bi.assert_cached_copy).to eq(true)
       bi2.reload
       expect(bi2.url).to eq("coughdrop://something.png")

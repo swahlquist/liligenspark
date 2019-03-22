@@ -140,6 +140,7 @@ describe User, :type => :model do
       expect(u.settings['preferences']).not_to eq(nil)
       expect(u.settings['preferences']['devices']['default']).to eq({
         'name' => 'Web browser for Desktop',
+        'utterance_text_only' => false,
         'voice' => {'pitch' => 1.0, 'volume' => 1.0},
         'button_spacing' => 'small',
         'button_border' => 'small',
@@ -171,6 +172,7 @@ describe User, :type => :model do
       expect(u.settings['preferences']).not_to eq(nil)
       expect(u.settings['preferences']['devices']['default']).to eq({
         'name' => 'not_browser',
+        'utterance_text_only' => false,
         'voice' => {'pitch' => 2.0, 'volume' => 2.0},
         'auto_home_return' => false,
         'button_spacing' => 'small',
