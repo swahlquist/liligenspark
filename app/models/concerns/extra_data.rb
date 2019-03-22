@@ -82,7 +82,7 @@ module ExtraData
     return false unless ENV['REMOTE_EXTRA_DATA']
     if self.is_a?(LogSession) && self.log_type == 'session'
       user = self.user
-      if self.data['events'] && self.data['events'].length > 5
+      if self.data && self.data['events'] && self.data['events'].length > 5
         return true
       end
     elsif self.is_a?(BoardDownstreamButtonSet)
