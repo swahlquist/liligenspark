@@ -78,7 +78,7 @@ class Api::LogsController < ApplicationController
       :author => @api_user,
       :ip_address => ip,
       :user => user,
-      :device => @api_device,
+      :device => Device.find_by_global_id(@api_device_id),
       :request_id => request.request_id
     })
     if !log || log.errored?
@@ -96,7 +96,7 @@ class Api::LogsController < ApplicationController
       type = 'unspecified'
       type = 'obl' if params['type'] == 'obl'
       type = 'lam' if params['type'] == 'lam'
-      progress = Progress.schedule(Exporter, :process_log, params['url'] || params['content'], type, user.global_id, @api_user.global_id, @api_device.global_id)
+      progress = Progress.schedule(Exporter, :process_log, params['url'] || params['content'], type, user.global_id, @api_user.global_id, @api_device_id)
       render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
     else
       remote_path = "imports/logs/#{@api_user.global_id}/upload-#{GoSecure.nonce('filename')}.txt"
@@ -116,7 +116,7 @@ class Api::LogsController < ApplicationController
     log.process(params['log'], {
       :author => @api_user,
       :user => user,
-      :device => @api_device,
+      :device => Device.find_by_global_id(@api_device_id),
       :update_only => true
     })
     

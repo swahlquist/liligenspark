@@ -119,7 +119,7 @@ class SessionController < ApplicationController
   end
   
   def oauth_logout
-    @api_device.logout!
+    Device.find_by_global_id(@api_device_id).logout!
     render json: {logout: true}.to_json
   end
   
@@ -169,13 +169,14 @@ class SessionController < ApplicationController
   def token_check
     set_browser_token_header
     if @api_user
-      valid = @api_device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
+      device = Device.find_by_global_id(@api_device_id)
+      valid = device && device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
       render json: {
         authenticated: valid, 
         user_name: @api_user.user_name, 
         user_id: @api_user.global_id,
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
-        scopes: @api_device && @api_device.permission_scopes,
+        scopes: device && device.permission_scopes,
         sale: ENV['CURRENT_SALE'],
         global_integrations: UserIntegration.global_integrations.keys
       }.to_json

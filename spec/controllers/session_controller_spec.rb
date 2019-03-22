@@ -591,5 +591,35 @@ describe SessionController, :type => :controller do
       expect(device.settings).not_to eq("null")
       expect(device.settings['keys'][0]['value']).to eq(@device.token)
     end
+
+    it "should error correctly (honor skip_on_token_check) on expired or invalid tokens" do
+      token_user
+      d = @user.devices[0]
+      d.settings['disabled'] = true
+      d.save
+      get :token_check, params: {:access_token => @device.token}
+      expect(response).to be_success
+      expect(assigns[:cached]).to eq(nil)
+      json = JSON.parse(response.body)
+      expect(json['authenticated']).to eq(false)
+      expect(json['user_name']).to eq(@user.user_name)
+    end
+
+    it "should used cached values on repeat requests" do
+      token_user
+      get :token_check, params: {:access_token => @device.token}
+      expect(response).to be_success
+      expect(assigns[:cached]).to eq(nil)
+      json = JSON.parse(response.body)
+      expect(json['authenticated']).to eq(true)
+      expect(json['user_name']).to eq(@user.user_name)
+
+      get :token_check, params: {:access_token => @device.token}
+      expect(assigns[:cached]).to eq(true)
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['authenticated']).to eq(true)
+      expect(json['user_name']).to eq(@user.user_name)
+    end
   end
 end

@@ -7,6 +7,7 @@ class Device < ActiveRecord::Base
   belongs_to :user_integration
   before_save :generate_defaults
   after_save :update_user_device_name
+  after_destroy :invalidate_cached_keys
 
   VALID_API_SCOPES = {
     'read_profile' => "access basic profile information",
@@ -111,9 +112,18 @@ class Device < ActiveRecord::Base
       24.hours.to_i
     end
   end
+
+  def invalidate_cached_keys
+    self.settings ||= {}
+    (self.settings['keys'] || []).each do |key|
+      token = key['value']
+      RedisInit.permissions.del("user_token/#{token}")
+    end
+    true
+  end
   
   def invalidate_keys!
-    self.settings ||= {}
+    self.invalidate_cached_keys
     self.settings['keys'] = []
     self.save
   end
@@ -121,8 +131,67 @@ class Device < ActiveRecord::Base
   def clean_old_keys
     self.settings ||= {}
     keys = self.settings['keys'] || []
-    keys = keys.select{|k| k['last_timestamp'] > Time.now.to_i - (k['timeout'] || self.inactivity_timeout) }
-    self.settings['keys'] = keys
+    @expired_keys ||= {}
+    new_keys = []
+    keys.each do |k|
+      if k['last_timestamp'] > Time.now.to_i - (k['timeout'] || self.inactivity_timeout)
+        new_keys << k
+      else
+        @expired_keys[k['value']] = true
+      end
+    end
+    self.settings['keys'] = new_keys
+  end
+
+  def self.check_token(token, app_version)
+    # Skip device lookup if you already have the necessary information cached
+    user = nil, device_id = nil, scopes = nil
+    cached = RedisInit.permissions.get("user_token/#{token}")
+    res = {}
+    if cached
+      user_id, device_id, scopes_string = cached.split(/::/)
+      scopes = (scopes_string || "").split(',')
+      res[:cached] = true
+    else
+      id = token.split(/~/)[0]
+      device = Device.find_by_global_id(id)
+      user_id = device && device.related_global_id(device.user_id)
+      device_id = device && device.global_id
+      if !device || !device.valid_token?(token, app_version)
+        expired = device && (device.instance_variable_get('@expired_keys') || {})[token]
+        res[:error] = expired ? "Expired token" : "Invalid token"
+        if !expired
+          device_id = nil
+          user_id = nil
+        end
+        res[:error] = "Disabled token" if device && device.disabled?
+        res[:skip_on_token_check] = true
+        res[:invalid_token] = true
+      end
+      scopes = device && device.permission_scopes
+    end
+    if user_id
+      users_lookup = User
+      if defined?(Octopus)
+        conn = (Octopus.config[Rails.env] || {}).keys.sample
+        users_lookup = users_lookup.using(conn) if conn
+      end
+      user = users_lookup.find_by_global_id(user_id)
+      if defined?(Octopus)
+        user ||= User.using(:master).find_by_global_id(user_id)
+      end
+      if user && device_id
+        user.permission_scopes = scopes
+
+        store = [user_id, device_id, scopes.join(',')].join("::")
+        RedisInit.permissions.setex("user_token/#{token}", 12.hours.from_now.to_i, store)
+        res[:user] = user
+        res[:device_id] = device_id
+      elsif user_id
+        res[:error] = "Missing user"
+      end
+    end
+    res
   end
   
   def valid_token?(token, app_version=nil)

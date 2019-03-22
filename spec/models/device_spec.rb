@@ -354,5 +354,170 @@ describe Device, :type => :model do
       d.invalidate_keys!
       expect(d.reload.settings['keys']).to eq([])
     end
+
+    it 'should invalidate cached tokens' do
+      d = Device.create
+      d.generate_token!
+      expect(d.settings['keys']).not_to be_nil
+      expect(d.settings['keys'].length).to eq(1)
+      key = d.settings['keys'][0]['value']
+      expect(RedisInit.permissions).to receive(:del).with("user_token/#{key}").and_return(true)
+      
+      d.invalidate_keys!
+      expect(d.reload.settings['keys']).to eq([])
+    end
+
+    it "should invalidate cached tokens on device destroy" do
+      d = Device.create
+      d.generate_token!
+      expect(d.settings['keys']).not_to be_nil
+      expect(d.settings['keys'].length).to eq(1)
+      key = d.settings['keys'][0]['value']
+      expect(RedisInit.permissions).to receive(:del).with("user_token/#{key}").and_return(true)
+      d.destroy      
+    end
+  end
+
+  describe "check_token" do
+    it 'should check for a cached value' do
+      expect(RedisInit.permissions).to receive(:get).with('user_token/asdf')
+      Device.check_token('asdf', '1.2.3')
+    end
+
+    it 'should use the cached value if available' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(RedisInit.permissions).to receive(:get).with('user_token/asdf').and_return("#{u.global_id}::#{d.global_id}::a,b")
+      res = Device.check_token('asdf', '1.2.3')
+      expect(res[:cached]).to eq(true)
+      expect(res[:user]).to eq(u)
+      expect(res[:error]).to eq(nil)
+      expect(res[:device_id]).to eq(d.global_id)
+    end
+
+    it 'should check for a valid token if not cached' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      expect(d).to receive(:valid_token?).with(d.token, '1.2.3').and_return(true)
+      res = Device.check_token(d.token, '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+    end
+
+    it 'should mark a token as expired' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      d.generate_token!
+      d.settings['keys'][0]['timestamp'] = 36.months.ago.to_i
+      d.settings['keys'][0]['last_timestamp'] = 36.months.ago.to_i
+      d.save
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.settings['keys'][0]['value'], '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq("Expired token")
+    end
+
+    it 'should mark a token as invalid' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      d.generate_token!
+      d.settings['keys'][0]['timestamp'] = 36.months.ago.to_i
+      d.settings['keys'][0]['last_timestamp'] = 36.months.ago.to_i
+      d.save
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token("#{d.settings['keys'][0]['value']}x", '1.2.3')
+      expect(res[:user]).to eq(nil)
+      expect(res[:device_id]).to eq(nil)
+      expect(res[:error]).to eq("Invalid token")
+    end
+
+    it 'should mark a token as disabled' do
+      u = User.create
+      d = Device.create(user: u, settings: {'disabled' => true, 'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      d.generate_token!
+      d.settings['keys'][0]['timestamp'] = 36.months.ago.to_i
+      d.settings['keys'][0]['last_timestamp'] = 36.months.ago.to_i
+      d.save
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.settings['keys'][0]['value'], '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq("Disabled token")
+    end
+
+    it 'should error if the user is not found' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(RedisInit.permissions).to receive(:get).with('user_token/asdf').and_return("#{u.global_id}9::#{d.global_id}::a,b")
+      res = Device.check_token('asdf', '1.2.3')
+      expect(res[:error]).to eq("Missing user")
+      expect(res[:user]).to eq(nil)
+      expect(res[:cached]).to eq(true)
+      expect(res[:device_id]).to eq(nil)
+    end
+
+    it 'should return a valid result if found' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.token, '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+    end
+
+    it 'should set permission scopes on the user from the cache' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(RedisInit.permissions).to receive(:get).with('user_token/asdf').and_return("#{u.global_id}::#{d.global_id}::a,b")
+      res = Device.check_token('asdf', '1.2.3')
+      expect(res[:cached]).to eq(true)
+      expect(res[:user]).to eq(u)
+      expect(res[:error]).to eq(nil)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:user].permission_scopes).to eq(['a', 'b'])
+    end
+
+    it 'should set permission scopes on the user from a fresh load' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      expect(d).to receive(:valid_token?).with(d.token, '1.2.3').and_return(true)
+      res = Device.check_token(d.token, '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+      expect(res[:user].permission_scopes).to eq(['a', 'b'])
+    end
+
+    it 'should persist the valid result to the cache' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      expect(RedisInit.permissions).to receive(:setex) do |key, ts, val|
+        expect(key).to eq("user_token/#{d.token}")
+        expect(ts).to be > (12.hours.from_now.to_i - 100)
+        expect(ts).to be < (12.hours.from_now.to_i + 100)
+        expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b")
+      end
+      res = Device.check_token(d.token, '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+    end
+
+    it 'should persist the valid result to the cache' do
+      u = User.create
+      d = Device.create(user: u)
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.token, '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+      expect(res[:user].permission_scopes).to eq(['full'])
+    end
   end
 end

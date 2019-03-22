@@ -105,7 +105,7 @@ class Utterance < ActiveRecord::Base
             recipient: sup,
             sender: sharer,
             notify: 'user_only',
-            device: @api_device,
+            device: sharer.devices[0],
             message: message,
             reply_id: params['reply_id']
           })

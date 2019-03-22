@@ -74,7 +74,7 @@ describe Api::UsersController, :type => :controller do
       @device.settings['permission_scopes'] = ['read_profile']
       @device.save
       u = User.create
-      u.permission_scopes_device = @device
+      u.permission_scopes = @device.permission_scopes
       
       User.link_supervisor_to_user(@user, u)
       expect(u.permission_scopes).to eq(['read_profile'])
@@ -120,7 +120,7 @@ describe Api::UsersController, :type => :controller do
       @device.settings['permission_scopes'] = ['full']
       @device.save
       u = User.create
-      u.permission_scopes_device = @device
+      u.permission_scopes = @device.permission_scopes
       expect(u.permission_scopes).to eq(['full'])
 
       User.link_supervisor_to_user(@user, u)

@@ -25,7 +25,7 @@ class User < ActiveRecord::Base
                   :if => Proc.new{|u| PaperTrail.request.whodunnit && !PaperTrail.request.whodunnit.match(/^job/) }
               
   secure_serialize :settings
-  attr_accessor :permission_scopes_device
+  attr_accessor :permission_scopes
 
   # TODO: callback to update board names if username changes
   # ...I guess should do something about old links as well. Github
@@ -1218,15 +1218,7 @@ class User < ActiveRecord::Base
     return nil unless hash == verifier
     User.find_by_global_id(user_id)
   end
-  
-  def permission_scopes
-    if self.permission_scopes_device
-      self.permission_scopes_device.permission_scopes
-    else
-      nil
-    end
-  end
-  
+    
   def notify_on(attributes, notification_type)
     # TODO: ...
   end

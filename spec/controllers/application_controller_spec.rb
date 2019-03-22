@@ -17,7 +17,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u)
       get :index, params: {:access_token => d.token, :check_token => true}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
     end
@@ -33,7 +33,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u)
       get :index, params: {:access_token => d.token, :check_token => true}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
     end
@@ -43,14 +43,14 @@ describe ApplicationController, :type => :controller do
       d = Device.create(:user => u)
       request.headers['Authorization'] = "Bearer #{d.token}"
       get :index, params: {:check_token => true}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
     end
     
     it "should return an error if a token is provided but invalid" do
       get :index, params: {:access_token => "abcdef", :check_token => true}
-      expect(assigns[:api_device]).to eq(nil)
+      expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
       expect(response).not_to be_success
       json = JSON.parse(response.body)
@@ -60,7 +60,7 @@ describe ApplicationController, :type => :controller do
     
     it "should not error if no token parameter is sent" do
       get :index, params: {:check_token => true}
-      expect(assigns[:api_device]).to eq(nil)
+      expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
       expect(response).to be_success
     end
@@ -73,7 +73,7 @@ describe ApplicationController, :type => :controller do
       d = Device.create(:user => u)
       request.headers['Authorization'] = "Bearer #{d.token}"
       get :index, params: {:check_token => true, :as_user_id => u2.global_id}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u2)
       expect(assigns[:true_user]).to eq(u)
       expect(response).to be_success
@@ -88,7 +88,7 @@ describe ApplicationController, :type => :controller do
       request.headers['Authorization'] = "Bearer #{d.token}"
       request.headers['X-As-User-Id'] = u2.global_id
       get :index, params: {:check_token => true}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u2)
       expect(assigns[:true_user]).to eq(u)
       expect(response).to be_success
@@ -99,11 +99,41 @@ describe ApplicationController, :type => :controller do
       d = Device.create(:user => u, :settings => {'disabled' => true})
       request.headers['Authorization'] = "Bearer #{d.token}"
       get :index, params: {:check_token => true}
-      expect(assigns[:api_device]).to eq(nil)
+      expect(assigns[:api_device_id]).to eq(nil)
+      expect(assigns[:api_user]).to eq(nil)
+      expect(response).to_not be_success
+      json = JSON.parse(response.body)
+      expect(json['error']).to eq('Disabled token')
+    end
+
+    it "should not allow invalid tokens" do
+      u = User.create
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.token}9"
+      get :index, params: {:check_token => true}
+      expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
       expect(response).to_not be_success
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid token')
+    end
+
+    it "should not allow expired tokens" do
+      u = User.create
+      d = Device.create(:user => u)
+      d.generate_token!
+      key = d.settings['keys'][0]
+      key['timestamp'] = 36.months.ago.to_i
+      key['last_timestamp'] = 36.months.ago.to_i
+      d.settings['keys'] = [key]
+      d.save!
+      request.headers['Authorization'] = "Bearer #{d.settings['keys'][0]['value']}"
+      get :index, params: {:check_token => true}
+      expect(assigns[:api_device_id]).to eq(nil)
+      expect(assigns[:api_user]).to eq(nil)
+      expect(response).to_not be_success
+      json = JSON.parse(response.body)
+      expect(json['error']).to eq('Expired token')
     end
   end
   
@@ -195,7 +225,7 @@ describe ApplicationController, :type => :controller do
     end
     it "should error if no token parameter is sent" do
       get :index, params: {:check_token => true}
-      expect(assigns[:api_device]).to eq(nil)
+      expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
       assert_missing_token
     end
@@ -204,7 +234,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u)
       get :index, params: {:access_token => d.token, :check_token => true}
-      expect(assigns[:api_device]).to eq(d)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
     end
