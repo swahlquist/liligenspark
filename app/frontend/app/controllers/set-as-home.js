@@ -38,8 +38,8 @@ export default modal.ModalController.extend({
   }.property('has_supervisees'),
   board_levels: function() {
     return [
-      {name: i18n.t('unspecified', "[  ]"), id: ''},
-      {name: i18n.t('level_1', "Level 1"), id: '1'},
+      {name: i18n.t('unspecified', "[ Use the Default ]"), id: ''},
+      {name: i18n.t('level_1', "Level 1 (most simple)"), id: '1'},
       {name: i18n.t('level_2', "Level 2"), id: '2'},
       {name: i18n.t('level_3', "Level 3"), id: '3'},
       {name: i18n.t('level_4', "Level 4"), id: '4'},
@@ -48,7 +48,7 @@ export default modal.ModalController.extend({
       {name: i18n.t('level_7', "Level 7"), id: '7'},
       {name: i18n.t('level_8', "Level 8"), id: '8'},
       {name: i18n.t('level_9', "Level 9"), id: '9'},
-      {name: i18n.t('level_10', "Level 10"), id: '10'},
+      {name: i18n.t('level_10', "Level 10 (all buttons and links)"), id: '10'},
     ];
   }.property(),
   pending: function() {

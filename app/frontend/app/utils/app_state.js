@@ -630,7 +630,7 @@ var app_state = EmberObject.extend({
             }
           });
         }
-        if(level.preferred) {
+        if(level.preferred || level.source) {
           // If the user has a preference for the currently-launching board,
           // then we take that into account. If already on a board and not in
           // modelling mode, assume this is the user's new preference and
@@ -638,7 +638,7 @@ var app_state = EmberObject.extend({
           // user's preference.
           if(board_state && stashes.get('board_level') && stashes.get('board_level') != level.preferred) {
             level.current = stashes.get('board_level');
-            stashes.persist('board_level', level.current);
+            stashes.persist('board_level', level.current); // TODO: isn't this redundant?
             if(opts.override_state) {
               opts.override_state = $.extend({}, opts.override_state, {level: level.current});
             }
@@ -659,7 +659,7 @@ var app_state = EmberObject.extend({
               }
             }
             board_level = level.current;
-          } else {
+          } else if(level.preferred) {
             stashes.persist('board_level', level.preferred);
             if(opts.override_state) {
               opts.override_state = $.extend({}, opts.override_state, {level: level.preferred});
