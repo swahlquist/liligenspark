@@ -60,7 +60,8 @@ class BoardsController < ApplicationController
     end
     @meta_record = board && board.public && board.meta_record
     if request.path.match(/\./)
-      raise ActiveRecord::RecordNotFound.new("Board paths can't have dots, so this is invalid: #{request.path}")
+      return redirect_to "/404"
+      #raise ActiveRecord::RecordNotFound.new("Board paths can't have dots, so this is invalid: #{request.path}")
     end
     if params['embed']
       response.headers.except! 'X-Frame-Options'
@@ -75,7 +76,8 @@ class BoardsController < ApplicationController
     end
     @meta_record = user && user.settings['public'] && user.meta_record
     if request.path.match(/\./)
-      raise ActiveRecord::RecordNotFound.new("User paths can't have dots, so this is invalid: #{request.path}")
+      return redirect_to "/404"
+      #raise ActiveRecord::RecordNotFound.new("User paths can't have dots, so this is invalid: #{request.path}")
     end
     render :index
   end
