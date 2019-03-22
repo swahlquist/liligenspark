@@ -7,6 +7,7 @@ describe Api::ButtonSetsController, :type => :controller do
   after(:each) do
     ENV['REMOTE_EXTRA_DATA'] = @pre_env
   end
+  
   describe "show" do
     it "should not require api token" do
       get :show, params: {:id => 'asdf'}

@@ -94,7 +94,7 @@ module JsonApi::Board
     json['board']['protected_settings'] = board.settings['protected'] if board.protected_material?
     self.trace_execution_scoped(['json/board/images_and_sounds']) do
       hash = board.images_and_sounds_for(args[:permissions])
-      unless json['board']['simple_refs']
+      unless json['board'] && json['board']['simple_refs']
         json['images'] = hash['images']
         json['sounds'] = hash['sounds']
       end

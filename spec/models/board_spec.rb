@@ -773,20 +773,20 @@ describe Board, :type => :model do
     end
   end
 
-  describe "buttons_and_images" do
+  describe "images_and_sounds_for" do
     it "should return a cached value if there is one" do
       b = Board.new
-      expect(b).to receive(:get_cached).with('buttons_and_images/nobody').and_return({a: 1})
+      expect(b).to receive(:get_cached).with('images_and_sounds_for/nobody').and_return({a: 1})
       expect(b.images_and_sounds_for(nil)).to eq({a: 1})
 
       u = User.create
-      expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return({b: 1})
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return({b: 1})
       expect(b.images_and_sounds_for(u)).to eq({b: 1})
     end
 
     it "should call cached_copy_urls to check for cached urls" do
       b = Board.new
-      expect(b).to receive(:get_cached).with('buttons_and_images/nobody').and_return(nil)
+      expect(b).to receive(:get_cached).with('images_and_sounds_for/nobody').and_return(nil)
       expect(ButtonImage).to receive(:cached_copy_urls).with([], nil, nil, [])
       b.images_and_sounds_for(nil)
     end
@@ -796,7 +796,8 @@ describe Board, :type => :model do
       User.purchase_extras({'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
-      expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return(nil)
+      b.settings['buttons'] = [{'sound_id' => 'asdf'}]
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
@@ -820,7 +821,8 @@ describe Board, :type => :model do
       User.purchase_extras({'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
-      expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return(nil)
+      b.settings['buttons'] = [{'sound_id' => 'asdf'}]
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
@@ -829,7 +831,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
-      expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
+      expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}
@@ -845,7 +847,9 @@ describe Board, :type => :model do
       User.purchase_extras({'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
-      expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return(nil)
+      b.settings['buttons'] = [{'sound_id' => 'asdf'}]
+      b.save
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
@@ -854,7 +858,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
-      expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
+      expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}
@@ -874,7 +878,7 @@ describe Board, :type => :model do
       u2.reload
 
       b = Board.create(user: u)
-      expect(b).to receive(:get_cached).with("buttons_and_images/#{u.cache_key}").and_return(nil)
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bi3 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'cheese'}, url: 'http://www.example.com')
@@ -882,7 +886,7 @@ describe Board, :type => :model do
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['pcs']).and_return({'bi3' => true})
-      expect(b).to receive(:set_cached).with("buttons_and_images/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
+      expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
           {'bi1' => true}, {'bi2' => true}, {'bi3' => true}

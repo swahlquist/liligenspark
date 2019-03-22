@@ -695,6 +695,7 @@ class Board < ActiveRecord::Base
   end
   
   def process_buttons(buttons, editor, secondary_editor=nil)
+    clear_cached("images_and_sounds_with_fallbacks")
     @edit_notes ||= []
     @check_for_parts_of_speech = true
     prior_buttons = self.settings['buttons'] || []
@@ -779,6 +780,7 @@ class Board < ActiveRecord::Base
     # TODO: can we cache both the protected URL and the fallback on the db record itself,
     # based on boards_updated_at, and then we could skip the lookup entirely 
     # (how long is the lookup taking??? is this worth the effort?)
+    # list_key = "images_and_sounds_with_fallbacks"
     key = "images_and_sounds_for/#{user ? user.cache_key : 'nobody'}"
     res = get_cached(key)
     return res if res
@@ -787,13 +789,22 @@ class Board < ActiveRecord::Base
     bis = self.button_images
     protected_sources = (user && user.enabled_protected_sources(true)) || []
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
-    
+    # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
-    if (self.settings['buttons'] || []).detect{|b| b && b['sound_id']}
-      res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }
+    if self.settings && (self.settings['buttons'] || []).detect{|b| b && b['sound_id']}
+      res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }
     else
       res['sounds'] = []
     end
+    # set_cached(list_key, res.to_json)
+    # res['images'].each do |img|
+    #   if img['protected_source'] && !protected_sources.include?(img['protected_source'])
+    #     img['url'] = img['fallback_url']
+    #     img['protected'] = false
+    #     img['fallback'] = true
+    #   end
+    #   img.delete('fallback_url')
+    # end
     Rails.logger.warn('end images_and_sounds lookup')
     set_cached(key, res)
     res

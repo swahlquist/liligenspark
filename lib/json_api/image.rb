@@ -15,7 +15,10 @@ module JsonApi::Image
     allowed_sources = args[:allowed_sources]
     allowed_sources ||= args[:permissions] && args[:permissions].enabled_protected_sources(true)
     allowed_sources ||= []
-    if settings && protected_source && !allowed_sources.include?(settings['protected_source'])
+    if settings && protected_source && args[:original_and_fallback]
+      fb = settings['fallback'] || {}
+      json['fallback_url'] = Uploader.fronted_url(fb['url'])
+    elsif settings && protected_source && !allowed_sources.include?(settings['protected_source'])
       settings = settings['fallback'] || {}
       json['url'] = Uploader.fronted_url(settings['url'])
       json['fallback'] = true

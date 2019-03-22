@@ -353,7 +353,7 @@ var Button = EmberObject.extend({
       }
     } else {
       if(!image.get('incomplete')) {
-        console.error("used retrieved image", image);
+        console.info("used retrieved image", image.get('url'));
       }
       return check_image(image);
     }
