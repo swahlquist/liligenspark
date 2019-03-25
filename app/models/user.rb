@@ -755,8 +755,9 @@ class User < ActiveRecord::Base
         voice_uris = [device['voice']['voice_uri']] + voice_uris
         voice_uris = voice_uris[0, 10].uniq
         device['voice'].delete('voice_uri')
-        device['voice']['voice_uris'] = voice_uris.uniq
       end
+      device['voice']['voice_uris'].uniq! if device['voice'] && device['voice']['voice_uris']
+      device['alternate_voice']['voice_uris'].uniq! if device['alternate_voice'] && device['alternate_voice']['voice_uris']
 
       # For eye gaze users we will auto-enable the status so they can see eye status
       if device['dwell'] && !device['dwell_type']

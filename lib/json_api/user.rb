@@ -78,6 +78,7 @@ module JsonApi::User
       json['preferences']['device'].delete('ever_synced')
       if args[:device] && user.settings['preferences']['devices'][args[:device].unique_device_key]
         json['preferences']['device'] = json['preferences']['device'].merge(user.settings['preferences']['devices'][args[:device].unique_device_key])
+        json['preferences']['device']['id'] = args[:device].global_id
         json['preferences']['device']['name'] = args[:device].settings['name'] || json['preferences']['device']['name']
       end
       if !args[:device] || FeatureFlags.user_created_after?(args[:device], 'browser_no_autosync')

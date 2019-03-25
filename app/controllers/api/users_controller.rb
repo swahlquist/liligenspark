@@ -4,7 +4,7 @@ class Api::UsersController < ApplicationController
   before_action :require_api_token, :except => [:update, :show, :create, :confirm_registration, :forgot_password, :password_reset, :protected_image, :subscribe, :activate_button]
   def show
     user = User.find_by_path(params['id'])
-    user_device = @api_user == user && Device.find_by_global_id(@api_device_id)
+    user_device = (user && @api_user.global_id == user.global_id) && Device.find_by_global_id(@api_device_id)
     allowed = false
     return unless exists?(user, params['id'])
     if user.registration_code && params['confirmation'] == user.registration_code
@@ -62,7 +62,7 @@ class Api::UsersController < ApplicationController
   
   def update
     user = User.find_by_path(params['id'])
-    user_device = @api_user == user && Device.find_by_global_id(@api_device_id)
+    user_device = (user && @api_user.global_id == user.global_id) && Device.find_by_global_id(@api_device_id)
     return unless exists?(user)
     options = {}
     if params['reset_token'] && user.valid_reset_token?(params['reset_token'])
@@ -81,7 +81,7 @@ class Api::UsersController < ApplicationController
     else
       return unless allowed?(user, 'edit')
     end
-    options['device'] = Device.find_by_global_id(@api_device_id) if user == @api_user
+    options['device'] = user_device
     options['updater'] = @api_user
       
     if user.process(params['user'], options)
