@@ -1134,8 +1134,10 @@ class LogSession < ActiveRecord::Base
 
         merged_ids[merger.log_session_id] = true
         log = LogSession.using(:master).find_by(id: merger.log_session_id)
-        log.schedule_once(:check_for_merger, true)
-        log_ids << log.id
+        if log
+          log.schedule_once(:check_for_merger, true)
+          log_ids << log.id
+        end
       end
       LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
 #    end
