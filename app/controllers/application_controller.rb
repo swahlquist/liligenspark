@@ -67,6 +67,7 @@ class ApplicationController < ActionController::Base
         admin = Organization.admin
         if admin && admin.manager?(@api_user) && @linked_user
           @true_user = @api_user
+          @linked_user.permission_scopes = @api_user.permission_scopes
           @api_user = @linked_user
           PaperTrail.request.whodunnit = "user:#{@true_user.global_id}:as:#{@api_user.global_id}"
         else
@@ -113,6 +114,7 @@ class ApplicationController < ActionController::Base
       res = {error: "Not authorized", unauthorized: true}
       if permission.instance_variable_get('@scope_rejected')
         res[:scope_limited] = true
+        res[:scopes] = scopes
       end
       api_error 400, res
       false
