@@ -12,6 +12,7 @@ import app_state from '../utils/app_state';
 import stashes from '../utils/_stashes';
 import word_suggestions from '../utils/word_suggestions';
 import progress_tracker from '../utils/progress_tracker';
+import { later as runLater} from '@ember/runloop';
 import Utils from '../utils/misc';
 
 var button_set_cache = {};
@@ -665,6 +666,11 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
   return RSVP.resolve();
 };
 CoughDrop.Buttonset.load_button_set = function(id) {
+  // use promises to make this call idempotent
+  CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
+  var promise = CoughDrop.Buttonset.pending_promises[id];
+  if(promise) { console.error("already checking for", id); return promise; }
+
   var button_sets = CoughDrop.store.peekAll('buttonset');
   var found = CoughDrop.store.peekRecord('buttonset', id) || button_sets.find(function(bs) { return bs.get('key') == id; });
   if(!found) {
@@ -678,7 +684,6 @@ CoughDrop.Buttonset.load_button_set = function(id) {
     });
   }
   if(found) { found.load_buttons(); return RSVP.resolve(found); }
-  
   var generate = function(id) {
     return new RSVP.Promise(function(resolve, reject) {
       persistence.ajax('/api/v1/buttonsets/' + id + '/generate', {
@@ -730,6 +735,13 @@ CoughDrop.Buttonset.load_button_set = function(id) {
       return RSVP.reject(err);
     }
   });
+  CoughDrop.Buttonset.pending_promises[id] = res;
+  res.then(function() { delete CoughDrop.Buttonset.pending_promises[id]; }, function() { delete CoughDrop.Buttonset.pending_promises[id]; });
+  runLater(function() {
+    if(CoughDrop.Buttonset.pending_promises[id] == res) {
+      delete CoughDrop.Buttonset.pending_promises[id];
+    }
+  }, 10000);
   return res;
 };
 
