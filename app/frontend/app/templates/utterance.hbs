@@ -62,7 +62,7 @@
       {{#if model.private_only}}
         <p>{{t "This is a private link that can be used to send messages to a CoughDrop communicator. Please respect the communicator's privacy and security by not sharing it with others." key='keep_private_link_secure'}}</p>
       {{else}}
-        <p>{{t "This is a private link and will expire after 7 day. You can navigate to the public link for this message if the communicator has given you permission and you would like to share it with others." key='private_link_warning'}}</p>
+        <p>{{t "This is a private link and will expire after 7 days. You can navigate to the public link for this message if the communicator has given you permission and you would like to share it with others." key='private_link_warning'}}</p>
         <a href={{model.link}} target='_blank' class='btn btn-default btn-lg'><span class='glyphicon glyphicon-hand-up'></span> {{t "Public Link" key='public_link'}}</a>
       {{/if}}
     {{else}}
