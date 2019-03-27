@@ -602,7 +602,6 @@ describe SessionController, :type => :controller do
       expect(assigns[:cached]).to eq(nil)
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(false)
-      expect(json['user_name']).to eq(@user.user_name)
     end
 
     it "should used cached values on repeat requests" do

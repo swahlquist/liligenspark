@@ -753,7 +753,7 @@ class User < ActiveRecord::Base
       voice_uris = ((self.settings['preferences']['devices'][device_key] || {})['voice'] || {})['voice_uris'] || []
       if device['voice'] && device['voice']['voice_uri']
         voice_uris = [device['voice']['voice_uri']] + voice_uris
-        voice_uris = voice_uris[0, 10].uniq
+        device['voice']['voice_uris'] = voice_uris.uniq[0, 10]
         device['voice'].delete('voice_uri')
       end
       device['voice']['voice_uris'].uniq! if device['voice'] && device['voice']['voice_uris']
