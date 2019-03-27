@@ -29,7 +29,7 @@ export default Component.extend({
           image: app_state.get('sessionUser.avatar_url_with_fallback')
         });
       }
-      if(!this.get('buttons')) {
+      if(!this.get('buttons') && !this.get('selection')) {
         this.sendAction('action', 'self');
       }
     }
