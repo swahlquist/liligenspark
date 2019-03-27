@@ -18,9 +18,8 @@ module JsonApi::ButtonSet
     json['root_url'] = button_set.url_for(args[:permissions])
     json['remote_enabled'] = !!ENV['REMOTE_EXTRA_DATA']
 
-    # TODO: remove remote_support check (and header in request) after
-    # this has been pushed to all the apps
-    if !button_set.extra_data_private_url || !args[:remote_support]
+    # TODO: make this only accessible when REMOTE_EXTRA_DATA is not set
+    if !json['root_url'] || !args[:remote_support]
       bs_buttons = button_set.buttons
       json['buttons'] = (bs_buttons || []).map{|b| 
         res = {}.merge(b) 
