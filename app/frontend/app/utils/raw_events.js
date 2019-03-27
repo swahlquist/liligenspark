@@ -43,7 +43,7 @@ var eat_events = function(event) {
   // on mobile, long presses result in unexpected selection issues.
   // This is an attempt to remedy, for Speak Mode at the very least.
   var eatable = app_state.get('speak_mode') || (!app_state.get('edit_mode') && $(event.target).closest('.board .button').length > 0);
-  if(eatable && capabilities.mobile && !modal.is_open()&& !buttonTracker.ignored_region(event)) {
+  if(eatable && capabilities.mobile && !modal.is_open() && !buttonTracker.ignored_region(event)) {
     event.preventDefault();
   }
 };
@@ -185,7 +185,7 @@ $(document).on('mousedown touchstart', function(event) {
   if(event.keyCode && event.keyCode == buttonTracker.check('select_keycode')) { // spacebar key
     scanner.pick();
     event.preventDefault();
-  } else if(event.keyCode && buttonTracker.check('any_select')) {
+  } else if(event.keyCode && buttonTracker.check('any_select') && (!modal.is_open() || modal.is_open('highlight'))) {
     scanner.pick();
     event.preventDefault();
   } else if(event.keyCode && event.keyCode == buttonTracker.check('next_keycode')) { // 1 key
@@ -418,6 +418,7 @@ var buttonTracker = EmberObject.extend({
     if(buttonTracker.buttonDown && buttonTracker.check('any_select') && buttonTracker.check('scanning_enabled')) {
       var skip_screen_touch = $(event.target).closest("#identity").length > 0;
       skip_screen_touch = skip_screen_touch || (buttonTracker.check('skip_header') && $(event.target).closest('header').length > 0);
+      skip_screen_touch = skip_screen_touch || (modal.is_open() && !modal.is_open('highlight'));
       if(!skip_screen_touch) {
         if(event.type != 'mousedown' && event.type != 'touchstart') {
           // ignore scanning events when checking for element release
