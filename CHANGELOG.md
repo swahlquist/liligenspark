@@ -1,6 +1,16 @@
 # CoughDrop Changelog
 
 ## Master
+### 2019-03-27
+- Improved sentence box dropdown (feature flag)
+- Switch access improvements
+- Native TTS (SAPI) support on Windows
+- Performance optimizations for database
+- Backend system upgrades
+- Updated premium voice lists
+- Preliminary support for NFC tags
+- Improved message sharing, including support for replies
+- IFTTT integration support
 
 ### 2018-10-01
 - full modeling ideas support
