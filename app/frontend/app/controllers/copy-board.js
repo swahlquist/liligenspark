@@ -59,6 +59,7 @@ export default modal.ModalController.extend({
       this.set('error', false);
       this.set('current_user', null);
       this.set('in_board_set', null);
+      this.set('in_sidebar_set', null);
       this.set('home_board', null);
       var find_user = CoughDrop.store.findRecord('user', for_user_id).then(function(user) {
         if(!user.get('stats')) {
@@ -72,6 +73,33 @@ export default modal.ModalController.extend({
         _this.set('current_user', user);
         _this.set('loading', false);
         _this.set('in_board_set', !!in_board_set);
+        var sidebar_keys = (user.get('preferences.sidebar_boards') || []).map(function(b) { return b.key; });
+        if(!in_board_set) {
+          // load all the sidebar button sets and see if it is
+          // in any of their board_ids lists
+          sidebar_keys.forEach(function(key) {
+            if(!key) { return; }
+            CoughDrop.store.findRecord('board', key).then(function(board) {
+              if(_this.get('current_user') == user) {
+                if(board.get('key') == _this.get('model.board.key')) {
+                  _this.set('in_sidebar_set', true);
+                  var sidebar_ids = user.get('stats.sidebar_board_ids') || [];
+                  user.set('stats.sidebar_board_ids', sidebar_ids.concat([board.get('id')]).uniq());
+                }
+              }
+              CoughDrop.Buttonset.load_button_set(board.get('id')).then(function(bs) {
+                var board_ids = bs.board_ids_for(board.get('id'));
+                if(_this.get('current_user') == user) {
+                  var sidebar_ids = user.get('stats.sidebar_board_ids') || [];
+                  user.set('stats.sidebar_board_ids', sidebar_ids.concat(board_ids).uniq());
+                  if(board_ids.indexOf(_this.get('model.board.id')) >= 0) {
+                    _this.set('in_sidebar_set', true);
+                  }
+                }
+              }, function() { });
+            }, function() { });
+          });
+        }
         _this.set('home_board', user.get('preferences.home_board.id') == _this.get('model.board.id'));
       }, function() {
         _this.set('loading', false);
@@ -81,6 +109,7 @@ export default modal.ModalController.extend({
       this.set('loading', false);
       this.set('error', false);
       this.set('in_board_set', false);
+      this.set('in_sidebar_set', false);
       this.set('home_board', false);
     }
   }.observes('currently_selected_id', 'model.supervisees'),

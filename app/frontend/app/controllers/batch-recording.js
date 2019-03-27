@@ -37,7 +37,7 @@ export default modal.ModalController.extend({
       this.get('model.board').load_button_set(true).then(function(bs) {
         var categories = [];
         var cats_hash = {};
-        bs.get('buttons').forEach(function(button) {
+        bs.redepth(_this.get('model.board.id')).forEach(function(button) {
           if(button.board_key.split(/\//)[0] == user_name) {
             if(button && button.label && !button.hidden) {
               if(categories.indexOf(button.board_key) == -1) {

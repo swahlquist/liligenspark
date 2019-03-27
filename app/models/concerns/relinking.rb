@@ -118,24 +118,56 @@ module Relinking
         end
         board_ids += downstream_ids
       end
+      sidebar_ids = {}
+      sidebar = user.sidebar_boards
+      user.sidebar_boards.each do |brd|
+        next unless brd['key']
+        board = Board.find_by_path(brd['key'])
+        next unless board
+        sidebar_ids[brd['key']] = board.global_id
+        board_ids += [board.global_id]
+        board.track_downstream_boards!
+        downstream_ids = board.settings['downstream_board_ids']
+        if opts[:valid_ids]
+          downstream_ids = downstream_ids & opts[:valid_ids]
+        end
+        board_ids += downstream_ids
+      end
+
       boards = Board.find_all_by_path(board_ids)
       pending_replacements = [[starting_old_board, starting_new_board]]
 
       user_home_changed = relink_board_for(user, {:boards => boards, :copy_id => starting_new_board.global_id, :pending_replacements => pending_replacements, :update_preference => (update_inline ? 'update_inline' : nil), :make_public => make_public, :authorized_user => auth_user})
+      sidebar_changed = false
+      sidebar_ids.each do |key, id|
+        if @replacement_map && @replacement_map[id]
+          idx = sidebar.index{|s| s['key'] == key }
+          board = @replacement_map[id]
+          sidebar[idx]['key'] = board.key
+          sidebar_changed = true
+        end
+      end
       
       # if the user's home board was replaced, update their preferences
-      if user_home_changed
-        new_home = user_home_changed
-        user.update_setting({
-          'preferences' => {'home_board' => {
-            'id' => new_home.global_id,
-            'key' => new_home.key
-          }}
-        })
-      else
+      if user_home_changed || sidebar_changed
+        if user_home_changed
+          new_home = user_home_changed
+          user.update_setting({
+            'preferences' => {'home_board' => {
+              'id' => new_home.global_id,
+              'key' => new_home.key
+            }}
+          })
+        end
+        if sidebar_changed
+          user.settings['preferences']['sidebar_boards'] = sidebar
+          user.save
+        end
+      elsif user.settings['preferences']['home_board']
         home = Board.find_by_path(user.settings['preferences']['home_board']['id'])
         home.track_downstream_boards!
       end
+      true
     end
 
     def copy_board_links_for(user, opts)

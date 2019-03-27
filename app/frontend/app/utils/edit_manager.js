@@ -1011,6 +1011,8 @@ var editManager = EmberObject.extend({
         if(decision == 'modify_links_update' || decision == 'modify_links_copy') {
           if((user.get('stats.board_set_ids') || []).indexOf(old_board.get('id')) >= 0) {
             endpoint = '/api/v1/users/' + user.get('id') + '/replace_board';
+          } else if((user.get('stats.sidebar_board_ids') || []).indexOf(old_board.get('id')) >= 0) {
+            endpoint = '/api/v1/users/' + user.get('id') + '/replace_board';
           }
         } else if(decision == 'links_copy' || decision == 'links_copy_as_home') {
           endpoint = '/api/v1/users/' + user.get('id') + '/copy_board_links';
@@ -1029,8 +1031,10 @@ var editManager = EmberObject.extend({
           }).then(function(data) {
             progress_tracker.track(data.progress, function(event) {
               if(event.status == 'finished') {
-                user.reload();
-                app_state.refresh_session_user();
+                runLater(function() {
+                  user.reload();
+                  app_state.refresh_session_user();
+                }, 100);
                 done_callback(event.result);
               } else if(event.status == 'errored') {
                 reject(i18n.t('re_linking_failed', "Board re-linking failed while processing"));

@@ -2045,8 +2045,8 @@ var boardGrabber = EmberObject.extend({
       board.set('grid.columns', 4);
     }
     board.set('for_user_id', 'self');
-    if(this.controller.get('supervisees')) {
-      var sups = this.controller.get('supervisees');
+    if(app_state.get('currentUser.supervisees')) {
+      var sups = app_state.get('currentUser.supervisees');
       if(sups.length > 0) {
         var user_name = original_board.get('user_name');
         sups.forEach(function(sup) {

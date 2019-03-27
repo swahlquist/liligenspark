@@ -763,6 +763,162 @@ describe Relinking, :type => :model do
       b = make_copy.reload
       expect(b.public).to eq(true)
     end
+    
+    it "should replace a sidebar board that has changed" do
+      u = User.create
+      old = Board.create(:user => u, :public => true, :settings => {'name' => 'old'})
+      ref = Board.create(:user => u, :public => true, :settings => {'name' => 'ref'})
+      leave_alone = Board.create(:user => u, :public => true, :settings => {'name' => 'leave alone'})
+      change_inline = Board.create(:user => u, :settings => {'name' => 'change inline'})
+      old.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => ref.global_id}},
+        {'id' => 2, 'load_board' => {'id' => leave_alone.global_id}},
+        {'id' => 3, 'load_board' => {'id' => change_inline.global_id}}
+      ]
+      old.save
+      new = old.copy_for(u)
+      new.settings['name'] = 'new'
+      new.save
+      ref.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      ref.save
+      change_inline.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      change_inline.save
+      expect(u.sidebar_boards.length).to be > 1
+      u.settings['preferences']['sidebar_boards'] = [{'name' => 'Board', 'key' => old.key, 'image' => 'http://www.example.com/pic.png'}]
+      u.save
+      Worker.process_queues
+      expect(ref.reload.settings['immediately_downstream_board_ids']).to eq([old.global_id])
+      expect(ref.reload.settings['downstream_board_ids']).to eq([old.global_id, leave_alone.global_id, change_inline.global_id])
+      expect(u.reload.sidebar_boards.length).to eq(1)
+      expect(u.sidebar_boards[0]['key']).to eq(old.key)
+      
+      Board.replace_board_for(u.reload, {:starting_old_board => old.reload, :starting_new_board => new.reload})
+      expect(u.settings['preferences']['sidebar_boards'][0]['key']).to eq(new.key)
+    end
+
+    it "should replace a default sidebar board and set the user's sidebar at the same time" do
+      u = User.create
+      u2 = User.create(user_name: 'example')
+      old = Board.create(:user => u2, :key => 'example/yesno', :public => true, :settings => {'name' => 'old'})
+      ref = Board.create(:user => u, :public => true, :settings => {'name' => 'ref'})
+      leave_alone = Board.create(:user => u, :public => true, :settings => {'name' => 'leave alone'})
+      change_inline = Board.create(:user => u, :settings => {'name' => 'change inline'})
+      old.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => ref.global_id}},
+        {'id' => 2, 'load_board' => {'id' => leave_alone.global_id}},
+        {'id' => 3, 'load_board' => {'id' => change_inline.global_id}}
+      ]
+      old.save
+      new = old.copy_for(u)
+      new.settings['name'] = 'new'
+      new.save
+      ref.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      ref.save
+      change_inline.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      change_inline.save
+      expect(u.sidebar_boards.length).to be > 1
+      Worker.process_queues
+      expect(ref.reload.settings['immediately_downstream_board_ids']).to eq([old.global_id])
+      expect(ref.reload.settings['downstream_board_ids']).to eq([old.global_id, leave_alone.global_id, change_inline.global_id])
+      expect(u.reload.sidebar_boards.length).to be > 1
+      count = u.sidebar_boards.length
+      expect(u.sidebar_boards[0]['key']).to eq('example/yesno')
+      
+      Board.replace_board_for(u.reload, {:starting_old_board => old.reload, :starting_new_board => new.reload})
+      expect(u.settings['preferences']['sidebar_boards'][0]['key']).to eq(new.key)
+      expect(u.settings['preferences']['sidebar_boards'].length).to eq(count)
+    end
+
+    it "should replace a sidebar board when a sub-board of the sidebar board has changed" do
+      u = User.create
+      u2 = User.create(user_name: 'example')
+      old = Board.create(:user => u2, :key => 'example/yesno', :public => true, :settings => {'name' => 'old'})
+      ref = Board.create(:user => u2, :public => true, :settings => {'name' => 'ref'})
+      leave_alone = Board.create(:user => u2, :public => true, :settings => {'name' => 'leave alone'})
+      change_inline = Board.create(:user => u2, :public => true, :settings => {'name' => 'change inline'})
+      old.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => ref.global_id}},
+        {'id' => 2, 'load_board' => {'id' => leave_alone.global_id}},
+        {'id' => 3, 'load_board' => {'id' => change_inline.global_id}}
+      ]
+      old.save
+      new = change_inline.copy_for(u)
+      new.settings['name'] = 'new inline'
+      new.save
+      ref.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      ref.save
+      change_inline.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      change_inline.save
+      expect(u.sidebar_boards.length).to be > 1
+      Worker.process_queues
+      expect(ref.reload.settings['immediately_downstream_board_ids']).to eq([old.global_id])
+      expect(ref.reload.settings['downstream_board_ids']).to eq([old.global_id, leave_alone.global_id, change_inline.global_id])
+      expect(u.reload.sidebar_boards.length).to be > 1
+      count = u.sidebar_boards.length
+      expect(u.sidebar_boards[0]['key']).to eq('example/yesno')
+      
+      Board.replace_board_for(u.reload, {:starting_old_board => change_inline.reload, :starting_new_board => new.reload})
+      u.reload
+      expect(u.settings['preferences']['sidebar_boards'][0]['key']).to_not eq(old.key)
+      root = Board.find_by_path(u.settings['preferences']['sidebar_boards'][0]['key'])
+      expect(root.settings['downstream_board_ids']).to be_include(new.global_id)
+      expect(u.settings['preferences']['sidebar_boards'].length).to eq(count)
+    end
+
+    it "should replace a home board and a sidebar board with the same update if both were related" do
+      u = User.create
+      u2 = User.create(user_name: 'example')
+      old = Board.create(:user => u2, :key => 'example/yesno', :public => true, :settings => {'name' => 'old'})
+      ref = Board.create(:user => u2, :public => true, :settings => {'name' => 'ref'})
+      leave_alone = Board.create(:user => u2, :public => true, :settings => {'name' => 'leave alone'})
+      change_inline = Board.create(:user => u2, :public => true, :settings => {'name' => 'change inline'})
+      old.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => ref.global_id}},
+        {'id' => 2, 'load_board' => {'id' => leave_alone.global_id}},
+        {'id' => 3, 'load_board' => {'id' => change_inline.global_id}}
+      ]
+      old.save
+      new = change_inline.copy_for(u)
+      new.settings['name'] = 'new inline'
+      new.save
+      ref.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      ref.save
+      change_inline.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => old.global_id}}
+      ]
+      change_inline.save
+      expect(u.sidebar_boards.length).to be > 1
+      u.settings['preferences']['home_board'] = {'id' => change_inline.global_id, 'key' => change_inline.key}
+      u.save
+      Worker.process_queues
+      expect(ref.reload.settings['immediately_downstream_board_ids']).to eq([old.global_id])
+      expect(ref.reload.settings['downstream_board_ids']).to eq([old.global_id, leave_alone.global_id, change_inline.global_id])
+      expect(u.reload.sidebar_boards.length).to be > 1
+      count = u.sidebar_boards.length
+      expect(u.sidebar_boards[0]['key']).to eq('example/yesno')
+      
+      Board.replace_board_for(u.reload, {:starting_old_board => change_inline.reload, :starting_new_board => new.reload})
+      u.reload
+      expect(u.settings['preferences']['sidebar_boards'][0]['key']).to_not eq(old.key)
+      root = Board.find_by_path(u.settings['preferences']['sidebar_boards'][0]['key'])
+      expect(root.settings['downstream_board_ids']).to be_include(new.global_id)
+      expect(u.settings['preferences']['sidebar_boards'].length).to eq(count)
+      expect(u.settings['preferences']['home_board']['id']).to eq(new.global_id)
+    end
   end
   
   it "should copy upstream boards for the specified user" do

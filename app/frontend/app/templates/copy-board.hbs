@@ -29,6 +29,9 @@
       {{else if in_board_set}}
         {{t "This board is part of the user's communication set. Do you want to use the new copy in the communication set instead of the original?" key='copy_upstream_board_links'}}
         {{t "This action could make copies of other boards in the communication set as well." key='more_copies_warning'}}
+      {{else if in_sidebar_set}}
+        {{t "This board is part of the user's sidebar set. Do you want to use the new copy in the sidebar instead of the original?" key='copy_upstream_sidebar_links'}}
+        {{t "This action could make copies of other boards in the sidebar set as well." key='more_sidebar_copies_warning'}}
       {{else if linked}}
         {{t "This board is linked to other boards. Do you want to make a copy of these linked boards as well, or just copy this board without changing any of the links?" key='copy_downstream_board_links'}}
       {{/if}}
@@ -96,6 +99,17 @@
       <div class="btn-group dropup">
         <button class='btn btn-primary dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
           {{t "Copy Into the Communication Set" key='use_new_copy'}} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a href="#" {{action 'tweakBoard' "modify_links_copy"}}><strong>{{t "Make Brand New Copies of Everything" key='update_replace'}}</strong></a></li>
+          <li><a href="#" {{action 'tweakBoard' "modify_links_update"}}>{{t "Use Existing Copies if I Have Any" key='update_in_place'}}</a></li>
+        </ul>
+      </div>
+      {{partial 'copy-just-this-board'}}
+    {{else if in_sidebar_set}}
+      <div class="btn-group dropup">
+        <button class='btn btn-primary dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
+          {{t "Copy Into the Sidebar Set" key='use_new_sidebar_copy'}} <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
           <li><a href="#" {{action 'tweakBoard' "modify_links_copy"}}><strong>{{t "Make Brand New Copies of Everything" key='update_replace'}}</strong></a></li>
