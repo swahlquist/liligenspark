@@ -1113,7 +1113,10 @@ var pictureGrabber = EmberObject.extend({
           var media_file = files[0];
           var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
           _this.file_selected(file);
-        }, function() { }, {limit: 1});
+        }, function(e) { 
+          console.error('native image capture failed', e);
+          _this.controller.set('webcam', {error: true});
+        }, {limit: 1});
       } else if(navigator.getUserMedia) {
         var last_stream_id = stashes.get('last_stream_id');
         var constraints = {video: true};
@@ -1143,10 +1146,10 @@ var pictureGrabber = EmberObject.extend({
           _this.controller.set('webcam', {error: true});
           console.log("permission not granted", err);
         });
-      }, function(err) {
-        _this.controller.set('webcam', {error: true});
-      });
-    }
+      }
+    }, function(err) {
+      _this.controller.set('webcam', {error: true});
+    });
   },
   swap_streams: function() {
     var video = document.querySelector('#webcam_video');
@@ -1322,7 +1325,10 @@ var videoGrabber = EmberObject.extend({
           var media_file = files[0];
           var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
           _this.file_selected(file);
-        }, function() { }, {limit: 1});
+        }, function(e) { 
+          _this.controller.set('video_error', true);
+          console.error('native vidoe capture failed', e) 
+        }, {limit: 1});
       } else if(navigator.getUserMedia) {
         if(this.controller.get('video_recording.stream')) {
           _this.user_media_ready(this.controller.get('video_recording.stream'));
@@ -1357,10 +1363,10 @@ var videoGrabber = EmberObject.extend({
           _this.controller.set('video_error', true);
           console.log("permission not granted", err);
         });
-      }, function(err) {
-        _this.controller.set('video_error', true);
-      });
-    }
+      }
+    }, function(err) {
+      _this.controller.set('video_error', true);
+    });
   },
   swap_streams: function() {
     var current_stream_id = this.controller.get('video_recording.stream_id');
@@ -1892,7 +1898,9 @@ var soundGrabber = EmberObject.extend({
         var media_file = files[0];
         var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
         _this.file_selected(file);
-      }, function() { }, {limit: 1});
+      }, function(e) { 
+        console.error('native sound record failed', e)
+      }, {limit: 1});
     }
   },
   toggle_recording_sound: function(action) {
