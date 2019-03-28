@@ -191,6 +191,65 @@ var capabilities;
           return promise;
         }
       },
+      permissions: {
+        assert: function(type) {
+          var promise = capabilities.mini_promise();
+          if(capabilities.system == 'Android' && capabilities.installed_app) {
+            if(window.cordova && window.cordova.plugins && window.cordova.plugins.permissions && cordova.plugins.permissions.checkPermission) {
+              var check_permissions = function(list) {
+                var answer = 0;
+                var missing = [];
+                list.forEach(function(perm) {
+                  window.cordova.plugins.permissions.checkPermission(perm, function(res) {
+                    answer++;
+                    if(res && res.hasPermission) {
+                    } else {
+                      missing.push(perm);
+                    }
+                    if(answer == list.length) {
+                      if(missing.length == 0) {
+                        promise.resolve({granted: true});
+                      } else {
+                        request_missing(missing);
+                      }
+                    }
+                  }, function(err) {
+                    answer++;
+                    missing.push(perm);
+                    if(answer == list.length) {
+                      request_missing(missing);
+                    }
+                  });
+                });
+              };
+              var request_missing = function(perms) {
+                window.cordova.plugins.permissions.requestPermissions(perms, function(res) {
+                  if(res.hasPermission) {
+                    promise.resolve({granted: true});
+                  } else {
+                    promise.reject({granted: false, authorized: false});
+                  }
+                }, function(err) {
+                  promise.reject({granted: false, error: true});
+                });
+              };
+              if(type == 'record_audio') {
+                check_permissions(['android.permission.RECORD_AUDIO']);
+              } else if(type == 'record_video') {
+                check_permissions(['android.permission.RECORD_AUDIO',
+                    'android.permission.CAMERA',
+                    'android.permission.RECORD_VIDEO'
+                  ]);
+              }
+            } else {
+              promise.reject({granted: false, not_available: true});
+            }
+          } else {
+            promise.resolve({granted: true});
+          }
+          return promise;
+        }
+      },
       nfc: {
         available: function() {
           var promise = capabilities.mini_promise();

@@ -40,6 +40,9 @@
               </button>
               <input type="file" name="video_upload" id="video_upload" accept="video/*"/>
             </span>
+            {{#if video_error}}
+              <p>{{t "There was an error while trying to record video" key='error_recording_video'}}</p>
+            {{/if}}
           {{/if}}
         </div>
         <div class="col-sm-10">

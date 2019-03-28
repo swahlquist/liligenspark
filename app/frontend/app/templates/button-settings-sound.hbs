@@ -69,7 +69,9 @@
       <button {{action "clear_sound_work"}} class='btn btn-default'>{{t "Cancel" key='cancel'}}</button>
     </div>
   {{else}}
-    {{#if sound_recording.ready}}
+    {{#if sound_record.error}}
+      <p>{{t "There was an error while trying to record audio" key='error_recording_audio'}}</p>
+    {{else if sound_recording.ready}}
       <button id="recording_status" {{action "toggle_recording_sound"}} class={{if sound_recording.recording 'recording'}} style='outline: none;'>
         <span class="sub_status">
           <span>Start</span>

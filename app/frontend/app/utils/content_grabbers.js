@@ -1107,7 +1107,6 @@ var pictureGrabber = EmberObject.extend({
   },
   start_webcam: function() {
     var _this = this;
-    // TODO: cross-browser
     if(navigator.device && contentGrabbers.capture_types().image) {
       navigator.device.capture.captureImage(function(files) {
         var media_file = files[0];
@@ -1125,22 +1124,27 @@ var pictureGrabber = EmberObject.extend({
           }]
         };
       }
-      var promise = null;
-      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        promise = navigator.mediaDevices.getUserMedia(constraints);
-      } else {
-        promise = new RSVP.Promise(function(res, rej) {
-          navigator.getUserMedia(constraints, function(stream) {
-            res(stream);
-          }, function(err) {
-            rej(err);
+      capabilities.permissions.assert('record_video').then(function(res) {
+        var promise = null;
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          promise = navigator.mediaDevices.getUserMedia(constraints);
+        } else {
+          promise = new RSVP.Promise(function(res, rej) {
+            navigator.getUserMedia(constraints, function(stream) {
+              res(stream);
+            }, function(err) {
+              rej(err);
+            });
           });
+        }
+        promise.then(function(stream) {
+          _this.user_media_ready(stream, last_stream_id);
+        }, function(err) {
+          _this.controller.set('webcam', {error: true});
+          console.log("permission not granted", err);
         });
-      }
-      promise.then(function(stream) {
-        _this.user_media_ready(stream, last_stream_id);
       }, function(err) {
-        console.log("permission not granted", err);
+        _this.controller.set('webcam', {error: true});
       });
     }
   },
@@ -1198,13 +1202,13 @@ var pictureGrabber = EmberObject.extend({
         promise.then(function(stream) {
           _this.user_media_ready(stream, stream_id);
         }, function(err) {
+          modal.error(i18n.t('error_swapping_streams', "There was an unexpected error while swapping streams"));
           console.log("permission not granted", err);
         });
       }
     }
   },
   toggle_webcam: function() {
-    // TODO: needs a real home and non-suck
     // TODO: cross-browser - https://developer.mozilla.org/en-US/docs/WebRTC/taking_webcam_photos
     var video = document.querySelector('#webcam_video');
     var canvas = document.querySelector('#webcam_canvas');
@@ -1310,6 +1314,7 @@ var videoGrabber = EmberObject.extend({
       ready: true
     });
     this.controller.set('video_preview', null);
+    _this.controller.set('video_error', null);
 
     if(contentGrabbers.capture_types().video) {
       navigator.device.capture.captureVideo(function(files) {
@@ -1333,22 +1338,27 @@ var videoGrabber = EmberObject.extend({
           }]
         };
       }
-      var promise = null;
-      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        promise = navigator.mediaDevices.getUserMedia(constraints);
-      } else {
-        promise = new RSVP.Promise(function(res, rej) {
-          navigator.getUserMedia(constraints, function(stream) {
-            res(stream);
-          }, function(err) {
-            rej(err);
+      capabilities.permissions.assert('record_video').then(function(res) {
+        var promise = null;
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          promise = navigator.mediaDevices.getUserMedia(constraints);
+        } else {
+          promise = new RSVP.Promise(function(res, rej) {
+            navigator.getUserMedia(constraints, function(stream) {
+              res(stream);
+            }, function(err) {
+              rej(err);
+            });
           });
+        }
+        promise.then(function(stream) {
+          _this.user_media_ready(stream, last_stream_id);
+        }, function(err) {
+          _this.controller.set('video_error', true);
+          console.log("permission not granted", err);
         });
-      }
-      promise.then(function(stream) {
-        _this.user_media_ready(stream, last_stream_id);
       }, function(err) {
-        console.log("permission not granted", err);
+        _this.controller.set('video_error', true);
       });
     }
   },
@@ -1407,6 +1417,7 @@ var videoGrabber = EmberObject.extend({
         promise.then(function(stream) {
           _this.user_media_ready(stream, stream_id);
         }, function(err) {
+          modal.error(i18n.t('error_swapping_streams', "There was an unexpected error while swapping streams"));
           console.log("permission not granted", err);
         });
       }
@@ -1800,75 +1811,79 @@ var soundGrabber = EmberObject.extend({
 
       return mr;
     }
-
-    if(navigator.getUserMedia || navigator.mediaDevices) {
-      if(this.controller.get('sound_recording.stream')) {
-        stream_ready(this.controller.get('sound_recording.stream'));
-        return;
-      }
-      var promise = null;
-      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        promise = navigator.mediaDevices.getUserMedia({audio: true});
-      } else {
-        promise = new RSVP.Promise(function(res, rej) {
-          navigator.getUserMedia({audio: true}, function(stream) {
-            res(stream);
-          }, function(err) {
-            rej(err);
-          });
-        });
-      }
-      promise.then(function(stream) {
-        var mr = stream_ready(stream);
-
-        if(stream && stream.id && document.getElementById('sound_levels')) {
-          var context = new window.AudioContext();
-          var source = context.createMediaStreamSource(stream);
-          var analyser = context.createAnalyser();
-          var ctx = $('#sound_levels')[0].getContext('2d');
-          analyser.smoothingTimeConstant = 0.3;
-          analyser.fftSize = 1024;
-          var js = context.createScriptProcessor(2048, 1, 1);
-          js.onaudioprocess = function() {
-            // get the average, bincount is fftsize / 2
-            var array =  new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(array);
-            var values = 0;
-            var average;
-
-            var length = array.length;
-
-            // get all the frequency amplitudes
-            for (var i = 0; i < length; i++) {
-                values += array[i];
-            }
-
-            var average = values / length;
-            var pct = average / 130;
-
-            var gradient = ctx.createLinearGradient(0,50,0,250);
-            gradient.addColorStop(1,'#00ff00');
-            gradient.addColorStop(0.25,'#ffff00');
-            gradient.addColorStop(0,'#ff0000');
-            // clear the current state
-            ctx.clearRect(0, 0, 400, 300);
-
-            // set the fill style
-            ctx.fillStyle=gradient;
-
-            // create the meters
-            ctx.fillRect(100,275,200,-250*pct);
-          };
-  //        source.connect(analyser);
-  //        analyser.connect(js);
-  //        js.connect(context.destination);
+    capabilities.permissions.assert('record_audio').then(function(res) {
+      if(navigator.getUserMedia || navigator.mediaDevices) {
+        if(_this.controller.get('sound_recording.stream')) {
+          stream_ready(_this.controller.get('sound_recording.stream'));
+          return;
         }
-      }, function(err) {
-        console.log("permission not granted", err);
-      });
-    } else if(!auto_loading && contentGrabbers.capture_types().audio) {
-      this.native_record_sound();
-    }
+        var promise = null;
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          promise = navigator.mediaDevices.getUserMedia({audio: true});
+        } else {
+          promise = new RSVP.Promise(function(res, rej) {
+            navigator.getUserMedia({audio: true}, function(stream) {
+              res(stream);
+            }, function(err) {
+              rej(err);
+            });
+          });
+        }
+        promise.then(function(stream) {
+          var mr = stream_ready(stream);
+  
+          if(stream && stream.id && document.getElementById('sound_levels')) {
+            var context = new window.AudioContext();
+            var source = context.createMediaStreamSource(stream);
+            var analyser = context.createAnalyser();
+            var ctx = $('#sound_levels')[0].getContext('2d');
+            analyser.smoothingTimeConstant = 0.3;
+            analyser.fftSize = 1024;
+            var js = context.createScriptProcessor(2048, 1, 1);
+            js.onaudioprocess = function() {
+              // get the average, bincount is fftsize / 2
+              var array =  new Uint8Array(analyser.frequencyBinCount);
+              analyser.getByteFrequencyData(array);
+              var values = 0;
+              var average;
+  
+              var length = array.length;
+  
+              // get all the frequency amplitudes
+              for (var i = 0; i < length; i++) {
+                  values += array[i];
+              }
+  
+              var average = values / length;
+              var pct = average / 130;
+  
+              var gradient = ctx.createLinearGradient(0,50,0,250);
+              gradient.addColorStop(1,'#00ff00');
+              gradient.addColorStop(0.25,'#ffff00');
+              gradient.addColorStop(0,'#ff0000');
+              // clear the current state
+              ctx.clearRect(0, 0, 400, 300);
+  
+              // set the fill style
+              ctx.fillStyle=gradient;
+  
+              // create the meters
+              ctx.fillRect(100,275,200,-250*pct);
+            };
+    //        source.connect(analyser);
+    //        analyser.connect(js);
+    //        js.connect(context.destination);
+          }
+        }, function(err) {
+          _this.controller.set('sound_recording', {error: true});
+          console.log("permission not granted", err);
+        });
+      } else if(!auto_loading && contentGrabbers.capture_types().audio) {
+        _this.native_record_sound();
+      }
+    }, function(err) {
+      _this.controller.set('sound_recording', {error: true});
+    });
   },
   native_record_sound: function() {
     var _this = this;

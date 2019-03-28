@@ -31,16 +31,20 @@
   </div>
 
   <div style="text-align: center;" class={{if webcam 'shown' 'hidden'}}>
-    <video autoplay id="webcam_video" {{action "webcamToggle" true}} class={{webcam_class}}></video>
-    <canvas id="webcam_canvas" style="display:none;" width="800" height="800"></canvas>
-    {{#unless webcam.snapshot}}
-      <br/>
-      <button type="button" class='btn btn-primary' {{action "webcamToggle" true}}>{{t "Take Pic" key='take_pic'}}</button>
-      {{#if webcam.video_streams}}
-        <button type="button" class='btn btn-default' {{action "swapStreams"}}>{{t "Switch Views" key='switch_cameras'}}</button>
-      {{/if}}
-      <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
-    {{/unless}}
+    {{#if webcam.error}}
+      <p>{{t "There was an error loading the camera" key='error_loading_camera'}}</p>
+    {{else}}
+      <video autoplay id="webcam_video" {{action "webcamToggle" true}} class={{webcam_class}}></video>
+      <canvas id="webcam_canvas" style="display:none;" width="800" height="800"></canvas>
+      {{#unless webcam.snapshot}}
+        <br/>
+        <button type="button" class='btn btn-primary' {{action "webcamToggle" true}}>{{t "Take Pic" key='take_pic'}}</button>
+        {{#if webcam.video_streams}}
+          <button type="button" class='btn btn-default' {{action "swapStreams"}}>{{t "Switch Views" key='switch_cameras'}}</button>
+        {{/if}}
+        <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
+      {{/unless}}
+    {{/if}}
   </div>
 
   {{#if image_preview}}
