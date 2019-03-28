@@ -25,7 +25,7 @@ export default modal.ModalController.extend({
     } else if(current_id == app_state.get('sessionUser.user_id')) {
       user_name = app_state.get('sessionUser.user_name');
     } else {
-      (app_state.get('sessionUser.supervisees') || []).forEach(function(sup) {
+      (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
         if(sup.id == current_id) {
           user_name = sup.user_name;
         }

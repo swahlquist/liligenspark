@@ -16,12 +16,12 @@ export default modal.ModalController.extend({
   },
   supervisee_share: function() {
     var un = this.get('share_user_name');
-    return un && (app_state.get('currentUser.supervisees') || []).find(function(s) { return s.user_name == un; });
-  }.property('share_user_name', 'app_state.currentUser.supervisees'),
+    return un && (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.user_name == un; });
+  }.property('share_user_name', 'app_state.currentUser.known_supervisees'),
   not_copyable: function() {
     var un = this.get('share_user_name');
-    return !(un && (app_state.get('currentUser.supervisees') || []).find(function(s) { return s.user_name == un && s.edit_permission; }));
-  }.property('share_user_name', 'app_state.currentUser.supervisees'),
+    return !(un && (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.user_name == un && s.edit_permission; }));
+  }.property('share_user_name', 'app_state.currentUser.known_supervisees'),
   actions: {
     share_with_user: function() {
       var user_name = this.get('share_user_name');

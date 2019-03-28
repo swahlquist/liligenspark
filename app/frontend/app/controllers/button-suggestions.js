@@ -87,8 +87,8 @@ export default modal.ModalController.extend({
     if(app_state.get('currentUser.premium')) {
       _this.set('premium_ideas', true);
     }
-    if(app_state.get('currentUser.supervisees')) {
-      app_state.get('currentUser.supervisees').forEach(function(sup) {
+    if(app_state.get('currentUser.known_supervisees')) {
+      app_state.get('currentUser.known_supervisees').forEach(function(sup) {
         if(sup.id == _this.get('for_user_id')) {
           _this.set('user', sup);
         }

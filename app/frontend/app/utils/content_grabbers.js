@@ -2130,8 +2130,8 @@ var boardGrabber = EmberObject.extend({
       board.set('grid.columns', 4);
     }
     board.set('for_user_id', 'self');
-    if(app_state.get('currentUser.supervisees')) {
-      var sups = app_state.get('currentUser.supervisees');
+    if(app_state.get('currentUser.known_supervisees')) {
+      var sups = app_state.get('currentUser.known_supervisees');
       if(sups.length > 0) {
         var user_name = original_board.get('user_name');
         sups.forEach(function(sup) {
@@ -2170,7 +2170,7 @@ var boardGrabber = EmberObject.extend({
     if(!board) { return; }
 
     var source_board_user_name = _this.controller.get('board.user_name');
-    var editable_supervisee_author = (app_state.get('currentUser.supervisees') || []).find(function(s) { return s.edit_permission && s.user_name == source_board_user_name; });
+    var editable_supervisee_author = (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.edit_permission && s.user_name == source_board_user_name; });
     var new_author = (editable_supervisee_author || {}).user_name || app_state.get('currentUser.user_name');
 
     board.set('copy_status', {copying: true});
@@ -2195,7 +2195,7 @@ var boardGrabber = EmberObject.extend({
     var source_board_user_name = _this.controller.get('board.user_name');
     var linked_board_user_name = board.get('user_name');
     var current_user_name = app_state.get('currentUser.user_name');
-    var editable_supervisee_author = (app_state.get('currentUser.supervisees') || []).find(function(s) { return s.edit_permission && s.user_name == source_board_user_name; });
+    var editable_supervisee_author = (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.edit_permission && s.user_name == source_board_user_name; });
     var can_copy_for_author = editable_supervisee_author || current_user_name == source_board_user_name;
 
     var confirm = false;

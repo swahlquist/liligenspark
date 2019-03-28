@@ -71,10 +71,10 @@
       {{/if}}
     {{/if}}
     <h3>{{t "People I Supervise" key='my_supervisees'}}</h3>
-    {{#if model.supervisees}}
+    {{#if model.known_supervisees}}
       <table class="table table-hover">
         <tbody>
-        {{#each model.supervisees as |supervisee|}}
+        {{#each model.known_supervisees as |supervisee|}}
           <tr>
             <td style="width: 60px;">
               <img src={{supervisee.avatar_url}} style="height: 50px; width: 50px;"/>

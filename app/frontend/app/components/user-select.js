@@ -11,8 +11,8 @@ export default Component.extend({
   didInsertElement: function() {
     var supervisees = [];
     var _this = this;
-    if(!this.get('users') && app_state.get('sessionUser.supervisees')) {
-      app_state.get('sessionUser.supervisees').forEach(function(supervisee) {
+    if(!this.get('users') && app_state.get('sessionUser.known_supervisees')) {
+      app_state.get('sessionUser.known_supervisees').forEach(function(supervisee) {
         supervisees.push({
           name: supervisee.user_name,
           image: supervisee.avatar_url,

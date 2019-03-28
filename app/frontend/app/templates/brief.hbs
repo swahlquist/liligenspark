@@ -167,7 +167,7 @@
                   </a>
                   <ul class="dropdown-menu" role="menu">
                     <li><a href="#" {{action "setSpeakModeUser" 'self'}}>{{t "speak as" key='speak_as'}} me</a></li>
-                    {{#each app_state.currentUser.supervisees as |supervisee|}}
+                    {{#each app_state.currentUser.known_supervisees as |supervisee|}}
                       <li><a href="#" {{action "setSpeakModeUser" supervisee.id}}>{{t "speak as" key='speak_as'}} {{supervisee.user_name}}</a></li>
                     {{/each}}
                   </ul>

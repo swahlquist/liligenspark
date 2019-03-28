@@ -357,8 +357,9 @@ CoughDrop.User = DS.Model.extend({
   }.property('preferences.device.auto_sync', 'preferences.device.ever_synced'),
   load_more_supervision: function() {
     var _this = this;
-    if(this.get('load_all_connections') && !this.get('all_connections.loaded')) {
-      _this.set('all_connections', {loading: true});
+    
+    if(this.get('load_all_connections') && (!this.get('all_connections.loaded') || this.get('all_connections.stamp') != this.get('sync_stamp'))) {
+      _this.set('all_connections', {loading: true, sync_stamp: _this.get('sync_stamp')});
       if((this.get('supervisors') || []).length >= 10) {
         Utils.all_pages('/api/v1/users/' + this.get('id') + '/supervisors', {result_type: 'user', type: 'GET', data: {}}, function(data) {
         }).then(function(res) {
@@ -376,6 +377,7 @@ CoughDrop.User = DS.Model.extend({
         Utils.all_pages('/api/v1/users/' + this.get('id') + '/supervisees', {result_type: 'user', type: 'GET', data: {}}, function(data) {
         }).then(function(res) {
           _this.set('supervisees', res);
+          _this.set('all_supervisees', res);
           _this.set('all_connections.supervisees', true);
         }, function(err) {
           console.log('error loading supervisees');
@@ -387,7 +389,10 @@ CoughDrop.User = DS.Model.extend({
       }
       _this.set('all_connections_loaded', true);
     }
-  }.observes('load_all_connections'),
+  }.observes('load_all_connections', 'sync_stamp'),
+  known_supervisees: function() {
+    return this.get('all_supervisees') || this.get('supervisees') || [];
+  }.property('all_supervisees', 'supervisees'),
   check_all_connections: function() {
     if(this.get('all_connections.supervisors') && this.get('all_connections.supervisees')) {
       this.set('all_connections.loading', null);

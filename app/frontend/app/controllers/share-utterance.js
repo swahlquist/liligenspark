@@ -35,7 +35,7 @@ export default modal.ModalController.extend({
       });
     });
     if(app_state.get('referenced_user.supporter_role')) {
-      res = res.concat(app_state.get('referenced_user.supervisees') || []);
+      res = res.concat(app_state.get('referenced_user.known_supervisees') || []);
     } else {
       res = res.concat(app_state.get('referenced_user.supervisors') || []);
     }
@@ -48,7 +48,7 @@ export default modal.ModalController.extend({
       })
     }
     return res;
-  }.property('app_state.referenced_user.supervisors', 'app_state.referenced_user.supervisees', 'app_state.referenced_user.supporter_role', 'app_state.referenced_user.contacts', 'app_state.reply_note'),
+  }.property('app_state.referenced_user.supervisors', 'app_state.referenced_user.known_supervisees', 'app_state.referenced_user.supporter_role', 'app_state.referenced_user.contacts', 'app_state.reply_note'),
   sentence: function() {
     if(this.get('utterance')) {
       return utterance.sentence(this.get('utterance'));

@@ -97,14 +97,14 @@
             <div class="col-sm-5 col-xs-6" style="margin-top: 5px;">
               {{input value=share_user_name class="form-control" placeholder="user name to add"}}
             </div>
-            {{#if app_state.currentUser.supervisees}}
+            {{#if app_state.currentUser.known_supervisees}}
               <div class="col-sm-1" style='margin-left: -80px; margin-top: 5px;'>
                 <div class='btn-group'><!-- dropup -->
                   <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {{t "user" key='user'}} <span class="caret"></span>
                   </button>
                   <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left;">
-                    {{#each app_state.currentUser.supervisees as |user|}}
+                    {{#each app_state.currentUser.known_supervisees as |user|}}
                       <li><a href='#' {{action 'set_share_user_name' user.user_name}}>{{user.user_name}}</a></li>
                     {{/each}}
                   </ul>

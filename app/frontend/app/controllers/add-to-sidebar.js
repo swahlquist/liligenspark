@@ -26,8 +26,8 @@ export default modal.ModalController.extend({
   user_board: function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');
-    if(this.get('model.supervisees')) {
-      this.get('model.supervisees').forEach(function(sup) {
+    if(this.get('model.known_supervisees')) {
+      this.get('model.known_supervisees').forEach(function(sup) {
         if(for_user_id == sup.id) {
           sup.set('currently_selected', true);
         } else {
@@ -35,7 +35,7 @@ export default modal.ModalController.extend({
         }
       });
     }
-  }.observes('currently_selected_id', 'model.supervisees'),
+  }.observes('currently_selected_id', 'model.known_supervisees'),
   actions: {
     add: function() {
       var board = this.get('model.board');

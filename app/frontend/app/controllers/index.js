@@ -265,8 +265,8 @@ export default Controller.extend({
         b = null;
       }
       // If no badge for the current user use the supervisee if there's only one
-      if(!b && (app_state.get('sessionUser.supervisees') || []).length == 1) {
-        var sup = app_state.get('sessionUser.supervisees')[0];
+      if(!b && (app_state.get('sessionUser.known_supervisees') || []).length == 1) {
+        var sup = app_state.get('sessionUser.known_supervisees')[0];
         if(sup.premium) {
           b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id)
         }
@@ -275,7 +275,7 @@ export default Controller.extend({
       emberSet(model, 'earned_badge', eb);
     }
     var sups = [];
-    (app_state.get('sessionUser.supervisees') || []).forEach(function(sup) {
+    (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
       if(for_users[emberGet(sup, 'id')] && emberGet(sup, 'premium')) {
         var b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id);
         emberSet(sup, 'current_badge', b);
@@ -285,12 +285,12 @@ export default Controller.extend({
       sups.push(sup);
     });
     _this.set('supervisees_with_badges', sups);
-  }.observes('app_state.sessionUser', 'app_state.sessionUser.supervisees', 'current_user_badges'),
+  }.observes('app_state.sessionUser', 'app_state.sessionUser.known_supervisees', 'current_user_badges'),
   modeling_ideas_available: function() {
     if(app_state.get('feature_flags.badge_progress')) {
       if(app_state.get('sessionUser.supporter_role')) {
         var any_premium_supervisees = false;
-        (app_state.get('sessionUser.supervisees') || []).forEach(function(sup) {
+        (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
           if(emberGet(sup, 'premium')) {
             any_premium_supervisees = true;
           }
@@ -498,7 +498,7 @@ export default Controller.extend({
           } else if(res) {
             // update the matching currentUser.supervisees goal attribute 
             // with the new value if not already set
-            (app_state.get('currentUser.supervisees') || []).forEach(function(sup) {
+            (app_state.get('currentUser.known_supervisees') || []).forEach(function(sup) {
               if(emberGet(sup, 'id') == user_model.get('id')) {
                 emberSet(sup, 'goal', {
                   id: res.get('id'),
@@ -516,7 +516,7 @@ export default Controller.extend({
       var users = [];
       if(!user_name) {
         if((app_state.get('currentUser.supervisees') || []).length > 0) {
-          (app_state.get('currentUser.supervisees') || []).forEach(function(u) {
+          (app_state.get('currentUser.known_supervisees') || []).forEach(function(u) {
             if(emberGet(u, 'premium')) {
               users.push(u);
             }
@@ -526,7 +526,7 @@ export default Controller.extend({
           users.push(app_state.get('currentUser'));
         }
       } else {
-        (app_state.get('currentUser.supervisees') || []).forEach(function(u) {
+        (app_state.get('currentUser.known_supervisees') || []).forEach(function(u) {
           if(u.user_name == user_name) {
             users.push(u);
           }

@@ -195,7 +195,7 @@ export default modal.ModalController.extend({
       if(for_user_id == 'self' || for_user_id == app_state.get('currentUser.id')) {
         this.set('model.user', app_state.get('currentUser'));
       } else {
-        var u = (app_state.get('currentUser.supervisees') || []).find(function(u) { return u.id == for_user_id; });
+        var u = (app_state.get('currentUser.known_supervisees') || []).find(function(u) { return u.id == for_user_id; });
         this.set('model.user', u);
       }
       this.load_recordings(true);

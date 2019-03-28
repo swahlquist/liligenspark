@@ -14,7 +14,7 @@ export default modal.ModalController.extend({
     var supervisees = [];
     if(app_state.get('sessionUser.supervisees.length')) {
       var selected_user_id = null;
-      app_state.get('sessionUser.supervisees').forEach(function(supervisee) {
+      app_state.get('sessionUser.known_supervisees').forEach(function(supervisee) {
         var res = EmberObject.create(supervisee);
         res.set('currently_speaking', app_state.get('currentUser.id') == supervisee.id);
         res.set('disabled', !supervisee.edit_permission);
@@ -27,7 +27,7 @@ export default modal.ModalController.extend({
     } else {
       this.set('currently_selected_id', 'self');
     }
-    this.set('model.supervisees', supervisees);
+    this.set('model.known_supervisees', supervisees);
   },
   linked: function() {
     return (this.get('model.board.linked_boards') || []).length > 0;
@@ -44,8 +44,8 @@ export default modal.ModalController.extend({
   user_board: function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');
-    if(this.get('model.supervisees')) {
-      this.get('model.supervisees').forEach(function(sup) {
+    if(this.get('model.known_supervisees')) {
+      this.get('model.known_supervisees').forEach(function(sup) {
         if(for_user_id == sup.id) {
           sup.set('currently_selected', true);
         } else {
@@ -112,10 +112,10 @@ export default modal.ModalController.extend({
       this.set('in_sidebar_set', false);
       this.set('home_board', false);
     }
-  }.observes('currently_selected_id', 'model.supervisees'),
+  }.observes('currently_selected_id', 'model.known_supervisees'),
   actions: {
     tweakBoard: function(decision) {
-      if(this.get('model.supervisees').length > 0) {
+      if(this.get('model.known_supervisees').length > 0) {
         if(!this.get('currently_selected_id')) {
           return;
         }
@@ -123,7 +123,7 @@ export default modal.ModalController.extend({
       var shares = [];
 
       if(this.get('self_currently_selected')) {
-        (this.get('model.supervisees') || []).forEach(function(sup) {
+        (this.get('model.known_supervisees') || []).forEach(function(sup) {
           if(sup.share) {
             shares.push(sup);
           }

@@ -38,8 +38,8 @@
           <span style="display: inline-block; width: 200px; width: calc(100% - 60px);">
             {{t "supervisees:" key='supervisees_colon'}}<br/>
             <ul class={{if many_supervisees "list-unstyled supervisee_list tall" "list-unstyled supervisee_list"}} style="margin-bottom: -15px;">
-            {{#if app_state.currentUser.supervisees}}
-              {{#each app_state.currentUser.supervisees as |supervisee|}}
+            {{#if app_state.currentUser.known_supervisees}}
+              {{#each app_state.currentUser.known_supervisees as |supervisee|}}
                 <li style="margin: 5px 0; font-size: 20px;">
                   <div class="btn-group btn-group-lg supervisee_nav">
                     {{#link-to 'user' supervisee.user_name class='btn btn-default'}}
