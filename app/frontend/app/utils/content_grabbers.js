@@ -1125,10 +1125,22 @@ var pictureGrabber = EmberObject.extend({
           }]
         };
       }
-      navigator.getUserMedia(constraints, function(stream) {
+      var promise = null;
+      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        promise = navigator.mediaDevices.getUserMedia(constraints);
+      } else {
+        promise = new RSVP.Promise(function(res, rej) {
+          navigator.getUserMedia(constraints, function(stream) {
+            res(stream);
+          }, function(err) {
+            rej(err);
+          });
+        });
+      }
+      promise.then(function(stream) {
         _this.user_media_ready(stream, last_stream_id);
-      }, function() {
-        console.log("permission not granted");
+      }, function(err) {
+        console.log("permission not granted", err);
       });
     }
   },
@@ -1163,17 +1175,30 @@ var pictureGrabber = EmberObject.extend({
           });
         }
         if(video) { video.src = null; }
-        navigator.getUserMedia({
+        var promise = null;
+        var constraints = {
           video: {
             optional: [{
               sourceId: stream_id,
               deviceId: stream_id
             }]
           }
-        }, function(stream) {
+        };
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          promise = navigator.mediaDevices.getUserMedia(constraints);
+        } else {
+          promise = new RSVP.Promise(function(res, rej) {
+            navigator.getUserMedia(constraints, function(stream) {
+              res(stream);
+            }, function(err) {
+              rej(err);
+            });
+          });
+        }
+        promise.then(function(stream) {
           _this.user_media_ready(stream, stream_id);
-        }, function() {
-          console.log("permission not granted");
+        }, function(err) {
+          console.log("permission not granted", err);
         });
       }
     }
@@ -1308,10 +1333,22 @@ var videoGrabber = EmberObject.extend({
           }]
         };
       }
-      navigator.getUserMedia(constraints, function(stream) {
+      var promise = null;
+      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        promise = navigator.mediaDevices.getUserMedia(constraints);
+      } else {
+        promise = new RSVP.Promise(function(res, rej) {
+          navigator.getUserMedia(constraints, function(stream) {
+            res(stream);
+          }, function(err) {
+            rej(err);
+          });
+        });
+      }
+      promise.then(function(stream) {
         _this.user_media_ready(stream, last_stream_id);
-      }, function() {
-        console.log("permission not granted");
+      }, function(err) {
+        console.log("permission not granted", err);
       });
     }
   },
@@ -1347,17 +1384,30 @@ var videoGrabber = EmberObject.extend({
         if(this.controller.get('video_recording')) {
           this.controller.set('video_recording.video_url', null);
         }
-        navigator.getUserMedia({
+        var promise = null;
+        var constraints = {
           video: {
             optional: [{
               sourceId: stream_id,
               deviceId: stream_id
             }]
           }
-        }, function(stream) {
+        };
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          promise = navigator.mediaDevices.getUserMedia(constraints);
+        } else {
+          promise = new RSVP.Promise(function(res, rej) {
+            navigator.getUserMedia(constraints, function(stream) {
+              res(stream);
+            }, function(err) {
+              rej(err);
+            });
+          });
+        }
+        promise.then(function(stream) {
           _this.user_media_ready(stream, stream_id);
-        }, function() {
-          console.log("permission not granted");
+        }, function(err) {
+          console.log("permission not granted", err);
         });
       }
     }
@@ -1751,12 +1801,24 @@ var soundGrabber = EmberObject.extend({
       return mr;
     }
 
-    if(navigator.getUserMedia) {
+    if(navigator.getUserMedia || navigator.mediaDevices) {
       if(this.controller.get('sound_recording.stream')) {
         stream_ready(this.controller.get('sound_recording.stream'));
         return;
       }
-      navigator.getUserMedia({audio: true}, function(stream) {
+      var promise = null;
+      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        promise = navigator.mediaDevices.getUserMedia({audio: true});
+      } else {
+        promise = new RSVP.Promise(function(res, rej) {
+          navigator.getUserMedia({audio: true}, function(stream) {
+            res(stream);
+          }, function(err) {
+            rej(err);
+          });
+        });
+      }
+      promise.then(function(stream) {
         var mr = stream_ready(stream);
 
         if(stream && stream.id && document.getElementById('sound_levels')) {
@@ -1801,8 +1863,8 @@ var soundGrabber = EmberObject.extend({
   //        analyser.connect(js);
   //        js.connect(context.destination);
         }
-      }, function() {
-        console.log("permission not granted");
+      }, function(err) {
+        console.log("permission not granted", err);
       });
     } else if(!auto_loading && contentGrabbers.capture_types().audio) {
       this.native_record_sound();
@@ -1820,7 +1882,7 @@ var soundGrabber = EmberObject.extend({
   },
   toggle_recording_sound: function(action) {
     var mr = this.controller.get('sound_recording.media_recorder');
-    if(action != 'stop' && !mr && contentGrabbers.capture_types().audio) {
+    if(action != 'stop' && !mr && !navigator.getUserMedia && contentGrabbers.capture_types().audio) {
       this.native_record_sound();
       return;
     }
