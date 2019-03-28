@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.03.28a";
+window.app_version = "2019.03.28c";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9698,7 +9698,7 @@ var n=a.mini_promise()
 return window.plugins.launcher[t]?e.match(/\/\//)?window.plugins.launcher[t]({uri:e},function(){n.resolve()},function(e){n.reject({error:e})}):"Android"==a.system?window.plugins.launcher[t]({packageName:e},function(){n.resolve()},function(e){n.reject({error:e})}):n.reject({error:"no launch option found"}):n.reject({error:"launching not available on this system"}),n}},permissions:{assert:function(e){var t=a.mini_promise()
 if("Android"==a.system&&a.installed_app)if(window.cordova&&window.cordova.plugins&&window.cordova.plugins.permissions&&cordova.plugins.permissions.checkPermission){var n=function(e){var n=0,a=[]
 e.forEach(function(o){window.cordova.plugins.permissions.checkPermission(o,function(r){n++,r&&r.hasPermission||a.push(o),n==e.length&&(0==a.length?t.resolve({granted:!0}):s(a))},function(t){n++,a.push(o),n==e.length&&s(a)})})},s=function(e){window.cordova.plugins.permissions.requestPermissions(e,function(e){e.hasPermission?t.resolve({granted:!0}):t.reject({granted:!1,authorized:!1})},function(e){t.reject({granted:!1,error:!0})})}
-"record_audio"==e?n(["android.permission.RECORD_AUDIO"]):"record_video"==e&&n(["android.permission.RECORD_AUDIO","android.permission.CAMERA","android.permission.RECORD_VIDEO"])}else t.reject({granted:!1,not_available:!0})
+"record_audio"==e?n(["android.permission.RECORD_AUDIO"]):"record_video"==e&&n(["android.permission.RECORD_AUDIO","android.permission.CAMERA","android.permission.RECORD_VIDEO","android.permission.WRITE_EXTERNAL_STORAGE"])}else t.reject({granted:!1,not_available:!0})
 else t.resolve({granted:!0})
 return t}},nfc:{available:function(){var e=a.mini_promise()
 return window.nfc&&window.nfc.enabled?window.nfc.enabled(function(){var t={nfc:!0,background:!0}
@@ -9933,10 +9933,10 @@ s.controller.set("webcam",{stream:e,showing:!0,stream_id:t,video_streams:a})
 var o=window.enumerateMediaDevices||window.navigator&&window.navigator.mediaDevices&&window.navigator.mediaDevices.enumerateDevices
 !o&&window.MediaStreamTrack&&window.MediaStreamTrack.getSources&&(o=function(){return new Ember.RSVP.Promise(function(e,t){window.MediaStreamTrack.getSources(function(t){e(t)})})}),o&&!a&&o().then(function(e){var t=[]
 e.forEach(function(e){"videoinput"!=e.kind&&"video"!=e.kind||t.push({id:e.deviceId||e.id,label:e.label||"camera "+(t.length+1)})}),t.length<=1&&(t=[]),s.controller.get("webcam")&&s.controller.set("webcam.video_streams",t)},function(){})},start_webcam:function(){var e=this
-if(navigator.device&&p.capture_types().image)navigator.device.capture.captureImage(function(t){var n=t[0],s=new window.File(n.name,n.localURL,n.type,n.lastModifiedDate,n.size)
-e.file_selected(s)},function(){},{limit:1})
-else if(navigator.getUserMedia){var t=l.default.get("last_stream_id"),n={video:!0}
-t&&(n.video={optional:[{sourceId:t,deviceId:t}]}),i.default.permissions.assert("record_video").then(function(s){(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia(n):new Ember.RSVP.Promise(function(e,t){navigator.getUserMedia(n,function(t){e(t)},function(e){t(e)})})).then(function(n){e.user_media_ready(n,t)},function(t){e.controller.set("webcam",{error:!0}),console.log("permission not granted",t)})},function(t){e.controller.set("webcam",{error:!0})})}},swap_streams:function(){var e=document.querySelector("#webcam_video"),n=this.controller.get("webcam.stream_id"),s=this.controller.get("webcam.video_streams"),a=0
+i.default.permissions.assert("record_video").then(function(t){if(navigator.device&&p.capture_types().image)navigator.device.capture.captureImage(function(t){var n=t[0],s=new window.File(n.name,n.localURL,n.type,n.lastModifiedDate,n.size)
+e.file_selected(s)},function(t){console.error("native image capture failed",t),e.controller.set("webcam",{error:!0})},{limit:1})
+else if(navigator.getUserMedia){var n=l.default.get("last_stream_id"),s={video:!0}
+n&&(s.video={optional:[{sourceId:n,deviceId:n}]});(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia(s):new Ember.RSVP.Promise(function(e,t){navigator.getUserMedia(s,function(t){e(t)},function(e){t(e)})})).then(function(t){e.user_media_ready(t,n)},function(t){e.controller.set("webcam",{error:!0}),console.log("permission not granted",t)})}},function(t){e.controller.set("webcam",{error:!0})})},swap_streams:function(){var e=document.querySelector("#webcam_video"),n=this.controller.get("webcam.stream_id"),s=this.controller.get("webcam.video_streams"),a=0
 if(s)for(var o=0;o<s.length;o++)n&&s[o].id==n&&(a=o)
 var l=this
 if(s&&s.length>1){++a>s.length-1&&(a=0)
@@ -9952,11 +9952,11 @@ e&&e.stop?e.stop():e&&e.getTracks&&e.getTracks().forEach(function(e){e&&e.stop&&
 e&&this.controller&&this.controller.get("video_preview")&&(this.controller.get("video_preview.license")||this.controller.set("video_preview.license",{type:"private"}),!this.controller.get("video_preview.license.author_name")&&this.controller.get("video_preview.license")&&this.controller.set("video_preview.license.author_name",e.get("user_name")),!this.controller.get("sound_preview.license.author_url")&&this.controller.get("video_preview.license")&&this.controller.set("video_preview.license.author_url",e.get("profile_url")))},file_selected:function(e){var t=this
 p.read_file(e).then(function(n){p.read_file(e,"blob").then(null,function(){return Ember.RSVP.resolve(null)}).then(function(s){var a={local_url:e.localURL,url:n.target.result,blob:s,name:e.name}
 window.resolveLocalFileSystemURL&&e.localURL?window.resolveLocalFileSystemURL(e.localURL,function(e){e&&e.toURL&&(a.local_url=e.toURL()),t.controller.set("video_preview",a)}):t.controller.set("video_preview",a)})})},recorder_available:function(){return!("Kindle"==i.default.subsystem||!navigator.getUserMedia&&!p.capture_types().video)},record_video:function(){var e=this
-if(this.controller.set("video_recording",{stream:this.controller.get("video_recording.stream"),ready:!0}),this.controller.set("video_preview",null),e.controller.set("video_error",null),p.capture_types().video)navigator.device.capture.captureVideo(function(t){var n=t[0],s=new window.File(n.name,n.localURL,n.type,n.lastModifiedDate,n.size)
-e.file_selected(s)},function(){},{limit:1})
+this.controller.set("video_recording",{stream:this.controller.get("video_recording.stream"),ready:!0}),this.controller.set("video_preview",null),e.controller.set("video_error",null),i.default.permissions.assert("record_video").then(function(t){if(p.capture_types().video)navigator.device.capture.captureVideo(function(t){var n=t[0],s=new window.File(n.name,n.localURL,n.type,n.lastModifiedDate,n.size)
+e.file_selected(s)},function(t){e.controller.set("video_error",!0),console.error("native vidoe capture failed",t)},{limit:1})
 else if(navigator.getUserMedia){if(this.controller.get("video_recording.stream"))return void e.user_media_ready(this.controller.get("video_recording.stream"))
-var t=l.default.get("last_stream_id"),n={video:!0,audio:!0}
-t&&(n.video={optional:[{sourceId:t,deviceId:t}]}),i.default.permissions.assert("record_video").then(function(s){(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia(n):new Ember.RSVP.Promise(function(e,t){navigator.getUserMedia(n,function(t){e(t)},function(e){t(e)})})).then(function(n){e.user_media_ready(n,t)},function(t){e.controller.set("video_error",!0),console.log("permission not granted",t)})},function(t){e.controller.set("video_error",!0)})}},swap_streams:function(){var e=this.controller.get("video_recording.stream_id"),n=this.controller.get("video_recording.video_streams"),s=0
+var n=l.default.get("last_stream_id"),s={video:!0,audio:!0}
+n&&(s.video={optional:[{sourceId:n,deviceId:n}]});(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia(s):new Ember.RSVP.Promise(function(e,t){navigator.getUserMedia(s,function(t){e(t)},function(e){t(e)})})).then(function(t){e.user_media_ready(t,n)},function(t){e.controller.set("video_error",!0),console.log("permission not granted",t)})}},function(t){e.controller.set("video_error",!0)})},swap_streams:function(){var e=this.controller.get("video_recording.stream_id"),n=this.controller.get("video_recording.video_streams"),s=0
 if(n)for(var a=0;a<n.length;a++)e&&n[a].id==e&&(s=a)
 var o=this
 if(n&&n.length>1){++s>n.length-1&&(s=0)
@@ -10010,7 +10010,7 @@ for(var t=0,s=e.length,o=0;o<s;o++)t+=e[o]
 var r=t/s/130,l=a.createLinearGradient(0,50,0,250)
 l.addColorStop(1,"#00ff00"),l.addColorStop(.25,"#ffff00"),l.addColorStop(0,"#ff0000"),a.clearRect(0,0,400,300),a.fillStyle=l,a.fillRect(100,275,200,-250*r)}}},function(e){n.controller.set("sound_recording",{error:!0}),console.log("permission not granted",e)})}else!e&&p.capture_types().audio&&n.native_record_sound()},function(e){n.controller.set("sound_recording",{error:!0})})},native_record_sound:function(){var e=this
 p.capture_types().audio&&navigator.device.capture.captureAudio(function(t){var n=t[0],s=new window.File(n.name,n.localURL,n.type,n.lastModifiedDate,n.size)
-e.file_selected(s)},function(){},{limit:1})},toggle_recording_sound:function(e){var t=this.controller.get("sound_recording.media_recorder")
+e.file_selected(s)},function(e){console.error("native sound record failed",e)},{limit:1})},toggle_recording_sound:function(e){var t=this.controller.get("sound_recording.media_recorder")
 if("stop"==e||t||navigator.getUserMedia||!p.capture_types().audio)if(e||(e=this.controller.get("sound_recording.recording")?"stop":"start"),"start"==e&&t&&"inactive"==t.state){var n=this,s=(Ember.testing,function(){n.controller.set("sound_recording.blob",null),n.controller.set("sound_recording.recording",!0),t.start(6e4)})
 Ember.testing?s():Ember.run.later(s,500)}else"stop"==e&&t&&"recording"==t.state&&(this.controller.set("sound_recording.recording",!1),t.stop())
 else this.native_record_sound()},select_sound_preview:function(e){if((e=e||this.controller&&this.controller.get("sound_preview"))&&e.url){var a=this
@@ -11155,8 +11155,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+8f1ab5ca"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+8f1ab5ca"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+3b16506b"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+3b16506b"})
 ;
 
 
