@@ -235,10 +235,19 @@ var capabilities;
               };
               if(type == 'record_audio') {
                 check_permissions(['android.permission.RECORD_AUDIO']);
+              } else if(type == 'nfc') {
+                check_permissions(['android.permission.NFC',
+                    'android.permission.VIBRATE'
+                  ]);
+              } else if(type == 'wakelock') {
+                check_permissions(['android.permission.WAKE_LOCK']);
+              } else if(type == 'geolocation') {
+                check_permissions(['android.permission.ACCESS_COARSE_LOCATION',
+                    'android.permission.ACCESS_FINE_LOCATION'
+                  ]);
               } else if(type == 'record_video') {
                 check_permissions(['android.permission.RECORD_AUDIO',
                     'android.permission.CAMERA',
-                    'android.permission.RECORD_VIDEO',
                     'android.permission.WRITE_EXTERNAL_STORAGE'
                   ]);
               }
@@ -254,20 +263,24 @@ var capabilities;
       nfc: {
         available: function() {
           var promise = capabilities.mini_promise();
-          if(window.nfc && window.nfc.enabled) {
-            window.nfc.enabled(function() { 
-              var res = {nfc: true, background: true};
-              if(capabilities.system == 'iOS') {
-                res.background = false;
-              }
-              if(capabilities.system == 'Android') {
-                res.can_write = true;
-              }
-              promise.resolve(res); 
-            }, function() { promise.reject(); });
-          } else {
+          capabilities.permissions.assert('nfc').then(function() {
+            if(window.nfc && window.nfc.enabled) {
+              window.nfc.enabled(function() { 
+                var res = {nfc: true, background: true};
+                if(capabilities.system == 'iOS') {
+                  res.background = false;
+                }
+                if(capabilities.system == 'Android') {
+                  res.can_write = true;
+                }
+                promise.resolve(res); 
+              }, function() { promise.reject(); });
+            } else {
+              promise.reject();
+            }
+          }, function() {
             promise.reject();
-          }
+          })
           return promise;
         },
         prompt: function() {
@@ -1138,6 +1151,7 @@ var capabilities;
         }
       },
       wakelock_capable: function() {
+        capabilities.permissions.assert('wakelock');
         return !!((window.chrome && window.chrome.power && window.chrome.power.requestKeepAwake) || (window.powerManagement && window.powerManagement.acquire));
       },
       wakelock: function(type, enable) {

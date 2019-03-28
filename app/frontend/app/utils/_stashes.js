@@ -235,18 +235,25 @@ var stashes = EmberObject.extend({
   geo: {
     poll: function() {
       if(navigator && navigator.geolocation) { stashes.geolocation = navigator.geolocation; }
-      if(stashes.geolocation && !CoughDrop.embedded) {
-        if(stashes.geo.watching) {
-          stashes.geolocation.clearWatch(stashes.geo.watching);
+      var go = function() {
+        if(stashes.geolocation && !CoughDrop.embedded) {
+          if(stashes.geo.watching) {
+            stashes.geolocation.clearWatch(stashes.geo.watching);
+          }
+          stashes.geolocation.getCurrentPosition(function(position) {
+            stashes.set('geo.latest', position);
+          });
+          stashes.geo.watching = stashes.geolocation.watchPosition(function(position) {
+            stashes.set('geo.latest', position);
+          }, function(error) {
+            stashes.set('geo.latest', null);
+          });
         }
-        stashes.geolocation.getCurrentPosition(function(position) {
-          stashes.set('geo.latest', position);
-        });
-        stashes.geo.watching = stashes.geolocation.watchPosition(function(position) {
-          stashes.set('geo.latest', position);
-        }, function(error) {
-          stashes.set('geo.latest', null);
-        });
+      };
+      if(stash_capabilities) {
+        stash_capabilities.permissions.assert('geolocation').then(function() { go(); });
+      } else {
+        go();
       }
     }
   },
