@@ -238,7 +238,8 @@ var capabilities;
               } else if(type == 'record_video') {
                 check_permissions(['android.permission.RECORD_AUDIO',
                     'android.permission.CAMERA',
-                    'android.permission.RECORD_VIDEO'
+                    'android.permission.RECORD_VIDEO',
+                    'android.permission.WRITE_EXTERNAL_STORAGE'
                   ]);
               }
             } else {

@@ -1107,24 +1107,24 @@ var pictureGrabber = EmberObject.extend({
   },
   start_webcam: function() {
     var _this = this;
-    if(navigator.device && contentGrabbers.capture_types().image) {
-      navigator.device.capture.captureImage(function(files) {
-        var media_file = files[0];
-        var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
-        _this.file_selected(file);
-      }, function() { }, {limit: 1});
-    } else if(navigator.getUserMedia) {
-      var last_stream_id = stashes.get('last_stream_id');
-      var constraints = {video: true};
-      if(last_stream_id) {
-        constraints.video = {
-          optional: [{
-            sourceId: last_stream_id,
-            deviceId: last_stream_id
-          }]
-        };
-      }
-      capabilities.permissions.assert('record_video').then(function(res) {
+    capabilities.permissions.assert('record_video').then(function(res) {
+      if(navigator.device && contentGrabbers.capture_types().image) {
+        navigator.device.capture.captureImage(function(files) {
+          var media_file = files[0];
+          var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
+          _this.file_selected(file);
+        }, function() { }, {limit: 1});
+      } else if(navigator.getUserMedia) {
+        var last_stream_id = stashes.get('last_stream_id');
+        var constraints = {video: true};
+        if(last_stream_id) {
+          constraints.video = {
+            optional: [{
+              sourceId: last_stream_id,
+              deviceId: last_stream_id
+            }]
+          };
+        }
         var promise = null;
         if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           promise = navigator.mediaDevices.getUserMedia(constraints);
@@ -1316,29 +1316,29 @@ var videoGrabber = EmberObject.extend({
     this.controller.set('video_preview', null);
     _this.controller.set('video_error', null);
 
-    if(contentGrabbers.capture_types().video) {
-      navigator.device.capture.captureVideo(function(files) {
-        var media_file = files[0];
-        var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
-        _this.file_selected(file);
-      }, function() { }, {limit: 1});
-    } else if(navigator.getUserMedia) {
-      if(this.controller.get('video_recording.stream')) {
-        _this.user_media_ready(this.controller.get('video_recording.stream'));
-        return;
-      }
+    capabilities.permissions.assert('record_video').then(function(res) {
+      if(contentGrabbers.capture_types().video) {
+        navigator.device.capture.captureVideo(function(files) {
+          var media_file = files[0];
+          var file = new window.File(media_file.name, media_file.localURL, media_file.type, media_file.lastModifiedDate, media_file.size);
+          _this.file_selected(file);
+        }, function() { }, {limit: 1});
+      } else if(navigator.getUserMedia) {
+        if(this.controller.get('video_recording.stream')) {
+          _this.user_media_ready(this.controller.get('video_recording.stream'));
+          return;
+        }
 
-      var last_stream_id = stashes.get('last_stream_id');
-      var constraints = {video: true, audio: true};
-      if(last_stream_id) {
-        constraints.video = {
-          optional: [{
-            sourceId: last_stream_id,
-            deviceId: last_stream_id
-          }]
-        };
-      }
-      capabilities.permissions.assert('record_video').then(function(res) {
+        var last_stream_id = stashes.get('last_stream_id');
+        var constraints = {video: true, audio: true};
+        if(last_stream_id) {
+          constraints.video = {
+            optional: [{
+              sourceId: last_stream_id,
+              deviceId: last_stream_id
+            }]
+          };
+        }
         var promise = null;
         if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           promise = navigator.mediaDevices.getUserMedia(constraints);
