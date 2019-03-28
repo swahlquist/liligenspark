@@ -134,10 +134,12 @@ var editManager = EmberObject.extend({
     for(var idx = 0; idx < oldState.length; idx++) {
       var arr = [];
       for(var jdx = 0; jdx < oldState[idx].length; jdx++) {
-        var b = editManager.Button.create(oldState[idx][jdx].raw());
+        var raw = oldState[idx][jdx].raw();
+        raw.local_image_url = oldState[idx][jdx].get('local_image_url');
+        raw.local_sound_url = oldState[idx][jdx].get('local_sound_url');
+        var b = editManager.Button.create(raw, {board: board, pending: false});
+        if(b.get('board') != board || b.get('pending') != false) { alert('blech!'); }
         b.set('id', oldState[idx][jdx].get('id'));
-        b.set('pending', false);
-        b.set('board', board);
         arr.push(b);
       }
       clone_state.push(arr);
