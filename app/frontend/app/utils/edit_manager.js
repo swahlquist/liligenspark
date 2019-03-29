@@ -610,7 +610,7 @@ var editManager = EmberObject.extend({
       }
     };
 
-    if(app_state.get('speak_mode') && app_state.get('feature_flags.fast_render')) {
+    if(app_state.get('speak_mode')) {
       controller.update_button_symbol_class();
       if(board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level) {
         CoughDrop.log.track('already have fast render');

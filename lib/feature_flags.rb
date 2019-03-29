@@ -1,4 +1,5 @@
 module FeatureFlags
+  # TODO: remove unused feature flags after like June 2019
   AVAILABLE_FRONTEND_FEATURES = ['subscriptions', 'assessments', 'custom_sidebar', 
               'canvas_render', 'snapshots', 'enable_all_buttons', 
               'video_recording', 'goals', 'app_connections', 'translation', 'geo_sidebar',
