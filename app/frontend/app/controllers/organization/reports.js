@@ -32,6 +32,7 @@ export default Controller.extend({
         list.push({id: 'premium_voices', name: i18n.t('premium_voice_downloads', "Premium Voice Downloads")});
         list.push({id: 'extras', name: i18n.t('extras_enabled', "Premium Symbol Activations")});
         list.push({id: 'feature_flags', name: i18n.t('feature_flags', "Beta/Feature Flags")});
+        list.push({id: 'org_sizes', name: i18n.t('org_sizes', "Organizations by Size")});
         list.push({id: 'totals', name: i18n.t('record_totals', "Total counts")});
       } else {
         list.push({id: 'logged_2', name: i18n.t('logged_2', "Generated usage logs in the last 2 weeks")});

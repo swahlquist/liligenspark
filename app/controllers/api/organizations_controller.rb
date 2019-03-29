@@ -66,6 +66,7 @@ class Api::OrganizationsController < ApplicationController
   def admin_reports
     org = Organization.find_by_path(params['organization_id'])
     return unless allowed?(org, 'edit')
+    # Only the reports in the list should be allowed for non-admins
     if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6'].include?(params['report'])
       if !org.admin?
         return unless allowed?(org, 'impossible')
@@ -118,6 +119,12 @@ class Api::OrganizationsController < ApplicationController
       users = users.select{|u| active_user_ids.include?(u.id) && !Organization.supervisor?(u) && !Organization.manager?(u) }
     elsif params['report'] == 'eval_accounts'
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['plan_id'] == 'eval_monthly_free' }
+    elsif params['report'] == 'org_sizes'
+      stats = {}
+      Organization.all.each do |org|
+        links = UserLink.links_for(org).select{|l| l['type'] == 'org_user'}
+        stats[org.settings['name']] = links.length
+      end
     elsif params['report'].match(/home_boards/)
       home_connections = UserBoardConnection.where(:home => true)
       if params['report'].match(/recent/)
