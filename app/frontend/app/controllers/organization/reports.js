@@ -16,12 +16,11 @@ export default Controller.extend({
       }
       if(this.get('model.admin')) {
         list.push({id: 'new_users', name: i18n.t('new_users', "Signed up in the last 2 weeks") });
-        list.push({id: 'recent_3', name: i18n.t('recent_3', "Signed up more than 3 weeks ago, used in the last week")});
         list.push({id: 'logged_2', name: i18n.t('logged_2', "Generated usage logs in the last 2 weeks")});
 //        list.push({id: 'setup_but_expired', name: i18n.t('setup_but_expired', "Used initially but now expired")});
         list.push({id: 'active_free_supervisor_without_supervisees_or_org', name: i18n.t('active_free_supervisor_without_supervisees_or_org', "Active free supervisors without any supervisees or org")});
-        list.push({id: 'free_supervisor_with_supervisors', name: i18n.t('free_supervisor_with_supervisors', "Free supervisors with their own supervisors")});
-        list.push({id: 'multiple_emails', name: i18n.t('multiple_emails', "Emails with multiple signups")});
+//        list.push({id: 'free_supervisor_with_supervisors', name: i18n.t('free_supervisor_with_supervisors', "Free supervisors with their own supervisors")});
+//        list.push({id: 'multiple_emails', name: i18n.t('multiple_emails', "Emails with multiple signups")});
         list.push({id: 'home_boards', name: i18n.t('home_boards', "Most common home boards")});
         list.push({id: 'recent_home_boards', name: i18n.t('recent_home_boards', "Most common home boards in the last 3 months")});
         list.push({id: 'current_but_expired', name: i18n.t('current_but_expired', "Used currently but now expired")});

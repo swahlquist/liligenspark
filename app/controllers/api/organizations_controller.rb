@@ -108,12 +108,12 @@ class Api::OrganizationsController < ApplicationController
       # logins that have changed to a free subscription after their trial but don't have any supervisees
       users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? }
       users = users.select{|u| !Organization.supervisor?(u) && !Organization.manager?(u) }
-    elsif params['report'] == 'free_supervisor_with_supervisors'
-      log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 6.weeks.ago]).select('id, user_id').map(&:user_id)
-      users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && !u.supervisor_user_ids.blank? }
+    # elsif params['report'] == 'free_supervisor_with_supervisors'
+    #   log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 6.weeks.ago]).select('id, user_id').map(&:user_id)
+    #   users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && !u.supervisor_user_ids.blank? }
     elsif params['report'] == 'active_free_supervisor_without_supervisees_or_org'
       log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 2.weeks.ago]).select('id, user_id').map(&:user_id)
-      users = User.where(user_id: log_user_ids).where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? && !Organization.supervisor?(u) }
+      users = User.where(id: log_user_ids).where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? && !Organization.supervisor?(u) }
       # TODO: sharding
       active_user_ids = Device.where(:user_id => users.map(&:id)).where(['updated_at > ?', 2.weeks.ago]).map(&:user_id).uniq
       users = users.select{|u| active_user_ids.include?(u.id) && !Organization.supervisor?(u) && !Organization.manager?(u) }
@@ -152,14 +152,14 @@ class Api::OrganizationsController < ApplicationController
         stats[ref.key] += (counts[board.id] || 0)
       end
       stats.each{|k, v| stats.delete(k) if stats[k] <= 1 }
-    elsif params['report'].match(/recent_/)
-      # logins signed up more than 3 weeks ago that have been used in the last week
-      x = 3
-      log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 1.week.ago]).select('id, user_id').map(&:user_id)
-      users = User.where(['created_at < ?', x.weeks.ago])
-      # TODO: sharding
-      active_user_ids = Device.where(:user_id => users.map(&:id)).where(['updated_at > ?', 1.week.ago]).map(&:user_id).uniq 
-      users = users.select{|u| active_user_ids.include?(u.id) }
+    # elsif params['report'].match(/recent_/)
+    #   # logins signed up more than 3 weeks ago that have been used in the last week
+    #   x = 3
+    #   log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 1.week.ago]).select('id, user_id').map(&:user_id)
+    #   users = User.where(['created_at < ?', x.weeks.ago])
+    #   # TODO: sharding
+    #   active_user_ids = Device.where(:user_id => users.map(&:id)).where(['updated_at > ?', 1.week.ago]).map(&:user_id).uniq 
+    #   users = users.select{|u| active_user_ids.include?(u.id) }
     elsif params['report'] == 'new_users'
       x = 2
       users = User.where(['created_at > ?', x.weeks.ago])
@@ -211,19 +211,19 @@ class Api::OrganizationsController < ApplicationController
       stats = RedisInit.default ? RedisInit.default.hgetall('missing_symbols') : {}
     elsif params['report'] == 'overridden_parts_of_speech'
       stats = RedisInit.default ? RedisInit.default.hgetall('overridden_parts_of_speech') : {}
-    elsif params['report'] == 'multiple_emails'
-      counts = User.all.group('email_hash').having('count(*) > 1').count
-      users = User.where({email_hash: counts.map(&:first)}); users.count
-      hashes = {}
-      stats = {}
-      users.find_in_batches(batch_size: 500).each do |batch|
-        batch.each do |u|
-          hashes[u.email_hash] = (u.settings['email'] || 'none') unless hashes[u.email_hash]
-          stats[hashes[u.email_hash]] ||= []
-          stats[hashes[u.email_hash]] << u.user_name
-        end
-      end
-      stats.each{|k, v| stats[k] = stats[k].join(',') }
+    # elsif params['report'] == 'multiple_emails'
+    #   counts = User.all.group('email_hash').having('count(*) > 1').count
+    #   users = User.where({email_hash: counts.map(&:first)}); users.count
+    #   hashes = {}
+    #   stats = {}
+    #   users.find_in_batches(batch_size: 500).each do |batch|
+    #     batch.each do |u|
+    #       hashes[u.email_hash] = (u.settings['email'] || 'none') unless hashes[u.email_hash]
+    #       stats[hashes[u.email_hash]] ||= []
+    #       stats[hashes[u.email_hash]] << u.user_name
+    #     end
+    #   end
+    #   stats.each{|k, v| stats[k] = stats[k].join(',') }
     elsif params['report'] == 'premium_voices'
       voices = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'voice_added'])
       stats = {}
