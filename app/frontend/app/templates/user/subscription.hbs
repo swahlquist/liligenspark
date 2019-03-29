@@ -130,9 +130,7 @@
           <div style="margin-top: 20px;">
             <a class='btn btn-default' href="#" {{action 'show_options'}}>{{t "Update my Billing Settings" key='change_my_subscription'}}</a>
             {{#unless subscription.user.subscription.extras_enabled}}
-              {{#if app_state.feature_flags.premium_symbols}}
-                <a class='btn btn-default' href="#" {{action 'premium_symbols' true}}>{{t "Purchase Premium Symbols" key='purchase_premium_symbols'}}</a>
-              {{/if}}
+              <a class='btn btn-default' href="#" {{action 'premium_symbols' true}}>{{t "Purchase Premium Symbols" key='purchase_premium_symbols'}}</a>
             {{/unless}}
             {{#if subscription.user.subscription.started}}
               <a class='btn btn-default' href="#" {{action 'cancel_subscription'}}>{{t "Cancel my Subscription" key='cancel_my_subscription'}}</a>

@@ -66,9 +66,7 @@
         </button>
         <ul class="dropdown-menu" role="menu">
           <li><a href="#" {{action 'recordNote'}}><strong>{{t "New Note" key='new_note'}}</strong></a></li>
-          {{#if app_state.feature_flags.assessments}}
-            <li><a href="#" {{action 'quick_assessment'}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
-          {{/if}}
+          <li><a href="#" {{action 'quick_assessment'}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
           <li><a href="#" {{action 'generate'}}>{{t "Manually Add Session" key='manually_add_session'}}</a></li>
           <li style='position: relative;'>
             <a href="#" {{action 'import_session'}}>
@@ -85,9 +83,7 @@
     {{#if messages_only}}
       {{#if model.permissions.edit}}
         <button class='btn btn-small btn-default' {{action "recordNote" "text"}}>{{t "New Note" key='new_note'}}</button>
-        {{#if app_state.feature_flags.assessments}}
-          <button class='btn btn-small btn-default' {{action "quick_assessment"}}>{{t "Quick Assessment" key='quick_assessment'}}</button>
-        {{/if}}
+        <button class='btn btn-small btn-default' {{action "quick_assessment"}}>{{t "Quick Assessment" key='quick_assessment'}}</button>
       {{/if}}
     {{/if}}
   {{/if}}

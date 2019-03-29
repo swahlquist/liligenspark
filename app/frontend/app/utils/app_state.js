@@ -573,7 +573,7 @@ var app_state = EmberObject.extend({
   toggle_edit_mode: function(decision) {
     editManager.clear_history();
     var _this = this;
-    if(!this.get('controller.board.model.permissions.edit') && this.get('feature_flags.edit_before_copying')) {
+    if(!this.get('controller.board.model.permissions.edit')) {
       modal.open('confirm-needs-copying', {board: this.controller.get('board.model')}).then(function(res) {
         if(res == 'confirm') {
           _this.toggle_mode('edit', {copy_on_save: true});
@@ -1082,9 +1082,6 @@ var app_state = EmberObject.extend({
     });
     return res;
   }.property('currentUser.feature_flags'),
-  set_filesystem: function() {
-    stashes.set('allow_local_filesystem_request', !!(!capabilities.installed_app && this.get('feature_flags.chrome_filesystem')));
-  }.observes('feature_flags.chrome_filesystem'),
   empty_header: function() {
     return !!(this.get('default_mode') && !this.get('currentBoardState') && !this.get('hide_search'));
   }.property('default_mode', 'currentBoardState', 'hide_search'),
@@ -1289,7 +1286,7 @@ var app_state = EmberObject.extend({
     if(!_this.get('speak_mode') || _this.get('referenced_user.id') === _this.get('speak_mode_modeling_ideas.user_id')) {
       return;
     }
-    if(_this.get('feature_flags.badge_progress') && _this.get('currentUser.preferences.progress.modeling_ideas_viewed')) {
+    if(_this.get('currentUser.preferences.progress.modeling_ideas_viewed')) {
       if(_this.get('referenced_user.full_premium') && !_this.get('referenced_user.supporter_role')) {
         _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
         _this.get('referenced_user').load_word_activities().then(function(activities) {
@@ -1646,7 +1643,6 @@ var app_state = EmberObject.extend({
       var old_badge_hash = this.get('user_badge_hash');
 
       var _this = this;
-      if(!_this.get('feature_flags.badge_progress') && !_this.get('sessionUser.feature_flags.badge_progress')) { return; }
       var user = this.get('referenced_user');
       // clear current badge if it doesn't match the referenced user info
       if(!user || _this.get('user_badge.user_id') != user.get('id')) {

@@ -177,9 +177,7 @@
       {{#if model.permissions.supervise}}
           <div class="col-sm-3 col-xs-6">
             <button style='width: 100%; height: 38px;' class='btn btn-small btn-default' {{action "recordNote" "text"}}>{{t "New Note" key='text_note'}}</button>
-            {{#if app_state.feature_flags.assessments}}
-              <button style='width: 100%; height: 38px; margin-top: 5px;' class='btn btn-small btn-default' {{action "quick_assessment"}}>{{t "Quick Assessment" key='quick_assessment'}}</button>
-            {{/if}}
+            <button style='width: 100%; height: 38px; margin-top: 5px;' class='btn btn-small btn-default' {{action "quick_assessment"}}>{{t "Quick Assessment" key='quick_assessment'}}</button>
           </div>
           <div class="col-sm-3 col-xs-6">
             <div class="panel panel-default summary smaller">
@@ -285,66 +283,64 @@
         </div>
       {{/if}}
     </div>
-    {{#if app_state.feature_flags.goals}}
-      <div class="col-sm-3 col-sx-6">
-        {{#if model.permissions.edit}}
-          <strong>{{t "Current Goals:" key='current_goals'}}</strong><br/>
-          {{#if model.goals.loading}}
-            <p>{{t "Loading..." key='loading'}}</p>
-          {{else if model.goals.error}}
-            <p>{{t "Failed to load" key='failed_to_load'}}</p>
-          {{else if model.goals}}
-            <div style="margin-left: 20px;">
-              {{#each model.goals as |goal|}}
-                <p>
-                  <div style='white-space: nowrap; overflow: hidden;'>
-                    {{#link-to 'user.goal' model.user_name goal.id}}
-                      {{goal.summary}}
-                    {{/link-to}}
-                  </div>
-                  <span style='color: #888; font-size: 10px; white-space: nowrap; overflow: hidden; display: block;' >
-                    {{goal.description}}&nbsp;
-                  </span>
-                </p>
-              {{/each}}
-              {{#if model.permissions.supervise}}
-                <div style='margin-top: 5px;'>
-                  {{#link-to 'user.goals' model.user_name}}{{t "see all user goals" key='see_all_user_goals'}}{{/link-to}}
-                </div>
-              {{/if}}
-            </div>
-          {{else}}
-            <p>{{t "No goals currently available" key='no_goals_found'}}</p>
-          {{/if}}
-        {{/if}}
-      </div>
-      <div class="col-sm-6">
-        {{#if model.badges}}
-          <strong>{{t "Badges:" key='badges_colon'}}</strong>
+    <div class="col-sm-3 col-sx-6">
+      {{#if model.permissions.edit}}
+        <strong>{{t "Current Goals:" key='current_goals'}}</strong><br/>
+        {{#if model.goals.loading}}
+          <p>{{t "Loading..." key='loading'}}</p>
+        {{else if model.goals.error}}
+          <p>{{t "Failed to load" key='failed_to_load'}}</p>
+        {{else if model.goals}}
           <div style="margin-left: 20px;">
-            {{#if model.badges.loading}}
-              <p>{{t "Loading..." key='loading'}}</p>
-            {{else if model.badges.error}}
-              <p>{{t "Failed to load" key='failed_to_load'}}</p>
-            {{else if model.badges}}
-              <div>
-              {{#each model.badges as |badge|}}
-                {{partial 'badge-in-list'}}
-              {{/each}}
-              </div>
-              <div style='clear: left;'></div>
-              {{#if model.permissions.supervise}}
-                <div style='margin-top: 5px;'>
-                  {{#link-to 'user.badges' model.user_name}}{{t "see all user badges" key='see_all_user_badges'}}{{/link-to}}
+            {{#each model.goals as |goal|}}
+              <p>
+                <div style='white-space: nowrap; overflow: hidden;'>
+                  {{#link-to 'user.goal' model.user_name goal.id}}
+                    {{goal.summary}}
+                  {{/link-to}}
                 </div>
-              {{/if}}
-            {{else}}
-              <p>{{t "No badges currently available" key='no_badges_found'}}</p>
+                <span style='color: #888; font-size: 10px; white-space: nowrap; overflow: hidden; display: block;' >
+                  {{goal.description}}&nbsp;
+                </span>
+              </p>
+            {{/each}}
+            {{#if model.permissions.supervise}}
+              <div style='margin-top: 5px;'>
+                {{#link-to 'user.goals' model.user_name}}{{t "see all user goals" key='see_all_user_goals'}}{{/link-to}}
+              </div>
             {{/if}}
           </div>
+        {{else}}
+          <p>{{t "No goals currently available" key='no_goals_found'}}</p>
         {{/if}}
-      </div>
-    {{/if}}
+      {{/if}}
+    </div>
+    <div class="col-sm-6">
+      {{#if model.badges}}
+        <strong>{{t "Badges:" key='badges_colon'}}</strong>
+        <div style="margin-left: 20px;">
+          {{#if model.badges.loading}}
+            <p>{{t "Loading..." key='loading'}}</p>
+          {{else if model.badges.error}}
+            <p>{{t "Failed to load" key='failed_to_load'}}</p>
+          {{else if model.badges}}
+            <div>
+            {{#each model.badges as |badge|}}
+              {{partial 'badge-in-list'}}
+            {{/each}}
+            </div>
+            <div style='clear: left;'></div>
+            {{#if model.permissions.supervise}}
+              <div style='margin-top: 5px;'>
+                {{#link-to 'user.badges' model.user_name}}{{t "see all user badges" key='see_all_user_badges'}}{{/link-to}}
+              </div>
+            {{/if}}
+          {{else}}
+            <p>{{t "No badges currently available" key='no_badges_found'}}</p>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
   </div>
   {{/unless}}
     <div class="row">

@@ -61,23 +61,21 @@
         &nbsp;&nbsp;{{t "Make the copied board(s) public to share changes with others" key='make_copies_public'}}
       </label>
     </div>
-    {{#if app_state.feature_flags.translation}}
-      <div class="row" style='margin-top: 20px;'>
-        <label style='font-weight: normal; color: #888;' class="col-sm-12">
-          {{input type='checkbox' checked=translate}}
-          &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards'}}
+    <div class="row" style='margin-top: 20px;'>
+      <label style='font-weight: normal; color: #888;' class="col-sm-12">
+        {{input type='checkbox' checked=translate}}
+        &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards'}}
+      </label>
+    </div>
+    {{#if translate}}
+      <div class="row">
+        <label class="col-sm-2 control-label" for="translate_locale">
+          Language:
         </label>
-      </div>
-      {{#if translate}}
-        <div class="row">
-          <label class="col-sm-2 control-label" for="translate_locale">
-            Language:
-          </label>
-          <div class="col-sm-4">
-            {{bound-select select_class="form-control" select_id="translate_locale" content=locales selection=translate_locale action=(action (mut translate_locale)) }}
-          </div>
+        <div class="col-sm-4">
+          {{bound-select select_class="form-control" select_id="translate_locale" content=locales selection=translate_locale action=(action (mut translate_locale)) }}
         </div>
-      {{/if}}
+      </div>
     {{/if}}
     {{#if model.board.protected_material}}
       <p class='text-warning'>{{t "NOTE: This board has premium content, any users who access it without the same premium access will see free alternatives instead." key='premium_content_reminder'}}</p>

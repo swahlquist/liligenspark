@@ -235,17 +235,15 @@ export default Controller.extend({
           controller.set('logs', {error: true});
         }
       });
-      if(app_state.get('feature_flags.badge_progress') || model.get('feature_flags.badge_progress')) {
-        this.store.query('badge', {user_id: model.get('id'), recent: 1}).then(function(badges) {
-          var for_users = {};
-          badges.forEach(function(badge) {
-            for_users[badge.get('user_id')] = for_users[badge.get('user_id')] || []
-            for_users[badge.get('user_id')].push(badge);
-          });
-          _this.set('current_user_badges', for_users);
-        }, function(err) { });
-        model.load_word_activities();
-      }
+      this.store.query('badge', {user_id: model.get('id'), recent: 1}).then(function(badges) {
+        var for_users = {};
+        badges.forEach(function(badge) {
+          for_users[badge.get('user_id')] = for_users[badge.get('user_id')] || []
+          for_users[badge.get('user_id')].push(badge);
+        });
+        _this.set('current_user_badges', for_users);
+      }, function(err) { });
+      model.load_word_activities();
     }
   }.observes('model.id', 'persistence.online'),
   best_badge: function(badges, goal_id) {
@@ -287,23 +285,21 @@ export default Controller.extend({
     _this.set('supervisees_with_badges', sups);
   }.observes('app_state.sessionUser', 'app_state.sessionUser.known_supervisees', 'current_user_badges'),
   modeling_ideas_available: function() {
-    if(app_state.get('feature_flags.badge_progress')) {
-      if(app_state.get('sessionUser.supporter_role')) {
-        var any_premium_supervisees = false;
-        (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
-          if(emberGet(sup, 'premium')) {
-            any_premium_supervisees = true;
-          }
-        });
-        if(any_premium_supervisees) {
-          return true;
+    if(app_state.get('sessionUser.supporter_role')) {
+      var any_premium_supervisees = false;
+      (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
+        if(emberGet(sup, 'premium')) {
+          any_premium_supervisees = true;
         }
-      } else if(app_state.get('sessionUser.full_premium')) {
+      });
+      if(any_premium_supervisees) {
         return true;
       }
+    } else if(app_state.get('sessionUser.full_premium')) {
+      return true;
     }
     return false;
-  }.property('app_state.feature_flags.badge_progress', 'app_state.sessionUser.supporter_role', 'app_state.sessionUser.full_premium'),
+  }.property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.full_premium'),
   many_supervisees: function() {
     return (app_state.get('currentUser.supervisees') || []).length > 5;
   }.property('app_state.currentUser.supervisees'),

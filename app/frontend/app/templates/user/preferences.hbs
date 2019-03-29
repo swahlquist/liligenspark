@@ -401,7 +401,6 @@
         </div>
       </div>
     {{/if}}
-    {{#if app_state.feature_flags.modeling}}
     <div class="form-group">
       <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Modeling" key='modeling'}}</label>
       <div class="col-sm-5">
@@ -413,7 +412,6 @@
         </div>
       </div>
     </div>
-    {{/if}}
     <div class="form-group">
       <label for="word_suggestion_images" class="col-sm-3 control-label">{{t "Keyboard Suggestions" key='keyboard_suggestions'}}</label>
       <div class="col-sm-5">
@@ -474,34 +472,54 @@
       {{/unless}}
     </div>
   </div>
-  {{#if app_state.feature_flags.custom_sidebar}}
-    {{#unless model.preferences.disable_quick_sidebar}}
-      <div class="form-group">
-        <label class="col-sm-3 control-label">{{t "Links and Buttons" key='links_and_buttons'}}</label>
-        <div class="col-sm-5">
-          {{#unless editing_sidebar}}
-            <button class='btn btn-default' {{action 'edit_sidebar'}}>{{t "Edit Sidebar Links and Buttons" key='edit_sidebar_links_and_buttons'}}</button><br/>
-          {{else}}
+  {{#unless model.preferences.disable_quick_sidebar}}
+    <div class="form-group">
+      <label class="col-sm-3 control-label">{{t "Links and Buttons" key='links_and_buttons'}}</label>
+      <div class="col-sm-5">
+        {{#unless editing_sidebar}}
+          <button class='btn btn-default' {{action 'edit_sidebar'}}>{{t "Edit Sidebar Links and Buttons" key='edit_sidebar_links_and_buttons'}}</button><br/>
+        {{else}}
+          <p class="form-control-static">
+            <strong>Active</strong>
+          </p>
+          <ul class="list-group">
+            {{#each active_sidebar_options as |option|}}
+              <li class="list-group-item" style="height: 60px;">
+                <img src={{option.image}} style="float: left; height: 40px; max-width: 40px;"  {{action "sidebar_button_settings" option}}/>
+                <span style="float: right; margin-top: 5px;">
+                  <button class='btn btn-default btn-sm' title={{t "move up" key='move_up'}} {{action 'move_sidebar_button' option 'up'}} style={{if option.top 'visibility: hidden;' ''}}><span class='glyphicon glyphicon-arrow-up'></span></button>
+                  <button class='btn btn-default btn-sm' title={{t "move down" key='move_down'}} {{action 'move_sidebar_button' option 'down'}}style={{if option.bottom 'visibility:hidden;' ''}}><span class='glyphicon glyphicon-arrow-down'></span></button>
+                  <button class='btn btn-default btn-sm' title={{t "remove" key='remove'}} {{action 'move_sidebar_button' option 'delete'}}><span class='glyphicon glyphicon-trash'></span></button>
+                </span>
+                <span style="cursor: pointer; margin-top: 10px; display: inline-block; margin-left: 5px;" {{action "sidebar_button_settings" option}}>
+                  {{#if option.alert}}
+                    <span class="glyphicon glyphicon-bullhorn"></span>
+                  {{else if option.home_lock}}
+                    <span class="glyphicon glyphicon-home"></span>
+                  {{/if}}
+                  {{#if option.highlight_type}}
+                    <span class="glyphicon glyphicon-map-marker"></span>
+                  {{/if}}
+                  {{option.name}}
+                </span>
+                <span style="clear: both;"></span>
+              </li>
+            {{/each}}
+          </ul>
+          {{#if disabled_sidebar_options_or_prior_sidebar_boards}}
             <p class="form-control-static">
-              <strong>Active</strong>
+              <strong>Disabled</strong>
             </p>
             <ul class="list-group">
-              {{#each active_sidebar_options as |option|}}
+              {{#each disabled_sidebar_options as |option|}}
                 <li class="list-group-item" style="height: 60px;">
-                  <img src={{option.image}} style="float: left; height: 40px; max-width: 40px;"  {{action "sidebar_button_settings" option}}/>
+                  <img src={{option.image}} style="float: left; height: 40px; max-width: 40px;"/>
                   <span style="float: right; margin-top: 5px;">
-                    <button class='btn btn-default btn-sm' title={{t "move up" key='move_up'}} {{action 'move_sidebar_button' option 'up'}} style={{if option.top 'visibility: hidden;' ''}}><span class='glyphicon glyphicon-arrow-up'></span></button>
-                    <button class='btn btn-default btn-sm' title={{t "move down" key='move_down'}} {{action 'move_sidebar_button' option 'down'}}style={{if option.bottom 'visibility:hidden;' ''}}><span class='glyphicon glyphicon-arrow-down'></span></button>
-                    <button class='btn btn-default btn-sm' title={{t "remove" key='remove'}} {{action 'move_sidebar_button' option 'delete'}}><span class='glyphicon glyphicon-trash'></span></button>
+                    <button class='btn btn-default btn-sm' title={{t "restore" key='restore'}} {{action 'move_sidebar_button' option 'restore'}} style={{if option.top 'visibility: hidden;' ''}}><span class='glyphicon glyphicon-arrow-up'></span></button>
                   </span>
-                  <span style="cursor: pointer; margin-top: 10px; display: inline-block; margin-left: 5px;" {{action "sidebar_button_settings" option}}>
+                  <span style="margin-top: 10px; display: inline-block; margin-left: 5px;">
                     {{#if option.alert}}
                       <span class="glyphicon glyphicon-bullhorn"></span>
-                    {{else if option.home_lock}}
-                      <span class="glyphicon glyphicon-home"></span>
-                    {{/if}}
-                    {{#if option.highlight_type}}
-                      <span class="glyphicon glyphicon-map-marker"></span>
                     {{/if}}
                     {{option.name}}
                   </span>
@@ -509,50 +527,28 @@
                 </li>
               {{/each}}
             </ul>
-            {{#if disabled_sidebar_options_or_prior_sidebar_boards}}
-              <p class="form-control-static">
-                <strong>Disabled</strong>
-              </p>
-              <ul class="list-group">
-                {{#each disabled_sidebar_options as |option|}}
-                  <li class="list-group-item" style="height: 60px;">
-                    <img src={{option.image}} style="float: left; height: 40px; max-width: 40px;"/>
-                    <span style="float: right; margin-top: 5px;">
-                      <button class='btn btn-default btn-sm' title={{t "restore" key='restore'}} {{action 'move_sidebar_button' option 'restore'}} style={{if option.top 'visibility: hidden;' ''}}><span class='glyphicon glyphicon-arrow-up'></span></button>
-                    </span>
-                    <span style="margin-top: 10px; display: inline-block; margin-left: 5px;">
-                      {{#if option.alert}}
-                        <span class="glyphicon glyphicon-bullhorn"></span>
-                      {{/if}}
-                      {{option.name}}
-                    </span>
-                    <span style="clear: both;"></span>
-                  </li>
-                {{/each}}
-              </ul>
-              {{#if model.preferences.prior_sidebar_boards}}
-                {{#unless include_prior_sidebar_buttons}}
-                  <a href="#" {{action 'include_prior_sidebar_buttons'}}>{{t "show prior sidebar links and buttons" key='show_prior_buttons'}}</a>
-                {{/unless}}
-              {{/if}}
+            {{#if model.preferences.prior_sidebar_boards}}
+              {{#unless include_prior_sidebar_buttons}}
+                <a href="#" {{action 'include_prior_sidebar_buttons'}}>{{t "show prior sidebar links and buttons" key='show_prior_buttons'}}</a>
+              {{/unless}}
             {{/if}}
-            <div>
-              <span style='display: inline-block; width: calc(100% - 65px);'>
-                {{input type='text' class='form-control' value=new_sidebar_board placeholder="add board key/action"}}
-              </span>
-              <span style='display: inline-block; width: 60px;'>
-                <button class='btn btn-default' {{action 'add_sidebar_board' new_sidebar_board}}>{{t "Add" key='add'}}</button>
-              </span>
-              {{#if add_sidebar_board_error}}
-                <p class='text-danger'>{{add_sidebar_board_error}}</p>
-              {{/if}}
-            </div>
-          {{/unless}}
-          <em>{{t "You can add any boards you find by finding them and selecting <span style='white-space: nowrap'>More -> Add to Sidebar</span>" key='add_to_sidebar_hint'}}</em>
-        </div>
+          {{/if}}
+          <div>
+            <span style='display: inline-block; width: calc(100% - 65px);'>
+              {{input type='text' class='form-control' value=new_sidebar_board placeholder="add board key/action"}}
+            </span>
+            <span style='display: inline-block; width: 60px;'>
+              <button class='btn btn-default' {{action 'add_sidebar_board' new_sidebar_board}}>{{t "Add" key='add'}}</button>
+            </span>
+            {{#if add_sidebar_board_error}}
+              <p class='text-danger'>{{add_sidebar_board_error}}</p>
+            {{/if}}
+          </div>
+        {{/unless}}
+        <em>{{t "You can add any boards you find by finding them and selecting <span style='white-space: nowrap'>More -> Add to Sidebar</span>" key='add_to_sidebar_hint'}}</em>
       </div>
-    {{/unless}}
-  {{/if}}
+    </div>
+  {{/unless}}
   {{#if advanced}}
     <div class="form-group">
       <label for="enable_tags" class="col-sm-3 control-label">{{t "NFC Tags" key='nfc_tags'}}</label>
@@ -1084,19 +1080,17 @@
             </div>
           </div>
         {{/if}}
-        {{#if app_state.feature_flags.modeling}}
-          <div class="form-group">
-            <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Dwell Modeling" key='dwell_modeling'}}</label>
-            <div class="col-sm-5">
-              <div class="checkbox">
-                <label>
-                  {{input type="checkbox" checked=model.preferences.device.dwell_modeling id="dwell_modeling"}}
-                  {{t "Mark clicks/touches as modeling events, not user selections" key='touch_as_modeling'}}
-                </label>
-              </div>
+        <div class="form-group">
+          <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Dwell Modeling" key='dwell_modeling'}}</label>
+          <div class="col-sm-5">
+            <div class="checkbox">
+              <label>
+                {{input type="checkbox" checked=model.preferences.device.dwell_modeling id="dwell_modeling"}}
+                {{t "Mark clicks/touches as modeling events, not user selections" key='touch_as_modeling'}}
+              </label>
             </div>
           </div>
-        {{/if}}
+        </div>
       </fieldset>
     {{/if}}
   {{/if}}

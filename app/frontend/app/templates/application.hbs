@@ -303,9 +303,7 @@
             </li>
           </ul>
         </span>
-        {{#if app_state.feature_flags.audio_recordings}}
-          <button class="btn btn-default wide" {{action "suggestions"}}><span class="wide">{{t "Ideas" key="ideas"}}</span><span class="skinny glyphicon glyphicon-tasks"></span></button>
-        {{/if}}
+        <button class="btn btn-default wide" {{action "suggestions"}}><span class="wide">{{t "Ideas" key="ideas"}}</span><span class="skinny glyphicon glyphicon-tasks"></span></button>
         <span class="dropdown" style="display: inline-block;">
           <button class="btn btn-default" data-toggle="dropdown"><span class="wide">{{t "More" key="more"}}</span><span class="skinny glyphicon glyphicon-wrench"></span> <span class='caret'></span></button>
           <ul class="dropdown-menu skinny_right" role="menu" aria-labelledby="dLabel">
@@ -467,17 +465,9 @@
                   <a class='btn btn-default not_really_skinny' href="#" {{action "purchase_board"}}>
                     <span class="wide">{{t "Purchase Board" key="purchase_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-usd"></span>
                   </a>
-                {{else if app_state.feature_flags.edit_before_copying}}
+                {{else}}
                   <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
                     <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
-                  </a>
-                {{else if app_state.current_board_in_extended_board_set}}
-                  <a class='btn btn-default not_really_skinny' href="#" {{action "copy_and_edit_board"}}>
-                    <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
-                  </a>
-                {{else}}
-                  <a class='btn btn-default not_really_skinny' href="#" {{action "tweakBoard"}}>
-                    <span class="wide">{{t "Make a Copy" key="make_copy"}}</span><span class="skinny real_skinny glyphicon glyphicon-file"></span>
                   </a>
                 {{/if}}
                 {{#unless app_state.current_board_is_home}}
@@ -526,11 +516,9 @@
                         <a role="menuitem" tabindex="-1" href="#" {{action "setAsHome"}}>{{t "Set as Home Board" key="set_as_home"}}</a>
                       </li>
                     {{/if}}
-                    {{#if app_state.feature_flags.custom_sidebar}}
-                      <li role="presentation">
-                          <a role="menuitem" tabindex="-1" href="#" {{action "add_to_sidebar"}}>{{t "Add to Sidebar" key="add_to_sidebar"}}</a>
-                      </li>
-                    {{/if}}
+                    <li role="presentation">
+                        <a role="menuitem" tabindex="-1" href="#" {{action "add_to_sidebar"}}>{{t "Add to Sidebar" key="add_to_sidebar"}}</a>
+                    </li>
                   {{/if}}
                   <li role="presentation">
                     <a role="menuitem" tabindex="-1" href="#" {{action "downloadBoard"}}>{{t "Download Board" key="download_board"}}</a>

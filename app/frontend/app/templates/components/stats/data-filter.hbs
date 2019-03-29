@@ -55,11 +55,9 @@
       {{/if}}
       <button type="button" {{action "update_filter" "date"}} class="btn btn-default">{{t "Go" key='go'}}</button>
       {{#unless side_by_side}}
-        {{#if app_state.feature_flags.snapshots}}
-          <span style="margin-left: 10px;" class="hidden-xs">
-            <a href="#" {{action 'compare_to'}}>{{t "compare to..." key='compare_to_ellipsis'}}</a>
-          </span>
-        {{/if}}
+        <span style="margin-left: 10px;" class="hidden-xs">
+          <a href="#" {{action 'compare_to'}}>{{t "compare to..." key='compare_to_ellipsis'}}</a>
+        </span>
       {{/unless}}
     </form>
     {{#if side_by_side}}

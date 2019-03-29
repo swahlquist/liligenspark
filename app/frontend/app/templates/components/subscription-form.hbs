@@ -81,23 +81,21 @@
           <td colspan="2" class='separator semi_dim'>{{t "track usage, get alerts and modify<br/>boards for communicators" key='track_for_communicators'}}</td>
         </tr>
         {{#if pricing_only}}
-          {{#if app_state.feature_flags.premium_symbols}}
-            <tr>
-              {{#if subscription.user.subscription.extras_enabled}}
-                <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-                <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-              {{else}}
-                <td colspan='2'>
-                  <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
-                  {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
-                </td>
-                <td colspan='2' class='separator semi_dim'>
-                  <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
-                  {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
-                </td>
-              {{/if}}
-            </tr>
-          {{/if}}
+          <tr>
+            {{#if subscription.user.subscription.extras_enabled}}
+              <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
+              <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
+            {{else}}
+              <td colspan='2'>
+                <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
+                {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
+              </td>
+              <td colspan='2' class='separator semi_dim'>
+                <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
+                {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
+              </td>
+            {{/if}}
+          </tr>
         {{/if}}
         <tr>
           <td>{{t "<a href='http://blog.mycoughdrop.com/what-in-the-world-are-aac-cloud-extras/' target='_blank'>cloud extras</a> included in subscription" key='included_in_subscription'}}</td>
@@ -145,40 +143,38 @@
               </button>
             </td>
           </tr>
-          {{#if app_state.feature_flags.premium_symbols}}
-            {{#unless subscription.gift_type}}
-              <tr>
-                {{#if subscription.user.subscription.extras_enabled}}
-                  <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-                  <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-                {{else}}
-                  <td colspan='2'>
-                    {{#if subscription.communicator_type}}
-                      <label>
-                        <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
-                        {{input type='checkbox' checked=subscription.extras}}
-                        {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
-                      </label>
-                    {{/if}}
-                  </td>
-                  <td colspan='2' class='separator semi_dim'>
-                    {{#if subscription.supporter_type}}
-                      <label>
-                        <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
-                        {{input type='checkbox' checked=subscription.extras}}
-                        {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
-                      </label>
-                    {{/if}}
-                  </td>
-                {{/if}}
-              </tr>
-            {{else if subscription.free_extras}}
-              {{#if subscription.extras}}
-                <td colspan='2'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
-                <td colspan='2' class='separator semi_dim'></td>
+          {{#unless subscription.gift_type}}
+            <tr>
+              {{#if subscription.user.subscription.extras_enabled}}
+                <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
+                <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
+              {{else}}
+                <td colspan='2'>
+                  {{#if subscription.communicator_type}}
+                    <label>
+                      <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
+                      {{input type='checkbox' checked=subscription.extras}}
+                      {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
+                    </label>
+                  {{/if}}
+                </td>
+                <td colspan='2' class='separator semi_dim'>
+                  {{#if subscription.supporter_type}}
+                    <label>
+                      <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
+                      {{input type='checkbox' checked=subscription.extras}}
+                      {{t "add premium symbols from PCS for $25" key='add_premium_symbols'}}
+                    </label>
+                  {{/if}}
+                </td>
               {{/if}}
-            {{/unless}}
-          {{/if}}
+            </tr>
+          {{else if subscription.free_extras}}
+            {{#if subscription.extras}}
+              <td colspan='2'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
+              <td colspan='2' class='separator semi_dim'></td>
+            {{/if}}
+          {{/unless}}
           <tr>
             <td colspan="2" style='text-align: right;'>
               {{#if move_gift_option}}

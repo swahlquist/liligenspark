@@ -341,23 +341,19 @@
                 {{t "Usage" key='usage'}}<br/>{{t "Reports" key='reports'}}
               </div>
             </button>
-            {{#if app_state.feature_flags.badge_progress}}
-              <button class='btn btn-default button_row_wrap' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444; border-color: #ad7332; background: #ffd7a8;' {{action 'modeling_ideas' supervisee.user_name}}>
-                <img src={{path 'images/modeling_ideas.svg'}}/>
-                <div style='line-height: 14px;'>
-                  {{t "Modeling" key='modeling'}}<br/>{{t "Ideas" key='ideas'}}
-                </div>
-              </button>
-            {{/if}}
+            <button class='btn btn-default button_row_wrap' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444; border-color: #ad7332; background: #ffd7a8;' {{action 'modeling_ideas' supervisee.user_name}}>
+              <img src={{path 'images/modeling_ideas.svg'}}/>
+              <div style='line-height: 14px;'>
+                {{t "Modeling" key='modeling'}}<br/>{{t "Ideas" key='ideas'}}
+              </div>
+            </button>
             <div class="btn-group">
               <button class='btn btn-default dropdown-toggle button_row_extras' style='margin-bottom: 5px; border-width: 2px; border-color: #ddd; color: #888;'data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class='text'>{{t "Extras " key='extras'}}</span><span class="caret"></span></button>
               <ul class="dropdown-menu" style='left: auto; right: 0;'>
                 <li>{{#link-to 'board' supervisee.home_board_key}}{{t "Home Board" key='home_board'}}{{/link-to}}</li>
                 <li>{{#link-to 'user' supervisee.user_name}}{{t "Account" key='account'}}{{/link-to}}</li>
                 <li><a href="#" {{action 'record_note' supervisee}}>{{t "New Note" key='new_note'}}</a></li>
-                {{#if app_state.feature_flags.assessments}}
-                  <li><a href="#" {{action 'quick_assessment' supervisee}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
-                {{/if}}
+                <li><a href="#" {{action 'quick_assessment' supervisee}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
               </ul>
             </div>
             <div style='clear: left;'></div>
@@ -448,17 +444,10 @@
             </div>
           {{/if}}
           <div class='col-md-3 col-xs-4 big_button_holder'>
-            {{#if app_state.feature_flags.badge_progress}}
-              <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
-                <img src={{path 'images/new.svg'}} />
-                {{t "New Board" key='new_board'}}
-              </button>
-            {{else}}
-              {{#link-to 'user.preferences' app_state.currentUser.user_name class='btn big_button btn-default middle_row'}}
-                <span class='glyphicon glyphicon-cog'></span>
-                {{t "Preferences" key='preferences'}}
-              {{/link-to}}
-            {{/if}}
+            <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
+              <img src={{path 'images/new.svg'}} />
+              {{t "New Board" key='new_board'}}
+            </button>
           </div>
           <div class='col-md-3 col-xs-4 big_button_holder'>
             <button class='btn big_button btn-default middle_row' {{action "manage_supervisors"}}>

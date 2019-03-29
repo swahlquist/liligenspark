@@ -88,12 +88,10 @@
       <div class="col-sm-3" style="padding: 0;">
         {{stats/recent-sessions total=model.user_counts.total_users recent=model.user_counts.recent_session_user_count}}
       </div>
-      {{#if app_state.feature_flags.goals}}
-        {{#if model.user_counts}}
-          <div class="col-sm-3" style="padding: 0;">
-            {{stats/recent-goals total=model.user_counts.total_users tracked=model.user_counts.goal_set untracked=model.user_counts.goal_recently_logged}}
-          </div>
-        {{/if}}
+      {{#if model.user_counts}}
+        <div class="col-sm-3" style="padding: 0;">
+          {{stats/recent-goals total=model.user_counts.total_users tracked=model.user_counts.goal_set untracked=model.user_counts.goal_recently_logged}}
+        </div>
       {{/if}}
     </div>
   {{/if}}
