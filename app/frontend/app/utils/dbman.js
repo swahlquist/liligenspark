@@ -686,7 +686,7 @@ var dbman = {
           var store = stores[key];
           tx.executeSql('CREATE TABLE IF NOT EXISTS ' + store.key + ' (id INTEGER PRIMARY KEY ASC, ref_id TEXT, data TEXT)', []);
           tx.executeSql('CREATE INDEX IF NOT EXISTS ' + (store.key + '_id') + ' ON ' + store.key + ' (ref_id)', []);
-          if(old_version <= 3) {
+          if(!old_version || old_version <= 3) {
             if(store.key == 'board') {
               try {
                 tx.executeSql('ALTER TABLE ' + store.key + ' ADD key_id TEXT');
