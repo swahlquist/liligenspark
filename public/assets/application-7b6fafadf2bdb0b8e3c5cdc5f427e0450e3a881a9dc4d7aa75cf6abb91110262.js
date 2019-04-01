@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.01c";
+window.app_version = "2019.04.01d";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9450,7 +9450,7 @@ h.get("currentUser.preferences.device.scanning")&&d.default.mobile&&d.default.in
 t.default.persist("board_level",null)
 var s=e.force_board_state||n&&n.get("preferences.home_board")||e.fallback_board_state||t.default.get("root_board_state")||{key:"example/yesno"}
 if(n&&!e.reminded&&n.get("expired"))return a.default.open("premium-required",{user_name:n.get("user_name"),remind_to_upgrade:!0,action:"app_speak_mode"}).then(function(){e.reminded=!0,h.home_in_speak_mode(e)})
-s&&n&&s.id==n.get("preferences.home_board.id")&&(s=n.get("preferences.home_board")||s),this.toggle_mode("speak",{force:!0,override_state:s}),this.controller.transitionToRoute("board",s.key)},check_scanning:function(){var e=this
+s&&n&&s.id==n.get("preferences.home_board.id")&&(s=n.get("preferences.home_board")||s),this.toggle_mode("speak",{force:!0,override_state:s}),this.set("referenced_board",s),this.controller.transitionToRoute("board",s.key)},check_scanning:function(){var e=this
 Ember.run.later(function(){if(h.get("speak_mode")&&e.get("currentUser.preferences.device.scanning")){i.default.scanning_enabled=!0,i.default.any_select=e.get("currentUser.preferences.device.scanning_select_on_any_event"),i.default.select_keycode=e.get("currentUser.preferences.device.scanning_select_keycode"),i.default.skip_header=e.get("currentUser.preferences.device.scanning_skip_header"),i.default.next_keycode=e.get("currentUser.preferences.device.scanning_next_keycode"),i.default.prev_keycode=e.get("currentUser.preferences.device.scanning_prev_keycode"),i.default.cancel_keycode=e.get("currentUser.preferences.device.scanning_cancel_keycode"),i.default.left_screen_action=e.get("currentUser.preferences.device.scanning_left_screen_action"),i.default.right_screen_action=e.get("currentUser.preferences.device.scanning_right_screen_action"),"iOS"!=d.default.system||d.default.installed_app||i.default.left_screen_action||i.default.right_screen_action||a.default.warning(f.default.t("keyboard_may_jump","NOTE: if you don't have a bluetooth switch installed, the keyboard may keep popping up while trying to scan.")),!a.default.is_open()||a.default.highlight_settings&&"button_search"==a.default.highlight_settings.highlight_type||a.default.close()
 var t=parseInt(e.get("currentUser.preferences.device.scanning_interval"),10)
 u.default.start({scan_mode:e.get("currentUser.preferences.device.scanning_mode"),interval:t,sweep:e.get("currentUser.preferences.device.scanning_sweep_speed"),auto_scan:0!==t,auto_start:!e.get("currentUser.preferences.device.scanning_wait_for_input"),vertical_chunks:e.get("currentUser.preferences.device.scanning_region_rows"),debounce:e.get("currentUser.preferences.debounce"),horizontal_chunks:e.get("currentUser.preferences.device.scanning_region_columns"),skip_header:e.get("currentUser.preferences.device.scanning_skip_header"),scanning_auto_select:e.get("currentUser.preferences.device.scanning_auto_select"),audio:e.get("currentUser.preferences.device.scanning_prompt")})}else i.default.scanning_enabled=!1,(u.default.interval||"axes"==(u.default.options||{}).scan_mode)&&u.default.stop()
@@ -11152,8 +11152,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+e5bd9a0c"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+e5bd9a0c"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+f38dc127"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+f38dc127"})
 ;
 
 
