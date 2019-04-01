@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.01a";
+window.app_version = "2019.04.01b";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9271,7 +9271,8 @@ var l=t.join(":"),i=r.default.store.createRecord("board")
 return i.set("integration",!0),i.set("key",e.key),i.set("id","i"+s),r.default.store.findRecord("integration",s).then(function(e){var t=Ember.RSVP.resolve(e)
 return e.get("render_url")||(t=e.reload()),t.then(function(e){var t=e.get("user_token")
 return t&&a.default.get("currentUser.id")!=a.default.get("sessionUser.id")&&(t=t+":as_user_id="+a.default.get("currentUser.id")),i.set("embed_url",e.get("render_url")),i.set("integration_name",e.get("name")||o.default.t("external_integration","External Integration")),i.set("user_token",t),i.set("action",l),Ember.RSVP.resolve(i)},function(e){return Ember.RSVP.resolve(i)})},function(e){return Ember.RSVP.resolve(i)})}var d=this
-return function t(n){return d.store.findRecord("board",e.key).then(function(t){return t.set("lookup_key",e.key),Ember.RSVP.resolve(t)},function(s){var a=s
+return function t(n){var s=e.key
+return a.default.get("referenced_user.preferences.home_board.key")==s?s=a.default.get("referenced_user.preferences.home_board.id")||e.key:a.default.get("referenced_board.key")==s&&(s=a.default.get("referenced_board.id")||e.key),d.store.findRecord("board",s).then(function(t){return t.set("lookup_key",e.key),Ember.RSVP.resolve(t)},function(s){var a=s
 if(s&&s.errors&&(a=s.errors[0]),"404"!=a.status&&n)return t(!1)
 var o=r.default.store.createRecord("board",{id:"bad",key:e.key})
 return o.set("lookup_key",e.key),o.set("error",a),d.set("error_record",o),Ember.RSVP.resolve(o)})}(!0)},actions:{re_transition:function(){this.get("error_record")&&this.set("error_record.retrying",!0),this.refresh()}}})}),define("frontend/routes/board/history",["exports","frontend/utils/i18n"],function(e,t){Object.defineProperty(e,"__esModule",{value:!0}),e.default=Ember.Route.extend({model:function(e){return this.modelFor("board")},setupController:function(e,t){e.set("key",t.get("lookup_key")),t.set("show_history",!0),e.load_results()}})}),define("frontend/routes/board/index",["exports","frontend/utils/edit_manager","frontend/utils/_stashes","frontend/utils/modal","frontend/utils/app_state","frontend/utils/i18n","frontend/app","frontend/utils/content_grabbers","frontend/utils/persistence"],function(e,t,n,s,a,o,r,l,i){Object.defineProperty(e,"__esModule",{value:!0}),e.default=Ember.Route.extend({model:function(e){r.default.log.track("getting model")
@@ -9420,7 +9421,7 @@ if(t){var n=Ember.$(".board[data-id='"+t+"']")
 if(Ember.$("#integration_frame").length||n.length&&n.find(".button_row,canvas").length)return void Ember.run.later(function(){o.default.log.track("done transitioning"),i.default.transitioning=!1},e)}this.check_for_board_readiness.timer=Ember.run.later(this,this.check_for_board_readiness,e,100)},track_depth:function(e){var t=this.get("depth_actions")||{depth:0}
 "home"==e?("home"!=t.last_action&&(t.depth=0),t.depth++):"back"==e?t.depth=Math.max(0,t.depth-1):"clear"==e?t.depth=0:t.depth++,t.last_action=e,this.set("depth_actions",t)},jump_to_board:function(e,n){i.default.transitioning=!0,e&&n&&e.id&&(e.id==n.id||e.key==n.key)&&(i.default.transitioning=!1)
 var s=this.get_history()
-n=n||this.get("currentBoardState"),t.default.get("board_level")&&(n.level=t.default.get("board_level")),s.push(n),t.default.log({action:"open_board",previous_key:n,new_id:e}),e&&e.home_lock&&this.set("temporary_root_board_key",e.key),this.controller.send("hide_temporary_sidebar"),this.set_history([].concat(s)),e.level&&t.default.persist("board_level",e.level),this.controller.transitionToRoute("board",e.key)},check_for_lock_on_board_state:function(){var e=this.get("currentBoardState")
+n=n||this.get("currentBoardState"),t.default.get("board_level")&&(n.level=t.default.get("board_level")),s.push(n),t.default.log({action:"open_board",previous_key:n,new_id:e}),e&&e.home_lock&&this.set("temporary_root_board_key",e.key),this.controller.send("hide_temporary_sidebar"),this.set_history([].concat(s)),e.level&&t.default.persist("board_level",e.level),this.set("referenced_board",e),this.controller.transitionToRoute("board",e.key)},check_for_lock_on_board_state:function(){var e=this.get("currentBoardState")
 e&&e.key&&(e.key==this.get("temporary_root_board_key")&&this.toggle_home_lock(!0),this.set("temporary_root_board_key",null))}.observes("currentBoardState"),toggle_home_lock:function(e){var n=t.default.get("root_board_state"),s=h.get("currentBoardState")
 !1===e||t.default.get("temporary_root_board_state")&&!0!==e?t.default.persist("temporary_root_board_state",null):n&&s&&n.key!=s.key&&(t.default.persist("temporary_root_board_state",h.get("currentBoardState")),h.set_history([]))},toggle_modeling:function(e){null==e&&(e=!h.get("manual_modeling")),h.set("last_activation",(new Date).getTime()),h.set("manual_modeling",!!e),e&&h.set("modeling_started",(new Date).getTime())},update_modeling:function(){void 0!==this.get("modeling")&&null!==this.get("modeling")&&t.default.set("modeling",!!this.get("modeling"))}.observes("modeling"),modeling:function(e){return!(!this.get("manual_modeling")&&!this.get("modeling_for_user"))}.property("manual_modeling","modeling_for_user","modeling_ts"),modeling_for_user:function(){var e=this.get("speak_mode")&&this.get("currentUser")&&this.get("referenced_speak_mode_user")&&h.get("currentUser.id")!=this.get("referenced_speak_mode_user.id"),t=this
 return Ember.run.later(function(){t.set("modeling_ts",(new Date).getTime()+"_"+Math.random())}),!!e}.property("speak_mode","currentUser","referenced_speak_mode_user"),auto_clear_modeling:function(){if(this.get("manual_modeling")){var e=(new Date).getTime()
@@ -11151,8 +11152,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+6750550f"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+6750550f"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+62064e3b"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+62064e3b"})
 ;
 
 
