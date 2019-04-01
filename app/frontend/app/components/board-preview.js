@@ -35,6 +35,7 @@ export default Component.extend({
       modal.close_board_preview();
     },
     visit: function() {
+      app_state.set('referenced_board', {id: this.get('model.id'), key: this.get('model.key')});
       app_state.controller.transitionToRoute('board', this.get('model.key'));
     }
   }

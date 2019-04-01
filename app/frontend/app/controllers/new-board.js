@@ -283,6 +283,7 @@ export default modal.ModalController.extend({
         _this.set('status', null);
         modal.close(true);
         editManager.auto_edit(board.get('id'));
+        app_state.set('referenced_board', {id: board.get('id'), key: board.get('key')});
         _this.transitionToRoute('board', board.get('key'));
       }, function() {
         _this.set('status', {error: true});

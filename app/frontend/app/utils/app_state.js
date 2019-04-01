@@ -495,6 +495,7 @@ var app_state = EmberObject.extend({
     if(state.level) {
       stashes.persist('board_level', state.level);
     }
+    this.set('referenced_board', state);
     this.controller.transitionToRoute('board', state.key);
   },
   jump_to_root_board: function(options) {
@@ -512,6 +513,7 @@ var app_state = EmberObject.extend({
       if(app_state.get('currentBoardState.key') != state.key) {
         buttonTracker.transitioning = true;
         stashes.persist('board_level', state.level || state.default_level);
+        this.set('referenced_board', state);
         this.controller.transitionToRoute('board', state.key);
         do_log = current && current.key && state.key != current.key;
       }
