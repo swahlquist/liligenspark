@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.01b";
+window.app_version = "2019.04.01c";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -10086,7 +10086,7 @@ n?(i(),r(n)):(i(),l({error:"no record found for "+e+":"+s}))},u.onerror=function
 t.rows&&t.rows.length>0&&(n=t.rows.item(0))
 var a=null
 if(n&&n.data)try{a=JSON.parse(n.data)}catch(e){}a?(i(),r(a)):(i(),l({error:"no record found for "+e+":"+s}))},function(e){i(),console.log(e),l({error:e.message})})}else i(),l({error:"unrecognized db_type, "+o.db_type})},find_all_internal:function(e,s,r,l,i){var d=a("find_all",e,s,r),u={}
-if(r&&r.forEach?r.forEach(function(e){u[e]=!0}):r&&(u[r]=!0),"indexeddb"==o.db_type){var c=t.default.db.transaction([e],"readonly"),p=[],m=c.objectStore(e).openCursor()
+if(r&&r.forEach?r.forEach(function(e){u[e]=!0}):r&&(u[r]=!0,r=[r]),"indexeddb"==o.db_type){var c=t.default.db.transaction([e],"readonly"),p=[],m=c.objectStore(e).openCursor()
 m.onsuccess=function(t){var n=t.target.result
 if(n){if(!s||u[n.value[s]]){var a=n.value
 p.push({store:e,data:a})}n.continue()}else d(),l(p)},m.onerror=function(){d(),i({error:"error retrieving records from db for "+e})}}else if("sqlite_plugin"==o.db_type){var f=null
@@ -11152,8 +11152,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+62064e3b"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+62064e3b"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+e5bd9a0c"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+e5bd9a0c"})
 ;
 
 
