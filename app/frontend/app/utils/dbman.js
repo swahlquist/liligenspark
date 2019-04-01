@@ -363,7 +363,6 @@ var dbman = {
         sql = sql + (exists ? 'WHERE ref_id=?' : 'ref_id) VALUES (?, ?)');
         if(store_name == 'board' && exists) { sql = sql.replace(/\)/, ', ?)'); }
         args.push(ref_id);
-        console.log('sql', sql);
         dbman.db.executeSql(sql, args, function() {
           done();
           success(record);
@@ -707,6 +706,7 @@ var dbman = {
         console.log(err);
         promise.reject({error: err.message});
       }, function() {
+        console.log("COUGHDROP: db succeeded through upgrade check");
         dbman.use_database(db, promise);
       });
       // for each index (include 'id'), make sure there's a string column <key>_index
