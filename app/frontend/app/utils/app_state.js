@@ -755,6 +755,7 @@ var app_state = EmberObject.extend({
     // NOTE: text-direction is updated on board load, so it's ok that it's not known here
     // preferred should include the user's home board setting
     this.toggle_mode('speak', {force: true, override_state: preferred});
+    this.set('referenced_board', preferred);
     this.controller.transitionToRoute('board', preferred.key);
   },
   check_scanning: function() {
