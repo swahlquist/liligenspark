@@ -247,6 +247,7 @@ var dbman = {
       key.forEach(function(k) { keys[k] = true; });
     } else if(key) {
       keys[key] = true;
+      key = [key];
     }
     if(dbman.db_type == 'indexeddb') {
       var transaction = capabilities.db.transaction([store], 'readonly');
