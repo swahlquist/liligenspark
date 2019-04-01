@@ -56,7 +56,13 @@ export default Route.extend({
     } else {
       var _this = this;
       var find_board = function(allow_retry) {
-        var obj = _this.store.findRecord('board', params.key);
+        var key = params.key;
+        if(app_state.get('referenced_user.preferences.home_board.key') == key) {
+          key = app_state.get('referenced_user.preferences.home_board.id') || params.key;
+        } else if(app_state.get('referenced_board.key') == key) {
+          key = app_state.get('referenced_board.id') || params.key;
+        }
+        var obj = _this.store.findRecord('board', key);
         return obj.then(function(data) {
           data.set('lookup_key', params.key);
           return RSVP.resolve(data);

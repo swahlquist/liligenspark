@@ -680,6 +680,7 @@ var dbman = {
         for(var key in stores) { keys.push(key); }
         keys.forEach(function(key) {
           var store = stores[key];
+          // TODO: add other_id column so you can look up boards by key?
           tx.executeSql('CREATE TABLE IF NOT EXISTS ' + store.key + ' (id INTEGER PRIMARY KEY ASC, ref_id TEXT, data TEXT)', []);
           tx.executeSql('CREATE INDEX IF NOT EXISTS ' + (store.key + '_id') + ' ON ' + store.key + ' (ref_id)', []);
         });

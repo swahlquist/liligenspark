@@ -400,6 +400,7 @@ var app_state = EmberObject.extend({
     if(new_state.level) {
       stashes.persist('board_level', new_state.level);
     }
+    this.set('referenced_board', new_state);
     this.controller.transitionToRoute('board', new_state.key);
   },
   check_for_lock_on_board_state: function() {
