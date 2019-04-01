@@ -1593,7 +1593,7 @@ var capabilities;
 
     var promise = capabilities.mini_promise();
 
-    var setup = capabilities.dbman.setup_database(key, 3);
+    var setup = capabilities.dbman.setup_database(key, capabilities.dbman.dbversion);
     setup.then(function(db) {
       // Don't proceed with app initialization until db_connect completes, ensuring
       // stashes is populated with whatever data is available.

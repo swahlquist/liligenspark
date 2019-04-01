@@ -38,6 +38,7 @@ var log_timing = function() {
 };
 
 var dbman = {
+  dbversion: 4,
   not_ready: function(method, options, promise) {
     if(capabilities.db === undefined) {
       capabilities.queued_db_actions.push([method, options, promise]);
@@ -310,6 +311,9 @@ var dbman = {
         });
         query = query + ')';
       }
+      // TODO: after the db upgrade is applied and stored,
+      // add a lookup here for boards by key:
+      // else if(index == 'key'...) { WHERE key_id IN... }
       dbman.db.executeSql(query, args, function(result_set) {
         // process and return the resulting list
         var list = [];
@@ -349,25 +353,25 @@ var dbman = {
       if(stores[store]) { store_name = store; }
       var ref_id = record.storageId || record.id;
       dbman.db.executeSql('SELECT * FROM ' + store_name + ' WHERE ref_id=?', [ref_id], function(result_set) {
-        if(result_set.rows && result_set.rows.length > 0) {
-          dbman.db.executeSql('UPDATE ' + store_name + ' SET data = ? WHERE ref_id=?', [JSON.stringify(record), ref_id], function() {
-            done();
-            success(record);
-          }, function(err) {
-            console.log(err);
-            done();
-            error({error: err.message});
-          });
-        } else {
-          dbman.db.executeSql('INSERT INTO ' + store_name + ' (ref_id, data) VALUES (?, ?)', [ref_id, JSON.stringify(record)], function() {
-            done();
-            success(record);
-          }, function(err) {
-            done();
-            console.log(err);
-            error({error: err.message});
-          });
+        var exists = result_set.rows && result_set.rows.length > 0;
+        var args = [JSON.stringify(record)];
+        var sql = exists ? 'UPDATE ' + store_name + ' SET data = ? ' : 'INSERT INTO ' + store_name + ' (data, ';
+        if(store_name == 'board') {
+          sql = sql + (exists ? ', key_id = ? ' : 'key_id, ');
+          args.push(record.key);
         }
+        sql = sql + (exists ? 'WHERE ref_id=?' : 'ref_id) VALUES (?, ?)');
+        if(store_name == 'board' && exists) { sql = sql.replace(/\)/, ', ?)'); }
+        args.push(ref_id);
+        console.log('sql', sql);
+        dbman.db.executeSql(sql, args, function() {
+          done();
+          success(record);
+        }, function(err) {
+          console.log(err);
+          done();
+          error({error: err.message});
+        });
       }, function(err) {
         done();
         error({error: err.message});
@@ -681,9 +685,20 @@ var dbman = {
         for(var key in stores) { keys.push(key); }
         keys.forEach(function(key) {
           var store = stores[key];
-          // TODO: add other_id column so you can look up boards by key?
           tx.executeSql('CREATE TABLE IF NOT EXISTS ' + store.key + ' (id INTEGER PRIMARY KEY ASC, ref_id TEXT, data TEXT)', []);
           tx.executeSql('CREATE INDEX IF NOT EXISTS ' + (store.key + '_id') + ' ON ' + store.key + ' (ref_id)', []);
+          if(old_version <= 3) {
+            if(store.key == 'board') {
+              try {
+                tx.executeSql('ALTER TABLE ' + store.key + ' ADD key_id TEXT');
+              } catch(e) { 
+                console.error('error on key_id value', e);
+              }
+            }
+          }
+          if(store.key == 'board') {
+            tx.executeSql('CREATE INDEX IF NOT EXISTS ' + (store.key + '_key_id') + ' ON ' + store.key + ' (key_id)', []);
+          }
         });
         tx.executeSql('DELETE FROM version');
         tx.executeSql('INSERT INTO version (version) VALUES (?)', [new_version]);
