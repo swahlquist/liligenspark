@@ -15,7 +15,7 @@
         {{input type='text' class='form-control' id='board_name' value=board_name placeholder="Name for board copy"}}
       </span>
     </div>
-    {{#if model.supervisees}}
+    {{#if model.known_supervisees}}
       <p>{{t "For which user would you like to make a copy of this board? If you are planning to use this board for multiple communicators, you should probably copy it for yourself and manually add it for each communicator." key='which-user'}}</p>
       {{user-select select_id="currently_selected_id" buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
     {{/if}}
@@ -37,11 +37,11 @@
       {{/if}}
     </p>
     {{#if self_currently_selected}}
-      {{#if model.supervisees}}
+      {{#if model.known_supervisees}}
         <p>
           {{t "Select any users to share this board and any links with them." key='select_sharing_supervisees'}}
           <ul class='list-unstyled' style='margin-top: 10px; margin-left: 30px;'>
-            {{#each model.supervisees as |supervisee|}}
+            {{#each model.known_supervisees as |supervisee|}}
               <li>
                 <label style={{if supervisee.share 'font-weight: bold;' 'font-weight: normal;'}}>
                   {{input type='checkbox' checked=supervisee.share}}
