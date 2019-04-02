@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.01f";
+window.app_version = "2019.04.02";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -10103,7 +10103,7 @@ u.onsuccess=function(e){i(),r(s)},u.onerror=function(e){i(),l({error:"error stor
 n[e]&&(c=e)
 var p=s.storageId||s.id
 o.db.executeSql("SELECT * FROM "+c+" WHERE ref_id=?",[p],function(e){var t=e.rows&&e.rows.length>0,n=[JSON.stringify(s)],a=t?"UPDATE "+c+" SET data = ? ":"INSERT INTO "+c+" (data, "
-"board"==c&&(a+=t?", key_id = ? ":"key_id, ",n.push(s.key)),a+=t?"WHERE ref_id=?":"ref_id) VALUES (?, ?)","board"==c&&t&&(a=a.replace(/\)/,", ?)")),n.push(p),console.log("sql",a),o.db.executeSql(a,n,function(){i(),r(s)},function(e){console.log(e),i(),l({error:e.message})})},function(e){i(),l({error:e.message})})}else i(),l({error:"unrecognized db_type, "+o.db_type})},remove_internal:function(e,s,r,l){var i=a("remove",e,s)
+"board"==c&&(a+=t?", key_id = ? ":"key_id, ",n.push(s.key)),a+=t?"WHERE ref_id=?":"ref_id) VALUES (?, ?)","board"==c&&t&&(a=a.replace(/\)/,", ?)")),n.push(p),o.db.executeSql(a,n,function(){i(),r(s)},function(e){console.log(e),i(),l({error:e.message})})},function(e){i(),l({error:e.message})})}else i(),l({error:"unrecognized db_type, "+o.db_type})},remove_internal:function(e,s,r,l){var i=a("remove",e,s)
 if("indexeddb"==o.db_type){var d=t.default.db.transaction([e],"readwrite")
 try{var u=d.objectStore(e).delete(s)
 u.onsuccess=function(e){t.default.dbman.deletes&&t.default.dbman.deletes.push({id:s}),i(),r({id:s})},u.onerror=function(e){i(),l({error:"error removing record in db"})}}catch(e){}}else if("sqlite_plugin"==o.db_type){var c=null
@@ -10132,7 +10132,7 @@ try{t.objectStore("settings").delete("lastSync")}catch(e){}}},2e3)}catch(t){cons
 var t=[]
 for(var o in n)t.push(o)
 t.forEach(function(t){var a=n[t]
-if(e.executeSql("CREATE TABLE IF NOT EXISTS "+a.key+" (id INTEGER PRIMARY KEY ASC, ref_id TEXT, data TEXT)",[]),e.executeSql("CREATE INDEX IF NOT EXISTS "+a.key+"_id ON "+a.key+" (ref_id)",[]),s<=3&&"board"==a.key)try{e.executeSql("ALTER TABLE "+a.key+" ADD key_id TEXT")}catch(e){console.error("error on key_id value",e)}"board"==a.key&&e.executeSql("CREATE INDEX IF NOT EXISTS "+a.key+"_key_id ON "+a.key+" (key_id)",[])}),e.executeSql("DELETE FROM version"),e.executeSql("INSERT INTO version (version) VALUES (?)",[a]),e.executeSql("DELETE FROM settings WHERE ref_id='lastSync'")},function(e){console.log(e),r.reject({error:e.message})},function(){o.use_database(e,r)})):r.reject({error:"unrecognized db_type, "+o.db_type})},use_database:function(e,n){"indexeddb"==o.db_type?(s("COUGHDROP: using indexedDB for offline sync"),t.default.mobile&&t.default.installed_app&&console.error("should be using sqlite but using indexeddb instead"),e.onerror=function(e){var t=e.target&&e.target.errorCode
+if(e.executeSql("CREATE TABLE IF NOT EXISTS "+a.key+" (id INTEGER PRIMARY KEY ASC, ref_id TEXT, data TEXT)",[]),e.executeSql("CREATE INDEX IF NOT EXISTS "+a.key+"_id ON "+a.key+" (ref_id)",[]),(!s||s<=3)&&"board"==a.key)try{e.executeSql("ALTER TABLE "+a.key+" ADD key_id TEXT")}catch(e){console.error("error on key_id value",e)}"board"==a.key&&e.executeSql("CREATE INDEX IF NOT EXISTS "+a.key+"_key_id ON "+a.key+" (key_id)",[])}),e.executeSql("DELETE FROM version"),e.executeSql("INSERT INTO version (version) VALUES (?)",[a]),e.executeSql("DELETE FROM settings WHERE ref_id='lastSync'")},function(e){console.log(e),r.reject({error:e.message})},function(){console.log("COUGHDROP: db succeeded through upgrade check"),o.use_database(e,r)})):r.reject({error:"unrecognized db_type, "+o.db_type})},use_database:function(e,n){"indexeddb"==o.db_type?(s("COUGHDROP: using indexedDB for offline sync"),t.default.mobile&&t.default.installed_app&&console.error("should be using sqlite but using indexeddb instead"),e.onerror=function(e){var t=e.target&&e.target.errorCode
 t=(t=(t=t||e.target&&e.target.error&&e.target.error.message)||e.target&&e.target.__versionTransaction&&e.target.__versionTransaction.error&&e.target.__versionTransaction.error.message)||"unknown error",console.log(e.target.error),e.target.error&&console.log(e.target.error.constructor&&e.target.error.constructor.name),console.log(e.target),console.error("Database error: "+t),n.reject(t)},e.onversionchange=function(n){e.close(),alert("A new version of this page is ready. Please reload!"),o.db=!1,t.default.db=!1},n.resolve({database:e})):"sqlite_plugin"==o.db_type?(t.default.db=e,o.db=e,s("COUGHDROP: using sqlite plugin for offline sync"),setTimeout(function(){n.resolve({database:e})})):n.reject({error:"unrecognized db_type, "+o.db_type})}}
 e.default=o}),define("frontend/utils/edit_manager",["exports","frontend/app","frontend/utils/button","frontend/utils/_stashes","frontend/utils/app_state","frontend/utils/content_grabbers","frontend/utils/modal","frontend/utils/persistence","frontend/utils/progress_tracker","frontend/utils/word_suggestions","frontend/utils/i18n"],function(e,t,n,s,a,o,r,l,i,d,u){Object.defineProperty(e,"__esModule",{value:!0})
 var c=Ember.Object.extend({setup:function(e){c.Button=n.default,this.controller=e,this.set("app_state",a.default),a.default.controller&&a.default.controller.addObserver("dragMode",function(){if(c.controller==e){var t=a.default.controller.get("dragMode")
@@ -11153,8 +11153,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+44986019"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+44986019"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+03ff0fff"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+03ff0fff"})
 ;
 
 
