@@ -17,5 +17,10 @@
       {{ button.label }}
     </div>
   </div>
+  {{#unless button.ghost}}
+    {{#if button.insert_after}}
+      <div class='utterance_cursor history_button'><div class='left'>&nbsp;</div><div class='right'>&nbsp;</div></div>
+    {{/if}}
+  {{/unless}}
 {{/each}}
 <div style="clear: left;"></div>

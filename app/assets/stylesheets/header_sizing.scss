@@ -70,6 +70,30 @@ header {
         max-width: 60px;
       }
     }
+    &.text_only.text_medium .utterance_cursor {
+      margin: 0 3px 0 0;
+      .left, .right {
+        height: 15px;
+      }
+    }
+    &.text_only.text_small .utterance_cursor {
+      margin: 0 3px 0 0;
+      .left, .right {
+        height: 13px;
+      }
+    }
+    &.text_only.text_large .utterance_cursor {
+      margin: 0 5px 0 0;
+      .left, .right {
+        height: 23px;
+      }
+    }
+    &.text_only.text_huge .utterance_cursor {
+      margin: 0 7px 0 0;
+      .left, .right {
+        height: 37px;
+      }
+    }
     &.text_only .history_button img{
       margin-top: -24px;
     }
