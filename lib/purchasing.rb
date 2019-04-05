@@ -452,8 +452,6 @@ module Purchasing
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
     type = opts['type'] || ""
     amount = type.split(/_/)[-1].to_i
-    amount += 25 if opts['extras']
-    amount += 50 if opts['donate']
     valid_amount = true
     description = type
     seconds = 5.years.to_i

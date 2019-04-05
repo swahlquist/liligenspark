@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.05";
+window.app_version = "2019.04.05a";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -8083,8 +8083,8 @@ else void 0!==this.get("custom_amount_error")&&this.set("custom_amount_error",!1
 if(t.default.ready&&e){if(e.get("valid")){var n=this
 n.set("purchase_error",null)
 n.get("model")
-"long_term_200"==e.get("subscription_amount")&&e.get("much_cheaper_offer")&&e.set("subscription_amount","long_term_100"),t.default.purchase(e).then(function(t){var l,i,d=e.get("subscription_amount")
-"long_term_custom"==d&&(d="long_term_custom_"+e.get("subscription_custom_amount"))
+t.default.purchase(e).then(function(t){var l,i,d=e.get("subscription_amount")
+"long_term_custom"==d?d="long_term_custom_"+e.get("subscription_custom_amount"):e.get("amount_in_dollars")&&(d="long_term_"+e.get("amount_in_dollars"))
 l=t,i=d,e.set("finalizing_purchase",!0),o.default.ajax("/api/v1/purchase_gift",{type:"POST",data:{token:l,type:i,extras:e.get("extras"),donate:e.get("donate"),email:n.get("subscription.email")}}).then(function(e){r.default.track(e.progress,function(e){if("errored"==e.status)n.set("purchase_error",s.default.t("user_subscription_update_failed","Purchase failed. Please try again or contact support for help.")),n.send("reset"),console.log(e)
 else if("finished"==e.status&&e.result&&!1===e.result.success&&"card_declined"==e.result.error){var t=s.default.t("card_declined","Purchase failed, your card was declined. Please try a different card or contact support for help.")
 e.result.decline_code&&"fraudulent"==e.result.decline_code?t=s.default.t("card_declined_by_billing","Purchase failed, our billing system has flagged your card as high-risk. Please try a different card or contact support for help."):e.result.decline_code&&"stolen_card"==e.result.decline_code&&(t=s.default.t("card_declined_by_billing","Purchase failed, our billing system has flagged your card as being stolen. Please try a different card or contact support for help.")),n.set("purchase_error",t),n.send("reset")}else"finished"==e.status&&e.result&&!1===e.result.success?(t=s.default.t("purchase_failed","Purchase failed unexpectedly,"+e.result.error),n.set("purchase_error",t),n.send("reset")):"finished"==e.status&&n.set("subscription.purchase_complete",!0)})},function(){n.send("reset"),a.default.error(s.default.t("user_subscription_update_failed","Purchase failed unexpectedly. Please contact support for help."))})})}}else a.default.error(s.default.t("purchasing_not_read","There was a problem initializing the purchasing system. Please contact support."))}}})}),define("frontend/controllers/goals",["exports"],function(e){Object.defineProperty(e,"__esModule",{value:!0}),e.default=Ember.Controller}),define("frontend/controllers/goals/goal",["exports","frontend/utils/persistence","frontend/utils/modal","frontend/utils/i18n","frontend/app"],function(e,t,n,s,a){Object.defineProperty(e,"__esModule",{value:!0}),e.default=Ember.Controller.extend({advance_options:[{name:s.default.t("none","Never"),id:"none"},{name:s.default.t("on_the_date","On the Date"),id:"date"},{name:s.default.t("after_time","After Time"),id:"duration"}],advance_unit_options:[{name:s.default.t("months","Months"),id:"month"},{name:s.default.t("weeks","Weeks"),id:"week"},{name:s.default.t("days","Days"),id:"day"}],load_user_badges:function(){var e=this
@@ -11175,8 +11175,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+88885f6f"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+88885f6f"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"2019.04.05+b9a2a963"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"2019.04.05+b9a2a963"})
 ;
 
 
