@@ -89,6 +89,10 @@ export default Controller.extend({
               }
               _this.set('purchase_error', str);
               _this.send('reset');
+            } else if(event.status == 'finished' && event.result && event.result.success === false) {
+              var str = i18n.t('purchase_failed', "Purchase failed unexpectedly," + event.result.error);
+              _this.set('purchase_error', str);
+              _this.send('reset');
             } else if(event.status == 'finished') {
               _this.set('subscription.purchase_complete', true);
             }
