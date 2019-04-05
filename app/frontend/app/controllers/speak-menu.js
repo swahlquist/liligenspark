@@ -58,6 +58,10 @@ export default modal.ModalController.extend({
         }
       }
     },
+    end_insertion: function() {
+      app_state.set('insertion', null);
+      modal.close();
+    },
     reply_note: function() {
       if(app_state.get('reply_note')) {
         var user = app_state.get('reply_note.author');

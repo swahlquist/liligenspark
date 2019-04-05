@@ -1,10 +1,7 @@
-import Ember from 'ember';
 import modal from '../../utils/modal';
 import stashes from '../../utils/_stashes';
 import $ from 'jquery';
-import app_state from '../../utils/app_state';
 import utterance from '../../utils/utterance';
-import CoughDrop from '../../app';
 import { set as emberSet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';

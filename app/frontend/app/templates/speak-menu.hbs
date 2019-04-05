@@ -66,6 +66,13 @@
             {{/if}}
           </a>
         </li>
+      {{else if app_state.insertion}}
+        <li>
+          <a href="#" {{action 'end_insertion'}}>
+            <span id='reply_icon' class='label label-info'><span class='glyphicon glyphicon-console'></span></span>
+            {{t "Done Inserting Text" key='done_inserting_text'}}
+          </a>
+        </li>
       {{/if}}
       {{#each rememberedUtterances as |utterance|}}
 

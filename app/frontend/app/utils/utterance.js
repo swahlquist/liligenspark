@@ -13,6 +13,7 @@ var utterance = EmberObject.extend({
   setup: function(controller) {
     this.controller = controller;
     this.set('rawButtonList', stashes.get('working_vocalization'));
+    this.set('app_state', app_state);
     app_state.addObserver('currentUser', this, this.update_voice);
     app_state.addObserver('currentUser.preferences.device.voice', this, this.update_voice);
     app_state.addObserver('currentUser.preferences.device.voice.volume', this, this.update_voice);
@@ -42,6 +43,7 @@ var utterance = EmberObject.extend({
     var find_one = function(list, look) { return list.find(function(e) { return e == look; }); };
     for(var idx = 0; idx < rawList.length; idx++) {
       var button = rawList[idx];
+      button.raw_index = idx;
       var last = rawList[idx - 1] || {};
       var last_computed = buttonList[buttonList.length - 1];
       var text = (button && (button.vocalization || button.label)) || '';
@@ -73,7 +75,11 @@ var utterance = EmberObject.extend({
       }
     }
     var visualButtonList = [];
-    buttonList.forEach(function(button) {
+    var hint = null;
+    if(utterance.get('hint_button')) {
+      hint = EmberObject.create({label: utterance.get('hint_button.label'), image: utterance.get('hint_button.image_url'), ghost: true});
+    }
+    buttonList.forEach(function(button, idx) {
       var visualButton = EmberObject.create(button);
       visualButtonList.push(visualButton);
       if(button.image && button.image.match(/^http/)) {
@@ -88,8 +94,22 @@ var utterance = EmberObject.extend({
           visualButton.set('sound', data_uri);
         }, function() { });
       }
+      if(app_state.get('insertion.index') == idx) {
+        visualButton.set('insert_after', true);
+        if(hint) {
+          visualButtonList.push(hint);
+          hint = null;
+        }
+      } else if(app_state.get('insertion.index') == -1 && idx == 0) {
+        visualButton.set('insert_before', true);
+        if(hint) {
+          visualButtonList.unshift(hint);
+          hint = null;
+        }
+      }
     });
-    var last_spoken_button = visualButtonList[visualButtonList.length - 1];
+    var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
+    var last_spoken_button = visualButtonList[idx];
     if(last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "").match(/^\s*[\.\?\,\!]\s*$/)) {
       var prior = utterance.sentence(visualButtonList.slice(0, -1));
       var parts = prior.split(/[\.\?\!]/);
@@ -99,14 +119,13 @@ var utterance = EmberObject.extend({
         label: str
       };
     }
-    if(utterance.get('hint_button')) {
-      var hint = EmberObject.create({label: utterance.get('hint_button.label'), image: utterance.get('hint_button.image_url'), ghost: true});
+    if(hint) {
       visualButtonList.push(hint);
     }
     app_state.set('button_list', visualButtonList);
     utterance.set('last_spoken_button', last_spoken_button);
     stashes.persist('working_vocalization', buttonList);
-  }.observes('rawButtonList', 'rawButtonList.[]', 'rawButtonList.length', 'rawButtonList.@each.image', 'hint_button', 'hint_button.label', 'hint_button.image_url'),
+  }.observes('app_state.insertion.index', 'rawButtonList', 'rawButtonList.[]', 'rawButtonList.length', 'rawButtonList.@each.image', 'hint_button', 'hint_button.label', 'hint_button.image_url'),
   update_hint: function() {
     if(this.get('hint_button.label')) {
 //      console.error("hint button!", this.get('hint_button.label'));
@@ -119,9 +138,11 @@ var utterance = EmberObject.extend({
   modifiers: [':plural', ':singular', ':comparative', ':er', ':superlative', ':verb-negation',
     ':est', ':possessive', ':\'s', ':past', ':ed', ':present-participle', ':ing', ':space', ':complete', ':predict'],
   modify_button: function(original, addition) {
-    // TODO: I'm thinking maybe +s notation shouldn't append to word buttons, only :modify notation
-    // should do that. The problem is when you want to spell a word after picking a word-button,
-    // how exactly do you go about that? Make them type a space first? I guess maybe...
+    addition.mod_id = addition.mod_id || Math.round(Math.random() * 9999);
+    if(original && original.modifications && original.modifications.find(function(m) { return addition.button_id == m.button_id && m.mod_id == addition.mod_id; })) {
+      return original;
+    }
+
     var altered = $.extend({}, original);
 
     altered.modified = true;
@@ -249,7 +270,24 @@ var utterance = EmberObject.extend({
     }
     // add button to the raw button list
     var list = this.get('rawButtonList');
-    list.pushObject(b);
+    var idx = app_state.get('insertion.index');
+    if(app_state.get('insertion') && isFinite(idx)) {
+      // insertion.index is for the visual list, which has 
+      // different items than the raw list
+      var button = app_state.get('button_list')[idx];
+      var raw_index = button && button.raw_index;
+      if(button) {
+        if(button.modifications) {
+          raw_index = button.modifications[button.modifications.length - 1].raw_index || (raw_index + button.modifications.length);
+        }
+        list.insertAt(raw_index + 1, b);
+      }
+      if(!b.specialty_with_modifiers) {
+        app_state.set('insertion.index', Math.min(list.length - 1, idx + 1));
+      }
+    } else {
+      list.pushObject(b);
+    }
     this.set('list_vocalized', false);
     // retrieve the correct result from the now-updated button list
     // should return whatever it is the vocalization is supposed to say
@@ -317,6 +355,7 @@ var utterance = EmberObject.extend({
     if(app_state.get('reply_note') && this.get('rawButtonList.length') == 0) {
       app_state.set('reply_note', null);
     }
+    app_state.set('insertion', null);
     this.set('rawButtonList', []);
     if(!opts.skip_logging) {
       stashes.log({
@@ -334,7 +373,26 @@ var utterance = EmberObject.extend({
     var list = this.get('rawButtonList');
     // if the list is vocalized, backspace should take it back into building-mode
     if(!this.get('list_vocalized')) {
-      list.popObject();
+      var idx = app_state.get('insertion.index');
+      if(app_state.get('insertion') && isFinite(idx)) {
+        // insertion.index is for the visual list, which has 
+        // different items than the raw list
+        var button = app_state.get('button_list')[idx];
+        var raw_index = button && button.raw_index;
+        var move_index = true;
+        if(button) {
+          if(button.modifications) {
+            raw_index = button.modifications[button.modifications.length - 1].raw_index || (raw_index + button.modifications.length);
+            move_index = false;
+          }
+          list.removeAt(raw_index);
+        }
+        if(move_index) {
+          app_state.set('insertion.index', Math.max(-1, idx - 1));
+        }
+      } else {
+        list.popObject();
+      }
     } else {
       speecher.stop('all');
     }
@@ -370,6 +428,7 @@ var utterance = EmberObject.extend({
       button_triggered: opts.button_triggered,
       buttons: stashes.get('working_vocalization')
     });
+    app_state.set('insertion', null);
     speecher.speak_collection(items, Math.round(Math.random() * 99999) + '-' + (new Date()).getTime(), {override_volume: volume});
     this.set('list_vocalized', true);
   },
