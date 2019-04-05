@@ -103,7 +103,7 @@ module ExtraData
     url = self.extra_data_private_url
     if url && !self.data[self.extra_data_attribute]
       req = Typhoeus.get(url, timeout: 10)
-      data = JSON.parse(req.body)
+      data = JSON.parse(req.body) rescue nil
       self.data[self.extra_data_attribute] = data
     end
   end
