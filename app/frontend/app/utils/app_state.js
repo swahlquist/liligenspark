@@ -1058,10 +1058,30 @@ var app_state = EmberObject.extend({
     }
   }.observes('speak_mode', 'currentUser.preferences.activation_location', 'currentUser.preferences.activation_minimum', 'currentUser.preferences.activation_cutoff', 'currentUser.preferences.activation_on_start', 'currentUser.preferences.debounce'),
   align_button_list: function() {
-    runLater(function() {
-      $("#button_list").scrollTop(9999999);
-    }, 200);
-  }.observes('button_list'),
+    if(app_state.get('speak_mode')) {
+      runLater(function() {
+        var $button_list = $("#button_list");
+        var $item = null;
+        if(app_state.get('insertion.index')) {
+          $item = $button_list.find(".utterance_cursor");
+          if($item.length == 0) {
+            $item = $button_list.find(".history_button:not(.utterance_cursor)").eq(app_state.get('insertion.index'));
+          }
+        }
+        if(!$item || $item.length == 0) { $item = $button_list.find(".history_button").last(); }
+        if($item.length && $button_list.length) {
+          var box_bounds = $button_list[0].getBoundingClientRect();
+          var scroll_top = $button_list.scrollTop();
+          var item_bounds = $item[0].getBoundingClientRect();
+          // TODO: don't know why the 1 is necessary
+          var top = item_bounds.top + scroll_top - box_bounds.top - 1; 
+          $button_list.scrollTop(top);
+        } else {
+          $button_list.scrollTop(9999999);
+        }
+      }, 200);
+    }
+  }.observes('speak_mode', 'button_list', 'button_list.length', 'insertion.index'),
   monitor_scanning: function() {
     this.check_scanning();
   }.observes('speak_mode', 'currentBoardState'),

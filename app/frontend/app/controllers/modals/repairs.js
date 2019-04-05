@@ -2,9 +2,11 @@ import modal from '../../utils/modal';
 import stashes from '../../utils/_stashes';
 import $ from 'jquery';
 import utterance from '../../utils/utterance';
+import i18n from '../../utils/i18n';
 import { set as emberSet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
+import app_state from '../../utils/app_state';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -19,11 +21,11 @@ export default modal.ModalController.extend({
     this.set('moving', null);
     this.set('selection_start', null);
     this.set('selection_end', null);
-    this.set('button_index', buttons.length - 1);
+    this.set('button_index', app_state.get('insertion.index') || buttons.length - 1);
     this.set('buttons', stashes.get('working_vocalization'));
+    app_state.set('insertion', null);
   },
   closing: function() {
-    alert('reset sentence box cursor unless it was just set');
   },
   update_selected: function() {
     var buttons = this.get('buttons') || [];
@@ -97,6 +99,13 @@ export default modal.ModalController.extend({
       utterance.set('rawButtonList', buttons);
       utterance.set('list_vocalized', false);
       modal.close();
+    },
+    begin_insertion: function() {
+      if(this.get('button_index')) {
+        app_state.set('insertion', {index: this.get('button_index')})
+        modal.close();
+        modal.notice(i18n.t('insertion_instructions', "You are now inserting text. Hit the sentence dropdown again to go back to adding text at the end."), true);
+      }
     },
     insert: function() {
       var insertion = this.get('insertion');

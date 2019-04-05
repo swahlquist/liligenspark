@@ -70,6 +70,17 @@ header {
         max-width: 60px;
       }
     }
+    .utterance_cursor {
+      .left, .right {
+        margin-top: 5px;
+        height: calc(100% - 10px);
+      }
+    }
+    &.text_only .utterance_cursor {
+      .left, .right {
+        margin-top: 0;
+      }
+    }
     &.text_only.text_medium .utterance_cursor {
       margin: 0 3px 0 0;
       .left, .right {
@@ -189,6 +200,9 @@ header {
           width: calc(100% - 177px); 
         }
         .history_button {
+          &.utterance_cursor {
+            margin: 5px 0 -4px;
+          }
           max-width: 30px; 
           height: 40px; 
           font-size: 11px;
