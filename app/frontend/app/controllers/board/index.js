@@ -154,12 +154,12 @@ export default Controller.extend({
   computeHeight: function() {
     var inner_width = window.innerWidth;    
     var height = window.innerHeight;
-    var width = window.innerWidth;
     if(capabilities.system == 'iOS') {
       inner_width = $("header").width() || window.innerWidth;
     }
+    var width = inner_width;
     if(app_state.get('sidebar_pinned')) {
-      width = width - 100; // TODO: make sidebar size configurable, or have it match top bar
+      width = inner_width - 100; // TODO: make sidebar size configurable, or have it match top bar
     }
     this.set('window_inner_width', inner_width);
     app_state.set('window_inner_width', inner_width);
