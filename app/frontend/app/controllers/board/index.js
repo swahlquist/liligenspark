@@ -152,13 +152,17 @@ export default Controller.extend({
   }.observes('model.id', 'model.integration', 'model.integration_name', 'model.locale', 'model.locales'),
   height: 400,
   computeHeight: function() {
+    var inner_width = window.innerWidth;    
     var height = window.innerHeight;
     var width = window.innerWidth;
+    if(capabilities.system == 'iOS') {
+      inner_width = $("header").width() || window.innerWidth;
+    }
     if(app_state.get('sidebar_pinned')) {
       width = width - 100; // TODO: make sidebar size configurable, or have it match top bar
     }
-    this.set('window_inner_width', window.innerWidth);
-    app_state.set('window_inner_width', window.innerWidth);
+    this.set('window_inner_width', inner_width);
+    app_state.set('window_inner_width', inner_width);
     var show_description = !app_state.get('edit_mode') && !app_state.get('speak_mode') && this.get('long_description');
     var topHeight = app_state.get('header_height') + 5;
     var sidebarTopHeight = topHeight;
