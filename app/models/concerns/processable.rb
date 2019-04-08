@@ -161,7 +161,7 @@ module Processable
       arg = "_" unless arg.length > 0
       arg = "_" + arg if arg[0].match(/\d/)
       arg = arg.gsub(/\'/, '').gsub(/[^a-zA-Z0-9_-]+/, '-').sub(/-+$/, '').gsub(/-+/, '-')
-      arg = arg * (3.0 / arg.length).ceil if arg.length < 3
+      arg = arg * (3.0 / [arg.length, 1].max).ceil if arg.length < 3
       arg
     end
     

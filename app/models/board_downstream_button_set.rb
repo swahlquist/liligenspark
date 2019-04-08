@@ -264,7 +264,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         # Otherwise if the parent board has a source_id, use that
         elsif bs && bs.data['source_id'] && linked_board_ids.include?(board.global_id)
           # legacy lists don't correctly filter linked board ids
-          valid_button = bs.buttons.detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
+          valid_button = (bs.buttons || []).detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
           if valid_button && bs.data['source_id'] != set.global_id
             source = BoardDownstreamButtonSet.find_by_global_id(bs.data['source_id'])
             if source
