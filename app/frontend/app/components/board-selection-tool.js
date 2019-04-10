@@ -20,6 +20,8 @@ export default Component.extend({
     this.set('min_level', null);
     this.set('max_level', null);
     this.set('levels', null);
+    this.set('current_level', null);
+    this.set('base_level', null);
   },
   didInsertElement: function() {
     this.size_element();
@@ -99,6 +101,15 @@ export default Component.extend({
       _this.sendAction('load_error');
     });
   },
+  check_update_scroll: function() {
+    var scroll_disableable = this.get('base_level') != null;
+    var _this = this;
+    if(this.get('update_scroll')) {
+      runLater(function() {
+        _this.get('update_scroll')(scroll_disableable);
+      });
+    }
+  }.observes('base_level'),
   no_next: function() {
     if(this.get('level_select')) {
       var max = this.get('max_level') || 10;

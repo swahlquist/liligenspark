@@ -100,12 +100,12 @@ export default Controller.extend({
     return this.get('symbols.lessonpix') && !this.get('lessonpix_enabled');
   }.property('symbols.lessonpix', 'lessonpix_enabled'),
   no_scroll: function() {
-    if(app_state.get('feature_flags.board_levels')) {
+    if(app_state.get('feature_flags.board_levels') && this.get('scroll_disableable')) {
       return !this.get('advanced') && this.get('page') == 'board_category'; 
     } else {
       return false;
     }
-  }.property('advanced', 'page', 'app_state.feature_flags.board_levels'),
+  }.property('advanced', 'page', 'app_state.feature_flags.board_levels', 'scroll_disableable'),
   notification: function() {
     var res = {};
     var user = app_state.get('currentUser') || this.get('fake_user');
@@ -276,7 +276,9 @@ export default Controller.extend({
         });
       }
     },
-
+    update_scroll: function(val) {
+      this.set('scroll_disableable', val);
+    },
     home: function(plus_video) {
       this.transitionToRoute('index');
       if(plus_video) {

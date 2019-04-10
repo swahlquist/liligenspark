@@ -55,7 +55,7 @@
 {{#if base_level}}
   {{#if prompt}}
     <div style='position: absolute; width: 100%;'>
-      <div style='width: 400px; max-width: 80vw; margin: -20px auto 0; background: #fff; border: 2px solid #aaa; border-radius: 10px; padding: 10px; font-size: 16px; box-shadow: 1px 1px 10px, -1px -1px 10px;'>
+      <div style='width: 400px; max-width: 80vw; max-height: calc(100vh - 200px); overflow: auto; margin: -20px auto 0; background: #fff; border: 2px solid #aaa; border-radius: 10px; padding: 10px; font-size: 16px; box-shadow: 1px 1px 10px, -1px -1px 10px;'>
         {{#if level_select}}
           {{t "Great! Here's what your home board will look like right now. If you want, you can fine-tune it to show fewer or more button to start off. You can start at a basic level with only a few buttons, or show everything right away.<br/><br/>You can easily change the number of buttons shown later by adjusting the level for the communicator." key='button_count_prompt'}}
         {{else}}

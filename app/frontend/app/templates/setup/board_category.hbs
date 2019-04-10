@@ -6,7 +6,7 @@
     </div>
     {{board-picker}}
   {{else}}
-    {{board-selection-tool load_error='show_advanced' advanced='show_advanced' select='select_board'}}
+    {{board-selection-tool load_error='show_advanced' advanced='show_advanced' select='select_board' update_scroll=(action 'update_scroll')}}
   {{/if}}
 {{else}}
   <div class='col-sm-10 col-sm-offset-1'>
