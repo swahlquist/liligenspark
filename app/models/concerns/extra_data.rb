@@ -85,7 +85,7 @@ module ExtraData
       if self.data && self.data['events'] && self.data['events'].length > 5
         return true
       end
-    elsif self.is_a?(BoardDownstreamButtonSet)
+    elsif self.is_a?(BoardDownstreamButtonSet) && self.data['buttons'] && self.data['buttons'].length > 5
       return true
     end
     # default would be to stringify and check length,
