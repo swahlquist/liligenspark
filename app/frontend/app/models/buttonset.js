@@ -83,7 +83,22 @@ CoughDrop.Buttonset = DS.Model.extend({
           }
         };
         persistence.find_url(bs.get('root_url'), 'json').then(function(data_uri) {
-          process_data_uri(data_uri);
+          if(data_uri.match(/^data:/)) {
+            process_data_uri(data_uri);
+          } else {
+            persistence.ajax(data_uri, {type: 'GET'}).then(function(res) {
+              try {
+                var buttons = JSON.parse(res.text);
+                bs.set('buttons_loaded', true);
+                bs.set('buttons', buttons);
+                resolve(bs);
+              } catch(e) {
+                reject({error: "Error parsing stored JSON"});
+              }
+            }, function(err) {
+              reject({error: "Error retrieving local JSON"});
+            });
+          }
         }, function() {
           persistence.store_url(bs.get('root_url'), 'json').then(function(res) {
             process_data_uri(res.data_uri);
