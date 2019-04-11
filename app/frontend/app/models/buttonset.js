@@ -72,36 +72,16 @@ CoughDrop.Buttonset = DS.Model.extend({
     var bs = this;
     return new RSVP.Promise(function(resolve, reject) {
       if(bs.get('root_url') && !bs.get('buttons_loaded')) {
-        var process_data_uri = function(data_uri) {
-          try {
-            var buttons = JSON.parse(atob(data_uri.split(/,/)[1]));
-            bs.set('buttons_loaded', true);
-            bs.set('buttons', buttons);
-            resolve(bs);
-          } catch(e) {
-            reject({error: "invalid JSON at root url"});
-          }
+        var process_buttons = function(buttons) {
+          bs.set('buttons_loaded', true);
+          bs.set('buttons', buttons);
+          resolve(bs);
         };
-        persistence.find_url(bs.get('root_url'), 'json').then(function(data_uri) {
-          if(data_uri.match(/^data:/)) {
-            process_data_uri(data_uri);
-          } else {
-            persistence.ajax(data_uri, {type: 'GET'}).then(function(res) {
-              try {
-                var buttons = JSON.parse(res.text);
-                bs.set('buttons_loaded', true);
-                bs.set('buttons', buttons);
-                resolve(bs);
-              } catch(e) {
-                reject({error: "Error parsing stored JSON"});
-              }
-            }, function(err) {
-              reject({error: "Error retrieving local JSON"});
-            });
-          }
+        persistence.find_json(bs.get('root_url')).then(function(buttons) {
+          process_buttons(buttons);
         }, function() {
-          persistence.store_url(bs.get('root_url'), 'json').then(function(res) {
-            process_data_uri(res.data_uri);
+          persistence.store_json(bs.get('root_url')).then(function(res) {
+            process_buttons(res);
           }, function(err) {
             reject(err);
           });

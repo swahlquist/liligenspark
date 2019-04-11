@@ -535,6 +535,42 @@ var persistence = EmberObject.extend({
       return url;
     }
   },
+  find_json: function(url) {
+    var _this = this;
+    return _this.find_url(url, 'json').then(function(uri) {
+      if(uri.match(/^data:/)) {
+        var json = null;
+        try {
+          json = JSON.parse(atob(uri.split(/,/)[1]));
+        } catch(e) {
+          return RSVP.reject({error: "Error parsing JSON dataURI"});
+        }
+        if(json) {
+          return json;
+        } else {
+          return RSVP.reject({error: "No JSON dataURI result"});
+        }
+      } else {
+        return _this.ajax(uri, {type: 'GET', dataType: 'json'});
+      }
+    });
+  },
+  store_json: function(url) {
+    var _this = this;
+    return _this.store_url(url, 'json').then(function(data_uri) {
+      var json = null;
+      try {
+        var json = JSON.parse(atob(data_uri.split(/,/)[1]));
+      } catch(e) {
+        return RSVP.reject({error: "Error parsing JSON dataURI storage"});
+      }
+      if(json) {
+        return json;
+      } else {
+        return RSVP.reject({error: "No JSON dataURI storage result"});
+      }
+    });
+  },
   find_url: function(url, type) {
     if(!this.primed) {
       var _this = this;
