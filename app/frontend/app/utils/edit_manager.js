@@ -601,7 +601,7 @@ var editManager = EmberObject.extend({
 
     var resume_scanning = function() {
       resume_scanning.attempts = (resume_scanning.attempts || 0) + 1;
-      if($(".board[data-id='" +  + "']").length > 0) {
+      if($(".board[data-id='" + board.get('id') + "']").length > 0) {
         runLater(function() {
           if(app_state.controller) {
             app_state.controller.highlight_button('resume');
