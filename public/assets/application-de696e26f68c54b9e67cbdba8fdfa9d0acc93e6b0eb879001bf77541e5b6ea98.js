@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.11d";
+window.app_version = "2019.04.11e";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9100,7 +9100,7 @@ t.push(l),l.then(null,function(){return Ember.RSVP.resolve()})}}})}),Ember.RSVP.
 if(0===e.length)return Ember.RSVP.resolve([])
 var p=n.default.store.peekAll("image"),m=this,f=new Ember.RSVP.Promise(function(n,s){var a=new RegExp("\\b"+e,"i"),o=l.default.get("all_buttons_enabled"),r=m.get("buttons")||[]
 t&&t!=m.get("id")&&(r=m.redepth(t)),r.forEach(function(t,n){if(!t.hidden||o){var s=t.label&&t.label.match(a)&&3
-if(s=(s=s||t.vocalization&&t.vocalization.match(a)&&2)||t.label&&i.default.edit_distance(e,t.label)<.5*Math.max(e.length,t.label.length)&&1){(t=Ember.$.extend({},t,{match_level:s})).on_this_board=0===Ember.get(t,"depth"),t.on_same_board=Ember.get(t,"on_this_board")
+if(s=(s=s||t.vocalization&&t.vocalization.match(a)&&2)||t.label&&i.default.edit_distance(e,t.label)<.5*Math.max(e.length,t.label.length)&&1){(t=Ember.$.extend({},t,{match_level:s})).on_this_board=0===Ember.get(t,"depth"),t.on_same_board=Ember.get(t,"on_this_board"),t.actual_button=!0
 for(var l=[],u=t.depth||0,c=t,p=!1,m=null,f=function(e){m||e.link_disabled||e.hidden&&!o||e.linked_board_id==c.board_id&&(p||e.preferred_link)&&(m=e)},_=function(e){return e.board_id==m.board_id&&e.id==m.id};u>0;)m=null,p=!1,r.forEach(f),p=!0,r.forEach(f),m?(u=(c=m).depth,l.find(_)?u=-1:l.unshift(m)):u=-1,l.length>15&&(u=-1)
 u>=0&&(t.pre_buttons=l,d.push(t))}}}),n()}),_=Ember.RSVP.resolve(),g=[],h=l.default.get("temporary_root_board_state.id")||l.default.get("root_board_state.id")||s&&s.get("preferences.home_board.id")
 return o&&h&&(_=new Ember.RSVP.Promise(function(t,s){var o=[],l=[],i=function(e,t){var s=e&&(c[e]||n.default.store.peekRecord("buttonset",e))
@@ -11181,8 +11181,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+3a5e0079"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+3a5e0079"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+83b0df0a"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+83b0df0a"})
 ;
 
 
