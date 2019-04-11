@@ -600,13 +600,20 @@ var editManager = EmberObject.extend({
     // - do NOT make remote requests for the individual records???
 
     var resume_scanning = function() {
-      runLater(function() {
+      resume_scanning.attempts = (resume_scanning.attempts || 0) + 1;
+      if($(".board[data-id='" +  + "']").length > 0) {
+        runLater(function() {
+          if(app_state.controller) {
+            app_state.controller.highlight_button('resume');
+          }
+        });
         if(app_state.controller) {
-          app_state.controller.highlight_button('resume');
+          app_state.controller.send('check_scanning');
         }
-      });
-      if(app_state.controller) {
-        app_state.controller.send('check_scanning');
+      } else if(resume_scanning.attempts < 10) {
+        runLater(resume_scanning, resume_scanning.attempts * 100);
+      } else {
+        console.error("scanning resume timed out");
       }
     };
 
