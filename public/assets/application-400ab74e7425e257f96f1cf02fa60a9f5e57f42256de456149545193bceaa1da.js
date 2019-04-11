@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.11b";
+window.app_version = "2019.04.11c";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -10208,7 +10208,7 @@ n.set("display_level",o)
 var r=n.translated_buttons(a.default.get("label_locale"),a.default.get("vocalization_locale")),l=n.get("grid")
 if(l){var i=!0,u=this,p=[],m=[],f={}
 t.default.log.track("process word suggestions"),e.get("model.word_suggestions")&&(e.set("suggestions",{loading:!0}),d.default.load().then(function(){e.set("suggestions",{ready:!0}),e.updateSuggestions()},function(){e.set("suggestions",{error:!0})}))
-var _=function e(){e.attempts=(e.attempts||0)+1,Ember.$(".board[data-id='NaN").length>0?(Ember.run.later(function(){a.default.controller&&a.default.controller.highlight_button("resume")}),a.default.controller&&a.default.controller.send("check_scanning")):e.attempts<10?Ember.run.later(e,100*e.attempts):console.error("scanning resume timed out")}
+var _=function e(){e.attempts=(e.attempts||0)+1,Ember.$(".board[data-id='"+n.get("id")+"']").length>0?(Ember.run.later(function(){a.default.controller&&a.default.controller.highlight_button("resume")}),a.default.controller&&a.default.controller.send("check_scanning")):e.attempts<10?Ember.run.later(e,100*e.attempts):console.error("scanning resume timed out")}
 if(a.default.get("speak_mode")){if(e.update_button_symbol_class(),n.get("fast_html")&&n.get("fast_html.width")==e.get("width")&&n.get("fast_html.height")==e.get("height")&&n.get("current_revision")==n.get("fast_html.revision")&&n.get("fast_html.label_locale")==a.default.get("label_locale")&&n.get("fast_html.display_level")==o)return t.default.log.track("already have fast render"),void _()
 n.set("fast_html",null),n.add_classes(),t.default.log.track("trying fast render")
 var g=n.render_fast_html({label_locale:a.default.get("label_locale"),height:e.get("height"),width:e.get("width"),extra_pad:e.get("extra_pad"),inner_pad:e.get("inner_pad"),display_level:o,base_text_height:e.get("base_text_height"),button_symbol_class:e.get("button_symbol_class")})
@@ -11181,8 +11181,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+0d200095"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+0d200095"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+cb271bd9"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+cb271bd9"})
 ;
 
 
