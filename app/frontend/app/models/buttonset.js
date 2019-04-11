@@ -484,6 +484,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             button = $.extend({}, button, {match_level: match_level});
             button.on_this_board = (emberGet(button, 'depth') === 0);
             button.on_same_board = emberGet(button, 'on_this_board');
+            button.actual_button = true;
             var path = [];
             var depth = button.depth || 0;
             var ref_button = button;
