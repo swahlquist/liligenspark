@@ -195,7 +195,7 @@ var capabilities;
         assert: function(type) {
           var promise = capabilities.mini_promise();
           if(capabilities.system == 'Android' && capabilities.installed_app) {
-            if(window.cordova && window.cordova.plugins && window.cordova.plugins.permissions && cordova.plugins.permissions.checkPermission) {
+            if(window.cordova && window.cordova.plugins && window.cordova.plugins.permissions && window.cordova.plugins.permissions.checkPermission) {
               var check_permissions = function(list) {
                 var answer = 0;
                 var missing = [];
