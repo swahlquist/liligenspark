@@ -12,7 +12,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   
   def generate_defaults
     self.data ||= {}
-    self.data['remote_salt'] = GoSecure.nonce('remote_salt')
+    self.data['remote_salt'] ||= GoSecure.nonce('remote_salt')
     @buttons = nil
     unless skip_extra_data_processing?
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq

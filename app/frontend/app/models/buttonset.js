@@ -694,29 +694,35 @@ CoughDrop.Buttonset.load_button_set = function(id) {
         type: 'POST',
         data: { }
       }).then(function(data) {
-        progress_tracker.track(data.progress, function(event) {
-          if(event.status == 'errored') {
-            reject({error: 'error while generating button set'});
-          } else if(event.status == 'finished') {
-            var url = event.result.url;
-            CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-              var reload = RSVP.resolve();
-              if(!button_set.get('root_url')) {
-                reload = button_set.reload().then(null, function() { return RSVP.resolve(); });
-                button_set.set('root_url', url);
-              }
-              reload.then(function() {
-                button_set.load_buttons().then(function() {
-                  resolve(button_set);
-                }, function(err) {
-                  reject(err); 
-                });
+        var found_url = function(url) {
+          CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
+            var reload = RSVP.resolve();
+            if(!button_set.get('root_url')) {
+              reload = button_set.reload().then(null, function() { return RSVP.resolve(); });
+              button_set.set('root_url', url);
+            }
+            reload.then(function() {
+              button_set.load_buttons().then(function() {
+                resolve(button_set);
+              }, function(err) {
+                reject(err); 
               });
-            }, function(err) {
-              reject({error: 'error while retrieving generated button set'});
             });
-          }
-        });
+          }, function(err) {
+            reject({error: 'error while retrieving generated button set'});
+          });
+        };
+        if(data.exists && data.url) {
+          found_url(data.url); 
+        } else {
+          progress_tracker.track(data.progress, function(event) {
+            if(event.status == 'errored') {
+              reject({error: 'error while generating button set'});
+            } else if(event.status == 'finished') {
+              found_url(event.result.url);
+            }
+          });  
+        }
       }, function(err) {
         reject({error: "button set missing and could not be generated"});
       });
