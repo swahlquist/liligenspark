@@ -13,7 +13,7 @@ window.user_preferences = {"device":{"voice":{"pitch":1.0,"volume":1.0},"button_
 
 
 
-window.app_version = "2019.04.11c";
+window.app_version = "2019.04.11d";
 window.EmberENV={FEATURES:{}}
 var loader,define,requireModule,require,requirejs,runningTests=!1
 function createDeprecatedModule(e){define(e,["exports","ember-resolver/resolver","ember"],function(t,n,r){r.default.deprecate("Usage of `"+e+"` module is deprecated, please update to `ember-resolver`.",!1,{id:"ember-resolver.legacy-shims",until:"3.0.0"}),t.default=n.default})}if(function(e){"use strict"
@@ -9052,9 +9052,9 @@ var s=[]
 for(var a in n)s.push(a)
 return s},buttons_for_level:function(e,t){for(var n={},s=[{id:e}],a=this.get("buttons")||[],o=0;s.length>0;){var r=s.shift()
 n[r.id]=!0,a.forEach(function(e){if(e.board_id==r.id){var a=!e.hidden,l=!!e.link_disabled
-e.visible_level&&(a=e.visible_level<=t),e.linked_level&&(l=e.linked_level<=t),a&&(e.linked_board_id&&l?n[e.linked_board_id]||(n[e.linked_board_id]=!0,s.push({id:e.linked_board_id})):o++)}})}return o},load_buttons:function(){var e=this
-return new Ember.RSVP.Promise(function(t,n){if(e.get("root_url")&&!e.get("buttons_loaded")){var s=function(n){e.set("buttons_loaded",!0),e.set("buttons",n),t(e)}
-o.default.find_json(e.get("root_url")).then(function(e){s(e)},function(){o.default.store_json(e.get("root_url")).then(function(e){s(e)},function(e){n(e)})})}else e.get("buttons")?t(e):n({error:"root url not available"})})},redepth:function(e){for(var t=this.get("buttons")||[],n=[],s=[{id:e,depth:0}],a=[],o=function(e){if(e.board_id==r.id){var t=Ember.$.extend({},e,{depth:r.depth})
+e.visible_level&&(a=e.visible_level<=t),e.linked_level&&(l=e.linked_level<=t),a&&(e.linked_board_id&&l?n[e.linked_board_id]||(n[e.linked_board_id]=!0,s.push({id:e.linked_board_id})):o++)}})}return o},load_buttons:function(){var e=this,t=e.get("id")
+return new Ember.RSVP.Promise(function(n,s){if(e.get("root_url")&&!e.get("buttons_loaded")){var a=function(s){e.set("buttons_loaded",!0),e.set("buttons",s),s.find(function(e){return e.board_id==t&&0==e.depth})||e.set("buttons",e.redepth(t)),n(e)}
+o.default.find_json(e.get("root_url")).then(function(e){a(e)},function(){o.default.store_json(e.get("root_url")).then(function(e){a(e)},function(e){s(e)})})}else e.get("buttons")?n(e):s({error:"root url not available"})})},redepth:function(e){for(var t=this.get("buttons")||[],n=[],s=[{id:e,depth:0}],a=[],o=function(e){if(e.board_id==r.id){var t=Ember.$.extend({},e,{depth:r.depth})
 n.push(t),e.linked_board_id&&-1==a.indexOf(e.linked_board_id)&&(a.push(e.linked_board_id),s.push({id:e.linked_board_id,depth:r.depth+1}))}};s.length>0;){var r=s.shift()
 t.forEach(o),s.sort(function(e,t){return t.depth-e.depth})}return t=n},button_steps:function(e,t,n,s,a){var o=!0
 if(e==t)return{buttons:[],steps:0,final_board_id:t}
@@ -11181,8 +11181,8 @@ var d,u=[],c=[]
 for(a=0;a<i;++a)u[a]=a,c[a]=t.charCodeAt(a)
 for(u[i]=i,a=0;a<l;++a){for(s=a+1,o=0;o<i;++o)n=s,d=e.charCodeAt(a)===c[o],(s=u[o]+(d?0:1))>(r=n+1)&&(s=r),s>(r=u[o+1]+1)&&(s=r),u[o]=n
 u[o]=s}return s}}).create({pieces:10,max_results:5})
-e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+cb271bd9"},exportApplicationGlobal:!1}}
-return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+cb271bd9"})
+e.default=r}),define("frontend/config/environment",[],function(){var e={default:{modulePrefix:"frontend",environment:"production",rootURL:"/",locationType:"auto",EmberENV:{FEATURES:{}},APP:{name:"frontend",version:"0.0.2+3a5e0079"},exportApplicationGlobal:!1}}
+return Object.defineProperty(e,"__esModule",{value:!0}),e}),runningTests||require("frontend/app").default.create({name:"frontend",version:"0.0.2+3a5e0079"})
 ;
 
 
