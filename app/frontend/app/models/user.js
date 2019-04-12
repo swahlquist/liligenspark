@@ -477,8 +477,20 @@ CoughDrop.User = DS.Model.extend({
     }
     return res;
   },
-  find_integration: function(key) {
-    return CoughDrop.User.find_integration(this.get('id'), key);
+  find_integration: function(key, supervisee_user_name) {
+    var search_user = CoughDrop.User.find_integration(this.get('id'), key);
+    var user = this;
+    var supervisee_fallback = search_user.then(null, function(err) {
+      if(err.error == 'no matching integration found' && supervisee_user_name) {
+        var sup = (user.get('supervisees') || []).find(function(sup) { return sup.user_id == supervisee_user_name || sup.user_name == supervisee_user_name });
+        if(sup) {
+          return CoughDrop.User.find_integration(sup.user_id || sup.user_name, key);
+        }
+      } else {
+        return RSVP.reject(err);
+      }
+    });
+    return supervisee_fallback;
   },
   add_action: function(action) {
     var actions = this.get('offline_actions') || [];

@@ -5,7 +5,12 @@ class Api::SearchController < ApplicationController
     token = ENV['OPENSYMBOLS_TOKEN']
     protected_source = nil
     if params['q'].match(/premium_repo:pcs$/) 
-      if @api_user && @api_user.subscription_hash['extras_enabled']
+      user_allowed = @api_user && @api_user.subscription_hash['extras_enabled']
+      if !user_allowed && @api_user && params['user_name']
+        ref_user = User.find_by_path(params['user_name'])
+        user_allowed = ref_user && ref_user.allows?(@api_user, 'edit') && ref_user.subscription_hash['extras_enabled']
+      end
+      if user_allowed
         params['q'].sub!(/premium_repo:pcs$/, 'repo:pcs')
         # TODO: for now, don't combine them in non-protected searches even though it's coming
         # from the same source, otherwise things can get confusing
@@ -41,7 +46,7 @@ class Api::SearchController < ApplicationController
       return unless allowed?(ref_user, 'edit')
     end
     if params['library']
-      res = Uploader.find_images(params['q'], params['library'], ref_user)
+      res = Uploader.find_images(params['q'], params['library'], ref_user, @api_user)
     end
     if res == false
       return allowed?(@api_user, 'never_allowed')

@@ -313,17 +313,30 @@ module Uploader
     {}
   end
   
-  def self.find_images(keyword, library, user)
+  def self.find_images(keyword, library, user, alt_user=nil)
     return false if (keyword || '').strip.blank? || (library || '').strip.blank?
     if library == 'ss'
       return false
     elsif library == 'lessonpix'
       cred = lessonpix_credentials(user)
-      return false unless cred
-      url = "http://lessonpix.com/apiKWSearch.php?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&word=#{CGI.escape(keyword)}&fmt=json&allstyles=n&limit=30"
-      req = Typhoeus.get(url, timeout: 5)
-      return false if req.body && (req.body.match(/Token Mismatch/) || req.body.match(/Unkonwn User/) || req.body.match(/Unknown User/))
-      results = JSON.parse(req.body) rescue nil
+      valid = true
+      valid = false unless cred
+      results = nil
+      if cred
+        url = "http://lessonpix.com/apiKWSearch.php?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&word=#{CGI.escape(keyword)}&fmt=json&allstyles=n&limit=30"
+        req = Typhoeus.get(url, timeout: 5)
+        valid = true
+        valid = false if req.body && (req.body.match(/Token Mismatch/) || req.body.match(/Unkonwn User/) || req.body.match(/Unknown User/))
+        results = JSON.parse(req.body) rescue nil
+        valid = false if !results
+      end
+      if !valid
+        if alt_user && alt_user != user
+          return find_images(keyword, library, alt_user)
+        else
+          return false
+        end
+      end
       list = []
       results.each do |obj|
         next if !obj || obj['iscategory'] == 't'

@@ -80,6 +80,29 @@ describe Api::SearchController, :type => :controller do
       ])
     end
 
+    it "should search for pcs symbols if not allowed for the user but for the referenced supervisee" do
+      token_user
+      u = User.create
+      User.purchase_extras({'user_id' => u.global_id})
+      u.reload
+      expect(u.subscription_hash['extras_enabled']).to eq(true)
+      User.link_supervisor_to_user(@user, u, nil, true)
+      Worker.process_queues
+      list = [
+        {'extension' => 'png', 'name' => 'bob'},
+        {'extension' => 'gif', 'name' => 'fred'}
+      ]
+      res = OpenStruct.new(:body => list.to_json)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 3, :ssl_verifypeer => false).and_return(res)
+      get :symbols, params: {:q => 'hat premium_repo:pcs', :user_name => u.user_name}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json).to eq([
+        {'extension' => 'png', 'protected' => true, 'protected_source' => 'pcs', 'content_type' => 'image/png', 'name' => 'bob', 'thumbnail_url' => nil},
+        {'extension' => 'gif', 'protected' => true, 'protected_source' => 'pcs', 'content_type' => 'image/gif', 'name' => 'fred', 'thumbnail_url' => nil}
+      ])
+    end
+
     it "should mark protected symbols as such when found via search" do
       token_user
       User.purchase_extras({'user_id' => @user.global_id})
@@ -140,6 +163,35 @@ describe Api::SearchController, :type => :controller do
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
       expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
       ].to_json}))
+      User.link_supervisor_to_user(@user, u, nil, true)
+      get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json).to eq([])
+    end
+
+    it "should fall back to api user if authorized user isn't authorized" do
+      token_user
+      u = User.create
+      expect(Uploader).to receive(:lessonpix_credentials).with(@user).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
+      expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return(nil)
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
+      ].to_json}))
+      User.link_supervisor_to_user(@user, u, nil, true)
+      get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json).to eq([])
+    end
+
+    it "should fall back to api user if authorized user has expired lessonpix account" do
+      token_user
+      u = User.create
+      expect(Uploader).to receive(:lessonpix_credentials).with(@user).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
+      expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({'pid' =>  '1', 'username' => 'sue', 'token' => 'jkl'})
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
+      ].to_json}))
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=sue&token=jkl&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: "Unknown User"}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
       expect(response).to be_success

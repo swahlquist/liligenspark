@@ -18,7 +18,12 @@ export default modal.ModalController.extend({
       _this.set('hierarchy', {error: true});
     });
     _this.set('premium_symbols_enabled', app_state.get('currentUser.subscription.extras_enabled'));
-    app_state.get('currentUser').find_integration('lessonpix').then(function(res) {
+    (app_state.get('currentUser.supervisees') || []).forEach(function(sup) {
+      if(sup.user_name == _this.get('model.board.user_name') && sup.extras_enabled) {
+        _this.set('premium_symbols_enabled', true);
+      }
+    });
+    app_state.get('currentUser').find_integration('lessonpix', this.get('model.board.user_name')).then(function(res) {
       _this.set('lessonpix_enabled', true);
       if(stashes.get('last_image_library') == 'lessonpix') { _this.set('image_library', 'lessonpix'); }
     }, function(err) { });

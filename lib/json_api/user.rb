@@ -185,8 +185,10 @@ module JsonApi::User
           json['organization_unit_id'] = org_unit.global_id
         end
       end
+      sub_hash = user.subscription_hash
+      json['extras_enabled'] = true if sub_hash['extras_enabled']
       if args[:subscription]
-        json['subscription'] = user.subscription_hash
+        json['subscription'] = sub_hash
       end
       if args[:organization]
         if args[:organization_manager]

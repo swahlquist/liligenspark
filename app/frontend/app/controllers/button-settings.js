@@ -106,15 +106,13 @@ export default modal.ModalController.extend({
     this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
     var _this = this;
     _this.set('premium_symbols', app_state.get('currentUser.subscription.extras_enabled'));
+    (app_state.get('currentUser.supervisees') || []).forEach(function(sup) {
+      if(sup.user_name == _this.get('board.user_name') && sup.extras_enabled) {
+        _this.set('premium_symbols', true);
+      }
+    });
     _this.set('lessonpix_enabled', false);
-    var find_integration = null;
-    if(this.get('board.user_name') == app_state.get('currentUser.user_name')) {
-      find_integration = app_state.get('currentUser').find_integration('lessonpix');
-    } else {
-      find_integration = CoughDrop.User.find_integration(this.get('board.user_name'), 'lessonpix').then(null, function() {
-        return app_state.get('currentUser').find_integration('lessonpix');
-      });
-    }
+    var find_integration = app_state.get('currentUser').find_integration('lessonpix', this.get('board.user_name'));
     find_integration.then(function(res) {
       _this.set('lessonpix_enabled', true);
       if(stashes.get('last_image_library') == 'lessonpix') {

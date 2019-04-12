@@ -679,7 +679,7 @@ var pictureGrabber = EmberObject.extend({
       text = text + " premium_repo:pcs"
 //      search = function(str) { return _this.open_symbols_search(str, 'pcs'); }
     }
-    return search(text);
+    return search(text, user_name);
   },
   protected_search: function(text, library, user_name, fallback) {
     user_name = user_name || (this.controller && this.controller.get('board.user_name')) || '';
@@ -699,8 +699,12 @@ var pictureGrabber = EmberObject.extend({
       }
     });
   },
-  open_symbols_search: function(text) {
-    return persistence.ajax('/api/v1/search/symbols?q=' + encodeURIComponent(text), { type: 'GET'
+  open_symbols_search: function(text, user_name) {
+    var path = '/api/v1/search/symbols?q=' + encodeURIComponent(text);
+    if(user_name) {
+      path = path + '&user_name=' + encodeURIComponent(user_name);
+    }
+    return persistence.ajax(path, { type: 'GET'
     }).then(function(data) {
       return data;
     }, function(xhr, message) {

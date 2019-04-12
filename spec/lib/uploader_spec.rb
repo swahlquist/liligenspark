@@ -497,6 +497,55 @@ describe Uploader do
       ])
     end
 
+    it "should fall back to the alt_user for lessonpix searches if needed" do
+      expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
+      expect(Uploader.find_images('bacon', 'lessonpix', nil)).to eq(false)
+      
+      u = User.create
+      u2 = User.create
+      expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({
+        'username' => 'pocatello',
+        'pid' => '99999',
+        'token' => 'for_the_team'
+      }).exactly(1).times
+      expect(Uploader).to receive(:lessonpix_credentials).with(u2).and_return({
+        'username' => 'nimue',
+        'pid' => '88888',
+        'token' => 'i_got_wet'
+      }).exactly(1).times
+
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: "Token Mismatch"))
+      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=88888&username=nimue&token=i_got_wet&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
+        {'iscategory' => 't'},
+        {
+          'image_id' => '2345',
+          'title' => 'good pic'
+        }
+      ].to_json))
+      expect(Uploader.find_images('cheddar', 'lessonpix', u, u2)).to eq([
+        {
+          'url' => "#{JsonApi::Json.current_host}/api/v1/users/#{u2.global_id}/protected_image/lessonpix/2345",
+          'thumbnail_url' => "https://lessonpix.com/drawings/2345/100x100/2345.png",
+          'content_type' => 'image/png',
+          'name' => 'good pic',
+          'width' => 300,
+          'height' => 300,
+          'external_id' => '2345',
+          'public' => false,
+          'protected' => true,
+          'protected_source' => 'lessonpix',
+          'license' => {
+            'type' => 'private',
+            'source_url' => "http://lessonpix.com/pictures/2345/good+pic",
+            'author_name' => 'LessonPix',
+            'author_url' => 'http://lessonpix.com',
+            'uneditable' => true,
+            'copyright_notice_url' => 'http://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+          }
+        }
+      ])
+    end
+
     it "should handle giphy searches" do
       ENV['GIPHY_KEY'] = 'giphy'
       expect(Typhoeus).to receive(:get).with("http://api.giphy.com/v1/gifs/search?q=%23asl+bacon&api_key=giphy", {timeout: 5}).and_return(OpenStruct.new({
