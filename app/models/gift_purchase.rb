@@ -11,17 +11,19 @@ class GiftPurchase < ActiveRecord::Base
   add_permissions('manage') {|user| Organization.admin_manager?(user) }
   add_permissions('manage') {|user| (self.settings['admin_user_ids'] || []).include?(user.global_id) }
 
-  def self.find_by_code(code)
+  def self.find_by_code(code, allow_inactive=false)
     code = (code || '').downcase
-    gift = GiftPurchase.find_by(code: code, active: true)
+    gifts = GiftPurchase
+    gifts = gifts.where(active: true) unless allow_inactive
+    gift = gifts.find_by(code: code)
     if !gift
       code = code.gsub(/o/, '0')
       parts = code.split(/x/)
       if parts.length > 1
-        gifts = GiftPurchase.where(["code LIKE ?", "#{parts[0]}%"]).where(active: true)
+        gifts = gifts.where(["code LIKE ?", "#{parts[0]}%"])
         gift = gifts.detect{|g| g.settings['total_codes'] && g.settings['codes'].has_key?(code) }
       else
-        gift = GiftPurchase.where(:code => code, :active => true).first
+        gift = gifts.where(:code => code).first
       end
     end
     gift

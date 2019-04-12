@@ -33,6 +33,21 @@ module JsonApi::Gift
     if args[:permissions]
       json['permissions'] = gift.permissions_for(args[:permissions])
     end
+    if gift.gift_type == 'user_gift'
+      user = User.find_by_path(gift.settings['giver_id'])
+      if user
+        json['giver'] = JsonApi::User.build_json(user, :limited_identity => true)
+      end
+      if gift.settings['giver_email']
+        json['giver'] ||= {}
+        json['giver']['email'] ||= gift.settings['giver_email']
+      end
+      recipient = User.find_by_path(gift.settings['receiver_id'])
+      if recipient
+        json['recipient'] = JsonApi::User.build_json(recipient, :limited_identity => true)
+        json['recipient']['redeemed_at'] = gift.settings['redeemed_at']
+      end
+    end
 
     if gift.settings['activations'] && json['permissions'] && json['permissions']['manage']
       user_ids = gift.settings['activations'].map{|k, c| c && c['receiver_id'] }

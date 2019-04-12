@@ -1,10 +1,24 @@
 <div class="row">
   <div class="col-sm-8 col-sm-offset-2 col-lg-6 col-lg-offset-3">
     <h2>
-      {{#if gift.gift_types.multi_code}}
+      {{#if gift.loading}}
+        {{t "Loading..." key='loading'}}
+      {{else if gift.gift_types.multi_code}}
         {{t "Gift Codes for" key='gift_codes'}}
       {{else if gift.gift_types.discount}}
         {{t "Discount Redemptions for" key='discounts_for'}}
+      {{else if gift.gift_types.user_gift}}
+        {{t "Gift Code"}}
+        {{#if gift.giver}}
+          {{t "from" key='from'}}
+          {{#if gift.giver.name}}
+            {{gift.giver.name}}
+          {{else if gift.giver.email}}
+            {{gift.giver.email}}
+          {{else}}
+            {{t "Unknown User" key='unknown_user'}}
+          {{/if}}
+        {{/if}}
       {{else}}
         {{t "CoughDrop Purchase, " key='coughdrop_purchase'}}
       {{/if}}
@@ -32,16 +46,38 @@
         {{/if}}
         {{t "has been granted a discounted rate to offer to its users. When people purchase a long-term license with CoughDrop they can enter the provided code to receive a discount on their purchase amount." key='discounts_intro2'}}
       </p>
-    {{else}}
-      <span class="glyphicon glyphicon-paperclip" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
+    {{else if gift.gift_types.user_gift}}
+      <span class="glyphicon glyphicon-gift" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
       <p style='margin-bottom: 20px;'>
-        {{t "Thank you for your interest in purchasing CoughDrop! CoughDrop is a powerful tool for developing communicators, and the support team around them. We are confident that CoughDrop can make a difference for the communicators you work with. Please enter the following information to complete your purchase. If you have any questions, feel free to contact our support team." key='bulk_purchase_intro'}}
+        {{t "The code you entered is tied to a one-time gift code," key='user_gift_intro'}}
+        {{t "and code includes <b>%{dur}</b> of free access to CoughDrop's cloud extras features." dur=gift.duration key='cloud_extras_gift_duration'}}
+        {{#if gift.active}}
+          {{t "This gift code has not yet been redeemed." key='gift_still_active'}}
+        {{else if gift.recipient}}
+          {{t "This gift code has been redeemed by" key='gift_redeemed_by'}}
+          {{#link-to 'user' gift.recipient.user_name}}
+            <b>{{gift.recipient.user_name}}</b>
+          {{/link-to}}{{t "." key='period'}}
+          {{#if gift.recipient.redeemed_at}}
+              {{t "It was redeemed" key='it_was_redeemed'}}
+              {{date gift.recipient.redeemed_at 'day'}}
+          {{/if}}
+        {{else}}
+          {{t "This gift code is no longer active or redeemable." key='gift_not_active'}}
+        {{/if}}
       </p>
+    {{else}}
+      {{#unless gift.loading}}
+        <span class="glyphicon glyphicon-paperclip" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
+        <p style='margin-bottom: 20px;'>
+          {{t "Thank you for your interest in purchasing CoughDrop! CoughDrop is a powerful tool for developing communicators, and the support team around them. We are confident that CoughDrop can make a difference for the communicators you work with. Please enter the following information to complete your purchase. If you have any questions, feel free to contact our support team." key='bulk_purchase_intro'}}
+        </p>
+      {{/unless}}
     {{/if}}
     {{#if gift.loading}}
       <p>{{t "Loading purchase information..." key='loading_purchase'}}</p>
     {{else if gift.error}}
-      <p>{{t "This purchase link appears to have been disabled. If you believe there is an error, please contact our support team." key='invalid_gift'}}</p>
+      <p>{{t "This purchase link appears to have been disabled or is an invalid link. If you believe there is an error, please contact our support team." key='invalid_gift'}}</p>
     {{else if gift.gift_types.multi_code}}
       <h4>{{t "Gift Codes" key='gift_codes'}}</h4>
       <div style='margin-top: -5px; margin-bottom: 15px;'>
@@ -111,6 +147,7 @@
         </li>
       {{/each}}
       </ul>
+    {{else if gift.gift_types.user_gift}}
     {{else if gift.active}}
       {{#if subscription.purchase_complete}}
         <div style="margin: 50px 0;">

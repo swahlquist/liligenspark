@@ -51,6 +51,45 @@ describe Api::GiftsController, :type => :controller do
       expect(response.code).to eq("200")
       expect(json['gift']['id']).to eq("#{g.code}::#{g.code_verifier}")
     end
+
+    it "should not allow looking up sub-codes" do
+      g = GiftPurchase.create(:settings => {'total_codes' => 50, 'seconds_to_add' => 4.years.to_i})
+      expect(g.settings['codes']).to_not eq(nil)
+      expect(g.settings['codes'].keys.length).to eq(50)
+      code = g.reload.settings['codes'].keys[0]
+      get :show, params: {:id => code}
+      assert_not_found(code)
+    end
+
+    it "should allow looking up sub-codes for admins" do
+      token_user
+      org = Organization.create(:admin => true)
+      org.add_manager(@user.user_name, true)
+      g = GiftPurchase.create(:settings => {'total_codes' => 50, 'seconds_to_add' => 4.years.to_i})
+      expect(g.settings['codes']).to_not eq(nil)
+      expect(g.settings['codes'].keys.length).to eq(50)
+      code = g.reload.settings['codes'].keys[0]
+      get :show, params: {:id => code}
+      json = assert_success_json
+      expect(json['gift']['code']).to eq(g.code)
+    end
+
+    it "should  allow looking up short codes with verifier if not an admin" do
+      gift = GiftPurchase.create
+      get :show, params: {:id => "#{gift.code}::#{gift.code_verifier}"}
+      json = assert_success_json
+      expect(json['gift']['code']).to eq(gift.code)
+    end
+
+    it "should not require a verifier for admins" do
+      token_user
+      org = Organization.create(:admin => true)
+      org.add_manager(@user.user_name, true)
+      g = GiftPurchase.create
+      get :show, params: {:id => g.code}
+      json = assert_success_json
+      expect(json['gift']['code']).to eq(g.code)
+    end
   end
   
   describe "index" do

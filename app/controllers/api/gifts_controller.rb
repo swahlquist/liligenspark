@@ -4,10 +4,12 @@ class Api::GiftsController < ApplicationController
 
   def show
     id, verifier = params['id'].split(/::/)
-    gift = GiftPurchase.find_by_code(id.gsub(/x/, '&'))
+    admin_allowed = @api_user && @api_user.allows?(@api_user, 'admin_support_actions')
+    code = admin_allowed ? id : id.gsub(/x/, '&')
+    gift = GiftPurchase.find_by_code(code, verifier != nil || admin_allowed)
     return unless exists?(gift, params['id'])
     return unless allowed?(gift, 'view')
-    return allowed?(gift, 'never_allow') if id.length < 20 && verifier != gift.code_verifier
+    return allowed?(gift, 'never_allow') if !admin_allowed && id.length < 20 && verifier != gift.code_verifier
     render json: JsonApi::Gift.as_json(gift, :wrapper => true, :permissions => @api_user).to_json
   end
   

@@ -330,4 +330,50 @@ describe GiftPurchase, :type => :model do
       expect(g.discount_percent).to eq(0.0)
     end
   end
+
+  describe 'find_by_code' do
+    it 'should find basic gifts' do
+      g = GiftPurchase.create
+      expect(GiftPurchase.find_by_code(g.code)).to eq(g)
+    end
+
+    it 'should not find inactive gifts' do
+      g = GiftPurchase.create
+      g.active = false
+      g.save
+      expect(GiftPurchase.find_by_code(g.code)).to eq(nil)
+    end
+
+    it 'should find inactive gifts if allowed' do
+      g = GiftPurchase.create
+      g.active = false
+      g.save
+      expect(GiftPurchase.find_by_code(g.code, true)).to eq(g)
+    end
+
+    it 'should find multi-code gifts' do
+      g = GiftPurchase.create(:settings => {'total_codes' => 50, 'seconds_to_add' => 4.years.to_i})
+      code = g.settings['codes'].keys[0]
+      expect(GiftPurchase.find_by_code(code)).to eq(g)
+    end
+
+    it 'should find bulk purchase gifts' do
+      giver = User.create(:settings => {'email' => 'fred@example.com'})
+      gift = GiftPurchase.process_new({
+        'licenses' => 4,
+        'amount' => '1234',
+        'organization' => 'org name',
+        'email' => 'bob@example.com',
+      }, {
+        'giver' => giver, 
+        'email' => 'stan@example.com'       
+      })
+      expect(GiftPurchase.find_by_code(gift.code)).to eq(gift)
+    end
+
+    it 'should find redemption discount gifts' do
+      g = GiftPurchase.create(settings: {'discount' => 0.5})
+      expect(GiftPurchase.find_by_code(g.code)).to eq(g)
+    end
+  end
 end

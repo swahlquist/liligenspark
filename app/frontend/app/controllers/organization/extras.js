@@ -62,6 +62,10 @@ export default Controller.extend({
         });
       }
     },
+    find_code: function() {
+      var code = this.get('code_lookup');
+      this.transitionToRoute('bulk_purchase', code);
+    },
     add_gift: function(type) {
       var gift = this.store.createRecord('gift');
       if(type == 'purchase') {

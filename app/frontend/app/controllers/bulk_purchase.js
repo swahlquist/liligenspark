@@ -15,12 +15,16 @@ export default Controller.extend({
     _this.set('gift', {loading: true});
     _this.store.findRecord('gift', gift_id).then(function(gift) {
       gift.reload();
-      _this.set('gift', gift);
-      _this.set('subscription.email', gift.get('email'));
-      _this.set('subscription.purchase_licenses', gift.get('licenses'));
-      _this.set('subscription.subscription_amount', 'long_term_custom');
-      _this.set('subscription.subscription_custom_amount', gift.get('amount'));
-      _this.set('subscription.any_subscription_amount', true);
+      if(gift && gift.get('active')) {
+        _this.set('gift', gift);
+        _this.set('subscription.email', gift.get('email'));
+        _this.set('subscription.purchase_licenses', gift.get('licenses'));
+        _this.set('subscription.subscription_amount', 'long_term_custom');
+        _this.set('subscription.subscription_custom_amount', gift.get('amount'));
+        _this.set('subscription.any_subscription_amount', true);
+      } else {
+        _this.set('gift', {error: true});
+      }
     }, function(err) {
       _this.set('gift', {error: true});
     });

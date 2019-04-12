@@ -8,7 +8,11 @@ export default Route.extend({
   model: function(params) {
     var obj = this.store.findRecord('gift', params.code);
     return obj.then(function(data) {
-      return RSVP.resolve(data);
+      if(data && data.get('active')) {
+        return RSVP.resolve(data);
+      } else {
+        return RSVP.resolve(EmberObject.create({invalid: true, code: params.code}));
+      }
     }, function() {
       return RSVP.resolve(EmberObject.create({invalid: true, code: params.code}));
     });

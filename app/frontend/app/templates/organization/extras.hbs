@@ -25,6 +25,10 @@
     {{else if gifts.error}}
       <p>{{t "Error loading custom purchases" key='error_loading_gifts'}}</p>
     {{else if gifts}}
+      <div style='max-width: 400px; margin-bottom: 2px;'>
+        {{input type='text' value=code_lookup placeholder="Find code" class='form-control inline inline-masquerade input-sm'}}
+        <button {{action 'find_code'}} class='btn btn-default'>{{t "Find" key='find'}}</button>
+      </div>
       <div class='list-group' style='max-width: 400px; margin-bottom: 5px;'>
         {{#each gifts as |gift|}}
           <a class='list-group-item'>
