@@ -1248,11 +1248,15 @@ module Stats
           lines << "#{stamp} WPR \"#{event['button']['completion']} \""
         elsif event['button']['vocalization'] && event['button']['vocalization'].match(/^\+/)
           lines << "#{stamp} SPE \"#{event['button']['vocalization'][1..-1]}\""
-        elsif event['button']['label'] && (!event['button']['vocalization'] || !event['button']['vocalization'].match(/^:/))
+        elsif (!event['type'] || event['type'] == 'speak') && event['button']['label'] && (!event['button']['vocalization'] || !event['button']['vocalization'].match(/^:/))
           # TODO: need to confirm, but it seems like if the user got to the word from a 
           # link, that would be qualify as semantic compaction instead of
           # a single-meaning picture...
           lines << "#{stamp} SMP \"#{event['button']['label']} \""
+        end
+      elsif event['action']
+        if event['action']['action'] == 'backspace'
+          lines << "#{stamp} OTH \"BACKSPACE\""
         end
       end
     end
