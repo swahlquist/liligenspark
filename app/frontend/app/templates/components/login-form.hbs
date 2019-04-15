@@ -38,7 +38,7 @@
                 {{t "Initializing..." key='initializing'}}
               {{else}}
                 {{#if persistence.online}}
-                  {{t "Can't Reach CoughDrop Cloud" key='cant_reach_coughdrop'}}
+                  {{t "Can't Reach %app_name% Cloud" key='cant_reach_coughdrop'}}
                 {{else}}
                   {{t "Not Online" key='not_connected'}}
                 {{/if}}
@@ -59,8 +59,11 @@
             {{#if app_state.no_linky}}
               {{#link-to 'forgot_login'}}{{t "need help?" key='forgot_login'}}{{/link-to}}
             {{else}}
-              {{#link-to 'forgot_password'}}{{t "forgot password" key='forgot_password'}}{{/link-to}} |
-              {{#link-to 'register'}}{{t "sign up" key='register'}}{{/link-to}}
+              {{#link-to 'forgot_password'}}{{t "forgot password" key='forgot_password'}}{{/link-to}}
+              {{#if app_state.domain_settings.full_domain}}
+                | 
+                {{#link-to 'register'}}{{t "sign up" key='register'}}{{/link-to}}
+              {{/if}}
             {{/if}}
           </span>
         </div>

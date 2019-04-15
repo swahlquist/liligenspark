@@ -20,7 +20,7 @@
           {{/if}}
         {{/if}}
       {{else}}
-        {{t "CoughDrop Purchase, " key='coughdrop_purchase'}}
+        {{t "%app_name% Purchase, " key='coughdrop_purchase'}}
       {{/if}}
 
       {{#if gift.organization}}
@@ -30,27 +30,27 @@
     {{#if gift.gift_types.multi_code}}
       <span class="glyphicon glyphicon-th" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
       <p style='margin-bottom: 20px;'>
-        {{t "Thank you for using CoughDrop! This organization" key='multi_code_intro'}}
+        {{t "Thank you for using %app_name%! This organization" key='multi_code_intro'}}
         {{#if gift.organization}}
           <b>( {{gift.organization}} )</b>
         {{/if}}
-        {{t "has been set up with multiple gifts code for use within CoughDrop. You can distribute these gift codes to users who can enter them when they sign up to get free access to CoughDrop's communication features." key='multi_code_intro2'}}
-        {{t "Each gift code includes <b>%{dur}</b> of free access to CoughDrop's cloud extras features." dur=gift.duration key='cloud_extras_duration'}}
+        {{t "has been set up with multiple gifts code for use within %app_name%. You can distribute these gift codes to users who can enter them when they sign up to get free access to %app_name%'s communication features." key='multi_code_intro2'}}
+        {{t "Each gift code includes <b>%{dur}</b> of free access to %app_name%'s cloud extras features." dur=gift.duration key='cloud_extras_duration'}}
       </p>
     {{else if gift.gift_types.discount}}
       <span class="glyphicon glyphicon-scissors" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
       <p style='margin-bottom: 20px;'>
-        {{t "Thank you for using CoughDrop! This organization" key='discounts_intro'}}
+        {{t "Thank you for using %app_name%! This organization" key='discounts_intro'}}
         {{#if gift.organization}}
           <b>( {{gift.organization}} )</b>
         {{/if}}
-        {{t "has been granted a discounted rate to offer to its users. When people purchase a long-term license with CoughDrop they can enter the provided code to receive a discount on their purchase amount." key='discounts_intro2'}}
+        {{t "has been granted a discounted rate to offer to its users. When people purchase a long-term license with Co%app_name%ughDrop they can enter the provided code to receive a discount on their purchase amount." key='discounts_intro2'}}
       </p>
     {{else if gift.gift_types.user_gift}}
       <span class="glyphicon glyphicon-gift" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
       <p style='margin-bottom: 20px;'>
         {{t "The code you entered is tied to a one-time gift code," key='user_gift_intro'}}
-        {{t "and code includes <b>%{dur}</b> of free access to CoughDrop's cloud extras features." dur=gift.duration key='cloud_extras_gift_duration'}}
+        {{t "and code includes <b>%{dur}</b> of free access to %app_name%'s cloud extras features." dur=gift.duration key='cloud_extras_gift_duration'}}
         {{#if gift.active}}
           {{t "This gift code has not yet been redeemed." key='gift_still_active'}}
         {{else if gift.recipient}}
@@ -70,7 +70,7 @@
       {{#unless gift.loading}}
         <span class="glyphicon glyphicon-paperclip" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
         <p style='margin-bottom: 20px;'>
-          {{t "Thank you for your interest in purchasing CoughDrop! CoughDrop is a powerful tool for developing communicators, and the support team around them. We are confident that CoughDrop can make a difference for the communicators you work with. Please enter the following information to complete your purchase. If you have any questions, feel free to contact our support team." key='bulk_purchase_intro'}}
+          {{t "Thank you for your interest in purchasing %app_name%! %app_name% is a powerful tool for developing communicators, and the support team around them. We are confident that %app_name% can make a difference for the communicators you work with. Please enter the following information to complete your purchase. If you have any questions, feel free to contact our support team." key='bulk_purchase_intro'}}
         </p>
       {{/unless}}
     {{/if}}

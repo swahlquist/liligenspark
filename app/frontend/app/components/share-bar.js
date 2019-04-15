@@ -33,9 +33,6 @@ export default Component.extend({
   twitter_enabled: function() {
     return !!(this.get('url') && (!this.get('native.generic') || this.get('native.twitter')));
   }.property('url', 'native.generic', 'native.twitter'),
-  google_plus_enabled: function() {
-    return false;
-  }.property('url', 'native.generic', 'native.google_plus'),
   email_enabled: function() {
     return !!this.get('text');
   }.property('text'),
@@ -56,11 +53,12 @@ export default Component.extend({
     return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(this.get('url'));
   }.property('url'),
   twitter_url: function() {
-    return 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('url')) + '&text=' + encodeURIComponent(this.get('text')) + '&related=CoughDropAAC';
+    var res = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('url')) + '&text=' + encodeURIComponent(this.get('text'));
+    if(app_state.get('domain_settings.twitter_handle')) {
+      res = res + '&related=' + encodeURIComponent(app_state.get('domain_settings.twitter_handle'));
+    }
+    return res;
   }.property('url', 'text'),
-  google_plus_url: function() {
-    return 'https://plus.google.com/share?url=' + encodeURIComponent(this.get('url'));
-  }.property('url'),
   actions: {
     message: function(supervisor) {
       modal.open('confirm-notify-user', {user: supervisor, utterance: this.get('utterance'), sentence: this.get('utterance.sentence')});
@@ -73,8 +71,6 @@ export default Component.extend({
         capabilities.window_open(this.get('facebook_url'));
       } else if(medium == 'twitter') {
         capabilities.window_open(this.get('twitter_url'));
-      } else if(medium == 'google_plus') {
-        capabilities.window_open(this.get('google_plus_url'));
       } else if(medium == 'email') {
         modal.open('share-email', {url: this.get('url'), text: this.get('text'), utterance_id: this.get('utterance.id') });
       } else if(medium == 'clipboard' && this.get('clipboard_enabled')) {

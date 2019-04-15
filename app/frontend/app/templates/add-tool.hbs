@@ -79,7 +79,7 @@
         {{#if selected_tool.error.bad_credentials}}
           <em class='text-danger'>{{t "Please check that you have entered the correct settings" key='please_check_settings'}}</em>
         {{else if selected_tool.error.credential_collision}}
-          <em class='text-danger'>{{t "It looks like those settings are already being used by a different CoughDrop user" key='credentials_already_in_use'}}</em>
+          <em class='text-danger'>{{t "It looks like those settings are already being used by a different %app_name% user" key='credentials_already_in_use'}}</em>
         {{/if}}
       </div>
     {{/if}}

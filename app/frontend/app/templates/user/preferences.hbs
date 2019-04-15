@@ -131,7 +131,7 @@
       <div class="checkbox">
         <label>
           {{input type="checkbox" checked=model.preferences.cookies id="cookies"}}
-          {{t "CoughDrop can track my actions and pageviews for internal purposes like error handling, improving features and tracking trends" key='allow_cookies'}}
+          {{t "%app_name% can track my actions and pageviews for internal purposes like error handling, improving features and tracking trends" key='allow_cookies'}}
         </label>
       </div>
     </div>
@@ -961,7 +961,7 @@
         {{#if eyegaze_type}}
           <div class="form-group">
             <div class="col-sm-5 col-sm-offset-3">
-              <p class="form-control-static"><em>{{t "Many eye trackers will work in CoughDrop using cursor control mode. We have built-in integrations for some, including EyeX and Eyegaze Edge trackers, and hope to add more devices soon." key='supported_eye_trackers'}}</em></p>
+              <p class="form-control-static"><em>{{t "Many eye trackers will work in %app_name% using cursor control mode. We have built-in integrations for some, including EyeX and Eyegaze Edge trackers, and hope to add more devices soon." key='supported_eye_trackers'}}</em></p>
               {{#unless eyegaze_capable}}
                 <p class='form-control-static text-danger'>
                   {{t "Integrated eye trackers will only work in the" key='eyegaze_windows_only_1'}}
@@ -1326,7 +1326,7 @@
         <div class="checkbox">
           <label>
             {{input type="checkbox" checked=model.preferences.device.device_home id="device_home"}}
-            {{t "Replace the device's home screen with CoughDrop" key='device_home_screen'}}
+            {{t "Replace the device's home screen with %app_name%" key='device_home_screen'}}
           </label>
         </div>
       </div>

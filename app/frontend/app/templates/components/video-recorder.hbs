@@ -65,7 +65,7 @@
   </div>
 {{else}}
   <p>
-    {{t "Video recording is a CoughDrop feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1'}}
+    {{t "Video recording is a %app_name% feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1'}}
     {{#if user}}
       {{#link-to 'user.subscription' user.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
     {{else if app_state.currentUser}}

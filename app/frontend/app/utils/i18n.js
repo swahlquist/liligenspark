@@ -1,8 +1,10 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
+import CoughDrop from '../app';
 import {set as emberSet, get as emberGet} from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { assign as emberAssign } from '@ember/polyfills';
+
 Ember.templateHelpers = Ember.templateHelpers || {};
 Ember.templateHelpers.date = function(date, precision) {
   var now = new Date();
@@ -194,24 +196,29 @@ var i18n = EmberObject.extend({
     var value;
     options = emberAssign({}, options);
     if(options && !options.hash) { options.hash = options; }
-    for(var idx = 0; terms && idx < terms.length; idx++) {
-      var word = terms[idx].match(/%{(\w+)}/)[1];
-      if(options[word] !== undefined && options[word] !== null) {
-        value = options[word];
-        if(options.increment == word || options.hash.increment == word) { value++; }
-        str = str.replace(terms[idx], value);
-      } else if(options.hash && options.hash[word] !== undefined && options.hash[word] !== null) {
-        value = options.hash[word];
-        if(options.increment == word || options.hash.increment == word) { value++; }
-        if(options.hashTypes) {
-          // TODO: pretty sure this isn't used anymore
-          if(options.hashTypes[word] == 'ID') {
-            value = emberGet(options.hashContexts[word], options.hash[word].toString());
-            value = value || options.hash[word];
+    if(str.match(/%/)) {
+      for(var idx = 0; terms && idx < terms.length; idx++) {
+        var word = terms[idx].match(/%{(\w+)}/)[1];
+        if(options[word] !== undefined && options[word] !== null) {
+          value = options[word];
+          if(options.increment == word || options.hash.increment == word) { value++; }
+          str = str.replace(terms[idx], value);
+        } else if(options.hash && options.hash[word] !== undefined && options.hash[word] !== null) {
+          value = options.hash[word];
+          if(options.increment == word || options.hash.increment == word) { value++; }
+          if(options.hashTypes) {
+            // TODO: pretty sure this isn't used anymore
+            if(options.hashTypes[word] == 'ID') {
+              value = emberGet(options.hashContexts[word], options.hash[word].toString());
+              value = value || options.hash[word];
+            }
           }
+          str = str.replace(terms[idx], value);
         }
-        str = str.replace(terms[idx], value);
       }
+      str = str.replace(/%app_name%/g, CoughDrop.app_name);
+      str = str.replace(/%app_name_upper%/g, CoughDrop.app_name.toUpperCase());
+      str = str.replace(/%company_name%/g, CoughDrop.company_name);
     }
 
     if(options && options.hash && options.hash.count !== undefined) {

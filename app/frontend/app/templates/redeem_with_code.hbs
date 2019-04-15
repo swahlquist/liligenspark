@@ -10,7 +10,7 @@
       {{/if}}
     {{else if model}}
       <p>
-        {{t "Someone has shared a premium membership to CoughDrop as a gift to you! This gift will give you free premium access to CoughDrop for <b>%{duration}</b>." duration=model.duration key='gift_details'}}
+        {{t "Someone has shared a premium membership to %app_name% as a gift to you! This gift will give you free premium access to %app_name% for <b>%{duration}</b>." duration=model.duration key='gift_details'}}
         {{#if app_state.currentUser}}
           {{t "To redeem it, just hit the button below." key='or_hit_button'}}
         {{else}}
@@ -25,8 +25,10 @@
         <p>
           {{t "Before you can redeem this code you'll need to " key='before_redeem'}}
           <a href="#" {{action "authenticateSession"}}>{{t "sign in" key="sign_in"}}</a>
-          {{t "or" key='or'}}
-          {{#link-to "register"}}{{t "create a new account" key="create_a_new_account"}}{{/link-to}}.
+          {{#if app_state.domain_settings.full_domain}}
+            {{t "or" key='or'}}
+            {{#link-to "register"}}{{t "create a new account" key="create_a_new_account"}}{{/link-to}}.
+          {{/if}}
         </p>
       {{/if}}
     {{else}}

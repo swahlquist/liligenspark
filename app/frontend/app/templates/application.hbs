@@ -28,8 +28,8 @@
         {{#unless app_state.button_list}}
           {{#if app_state.embedded}}
             <div style='float: left; margin: 5px; opacity: 0.7;'>
-              <img src="{{path 'images/logo-big.png'}}" alt="CoughDrop" style='width: 20px;'/>
-              Powered by CoughDrop
+              <img src="{{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}}" alt="CoughDrop" style='width: 20px;'/>
+              {{t "Powered by %app_name%" key='powered_by_coughdrop'}}
             </div>
           {{else if app_state.currentUser.preferences.blank_status}}
             <div id="blank_status" class='text-muted'>
@@ -136,9 +136,9 @@
     {{/if}}
     <h1 class={{app_state.h1_class}}>
       <a href="#" {{action "index"}}>
-        <img src="{{path 'images/logo-big.png'}}" alt="CoughDrop"/>
+        <img src="{{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}}" alt="CoughDrop"/>
         <span>
-          {{t "COUGHDROP" key="coughdrop"}}
+          {{t "%app_name_upper%" key="coughdrop"}}
         </span>
       </a>
     </h1>
@@ -197,11 +197,13 @@
         {{#unless app_state.embedded}}
           {{#unless app_state.currentBoardState}}
             {{#unless app_state.no_linky}}
-              <div class='signup_links'>
-                {{#link-to 'register'}}<span style='color: #444;'>{{t "2-Month Trial" key='two_month_trial'}}</span>{{/link-to}}
-                <span style='color: #aaa; padding: 0 5px;'> | </span>
-                {{#link-to 'gift_purchase'}}<span style='color: #444;'>{{t "Gift Purchase" key='gift_purchase'}}</span>{{/link-to}}
-              </div>
+              {{#if app_state.domain_settings.full_domain}}
+                <div class='signup_links'>
+                  {{#link-to 'register'}}<span style='color: #444;'>{{t "2-Month Trial" key='two_month_trial'}}</span>{{/link-to}}
+                  <span style='color: #aaa; padding: 0 5px;'> | </span>
+                  {{#link-to 'gift_purchase'}}<span style='color: #444;'>{{t "Gift Purchase" key='gift_purchase'}}</span>{{/link-to}}
+                </div>
+              {{/if}}
             {{/unless}}
           {{/unless}}
         {{/unless}}
@@ -626,7 +628,7 @@
                 <a href="#" {{action 'printBoard'}}>{{t "Print this Board" key="print_this_board"}}</a>
               </li>
               <li role="presentation">
-                <a href="#" {{action 'launch_board'}}>{{t "Open in CoughDrop" key="open_in_coughdrop"}}</a>
+                <a href="#" {{action 'launch_board'}}>{{t "Open in %app_name%" key="open_in_coughdrop"}}</a>
               </li>
               {{#if app_state.full_screen_capable}}
                 <li role="presentation">
@@ -634,7 +636,7 @@
                 </li>
               {{/if}}
               <li role="presentation">
-                <a href="#" {{action "about_modal"}}>{{t "About CoughDrop" key="about_coughdrop"}}</a>
+                <a href="#" {{action "about_modal"}}>{{t "About %app_name%" key="about_coughdrop"}}</a>
               </li>
               <li><a href="#" {{action "find_button"}}>{{t "Find a Button" key='find_a_button'}}</a></li>
             {{/if}}
@@ -775,9 +777,11 @@
                 <a href="#" {{action "authenticateSession"}}>{{t "Sign In" key="login"}}</a>
               </li>
               {{#unless app_state.no_linky}}
-              <li role="presentation">
-                {{#link-to "register"}}{{t "Register" key="register"}}{{/link-to}}
-              </li>
+                {{#if app_state.domain_settings.full_domain}}
+                  <li role="presentation">
+                    {{#link-to "register"}}{{t "Register" key="register"}}{{/link-to}}
+                  </li>
+                {{/if}}
               {{/unless}}
             {{/if}}
           {{/unless}}

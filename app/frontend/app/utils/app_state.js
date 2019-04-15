@@ -44,6 +44,10 @@ var app_state = EmberObject.extend({
     this.set('no_linky', capabilities.installed_app && capabilities.system == 'iOS');
     this.set('licenseOptions', CoughDrop.licenseOptions);
     this.set('device_name', capabilities.readable_device_name);
+    var settings = window.domain_settings || {};
+    settings.app_name = CoughDrop.app_name || settings.app_name || "CoughDrop";
+    settings.company_name = CoughDrop.company_name || settings.company_name || "CoughDrop";
+    this.set('domain_settings', settings);
     this.set('currentBoardState', null);
     var _this = this;
     this.set('version', window.app_version || 'unknown');
@@ -99,6 +103,8 @@ var app_state = EmberObject.extend({
     this.route = route;
     this.controller = controller;
     if(!session.get('isAuthenticated') && capabilities.mobile && capabilities.browserless) {
+      this.set('login_modal', true);
+    } else if(!session.get('isAuthenticated') && !this.get('domain_settings.full_domain')) {
       this.set('login_modal', true);
     }
     modal.setup(route);

@@ -154,7 +154,7 @@ export default Component.extend({
                   user.set('preferences.progress.subscription_set', true);
                   user.save();
                   _this.send('reset');
-                  _this.sendAction('subscription_success', i18n.t('user_subscribed', "Your purchase succeeded! Thank you for supporting CoughDrop!"));
+                  _this.sendAction('subscription_success', i18n.t('user_subscribed', "Your purchase succeeded! Thank you for supporting %app_name%!"));
                 }, function() {
                   _this.sendAction('subscription_error', i18n.t('user_subscription_reload_failed', "Purchase succeeded, but there was a problem reloading your user account. Please try loading this page again."));
                 });

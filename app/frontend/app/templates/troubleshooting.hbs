@@ -2,7 +2,7 @@
   <div class="col-sm-10 col-sm-offset-1">
     <h2>{{t "App Troubleshooting" key='app_troubleshooting'}}</h2>
     <p>
-      {{t "This tool can help test for functionality that is expected or required in order for CoughDrop to function correctly. Some tests will run automatically, while others may require manual testing. If you come across anything unexpected please hit the 'Support' link at the bottom of the page and report the problem." key='troubleshooting_intro'}}
+      {{t "This tool can help test for functionality that is expected or required in order for %app_name% to function correctly. Some tests will run automatically, while others may require manual testing. If you come across anything unexpected please hit the 'Support' link at the bottom of the page and report the problem." key='troubleshooting_intro'}}
     </p>
     {{#unless testing}}
       <div style="margin: 50px; text-align: center;">
@@ -53,7 +53,7 @@
           {{/each}}
           <tr>
             <td>{{t "CSS Alpha" key='css_alpha'}}</td>
-            <td>{{t "CoughDrop supports transparent colors for more flexible rendering of boards and board buttons." key='css_alpha_info'}}</td>
+            <td>{{t "%app_name% supports transparent colors for more flexible rendering of boards and board buttons." key='css_alpha_info'}}</td>
             <td>
               <div style="position: relative; float: left; margin-right: 5px; background: rgba(0, 0, 255, 1.0);">
                 <div style="width: 20px; height: 20px; background: rgba(255, 0, 0, 0.5);">
@@ -66,7 +66,7 @@
           </tr>
           <tr>
             <td>{{t "CSS Animations" key='css_animation'}}</td>
-            <td>{{t "Progress bars and spinners use animation to make CoughDrop feel more responsive." key='animation_info'}}</td>
+            <td>{{t "Progress bars and spinners use animation to make %app_name% feel more responsive." key='animation_info'}}</td>
             <td>
               <span class="glyphicon glyphicon-refresh spinning"></span>
               {{t "The icon next to this text should appear to be spinning." key='spinning_test'}}

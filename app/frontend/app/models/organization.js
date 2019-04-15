@@ -39,6 +39,9 @@ CoughDrop.Organization = DS.Model.extend({
   management_action: DS.attr('string'),
   recent_session_user_count: DS.attr('number'),
   recent_session_count: DS.attr('number'),
+  custom_domain: DS.attr('boolean'),
+  hosts: DS.attr('raw'),
+  host_settings: DS.attr('raw'),
   update_licenses_expire: function() {
     if(this.get('licenses_expire')) {
       var m = window.moment(this.get('licenses_expire'));

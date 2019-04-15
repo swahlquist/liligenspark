@@ -1,9 +1,9 @@
 <div class='col-sm-6 col-sm-offset-3'>
   <p>{{t "Now let's pick a voice. This is the voice output that people will hear when the communicator hits buttons in their board set." key='select_voice'}}</p>
   {{#if app_state.currentUser.grace_period}}
-    <p>{{t "<strong>Keep in mind</strong>: you're still in the free trial, so currently you only have access to the voices built into this device. After you purchase CoughDrop, you can download from our collection of over 90 premium voices." key='free_trial'}}</p>
+    <p>{{t "<strong>Keep in mind</strong>: you're still in the free trial, so currently you only have access to the voices built into this device. After you purchase %app_name%, you can download from our collection of over 90 premium voices." key='free_trial'}}</p>
   {{else if app_state.currentUser.free_premium}}
-    <p>{{t "You are using a free CoughDrop account, so currently you only have access to the voices built into this device. Paid accounts have access to additional premium voices for use in Speak Mode" key='free_supporter'}}</p>
+    <p>{{t "You are using a free %app_name% account, so currently you only have access to the voices built into this device. Paid accounts have access to additional premium voices for use in Speak Mode" key='free_supporter'}}</p>
   {{else}}
     <p>{{t "Remember, you can also browse through the premium voices that can be downloaded to the mobile and Windows apps for use on paid accounts." key='paid_voices'}}</p>
   {{/if}}

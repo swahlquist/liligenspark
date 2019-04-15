@@ -12,7 +12,7 @@ export default Controller.extend({
     select_board: function() {
       this.transitionToRoute('index');
       runLater(function() {
-        modal.success(i18n.t('board_layout_copying', "Great, sounds like a match! CoughDrop is making your own personal copy based on your choices. You can start using it by entering Speak Mode when you're ready."), true, true);
+        modal.success(i18n.t('board_layout_copying', "Great, sounds like a match! %app_name% is making your own personal copy based on your choices. You can start using it by entering Speak Mode when you're ready."), true, true);
       }, 100);
     }
   }

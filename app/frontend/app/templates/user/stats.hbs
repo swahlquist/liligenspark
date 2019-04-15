@@ -126,7 +126,7 @@
     {{/if}}
   {{else if model.permissions.edit}}
     <h2>{{t "Usage Reports" key='usage_reports'}}</h2>
-    <p>{{t "CoughDrop can generate insightful reports on word frequency, usage by time of day or location, etc., but only if logging is enabled. Right now it's turned off, but you can enable it in your preferences." key='logging_disabled'}}</p>
+    <p>{{t "%app_name% can generate insightful reports on word frequency, usage by time of day or location, etc., but only if logging is enabled. Right now it's turned off, but you can enable it in your preferences." key='logging_disabled'}}</p>
     <button {{action "enable_logging"}} type="button" class='btn btn-default'>{{t "Enable Communication Logging & Reports" key='enable_logging'}}</button>
   {{else}}
     <h2>{{t "Usage Reports" key='usage_reports'}}</h2>
@@ -138,7 +138,7 @@
     <button class='btn btn-default' style='margin-left: 10px;' {{action 'switch_communicators'}}>{{t "Switch Communicators" key='switch_communicators'}}</button>
   {{/if}}
   <p>
-    {{t "CoughDrop is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1'}}
+    {{t "%app_name% is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1'}}
     {{#if app_state.feature_flags.subscriptions}}
       {{#link-to 'user.subscription' model.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
     {{else}}

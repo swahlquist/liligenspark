@@ -27,7 +27,7 @@
     {{else if activities.error}}
       {{t "Error Loading Ideas" key='error_loading_ideas'}}
     {{else if show_target_words}}
-      <p style='font-size: 14px;'>{{t "Each of the following words were suggested based on available user activity, goals, time in the app, etc. Some words are included for different reasons, you can review the reasons below, or set a goal inside of CoughDrop to track progress toward these words." key='target_words_explainer'}}</p>
+      <p style='font-size: 14px;'>{{t "Each of the following words were suggested based on available user activity, goals, time in the app, etc. Some words are included for different reasons, you can review the reasons below, or set a goal inside of %app_name% to track progress toward these words." key='target_words_explainer'}}</p>
       <div style='margin: 20px 60px 30px;'>
         <table class='table table-striped'>
           <tbody>
@@ -54,9 +54,9 @@
     {{else if current_activity.target_words}}
       <span class='glyphicon glyphicon-screenshot' style='font-size: 80px; float: left; margin-right: 20px;'></span>
       <p>
-        {{t "As you use CoughDrop, the app will automatically generate <b>target words</b> that you can choose to focus on with your communicator." key='target_words_explainer'}}
+        {{t "As you use %app_name%, the app will automatically generate <b>target words</b> that you can choose to focus on with your communicator." key='target_words_explainer'}}
         {{#if user_words}}
-          {{t "Below are some words you may want to consider using. CoughDrop shows different ideas throughout the day for ways to use the target words, so check back regularly." key='target_user_words'}}
+          {{t "Below are some words you may want to consider using. %app_name% shows different ideas throughout the day for ways to use the target words, so check back regularly." key='target_user_words'}}
         {{else}}
           {{t "The list of suggestions will update throughout the day, so check back regularly for new ideas of activities to try with your communicator." key='target_no_user_words'}}
         {{/if}}
@@ -80,7 +80,7 @@
       <p>{{t "Sorry! We don't have any suggestions for you right now! We're continually adding more core words and suggestions, so please check back soon for more ideas!" key='no_data_yet'}}</p>
     {{else if current_activity.none_premium}}
       <span class='glyphicon glyphicon-info-sign' style='font-size: 70px; float: left; margin-right: 10px;'></span>
-      <p>{{t "CoughDrop's Modeling Ideas require a premium membership to access for users. Modeling Ideas are a powerful feature that can make a significant different for developing communicators. Please consider purchasing a license to access these ideas." key='purchase_to_unlock_modeling_ideas'}}</p>
+      <p>{{t "%app_name%'s Modeling Ideas require a premium membership to access for users. Modeling Ideas are a powerful feature that can make a significant different for developing communicators. Please consider purchasing a license to access these ideas." key='purchase_to_unlock_modeling_ideas'}}</p>
     {{else if current_activity.real}}
       {{#if current_activity.types.topic_starters}}
       {{else if current_activity.image.image_url}}
@@ -124,7 +124,7 @@
       <p>{{t "Did you know that new communicators learn to combine words by observing others do it first? Did you know that babies hear thousands of hours of spoken language before speaking on their own? Or that AAC experts recommend up to 80% of communication with a new user be modeled on a device?" key='modeling_intro_1'}}</p>
       <!-- source: https://www.facebook.com/groups/421704261346486/permalink/830509463799295/ -->
       <p>{{t "Modeling, or showing examples of how to hit buttons to communicate, is very important! As you start work with communicators who are using AAC, look for chances to model different words, or the same words in different ways. It may take practice to get comfortable or to see results, but research has shown over and over how much of a different modeling makes!" key='modeling_intro_2'}}</p>
-      <p>{{t "<b>Modeling Ideas</b> is a CoughDrop tool that recommends a few activities every day based on target words from your user's goals and log history. We hope it helps give you lots of ideas to help your communicator grow!" key='modeling_intro_3'}}</p>
+      <p>{{t "<b>Modeling Ideas</b> is a %app_name% tool that recommends a few activities every day based on target words from your user's goals and log history. We hope it helps give you lots of ideas to help your communicator grow!" key='modeling_intro_3'}}</p>
     {{/if}}
     <div style='clear: left;'></div>
     <!-- MODEL AND STUFF {{model.users.length}} -->

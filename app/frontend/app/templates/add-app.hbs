@@ -3,22 +3,28 @@
     <button type="button" class="close" {{action 'close'}}>&times;</button>
     <h3>
       <span class="glyphicon glyphicon-phone"></span>
-      {{t "Add the CoughDrop App" key='add_the_cough_drop_app'}}
+      {{t "Add the %app_name% App" key='add_the_cough_drop_app'}}
     </h3>
   </div>
   <div class="modal-body">
-    {{t "CoughDrop works in web browsers on your computer or mobile device, but you can also find it in the app stores listed below. If you're having trouble finding or installing the app, please contact our support team and we can help figure it out." key='app_stores'}}
+    {{t "%app_name% works in web browsers on your computer or mobile device, but you can also find it in the app stores listed below. If you're having trouble finding or installing the app, please contact our support team and we can help figure it out." key='app_stores'}}
 
     <div style='text-align: center; margin: 50px 0;'>
-      <a href="https://itunes.apple.com/us/app/coughdrop/id1021384570?ls=1&mt=8">
-        <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 50px; margin-top: 5px;"/>
-      </a>
-      <a href="https://play.google.com/store/apps/details?id=com.mycoughdrop.coughdrop">
-        <img src={{path "images/google_play.png"}} alt="google play" style="height: 50px; margin-top: 5px;"/>
-      </a>
-      <a href="http://www.amazon.com/CoughDrop-Inc-AAC/dp/B01BU8RUEY/ref=sr_1_1?s=mobile-apps&ie=UTF8&qid=1458589410&sr=1-1" target="_blank">
-        <img src={{path "images/amazon.png"}} alt="amazon" style="height: 50px; margin-top: 5px;"/>
-      </a>
+      {{#if app_state.domain_settings.ios_store_url}}
+        <a href={{app_state.domain_settings.ios_store_url}}>
+          <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 50px; margin-top: 5px;"/>
+        </a>
+      {{/if}}
+      {{#if app_state.domain_settings.play_store_url}}
+        <a href={{app_state.domain_settings.play_store_url}}>
+          <img src={{path "images/google_play.png"}} alt="google play" style="height: 50px; margin-top: 5px;"/>
+        </a>
+      {{/if}}
+      {{#if app_state.domain_settings.kindle_store_url}}
+        <a href={{app_state.domain_settings.kindle_store_url}} target="_blank">
+          <img src={{path "images/amazon.png"}} alt="amazon" style="height: 50px; margin-top: 5px;"/>
+        </a>
+      {{/if}}
       {{#link-to 'download'}}
         <img src={{path "images/windows.svg"}} alt="windows" style="height: 50px; margin-top: 5px;"/>
       {{/link-to}}

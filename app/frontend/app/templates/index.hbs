@@ -6,21 +6,23 @@
     {{else}}
       {{partial 'index/authenticated'}}
     {{/if}}
-  {{else}}
+  {{else if app_state.domain_settings.full_domain}}
     {{partial 'index/unauthenticated'}}
   {{/if}}
 </div>
 {{#if app_state.login_modal}}
   <div id="login_overlay">
     <div style="text-align: center; margin-bottom: 30px;">
-      <img src={{path 'images/logo-big.png'}} style="width: 100px;"/>
+      <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} style="width: 100px;"/>
     </div>
     {{#unless app_state.no_linky}}
-      <div class="row" style="margin-bottom: 10px;">
-        <div class="col-md-offset-4 col-md-4 col-sm-offset-3 col-sm-6">
-          <a href="#" {{action 'hide_login'}} class='btn btn-default' style="width: 100%;">{{t "New to CoughDrop? Find out more." key='learn_more'}}</a>
+      {{#if app_state.domain_settings.full_domain}}
+        <div class="row" style="margin-bottom: 10px;">
+          <div class="col-md-offset-4 col-md-4 col-sm-offset-3 col-sm-6">
+            <a href="#" {{action 'hide_login'}} class='btn btn-default' style="width: 100%;">{{t "New to %app_name%? Find out more." key='learn_more'}}</a>
+          </div>
         </div>
-      </div>
+      {{/if}}
     {{/unless}}
     {{login-form set_overflow=true}}
   </div>

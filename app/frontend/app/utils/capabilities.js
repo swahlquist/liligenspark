@@ -596,10 +596,6 @@ var capabilities;
             },
             'twitter': {
               'iOS': 'com.apple.social.twitter'
-            },
-            'google_plus': {
-              'Android': 'com.google.android.apps.plus',
-              'iOS': 'com.google.android.apps.plus'
             }
           };
         },

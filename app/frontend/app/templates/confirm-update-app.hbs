@@ -5,7 +5,7 @@
   </div>
   <div class="modal-body">
     <p>
-      {{t "An updated version of CoughDrop has been downloaded and installed. Would you like to restart now? If you don't restart now, you should very soon." key='confirm_update'}}
+      {{t "An updated version of %app_name% has been downloaded and installed. Would you like to restart now? If you don't restart now, you should very soon." key='confirm_update'}}
       <span class='text-muted'>{{t "Updating to %{version}" key='updating_to' version=version}}</span>
     </p>
     <p>{{t "Please note: Any premium voices you have downloaded may no longer work until after you restart the app." key='premium_voices_need_update'}}</p>
@@ -14,7 +14,7 @@
     {{/if}}
   </div>
   <div class="modal-footer">
-    <button class='btn btn-primary' {{action 'restart'}}>{{t "Restart CoughDrop" key='restart_coughdrop'}}</button>
+    <button class='btn btn-primary' {{action 'restart'}}>{{t "Restart %app_name%" key='restart_coughdrop'}}</button>
     <button class='btn btn-default' {{action 'close'}}>{{t "I'll Do it in a Minute" key='restart_soon'}}</button>
   </div>
 {{/modal-dialog}}

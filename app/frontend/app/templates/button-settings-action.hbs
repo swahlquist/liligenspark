@@ -229,7 +229,7 @@
         <div class="col-sm-10 options">
           {{input value=model.url class="form-control" id="link_to" placeholder="https://"}}
           <div style='font-size: 11px;' class='text-muted'>
-            <em>{{t "CoughDrop works great with YouTube and TarHeel Reader links!" key='youtube_and_tarheel_reader_compatible'}}</em>
+            <em>{{t "%app_name% works great with YouTube and TarHeel Reader links!" key='youtube_and_tarheel_reader_compatible'}}</em>
           </div>
         </div>
       </div>
@@ -362,7 +362,7 @@
             <div class="col-sm-10 col-sm-offset-2">
               {{#if non_https}}
                 <p class='form-control-static text-danger'>
-                  {{t "Keep in mind, this URL is http, not https, so it will not load as a popup when using CoughDrop in a web browser" key='http_not_allowed_in_browser'}}
+                  {{t "Keep in mind, this URL is http, not https, so it will not load as a popup when using %app_name% in a web browser" key='http_not_allowed_in_browser'}}
                 </p>
               {{/if}}
               <p class="form-control-static">
@@ -404,9 +404,9 @@
                     {{input value=model.apps.ios.launch_url class="form-control" placeholder="i.e. fb://feed"}}
                   {{else}}
                     {{#if model.apps.ios.launch_url}}
-                      <em class="text-muted">{{t "This app will be launched by CoughDrop" key='app_can_be_launched'}}</em>
+                      <em class="text-muted">{{t "This app will be launched by %app_name%" key='app_can_be_launched'}}</em>
                     {{else}}
-                      <em class="text-danger">{{t "This app won't be launched by CoughDrop" key='app_cant_be_launched'}}</em>
+                      <em class="text-danger">{{t "This app won't be launched by %app_name%" key='app_cant_be_launched'}}</em>
                       <br/><a href="#" {{action "set_custom"}}>advanced</a>
                     {{/if}}
                   {{/if}}
@@ -482,9 +482,9 @@
                     {{input value=model.apps.android.launch_url class="form-control" placeholder="i.e. https://www.twitter.com/"}}
                   {{else}}
                     {{#if model.apps.android.launch_url}}
-                      <em class="text-muted">{{t "This app will be launched by CoughDrop" key='app_can_be_launched'}}</em>
+                      <em class="text-muted">{{t "This app will be launched by %app_name%" key='app_can_be_launched'}}</em>
                     {{else}}
-                      <em class="text-danger">{{t "This app won't be launched by CoughDrop" key='app_cant_be_launched'}}</em>
+                      <em class="text-danger">{{t "This app won't be launched by %app_name%" key='app_cant_be_launched'}}</em>
                       <br/><a href="#" {{action "set_custom"}}>advanced</a>
                     {{/if}}
                   {{/if}}

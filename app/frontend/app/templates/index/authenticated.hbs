@@ -10,7 +10,7 @@
       {{#if blank_slate}}
         <a class="list-group-item" href="#" style="height: 80px;" {{action 'getting_started'}}>
           <span class="glyphicon glyphicon-user"></span>
-          <strong>{{t "Welcome to CoughDrop!" key='welcome_to_coughdrop'}}</strong>
+          <strong>{{t "Welcome to %app_name%!" key='welcome_to_coughdrop'}}</strong>
           <div class="progress" style="margin-bottom: 0;">
             <div class="progress-bar" role="progressbar" aria-valuenow={{blank_slate_percent}} aria-valuemin="0" aria-valuemax="100" style={{blank_slate_percent_style}}>
               <span class="sr-only">{{t "%{pct}% Complete" key='percent_complete' key=blank_slate_percent}}</span>
@@ -316,10 +316,10 @@
             {{t "Let's Get Started" key='lets_get_started'}}
           </h2>
           <div style='text-align: left;'>
-            {{t "Thanks for signing up! If you're new to CoughDrop, don't worry! We want to help make things easy as you get started. Just hit the button below to learn more about how the app works." key='getting_started_with_coughdrop'}}
+            {{t "Thanks for signing up! If you're new to %app_name%, don't worry! We want to help make things easy as you get started. Just hit the button below to learn more about how the app works." key='getting_started_with_coughdrop'}}
           </div>
           <div style='margin: 10px 0 40px;'>
-            <button class='btn btn-lg btn-primary' {{action 'intro'}}>{{t "How To Use CoughDrop" key='how_this_works'}}</button>
+            <button class='btn btn-lg btn-primary' {{action 'intro'}}>{{t "How To Use %app_name%" key='how_this_works'}}</button>
           </div>
         </div>
       {{else if device.needs_install_reminder}}
@@ -329,18 +329,24 @@
             {{t "Try the App" key='use_cough_drop_app'}}
           </h2>
           <div style='text-align: left;'>
-            {{t "CoughDrop works in any web browser, but you can also install the free app in the following stores:" key='app_stores'}}
+            {{t "%app_name% works in any web browser, but you can also install the free app in the following stores:" key='app_stores'}}
           </div>
           <div>
-            <a href="https://itunes.apple.com/us/app/coughdrop/id1021384570?ls=1&mt=8" target="_blank">
-              <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 40px; margin-top: 5px;"/>
-            </a>
-            <a href="https://play.google.com/store/apps/details?id=com.mycoughdrop.coughdrop" target="_blank">
-              <img src={{path "images/google_play.png"}} alt="google play" style="height: 40px; margin-top: 5px;"/>
-            </a><br/>
-            <a href="http://www.amazon.com/CoughDrop-Inc-AAC/dp/B01BU8RUEY/ref=sr_1_1?s=mobile-apps&ie=UTF8&qid=1458589410&sr=1-1" target="_blank">
-              <img src={{path "images/amazon.png"}} alt="amazon" style="height: 40px; margin-top: 5px;"/>
-            </a>
+            {{#if app_state.domain_settings.ios_store_url}}
+              <a href={{app_state.domain_settings.ios_store_url}} target="_blank">
+                <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 40px; margin-top: 5px;"/>
+              </a>
+            {{/if}}
+            {{#if app_state.domain_settings.play_store_url}}
+              <a href={{app_state.domain_settings.play_store_url}} target="_blank">
+                <img src={{path "images/google_play.png"}} alt="google play" style="height: 40px; margin-top: 5px;"/>
+              </a><br/>
+            {{/if}}
+            {{#if app_state.domain_settings.kindle_store_url}}
+              <a href={{app_state.domain_settings.kindle_store_url}} target="_blank">
+                <img src={{path "images/amazon.png"}} alt="amazon" style="height: 40px; margin-top: 5px;"/>
+              </a>
+            {{/if}}
             {{#link-to 'download'}}
               <img src={{path "images/windows.svg"}} alt="windows" style="height: 40px; margin-top: 5px;"/>
             {{/link-to}}
@@ -351,7 +357,7 @@
           <div style="margin-bottom: 20px; text-align: center;">
             <h2>
               <span class="glyphicon glyphicon-refresh"></span>
-              {{t "CoughDrop works Offline!" key='coughdrop_works_offline'}}
+              {{t "%app_name% works Offline!" key='coughdrop_works_offline'}}
             </h2>
             <div style='text-align: left;'>
               {{#if blank_slate}}
@@ -368,7 +374,7 @@
                 {{#if blank_slate}}
                   {{t "Once you're done with the setup checklist and have a home board set, you'll see a \"Sync\" button you can hit to save all your boards locally for offline use." key='you_will_have_sync_for_offline'}}
                 {{else}}
-                  {{t "CoughDrop can work in your browser, even when offline. If you'd like offline support, make sure to hit the \"Sync\" button and your boards will be saved for offline use." key='browser_sync_for_offline'}}
+                  {{t "%app_name% can work in your browser, even when offline. If you'd like offline support, make sure to hit the \"Sync\" button and your boards will be saved for offline use." key='browser_sync_for_offline'}}
                 {{/if}}
               </div>
             </div>
@@ -418,7 +424,7 @@
           {{#unless app_state.currentUser.parsed_notifications}}
             {{#unless app_state.currentUser.pending_board_shares}}
               {{#if show_notifications_explanation}}
-                <em style="font-size: 11px;">{{t "Notifications are alerts sent from other CoughDrop users. Users can send messages to everyone on a communicator's team and they'll appear here for quick review." key='notification_explanation'}}</em>
+                <em style="font-size: 11px;">{{t "Notifications are alerts sent from other %app_name% users. Users can send messages to everyone on a communicator's team and they'll appear here for quick review." key='notification_explanation'}}</em>
               {{else}}
                 {{t "You have no new messages" key='no_new_messages'}}
                 <a href="#" {{action 'show_explanation' 'notifications'}}>

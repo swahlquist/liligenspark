@@ -27,9 +27,9 @@ export default Controller.extend({
   updateTitle: function(str) {
     if(!Ember.testing) {
       if(str) {
-        document.title = str + " - CoughDrop";
+        document.title = str + " - " + CoughDrop.app_name;
       } else {
-        document.title = "CoughDrop";
+        document.title = CoughDrop.app_name;
       }
     }
   },

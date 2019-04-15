@@ -11,7 +11,7 @@
     {{#if blank_slate}}
       <a class="list-group-item" href="#" style="height: 80px;" {{action 'getting_started'}}>
         <span class="glyphicon glyphicon-user"></span>
-        <strong>{{t "Welcome to CoughDrop!" key='welcome_to_coughdrop'}}</strong>
+        <strong>{{t "Welcome to %app_name%!" key='welcome_to_coughdrop'}}</strong>
         <div class="progress" style="margin-bottom: 0;">
           <div class="progress-bar" role="progressbar" aria-valuenow={{blank_slate_percent}} aria-valuemin="0" aria-valuemax="100" style={{blank_slate_percent_style}}>
             <span class="sr-only">{{t "%{pct}% Complete" key='percent_complete' key=blank_slate_percent}}</span>
@@ -376,7 +376,7 @@
             {{#link-to 'user.subscription' app_state.currentUser.user_name class='purchase_link'}}
               <span style='color: #fff;'>
                 <span class={{if app_state.currentUser.expired "glyphicon glyphicon-info-sign expired" "glyphicon glyphicon-info-sign"}}></span>
-                {{t "Purchase CoughDrop" key='purchase_coughdrop'}}
+                {{t "Purchase %app_name%" key='purchase_coughdrop'}}
               </span>
             {{/link-to}}
           </div>
@@ -587,18 +587,24 @@
               {{t "Try the App" key='use_cough_drop_app'}}
             </h2>
             <div style='text-align: left;'>
-              {{t "CoughDrop works in any web browser, but you can also install the free app in the following stores:" key='app_stores'}}
+              {{t "%app_name% works in any web browser, but you can also install the free app in the following stores:" key='app_stores'}}
             </div>
             <div>
-              <a href="https://itunes.apple.com/us/app/coughdrop/id1021384570?ls=1&mt=8" target="_blank">
-                <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 40px; margin-top: 5px;"/>
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.mycoughdrop.coughdrop" target="_blank">
-                <img src={{path "images/google_play.png"}} alt="google play" style="height: 40px; margin-top: 5px;"/>
-              </a><br/>
-              <a href="http://www.amazon.com/CoughDrop-Inc-AAC/dp/B01BU8RUEY/ref=sr_1_1?s=mobile-apps&ie=UTF8&qid=1458589410&sr=1-1" target="_blank">
-                <img src={{path "images/amazon.png"}} alt="amazon" style="height: 40px; margin-top: 5px;"/>
-              </a>
+              {{#if app_state.domain_settings.ios_store_url}}
+                <a href={{app_state.domain_settings.ios_store_url}} target="_blank">
+                  <img src={{path "images/ios_app_store.svg"}} alt="ios app store" style="height: 40px; margin-top: 5px;"/>
+                </a>
+              {{/if}}
+              {{#if app_state.domain_settings.play_store_url}}
+                <a href={{app_state.domain_settings.play_store_url}} target="_blank">
+                  <img src={{path "images/google_play.png"}} alt="google play" style="height: 40px; margin-top: 5px;"/>
+                </a><br/>
+              {{/if}}
+              {{#if app_state.domain_settings.kindle_store_url}}
+                <a href={{app_state.domain_settings.kindle_store_url}} target="_blank">
+                  <img src={{path "images/amazon.png"}} alt="amazon" style="height: 40px; margin-top: 5px;"/>
+                </a>
+              {{/if}}
               {{#link-to 'download'}}
                 <img src={{path "images/windows.svg"}} alt="windows" style="height: 40px; margin-top: 5px;"/>
               {{/link-to}}
@@ -644,7 +650,7 @@
             {{#unless app_state.currentUser.parsed_notifications}}
               {{#unless app_state.currentUser.pending_board_shares}}
                 {{#if show_notifications_explanation}}
-                  <em style="font-size: 11px;">{{t "Notifications are alerts sent from other CoughDrop users. Users can send messages to everyone on a communicator's team and they'll appear here for quick review." key='notification_explanation'}}</em>
+                  <em style="font-size: 11px;">{{t "Notifications are alerts sent from other %app_name% users. Users can send messages to everyone on a communicator's team and they'll appear here for quick review." key='notification_explanation'}}</em>
                 {{else}}
                   {{t "You have no new messages" key='no_new_messages'}}
                   <a href="#" {{action 'show_explanation' 'notifications'}}>

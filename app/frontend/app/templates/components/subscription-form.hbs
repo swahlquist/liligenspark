@@ -234,18 +234,24 @@
             </div>
             {{#if show_expiration_notes}}
               <p class="explanation" style="margin-top: 10px;">
-                {{t "We don't want to shut off anyone's voice, even if funding unexpectedly becomes an issue down the line. When a user's subscription expires CoughDrop will still work as a communication system but premium features like reporting and video notes will be disabled. If you need help with funding please <a href='https://coughdrop.zendesk.com'>contact our support team</a> for more information." key='expiration_notes'}}
+                {{t "We don't want to shut off anyone's voice, even if funding unexpectedly becomes an issue down the line. When a user's subscription expires %app_name% will still work as a communication system but premium features like reporting and video notes will be disabled." key='expiration_notes_pre'}}
+                {{#if app_state.domain_settings.support_url}}
+                  {{t "If you need help with funding please" key='expiration_notes_support'}} 
+                  <a href={{app_state.domain_settings.support_url}}>{{t "contact our support team" key='contact_support_team'}}</a> {{t "for more information." key='expiration_notes'}}
+                {{/if}}
               </p>
             {{/if}}
           </div>
         </div>
       {{/unless}}
-      <div class="form-group">
-        <div class="col-sm-12">
-          {{#link-to 'register' class='btn btn-lg btn-primary'}}{{t "Sign Up for a Free Trial of CoughDrop" key='sign_up_for_trial_coughdrop'}}{{/link-to}}
-          {{#link-to 'gift_purchase' class='btn btn-lg btn-default'}}{{t "Purchase as a Gift" key='purchase_as_a_Gift'}}{{/link-to}}
+      {{#if app_state.domain_settings.full_domain}}
+        <div class="form-group">
+          <div class="col-sm-12">
+            {{#link-to 'register' class='btn btn-lg btn-primary'}}{{t "Sign Up for a Free Trial of %app_name%" key='sign_up_for_trial_coughdrop'}}{{/link-to}}
+            {{#link-to 'gift_purchase' class='btn btn-lg btn-default'}}{{t "Purchase as a Gift" key='purchase_as_a_Gift'}}{{/link-to}}
+          </div>
         </div>
-      </div>
+      {{/if}}
     {{else}}
       <div class="form-group">
         <div class="col-sm-12" style='margin-top: 20px;'>

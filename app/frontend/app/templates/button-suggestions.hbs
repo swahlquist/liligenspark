@@ -39,7 +39,7 @@
           <button class='btn btn-default' {{action 'search_extras'}}>{{t "Go" key='go'}}</button>
         </div>
       {{else}}
-        {{t "Extra Ideas is a CoughDrop feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1'}}
+        {{t "Extra Ideas is a %app_name% feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1'}}
         {{#if user}}
           {{#link-to 'user.subscription' user.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
         {{else if app_state.currentUser}}

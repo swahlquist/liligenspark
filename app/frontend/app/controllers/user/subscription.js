@@ -45,7 +45,7 @@ export default Controller.extend({
               user.reload().then(function() {
                 _this.set('extras_status', null);
                 _this.set('show_premium_symbols', false);
-                modal.success(i18n.t('extras_purchased', "Success! You now have access to premium symbols in CoughDrop!"));
+                modal.success(i18n.t('extras_purchased', "Success! You now have access to premium symbols in %app_name%!"));
               }, function() {
                 _this.set('extras_status', {error: true, user_error: true});
               });

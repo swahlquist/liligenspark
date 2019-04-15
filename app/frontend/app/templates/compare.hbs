@@ -1,12 +1,12 @@
 <div class="row">
   <div class="col-sm-8 col-sm-offset-2">
-    <h2>{{t "Compare CoughDrop" key='compare_coughdrop'}}</h2>
-    <p>{{t "There are lots of communication apps and devices out there, and sometimes it's hard to know what will work well for your communicator. Some apps only run on an iPad and some won't work with hardware or have limited customization. We want to make sure you know everything CoughDrop can offer, so we've put together the comparison chart below." key='compare_notes'}}</p>
+    <h2>{{t "Compare %app_name%" key='compare_coughdrop'}}</h2>
+    <p>{{t "There are lots of communication apps and devices out there, and sometimes it's hard to know what will work well for your communicator. Some apps only run on an iPad and some won't work with hardware or have limited customization. We want to make sure you know everything %app_name% can offer, so we've put together the comparison chart below." key='compare_notes'}}</p>
     <table class='compare table table-striped table-hover'>
       <thead>
         <tr>
           <th>&nbsp;</th>
-          <th style='text-align: center;'>{{t "CoughDrop" key='coughdrop'}}</th>
+          <th style='text-align: center;'>{{t "%app_name%" key='coughdrop'}}</th>
           <th style='text-align: center;'>{{t "iOS Apps" key='most_ios_apps'}}</th>
           <th style='text-align: center;'>{{t "Windows Apps" key='windows_apps'}}</th>
           <th style='text-align: center;'>{{t "Dedicated Devices" key='dedicated_devices'}}</th>
@@ -199,15 +199,17 @@
         </tr>
       </tbody>
     </table>
-    <p>{{t "As you can see, we're pretty proud of everything CoughDrop can do. We wanted to build something that could stay with communicators as their needs develop and change over time, so there are a lot of customizations built-in to help support the needs of each individual." key='proud_of_features'}}</p>
+    <p>{{t "As you can see, we're pretty proud of everything %app_name% can do. We wanted to build something that could stay with communicators as their needs develop and change over time, so there are a lot of customizations built-in to help support the needs of each individual." key='proud_of_features'}}</p>
     {{#if app_state.currentUser}}
-      <p>{{t "Excited by what you see? Please share CoughDrop with others to help spread the good word!" key='please_share_coughdrop'}}</p>
-    {{else}}
+      <p>{{t "Excited by what you see? Please share %app_name% with others to help spread the good word!" key='please_share_coughdrop'}}</p>
+    {{else if app_state.domain_settings.full_domain}}
       <p>
         {{t "Ready to try it out yourself?" key='read_to_try_it_out'}}
-        {{#link-to 'register'}}{{t "Sign up for a CoughDrop account" key='sign_up'}}{{/link-to}}
-        {{t "to see how powerful and flexible CoughDrop really is!" key='to_see_coughdrop_for_yourself'}}
+        {{#link-to 'register'}}{{t "Sign up for a %app_name% account" key='sign_up'}}{{/link-to}}
+        {{t "to see how powerful and flexible %app_name% really is!" key='to_see_coughdrop_for_yourself'}}
       </p>
+    {{else}}
+      <p>{{t "Excited by what you see? Please share %app_name% with others to help spread the good word!" key='please_share_coughdrop'}}</p>
     {{/if}}
   </div>
 </div>

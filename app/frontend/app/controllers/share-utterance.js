@@ -95,7 +95,11 @@ export default modal.ModalController.extend({
     return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(this.get('utterance_record.link'));
   }.property('utterance_record.link'),
   twitter_url: function() {
-    return 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('utterance_record.link')) + '&text=' + encodeURIComponent(this.get('sentence')) + '&related=CoughDropAAC';
+    var res = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('utterance_record.link')) + '&text=' + encodeURIComponent(this.get('sentence'));
+    if(app_state.get('domain_settings.twitter_handle')) {
+      res = res + '&related=' + encodeURIComponent(app_state.get('domain_settings.twitter_handle'));
+    } 
+    return res;
   }.property('utterance_record.link', 'sentence'),
   actions: {
     copy_event(res) {

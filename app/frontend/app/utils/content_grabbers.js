@@ -717,7 +717,7 @@ var pictureGrabber = EmberObject.extend({
   },
   flickr_search: function(text) {
     if(!window.flickr_key) {
-      return RSVP.reject(i18n.t('flickr_not_configured', "Flickr hasn't been properly configured for CoughDrop"));
+      return RSVP.reject(i18n.t('flickr_not_configured', "Flickr hasn't been properly configured for %app_name%"));
     }
     // https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=5b397c920edee06dafeb630957e0a99e&text=cat&safe_search=2&media=photos&extras=license%2C+owner_name&format=json&nojsoncallback=1
     return persistence.ajax('https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=' + window.flickr_key + '&text=' + text + '&safe_search=1&media=photos&license=2%2C3%2C4%2C5%2C6%2C7&extras=license%2C+owner_name&format=json&nojsoncallback=1', { type: 'GET'
@@ -782,7 +782,7 @@ var pictureGrabber = EmberObject.extend({
   },
   pixabay_search: function(text, filter) {
     if(!window.pixabay_key) {
-      return RSVP.reject(i18n.t('pixabay_not_configured', "Pixabay hasn't been properly configured for CoughDrop"));
+      return RSVP.reject(i18n.t('pixabay_not_configured', "Pixabay hasn't been properly configured for %app_name%"));
     }
     var type = 'photo';
     if(filter == 'vector') { type = 'vector'; }
@@ -904,7 +904,7 @@ var pictureGrabber = EmberObject.extend({
       license: {
         type: 'CC By',
         copyright_notice_url: 'https://creativecommons.org/licenses/by/3.0/us/',
-        author_name: 'CoughDrop',
+        author_name: CoughDrop.app_name,
         author_url: 'https://www.mycoughdrop.com',
         uneditable: true
       }

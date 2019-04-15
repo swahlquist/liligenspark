@@ -354,28 +354,28 @@ var Subscription = EmberObject.extend({
     })
   },
   description: function() {
-    var res = i18n.t('coughdrop_license', "CoughDrop license");
+    var res = i18n.t('coughdrop_license', "%app_name% license");
     if(this.get('user_type') == 'communicator') {
       if(this.get('eval')) {
         if(this.get('subscription_type') == 'monthly') {
-          res = i18n.t('monthly_sub', "CoughDrop monthly evaluation account");
+          res = i18n.t('monthly_sub', "%app_name% monthly evaluation account");
         } else {
-          res = i18n.t('long_term_sub', "CoughDrop evaluation account");
+          res = i18n.t('long_term_sub', "%app_name% evaluation account");
         }
       } else if(this.get('subscription_type') == 'extras') {
-        res = i18n.t('extras_purchase', "CoughDrop premium symbols")
+        res = i18n.t('extras_purchase', "%app_name% premium symbols")
       } else {
         if(this.get('subscription_type') == 'monthly') {
-          res = i18n.t('monthly_sub', "CoughDrop monthly subscription");
+          res = i18n.t('monthly_sub', "%app_name% monthly subscription");
         } else {
-          res = i18n.t('long_term_sub', "CoughDrop 5-year purchase");
+          res = i18n.t('long_term_sub', "%app_name% 5-year purchase");
         }
       }
     } else {
       if(this.get('subscription_type') == 'monthly') {
-        res = i18n.t('slp_monthly_sub', "CoughDrop supporting-role");
+        res = i18n.t('slp_monthly_sub', "%app_name% supporting-role");
       } else {
-        res = i18n.t('slp_long_term_sub', "CoughDrop supporting-role 5-year purchase");
+        res = i18n.t('slp_long_term_sub', "%app_name% supporting-role 5-year purchase");
       }
     }
     if(this.get('extras')) {
@@ -489,7 +489,7 @@ Subscription.reopenClass({
       console.error('purchase_resetting_defer');
     }
     Subscription.handler.open({
-      name: subscription.get('name') || subscription.get('user.name') || "CoughDrop",
+      name: subscription.get('name') || subscription.get('user.name') || CoughDrop.app_name,
       description: subscription.get('description'),
       amount: amount,
       panelLabel: subscription.get('purchase_description'),

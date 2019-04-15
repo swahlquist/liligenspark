@@ -85,6 +85,8 @@ CoughDrop.grabRecord = persistence.DSExtend.grabRecord;
 CoughDrop.embedded = !!location.href.match(/embed=1/);
 CoughDrop.ad_referrer = (location.href.match(/\?ref=([^#]+)/) || [])[1];
 CoughDrop.referrer = document.referrer;
+CoughDrop.app_name = CoughDrop.app_name || (window.domain_settings || {}).app_name || "CoughDrop";
+CoughDrop.company_name = CoughDrop.company_name || (window.domain_settings || {}).company_name || "CoughDrop";
 
 CoughDrop.track_error = function(msg, stack) {
   var error = new Error();

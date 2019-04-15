@@ -2,10 +2,10 @@
   <div class="col-sm-6 col-sm-offset-3">
     {{#if stashes.enabled}}
       <div class='col-sm-8 col-sm-offset-4'>
-        <h2>{{t "Join CoughDrop" key='join_coughdrop'}}</h2>
+        <h2>{{t "Join %app_name%" key='join_coughdrop'}}</h2>
       </div>
       <div class='col-sm-8 col-sm-offset-4' style='margin-bottom: 10px;'>
-        {{t "Ready to try CoughDrop out for yourself? Every signup gets 2 months free to kick the tires and see if the app is going to work for them, no credit card required!" key='ready_to_try_coughdrop'}}
+        {{t "Ready to try %app_name% out for yourself? Every signup gets 2 months free to kick the tires and see if the app is going to work for them, no credit card required!" key='ready_to_try_coughdrop'}}
       </div>
       <form class="form-horizontal" {{action "saveProfile" on="submit"}}>
       <div class="form-group">
@@ -56,7 +56,7 @@
         <div class="col-sm-offset-4 col-sm-8">
           <p><label style="font-weight: normal;">
             {{input type="checkbox" checked=user.preferences.cookies}}
-            {{t "Send usage data to CoughDrop for analytics, error tracking and feature improvements" key='allow_cookies'}}
+            {{t "Send usage data to %app_name% for analytics, error tracking and feature improvements" key='allow_cookies'}}
           </label></p>
           <p><label style="font-weight: normal;">
             {{input type="checkbox" checked=model.terms_agree}}

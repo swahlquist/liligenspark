@@ -13,6 +13,10 @@ export default Route.extend({
   setupController: function(controller, model) {
     controller.set('model', model);
     controller.set('user', model);
+    if(!app_state.get('domain_settings.full_domain')) {
+      controller.transitionToRoute('index');
+      return;
+    }
   },
   actions: {
     saveProfile: function() {

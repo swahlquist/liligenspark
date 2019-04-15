@@ -10,6 +10,10 @@ export default app_state.ScrollTopRoute.extend({
       controller.transitionToRoute('limited');
       return;
     }
+    if(!app_state.get('domain_settings.full_domain')) {
+      controller.transitionToRoute('index');
+      return;
+    }
     controller.set('model', model);
     controller.set('subscription', Subscription.create());
 

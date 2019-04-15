@@ -2,6 +2,7 @@ import Ember from 'ember';
 import Route from '@ember/routing/route';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
+import app_state from '../utils/app_state';
 
 export default Route.extend({
   controllerName: 'redeem',
@@ -19,6 +20,10 @@ export default Route.extend({
   },
   setupController: function(controller, model) {
     var _this = this;
+    if(!app_state.get('domain_settings.full_domain')) {
+      controller.transitionToRoute('index');
+      return;
+    }
 
     controller.set('model', model);
   }
