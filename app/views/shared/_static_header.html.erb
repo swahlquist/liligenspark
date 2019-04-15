@@ -2,9 +2,9 @@
   <span id="nav_header">
     <h1>
       <a href="/">
-        <img alt="CoughDrop" src="/images/logo-big.png">
+        <img alt="CoughDrop" src="<%= (@domain_overrides['settings'] || {})['logo_url'] || "/images/logo-big.png" %>">
         <span>
-          COUGHDROP
+          <%= (@domain_overrides['settings'] || {})['app_name'] || "COUGHDROP" %>
         </span>
       </a>
     </h1>

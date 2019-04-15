@@ -14,8 +14,14 @@ module JsonApi::Organization
     if args.key?(:permissions)
       json['permissions'] = org.permissions_for(args[:permissions])
     end
+
     
     if json['permissions'] && json['permissions']['edit']
+      json['custom_domain'] = !!org.custom_domain
+      if json['custom_domain']
+        json['hosts'] = org.settings['hosts'] || []
+        json['host_settings'] = org.settings['host_settings'] || {}
+      end
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0
       json['used_licenses'] = 0

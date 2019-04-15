@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   before_action :set_host
   before_action :check_api_token
   before_action :replace_helper_params
+  before_action :load_domain
   before_action :set_paper_trail_whodunnit
   after_action :log_api_call
   before_bugsnag_notify :add_user_info_to_bugsnag
@@ -15,7 +16,40 @@ class ApplicationController < ActionController::Base
     end
     JsonApi::Json.set_host("#{request.protocol}#{request.host_with_port}")
   end
-  
+
+  def load_domain
+    host = request.host
+    @domain_overrides = {
+      'css' => nil,
+      'domain' => host,
+      'settings' => {
+        app_name: "CoughDrop",
+        company_name: "CoughDrop",
+        ios_store_url: ENV['IOS_STORE_URL'],
+        play_store_url: ENV['PLAY_STORE_URL'],
+        kindle_store_url: ENV['KINDLE_STORE_URL'],
+        windows_32_bit_url: ENV['WINDOWS_32_BIT_URL'],
+        windows_64_bit_url: ENV['WINDOWS_64_BIT_URL'],
+        blog_url: ENV['BLOG_URL'],
+        twitter_url: ENV['TWITTER_URL'],
+        twitter_handle: ENV['TWITTER_HANDLE'],
+        facebook_url: ENV['FACEBOOK_URL'],
+        youtube_url:ENV['YOUTUBE_URL'],
+        support_url: ENV['SUPPORT_URL'],
+        full_domain: true
+      }
+    }
+    domain = (Organization.load_domains || {})[host]
+    if domain
+      @domain_overrides = {
+        'css' => domain['css_url'],
+        'domain' => host,
+        'settings' => domain
+      }
+    end
+    true
+  end
+
   def log_api_call
     time = @time ? (Time.now - @time) : nil
     ApiCall.log(@token, @api_user, request, response, time)

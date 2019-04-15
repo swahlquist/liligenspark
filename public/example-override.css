@@ -1,0 +1,7 @@
+#content.index.with_user {
+  border-top-color: #89de8d;
+  border-bottom-color: #c7c55d;
+}
+header.new_index:not(.speaking) {
+  background: #ceeaff;
+}

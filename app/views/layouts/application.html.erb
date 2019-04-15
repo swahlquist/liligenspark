@@ -55,6 +55,10 @@
 
  
   <%= stylesheet_link_tag "application", media: "all" %>
+  <link href="<%= @domain_overrides.to_json %>" />
+  <% if @domain_overrides && @domain_overrides['css'] %>
+    <%= stylesheet_link_tag @domain_overrides['css'] %>
+  <% end %>
   <!-- rumor has it android needs absolute paths for these to work -->
   <link href="https://www.mycoughdrop.com/icons/logo-60.png" rel="apple-touch-icon" />
   <link href="https://www.mycoughdrop.com/icons/logo-76.png" rel="apple-touch-icon" sizes="76x76" />
@@ -80,7 +84,13 @@
     </div>
   </div>
 <% end %>
-<script>
+<% if @domain_overrides && @domain_overrides['settings'] %>
+  <script style='text/javascript'>
+    window.domain_settings = <%= (@domain_overrides['settings'] || {}).to_json.html_safe %>;
+    window.domain_settings['domain'] = "<%= @domain_overrides['domain'] %>";
+  </script>
+<% end %>
+<script type='text/javascript'>
   <% if ENV['SYMBOL_PROXY_KEY'] %>
     window.symbol_proxy_key = "<%= ENV['SYMBOL_PROXY_KEY'] %>";
   <% end %>

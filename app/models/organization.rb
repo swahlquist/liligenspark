@@ -371,6 +371,7 @@ class Organization < ActiveRecord::Base
   end
   
   def touch_parent
+    Organization.schedule(:load_domains, true) if self.custom_domain
     return unless self.parent_organization_id
     Organization.where(id: self.parent_organization_id).update_all(updated_at: Time.now)
     true
@@ -674,6 +675,21 @@ class Organization < ActiveRecord::Base
     end
     res
   end
+
+  def self.load_domains(force=false)
+    domains = JSON.parse(RedisInit.default.get('domain_org_ids')) rescue nil
+    if !domains || force
+      domains = {}
+      Organization.where(custom_domain: true).order('id ASC').each do |org|
+        puts org.settings['hosts'].to_json
+        (org.settings['hosts'] || []).each do |host|
+          domains[host] ||= org.settings['host_settings'] || {}
+        end
+      end
+      RedisInit.default.setex('domain_org_ids', 12.hours.from_now.to_i, domains.to_json) rescue nil
+    end
+    domains
+  end
   
   def process_params(params, non_user_params)
     self.settings ||= {}
@@ -717,6 +733,22 @@ class Organization < ActiveRecord::Base
     if params[:licenses_expire]
       time = Time.parse(params[:licenses_expire])
       self.settings['licenses_expire'] = time.iso8601
+    end
+
+    if params[:host_settings]
+      self.settings['host_settings'] ||= {}
+      self.settings['host_settings']['css'] = params[:host_settings]['css_url']
+      self.settings['host_settings']['app_name'] = params[:host_settings]['app_name'] || "CoughDrop"
+      self.settings['host_settings']['company_name'] = params[:host_settings]['company_name'] || "CoughDrop"
+      ['ios_store_url', 'play_store_url', 'kindle_store_url', 'windows_32_bit_url', 'windows_64_bit_url',
+                'blog_url', 'twitter_url', 'twitter_handle', 'facebook_url', 'youtube_url',
+                'support_url', 'logo_url', 'css_url'].each do |str|
+                
+        if params[:host_settings][str] != nil
+          val = str.match(/_url/) ? process_url(params[:host_settings][str]) : process_string(params[:host_settings][str])
+          self.settings['host_settings'][str] = val
+        end
+      end
     end
     
     if params[:home_board_key]
