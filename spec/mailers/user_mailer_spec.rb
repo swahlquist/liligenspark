@@ -8,7 +8,6 @@ describe UserMailer, :type => :mailer do
   describe "schedule_delivery" do
     it "should schedule deliveries" do
       UserMailer.schedule_delivery('confirm_registration', 4)
-      puts Worker.scheduled_actions('priority').to_json
       expect(Worker.scheduled_for?('priority', UserMailer, :deliver_message, 'confirm_registration', 4)).to eq(true)
     end
   end

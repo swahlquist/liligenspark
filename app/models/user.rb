@@ -541,8 +541,9 @@ class User < ActiveRecord::Base
     self.settings['ad_referrer'] ||= params['ad_referrer'] if params['ad_referrer']
     if params['authored_organization_id'] && !self.id
       org = Organization.find_by_global_id(params['authored_organization_id'])
-      if org
+      if org && non_user_params[:author] && org.allows?(non_user_params[:author], 'edit')
         self.settings['authored_organization_id'] = org.global_id
+        self.settings['pending'] = false
       end
     end
     if params['last_message_read']
@@ -706,7 +707,7 @@ class User < ActiveRecord::Base
       end
     end
     
-    self.settings['pending'] = non_user_params[:pending] if non_user_params[:pending] != nil
+    self.settings['pending'] = non_user_params[:pending] if self.settings['pending'] != false && non_user_params[:pending] != nil
     self.settings['public'] = !!params['public'] if params['public'] != nil
     self.settings['admin'] = !!non_user_params['admin'] if non_user_params['admin'] != nil
     if params['password'] && params['password'] != ""

@@ -92,7 +92,7 @@ class Api::UsersController < ApplicationController
   end
   
   def create
-    user = User.process_new(params['user'], {:pending => true})
+    user = User.process_new(params['user'], {:pending => true, :author => @api_user})
     if !user || user.errored?
       return api_error(400, {error: "user creation failed", errors: user && user.processing_errors})
     end
