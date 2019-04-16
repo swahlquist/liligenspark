@@ -641,13 +641,13 @@ CoughDrop.Board = DS.Model.extend({
   load_button_set: function(force) {
     var _this = this;
     if(this.get('button_set') && !force) {
-      return RSVP.resolve(this.get('button_set'));
+      return this.get('button_set').load_buttons();
     }
-    if(!this.get('id')) { return RSVP.reject({}); }
+    if(!this.get('id')) { return RSVP.reject({error: 'board has no id'}); }
     var button_set = CoughDrop.store.peekRecord('buttonset', this.get('id'));
     if(button_set && !force) {
       this.set('button_set', button_set);
-      return RSVP.resolve(button_set);
+      return button_set.load_buttons();
     } else {
       var valid_button_set = null;
       var button_sets = CoughDrop.store.peekAll('buttonset').map(function(i) { return i; }).forEach(function(bs) {
@@ -660,7 +660,7 @@ CoughDrop.Board = DS.Model.extend({
       if(valid_button_set && !force) {
         if(!_this.get('fresh') || valid_button_set.get('fresh')) {
           _this.set('button_set', valid_button_set);
-          return RSVP.resolve(valid_button_set);
+          return valid_button_set.load_buttons();
         } else{
         }
       }
@@ -668,7 +668,7 @@ CoughDrop.Board = DS.Model.extend({
       var res = CoughDrop.Buttonset.load_button_set(this.get('id')).then(function(button_set) {
         _this.set('button_set', button_set);
         if((_this.get('fresh') || force) && !button_set.get('fresh')) {
-          return button_set.reload();
+          return button_set.reload().then(function(bs) { return bs.load_buttons(); });
         } else {
           return button_set;
         }
