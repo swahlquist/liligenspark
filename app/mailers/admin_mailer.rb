@@ -5,16 +5,19 @@ class AdminMailer < ActionMailer::Base
   
   def message_sent(message_id)
     @message = ContactMessage.find_by_global_id(message_id)
-    if ENV['NEW_REGISTRATION_EMAIL'] && @message
-      mail(to: ENV['NEW_REGISTRATION_EMAIL'], subject: "CoughDrop - \"Contact Us\" Message Received", reply_to: @message.settings['email'])
+    recipient = JsonApi::Json.current_domain['settings']['admin_email'] || ENV['NEW_REGISTRATION_EMAIL']
+    if recipient && @message
+      mail(to: recipient, subject: "#{app_name} - \"Contact Us\" Message Received", reply_to: @message.settings['email'])
     end
   end
   
   def opt_out(user_id, reason)
+    return unless full_domain_enabled
     @user = User.find_by_global_id(user_id)
     @reason = reason || 'unspecified'
-    if ENV['NEW_REGISTRATION_EMAIL'] && @user
-      mail(to: ENV['NEW_REGISTRATION_EMAIL'], subject: "CoughDrop - \"Opt-Out\" Requested")
+    recipient = JsonApi::Json.current_domain['settings']['admin_email'] || ENV['NEW_REGISTRATION_EMAIL']
+    if recipient && @user
+      mail(to: recipient, subject: "#{app_name} - \"Opt-Out\" Requested")
     end
   end
 end

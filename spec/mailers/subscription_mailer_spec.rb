@@ -1,6 +1,10 @@
 require "spec_helper"
 
 describe SubscriptionMailer, :type => :mailer do
+  after(:each) do
+    JsonApi::Json.load_domain("default")
+  end
+
   describe "one_day_until_expiration" do
     it "should generate the correct message" do
       u = User.create(:settings => {'name' => 'fred', 'email' => 'fred@example.com'})
@@ -274,6 +278,32 @@ describe SubscriptionMailer, :type => :mailer do
       expect(text).to match(/notice that the gift you purchased/)
       expect(text).to match(/"#{gift.code}"/)
       expect(text).to match(/4 years/)
+    end
+
+    it "should skip delivery for non-full domain overrides" do
+      o = Organization.create(custom_domain: true)
+      o.settings['hosts'] = ['cheddar.org']
+      o.settings['host_settings'] = {}
+      o.settings['host_settings']['admin_email'] = "Admin <admin@example.com>"
+      o.settings['host_settings']['app_name'] = "Cheddar"
+      o.save
+      Worker.process_queues
+      JsonApi::Json.load_domain('cheddar.org')
+      expect(JsonApi::Json.current_domain['settings']['admin_email']).to eq("Admin <admin@example.com>")
+
+      giver = User.create(:settings => {'email' => 'fred@example.com'})
+      recipient = User.create(:settings => {'email' => 'susan@example.com'})
+      
+      gift = GiftPurchase.process_new({}, {
+        'giver' => giver,
+        'email' => 'bob@example.com',
+        'seconds' => 4.years.to_i
+      })
+      gift.settings['receiver_id'] = recipient.global_id
+      gift.save
+      
+      m = SubscriptionMailer.gift_redeemed(gift.global_id)
+      expect(m.to).to eq(nil)
     end
   end
   

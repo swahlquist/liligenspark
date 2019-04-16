@@ -13,6 +13,16 @@ module Worker
     methods
   end
 
+  def self.domain_id
+    JsonApi::Json.current_host || 'default'
+  end
+
+  def self.set_domain_id(val)
+    @@domain_id = val
+    JsonApi::Json.set_host(val)
+    JsonApi::Json.load_domain(val)
+  end
+
   def self.requeue_failed(method)
     count = Resque::Failure.count
     count.times do |i|

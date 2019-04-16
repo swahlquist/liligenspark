@@ -1,6 +1,6 @@
 class UserMailer < ActionMailer::Base
   include General
-  default from: "CoughDrop <brian@coughdropaac.com>"
+  default from: ENV['DEFAULT_EMAIL_FROM']
   layout 'email'
   
   def self.bounce_email(email)
@@ -25,9 +25,10 @@ class UserMailer < ActionMailer::Base
       rescue => e
       end
     end
-    if ENV['NEW_REGISTRATION_EMAIL']
+    recipient = JsonApi::Json.current_domain['settings']['admin_email'] || ENV['NEW_REGISTRATION_EMAIL']
+    if recipient
       user_type = @user.supporter_registration? ? 'Supervisor' : 'Communicator'
-      mail(to: ENV['NEW_REGISTRATION_EMAIL'], subject: "CoughDrop - New #{user_type} Registration", reply_to: @user.settings['email'])
+      mail(to: recipient, subject: "#{app_name} - New #{user_type} Registration", reply_to: @user.settings['email'])
     end
   end
 
@@ -59,7 +60,8 @@ class UserMailer < ActionMailer::Base
   
   def login_no_user(email)
     @email = email
-    mail(to: email, subject: "CoughDrop - Login Help")
+    @full_domain = full_domain_enabled
+    mail(to: email, subject: "#{app_name} - Login Help")
   end
   
   def forgot_password(user_ids)
@@ -198,6 +200,7 @@ class UserMailer < ActionMailer::Base
   end
 
   def usage_reminder(user_id)
+    return unless full_domain_enabled
     @user = User.find_by_global_id(user_id)
     
     @logging_disabled = !@user.settings['preferences']['logging']

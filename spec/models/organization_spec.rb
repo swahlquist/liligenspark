@@ -1573,4 +1573,98 @@ describe Organization, :type => :model do
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(true)
     end
   end
+
+  describe "load_domains" do
+    it 'should use the cached value if found' do
+      RedisInit.default.set('domain_org_ids', {'a' => 1}.to_json)
+      expect(Organization.load_domains).to eq({'a' => 1})
+    end
+
+    it 'should look up current orgs for a value' do
+      o1 = Organization.create
+      o1.settings['hosts'] = ['a.com']
+      o1.settings['host_settings'] = {'app_name' => 'A'}
+      o1.save
+      o2 = Organization.create(custom_domain: true)
+      o2.settings['hosts'] = ['b.com', 'c.com']
+      o2.settings['host_settings'] = {'app_name' => 'B'}
+      o2.save
+      o3 = Organization.create(custom_domain: true)
+      o3.settings['hosts'] = ['c.com', 'd.com']
+      o3.settings['host_settings'] = {'app_name' => 'D'}
+      o3.save
+      expect(Organization.load_domains).to eq({
+        'b.com' => {'app_name' => 'B'},
+        'c.com' => {'app_name' => 'B'},
+        'd.com' => {'app_name' => 'D'}
+      })
+    end
+
+    it 'should not use the cached valud if force=true' do
+      RedisInit.default.set('domain_org_ids', {'a' => 1}.to_json)
+      o1 = Organization.create
+      o1.settings['hosts'] = ['a.com']
+      o1.settings['host_settings'] = {'app_name' => 'A'}
+      o1.save
+      o2 = Organization.create(custom_domain: true)
+      o2.settings['hosts'] = ['b.com', 'c.com']
+      o2.settings['host_settings'] = {'app_name' => 'B'}
+      o2.save
+      o3 = Organization.create(custom_domain: true)
+      o3.settings['hosts'] = ['c.com', 'd.com']
+      o3.settings['host_settings'] = {'app_name' => 'D'}
+      o3.save
+      expect(Organization.load_domains).to eq({'a' => 1})
+      expect(Organization.load_domains(true)).to eq({
+        'b.com' => {'app_name' => 'B'},
+        'c.com' => {'app_name' => 'B'},
+        'd.com' => {'app_name' => 'D'}
+      })
+    end
+
+    it 'should cache the latest results' do
+      o1 = Organization.create
+      o1.settings['hosts'] = ['a.com']
+      o1.settings['host_settings'] = {'app_name' => 'A'}
+      o1.save
+      o2 = Organization.create(custom_domain: true)
+      o2.settings['hosts'] = ['b.com', 'c.com']
+      o2.settings['host_settings'] = {'app_name' => 'B'}
+      o2.save
+      o3 = Organization.create(custom_domain: true)
+      o3.settings['hosts'] = ['c.com', 'd.com']
+      o3.settings['host_settings'] = {'app_name' => 'D'}
+      o3.save
+      expect(RedisInit.default).to receive(:setex) do |key, ts, str|
+        expect(key).to eq('domain_org_ids')
+        expect(ts).to be < (72.hours.from_now.to_i + 10)
+        expect(ts).to be > (72.hours.from_now.to_i - 10)
+        json = JSON.parse(str)
+        expect(json).to eq({
+          'b.com' => {'app_name' => 'B'},
+          'c.com' => {'app_name' => 'B'},
+          'd.com' => {'app_name' => 'D'}
+        })
+      end
+      expect(Organization.load_domains).to eq({
+        'b.com' => {'app_name' => 'B'},
+        'c.com' => {'app_name' => 'B'},
+        'd.com' => {'app_name' => 'D'}
+      })
+    end
+
+    it 'should invalidate the cache when a custom org is updated' do
+      RedisInit.default.set('domain_org_ids', {'a' => 1}.to_json)
+      o3 = Organization.create(custom_domain: true)
+      o3.settings['hosts'] = ['c.com', 'd.com']
+      o3.settings['host_settings'] = {'app_name' => 'D'}
+      o3.save
+      expect(Organization.load_domains).to eq({'a' => 1})
+      Worker.process_queues
+      expect(Organization.load_domains).to eq({
+        'c.com' => {'app_name' => 'D'},
+        'd.com' => {'app_name' => 'D'}
+      })
+    end
+  end
 end

@@ -363,5 +363,31 @@ describe ApplicationController, :type => :controller do
       expect(GoSecure.valid_browser_token?(response.headers['BROWSER_TOKEN'])).to eq(true)
     end
   end
-end
 
+  describe "load_domains" do
+    it "should load the domain-override settings" do
+      get :index
+      expect(assigns[:domain_overrides]).to_not eq(nil)
+      expect(assigns[:domain_overrides]['host']).to eq('test.host')
+      expect(assigns[:domain_overrides]['settings']['app_name']).to eq('CoughDrop')
+      expect(assigns[:domain_overrides]['settings']['company_name']).to eq('CoughDrop')
+    end
+
+    it "should load org-set settings" do
+      o = Organization.create(custom_domain: true)
+      o.settings['hosts'] = ['bacon.com']
+      o.settings['host_settings'] = {
+        'css_url' => 'asdf',
+        'app_name' => 'bacon'
+      }
+      o.save
+      request.host = "bacon.com"
+      get :index
+      expect(assigns[:domain_overrides]).to_not eq(nil)
+      expect(assigns[:domain_overrides]['host']).to eq('bacon.com')
+      expect(assigns[:domain_overrides]['css']).to eq('asdf')
+      expect(assigns[:domain_overrides]['settings']['app_name']).to eq('bacon')
+      expect(assigns[:domain_overrides]['settings']['company_name']).to eq('Someone')
+    end
+  end
+end

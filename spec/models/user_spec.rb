@@ -644,6 +644,27 @@ describe User, :type => :model do
       expect(gp['contact_type']).to eq('sms')
       expect(gp['image_url']).to match(/amazonaws/)
     end
+
+    it "should only allow settings authored_organization_id (and unpending) if an org admin" do
+      o = Organization.create
+      u = User.process_new({'authored_organization_id' => o.global_id}, {'pending' => true})
+      expect(u.settings['authored_organization_id']).to eq(nil)
+      expect(u.settings['pending']).to eq(true)
+      o.add_manager(u.user_name, true)
+      u2 = User.process_new({'authored_organization_id' => o.global_id}, {'pending' => true, 'author' => u.reload})
+      expect(u2.settings['authored_organization_id']).to eq(o.global_id)
+      expect(u2.settings['pending']).to eq(false)
+    end
+
+    it "should only allow setting authored_organization_id on create" do
+      u = User.create
+      o = Organization.create
+      o.add_manager(u.user_name, true)
+      u.reload
+      u.process({'authored_organization_id' => o.global_id}, {'pending' => true, 'author' => u})
+      expect(u.settings['authored_organization_id']).to eq(nil)
+      expect(u.settings['pending']).to eq(true)
+    end
   end
 
   describe "replace_board" do

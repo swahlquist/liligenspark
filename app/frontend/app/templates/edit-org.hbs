@@ -52,6 +52,12 @@
           </div>
         </div>
         <div class="form-group">
+          <label for="admin_email" class="col-sm-3 control-label">{{t "Admin Email" key='admin_email'}}</label>
+          <div class="col-sm-7">
+            {{input value=model.org.host_settings.admin_email class="form-control" id="admin_email" placeholder="for alerts and messages"}}
+          </div>
+        </div>
+        <div class="form-group">
           <label for="logo_url" class="col-sm-3 control-label">{{t "Logo Image URL" key='logo_url'}}</label>
           <div class="col-sm-7">
             {{input value=model.org.host_settings.logo_url class="form-control" id="logo_url" placeholder="100px x 100px"}}

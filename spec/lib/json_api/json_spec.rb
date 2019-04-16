@@ -116,18 +116,31 @@ describe JsonApi::Json do
       expect(Worker).to receive(:thread_id).and_return('123456_456')
       JsonApi::Json.set_host('fred')
       hosts = JsonApi::Json.class_variable_get(:@@running_hosts)
-      expect(hosts).to eq({
-        '12345_123' => 'bob', 
-        '123456_456' => 'fred'
+      expect(hosts.keys.sort).to eq(['123456_456', '12345_123'])
+      expect(hosts['12345_123']['host']).to eq('bob')
+      expect(hosts['12345_123']['timestamp']).to be > 10.seconds.ago.to_i
+      expect(hosts['123456_456']['host']).to eq('fred')
+      expect(hosts['123456_456']['timestamp']).to be > 10.seconds.ago.to_i
+    end
+
+    it "should clear old hosts on set" do
+      JsonApi::Json.class_variable_set(:@@running_hosts, {
+        '12345_123' => {'host' => 'bob', 'timestamp' => 5.minutes.ago.to_i}, 
+        '12345_1234' => {'host' => 'sam', 'timestamp' => 90.minutes.ago.to_i}, 
+        '123456_234' => {'host' => 'fred'},
       })
+      expect(Worker).to receive(:thread_id).and_return('98765')
+      JsonApi::Json.set_host('sam')
+      hosts = JsonApi::Json.class_variable_get(:@@running_hosts)
+      expect(hosts.keys.sort).to eq(["12345_123", "98765"])
     end
   end
   
   describe "current_host" do
     it "should return found hosts, or the default if none found" do
       JsonApi::Json.class_variable_set(:@@running_hosts, {
-        '12345_123' => 'bob', 
-        '123456_234' => 'fred'
+        '12345_123' => {'host' => 'bob'}, 
+        '123456_234' => {'host' => 'fred'},
       })
       expect(Worker).to receive(:thread_id).and_return('12345_123')
       expect(JsonApi::Json.current_host).to eq('bob')
@@ -137,4 +150,72 @@ describe JsonApi::Json do
       expect(JsonApi::Json.current_host).to eq(ENV['DEFAULT_HOST'])
     end
   end
+
+  describe "load_domain" do
+    it 'should load the domain from the org' do
+      expect(Organization).to receive(:load_domains).and_return({'bacon.com' => {'app_name' => 'bacon'}})
+      host = JsonApi::Json.load_domain('bacon.com')
+      expect(host).to_not eq(nil)
+      expect(host['host']).to eq('bacon.com')
+      expect(host['settings']['app_name']).to eq('bacon')
+    end
+
+    it 'should enforce needed values' do
+      expect(Organization).to receive(:load_domains).and_return({'bacon.com' => {'app_name' => 'bacon'}})
+      host = JsonApi::Json.load_domain('bacon.com')
+      expect(host).to_not eq(nil)
+      expect(host['host']).to eq('bacon.com')
+      expect(host['settings']['company_name']).to eq('Someone')
+    end
+
+    it 'should fall back to the default domain settings' do
+      expect(Organization).to receive(:load_domains).and_return({'bacon.com' => {'app_name' => 'bacon'}})
+      host = JsonApi::Json.load_domain('bacon.net')
+      expect(host).to_not eq(nil)
+      expect(host['host']).to eq('bacon.net')
+      expect(host['settings']['app_name']).to eq('CoughDrop')
+    end
+
+    it 'should clear old domains' do
+      JsonApi::Json.class_variable_set(:@@running_domains, {
+        '12345_123' => {'override' => {'a' => 1}, 'timestamp' => 5.minutes.ago.to_i}, 
+        '12345_124' => {'override' => {'b' => 1}, 'timestamp' => 90.minutes.ago.to_i}, 
+        '12345_125' => {'override' => {'c' => 1}},
+      })
+      expect(Organization).to receive(:load_domains).and_return({'bacon.com' => {'app_name' => 'bacon'}})
+      expect(Worker).to receive(:thread_id).and_return('98765')
+      host = JsonApi::Json.load_domain('bacon.com')
+      expect(host).to_not eq(nil)
+      expect(host['host']).to eq('bacon.com')
+      expect(host['settings']['app_name']).to eq('bacon')
+      hosts = JsonApi::Json.class_variable_get(:@@running_domains)
+      expect(hosts.keys.sort).to eq(["12345_123", "98765"])
+    end
+  end
+
+  describe "current_domian" do
+    it 'should return the default if nothing found' do
+      JsonApi::Json.class_variable_set(:@@running_domains, nil)
+      expect(JsonApi::Json.current_domain).to eq(JsonApi::Json.default_domain)
+    end
+
+    it 'should find the set value if there is one' do
+      JsonApi::Json.class_variable_set(:@@running_domains, {
+        '12345_123' => {'override' => {'a' => 1}}
+      })
+      expect(Worker).to receive(:thread_id).and_return('12345_123')
+      expect(JsonApi::Json.current_domain).to eq({'a' => 1})
+    end
+  end
+
+  describe "default_domain" do
+    it 'should return default values' do
+      default = JsonApi::Json.default_domain
+      expect(default['css']).to eq(nil)
+      expect(default['settings']['app_name']).to eq('CoughDrop')
+      expect(default['settings']['company_name']).to eq('CoughDrop')
+      expect(default['settings']['full_domain']).to eq(true)
+    end
+  end
+  
 end

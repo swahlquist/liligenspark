@@ -30,6 +30,14 @@ describe Worker do
       Worker.process_queues
       expect(Worker.scheduled?(User, :bacon, 12)).to be_truthy
     end
+
+    it "should load the domain override if set" do
+      JsonApi::Json.set_host("https://whatever.com:1234")
+      Worker.schedule(User, :last)
+      expect(JsonApi::Json).to receive(:set_host).with('https://whatever.com:1234')
+      expect(JsonApi::Json).to receive(:load_domain).with('https://whatever.com:1234')
+      Worker.process_queues
+    end
   end
   
   describe "schedule" do

@@ -54,6 +54,7 @@ RSpec.configure do |config|
     RedisInit.cache_token = "#{rand(999)}.#{Time.now.to_f}"
     ENV['REMOTE_EXTRA_DATA'] = nil
     Permissable.set_redis(RedisInit.permissions, RedisInit.cache_token)
+    RedisInit.default.del('domain_org_ids')
   end
 end
 

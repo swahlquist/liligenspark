@@ -1,9 +1,14 @@
 require "spec_helper"
 
 describe UserMailer, :type => :mailer do
+  after(:each) do
+    JsonApi::Json.load_domain("default")
+  end
+
   describe "schedule_delivery" do
     it "should schedule deliveries" do
       UserMailer.schedule_delivery('confirm_registration', 4)
+      puts Worker.scheduled_actions('priority').to_json
       expect(Worker.scheduled_for?('priority', UserMailer, :deliver_message, 'confirm_registration', 4)).to eq(true)
     end
   end
@@ -54,6 +59,22 @@ describe UserMailer, :type => :mailer do
       expect(text).to match(/Welcome to CoughDrop!/)
       expect(text).to match(/\"#{u.user_name}\"/)
     end
+
+    it "should use the domain-overridden app name if set" do
+      o = Organization.create(custom_domain: true)
+      o.settings['hosts'] = ['cheddar.org']
+      o.settings['host_settings'] = {}
+      o.settings['host_settings']['app_name'] = "Cheddar"
+      o.save
+      Worker.process_queues
+      JsonApi::Json.load_domain('cheddar.org')
+      expect(JsonApi::Json.current_domain['settings']['app_name']).to eq("Cheddar")
+
+      u = User.create
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.confirm_registration(u.global_id)
+      expect(m.subject).to eq("Cheddar - Welcome!")
+    end
   end
   
   describe "forgot_password" do
@@ -96,6 +117,26 @@ describe UserMailer, :type => :mailer do
       expect(text).to match(/\"#{u2.user_name}\"/)
       expect(text).to match(/#{u1.password_reset_code}/)
       expect(text).to match(/#{u2.password_reset_code}/)
+    end
+
+    it "should use the domain-overridden forgot password domain if set" do
+      o = Organization.create(custom_domain: true)
+      o.settings['hosts'] = ['cheddar.org']
+      o.settings['host_settings'] = {}
+      o.settings['host_settings']['app_name'] = "Cheddar"
+      o.save
+      Worker.process_queues
+      Worker.set_domain_id('https://cheddar.org')
+      expect(JsonApi::Json.current_domain['settings']['app_name']).to eq("Cheddar")
+
+      u = User.create
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.forgot_password([u.global_id])
+      expect(m.subject).to eq("Cheddar - Forgot Password Confirmation")
+      expect(m.to).to eq(["bob@example.com"])
+      html = message_body(m, :html)
+      expect(html).to match(/password reset/)
+      expect(html).to match("https://cheddar.org/#{u.user_name}/password_reset")
     end
   end
   

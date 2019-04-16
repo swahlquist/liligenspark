@@ -4,10 +4,21 @@ module General
   def mail_message(user, subject, channel_type=nil)
     channel_type ||= caller_locations(1,1)[0].label
     return nil unless user
+    from = JsonApi::Json.current_domain['settings']['admin_email']
     user.channels_for(channel_type).each do |path|
-      mail(to: path, subject: "CoughDrop - #{subject}")
+      opts = {to: path, subject: "#{app_name} - #{subject}"}
+      opts[:from] = from if from
+      mail(opts)
     end
-  end  
+  end
+  
+  def full_domain_enabled
+    !!JsonApi::Json.current_domain['settings']['full_domain']
+  end
+
+  def app_name
+    JsonApi::Json.current_domain['settings']['app_name'] || "CoughDrop"
+  end
 
   module ClassMethods
     def schedule_delivery(delivery_type, *args)
