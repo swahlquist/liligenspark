@@ -1,17 +1,17 @@
-Hello! This is a final reminder that the <%= @user.grace_period? ? "free trial" : "premium cloud extras access" %> for the CoughDrop 
+Hello! This is a final reminder that the <%= @user.grace_period? ? "free trial" : "premium cloud extras access" %> for the <%= app_name %> 
 user account <b><%= @user.user_name %></b> is about to expire. It is set to expire 
 <b><%= @user.expires_at.to_s(:long_ordinal) %></b>. Please
 <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription?confirmation=<%= @user.registration_code %>">update your billing settings</a> 
-so you don't lose out on CoughDrop's rich set of communication and tracking
+so you don't lose out on <%= app_name %>'s rich set of communication and tracking
 tools.<br/><br/>
 
-If you don't need CoughDrop right now, don't worry, you won't
+If you don't need <%= app_name %> right now, don't worry, you won't
 be automatically billed or anything, and your account will stay here waiting for you
 in case you decide to pick it up again later.<br/><br/>
 
-CoughDrop is more than just a communication app. CoughDrop is a movement.
+<%= app_name %> is more than just a communication app. <%= app_name %> is a movement.
 We're trying to show just how much better communication can be, and how much of
-a difference a team-enabling tool like CoughDrop can make in helping communicators
+a difference a team-enabling tool like <%= app_name %> can make in helping communicators
 be heard, and we need your help spreading that vision. Your purchase doesn't
 just help you, it can help fund the app for families in need, and also supports
 initiatives for more openness and interoperability in AAC. We hope you'll consider
@@ -24,4 +24,4 @@ we're willing to work with individuals to find a good solution. Just
 <br/><br/>
 
 Thanks!<br/>
--The CoughDrop Team
+<%= email_signature %>

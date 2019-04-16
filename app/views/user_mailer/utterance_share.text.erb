@@ -1,4 +1,4 @@
-This message was sent to you by *<%= @sender %>* using the CoughDrop augmentative communication app:
+This message was sent to you by *<%= @sender %>* using the <%= app_name %> augmentative communication app:
 
 <%= @message %>
 
@@ -13,5 +13,5 @@ This message was sent to you by *<%= @sender %>* using the CoughDrop augmentativ
 <% end %>
 
 Thanks!
--The CoughDrop Team
+<%= email_signature %>
 <%= JsonApi::Json.current_host %>

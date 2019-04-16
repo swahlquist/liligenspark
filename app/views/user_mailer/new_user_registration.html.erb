@@ -1,4 +1,4 @@
-<%= @user.settings['name'] %> just signed up for CoughDrop!<br/><br/>
+<%= @user.settings['name'] %> just signed up for <%= app_name %>!<br/><br/>
 User name: <b><a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>"><%= @user.user_name %></a></b><br/>
 Email: <b><%= @user.settings['email'] %></b><br/>
 Type: <b><%= @user.registration_type %></b><br/><br/>
@@ -6,4 +6,4 @@ Type: <b><%= @user.registration_type %></b><br/><br/>
 <%if @user.settings['referrer']%>Source: <%= @user.settings['referrer'] %><br/><% end %>
 <%if @user.settings['ad_referrer']%>Ad Key: <%= @user.settings['ad_referrer'] %><br/><% end %>
 Thanks!<br/>
--The CoughDrop Team
+<%= email_signature %>

@@ -1,10 +1,10 @@
 This is a notice that the user account "<%= @user.user_name %>" needs updated subscription information. We tried to auto-resume the subscription settings you had on hand before, but for some reason it failed.
 
-To address this problem please update your subscription settings in CoughDrop:
+To address this problem please update your subscription settings in <%= app_name %>:
 
 <%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription?confirmation=<%= @user.registration_code %>
 
 If you need help or think this message was sent in error , please let us know and we'll help get to the bottom of things. Just contact us (<%= JsonApi::Json.current_host %>) to make a request.
 
 Thanks!
--The CoughDrop Team
+<%= email_signature %>

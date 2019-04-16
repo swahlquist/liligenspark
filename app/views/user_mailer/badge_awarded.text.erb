@@ -1,23 +1,23 @@
 <% if @for_self %>
-You have earned a CoughDrop badge!
+You have earned a <%= app_name %> badge!
 <% else %>
-<%= @user.user_name %> has earned a CoughDrop badge!
+<%= @user.user_name %> has earned a <%= app_name %> badge!
 <% end %>
 
 <%= @badge.data['name'] %>, Level <%= @badge.level %>
 
 <% if @badge.data['global_goal'] %>
-As CoughDrop tracks your usage, you'll automagically see badges like this one be awarded based on how much you use different features in CoughDrop, and what your typical usage looks like.
+As <%= app_name %> tracks your usage, you'll automagically see badges like this one be awarded based on how much you use different features in <%= app_name %>, and what your typical usage looks like.
 <% elsif @goal %>
-This badge is part of the goal, <%= @goal.settings['summary'] %> (<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/goals/<%= @goal.global_id %>), and you can see more detailed information on goal progress in the CoughDrop app.
+This badge is part of the goal, <%= @goal.settings['summary'] %> (<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/goals/<%= @goal.global_id %>), and you can see more detailed information on goal progress in the <%= app_name %> app.
 <% end %>
 <% if !@badge.data['max_level'] %>
 This badge is part of a set, so keep at it and see if you can move up to the next level!
 <% end %>
 <% if @badge.global %>
 
-Did you know you can create your own badges in CoughDrop? Go to the "Goals" section of a user's account and you can set personalized goals, track them, and even build badges they can earn as they make progress on the goal!
+Did you know you can create your own badges in <%= app_name %>? Go to the "Goals" section of a user's account and you can set personalized goals, track them, and even build badges they can earn as they make progress on the goal!
 <% end %>
 
 Thanks!
-- The CoughDrop Team
+<%= email_signature %>

@@ -53,6 +53,7 @@ describe UserMailer, :type => :mailer do
       expect(m.to).to eq(["bob@example.com"])
       html = message_body(m, :html)
       expect(html).to match(/Welcome to CoughDrop!/)
+      expect(html).to match("-The CoughDrop Team")
       expect(html).to match(/<b>#{u.user_name}<\/b>/)
       text = message_body(m, :text)
       expect(text).to match(/Welcome to CoughDrop!/)
@@ -64,15 +65,19 @@ describe UserMailer, :type => :mailer do
       o.settings['hosts'] = ['cheddar.org']
       o.settings['host_settings'] = {}
       o.settings['host_settings']['app_name'] = "Cheddar"
+      o.settings['host_settings']['company_name'] = "Cheddarific"
       o.save
       Worker.process_queues
       JsonApi::Json.load_domain('cheddar.org')
       expect(JsonApi::Json.current_domain['settings']['app_name']).to eq("Cheddar")
+      expect(JsonApi::Json.current_domain['settings']['company_name']).to eq("Cheddarific")
 
       u = User.create
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.confirm_registration(u.global_id)
       expect(m.subject).to eq("Cheddar - Welcome!")
+      html = message_body(m, :html)
+      expect(html).to match("-The Cheddarific Team")
     end
   end
   

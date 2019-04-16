@@ -1,5 +1,5 @@
 <p>Hello! You are receiving this because your account <b><%= @user.user_name %></b> has opted to receive email updates when one or more
-of the CoughDrop users tied to your account generates usage. You are signed up to receive these
+of the <%= app_name %> users tied to your account generates usage. You are signed up to receive these
 updates every <%= @log_period %>.</p>
 
 <% if @users.length > 1 %>
@@ -165,5 +165,5 @@ updates every <%= @log_period %>.</p>
   If you no longer want to receive these notifications, or want to change how often you receive
   them, please 
   <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/edit">update the "Usage Summaries" preference</a> 
-  in your CoughDrop account settings.
+  in your <%= app_name %> account settings.
 </p>

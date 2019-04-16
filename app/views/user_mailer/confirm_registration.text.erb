@@ -1,4 +1,4 @@
-<%= @user.settings['name'] %> -- Welcome to CoughDrop! We're excited that you've signed up to use what we think is the most flexible, usable communication tool out there! We built CoughDrop to make things easier for communicators and the support teams around them, so we hope the app can make a difference for you.
+<%= @user.settings['name'] %> -- Welcome to <%= app_name %>! We're excited that you've signed up to use what we think is the most flexible, usable communication tool out there! We built <%= app_name %> to make things easier for communicators and the support teams around them, so we hope the app can make a difference for you.
 
 You've signed up for an account with the user name "<%= @user.display_user_name %>".
 
@@ -6,9 +6,9 @@ To finish registering just open this link in your web browser of choice:
 
 <%= JsonApi::Json.current_host %>/<%= @user.user_name %>/confirm_registration/<%= @user.registration_code %>
 
-After that you'll be good to go. There are lots of powerful tools in CoughDrop for tracking and reporting on usage, customizing how buttons look, changing the header, etc. You can find walkthroughs on simple and advanced features on our support site (https://coughdrop.zendesk.com), or our YouTube channel (https://www.youtube.com/channel/UCSVyFzvGVeFSOS7TP06re1g). You can also file a ticket there if you think something might be broken.
+After that you'll be good to go. There are lots of powerful tools in <%= app_name %> for tracking and reporting on usage, customizing how buttons look, changing the header, etc. You can find walkthroughs on simple and advanced features on our support site (<%= support_url %>), or our YouTube channel (<%= domain_settings['youtube_url'] %>). You can also file a ticket there if you think something might be broken.
 
 If you ever find something you think could be improved upon, we'd love to hear about it! Our goal is to build something that can help enable communicators to succeed, and we're always looking for new ways to make that happen!
 
 Thanks!
--The CoughDrop Team
+<%= email_signature %>

@@ -3,7 +3,7 @@
 <div id="loading_box" <% if crawler? %>style="display: none;"<% end %>>
   <h2 id="loading">
     <img src="/images/logo-big.png"/>
-    Loading <%= (@domain_overrides['settings'] || {})['app_name'] || "CoughDrop" %><%= " Demo" if params['embed'] %>...
+    Loading <%= app_name %><%= " Demo" if params['embed'] %>...
     <span id="loading_message" style="display: none; font-size: 14px; font-weight: normal;">(this may take a little while...)</span>
   </h2>
   <% unless params['embed'] %>
@@ -29,11 +29,13 @@
     }
     function checkState() {
       var googlebot = window.navigator && window.navigator.userAgent && window.navigator.userAgent.match(/googlebot/i);
+      var support_url = "<%= @domain_overrides['settings']['support_url'] %>";
+      var app_name = "<%= app_name %>";
       window.load_state = window.load_state || {};
       if(!window.FileReader && !googlebot) {
-        loadingSay("your web browser appears out of date and will not work with CoughDrop, <a href='http://www.whatbrowser.org' target='_blank'>you should consider upgrading</a>.");
+        loadingSay("your web browser appears out of date and will not work with " + app_name + ", <a href='http://www.whatbrowser.org' target='_blank'>you should consider upgrading</a>.");
 //       } else if(!local_storage_available) {
-//         loadingSay("your browser's privacy settings appear to be preventing CoughDrop from loading successfully. Please <a target='_blank' href='https://coughdrop.zendesk.com/hc/en-us/articles/202007575'>make sure your browser is set up properly for CoughDrop to run</a>.");
+//         loadingSay("your browser's privacy settings appear to be preventing " + app_name + " from loading successfully. Please <a target='_blank' href='https://coughdrop.zendesk.com/hc/en-us/articles/202007575'>make sure your browser is set up properly for " + app_name + " to run</a>.");
       } else if(!window.load_state.js_retrieved) {
         if(!window.load_state.js_still_waiting) {
           window.load_state.js_still_waiting = true;
@@ -47,9 +49,9 @@
         } else {
           window._trackJs && window._trackJs.track("download failed");
           if(window.capabilities && window.capabilities.db_error) {
-            loadingSay("there might be a problem with your installation. You can try deleting and re-installing the app, keep waiting, or <a href='https://coughdrop.zendesk.com' target='_blank'>contact support</a>");
+            loadingSay("there might be a problem with your installation. You can try deleting and re-installing the app, keep waiting, or <a href='" + support_url + "' target='_blank'>contact support</a>");
           } else {
-            loadingSay("looks like there might be a problem. You can keep waiting or <a href='https://coughdrop.zendesk.com' target='_blank'>contact support</a>");
+            loadingSay("looks like there might be a problem. You can keep waiting or <a href='" + support_url + "' target='_blank'>contact support</a>");
           }
         }
       } else if(!window.load_state.js_loaded) {
@@ -65,9 +67,9 @@
         } else {
           window._trackJs && window._trackJs.track("init failed");
           if(window.capabilities && window.capabilities.db_error) {
-            loadingSay("there might be a problem with your installation. You can try deleting and re-installing the app, keep waiting, or <a href='https://coughdrop.zendesk.com' target='_blank'>contact support</a>");
+            loadingSay("there might be a problem with your installation. You can try deleting and re-installing the app, keep waiting, or <a href='" + support_url + "' target='_blank'>contact support</a>");
           } else {
-            loadingSay("something may be broken. You can keep waiting or <a href='https://coughdrop.zendesk.com' target='_blank'>contact support</a>. You may also want to <a href='http://www.whatbrowser.org' target='_blank'>try a different browser</a>.");
+            loadingSay("something may be broken. You can keep waiting or <a href='" + support_url + "' target='_blank'>contact support</a>. You may also want to <a href='http://www.whatbrowser.org' target='_blank'>try a different browser</a>.");
           }
         }
       }

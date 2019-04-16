@@ -1,7 +1,7 @@
-Thank you for purchasing CoughDrop! Unfortunately there was an unexpected problem 
+Thank you for purchasing <%= app_name %>! Unfortunately there was an unexpected problem 
 processing your purchase for the user account <b><%= @user.user_name %></b>. Your credit
 card information may no longer be valid, we'll need updated information within the
-next few days in order to keep your CoughDrop account active.
+next few days in order to keep your <%= app_name %> account active.
 Please confirm your credit card information and
 <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription?confirmation=<%= @user.registration_code %>">update your
 billing settings again</a>.
@@ -12,4 +12,4 @@ we're willing to work with individuals to find a good solution. Just
 to make a request.<br/><br/>
 
 Thanks!<br/>
--The CoughDrop Team
+<%= email_signature %>

@@ -1,4 +1,4 @@
-This message was sent to you by <b><%= @sender %></b> using the CoughDrop augmentative communication app:<br/><br/>
+This message was sent to you by <b><%= @sender %></b> using the <%= app_name %> augmentative communication app:<br/><br/>
 
 <div style='font-size: 20px;'>
   <%= @message %>
@@ -16,5 +16,5 @@ This message was sent to you by <b><%= @sender %></b> using the CoughDrop augmen
 <% end %>
 
 Thanks!<br/>
--The CoughDrop Team<br/>
+<%= email_signature %><br/>
 <a href="<%= JsonApi::Json.current_host %>"><%= JsonApi::Json.current_host %></a> 

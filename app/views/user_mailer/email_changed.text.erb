@@ -1,10 +1,10 @@
 <% if @old_email %>
-The email address for the CoughDrop login "<%= @user.display_user_name %>" was recently updated from this address to a new email address.
+The email address for the <%= app_name %> login "<%= @user.display_user_name %>" was recently updated from this address to a new email address.
 <% else %>
-The email address for the CoughDrop login "<%= @user.display_user_name %>" was recently updated to this address.
+The email address for the <%= app_name %> login "<%= @user.display_user_name %>" was recently updated to this address.
 <% end %>
 
-If this was intentional feel free to ignore this message. If you were not aware of this email address change please notify CoughDrop support immediately (<%= JsonApi::Json.current_host %>/contact).
+If this was intentional feel free to ignore this message. If you were not aware of this email address change please notify <%= app_name %> support immediately (<%= JsonApi::Json.current_host %>/contact).
 
 Thanks!
-- The CoughDrop Team
+<%= email_signature %>

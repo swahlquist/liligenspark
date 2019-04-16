@@ -1,5 +1,6 @@
 class SubscriptionMailer < ActionMailer::Base
   include General
+  helper MailerHelper
   default from: ENV['DEFAULT_EMAIL_FROM']
   layout 'email'
   

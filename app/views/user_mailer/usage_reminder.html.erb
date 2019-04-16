@@ -1,6 +1,6 @@
-Hello again, and thanks for joining CoughDrop! We wanted to take just
+Hello again, and thanks for joining <%= app_name %>! We wanted to take just
 a minute and make sure you knew about some of the powerful tools you have 
-access to with your CoughDrop account, so you can get the most out of
+access to with your <%= app_name %> account, so you can get the most out of
 your experience. This is a one-time email that you'll hopefully find helpful.<br/><br/>
 <% if @supporter_no_supervisees %>
   <h3>Supervising</h3>
@@ -15,7 +15,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
 <% elsif @no_recent_activity || @no_home_board %>
   <h3>Getting Started</h3>
   <img src="https://s3.amazonaws.com/coughdrop/email/board.png" style="float: right; width: 300px; border: 1px solid #888; padding: 2px; margin-left: 10px; margin-right: 5px;" alt="board screen shot"/>
-  If you haven't had much chance to use CoughDrop yet, remember that it's a
+  If you haven't had much chance to use <%= app_name %> yet, remember that it's a
   simple, flexible communication app that gives you unique insights into what's working.
   It's easy to get started, just pick a home board, open it in Speak Mode and start
   talking! You can always use one of the suggested starter boards, or create your own.
@@ -26,7 +26,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
 <% else %>
   <h3>Doing More</h3>
   <img src="https://s3.amazonaws.com/coughdrop/email/board.png" style="float: right; width: 300px; border: 1px solid #888; padding: 2px; margin-left: 10px; margin-right: 5px;" alt="board screen shot"/>
-  CoughDrop is more than just a communication app, it's a movement. We're trying to show
+  <%= app_name %> is more than just a communication app, it's a movement. We're trying to show
   everyone just how much of a different flexible, team-enabled resources can be
   in helping communicators make their voices heard. Your
   support helps make that happen, so thank you for joining us. We're constantly working 
@@ -40,7 +40,7 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
 <% if @logging_disabled %>
   <h3>Logging</h3>
   <img src="https://s3.amazonaws.com/coughdrop/email/reporting.png" style="float: left; width: 300px; border: 1px solid #888; padding: 2px; margin-right: 10px; margin-left: 5px;" alt="reporting screen shot"/>
-  CoughDrop has powerful reporting and logging built-in. Once you 
+  <%= app_name %> has powerful reporting and logging built-in. Once you 
   <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/stats">turn on logging</a> 
   then any usage that happens will be automatically gathered into detailed
   reports and summaries. The communicator and their support team can see things
@@ -53,21 +53,21 @@ your experience. This is a one-time email that you'll hopefully find helpful.<br
 
 <% if @no_subscription %>
   <h3>Purchasing</h3>
-  If you like what you're seeing with CoughDrop, feel free to 
+  If you like what you're seeing with <%= app_name %>, feel free to 
   <a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/subscription">update your billing settings</a> 
-  to keep using all of CoughDrop's features for the long-term! Remember, you can buy CoughDrop
+  to keep using all of <%= app_name %>'s features for the long-term! Remember, you can buy <%= app_name %>
   as a one-time purchase, or as a monthly subscription, whatever works better for you.<br/><br/>
 <% end %>
 Also, we'd love it if you'd rate the app on the
-<a href="https://itunes.apple.com/us/app/coughdrop/id1021384570?mt=8">iOS App Store</a>,
-<a href="https://play.google.com/store/apps/details?id=com.mycoughdrop.coughdrop">Google Play Store</a>,
-or <a href="https://www.amazon.com/CoughDrop-Inc-AAC/dp/B01BU8RUEY">Kindle App Store</a>!<br/><br/>
+<a href="<%= domain_settings['ios_store_url'] %>">iOS App Store</a>,
+<a href="<%= domain_settings['play_store_url'] %>">Google Play Store</a>,
+or <a href="<%= domain_settings['kindle_store_url'] %>">Kindle App Store</a>!<br/><br/>
 
 We hope this was a helpful check-in! If you have any questions or concerns, please 
-<a href="https://www.youtube.com/channel/UCSVyFzvGVeFSOS7TP06re1g">check out our YouTube channel</a>
+<a href="<%= domain_settings['youtube_url'] %>">check out our YouTube channel</a>
 or 
 <a href="<%= JsonApi::Json.current_host %>/contact">reach out to us</a>
 and we'll be happy to help you out.
 <br/><br/>
 Thanks!<br/>
--The CoughDrop Team
+<%= email_signature %>

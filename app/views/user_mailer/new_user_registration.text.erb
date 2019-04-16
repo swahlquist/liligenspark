@@ -1,4 +1,4 @@
-<%= @user.settings['name'] %> just signed up for CoughDrop!
+<%= @user.settings['name'] %> just signed up for <%= app_name %>!
 
 
 User name: <%= @user.display_user_name %>
@@ -10,4 +10,4 @@ Type: <%= @user.registration_type %>
 <%= JsonApi::Json.current_host %>/<%= @user.user_name %>
 
 Thanks!
--The CoughDrop Team
+<%= email_signature %>
