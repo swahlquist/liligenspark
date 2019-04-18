@@ -359,6 +359,11 @@
                          {{letter.letter}} - 
                         </span> 
                         {{t "org" count=letter.orgs.length key='n_orgs'}}
+                        {{#if letter.expanded}}
+                          <span class='caret'></span>
+                        {{else}}
+                          <span class='caret-right'></span>
+                        {{/if}}
                       </a>
                     </td>
                   </tr>

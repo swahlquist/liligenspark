@@ -1,6 +1,6 @@
 module ApplicationHelper
   def pretty_loader
-    request.path == '/'
+    request.path == '/' && ((@domain_overrides || {})['settings'] || {})['full_domain']
   end
 
   def app_name
