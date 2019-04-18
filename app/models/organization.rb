@@ -682,7 +682,10 @@ class Organization < ActiveRecord::Base
       domains = {}
       Organization.where(custom_domain: true).order('id ASC').each do |org|
         (org.settings['hosts'] || []).each do |host|
-          domains[host] ||= org.settings['host_settings'] || {}
+          if !domains[host]
+            domains[host] = org.settings['host_settings'] || {}
+            domains[host]['org_id'] = org.global_id
+          end
         end
       end
       RedisInit.default.setex('domain_org_ids', 72.hours.from_now.to_i, domains.to_json) rescue nil

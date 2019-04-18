@@ -50,7 +50,7 @@ class User < ActiveRecord::Base
   add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
   cache_permissions
   
-  def self.find_for_login(user_name)
+  def self.find_for_login(user_name, org_id=nil)
     user_name = user_name.strip
     res = nil
     if !user_name.match(/@/)
@@ -62,6 +62,14 @@ class User < ActiveRecord::Base
       emails = self.find_by_email(user_name)
       emails = self.find_by_email(user_name.downcase) if emails.length == 0
       res = emails[0] if emails.length == 1
+    end
+    if org_id
+      if res.settings['authored_organization_id'] == org_id
+      else
+        # try looking up org and see if the user has been added there
+        # TODO: someday if you want to scope logins to domain, this is how
+        # res = nil
+      end
     end
     res
   end
