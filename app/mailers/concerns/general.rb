@@ -7,7 +7,7 @@ module General
     from = JsonApi::Json.current_domain['settings']['admin_email']
     user.channels_for(channel_type).each do |path|
       opts = {to: path, subject: "#{app_name} - #{subject}"}
-      opts[:from] = from if from
+      opts[:from] = from if !from.blank?
       mail(opts)
     end
   end
