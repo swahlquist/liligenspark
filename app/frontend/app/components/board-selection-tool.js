@@ -87,7 +87,7 @@ export default Component.extend({
     _this.set('boards', null);
     var canvas = _this.element.getElementsByTagName('canvas')[0];
     if(canvas) { canvas.style.display = 'none'; }
-    CoughDrop.store.query('board', {public: true, starred: true, user_id: 'example', per_page: 6, category: 'layout'}).then(function(data) {
+    CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), per_page: 6, category: 'layout'}).then(function(data) {
       var res = data.map(function(b) { return b; });
       if(res && res.length > 0) {
         _this.set('boards', res);

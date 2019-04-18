@@ -70,6 +70,18 @@
           </div>
         </div>
         <div class="form-group">
+          <label for="support_url" class="col-sm-3 control-label">{{t "Customer Support URL" key='support_url'}}</label>
+          <div class="col-sm-7">
+            {{input value=model.org.host_settings.support_url class="form-control" id="support_url" placeholder="https://"}}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="board_user_name" class="col-sm-3 control-label">{{t "Suggest Boards User Name" key='board_user_name'}}</label>
+          <div class="col-sm-7">
+            {{input value=model.org.host_settings.board_user_name class="form-control" id="board_user_name" placeholder="user_name"}}
+          </div>
+        </div>
+        <div class="form-group">
           <label for="ios_store_url" class="col-sm-3 control-label">{{t "iOS App Store URL" key='ios_store_url'}}</label>
           <div class="col-sm-7">
             {{input value=model.org.host_settings.ios_store_url class="form-control" id="ios_store_url" placeholder="https://"}}
@@ -127,12 +139,6 @@
           <label for="youtube_url" class="col-sm-3 control-label">{{t "YouTube URL" key='youtube_url'}}</label>
           <div class="col-sm-7">
             {{input value=model.org.host_settings.youtube_url class="form-control" id="youtube_url" placeholder="https://"}}
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="support_url" class="col-sm-3 control-label">{{t "Customer Support URL" key='support_url'}}</label>
-          <div class="col-sm-7">
-            {{input value=model.org.host_settings.support_url class="form-control" id="support_url" placeholder="https://"}}
           </div>
         </div>
       {{/if}}

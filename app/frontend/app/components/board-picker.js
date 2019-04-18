@@ -33,7 +33,7 @@ export default Component.extend({
       this.set('show_category_explainer', false);
       this.set('category_boards', {loading: true});
       var _this = this;
-      CoughDrop.store.query('board', {public: true, starred: true, user_id: 'example', sort: 'custom_order', per_page: 6, category: str}).then(function(data) {
+      CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 6, category: str}).then(function(data) {
         _this.set('category_boards', data);
       }, function(err) {
         _this.set('category_boards', {error: true});

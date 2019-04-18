@@ -192,13 +192,13 @@ export default Controller.extend({
           });
         } else {
           var list = 'homeBoards';
-          var opts = {public: true, starred: true, user_id: 'example', sort: 'custom_order', per_page: 12};
+          var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 12};
           if(key == 'personal') {
             list = 'personalBoards';
             opts = {user_id: 'self', copies: false, per_page: 12};
           } else if(key == 'popular') {
             list = 'popularBoards';
-            opts = {sort: 'home_popularity', per_page: 12, exclude_starred: 'example'};
+            opts = {sort: 'home_popularity', per_page: 12, exclude_starred: app_state.get('domain_board_user_name')};
           }
           if(!(_this.get(list) || {}).length) {
             _this.set(list, {loading: true});

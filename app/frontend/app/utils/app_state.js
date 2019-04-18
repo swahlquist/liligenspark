@@ -324,6 +324,9 @@ var app_state = EmberObject.extend({
       return null;
     }
   }.property('currentBoardState.key'),
+  domain_board_user_name: function() {
+    return this.get('domain_settings.board_user_name') || 'example';
+  }.property('domain_settings.board_user_name'),
   h1_class: function() {
     var res = "";
     if(this.get('currentBoardState.id')) {

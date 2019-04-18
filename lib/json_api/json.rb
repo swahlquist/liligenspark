@@ -121,6 +121,7 @@ module JsonApi::Json
         'facebook_url' => ENV['FACEBOOK_URL'],
         'youtube_url' => ENV['YOUTUBE_URL'],
         'support_url' => ENV['SUPPORT_URL'],
+        'board_user_name' => ENV['BOARD_USER_NAME'] || 'example',
         'full_domain' => true
       }
     }

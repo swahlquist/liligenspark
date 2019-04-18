@@ -744,7 +744,7 @@ class Organization < ActiveRecord::Base
       self.settings['host_settings']['company_name'] = params[:host_settings]['company_name'].blank? ? "CoughDrop" : params[:host_settings]['company_name']
       ['ios_store_url', 'play_store_url', 'kindle_store_url', 'windows_32_bit_url', 'windows_64_bit_url',
                 'blog_url', 'twitter_url', 'twitter_handle', 'facebook_url', 'youtube_url',
-                'support_url', 'logo_url', 'css_url', 'admin_email'].each do |str|
+                'support_url', 'logo_url', 'css_url', 'admin_email', 'board_user_name'].each do |str|
                 
         if params[:host_settings][str] != nil
           val = process_string(params[:host_settings][str])
