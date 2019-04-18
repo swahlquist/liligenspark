@@ -208,13 +208,17 @@ export default Controller.extend({
     }
     return defer.promise;
   },
+  allow_search: function() {
+    return app_state.get('domain_settings.full_domain') || session.get('isAuthenticated');
+  }.property('app_state.domain_settings.full_domain', 'session.isAuthenticated'),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);
     },
     authenticateSession: function() {
       if(location.hostname == '127.0.0.1') {
-        location.href = "//localhost:" + location.port + "/login";
+        this.transitionToRoute('login');
+        // location.href = "//localhost:" + location.port + "/login";
       } else if(location.hostname == 'www.mycoughdrop.com') {
         location.href = "//app.mycoughdrop.com/login";
       } else {
@@ -1086,8 +1090,10 @@ export default Controller.extend({
     }
     if(this.get('session.isAuthenticated')) {
       res = res + "with_user ";
-    } else {
+    } else if(app_state.get('domain_settings.full_domain')) {
       res = res + "no_user ";
+    } else {
+      res = res + "blank_user";
     }
     if(this.get('app_state.currentUser.preferences.new_index')) {
       res = res + "new_index ";

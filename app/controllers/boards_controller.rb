@@ -3,6 +3,10 @@ class BoardsController < ApplicationController
     @meta_record = OpenStruct.new
     @meta_record.title = "CoughDrop - Every voice should be heard"
     @meta_record.summary = "Let's help those with complex communication needs make their voices heard, using good technology that actually makes things easier and supports everyone in helping the individual succeed."
+    if !@domain_overrides['settings']['full_domain']
+      @meta_record.title = @domain_overrides['settings']['app_name']
+      @meta_record.summary = "#{@domain_overrides['settings']['app_name']} is a flexible AAC application"
+    end
     @meta_record.link = "#{request.protocol}://#{request.host_with_port}/"
     @meta_record.created = Time.parse("Jan 1 2014").iso8601
     @meta_record.updated = Time.now.iso8601
@@ -16,6 +20,10 @@ class BoardsController < ApplicationController
     @meta_record = OpenStruct.new
     @meta_record.title = "About CoughDrop"
     @meta_record.summary = "Why \"CoughDrop\"? Cough drops help you get back the voice you already had, but that maybe people couldn't hear so well. If you're new to the world of augmentative communication, just about every part of it feels intimidating."
+    if !@domain_overrides['settings']['full_domain']
+      @meta_record.title = "About #{@domain_overrides['settings']['app_name']}"
+      @meta_record.summary = "A little information about the #{@domain_overrides['settings']['app_name']} AAC application"
+    end
     @meta_record.link = "#{request.protocol}://#{request.host_with_port}/about"
     @meta_record.created = Time.parse("Jan 1 2014").iso8601
     @meta_record.updated = Time.now.iso8601

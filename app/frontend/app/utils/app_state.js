@@ -105,7 +105,7 @@ var app_state = EmberObject.extend({
     if(!session.get('isAuthenticated') && capabilities.mobile && capabilities.browserless) {
       this.set('login_modal', true);
     } else if(!session.get('isAuthenticated') && !this.get('domain_settings.full_domain')) {
-      this.set('login_modal', true);
+      this.set('login_index', true);
     }
     modal.setup(route);
     contentGrabbers.boardGrabber.transitioner = route;

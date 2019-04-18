@@ -182,13 +182,15 @@
     {{#if app_state.empty_header}}
       {{#if persistence.online}}
         {{#unless app_state.super_no_linky}}
-          <form id="header_search">
-            <div style="float: left; margin-right: 4px; width: 150px;">
-            {{input type="text" value=searchString enter="searchBoards" class="form-control" placeholder="Search Boards"}}
-            </div>
-            <button class="btn btn-default" {{action "searchBoards"}}>{{t "Go" key='go'}}</button>
-            <div style="clear: left;"></div>
-          </form>
+          {{#if allow_search}}
+            <form id="header_search">
+              <div style="float: left; margin-right: 4px; width: 150px;">
+              {{input type="text" value=searchString enter="searchBoards" class="form-control" placeholder="Search Boards"}}
+              </div>
+              <button class="btn btn-default" {{action "searchBoards"}}>{{t "Go" key='go'}}</button>
+              <div style="clear: left;"></div>
+            </form>
+          {{/if}}
         {{/unless}}
       {{/if}}
     {{/if}}

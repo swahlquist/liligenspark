@@ -8,6 +8,11 @@
     {{/if}}
   {{else if app_state.domain_settings.full_domain}}
     {{partial 'index/unauthenticated'}}
+  {{else if app_state.login_index}}
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} style="width: 100px;"/>
+    </div>
+    {{login-form}}
   {{/if}}
 </div>
 {{#if app_state.login_modal}}
