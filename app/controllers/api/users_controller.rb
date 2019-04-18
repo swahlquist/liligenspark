@@ -491,8 +491,7 @@ class Api::UsersController < ApplicationController
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
-    alerts = LogSession.where(user: user, log_type: 'note').select{|s| s.data['notify_user'] && !s.alert_cleared? }
-    alerts = alerts.sort{|a| a.created_at }
+    alerts = LogSession.where(user: user, log_type: 'note').order('id DESC').select{|s| s.data['notify_user'] && !s.alert_cleared? }
     render json: JsonApi::Alert.paginate(params, alerts)
   end
 

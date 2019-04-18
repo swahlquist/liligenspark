@@ -99,13 +99,13 @@ describe Worker do
     it "should have list actions" do
       Worker.schedule(User, :something)
       expect(Worker.scheduled_actions.length).to eq(1)
-      expect(Worker.scheduled_actions[-1]).to eq({
+      expect(Worker.scheduled_actions[-1].except('domain_id')).to eq({
         'class' => 'Worker', 'args' => ['User', 'something']
       })
       u = User.create
       u.schedule(:do_something, 'cool')
       expect(Worker.scheduled_actions.length).to be >= 2
-      expect(Worker.scheduled_actions[-1]).to eq({
+      expect(Worker.scheduled_actions[-1].except('domain_id')).to eq({
         'class' => 'Worker', 'args' => ['User', 'perform_action', {'id' => u.id, 'method' => 'do_something', 'scheduled' => Time.now.to_i, 'arguments' => ['cool']}]
       })
     end

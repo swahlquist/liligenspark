@@ -1594,9 +1594,9 @@ describe Organization, :type => :model do
       o3.settings['host_settings'] = {'app_name' => 'D'}
       o3.save
       expect(Organization.load_domains).to eq({
-        'b.com' => {'app_name' => 'B'},
-        'c.com' => {'app_name' => 'B'},
-        'd.com' => {'app_name' => 'D'}
+        'b.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'c.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
       })
     end
 
@@ -1616,9 +1616,9 @@ describe Organization, :type => :model do
       o3.save
       expect(Organization.load_domains).to eq({'a' => 1})
       expect(Organization.load_domains(true)).to eq({
-        'b.com' => {'app_name' => 'B'},
-        'c.com' => {'app_name' => 'B'},
-        'd.com' => {'app_name' => 'D'}
+        'b.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'c.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
       })
     end
 
@@ -1641,15 +1641,15 @@ describe Organization, :type => :model do
         expect(ts).to be > (72.hours.from_now.to_i - 10)
         json = JSON.parse(str)
         expect(json).to eq({
-          'b.com' => {'app_name' => 'B'},
-          'c.com' => {'app_name' => 'B'},
-          'd.com' => {'app_name' => 'D'}
+          'b.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+          'c.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+          'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
         })
       end
       expect(Organization.load_domains).to eq({
-        'b.com' => {'app_name' => 'B'},
-        'c.com' => {'app_name' => 'B'},
-        'd.com' => {'app_name' => 'D'}
+        'b.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'c.com' => {'app_name' => 'B', 'org_id' => o2.global_id},
+        'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
       })
     end
 
@@ -1662,8 +1662,8 @@ describe Organization, :type => :model do
       expect(Organization.load_domains).to eq({'a' => 1})
       Worker.process_queues
       expect(Organization.load_domains).to eq({
-        'c.com' => {'app_name' => 'D'},
-        'd.com' => {'app_name' => 'D'}
+        'c.com' => {'app_name' => 'D', 'org_id' => o3.global_id},
+        'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
       })
     end
   end

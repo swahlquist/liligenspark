@@ -670,7 +670,7 @@ describe UserGoal, type: :model do
       g3 = UserGoal.create(:advance_at => 2.weeks.ago)
       Worker.process_queues
       UserGoal.advance_goals
-      expect(Worker.scheduled_actions).to eq([{
+      expect(Worker.scheduled_actions.map{|a| a.except('domain_id')}).to eq([{
         'class' => 'Worker',
         'args' => ['UserGoal', 'perform_action', {'id' => g.id, 'method' => 'advance!', 'scheduled' => Time.now.to_i, 'arguments' => []}]
       }])
@@ -738,7 +738,8 @@ describe UserGoal, type: :model do
       }, {user: u, author: u})
       expect(g1.settings['author_id']).to eq(u.global_id)
       expect(g1.settings['template_id']).to eq(t1.global_id)
-      expect(g1.advance_at.to_i).to eq((Time.now + 2.weeks.to_i).to_i)
+      expect(g1.advance_at.to_i).to be > ((Time.now + 2.weeks.to_i).to_i - 10)
+      expect(g1.advance_at.to_i).to be < ((Time.now + 2.weeks.to_i).to_i + 10)
       expect(g1.active).to eq(true)
       g1.advance_at = 2.hours.ago
       
