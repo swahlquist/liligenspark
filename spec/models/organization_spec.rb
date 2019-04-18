@@ -912,6 +912,28 @@ describe Organization, :type => :model do
       o.process({:home_board_key => b.key}, {updater: u})
       expect(o.settings['default_home_board']).to eq({'key' => b.key, 'id' => b.global_id})
     end
+
+    it "should parse hosting settings" do
+      u = User.create
+      o = Organization.create
+      o.add_manager(u.user_name, true)
+      o.process({
+        :host_settings => {
+          'a' => 1,
+          'logo_url' => 'https://www.example.com/logo.png',
+          'admin_email' => ''
+        }
+      }, {'updater' => u})
+      expect(o.settings['host_settings']).to eq({'css' => nil, 'app_name' => 'CoughDrop', 'company_name' => 'CoughDrop', 'logo_url' => 'https://www.example.com/logo.png'})
+      o.process({
+        :host_settings => {
+          'b' => 1,
+          'logo_url' => '',
+          'admin_email' => 'admin@example.com'
+        }
+      }, {'updater' => u})
+      expect(o.settings['host_settings']).to eq({'css' => nil, 'app_name' => 'CoughDrop', 'company_name' => 'CoughDrop', 'admin_email' => 'admin@example.com'})
+    end
   end
   
   describe "log_sessions" do

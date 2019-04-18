@@ -740,8 +740,8 @@ class Organization < ActiveRecord::Base
     if params[:host_settings]
       self.settings['host_settings'] ||= {}
       self.settings['host_settings']['css'] = params[:host_settings]['css_url']
-      self.settings['host_settings']['app_name'] = params[:host_settings]['app_name'] || "CoughDrop"
-      self.settings['host_settings']['company_name'] = params[:host_settings]['company_name'] || "CoughDrop"
+      self.settings['host_settings']['app_name'] = params[:host_settings]['app_name'].blank?  ? "CoughDrop" : params[:host_settings]['app_name']
+      self.settings['host_settings']['company_name'] = params[:host_settings]['company_name'].blank? ? "CoughDrop" : params[:host_settings]['company_name']
       ['ios_store_url', 'play_store_url', 'kindle_store_url', 'windows_32_bit_url', 'windows_64_bit_url',
                 'blog_url', 'twitter_url', 'twitter_handle', 'facebook_url', 'youtube_url',
                 'support_url', 'logo_url', 'css_url', 'admin_email'].each do |str|
@@ -749,6 +749,7 @@ class Organization < ActiveRecord::Base
         if params[:host_settings][str] != nil
           val = process_string(params[:host_settings][str])
           self.settings['host_settings'][str] = val
+          self.settings['host_settings'].delete(str) if val.blank?
         end
       end
     end
