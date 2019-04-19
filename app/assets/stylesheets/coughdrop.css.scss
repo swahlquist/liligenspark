@@ -4587,3 +4587,11 @@ body:-ms-fullscreen {
     }
   }
 }
+@media (max-height: 500px) {
+  table#pin td a {
+    height: calc((100vh - 230px) / 4);
+    padding-top: 0;
+    line-height: calc((100vh - 230px) / 4);
+    vertical-align: middle;
+  }
+}
