@@ -348,6 +348,7 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('their_starred_boards', "This User's Liked Boards"), id: 'current_user_starred'});
       res.push({name: i18n.t('my_public_boards', "My Public Boards"), id: 'personal_public'});
       res.push({name: i18n.t('my_public_boards', "My Liked Public Boards"), id: 'personal_public_starred'});
+      res.push({name: i18n.t('all_my_boards', "All My Boards (includes shared)"), id: 'personal'});
       // TODO: add My Private Boards, but warn and have option to auto-share if selected
     } else {
       res.push({name: i18n.t('my_boards', "My Boards (includes shared)"), id: 'personal'});
@@ -636,6 +637,9 @@ export default modal.ModalController.extend({
     },
     cancel_build_board: function() {
       contentGrabbers.boardGrabber.cancel_build_board();
+    },
+    shareFoundBoard: function(board) {
+      contentGrabbers.boardGrabber.share_board(board);
     },
     selectFoundBoard: function(board, force) {
       contentGrabbers.boardGrabber.pick_board(board, force);

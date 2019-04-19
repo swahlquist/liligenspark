@@ -46,6 +46,14 @@
                 <div class="col-sm-12">
                   <p>{{t "There was an error copying the board" key='error_copying_board'}}</p>
                 </div>
+              {{else if confirm_found_board.share_status.sharing}}
+                <div class="col-sm-12">
+                  <p>{{t "Sharing board %{board_key}..." board_key=confirm_found_board.key key='sharing_board_key'}}</p>
+                </div>
+              {{else if confirm_found_board.share_status.error}}
+                <div class="col-sm-12">
+                  <p>{{t "There was an error sharing the board" key='error_sharing_board'}}</p>
+                </div>
               {{else}}
                 {{#with confirm_found_board as |board|}}
                   <div class="col-sm-4">
@@ -54,11 +62,19 @@
                     </span>
                   </div>
                   <div class="col-sm-12">
-                    <p>{{t "This board was created by someone other than the current board's author. Would you like to use the board as-is, or make a copy of it?" key='copy_or_link_board'}}</p>
+                    {{#if board.copy_or_share}}
+                      <p>{{t "The current board's author may not have access to this board as it is marked private. Would you like to share this board, or make a copy of it?" key='copy_or_share_board'}}</p>
+                    {{else}}
+                      <p>{{t "This board was created by someone other than the current board's author. Would you like to use the board as-is, or make a copy of it?" key='copy_or_link_board'}}</p>
+                    {{/if}}
                     {{#if board.downstream_boards}}
                       <p>{{t "NOTE: To copy linked boards with this board you should navigate to the board and manually make a copy." key='links_are_not_copied'}}</p>
                     {{/if}}
-                    <button class='btn btn-primary' {{action 'selectFoundBoard' board true}}>{{t "Link to This Board" key='link_to_this_board'}}</button>
+                    {{#if board.copy_or_share}}
+                      <button class='btn btn-primary' {{action 'shareFoundBoard' board}}>{{t "Share This Board" key='share_this_board'}}</button>
+                    {{else}}
+                      <button class='btn btn-primary' {{action 'selectFoundBoard' board true}}>{{t "Link to This Board" key='link_to_this_board'}}</button>
+                    {{/if}}
                     <!-- TODO: option to select who to copy for? -->
                     <!-- TODO: option to copy downstream boards as well? I'm deliberately
                                not adding right now because it's a potentially-complicated

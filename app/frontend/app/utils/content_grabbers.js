@@ -2139,7 +2139,7 @@ var boardGrabber = EmberObject.extend({
       if(sups.length > 0) {
         var user_name = original_board.get('user_name');
         sups.forEach(function(sup) {
-          if(sup.name == user_name) {
+          if(sup.user_name == user_name) {
             board.set('for_user_id', sup.id);
           }
         });
@@ -2178,6 +2178,7 @@ var boardGrabber = EmberObject.extend({
     var new_author = (editable_supervisee_author || {}).user_name || app_state.get('currentUser.user_name');
 
     board.set('copy_status', {copying: true});
+    board.set('sharing_status', null);
     board.reload().then(function() {
       board.set('copy_status', {copying: true});
       CoughDrop.store.findRecord('user', new_author).then(function(user) {
@@ -2192,6 +2193,22 @@ var boardGrabber = EmberObject.extend({
       });
     }, function() {
       board.set('copy_status', {error: true});
+    });
+  },
+  share_board: function(board) {
+    var _this = this;
+    var source_board_user_name = _this.controller.get('board.user_name');
+    var include_downstream = true;
+    var allow_editing = false;
+    var sharing_key = "add_deep-" + source_board_user_name;
+    board.set('sharing_key', sharing_key);
+    board.set('copy_status', null);
+    board.set('sharing_status', {sharing: true});
+    board.save().then(function() {
+      board.set('sharing_status', null);
+      boardGrabber.pick_board(board, true);
+    }, function(xhr) {
+      board.set('sharing_status', {error: true});
     });
   },
   pick_board: function(board, force) {
@@ -2215,6 +2232,8 @@ var boardGrabber = EmberObject.extend({
     }
     if(confirm && !force) {
       board.set('copy_status', null);
+      board.set('sharing_status', null);
+      board.set('copy_or_share', board.get('visibility') == 'private');
       this.controller.set('confirm_found_board', board);
     } else {
       this.controller.set('confirm_found_board', null);
