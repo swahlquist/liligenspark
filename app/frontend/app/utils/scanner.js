@@ -499,7 +499,26 @@ var scanner = EmberObject.extend({
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
       $elem.select().focus();
     }
+    // DO NOT hide_input in this method, as it is used by 
+    // :native-keyboard action now
 //    scanner.hide_input();
+  },
+  native_keyboard: function() {
+    if(!window.Keyboard) { return; }
+    var prior_keyboard_listen = buttonTracker.keyboard_listen;
+    buttonTracker.keyboard_listen = true;
+    buttonTracker.native_keyboard = true;
+    var listener = function() {
+      window.Keyboard.removeEventListener('keyboardDidHide', listener);
+      buttonTracker.keyboard_listen = prior_keyboard_listen;
+      buttonTracker.native_keyboard = false;
+    };
+    window.Keyboard.addEventListener('keyboardDidHide', listener)
+    scanner.listen_for_input();
+    runLater(function() {
+      window.Keyboard.hideFormAccessoryBar(false, function() { });
+      window.Keyboard.show();
+    });
   },
   axes_advance: function() {
     var do_continue = false;
@@ -740,7 +759,9 @@ window.addEventListener('keyboardWillShow', function() {
   if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
     scanner.keyboard_tried_to_show = true;
   }
-  scanner.hide_input();
+  if(!buttonTracker.native_keyboard) {
+    scanner.hide_input();
+  }
 });
 window.scanner = scanner;
 

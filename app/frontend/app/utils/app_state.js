@@ -1780,6 +1780,7 @@ var app_state = EmberObject.extend({
     var specialty_button = null;
     var specialty = utterance.specialty_button(obj);
     var skip_speaking_by_default = !!(button.load_board || specialty || button_to_speak.special || button.url || button.apps || (button.integration && button.integration.action_type == 'render'));
+    var button_added_or_spoken = false;
     if(specialty) {
       specialty_button = $.extend({}, specialty);
       specialty_button.special = true;
@@ -1791,16 +1792,18 @@ var app_state = EmberObject.extend({
           }
         }
         button_to_speak = utterance.add_button(obj, button);
+        button_added_or_spoken = true;
       } else if(specialty.default_speak) {
         skip_speaking_by_default = false;
         obj.vocalization = specialty.default_speak;
         utterance.add_button(obj, button);
+        button_added_or_spoken = true;
       }
     } else if(skip_speaking_by_default && !button.add_to_vocalization) {
     } else {
       button_to_speak = utterance.add_button(obj, button);
+      button_added_or_spoken = true;
     }
-//     $(".hover_button").remove();
 
     // speak or make a sound to show the button was selected
     if(obj.label) {
@@ -1832,7 +1835,7 @@ var app_state = EmberObject.extend({
         } else {
           click_sound();
         }
-      } else {
+      } else if(button_to_speak) {
         utterance.silent_speak_button(button_to_speak);
       }
     }

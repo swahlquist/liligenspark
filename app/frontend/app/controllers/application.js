@@ -458,6 +458,7 @@ export default Controller.extend({
       this.send('hide_temporary_sidebar');
     },
     special: function(opts) {
+      // sidebar actions
       if(opts.action == ':app') {
         if(capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android')) {
           capabilities.apps.launch(opts.arg).then(null, function(err) {

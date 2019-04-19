@@ -227,7 +227,7 @@ var utterance = EmberObject.extend({
         }
         specialty = button;
         var any_special = true;
-      } else if(voc.match(/^\+/) || voc.match(/^:/)) {
+      } else if((voc.match(/^\+/) || voc.match(/^:/)) && voc != ':native-keyboard') {
         button.specialty_with_modifiers = true;
         if(voc.match(/^\+/) || voc == ':space' || voc == ':complete' || voc == ':predict') {
           button.default_speak = true;

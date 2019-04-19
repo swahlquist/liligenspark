@@ -236,7 +236,8 @@ class User < ActiveRecord::Base
         'preferred_symbols' => 'original',
         'word_suggestion_images' => true,
         'hidden_buttons' => 'grid',
-        'symbol_background' => 'clear'
+        'symbol_background' => 'clear',
+        'prefer_native_keyboard' => false
       },
       'authenticated_user' => {
         'long_press_edit' => false,

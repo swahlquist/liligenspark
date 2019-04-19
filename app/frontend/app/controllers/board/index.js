@@ -807,7 +807,7 @@ export default Controller.extend({
         button.set('vocalization', ":complete");
         var list = app_state.get('button_list') || [];
         if(!emberGet(list[0] || {}, 'in_progress')) {
-          button.set('label', ":predict");
+          button.set('vocalization', ":predict");
         }
         button.set('completion', text);
         if(word.original_image) {

@@ -230,6 +230,14 @@ export default Controller.extend({
   button_dwell: function() {
     return this.get('model.preferences.device.dwell_selection') == 'button';
   }.property('model.preferences.device.dwell_selection'),
+  native_keyboard_available: function() {
+    return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && window.Keyboard;
+  }.property(),
+  enable_external_keyboard: function() {
+    if(this.get('model.preferences.device.prefer_native_keyboard')) {
+      this.set('model.preferences.device.external_keyboard', true);
+    }
+  }.observes('model.preferences.device.prefer_native_keyboard'),
   select_keycode_string: function() {
     if(this.get('model.preferences.device.scanning_select_keycode')) {
       return (i18n.key_string(this.get('model.preferences.device.scanning_select_keycode')) || 'unknown') + ' key';

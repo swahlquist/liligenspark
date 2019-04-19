@@ -100,7 +100,8 @@ $(document).on('mousedown touchstart', function(event) {
     frame_listener.trigger_target($(event.target).closest(".integration_target")[0]);
   }
 }).on('keypress', function(event) {
-  if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !buttonTracker.check('dwell_enabled') && !modal.is_open()) {
+  var dwell_key = buttonTracker.check('dwell_enabled') && event.keyCode && event.keyCode == buttonTracker.check('select_keycode');
+  if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !dwell_key && !modal.is_open()) {
     // add letter to the sentence box
     var key = "+" + event.key;
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
