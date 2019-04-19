@@ -842,15 +842,15 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json).to eq({'user' => []})
     end
     
-    it "should generate free_supervisor_with_supervisors report" do
-      token_user
-      o = Organization.create(:admin => true)
-      o.add_manager(@user.user_name, false)
-      get :admin_reports, params: {:organization_id => o.global_id, :report => "free_supervisor_with_supervisors"}
-      expect(response).to be_success
-      json = JSON.parse(response.body)
-      expect(json).to eq({'user' => []})
-    end
+    # it "should generate free_supervisor_with_supervisors report" do
+    #   token_user
+    #   o = Organization.create(:admin => true)
+    #   o.add_manager(@user.user_name, false)
+    #   get :admin_reports, params: {:organization_id => o.global_id, :report => "free_supervisor_with_supervisors"}
+    #   expect(response).to be_success
+    #   json = JSON.parse(response.body)
+    #   expect(json).to eq({'user' => []})
+    # end
     
     it "should generate active_free_supervisor_without_supervisees_or_org report" do
       token_user
@@ -872,15 +872,15 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json).to eq({'user' => []})
     end
     
-    it "should generate recent_ report" do
-      token_user
-      o = Organization.create(:admin => true)
-      o.add_manager(@user.user_name, false)
-      get :admin_reports, params: {:organization_id => o.global_id, :report => "recent_"}
-      expect(response).to be_success
-      json = JSON.parse(response.body)
-      expect(json).to eq({'user' => []})
-    end
+    # it "should generate recent_ report" do
+    #   token_user
+    #   o = Organization.create(:admin => true)
+    #   o.add_manager(@user.user_name, false)
+    #   get :admin_reports, params: {:organization_id => o.global_id, :report => "recent_"}
+    #   expect(response).to be_success
+    #   json = JSON.parse(response.body)
+    #   expect(json).to eq({'user' => []})
+    # end
 
     it "should generate extras report" do
       token_user
@@ -1000,15 +1000,15 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json['stats']).to_not eq(nil)
     end
     
-    it "should generate multiple_emails report" do
-      token_user
-      o = Organization.create(:admin => true)
-      o.add_manager(@user.user_name, false)
-      get :admin_reports, params: {:organization_id => o.global_id, :report => "multiple_emails"}
-      expect(response).to be_success
-      json = JSON.parse(response.body)
-      expect(json).to eq({'user' => [], 'stats' => {}})
-    end
+    # it "should generate multiple_emails report" do
+    #   token_user
+    #   o = Organization.create(:admin => true)
+    #   o.add_manager(@user.user_name, false)
+    #   get :admin_reports, params: {:organization_id => o.global_id, :report => "multiple_emails"}
+    #   expect(response).to be_success
+    #   json = JSON.parse(response.body)
+    #   expect(json).to eq({'user' => [], 'stats' => {}})
+    # end
     
     it "should generate premium_voices report" do
       token_user
