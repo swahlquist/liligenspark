@@ -905,7 +905,7 @@ footer .wide_links {
   overflow: hidden;
   opacity: 1.0;
   &.fading {
-    box-shadow: 6px 6px 20px rgba(60, 60, 60, 0.7), -2px -2px 20px rgba(60, 60, 60, 0.7);
+    box-shadow: 6px 6px 20px rgba(60, 60, 60, 0.7), -2px -2px 20px rgba(60, 60, 60, 0.7), 6px 6px 30px rgba(255, 255, 0, 0.8), -2px -2px 30px rgba(255, 0, 0, 0.8);
     transition: opacity 0.5s linear 0.9s;
     opacity: 0.0;
   }
@@ -914,7 +914,7 @@ footer .wide_links {
   position: absolute; 
   cursor: pointer;
   left: -100px; 
-  z-index: 3; 
+  z-index: 3;
   width: 162px; 
   height: 41px;
   font-size: 11px;
