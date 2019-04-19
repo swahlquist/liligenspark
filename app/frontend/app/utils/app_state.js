@@ -1913,7 +1913,8 @@ var app_state = EmberObject.extend({
       }
     } else if(specialty_button) {
       app_state.track_depth('clear');
-      var vocs = [];
+      var auto_return_possible = false;
+      var already_navigating = false;
       (button.vocalization || '').split(/\s*&&\s*/).forEach(function(mod) {
         if(mod && mod.length > 0) {
           if(mod == ':clear') {
@@ -1922,17 +1923,26 @@ var app_state = EmberObject.extend({
             app_state.controller.send('alert', {button_triggered: true});
           } else if(mod == ':home') {
             app_state.controller.send('home', {button_triggered: true});
+            already_navigating = true;
           } else if(mod == ':back') {
             app_state.controller.send('back', {button_triggered: true});
+            already_navigating = true;
           } else if(mod == ':speak') {
             app_state.controller.send('vocalize', {button_triggered: true});
           } else if(mod == ':hush') {
             speecher.stop('all');
           } else if(mod == ':backspace') {
             app_state.controller.send('backspace', {button_triggered: true});
+          } else if(mod == ':space') {
+            auto_return_possible = true;
+          } else if(mod == ':complete' || mod == ':predict') {
+            auto_return_possible = true;
           }
         }
       });
+      if(auto_return_possible && !already_navigating) {
+        app_state.possible_auto_home(obj);
+      }
     } else if(button.integration && button.integration.action_type == 'webhook') {
       app_state.track_depth('clear');
       Button.extra_actions(button);
