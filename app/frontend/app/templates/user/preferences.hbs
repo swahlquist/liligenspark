@@ -91,6 +91,14 @@
       {{/if}}
     </div>
   </div>
+  {{#if advanced}}
+    <div class="form-group">
+      <label for="highlighted_buttons" class="col-sm-3 control-label">{{t "Selection Highlights" key='highlighted_buttons'}}</label>
+      <div class="col-sm-5">
+        {{bound-select select_class="form-control" select_id="highlighted_buttons" content=highlighted_buttons_list selection=model.preferences.highlighted_buttons action=(action (mut model.preferences.highlighted_buttons)) }}
+      </div>
+    </div>
+  {{/if}}
   <div class="form-group">
     <label for="logging" class="col-sm-3 control-label">{{t "Logging" key='logging'}}</label>
     <div class="col-sm-5">

@@ -673,7 +673,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
   // use promises to make this call idempotent
   CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
   var promise = CoughDrop.Buttonset.pending_promises[id];
-  if(promise) { console.error("already checking for", id); return promise; }
+  if(promise) { return promise; }
 
   var button_sets = CoughDrop.store.peekAll('buttonset');
   var found = CoughDrop.store.peekRecord('buttonset', id) || button_sets.find(function(bs) { return bs.get('key') == id; });

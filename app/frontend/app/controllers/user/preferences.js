@@ -53,6 +53,11 @@ export default Controller.extend({
     {name: i18n.t('confirm_all_external_buttons', "Confirm Before Opening Any Externally-Linked Buttons"), id: "confirm_all"},
     {name: i18n.t('prevent_external_buttons', "Do Not Allow Opening Externally-Linked Buttons"), id: "prevent"}
   ],
+  highlighted_buttons_list: [
+    {name: i18n.t('dont_highlight', "Don't Highlight Buttons on Selection"), id: "none"},
+    {name: i18n.t('highlight_all', "Highlight All Buttons on Selection"), id: "all"},
+    {name: i18n.t('highlight_spoken', "Highlight Spoken Buttons on Selection"), id: "spoken"},
+  ],
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
     {name: i18n.t('default_font_caps', "Default Font, All Uppercase"), id: "default_caps"},

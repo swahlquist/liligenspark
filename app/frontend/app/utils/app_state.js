@@ -1844,52 +1844,31 @@ var app_state = EmberObject.extend({
     if(button_to_speak.modified && !button_to_speak.in_progress) {
       obj.completion = obj.completion || button_to_speak.label;
     }
+
     // TODO: If the user just navigated to a home-locked board
     // then it'll be logged with a depth of 0 even though it
     // took them any number of steps to get there. On average
     // it will probably be fine, but some buttons won't get 
     // enough weight.
-    // TODO: If the user doesn't have auto-home set, then this
-    // depth value is meaningless.
     obj.depth = app_state.get('depth_actions.depth') || 0; // || (stashes.get('boardHistory') || []).length;
     stashes.log(obj);
     var _this = this;
 
+    if((app_state.get('currentUser.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
+      if(button_added_or_spoken || app_state.get('currentUser.preferences.highlighted_buttons') == 'all') {
+        app_state.highlight_selected_button(button);
+      }
+    }
+
     // additional actions (besides just speaking) will be necessary for some buttons
     if(button.load_board && button.load_board.key) {
-      if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
+      var user_prefers_native_keyboard = app_state.get('currentUser.preferences.prefer_native_keyboard') || window.user_preferences.any_user.prefer_native_keyboard;
+      var native_keyboard_available = capabilities.install_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && !buttonTracker.scanning_enabled;
+      if((button.vocalization || '').match(/:native-keyboard/) && native_keyboard_available && user_prefers_native_keyboard && window.Keyboard && window.Keyboard.hide) {
+        scanner.native_keyboard();
+      } else if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
         modal.warning(i18n.t('sticky_board_notice', "Board lock is enabled, disable to leave this board."), true);
       } else {
-
-//     var $button = $(".button[data-id='" + button.id + "']").parent();
-//     if($button.length) {
-//       var $clone = $button.clone().addClass('hover_button').addClass('touched');
-//       var width = $button.find(".button").outerWidth();
-//       var height = $button.find(".button").outerHeight();
-//       var offset = $button.offset();
-//       $clone.css({
-//         position: 'absolute',
-//         top: offset.top,
-//         left: offset.left,
-//         width: '',
-//         height: ''
-//       });
-//       $clone.find('.button').css({
-//         width: width,
-//         height: height
-//       });
-//
-//       $("body").append($clone);
-//       $clone.addClass('selecting');
-//
-//       runLater(function() {
-//         $button.addClass('selecting');
-//         var later = runLater(function() {
-//           $(".hover_button").remove();
-//         }, 3000);
-//         $button.data('later', later);
-//       });
-//     }
         runLater(function() {
           app_state.track_depth('link');
           _this.jump_to_board({
@@ -1966,11 +1945,48 @@ var app_state = EmberObject.extend({
         home_lock: button.home_lock
       }, obj.board);
       }, 100);
-    } else if(obj.prevent_return) {
-      app_state.track_depth('clear');
+    } else {
+      app_state.possible_auto_home(obj);
+    }
+    frame_listener.notify_of_button(button, obj);
+    return true;
+  },
+  highlight_selected_button: function(button) {
+    var $button = $(".button[data-id='" + button.id + "']");
+    if($button.length) {
+      var $board = $(".board");
+      var board_offset = $board.offset();
+      var $clone = $button.clone().addClass('hover_button').addClass('touched');
+      var width = $button.outerWidth();
+      var height = $button.outerHeight();
+      var offset = $button.offset();
+      $clone.css({
+        position: 'absolute',
+        top: offset.top - board_offset.top,
+        left: offset.left - board_offset.left,
+        width: width + 4,
+        height: height + 4,
+        margin: -2
+      });
+
+      $board.append($clone);
+      $clone.addClass('selecting');
+
+      runLater(function() {
+        $clone.addClass('fading');
+        $button.addClass('selecting');
+        var later = runLater(function() {
+          $clone.remove();
+        }, 3000);
+        $button.data('later', later);
+      });
+    }
+  },
+  possible_auto_home: function(obj) {
+    app_state.track_depth('clear');
+    if(obj.prevent_return) {
       // integrations and configured buttons can explicitly prevent navigating away when activated
     } else if(app_state.get('speak_mode') && ((!app_state.get('currentUser') && window.user_preferences.any_user.auto_home_return) || app_state.get('currentUser.preferences.auto_home_return'))) {
-      app_state.track_depth('clear');
       if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
         var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
         var current = app_state.get('currentBoardState');
@@ -1984,8 +2000,6 @@ var app_state = EmberObject.extend({
         app_state.jump_to_root_board({auto_home: true});
       }
     }
-    frame_listener.notify_of_button(button, obj);
-    return true;
   },
   launch_url: function(button, force, board) {
     var _this = this;

@@ -263,6 +263,9 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_start: function(event) {
+    if($(event.target).closest('.hover_button').length) {
+      $(event.target).closest('.hover_button').remove();
+    }
     // advanced_selection regions should be eating all click events and
     // instead manually interpreting touch and mouse events. that way we
     // can do magical things like "click" on starting/ending point
