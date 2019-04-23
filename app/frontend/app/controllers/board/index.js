@@ -126,11 +126,14 @@ export default Controller.extend({
     // before, but with all the local caching it's more likely to
     // happen more often.
   },
+  has_rendered_material: function() {
+    return !!(this.get('ordered_buttons') || this.get('model.fast_html'));
+  }.property('ordered_buttons', 'model.fast_html'),
   check_for_updated_board: function() {
     // When you exit out of speak mode, go ahead and try to reload the board, that
     // will give people a consistent, reliable way to check for updates in case
     // their board got out of sync.
-    if(persistence.get('online') && this.get('ordered_buttons') && this.get('app_state.currentBoardState.reload_token') && !this.get('app_state.speak_mode')) {
+    if(persistence.get('online') && this.get('has_rendered_material') && this.get('app_state.currentBoardState.reload_token') && !this.get('app_state.speak_mode')) {
       var _this = this;
       _this.set('app_state.currentBoardState.reload_token', null);
       _this.get('model').reload().then(function(brd) {
@@ -140,7 +143,7 @@ export default Controller.extend({
         }
       }, function() { });
     }
-  }.observes('app_state.currentBoardState.reload_token', 'ordered_buttons', 'app_state.speak_mode'),
+  }.observes('app_state.currentBoardState.reload_token', 'has_rendered_material', 'app_state.speak_mode'),
   update_current_board_state: function() {
     if(this.get('model.id') && app_state.get('currentBoardState.id') == this.get('model.id')) {
       app_state.setProperties({

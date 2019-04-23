@@ -94,7 +94,10 @@ var persistence = EmberObject.extend({
   push_records: function(store, keys) {
     var hash = {};
     var res = {};
+    // Any non-found records will remain marked as missing
     keys.forEach(function(key) { hash[key] = true; });
+    // Look in the in-memory store for matching records, mark them
+    // as not missing if found
     CoughDrop.store.peekAll(store).map(function(i) { return i; }).forEach(function(item) {
       if(item) {
         var record = item;
@@ -513,6 +516,8 @@ var persistence = EmberObject.extend({
           });
         }
         RSVP.all(promises).then(function() {
+          // Completely clear known_missing for the store when a new
+          // record is persisted
           persistence.known_missing = persistence.known_missing || {};
           persistence.known_missing[store] = {};
           persistence.stores.push({object: obj});

@@ -361,7 +361,7 @@ var dbman = {
           args.push(record.key);
         }
         sql = sql + (exists ? 'WHERE ref_id=?' : 'ref_id) VALUES (?, ?)');
-        if(store_name == 'board' && exists) { sql = sql.replace(/\)/, ', ?)'); }
+        if(store_name == 'board' && !exists) { sql = sql.replace(/\?\)/, '?, ?)'); }
         args.push(ref_id);
         dbman.db.executeSql(sql, args, function() {
           done();

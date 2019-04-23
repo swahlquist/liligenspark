@@ -107,10 +107,16 @@ export default Route.extend({
         _this.set('load_state', {remote_reload: true});
         reload = model.reload(force_fetch).then(null, function(err) {
           _this.set('load_state', {remote_reload_local_reload: true});
-          return model.reload(false);
+          if(!force_fetch && controller.get('has_rendered_material')) {
+            // If you think you're online but you're not really,
+            // then it'll barf on a failed lookup
+            return RSVP.resolve(model)
+          } else {
+            return model.reload(false);
+          }
         });
       // if we're offline, then we should only reload if we absolutely have to (i.e. ordered_buttons isn't set)
-      } else if(!controller.get('ordered_buttons')) {
+      } else if(!controller.get('has_rendered_material')) {
         _this.set('load_state', {local_reload: true});
         reload = model.reload(false).then(null, function(err) {
           _this.set('load_state', {local_reload_local_reload: true});
@@ -119,12 +125,12 @@ export default Route.extend({
       }
 
       reload.then(function(updated) {
-        if(!controller.get('ordered_buttons') || updated.get('current_revision') != prior_revision) {
+        if(!controller.get('has_rendered_material') || updated.get('current_revision') != prior_revision) {
           CoughDrop.log.track('processing buttons again');
           controller.processButtons();
         }
       }, function(error) {
-        if(!controller.get('ordered_buttons') || !app_state.get('speak_mode')) {
+        if(!controller.get('has_rendered_material') || !app_state.get('speak_mode')) {
           _this.send('error', error);
         }
       });
