@@ -104,56 +104,106 @@ task "extras:version" => :environment do
 end
 
 task "extras:desktop" => :environment do
-  folder = 'coughdrop_desktop'
-  js = nil
-  css = nil
-  Dir.glob('./public/assets/application-*') do |fn|
-    if fn.match(/\.js$/)
-      js = fn
-    elsif fn.match(/\.css$/)
-      css = fn
+  json = JSON.parse(File.read("./lib/domains.json")) rescue nil
+  if !json
+    puts "lib/domains.json not found or invalid"
+    return
+  end
+  json.each do |domain, folder|
+    puts "retrieving domain settings"
+    res = Typhoeus.get("https://#{domain}/api/v1/domain_settings")
+    domain_settings = JSON.parse(res.body) rescue nil
+    if domain_settings
+      puts "FOR DOMAIN: #{domain}"
+      js = nil
+      css = nil
+      Dir.glob('./public/assets/application-*') do |fn|
+        if fn.match(/\.js$/)
+          js = fn
+        elsif fn.match(/\.css$/)
+          css = fn
+        end
+      end
+      if !js || !css
+        raise "need both a js and css to be created"
+      end
+      puts "copying static assets"
+      puts `cp ./public/images/* ../#{folder}/www/images`
+      puts `cp ./public/images/logos/* ../#{folder}/www/images/logos`
+      puts `cp ./public/fonts/* ../#{folder}/www/fonts`
+      puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
+      puts `cp #{js} ../#{folder}/www/app.js`
+      puts `cp #{css} ../#{folder}/www/css/app.css`
+
+      puts "retrieving remote assets"
+      if domain_settings['css']
+        url = domain_settings['css']
+        url = "//#{domain}" + url if url.match(/^\/[^\/]/)
+        url = "" + url if url.match(/^\/\//)
+        res = Typhoeus.get(url)
+        if res.code == 200
+          File.write("../#{folder}/www/domain_overrides.css", res.body) 
+          puts "retrieved overrides css"
+        else
+          puts "ERROR: could not retreived overrides css from #{domain_settings['css']}"
+        end
+      end
+      if domain_settings['settings']['logo_url'] && domain_settings['settings']['logo_url'] != '/images/logo-big.png'
+        url = domain_settings['settings']['logo_url']
+        url = "//#{domain}" + url if url.match(/^\/[^\/]/)
+        url = "" + url if url.match(/^\/\//)
+        res = Typhoeus.get(url)
+        extensions = {
+          'image/gif' => 'gif', 
+          'image/jpg' => 'jpg', 
+          'image/jpeg' => 'jpg', 
+          'image/png' => 'png', 
+          'image/svg' => 'svg'
+        }
+        if extensions[res.headers['Content-Type'].downcase]
+          ext = extensions[res.headers['Content-Type'].downcase]
+          File.write("../#{folder}/public/images/logo-big.png.#{ext}", res.body) if res.code == 200
+          `convert ../#{folder}/public/images/logo-big.png.#{ext} -resize 200x200 ../#{folder}/public/images/logo-big-custom.png`
+          domain_settings['settings']['logo_url'] = '/images/logo-big-custom.png'
+          puts "stored custom logo image"
+        else
+          puts "ERROR: Unknown file type, #{res.headers['Content-Type']} at #{url}"
+        end        
+      end
+
+      puts "updating index file"
+      content = File.read("../#{folder}/www/desktop_index.html")
+      str = ""
+      if ENV['TRACK_JS_TOKEN']
+        str += "<script type=\"text/javascript\" async src=\"//d2zah9y47r7bi2.cloudfront.net/releases/current/tracker.js\" data-token=\"#{ ENV['TRACK_JS_TOKEN'] }\"></script>"
+      end
+      str += "\n<div id='enabled_frontend_features' data-list='#{FeatureFlags::ENABLED_FRONTEND_FEATURES.join(',')}'></div>"
+
+      pre, chunk = content.split(/<!-- begin generated content -->/)
+      chunk, post = chunk.split(/<!-- end generated content -->/)
+      content = pre + "<!-- begin generated content -->\n" + str + "\n\n<!-- end generated content -->" + post
+      File.write("../#{folder}/www/desktop_index.html", content)
+
+      puts "updating electron version"
+      
+      str = File.read('./app/assets/javascripts/application-preload.js')
+      match = str.match(/window\.app_version\s+=\s+\"([0-9\.]+\w*)\";/)
+      str = File.read("../#{folder}/package.json")
+      full_version = (match && match[1]) || Date.today.strftime('%Y.%m.%d')
+      full_version = full_version[2..-1].gsub(/[a-z]+/, '').gsub(/\.0+/, '.')
+      str = str.sub(/\"version\"\s*:\s*\"[^\"]+\"/, "\"version\": \"#{full_version}\"");
+      File.write("../#{folder}/package.json", str)
+
+      str = File.read('./app/assets/javascripts/application-preload.js')
+      match = str.match(/window\.app_version\s+=\s+\"([0-9\.]+\w*)\";/)
+      str = File.read("../#{folder}/www/init.js")
+      full_version = (match && match[1]) || Date.today.strftime('%Y.%m.%d')
+      str = str.sub(/window\.app_version\s*=\s*\"[^\"]+\"/, "window.app_version = \"#{full_version}\"");
+      File.write("../#{folder}/www/init.js", str)
+    else
+      puts "ERROR retrieving domain settings for #{domain}"
     end
   end
-  if !js || !css
-    raise "need both a js and css to be created"
-  end
-  puts "copying static assets"
-  puts `cp ./public/images/* ../#{folder}/www/images`
-  puts `cp ./public/images/logos/* ../#{folder}/www/images/logos`
-  puts `cp ./public/fonts/* ../#{folder}/www/fonts`
-  puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
-  puts `cp #{js} ../#{folder}/www/app.js`
-  puts `cp #{css} ../#{folder}/www/css/app.css`
-
-  puts "updating index file"
-  content = File.read("../#{folder}/www/desktop_index.html")
-  str = ""
-  if ENV['TRACK_JS_TOKEN']
-    str += "<script type=\"text/javascript\" async src=\"//d2zah9y47r7bi2.cloudfront.net/releases/current/tracker.js\" data-token=\"#{ ENV['TRACK_JS_TOKEN'] }\"></script>"
-  end
-  str += "\n<div id='enabled_frontend_features' data-list='#{FeatureFlags::ENABLED_FRONTEND_FEATURES.join(',')}'></div>"
-
-  pre, chunk = content.split(/<!-- begin generated content -->/)
-  chunk, post = chunk.split(/<!-- end generated content -->/)
-  content = pre + "<!-- begin generated content -->\n" + str + "\n\n<!-- end generated content -->" + post
-  File.write("../#{folder}/www/desktop_index.html", content)
-
-  puts "updating electron version"
-  
-  str = File.read('./app/assets/javascripts/application-preload.js')
-  match = str.match(/window\.app_version\s+=\s+\"([0-9\.]+\w*)\";/)
-  str = File.read("../#{folder}/package.json")
-  full_version = (match && match[1]) || Date.today.strftime('%Y.%m.%d')
-  full_version = full_version[2..-1].gsub(/[a-z]+/, '').gsub(/\.0+/, '.')
-  str = str.sub(/\"version\"\s*:\s*\"[^\"]+\"/, "\"version\": \"#{full_version}\"");
-  File.write("../#{folder}/package.json", str)
-
-  str = File.read('./app/assets/javascripts/application-preload.js')
-  match = str.match(/window\.app_version\s+=\s+\"([0-9\.]+\w*)\";/)
-  str = File.read("../#{folder}/www/init.js")
-  full_version = (match && match[1]) || Date.today.strftime('%Y.%m.%d')
-  str = str.sub(/window\.app_version\s*=\s*\"[^\"]+\"/, "window.app_version = \"#{full_version}\"");
-  File.write("../#{folder}/www/init.js", str)
 end
 
 task "extras:mobile" => :environment do
