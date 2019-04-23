@@ -2195,7 +2195,7 @@ var persistence = EmberObject.extend({
         });
       });
     } else {
-      return RSVP.reject(null, {offline: true, error: "not online"});
+      return RSVP.reject({offline: true, error: "not online"});
     }
   },
   on_connect: function() {

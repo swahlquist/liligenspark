@@ -85,7 +85,7 @@ var session = EmberObject.extend({
     var key = store_data.access_token || "none";
     persistence.tokens = persistence.tokens || {};
     persistence.tokens[key] = true;
-    var url = '/api/v1/token_check?access_token=' + store_data.access_token;
+    var url = '/api/v1/token_check?access_token=' + store_data.access_token + "&rnd=" + Math.round(Math.random * 999999);
     if(store_data.as_user_id) {
       url = url + "&as_user_id=" + store_data.as_user_id;
     }
@@ -134,6 +134,9 @@ var session = EmberObject.extend({
         persistence.set('browserToken', data.fakeXHR.browserToken);
       }
       if(data && data.result && data.result.error == "not online") {
+        return;
+      }
+      if(!data && !persistence.get('online')) {
         return;
       }
       persistence.tokens[key] = false;
