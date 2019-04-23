@@ -356,12 +356,13 @@ var dbman = {
         var exists = result_set.rows && result_set.rows.length > 0;
         var args = [JSON.stringify(record)];
         var sql = exists ? 'UPDATE ' + store_name + ' SET data = ? ' : 'INSERT INTO ' + store_name + ' (data, ';
+        var keys = ['?', '?'];
         if(store_name == 'board') {
           sql = sql + (exists ? ', key_id = ? ' : 'key_id, ');
           args.push(record.key);
+          keys.push('?');
         }
-        sql = sql + (exists ? 'WHERE ref_id=?' : 'ref_id) VALUES (?, ?)');
-        if(store_name == 'board' && !exists) { sql = sql.replace(/\?\)/, '?, ?)'); }
+        sql = sql + (exists ? 'WHERE ref_id=?' : 'ref_id) VALUES (' + keys.join(', ') + ')');
         args.push(ref_id);
         dbman.db.executeSql(sql, args, function() {
           done();
