@@ -21,6 +21,7 @@ export default modal.ModalController.extend({
   }.observes('pin'),
   opening: function() {
     this.set('pin', '');
+    this.set('invalid_pin', null);
   },
   update_pin: function() {
     var str = this.get('pin_dots') || "";
