@@ -1,5 +1,5 @@
 class Api::IntegrationsController < ApplicationController
-  before_action :require_api_token, :except => [:show]
+  before_action :require_api_token, :except => [:show, :domain_settings]
   
   def index
     integrations = UserIntegration.where(:template => true).order('id ASC')
@@ -68,5 +68,9 @@ class Api::IntegrationsController < ApplicationController
     else
       api_error(400, {error: "integration deletion failed"})
     end
+  end
+
+  def domain_settings
+    render json: @domain_overrides.to_json
   end
 end

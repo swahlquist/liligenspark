@@ -99,7 +99,7 @@ class BoardsController < ApplicationController
     response.headers.except! 'X-Frame-Options'
     render :layout => false
   end
-  
+
   def icon
     board = Board.find_by_path(params['id'])
     if board
