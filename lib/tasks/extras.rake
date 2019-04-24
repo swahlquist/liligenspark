@@ -109,7 +109,8 @@ task "extras:desktop" => :environment do
     puts "lib/domains.json not found or invalid"
     return
   end
-  json.each do |domain, folder|
+  json.each do |domain, folders|
+    folder = folders[1]
     puts "retrieving domain settings"
     res = Typhoeus.get("https://#{domain}/api/v1/domain_settings")
     domain_settings = JSON.parse(res.body) rescue nil
@@ -212,7 +213,8 @@ task "extras:mobile" => :environment do
     puts "lib/domains.json not found or invalid"
     return
   end
-  json.each do |domain, folder|
+  json.each do |domain, folders|
+    folder = folders[0]
     puts "retrieving domain settings"
     res = Typhoeus.get("https://#{domain}/api/v1/domain_settings")
     domain_settings = JSON.parse(res.body) rescue nil
