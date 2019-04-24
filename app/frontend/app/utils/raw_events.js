@@ -1077,6 +1077,7 @@ var buttonTracker = EmberObject.extend({
     buttonTracker.dwell_timeout = buttonTracker.dwell_timeout || 1000;
     buttonTracker.dwell_animation = buttonTracker.dwell_animation || 'pie';
     var allowed_delay_between_events = Math.max(300, buttonTracker.dwell_timeout / 4);
+    var allowed_delay_between_identical_events = 300;
     var minimum_interaction_window = 50;
     if(event.type == 'mousemove' && buttonTracker.dwell_no_cutoff) {
       allowed_delay_between_events = buttonTracker.dwell_timeout - minimum_interaction_window;
@@ -1105,8 +1106,9 @@ var buttonTracker = EmberObject.extend({
     //     with more dwell gravity towards the new element
     //   - start over if on a new element
     if(buttonTracker.last_dwell_linger) {
+      var last_event = buttonTracker.last_dwell_linger.events[buttonTracker.last_dwell_linger.events.length - 1];
       // check if we're outside the screen bounds, or the timestamp bounds.
-      // if so clear the object
+      // if so clear the object, also check for repeat robot events
       if(now - buttonTracker.last_dwell_linger.started > buttonTracker.dwell_timeout + 1000 - duration) {
         // if it's been too long since starting to track the dwell, start over
         console.log("linger cleared because linger took too long");
@@ -1115,6 +1117,14 @@ var buttonTracker = EmberObject.extend({
         // if it's been too long since the last dwell event, start over
         console.log("linger cleared because too long a gap");
         buttonTracker.last_dwell_linger = null;
+      } else if(!buttonTracker.dwell_no_cutoff && event.type == 'mousemove' && last_event && event.clientX == last_event.clientX && event.clientY == last_event.clientY && (now - buttonTracker.last_dwell_linger.updated) > allowed_delay_between_identical_events) {
+        // if it's on the exact same location as the last mouse event
+        // and it's been more than 300ms, this sounds suspiciously like
+        // an artifical event, which should restart the dwell timer
+        console.log("linger timer reset because exact same location");
+        buttonTracker.last_dwell_linger.events = [];
+        buttonTracker.last_dwell_linger.started = null;
+        buttonTracker.last_dwell_linger.updated = null;
       } else {
         // if it's outside the loose bounds to the last target, start over
         var bounds = buttonTracker.last_dwell_linger.loose_bounds();
@@ -1124,6 +1134,12 @@ var buttonTracker = EmberObject.extend({
           buttonTracker.last_dwell_linger = null;
         }
       }
+    } else if(event.type == 'mousemove' && buttonTracker.last_dwell_event && event.clientX == buttonTracker.last_dwell_event.clientX && event.clientY == buttonTracker.last_dwell_event.clientY && (now - buttonTracker.last_dwell_event.ts) > allowed_delay_between_identical_events) {
+      // if the linger has timed out and the next mouse event is exactly
+      // the same location as the last event, this sounds like
+      // an artificial event, which should be ignored
+      buttonTracker.last_dwell_linger = null;
+      elem_wrap = null;
     }
     if(elem_wrap && buttonTracker.last_dwell_linger && elem_wrap.dom == buttonTracker.last_dwell_linger.dom) {
       // if still lingering on the same element, we're rockin'
@@ -1180,6 +1196,8 @@ var buttonTracker = EmberObject.extend({
       buttonTracker.last_dwell_linger.updated = now;
       buttonTracker.last_dwell_linger.events = buttonTracker.last_dwell_linger.events || [];
       buttonTracker.last_dwell_linger.events.push(event);
+      buttonTracker.last_dwell_event = event;
+      buttonTracker.last_dwell_event.ts = now;
       if(dwell_selection) {
         // trigger selection if dwell has been for long enough
         if(now - buttonTracker.last_dwell_linger.started > buttonTracker.dwell_timeout) {
