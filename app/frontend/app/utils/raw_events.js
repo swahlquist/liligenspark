@@ -1508,7 +1508,7 @@ var buttonTracker = EmberObject.extend({
         var prior = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 2];
         if(prior) {
           prior.pct_x = Math.round((prior.x - left) / width * 1000) / 1000;
-          prior.pct_y = Math.round((prior.y - left) / width * 1000) / 1000;
+          prior.pct_y = Math.round((prior.y - left) / height * 1000) / 1000;
         }
         prior = prior || {};
         if(buttonTracker.hit_spots && buttonTracker.hit_spots.length > 0 && buttonTracker.hit_spots[buttonTracker.hit_spots.length - 1].distance != null) {
@@ -1518,7 +1518,7 @@ var buttonTracker = EmberObject.extend({
           // find based on the last location
           var prior = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 2];
           var a = Math.abs(pct_x - ((prior.x - left) / width));
-          var b = Math.abs(pct_y - ((prior.y - top) / width));
+          var b = Math.abs(pct_y - ((prior.y - top) / height));
           travel = Math.round(Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2)) * 1000) / 1000;
         } else {
           // otherwise find the closest edge and use that
