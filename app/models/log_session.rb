@@ -65,6 +65,7 @@ class LogSession < ActiveRecord::Base
     seen_ids = {}
     spelling_sequence = []
     highlight_words = []
+    last_board_id = nil
     (self.data['events'] || []).each_with_index do |event, idx|
       next_event = self.data['events'][idx + 1]
       event.each do |key, val|
@@ -106,6 +107,10 @@ class LogSession < ActiveRecord::Base
         hit_locations[board_id][x] ||= {}
         hit_locations[board_id][x][y] ||= 0
         hit_locations[board_id][x][y] += 1
+        if board_id != last_board_id
+          event['button']['first_on_board'] = true
+        end
+        last_board_id = board_id
       end
 
       if event['button'] && event['button']['label'] && (!event['parts_of_speech'] || event['parts_of_speech']['types'] == ['other'])
@@ -273,6 +278,14 @@ class LogSession < ActiveRecord::Base
   def generate_stats
     self.data['stats'] ||= {}
     return true if skip_extra_data_processing?
+    # TODO: questions we want to answer:
+    # for board B, what's the most common starting location
+    # for board B, how much travel and usage does each button get?
+    # for user U, how much work (travel AND activation) and usage does each word get?
+    # for parent_board P, what's the most common starting location?
+    # for parent_board P, how much travel and usage does each button get?
+    # for parent board P, how much travel and usage does each button (including sub-boards, with measurements relative to this board as the starting place) get?
+    # for argument's sake, let's say activate = 0.5 pct_travel
     self.data['stats']['session_seconds'] = 0
     self.data['stats']['utterances'] = 0.0
     self.data['stats']['utterance_words'] = 0.0
@@ -325,8 +338,8 @@ class LogSession < ActiveRecord::Base
     if self.data['events'] && self.started_at && self.ended_at
       self.data['stats']['session_seconds'] = (self.ended_at - self.started_at).to_i
 
-
       last_button_event = nil
+      travel_tally = 0
       self.data['events'].each do |event|
         self.data['stats']['modeling_events'] ||= 0
         if event['modeling']
@@ -368,6 +381,13 @@ class LogSession < ActiveRecord::Base
               'text' => LogSession.event_text(event),
               'count' => 0
             }
+            if (event['button']['depth'] || 0) == 0
+              travel_tally = 0
+            else
+              travel_tally += LogSession.travel_activation_score
+            end
+            travel_tally += event['button']['percent_travel'] || 0
+
             if button['button_id'] && button['board_id']
               ref = "#{button['button_id']}::#{button['board_id']}"
               if !event['modeling']
@@ -381,6 +401,13 @@ class LogSession < ActiveRecord::Base
                   # accuracy of the data, but on average it's
                   # probably ok.
                   self.data['stats']['all_button_counts'][ref]['depth_sum'] = (self.data['stats']['all_button_counts'][ref]['depth_sum'] || 0) + (event['button']['depth'])
+                end
+                if event['button']['percent_travel']
+                  self.data['stats']['all_button_counts'][ref]['spoken'] = true if (event['button']['spoken'] || event['button']['for_speaking'])
+                  self.data['stats']['all_button_counts'][ref]['full_travel_sum'] ||= 0
+                  self.data['stats']['all_button_counts'][ref]['full_travel_sum'] += travel_tally
+                  # add total travel distance for the button, and mark if it was spoken or not,
+                  # because we really mostly just care about travel distance for spoken buttons
                 end
                 if button['text'] && button['text'].length > 0 && (event['button']['spoken'] || event['button']['for_speaking'])
                   button['text'].split(/\s+/).each do |word|
@@ -738,6 +765,10 @@ class LogSession < ActiveRecord::Base
     end
     true
   end
+
+  def self.travel_activation_score
+    0.5 # add 50% screen travel as an approximation for the work of activating the button
+  end
   
   def schedule_summary
     return true if @skip_extra_data_update
@@ -758,6 +789,7 @@ class LogSession < ActiveRecord::Base
         self.data['events'].each do |event|
           if event['type'] == 'button' && event['button'] && event['button']['board']
             board_ids << event['button']['board']['id']
+            board_ids << event['button']['board']['parent_id']
           elsif event['type'] == 'action' && event['action'] && event['action']['action'] == 'open_board'
             pre = event['action']['previous_key']
             board_ids << pre['id'] if pre && pre['id']

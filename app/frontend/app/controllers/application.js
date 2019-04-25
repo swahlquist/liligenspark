@@ -473,7 +473,7 @@ export default Controller.extend({
           vocalization: opts.action,
           prevent_return: true,
           button_id: null,
-          board: {id: app_state.get('currentBoardState.id'), key: app_state.get('currentBoardState.key')},
+          board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
           type: 'speak'
         };
         app_state.activate_button(obj, obj);
@@ -898,7 +898,8 @@ export default Controller.extend({
 
       var oldState = {
         id: board.get('id'),
-        key: board.get('key')
+        key: board.get('key'),
+        parent_id: board.get('parent_board_id')
       };
       var image_url = button.image;
       if(image && image.get('personalized_url')) {
@@ -921,6 +922,9 @@ export default Controller.extend({
       if(location) {
         obj.percent_x = location.percent_x;
         obj.percent_y = location.percent_y;
+        obj.prior_percent_x = location.prior_percent_x;
+        obj.prior_percent_y = location.prior_percent_y;
+        obj.percent_travel = location.percent_travel;
       }
       _this.set('last_highlight_explore_action', (new Date()).getTime());
       // TODO: if this is the next actual_button in the highlight

@@ -33,6 +33,7 @@ export default Route.extend({
     app_state.set('currentBoardState', {
       id: model.get('id'),
       key: model.get('key'),
+      parent_id: model.get('parent_board_id'),
       name: model.get('name'),
       has_fallbacks: model.get('has_fallbacks'),
       copy_version: model.get('copy_version'),

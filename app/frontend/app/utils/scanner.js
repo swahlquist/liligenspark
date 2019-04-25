@@ -328,6 +328,7 @@ var scanner = EmberObject.extend({
     scanner.interval = null;
     modal.close_highlight();
     scanner.scan_axes('clear');
+    scanner.scanning_distances = {x: 0, y: 0};
     if(partial !== true) {
       scanner.start();
       scanner.listen_for_input();
@@ -341,6 +342,7 @@ var scanner = EmberObject.extend({
     this.last_options = null;
     modal.close_highlight();
     scanner.scan_axes('clear');
+    scanner.scanning_distances = {x: 0, y: 0};
   },
   same_elements: function(a, b) {
     if(!a || !b || a.length != b.length) {
@@ -391,8 +393,11 @@ var scanner = EmberObject.extend({
 
     var track = buttonTracker.track_selection({
       event_type: 'click',
-      selection_type: 'scanner'
+      selection_type: 'scanner',
+      distance: scanner.scanning_distances,
+      elem: elem
     });
+    scanner.scanning_distances = {x: 0, y: 0};
     if(!track || !track.proceed) { return; }
 
     if(scanner.options && scanner.options.scan_mode == 'axes') {
@@ -548,6 +553,7 @@ var scanner = EmberObject.extend({
         x = 0;
         scanner.axes.x = 'scanning-forward';
       }
+      scanner.scanning_distances.x = scanner.scanning_distances.x + rate;
       scanner.axes.vertical.style.left = x + 'vw';
       do_continue = true;
     }
@@ -570,6 +576,7 @@ var scanner = EmberObject.extend({
         y = min;
         scanner.axes.y = 'scanning-forward';
       }
+      scanner.scanning_distances.y = scanner.scanning_distances.y + rate;
       scanner.axes.horizontal.style.top = y + 'vh';
       do_continue = true;
     }
@@ -690,9 +697,16 @@ var scanner = EmberObject.extend({
       scanner.scan_axes('start');
       return;
     }
+    var prior = {x: 0, y: 0};
+    if(scanner.current_elem) {
+      var bounds = scanner.current_elem.getBoundingClientRect();
+      prior.x = bounds.left;
+      prior.y = bounds.top;
+    }
     if(!elem) {
       elem = elem || this.elements[0];
       this.element_index = 0;
+      prior = {x: 0, y: 0};
     }
     if(!document.body.contains(elem.dom[0])) {
       var last = this.elements[this.elements.length - 1];
@@ -716,6 +730,9 @@ var scanner = EmberObject.extend({
 
     // Don't repeat
     if(!retry) {
+      var current_bounds = elem.getBoundingClientRect();
+      scanner.scanning_distances.x = scanner.scanning_distances.x + Math.abs(current_bounds.left - prior.x);
+      scanner.scanning_distances.y = scanner.scanning_distances.y + Math.abs(current_bounds.top - prior.y);
       if(this.options && this.options.audio && this.last_spoken_elem != elem.dom[0]) {
         this.last_spoken_elem = elem.dom[0];
         var alt_voice = !!(speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_scanning !== false);

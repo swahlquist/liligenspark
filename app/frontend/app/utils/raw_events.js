@@ -726,6 +726,7 @@ var buttonTracker = EmberObject.extend({
         var track = buttonTracker.track_selection({
           event_type: event.type,
           selection_type: event_type,
+          event: event,
           total_events: buttonTracker.multi_touch.total,
           multi_touch_events: buttonTracker.multi_touch.multis
         });
@@ -1471,12 +1472,11 @@ var buttonTracker = EmberObject.extend({
     return result_wrap;
   },
   locate_button_on_board: function(id, event) {
-    var x = null, y = null;
+    var x = null, y = null, travel = null;
     if(event && event.clientX !== undefined && event.clientY !== undefined) {
       x = event.clientX;
       y = event.clientY;
     } else {
-      // TODO: support virtual board dom
       var $button = $(".button[data-id='" + id + "']");
       if($button[0]) {
         var offset = $button.offset();
@@ -1490,6 +1490,7 @@ var buttonTracker = EmberObject.extend({
         }
       }
     }
+
     if(x && y) {
       var $board = $(".board");
       if($board.length) {
@@ -1504,7 +1505,27 @@ var buttonTracker = EmberObject.extend({
         var height = $board.height() + top;
         var pct_x = Math.round((x - left) / width * 1000) / 1000;
         var pct_y = Math.round((y - top) / height * 1000) / 1000;
-        return {percent_x: pct_x, percent_y: pct_y};
+        var prior = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 2];
+        if(prior) {
+          prior.pct_x = Math.round((prior.x - left) / width * 1000) / 1000;
+          prior.pct_y = Math.round((prior.y - left) / width * 1000) / 1000;
+        }
+        prior = prior || {};
+        if(buttonTracker.hit_spots && buttonTracker.hit_spots.length > 0 && buttonTracker.hit_spots[buttonTracker.hit_spots.length - 1].distance != null) {
+          var distance = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 1].distance;
+          travel = Math.round((distance.x / width) + (distance.y / height) * 1000) / 1000;
+        } else if(prior) {
+          // find based on the last location
+          var prior = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 2];
+          var a = Math.abs(pct_x - ((prior.x - left) / width));
+          var b = Math.abs(pct_y - ((prior.y - top) / width));
+          travel = Math.round(Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2)) * 1000) / 1000;
+        } else {
+          // otherwise find the closest edge and use that
+          travel = Math.max(0, Math.min(pct_x, pct_y, 1.0 - pct_x, 1.0 - pct_y));
+        }
+  
+        return {percent_x: pct_x, percent_y: pct_y, prior_percent_x: prior.pct_x, prior_percent_y: prior.pct_y, percent_travel: travel};
       }
     }
     return null;
@@ -1657,6 +1678,26 @@ var buttonTracker = EmberObject.extend({
       multi_touch_events: opts.multi_touch_events || 0,
       ts: (new Date()).getTime()
     };
+    buttonTracker.hit_spots = (buttonTracker.hit_spots || []).slice(-3);
+    var hit = {};
+    if(opts.selection_type == 'scanner') {
+      if(opts.distance) {
+        hit.distance = opts.distance;
+        buttonTracker.hit_spots.push({distance: opts.distance});
+      }
+    }
+    if(opts.event) {
+      hit.x = opts.event.clientX;
+      hit.y = opts.event.clientY;
+    } else if(opts.elem) {
+      var bounds = opts.elem.getBoundingClientRect();
+      hit.x = bounds.left + (bounds.width / 2);
+      hit.y = bounds.top + (bounds.height / 2);
+    }
+    if(hit.x != null) {
+      buttonTracker.hit_spots.push(hit);
+    }
+
     if(ls.selection_type == 'touch' && ls.total_events > 0 && ls.multi_touch_events > 0 && (ls.multi_touch_events / (ls.total_events - 1)) >= 0.4) {
       ls.multi_touch = true;
     }

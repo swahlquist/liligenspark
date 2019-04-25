@@ -1282,6 +1282,7 @@ var app_state = EmberObject.extend({
     } else if(!this.get('speak_mode') && this.get('last_speak_mode') !== undefined) {
       capabilities.wakelock('speak!', false);
       capabilities.fullscreen(false);
+      buttonTracker.hit_spots = [];
       if(this.get('last_speak_mode') !== false) {
         stashes.persist('temporary_root_board_state', null);
         stashes.persist('sticky_board', false);
@@ -1343,7 +1344,7 @@ var app_state = EmberObject.extend({
         vocalization: text,
         prevent_return: true,
         button_id: null,
-        board: {id: app_state.get('currentBoardState.id'), key: app_state.get('currentBoardState.key')},
+        board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
         type: 'speak'
       };
   

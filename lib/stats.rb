@@ -170,7 +170,7 @@ module Stats
     # number of forks
     res[:forks] = board.settings['forks']
     # popular copies
-    boards = Board.where(:parent_board_id => board.id).sort_by{|b| b.settings['popularity'] }.select{|b| b.settings['uses'] > 10 }.reverse[0, 5]
+    boards = Board.where(:parent_board_id => board.id).order('home_popularity DESC').limit(100).select{|b| b.settings['uses'] > 10 }.reverse[0, 5]
     res[:popular_forks] = boards.map{|b| JsonApi::Board.as_json(b) }
     # TODO: total uses over time
     # TODO: uses of each button over time
@@ -373,8 +373,10 @@ module Stats
       stats[:all_button_counts].each do |ref, button|
         if all_button_counts[ref]
           all_button_counts[ref]['count'] += button['count']
-          all_button_counts[ref]['depth_sum'] ||= 0 if button['depth_sum']
-          all_button_counts[ref]['depth_sum'] += button['depth_sum'] if button['depth_sum']
+          if button['depth_sum']
+            all_button_counts[ref]['depth_sum'] ||= 0
+            all_button_counts[ref]['depth_sum'] += button['depth_sum']
+          end
         else
           all_button_counts[ref] = button.merge({})
         end
@@ -548,6 +550,10 @@ module Stats
         (session.data['stats']['all_button_counts'] || []).each do |ref, button|
           if stats[:all_button_counts][ref]
             stats[:all_button_counts][ref]['count'] += button['count']
+            if button['depth_sum']
+              stats[:all_button_counts][ref]['depth_sum'] ||= 0
+              stats[:all_button_counts][ref]['depth_sum'] += button['depth_sum']
+            end
           else
             stats[:all_button_counts][ref] = button.merge({})
           end
@@ -617,6 +623,10 @@ module Stats
         stats[:all_button_counts].each do |ref, button|
           if total_stats[:all_button_counts][ref]
             total_stats[:all_button_counts][ref]['count'] += button['count']
+            if button['depth_sum']
+              total_stats[:all_button_counts][ref]['depth_sum'] ||= 0
+              total_stats[:all_button_counts][ref]['depth_sum'] += button['depth_sum']
+            end
           else
             total_stats[:all_button_counts][ref] = button.merge({})
           end

@@ -55,6 +55,16 @@ describe WeeklyStatsSummary, :type => :model do
     expect(data['modeled_word_counts']).to eq({'ok' => 2, 'go' => 1})
     expect(data['modeled_button_counts']).to eq({'1::1_1' => {'button_id' => 1, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 2}})
   end
+
+  it "should schedule board stats generation" do
+    write_this_test
+  end
+
+  describe "update_for_board" do
+    it "should have specs" do
+      write_this_test
+    end
+  end
   
   describe "track_for_trends" do
     it 'should collect data from all summaries for the specified weekyear' do

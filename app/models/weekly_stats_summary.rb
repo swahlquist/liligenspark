@@ -145,6 +145,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end_at = log_session.started_at.utc.end_of_week(:sunday)
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
 
+    Worker.schedule_for(:slow, self, :perform_action, {
+      'method' => 'update_for_board',
+      'arguments' => [log_session_id]
+    })
     summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => (all ? 0 : log_session.user_id))
     summary.update!
   end
@@ -168,24 +172,53 @@ class WeeklyStatsSummary < ActiveRecord::Base
     return true
   end
   
-  def self.update_for_board(log_session)
-  
+  def self.update_for_board(log_session_id)
+    log_session = LogSession.find_by_global_id(log_session_id)
+    return unless log_session && log_session.log_type == 'session'
+    
+    return # for now
     # TODO: stats should have some data on downstream boards, since one of the questions we
     # want to answer is, are there buttons on sub-boards that are used more often than
     # buttons on the main board, because if so then they should probably be moved
   
     all = false
-    return if !log_session || log_session.log_type != 'session'
     return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
     start_at = log_session.started_at.utc.beginning_of_week(:sunday)
     end_at = log_session.started_at.utc.end_of_week(:sunday)
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
 
-    board_id_events.each do |board_id, board_clump|
-      summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :board_id => board_id)
-      sessions = LogSessionBoard.find_sessions(board_id, {:start_at => start_at, :end_at => end_at})
+    board_id_events = {}
+    # TODO: sharding
+    board_ids = LogSessionBoard.where(log_session_id: log_session.id).map(&:board_id).compact.uniq
+    Boards.where(id: board_ids).each do |board|
+      # TODO: sharding
+      summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :board_id => board.id)
+      sessions = LogSessionBoard.find_sessions(board.id, {:start_at => start_at, :end_at => end_at})
       
+
+      start_at = WeeklyStatsSummary.weekyear_to_date(summary.weekyear).beginning_of_week(:sunday)
+      end_at = start_at.end_of_week(:sunday)
+      current_weekyear = WeeklyStatsSummary.date_to_weekyear(Date.today)
+      days = {}
       total_stats = LogSessionBoard.init_stats(sessions)
+
+      start_at.to_date.upto(end_at.to_date) do |date|
+        day_sessions = sessions.select{|s| s.started_at.to_date == date }
+        day_stats = LogSessionBoard.init_stats(day_sessions)
+        day_stats.merge!(LogSessionBoard.button_stats(day_sessions, board))
+        
+        days[date.to_s] = {
+          'total' => day_stats
+        }
+      end
+  
+      total_stats.merge!(LogSessionBoard.button_stats(sessions))
+      total_stats[:days] = days
+
+      summary.data ||= {}
+      summary.data['stats'] = total_stats
+      summary.data['session_ids'] = sessions.map(&:global_id)
+      summary.save
     end
   end
   

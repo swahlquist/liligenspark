@@ -577,6 +577,14 @@ describe LogSession, :type => :model do
     it "should persist modeling events back (as non-modeling events) to the modeler's account where possible" do
       # TODO: should we implement this??
     end
+
+    it "should track button depths" do
+      write_this_test
+    end
+
+    it "should track button travel distances" do
+      write_this_test
+    end
   end
 
   describe "split_out_later_sessions" do
