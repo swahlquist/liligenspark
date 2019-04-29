@@ -19,6 +19,7 @@ export default modal.ModalController.extend({
       _this.snap_scroll();
     };
     _this.set('snap', snap);
+    _this.set('holding', false);
     runLater(snap);
     window.addEventListener('resize', snap);
   },
@@ -54,8 +55,12 @@ export default modal.ModalController.extend({
   }.property('model.text_only', 'model.text'),
   actions: {
     speak: function() {
+      if(this.get('holding')) { return; }
       utterance.vocalize_list(null, {button_triggered: true});
       modal.close();
+    },
+    hold: function() {
+      this.set('holding', !this.get('holding'));
     },
     move: function(direction) {
       var btn = document.getElementById('full_button');

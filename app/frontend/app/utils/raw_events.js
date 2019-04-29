@@ -1325,7 +1325,7 @@ var buttonTracker = EmberObject.extend({
       } else if((region.className || "").match(/board/) || region.id == 'board_canvas') {
         return buttonTracker.button_from_point(event.clientX, event.clientY);
       } else if(region.classList.contains('share_buttons') || region.classList.contains('modal_targets')) {
-        return buttonTracker.element_wrap($target.closest(".btn")[0]);
+        return buttonTracker.element_wrap($target.closest(".btn").filter(":not([disabled])").filter(":not(.unselectable)")[0]);
       } else if(region.id == 'integration_overlay') {
         return buttonTracker.element_wrap($target.closest(".integration_target")[0]);
       } else if(region.id == 'highlight_box') {
