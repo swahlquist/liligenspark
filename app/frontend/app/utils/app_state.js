@@ -1983,10 +1983,27 @@ var app_state = EmberObject.extend({
       $board.append($clone);
       $clone.addClass('selecting');
 
+      // Have to reposition of moving to/from keyboard suggestion board
+      var offset_y = $("#word_suggestions").height() || 0;
+      var checky = function() {
+        if(!$clone.removed) {
+          var new_offset_y = $("#word_suggestions").height() || 0;
+          if(offset_y != new_offset_y) {
+            var top = parseInt($clone.css('top'), 10);
+            top = top + (offset_y - new_offset_y);
+            offset_y = new_offset_y;
+            $clone.css('top', top);
+          }
+          runLater(checky, 100);
+        }
+      };
+      runLater(checky);
+
       runLater(function() {
         $clone.addClass('fading');
         $button.addClass('selecting');
         var later = runLater(function() {
+          $clone.removed = true;
           $clone.remove();
         }, 3000);
         $button.data('later', later);
