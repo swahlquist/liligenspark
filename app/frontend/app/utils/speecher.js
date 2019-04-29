@@ -768,7 +768,9 @@ var speecher = EmberObject.extend({
     }
     if($res.length === 0 && url) {
       var new_url = persistence.url_cache[url] || url;
-      $res = $("<audio>", {preload: 'auto', src: new_url, rel: url}).appendTo($(".board"));
+      $res = $("<audio>", {preload: 'auto', src: new_url, rel: url}).appendTo($("#button_list"));
+    } else if($res.closest("#button_list").length == 0) {
+      $("#button_list").append($res[0]);
     }
     return $res;
   },

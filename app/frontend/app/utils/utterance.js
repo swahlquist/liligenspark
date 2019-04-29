@@ -47,7 +47,9 @@ var utterance = EmberObject.extend({
       var last = rawList[idx - 1] || {};
       var last_computed = buttonList[buttonList.length - 1];
       var text = (button && (button.vocalization || button.label)) || '';
-      if(text.match(/^\+/) && !last.sound) {
+      // TODO: this used to check whether the last button was a sound,
+      // but I have no idea why.
+      if(text.match(/^\+/)) {
         last = {};
         if(idx === 0 || last_computed.in_progress) {
           last = buttonList.pop() || {};
@@ -55,7 +57,7 @@ var utterance = EmberObject.extend({
         // append to previous
         var altered = this.modify_button(last, button);
         buttonList.push(altered);
-      } else if(text.match(/^\:/) && !last.sound) {
+      } else if(text.match(/^\:/)) {
         last = buttonList.pop();
         if((text == ':complete' || text == ':predict') && !(last || {}).in_progress) {
           if(last) {
@@ -357,6 +359,11 @@ var utterance = EmberObject.extend({
     }
     app_state.set('insertion', null);
     this.set('rawButtonList', []);
+    var audio = document.getElementById('button_list').getElementsByTagName('AUDIO');
+    for(var idx = audio.length - 1; idx >= 0; idx--) {
+      audio[idx].parentNode.removeChild(audio[idx]);
+    }
+    $("#button_list audio")
     if(!opts.skip_logging) {
       stashes.log({
         action: 'clear',
