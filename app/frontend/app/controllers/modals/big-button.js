@@ -1,0 +1,70 @@
+import Ember from 'ember';
+import modal from '../../utils/modal';
+import utterance from '../../utils/utterance';
+import persistence from '../../utils/persistence';
+import app_state from '../../utils/app_state';
+import i18n from '../../utils/i18n';
+import { htmlSafe } from '@ember/string';
+import { set as emberSet, get as emberGet } from '@ember/object';
+import { later as runLater } from '@ember/runloop';
+
+export default modal.ModalController.extend({
+  opening: function() {
+    this.get('model.text');
+    this.get('model.text_only');
+    // figure out the correct font size to ensure all the text
+    // is shown, if that's possible
+    var _this = this;
+    var snap = function() {
+      _this.snap_scroll();
+    };
+    _this.set('snap', snap);
+    runLater(snap);
+    window.addEventListener('resize', snap);
+  },
+  closing: function() {
+    var _this = this;
+    if(_this.get('snap')) {
+      window.removeEventListener('resize', _this.get('snap'));
+    }
+  },
+  snap_scroll: function() {
+    var btn = document.getElementById('full_button');
+    if(btn) {
+      this.set('not_scrollable', btn.scrollHeight <= btn.clientHeight);
+    }
+  },
+  text_class: function() {
+    var size = 'normal';
+    var text = this.get('model.text') || "";
+    if(this.get('model.text_only')) {
+      if(text.length > 200) {
+        size = 'small';
+      } else if(text.length > 100) {
+        size = 'medium';
+      }
+    } else {
+      if(text.length > 100) {
+        size = 'small';
+      } else if(text.length > 50) {
+        size = 'medium';
+      }
+    }
+    return htmlSafe(size);
+  }.property('model.text_only', 'model.text'),
+  actions: {
+    speak: function() {
+      utterance.vocalize_list(null, {button_triggered: true});
+      modal.close();
+    },
+    move: function(direction) {
+      var btn = document.getElementById('full_button');
+      var interval = btn.clientHeight - 20;
+      if(direction == 'up') {
+        btn.scrollTop = Math.max(0, btn.scrollTop - interval);
+      } else {
+        btn.scrollTop = Math.min(btn.scrollHeight, btn.scrollTop + interval);
+      }
+    }
+  }
+});

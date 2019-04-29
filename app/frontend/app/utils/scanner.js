@@ -731,8 +731,11 @@ var scanner = EmberObject.extend({
     // Don't repeat
     if(!retry) {
       var current_bounds = elem.getBoundingClientRect();
-      scanner.scanning_distances.x = scanner.scanning_distances.x + Math.abs(current_bounds.left - prior.x);
-      scanner.scanning_distances.y = scanner.scanning_distances.y + Math.abs(current_bounds.top - prior.y);
+      // We add .25 to the travel score based on the assumption that
+      // each scan progression costs some fixed amount of expense,
+      // either in waiting or hitting a button to progress
+      scanner.scanning_distances.x = scanner.scanning_distances.x + Math.abs(current_bounds.left - prior.x) + 0.25;
+      scanner.scanning_distances.y = scanner.scanning_distances.y + Math.abs(current_bounds.top - prior.y) + 0.25;
       if(this.options && this.options.audio && this.last_spoken_elem != elem.dom[0]) {
         this.last_spoken_elem = elem.dom[0];
         var alt_voice = !!(speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_scanning !== false);

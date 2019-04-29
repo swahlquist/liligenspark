@@ -9,14 +9,14 @@
     {{#if buttons}}
       <div class='cursor_holder'>
         <div class='cursor_navigation repair_buttons'>
-          <btn class='btn btn-default btn-lg up' {{action 'move' 'up'}} disabled={{not_scrollable}}>
+          <button class='btn btn-default btn-lg up' {{action 'move' 'up'}} disabled={{not_scrollable}}>
             <span class='glyphicon glyphicon-chevron-up'></span>
             {{t "Up" key='up'}}
-          </btn>
-          <btn class='btn btn-default btn-lg down' {{action 'move' 'down'}} disabled={{not_scrollable}}>
+          </button>
+          <button class='btn btn-default btn-lg down' {{action 'move' 'down'}} disabled={{not_scrollable}}>
             <span class='glyphicon glyphicon-chevron-down'></span>
             {{t "Down" key='down'}}
-          </btn>
+          </button>
         </div>
         <div class='row cursor_area'>
           {{#each buttons as |button|}}

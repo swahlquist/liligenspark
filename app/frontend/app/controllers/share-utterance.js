@@ -5,6 +5,7 @@ import $ from 'jquery';
 import utterance from '../utils/utterance';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
+import { htmlSafe } from '@ember/string';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -101,6 +102,15 @@ export default modal.ModalController.extend({
     } 
     return res;
   }.property('utterance_record.link', 'sentence'),
+  clipboard_class: function() {
+    if(this.get('copy_result.succeeded')) {
+      return htmlSafe('btn btn-success');
+    } else if(this.get('copy_result.failed')) {
+      return htmlSafe('btn btn-danger');
+    } else {
+      return htmlSafe('btn btn-default');
+    }
+  }.property('copy_result'),
   actions: {
     copy_event(res) {
       if(res) {
@@ -126,8 +136,13 @@ export default modal.ModalController.extend({
       } else if(medium == 'twitter') {
         capabilities.window_open(this.get('twitter_url'));
         modal.close();
+      } else if(medium == 'link') {
+        capabilities.window_open(this.get('utterance_record.link'));
+        modal.close();
       } else if(medium == 'email') {
         modal.open('share-email', {url: this.get('utterance_record.link'), text: this.get('sentence'), utterance_id: this.get('utterance_record.id') });
+      } else if(medium == 'big_text') {
+        modal.open('modals/big-button', {text: this.get('sentence'), text_only: app_state.get('referenced_user.preferences.device.button_text_position') == 'text_only'});
       } else if(medium == 'clipboard' && this.get('shares.clipboard')) {
         var $elem = $("#utterance_sentence");
         window.getSelection().removeAllRanges();

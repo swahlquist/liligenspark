@@ -765,6 +765,31 @@ footer .wide_links {
   min-height: 220px;
   overflow: auto;
   position: relative;
+  &.any_size {
+    min-height: none;
+    max-height: none;
+    .big_btn {
+      width: calc(100% - 10px); 
+      height: calc(100vh - 180px); 
+      overflow: auto;
+      white-space: normal; 
+      font-size: 40px;
+      line-height: 45px;
+      border-width: 4px;
+      border-radius: 10px;
+      span {
+        display: inline-block;
+      }
+      .medium {
+        font-size: 30px;
+        line-height: 35px;
+      }
+      .small {
+        font-size: 20px;
+        line-height: 25px;
+      }
+    }
+  }
   .cursor_box {
     float: left;
     width: 150px;

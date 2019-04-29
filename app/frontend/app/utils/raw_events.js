@@ -1324,6 +1324,8 @@ var buttonTracker = EmberObject.extend({
         return buttonTracker.element_wrap($elem[0]);
       } else if((region.className || "").match(/board/) || region.id == 'board_canvas') {
         return buttonTracker.button_from_point(event.clientX, event.clientY);
+      } else if(region.classList.contains('share_buttons') || region.classList.contains('modal_targets')) {
+        return buttonTracker.element_wrap($target.closest(".btn")[0]);
       } else if(region.id == 'integration_overlay') {
         return buttonTracker.element_wrap($target.closest(".integration_target")[0]);
       } else if(region.id == 'highlight_box') {
@@ -1510,7 +1512,6 @@ var buttonTracker = EmberObject.extend({
           prior.pct_x = Math.round((prior.x - left) / width * 1000) / 1000;
           prior.pct_y = Math.round((prior.y - left) / height * 1000) / 1000;
         }
-        prior = prior || {};
         if(buttonTracker.hit_spots && buttonTracker.hit_spots.length > 0 && buttonTracker.hit_spots[buttonTracker.hit_spots.length - 1].distance != null) {
           var distance = buttonTracker.hit_spots[buttonTracker.hit_spots.length - 1].distance;
           travel = Math.round((distance.x / width) + (distance.y / height) * 1000) / 1000;
@@ -1524,7 +1525,8 @@ var buttonTracker = EmberObject.extend({
           // otherwise find the closest edge and use that
           travel = Math.max(0, Math.min(pct_x, pct_y, 1.0 - pct_x, 1.0 - pct_y));
         }
-  
+        prior = prior || {};
+
         return {percent_x: pct_x, percent_y: pct_y, prior_percent_x: prior.pct_x, prior_percent_y: prior.pct_y, percent_travel: travel};
       }
     }
