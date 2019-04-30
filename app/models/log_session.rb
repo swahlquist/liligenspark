@@ -141,10 +141,12 @@ class LogSession < ActiveRecord::Base
       next if event['action'] && event['action']['action'] == 'auto_home'
       stamp = event['timestamp']
       event_string = event['button'] && event['button']['label']
-      event_string = "[#{event['action']['action']}]" if event['action']
+      event_string = nil if event['button'] && !event['button']['spoken'] || !event['button']['for_speaking']
+      event_string = "[#{event['action']['action']}]" if event['action'] && ['clear', 'vocalize', 'backspace'].include?(event['action']['action'])
+      event_string = "_" if event['action'] && event['action']['action'] == 'open_board'
       event_string = event['button']['completion'] if event && event['button'] && event['button']['completion']
       event_string = "[vocalize]" if event['utterance']
-      event_string ||= "event"
+      event_string ||= nil
       if !last_stamp
         str += event_string
       else
