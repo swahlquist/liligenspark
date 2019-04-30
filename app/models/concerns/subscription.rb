@@ -669,8 +669,10 @@ module Subscription
       # going to be deleted for inactivity (after 12 months of non-use)
       to_be_deleted = User.where(['updated_at < ?', 12.months.ago]).order('updated_at ASC').limit(100)
       to_be_deleted.each do |user|
-        next if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
-        updated = user.updated_at
+        if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
+          user.touch
+          next
+        end
         user.settings['subscription'] ||= {}
         last_warning = Time.parse(user.settings['subscription']['last_deletion_warning']) rescue Time.at(0)
         if last_warning < 3.weeks.ago

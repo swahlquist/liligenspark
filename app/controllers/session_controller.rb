@@ -143,8 +143,10 @@ class SessionController < ApplicationController
         device_key = request.headers['X-Device-Id'] || params['device_id'] || 'default'
         
         d = Device.find_or_create_by(:user_id => u.id, :developer_key_id => 0, :device_key => device_key)
-        d.settings['ip_address'] = request.remote_ip
-        d.settings['user_agent'] = request.headers['User-Agent']
+
+        store_user_data = (u.settings['preferences'] || {})['cookies'] != false
+        d.settings['ip_address'] = store_user_data ? request.remote_ip : nil
+        d.settings['user_agent'] = store_user_data ? request.headers['User-Agent'] : nil
         d.settings['mobile'] = params['mobile'] == 'true'
         d.settings['browserless'] = params['browserless']
         d.generate_token!(!!params['long_token'])
