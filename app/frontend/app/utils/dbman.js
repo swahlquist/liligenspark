@@ -310,10 +310,17 @@ var dbman = {
           }
         });
         query = query + ')';
+      } else if(index == 'key' && store_name == 'board' && key && key.forEach) {
+        query = query + ' WHERE key_id IN (';
+        key.forEach(function(k, idx) {
+          query = query + '?';
+          args.push(k);
+          if(kdx < key.length - 1) {
+            query = query + ',';
+          }
+        });
+        query = query + ')';
       }
-      // TODO: after the db upgrade is applied and stored,
-      // add a lookup here for boards by key:
-      // else if(index == 'key'...) { WHERE key_id IN... }
       dbman.db.executeSql(query, args, function(result_set) {
         // process and return the resulting list
         var list = [];
