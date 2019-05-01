@@ -2210,6 +2210,9 @@ var app_state = EmberObject.extend({
 });
 
 if(!app_state.get('testing')) {
+  app_state.set('refresh_stamp', (new Date()).getTime());
+  app_state.set('medium_refresh_stamp', (new Date()).getTime());
+  app_state.set('short_refresh_stamp', (new Date()).getTime());
   setInterval(function() {
     app_state.set('refresh_stamp', (new Date()).getTime());
   }, 5*60*1000);

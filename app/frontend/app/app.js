@@ -98,6 +98,7 @@ CoughDrop.track_error = function(msg, stack) {
   CoughDrop.errors = CoughDrop.errors || [];
   CoughDrop.errors.push({
     message: msg,
+    date: (new Date()),
     stack: stack === false ? null : (stack || error.stack)
   });
 }
