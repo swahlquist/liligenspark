@@ -67,6 +67,15 @@ $(document).on('mousedown touchstart', function(event) {
     scanner.listen_for_input();
   }
 }).on('gazelinger mousemove touchmove mousedown touchstart', function(event) {
+  if(capabilities.system == 'iOS' && !buttonTracker.ios_start_initialized) {
+    // Safari requires a user-interaction-initiated utterance before
+    // it will allow unsanctioned utterances (such as on touch timeouts,
+    // scanning events, etc.)
+    var u = new window.SpeechSynthesisUtterance();
+    u.text = "";
+    window.speechSynthesis.speak(u);
+    buttonTracker.ios_start_initialized = true;
+  }
   if(event.type == 'mousemove' || event.type == 'mousedown') {
     buttonTracker.mouse_used = true;
   }
