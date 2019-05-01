@@ -73,6 +73,9 @@ $(document).on('mousedown touchstart', function(event) {
   buttonTracker.touch_continue(event);
 }).on('mouseup touchend touchcancel blur', function(event) {
   if(capabilities.system == 'iOS' && !buttonTracker.ios_initialized) {
+    // Safari requires a user-interaction-initiated utterance before
+    // it will allow unsanctioned utterances (such as on touch timeouts,
+    // scanning events, etc.)
     var u = new window.SpeechSynthesisUtterance();
     u.text = "";
     window.speechSynthesis.speak(u);
@@ -1296,6 +1299,7 @@ var buttonTracker = EmberObject.extend({
       // you're close to anything selectable
     }
     if(region) {
+      buttonTracker.shortPressEvent = buttonTracker.longPressEvent;
       buttonTracker.longPressEvent = null;
       if(allow_dwell === false && $target.closest('.undwellable').length > 0) {
         return null;
@@ -1656,11 +1660,11 @@ var buttonTracker = EmberObject.extend({
   track_short_press: function() {
     if(this.longPressEvent) {
       var selectable_wrap = this.find_selectable_under_event(this.longPressEvent, true);
-      if(selectable_wrap && this.longPressEvent) {
-        var target = this.longPressEvent.originalTarget || (this.longPressEvent.originalEvent || this.longPressEvent).target
+      if(selectable_wrap && this.shortPressEvent) {
+        var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target
         var event = $.Event('touchend', target);
-        event.clientX = (this.longPressEvent || this.longPressEvent.originalEvent).clientX;
-        event.clientY = (this.longPressEvent || this.longPressEvent.originalEvent).clientY;
+        event.clientX = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientX;
+        event.clientY = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientY;
         buttonTracker.element_release(selectable_wrap, event);
         this.ignoreUp = true;
       }

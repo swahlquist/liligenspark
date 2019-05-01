@@ -10,6 +10,7 @@ import app_state from './app_state';
 import i18n from './i18n';
 import stashes from './_stashes';
 import Utils from './misc';
+import CoughDrop from '../app';
 
 var speecher = EmberObject.extend({
   beep_url: "https://opensymbols.s3.amazonaws.com/beep.mp3",
@@ -386,6 +387,7 @@ var speecher = EmberObject.extend({
           });
           utterance.addEventListener('error', function() {
             console.log("errored");
+            CoughDrop.track_error("error rendering synthesized voice", opts);
             handle_callback();
           });
           utterance.addEventListener('pause', function() {
