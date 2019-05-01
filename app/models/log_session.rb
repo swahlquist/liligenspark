@@ -146,7 +146,7 @@ class LogSession < ActiveRecord::Base
       event_string = "_" if event['action'] && event['action']['action'] == 'open_board'
       event_string = event['button']['completion'] if event && event['button'] && event['button']['completion']
       event_string = "[vocalize]" if event['utterance']
-      event_string ||= nil
+      event_string ||= ""
       if !last_stamp
         str += event_string
       else
