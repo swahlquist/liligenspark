@@ -359,7 +359,10 @@ var utterance = EmberObject.extend({
     }
     app_state.set('insertion', null);
     this.set('rawButtonList', []);
-    var audio = document.getElementById('button_list').getElementsByTagName('AUDIO');
+    var audio = [];
+    if(document.getElementById('button_list')) {
+      audio = document.getElementById('button_list').getElementsByTagName('AUDIO');
+    }
     for(var idx = audio.length - 1; idx >= 0; idx--) {
       audio[idx].parentNode.removeChild(audio[idx]);
     }

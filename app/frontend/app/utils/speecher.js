@@ -351,6 +351,7 @@ var speecher = EmberObject.extend({
         voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase() == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
         voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
         voice = voice || voices.find(function(v) { return v['default']; });
+        voice = voice || voices[0];
       }
       // Try to render default prompts in the locale's language
       if(opts.default_prompt) {
@@ -376,7 +377,7 @@ var speecher = EmberObject.extend({
         }
         var handle_callback = function() {
           utterance.handled = true;
-          callback();
+          if(callback) { callback(); }
         };
         if(utterance.addEventListener) {
           utterance.addEventListener('end', function() {
@@ -464,15 +465,15 @@ var speecher = EmberObject.extend({
     }
   },
   next_speak: function() {
-    if(this.speaks && this.speaks.length) {
-      var speak = this.speaks.shift();
+    if(speecher.speaks && speecher.speaks.length) {
+      var speak = speecher.speaks.shift();
       if(speak.sound) {
-        this.speak_audio(speak.sound, 'text', this.speaking_from_collection);
+        speecher.speak_audio(speak.sound, 'text', speecher.speaking_from_collection);
       } else if(speak.text) {
-        var stashVolume = this.volume;
-        if(speak.volume) { this.volume = speak.volume; }
-        this.speak_text(speak.text, this.speaking_from_collection);
-        this.volume = stashVolume;
+        var stashVolume = speecher.volume;
+        if(speak.volume) { speecher.volume = speak.volume; }
+        speecher.speak_text(speak.text, speecher.speaking_from_collection);
+        speecher.volume = stashVolume;
       }
     } else {
       // console.log("no speaks left");
