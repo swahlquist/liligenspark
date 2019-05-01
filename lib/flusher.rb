@@ -112,7 +112,7 @@ module Flusher
     # NOTE: this is aggressive, but probably necessary
     # TODO: build a notification for users who just lost their home board this way
     UserBoardConnection.where(:board_id => board_db_id).each do |bc|
-      if bc.home
+      if bc.home && bc.user
         user = bc.user
         user.settings['preferences']['home_board'] = nil
         user.save
