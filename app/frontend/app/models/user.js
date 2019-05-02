@@ -485,6 +485,8 @@ CoughDrop.User = DS.Model.extend({
         var sup = (user.get('supervisees') || []).find(function(sup) { return sup.user_id == supervisee_user_name || sup.user_name == supervisee_user_name });
         if(sup) {
           return CoughDrop.User.find_integration(sup.user_id || sup.user_name, key);
+        } else {
+          return RSVP.reject({error: 'no matching integration found for user or board author'});
         }
       } else {
         return RSVP.reject(err);
