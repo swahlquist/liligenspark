@@ -84,19 +84,19 @@
         {{/if}}
       </div>
       <div class='col-sm-3 col-xs-6 big_button_holder'>
-        <button class='btn big_button btn-default' {{action 'stats'}} style='border-color: #9b962e; background: #fffbbc;'>
+        <button class='btn big_button btn-default secondary_button' {{action 'stats'}}>
           <img src={{path 'images/bar_chart.svg'}} style='opacity: 0.9; filter: grayscale(60%);'/>
           {{t "Reports" key='reports'}}
         </button>
       </div>
       <div class='col-sm-3 col-xs-6 big_button_holder'>
-        {{#link-to 'user.goals' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
+        {{#link-to 'user.goals' app_state.currentUser.user_name class='btn big_button btn-default alternate_button'}}
           <span class='glyphicon glyphicon-flag'></span>
           {{t "Goals" key='goals'}}
         {{/link-to}}
       </div>
       <div class='col-sm-3 col-xs-6 big_button_holder'>
-        <button class='btn big_button btn-default middle_row' {{action "supervision_settings"}}>
+        <button class='btn big_button btn-default lesser_button' {{action "supervision_settings"}}>
           <span class='glyphicon glyphicon-user'></span>
           {{#if model.supporter_role}}
             {{t "Supervision" key='manage_supervision'}}

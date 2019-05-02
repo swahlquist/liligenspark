@@ -2340,6 +2340,18 @@ $nav_secondary_bottom_row: #ffd7a8;
 $nav_secondary_middle_row: #eac8ff;
 $nav_tertiary: #d1efbc;
 $nav_extras: #eee;
+.secondary_button {
+  border-color: #9b962e !important; 
+  background: $nav_secondary !important;
+}
+.lesser_button {
+  border-color: #692693 !important;
+  background: $nav_secondary_middle_row !important;
+}
+.alternate_button {
+  border-color: #ad7332 !important; 
+  background: $nav_secondary_bottom_row !important;
+}
 #new_right {
   background: #fff; 
 /*  overflow: auto; */

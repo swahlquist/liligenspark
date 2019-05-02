@@ -335,13 +335,13 @@
                 {{t "Speak as" key='speak_as'}}<br/>{{supervisee.user_name}}
               </div>
             </button>
-            <button class='btn btn-default button_row_mini_wrap' style='margin-bottom: 5px; width: 88px; border-width: 2px; color: #888; border-color: #9b962e; background: #fffbbc;' {{action 'stats' supervisee.user_name}}>
+            <button class='btn btn-default button_row_mini_wrap secondary_button' style='margin-bottom: 5px; width: 88px; border-width: 2px; color: #888;' {{action 'stats' supervisee.user_name}}>
               <span class='glyphicon glyphicon-stats' style='font-size: 30px;'></span><br/>
               <div style='line-height: 14px;'>
                 {{t "Usage" key='usage'}}<br/>{{t "Reports" key='reports'}}
               </div>
             </button>
-            <button class='btn btn-default button_row_wrap' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444; border-color: #ad7332; background: #ffd7a8;' {{action 'modeling_ideas' supervisee.user_name}}>
+            <button class='btn btn-default button_row_wrap alternate_button' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444;' {{action 'modeling_ideas' supervisee.user_name}}>
               <img src={{path 'images/modeling_ideas.svg'}}/>
               <div style='line-height: 14px;'>
                 {{t "Modeling" key='modeling'}}<br/>{{t "Ideas" key='ideas'}}
