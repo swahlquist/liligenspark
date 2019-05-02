@@ -20,7 +20,11 @@
     {{#if log.note_type}}
       <div style="font-size: 10px; color: #888;">
         {{t "Note by" key='note_by'}}
-        {{log.author.user_name}}
+        {{#if log.author.contact.name}}
+          {{log.author.contact.name}}
+        {{else}}
+          {{log.author.user_name}}
+        {{/if}}
         {{#if log.goal.status}}
           <br/>
           <span class='face_label'><span class={{log.goal_status_class}}></span></span>

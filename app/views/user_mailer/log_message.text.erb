@@ -1,4 +1,4 @@
-<%= @author.settings['name'] %> just posted a message to the log of <%= @target.settings['name'] %>
+<%= @author_name %> just posted a message to the log of <%= @target.settings['name'] %>
 
 Message: 
 <%= (@log.data['note'] && @log.data['note']['text']) || "no message" %>

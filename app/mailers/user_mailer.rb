@@ -74,6 +74,7 @@ class UserMailer < ActionMailer::Base
   def log_message(user_id, log_id)
     @user = User.find_by_global_id(user_id)
     @log = LogSession.find_by_global_id(log_id)
+    @author_name = (@log.data['author_contact'] || {})['name'] || @author.settings['name']
     @author = @log.author
     @target = @log.user
     mail_message(@user, "New Message")
