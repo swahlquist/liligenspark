@@ -63,13 +63,18 @@ export default modal.ModalController.extend({
     },
     select: function() {
       var user = this.get('model.user');
-      user.set('avatar_data_uri', null);
-      user.save().then(function() {
-        user.checkForDataURL().then(null, function() { });
-        modal.close();
-      }, function() {
-        modal.error(i18n.t('avatar_update_failed', "Failed to save updated avatar"));
-      });
+      var url = this.get('model.user.avatar_url');
+      if(user && user.save) {
+        user.set('avatar_data_uri', null);
+        user.save().then(function() {
+          user.checkForDataURL().then(null, function() { });
+          modal.close({image_url: url});
+        }, function() {
+          modal.error(i18n.t('avatar_update_failed', "Failed to save updated avatar"));
+        });
+      } else {
+        modal.close({image_url: url});
+      }
     }
   }
 });

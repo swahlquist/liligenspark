@@ -144,7 +144,7 @@ export default Controller.extend({
     },
     set_picture: function() {
       var _this = this;
-      modal.open('pick-avatar', {}).then(function(res) {
+      modal.open('pick-avatar', {user: {}}).then(function(res) {
         if(res && res.image_url) {
           _this.set('contact_image_url', res.image_url);
           _this.send('add_contact');
@@ -163,8 +163,9 @@ export default Controller.extend({
         avatar_url: contact.image_url,
         id: this.get('model.id') + 'x' + contact.hash
       }
+      var _this = this;
       u.save().then(function(u) {
-        modal.open('confirm-notify-user', {user: user, raw: u.get('button_list'), sentence: u.get('sentence'), utterance: u});
+        modal.open('confirm-notify-user', {user: user, sharer_id: _this.get('model.id'), raw: u.get('button_list'), sentence: u.get('sentence'), utterance: u});
       }, function() {
         modal.error(i18n.t('error_creating_utterance', "There was an unexpected error generating the message"));
       });
