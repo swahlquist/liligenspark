@@ -156,7 +156,7 @@ export default Controller.extend({
         button_list: [{'label': "You can use this link to message me!"}], 
         sentence: "You can use this link to message me!",
         private_only: true,
-        user_id: app_state.get('currentUser.id')
+        user_id: this.get('model.id')
       });
       var user = {
         user_name: contact.name,
