@@ -2343,14 +2343,29 @@ $nav_extras: #eee;
 .secondary_button {
   border-color: #9b962e !important; 
   background: $nav_secondary !important;
+  &.less_important {
+    color: #888;
+  }
 }
 .lesser_button {
   border-color: #692693 !important;
   background: $nav_secondary_middle_row !important;
+  &.less_important {
+    color: #444;
+  }
+}
+.modeling_button {
+  background-color: #cce7ff; border-color: #337ab7; 
+  &.less_important {
+    color: #666;  
+  }
 }
 .alternate_button {
   border-color: #ad7332 !important; 
   background: $nav_secondary_bottom_row !important;
+  &.less_important {
+    color: #444;
+  }
 }
 #new_right {
   background: #fff; 
