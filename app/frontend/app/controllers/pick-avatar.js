@@ -8,22 +8,29 @@ import contentGrabbers from '../utils/content_grabbers';
 import Utils from '../utils/misc';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
+import editManager from '../utils/edit_manager';
 
 export default modal.ModalController.extend({
   opening: function() {
     var _this = this;
+    _this.set('editable', false);
+    _this.set('editing', false);
+    _this.set('saving', false);
     contentGrabbers.avatar_result = function(success, result) {
       _this.set('loading_avatar', false);
       if(success) {
         if(result == 'loading') {
           _this.set('loading_avatar', true);
         } else {
+          editManager.stash_image({url: result.get('data_url')});
+          _this.set('editable', true);
           _this.set('model.user.avatar_url', result.get('url'));
         }
       } else {
         modal.error(i18n.t('avatar_upload_failed', "Profile pic failed to upload"));
       }
     };
+    contentGrabbers.avatar_result.size = 800;
   },
   closing: function() {
     contentGrabbers.avatar_result = null;
@@ -60,6 +67,38 @@ export default modal.ModalController.extend({
   actions: {
     pick: function(option) {
       modal.close({image_url: option.url});
+    },
+    edit_image_url: function() {
+      this.set('editing', !this.get('editing'));
+    },
+    save_edit: function() {
+      var _this = this;
+      _this.set('saving', true);
+      editManager.get_edited_image().then(function(url) {
+        var content_type = (url.split(/:/)[1] || "").split(/;/)[0];
+        var image = CoughDrop.store.createRecord('image', {
+          url: url,
+          content_type: content_type,
+          width: contentGrabbers.pictureGrabber.default_size,
+          height: contentGrabbers.pictureGrabber.default_size,
+          avatar: true,
+          badge: false,
+          license: {
+            type: 'private'
+          }
+        });
+        contentGrabbers.save_record(image).then(function(res) {
+          _this.set('saving', false);
+          _this.set('model.user.avatar_url', res.get('url'));
+          _this.send('select');
+        }, function(err) {
+          _this.set('saving', false);
+          modal.error(i18n.t('error_saving_image', "Failed to save edited image"));
+        });
+      }, function(err) {
+        _this.set('saving', false);
+        modal.error(i18n.t('error_getting_image', "Failed to retrieve edited image"));
+      });
     },
     select: function() {
       var user = this.get('model.user');

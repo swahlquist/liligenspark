@@ -431,8 +431,9 @@ var pictureGrabber = EmberObject.extend({
       if(!window.scratch_canvas) {
         window.scratch_canvas = document.createElement('canvas');
       }
-      window.scratch_canvas.width = stored_size || _this.default_size;
-      window.scratch_canvas.height = stored_size || _this.default_size;
+      var max_size = stored_size || _this.default_size;
+      window.scratch_canvas.width = max_size;
+      window.scratch_canvas.height = max_size;
 
       var context = window.scratch_canvas.getContext('2d');
       var img = document.createElement('img');
@@ -440,7 +441,7 @@ var pictureGrabber = EmberObject.extend({
       var canvas = window.scratch_canvas;
       img.onload = function() {
         run(function() {
-          if(img.width < _this.default_size && img.height < _this.default_size && data_url.match(/^data/)) {
+          if(img.width < max_size && img.height < max_size && data_url.match(/^data/)) {
             return resolve({url: data_url, width: img.width, height: img.height});
           }
           var pct = img.width / img.height;
@@ -499,14 +500,18 @@ var pictureGrabber = EmberObject.extend({
     } else {
       reader = contentGrabbers.read_file(file);
     }
+    var size = null;
     if(type == 'avatar' && contentGrabbers.avatar_result) {
       contentGrabbers.avatar_result(true, 'loading');
+      if(contentGrabbers.avatar_result.size) {
+        size = contentGrabbers.avatar_result.size;
+      }
     } else if(type == 'badge' && contentGrabbers.badge_result) {
       contentGrabbers.badge_result(true, 'loading');
     }
     var sizer = reader.then(function(data) {
       window.result = data.target.result;
-      return pictureGrabber.size_image(data.target.result);
+      return pictureGrabber.size_image(data.target.result, size);
     });
 
     var force_data_url = sizer.then(function(res) {

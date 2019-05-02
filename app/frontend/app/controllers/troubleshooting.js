@@ -356,7 +356,7 @@ export default Controller.extend({
     show_errors: function() {
       if(this.get('errors')) {
         this.set('errors', null);
-      } else {
+        } else {
         this.set('errors', CoughDrop.errors || []);
       }
     },
