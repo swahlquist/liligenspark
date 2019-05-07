@@ -1688,6 +1688,10 @@ footer .wide_links {
   background: #fff;
   border-color: #aaa;
 }
+.color_black .board.grid_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+  background: #000;
+  border-color: #888;
+}
 .board.grid_hidden_buttons:not(.edit):not(.show_all_buttons) .button.empty {
   visibility: visible;
   * {
@@ -1695,6 +1699,10 @@ footer .wide_links {
   }
   background: #fff;
   border-color: #aaa;
+}
+.color_black .board.grid_hidden_buttons:not(.edit):not(.show_all_buttons) .button.empty {
+  background: #000;
+  border-color: #888;
 }
 .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
   visibility: visible;
