@@ -80,9 +80,11 @@ export default Route.extend({
     var prior_revision = model.get('current_revision');
     CoughDrop.log.track('processing buttons without lookups');
     _this.set('load_state', {retrieved: true});
-    model.without_lookups(function() {
-      controller.processButtons();
-    });
+    if(model.get('image_urls')) {
+      model.without_lookups(function() {
+        controller.processButtons();
+      });
+    }
     model.prefetch_linked_boards();
 
     // if you have the model.id but not permissions, that means you got it from an /index
@@ -90,7 +92,10 @@ export default Route.extend({
     // better reload. if ordered_buttons isn't set then that just means we need some
     // additional lookups
     if(model.get('integration')) { return; }
-    var insufficient_data = model.get('id') && !model.get('fast_html') && (!controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
+
+    var valid_fast_html = model.get('fast_html') && model.get('fast_html.width') == controller.get('width') && model.get('fast_html.height') == controller.get('height') && model.get('current_revision') == model.get('fast_html.revision') && model.get('fast_html.label_locale') == app_state.get('label_locale') && model.get('fast_html.display_level') == app_state.get('currentBoardState.level');
+    var insufficient_data = model.get('id') && (!valid_fast_html || !controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
+
     if(!model.get('valid_id')) {
     } else if(persistence.get('online') || insufficient_data) {
       CoughDrop.log.track('considering reload');
