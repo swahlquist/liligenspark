@@ -465,7 +465,7 @@ describe('User', function() {
         searched = true;
         return RSVP.reject();
       });
-      user.set('watch_user_name', true);
+      user.set('watch_user_name_and_cookies', true);
       expect(user.get('user_name_check.checking')).toEqual(true);
       waitsFor(function() { return user.get('user_name_check.exists') === false; });
       runs(function() {
@@ -485,7 +485,7 @@ describe('User', function() {
         searched = true;
         return RSVP.resolve(EmberObject.create({}));
       });
-      user.set('watch_user_name', true);
+      user.set('watch_user_name_and_cookies', true);
       expect(user.get('user_name_check.checking')).toEqual(true);
       waitsFor(function() { return user.get('user_name_check.exists') === true; });
       runs(function() {

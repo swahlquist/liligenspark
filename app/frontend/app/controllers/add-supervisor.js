@@ -16,7 +16,7 @@ export default modal.ModalController.extend({
     });
     this.set('linking', false);
     this.set('error', null);
-    sup.set('watch_user_name', true);
+    sup.set('watch_user_name_and_cookies', true);
     this.set('model.supervisor', sup);
   },
   actions: {
@@ -38,7 +38,7 @@ export default modal.ModalController.extend({
       var get_user_name = RSVP.resolve(this.get('supervisor_key'));
       if(this.get('new_user')) {
         var supervisor = this.get('model.supervisor');
-        supervisor.set('watch_user_name', false);
+        supervisor.set('watch_user_name_and_cookies', false);
         get_user_name = supervisor.save().then(function(user) {
           return user.get('user_name');
         }, function() {

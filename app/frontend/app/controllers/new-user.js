@@ -16,7 +16,7 @@ export default modal.ModalController.extend({
     });
     this.set('linking', false);
     this.set('error', null);
-    user.set('watch_user_name', true);
+    user.set('watch_user_name_and_cookies', true);
     this.set('model.user', user);
     this.set('model.user.org_management_action', this.get('model.default_org_management_action'));
   },
@@ -38,13 +38,16 @@ export default modal.ModalController.extend({
     res.push({id: 'add_eval', name: i18n.t('add_eval', "Add this User As a Paid Eval Account")});
     return res;
   }.property('model.no_licenses'),
+  linking_or_exists: function() {
+    return this.get('linking') || this.get('model.user.user_name_check.exists');
+  }.property('linking', 'model.user.user_name_check.exists'),
   actions: {
     add: function() {
       var controller = this;
       controller.set('linking', true);
 
       var user = this.get('model.user');
-      user.set('watch_user_name', false);
+      user.set('watch_user_name_and_cookies', false);
       var get_user_name = user.save().then(function(user) {
         return user.get('user_name');
       }, function() {
