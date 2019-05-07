@@ -39,7 +39,7 @@ class Organization < ActiveRecord::Base
       user_ids = self.users.map(&:id)
       sessions = sessions.where(:user_id => user_ids)
     end
-    sessions.where(['started_at > ?', 6.months.ago]).order('started_at DESC')
+    sessions.where(['started_at > ? AND started_at <= ?', 6.months.ago, Time.now]).order('started_at DESC')
   end
   
   def purchase_history
