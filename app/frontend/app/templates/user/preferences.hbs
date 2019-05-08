@@ -74,14 +74,19 @@
               {{t "Don't vocalize when spelling until the word is completed" key='silence_spelling_buttons'}}
             </label>
           </div>
-        {{else}}
-          <div class="checkbox">
-            <label>
-              {{input type="checkbox" checked=model.preferences.click_buttons id="click_buttons"}}
-              {{t "Make a clicking sound when hitting unspoken buttons" key='click_buttons'}}
-            </label>
-          </div>
         {{/if}}
+        <div class="checkbox">
+          <label>
+            {{input type="checkbox" checked=model.preferences.click_buttons id="click_buttons"}}
+            {{t "Make a clicking sound when hitting unspoken buttons" key='click_buttons'}}
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            {{input type="checkbox" checked=model.preferences.vibrate_buttons id="vibrate_buttons"}}
+            {{t "Vibrate the device when hitting buttons (if supported)" key='vibrate_buttons'}}
+          </label>
+        </div>
         <div class="checkbox">
           <label>
             {{input type="checkbox" checked=model.preferences.auto_home_return id="auto_home_return"}}
@@ -159,6 +164,14 @@
         <label>
           {{input type="checkbox" checked=model.preferences.clear_on_vocalize id="clear_on_vocalize"}}
           {{t "Automatically clear the current utterance after vocalization" key='clear_on_vocalize'}}
+        </label>
+      </div>
+    </div>
+    <div class="col-sm-5 col-sm-offset-3">
+      <div class="checkbox">
+        <label>
+          {{input type="checkbox" checked=model.preferences.repair_on_vocalize id="repair_on_vocalize"}}
+          {{t "Always open the \"Repairs\" window when hitting the sentence box" key='repair_on_vocalize'}}
         </label>
       </div>
     </div>
