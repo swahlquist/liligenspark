@@ -78,7 +78,7 @@
 <% if ENV['ANALYTICS_ID'] && ENV['ANALYTICS_DOMAIN'] %>
   <div id='cookies_prompt' style='display: none; position: fixed; z-index: 999999; top: 0; width: 300px; left: calc(50vw - 150px); border: 2px solid #aaa; border-radius: 5px; margin-top: 20px; background: #fff; padding: 20px; text-align: center; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);'>
     <%= app_name %> uses tracking tools to improve features and keep making our app better. Are you ok with this?
-    <div style='margin-top: 10px;'>
+    <div style='margin-top: 10px;' class='advanced_selection modal_targets'>
       <button class='btn btn-primary' id='cookies_prompt_enable'>Allow "Cookies"</button>
       <button class='btn btn-default' id='cookies_prompt_disable'>No Thanks</button>
     </div>
