@@ -389,6 +389,8 @@ export default Controller.extend({
       if(!persistence.get('syncing')) {
         console.debug('syncing because manually triggered');
         persistence.sync('self', true).then(null, function() { });
+      } else {
+        this.send('sync_details');
       }
     },
     load_reports: function() {
