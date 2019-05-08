@@ -51,13 +51,16 @@
       </ul>
     {{/if}}
     <ul class="nav nav-pills nav-stacked">
+      <li style='text-align: left; float: left; width: 50%;'>
+        <a href="#" {{action 'close'}}>{{t "Cancel" key='cancel'}}</a>
+      </li>
       {{#if app_state.feature_flags.new_speak_menu}}
-        <li style='text-align: right;'>
+        <li style='text-align: right; float: left; width: 50%;'>
           <a href="#" {{action "selectButton" "remember"}}>{{t "Remember this" key="remember_this"}}</a>
         </li>
       {{/if}}
       {{#if app_state.reply_note}}
-        <li>
+        <li style='clear: left;'>
           <a href="#" {{action 'reply_note'}}>
             <span id='reply_icon' class='label label-info'><span class='glyphicon glyphicon-envelope'></span></span>
             {{t "Send Reply" key='send_rely'}}
@@ -67,7 +70,7 @@
           </a>
         </li>
       {{else if app_state.insertion}}
-        <li>
+        <li style='clear: left;'>
           <a href="#" {{action 'end_insertion'}}>
             <span id='reply_icon' class='label label-info'><span class='glyphicon glyphicon-console'></span></span>
             {{t "Done Inserting Text" key='done_inserting_text'}}
@@ -76,8 +79,8 @@
       {{/if}}
       {{#each rememberedUtterances as |utterance|}}
 
-        <li>
-          <a href="#" {{action "selectButton" utterance}} style='font-size: 13px;'>
+        <li style='clear: left;'>
+          <a href="#" {{action "selectButton" utterance}} style='font-size: 13px; height: 55px; padding-top: 15px;'>
             {{#if utterance.stash }}
               {{t "Resume: " key="resume_colon"}} 
             {{else}}
