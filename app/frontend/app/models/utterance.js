@@ -2,6 +2,7 @@ import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import DS from 'ember-data';
 import CoughDrop from '../app';
+import persistence from '../utils/persistence';
 
 CoughDrop.Utterance = DS.Model.extend({
   button_list: DS.attr('raw'),
@@ -16,6 +17,24 @@ CoughDrop.Utterance = DS.Model.extend({
   prior: DS.attr('raw'),
   user: DS.attr('raw'),
   show_user: DS.attr('boolean'),
+  assert_remote_urls: function() {
+    var find_remote = function(local) {
+      for(var url in (persistence.url_cache || {})) {
+        if(persistence.url_cache[url] == local) {
+          return url;
+        }
+      }
+      return local;
+    };
+    if(this.get('image_url') && !this.get('image_url').match(/^http/)) {
+      this.set('image_url', find_remote(this.get('image_url')));
+    }
+    (this.get('button_list') || []).forEach(function(btn) {
+      if(btn.image && !btn.image.match(/^http/)) {
+        btn.image = find_remote(btn.image);
+      }
+    });
+  },
   best_image_url: function() {
     return this.get('large_image_url') || this.get('image_url');
   }.property('image_url', 'large_image_url'),

@@ -19,6 +19,7 @@ export default modal.ModalController.extend({
       sentence: utterance.sentence(settings.utterance),
       user_id: app_state.get('referenced_user.id')
     });
+    u.assert_remote_urls();
     u.save().then(function(u) {
       controller.set('utterance_record', u);
     }, function() {
