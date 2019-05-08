@@ -128,6 +128,12 @@
         </div>
       {{else}}
         {{#if model.permissions.delete}}
+          <div class="checkbox">
+            <label>
+              {{input type="checkbox" checked=model.preferences.never_delete id="never_delete"}}
+              {{t "Never delete this account, even if it hasn't been used in a long time" key='never_delete'}}
+            </label>
+          </div>
           <div style="margin-top: 10px;">
             <button type="button" class='btn btn-default' {{action "delete_logs"}}>{{t "Delete all stored logs" key='delete_logs'}}</button>
           </div>

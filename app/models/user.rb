@@ -513,8 +513,8 @@ class User < ActiveRecord::Base
       'speak_on_speak_mode', 'ever_synced', 'folder_icons', 'allow_log_reports',
       'symbol_background', 'disable_button_help', 'click_buttons', 'prevent_hide_buttons',
       'new_index', 'debounce', 'cookies', 'preferred_symbols', 'tag_ids',
-      'highlighted_buttons']
-  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'geo_logging', 'allow_log_reports', 'cookies']
+      'highlighted_buttons', 'never_delete']
+  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'geo_logging', 'allow_log_reports', 'cookies', 'never_delete']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 
       'home_board_set', 'app_added', 'skipped_subscribe_modal', 'speak_mode_intro_done',

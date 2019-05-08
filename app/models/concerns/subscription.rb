@@ -597,7 +597,7 @@ module Subscription
       # send out a warning notification 1 week before, and another one the day before,
       # to all the ones that haven't been warned yet for this cycle
       upcoming_expires.each do |user|
-        next unless user.communicator_role?
+        next if !user.communicator_role? || user.settings['preferences']['allow_log_reports'] || user.settings['preferences']['never_delete']
         alerts[:upcoming] += 1
         user.settings['subscription'] ||= {}
         last_day = Time.parse(user.settings['subscription']['last_expiring_day_notification']) rescue Time.at(0)
