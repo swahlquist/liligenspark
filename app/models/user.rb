@@ -247,6 +247,7 @@ class User < ActiveRecord::Base
         'role' => 'communicator',
         'auto_open_speak_mode' => true,
         'share_notifications' => 'email',
+        'click_buttons' => true,
         'cookies' => true
       }
     }

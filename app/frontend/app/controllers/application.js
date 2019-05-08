@@ -260,12 +260,18 @@ export default Controller.extend({
       if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
         speecher.click();
       }
+      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+        capabilities.vibrate();
+      }
     },
     clear: function(opts) {
       app_state.toggle_modeling(false);
       utterance.clear(opts);
       if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
         speecher.click();
+      }
+      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+        capabilities.vibrate();
       }
     },
     toggle_home_lock: function() {
@@ -305,6 +311,9 @@ export default Controller.extend({
           this.rootBoard({index_as_fallback: true, button_triggered: opts.button_triggered});
           if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
             speecher.click();
+          }
+          if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+            capabilities.vibrate();
           }
         }
       }
@@ -443,6 +452,9 @@ export default Controller.extend({
         this.backOneBoard(opts);
         if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
           speecher.click();
+        }
+        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+          capabilities.vibrate();
         }
       }
       this.set('last_highlight_explore_action', (new Date()).getTime());
@@ -993,7 +1005,14 @@ export default Controller.extend({
     this.vocalize(3.0);
   },
   vocalize: function(volume, opts) {
-    utterance.vocalize_list(volume, opts);
+    if(app_state.get('currentUser.preferences.repair_on_vocalize')) {
+      modal.open('modals/repairs', {inactivity_timeout: true, speak_on_done: true});
+    } else {
+      utterance.vocalize_list(volume, opts);
+      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+        capabilities.vibrate();
+      }
+    }
   },
   jumpToBoard: function(new_state, old_state) {
     app_state.jump_to_board(new_state, old_state);

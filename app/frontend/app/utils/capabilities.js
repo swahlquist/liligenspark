@@ -260,6 +260,12 @@ var capabilities;
           return promise;
         }
       },
+      vibrate: function(duration) {
+        duration = duration || 100;
+        if(navigator.vibrate) {
+          navigator.vibrate(duration);
+        }
+      },
       nfc: {
         available: function() {
           var promise = capabilities.mini_promise();
@@ -382,9 +388,7 @@ var capabilities;
           if(capabilities.nfc.reader_mode) { return; }
           capabilities.nfc.reader_mode = true;
           window.nfc.readerMode(window.nfc.FLAG_READER_NFC_A | window.nfc.FLAG_READER_NFC_B | window.nfc.FLAG_READER_NO_PLATFORM_SOUNDS, function(tag) {
-            if(navigator && navigator.vibrate) {
-              navigator.vibrate(200);
-            }
+            capabilities.vibrate(200);
             for(var key in capabilities.nfc.listeners) {
               (capabilities.nfc.listeners[key] || []).forEach(function(l) {
                 l({type: 'ndef', tag: tag});

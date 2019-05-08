@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import modal from '../../utils/modal';
 import utterance from '../../utils/utterance';
-import persistence from '../../utils/persistence';
+import capabilities from '../../utils/capabilities';
 import app_state from '../../utils/app_state';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
@@ -57,6 +57,9 @@ export default modal.ModalController.extend({
     speak: function() {
       if(this.get('holding')) { return; }
       utterance.vocalize_list(null, {button_triggered: true});
+      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+        capabilities.vibrate();
+      }
       modal.close();
     },
     hold: function() {

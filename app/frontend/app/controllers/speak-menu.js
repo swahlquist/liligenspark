@@ -80,6 +80,9 @@ export default modal.ModalController.extend({
           if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
             speecher.click();
           }
+          if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+            capabilities.vibrate();
+          }
         };
         modal.close(true);
         if(button == 'menu_share_button') {

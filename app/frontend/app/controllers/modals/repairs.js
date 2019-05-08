@@ -7,6 +7,7 @@ import { set as emberSet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
 import app_state from '../../utils/app_state';
+import capabilities from '../../utils/capabilities';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -94,11 +95,17 @@ export default modal.ModalController.extend({
 
   },
   actions: {
-    done: function() {
+    done: function(do_speak) {
       var buttons = this.get('buttons');
       utterance.set('rawButtonList', buttons);
       utterance.set('list_vocalized', false);
       modal.close();
+      if(do_speak) {
+        utterance.vocalize_list(null, {});
+        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+          capabilities.vibrate();
+        }
+      }
     },
     begin_insertion: function() {
       if(this.get('button_index')) {

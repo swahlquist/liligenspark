@@ -1816,6 +1816,11 @@ var app_state = EmberObject.extend({
           }
         }
       };
+      var vibrate = function() {
+        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+          capabilities.vibrate();
+        }
+      };
       if(app_state.get('speak_mode')) {
         if(!skip_speaking_by_default) {
           obj.for_speaking = true;
@@ -1825,16 +1830,20 @@ var app_state = EmberObject.extend({
           if(skip_speaking_by_default && !app_state.get('currentUser.preferences.vocalize_linked_buttons') && !button.add_to_vocalization) {
             // don't say it...
             click_sound();
+            vibrate();
           } else if(button_to_speak.in_progress && app_state.get('currentUser.preferences.silence_spelling_buttons')) {
             // don't say it...
             click_sound();
+            vibrate();
           } else {
             obj.spoken = true;
             obj.for_speaking = true;
             utterance.speak_button(button_to_speak);
+            vibrate();
           }
         } else {
           click_sound();
+          vibrate();
         }
       } else if(button_to_speak) {
         utterance.silent_speak_button(button_to_speak);
