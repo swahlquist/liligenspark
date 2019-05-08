@@ -110,7 +110,10 @@ export default modal.ModalController.extend({
   num_style: function() {
     return htmlSafe("width: " + this.get('num_percent') + "%;");
   }.property('num_percent'),
-  download_type: function() {
-    return this.get('model.type') != 'pdf';
-  }.property('model.type')
+  multi_download_type: function() {
+    return this.get('model.type') != 'pdf' && this.get('model.has_links');
+  }.property('model.type', 'model.has_links'),
+  single_download_type: function() {
+    return this.get('model.type') != 'pdf' && !this.get('model.has_links');
+  }.property('model.type', 'model.has_links')
 });
