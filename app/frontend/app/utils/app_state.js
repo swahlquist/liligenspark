@@ -1923,7 +1923,7 @@ var app_state = EmberObject.extend({
       }
     } else if(specialty_button) {
       app_state.track_depth('clear');
-      var auto_return_possible = false;
+      var auto_return_possible = !!specialty_button.default_speak;
       var already_navigating = false;
       (button.vocalization || '').split(/\s*&&\s*/).forEach(function(mod) {
         if(mod && mod.length > 0) {
