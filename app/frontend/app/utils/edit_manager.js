@@ -617,6 +617,7 @@ var editManager = EmberObject.extend({
       }
     };
 
+    var need_everything_local = app_state.get('speak_mode') || !persistence.get('online');
     if(app_state.get('speak_mode')) {
       controller.update_button_symbol_class();
       if(board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level) {
@@ -684,7 +685,7 @@ var editManager = EmberObject.extend({
             }
           }
           button = button || _this.fake_button();
-          if(!button.everything_local()) {
+          if(!button.everything_local() && need_everything_local) {
             allButtonsReady = false;
             pending_buttons.push(button);
           }

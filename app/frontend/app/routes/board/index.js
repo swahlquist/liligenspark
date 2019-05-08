@@ -80,11 +80,9 @@ export default Route.extend({
     var prior_revision = model.get('current_revision');
     CoughDrop.log.track('processing buttons without lookups');
     _this.set('load_state', {retrieved: true});
-    if(model.get('image_urls')) {
-      model.without_lookups(function() {
-        controller.processButtons();
-      });
-    }
+    model.without_lookups(function() {
+      controller.processButtons();
+    });
     model.prefetch_linked_boards();
 
     // if you have the model.id but not permissions, that means you got it from an /index
