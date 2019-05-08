@@ -40,7 +40,7 @@ module JsonApi::Organization
           user_ids << link['user_id']
           json['total_users'] += 1
           json['used_evals'] += 1 if link['state']['eval']
-          json['used_licenses'] += 1 if link['state']['sponsored']
+          json['used_licenses'] += 1 if link['state']['sponsored'] && !link['state']['eval']
         end
       end
 
