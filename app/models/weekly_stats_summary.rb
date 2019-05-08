@@ -225,6 +225,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
   def self.track_trends(weekyear)
     start = 1.week.ago.to_date
     nowweekyear = WeeklyStatsSummary.date_to_weekyear(start)
+    return unless weekyear <= nowweekyear
     current_trends = weekyear >= nowweekyear
 
 
@@ -479,6 +480,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res['weeks'] = {}
     stash = {}
     start = 3.months.ago.to_date
+    nowweekyear = WeeklyStatsSummary.date_to_weekyear(start)
     cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(start)
     stash[:total_session_seconds] = 0
     stash[:modeled_buttons] = 0.0
@@ -497,7 +499,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:device] = {}
     earliest = nil
     latest = nil
-    WeeklyStatsSummary.where(['weekyear >= ?', cutoffweekyear]).where(:user_id => 0).find_in_batches(batch_size: 20) do |batch|
+    WeeklyStatsSummary.where(['weekyear >= ? AND weekyear <= ?', cutoffweekyear, nowweekyear]).where(:user_id => 0).find_in_batches(batch_size: 20) do |batch|
       batch.each do |summary|
         next unless summary.data && summary.data['totals']
         date = Date.commercial(summary.weekyear / 100, summary.weekyear % 100) - 1
