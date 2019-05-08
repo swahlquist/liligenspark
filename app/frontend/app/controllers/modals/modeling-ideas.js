@@ -151,7 +151,7 @@ export default modal.ModalController.extend({
     if(index > 0 && index >= cutoff_chunk) {
       offset = ((index - cutoff_chunk) * units * 2) + units;
     }
-    middles = middles.slice(offset, offset + 5);
+    middles = middles.slice(offset, offset + 8);
     res = res.concat(middles);
 
     if(res.length == empty_num) {
@@ -217,6 +217,9 @@ export default modal.ModalController.extend({
   no_previous: function() {
     return !!(this.get('activity_index') == 0 || this.get('user_activities.length') == 0 || !this.get('user_activities.length'));
   }.property('activity_index', 'user_activities'),
+  feedback_given: function() {
+    return this.get('current_activity.will_attempt') || this.get('current_activity.dismissed');
+  }.property('current_activity.will_attempt', 'current_activity.dismissed'),
   actions: {
     next: function() {
       var on_target_words = this.get('current_activity.target_words');
