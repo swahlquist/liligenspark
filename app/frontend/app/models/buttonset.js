@@ -212,10 +212,10 @@ CoughDrop.Buttonset = DS.Model.extend({
           button_set.set('home_lock_set', home_lock);
           button_sets.push(button_set);
         } else if(key) {
-          lookups.push(CoughDrop.Buttonset.load_button_set(key).then(function(button_set) {
-            button_set.set('home_lock_set', home_lock);
-            button_sets.push(button_set);
-          }, function() { return RSVP.resolve(); }));
+          // lookups.push(CoughDrop.Buttonset.load_button_set(key).then(function(button_set) {
+          //   button_set.set('home_lock_set', home_lock);
+          //   button_sets.push(button_set);
+          // }, function() { return RSVP.resolve(); }));
         }
       };
       // probably skip the sidebar for now, highlighting the scrollable sidebar
@@ -230,11 +230,11 @@ CoughDrop.Buttonset = DS.Model.extend({
     var buttons = [];
     var board_map = null;
 
-    var build_map = RSVP.all_wait(lookups).then(function() {
+//    var build_map = RSVP.all_wait(lookups).then(function() {
       var res = _this.board_map(button_sets);
       buttons = res.buttons;
       board_map = res.map;
-    });
+//    });
 
     // check each button individually
     var button_sweep = build_map.then(function() {
@@ -304,16 +304,16 @@ CoughDrop.Buttonset = DS.Model.extend({
           });
         });
       });
-    });
+//    });
 
-    var sort_results = button_sweep.then(function() {
+//    var sort_results = button_sweep.then(function() {
       partial_matches = partial_matches.sort(function(a, b) { 
         if(a.total_edit_distance == b.total_edit_distance) {
           return a.button.depth - b.button.depth;
         }
         return a.total_edit_distance - b.total_edit_distance; 
       });  
-    });
+//    });
 
     var combos = [{
       sequence: true, 
@@ -325,7 +325,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       extra_steps: 0,
       current_sticky_board_id: stashes.get('temporary_root_board_state.id') || home_board_id
     }];
-    var build_combos = sort_results.then(function() {
+//    var build_combos = sort_results.then(function() {
       // Check all permutations, score for shortest access distance
       // combined with shortest edit distance
       // for 1 part, include 30-50 matches
@@ -396,7 +396,8 @@ CoughDrop.Buttonset = DS.Model.extend({
           return 0;
         }).slice(0, 25 * (part_idx + 1));
       });
-    });
+//    });
+
     // when searching for "I want to sleep" sort as follows:
     // - I want to sleep
     // - I want sleep
@@ -410,7 +411,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     // then sort the rest by edit distance and steps
     // then sort by number of words covered (bonus for > 50% coverage)
     // finally by number of button hits required
-    var sort_combos = build_combos.then(function() {
+//    var sort_combos = build_combos.then(function() {
       combos = combos.filter(function(c) { return c.text; });
       combos = combos.sort(function(a, b) {
         for(var idx = 0; idx < a.match_scores.length; idx++) {
@@ -420,8 +421,9 @@ CoughDrop.Buttonset = DS.Model.extend({
         }
         return 0;
       });
-      return combos.slice(0, 10);
-    });
+      combos = combos.slice(0, 10);
+//      return combos;
+//    });
 
     var images = CoughDrop.store.peekAll('image');
     var image_lookups = sort_combos.then(function(combos) {
