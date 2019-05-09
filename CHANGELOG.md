@@ -1,6 +1,18 @@
 # CoughDrop Changelog
 
 ## Master
+### 2019-05-09
+- In-app error tracking 
+- Local storage optimizations
+- More sentence dropdown improvements
+- Find-a-button optimizations
+- Allow searching premium symbols for authorized supervisees
+- LAM file improvements
+- Preliminary support for native keyboards
+- Option to highlight buttons on selection
+- Better support for premium symbols in pdf/obf
+- Additional button actions
+
 ### 2019-03-27
 - Improved sentence box dropdown (feature flag)
 - Switch access improvements
