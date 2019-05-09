@@ -1249,8 +1249,7 @@ Button.load_actions = function() {
               runLater(function() {
                 speecher.beep();
               }, 1500);
-              // TODO: pop up a Time's Up button, 
-              // maybe play a soft sound, give the user a button to speak
+              modal.open('modals/timer');
             } else {
               runLater(tick, 500);
             }
