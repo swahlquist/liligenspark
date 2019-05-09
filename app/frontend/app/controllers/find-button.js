@@ -51,11 +51,11 @@ export default modal.ModalController.extend({
           if(_this.get('search_id') != search_id) { return; }
           var results = null;
           if(app_state.get('feature_flags.find_multiple_buttons')) {
-            results = board.get('button_set').find_sequence(_this.get('searchString'), board.get('id'), user, include_home);
+            search = board.get('button_set').find_sequence(_this.get('searchString'), board.get('id'), user, include_home);
           } else {
             search = board.get('button_set').find_buttons(_this.get('searchString'), board.get('id'), user, include_home);
           }
-          // search.then(function(results) {
+          search.then(function(results) {
             console.log("results!", results, (new Date()).getTime() - now);
             if(persistence.get('online')) {
               _this.set('results', results);
@@ -80,10 +80,10 @@ export default modal.ModalController.extend({
             }
             _this.set('results', results);
             _this.set('loading', false);
-          // }, function(err) {
-          //   _this.set('loading', false);
-          //   _this.set('error', err.error);
-          // });
+          }, function(err) {
+            _this.set('loading', false);
+            _this.set('error', err.error);
+          });
         }, interval);
       } else {
         _this.set('loading', false);
