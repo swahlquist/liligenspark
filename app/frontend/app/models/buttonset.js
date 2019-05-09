@@ -237,8 +237,8 @@ CoughDrop.Buttonset = DS.Model.extend({
 //    });
 
     // check each button individually
-    var button_sweep = build_map.then(function() {
-//      console.log("all buttons", buttons, board_map);
+    // var button_sweep = build_map.then(function() {
+      console.log("all buttons", buttons, board_map);
       buttons.forEach(function(button, idx) {
         var lookups = [button.label, button.vocalization];
         var found_some = false;
@@ -426,7 +426,7 @@ CoughDrop.Buttonset = DS.Model.extend({
 //    });
 
     var images = CoughDrop.store.peekAll('image');
-    var image_lookups = sort_combos.then(function(combos) {
+    // var image_lookups = sort_combos.then(function(combos) {
       var image_lookup_promises = [];
       combos.forEach(function(combo) {
         combo.steps.forEach(function(step) {
@@ -453,12 +453,12 @@ CoughDrop.Buttonset = DS.Model.extend({
           }
         });
       });
-      return RSVP.all_wait(image_lookup_promises).then(function() {
+      // return RSVP.all_wait(image_lookup_promises).then(function() {
         return combos;
-      });
-    });
+      // });
+    // });
 
-    return image_lookups;
+    // return image_lookups;
   },
   find_buttons: function(str, from_board_id, user, include_home_and_sidebar) {
     var matching_buttons = [];
