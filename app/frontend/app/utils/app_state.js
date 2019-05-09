@@ -1670,6 +1670,13 @@ var app_state = EmberObject.extend({
     }
     return user;
   }.property('modeling_for_user', 'currentUser', 'referenced_speak_mode_user'),
+  ding_on_message: function() {
+    var ref_id = this.get('referenced_user.id') + ":" + this.get('referenced_user.unread_alerts');
+    if(ref_id != this.get('last_ding_state') && this.get('speak_mode') && this.get('referenced_user.unread_alerts') > 0) {
+      speecher.click('ding');
+    }
+    this.set('last_ding_state', ref_id);
+  }.observes('referenced_user.unread_alerts'),
   load_user_badge: function() {
     if(this.get('speak_mode') && this.get('persistence.online')) {
       var badge_hash = (this.get('referenced_user.id') || 'nobody') + "::" + ((new Date()).getTime() / 1000 / 3600)
