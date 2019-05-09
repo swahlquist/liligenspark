@@ -170,28 +170,43 @@ CoughDrop.Buttonset = DS.Model.extend({
   },
   board_map: function(button_sets) {
     var _this = this;
+    if(_this.last_board_map) {
+      if(_this.last_board_map.list = button_sets) {
+        return _this.last_board_map.result;
+      }
+    }
     var board_map = {};
     var buttons = [];
+    var buttons_hash = {all: {}};
     button_sets.forEach(function(bs, idx) {
       var button_set_buttons = bs.get('buttons');
       if(bs == _this) {
         button_set_buttons = _this.redepth(bs.get('id'));
       }
       button_set_buttons.forEach(function(button) {
-        if(!buttons.find(function(b) { return b.id == button.id && b.board_id == button.board_id; })) {
+        var ref_id = button.id + ":" + button.board_id;
+        if(!buttons_hash['all'][ref_id]) {
           if(!button.linked_board_id || button.force_vocalize || button.link_disabled) {
             buttons.push(button);
+            buttons_hash['all'][ref_id] = true;
           }
         }
         if(button.linked_board_id && !button.link_disabled) {
           board_map[button.linked_board_id] = board_map[button.linked_board_id] || []
-          if(!board_map[button.linked_board_id].find(function(b) { return b.id == button.id && b.board_id == button.board_id; })) {
+          if(!buttons_hash[button.linked_board_id] || !buttons_hash[button.linked_board_id][ref_id]) {
             board_map[button.linked_board_id].push(button);
+            buttons_hash[button.linked_board_id] = buttons_hash[button.linked_board_id] || {};
+            buttons_hash[button.linked_board_id][ref_id] = true;
           }
         }
-      })
+      });
     });
-    return {buttons: buttons, map: board_map};
+    var result = {buttons: buttons, map: board_map};
+    // _this.last_board_map = {
+    //   list: button_sets,
+    //   result: result
+    // };
+    return result;
   },
   find_sequence: function(str, from_board_id, user, include_home_and_sidebar) {
     // TODO: consider optional support for keyboard for missing words
