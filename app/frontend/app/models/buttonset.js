@@ -195,7 +195,9 @@ CoughDrop.Buttonset = DS.Model.extend({
   },
   find_sequence: function(str, from_board_id, user, include_home_and_sidebar) {
     // TODO: consider optional support for keyboard for missing words
-    if(str.length === 0) { return RSVP.resolve([]); }
+    var now = (new Date()).getTime();
+    console.log("start search", (new Date().getTime()) - now);
+    if(str.length === 0) { return []; }
     var query = str.toLowerCase();
     var _this = this;
     from_board_id = from_board_id || app_state.get('currentBoardState.id');
@@ -222,6 +224,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       // is kind of a can of worms
       add_buttons(home_board_id, false);
     }
+    console.log("includes", (new Date().getTime()) - now);
 
     var partial_matches = [];
     var all_buttons_enabled = true;
@@ -235,6 +238,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       buttons = res.buttons;
       board_map = res.map;
 //    });
+    console.log("build map", (new Date().getTime()) - now);
 
     // check each button individually
     // var button_sweep = build_map.then(function() {
@@ -305,6 +309,7 @@ CoughDrop.Buttonset = DS.Model.extend({
         });
       });
 //    });
+console.log("sort results", (new Date().getTime()) - now);
 
 //    var sort_results = button_sweep.then(function() {
       partial_matches = partial_matches.sort(function(a, b) { 
