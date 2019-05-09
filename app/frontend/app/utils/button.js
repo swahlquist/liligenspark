@@ -1229,6 +1229,10 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':native-keyboard',
+      description: i18n.t('launch_native_keyboard', "Open the native keyboard if available")
+    },
+    {
       action: ':timer',
       match: /^:timer\((\d+)s\)/,
       description_callback: function(match) {
