@@ -202,10 +202,10 @@ CoughDrop.Buttonset = DS.Model.extend({
       });
     });
     var result = {buttons: buttons, map: board_map};
-    // _this.last_board_map = {
-    //   list: button_sets,
-    //   result: result
-    // };
+    _this.last_board_map = {
+      list: button_sets,
+      result: result
+    };
     return result;
   },
   find_sequence: function(str, from_board_id, user, include_home_and_sidebar) {
