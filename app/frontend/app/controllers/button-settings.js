@@ -430,26 +430,23 @@ export default modal.ModalController.extend({
     var parts = voc.split(/\s*&&\s*/);
     var list = [];
     var any_basic = false;
-    var specials = Button.special_actions;
     parts.forEach(function(part) {
-      if(specials.indexOf(part) >= 0) {
-        var special = "unknown";
-        if(part == ':clear') {
-          special = i18n.t('clear_utterance', "Clear the current utterance");
-        } else if(part == ':home') {
-          special = i18n.t('home', "Jump to the current home board");
-        } else if(part == ':back') {
-          special = i18n.t('back', "Go back one board");
-        } else if(part == ':backspace') {
-          special = i18n.t('backspace', "Erase the last button from the utterance");
-        } else if(part == ':beep') {
-          special = i18n.t('beep', "Beep");
-        } else if(part == ':speak') {
-          special = i18n.t('speak', "Speak the full utterance");
-        } else if(part == ':hush') {
-          special = i18n.t('stop_speaking', "Stop speaking");
+      var special = CoughDrop.find_special_action(part);
+      if(special && !special.completion) {
+        var description = "unknown";
+        if(special.description) {
+          description = special.description;
+        } else if(special.description_callback) {
+          description = special.description_callback(part.match(special.match));
+        } else {
+          description = special.action;
         }
-        list.push({modifier: part, special: special});
+
+        if(special.modifier) {
+          list.push({modifier: part});
+        } else {
+          list.push({modifier: part, special: description});
+        }
       } else if(part.match(/^\+/)) {
         list.push({basic: true, modifier: part});
         any_basic = true;

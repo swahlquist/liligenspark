@@ -81,6 +81,7 @@ var app_state = EmberObject.extend({
         })
       }
     });
+    Button.load_actions();
 //    speecher.check_for_upgrades();
     this.refresh_user();
   },
@@ -1923,34 +1924,9 @@ var app_state = EmberObject.extend({
       }
     } else if(specialty_button) {
       app_state.track_depth('clear');
-      var auto_return_possible = !!specialty_button.default_speak;
-      var already_navigating = false;
-      (button.vocalization || '').split(/\s*&&\s*/).forEach(function(mod) {
-        if(mod && mod.length > 0) {
-          if(mod == ':clear') {
-            app_state.controller.send('clear', {button_triggered: true});
-          } else if(mod == ':beep') {
-            app_state.controller.send('alert', {button_triggered: true});
-          } else if(mod == ':home') {
-            app_state.controller.send('home', {button_triggered: true});
-            already_navigating = true;
-          } else if(mod == ':back') {
-            app_state.controller.send('back', {button_triggered: true});
-            already_navigating = true;
-          } else if(mod == ':speak') {
-            app_state.controller.send('vocalize', {button_triggered: true});
-          } else if(mod == ':hush') {
-            speecher.stop('all');
-          } else if(mod == ':backspace') {
-            app_state.controller.send('backspace', {button_triggered: true});
-          } else if(mod == ':space') {
-            auto_return_possible = true;
-          } else if(mod == ':complete' || mod == ':predict') {
-            auto_return_possible = true;
-          }
-        }
-      });
-      if(auto_return_possible && !already_navigating) {
+      var res = app_state.specialty_actions(button.vocalization);
+      var auto_return_possible = !!specialty_button.default_speak || res.auto_return_possible;
+      if(auto_return_possible && !res.already_navigating) {
         app_state.possible_auto_home(obj);
       }
     } else if(button.integration && button.integration.action_type == 'webhook') {
@@ -1970,6 +1946,35 @@ var app_state = EmberObject.extend({
     }
     frame_listener.notify_of_button(button, obj);
     return true;
+  },
+  specialty_actions: function(voc) {
+    var res = {auto_return_possible: false, already_navigating: false};
+    (voc || '').split(/\s*&&\s*/).forEach(function(mod) {
+      if(mod && mod.length > 0) {
+        var found = false;
+        CoughDrop.special_actions.forEach(function(action) {
+          if(found) { return; }
+          if(mod == action.action || (action.match && mod.match(action.match))) {
+            found = true;
+            if(action.trigger) {
+              var trigger_res = null;
+              if(action.match) {
+                trigger_res = action.trigger(mod.match(action.match));
+              } else {
+                trigger_res = action.trigger(mod)
+              }
+              if(trigger_res && trigger_res.auto_return_possible) {
+                res.auto_return_possible = true;
+              }
+              if(trigger_res && trigger_res.already_navigating) {
+                res.already_navigating = true;
+              }
+            }
+          }
+        });
+      }
+    });
+    return res;
   },
   highlight_selected_button: function(button) {
     var $button = $(".button[data-id='" + button.id + "']");

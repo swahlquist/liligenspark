@@ -11,6 +11,7 @@ import speecher from '../../utils/speecher';
 import persistence from '../../utils/persistence';
 import Button from '../../utils/button';
 import {set as emberSet} from '@ember/object';
+import CoughDrop from '../../app';
 
 export default Controller.extend({
   speecher: speecher,
@@ -640,7 +641,8 @@ export default Controller.extend({
           var arg = key.slice(action.length + 1, key.length - 1);
         }
         var image_url = "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/touch_437_g.svg";
-        if(Button.special_actions.indexOf(action) != -1) {
+        var special = CoughDrop.find_special_action(part);
+        if(special && !special.completion && !special.modifier) {
           add_board({
             name: action.slice(1),
             special: true,

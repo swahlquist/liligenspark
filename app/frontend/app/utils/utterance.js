@@ -8,6 +8,7 @@ import speecher from './speecher';
 import app_state from './app_state';
 import persistence from './persistence';
 import $ from 'jquery';
+import CoughDrop from '../app';
 
 var utterance = EmberObject.extend({
   setup: function(controller) {
@@ -40,7 +41,6 @@ var utterance = EmberObject.extend({
     var buttonList = [];
     var rawList = this.get('rawButtonList');
     if(!rawList) { app_state.set('button_list', []); return; }
-    var find_one = function(list, look) { return list.find(function(e) { return e == look; }); };
     for(var idx = 0; idx < rawList.length; idx++) {
       var button = rawList[idx];
       button.raw_index = idx;
@@ -65,8 +65,8 @@ var utterance = EmberObject.extend({
           }
           last = {};
         }
-        var wordAction = find_one(this.modifiers, text);
-        if(wordAction) {
+        var action = CoughDrop.find_special_action(text);
+        if(action && action.modifier) {
           var altered = this.modify_button(last || {}, button);
           buttonList.push(altered);
         } else if(last) {
@@ -137,8 +137,6 @@ var utterance = EmberObject.extend({
       // clear hint overlay
     }
   }.observes('hint_button.label'),
-  modifiers: [':plural', ':singular', ':comparative', ':er', ':superlative', ':verb-negation',
-    ':est', ':possessive', ':\'s', ':past', ':ed', ':present-participle', ':ing', ':space', ':complete', ':predict'],
   modify_button: function(original, addition) {
     addition.mod_id = addition.mod_id || Math.round(Math.random() * 9999);
     if(original && original.modifications && original.modifications.find(function(m) { return addition.button_id == m.button_id && m.mod_id == addition.mod_id; })) {
@@ -159,51 +157,14 @@ var utterance = EmberObject.extend({
       if(text && text.length > 0) {
         var prior_text = (altered.vocalization || altered.label || '');
         var prior_label = (altered.label || '');
+        var action = CoughDrop.find_special_action(text);
     
         if(text.match(/^\+/) && (altered.in_progress || !prior_text)) {
           altered.vocalization = prior_text + text.substring(1);
           altered.label = prior_label + text.substring(1);
           altered.in_progress = true;
-        } else if(text == ':space') {
-          altered.in_progress = false;
-        } else if(text == ':complete' || text == ':predict') {
-    
-          altered.vocalization = addition.completion;
-          altered.label = addition.completion;
-          if(addition.image) { altered.image = addition.image; }
-          altered.in_progress = false;
-        } else if(text == ':plural' || text == ':pluralize') {
-          altered.vocalization = i18n.pluralize(prior_text);
-          altered.label = i18n.pluralize(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':singular' || text == ':singularize') {
-          altered.vocalization = i18n.singularize(prior_text);
-          altered.label = i18n.singularize(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':comparative' || text == ':er') {
-          altered.vocalization = i18n.comparative(prior_text);
-          altered.label = i18n.comparative(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':superlative' || text == ':est') {
-          altered.vocalization = i18n.superlative(prior_text);
-          altered.label = i18n.superlative(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':verb-negation' || text == ':\'t' || text == ':n\t') {
-          altered.vocalization = i18n.verb_negation(prior_text);
-          altered.label = i18n.verb_negation(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':possessive' || text == ':\'s') {
-          altered.vocalization = i18n.possessive(prior_text);
-          altered.label = i18n.possessive(prior_label);
-          altered.in_progress = false;
-        } else if(text == ':past' || text == ':ed') {
-          altered.vocalization = i18n.tense(prior_text, {simple_past: true});
-          altered.label = i18n.tense(prior_label, {simple_past: true});
-          altered.in_progress = false;
-        } else if(text == ':present-participle' || text == ':ing') {
-          altered.vocalization = i18n.tense(prior_text, {present_participle: true});
-          altered.label = i18n.tense(prior_label, {present_participle: true});
-          altered.in_progress = false;
+        } else if(action && action.alter) {
+          action.alter(text, prior_text, prior_label, altered, addition);
         }
     
       }
@@ -223,17 +184,18 @@ var utterance = EmberObject.extend({
     });
     var specialty = null;
     vocs.forEach(function(voc) {
-      if(voc == ":beep" || voc == ":home" || voc == ":back" || voc == ":clear" || voc == ":speak" || voc == ":backspace" || voc == ':hush') {
-        if(voc == ':beep' || voc == ':speak') {
+      var action = CoughDrop.find_special_action(voc);
+      if(action && !action.completion && !action.modifier) {
+        if(action.has_sound) {
           button.has_sound = true;
         }
         specialty = button;
         var any_special = true;
       } else if((voc.match(/^\+/) || voc.match(/^:/)) && voc != ':native-keyboard') {
         button.specialty_with_modifiers = true;
-        if(voc.match(/^\+/) || voc == ':space' || voc == ':complete' || voc == ':predict') {
+        if(voc.match(/^\+/) || (action && action.completion)) {
           button.default_speak = true;
-        } else if([':plural', ':singular', ':comparative', ':er', ':superlative', ':verb-negation', ':est', ':possessive', ':\'s', ':past', ':ed', ':present-participle', ':ing'].indexOf(voc) !== -1) {
+        } else if(action && action.modifier) {
           button.default_speak = true;
         }
         specialty = button;

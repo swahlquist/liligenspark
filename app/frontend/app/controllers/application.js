@@ -257,21 +257,25 @@ export default Controller.extend({
     },
     backspace: function(opts) {
       utterance.backspace(opts);
-      if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
-        speecher.click();
-      }
-      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
-        capabilities.vibrate();
+      if(!opts || !opts.skip_click) {
+        if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
+          speecher.click();
+        }
+        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+          capabilities.vibrate();
+        }
       }
     },
     clear: function(opts) {
       app_state.toggle_modeling(false);
       utterance.clear(opts);
-      if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
-        speecher.click();
-      }
-      if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
-        capabilities.vibrate();
+      if(!opts || !opts.skip_click) {
+        if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
+          speecher.click();
+        }
+        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+          capabilities.vibrate();
+        }
       }
     },
     toggle_home_lock: function() {
@@ -450,11 +454,13 @@ export default Controller.extend({
       } else {
         app_state.track_depth('back');
         this.backOneBoard(opts);
-        if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
-          speecher.click();
-        }
-        if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
-          capabilities.vibrate();
+        if(!opts || !opts.skip_click) {
+          if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
+            speecher.click();
+          }
+          if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
+            capabilities.vibrate();
+          }
         }
       }
       this.set('last_highlight_explore_action', (new Date()).getTime());

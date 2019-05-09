@@ -7,6 +7,9 @@ import RSVP from 'rsvp';
 import CoughDrop from '../app';
 import boundClasses from './bound_classes';
 import app_state from './app_state';
+import modal from './modal';
+import speecher from './speecher';
+import utterance from './utterance';
 import persistence from './persistence';
 import i18n from './i18n';
 import stashes from './_stashes';
@@ -757,8 +760,6 @@ Button.resource_from_url = function(url) {
   }
   return null;
 };
-Button.special_actions = [':clear', ':home', ':back', ':backspace', ':beep', ':speak', ':hush'];
-
 Button.set_attribute = function(button, attribute, value) {
   emberSet(button, attribute, value);
   var mods = emberGet(button, 'level_modifications');
@@ -921,6 +922,361 @@ Button.extra_actions = function(button) {
       }
     }
   }
+};
+
+Button.load_actions = function() {
+  if(!CoughDrop || CoughDrop.special_actions) { return; }
+  CoughDrop.find_special_action = function(mod) {
+    var res = null;
+    CoughDrop.special_actions.forEach(function(action) {
+      if(res || !mod) { return; }
+      if(action.action == mod) { 
+        res = action;
+      } else if(action.match) {
+        var match = mod.match(action.match);
+        res = $.extend({}, action);
+        res.last_match = match;
+      }
+    });
+    return res;
+  };
+  CoughDrop.special_actions = [
+    {
+      action: ':clear',
+      description: i18n.t('clear_utterance', "Clear the current utterance"),
+      trigger: function() { app_state.controller.send('clear', {button_triggered: true, skip_click: true}); }
+    },
+    {
+      action: ':home',
+      description: i18n.t('home', "Jump to the current home board"),
+      trigger: function() {
+        app_state.controller.send('home', {button_triggered: true, skip_click: true});
+        return {already_navigating: true};
+      }
+    },
+    {
+      action: ':back',
+      description: i18n.t('back', "Go back one board"),
+      trigger: function() {
+        app_state.controller.send('back', {button_triggered: true, skip_click: true});
+        return {already_navigating: true};
+      }
+    },
+    {
+      action: ':backspace',
+      description: i18n.t('backspace', "Erase the last button from the utterance"),
+      trigger: function() {
+        app_state.controller.send('backspace', {button_triggered: true, skip_click: true});      
+      }
+    },
+    {
+      action: ':beep',
+      description: i18n.t('beep', "Beep"),
+      has_sound: true,
+      trigger: function() {
+        app_state.controller.send('alert', {button_triggered: true, skip_click: true});      
+      }
+    },
+    {
+      action: ':speak',
+      description: i18n.t('speak', "Speak the full utterance"),
+      has_sound: true,
+      trigger: function() {
+        app_state.controller.send('vocalize', {button_triggered: true});      
+      }
+    },
+    {
+      action: ':hush',
+      description: i18n.t('stop_speaking', "Stop speaking"),
+      trigger: function() {
+        speecher.stop('all');      
+      }
+    },
+    {
+      action: ':find',
+      description: i18n.t('find_buttons', "Open the Find Buttons window"),
+      trigger: function() {
+        app_state.controller.send('find_button');      
+      }
+    },
+    {
+      action: ':share',
+      description: i18n.t('share_window', "Open the Share window"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          modal.open('share-utterance', {utterance: stashes.get('working_vocalization')});
+        }    
+      }
+    },
+    {
+      action: ':alerts',
+      description: i18n.t('alerts_window', "Open the Alerts window"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          modal.open('modals/inbox', {inactivity_timeout: true});
+        }    
+      }
+    },
+    {
+      action: ':repairs',
+      description: i18n.t('repairs_window', "Open the Repairs window"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          modal.open('modals/repairs', {inactivity_timeout: true});
+        }
+      }
+    },
+    {
+      action: ':shout',
+      description: i18n.t('speak_louder', "Speak the current utterance, louder"),
+      has_sound: true,
+      trigger: function() {
+        app_state.say_louder();
+      }
+    },
+    {
+      action: ':phrases',
+      description: i18n.t('phrases_window', "Open the Phrases window"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          modal.open('modals/phrases', {inactivity_timeout: true});
+        }    
+      }
+    },
+    {
+      action: ':hold-thought',
+      description: i18n.t('hold_thought', "Hold That Thought"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          stashes.remember({stash: true});
+          utterance.clear();
+        }    
+      }
+    },
+    {
+      action: ':board-lock',
+      description: i18n.t('toggle_board_lock', "Toggle Board Lock"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          app_state.controller.send('toggle_sticky_board');
+        }    
+      }
+    },
+    {
+      action: ':space',
+      completion: true,
+      trigger: function() {
+        return {auto_return_possible: true};
+      },
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':complete',
+      completion: true,
+      trigger: function() {
+        return {auto_return_possible: true};
+      },
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = addition.completion;
+        altered.label = addition.completion;
+        if(addition.image) { altered.image = addition.image; }
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':predict',
+      completion: true,
+      trigger: function() {
+        return {auto_return_possible: true};
+      },
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = addition.completion;
+        altered.label = addition.completion;
+        if(addition.image) { altered.image = addition.image; }
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':plural',
+      modifier: true,
+      description: i18n.t('pluralize', "Make the word plural"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.pluralize(prior_text);
+        altered.label = i18n.pluralize(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':singular',
+      modifier: true,
+      description: i18n.t('singularize', "Make the word singular"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.singularize(prior_text);
+        altered.label = i18n.singularize(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':comparative',
+      modifier: true,
+      description: i18n.t('comparative', "Add \"more\" or \"er\" (comparative)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.comparative(prior_text);
+        altered.label = i18n.comparative(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':er',
+      modifier: true,
+      description: i18n.t('comparative', "Add \"more\" or \"-er\" (comparative)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.comparative(prior_text);
+        altered.label = i18n.comparative(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':superlative',
+      modifier: true,
+      description: i18n.t('superlative', "Add \"most\" or \"-est\" (superlative)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.superlative(prior_text);
+        altered.label = i18n.superlative(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':est',
+      modifier: true,
+      description: i18n.t('superlative', "Add \"most\" or \"-est\" (superlative)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.superlative(prior_text);
+        altered.label = i18n.superlative(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':verb-negation',
+      modifier: true,
+      description: i18n.t('negation', "Negate the word"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.verb_negation(prior_text);
+        altered.label = i18n.verb_negation(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':possessive',
+      modifier: true,
+      description: i18n.t('possessive', "Add \"\s\" (possessive)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.possessive(prior_text);
+        altered.label = i18n.possessive(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':\'s',
+      modifier: true,
+      description: i18n.t('possessive', "Add \"\s\" (possessive)"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.possessive(prior_text);
+        altered.label = i18n.possessive(prior_label);
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':past',
+      modifier: true,
+      description: i18n.t('past_tense', "Make the verb past tense"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.tense(prior_text, {simple_past: true});
+        altered.label = i18n.tense(prior_label, {simple_past: true});
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':ed',
+      modifier: true,
+      description: i18n.t('past_tense', "Make the verb past tense"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.tense(prior_text, {simple_past: true});
+        altered.label = i18n.tense(prior_label, {simple_past: true});
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':present-participle',
+      modifier: true,
+      description: i18n.t('present_participle', "Make the verb present participle"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.tense(prior_text, {present_participle: true});
+        altered.label = i18n.tense(prior_label, {present_participle: true});
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':ing',
+      modifier: true,
+      description: i18n.t('present_participle', "Make the verb present participle"),
+      alter: function(text, prior_text, prior_label, altered, addition) {
+        altered.vocalization = i18n.tense(prior_text, {present_participle: true});
+        altered.label = i18n.tense(prior_label, {present_participle: true});
+        altered.in_progress = false;
+      }
+    },
+    {
+      action: ':timer',
+      match: /^:timer\((\d+)s\)/,
+      description_callback: function(match) {
+        var seconds = match ? parseInt(match[1], 10) : 30;
+        var duration = Ember.templateHelpers.seconds_ago(seconds);
+        return i18n.t('set_timer', "Set a timer for %{duration}", {duration: duration});
+      },
+      trigger: function(match) {
+        var seconds = match ? parseInt(match[1], 10) : 30;
+        var duration = Ember.templateHelpers.seconds_ago(seconds);
+        modal.success(i18n.t('timer_started', "Timer Started:") + " " + duration, true);
+        var start = (new Date()).getTime();
+        var tick = function() {
+          if(app_state.get('speak_mode')) {
+            var now = (new Date()).getTime();
+            if(now - start > (seconds * 1000)) {
+              speecher.beep();
+              runLater(function() {
+                speecher.beep();
+              }, 1500);
+              // TODO: pop up a Time's Up button, 
+              // maybe play a soft sound, give the user a button to speak
+            } else {
+              runLater(tick, 500);
+            }
+          }
+        };
+        runLater(tick, 500);    
+      }
+    },
+    {
+      action: ':say',
+      has_sound: true,
+      match: /^:say\(.+\)/,
+      description_callback: function(match) {
+        var phrase = (match && match[1]) || "nothing";
+        return i18n.t('say', "Say: ") + phrase;
+      },
+      trigger: function(match) {
+        if(app_state.get('speak_mode') && match) {
+          var phrase = match[1];
+          speecher.speak_text(phrase);
+          // TODO: this will be easier for people to find as a 
+          // button setting, yo
+        }    
+      }
+    },
+  ];
 };
 
 window.button_broken_image = Button.broken_image;
