@@ -277,24 +277,6 @@ var buttonTracker = EmberObject.extend({
     if($(event.target).closest('.hover_button').length) {
       $(event.target).closest('.hover_button').remove();
     }
-    if(event.target.id == 'highlight_box') {
-      var found = false;
-      // special case to make sure you can always hit the identity box
-      document.elementsFromPoint(event.clientX, event.clientY).forEach(function(e) {
-        if(e.id == 'identity_button') {
-          found = true;
-          var e = $.Event( "click" );
-          e.pass_through = true;
-          e.switch_activated = true;
-          $(event.target).trigger(e);
-          setTimeout(function() {
-            // what's this about?
-            scanner.find_elem("#home_button").focus().select();
-          }, 100);
-        }
-      })
-      if(found) { return; }
-    }
     // advanced_selection regions should be eating all click events and
     // instead manually interpreting touch and mouse events. that way we
     // can do magical things like "click" on starting/ending point
@@ -764,6 +746,17 @@ var buttonTracker = EmberObject.extend({
         if(track.proceed) {
           // different elements have different selection styles
           // TODO: standardize this more
+          if(elem_wrap.dom.id == 'highlight_box') {
+            var found = false;
+            // special case to make sure you can always hit the identity box,
+            // even if scanning
+            document.elementsFromPoint(event.clientX, event.clientY).forEach(function(e) {
+              if(e.id == 'identity_button') {
+                modal.close(null, 'highlight');
+                elem_wrap = {dom: e};
+              }
+            });
+          }
           if(elem_wrap.dom.id == 'identity') {
             event.preventDefault();
             // click events are eaten by our listener above, unless you
