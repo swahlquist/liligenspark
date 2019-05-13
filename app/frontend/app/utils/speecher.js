@@ -309,7 +309,7 @@ var speecher = EmberObject.extend({
     voice = voice || voices.find(function(v) { return v.lang == uri; });
     var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
     var language = locale && locale.split(/-/)[0];
-    if(locale) {
+    if(locale && voice) {
       // If locale is set but the voice doesn't match, return null
       var voice_locale = voice.lang.toLowerCase().replace(/_/, '-');
       var voice_lang = voice_locale.split(/-/)[0];
