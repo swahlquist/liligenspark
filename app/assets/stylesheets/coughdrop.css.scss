@@ -2261,6 +2261,14 @@ body.pretty_loader #loading_box {
 .form-inline .thin_select select.form-control {
   width: 100%;
 }
+#languages_prompt .form-group .glyphicon {
+  font-size: 30px;
+  vertical-align: middle;
+}
+.big_select {
+  font-size: 20px;
+  height: 50px;
+}
 
 #scanner_axis_vertical {
   width: 3px;

@@ -2,6 +2,7 @@ import Ember from 'ember';
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import stashes from '../utils/_stashes';
+import {set as emberSet, get as emberGet} from '@ember/object';
 import i18n from '../utils/i18n';
 
 export default modal.ModalController.extend({
@@ -13,14 +14,30 @@ export default modal.ModalController.extend({
     if(labels == vocalizations) { this.set('same_locale', true); }
   },
   update_matching_other: function(stuff, change) {
-    if(change == 'label_locale' && this.get('same_locale')) {
-      this.set('vocalization_locale', this.get('label_locale'));
+    if(change == 'vocalization_locale' && this.get('same_locale')) {
+      this.set('label_locale', this.get('vocalization_locale'));
     }
-  }.observes('label_locale', 'vocalization_locale'),
+    var _this = this;
+    this.get('locales').forEach(function(l) {
+      if(emberGet(l, 'id') == _this.get('vocalization_locale')) {
+        emberSet(l, 'vocalization_locale', true);
+      } else if(emberGet(l, 'vocalization_locale')) {
+        emberSet(l, 'vocalization_locale', false);
+      }
+      if(emberGet(l, 'id') == _this.get('label_locale')) {
+        emberSet(l, 'label_locale', true);
+      } else if(emberGet(l, 'label_locale')) {
+        emberSet(l, 'label_locale', false);
+      }
+    });
+  }.observes('label_locale', 'vocalization_locale', 'locales'),
+  two_languages: function() {
+    return this.get('locales.length') == 2;
+  }.property('locales'),
   locales: function() {
     var locales = this.get('model.board.locales') || [];
     var list = i18n.get('locales');
-    var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
+    var res = [];
     for(var key in list) {
       if(locales.indexOf(key) != -1) {
         res.push({name: list[key], id: key});
@@ -29,6 +46,9 @@ export default modal.ModalController.extend({
     return res;
   }.property('model.board', 'model.board.locales'),
   actions: {
+    set_locale: function(type, val) {
+      this.set(type + '_locale', val);
+    },
     set_languages: function() {
       app_state.set('label_locale', this.get('label_locale'));
       stashes.persist('label_locale', this.get('label_locale'));

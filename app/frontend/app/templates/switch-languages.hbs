@@ -4,25 +4,37 @@
     <h3>{{t "Switch Languages" key='switch_languages'}}
 </h3>
   </div>
-  <div class="modal-body">
+  <div class="modal-body" id='languages_prompt'>
     <form class="form-horizontal" {{action "nothing" on="submit"}}>
       <div class="form-group">
-        <div class="col-sm-8 col-sm-offset-4">
+        <div class="col-sm-12">
           <p class='form-control-static'>
             {{t "This board supports multiple languages. You can quickly switch between languages for both the text labels and the system-generated speech." key='select_a_language_for_switching'}}
           </p>
         </div>
       </div>
       <div class="form-group">
-        <label class="col-sm-4 control-label" for="translate_locale">
+        <label class="col-sm-4 control-label" for="vocalization_locale">
           {{#if same_locale}}
+            <span class='glyphicon glyphicon-globe'></span>
             {{t "Language" key='language'}}
           {{else}}
-            {{t "Button Labels" key='labels'}}
+            <span class='glyphicon glyphicon-volume-up'></span>
+            {{t "Spoken Language" key='speech_generation'}}
           {{/if}}
         </label>
         <div class="col-sm-8">
-          {{bound-select select_class="form-control" select_id="label_locale" content=locales selection=label_locale action=(action (mut label_locale)) }}
+          {{#if two_languages}}
+            <div class='btn-group'>
+              {{#each locales as |locale|}}
+                <button type='button' {{action 'set_locale' 'vocalization' locale.id}} class={{if locale.vocalization_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class='input-group input-group-lg' style='min-width: 200px;'>
+              {{bound-select select_class="form-control big_select" select_id="vocalization_locale" content=locales selection=vocalization_locale action=(action (mut vocalization_locale)) }}
+            </div>
+          {{/if}}
         </div>
       </div>
       <div class="form-group">
@@ -37,18 +49,29 @@
       </div>
       {{#unless same_locale}}
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="translate_locale">
-            {{t "Speech Generation" key='speech_generation'}}
+          <label class="col-sm-4 control-label" for="label_locale">
+            <span class='glyphicon glyphicon-text-background'></span>
+            {{t "Text Language" key='labels'}}
           </label>
           <div class="col-sm-8">
-            {{bound-select select_class="form-control" select_id="vocalization_locale" content=locales selection=vocalization_locale action=(action (mut vocalization_locale)) }}
+            {{#if two_languages}}
+              <div class='btn-group'>
+                {{#each locales as |locale|}}
+                  <button type='button' {{action 'set_locale' 'label' locale.id}} class={{if locale.label_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class='input-group input-group-lg' style='min-width: 200px;'>
+                {{bound-select select_class="form-control big_select" select_id="vocalization_locale" content=locales selection=label_locale action=(action (mut label_locale)) }}
+              </div>
+            {{/if}}
           </div>
         </div>
       {{/unless}}
     </form>
   </div>
   <div class="modal-footer">
-    <button class='btn btn-primary' {{action 'set_languages'}}>{{t "Switch Languages" key='switch_languages'}}</button>
-    <a href="#" class="btn btn-default" {{action 'close'}}>{{t "Cancel" key='cancel'}}</a>
+    <button class='btn btn-lg btn-primary' {{action 'set_languages'}}>{{t "Switch Languages" key='switch_languages'}}</button>
+    <a href="#" class="btn btn-lg btn-default" {{action 'close'}}>{{t "Cancel" key='cancel'}}</a>
   </div>
 {{/modal-dialog}}

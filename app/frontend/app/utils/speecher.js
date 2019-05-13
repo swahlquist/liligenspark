@@ -302,7 +302,7 @@ var speecher = EmberObject.extend({
     if(uri == 'force_default') { return null; }
     var voices = speecher.get('voices');
     // Try to find the exact voice
-    voice = voices.find(function(v) { return v.voiceURI == uri; });
+    var voice = voices.find(function(v) { return v.voiceURI == uri; });
     // Sometimes voiceURI is just the string
     voice = voice || voices.find(function(v) { return (v.name + " " + v.lang) == uri; });
     // Sometimes voiceURI is just the lang
