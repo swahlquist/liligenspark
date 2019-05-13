@@ -112,6 +112,7 @@ Coughdrop::Application.routes.draw do
   
   get 'profile' => ember_handler
   get 'search/:query' => ember_handler
+  get 'search/:locale/:query' => ember_handler
   get 'u/:reply_code' => 'boards#utterance_redirect'
   get ':id/logs/:log_id' => ember_handler, :constraints => {:id => user_id_regex}
   get ':id/goals/:goal_id' => ember_handler, :constraints => {:id => user_id_regex}

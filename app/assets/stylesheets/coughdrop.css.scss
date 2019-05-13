@@ -2258,6 +2258,9 @@ body.pretty_loader #loading_box {
   opacity: 0.5;
   font-style: italic;
 }
+.form-inline .thin_select select.form-control {
+  width: 100%;
+}
 
 #scanner_axis_vertical {
   width: 3px;

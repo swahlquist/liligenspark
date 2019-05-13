@@ -4,12 +4,20 @@ import CoughDrop from '../app';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import session from '../utils/session';
-import Utils from '../utils/misc';
+import i18n from '../utils/i18n';
 
 export default Controller.extend({
   title: function() {
     return "Search results for " + this.get('searchString');
   }.property('searchString'),
+  locales: function() {
+    var list = i18n.get('translatable_locales');
+    var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
+    for(var key in list) {
+      res.push({name: list[key], id: key});
+    }
+    return res;
+  }.property(),
   load_results: function(str) {
     var _this = this;
     this.set('online_results', {loading: true, results: []});
@@ -27,7 +35,7 @@ export default Controller.extend({
       if(persistence.get('online')) {
         _this.set('online_results', {loading: true, results: []});
         _this.set('personal_results', {loading: true, results: []});
-        var locale = (window.navigator.language || 'en').split(/-/)[0];
+        var locale = (_this.get('locale') || window.navigator.language || 'en').split(/-/)[0];
         CoughDrop.store.query('board', {q: str, locale: locale, sort: 'popularity'}).then(function(res) {
           _this.set('online_results', {results: res.map(function(i) { return i; })});
         }, function() {
@@ -53,6 +61,11 @@ export default Controller.extend({
       loadBoards();
     });
 
+  },
+  actions: {
+    searchBoards: function() {
+      this.transitionToRoute('search', this.get('locale'), encodeURIComponent(this.get('searchString') || '_'));
+    }
   }
 });
 
