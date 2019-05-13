@@ -934,8 +934,10 @@ Button.load_actions = function() {
         res = action;
       } else if(action.match) {
         var match = mod.match(action.match);
-        res = $.extend({}, action);
-        res.last_match = match;
+        if(match) {
+          res = $.extend({}, action);
+          res.last_match = match;
+        }
       }
     });
     return res;
