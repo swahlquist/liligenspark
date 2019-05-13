@@ -1199,6 +1199,12 @@ var app_state = EmberObject.extend({
         if(this.get('currentUser.preferences.device.wakelock') !== false) {
           capabilities.wakelock('speak!', true);
         }
+        // When entering Speak Mode, use the board's default locale
+        if(this.get('currentBoardState.default_locale')) {
+          var loc = this.get('currentBoardState.default_locale');
+          app_state.set('label_locale', loc);
+          app_state.set('vocalization_locale', loc);
+        }
         this.set_history([]);
         var noticed = false;
         if(stashes.get('logging_enabled')) {

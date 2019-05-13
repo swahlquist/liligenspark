@@ -36,28 +36,38 @@ export default Route.extend({
       parent_id: model.get('parent_board_id'),
       name: model.get('name'),
       has_fallbacks: model.get('has_fallbacks'),
+      default_locale: model.get('locale'),
       copy_version: model.get('copy_version'),
       integration_name: model.get('integration') && model.get('integration_name'),
       parent_key: model.get('parent_board_key'),
       text_direction: i18n.text_direction(model.get('locale')),
       translatable: (model.get('locales') || []).length > 1
     });
-    if(!app_state.get('label_locale')) {
-      app_state.set('label_locale', stashes.get('label_locale'));
-    }
-    if(!app_state.get('vocalization_locale')) {
-      app_state.set('vocalization_locale', stashes.get('vocalization_locale'));
-    }
     if(stashes.get('root_board_state.id') == app_state.get('currentBoardState.id')) {
       if(!stashes.get('root_board_state.text_direction')) {
         stashes.set('root_board_state.text_direction', app_state.get('currentBoardState.text_direction'));
       }
     }
-    if(!app_state.get('label_locale')) {
-      app_state.set('label_locale', stashes.get('label_locale'));
+    // By default use whatever locale is set for the board, but
+    // if the user has explicitly set a preferred locale then try
+    // to use that
+    if(stashes.get('label_locale')) {
+      var preferred_lang = stashes.get('label_locale').split(/-|_/)[0];
+      var board_langs = model.get('locales').map(function(l) { return l.split(/-|_/)[0]; });
+      if(board_langs.indexOf(preferred_lang) != -1) {
+        app_state.set('label_locale', model.get('locale'));
+      }
+    } else {
+      app_state.set('label_locale', model.get('locale'));
     }
-    if(!app_state.get('vocalization_locale')) {
-      app_state.set('vocalization_locale', stashes.get('vocalization_locale'));
+    if(stashes.get('vocalization_locale')) {
+      var preferred_lang = stashes.get('vocalization_locale').split(/-|_/)[0];
+      var board_langs = model.get('locales').map(function(l) { return l.split(/-|_/)[0]; });
+      if(board_langs.indexOf(preferred_lang) != -1) {
+        app_state.set('vocalization_locale', model.get('locale'));
+      }
+    } else {
+      app_state.set('vocalization_locale', model.get('locale'));
     }
     if(CoughDrop.embedded && !app_state.get('speak_mode')) {
       // Embedded mode should only operate in Speak Mode, so force it

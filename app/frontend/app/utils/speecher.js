@@ -298,6 +298,31 @@ var speecher = EmberObject.extend({
     }
     capabilities.output.set_target(target).then(runVoice, runVoice);
   },
+  find_voice_by_uri: function(uri, locale, allow_fallbacks) {
+    if(uri == 'force_default') { return null; }
+    var voices = speecher.get('voices');
+    // Try to find the exact voice
+    voice = voices.find(function(v) { return v.voiceURI == uri; });
+    // Sometimes voiceURI is just the string
+    voice = voice || voices.find(function(v) { return (v.name + " " + v.lang) == uri; });
+    // Sometimes voiceURI is just the lang
+    voice = voice || voices.find(function(v) { return v.lang == uri; });
+    var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
+    var language = locale && locale.split(/-/)[0];
+    if(allow_fallbacks) {
+      // Can't find an exact match? Look for a best match
+      voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+      voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
+      voice = voice || voices.find(function(v) { return v['default']; });
+      voice = voice || voices[0];
+    } else if(voice && locale) {
+      // If locale is set but the voice doesn't match, return null
+      var voice_locale = voice.lang.toLowerCase().replace(/_/, '-');
+      var voice_lang = voice_locale.split(/-/)[0];
+      if(voice_lang != language) { voice = null; }
+    }
+    return voice;
+  },
   speak_raw_text: function(text, collection_id, opts, callback) {
     var _this = this;
     if(opts.alternate_voice) {
@@ -306,11 +331,11 @@ var speecher = EmberObject.extend({
       opts.rate = this.alternate_rate;
       opts.voiceURI = this.alternate_voiceURI;
       if(app_state.get('vocalization_locale')) {
+        // If the alternate voice doesn't match the expected locale, use a different voice
         var set_locale = app_state.get('vocalization_locale').split(/[-_]/)[0].toLowerCase();
         var voice_locale = (_this.alternate_voiceLang || navigator.language).split(/[-_]/)[0].toLowerCase();
         if(set_locale != voice_locale) {
-          var list = _this.get('voices').filter(function(v) { return v.lang && v.lang.split(/[-_]/)[0].toLowerCase() == set_locale; });
-          opts.voiceURI = (list[1] && list[1].voiceURI) || (list[0] && list[0].voiceURI) || _this.alternate_voiceURI;
+          opts.voiceURI = (speecher.find_voice_by_uri(_this.alternate_voiceURI, app_state.get('vocalization_locale'), true) || {}).voiceURI || _this.alternate_voiceURI;
         }
       }
     }
@@ -319,11 +344,11 @@ var speecher = EmberObject.extend({
     if(!opts.voiceURI) {
       opts.voiceURI = this.voiceURI;
       if(app_state.get('vocalization_locale')) {
+        // If the voice doesn't match the expected locale, use a different voice
         var set_locale = app_state.get('vocalization_locale').split(/[-_]/)[0].toLowerCase();
-        var voice_locale = (this.alternate_voiceLang || navigator.language).split(/[-_]/)[0].toLowerCase();
+        var voice_locale = (this.voiceLang || navigator.language).split(/[-_]/)[0].toLowerCase();
         if(set_locale != voice_locale) {
-          var list = _this.get('voices').filter(function(v) { return v.lang && v.lang.split(/[-_]/)[0].toLowerCase() == set_locale; });
-          opts.voiceURI = (list[1] && list[1].voiceURI) || (list[0] && list[0].voiceURI) || _this.voiceURI;
+          opts.voiceURI = (speecher.find_voice_by_uri(_this.voiceLang, app_state.get('vocalization_locale'), true) || {}).voiceURI || _this.voiceURI;
         }
       }
     }
@@ -344,16 +369,7 @@ var speecher = EmberObject.extend({
       utterance.voiceURI = opts.voiceURI;
       var voice = null;
       if(opts.voiceURI != 'force_default') {
-        var voices = speecher.get('voices');
-        voice = voices.find(function(v) { return v.voiceURI == opts.voiceURI; });
-        voice = voice || voices.find(function(v) { return (v.name + " " + v.lang) == opts.voiceURI; });
-        voice = voice || voices.find(function(v) { return v.lang == opts.voiceURI; });
-        var locale = window.navigator.language.toLowerCase();
-        var language = locale && locale.split(/-/)[0];
-        voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase() == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
-        voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
-        voice = voice || voices.find(function(v) { return v['default']; });
-        voice = voice || voices[0];
+        voice = speecher.find_voice_by_uri(opts.voiceURI, null, true);
       }
       // Try to render default prompts in the locale's language
       if(opts.default_prompt) {
