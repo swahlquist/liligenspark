@@ -190,8 +190,7 @@ $(document).on('mousedown touchstart', function(event) {
     }
   }
   if($(event.target).closest(".modal-content.auto_close").length > 0) {
-    $(".modal-content.auto_close").removeClass('auto_close');
-    modal.auto_close = false;
+    modal.cancel_auto_close();
   }
   if(!buttonTracker.check('scanning_enabled')) { return; }
   if(event.target.tagName == 'INPUT' && event.target.id != 'hidden_input') { return; }
@@ -277,6 +276,24 @@ var buttonTracker = EmberObject.extend({
   touch_start: function(event) {
     if($(event.target).closest('.hover_button').length) {
       $(event.target).closest('.hover_button').remove();
+    }
+    if(event.target.id == 'highlight_box') {
+      var found = false;
+      // special case to make sure you can always hit the identity box
+      document.elementsFromPoint(event.clientX, event.clientY).forEach(function(e) {
+        if(e.id == 'identity_button') {
+          found = true;
+          var e = $.Event( "click" );
+          e.pass_through = true;
+          e.switch_activated = true;
+          $(event.target).trigger(e);
+          setTimeout(function() {
+            // what's this about?
+            scanner.find_elem("#home_button").focus().select();
+          }, 100);
+        }
+      })
+      if(found) { return; }
     }
     // advanced_selection regions should be eating all click events and
     // instead manually interpreting touch and mouse events. that way we
@@ -467,7 +484,7 @@ var buttonTracker = EmberObject.extend({
               return scanner.pick();
             }
           } else {
-            if(buttonTracker.check('') == 'next') {
+            if(buttonTracker.check('right_screen_action') == 'next') {
               return scanner.next();
             } else {
               return scanner.pick();
@@ -1337,7 +1354,7 @@ var buttonTracker = EmberObject.extend({
         return buttonTracker.element_wrap($elem[0]);
       } else if((region.className || "").match(/board/) || region.id == 'board_canvas') {
         return buttonTracker.button_from_point(event.clientX, event.clientY);
-      } else if(region.classList.contains('share_buttons') || region.classList.contains('modal_targets')) {
+      } else if(region.classList.contains('modal_targets')) {
         return buttonTracker.element_wrap($target.closest(".btn").filter(":not([disabled])").filter(":not(.unselectable)")[0]);
       } else if(region.id == 'integration_overlay') {
         return buttonTracker.element_wrap($target.closest(".integration_target")[0]);
@@ -1672,6 +1689,7 @@ var buttonTracker = EmberObject.extend({
       if(selectable_wrap && this.shortPressEvent) {
         var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target
         var event = $.Event('touchend', target);
+        event.target = target;
         event.clientX = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientX;
         event.clientY = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientY;
         buttonTracker.element_release(selectable_wrap, event);
@@ -1705,7 +1723,7 @@ var buttonTracker = EmberObject.extend({
       hit.x = opts.event.clientX;
       hit.y = opts.event.clientY;
     } else if(opts.elem) {
-      var bounds = opts.elem.getBoundingClientRect();
+      var bounds = scanner.measure(opts.elem.dom);
       hit.x = bounds.left + (bounds.width / 2);
       hit.y = bounds.top + (bounds.height / 2);
     }

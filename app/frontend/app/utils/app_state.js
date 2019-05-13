@@ -2003,6 +2003,7 @@ var app_state = EmberObject.extend({
 
       $board.append($clone);
       $clone.addClass('selecting');
+      $clone.addClass('clone');
 
       // Have to reposition of moving to/from keyboard suggestion board
       var offset_y = $("#word_suggestions").height() || 0;
@@ -2025,6 +2026,8 @@ var app_state = EmberObject.extend({
         $button.addClass('selecting');
         var later = runLater(function() {
           $clone.removed = true;
+          $button.removeClass('selecting');
+          $button.data('later', null);
           $clone.remove();
         }, 3000);
         $button.data('later', later);

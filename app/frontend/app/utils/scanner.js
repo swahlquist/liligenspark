@@ -41,7 +41,34 @@ var scanner = EmberObject.extend({
     options.all_elements = [];
 
     var highlight_type = emberGet(modal.highlight_settings || {}, 'highlight_type');
-    if((modal.is_open() && !modal.is_open('highlight')) || highlight_type == 'button_search') {
+    var scannable_targets = modal.scannable_targets();
+    if(scannable_targets.length > 0) {
+      rows = [];
+      rows.reload = function() {
+        var elem = (scanner.current_element || {}).dom || [];
+        while(rows.length > 0) { rows.pop();}
+        modal.scannable_targets().each(function() {
+          var $item = scanner.find_elem(this);
+          rows.push({
+            dom: $item,
+            label: ($item.attr('rel') || $item.text()).replace(/^\s*/, '').replace(/\s*$/, '')
+          });
+        })
+        scanner.find_elem(".modal-content .close").each(function() {
+          var $item = scanner.find_elem(this);
+          rows.push({
+            dom: $item,
+            label: i18n.t('close', "Close")
+          });
+        });
+        var item = rows.find(function(i) { return scanner.same_elements(i.dom, elem);});
+        var idx = rows.indexOf(item);
+        if(item && idx != -1) {
+          scanner.element_index = idx;
+        }
+      };
+      rows.reload();
+    } else if((modal.is_open() && !modal.is_open('highlight')) || highlight_type == 'button_search') {
       return;
     } else if(options && options.scan_mode == 'axes') {
     } else {
@@ -75,15 +102,22 @@ var scanner = EmberObject.extend({
         var menu = {
           dom: scanner.find_elem("#identity a.btn"),
           label: i18n.t('menu', "Menu"),
-          children: []
+          children: [],
+          reload_children: function() {
+            var res = [];
+            scanner.find_elem("#identity .dropdown-menu a:visible").each(function() {
+              var $option = scanner.find_elem(this);
+              res.push({
+                dom: $option,
+                label: $option.text()
+              });
+            });
+            return res;
+          } 
         };
-        scanner.find_elem("#identity .dropdown-menu a").each(function() {
-          var $option = scanner.find_elem(this);
-          menu.children.push({
-            dom: $option,
-            label: $option.text()
-          });
-        });
+
+
+        menu.children = menu.reload_children();
         row.children.push(menu);
 
         // TODO: figure out sidebar, when teaser is visible and also when the
@@ -285,9 +319,6 @@ var scanner = EmberObject.extend({
         rows = new_rows;
       }
     }
-    this.scanning = true;
-    this.element_index = null;
-    this.element_index_advanced = !!options.auto_start;
     this.scan_elements(rows, options);
   },
   scan_content: function() {
@@ -313,7 +344,7 @@ var scanner = EmberObject.extend({
       for(var idx = 0; idx < grid.order.length; idx++) {
         res.order[idx] = [];
         for(var jdx = 0; jdx < grid.order[idx].length; jdx++) {
-          var $button = scanner.find_elem(".button[data-id='" + grid.order[idx][jdx] + "']:not(.hidden_button)");
+          var $button = scanner.find_elem(".button[data-id='" + grid.order[idx][jdx] + "']:not(.hidden_button):not(.clone)");
           var button = editManager.find_button(grid.order[idx][jdx]);
           $button.label = (button && (button.get('vocalization') || button.get('label'))) || "";
           $button.sound = (button && button.get('sound')) || null;
@@ -364,6 +395,12 @@ var scanner = EmberObject.extend({
     return true;
   },
   scan_elements: function(elements, options) {
+    scanner.scanning = true;
+    scanner.element_index = null;
+    scanner.element_index_advanced = !!options.auto_start;
+    if(!scanner.scanning_distances) {
+      scanner.scanning_distances = {x: 0, y: 0};
+    }
     var retry = false;
     if(scanner.interval && scanner.same_elements(elements, this.elements)) {
       retry = true;
@@ -379,7 +416,7 @@ var scanner = EmberObject.extend({
       this.next_element(retry);
     }
   },
-  pick: function() {
+  pick: function(ref) {
     var elem = scanner.current_element;
     if(scanner.options && scanner.options.scan_mode != 'axes') {
       if((!modal.highlight_controller || !elem) && scanner.options && !scanner.options.auto_start) {
@@ -397,6 +434,9 @@ var scanner = EmberObject.extend({
       distance: scanner.scanning_distances,
       elem: elem
     });
+    if(ref != 'auto' && modal.is_open()) {
+      modal.cancel_auto_close();
+    }
     scanner.scanning_distances = {x: 0, y: 0};
     if(!track || !track.proceed) { return; }
 
@@ -412,24 +452,18 @@ var scanner = EmberObject.extend({
         frame_listener.trigger_target_event(elem.dom[0], 'scanselect', 'select');
       }
 
-      if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
-        var e = $.Event( "click" );
-        e.pass_through = true;
-        e.switch_activated = true;
-        scanner.find_elem(elem.dom).trigger(e);
-        setTimeout(function() {
-          scanner.find_elem("#home_button").focus().select();
-        }, 100);
-      }
-
       if(elem.higher_level) {
-        scanner.elements = elem.higher_level;
-        scanner.element_index = elem.higher_level_index;
-        runCancel(scanner.interval);
-        scanner.interval = runLater(function() {
-          scanner.next_element();
-        });
+        scanner.level_up(elem);
       } else if(elem.children) {
+        if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
+          var e = $.Event( "click" );
+          e.pass_through = true;
+          e.switch_activated = true;
+          scanner.find_elem(elem.dom).trigger(e);
+          setTimeout(function() {
+            scanner.find_elem("#home_button").focus().select();
+          }, 100);
+        }    
         scanner.load_children(elem, scanner.elements, scanner.element_index);
       } else if(elem.dom) {
         scanner.pick_elem(elem.dom);
@@ -439,14 +473,27 @@ var scanner = EmberObject.extend({
       scanner.ignore_until = now + scanner.options.debounce;
     }
   },
+  level_up: function(elem) {
+    scanner.elements = elem.higher_level;
+    scanner.element_index = elem.higher_level_index;
+    runCancel(scanner.interval);
+    scanner.interval = runLater(function() {
+      scanner.next_element();
+    });
+  },
   pick_elem: function(dom) {
-    var $closest = $(dom).closest('.button,.integration_target,.button_list');
+    var $closest = $(dom).closest('.button,.integration_target,.button_list,.btn,a,.speak_menu_button');
     if($closest.length > 0) { dom = $closest; }
     scanner.element_index = 0;
     scanner.element_index_advanced = false;
     scanner.last_spoken_elem = null;
     var reset_now = true;
-    if(dom.hasClass('button') && dom.attr('data-id')) {
+
+    if(dom && dom.hasClass('speak_menu_button')) {
+      var e = $.Event( 'speakmenuselect' );
+      e.button_id = dom.attr('id');
+      dom.trigger(e);
+    } else if(dom.hasClass('button') && dom.attr('data-id')) {
       var id = dom.attr('data-id');
       var button = editManager.find_button(id);
       var app = app_state.controller;
@@ -650,6 +697,7 @@ var scanner = EmberObject.extend({
       elem.children = elem.reload_children();
     }
     scanner.elements = elem.children.concat([parent]);
+    scanner.elements.reload = elem.children.reload
     scanner.element_index = 0;
     scanner.element_index_advanced = !!parent.higher_level;
     runCancel(scanner.interval);
@@ -658,6 +706,11 @@ var scanner = EmberObject.extend({
     });
   },
   next: function(reverse) {
+    var auto = false;
+    if(reverse == 'auto') {
+      auto = true;
+      reverse = null;
+    }
     var now = (new Date()).getTime();
     if(scanner.ignore_until && now < scanner.ignore_until) { console.log("ignoring because too soon"); return; }
     if(scanner.reset_until && now < scanner.reset_until) { 
@@ -667,6 +720,9 @@ var scanner = EmberObject.extend({
         runLater(function() { scanner.next(reverse); });
       }
       return; 
+    }
+    if(!auto && modal.is_open()) {
+      modal.cancel_auto_close();
     }
     if(!scanner.element_index_advanced) { scanner.element_index = -1; }
     runCancel(scanner.interval);
@@ -691,15 +747,35 @@ var scanner = EmberObject.extend({
   prev: function() {
     scanner.next(true);
   },
+  measure: function($elems) {
+    var minX = null, minY = null, maxX = null, maxY = null;
+    if(!$elems.each) { $elems = $($elems); }
+    $elems.each(function() {
+      var $e = $(this);
+      var offset = $e.offset();
+      var thisMinX = offset.left;
+      var thisMinY = offset.top;
+      var thisMaxX = offset.left + $e.outerWidth();
+      var thisMaxY = offset.top + $e.outerHeight();
+      minX = Math.min(minX || thisMinX, thisMinX);
+      minY = Math.min(minY || thisMinY, thisMinY);
+      maxX = Math.max(maxX || thisMaxX, thisMaxX);
+      maxY = Math.max(maxY || thisMaxY, thisMaxY);
+    });
+    return {top: minY, left: minX, width: maxX - minX, height: maxY - minY};
+  },
   next_element: function(retry) {
+    if(this.elements.reload) {
+      this.elements.reload();
+    }
     var elem = this.elements[this.element_index];
     if(scanner.options && scanner.options.scan_mode == 'axes') {
       scanner.scan_axes('start');
       return;
     }
     var prior = {x: 0, y: 0};
-    if(scanner.current_elem) {
-      var bounds = scanner.current_elem.getBoundingClientRect();
+    if(scanner.current_element) {
+      var bounds = scanner.measure(scanner.current_element.dom);
       prior.x = bounds.left;
       prior.y = bounds.top;
     }
@@ -708,10 +784,29 @@ var scanner = EmberObject.extend({
       this.element_index = 0;
       prior = {x: 0, y: 0};
     }
-    if(!document.body.contains(elem.dom[0])) {
+    var elem_bounds = scanner.measure(elem.dom);
+    if(!document.body.contains(elem.dom[0]) || (elem_bounds.width == 0 && elem_bounds.height == 0)) {
       var last = this.elements[this.elements.length - 1];
-      if(last && last.higher_level && last.reload_children) {
-        scanner.load_children(last.higher_level[last.higher_level_index], last.higher_level, last.higher_level_index);
+      if(last && last.higher_level) {
+        if(last.reload_children) {
+          scanner.load_children(last.higher_level[last.higher_level_index], last.higher_level, last.higher_level_index);
+        } else {
+          // if load_children won't work, at least clear empties
+          var items = [];
+          while(scanner.elements.length > 0) { items.push(scanner.elements.pop()); }
+          while(items.length > 0) {
+            var item = items.pop();
+            var item_bounds = scanner.measure(item.dom);
+            if(item.higher_level || item_bounds.width > 0 && item_bounds.height > 0) {
+              scanner.elements.push(item);
+            } else {
+              scanner.element_index--;
+            }
+          }
+        }
+        if(scanner.elements.length == 1 && scanner.elements[0].higher_level) {
+          scanner.level_up(scanner.elements[0]);
+        }
         return;
       }
     }
@@ -730,7 +825,7 @@ var scanner = EmberObject.extend({
 
     // Don't repeat
     if(!retry) {
-      var current_bounds = elem.getBoundingClientRect();
+      var current_bounds = scanner.measure(elem.dom);
       // We add .25 to the travel score based on the assumption that
       // each scan progression costs some fixed amount of expense,
       // either in waiting or hitting a button to progress
@@ -755,6 +850,8 @@ var scanner = EmberObject.extend({
       frame_listener.trigger_target_event(elem.dom[0], 'scanover', 'over');
     }
     modal.highlight(elem.dom, options).then(function() {
+      // we ignore here for any_select because it's triggered instead
+      // in raw_events
       if(!buttonTracker.any_select) {
         scanner.pick();
       }
@@ -765,9 +862,9 @@ var scanner = EmberObject.extend({
         scanner.interval = runLater(function() {
           if(scanner.current_element == elem) {
             if(scanner.options && scanner.options.scanning_auto_select) {
-              scanner.pick();
+              scanner.pick('auto');
             } else {
-              scanner.next();
+              scanner.next('auto');
             }
           }
         }, Math.max(options.interval || 1000, 500));

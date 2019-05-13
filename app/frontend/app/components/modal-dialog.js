@@ -12,11 +12,11 @@ export default Component.extend({
       this.sendAction('opening');
     }
     this.set('auto_close', !!modal.auto_close);
-    modal.component = this;
-//     if(capabilities.mobile) {
-      var height = $(window).height() - 50;
-      $(this.get('element')).find(".modal-content").css('maxHeight', height).css('overflow', 'auto');
-//     }
+    if(modal.last_any_template != 'highlight') {
+      modal.component = this;
+    }
+    var height = $(window).height() - 50;
+    $(this.get('element')).find(".modal-content").css('maxHeight', height).css('overflow', 'auto');
   },
   willClearRender: function() {
     this.set('already_opened', false);
@@ -70,8 +70,7 @@ export default Component.extend({
       }
     },
     any_select: function() {
-      modal.auto_close = false;
-      this.set('auto_close', !!modal.auto_close);
+      modal.cancel_auto_close();
     }
   }
 });

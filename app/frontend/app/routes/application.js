@@ -47,7 +47,7 @@ export default Route.extend({
       if(last_closed && last_closed > Date.now() - 500) {
         return;
       }
-      modal.open('speak-menu', {inactivity_timeout: true});
+      modal.open('speak-menu', {inactivity_timeout: true, scannable: true});
     },
     newBoard: function() {
       modal.open('new-board');

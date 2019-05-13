@@ -60,12 +60,12 @@ export default modal.ModalController.extend({
     if(width > window_width - 8) {
       width = window_width - 8;
     }
-    this.set('model.top_style', htmlSafe(display + "z-index: 9; position: absolute; top: -" + header_height + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: " + (top + header_height) + "px;"));
-    this.set('model.left_style', htmlSafe(display + "z-index: 9; position: absolute; top: " + (top) + "px; left: 0; background: #000; opacity: " + opacity + "; width: " + left + "px; height: " + height + "px;"));
-    this.set('model.right_style', htmlSafe(display + "z-index: 9; position: absolute; top: " + (top) + "px; left: calc(" + left+ "px + " + width + "px); background: #000; opacity: " + opacity + "; width: calc(100% - " + left + "px - " + width + "px); height: " + height + "px;"));
-    this.set('model.bottom_style', htmlSafe(display + "z-index: 9; position: absolute; top: " + (bottom) + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: 5000px;"));
-    this.set('model.highlight_style', htmlSafe("z-index: 10; position: absolute; top: " + (top - 4) + "px; left: " + (left - 4) + "px; width: " + (width + 8) + "px; height: " + (height + 8) + "px; cursor: pointer;"));
-    this.set('model.inner_highlight_style', htmlSafe("z-index: 11; position: absolute; top: " + (top) + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; cursor: pointer;"));
+    this.set('model.top_style', htmlSafe(display + "z-index: 2000; position: absolute; top: -" + header_height + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: " + (top + header_height) + "px;"));
+    this.set('model.left_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (top) + "px; left: 0; background: #000; opacity: " + opacity + "; width: " + left + "px; height: " + height + "px;"));
+    this.set('model.right_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (top) + "px; left: calc(" + left+ "px + " + width + "px); background: #000; opacity: " + opacity + "; width: calc(100% - " + left + "px - " + width + "px); height: " + height + "px;"));
+    this.set('model.bottom_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (bottom) + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: 5000px;"));
+    this.set('model.highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top - 4) + "px; left: " + (left - 4) + "px; width: " + (width + 8) + "px; height: " + (height + 8) + "px; cursor: pointer;"));
+    this.set('model.inner_highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top) + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; cursor: pointer;"));
   }.observes('model.left', 'model.top', 'model.width', 'model.height', 'model.bottom', 'model.right', 'model.overlay', 'model.clear_overlay'),
   actions: {
     select: function() {
@@ -73,18 +73,18 @@ export default modal.ModalController.extend({
         this.get('model.defer').resolve();
       }
       if(!this.get('model.prevent_close')) {
-        modal.close();
+        modal.close(null, 'highlight');
       }
     },
     close: function() {
       if(this.get('model.select_anywhere')) { // whole-screen is giant switch
-        this.send('model.select');
+        this.send('select');
       } else {
         if(this.get('model.defer')) {
           this.get('model.defer').reject();
         }
         if(!this.get('model.prevent_close')) {
-          modal.close();
+          modal.close(null, 'highlight');
         }
       }
     },

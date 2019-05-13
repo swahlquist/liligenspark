@@ -70,7 +70,7 @@ export default modal.ModalController.extend({
           emberSet(user, 'avatar_url', user.avatar_url || user.image_url);
           var voc = stashes.get('working_vocalization') || [];
           var sentence = voc.map(function(v) { return v.label; }).join(' ');
-          modal.open('confirm-notify-user', {user: user, reply_id: app_state.get('reply_note.id'), raw: stashes.get('working_vocalization'), sentence: sentence, utterance: null});
+          modal.open('confirm-notify-user', {user: user, reply_id: app_state.get('reply_note.id'), raw: stashes.get('working_vocalization'), sentence: sentence, utterance: null, scannable: true});
         }
       }
     },
@@ -86,7 +86,7 @@ export default modal.ModalController.extend({
         };
         modal.close(true);
         if(button == 'menu_share_button') {
-          modal.open('share-utterance', {utterance: stashes.get('working_vocalization')});
+          modal.open('share-utterance', {utterance: stashes.get('working_vocalization'), inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_repeat_button') {
           app_state.say_louder();
@@ -96,13 +96,13 @@ export default modal.ModalController.extend({
           utterance.clear();
           click();
         } else if(button == 'menu_phrases_button') {
-          modal.open('modals/phrases', {inactivity_timeout: true});
+          modal.open('modals/phrases', {inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_inbox_button') {
-          modal.open('modals/inbox', {inactivity_timeout: true});
+          modal.open('modals/inbox', {inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_repair_button') {
-          modal.open('modals/repairs', {inactivity_timeout: true});
+          modal.open('modals/repairs', {inactivity_timeout: true, scannable: true});
           click();
         } else {
           console.error("unrecognized button", button);

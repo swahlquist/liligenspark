@@ -2266,7 +2266,7 @@ body.pretty_loader #loading_box {
   left: -1000px;
   position: absolute;
   top: 0;
-  z-index: 99;
+  z-index: 3000;
   box-shadow: 2px 2px 10px rgba(60, 60, 60, 0.7), -2px -2px 10px rgba(60, 60, 60, 0.7), -2px 2px 10px rgba(60, 60, 60, 0.7), 2px -2px 10px rgba(60, 60, 60, 0.7);
 }
 #scanner_axis_horizontal {
@@ -2276,7 +2276,7 @@ body.pretty_loader #loading_box {
   top: -1000px;
   position: absolute;
   left: 0;
-  z-index: 99;
+  z-index: 3000;
   box-shadow: 2px 2px 10px rgba(60, 60, 60, 0.7), -2px -2px 10px rgba(60, 60, 60, 0.7), -2px 2px 10px rgba(60, 60, 60, 0.7), 2px -2px 10px rgba(60, 60, 60, 0.7);
 }
 

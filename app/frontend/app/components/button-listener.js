@@ -25,7 +25,7 @@ export default Component.extend({
   },
   buttonId: function(event) {
     var $button = $(event.target).closest('.button');
-    return $button.attr('data-id');
+    return $button.attr('data-id') || $(event.target).attr('id');
   },
   speakMenuSelect: function(event) {
     this.sendAction('button_event', 'speakMenuSelect', event.button_id);

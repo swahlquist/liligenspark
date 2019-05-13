@@ -17,30 +17,42 @@ var modal = EmberObject.extend({
     this.route = null;
   },
   open: function(template, options) {
-    if(template != 'highlight' && scanner.scanning) {
+    var outlet = template == 'highlight' ? 'highlight' : 'modal';
+    if(template != 'highlight') {
       this.resume_scanning = true;
-      scanner.stop();
+      scanner.stop();  
+      runLater(function() {
+        var targets = modal.scannable_targets();
+        if(targets.length > 0 && options && options.scannable) {
+          scanner.start(scanner.options);
+        }
+      });
     }
-    // TODO: one option should be to have a gray background (dull out the
-    // prior context as unimportant), which would be used in the new-board modal
-    if((this.last_promise || this.last_template) && template != 'highlight') {
-      this.close();
+    if((this.last_promise || this.last_template)) {
+      this.close(null, outlet);
     }
     if(!this.route) { throw "must call setup before trying to open a modal"; }
 
     this.settings_for[template] = options;
-    this.last_template = template;
-    this.route.render(template, { into: 'application', outlet: 'modal'});
+    this.last_any_template = template;
+    if(template != 'highlight') {
+      this.last_template = template;
+    }
+    this.route.render(template, { into: 'application', outlet: outlet});
     var _this = this;
     return new RSVP.Promise(function(resolve, reject) {
-      _this.last_promise = {
-        resolve: resolve,
-        reject: reject
-      };
+      if(template != 'highlight') {
+        _this.last_promise = {
+          resolve: resolve,
+          reject: reject
+        };
+      }
     });
   },
   is_open: function(template) {
-    if(template) {
+    if(template == 'highlight') {
+      return !!this.highlight_controller;
+    } else if(template) {
       return this.last_template == template;
     } else {
       return !!this.last_template;
@@ -49,7 +61,15 @@ var modal = EmberObject.extend({
   is_closeable: function() {
     return $(".modal").attr('data-uncloseable') != 'true';
   },
+  scannable_targets: function() {
+    if(modal.is_open()) {
+      return scanner.find_elem(".modal-dialog .modal_targets").find(".btn,a,.speak_menu_button");
+    } else {
+      return scanner.find_elem();
+    }
+  },
   queue: function(template) {
+    // TODO: pretty sure this isn't used anywhere
     if(this.is_open()) {
       this.queued_template = template;
     } else {
@@ -57,19 +77,8 @@ var modal = EmberObject.extend({
     }
   },
   highlight: function($elems, options) {
-    var minX, minY, maxX, maxY;
-    $elems.each(function() {
-      var $e = $(this);
-      var offset = $e.offset();
-      var thisMinX = offset.left;
-      var thisMinY = offset.top;
-      var thisMaxX = offset.left + $e.outerWidth();
-      var thisMaxY = offset.top + $e.outerHeight();
-      minX = Math.min(minX || thisMinX, thisMinX);
-      minY = Math.min(minY || thisMinY, thisMinY);
-      maxX = Math.max(maxX || thisMaxX, thisMaxX);
-      maxY = Math.max(maxY || thisMaxY, thisMaxY);
-    });
+    var rect = scanner.measure($elems);
+    var minX = rect.left, minY = rect.top, maxX = rect.left + rect.width, maxY = rect.top + rect.height;
     var do_stretch = true;
     if(do_stretch) {
       minX = minX - 10;
@@ -102,7 +111,7 @@ var modal = EmberObject.extend({
       }
       modal.highlight_controller.set('model', settings);
     } else {
-      modal.close();
+      modal.close(null, 'highlight');
       runLater(function() {
         modal.open('highlight', settings);
       });
@@ -112,13 +121,14 @@ var modal = EmberObject.extend({
     return promise;
   },
   close_highlight: function() {
-    if(this.last_template == 'highlight') {
-      modal.close();
+    if(this.highlight_controller) {
+      modal.close(null, 'highlight');
     }
   },
-  close: function(success) {
+  close: function(success, outlet) {
+    outlet = outlet || 'modal';
     if(!this.route) { return; }
-    if(this.last_promise) {
+    if(this.last_promise && outlet != 'highlight') {
       if(success || success === undefined) {
         this.last_promise.resolve(success);
       } else {
@@ -126,7 +136,7 @@ var modal = EmberObject.extend({
       }
       this.last_promise = null;
     }
-    if(this.highlight_promise) {
+    if(this.highlight_promise && outlet == 'highlight') {
       this.highlight_promise.reject({reason: 'force close'});
       this.highlight_promise = null;
     }
@@ -139,13 +149,24 @@ var modal = EmberObject.extend({
         }
       });
     }
-    this.last_template = null;
+    if(outlet != 'highlight') {
+      this.last_template = null;
+      runLater(function() {
+        modal.close(null, 'highlight');
+      });
+    }
     if(this.route.disconnectOutlet) {
-      if(this.last_controller && this.last_controller.closing) {
-        this.last_controller.closing();
+      if(outlet == 'highlight') {
+        if(this.highlight_controller && this.highlight_controller.closing) {
+          this.highlight_controller.closing();
+        }
+      } else {
+        if(this.last_controller && this.last_controller.closing) {
+          this.last_controller.closing();
+        }
       }
       this.route.disconnectOutlet({
-        outlet: 'modal',
+        outlet: outlet,
         parentView: 'application'
       });
     }
@@ -205,6 +226,12 @@ var modal = EmberObject.extend({
   board_preview: function(board, callback) {
     modal.route.render('board-preview', { into: 'application', outlet: 'board-preview', model: {board: board, option: board.preview_option, callback: callback}});
   },
+  cancel_auto_close: function() {
+    modal.auto_close = false;
+    if(modal.component) {
+      modal.component.set('auto_close', false);      
+    }
+},
   close_board_preview: function() {
     if(modal.route) {
       modal.route.disconnectOutlet({
@@ -218,24 +245,41 @@ var modal = EmberObject.extend({
 modal.ModalController = Controller.extend({
   actions: {
     opening: function() {
-      var template = modal.last_template;
+      var template = modal.last_any_template;
       if(!template) { console.error("can't find template name"); }
       var settings = modal.settings_for[template] || {};
       var controller = this;
-      modal.last_controller = controller;
-      controller.set('model', settings);
-      if(modal.auto_close_callback) {
-        runCancel(modal.auto_close_callback);
+      if(modal.last_any_template != 'highlight') {
+        modal.last_controller = controller;        
       }
+      controller.set('model', settings);
+      if(modal.auto_close_timer) {
+        runCancel(modal.auto_close_timer);
+      }
+      modal.auto_close_callback = null;
+      modal.auto_close_timer = null;
       if(settings && settings.inactivity_timeout) {
-        modal.auto_close = true;
-        // after 15 seconds with no interaction, close this modal
-        modal.auto_close_callback = runLater(function() {
+        modal.auto_close_callback = function() {
           if(modal.auto_close && $(modal.component.element).find(".modal-content.auto_close").length) {
-            modal.close(template);
+            modal.close();
             modal.auto_close = false;
           }
-        }, 15 * 1000);
+        }
+        modal.auto_close = true;
+        var duration = 20 * 1000;
+        // After 20 seconds with no interaction, close this modal
+        if(scanner.options && scanner.options.interval && scanner.options.auto_start) {
+          // If scanning, wait until 2 times through the list to auto-close
+          runLater(function() {
+            var targets = Math.max(5, modal.scannable_targets().length);
+            duration = Math.max(duration, scanner.options.interval * targets * 2);
+            if(modal.auto_close) {
+              modal.auto_close_timer = runLater(modal.auto_close_callback, duration);
+            }
+          }, 500);
+        } else {
+          modal.auto_close_timer = runLater(modal.auto_close_callback, duration);
+        }
       }
       if(controller.opening) {
         controller.opening();
