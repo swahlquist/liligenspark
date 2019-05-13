@@ -309,17 +309,18 @@ var speecher = EmberObject.extend({
     voice = voice || voices.find(function(v) { return v.lang == uri; });
     var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
     var language = locale && locale.split(/-/)[0];
-    if(allow_fallbacks) {
-      // Can't find an exact match? Look for a best match
-      voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
-      voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
-      voice = voice || voices.find(function(v) { return v['default']; });
-      voice = voice || voices[0];
-    } else if(voice && locale) {
+    if(locale) {
       // If locale is set but the voice doesn't match, return null
       var voice_locale = voice.lang.toLowerCase().replace(/_/, '-');
       var voice_lang = voice_locale.split(/-/)[0];
       if(voice_lang != language) { voice = null; }
+    }
+    if(allow_fallbacks) {
+      // Can't find an exact match? Look for a best match by locale
+      voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+      voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
+      voice = voice || voices.find(function(v) { return v['default']; });
+      voice = voice || voices[0];
     }
     return voice;
   },
@@ -348,7 +349,7 @@ var speecher = EmberObject.extend({
         var set_locale = app_state.get('vocalization_locale').split(/[-_]/)[0].toLowerCase();
         var voice_locale = (this.voiceLang || navigator.language).split(/[-_]/)[0].toLowerCase();
         if(set_locale != voice_locale) {
-          opts.voiceURI = (speecher.find_voice_by_uri(_this.voiceLang, app_state.get('vocalization_locale'), true) || {}).voiceURI || _this.voiceURI;
+          opts.voiceURI = (speecher.find_voice_by_uri(_this.voiceURI, app_state.get('vocalization_locale'), true) || {}).voiceURI || _this.voiceURI;
         }
       }
     }
@@ -369,7 +370,7 @@ var speecher = EmberObject.extend({
       utterance.voiceURI = opts.voiceURI;
       var voice = null;
       if(opts.voiceURI != 'force_default') {
-        voice = speecher.find_voice_by_uri(opts.voiceURI, null, true);
+        voice = speecher.find_voice_by_uri(opts.voiceURI, app_state.get('vocalization_locale'), true);
       }
       // Try to render default prompts in the locale's language
       if(opts.default_prompt) {
