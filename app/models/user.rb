@@ -247,7 +247,6 @@ class User < ActiveRecord::Base
         'role' => 'communicator',
         'auto_open_speak_mode' => true,
         'share_notifications' => 'email',
-        'click_buttons' => true,
         'cookies' => true
       }
     }
@@ -293,6 +292,9 @@ class User < ActiveRecord::Base
     end
     if FeatureFlags.user_created_after?(self, 'new_index')
       self.settings['preferences']['new_index'] = true if self.settings['preferences']['new_index'] == nil
+    end
+    if FeatureFlags.user_created_after?(self, 'click_buttons')
+      self.settings['preferences']['click_buttons'] = true if self.settings['preferences']['click_buttons'] == nil
     end
     if self.settings['preferences']['confirm_external_links']
       self.settings['preferences']['external_links'] = 'confirm_custom'
