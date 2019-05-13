@@ -5,14 +5,14 @@ class GiftPurchase < ActiveRecord::Base
   include Processable
   secure_serialize :settings
   before_save :generate_defaults
-  replicated_model  
+  replicated_model
   
   add_permissions('view', ['*']) { self.active == true }
   add_permissions('manage') {|user| Organization.admin_manager?(user) }
   add_permissions('manage') {|user| (self.settings['admin_user_ids'] || []).include?(user.global_id) }
 
   def self.find_by_code(code, allow_inactive=false)
-    code = (code || '').downcase
+    code = (code || '').strip.downcase
     gifts = GiftPurchase
     gifts = gifts.where(active: true) unless allow_inactive
     gift = gifts.find_by(code: code)
