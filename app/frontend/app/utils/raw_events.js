@@ -744,8 +744,6 @@ var buttonTracker = EmberObject.extend({
 
         // selection events can be prevented by a debounce setting
         if(track.proceed) {
-          // different elements have different selection styles
-          // TODO: standardize this more
           if(elem_wrap.dom.id == 'highlight_box') {
             var found = false;
             // special case to make sure you can always hit the identity box,
@@ -753,10 +751,11 @@ var buttonTracker = EmberObject.extend({
             document.elementsFromPoint(event.clientX, event.clientY).forEach(function(e) {
               if(e.id == 'identity_button') {
                 modal.close(null, 'highlight');
-                elem_wrap = {dom: e};
+                elem_wrap = {dom: e, wait: true};
               }
             });
           }
+          // different elements have different selection styles
           if(elem_wrap.dom.id == 'identity') {
             event.preventDefault();
             // click events are eaten by our listener above, unless you
@@ -765,6 +764,13 @@ var buttonTracker = EmberObject.extend({
             e.clientX = event.clientX;
             e.clientY = event.clientY;
             e.pass_through = true;
+            if(elem_wrap.wait) {
+              runLater(function() {
+                if($("#identity .dropdown-menu:visible").length == 0) {
+                  $(elem_wrap.dom).trigger(e);
+                }
+              }, 500);
+            }
             $(elem_wrap.dom).trigger(e);
           } else if(elem_wrap.dom.id == 'button_list') {
             event.preventDefault();
