@@ -170,6 +170,7 @@ class WordData < ActiveRecord::Base
       if word && !word['pending']
         found_words << {
           'word' => word['word'],
+          'score' => word['score'] || 0,
           'locale' => word['locale'],
           'reasons' => suggestion['reasons']
         }
@@ -179,8 +180,9 @@ class WordData < ActiveRecord::Base
             a['type'] = key
             a['word'] = suggestion['word']
             a['locale'] = locale
-            a['score'] = 5 * (suggestions.length - idx) / suggestions.length.to_f
-            a['score'] += 1 if ['learning_projects', 'activity_ideas', 'send_homes'].include?(key)
+            a['score'] = 5.0 * (suggestions.length - idx) / suggestions.length.to_f
+            a['score'] += 5.0 * ((word['score'] || 0 / 100.0))
+            a['score'] += 1.0 if ['learning_projects', 'activity_ideas', 'send_homes'].include?(key)
             text = "#{a['text']} #{a['description']}"
             a['score'] += 0.3 * text.scan(word_re).length
             a['score'] += 0.5 * text.scan(quote_re).length

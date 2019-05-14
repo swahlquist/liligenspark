@@ -82,7 +82,7 @@ export default modal.ModalController.extend({
     var middles = [];
     var follow_ups = [];
     var skips = {};
-    // For logs: skip if it's been dismissed, or if it's been attempted more than two weeks ago, 
+    // For logs: skip if it's been dismissed, or if it's been attempted less than two weeks ago, 
     // or if it's been completed -- but only if true for the all of the current user_ids.
     var lists = [this.get('activities.local_log') || [], this.get('activities.log') || []];
     var attempt_timeout_cutoff = parseInt(window.moment().add(-1, 'week').format('X'), 10);
@@ -150,6 +150,15 @@ export default modal.ModalController.extend({
     var offset = index * units * 2
     if(index > 0 && index >= cutoff_chunk) {
       offset = ((index - cutoff_chunk) * units * 2) + units;
+    }
+    var check_word = app_state.get('speak_mode_modeling_ideas.word');
+    middles.forEach(function(a, idx) { 
+      middles.for_suggest_word = (a.word == check_word);
+    });
+    if(app_state.get('speak_mode_modeling_ideas.enabled')) {
+      middles = middles.sort(function(a, b) { 
+        return (b.word == check_word ? 1 : 0) - (a.word == check_word ? 1 : 0); 
+      });  
     }
     middles = middles.slice(offset, offset + 8);
     res = res.concat(middles);

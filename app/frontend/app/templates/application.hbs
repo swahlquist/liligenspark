@@ -82,6 +82,13 @@
             {{#if app_state.speak_mode_modeling_ideas.enabled}}
               <span class='notification' style='height: 100%; position: absolute; top: 5px; left: 0; right: 0; bottom: 5px; height: auto;'>
                 <img src={{path 'images/modeling_ideas.svg'}} style='height: 100%; width: 100%; opacity: 0.7;' class='fit_image'/>
+                {{#if app_state.speak_mode_modeling_ideas.word}}
+                  <div style='position: absolute; left: 0; top: 3px; width: 100%; text-align: center;'>
+                    <span style='border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 3px;'>
+                      <span style='background: rgba(255, 255, 255, 0.9);'>"{{app_state.speak_mode_modeling_ideas.word}}"</span>
+                    </span>
+                  </div>
+                {{/if}}
               </span>
             {{else if app_state.user_badge}}
               <span class='notification'>
