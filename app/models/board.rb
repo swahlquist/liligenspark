@@ -137,6 +137,10 @@ class Board < ActiveRecord::Base
       # TODO: a real algorithm perchance?
       self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks'] * 2) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
       self.home_popularity = (self.any_upstream ? 0 : 10) + (self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks'] * 2) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
+      if self.parent_board_id
+        self.popularity /= 2
+        self.home_popularity /= 2
+      end
     end
     self.any_upstream ||= false
     self.settings['total_buttons'] = (self.settings['buttons'] || []).length + (self.settings['total_downstream_buttons'] || 0)
@@ -274,6 +278,7 @@ class Board < ActiveRecord::Base
     UserLink.invalidate_cache_for(self)
           
     # TODO: encrypted search, lol
+    self.settings['locale'] ||= 'en'
     self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
     self.search_string = self.fully_listed? ? self.settings['search_string'] : nil
     true
@@ -542,11 +547,13 @@ class Board < ActiveRecord::Base
     self.settings ||= {}
     self.settings['last_updated'] = Time.now.iso8601
 
+    self.settings['locale'] = params['locale'] if params['locale']
     if !self.id && params['source_id']
-      # check if the user has edit permission on the source, and oly set this if so
+      # check if the user has edit permission on the source, and only set this if so
       ref_board = Board.find_by_global_id(params['source_id'])
       if ref_board && ref_board.allows?(non_user_params[:user], 'edit')
         self.settings['copy_id'] ||= ref_board.settings['copy_id'] || ref_board.global_id
+        self.settings['locale'] ||= ref_board.settings['locale']
       end
     end
 
@@ -557,7 +564,6 @@ class Board < ActiveRecord::Base
     self.settings['description'] = process_string(params['description']) if params['description']
     @edit_notes << "changed the image" if params['image_url'] && params['image_url'] != self.settings['image_url']
     self.settings['image_url'] = params['image_url'] if params['image_url']
-    self.settings['locale'] = params['locale'] if params['locale']
     if params['intro']
       self.settings['intro'] = params['intro'] 
       # When a board is copied and buttons change, the intro

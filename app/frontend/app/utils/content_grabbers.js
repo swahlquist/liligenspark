@@ -2134,6 +2134,7 @@ var boardGrabber = EmberObject.extend({
     if(original_board) {
       board.set('grid.rows', original_board.get('grid.rows') || 2);
       board.set('grid.columns', original_board.get('grid.columns') || 4);
+      board.set('locale', original_board.get('locale'));
     } else {
       board.set('grid.rows', 2);
       board.set('grid.columns', 4);

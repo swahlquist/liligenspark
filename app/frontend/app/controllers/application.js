@@ -252,8 +252,7 @@ export default Controller.extend({
       if(this.get('searchString') == 'home') {
         this.transitionToRoute('home-boards');
       } else {
-        var locale = (window.navigator.language || 'en').split(/-/)[0];
-        this.transitionToRoute('search', locale, encodeURIComponent(this.get('searchString') || '_'));
+        this.transitionToRoute('search', 'any', encodeURIComponent(this.get('searchString') || '_'));
       }
     },
     backspace: function(opts) {

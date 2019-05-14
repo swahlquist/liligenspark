@@ -16,6 +16,7 @@ export default Controller.extend({
     for(var key in list) {
       res.push({name: list[key], id: key});
     }
+    res.push({name: i18n.t('any_language', "Any Language"), id: 'any'});
     return res;
   }.property(),
   load_results: function(str) {
@@ -64,6 +65,7 @@ export default Controller.extend({
   },
   actions: {
     searchBoards: function() {
+      this.load_results(this.get('searchString'));
       this.transitionToRoute('search', this.get('locale'), encodeURIComponent(this.get('searchString') || '_'));
     }
   }

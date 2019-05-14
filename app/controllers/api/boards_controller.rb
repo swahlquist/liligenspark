@@ -73,8 +73,12 @@ class Api::BoardsController < ApplicationController
         q = CGI.unescape(params['q']).downcase
         # TODO: real search via https://github.com/casecommons/pg_search or elasticsearch with facets
         boards = boards.search_by_text(q) #where(['search_string ILIKE ?', "%#{q}%"])
+        if params['locale'] && params['locale'] != 'any' && params['locale'] != ''
+          lang = params['locale'].split(/-|_/)[0].downcase
+          boards = boards.where(['search_string ILIKE ?', "%locale:#{lang}%"])
+        end
         # TODO: is it possible to just de-prioritize copies instead of excluding them?
-        boards = boards.where('parent_board_id IS NULL')
+        # boards = boards.where('parent_board_id IS NULL')
       end
     end
 
@@ -85,7 +89,6 @@ class Api::BoardsController < ApplicationController
       end
     end
     
-    # TODO: filter public board searches by locale in addition to query string
 
     Rails.logger.warn('sort board')
     self.class.trace_execution_scoped(['boards/sort']) do
