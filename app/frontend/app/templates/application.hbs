@@ -852,7 +852,7 @@
   {{#if app_state.speak_mode}}
     {{#unless app_state.currentUser.preferences.disable_quick_sidebar}}
       {{#unless app_state.sidebar_relegated}}
-        <div id="sidebar_tease" class="advanced_selection noselect">
+        <div id="sidebar_tease" class={{if app_state.skinny_sidebar "advanced_selection noselect skinny" "advanced_selection noselect"}}>
           {{#if app_state.fenced_sidebar_board}}
             <span class='glyphicon glyphicon-map-marker' style='font-size: 20px; vertical-align: middle;'></span>
           {{/if}}
