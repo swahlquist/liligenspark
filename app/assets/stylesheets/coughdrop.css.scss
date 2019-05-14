@@ -1878,6 +1878,11 @@ body.pretty_loader #loading_box {
   color: #888;
   opacity: 0.7;
   cursor: pointer;
+  &.skinny {
+    width: 50px;
+    height: 35px;
+    font-size: 13px;
+  }
 }
 .cursor { cursor: pointer; }
 #sidebar_tease:hover {

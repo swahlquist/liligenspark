@@ -187,6 +187,10 @@ export default Controller.extend({
     if(app_state.controller && app_state.controller.get('setup_footer')) {
       height = height - 56;
     }
+    var columns = this.get('current_grid.columns') || this.get('model.grid.columns') || 1;
+    var column_width = inner_width / columns;
+    app_state.set('skinny_sidebar', column_width < 160);
+    if(this.get('current_grid.columns'))
     if((!this.get('model.public') || this.get('model.license.type') != 'private') && !app_state.get('edit_mode') && stashes.get('current_mode') != 'speak') {
       show_description = show_description || this.get('model.name');
       if(!this.get('model.public')) {
