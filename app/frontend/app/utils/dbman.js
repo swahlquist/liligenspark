@@ -315,7 +315,7 @@ var dbman = {
         key.forEach(function(k, idx) {
           query = query + '?';
           args.push(k);
-          if(kdx < key.length - 1) {
+          if(idx < key.length - 1) {
             query = query + ',';
           }
         });
