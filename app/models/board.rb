@@ -138,8 +138,8 @@ class Board < ActiveRecord::Base
       self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks'] * 2) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
       self.home_popularity = (self.any_upstream ? 0 : 10) + (self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks'] * 2) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
       if self.parent_board_id
-        self.popularity /= 2
-        self.home_popularity /= 2
+        self.popularity /= 3
+        self.home_popularity /= 3
       end
     end
     self.any_upstream ||= false
