@@ -850,6 +850,8 @@ CoughDrop.Board = DS.Model.extend({
     return {
       width: size.width,
       height: size.height,
+      label_locale: size.label_locale,
+      display_level: size.display_level,
       revision: _this.get('current_revision'),
       html: htmlSafe(html)
     };

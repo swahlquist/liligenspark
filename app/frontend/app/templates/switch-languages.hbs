@@ -25,9 +25,9 @@
         </label>
         <div class="col-sm-8">
           {{#if two_languages}}
-            <div class='btn-group'>
+            <div class='btn-group' style='width: 100%;'>
               {{#each locales as |locale|}}
-                <button type='button' {{action 'set_locale' 'vocalization' locale.id}} class={{if locale.vocalization_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
+                <button type='button' style='max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_locale' 'vocalization' locale.id}} class={{if locale.vocalization_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
               {{/each}}
             </div>
           {{else}}
@@ -55,9 +55,9 @@
           </label>
           <div class="col-sm-8">
             {{#if two_languages}}
-              <div class='btn-group'>
+              <div class='btn-group' style='width: 100%;'>
                 {{#each locales as |locale|}}
-                  <button type='button' {{action 'set_locale' 'label' locale.id}} class={{if locale.label_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
+                  <button type='button' style='max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_locale' 'label' locale.id}} class={{if locale.label_locale 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>{{locale.name}}</button>
                 {{/each}}
               </div>
             {{else}}

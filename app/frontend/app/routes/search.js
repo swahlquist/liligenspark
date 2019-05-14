@@ -9,7 +9,7 @@ export default Route.extend({
     if(q == '_') { q = ''; }
     this.set('q', q);
     this.set('queryString', decodeURIComponent(q));
-    this.set('locale', params.locale || window.navigator.language);
+    this.set('locale', params.locale || params.l || window.navigator.language);
     return {};
   },
   setupController: function(controller) {

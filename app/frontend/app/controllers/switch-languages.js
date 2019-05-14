@@ -35,12 +35,24 @@ export default modal.ModalController.extend({
     return this.get('locales.length') == 2;
   }.property('locales'),
   locales: function() {
+    var root_locales = {};
     var locales = this.get('model.board.locales') || [];
     var list = i18n.get('locales');
     var res = [];
+    locales.forEach(function(l) {
+      var root = l.split(/-|_/)[0];
+      root_locales[root] = (root_locales[root] || 0) + 1;
+    })
     for(var key in list) {
       if(locales.indexOf(key) != -1) {
-        res.push({name: list[key], id: key});
+        var root = key.split(/-|_/)[0];
+        var name = list[key];
+        // If there aren't multiple locales with the same
+        // language, just use the language and the descriptor
+        if(!root_locales[root] || root_locales[root] == 1 && list[root]) {
+          name = list[root];
+        }
+        res.push({name: name, id: key});
       }
     }
     return res;
