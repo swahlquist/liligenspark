@@ -101,9 +101,8 @@ export default Route.extend({
     // additional lookups
     if(model.get('integration')) { return; }
 
-    var valid_fast_html = model.get('fast_html') && model.get('fast_html.width') == controller.get('width') && model.get('fast_html.height') == controller.get('height') && model.get('current_revision') == model.get('fast_html.revision') && model.get('fast_html.label_locale') == app_state.get('label_locale') && model.get('fast_html.display_level') == app_state.get('currentBoardState.level');
-    var insufficient_data = model.get('id') && (!valid_fast_html || !controller.get('ordered_buttons') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
-
+    controller.get('valid_fast_html');
+    var insufficient_data = model.get('id') && (!controller.get('has_rendered_material') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
     if(!model.get('valid_id')) {
     } else if(persistence.get('online') || insufficient_data) {
       CoughDrop.log.track('considering reload');
@@ -139,9 +138,9 @@ export default Route.extend({
       }
 
       reload.then(function(updated) {
-        if(!controller.get('has_rendered_material') || updated.get('current_revision') != prior_revision) {
+        if(!controller.get('has_rendered_material') || updated.get('current_revision') != prior_revision || insufficient_data) {
           CoughDrop.log.track('processing buttons again');
-          controller.processButtons();
+          controller.processButtons(true);
         }
       }, function(error) {
         if(!controller.get('has_rendered_material') || !app_state.get('speak_mode')) {

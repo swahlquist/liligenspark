@@ -30,11 +30,11 @@ export default Controller.extend({
     return title;
   }.property('model.name'),
   ordered_buttons: null,
-  processButtons: function() {
+  processButtons: function(ignore_fast_html) {
     this.update_button_symbol_class();
     boundClasses.add_rules(this.get('model.buttons'));
     this.computeHeight();
-    editManager.process_for_displaying();
+    editManager.process_for_displaying(ignore_fast_html);
   }.observes('app_state.board_reload_key'),
   check_for_share_approval: function() {
     var board_id = this.get('model.id');
@@ -126,9 +126,14 @@ export default Controller.extend({
     // before, but with all the local caching it's more likely to
     // happen more often.
   },
+  valid_fast_html: function() {
+    var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') && this.get('model.fast_html.height') == this.get('height') && this.get('model.current_revision') == this.get('model.fast_html.revision') && this.get('model.fast_html.label_locale') == app_state.get('label_locale') && this.get('model.fast_html.display_level') == this.get('model.display_level'));
+    return res;
+  }.property('model.fast_html', 'app_state.currentBoardState.level', 'model.fast_html.width', 'width', 'model.fast_html.height', 'height', 'model.fast_html.revision', 'model.current_revision', 'model.fast_html.label_locale', 'app_state.label_locale'),
   has_rendered_material: function() {
-    return !!(this.get('ordered_buttons') || this.get('model.fast_html'));
-  }.property('ordered_buttons', 'model.fast_html'),
+    var res = !!(this.get('ordered_buttons') || this.get('valid_fast_html'));
+    return res;
+  }.property('ordered_buttons', 'valid_fast_html', 'model.fast_html', 'app_state.currentBoardState.level', 'model.fast_html.width', 'width', 'model.fast_html.height', 'height', 'model.fast_html.revision', 'model.current_revision', 'model.fast_html.label_locale', 'app_state.label_locale'),
   check_for_updated_board: function() {
     // When you exit out of speak mode, go ahead and try to reload the board, that
     // will give people a consistent, reliable way to check for updates in case
