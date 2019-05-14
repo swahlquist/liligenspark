@@ -340,7 +340,7 @@
           {{#unless app_state.limited_speak_mode_options}}
             {{#if session.isAuthenticated}}
               {{#unless app_state.speak_mode}}
-                <li>{{#link-to "search" "_"}}{{t "Find Board" key='find_board'}}{{/link-to}}</li>
+                <li>{{#link-to "search" "any" "_"}}{{t "Find Board" key='find_board'}}{{/link-to}}</li>
                 <li><a href="#" {{action "newBoard"}}>{{t "Create a New Board" key='create_a_new_board'}}</a></li>
               {{/unless}}
               <li>{{#link-to 'user.preferences' app_state.currentUser.user_name}}{{t "Preferences" key='preferences'}}{{/link-to}}</li>
