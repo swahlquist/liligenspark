@@ -17,6 +17,14 @@
   overflow: hidden; /* Windows-only quirk causes extra scrollbars without this, if you 
                       change, make sure to test sidebar and modal.highlight */
 }
+#within_ember.dim_sides {
+  header #speak, header #identity_button {
+    opacity: 0.7;
+  }
+  #sidebar > * {
+    opacity: 0.7;
+  }
+}
 #within_ember.color_black {
   background: #000;
   header {

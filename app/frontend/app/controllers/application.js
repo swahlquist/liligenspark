@@ -967,15 +967,19 @@ export default Controller.extend({
     }, function() { });
   },
   background_class: function() {
+    var res = "";
     if(app_state.get('speak_mode')) {
       var color = app_state.get('currentUser.preferences.board_background');
       if(color) {
         if(color == '#000') { color = 'black'; }
-        return "color_" + color;
+        res = res + "color_" + color;
+      }
+      if(app_state.get('currentUser.preferences.dim_header')) {
+        res = res + " dim_sides";
       }
     }
-    return "";
-  }.property('app_state.speak_mode', 'app_state.currentUser.preferences.board_background'),
+    return htmlSafe(res);
+  }.property('app_state.speak_mode', 'app_state.currentUser.preferences.board_background', 'app_state.currentUser.preferences.dim_header'),
   set_and_say_buttons: function(buttons) {
     utterance.set_and_say_buttons(buttons);
   },

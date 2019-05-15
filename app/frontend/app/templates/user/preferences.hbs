@@ -257,6 +257,17 @@
     </div>
   </div>
   <div class="form-group">
+    <label for="dim_header" class="col-sm-3 control-label">{{t "Dim Header" key='dim_header'}}</label>
+    <div class="col-sm-5">
+      <div class="checkbox">
+        <label>
+          {{input type="checkbox" checked=model.preferences.dim_header id="dim_header"}}
+          {{t "Make the header and sidebar less bright" key='show_folder_icons'}}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
     <label for="stretch_buttons" class="col-sm-3 control-label">{{t "Fill Empty Button Spaces" key='stretch_buttons'}}</label>
     <div class="col-sm-5">
       {{bound-select select_class="form-control" select_id="stretch_buttons" content=buttonSpaceList selection=model.preferences.stretch_buttons action=(action (mut model.preferences.stretch_buttons)) }}
