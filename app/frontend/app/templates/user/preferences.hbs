@@ -1303,6 +1303,12 @@
             </div>
             <div class="checkbox">
               <label>
+                {{input type="checkbox" checked=model.preferences.device.alternate_voice.for_integrations id="for_integrations"}}
+                {{t "Use for Third-Party Integrations" key='use_for_integrations'}}
+              </label>
+            </div>
+            <div class="checkbox">
+              <label>
                 {{input type="checkbox" checked=model.preferences.device.alternate_voice.for_buttons id="for_buttons"}}
                 {{t "Use for Button Presses" key='use_for_buttons'}}
               </label>

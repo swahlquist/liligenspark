@@ -1249,6 +1249,7 @@ var app_state = EmberObject.extend({
             modal.notice(str, true);
           }, 100);
         }
+        speecher.set_output_target({}, function() { });
         app_state.load_user_badge();
         if(app_state.get('installed_app') && window.persistence) {
           var get_local_revisions = window.persistence.find('settings', 'synced_full_set_revisions').then(function(res) {

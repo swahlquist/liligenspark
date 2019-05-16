@@ -199,6 +199,7 @@ var speecher = EmberObject.extend({
         this.voiceURI = voices[0].voiceURI;
         this.voiceLang = voices[0].lang;
       }
+      this.voice = voice;
     }
     if(alternate_voice && alternate_voice.enabled && alternate_voice.voice_uri) {
       this.alternate_pitch = alternate_voice.pitch;
@@ -214,6 +215,7 @@ var speecher = EmberObject.extend({
         this.alternate_voiceURI = 'force_default';
         this.alternate_voiceLang = navigator.language;
       }
+      this.alternate_voice = alternate_voice;
     }
   },
   rate_multiplier: function(voiceURI) {
@@ -290,13 +292,24 @@ var speecher = EmberObject.extend({
         next_piece();
       }, delay);
     };
-    var target = opts.target || "default";
-    if(_this.alternate_voice && _this.alternate_voice.target && opts.alternate_voice) {
+    _this.set_output_target(opts, runVoice);
+  },
+  set_output_target: function(opts, callback) {
+    opts = opts || {};
+    target = opts.target || "default";
+    if(_this.alternate_voice && _this.alternate_voice.target && opts.alternate_voice && !opts.target) {
       target = _this.alternate_voice.target;
-    } else if(_this.voice && _this.voice.target && !opts.alternate_voice) {
+    } else if(_this.voice && _this.voice.target && !opts.alternate_voice && !opts.target) {
       target = _this.voice.target;
     }
-    capabilities.output.set_target(target).then(runVoice, runVoice);
+    // Don't keep re-setting the output target if you're already
+    // on the right one
+    if(_this.current_target != target) {
+      _this.current_target = target;
+      capabilities.output.set_target(target).then(callback, callback);
+    } else if(callback) {
+      callback();
+    }
   },
   find_voice_by_uri: function(uri, locale, allow_fallbacks) {
     if(uri == 'force_default') { return null; }
@@ -772,14 +785,7 @@ var speecher = EmberObject.extend({
         _this.audio[type] = playing_audio;
       }
 
-      var target = "default";
-      if(_this.alternate_voice && _this.alternate_voice.target && opts.alternate_voice) {
-        target = _this.alternate_voice.target;
-      } else if(_this.voice && _this.voice.target && !opts.alternate_voice) {
-        target = _this.voice.target;
-      }
-      capabilities.output.set_target(target).then(playAudio, playAudio);
-  
+      _this.set_output_target({target: 'default'}, playAudio);
     } else {
       console.log("couldn't find sound to play");
     }
