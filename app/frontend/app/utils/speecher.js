@@ -296,6 +296,7 @@ var speecher = EmberObject.extend({
   },
   set_output_target: function(opts, callback) {
     opts = opts || {};
+    var _this = this;
     var target = opts.target || "default";
     if(_this.alternate_voice && _this.alternate_voice.target && opts.alternate_voice && !opts.target) {
       target = _this.alternate_voice.target;
