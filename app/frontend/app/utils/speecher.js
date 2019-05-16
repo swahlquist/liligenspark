@@ -296,7 +296,7 @@ var speecher = EmberObject.extend({
   },
   set_output_target: function(opts, callback) {
     opts = opts || {};
-    target = opts.target || "default";
+    var target = opts.target || "default";
     if(_this.alternate_voice && _this.alternate_voice.target && opts.alternate_voice && !opts.target) {
       target = _this.alternate_voice.target;
     } else if(_this.voice && _this.voice.target && !opts.alternate_voice && !opts.target) {
@@ -785,7 +785,7 @@ var speecher = EmberObject.extend({
         _this.audio[type] = playing_audio;
       }
 
-      _this.set_output_target({target: 'default'}, playAudio);
+      _this.set_output_target(opts, playAudio);
     } else {
       console.log("couldn't find sound to play");
     }
