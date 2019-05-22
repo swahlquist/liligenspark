@@ -103,7 +103,7 @@ $(document).on('mousedown touchstart', function(event) {
   // if(app_state.get('edit_mode')) { return; }
   if(event.keyCode == 13 || event.keyCode == 32) {
     if(event.target.tagName != 'INPUT') {
-      $(this).trigger('buttonselect');
+      buttonTracker.button_select(this);
     }
   }
 }).on('keypress', '.integration_target', function(event) {
@@ -214,7 +214,7 @@ $(document).on('mousedown touchstart', function(event) {
   var element_wrap = buttonTracker.find_selectable_under_event(event);
   buttonTracker.frame_event(event, 'select');
   if(element_wrap && element_wrap.button) {
-    element_wrap.trigger('buttonselect');
+    buttonTracker.button_select(element_wrap);
   } else {
     $(this).trigger('click');
   }
@@ -841,9 +841,9 @@ var buttonTracker = EmberObject.extend({
     // of applying stashed buttons/swapping buttons
     var $target = $(event.target);
     if(editManager.finding_target()) {
-      elem_wrap.trigger('buttonselect');
+      buttonTracker.button_select(elem_wrap);
     } else if(!app_state.get('edit_mode')) {
-      elem_wrap.trigger_special('buttonselect', {clientX: event.clientX, clientY: event.clientY});
+      buttonTracker.button_select(elem_wrap, {clientX: event.clientX, clientY: event.clientY});
     } else if(app_state.get('edit_mode') && !editManager.paint_mode) {
       event.preventDefault();
       if($target.closest('.action').length > 0) {
@@ -851,7 +851,7 @@ var buttonTracker = EmberObject.extend({
       } else if($target.closest('.symbol').length > 0) {
         elem_wrap.trigger('symbolselect');
       } else {
-        elem_wrap.trigger('buttonselect');
+        buttonTracker.button_select(elem_wrap);
       }
     }
   },
@@ -1482,6 +1482,20 @@ var buttonTracker = EmberObject.extend({
     }
     return res;
   },
+  button_select: function(elem, args) {
+    var dom = elem.dom || elem;
+    if(dom && dom.classList && dom.classList.contains('overlay_button')) {
+      if(dom.select_callback) {
+        var event = args || {};
+        event.overlay_target = dom;
+        dom.select_callback(event);
+      }
+    } else if(elem.dom && elem.trigger) {
+      args ? elem.trigger_special('buttonselect', args) : elem.trigger('buttonselect');
+    } else {
+      $(elem).trigger('buttonselect');
+    }
+  },
   find_button_under_event: function(event, no_side_effects) {
     if(buttonTracker.drag) {
       buttonTracker.drag.hide();
@@ -1672,19 +1686,29 @@ var buttonTracker = EmberObject.extend({
                     ));
     return result;
   },
-  long_press_delay: 2500,
+  long_press_delay: 1500,
   track_long_press: function() {
     if(this.longPressEvent) {
       var button_wrap = this.find_button_under_event(this.longPressEvent);
-      if(button_wrap) {
-        this.ignoreUp = true;
-        editManager.long_press_mode(button_wrap.id);
+      var $radial = $(this.longPressEvent.target).closest(".radial");
+      if(button_wrap || $radial[0]) {
+        var handled = editManager.long_press_mode({
+          button_id: button_wrap.id,
+          radial_id: $radial.attr('id'),
+          radial_dom: $radial[0],
+          clientX: this.longPressEvent.clientX,
+          clientY: this.longPressEvent.clientY
+        });
+        if(handled) {
+          this.ignoreUp = true;
+        }
+        this.longPressEvent = null;
       }
     }
   },
   track_short_press: function() {
-    if(this.longPressEvent) {
-      var selectable_wrap = this.find_selectable_under_event(this.longPressEvent, true);
+    if(this.shortPressEvents) {
+      var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
         var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target
         var event = $.Event('touchend', target);
@@ -1773,7 +1797,7 @@ var buttonTracker = EmberObject.extend({
   },
   select_tab: function() {
     // trigger buttonselect for the current button
-    buttonTracker.focus_wrap.trigger('buttonselect');
+    buttonTracker.button_select(buttonTracker.focus_wrap);
   },
   move_tab: function(forward) {
     // progress forward or backward to the adjacent button

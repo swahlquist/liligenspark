@@ -21,7 +21,7 @@ class Api::WebhooksController < ApplicationController
       render json: JsonApi::Webhook.as_json(webhook, {wrapper: true, permissions: @api_user})
     end
   end
-  
+
   def test
     webhook = Webhook.find_by_path(params['webhook_id'])
     return unless exists?(webhook, params['webhook_id'])

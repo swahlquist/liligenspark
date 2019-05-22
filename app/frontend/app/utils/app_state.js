@@ -1883,7 +1883,7 @@ var app_state = EmberObject.extend({
 
     if((app_state.get('currentUser.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
       if(button_added_or_spoken || app_state.get('currentUser.preferences.highlighted_buttons') == 'all') {
-        app_state.highlight_selected_button(button);
+        app_state.highlight_selected_button(button, overlay);
       }
     }
 
@@ -1992,10 +1992,13 @@ var app_state = EmberObject.extend({
     });
     return res;
   },
-  highlight_selected_button: function(button) {
+  highlight_selected_button: function(button, overlay) {
     var $button = $(".button[data-id='" + button.id + "']");
-    if($button.length) {
-      var $board = $(".board");
+    if(overlay) {
+      $button = $(overlay);
+    }
+    if(button.id != -1 && $button.length) {
+      var $board = $(".board:first");
       var board_offset = $board.offset();
       var $clone = $button.clone().addClass('hover_button').addClass('touched');
       var width = $button.outerWidth();
