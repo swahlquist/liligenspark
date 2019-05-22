@@ -39,7 +39,8 @@ var utterance = EmberObject.extend({
   },
   set_button_list: function() {
     var buttonList = [];
-    var rawList = this.get('rawButtonList');
+    var _this = this;
+    var rawList = _this.get('rawButtonList');
     if(!rawList) { app_state.set('button_list', []); return; }
     for(var idx = 0; idx < rawList.length; idx++) {
       var button = rawList[idx];
@@ -49,30 +50,48 @@ var utterance = EmberObject.extend({
       var text = (button && (button.vocalization || button.label)) || '';
       // TODO: this used to check whether the last button was a sound,
       // but I have no idea why.
-      if(text.match(/^\+/)) {
+      var plusses = [], colons = [];
+      if(button.specialty_with_modifiers) {
+        var parts = text.split(/\s*&&\s*/);
+        parts.forEach(function(text) {
+          if(text.match(/^\+/)) {
+            plusses.push(text);
+          } else if(text.match(/^\:/)) {
+            colons.push(text);
+          }
+        });
+      } 
+      var added = false;
+      if(plusses.length > 0) {
         last = {};
         if(idx === 0 || last_computed.in_progress) {
           last = buttonList.pop() || {};
         }
         // append to previous
-        var altered = this.modify_button(last, button);
+        var altered = _this.modify_button(last, button);
+        added = true;
         buttonList.push(altered);
-      } else if(text.match(/^\:/)) {
-        last = buttonList.pop();
-        if((text == ':complete' || text == ':predict') && !(last || {}).in_progress) {
-          if(last) {
+      }
+      if(colons.length > 0) {
+        colons.forEach(function(text) {
+          last = buttonList.pop();
+          if((text == ':complete' || text == ':predict') && !(last || {}).in_progress) {
+            if(last) {
+              buttonList.push(last);
+            }
+            last = {};
+          }
+          var action = CoughDrop.find_special_action(text);
+          if(action && (action.modifier || action.completion) && !added) {
+            var altered = _this.modify_button(last || {}, button);
+            added = true;
+            buttonList.push(altered);
+          } else if(last) {
             buttonList.push(last);
           }
-          last = {};
-        }
-        var action = CoughDrop.find_special_action(text);
-        if(action && action.modifier) {
-          var altered = this.modify_button(last || {}, button);
-          buttonList.push(altered);
-        } else if(last) {
-          buttonList.push(last);
-        }
-      } else {
+        });
+      } 
+      if(!added) {
         buttonList.push(rawList[idx]);
       }
     }
@@ -91,7 +110,7 @@ var utterance = EmberObject.extend({
         }, function() { });
       }
       if(button.sound && button.sound.match(/^http/)) {
-        visualButton.set('origianl_sound', button.sound);
+        visualButton.set('original_sound', button.sound);
         persistence.find_url(button.sound, 'image').then(function(data_uri) {
           visualButton.set('sound', data_uri);
         }, function() { });
