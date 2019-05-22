@@ -12,7 +12,7 @@ module MobyParser
     self.all_words.each do |word, data|
       puts word
       word = WordData.find_or_initialize_by(:word => word, :locale => 'en')
-      word.data = data
+      word.data ||= data
       word.save!
     end
   end
