@@ -277,6 +277,13 @@ var buttonTracker = EmberObject.extend({
     if($(event.target).closest('.hover_button').length) {
       $(event.target).closest('.hover_button').remove();
     }
+    buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+
+    var $overlay = $("#overlay_container");
+    // clear overlays when user interacts outside of them
+    if($overlay.length > 0 && $(event.target).closest("#overlay_container").length == 0) {
+      $overlay.remove();
+    }
     // advanced_selection regions should be eating all click events and
     // instead manually interpreting touch and mouse events. that way we
     // can do magical things like "click" on starting/ending point
