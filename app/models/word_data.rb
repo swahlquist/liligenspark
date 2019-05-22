@@ -1,12 +1,92 @@
 class WordData < ActiveRecord::Base
   include SecureSerialize
   include Async
+  include GlobalId
+  include Processable
+
   secure_serialize :data
   replicated_model  
   before_save :generate_defaults
   
   def generate_defaults
     self.data ||= {}
+    self.reviews ||= 0
+    if !self.priority && self.locale
+      self.priority = -1
+      self.schedule(:assert_priority)
+    end
+  end
+  
+  def process_params(params, non_user_params)
+    non_user_params[:updater]
+    if non_user_params[:updater].allows?(non_user_params[:updater], 'admin_support_actions')
+      self.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + [non_user_params[:updater].global_id]).uniq
+      self.data['reviews'] ||= {}
+      self.data['reviews'][non_user_params[:updater].global_id] = {
+        'updated' => Time.now.iso8601,
+        'primary_part_of_speech' => params['primary_part_of_speech'],
+        'inflection_overrides' => params['inflect_overrides']
+      }
+      if params['primary_part_of_speech']
+        self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
+      end
+      if params['inflection_overrides']
+        hash = self.data['inflection_overrides'] || {}
+        params['inflection_overrides'].each do |key, str|
+          if str == ""
+            hash.delete(key)
+          else
+            hash[key] = str
+          end
+        end
+        self.data['inflection_overrides'] = hash
+      end
+    end
+  end
+
+  def assert_priority
+    cores = WordData.core_lists.select{|l| l['locale'] == self.locale }
+    fringes = WordData.fringe_lists.select{|l| l['locale'] == self.locale }
+    score = nil
+    bs = Board.find_by_path('example/core-112').board_downstream_button_set rescue nil
+    if bs
+      bs.assert_extra_data
+      # priority = 8 if it's in core-112
+      score = 8 if bs.data['buttons'].any?{|b| b['label'] == self.word }
+    end
+    if cores.length > 0
+      core_count = cores.select{|l| l['words'].include?(self.word) }.length
+      fringe_count = fringes.select{|l| l['categories'].any?{|c| c['words'].include?(self.word) } }.length
+      # something in all the core lists is top priority
+      score = 10 if core_count == cores.length
+      # something in some of the core lists is high priority
+      score = 9 if core_count > 0
+      # something in the fringe lists is moderate priority
+      score == 7 if fringe_count > 0
+    end
+    if !score
+      # download word frequency list
+      res = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
+      lines = res.body.split(/\n/)
+      hash = {}
+      # top 5,000 - 5 points
+      # top 10,000 - 4 points
+      # top 25,000 - 3 points
+      # top 50,000 - 2 points
+      # any        - 1 point
+      list = lines.map{|s| s.split(/\t/)[0] }
+      idx = list.index(self.word)
+      # score it from 0-5 based on word frequency
+      score ||= 5 if idx && idx < 5000
+      score ||= 4 if idx && idx < 10000
+      score ||= 3 if idx && idx < 25000
+      score ||= 2 if idx && idx < 50000
+      score ||= 1 if idx
+    end
+    if score
+      self.priority = score
+      self.save
+    end
   end
   
   def self.find_word(text, locale='en') 
