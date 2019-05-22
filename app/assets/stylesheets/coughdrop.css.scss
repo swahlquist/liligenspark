@@ -1311,6 +1311,21 @@ footer .wide_links {
     font-family: "ArchitectsDaughter", Arial, sans-serif;
   }
 }
+#overlay_container {
+  position: absolute;
+  margin: 0;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.7);
+  background: rgba(100, 100, 100, 0.95);
+  border-radius: '5px';
+  z-index: 3;
+  .overlay_row {
+    clear: both;
+    .overlay_button {
+      position: relative;
+      float: left;
+    }
+  }
+}
 #word_suggestions {
   text-align: center;
   white-space: nowrap;

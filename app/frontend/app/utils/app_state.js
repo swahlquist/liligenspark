@@ -1059,10 +1059,12 @@ var app_state = EmberObject.extend({
       if(this.get('currentUser.preferences.activation_on_start')) {
         buttonTracker.short_press_delay = 50;
       }
+      buttonTracker.long_press_delay = Math.max((buttonTracker.short_press_delay || 50) * 2, 1500);
       buttonTracker.debounce = this.get('currentUser.preferences.debounce');
     } else if (window.user_preferences) {
       buttonTracker.minimum_press = null;
       buttonTracker.activation_location = null;
+      buttonTracker.long_press_delay = 1500;
       buttonTracker.short_press_delay = null;
       buttonTracker.debounce = null;
     }
@@ -1792,6 +1794,8 @@ var app_state = EmberObject.extend({
     } else if(button.load_board) {
       obj.type = 'link';
     }
+    var overlay = obj.overlay;
+    delete obj['overlay'];
 
     // only certain buttons should be added to the sentence box
     var button_to_speak = obj;
@@ -1878,6 +1882,7 @@ var app_state = EmberObject.extend({
     // it will probably be fine, but some buttons won't get 
     // enough weight.
     obj.depth = app_state.get('depth_actions.depth') || 0; // || (stashes.get('boardHistory') || []).length;
+    obj.overlay = !!overlay;
     stashes.log(obj);
     var _this = this;
 

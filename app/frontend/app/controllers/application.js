@@ -936,6 +936,9 @@ export default Controller.extend({
         blocking_speech: button.blocking_speech,
         type: 'speak'
       };
+      obj.label = options.overlay_label || obj.label;
+      obj.vocalization = options.overlay_vocalization || obj.vocalization;
+      if(options.event && options.event.overlay_target) { obj.overlay = options.event.overlay_target; }
       var location = buttonTracker.locate_button_on_board(button.id, options.event);
       if(location) {
         obj.percent_x = location.percent_x;

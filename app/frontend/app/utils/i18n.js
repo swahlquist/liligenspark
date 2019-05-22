@@ -316,6 +316,8 @@ var i18n = EmberObject.extend({
     } else if(options.present_participle) {
       modifier = 'ing';
       res = sub && sub[3];
+    } else if(options.infinitive) {
+      res = "to " + str;
     }
     if(res) {
     } else if(check[check.length - 1] == 'e') {
@@ -377,6 +379,9 @@ var i18n = EmberObject.extend({
       res = str + '\'s';
     }
     return res;
+  },
+  negation: function(str) {
+    return "not " + str;
   },
   negatable_verbs: ['is', 'am', 'was', 'were', 'be', 'been', 'being', 'do', 'does', 'did', 'have', 'has',
     'had', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should', 'are'],

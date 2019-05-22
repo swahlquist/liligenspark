@@ -379,6 +379,7 @@ class LogSession < ActiveRecord::Base
           if event['button'] && event['button']['board']
             button = {
               'button_id' => event['button']['button_id'],
+              'overlay' => event['button']['overlay'],
               'board_id' => event['button']['board']['id'],
               'text' => LogSession.event_text(event),
               'count' => 0
@@ -388,12 +389,17 @@ class LogSession < ActiveRecord::Base
             else
               travel_tally += LogSession.travel_activation_score
             end
+            travel_tally += LogSession.travel_activation_score if event['button']['overlay']
             travel_tally += event['button']['percent_travel'] || 0
 
             if button['button_id'] && button['board_id']
               ref = "#{button['button_id']}::#{button['board_id']}"
               if !event['modeling']
                 self.data['stats']['all_button_counts'][ref] ||= button
+                if self.data['stats']['all_button_counts'][ref]['overlay'] && !button['overlay']
+                  self.data['stats']['all_button_counts'][ref].delete('overlay')
+                  self.data['stats']['all_button_counts'][ref]['text'] = LogSession.event_text(event);
+                end
                 self.data['stats']['all_button_counts'][ref]['count'] += 1
                 if event['button']['depth']
                   # This will only allow us to determine the
@@ -425,6 +431,10 @@ class LogSession < ActiveRecord::Base
                 self.data['stats']['all_board_counts'][button['board_id']]['count'] += 1
               else
                 self.data['stats']['modeled_button_counts'][ref] ||= button
+                if self.data['stats']['modeled_button_counts'][ref]['overlay'] && !button['overlay']
+                  self.data['stats']['modeled_button_counts'][ref].delete('overlay')
+                  self.data['stats']['modeled_button_counts'][ref]['text'] = LogSession.event_text(event);
+                end
                 self.data['stats']['modeled_button_counts'][ref]['count'] += 1
                 if button['text'] && button['text'].length > 0 && (event['button']['spoken'] || event['button']['for_speaking'])
                   button['text'].split(/\s+/).each do |word|

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190415194741) do
+ActiveRecord::Schema.define(version: 20190521215546) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -473,6 +473,10 @@ ActiveRecord::Schema.define(version: 20190415194741) do
     t.text     "data"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "priority"
+    t.integer  "reviews"
+    t.index ["locale", "priority", "word"], name: "index_word_data_on_locale_and_priority_and_word", using: :btree
+    t.index ["locale", "reviews", "priority", "word"], name: "index_word_data_on_locale_and_reviews_and_priority_and_word", using: :btree
     t.index ["word", "locale"], name: "index_word_data_on_word_and_locale", using: :btree
   end
 

@@ -35,5 +35,46 @@
         </div>
       </div>
     {{/if}}
+    {{#if app_state.feature_flags.inflections_overlay}}
+      <div class='form-group'>
+        <label for="inflections" class="col-sm-2 control-label">{{t "Inflections" key='inflections'}}</label>
+        <div class='col-sm-10'>
+          <p class='form-control-static'>{{t "When users enable inflections and long-press on the button, these are the options they will see:" key='inflections_overlay_description'}}</p>
+          <div>
+            {{#if model.translations}}
+              <p>{{t "See the \"Language\" section for per-language inflections" key='see_language_for_inflections'}}</p>
+            {{else}}
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.nw placeholder=inflections_suggestions.nw}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.n placeholder=inflections_suggestions.n}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.ne placeholder=inflections_suggestions.ne}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.w placeholder=inflections_suggestions.w}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px; text-align: center; overflow: hidden;'>
+                {{model.label}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.e placeholder=inflections_suggestions.e}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.sw placeholder=inflections_suggestions.sw}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.s placeholder=inflections_suggestions.s}}
+              </div>
+              <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
+                {{input class='form-control' value=inflections_hash.se placeholder=inflections_suggestions.se}}
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    {{/if}}
 </div>
 </form>

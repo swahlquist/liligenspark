@@ -12,7 +12,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'privacy', 'terms', 'hipaa', 'accessibility', 'history',
   'js', 'css', 'scripts', 'script', 'pics', 'images',
   'find', 'unknown', 'nobody', 'goals', 'notes', 'rooms', 'coughdrop', 'cough_drop',
-  'mycoughdrop'
+  'mycoughdrop', 'inflection', 'inflections'
 ]
 require 'resque/server'
 
@@ -149,6 +149,7 @@ Coughdrop::Application.routes.draw do
     end
 
     resources :tags
+    resources :words
     
     
     resources :users do

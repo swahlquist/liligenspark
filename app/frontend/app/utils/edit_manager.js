@@ -53,24 +53,306 @@ var editManager = EmberObject.extend({
     }
 
   }.observes('app_state.edit_mode'),
-  long_press_mode: function(button_id) {
+  long_press_mode: function(opts) {
     var app = app_state.controller;
     if(!app_state.get('edit_mode')) {
-      if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.long_press_edit')) {
+      if(opts.button_id && app_state.get('speak_mode') && app_state.get('currentUser.preferences.long_press_edit')) {
         if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.require_speak_mode_pin') && app_state.get('currentUser.preferences.speak_mode_pin')) {
           modal.open('speak-mode-pin', {actual_pin: app_state.get('currentUser.preferences.speak_mode_pin'), action: 'edit'});
         } else if(app_state.get('currentUser.preferences.long_press_edit')) {
           app.toggleMode('edit');
         }
-      } else if(app_state.get('speak_mode')) {
-        // TODO: long-press for inflections
-      } else if(app_state.get('default_mode')) {
-        var button = editManager.find_button(button_id);
+        return true;
+      } else if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.inflections_overlay')) {
+        if(opts.button_id) {
+          // TODO: scanning will require a reset, and looking for this
+          // new mini-grid, but scanning can wait because how do you
+          // open this overlay via scanning anyway? Idea: another button
+          var grid = editManager.grid_for(opts.button_id);
+          var $button = $(".button[data-id='" + opts.button_id + "']");
+          if($button[0] && grid && !modal.is_open() && !modal.is_open('highlight')) {
+            editManager.overlay_grid(grid, $button[0], opts);
+          }
+          return true;
+        } else if(opts.radial_id && opts.radial_dom) {
+          // TODO: look for handler for radial, it should return
+          // a hash of button labels, images and callbacks to be rendered
+          // around the original element:
+          // [
+          //   {location: 'n', label: 'more', image: 'https://...', callback: function() { }},
+          //   {...} location 's', 'c', 'e', 'nw', etc.
+          // ]
+        }
+      } else if(app_state.get('default_mode') && opts.button_id) {
+        var button = editManager.find_button(opts.button_id);
         if(button && (button.label || button.vocalization)) {
           modal.open('word-data', {word: (button.label || button.vocalization), button: button, usage_stats: null, user: app_state.get('currentUser')});
         }
+        return true;
       }
     }
+  },
+  grid_for: function(button_id) {
+    var button = editManager.find_button(button_id);
+    var res = null;
+    if(!button) { return null; }
+    var select_button = function(label, vocalization, event) {
+      var overlay_button = editManager.Button.create({
+        overlay: true,
+        id: button.get('id'),
+        label: button.get('label'),
+        image_id: button.get('image_id'),
+        part_of_speech: button.get('part_of_speech')
+      });
+  
+      app_state.controller.activateButton(overlay_button, {
+        board: editManager.controller.get('model'),
+        overlay_label: label,
+        overlay_vocalization: vocalization,
+        event: event
+      });
+    };
+    var voc_locale = app_state.get('vocalization_locale');
+    var lab_locale = app_state.get('label_locale');
+    var trans = (app_state.controller.get('board.model.translations') || {})[button_id];
+    var voc = (trans || {})[voc_locale];
+    var lab = (trans || {})[lab_locale];
+    var locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+    var list = [];
+    if(button.inflections || trans || button.inflection_defaults) {
+      for(var idx = 0; idx < 8; idx++) {
+        var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
+        var trans_voc = voc && ((voc.inflections || [])[idx] || (voc.inflection_defaults || [])[idx]);
+        var trans_lab = lab && ((lab.inflections || [])[idx] || (lab.inflection_defaults || [])[idx]);
+        // If it's for the current locale we can just use the inflections
+        // list or suggested defaults, otherwise we need to check the
+        // translations for inflections/suggested defaults
+        if(for_current_locale && button.inflections && button.inflections[idx]) {
+          list.push({location: locs[idx], label: button.inflections[idx]});
+        } else if(for_current_locale && button.inflections_defaults && button.inflections_defaults[idx]) {
+          list.push({location: locs[idx], label: button.inflections_defaults[idx]});
+        } else if(trans_voc && trans_lab) {
+          list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
+        }
+      }
+      if(list.length > 0) { 
+        list.push({location: 'c', label: (lab || {}).label || button.label, vocalization: (voc || {}).label || button.vocalization});
+        res = list; 
+      }
+    }
+    // TODO: only use fallbacks if we know it's 'en' locale
+    if(res) {
+    } else if(button.part_of_speech == 'noun') {
+      res = [
+        {location: 'n', label: i18n.pluralize(button.label)},
+        {location: 'c', label: button.label},
+        {location: 'w', label: i18n.negation(button.label)},
+        {location: 's', label: i18n.possessive(button.label)},
+      ]
+    } else if(button.part_of_speech == 'adjective') {
+      res = [
+        {location: 'n', label: i18n.pluralize(button.label)},
+        {location: 'e', label: i18n.comparative(button.label)},
+        {location: 'ne', label: i18n.superlative(button.label)},
+        {location: 'w', label: i18n.negation(button.label)},
+        {location: 'c', label: button.label},
+      ]
+    } else if(button.part_of_speech == 'verb') {
+      res = [
+        {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
+        {location: 's', label: i18n.tense(button.label, {present_participle: true})},
+        {location: 'nw', label: i18n.tense(button.label, {past_participle: true})},
+        {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
+        {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
+        // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
+        {location: 'c', label: button.label}
+      ]
+    } else {
+      console.log("unrecognized button type", button.part_of_speech, button);
+      res = [
+//        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
+        {location: 'c', label: button.label},
+        {location: 'w', label: i18n.negation(button.label)},
+//        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
+      ];
+    }
+    res.select = function(obj, event) {
+      select_button(obj.label, obj.vocalization, event);
+    };
+    return res;
+  },
+  overlay_grid: function(grid, elem, event) {
+    // TODO: log the overlay being opened somewhere
+
+    // if we have room put the close/cancel button underneath,
+    // otherwise put it on top or on the right
+    var bounds = elem.getBoundingClientRect();
+    var screen_width = window.innerWidth;
+    var screen_height = window.innerHeight;
+    if(bounds.width > 0 && bounds.height > 0) {
+      var margin = 5; // TODO: this is a user pref
+      var button_width = bounds.width + (margin * 2);
+      var button_height = bounds.height + (margin * 2);
+      var top = bounds.top;
+      var left = bounds.left;
+      var vertical_close = true;
+      if(button_height > screen_height / 3) {
+        // grid won't fit, needs to shrink
+        if(screen_height < screen_width) {
+          vertical_close = false;
+        }
+        button_height = screen_height / (vertical_close ? 3.5 : 3);
+        top = event.clientY - (button_height / 2);
+      }
+      if(button_width > screen_width / 3) {
+        // grid won't fit, needs to shrink
+        button_width = screen_width / (vertical_close ? 3 : 3.5);
+        left = event.clientX - (button_width / 2);
+      }
+      var left = Math.max(left - margin, button_width);
+      var left = Math.min(left, screen_width - button_width - button_width);
+      var top = Math.max(top - margin, button_height);
+      var top = Math.min(top, screen_height - button_height - button_height);
+      var layout = [];
+      var hash = {'nw': 0, 'n': 1, 'ne': 2, 'w': 3, 'c': 4, 'e': 5, 'sw': 6, 's': 7, 'se': 8};
+      grid.forEach(function(e) {
+        if(hash[e.location] != null && !layout[hash[e.location]]) {
+          layout[hash[e.location]] = e;
+        }
+      });
+      console.log(bounds);
+      var far_left = left - button_width;
+      var far_right = left + button_width + button_width;
+      var far_top = top - button_height;
+      var far_bottom = top + button_height + button_height;
+      // TODO: if the buttons are small enough, allow for a full-size (not half-size) close button
+      var too_tall = button_height > (screen_height / 4);
+      var too_wide = button_width > (screen_width / 4);
+      var close_position = 'n';
+      if(vertical_close) {
+        if((top + button_height) < screen_height - (button_height * 1.5)) {
+          close_position = 's';
+          far_bottom = far_bottom + (button_height * (too_tall ? 0.5 : 1.0));
+          // put the close underneath
+        } else {
+          far_top = far_top - (button_height * (too_tall ? 0.5 : 1.0));
+          // put the close above
+        }
+      } else {
+        if((left + button_width) < screen_width - (button_width * 1.5)) {
+          close_position = 'e';
+          far_right = far_right + (button_width * (too_wide ? 0.5 : 1.0));
+          // put the close to the right
+        } else {
+          close_position = 'w';
+          far_left = far_left - (button_width * (too_wide ? 0.5 : 1.0));
+          // put the close to the left
+        }
+      }
+      var pad = 5;
+      var div = document.createElement('div');
+      div.id = 'overlay_container';
+      div.setAttribute('class', document.getElementsByClassName('board')[0].getAttribute('class'));
+      div.classList.add('overlay');
+      div.classList.add('board');
+      div.style.left = (far_left - pad) + 'px';
+      div.style.width = (far_right - far_left + (pad * 2)) + 'px';
+      div.style.top = (far_top - pad) + 'px';
+      div.style.height = (far_bottom - far_top + (pad * 2)) + 'px';
+      div.style.padding = pad + 'px';
+      var button_margin = 5; // TODO: this is a user preference
+      var img = elem.getElementsByClassName('symbol')[0];
+      var formatted_button = function(label, image_url) {
+        image_url = image_url || (img || {}).src || "https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg";
+        var btn = document.createElement('div');
+        btn.setAttribute('class', elem.getAttribute('class').replace(/b_[\w\d_]+_/, ''));
+        btn.classList.add('overlay_button');
+        btn.classList.add('b__');
+        btn.classList.remove('touched');
+        btn.style.margin = button_margin + 'px';
+        btn.style.width = (button_width - (button_margin * 2)) + 'px';
+        btn.style.height = (button_height - (button_margin * 2)) + 'px';
+        btn.innerHTML = "<span style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; max-height: " + img.style.maxHeight + ";\"/></span><div class='button-label-holder top'><span class='button-label'>" + label + "</span></div>";
+        
+        return btn;
+      };
+      var close_row = document.createElement('div');
+      close_row.classList.add('overlay_row');
+      close_row.classList.add('button_row');
+      var close = formatted_button('close', "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg");
+      close.style.float = 'right';
+      close.select_callback = function() {
+        div.parentNode.removeChild(div);
+        // TODO: log the close event somewhere
+      };
+      close_row.appendChild(close);
+      if(close_position == 'n') {
+        div.appendChild(close_row);
+      }
+      var row = null;
+      for(var idx = 0; idx < 9; idx++) {
+        if(idx % 3 == 0) {
+          row = document.createElement('div');
+          row.classList.add('overlay_row');
+          row.classList.add('button_row');
+          if(close_position == 'w') {
+            if(idx == 0) {
+              row.appendChild(close);
+            } else {
+              var btn = formatted_button('nothing');
+              btn.style.visibility = 'hidden';
+              row.appendChild(btn);
+            }
+          }
+        }
+        var btn = formatted_button((layout[idx] || {}).label || "nothing");
+        if(idx == 4) { 
+          btn.setAttribute('class', elem.getAttribute('class')); 
+          btn.classList.remove('touched');
+          btn.classList.add('overlay_button');
+        }
+        btn.select_callback = (function(obj) {
+          return function(event) {
+            // TODO: log the event somewhere
+            if(obj && obj.callback) {
+              obj.callback(event);
+            } else if(grid.select) {
+              grid.select(obj, event);
+            }
+            runLater(function() {
+              div.parentNode.removeChild(div);
+            }, 50);
+          }
+        })(layout[idx]);
+        if(!layout[idx]) {
+          btn.style.visibility = 'hidden';
+        }
+        row.appendChild(btn);
+        if(idx % 3 == 2) {
+          if(close_position == 'e') {
+            if(idx == 8) {
+              row.appendChild(close);
+            } else {
+              var btn = formatted_button();
+              document.createElement('div');
+              btn.style.visibility = 'hidden';
+              row.appendChild(btn);
+            }
+          }
+          div.appendChild(row);
+        }
+      }
+      if(close_position == 's') {
+        div.appendChild(close_row);
+      }
+
+      document.body.appendChild(div);
+    }
+
+    // TODO: for the log event mark it as an overlay event,
+    // for computing travel don't +1 depth or anything,
+    // but track how many times each button has overlays used
+    // so we can learn which are the most useful
   },
   auto_edit: function(id) {
     // used to auto-enter edit mode after creating a brand new board
@@ -806,6 +1088,9 @@ var editManager = EmberObject.extend({
           newButton.blocking_speech = !!currentButton.blocking_speech;
           if(currentButton.get('translations.length') > 0) {
             newButton.translations = currentButton.get('translations');
+          }
+          if(currentButton.get('inflections.length') > 0) {
+            newButton.inflections = currentButton.get('inflections');
           }
           if(currentButton.get('external_id')) {
             newButton.external_id = currentButton.get('external_id');

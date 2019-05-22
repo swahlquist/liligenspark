@@ -1,0 +1,144 @@
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <h2>{{t "Inflections Review Tool" key='inflections_review_tool'}}</h2>
+    <p>{{t "CoughDrop is an open source tool that supports multiple languages and interactions. This Inflections Review Tool allows us to collect information from multiple sources as we build out language word lists. Having accurate information on word forms helps us better support our communities. <b>Remember</b>, all information collected by this tool will be released for free online with an open license for others to use and benefit from." key='inflections_tool_explainer'}}</p>
+  </div>
+  <div class='col-sm-8 col-sm-offset-2' style='margin-top: 50px;'>
+    {{#if word.loading}}
+      <p>{{t "Loading next word..." key='loading_next_word'}}</p>
+    {{else if word.error}}
+      <p>{{t "There was an error loading words" key='error_loading_words'}}</p>
+    {{else if word}}
+      
+      <form class="form-horizontal" {{action "save" on="submit"}}>
+        <div class='form-group'>
+          <div class='col-sm-9 col-sm-offset-3'>
+            <h3>{{word.word}} - {{word.locale}}</h3>
+          </div>
+
+        </div>
+          <div class="form-group">
+            <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
+            <div class="col-sm-4">
+              {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
+            </div>
+          </div>
+        {{#if word_type.noun}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Noun" key='base'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "I would like to own a %{word}." word=inflection_options.base key='base_noun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.plural class="form-control" id="plural" placeholder="plural"}}
+              <em class='text-muted'>{{t "Can I have two %{word}, please?" word=inflection_options.plural key='plural_noun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="possessive" class="col-sm-3 control-label">{{t "Possessive" key='possessive'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.possessive class="form-control" id="possessive" placeholder="possessive"}}
+              <em class='text-muted'>{{t "The %{word} age is starting to show." word=inflection_options.possessive key='possessive_noun_example'}}</em>
+            </div>
+          </div>
+        {{else if word_type.adjective}}
+          base, comparative, superlative
+        {{else if word_type.verb}}
+          base, 
+          progressive/present participle (ing), perfect non-progressive (en/ed), past tense (ed), past participle (has ____), simple present (s), infinitive (to ____)
+        {{else if word_type.pronoun}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Possessive" key='base'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root"}}
+              <em class='text-muted'>{{t "That is not what %{word} said." word=inflection_options.base key='base_pronoun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="subjective" class="col-sm-3 control-label">{{t "Subjective" key='subjective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="subjective" placeholder="subjective"}}
+              <em class='text-muted'>{{t "Why did %{word} eat so many of those?" word=inflection_options.base key='subjective_pronoun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="objective" class="col-sm-3 control-label">{{t "Objective" key='objective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.objective class="form-control" id="objective" placeholder="objective"}}
+              <em class='text-muted'>{{t "The piano fell right on %{word}." word=inflection_options.objective key='objective_pronoun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="possessive" class="col-sm-3 control-label">{{t "Possessive" key='possessive'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.possessive class="form-control" id="possessive" placeholder="possessive"}}
+              <em class='text-muted'>{{t "Are you sure that monkey isn't %{word}?" word=inflection_options.possessive key='possessive_pronoun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="possessive_adjective" class="col-sm-3 control-label">{{t "Possessive Adj." key='possessive_adjective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.possessive_adjective class="form-control" id="possessive_adjective" placeholder="possessive_adjective"}}
+              <em class='text-muted'>{{t "That sounds like one of %{word} songs." word=inflection_options.possessive_adjective key='possessive_adjective_pronoun_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reflexive" class="col-sm-3 control-label">{{t "Reflexive" key='reflexive'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.reflexive class="form-control" id="reflexive" placeholder="reflexive"}}
+              <em class='text-muted'>{{t "%{word_base} solved the maze all by %{word}!" word_base=inflection_options.base word=inflection_options.reflexive key='reflexive_pronoun_example'}}</em>
+            </div>
+          </div>
+          <!-- TODO: relative/demonstrative pronouns, https://owl.excelsior.edu/grammar-essentials/parts-of-speech/pronouns/relative-and-demonstrative-pronouns/ -->
+          <!-- TODO: indefinite pronouns, https://owl.excelsior.edu/grammar-essentials/parts-of-speech/pronouns/definite-and-indefinite-pronouns/ -->
+        {{else}}
+          <div class="form-group">
+            <label for="inflections" class="col-sm-3 control-label">{{t "Inflections" key='inflections'}}</label>
+            <div class="col-sm-7">
+              <p class='form-control-static'>
+                {{t "No inflections expected for words of type" key='no_inflections_for_words_of'}}
+              </p>
+            </div>
+          </div>
+        {{/if}}
+        {{#each extra_inflections as |extra|}}
+          <div class="form-group">
+            <div class="col-sm-3">
+              {{input value=extra.type class="form-control" placeholder="type"}}
+            </div>
+            <div class="col-sm-7">
+              {{input value=extra.value class="form-control" placeholder="inflection"}}
+            </div>
+          </div>
+        {{/each}}
+        <div class="form-group">
+          <div class="col-sm-9 col-sm-offset-3">
+            <button class='btn btn-default' {{action 'add_extra'}}>{{t "Add Inflection" key='add_inflection'}}</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-9 col-sm-offset-3">
+            <button class='btn btn-primary' type='submit' disabled={{status.saving}}>
+              {{#if status.saving}}
+                {{t "Updating Word..." key='updating_word'}}
+              {{else}}
+                {{t "Confirm Inflections" key='confirm_inflections'}}
+              {{/if}}
+            </button>
+            <button type='button' class='btn btn-default' {{action 'skip'}}>{{t "Skip" key='skip'}}</button>
+            {{#if status.error}}
+              <p class='text-danger'>{{t "There was an unexpected error while updating the word" key='error_updating_word'}}</p>
+            {{/if}}
+          </div>
+        </div>
+        
+      </form>
+    {{else}}
+      <p>{{t "No words found for review, please check back again later!" key='no_words_for_now'}}</p>
+    {{/if}}
+  </div>
+</div>

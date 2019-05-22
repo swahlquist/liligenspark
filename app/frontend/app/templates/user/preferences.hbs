@@ -360,26 +360,7 @@
       <p class="form-control-static">{{t "milliseconds" key='milliseconds'}}</p>
     </div>
   </div>
-  <div class="form-group">
-    <label for="long_press_edit" class="col-sm-3 control-label">{{t "Long-Press to Edit" key='long_press_edit'}}</label>
-    <div class="col-sm-5">
-      <div class="checkbox">
-        <label>
-          {{input type="checkbox" checked=model.preferences.long_press_edit id="long_press_edit"}}
-          {{t "Automatically enter edit mode on long button press" key='enter_edit_mode_on_long_press'}}
-        </label>
-      </div>
-    </div>
-  </div>
   {{/if}}
-  <!--
-    TODO: Sizing and Timing:
-    (have a little preview & testing area kind of like the rows/cols box in new board)
-    - Speak Mode header size (in pixels? or small|normal|large. prolly the latter)
-    - Button Spacing (same, small|normal|large)
-    - When to Select (when I release my touch/click|after I hold for 1/2 second|after I hold 1 second)
-    - Which to Select (where I started|where I ended|where I spent the most time)
-  -->
   <h2 style="margin: 50px 0 20px 0;">{{t "Core & Modeling" key='sidebar_layout'}}</h2>
   <div class="form-group">
     <label for="core_word_list" class="col-sm-3 control-label">{{t "Core Word List" key='core_word_list'}}</label>

@@ -125,11 +125,51 @@ export default modal.ModalController.extend({
         _this.set('image_library', null);
       }
     });
+    this.set_inflection_hashes();
   },
   closing: function() {
     stashes.set('last_board_search_type', this.get('board_search_type'));
 //    editManager.done_editing_image();
     contentGrabbers.clear();
+    var loc_hash = {nw: 0, n: 1, ne: 2, w: 3, e: 4, sw: 5, s: 6, se: 7};
+    if(this.get('inflections_hash')) {
+      var any_set = false;
+      var list = [];
+      var hash = this.get('inflections_hash');
+      for(var loc in hash) {
+        if(hash[loc] && loc_hash[loc] != null) {
+          list[loc_hash[loc]] = hash[loc];
+          any_set = true;
+        }
+      }
+      if(any_set) {
+        this.set('model.inflections', list);
+      } else {
+        this.set('model.inflections', null);
+      }
+    }
+    if(this.get('model.translations')) {
+      this.get('model.translations').forEach(function(trans) {
+        var hash = emberGet(trans, 'inflections_hash');
+        if(hash) {
+          var any_set = false;
+          var list = [];
+          for(var loc in hash) {
+            if(hash[loc] && loc_hash[loc] != null) {
+              list[loc_hash[loc]] = hash[loc];
+              any_set = true;
+            }
+          }
+          if(any_set) { 
+            emberSet(trans, 'inflections', list); 
+          } else {
+            emberSet(trans, 'inflections', null);
+          }
+        }
+        delete trans['inflections_hash'];
+        delete trans['inflections_suggestions'];
+      });
+    }
   },
   labelChanged: function() {
     if(!this.get('handle_updates')) { return; }
@@ -237,6 +277,52 @@ export default modal.ModalController.extend({
     });
     return res;
   }.property('user_integrations'),
+  set_inflection_hashes: function() {
+    var inflections = {};
+    var inflection_defaults = {};
+    var grid_map = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+    grid_map.forEach(function(m) {
+      inflections[m] = null;
+      inflection_defaults[m] = null;
+    });
+    (this.get('model.inflections') || []).forEach(function(str, idx) {
+      if(str && grid_map[idx]) {
+        inflections[grid_map[idx]] = str;
+      }
+    });
+    (this.get('model.inflection_defaults') || []).forEach(function(str, idx) {
+      if(str && grid_map[idx]) {
+        inflection_defaults[grid_map[idx]] = str;
+      }
+    });
+    if(this.get('model.translations')) {
+      this.get('model.translations').forEach(function(trans) {
+        var i = {}, id = {};
+        grid_map.forEach(function(m) {
+          i[m] = null;
+          id[m] = null;
+        });
+        if(trans.inflections) {
+          trans.inflections.forEach(function(str, idx) {
+            if(str && grid_map[idx]) {
+              i[grid_map[idx]] = str;
+            }
+          });
+        }
+        if(trans.inflection_defaults) {
+          trans.inflection_defaults.forEach(function(str, idx) {
+            if(str && grid_map[idx]) {
+              id[grid_map[idx]] = str;
+            }
+          });
+        }
+        emberSet(trans, 'inflections_hash', i);
+        emberSet(trans, 'inflections_suggestions', id);
+      });
+    }
+    this.set('inflections_hash', inflections);
+    this.set('inflections_suggestions', inflection_defaults);
+  },
   update_integration: function() {
     var _this = this;
     if(!this.get('user_integrations.length')) { return; }
