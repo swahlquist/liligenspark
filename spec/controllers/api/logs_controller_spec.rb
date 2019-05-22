@@ -220,7 +220,7 @@ describe Api::LogsController, :type => :controller do
     
     it "should generate a log result and return it" do
       token_user
-      post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'board' => {'id' => '1_1'}}}]}}
+      post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'spoken' => true, 'board' => {'id' => '1_1'}}}]}}
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json['log']['pending']).to eq(true)
@@ -232,7 +232,7 @@ describe Api::LogsController, :type => :controller do
     it "should try to extract and canonicalize the ip address" do
       token_user
       request.env['HTTP_X_FORWARDED_FOR'] = "8.7.6.5"
-      post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'board' => {'id' => '1_1'}}}]}}
+      post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'spoken' => true, 'board' => {'id' => '1_1'}}}]}}
       expect(response).to be_success
       Worker.process_queues
       s = LogSession.last

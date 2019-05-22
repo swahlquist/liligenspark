@@ -223,8 +223,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
   end
   
   def self.track_trends(weekyear)
-    start = 1.week.ago.to_date
-    nowweekyear = WeeklyStatsSummary.date_to_weekyear(start)
+    nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
     return unless weekyear <= nowweekyear
     current_trends = weekyear >= nowweekyear
 
@@ -399,7 +398,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         if board.fully_listed? && !board.parent_board_id
           total.data['board_usages'][board.key] = board_usages[board.global_id]
           total.data['board_locales'][board.settings['locale'] || 'en'] = (total.data['board_locales'][board.settings['locale'] || 'en'] || 0) + board_usages[board.global_id]
-        elsif board.fully_listed? && board.parent_board
+        elsif board.parent_board && board.parent_board.fully_listed?
           total.data['board_usages'][board.parent_board.key] = board_usages[board.global_id]
           total.data['board_locales'][board.settings['locale'] || 'en'] = (total.data['board_locales'][board.settings['locale'] || 'en'] || 0) + board_usages[board.global_id]
         end
@@ -480,7 +479,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res['weeks'] = {}
     stash = {}
     start = 3.months.ago.to_date
-    nowweekyear = WeeklyStatsSummary.date_to_weekyear(start)
+    nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
     cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(start)
     stash[:total_session_seconds] = 0
     stash[:modeled_buttons] = 0.0

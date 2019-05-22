@@ -34,8 +34,8 @@ describe LogSession, :type => :model do
       time1 = 10.minutes.ago
       time2 = 8.minutes.ago
       s.data['events'] = [
-        {'geo' => ['1', '2'], 'timestamp' => time1.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}},
-        {'geo' => ['1', '2'], 'timestamp' => time2.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'board' => {'id' => '1_1'}}}
+        {'geo' => ['1', '2'], 'timestamp' => time1.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'spoken' => true, 'board' => {'id' => '1_1'}}},
+        {'geo' => ['1', '2'], 'timestamp' => time2.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'spoken' => true, 'board' => {'id' => '1_1'}}}
       ]
       s.generate_defaults rescue nil
       expect(s.data['button_count']).to eq(2)
@@ -190,8 +190,8 @@ describe LogSession, :type => :model do
       time2 = 8.minutes.ago
       time3 = 2.minutes.ago
       s.data['events'] = [
-        {'geo' => ['1', '2'], 'timestamp' => time1.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}},
-        {'geo' => ['1', '2'], 'timestamp' => time2.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'board' => {'id' => '1_1'}}},
+        {'geo' => ['1', '2'], 'timestamp' => time1.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'spoken' => true, 'board' => {'id' => '1_1'}}},
+        {'geo' => ['1', '2'], 'timestamp' => time2.to_i, 'type' => 'button', 'button' => {'label' => 'cow', 'spoken' => true, 'board' => {'id' => '1_1'}}},
         {'action' => {'action' => 'auto_home'}, 'timestamp' => time3.to_i, 'type' => 'action'},
         {'action' => {'action' => 'home'}, 'timestamp' => time3.to_i, 'type' => 'action'}
       ]
@@ -406,9 +406,9 @@ describe LogSession, :type => :model do
       u = User.create
       d = Device.create
       events = [
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'type' => 'speak'}, 'timestamp' => 1444994881}, 
-        {'type' => 'button', 'button' => {'label' => 'f', 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444994884}
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'spoken' => true, 'type' => 'speak'}, 'timestamp' => 1444994881}, 
+        {'type' => 'button', 'button' => {'label' => 'f', 'spoken' => true, 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'spoken' => true, 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444994884}
       ]
       s = LogSession.process_new({'events' => events}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(s.highlighted).to eq(true)
@@ -419,9 +419,9 @@ describe LogSession, :type => :model do
       u = User.create
       d = Device.create
       events = [
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'type' => 'speak'}, 'timestamp' => 1444994881}, 
-        {'type' => 'button', 'button' => {'label' => 'f', 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444994884}
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'spoken' => true, 'type' => 'speak'}, 'timestamp' => 1444994881}, 
+        {'type' => 'button', 'button' => {'label' => 'f', 'spoken' => true, 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'spoken' => true, 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444994884}
       ]
       s = LogSession.process_new({'events' => events}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(s.highlighted).to eq(true)
@@ -432,9 +432,9 @@ describe LogSession, :type => :model do
       u = User.create
       d = Device.create
       events = [
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'type' => 'speak'}, 'timestamp' => 1444994881}, 
-        {'type' => 'button', 'button' => {'label' => 'f', 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
-        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444995884}
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'ruxl', 'spoken' => true, 'type' => 'speak'}, 'timestamp' => 1444994881}, 
+        {'type' => 'button', 'button' => {'label' => 'f', 'spoken' => true, 'vocalization' => '+f', 'type' => 'speak'}, 'timestamp' => 1444994883},
+        {'type' => 'button', 'highlighted' => true, 'button' => {'label' => 'u', 'spoken' => true, 'vocalization' => '+z', 'type' => 'speak'}, 'timestamp' => 1444995884}
       ]
       s = LogSession.process_new({'events' => events}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(s.highlighted).to eq(true)

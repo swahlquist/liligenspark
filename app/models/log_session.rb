@@ -142,7 +142,7 @@ class LogSession < ActiveRecord::Base
       stamp = event['timestamp']
       event_string = event['button'] && event['button']['label']
       event_string = nil if event['button'] && !event['button']['spoken'] && !event['button']['for_speaking']
-      event_string = "[#{event['action']['action']}]" if event['action'] && ['clear', 'vocalize', 'backspace'].include?(event['action']['action'])
+      event_string = "[#{event['action']['action']}]" if event['action'] && ['clear', 'vocalize', 'backspace', 'home'].include?(event['action']['action'])
       event_string = "_" if event['action'] && event['action']['action'] == 'open_board'
       event_string = event['button']['completion'] if event && event['button'] && event['button']['completion']
       event_string = "[vocalize]" if event['utterance']
@@ -379,11 +379,11 @@ class LogSession < ActiveRecord::Base
           if event['button'] && event['button']['board']
             button = {
               'button_id' => event['button']['button_id'],
-              'overlay' => event['button']['overlay'],
               'board_id' => event['button']['board']['id'],
               'text' => LogSession.event_text(event),
               'count' => 0
             }
+            button['overlay'] = event['button']['overlay'] if event['button']['overlay']
             if (event['button']['depth'] || 0) == 0
               travel_tally = 0
             else

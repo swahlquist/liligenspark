@@ -1,5 +1,5 @@
-require 'rails_helper'
+require 'spec_helper'
 
-RSpec.describe Api::WordsController, type: :controller do
+describe Api::WordsController, :type => :controller do
 
 end

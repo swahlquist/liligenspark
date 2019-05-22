@@ -154,7 +154,7 @@ describe JsonApi::Log do
       l = LogSession.new(data: {'hat' => 'black'}, started_at: Time.now, ended_at: Time.now)
       l.data['events'] = [
         {'id' => 1, 'highlighted' => true, 'timestamp' => 12345, 'button' => {'spoken' => true, 'label' => 'hat'}, 'parts_of_speech' => {}},
-        {'id' => 2, 'highlighted' => true, 'timestamp' => 12346, 'button' => {'label' => 'hat', 'percent_x' => 0.5, 'percent_y' => 0.32, 'board' => {}}, 'parts_of_speech' => {}},
+        {'id' => 2, 'highlighted' => true, 'timestamp' => 12346, 'button' => {'spoken' => true, 'label' => 'hat', 'percent_x' => 0.5, 'percent_y' => 0.32, 'board' => {}}, 'parts_of_speech' => {}},
         {'id' => 3, 'highlighted' => true, 'timestamp' => 12347, 'action' => {'action' => 'open_board', 'new_id' => {}}},
         {'id' => 4, 'highlighted' => true, 'timestamp' => 12348, 'action' => {'action' => 'auto_home'}},
         {'id' => 5, 'timestamp' => 12349, 'utterance' => {'spoken' => true, }},
@@ -167,7 +167,7 @@ describe JsonApi::Log do
       l.generate_defaults
       json = JsonApi::Log.as_json(l, :wrapper => true)
       expect(json['log']['highlighted']).to eq(true)
-      expect(json['log']['highlight_summary']).to eq('hat hat [open_board]')
+      expect(json['log']['highlight_summary']).to eq('hat hat _')
       expect(json['log']['events'][0]['highlighted']).to eq(true)
       expect(json['log']['events'][1]['highlighted']).to eq(true)
       expect(json['log']['events'][2]['highlighted']).to eq(true)
