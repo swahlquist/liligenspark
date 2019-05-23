@@ -3,7 +3,7 @@ class Api::WordsController < ApplicationController
   
   def index
     return unless allowed?(@api_user, 'admin_support_actions')
-    words = WordData.where(locale: params['locale']).where(['priority > ?', 0])
+    words = WordData.where(locale: params['locale']).where(['priority > ?', 0]).where(['updated_at < ?', 24.hours.ago])
     words = words.order('reviews ASC, priority DESC, word')
     render json: JsonApi::Word.paginate(params, words)
   end
@@ -12,6 +12,10 @@ class Api::WordsController < ApplicationController
     word = WordData.find_by_global_id(params['id'])
     return unless allowed?(@api_user, 'admin_support_actions')
     return unless exists?(word, params['id'])
+    word_params = params['word']
+    if params['word'] && params['word']['skip']
+      word_params = word_params.slice('skip')
+    end
     if word.process(params['word'], {updater: @api_user})
       render json: JsonApi::Word.as_json(word, {wrapper: true, permissions: @api_user})
     else

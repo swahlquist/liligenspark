@@ -304,22 +304,42 @@ var i18n = EmberObject.extend({
       ending_stress = false;
     }
     var sub = this.substitutions.tenses[str];
+    // https://www.grammarly.com/blog/verb-tenses/
+    // infinitive: to laugh
+    // simple present: laugh/laughs
+    // simple past/past participle: laughed
+    // simple future: will laugh
+    // present participle: laughing
+    // present continuous: am/is laughing
+    // past continuous: was laughing
+    // future continuous: will be laughing
+    // present perfect: have/has laughed
+    // past perfect: had laughed
+    // future perfect: will have laughed
+    // present perfect continuous: have been laughing
+    // past perfect continuous: had been laughing
+    // future perfect continuous: will have been laughing
     if(options.simple_past) {
       modifier = 'ed';
       res = sub && sub[1];
     } else if(options.simple_present) {
+      // TODO: options should specify whether it's for
+      // a he/she/it/someone which adds "s" 
+      // or is for I/plural
       modifier = 's';
       res = sub && sub[0];
-    } else if(options.past_participle) {
+    } else if(options.past_participle || options.simple_past || options.present_perfect || options.past_perfect || options.future_perfect) {
+      // TODO: perfect tenses are sometimes 'en' (i.e. forgotten)
       modifier = 'ed';
       res = sub && sub[2];
-    } else if(options.present_participle) {
+    } else if(options.present_participle || options.present_continuous || options.past_continuous || options.future_continuous || options.present_perfect_continuous || options.past_perfect_continuous || options.future_perfect_continuous) {
       modifier = 'ing';
       res = sub && sub[3];
+    }
+
+    if(res) {
     } else if(options.infinitive) {
       res = "to " + str;
-    }
-    if(res) {
     } else if(check[check.length - 1] == 'e') {
       res = str.substring(0, str.length - 1) + modifier;
       if(check[check.length - 2] == 'e' && (options.present_participle || options.simple_present)) {
@@ -344,6 +364,32 @@ var i18n = EmberObject.extend({
       res = str + str[str.length - 1] + modifier;
     } else {
       res = str + modifier;
+    }
+
+    if(options.simple_future) {
+      res = "will " + res;
+    } else if(options.present_continuous) {
+      // TODO: discern between is/am/are
+      // "are" if prior is plural/they/we
+      // "am" if "I"
+      // "is" otherwise
+      res = "is " + res;
+    } else if(options.past_continuous) {
+      res = "was " + res;
+    } else if(options.future_continuous) {
+      res = "will be " + res;
+    } else if(options.present_perfect) {
+      res = "have " + res;
+    } else if(options.past_perfect) {
+      res = "had " + res;
+    } else if(options.future_perfect) {
+      res = "will have " + res;
+    } else if(options.present_perfect_continuous) {
+      res = "have been " + res;
+    } else if(options.past_perfect_continuous) {
+      res = "had been " + res;
+    } else if(options.future_perfect_continuous) {
+      res = "will haver been " + res;
     }
     return res;
   },
@@ -371,7 +417,13 @@ var i18n = EmberObject.extend({
     if(!this.substitutions.tenses[check] && this.substitutions.possessives.replacements[check]) {
       check = this.substitutions.possessives.replacements[check];
     }
-    if(this.substitutions.possessives[check]) { // list of exceptions
+    if(options.reflexive) {
+      res = (this.substitutions.possessives[check] || {})[3];
+      res = res || "themselves";
+    } else if(options.objective) {
+      res = (this.substitutions.possessives[check] || {})[2];
+      res = res || "them";
+    } else if(this.substitutions.possessives[check]) { // list of exceptions
       res = this.substitutions.possessives[check][options.pronoun ? 1 : 0];
     } else if(check.substring(str.length - 1) == 's') {
       res = str + '\'';
@@ -597,14 +649,15 @@ var i18n = EmberObject.extend({
       'being': "not being"
     },
     possessives: {
-      'i': ['my', 'mine'],
-      'me': ['my', 'mine'],
-      'you': ['your', 'yours'],
-      'he': ['his', 'his'],
-      'she': ['her', 'hers'],
-      'it': ['its', 'its'],
-      'we': ['our', 'ours'],
-      'they': ['their', 'theirs']
+      'i': ['my', 'mine', 'me', 'myself'],
+      'me': ['my', 'mine', 'me', 'myself'],
+      'you': ['your', 'yours', 'you', 'yourself'],
+      'he': ['his', 'his', 'him', 'himself'],
+      'she': ['her', 'hers', 'her', 'herself'],
+      'it': ['its', 'its', 'it', 'itself'],
+      'we': ['our', 'ours', 'us', 'ourselves'],
+      'they': ['their', 'theirs', 'them', 'themselves'],
+      'them': ['their', 'theirs', 'them', 'themselves']
     },
     tenses: {
       // http://www.englishpage.com/irregularverbs/irregularverbs.html

@@ -10,36 +10,42 @@ class WordData < ActiveRecord::Base
   
   def generate_defaults
     self.data ||= {}
-    self.reviews ||= 0
+    self.reviews = (self.data['reviewer_ids'] || []).length
     if !self.priority && self.locale
       self.priority = -1
       self.schedule(:assert_priority)
     end
   end
+
+  def reviewed_by?(user)
+    return (self.data['reviewer_ids'] || []).include?(user && user.global_id)
+  end
   
   def process_params(params, non_user_params)
-    non_user_params[:updater]
-    if non_user_params[:updater].allows?(non_user_params[:updater], 'admin_support_actions')
-      self.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + [non_user_params[:updater].global_id]).uniq
-      self.data['reviews'] ||= {}
-      self.data['reviews'][non_user_params[:updater].global_id] = {
-        'updated' => Time.now.iso8601,
-        'primary_part_of_speech' => params['primary_part_of_speech'],
-        'inflection_overrides' => params['inflect_overrides']
-      }
-      if params['primary_part_of_speech']
-        self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
-      end
-      if params['inflection_overrides']
-        hash = self.data['inflection_overrides'] || {}
-        params['inflection_overrides'].each do |key, str|
-          if str == ""
-            hash.delete(key)
-          else
-            hash[key] = str
-          end
+    updater = non_user_params[:updater]
+    if updater && updater.allows?(non_user_params[:updater], 'admin_support_actions')
+      if !params['skip']
+        self.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + [updater.global_id]).uniq
+        self.data['reviews'] ||= {}
+        self.data['reviews'][updater.global_id] = {
+          'updated' => Time.now.iso8601,
+          'primary_part_of_speech' => params['primary_part_of_speech'],
+          'inflection_overrides' => params['inflect_overrides']
+        }
+        if params['primary_part_of_speech']
+          self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
         end
-        self.data['inflection_overrides'] = hash
+        if params['inflection_overrides']
+          hash = self.data['inflection_overrides'] || {}
+          params['inflection_overrides'].each do |key, str|
+            if str == ""
+              hash.delete(key)
+            else
+              hash[key] = str
+            end
+          end
+          self.data['inflection_overrides'] = hash
+        end
       end
     end
   end
@@ -319,7 +325,7 @@ class WordData < ActiveRecord::Base
   end
   
 # word types:
-#  'noun', 'plural noun', 'noun phrase',
+#  'noun', 'plural noun', 'noun phrase', 'nominative'
 #  'verb', 'usu participle verb', 'transitive verb', 'intransitive verb',
 #  'adjective',
 #  'adverb',
@@ -328,7 +334,7 @@ class WordData < ActiveRecord::Base
 #  'interjection',
 #  'pronoun',
 #  'article', 'definite article', 'indefinite article',
-#  'nominative'
+#  'numeral'
   def self.update_word_type(text, locale, type)
     wd = find_word_record(text, locale)
     locales = []

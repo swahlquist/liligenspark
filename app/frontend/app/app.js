@@ -284,17 +284,20 @@ CoughDrop.parts_of_speech = [
   {name: i18n.t('conjunction', "Conjunction (and, or)"), id: 'conjunction'},
   {name: i18n.t('negation', "Negation (not, never)"), id: 'negation'},
   {name: i18n.t('preposition', "Preposition (behind, with)"), id: 'preposition'},
-  {name: i18n.t('article', "Article (a, an)"), id: 'article'},
+  {name: i18n.t('interjection', "Interjection (ahem, duh, hey)"), id: 'interjection'},
+  {name: i18n.t('article', "Article (a, an, the)"), id: 'article'},
   {name: i18n.t('determiner', "Determiner (that, his)"), id: 'determiner'},
+  {name: i18n.t('number', "Number (one, two)"), id: 'number'},
   {name: i18n.t('other', "Other word type"), id: 'other'},
   {name: i18n.t('custom_1', "Custom Word Type 1"), id: 'custom_1'},
   {name: i18n.t('custom_2', "Custom Word Type 2"), id: 'custom_2'},
   {name: i18n.t('custom_3', "Custom Word Type 3"), id: 'custom_3'}
 ];
+
 // derived from http://praacticalaac.org/strategy/communication-boards-colorful-considerations/
 // and http://talksense.weebly.com/cbb-8-colour.html
 CoughDrop.keyed_colors = [
-  {border: "#ccc", fill: "#fff", color: i18n.t('white', "White"), types: ['conjunction']},
+  {border: "#ccc", fill: "#fff", color: i18n.t('white', "White"), types: ['conjunction', 'number']},
   {border: "#dd0", fill: "#ffa", color: i18n.t('yellow', "Yellow"), hint: i18n.t('people', "people"), types: ['pronoun']},
   {border: "#6d0", fill: "#cfa", color: i18n.t('green', "Green"), hint: i18n.t('actions', "actions"), types: ['verb']},
   {fill: "#fca", color: i18n.t('orange', "Orange"), hint: i18n.t('nouns', "nouns"), types: ['noun', 'nominative']},

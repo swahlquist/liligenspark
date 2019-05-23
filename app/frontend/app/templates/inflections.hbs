@@ -21,6 +21,7 @@
             <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
             <div class="col-sm-4">
               {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
+              <em class='text-muted'>{{t "If the word matches more than one type, use the most common" key='use_most_common_type'}}</em>
             </div>
           </div>
         {{#if word_type.noun}}
@@ -28,69 +29,136 @@
             <label for="base" class="col-sm-3 control-label">{{t "Root Noun" key='base'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
-              <em class='text-muted'>{{t "I would like to own a %{word}." word=inflection_options.base key='base_noun_example'}}</em>
+              <em class='text-muted'>{{t "I would like to own a <b>%{word}</b>." word=inflection_options.base key='base_noun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.plural class="form-control" id="plural" placeholder="plural"}}
-              <em class='text-muted'>{{t "Can I have two %{word}, please?" word=inflection_options.plural key='plural_noun_example'}}</em>
+              <em class='text-muted'>{{t "Can I have two <b>%{word}</b>, please?" word=inflection_options.plural key='plural_noun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="possessive" class="col-sm-3 control-label">{{t "Possessive" key='possessive'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.possessive class="form-control" id="possessive" placeholder="possessive"}}
-              <em class='text-muted'>{{t "The %{word} age is starting to show." word=inflection_options.possessive key='possessive_noun_example'}}</em>
+              <em class='text-muted'>{{t "The <b>%{word}</b> age is starting to show." word=inflection_options.possessive key='possessive_noun_example'}}</em>
             </div>
           </div>
         {{else if word_type.adjective}}
-          base, comparative, superlative
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Adjective" key='root_adjective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "That looks very <b>%{word}</b> to me." word=inflection_options.base key='base_adjective_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="comparative" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.comparative class="form-control" id="comparative" placeholder="comparative"}}
+              <em class='text-muted'>{{t "Yours is much <b>%{word}</b> than mine." word=inflection_options.comparative key='comparative_adjective_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="superlative" class="col-sm-3 control-label">{{t "Superlative" key='superlative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.superlative class="form-control" id="superlative" placeholder="superlative"}}
+              <em class='text-muted'>{{t "His is <b>%{word}</b> of all!" word=inflection_options.superlative key='superlative_adjective_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.plural class="form-control" id="plural" placeholder="plural"}}
+              <em class='text-muted'>{{t "I like how the <b>%{word}</b> stand out in that picture." word=inflection_options.plural key='plural_adjective_example'}}</em>
+            </div>
+          </div>
         {{else if word_type.verb}}
-          base, 
-          progressive/present participle (ing), perfect non-progressive (en/ed), past tense (ed), past participle (has ____), simple present (s), infinitive (to ____)
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Verb" key='root_verb'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "I <b>%{word}</b> in the face of danger!" word=inflection_options.base key='base_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="infinitive" class="col-sm-3 control-label">{{t "Infinitive" key='infinitive'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.infinitive class="form-control" id="infinitive" placeholder="infinitive"}}
+              <em class='text-muted'>{{t "I do not want <b>%{word}</b> until next week." word=inflection_options.infinitive key='infinitive_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="simple_present" class="col-sm-3 control-label">{{t "Simple Present" key='simple_present'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.simple_present class="form-control" id="simple_present" placeholder="simple_present"}}
+              <em class='text-muted'>{{t "I think he <b>%{word}</b> a little too often." word=inflection_options.simple_present key='simple_present_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="simple_past" class="col-sm-3 control-label">{{t "Simple Past" key='simple_past'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.simple_past class="form-control" id="simple_past" placeholder="simple_past"}}
+              <em class='text-muted'>{{t "Yesterday they <b>%{word}</b> before lunch." word=inflection_options.simple_past key='simple_past_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="present_participle" class="col-sm-3 control-label">{{t "Present Participle" key='present_participle'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.present_participle class="form-control" id="present_participle" placeholder="present_participle"}}
+              <em class='text-muted'>{{t "I plan on <b>%{word}</b> after I finish this sandwich." word=inflection_options.present_participle key='present_participle_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="past_participle" class="col-sm-3 control-label">{{t "Past Participle" key='past_participle'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.past_participle class="form-control" id="past_participle" placeholder="past_participle"}}
+              <em class='text-muted'>{{t "She has <b>%{word}</b> several times already." word=inflection_options.past_participle key='past_participle_verb_example'}}</em>
+            </div>
+          </div>
         {{else if word_type.pronoun}}
           <div class="form-group">
-            <label for="base" class="col-sm-3 control-label">{{t "Possessive" key='base'}}</label>
+            <label for="base" class="col-sm-3 control-label">{{t "Root Pronoun" key='root_pronoun'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.base class="form-control" id="base" placeholder="root"}}
-              <em class='text-muted'>{{t "That is not what %{word} said." word=inflection_options.base key='base_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "That is not what <b>%{word}</b> said." word=inflection_options.base key='base_pronoun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="subjective" class="col-sm-3 control-label">{{t "Subjective" key='subjective'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.base class="form-control" id="subjective" placeholder="subjective"}}
-              <em class='text-muted'>{{t "Why did %{word} eat so many of those?" word=inflection_options.base key='subjective_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "Why did <b>%{word}</b> eat so many of those?" word=inflection_options.base key='subjective_pronoun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="objective" class="col-sm-3 control-label">{{t "Objective" key='objective'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.objective class="form-control" id="objective" placeholder="objective"}}
-              <em class='text-muted'>{{t "The piano fell right on %{word}." word=inflection_options.objective key='objective_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "Someone should probably talk to <b>%{word}</b>." word=inflection_options.objective key='objective_pronoun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="possessive" class="col-sm-3 control-label">{{t "Possessive" key='possessive'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.possessive class="form-control" id="possessive" placeholder="possessive"}}
-              <em class='text-muted'>{{t "Are you sure that monkey isn't %{word}?" word=inflection_options.possessive key='possessive_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "Are you sure that monkey isn't <b>%{word}</b>?" word=inflection_options.possessive key='possessive_pronoun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="possessive_adjective" class="col-sm-3 control-label">{{t "Possessive Adj." key='possessive_adjective'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.possessive_adjective class="form-control" id="possessive_adjective" placeholder="possessive_adjective"}}
-              <em class='text-muted'>{{t "That sounds like one of %{word} songs." word=inflection_options.possessive_adjective key='possessive_adjective_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "That sounds like one of <b>%{word}</b> songs." word=inflection_options.possessive_adjective key='possessive_adjective_pronoun_example'}}</em>
             </div>
           </div>
           <div class="form-group">
             <label for="reflexive" class="col-sm-3 control-label">{{t "Reflexive" key='reflexive'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.reflexive class="form-control" id="reflexive" placeholder="reflexive"}}
-              <em class='text-muted'>{{t "%{word_base} solved the maze all by %{word}!" word_base=inflection_options.base word=inflection_options.reflexive key='reflexive_pronoun_example'}}</em>
+              <em class='text-muted'>{{t "Wow, %{word_base} solved the maze all by <b>%{word}</b>!" word_base=inflection_options.base word=inflection_options.reflexive key='reflexive_pronoun_example'}}</em>
             </div>
           </div>
           <!-- TODO: relative/demonstrative pronouns, https://owl.excelsior.edu/grammar-essentials/parts-of-speech/pronouns/relative-and-demonstrative-pronouns/ -->
@@ -101,6 +169,7 @@
             <div class="col-sm-7">
               <p class='form-control-static'>
                 {{t "No inflections expected for words of type" key='no_inflections_for_words_of'}}
+                <b>{{word.primary_part_of_speech}}</b>
               </p>
             </div>
           </div>

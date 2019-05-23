@@ -8,6 +8,7 @@ CoughDrop.Word = DS.Model.extend({
   parts_of_speech: DS.attr('raw'),
   primary_part_of_speech: DS.attr('string'),
   inflection_overrides: DS.attr('raw'),
+  skip: DS.attr('boolean')
 });
 
 export default CoughDrop.Word;
