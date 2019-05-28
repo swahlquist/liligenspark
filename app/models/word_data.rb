@@ -54,11 +54,18 @@ class WordData < ActiveRecord::Base
     cores = WordData.core_lists.select{|l| l['locale'] == self.locale }
     fringes = WordData.fringe_lists.select{|l| l['locale'] == self.locale }
     score = nil
-    bs = Board.find_by_path('example/core-112').board_downstream_button_set rescue nil
-    if bs
-      bs.assert_extra_data
-      # priority = 8 if it's in core-112
-      score = 8 if bs.buttons.any?{|b| b['label'] == self.word }
+    return unless self.locale == 'en'
+    @@english_buttons ||= nil
+    if !@english_buttons
+      bs = Board.find_by_path('example/core-112').board_downstream_button_set rescue nil
+      if bs
+        bs.assert_extra_data
+        # priority = 8 if it's in core-112
+        bs
+        @@english_buttons = bs.buttons
+    end
+    if @@english_buttons
+      score = 8 if @@english_buttons.buttons.any?{|b| b['label'] == self.word }
     end
     if cores.length > 0
       core_count = cores.select{|l| l['words'].include?(self.word) }.length
@@ -70,7 +77,7 @@ class WordData < ActiveRecord::Base
       # something in the fringe lists is moderate priority
       score == 7 if fringe_count > 0
     end
-    if !score && self.locale == 'en'
+    if !score
       # download word frequency list
       @@english_with_counts ||= Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
       lines = @@english_with_counts.body.split(/\n/)
