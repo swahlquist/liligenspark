@@ -58,7 +58,7 @@ class WordData < ActiveRecord::Base
     if bs
       bs.assert_extra_data
       # priority = 8 if it's in core-112
-      score = 8 if bs.data['buttons'].any?{|b| b['label'] == self.word }
+      score = 8 if bs.buttons.any?{|b| b['label'] == self.word }
     end
     if cores.length > 0
       core_count = cores.select{|l| l['words'].include?(self.word) }.length
@@ -70,10 +70,10 @@ class WordData < ActiveRecord::Base
       # something in the fringe lists is moderate priority
       score == 7 if fringe_count > 0
     end
-    if !score
+    if !score && self.locale == 'en'
       # download word frequency list
-      res = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
-      lines = res.body.split(/\n/)
+      @@english_with_counts ||= Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
+      lines = @@english_with_counts.body.split(/\n/)
       hash = {}
       # top 5,000 - 5 points
       # top 10,000 - 4 points
