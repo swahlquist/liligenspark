@@ -50,22 +50,38 @@ class WordData < ActiveRecord::Base
     end
   end
 
-  def assert_priority
+  def self.assert_priority(relation)
+    bs = Board.find_by_path('example/core-112').board_downstream_button_set rescue nil
+    buttons = nil
+    if bs
+      bs.assert_extra_data
+      buttons = bs.buttons
+    end
+    counts = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
+    relation.find_in_batches(batch_size: 20) do |batch|
+      batch.each do |wd|
+        wd.assert_priority({'buttons' => buttons, 'counts' => counts})
+      end
+    end
+  end
+
+  def assert_priority(opts=nil)
     cores = WordData.core_lists.select{|l| l['locale'] == self.locale }
     fringes = WordData.fringe_lists.select{|l| l['locale'] == self.locale }
     score = nil
     return unless self.locale == 'en'
-    @@english_buttons ||= nil
-    if !@english_buttons
+    buttons = nil
+    if !opts
       bs = Board.find_by_path('example/core-112').board_downstream_button_set rescue nil
       if bs
         bs.assert_extra_data
         # priority = 8 if it's in core-112
         bs
-        @@english_buttons = bs.buttons
+        buttons = bs.buttons
+      end
     end
-    if @@english_buttons
-      score = 8 if @@english_buttons.buttons.any?{|b| b['label'] == self.word }
+    if buttons
+      score = 8 if buttons.buttons.any?{|b| b['label'] == self.word }
     end
     if cores.length > 0
       core_count = cores.select{|l| l['words'].include?(self.word) }.length
@@ -79,22 +95,25 @@ class WordData < ActiveRecord::Base
     end
     if !score
       # download word frequency list
-      @@english_with_counts ||= Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
-      lines = @@english_with_counts.body.split(/\n/)
-      hash = {}
-      # top 5,000 - 5 points
-      # top 10,000 - 4 points
-      # top 25,000 - 3 points
-      # top 50,000 - 2 points
-      # any        - 1 point
-      list = lines.map{|s| s.split(/\t/)[0] }
-      idx = list.index(self.word)
-      # score it from 0-5 based on word frequency
-      score ||= 5 if idx && idx < 5000
-      score ||= 4 if idx && idx < 10000
-      score ||= 3 if idx && idx < 25000
-      score ||= 2 if idx && idx < 50000
-      score ||= 1 if idx
+      counts = opts && opts['counts']
+      counts ||= Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt") if !opts
+      if counts
+        lines = counts.body.split(/\n/)
+        hash = {}
+        # top 5,000 - 5 points
+        # top 10,000 - 4 points
+        # top 25,000 - 3 points
+        # top 50,000 - 2 points
+        # any        - 1 point
+        list = lines.map{|s| s.split(/\t/)[0] }
+        idx = list.index(self.word)
+        # score it from 0-5 based on word frequency
+        score ||= 5 if idx && idx < 5000
+        score ||= 4 if idx && idx < 10000
+        score ||= 3 if idx && idx < 25000
+        score ||= 2 if idx && idx < 50000
+        score ||= 1 if idx
+      end
     end
     if score
       self.priority = score
