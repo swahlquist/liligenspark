@@ -24,7 +24,9 @@ class WordData < ActiveRecord::Base
   def process_params(params, non_user_params)
     updater = non_user_params[:updater]
     if updater && updater.allows?(non_user_params[:updater], 'admin_support_actions')
-      if !params['skip']
+      if params['skip']
+        self.updated_at = Time.now
+      else
         self.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + [updater.global_id]).uniq
         self.data['reviews'] ||= {}
         self.data['reviews'][updater.global_id] = {
