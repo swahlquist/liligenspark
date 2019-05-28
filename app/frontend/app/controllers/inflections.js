@@ -111,7 +111,7 @@ export default Controller.extend({
       var overrides = word.get('inflection_overrides');
       var options = _this.get('inflection_options');
       for(var key in options) {
-        if(key == 'base' && options[key] != word) {
+        if(key == 'base' && options[key] != word.get('word')) {
           overrides[key] = options[key]
         } else if(!key.match(/_fallback$/)) {
           if(options[key] && options[key] != options[key + '_fallback']) {
