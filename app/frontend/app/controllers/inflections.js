@@ -83,7 +83,7 @@ export default Controller.extend({
       {name: i18n.t('verb', "Verb (run, jump, cry, think)"), id: 'verb'},
       {name: i18n.t('adjective', "Adjective (red, ugly, humble)"), id: 'adjective'},
       {name: i18n.t('pronoun', "Pronoun (we, I, you, someone, anybody)"), id: 'pronoun'},
-      {name: i18n.t('adverb', "Adverb (kindly, often)"), id: 'pronoun'},
+      {name: i18n.t('adverb', "Adverb (kindly, often)"), id: 'adverb'},
       {name: i18n.t('question', "Question (why, when)"), id: 'question'},
       {name: i18n.t('conjunction', "Conjunction (and, but, if, because, although)"), id: 'conjunction'},
       {name: i18n.t('negation', "Negation (not, never)"), id: 'negation'},
