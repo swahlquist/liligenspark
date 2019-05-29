@@ -83,9 +83,9 @@ export default Controller.extend({
     // 
     this.set('inflection_options', opts);
     this.set('antonyms', (this.get('word.antonyms') || []).join(', '));
-    this.set('parts_of_speech', (this.get('parts_of_speech') || []).join(', '));
+    this.set('parts_of_speech', (this.get('word.parts_of_speech') || []).join(', '));
 
-  }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base'),
+  }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech'),
   word_types: function() {
     return [
       {name: i18n.t('unspecified', "[ Select Type ]"), id: ''},
