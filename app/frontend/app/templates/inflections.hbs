@@ -166,10 +166,24 @@
             </div>
           </div>
           <div class="form-group">
+            <label for="present" class="col-sm-3 control-label">{{t "Personal Present" key='present'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.present class="form-control" id="present" placeholder="present"}}
+              <em class='text-muted'>{{t "Next time I <b>%{word}</b> I will include you." word=inflection_options.present key='present_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="simple_present" class="col-sm-3 control-label">{{t "Simple Present" key='simple_present'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.simple_present class="form-control" id="simple_present" placeholder="simple_present"}}
               <em class='text-muted'>{{t "I think he <b>%{word}</b> a little too often." word=inflection_options.simple_present key='simple_present_verb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="past" class="col-sm-3 control-label">{{t "Personal Past" key='past'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.past class="form-control" id="past" placeholder="past"}}
+              <em class='text-muted'>{{t "I can't remember when I last <b>%{word}</b> like that." word=inflection_options.past key='past_verb_example'}}</em>
             </div>
           </div>
           <div class="form-group">

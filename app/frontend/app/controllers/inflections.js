@@ -58,7 +58,9 @@ export default Controller.extend({
     }
     if(parts.verb) {
       write('infinitive', function(word) { return i18n.tense(word, {infinitive: true}); });
+      write('present', function(word) { return word; });
       write('simple_present', function(word) { return i18n.tense(word, {simple_present: true}); });
+      write('past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
       write('past_participle', function(word) { return i18n.tense(word, {past_participle: true}); });
