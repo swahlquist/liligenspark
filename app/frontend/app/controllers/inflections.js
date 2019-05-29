@@ -111,7 +111,7 @@ export default Controller.extend({
     var parts = _this.get('word.parts_of_speech') || [];
     res.forEach(function(type) {
       type.checked = !!(parts.indexOf(type.id) != -1) || type.id == _this.get('word.primary_part_of_speech');
-      type.style = 'float: left; width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+      type.style = 'float: left; width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 0;';
       CoughDrop.keyed_colors.forEach(function(color) {
         if(color.types.indexOf(type.id) != -1) {
           type.border = color.border;

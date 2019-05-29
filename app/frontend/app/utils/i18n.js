@@ -518,7 +518,7 @@ var i18n = EmberObject.extend({
       if(type == 'superlative') {
         res = word + "est";
       } else if(type == 'negative') {
-        res = "less " + word;
+        res = "less " + str;
       } else {
         res = word + "er";
       }
@@ -527,7 +527,7 @@ var i18n = EmberObject.extend({
       if(type == 'superlative') {
         res = "the " + no_y + "iest";
       } else if(type == 'negative') {
-        res = "less " + word;
+        res = "less " + str;
       } else {
         res = no_y + "ier";
       }
@@ -539,7 +539,7 @@ var i18n = EmberObject.extend({
           res = "the most " + str;
         }
       } else if(type == 'negative') {
-        res = "less " + word;
+        res = "less " + str;
       } else {
         res = "more " + str;
       }
