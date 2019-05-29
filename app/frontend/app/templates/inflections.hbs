@@ -127,32 +127,32 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
+            <label for="plural_adj" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
             <div class="col-sm-7">
-              {{input value=inflection_options.plural class="form-control" id="plural" placeholder="plural"}}
+              {{input value=inflection_options.plural class="form-control" id="plural_adj" placeholder="plural"}}
               <em class='text-muted'>{{t "I like how the <b>%{word}</b> stand out in that picture." word=inflection_options.plural key='plural_adjective_example'}}</em>
             </div>
           </div>
         {{/if}}
         {{#if parts_of_speech.adverb}}
           <div class="form-group">
-            <label for="comparative" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
+            <label for="comparative_adv" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
             <div class="col-sm-7">
-              {{input value=inflection_options.comparative class="form-control" id="comparative" placeholder="comparative"}}
+              {{input value=inflection_options.comparative class="form-control" id="comparative_adv" placeholder="comparative"}}
               <em class='text-muted'>{{t "She waved her arms <b>%{word}</b> than last time." word=inflection_options.comparative key='comparative_adverb_example'}}</em>
             </div>
           </div>
           <div class="form-group">
-            <label for="superlative" class="col-sm-3 control-label">{{t "Superlative" key='superlative'}}</label>
+            <label for="superlative_adv" class="col-sm-3 control-label">{{t "Superlative" key='superlative'}}</label>
             <div class="col-sm-7">
-              {{input value=inflection_options.superlative class="form-control" id="superlative" placeholder="superlative"}}
+              {{input value=inflection_options.superlative class="form-control" id="superlative_adv" placeholder="superlative"}}
               <em class='text-muted'>{{t "They looked up <b>%{word}</b>." word=inflection_options.superlative key='superlative_adverb_example'}}</em>
             </div>
           </div>
           <div class="form-group">
-            <label for="negative_comparative" class="col-sm-3 control-label">{{t "Negative Comparative" key='negative_comparative'}}</label>
+            <label for="negative_comparative_adv" class="col-sm-3 control-label">{{t "Negative Comparative" key='negative_comparative'}}</label>
             <div class="col-sm-7">
-              {{input value=inflection_options.negative_comparative class="form-control" id="negative_comparative" placeholder="negative_comparative"}}
+              {{input value=inflection_options.negative_comparative class="form-control" id="negative_comparative_adv" placeholder="negative_comparative"}}
               <em class='text-muted'>{{t "The ball rolled <b>%{word}</b> today than yesterday." word=inflection_options.negative_comparative key='negative_comparative_adverb_example'}}</em>
             </div>
           </div>

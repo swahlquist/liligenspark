@@ -22,10 +22,10 @@ export default Controller.extend({
     _this.set('word', {loading: true});
     _this.set('inflection_options', null);
     var locale = (window.navigator.language || 'en').split(/-|_/)[0];
-    
     CoughDrop.store.query('word', {locale: locale, for_review: true}).then(function(data) {
       var words = data.map(function(r) { return r; });
       _this.set('words', words);
+      _this.set('antonyms', null);
       _this.set('word', words[0]);
     }, function(err) {
       _this.set('word', {error: true});
