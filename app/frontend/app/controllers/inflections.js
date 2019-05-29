@@ -51,43 +51,43 @@ export default Controller.extend({
       emberSet(opts, attr + '_fallback', method.call(i18n, word));
       emberSet(opts, attr, opts[attr] || opts[attr + '_fallback']);
     }
-    if(type == 'noun') {
+    var parts = this.get('parts_of_speech');
+    if(parts.noun) {
       write('plural', i18n.pluralize);
       write('possessive', i18n.possessive);
-    } else if(type == 'verb') {
+    }
+    if(parts.verb) {
       write('infinitive', function(word) { return i18n.tense(word, {infinitive: true}); });
       write('simple_present', function(word) { return i18n.tense(word, {simple_present: true}); });
       write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
       write('past_participle', function(word) { return i18n.tense(word, {past_participle: true}); });
-    } else if(type == 'adjective' || type == 'adverb') {
-      if(type == 'adjective') {
+    }
+    if(parts.adjective || parts.adverb) {
+      if(parts.adjective) {
         write('plural', i18n.pluralize);
       }
       write('comparative', i18n.comparative);
       write('negative_comparative', function(word) { return i18n.comparative(word, {negative: true}); });
       write('superlative', i18n.superlative);
       write('negation', i18n.negation);
-    } else if(type == 'pronoun') {
+    }
+    if(parts.pronoun) {
       write('objective',  function(word) { return i18n.possessive(word, {objective: true}); });
       write('possessive', function(word) { return i18n.possessive(word, {pronoun: true}); });
       write('possessive_adjective', function(word) { return i18n.possessive(word, {}); });
       write('reflexive',  function(word) { return i18n.possessive(word, {reflexive: true}); });
-    } else if(type == 'negation' || type == 'interjection' || type == 'numeral') {
-      // nothing to inflect
-    } else {
+    }
+    if(parts.noun || parts.verb || parts.adjective || parts.adverb || parts.pronoun || parts.article || parts.preposition || parts.article || parts.determiner) {
       write('negation', i18n.negation);
     }
-    // TODO: English:
-    // prepositions, articles, determiners - negation
-    // 
+
     this.set('inflection_options', opts);
     this.set('antonyms', (this.get('word.antonyms') || []).join(', '));
-    this.set('parts_of_speech', (this.get('word.parts_of_speech') || []).join(', '));
 
-  }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech'),
+  }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech', 'parts_of_speech'),
   word_types: function() {
-    return [
+    var res = [
       {name: i18n.t('unspecified', "[ Select Type ]"), id: ''},
       {name: i18n.t('noun', "Noun (dog, window, idea)"), id: 'noun'},
       {name: i18n.t('verb', "Verb (run, jump, cry, think)"), id: 'verb'},
@@ -106,7 +106,22 @@ export default Controller.extend({
       {name: i18n.t('number', "Number (one, two, three)"), id: 'numeral'},
       {name: i18n.t('other', "Other word type"), id: ''},
     ];
-  }.property(),
+    
+    var _this = this;
+    var parts = _this.get('word.parts_of_speech') || [];
+    res.forEach(function(type) {
+      type.checked = !!(parts.indexOf(type.id) != -1) || type.id == _this.get('word.primary_part_of_speech');
+      type.style = 'float: left; width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+      CoughDrop.keyed_colors.forEach(function(color) {
+        if(color.types.indexOf(type.id) != -1) {
+          type.border = color.border;
+          type.fill = color.fill;
+          type.style = type.style + ' border: 1px solid ' + type.border + '; background: ' + type.fill + ';';
+        }
+      });
+    });
+    return res;
+  }.property('word.parts_of_speech'),
   word_type: function() {
     var res = {};
     if(this.get('word.primary_part_of_speech')) {
@@ -117,6 +132,16 @@ export default Controller.extend({
     }
     return res;
   }.property('word.primary_part_of_speech'),
+  parts_of_speech: function() {
+    var res = {};
+    this.get('word_types').forEach(function(type) {
+      if(type.checked) { res[type.id] = true; }
+    });
+    if(res.noun || res.verb || res.adjective || res.pronoun || res.adverb || res.preposition || res.determiner) {
+      res.oppositable = true;
+    }
+    return res;
+  }.property('word.parts_of_speech', 'word_types', 'word_types.@each.checked'),
   actions: {
     save: function() {
       var _this = this;
@@ -124,9 +149,12 @@ export default Controller.extend({
       if(this.get('antonyms')) {
         word.set('antonyms', _this.get('antonyms').split(','));
       }
-      if(this.get('parts_of_speech')) {
-        word.set('parts_of_speech', _this.get('parts_of_speech').split(','));
-      }
+      var types = _this.get('word_types');
+      var list = [];
+      types.forEach(function(type) {
+        if(type.checked) { list.push(type.id); }
+      });
+      word.set('parts_of_speech', list);
       var overrides = word.get('inflection_overrides');
       var options = _this.get('inflection_options');
       var regulars = [];

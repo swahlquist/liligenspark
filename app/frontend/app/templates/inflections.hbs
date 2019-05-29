@@ -25,12 +25,19 @@
         </div>
         <div class="form-group">
           <label for="parts_of_speech" class="col-sm-3 control-label">{{t "All Word Types" key='all_word_types'}}</label>
-          <div class="col-sm-4">
-            {{input type='text' id='parts_of_speech' class='form-control' value=parts_of_speech placeholder='list, of, parts'}}
-              <em class='text-muted'>{{t "See the dropdown for a full list" key='see_dropdown_for_full_list'}}</em>
+          <div class="col-sm-8">
+            <ul class='list-group'>
+              {{#each word_types as |type|}}
+                {{#if type.id}}
+                  <li class='list-group-item' style={{type.style}}>
+                    <label>{{input type='checkbox' checked=type.checked}} {{type.name}}</label>
+                  </li>
+                {{/if}}
+              {{/each}}
+            </ul>
           </div>
         </div>
-        {{#if word_type.noun}}
+        {{#if parts_of_speech.noun}}
           <div class="form-group">
             <label for="base" class="col-sm-3 control-label">{{t "Root Noun" key='base'}}</label>
             <div class="col-sm-7">
@@ -38,6 +45,50 @@
               <em class='text-muted'>{{t "I would like to own a <b>%{word}</b>." word=inflection_options.base key='base_noun_example'}}</em>
             </div>
           </div>
+        {{else if parts_of_speech.adjective}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Adjective" key='root_adjective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "That looks very <b>%{word}</b> to me." word=inflection_options.base key='base_adjective_example'}}</em>
+            </div>
+          </div>
+        {{else if parts_of_speech.adverb}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Adverb" key='root_adverb'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "He stood there <b>%{word}</b> waiting." word=inflection_options.base key='base_adverb_example'}}</em>
+            </div>
+          </div>
+        {{else if parts_of_speech.verb}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Verb" key='root_verb'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "I <b>%{word}</b> in the face of danger!" word=inflection_options.base key='base_verb_example'}}</em>
+            </div>
+          </div>
+        {{else if parts_of_speech.pronoun}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Pronoun" key='root_pronoun'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root"}}
+              <em class='text-muted'>{{t "That is not what <b>%{word}</b> said." word=inflection_options.base key='base_pronoun_example'}}</em>
+            </div>
+          </div>
+        {{else}}
+          <div class="form-group">
+            <label for="inflections" class="col-sm-3 control-label">{{t "Inflections" key='inflections'}}</label>
+            <div class="col-sm-7">
+              <p class='form-control-static'>
+                {{t "No inflections expected for words of type" key='no_inflections_for_words_of'}}
+                <b>{{word.primary_part_of_speech}}</b>
+              </p>
+            </div>
+          </div>
+        {{/if}}
+        {{#if parts_of_speech.noun}}
           <div class="form-group">
             <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
             <div class="col-sm-7">
@@ -52,14 +103,8 @@
               <em class='text-muted'>{{t "The <b>%{word}</b> age is starting to show." word=inflection_options.possessive key='possessive_noun_example'}}</em>
             </div>
           </div>
-        {{else if word_type.adjective}}
-          <div class="form-group">
-            <label for="base" class="col-sm-3 control-label">{{t "Root Adjective" key='root_adjective'}}</label>
-            <div class="col-sm-7">
-              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
-              <em class='text-muted'>{{t "That looks very <b>%{word}</b> to me." word=inflection_options.base key='base_adjective_example'}}</em>
-            </div>
-          </div>
+        {{/if}}
+        {{#if parts_of_speech.adjective}}
           <div class="form-group">
             <label for="comparative" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
             <div class="col-sm-7">
@@ -88,14 +133,8 @@
               <em class='text-muted'>{{t "I like how the <b>%{word}</b> stand out in that picture." word=inflection_options.plural key='plural_adjective_example'}}</em>
             </div>
           </div>
-        {{else if word_type.adverb}}
-          <div class="form-group">
-            <label for="base" class="col-sm-3 control-label">{{t "Root Adjective" key='root_adjective'}}</label>
-            <div class="col-sm-7">
-              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
-              <em class='text-muted'>{{t "He stood there <b>%{word}</b> waiting." word=inflection_options.base key='base_adverb_example'}}</em>
-            </div>
-          </div>
+        {{/if}}
+        {{#if parts_of_speech.adverb}}
           <div class="form-group">
             <label for="comparative" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
             <div class="col-sm-7">
@@ -117,14 +156,8 @@
               <em class='text-muted'>{{t "The ball rolled <b>%{word}</b> today than yesterday." word=inflection_options.negative_comparative key='negative_comparative_adverb_example'}}</em>
             </div>
           </div>
-        {{else if word_type.verb}}
-          <div class="form-group">
-            <label for="base" class="col-sm-3 control-label">{{t "Root Verb" key='root_verb'}}</label>
-            <div class="col-sm-7">
-              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
-              <em class='text-muted'>{{t "I <b>%{word}</b> in the face of danger!" word=inflection_options.base key='base_verb_example'}}</em>
-            </div>
-          </div>
+        {{/if}}
+        {{#if parts_of_speech.verb}}
           <div class="form-group">
             <label for="infinitive" class="col-sm-3 control-label">{{t "Infinitive" key='infinitive'}}</label>
             <div class="col-sm-7">
@@ -160,14 +193,8 @@
               <em class='text-muted'>{{t "She has <b>%{word}</b> several times already." word=inflection_options.past_participle key='past_participle_verb_example'}}</em>
             </div>
           </div>
-        {{else if word_type.pronoun}}
-          <div class="form-group">
-            <label for="base" class="col-sm-3 control-label">{{t "Root Pronoun" key='root_pronoun'}}</label>
-            <div class="col-sm-7">
-              {{input value=inflection_options.base class="form-control" id="base" placeholder="root"}}
-              <em class='text-muted'>{{t "That is not what <b>%{word}</b> said." word=inflection_options.base key='base_pronoun_example'}}</em>
-            </div>
-          </div>
+        {{/if}}
+        {{#if parts_of_speech.pronoun}}
           <div class="form-group">
             <label for="subjective" class="col-sm-3 control-label">{{t "Subjective" key='subjective'}}</label>
             <div class="col-sm-7">
@@ -205,27 +232,19 @@
           </div>
           <!-- TODO: relative/demonstrative pronouns, https://owl.excelsior.edu/grammar-essentials/parts-of-speech/pronouns/relative-and-demonstrative-pronouns/ -->
           <!-- TODO: indefinite pronouns, https://owl.excelsior.edu/grammar-essentials/parts-of-speech/pronouns/definite-and-indefinite-pronouns/ -->
-        {{else}}
+        {{/if}}
+        {{#if parts_of_speech.oppositable}}
           <div class="form-group">
-            <label for="inflections" class="col-sm-3 control-label">{{t "Inflections" key='inflections'}}</label>
+            <label for="antonyms" class="col-sm-3 control-label">{{t "Opposite(s)" key='opposites'}}</label>
             <div class="col-sm-7">
-              <p class='form-control-static'>
-                {{t "No inflections expected for words of type" key='no_inflections_for_words_of'}}
-                <b>{{word.primary_part_of_speech}}</b>
-              </p>
+              {{input value=antonyms class="form-control" id="antonyms" placeholder="comma, for, multiple"}}
             </div>
           </div>
         {{/if}}
-        <div class="form-group">
-          <label for="antonyms" class="col-sm-3 control-label">{{t "Opposite(s)" key='opposites'}}</label>
-          <div class="col-sm-7">
-            {{input value=antonyms class="form-control" id="antonyms" placeholder="comma, for, multiple"}}
-          </div>
-        </div>
         {{#each extra_inflections as |extra|}}
           <div class="form-group">
             <div class="col-sm-3">
-              {{input value=extra.type class="form-control" placeholder="type"}}
+              {{input value=extra.type class="form-control" placeholder="N, S, E, W, etc."}}
             </div>
             <div class="col-sm-7">
               {{input value=extra.value class="form-control" placeholder="inflection"}}
@@ -234,7 +253,7 @@
         {{/each}}
         <div class="form-group">
           <div class="col-sm-9 col-sm-offset-3">
-            <button class='btn btn-default' {{action 'add_extra'}}>{{t "Add Inflection" key='add_inflection'}}</button>
+            <button class='btn btn-default' {{action 'add_extra'}}>{{t "Add Other Inflection" key='add_other_inflection'}}</button>
           </div>
         </div>
         <div class="form-group">

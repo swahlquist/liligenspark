@@ -533,9 +533,13 @@ var i18n = EmberObject.extend({
       }
     } else {
       if(type == 'superlative') {
-        res = "the most " + str;
+        if(check.substring(check.length - 2) == 'ly') {
+          res = "most " + str;
+        } else {
+          res = "the most " + str;
+        }
       } else if(type == 'negative') {
-        res = "less " + str;
+        res = "less " + word;
       } else {
         res = "more " + str;
       }
