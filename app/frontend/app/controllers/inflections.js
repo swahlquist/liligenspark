@@ -137,7 +137,7 @@ export default Controller.extend({
     this.get('word_types').forEach(function(type) {
       if(type.checked) { res[type.id] = true; }
     });
-    if(res.noun || res.verb || res.adjective || res.pronoun || res.adverb || res.preposition || res.determiner) {
+    if(res.noun || res.verb || res.adjective || res.pronoun || res.adverb || res.preposition || res.determiner || res.negation) {
       res.oppositable = true;
     }
     return res;
