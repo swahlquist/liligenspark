@@ -15,15 +15,20 @@
           <div class='col-sm-9 col-sm-offset-3'>
             <h3>{{word.word}} - {{word.locale}}</h3>
           </div>
-
         </div>
-          <div class="form-group">
-            <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
-            <div class="col-sm-4">
-              {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
-              <em class='text-muted'>{{t "If the word matches more than one type, use the most common" key='use_most_common_type'}}</em>
-            </div>
+        <div class="form-group">
+          <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
+          <div class="col-sm-4">
+            {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
+            <em class='text-muted'>{{t "If the word matches more than one type, use the most common" key='use_most_common_type'}}</em>
           </div>
+        </div>
+        <div class="form-group">
+          <label for="parts_of_speech" class="col-sm-3 control-label">{{t "All Word Types" key='all_word_types'}}</label>
+          <div class="col-sm-4">
+            {{input type='text' value=parts_of_speech placeholder='list, of, parts'}}
+          </div>
+        </div>
         {{#if word_type.noun}}
           <div class="form-group">
             <label for="base" class="col-sm-3 control-label">{{t "Root Noun" key='base'}}</label>
@@ -69,10 +74,46 @@
             </div>
           </div>
           <div class="form-group">
+            <label for="negative_comparative" class="col-sm-3 control-label">{{t "Negative Comparative" key='negative_comparative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.negative_comparative class="form-control" id="negative_comparative" placeholder="negative_comparative"}}
+              <em class='text-muted'>{{t "Oh well, mine is <b>%{word}</b> than I hoped it would be." word=inflection_options.negative_comparative key='negative_comparative_adjective_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="plural" class="col-sm-3 control-label">{{t "Plural" key='plural'}}</label>
             <div class="col-sm-7">
               {{input value=inflection_options.plural class="form-control" id="plural" placeholder="plural"}}
               <em class='text-muted'>{{t "I like how the <b>%{word}</b> stand out in that picture." word=inflection_options.plural key='plural_adjective_example'}}</em>
+            </div>
+          </div>
+        {{else if word_type.adverb}}
+          <div class="form-group">
+            <label for="base" class="col-sm-3 control-label">{{t "Root Adjective" key='root_adjective'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.base class="form-control" id="base" placeholder="root word"}}
+              <em class='text-muted'>{{t "He stood there <b>%{word}</b> waiting." word=inflection_options.base key='base_adverb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="comparative" class="col-sm-3 control-label">{{t "Comparative" key='comparative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.comparative class="form-control" id="comparative" placeholder="comparative"}}
+              <em class='text-muted'>{{t "She waved her arms <b>%{word}</b> than last time." word=inflection_options.comparative key='comparative_adverb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="superlative" class="col-sm-3 control-label">{{t "Superlative" key='superlative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.superlative class="form-control" id="superlative" placeholder="superlative"}}
+              <em class='text-muted'>{{t "They looked up <b>%{word}</b>." word=inflection_options.superlative key='superlative_adverb_example'}}</em>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="negative_comparative" class="col-sm-3 control-label">{{t "Negative Comparative" key='negative_comparative'}}</label>
+            <div class="col-sm-7">
+              {{input value=inflection_options.negative_comparative class="form-control" id="negative_comparative" placeholder="negative_comparative"}}
+              <em class='text-muted'>{{t "The ball rolled <b>%{word}</b> today than yesterday." word=inflection_options.negative_comparative key='negative_comparative_adverb_example'}}</em>
             </div>
           </div>
         {{else if word_type.verb}}
@@ -174,6 +215,12 @@
             </div>
           </div>
         {{/if}}
+        <div class="form-group">
+          <label for="antonyms" class="col-sm-3 control-label">{{t "Opposite(s)" key='opposites'}}</label>
+          <div class="col-sm-7">
+            {{input value=antonyms class="form-control" id="antonyms" placeholder="comma, for, multiple"}}
+          </div>
+        </div>
         {{#each extra_inflections as |extra|}}
           <div class="form-group">
             <div class="col-sm-3">

@@ -12,6 +12,7 @@ module JsonApi::Word
     json['word'] = obj.word
     json['locale'] = obj.locale
     json['parts_of_speech'] = obj.data['types']
+    json['antonyms'] = obj.data['antonyms']
     json['primary_part_of_speech'] = (obj.data['types'] || [])[0]
     json['inflection_overrides'] = obj.data['inflection_overrides'] || {}
 

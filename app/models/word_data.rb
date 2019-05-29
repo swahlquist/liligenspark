@@ -32,10 +32,18 @@ class WordData < ActiveRecord::Base
         self.data['reviews'][updater.global_id] = {
           'updated' => Time.now.iso8601,
           'primary_part_of_speech' => params['primary_part_of_speech'],
-          'inflection_overrides' => params['inflect_overrides']
+          'inflection_overrides' => params['inflect_overrides'],
+          'antonyms' => params['antonyms'],
+          'parts_of_speech', params['parts_of_speech']
         }
+        if params['parts_of_speech']
+          self.data['types'] = params['parts_of_speech'].split(/,/).map{|s| s.strip }
+        end
         if params['primary_part_of_speech']
           self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
+        end
+        if params['antonyms']
+          self.data['antonyms'] = params['antonyms'].split(/,/).map{|s| s.strip }
         end
         if params['inflection_overrides']
           hash = self.data['inflection_overrides'] || {}

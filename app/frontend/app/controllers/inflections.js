@@ -60,9 +60,12 @@ export default Controller.extend({
       write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
       write('past_participle', function(word) { return i18n.tense(word, {past_participle: true}); });
-    } else if(type == 'adjective') {
-      write('plural', i18n.pluralize);
+    } else if(type == 'adjective' || type == 'adverb') {
+      if(type == 'adjective') {
+        write('plural', i18n.pluralize);
+      }
       write('comparative', i18n.comparative);
+      write('negative_comparative', function(word) { return i18n.comparative(word, {negative: true}); });
       write('superlative', i18n.superlative);
       write('negation', i18n.negation);
     } else if(type == 'pronoun') {
@@ -70,10 +73,17 @@ export default Controller.extend({
       write('possessive', function(word) { return i18n.possessive(word, {pronoun: true}); });
       write('possessive_adjective', function(word) { return i18n.possessive(word, {}); });
       write('reflexive',  function(word) { return i18n.possessive(word, {reflexive: true}); });
+    } else if(type == 'negation' || type == 'interjection' || type == 'numeral') {
+      // nothing to inflect
     } else {
       write('negation', i18n.negation);
     }
+    // TODO: English:
+    // prepositions, articles, determiners - negation
+    // 
     this.set('inflection_options', opts);
+    this.set('antonyms', (this.get('word.antonyms') || []).join(', '));
+    this.set('parts_of_speech', (this.get('parts_of_speech') || []).join(', '));
 
   }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base'),
   word_types: function() {
@@ -102,23 +112,40 @@ export default Controller.extend({
     if(this.get('word.primary_part_of_speech')) {
       res[this.get('word.primary_part_of_speech')] = true;
     }
+    if(['adjective', 'adverb'].indexOf(this.get('word.primary_part_of_speech')) != -1) {
+      res['adjective_or_adverb'] = true;
+    }
     return res;
   }.property('word.primary_part_of_speech'),
   actions: {
     save: function() {
       var _this = this;
       var word = _this.get('word');
+      if(this.get('antonyms')) {
+        word.set('antonyms', _this.get('antonyms').split(','));
+      }
+      if(this.get('parts_of_speech')) {
+        word.set('parts_of_speech', _this.get('parts_of_speech').split(','));
+      }
       var overrides = word.get('inflection_overrides');
       var options = _this.get('inflection_options');
+      var regulars = [];
       for(var key in options) {
-        if(key == 'base' && options[key] != word.get('word')) {
+        if(key == 'regulars') {
+          regulars = regulars.concat(options[key]).uniq();
+        } else if(key == 'base') {
           overrides[key] = options[key]
+          if(options[key] == word.get('word')) {
+            regulars.push('base');
+          }
         } else if(!key.match(/_fallback$/)) {
-          if(options[key] && options[key] != options[key + '_fallback']) {
-            overrides[key] = options[key];
+          overrides[key] = options[key];
+          if(options[key] && options[key] == options[key + '_fallback']) {
+            regulars.push(key);
           }
         }
       }
+      overrides['regulars'] = regulars;
       word.set('inflection_overrides', overrides);
       _this.set('status', {saving: true});
       word.save().then(function() {

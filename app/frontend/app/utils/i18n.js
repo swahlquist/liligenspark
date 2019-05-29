@@ -393,19 +393,19 @@ var i18n = EmberObject.extend({
     }
     return res;
   },
-  comparative: function(str) {
+  comparative: function(str, opts) {
     // good == better
     // happy == happier
     // strong == stronger
     // difficult == more difficult
-    return this.modify_ad(str, false);
+    return this.modify_ad(str, opts && opts.negative ? 'negative' : 'positive');
   },
   superlative: function(str) {
     // happy == happiest
     // beautiful == most beautiful (or the most beautiful??)
     // good == best
     // http://en.wikipedia.org/wiki/Superlative
-    return this.modify_ad(str, true);
+    return this.modify_ad(str, 'superlative');
   },
   possessive: function(str, options) {
     // me == my
@@ -490,7 +490,10 @@ var i18n = EmberObject.extend({
     }
     return num_vowels;
   },
-  modify_ad: function(str, most) {
+  modify_ad: function(str, type) {
+    var most_idx = 0;
+    if(type == 'superlative') { most_idx = 1; }
+    if(type == 'negative') { most_idx = 2; }
     var res = str;
     var check = str.toLowerCase();
     if(!this.substitutions.tenses[check] && this.substitutions.superlatives_comparatives.replacements[check]) {
@@ -498,7 +501,7 @@ var i18n = EmberObject.extend({
     }
     var syllables = this.syllables(str);
     if(this.substitutions.superlatives_comparatives[check]) { // list of exceptions
-      res = this.substitutions.superlatives_comparatives[check][(most ? 1 : 0)];
+      res = this.substitutions.superlatives_comparatives[check][most_idx];
     } else if(syllables == 1) { // 1 syllable
       // add the last consonant again if it's not already doubled and
       // the word ends in consonant-vowel-consonant
@@ -512,17 +515,27 @@ var i18n = EmberObject.extend({
           }
         }
       }
-      res = word + (most ? "est" : "er");
+      if(type == 'superlative') {
+        res = word + "est";
+      } else if(type == 'negative') {
+        res = "less " + word;
+      } else {
+        res = word + "er";
+      }
     } else if(syllables == 2 && check.substring(check.length - 1) == 'y' && check.substring(check.length - 2) != 'ly') { //2-syllable adjective (not adverb) ends in y not ly
       var no_y = str.substring(0, str.length - 1);
-      if(most) {
+      if(type == 'superlative') {
         res = "the " + no_y + "iest";
+      } else if(type == 'negative') {
+        res = "less " + word;
       } else {
         res = no_y + "ier";
       }
     } else {
-      if(most) {
+      if(type == 'superlative') {
         res = "the most " + str;
+      } else if(type == 'negative') {
+        res = "less " + str;
       } else {
         res = "more " + str;
       }
@@ -633,12 +646,12 @@ var i18n = EmberObject.extend({
     superlatives_comparatives: {
       // http://www.edufind.com/english/grammar/adjectives_irregular_comparative_superlative.php
       // http://www.englishclub.com/vocabulary/irregular-adjectives.htm
-      'good': ['better', 'the best'],
-      'well': ['better', 'the best'],
-      'bad': ['worse', 'the worst'],
-      'little': ['less', 'the least'],
-      'much': ['more', 'the most',],
-      'far': ['farther', 'the farthest']
+      'good': ['better', 'the best', 'less good'],
+      'well': ['better', 'the best', 'less good'],
+      'bad': ['worse', 'the worst', 'less bad'],
+      'little': ['less', 'the least', 'less little'],
+      'much': ['more', 'the most', 'less'],
+      'far': ['farther', 'the farthest', 'less far']
     },
     verb_to_be_negations: {
       'am': "am not",
