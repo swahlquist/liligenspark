@@ -37,7 +37,7 @@ class WordData < ActiveRecord::Base
           'parts_of_speech' => params['parts_of_speech']
         }
         if params['parts_of_speech']
-          self.data['types'] = params['parts_of_speech'].split(/,/).map{|s| s.strip }
+          self.data['types'] = params['parts_of_speech'].split(/,/).map{|s| s.strip.downcase }
         end
         if params['primary_part_of_speech']
           self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
