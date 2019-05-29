@@ -569,6 +569,9 @@ module Purchasing
   
   def self.unsubscribe(user)
     return false unless user
+    # TODO: when a subscription is canceled, any long-term credit should immediately be
+    # applied, and if a user is currently on a long-term plan they really shouldn't be
+    # able to cancel the "subscription"
     User.subscription_event({
       'unsubscribe' => true,
       'manual_unsubscribe' => true,

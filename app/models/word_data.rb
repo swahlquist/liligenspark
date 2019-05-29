@@ -34,7 +34,7 @@ class WordData < ActiveRecord::Base
           'primary_part_of_speech' => params['primary_part_of_speech'],
           'inflection_overrides' => params['inflect_overrides'],
           'antonyms' => params['antonyms'],
-          'parts_of_speech', params['parts_of_speech']
+          'parts_of_speech' => params['parts_of_speech']
         }
         if params['parts_of_speech']
           self.data['types'] = params['parts_of_speech'].split(/,/).map{|s| s.strip }
@@ -75,6 +75,7 @@ class WordData < ActiveRecord::Base
     end
   end
 
+  # TODO: add antonyms, https://words.bighugelabs.com/api.php
   def assert_priority(opts=nil)
     cores = WordData.core_lists.select{|l| l['locale'] == self.locale }
     fringes = WordData.fringe_lists.select{|l| l['locale'] == self.locale }
@@ -346,6 +347,8 @@ class WordData < ActiveRecord::Base
     end
     
     # add the activities to the user object for quick retrieval
+    # TODO: store these sometwhere other than on the user record and
+    # bump the result list to 50, that's way too much data for that model
     user.settings['target_words']['activities'] = {
       'generated' => Time.now.iso8601,
       'words' => found_words,

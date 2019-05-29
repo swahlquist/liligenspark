@@ -777,6 +777,10 @@ describe('User', function() {
         expect(error).toEqual({error: 'no matching integration found'});
       });
     });
+
+    it('should also check for supervisee permission if possible', function() {
+      expect('test').toEqual('todo');
+    });
   });
 
   describe('auto_sync', function() {
