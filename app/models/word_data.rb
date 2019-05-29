@@ -45,7 +45,9 @@ class WordData < ActiveRecord::Base
           self.data['types'] = ([params['primary_part_of_speech']] + (self.data['types'] || [])).uniq
         end
         if params['antonyms']
-          self.data['antonyms'] = params['antonyms'].split(/,/).map{|s| s.strip }
+          parts = params['antonyms']
+          parts = parts.split(/,/) if parts.is_a?(String)
+          self.data['antonyms'] = parts.map{|s| s.strip }
         end
         if params['inflection_overrides']
           hash = self.data['inflection_overrides'] || {}
