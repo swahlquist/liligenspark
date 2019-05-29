@@ -83,8 +83,7 @@ export default Controller.extend({
     }
 
     this.set('inflection_options', opts);
-    this.set('antonyms', (this.get('word.antonyms') || []).join(', '));
-
+    this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
   }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech', 'parts_of_speech'),
   word_types: function() {
     var res = [
@@ -122,6 +121,20 @@ export default Controller.extend({
     });
     return res;
   }.property('word.parts_of_speech'),
+  update_primary_on_single_word_type: function() {
+    var single_type = null;
+    var multiple = false;
+    this.get('word_types').forEach(function(t) { 
+      if(t.checked && single_type) {
+        multiple = true;
+      } else if(t.checked) {
+        single_type = t.id;
+      }
+    });
+    if(single_type && !multiple) {
+      this.set('word.primary_part_of_speech', single_type);
+    }
+  }.observes('word_types', 'word_types.@each.checked'),
   word_type: function() {
     var res = {};
     if(this.get('word.primary_part_of_speech')) {
