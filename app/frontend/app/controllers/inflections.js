@@ -5,6 +5,7 @@ import session from '../utils/session';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import {set as emberSet, get as emberGet} from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
   abort_if_unauthorized: function() {
@@ -95,6 +96,11 @@ export default Controller.extend({
     this.set('inflection_options', opts);
     this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
   }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech', 'parts_of_speech'),
+  word_type_style: function() {
+    var _this = this;
+    var type = this.get('word_types').find(function(t) { return t.id == _this.get('word.primary_part_of_speech'); });
+    return type && htmlSafe(type.extra_style + ' padding: 10px; border-radius: 5px;');
+  }.property('word.primary_part_of_speech', 'word_types'),
   word_types: function() {
     var res = [
       {name: i18n.t('unspecified', "[ Select Type ]"), id: ''},
@@ -125,7 +131,8 @@ export default Controller.extend({
         if(color.types.indexOf(type.id) != -1) {
           type.border = color.border;
           type.fill = color.fill;
-          type.style = type.style + ' border: 1px solid ' + type.border + '; background: ' + type.fill + ';';
+          type.extra_style = htmlSafe(' border: 1px solid ' + type.border + '; background: ' + type.fill + ';');
+          type.style = htmlSafe(type.style + type.extra_style);
         }
       });
     });

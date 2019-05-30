@@ -18,9 +18,13 @@
         </div>
         <div class="form-group">
           <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
-          <div class="col-sm-4">
-            {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
-            <em class='text-muted'>{{t "If the word matches more than one type, use the most common" key='use_most_common_type'}}</em>
+          <div class="col-sm-8">
+            <div style={{word_type_style}}>
+              <div style='max-width: 400px;'>
+                {{bound-select select_class="form-control" select_id="type" content=word_types selection=word.primary_part_of_speech action=(action (mut word.primary_part_of_speech)) }}
+              </div>
+              <em class='text-muted'>{{t "If the word matches more than one type, use the most common" key='use_most_common_type'}}</em>
+            </div>
           </div>
         </div>
         <div class="form-group">
@@ -275,6 +279,17 @@
         <div class="form-group">
           <div class="col-sm-9 col-sm-offset-3">
             <button class='btn btn-default' {{action 'add_extra'}}>{{t "Add Other Inflection" key='add_other_inflection'}}</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="type" class="col-sm-3 control-label">{{t "Word Type" key='word_type'}}</label>
+          <div class="col-sm-7">
+            <div style={{word_type_style}}>
+              most common: 
+              <span style='font-size: 20px; font-weight: bold;'>
+                {{word.primary_part_of_speech}}
+              </span>
+            </div>
           </div>
         </div>
         <div class="form-group">
