@@ -288,7 +288,7 @@ CoughDrop.parts_of_speech = [
   {name: i18n.t('article', "Article (a, an, the)"), id: 'article'},
   {name: i18n.t('determiner', "Determiner (that, his)"), id: 'determiner'},
   {name: i18n.t('number', "Number (one, two)"), id: 'number'},
-  {name: i18n.t('social_phrase', "Social Phrase"), id: 'social'},
+  {name: i18n.t('social_phrase', "Social Phrase (hello, thank you)"), id: 'social'},
   {name: i18n.t('other', "Other word type"), id: 'other'},
   {name: i18n.t('custom_1', "Custom Word Type 1"), id: 'custom_1'},
   {name: i18n.t('custom_2', "Custom Word Type 2"), id: 'custom_2'},
