@@ -67,6 +67,7 @@ export default Controller.extend({
       write('infinitive', function(word) { return i18n.tense(word, {infinitive: true}); });
       write('present', function(word) { return word; });
       write('simple_present', function(word) { return i18n.tense(word, {simple_present: true}); });
+      write('plural_present', function(word) { return word; });
       write('past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
       write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
@@ -140,8 +141,11 @@ export default Controller.extend({
         single_type = t.id;
       }
     });
+    var types = this.get('word_types').map(function(w) { return w.id; });
     if(single_type && !multiple) {
       this.set('word.primary_part_of_speech', single_type);
+    } else if(multiple && types.indexOf(this.get('word.primary_part_of_speech')) == -1) {
+      this.set('word.primary_parts_of_speech', types[0]);
     }
   }.observes('word_types', 'word_types.@each.checked'),
   word_type: function() {
