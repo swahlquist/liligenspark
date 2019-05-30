@@ -71,19 +71,24 @@ class WordData < ActiveRecord::Base
       bs.assert_extra_data
       buttons = bs.buttons
     end
-    counts = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
+    req = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt")
+    lines = req.body.split(/\n/)
+    counts = lines.map{|s| s.split(/\t/)[0] }
+    cores = WordData.core_lists.select{|l| l['locale'] == 'en' }
+    fringes = WordData.fringe_lists.select{|l| l['locale'] == 'en' }
     relation.find_in_batches(batch_size: 20) do |batch|
       batch.each do |wd|
-        wd.assert_priority({'buttons' => buttons, 'counts' => counts})
+        wd.assert_priority({'buttons' => buttons, 'counts' => counts, 'cores' => cores, 'fringes' => fringes})
       end
+      puts "..."
     end
   end
 
-  # TODO: add antonyms, https://words.bighugelabs.com/api.php
+  ## TODO: add antonyms, https://words.bighugelabs.com/api.php
   def assert_priority(opts=nil)
-    cores = WordData.core_lists.select{|l| l['locale'] == self.locale }
-    fringes = WordData.fringe_lists.select{|l| l['locale'] == self.locale }
-    score = nil
+    cores = (opts && opts['cores']) || WordData.core_lists.select{|l| l['locale'] == self.locale }
+    fringes = (opts && opts['fringes']) || WordData.fringe_lists.select{|l| l['locale'] == self.locale }
+    score = 0
     return unless self.locale == 'en'
     buttons = nil
     if !opts
@@ -111,17 +116,19 @@ class WordData < ActiveRecord::Base
     if !score
       # download word frequency list
       counts = opts && opts['counts']
-      counts ||= Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt") if !opts
+      if !opts
+        req = Typhoeus.get("https://coughdrop.s3.amazonaws.com/language/english_with_counts.txt") 
+        lines = req.body.split(/\n/)
+        counts = lines.map{|s| s.split(/\t/)[0] }
+      end
       if counts
-        lines = counts.body.split(/\n/)
         hash = {}
         # top 5,000 - 5 points
         # top 10,000 - 4 points
         # top 25,000 - 3 points
         # top 50,000 - 2 points
         # any        - 1 point
-        list = lines.map{|s| s.split(/\t/)[0] }
-        idx = list.index(self.word)
+        idx = counts.index(self.word)
         # score it from 0-5 based on word frequency
         score ||= 5 if idx && idx < 5000
         score ||= 4 if idx && idx < 10000
@@ -134,6 +141,7 @@ class WordData < ActiveRecord::Base
       self.priority = score
       self.save
     end
+    true
   end
   
   def self.find_word(text, locale='en') 
