@@ -2,6 +2,7 @@
   <div class="col-sm-8 col-sm-offset-2">
     <h2>{{t "Inflections Review Tool" key='inflections_review_tool'}}</h2>
     <p>{{t "CoughDrop is an open source tool that supports multiple languages and interactions. This Inflections Review Tool allows us to collect information from multiple sources as we build out language word lists. Having accurate information on word forms helps us better support our communities. <b>Remember</b>, all information collected by this tool will be released for free online with an open license for others to use and benefit from." key='inflections_tool_explainer'}}</p>
+    <p>{{t "TIPS: Some words have multiple types. Some alternate types are so obscure that they're not really worth including, think about what an average speaker might say. If the word is alreeady inflected (\"looking\") make sure to enter its root (\"look\") in the first box. Some inflections for certain verbs/adverbs don't make sense, please put \"N/A\" in the box. For opposites, just do the most obvious if any. If you're unsure about a word, don't be afraid to skip it!" key='inflections_tips'}}</p>
   </div>
   <div class='col-sm-8 col-sm-offset-2' style='margin-top: 50px;'>
     {{#if word.loading}}
@@ -14,6 +15,9 @@
         <div class='form-group'>
           <div class='col-sm-9 col-sm-offset-3'>
             <h3>{{word.word}} - {{word.locale}}</h3>
+            <div>
+              <a href={{lookup_link}} target='_blank'>look up definition</a>
+            </div>
           </div>
         </div>
         <div class="form-group">
