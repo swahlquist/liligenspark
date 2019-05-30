@@ -142,7 +142,7 @@ export default Controller.extend({
     });
     return res;
   }.property('word.parts_of_speech'),
-  update_primary_on_single_word_type: function() {
+  update_primary_on_single_word_type: function(ref, change) {
     var single_type = null;
     var multiple = false;
     this.get('word_types').forEach(function(t) { 
@@ -152,13 +152,18 @@ export default Controller.extend({
         single_type = t.id;
       }
     });
-    var types = this.get('word_types').map(function(w) { return w.id; });
+    var types = this.get('word_types');
+    var pos = this.get('word.primary_part_of_speech');
+    var type = types.find(function(t) { return t.id == pos; });
     if(single_type && !multiple) {
       this.set('word.primary_part_of_speech', single_type);
-    } else if(multiple && types.indexOf(this.get('word.primary_part_of_speech')) == -1) {
-      this.set('word.primary_parts_of_speech', types[0]);
+    } else if(change == 'word.primary_part_of_speech' && type) {
+      emberSet(type, 'checked', true);
+    } else if(multiple && !type.checked) {
+      type = types.find(function(t) { return t.checked; });
+      if(type) { this.set('word.primary_part_of_speech', type.id); }
     }
-  }.observes('word_types', 'word_types.@each.checked'),
+  }.observes('word_types', 'word_types.@each.checked', 'word.primary_part_of_speech'),
   word_type: function() {
     var res = {};
     if(this.get('word.primary_part_of_speech')) {
