@@ -3,8 +3,12 @@ class Api::WordsController < ApplicationController
   
   def index
     return unless allowed?(@api_user, 'admin_support_actions')
-    words = WordData.where(locale: params['locale']).where(['priority > ?', 0]).where(['updated_at < ?', 24.hours.ago])
-    words = words.order('reviews ASC, priority DESC, word')
+    words = WordData.where(locale: params['locale']).where(['priority > ?', 0])
+    if params['word']
+      words = words.order(ActiveRecord::Base.send(:sanitize_sql_for_conditions, ['(word = ?) DESC, reviews ASC, priority DESC, word', params['word']]))
+    else
+      words = words.where(['updated_at < ?', 24.hours.ago]).order('reviews ASC, priority DESC, word')
+    end
     render json: JsonApi::Word.paginate(params, words)
   end
   

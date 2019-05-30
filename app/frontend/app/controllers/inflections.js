@@ -21,11 +21,18 @@ export default Controller.extend({
     _this.set('status', null);
     _this.set('word', {loading: true});
     _this.set('inflection_options', null);
-    var locale = (window.navigator.language || 'en').split(/-|_/)[0];
-    CoughDrop.store.query('word', {locale: locale, for_review: true}).then(function(data) {
+    var locale = (this.get('locale') || window.navigator.language || 'en').split(/-|_/)[0];
+    var opts = {locale: locale, for_review: true};
+    if(_this.get('ref')) {
+      opts.word = _this.get('ref');
+    }
+    CoughDrop.store.query('word', opts).then(function(data) {
       var words = data.map(function(r) { return r; });
-      _this.set('words', words);
       _this.set('antonyms', null);
+      if(words[0].get('word') != _this.get('ref') || words[0].get('locale') != _this.get('locale')) {
+        _this.transitionToRoute('inflections', words[0].get('word'), words[0].get('locale'));
+      }
+      _this.set('words', words);
       _this.set('word', words[0]);
     }, function(err) {
       _this.set('word', {error: true});
@@ -193,7 +200,12 @@ export default Controller.extend({
       _this.set('status', {saving: true});
       word.save().then(function() {
         _this.set('status', null);
-        _this.load_word();
+        var found = false;
+        _this.get('words').forEach(function(w) {
+          if(w.get('word') != _this.get('word.word')) {
+            _this.transitionToRoute('inflections', w.get('word'), w.get('locale'));
+          }
+        });
       }, function(err) {
         _this.set('status', {error: true});
       });

@@ -50,6 +50,7 @@ Router.map(function() {
   this.route('home-boards', { path: '/search/home' });
   this.route('search', { path: '/search/:l/:q' });
   this.route('inflections', { path: '/inflections' });
+  this.route('inflections', { path: '/inflections/:ref/:locale' });
   this.route('old_search', { path: '/search/:q' });
   this.route('utterance-reply', { path: '/u/:reply_code'})
   this.route('login');

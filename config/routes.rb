@@ -39,6 +39,7 @@ Coughdrop::Application.routes.draw do
   get '/terms' => 'boards#terms'
   get '/jobs' => 'boards#jobs'
   get '/about' => 'boards#about'
+  get '/inflections/:word_id/:locale' => ember_handler
   
   get 'oauth2/token' => 'session#oauth'
   post 'oauth2/token/login' => 'session#oauth_login'
