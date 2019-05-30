@@ -122,6 +122,7 @@ export default Controller.extend({
       // https://www.ef.edu/english-resources/english-grammar/determiners/
       {name: i18n.t('determiner', "Determiner (this, that, some, any, other, such, quite)"), id: 'determiner'},
       {name: i18n.t('number', "Number (one, two, three)"), id: 'numeral'},
+      {name: i18n.t('social_phrase', "Social Phrase"), id: 'social'},
       {name: i18n.t('other', "Other word type"), id: ''},
     ];
     
