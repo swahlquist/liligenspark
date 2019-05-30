@@ -97,7 +97,7 @@ export default Controller.extend({
     this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
   }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech', 'parts_of_speech'),
   lookup_link: function() {
-    return "https://www.google.com/search?q=" + encodeURIComponent(this.get('word.word'));
+    return "https://www.google.com/search?q=define:" + encodeURIComponent(this.get('word.word'));
   }.property('word'),
   word_type_style: function() {
     var _this = this;
