@@ -83,7 +83,7 @@ class Api::UsersController < ApplicationController
     end
     # we don't want to set device preferences unless the user actually changed device settings
     user_device ||= Device.where(user: @api_user).find_by_global_id(@api_device_id) if params['user'] && params['user']['preference'] && params['user']['preference']['device'] && params['user']['preference']['device']['updated']
-    options['device'] = user_devices
+    options['device'] = user_device
     options['updater'] = @api_user
       
     if user.process(params['user'], options)
