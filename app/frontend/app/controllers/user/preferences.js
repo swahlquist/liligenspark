@@ -501,6 +501,7 @@ export default Controller.extend({
 
       var user = this.get('model');
       user.set('preferences.progress.preferences_edited', true);
+      user.set('preferences.device.updated', true);
       var _this = this;
       _this.set('status', {saving: true});
       user.save().then(function(user) {
