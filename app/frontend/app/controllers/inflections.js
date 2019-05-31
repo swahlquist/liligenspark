@@ -159,7 +159,7 @@ export default Controller.extend({
       this.set('word.primary_part_of_speech', single_type);
     } else if(change == 'word.primary_part_of_speech' && type) {
       emberSet(type, 'checked', true);
-    } else if(multiple && !type.checked) {
+    } else if(multiple && type && !type.checked) {
       type = types.find(function(t) { return t.checked; });
       if(type) { this.set('word.primary_part_of_speech', type.id); }
     }
