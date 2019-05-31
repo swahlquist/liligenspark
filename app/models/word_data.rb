@@ -487,7 +487,10 @@ class WordData < ActiveRecord::Base
   def self.persist_translation(text, translation, source_lang, dest_lang, type)
     # record the translations on the source word
     word = find_word_record(text, source_lang)
-    word ||= WordData.new(:word => text.downcase.strip, :locale => source_lang, :data => {:word => text.downcase.strip})
+    if !word && !text.match(/^[\+\:]/)
+      word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang)
+      word.data = {:word => text.downcase.strip}
+    end
     if word && word.data
       word.data['translations'] ||= {}
       word.data['translations'][dest_lang] ||= translation
@@ -496,7 +499,10 @@ class WordData < ActiveRecord::Base
     end
     # record the reverse translation on the 
     backwards_word = find_word_record(translation, dest_lang)
-    backwards_word ||= WordData.new(:word => translation.downcase.strip, :locale => dest_lang, :data => {:word => translation.downcase.strip})
+    if !backwards_word && !translation.match(/^[\+\:]/)
+      backwards_word ||= WordData.find_or_create_by(:word => translation.downcase.strip, :locale => dest_lang)
+      backwards_word.data = {:word => translation.downcase.strip}
+    end
     if backwards_word && backwards_word.data
       backwards_word.data['translations'] ||= {}
       backwards_word.data['translations'][source_lang] ||= text
