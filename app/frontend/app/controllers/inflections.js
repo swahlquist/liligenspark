@@ -40,6 +40,7 @@ export default Controller.extend({
     });
   },
   update_inflection_options: function() {
+    if(!this.get('word.word')) { return; }
     var opts = this.get('inflection_options') || {};
     if(this.get('word.word') || emberGet(opts, 'base') != "") {
       emberSet(opts, 'base', emberGet(opts, 'base') || this.get('word.word'));
@@ -51,7 +52,7 @@ export default Controller.extend({
       }
     }
     var type = this.get('word.primary_part_of_speech');
-    var word = opts.base;
+    var word = opts.base || "";
     var write = function(attr, method) {
       if(opts[attr] && opts[attr] == opts[attr + '_fallback']) {
         opts[attr] = null;
