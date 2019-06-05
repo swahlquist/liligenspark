@@ -7,14 +7,20 @@ class WordData < ActiveRecord::Base
   secure_serialize :data
   replicated_model  
   before_save :generate_defaults
+  after_save :assert_missing_priority
   
   def generate_defaults
     self.data ||= {}
     self.reviews = (self.data['reviewer_ids'] || []).length
+    true
+  end
+
+  def assert_missing_priority
     if !self.priority && self.locale
       self.priority = -1
       self.schedule(:assert_priority)
     end
+    true
   end
 
   def reviewed_by?(user)
@@ -101,14 +107,14 @@ class WordData < ActiveRecord::Base
       end
     end
     if buttons
-      score = 8 if buttons.buttons.any?{|b| b['label'] == self.word }
+      score = 8 if buttons.any?{|b| b['label'] == self.word }
     end
     if cores.length > 0
       core_count = cores.select{|l| l['words'].include?(self.word) }.length
       fringe_count = fringes.select{|l| l['categories'].any?{|c| c['words'].include?(self.word) } }.length
       # something in all the core lists is top priority
       score = 10 if core_count == cores.length
-      # something in some of the core lists is high priority
+      # something  in some of the core lists is high priority
       score = 9 if core_count > 0
       # something in the fringe lists is moderate priority
       score == 7 if fringe_count > 0
