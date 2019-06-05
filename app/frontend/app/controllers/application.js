@@ -693,7 +693,7 @@ export default Controller.extend({
       var _this = this;
       var picture_prompt = function($button) {
         if(utterance.get('hint_button')) {
-          utterance.set('hint_button.label', $button.find(".button-label").text());
+          utterance.set('hint_button.label', $button.find(".button-label").eq(0).text());
           utterance.set('hint_button.image_url', $button.find(".symbol").attr('src'));
         }
       };
