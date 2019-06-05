@@ -7,6 +7,7 @@ import CoughDrop from '../app';
 import {set as emberSet, get as emberGet} from '@ember/object';
 import { htmlSafe } from '@ember/string';
 
+var extra_types = ['NW', 'N', 'NE', 'W', 'E', 'SW', 'S', 'SE'];
 export default Controller.extend({
   abort_if_unauthorized: function() {
     if(!session.get('isAuthenticated')) {
@@ -37,6 +38,15 @@ export default Controller.extend({
       if(words[0].get('word') != _this.get('ref') || words[0].get('locale') != _this.get('locale')) {
         _this.transitionToRoute('inflections', words[0].get('word'), words[0].get('locale'));
       }
+      var extras = [];
+      if(words[0]) {
+        for(var key in words[0].get('inflection_overrides')) {
+          if(key.match(/^extra_.+$/) || extra_types.indexOf(key) != -1) {
+            extras.push({type: key, value: words[0].get('inflection_overrides')[key]});
+          }
+        }
+      }
+      _this.set('extra_inflections', extras);
       _this.set('words', words);
       _this.set('word', words[0]);
     }, function(err) {
@@ -220,6 +230,11 @@ export default Controller.extend({
           }
         }
       }
+      (_this.get('extra_inflections') || []).forEach(function(extra) {
+        if(extra.type && extra.value && (extra.type.match(/^extra_.+$/) || extra_types.indexOf(extra.type) != -1))  {
+          overrides[extra.type] = extra.value;
+        }
+      });
       overrides['regulars'] = regulars;
       word.set('inflection_overrides', overrides);
       _this.set('status', {saving: true});
