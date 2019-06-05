@@ -22,6 +22,10 @@ export default Controller.extend({
     _this.set('status', null);
     _this.set('word', {loading: true});
     _this.set('inflection_options', null);
+    var types = _this.get('word_types');
+    types.forEach(function(type) {
+      emberSet(type, 'checked', false);
+    });
     var locale = (this.get('locale') || window.navigator.language || 'en').split(/-|_/)[0];
     var opts = {locale: locale, for_review: true};
     if(_this.get('ref')) {
@@ -221,9 +225,13 @@ export default Controller.extend({
       _this.set('status', {saving: true});
       word.save().then(function() {
         _this.set('status', null);
-        var found = false;
         _this.get('words').forEach(function(w) {
           if(w.get('word') != _this.get('word.word')) {
+            _this.set('inflection_options', null);
+            var types = _this.get('word_types');
+            types.forEach(function(type) {
+              emberSet(type, 'checked', false);
+            });
             _this.transitionToRoute('inflections', w.get('word'), w.get('locale'));
           }
         });
