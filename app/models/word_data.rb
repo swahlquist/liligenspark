@@ -94,7 +94,7 @@ class WordData < ActiveRecord::Base
   def assert_priority(opts=nil)
     cores = (opts && opts['cores']) || WordData.core_lists.select{|l| l['locale'] == self.locale }
     fringes = (opts && opts['fringes']) || WordData.fringe_lists.select{|l| l['locale'] == self.locale }
-    score = 0
+    scores = []
     return unless self.locale == 'en'
     buttons = nil
     if !opts
@@ -107,19 +107,19 @@ class WordData < ActiveRecord::Base
       end
     end
     if buttons
-      score = 8 if buttons.any?{|b| b['label'] == self.word }
+      scores << 8 if buttons.any?{|b| b['label'] == self.word }
     end
     if cores.length > 0
       core_count = cores.select{|l| l['words'].include?(self.word) }.length
       fringe_count = fringes.select{|l| l['categories'].any?{|c| c['words'].include?(self.word) } }.length
       # something in all the core lists is top priority
-      score = 10 if core_count == cores.length
+      scores << 10 if core_count == cores.length
       # something  in some of the core lists is high priority
-      score = 9 if core_count > 0
+      scores << 9 if core_count > 0
       # something in the fringe lists is moderate priority
-      score == 7 if fringe_count > 0
+      scores << 7 if fringe_count > 0
     end
-    if !score
+    if scores.empty?
       # download word frequency list
       counts = opts && opts['counts']
       if !opts
@@ -136,13 +136,14 @@ class WordData < ActiveRecord::Base
         # any        - 1 point
         idx = counts.index(self.word)
         # score it from 0-5 based on word frequency
-        score ||= 5 if idx && idx < 5000
-        score ||= 4 if idx && idx < 10000
-        score ||= 3 if idx && idx < 25000
-        score ||= 2 if idx && idx < 50000
-        score ||= 1 if idx
+        scores << 5 if idx && idx < 5000
+        scores << 4 if idx && idx < 10000
+        scores << 3 if idx && idx < 25000
+        scores << 2 if idx && idx < 50000
+        scores << 1 if idx
       end
     end
+    score = scores.max || 0
     if score
       self.priority = score
       self.save
