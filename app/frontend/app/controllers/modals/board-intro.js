@@ -10,7 +10,9 @@ export default modal.ModalController.extend({
     this.set('current_step', (this.get('model.board.intro.sections') || [])[step]);
     var user = app_state.get('currentUser');
     var intros = app_state.get('currentUser.preferences.progress.board_intros') || [];
-    intros.push(this.get('model.board.id'));
+    if(intros.indexOf(this.get('model.board.id')) == -1) {
+      intros.push(this.get('model.board.id'));
+    }
     if(user) {
       user.set('preferences.progress.board_intros', intros);
       user.save();

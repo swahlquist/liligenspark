@@ -14,6 +14,11 @@ import {set as emberSet} from '@ember/object';
 import CoughDrop from '../../app';
 
 export default Controller.extend({
+  setup: function() {
+    var str = JSON.stringify(this.get('model.preferences'));
+    this.set('pending_preferences', JSON.parse(str));
+    this.set('original_preferences', JSON.parse(str));
+  },
   speecher: speecher,
   buttonSpacingList: [
     {name: i18n.t('minimal', "Minimal (1px)"), id: "minimal"},
@@ -87,7 +92,7 @@ export default Controller.extend({
   ],
   text_sample_class: function() {
     var res = "text_sample ";
-    var style = Button.style(this.get('model.preferences.device.button_style'));
+    var style = Button.style(this.get('pending_preferences.device.button_style'));
     if(style.upper) {
       res = res + "upper ";
     } else if(style.lower) {
@@ -97,7 +102,7 @@ export default Controller.extend({
       res = res + style.font_class + " ";
     }
     return res;
-  }.property('model.preferences.device.button_style'),
+  }.property('pending_preferences.device.button_style'),
   activationLocationList: [
     {name: i18n.t('pointer_release', "Where I Release My Pointer"), id: "end"},
     {name: i18n.t('pointer_start', "Where I First Press"), id: "start"}
@@ -176,8 +181,8 @@ export default Controller.extend({
     return capabilities.system == 'iOS' && capabilities.installed_app;
   }.property(),
   set_auto_sync: function() {
-    if(this.get('model.preferences.device')) {
-      this.set('model.preferences.device.auto_sync', this.get('model.auto_sync'));
+    if(this.get('pending_preferences.device')) {
+      this.set('pending_preferences.device.auto_sync', this.get('model.auto_sync'));
     }
   }.observes('model.id', 'model.auto_sync'),
   check_calibration: function() {
@@ -198,7 +203,7 @@ export default Controller.extend({
   },
   requested_phrases: function() {
     var list = [].concat(this.get('core_lists.requested_phrases_for_user') || []);
-    var changes = this.get('model.preferences.requested_phrase_changes') || [];
+    var changes = this.get('pending_preferences.requested_phrase_changes') || [];
     changes.forEach(function(change) {
       var str = change.replace(/^(add:|remove:)/, '');
       if(change.match(/^add:/)) {
@@ -208,7 +213,7 @@ export default Controller.extend({
       }
     });
     return list;
-  }.property('core_lists.requested_phrases_for_user', 'model.preferences.requested_phrase_changes'),
+  }.property('core_lists.requested_phrases_for_user', 'pending_preferences.requested_phrase_changes'),
   check_voices_available: function() {
     var _this = this;
     if(capabilities.installed_app) {
@@ -222,59 +227,59 @@ export default Controller.extend({
     }
   },
   text_only_button_text_position: function() {
-    return this.get('model.preferences.device.button_text_position') == 'text_only';
-  }.property('model.preferences.device.button_text_position'),
+    return this.get('pending_preferences.device.button_text_position') == 'text_only';
+  }.property('pending_preferences.device.button_text_position'),
   non_communicator: function() {
-    return this.get('model.preferences.role') != 'communicator';
-  }.property('model.preferences.role'),
+    return this.get('pending_preferences.role') != 'communicator';
+  }.property('pending_preferences.role'),
   region_scanning: function() {
-    return this.get('model.preferences.device.scanning_mode') == 'region';
-  }.property('model.preferences.device.scanning_mode'),
+    return this.get('pending_preferences.device.scanning_mode') == 'region';
+  }.property('pending_preferences.device.scanning_mode'),
   axes_scanning: function() {
-    return this.get('model.preferences.device.scanning_mode') == 'axes';
-  }.property('model.preferences.device.scanning_mode'),
+    return this.get('pending_preferences.device.scanning_mode') == 'axes';
+  }.property('pending_preferences.device.scanning_mode'),
   arrow_dwell: function() {
-    return this.get('model.preferences.device.dwell_type') == 'arrow_dwell';
-  }.property('model.preferences.device.dwell_type'),
+    return this.get('pending_preferences.device.dwell_type') == 'arrow_dwell';
+  }.property('pending_preferences.device.dwell_type'),
   button_dwell: function() {
-    return this.get('model.preferences.device.dwell_selection') == 'button';
-  }.property('model.preferences.device.dwell_selection'),
+    return this.get('pending_preferences.device.dwell_selection') == 'button';
+  }.property('pending_preferences.device.dwell_selection'),
   native_keyboard_available: function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && window.Keyboard;
   }.property(),
   enable_external_keyboard: function() {
-    if(this.get('model.preferences.device.prefer_native_keyboard')) {
-      this.set('model.preferences.device.external_keyboard', true);
+    if(this.get('pending_preferences.device.prefer_native_keyboard')) {
+      this.set('pending_preferences.device.external_keyboard', true);
     }
-  }.observes('model.preferences.device.prefer_native_keyboard'),
+  }.observes('pending_preferences.device.prefer_native_keyboard'),
   select_keycode_string: function() {
-    if(this.get('model.preferences.device.scanning_select_keycode')) {
-      return (i18n.key_string(this.get('model.preferences.device.scanning_select_keycode')) || 'unknown') + ' key';
+    if(this.get('pending_preferences.device.scanning_select_keycode')) {
+      return (i18n.key_string(this.get('pending_preferences.device.scanning_select_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('model.preferences.device.scanning_select_keycode'),
+  }.property('pending_preferences.device.scanning_select_keycode'),
   next_keycode_string: function() {
-    if(this.get('model.preferences.device.scanning_next_keycode')) {
-      return (i18n.key_string(this.get('model.preferences.device.scanning_next_keycode')) || 'unknown') + ' key';
+    if(this.get('pending_preferences.device.scanning_next_keycode')) {
+      return (i18n.key_string(this.get('pending_preferences.device.scanning_next_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('model.preferences.device.scanning_next_keycode'),
+  }.property('pending_preferences.device.scanning_next_keycode'),
   prev_keycode_string: function() {
-    if(this.get('model.preferences.device.scanning_prev_keycode')) {
-      return (i18n.key_string(this.get('model.preferences.device.scanning_prev_keycode')) || 'unknown') + ' key';
+    if(this.get('pending_preferences.device.scanning_prev_keycode')) {
+      return (i18n.key_string(this.get('pending_preferences.device.scanning_prev_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('model.preferences.device.scanning_prev_keycode'),
+  }.property('pending_preferences.device.scanning_prev_keycode'),
   cancel_keycode_string: function() {
-    if(this.get('model.preferences.device.scanning_cancel_keycode')) {
-      return (i18n.key_string(this.get('model.preferences.device.scanning_cancel_keycode')) || 'unknown') + ' key';
+    if(this.get('pending_preferences.device.scanning_cancel_keycode')) {
+      return (i18n.key_string(this.get('pending_preferences.device.scanning_cancel_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('model.preferences.device.scanning_cancel_keycode'),
+  }.property('pending_preferences.device.scanning_cancel_keycode'),
   fullscreen_capable: function() {
     return capabilities.fullscreen_capable();
   }.property(),
@@ -285,15 +290,15 @@ export default Controller.extend({
     return capabilities.eye_gaze.available || buttonTracker.mouse_used;
   }.property(),
   eyegaze_type: function() {
-    return this.get('model.preferences.device.dwell') && this.get('model.preferences.device.dwell_type') == 'eyegaze';
-  }.property('model.preferences.device.dwell', 'model.preferences.device.dwell_type'),
+    return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
+  }.property('pending_preferences.device.dwell', 'pending_preferences.device.dwell_type'),
   update_dwell_defaults: function() {
-    if(this.get('model.preferences.device.dwell')) {
-      if(!this.get('model.preferences.device.dwell_type')) {
-        this.set('model.preferences.device.dwell_type', 'eyegaze');
+    if(this.get('pending_preferences.device.dwell')) {
+      if(!this.get('pending_preferences.device.dwell_type')) {
+        this.set('pending_preferences.device.dwell_type', 'eyegaze');
       }
     }
-  }.observes('model.preferences.device.dwell'),
+  }.observes('pending_preferences.device.dwell'),
   wakelock_capable: function() {
     return capabilities.wakelock_capable();
   }.property(),
@@ -322,26 +327,26 @@ export default Controller.extend({
     }
     // this is a weird hack because the the voice uri needs to be set *after* the
     // voice list is generated in order to make sure the correct default is selected
-    var val = this.get('model.preferences.device.voice.voice_uri');
-    this.set('model.preferences.device.voice.voice_uri', 'tmp_needs_changing');
+    var val = this.get('pending_preferences.device.voice.voice_uri');
+    this.set('pending_preferences.device.voice.voice_uri', 'tmp_needs_changing');
     var _this = this;
     runLater(function() {
-      _this.set('model.preferences.device.voice.voice_uri', val);
+      _this.set('pending_preferences.device.voice.voice_uri', val);
     });
     return result;
-  }.property('speecher.voiceList', 'model.premium_voices.claimed', 'model.preferences.device.voice.voice_uris'),
+  }.property('speecher.voiceList', 'model.premium_voices.claimed', 'pending_preferences.device.voice.voice_uris'),
   active_sidebar_options: function() {
-    var res = this.get('model.preferences.sidebar_boards');
+    var res = this.get('pending_preferences.sidebar_boards');
     if(!res || res.length === 0) {
      res = [].concat(window.user_preferences.any_user.default_sidebar_boards);
     }
     res.forEach(function(b, idx) { b.idx = idx; });
     return res;
-  }.property('model.preferences.sidebar_boards'),
+  }.property('pending_preferences.sidebar_boards'),
   disabled_sidebar_options: function() {
     var defaults = window.user_preferences.any_user.default_sidebar_boards;
     if(this.get('include_prior_sidebar_buttons')) {
-      (this.get('model.preferences.prior_sidebar_boards') || []).forEach(function(b) {
+      (this.get('pending_preferences.prior_sidebar_boards') || []).forEach(function(b) {
         if(!defaults.find(function(o) { return (o.key && o.key == b.key) || (o.alert && b.alert); })) {
           defaults.push(b);
         }
@@ -355,50 +360,50 @@ export default Controller.extend({
       }
     });
     return res;
-  }.property('model.preferences.sidebar_boards', 'include_prior_sidebar_buttons', 'model.preferences.prior_sidebar_boards'),
+  }.property('pending_preferences.sidebar_boards', 'include_prior_sidebar_buttons', 'pending_preferences.prior_sidebar_boards'),
   disabled_sidebar_options_or_prior_sidebar_boards: function() {
-    return (this.get('disabled_sidebar_options') || []).length > 0 || (this.get('model.preferences.prior_sidebar_boards') || []).length > 0;
-  }.property('disabled_sidebar_options', 'model.preferences.prior_sidebar_boards'),
+    return (this.get('disabled_sidebar_options') || []).length > 0 || (this.get('pending_preferences.prior_sidebar_boards') || []).length > 0;
+  }.property('disabled_sidebar_options', 'pending_preferences.prior_sidebar_boards'),
   logging_changed: function() {
-    if(this.get('model.preferences.logging')) {
+    if(this.get('pending_preferences.logging')) {
       if(this.get('logging_set') === false) {
         modal.open('enable-logging', {save: false, user: this.get('model')});
       }
     }
-    this.set('logging_set', this.get('model.preferences.logging'));
-  }.observes('model.preferences.logging'),
+    this.set('logging_set', this.get('pending_preferences.logging'));
+  }.observes('pending_preferences.logging'),
   buttons_stretched: function() {
-    return this.get('model.preferences.stretch_buttons') && this.get('model.preferences.stretch_buttons') != 'none';
-  }.property('model.preferences.stretch_buttons'),
+    return this.get('pending_preferences.stretch_buttons') && this.get('pending_preferences.stretch_buttons') != 'none';
+  }.property('pending_preferences.stretch_buttons'),
   enable_alternate_voice: function() {
-    var alt = this.get('model.preferences.device.alternate_voice') || {};
+    var alt = this.get('pending_preferences.device.alternate_voice') || {};
     if(alt.enabled && alt.for_scanning === undefined && alt.for_fishing === undefined && alt.for_buttons === undefined) {
       emberSet(alt, 'for_scanning', true);
     }
     if(alt.for_scanning || alt.for_fishing || alt.for_buttons) {
       emberSet(alt, 'enabled', true);
     }
-    this.set('model.preferences.device.alternate_voice', alt);
-  }.observes('model.preferences.device.alternate_voice.enabled', 'model.preferences.device.alternate_voice.for_scanning', 'model.preferences.device.alternate_voice.for_fishing', 'model.preferences.device.alternate_voice.for_buttons'),
+    this.set('pending_preferences.device.alternate_voice', alt);
+  }.observes('pending_preferences.device.alternate_voice.enabled', 'pending_preferences.device.alternate_voice.for_scanning', 'pending_preferences.device.alternate_voice.for_fishing', 'pending_preferences.device.alternate_voice.for_buttons'),
   not_scanning: function() {
-    return !this.get('model.preferences.device.scanning');
-  }.property('model.preferences.device.scanning'),
+    return !this.get('pending_preferences.device.scanning');
+  }.property('pending_preferences.device.scanning'),
   not_fishing: function() {
-    return !this.get('model.preferences.device.fishing');
-  }.property('model.preferences.device.fishing'),
+    return !this.get('pending_preferences.device.fishing');
+  }.property('pending_preferences.device.fishing'),
   audio_switching_delays: function() {
     if(this.get('audio_target_available') && capabilities.system == 'Android') {
       var res = {};
-      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('model.preferences.device.voice.target')) != -1) {
+      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.voice.target')) != -1) {
         res.primary = true;
       }
-      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('model.preferences.device.alternate_voice.target')) != -1) {
+      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.alternate_voice.target')) != -1) {
         res.alternate = true;
       }
     } else {
       return {};
     }
-  }.property('model.preferences.device.voice.target', 'model.preference.device.alternate_voice.target'),
+  }.property('pending_preferences.device.voice.target', 'pending_preferences.device.alternate_voice.target'),
   audio_target_available: function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android');
   }.property(),
@@ -422,51 +427,51 @@ export default Controller.extend({
         max = 2.0;
       } else if(attribute.match(/pitch/)) {
         max = 2.0;
-      } else if(attribute == 'model.preferences.activation_cutoff') {
+      } else if(attribute == 'pending_preferences.activation_cutoff') {
         min = 0;
         max = 5000;
         step = 100;
         default_value = 0;
         empty_on_default = true;
-      } else if(attribute == 'model.preferences.activation_minimum') {
+      } else if(attribute == 'pending_preferences.activation_minimum') {
         min = 0;
         max = 5000;
         step = 100;
         default_value = 0;
         empty_on_default = true;
-      } else if(attribute == 'model.preferences.device.eyegaze_dwell') {
+      } else if(attribute == 'pending_preferences.device.eyegaze_dwell') {
         min = 0;
         max = 5000;
         step = 100;
         default_value = 1000;
         empty_on_default = true;
-      } else if(attribute == 'model.preferences.device.eyegaze_delay') {
+      } else if(attribute == 'pending_preferences.device.eyegaze_delay') {
         min = 0;
         max = 5000;
         step = 100;
         default_value = 100;
         empty_on_default = true;
-      } else if(attribute == 'model.preferences.device.dwell_duration') {
+      } else if(attribute == 'pending_preferences.device.dwell_duration') {
         min = 0;
         max = 20000;
         step = 100;
         default_value = 1000;
         empty_on_default = true;
-      } else if(attribute == 'model.preferences.board_jump_delay') {
+      } else if(attribute == 'pending_preferences.board_jump_delay') {
         min = 100;
         max = 5000;
         step = 100;
         default_value = 500;
-      } else if(attribute == 'model.preferences.device.scanning_interval') {
+      } else if(attribute == 'pending_preferences.device.scanning_interval') {
         min = 0;
         max = 5000;
         step = 100;
         default_value = 1000;
-      } else if(attribute == 'model.preferences.device.scanning_region_columns' || attribute == 'model.preferences.device.scanning_region_rows') {
+      } else if(attribute == 'pending_preferences.device.scanning_region_columns' || attribute == 'pending_preferences.device.scanning_region_rows') {
         min = 1;
         max = 10;
         step = 1;
-      } else if(attribute == 'model.preferences.debounce') {
+      } else if(attribute == 'pending_preferences.debounce') {
         min = 0;
         max = 5000;
         step = 100;
@@ -487,22 +492,52 @@ export default Controller.extend({
     savePreferences: function() {
       // TODO: add a "save pending..." status somewhere
       // TODO: this same code is in utterance.js...
-      var pitch = parseFloat(this.get('model.preferences.device.voice.pitch'));
+      var pitch = parseFloat(this.get('pending_preferences.device.voice.pitch'));
       if(isNaN(pitch)) { pitch = 1.0; }
-      var volume = parseFloat(this.get('model.preferences.device.voice.volume'));
+      var volume = parseFloat(this.get('pending_preferences.device.voice.volume'));
       if(isNaN(volume)) { volume = 1.0; }
-      this.set('model.preferences.device.voice.pitch', pitch);
-      this.set('model.preferences.device.voice.volume', volume);
+      this.set('pending_preferences.device.voice.pitch', pitch);
+      this.set('pending_preferences.device.voice.volume', volume);
       var _this = this;
       ['debounce', 'device.dwell_release_distance', 'device.scanning_next_keycode', 'device.scanning_prev_keycode', 'device.scanning_region_columns', 'device.scanning_region_rows', 'device.scanning_select_keycode', 'device.scanning_interval'].forEach(function(key) {
-        var val = _this.get('model.preferences.' + key);
+        var val = _this.get('pending_preferences.' + key);
         if(val && val.match && val.match(/\d/)) {
           var num = parseInt(val, 10);
-          _this.set('model.preferences.' + key, num);
+          _this.set('pending_preferences.' + key, num);
         }
       });
 
       var user = this.get('model');
+      var pending = this.get('pending_preferences');
+      var orig = this.get('original_preferences');
+      // check for values that have actually changed since page load
+      for(var key in pending) {
+        if(pending[key] == null) {
+          if(orig[key] == null) { } else {
+            user.set('preferences.' + key, pending[key]);
+          }
+        } else if(key == 'device') {
+          for(var dkey in pending[key]) {
+            if(['string', 'boolean', 'number'].indexOf(typeof(pending[key][dkey])) != -1) {
+              if(pending[key][dkey] != orig[key][dkey]) {
+                user.set('preferences.device.' + dkey, pending[key][dkey]);
+              }
+            } else if(pending[key][dkey] == null) {
+              if(orig[key][dkey] == null) { } else {
+                user.set('preferences.device.' + dkey, pending[key][dkey]);
+              }
+            } else if(pending[key][dkey] != orig[key][dkey]) {
+              user.set('preferences.device.' + dkey, pending[key][dkey]);
+            }
+          }
+        } else if(['string', 'boolean', 'number'].indexOf(typeof(pending[key])) != -1) {
+          if(pending[key] != orig[key]) {
+            user.set('preferences.' + key, pending[key]);
+          }
+        } else {
+          user.set('preferences.' + key, pending[key]);
+        }
+      }
       user.set('preferences.progress.preferences_edited', true);
       user.set('preferences.device.updated', true);
       var _this = this;
@@ -540,7 +575,7 @@ export default Controller.extend({
           swap.push(active[button.idx - 1]);
         }
         var post = active.slice(button.idx + 1);
-        this.set('model.preferences.sidebar_boards', pre.concat(swap, post));
+        this.set('pending_preferences.sidebar_boards', pre.concat(swap, post));
       } else if(direction == 'down') {
         var pre = active.slice(0, Math.max(0, button.idx));
         var swap = [button];
@@ -548,17 +583,17 @@ export default Controller.extend({
           swap.unshift(active[button.idx + 1]);
         }
         var post = active.slice(button.idx + 2);
-        this.set('model.preferences.sidebar_boards', pre.concat(swap, post));
+        this.set('pending_preferences.sidebar_boards', pre.concat(swap, post));
       } else if(direction == 'delete') {
         var pre = active.slice(0, button.idx);
         var post = active.slice(button.idx + 1);
-        var prior = [].concat(this.get('model.preferences.prior_sidebar_boards') || []);
+        var prior = [].concat(this.get('pending_preferences.prior_sidebar_boards') || []);
         prior.push(button);
         prior = prior.uniq(function(o) { return o.special ? (o.alert + "_" + o.action + "_" + o.arg) : o.key; });
-        this.set('model.preferences.prior_sidebar_boards', prior);
-        this.set('model.preferences.sidebar_boards', pre.concat(post));
+        this.set('pending_preferences.prior_sidebar_boards', prior);
+        this.set('pending_preferences.sidebar_boards', pre.concat(post));
       } else if(direction == 'restore') {
-        this.set('model.preferences.sidebar_boards', active.concat([button]));
+        this.set('pending_preferences.sidebar_boards', active.concat([button]));
       }
     },
     test_dwell: function() {
@@ -570,9 +605,9 @@ export default Controller.extend({
     },
     test_voice: function(which) {
       if(which == 'alternate') {
-        utterance.test_voice(this.get('model.preferences.device.alternate_voice.voice_uri'), this.get('model.preferences.device.alternate_voice.rate'), this.get('model.preferences.device.alternate_voice.pitch'), this.get('model.preferences.device.alternate_voice.volume'), this.get('model.preferences.device.alternate_voice.target'));
+        utterance.test_voice(this.get('pending_preferences.device.alternate_voice.voice_uri'), this.get('pending_preferences.device.alternate_voice.rate'), this.get('pending_preferences.device.alternate_voice.pitch'), this.get('pending_preferences.device.alternate_voice.volume'), this.get('pending_preferences.device.alternate_voice.target'));
       } else {
-        utterance.test_voice(this.get('model.preferences.device.voice.voice_uri'), this.get('model.preferences.device.voice.rate'), this.get('model.preferences.device.voice.pitch'), this.get('model.preferences.device.voice.volume'), this.get('model.preferences.device.voice.target'));
+        utterance.test_voice(this.get('pending_preferences.device.voice.voice_uri'), this.get('pending_preferences.device.voice.rate'), this.get('pending_preferences.device.voice.pitch'), this.get('pending_preferences.device.voice.volume'), this.get('pending_preferences.device.voice.target'));
       }
     },
     delete_logs: function() {
@@ -588,11 +623,11 @@ export default Controller.extend({
       });
     },
     add_phrase: function() {
-      var list = this.get('model.preferences.requested_phrase_changes') || [];
+      var list = this.get('pending_preferences.requested_phrase_changes') || [];
       var str = this.get('new_phrase');
       list = list.filter(function(p) { return (p != "add:" + str) && (p != "remove:" + str); });
       list.push("add:" + str);
-      this.set('model.preferences.requested_phrase_changes', list);
+      this.set('pending_preferences.requested_phrase_changes', list);
     },
     calibrate: function() {
       capabilities.eye_gaze.calibratable(function(res) {
@@ -604,16 +639,16 @@ export default Controller.extend({
       });
     },
     remove_phrase: function(str) {
-      var list = this.get('model.preferences.requested_phrase_changes') || [];
+      var list = this.get('pending_preferences.requested_phrase_changes') || [];
       list = list.filter(function(p) { return (p != "add:" + str) && (p != "remove:" + str); });
       list.push("remove:" + str);
-      this.set('model.preferences.requested_phrase_changes', list);
+      this.set('pending_preferences.requested_phrase_changes', list);
     },
     program_tag: function() {
       modal.open('modals/program-nfc', {listen: true});
     },
     clear_nfc_tags: function() {
-      this.set('model.preferences.tag_ids', []);
+      this.set('pending_preferences.tag_ids', []);
     },
     edit_sidebar: function() {
       this.set('editing_sidebar', true);
@@ -622,9 +657,9 @@ export default Controller.extend({
       var _this = this;
       _this.set('add_sidebar_board_error', null);
       var add_board = function(opts) {
-        var boards = [].concat(_this.get('model.preferences.sidebar_boards') || []);
+        var boards = [].concat(_this.get('pending_preferences.sidebar_boards') || []);
         boards.unshift(opts);
-        _this.set('model.preferences.sidebar_boards', boards);
+        _this.set('pending_preferences.sidebar_boards', boards);
         _this.set('new_sidebar_board', null);
       };
       if(key.match(/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_:%-]+|\d+_\d+/)) {
@@ -645,7 +680,7 @@ export default Controller.extend({
           var arg = key.slice(action.length + 1, key.length - 1);
         }
         var image_url = "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/touch_437_g.svg";
-        var special = CoughDrop.find_special_action(part);
+        var special = CoughDrop.find_special_action(key);
         if(special && !special.completion && !special.modifier) {
           add_board({
             name: action.slice(1),
