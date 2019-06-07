@@ -273,6 +273,8 @@ class User < ActiveRecord::Base
     self.settings['preferences']['devices']['default'] ||= {}
     self.settings['preferences']['devices']['default']['name'] ||= "Web browser for Desktop"
     self.settings['preferences']['devices'].each do |key, hash|
+      self.settings['preferences']['devices'][key]['voice']['voice_uris'].uniq! if self.settings['preferences']['devices'][key]['voice'] && self.settings['preferences']['devices'][key]['voice']['voice_uris']
+      self.settings['preferences']['devices'][key]['alternate_voice']['voice_uris'].uniq! if self.settings['preferences']['devices'][key]['alternate_voice'] && self.settings['preferences']['devices'][key]['alternate_voice']['voice_uris']
       User.preference_defaults['device'].each do |attr, val|
         self.settings['preferences']['devices'][key][attr] = val if self.settings['preferences']['devices'][key][attr] == nil
       end
@@ -669,6 +671,9 @@ class User < ActiveRecord::Base
     if params['preferences'] && params['preferences']['progress']
       PROGRESS_PARAMS.each do |attr|
         self.settings['preferences']['progress'][attr] = params['preferences']['progress'][attr] if params['preferences']['progress'][attr]
+      end
+      if self.settings['preferences']['progress']['board_intros']
+        self.settings['preferences']['progress']['board_intros'] = self.settings['preferences']['progress']['board_intros'].uniq
       end
     end
     if params['preferences'] && params['preferences']['requested_phrase_changes']
