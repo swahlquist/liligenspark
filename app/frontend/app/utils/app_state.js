@@ -1886,15 +1886,15 @@ var app_state = EmberObject.extend({
     stashes.log(obj);
     var _this = this;
 
-    if((app_state.get('currentUser.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
-      if(button_added_or_spoken || app_state.get('currentUser.preferences.highlighted_buttons') == 'all') {
+    if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
+      if(button_added_or_spoken || app_state.get('referenced_user.preferences.highlighted_buttons') == 'all') {
         app_state.highlight_selected_button(button, overlay);
       }
     }
 
     // additional actions (besides just speaking) will be necessary for some buttons
     if(button.load_board && button.load_board.key) {
-      var user_prefers_native_keyboard = app_state.get('currentUser.preferences.prefer_native_keyboard') || window.user_preferences.any_user.prefer_native_keyboard;
+      var user_prefers_native_keyboard = app_state.get('referenced_user.preferences.prefer_native_keyboard') || window.user_preferences.any_user.prefer_native_keyboard;
       var native_keyboard_available = capabilities.install_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && !buttonTracker.scanning_enabled;
       if((button.vocalization || '').match(/:native-keyboard/) && native_keyboard_available && user_prefers_native_keyboard && window.Keyboard && window.Keyboard.hide) {
         scanner.native_keyboard();
@@ -2005,18 +2005,156 @@ var app_state = EmberObject.extend({
     if(button.id != -1 && $button.length) {
       var $board = $(".board:first");
       var board_offset = $board.offset();
-      var $clone = $button.clone().addClass('hover_button').addClass('touched');
       var width = $button.outerWidth();
       var height = $button.outerHeight();
       var offset = $button.offset();
-      $clone.css({
-        position: 'absolute',
-        top: offset.top - board_offset.top,
-        left: offset.left - board_offset.left,
-        width: width + 4,
-        height: height + 4,
-        margin: -2
-      });
+      var $clone = $button.clone().addClass('hover_button').addClass('touched');
+      var wait_to_fade = 10;
+      // TODO: wait_to_fade should be configurable maybe
+      if(app_state.get('referenced_user.preferences.highlight_popup_text')) {
+        // https://rerc-aac.psu.edu/1819-2/
+        var popup_width = Math.min(400, window.innerWidth);
+        var popup_height = Math.min(200, window.innerHeight - board_offset.top);
+        var popup_top = Math.max(0, offset.top - board_offset.top - popup_height);
+        var below = false;
+        // if the popup overlaps the button
+        if(popup_top + popup_height > offset.top + height) {
+          // ..and there is room underneath the button
+          if(window.innerHeight > offset.top + height + popup_height) {
+            popup_top = offset.top - board_offset.top + height;
+            below = true;
+          }
+        }
+        wait_to_fade = 5000;
+        $clone = $("<div/>").addClass('button').addClass('hover_button');
+        var popup_left = offset.left + (width / 2) - board_offset.left - (popup_width / 2);
+        var marg = popup_height;
+        if(offset.top - board_offset.top - popup_height < 0) {
+          marg = offset.top - board_offset.top;
+        }
+        $clone.css({
+          position: 'absolute',
+          top: popup_top,
+          zIndex: 9,
+          left: popup_left,
+          width: 20,
+          height: 10,
+          opacity: 0.0,
+          marginTop: below ? -10 : marg,
+          marginLeft: (popup_width - 20) / 2,
+          border: '1px solid #000',
+          background: '#fff'
+        });
+        $clone.addClass('text_popup');
+        var $canvas = $("<canvas/>");
+        $canvas.attr({width: popup_width * 2, height: popup_height * 2});
+        $canvas.css({
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%'
+        });
+        var context = $canvas[0].getContext('2d');
+        var text = button.vocalization || button.label;
+        var max_font_size = 120;
+        var text_height = max_font_size;
+        var style = Button.style(app_state.controller.get('board.button_style')) || {};
+        var font_family = style.font_family || 'Arial';
+  
+        context.font = text_height + "px " + font_family;
+        var rows = 1;
+        var lines = [text];
+        var max_text_width = context.measureText(text).width / 2;
+        var trim_line = function(text, length) {
+          var pre = length, post = length;
+          while(true) {
+            if(text.charAt(pre).match(/\s/)) {
+              return [text.substring(0, pre), text.substring(pre + 1)];
+            } else if(text.charAt(post).match(/\s/)) {
+              return [text.substring(0, post), text.substring(post + 1)];
+            } else if(pre <= 0 && post >= text.length) {
+              return [text, ""];  
+            } else {
+              pre--;
+              post++;
+            }
+          }
+        }
+        var stay_put = false;
+        var max_lines = 4;
+        while(max_text_width > popup_width && rows <= max_lines) {
+          var text_cutoff = (rows == max_lines || stay_put) ? 50 : 80;
+          while(text_height > text_cutoff && max_text_width > popup_width) {
+            var widths = [];
+            text_height = text_height - 10;
+            context.font = text_height + "px " + font_family;
+            max_text_width = Math.max.apply(null, lines.map(function(l) { return context.measureText(l).width; })) / 2;
+          }
+          if(max_text_width > popup_width && rows < max_lines && !stay_put) {
+            rows++;
+            var last_lines = lines;
+            lines = [];
+            var line_length = text.length / rows;
+            var leftover = text;
+            for(var i = 0; i < rows; i++) {
+              if(i == rows - 1) {
+                lines.push(leftover);
+              } else {
+                var arr = trim_line(leftover, line_length);
+                leftover = arr[1];
+                lines.push(arr[0]);
+              }
+            }
+            var last_max_length = Math.max.apply(null, last_lines.map(function(l) { return l.length; }));
+            var new_max_length = Math.max.apply(null, lines.map(function(l) { return l.length; }));
+            if(last_max_length == new_max_length) {
+              stay_put = true;
+              lines = last_lines;
+            }
+            text_height = max_font_size + 20 - (lines.length * 10);
+          }
+        }
+        context.textAlign = 'center';
+        context.fillStyle = '#000';
+        context.measureText(text);
+        var text_top = popup_height - ((text_height + 5) * lines.length / 2);
+        lines.forEach(function(line, idx) {
+          context.fillText(line, popup_width, text_top - (text_height / 6) + ((text_height + 5) * (idx + 1)));
+        });
+
+        $clone.append($canvas);
+        runLater(function() {
+          $clone.css({
+            width: 400,
+            height: 200,
+            opacity: 1.0,
+            marginLeft: Math.min(Math.max(0, -1 * popup_left + 5), window.innerWidth - popup_left - popup_width - 5),
+            marginTop: below ? 10 : -10
+          })
+        });
+        runLater(function() {
+          $clone.css({
+            width: 20,
+            height: 10,
+            opacity: 0.0,
+            marginTop: below ? -10 : marg,
+            marginLeft: (popup_width - 20) / 2,
+          });
+        }, wait_to_fade);
+        // pop-up speech
+      } else {
+        $clone.css({
+          position: 'absolute',
+          top: offset.top - board_offset.top,
+          left: offset.left - board_offset.left,
+          width: width + 4,
+          height: height + 4,
+          margin: -2
+        });
+      }
 
       $board.append($clone);
       $clone.addClass('selecting');
@@ -2048,7 +2186,7 @@ var app_state = EmberObject.extend({
           $clone.remove();
         }, 3000);
         $button.data('later', later);
-      });
+      }, wait_to_fade);
     }
   },
   possible_auto_home: function(obj) {

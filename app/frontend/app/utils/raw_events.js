@@ -274,9 +274,6 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_start: function(event) {
-    if($(event.target).closest('.hover_button').length) {
-      $(event.target).closest('.hover_button').remove();
-    }
     buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
 
     var $overlay = $("#overlay_container");
@@ -344,6 +341,15 @@ var buttonTracker = EmberObject.extend({
         }
       }, 2000);
       return;
+    }
+    if((event.type == 'touchstart' || event.type == 'mousedown') && $(event.target).closest('.hover_button').length) {
+      var text_popup = $(event.target).closest('.hover_button').hasClass('text_popup');
+      $(event.target).closest('.hover_button').remove();
+      if(text_popup) { 
+        event.preventDefault(); 
+        buttonTracker.ignoreUp = true; 
+        return false; 
+      }
     }
 
     // not the best approach, but I was getting tired of all the selected text blue things when

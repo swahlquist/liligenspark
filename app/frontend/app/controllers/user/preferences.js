@@ -59,6 +59,9 @@ export default Controller.extend({
     {name: i18n.t('highlight_all', "Highlight All Buttons on Selection"), id: "all"},
     {name: i18n.t('highlight_spoken', "Highlight Spoken Buttons on Selection"), id: "spoken"},
   ],
+  some_highlighted_buttons: function() {
+    return this.get('pending_preferences.highlighted_buttons') && this.get('pending_preferences.highlighted_buttons') != 'none';
+  }.property('pending_preferences.highlighted_buttons'),
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
     {name: i18n.t('default_font_caps', "Default Font, All Uppercase"), id: "default_caps"},

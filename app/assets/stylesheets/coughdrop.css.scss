@@ -937,12 +937,23 @@ footer .wide_links {
   outline: none;
   overflow: hidden;
   opacity: 1.0;
-  &.fading {
+  &.hover_button {
     box-shadow: 6px 6px 20px rgba(60, 60, 60, 0.7), -2px -2px 20px rgba(60, 60, 60, 0.7), 6px 6px 30px rgba(255, 255, 0, 0.8), -2px -2px 30px rgba(255, 0, 0, 0.8);
+  }
+  &.fading {
     transition: opacity 0.5s linear 0.9s;
     opacity: 0.0;
   }
+  &.text_popup {
+    transition: width 2s ease-in-out, height 2s ease-in-out, margin-left 2s ease-in-out, margin-top 2s ease-in-out, opacity .3s ease-in-out;
+    position: relative;
+    opacity: 0.0;
+  }
+  &.fading.text_popup {
+    transition: width 2s ease-in-out, height 2s ease-in-out, margin-left 2s ease-in-out, margin-top 2s ease-in-out, opacity 1s ease-in-out 0.9s;
+  }
 }
+  
 #stash_hover {
   position: absolute; 
   cursor: pointer;

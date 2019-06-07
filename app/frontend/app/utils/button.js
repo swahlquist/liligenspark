@@ -550,12 +550,16 @@ Button.style = function(style) {
   } else if(style.match(/small$/)) {
     res.lower = true;
   }
+  res.font_family = "Arial";
   if(style.match(/^comic_sans/)) {
     res.font_class = "comic_sans";
+    res.font_family = "Comic Sans MS";
   } else if(style.match(/open_dyslexic/)) {
     res.font_class = "open_dyslexic";
+    res.font_family = "OpenDyslexic";
   } else if(style.match(/architects_daughter/)) {
     res.font_class = "architects_daughter";
+    res.font_family = "ArchitectsDaughter";
   }
 
   return res;
