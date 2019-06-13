@@ -1087,6 +1087,7 @@ class LogSession < ActiveRecord::Base
     Octopus.using(:master) do
       session = LogSession.find_or_create_by(:log_type => 'daily_use', :user_id => non_user_params[:author].id)
       session.with_lock do
+        session.assert_extra_data
         session.author = non_user_params[:author]
         session.device = non_user_params[:device]
         session.data['events'] = []
@@ -1112,6 +1113,7 @@ class LogSession < ActiveRecord::Base
     Octopus.using(:master) do
       session = LogSession.find_or_create_by(log_type: 'modeling_activities', user_id: non_user_params[:user].id)
       session.with_lock do
+        session.assert_extra_data
         session.author ||= non_user_params[:user]
         session.device ||= non_user_params[:device]
         session.data['events'] ||= []
