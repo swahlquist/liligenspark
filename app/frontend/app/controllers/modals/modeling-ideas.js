@@ -152,15 +152,11 @@ export default modal.ModalController.extend({
       offset = ((index - cutoff_chunk) * units * 2) + units;
     }
     var check_word = app_state.get('speak_mode_modeling_ideas.word');
-    middles.forEach(function(a, idx) { 
-      middles.for_suggest_word = (a.word == check_word);
-    });
+    var for_word = [];
     if(app_state.get('speak_mode_modeling_ideas.enabled')) {
-      middles = middles.sort(function(a, b) { 
-        return (b.word == check_word ? 1 : 0) - (a.word == check_word ? 1 : 0); 
-      });  
+      for_word = middles.filter(function(a) { return a.word == check_word; });
     }
-    middles = middles.slice(offset, offset + 8);
+    middles = for_word.concat(middles.slice(offset, offset + 8)).uniq().slice(0, 8);
     res = res.concat(middles);
 
     if(res.length == empty_num) {
