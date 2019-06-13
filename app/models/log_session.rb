@@ -826,8 +826,8 @@ class LogSession < ActiveRecord::Base
   def geo_object
     @geo ||= ClusterLocation.geo_object(self)
   end
-  
-  def split_out_later_sessions(frd=false)
+
+  def session_split_check
     cutoff = (self.user && self.user.log_session_duration) || User.default_log_session_duration
     last_stamp = nil
     sessions = []
@@ -852,49 +852,56 @@ class LogSession < ActiveRecord::Base
     end
     sessions << current_session if current_session.length > 0
     sessions += more_sessions
+  end
+  
+  def split_out_later_sessions(frd=false)
+    sessions = session_split_check
     if sessions.length > 1
       if !frd
         schedule(:split_out_later_sessions, true)
       else
-        self.data['events'] = sessions.shift
-        sessions.each do |session|
-          user_id = session.map{|e| e['user_id'] }.compact.first || (self.user && self.user.global_id)
-          user = User.find_by_global_id(user_id)
-          # TODO: right now this silently throws away any unauthorized log attempts. Is this a good idea?
-          if user && user.allows?(self.author, 'supervise')
-            params = {:events => session}
-            event = session[0] if session.length == 1
-            if event && event['note']
-              params = event['note']
-            elsif event && event['assessment']
-              params = event['assessment']
-            elsif event && event['share']
-              utterance = Utterance.process_new({
-                button_list: event['share']['utterance'],
-                sentence: event['share']['sentence']
-              }, {:user => user})
-              utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
-              params = nil
-              # TODO: schedule background job to process user share
-            elsif event && event['alert']
-              opts = {}.merge(event['alert'])
-              opts['author_id'] = self.author.global_id
-              LogSession.schedule(:handle_alert, opts)
-              params = nil
+        self.with_lock do
+          sessions = session_split_check
+          self.data['events'] = sessions.shift
+          sessions.each do |session|
+            user_id = session.map{|e| e['user_id'] }.compact.first || (self.user && self.user.global_id)
+            user = User.find_by_global_id(user_id)
+            # TODO: right now this silently throws away any unauthorized log attempts. Is this a good idea?
+            if user && user.allows?(self.author, 'supervise')
+              params = {:events => session}
+              event = session[0] if session.length == 1
+              if event && event['note']
+                params = event['note']
+              elsif event && event['assessment']
+                params = event['assessment']
+              elsif event && event['share']
+                utterance = Utterance.process_new({
+                  button_list: event['share']['utterance'],
+                  sentence: event['share']['sentence']
+                }, {:user => user})
+                utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
+                params = nil
+                # TODO: schedule background job to process user share
+              elsif event && event['alert']
+                opts = {}.merge(event['alert'])
+                opts['author_id'] = self.author.global_id
+                LogSession.schedule(:handle_alert, opts)
+                params = nil
+              end
+              LogSession.process_new(params, {
+                :ip_address => self.data['id_address'], 
+                :device => self.device,
+                :author => self.author,
+                :user => user
+              }) if params
             end
-            LogSession.process_new(params, {
-              :ip_address => self.data['id_address'], 
-              :device => self.device,
-              :author => self.author,
-              :user => user
-            }) if params
           end
-        end
-        self.processed = true
-        if self.data['events'].length == 0
-          self.destroy
-        else
-          self.save
+          self.processed = true
+          if self.data['events'].length == 0
+            self.destroy
+          else
+            self.save
+          end
         end
       end
     elsif !self.processed
@@ -1055,8 +1062,10 @@ class LogSession < ActiveRecord::Base
     if params['events']
       params['events'] = valid_events
       if active_session && !non_user_params['imported']
-        active_session.process(params, non_user_params)
-        active_session.schedule(:check_for_merger)
+        active_session.with_lock do
+          active_session.process(params, non_user_params)
+          active_session.schedule(:check_for_merger)
+        end
       else
         session = self.process_new(params, non_user_params)
         session.schedule(:check_for_merger)
@@ -1070,40 +1079,44 @@ class LogSession < ActiveRecord::Base
   def self.process_daily_use(params, non_user_params)
     raise "author required" unless non_user_params[:author]
     session = LogSession.find_or_create_by(:log_type => 'daily_use', :user_id => non_user_params[:author].id)
-    session.author = non_user_params[:author]
-    session.device = non_user_params[:device]
-    session.data['events'] = []
-    days = session.data['days'] || {}
-    params['events'].each do |day|
-      existing_day = days[day['date']]
-      existing_day = nil unless existing_day.is_a?(Hash)
-      day = day.to_unsafe_h if day.respond_to?(:to_unsafe_h)
-      existing_day ||= day
-      existing_day['active'] ||= day['active']
-      existing_day['activity_level'] = [(existing_day || {})['activity_level'], (day || {})['activity_level']].compact.max
-      days[day['date']] = existing_day
+    session.with_lock do
+      session.author = non_user_params[:author]
+      session.device = non_user_params[:device]
+      session.data['events'] = []
+      days = session.data['days'] || {}
+      params['events'].each do |day|
+        existing_day = days[day['date']]
+        existing_day = nil unless existing_day.is_a?(Hash)
+        day = day.to_unsafe_h if day.respond_to?(:to_unsafe_h)
+        existing_day ||= day
+        existing_day['active'] ||= day['active']
+        existing_day['activity_level'] = [(existing_day || {})['activity_level'], (day || {})['activity_level']].compact.max
+        days[day['date']] = existing_day
+      end
+      session.data['days'] = days
+      session.save!
     end
-    session.data['days'] = days
-    session.save!
     session
   end
 
   def self.process_modeling_event(event, non_user_params)
     session = LogSession.find_or_create_by(log_type: 'modeling_activities', user_id: non_user_params[:user].id)
-    session.author ||= non_user_params[:user]
-    session.device ||= non_user_params[:device]
-    session.data['events'] ||= []
-    if event['modeling_action'] == 'dismiss'
-      repeats = session.data['events'].select{|a| a['modeling_action'] == event['modeling_action'] && a['modeling_activity_id'] == event['modeling_activity_id']}.length
-      related = session.data['events'].select{|a| a['modeling_activity_id'] == event['activity_id'] }
-      repeats = related.select{|a| a['modeling_action'] == event['modeling_action'] }.length
-      event['repeats'] = repeats + 1
-      cutoff = 6.months.ago.to_i
-      event['related_user_ids'] = related.select{|a| (a['timestamp'] || 0) > cutoff || a['modeling_action'] == 'complete' }.map{|a| a['modeling_user_ids'] || [] }.flatten.uniq
+    session.with_lock do
+      session.author ||= non_user_params[:user]
+      session.device ||= non_user_params[:device]
+      session.data['events'] ||= []
+      if event['modeling_action'] == 'dismiss'
+        repeats = session.data['events'].select{|a| a['modeling_action'] == event['modeling_action'] && a['modeling_activity_id'] == event['modeling_activity_id']}.length
+        related = session.data['events'].select{|a| a['modeling_activity_id'] == event['activity_id'] }
+        repeats = related.select{|a| a['modeling_action'] == event['modeling_action'] }.length
+        event['repeats'] = repeats + 1
+        cutoff = 6.months.ago.to_i
+        event['related_user_ids'] = related.select{|a| (a['timestamp'] || 0) > cutoff || a['modeling_action'] == 'complete' }.map{|a| a['modeling_user_ids'] || [] }.flatten.uniq
+      end
+      session.data['events'] << event
+      session.save!
+      session.schedule(:process_external_callbacks)
     end
-    session.data['events'] << event
-    session.save!
-    session.schedule(:process_external_callbacks)
     session
   end
 
@@ -1197,71 +1210,76 @@ class LogSession < ActiveRecord::Base
 
   def check_for_merger(frd=false)
     log = self
-    log.assert_extra_data
-    cutoff = (log.user && log.user.log_session_duration) || User.default_log_session_duration
-    matches = LogSession.where(log_type: 'session', user_id: log.user_id, author_id: log.author_id, device_id: log.device_id); matches.count
-    mergers = matches.where(['id != ?', log.id]).where(['ended_at >= ? AND ended_at <= ?', log.started_at - cutoff, log.ended_at + cutoff]).order('id ASC')
-    mergers.each do |merger|
-      next if merger.id == log.id
-      merger.assert_extra_data
-      # always merge the newer log into the older log
-      if log.id < merger.id
-        ids = (log.data['events'] || []).map{|e| e['id'] }.compact
-        merger.data['events'] ||= []
-        max_precision = 0
-        merger.data['events'].each do |e|
-          max_precision = [max_precision, e['timestamp'].to_s.split(/\./)[1].length].max
-        end
-        # remove dups based on timestamp or (event data if timestamps aren't precise enough)
-        kept_events = []
-        transferred_events = []
-        merger_user_id = (log.data['events'] || []).map{|e| e['user_id'] }.first
-        slices = ['type', 'percent_x', 'percent_y', 'timestamp', 'action', 'button', 'utterance']
-        merger.data['events'].each do |e|
-          json = e.slice(*slices).to_json if max_precision <= 1
-          found = !!log.data['events'].detect do |me|
-            if max_precision > 1
-              me['timestamp'] == e['timestamp']
-            else
-              me.slice(*slices).to_json == json
+    log.with_lock do
+      log.assert_extra_data
+      cutoff = (log.user && log.user.log_session_duration) || User.default_log_session_duration
+      matches = LogSession.where(log_type: 'session', user_id: log.user_id, author_id: log.author_id, device_id: log.device_id); matches.count
+      mergers = matches.where(['id != ?', log.id]).where(['ended_at >= ? AND ended_at <= ?', log.started_at - cutoff, log.ended_at + cutoff]).order('id ASC')
+      stop_iterating = false
+      mergers.each do |merger|
+        next if merger.id == log.id || stop_iterating
+        merger.assert_extra_data
+        merger.with_lock do
+          # always merge the newer log into the older log
+          if log.id < merger.id
+            ids = (log.data['events'] || []).map{|e| e['id'] }.compact
+            merger.data['events'] ||= []
+            max_precision = 0
+            merger.data['events'].each do |e|
+              max_precision = [max_precision, e['timestamp'].to_s.split(/\./)[1].length].max
             end
-          end
-          # if not found in the existing events list, add it to the log or keep it
-          if !found
-            if e['user_id'] == merger_user_id
-              # replace any colliding event ids
-              e['id'] = (ids.max || 0) + 1 if merger.data['events'].detect{|me| me['id'] == e['id'] }
-              ids << e['id']
-              transferred_events << e
-            else
-              kept_events << e
+            # remove dups based on timestamp or (event data if timestamps aren't precise enough)
+            kept_events = []
+            transferred_events = []
+            merger_user_id = (log.data['events'] || []).map{|e| e['user_id'] }.first
+            slices = ['type', 'percent_x', 'percent_y', 'timestamp', 'action', 'button', 'utterance']
+            merger.data['events'].each do |e|
+              json = e.slice(*slices).to_json if max_precision <= 1
+              found = !!log.data['events'].detect do |me|
+                if max_precision > 1
+                  me['timestamp'] == e['timestamp']
+                else
+                  me.slice(*slices).to_json == json
+                end
+              end
+              # if not found in the existing events list, add it to the log or keep it
+              if !found
+                if e['user_id'] == merger_user_id
+                  # replace any colliding event ids
+                  e['id'] = (ids.max || 0) + 1 if merger.data['events'].detect{|me| me['id'] == e['id'] }
+                  ids << e['id']
+                  transferred_events << e
+                else
+                  kept_events << e
+                end
+              end
             end
-          end
-        end
-        if frd
-          if transferred_events.length > 0
-            log.data['events'] ||= []
-            log.data['events'] += transferred_events
-            log.save
-            # If anything actually changed, let's check one more time
-            log.schedule_once(:check_for_merger)
-          end
-          if kept_events.length > 0
-            merger.data['events'] = kept_events
-            merger.save!
+            if frd
+              if transferred_events.length > 0
+                log.data['events'] ||= []
+                log.data['events'] += transferred_events
+                log.save
+                # If anything actually changed, let's check one more time
+                log.schedule_once(:check_for_merger)
+              end
+              if kept_events.length > 0
+                merger.data['events'] = kept_events
+                merger.save!
+              else
+                merger.destroy
+              end
+            elsif transferred_events.length > 0 || kept_events.length != merger.data['events'].length
+              # If the merger is already scheduled, do nothing
+              # If the merger is in progress, schedule a new one
+              merger = LogMerger.find_or_create_by(log_session_id: log.id)
+              merger = LogMerger.create(log_session_id: log.id, merge_at: 60.minutes.from_now) if merger && merger.started
+            end
           else
-            merger.destroy
+            # Swap the root and try again, always go for the lower-id record
+            merger.schedule_once(:check_for_merger)
+            stop_iterating = true
           end
-        elsif transferred_events.length > 0 || kept_events.length != merger.data['events'].length
-          # If the merger is already scheduled, do nothing
-          # If the merger is in progress, schedule a new one
-          merger = LogMerger.find_or_create_by(log_session_id: log.id)
-          merger = LogMerger.create(log_session_id: log.id, merge_at: 60.minutes.from_now) if merger && merger.started
         end
-      else
-        # Swap the root and try again, always go for the lower-id record
-        merger.schedule_once(:check_for_merger)
-        return
       end
     end
   end

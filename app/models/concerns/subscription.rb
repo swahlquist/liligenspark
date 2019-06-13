@@ -445,8 +445,9 @@ module Subscription
       summary.schedule(:update!)
     end
     LogSession.where(user_id: self.id, log_type: ['session', 'note', 'assessment']).where(['started_at >= ?', eval_start]).each do |session|
-      session.user_id = destination_user.id
-      session.save
+      LogSession.where(id: session.id).update_all(user_id: destination_user.id)
+      # session.user_id = destination_user.id
+      # session.save
     end
     # TODO: transfer daily_use data across as well
     self.reset_eval(current_device)

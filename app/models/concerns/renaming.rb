@@ -127,19 +127,21 @@ module Renaming
       end
       LogSessionBoard.where(:board_id => record.id).each do |lsb|
         session = lsb.log_session
-        session.assert_extra_data
-        changed = false
-        (session.data['events'] || []).each do |event|
-          if event['button'] && event['button']['board'] && event['button']['board']['id'] == record.global_id && event['button']['board']['key'] != to_key
-            event['button']['board']['key'] = to_key
-            changed = true
-          elsif event['action'] && event['action']['previous_key'] && event['action']['previous_key']['key']
-            event['action']['previous_key']['key'] = to_key if event['action']['previous_key']['key'] == from_key
-            event['action']['new_id']['key'] = to_key if event['action']['new_id'] && event['action']['new_id']['key'] == from_key
-            changed = true
+        session.with_lock do
+          session.assert_extra_data
+          changed = false
+          (session.data['events'] || []).each do |event|
+            if event['button'] && event['button']['board'] && event['button']['board']['id'] == record.global_id && event['button']['board']['key'] != to_key
+              event['button']['board']['key'] = to_key
+              changed = true
+            elsif event['action'] && event['action']['previous_key'] && event['action']['previous_key']['key']
+              event['action']['previous_key']['key'] = to_key if event['action']['previous_key']['key'] == from_key
+              event['action']['new_id']['key'] = to_key if event['action']['new_id'] && event['action']['new_id']['key'] == from_key
+              changed = true
+            end
           end
+          session.save if changed
         end
-        session.save if changed
       end
     elsif record_type == 'user'
       # Stuff that's being updated

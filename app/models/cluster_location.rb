@@ -169,8 +169,7 @@ class ClusterLocation < ActiveRecord::Base
           session_geo = session.geo_object
           cluster_geo = cluster.geo_object
           if session_geo.distance_to(cluster_geo) < cluster.distance_tolerance
-            session.geo_cluster_id = cluster.id
-            session.save
+            LogSession.where(id: session.id).update_all(geo_cluster_id: cluster.id)
             cluster.reload.save
             found = true
           end
@@ -186,8 +185,7 @@ class ClusterLocation < ActiveRecord::Base
       batch.each do |cluster|
         if !found && session.data && session.data['ip_address'] && cluster.data && cluster.data['ip_address']
           if session.data['ip_address'] == cluster.data['ip_address']
-            session.ip_cluster_id = cluster.id
-            session.save
+            LogSession.where(id: session.id).update_all(ip_cluster_id: cluster.id)
             cluster.reload.save
             found = true
           end
@@ -271,10 +269,11 @@ class ClusterLocation < ActiveRecord::Base
       sessions ||= []
       if sessions.length >= self.frequency_tolerance
         cluster = ClusterLocation.find_or_create_by_cluster(user, 'geo', {ts: Time.now.to_i, r: rand})
-        sessions.each do |session|
-          session.geo_cluster_id = cluster.id
-          session.save
-        end
+        LogSession.where(id: sessions.map(&:id)).update_all(geo_cluster_id: cluster.id)
+        # sessions.each do |session|
+        #   session.geo_cluster_id = cluster.id
+        #   session.save
+        # end
         non_geos -= sessions
         cluster.reload.save
       end
@@ -309,10 +308,11 @@ class ClusterLocation < ActiveRecord::Base
       readable_ip = sessions.first.data['readable_ip_address']
       cluster = ClusterLocation.find_or_create_by_cluster(user, 'ip_address', ip)
       cluster.data['readable_ip_address'] = readable_ip
-      sessions.each do |session|
-        session.ip_cluster_id = cluster.id
-        session.save
-      end
+      LogSession.where(id: sessions.map(&:id)).update_all(ip_cluster_id: cluster.id)
+      # sessions.each do |session|
+      #   session.ip_cluster_id = cluster.id
+      #   session.save
+      # end
       cluster.save
     end
     Rails.logger.info("done with ip clusters")
