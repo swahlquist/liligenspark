@@ -518,7 +518,7 @@ class User < ActiveRecord::Base
       'symbol_background', 'disable_button_help', 'click_buttons', 'prevent_hide_buttons',
       'new_index', 'debounce', 'cookies', 'preferred_symbols', 'tag_ids', 'vibrate_buttons',
       'highlighted_buttons', 'never_delete', 'dim_header', 'inflections_overlay',
-      'highlight_popup_text']
+      'highlight_popup_text', 'phrase_categories']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'geo_logging', 'allow_log_reports', 'cookies', 'never_delete']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 
@@ -604,13 +604,32 @@ class User < ActiveRecord::Base
         if action['action'] == 'add_vocalization'
           self.settings['vocalizations'] ||= []
           action['id'] = nil if self.settings['vocalizations'].find{|v| v['id'] == action['id'] }
-          self.settings['vocalizations'] << {
+          cat = action['category'] || 'default'
+          categories = (self.settings['preferences']['phrase_categories'] || [])
+          cat = 'default' if !categories.include?(cat) && cat != 'default' && cat != 'journal'
+          id = action['id'] || (rand(999).to_s + (Time.now.to_i % 1000).to_s + self.settings['vocalizations'].length.to_s)
+          if cat == 'journal'
+            LogSession.process_as_follow_on({
+              'type' => 'journal',
+              'vocalization' => action['value'],
+              'category' => cat,
+              'ts' => action['ts'] || Time.now.to_i,
+              'id' => id
+            }, {'user' => self, 'author' => non_user_params['updater'] || self, 'device' => non_user_params['device'] || self.devices.first}.with_indifferent_access)
+          end
+      
+          self.settings['vocalizations'].unshift({
             'list' => action['value'],
-            'id' => action['id'] || (rand(999).to_s + (Time.now.to_i % 1000).to_s + self.settings['vocalizations'].length.to_s)
-          }
+            'category' => cat,
+            'ts' => action['ts'] || Time.now.to_i,
+            'id' => id
+          })
+          journal_cutoff = 2.weeks.ago
+          self.settings['vocalizations'] = self.settings['vocalizations'].select{|v| v['category'] != 'journal' || (v['ts'] && v['ts'] > journal_cutoff.to_i) || v['id'] == id }
         elsif action['action'] == 'reorder_vocalizations'
           new_list = []
-          list = self.settings['vocalizations'] || []
+          journal_cutoff = 2.weeks.ago
+          list = (self.settings['vocalizations'] || []).select{|v| v['category'] != 'journal' || (v['ts'] && v['ts'] > journal_cutoff.to_i) || v['id'] == id }
           action['value'].split(',').each do |id|
             item = list.find{|v| v['id'] == id }
             if item

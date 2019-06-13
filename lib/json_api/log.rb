@@ -61,6 +61,8 @@ module JsonApi::Log
     elsif log.data['assessment']
       json['percent'] = log.data['stats']['percent_correct']
       json['assessment'] = log.data['assessment']
+    elsif log.data['journal']
+      json['journal'] = log.data['journal'].slice('vocalization', 'sentence', 'timestamp', 'id')
     else
       json['duration'] = log.data['duration']
       json['button_count'] = log.data['button_count']

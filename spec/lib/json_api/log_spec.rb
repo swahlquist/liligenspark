@@ -286,6 +286,22 @@ describe JsonApi::Log do
         'status' => 3
       })
     end
+
+    it "should return journal data for a journal entry" do
+      @user = User.create
+      @device = Device.create(user: @user)
+      j = LogSession.process_new({
+        :type => 'journal',
+        :vocalization => [{'label' => 'cat'}, {'label' => 'frog'}],
+        :category => 'journal'
+      }, {:user => @user, :device => @device, :author => @user})
+      expect(j.id).to_not eq(nil)
+
+      json = JsonApi::Log.as_json(j, :wrapper => true, :permissions  => @user)
+      expect(json['log']['id']).to eq(j.global_id)
+      expect(json['log']['type']).to eq('journal')
+      expect(json['log']['journal']['sentence']).to eq('cat frog')
+    end
   end
   
   describe "days" do

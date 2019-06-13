@@ -64,6 +64,41 @@ describe JsonApi::User do
       json = JsonApi::User.build_json(u, permissions: u)
       expect(json['premium_voices']).to eq({'claimed' => [], 'allowed' => 0})
     end
+
+    it "should include user vocalizations (saved phrases)" do
+      u = User.create(:settings => {'vocalizations' => [
+        {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},
+        {'list' => [{'label' => 'cat'}, {'label' => 'frog'}], 'sentence' => 'cat frog', 'category' => 'journal', 'ts' => 5.seconds.ago.to_i},
+      ]})
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['vocalizations'].length).to eq(2)
+      expect(json['vocalizations'][0]['sentence']).to eq('whatevs')
+      expect(json['vocalizations'][1]['sentence']).to eq('cat frog')
+    end
+
+    it "should not include journal entries for supervisers" do
+      u = User.create(:settings => {'vocalizations' => [
+        {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},
+        {'list' => [{'label' => 'cat'}, {'label' => 'frog'}], 'sentence' => 'cat frog', 'category' => 'journal', 'ts' => 5.seconds.ago.to_i},
+      ]})
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      json = JsonApi::User.build_json(u, permissions: u2)
+      expect(json['vocalizations'].length).to eq(1)
+      expect(json['vocalizations'][0]['sentence']).to eq('whatevs')
+    end
+
+    it "should only include recent journal entries for the user" do
+      u = User.create(:settings => {'vocalizations' => [
+        {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},
+        {'list' => [{'label' => 'cat'}, {'label' => 'frog'}], 'sentence' => 'cat frog', 'category' => 'journal', 'ts' => 5.seconds.ago.to_i},
+        {'list' => [{'label' => 'cat'}, {'label' => 'fog'}], 'sentence' => 'cat fog', 'category' => 'journal', 'ts' => 5.months.ago.to_i},
+      ]})
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['vocalizations'].length).to eq(2)
+      expect(json['vocalizations'][0]['sentence']).to eq('whatevs')
+      expect(json['vocalizations'][1]['sentence']).to eq('cat frog')
+    end
     
     it "should include board ids if the user has set a home board" do
       u = User.create

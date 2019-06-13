@@ -27,7 +27,11 @@ module JsonApi::User
       json['unread_messages'] = user.settings['unread_messages'] || 0
       json['unread_alerts'] = user.settings['unread_alerts'] || 0
       json['user_token'] = user.user_token
-      json['vocalizations'] = user.settings['vocalizations'] || []
+      journal_cutoff = 2.weeks.ago.to_i
+      json['vocalizations'] = (user.settings['vocalizations'] || []).select{|v| v['category'] != 'journal' || (v['ts'] && v['ts'] > journal_cutoff) }
+      unless json['permissions']['delete']
+        json['vocalizations'] = json['vocalizations'].select{|v| v['category'] != 'journal' }
+      end
       json['contacts'] = user.settings['contacts'] || []
       json['global_integrations'] = UserIntegration.global_integrations
       json['preferences'] = {}

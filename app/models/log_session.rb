@@ -226,6 +226,10 @@ class LogSession < ActiveRecord::Base
       self.ended_at ||= DateTime.strptime(last_tally['timestamp'].to_s, '%s') if last_tally
       self.started_at ||= Time.now
       self.ended_at ||= self.started_at
+    elsif self.data['journal']
+      self.log_type = 'journal'
+      self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
+      self.data['events'] = []
     elsif self.data['days']
       self.log_type = 'daily_use'
       self.data['events'] = []
@@ -992,6 +996,9 @@ class LogSession < ActiveRecord::Base
     elsif params['type'] == 'daily_use'
       Rails.logger.warn('processing daily_use creation in client request')
       self.process_daily_use(params, non_user_params)
+    elsif params['type'] == 'journal'
+      Rails.logger.warn('processing journal creation in client request')
+      self.process_new(params, non_user_params)
     else
       Rails.logger.warn('generating stash')
       res = LogSession.new(:data => {})
@@ -1208,7 +1215,7 @@ class LogSession < ActiveRecord::Base
         # remove dups based on timestamp or (event data if timestamps aren't precise enough)
         kept_events = []
         transferred_events = []
-        merger_user_id = log.data['events'].map{|e| e['user_id'] }.first
+        merger_user_id = (log.data['events'] || []).map{|e| e['user_id'] }.first
         slices = ['type', 'percent_x', 'percent_y', 'timestamp', 'action', 'button', 'utterance']
         merger.data['events'].each do |e|
           json = e.slice(*slices).to_json if max_precision <= 1
@@ -1382,6 +1389,16 @@ class LogSession < ActiveRecord::Base
           self.data['assessment']['manual'] = true
           self.data['assessment']['automatic'] = false
         end
+      end
+      if params['type'] == 'journal'
+        self.data['journal'] = {
+          'type' => 'journal',
+          'vocalization' => params['vocalization'],
+          'sentence' => (params['vocalization'] || []).map{|l| l['label'] }.join(' '),
+          'category' => params['category'],
+          'timestamp' => params['timestamp'] || Time.now.to_i,
+          'id' => params['id']
+        }
       end
     end
     true

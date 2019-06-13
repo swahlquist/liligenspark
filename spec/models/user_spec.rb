@@ -579,20 +579,132 @@ describe User, :type => :model do
         {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'qwer'}]}
       ]})
       expect(u.settings['vocalizations'].length).to eq(2)
-      expect(u.settings['vocalizations'][0]['id']).to eq('aaa')
-      expect(u.settings['vocalizations'][1]['id']).to_not eq('aaa')
+      expect(u.settings['vocalizations'][0]['id']).to_not eq('aaa')
+      expect(u.settings['vocalizations'][1]['id']).to eq('aaa')
       u.process({'offline_actions' => [
-        {'action' => 'reorder_vocalizations', 'value' => [u.settings['vocalizations'][1]['id'], 'asdf'].join(',')}
+        {'action' => 'reorder_vocalizations', 'value' => ['asdf', u.settings['vocalizations'][0]['id']].join(',')}
       ]})
       expect(u.settings['vocalizations'].length).to eq(2)
       expect(u.settings['vocalizations'][0]['id']).to_not eq('aaa')
       expect(u.settings['vocalizations'][1]['id']).to eq('aaa')
+
+      u.process({'offline_actions' => [
+        {'action' => 'reorder_vocalizations', 'value' => ['aaa', 'asdf', u.settings['vocalizations'][0]['id']].join(',')}
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(2)
+      expect(u.settings['vocalizations'][0]['id']).to eq('aaa')
+      expect(u.settings['vocalizations'][1]['id']).to_not eq('aaa')
+
       u.process({'offline_actions' => [
         {'action' => 'remove_vocalization', 'value' => 'aaa'},
         {'action' => 'remove_vocalization', 'value' => 'qwer'}
       ]})
       expect(u.settings['vocalizations'].length).to eq(1)
       expect(u.settings['vocalizations'][0]['id']).to_not eq('aaa')
+    end
+
+    it "should remove old journal entries from the cache when reordering" do
+      u = User.create
+      expect(u.settings['vocalizations']).to eq(nil)
+      u.settings['vocalizations'] = [
+        {'category' => 'journal', 'id' => 'asdf', 'sentence' => 'something', 'ts' => 6.months.ago.to_i},
+        {'category' => 'journal', 'id' => 'qwer', 'sentence' => 'something', 'ts' => 6.minutes.ago.to_i},
+        {'category' => 'default', 'id' => 'zxcv', 'sentence' => 'something', 'ts' => 6.months.ago.to_i},
+      ]
+      u.process({'offline_actions' => [
+        {'action' => 'reorder_vocalizations', 'value' => ['asdf', 'qwer', 'zxcv'].join(',')}
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(2)
+      expect(u.settings['vocalizations'][0]['id']).to_not eq('asdf')
+      expect(u.settings['vocalizations'][1]['id']).to eq('zxcv')
+    end
+
+    it "should allow saving phrase_categories" do
+      u = User.create
+      u.process({'preferences' => {'phrase_categories' => ['a', 'b']}})
+      expect(u.settings['preferences']['phrase_categories']).to eq(['a', 'b'])
+      u.process({'offline_actions' => [
+        {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'asdf'}], 'category' => 'a'},
+        {'action' => 'add_vocalization', 'id' => 'bbb', 'list' => [{'label' => 'qwer'}], 'category' => 'default'},
+        {'action' => 'add_vocalization', 'id' => 'ccc', 'list' => [{'label' => 'zxcv'}], 'category' => 'c'},
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(3)
+      expect(u.settings['vocalizations'][0]['id']).to eq('ccc')
+      expect(u.settings['vocalizations'][0]['category']).to eq('default')
+      expect(u.settings['vocalizations'][1]['id']).to eq('bbb')
+      expect(u.settings['vocalizations'][1]['category']).to eq('default')
+      expect(u.settings['vocalizations'][2]['id']).to eq('aaa')
+      expect(u.settings['vocalizations'][2]['category']).to eq('a')
+    end
+
+    it "should record add_vocalization journal entries to the user log" do
+      u = User.create
+      d = Device.create(user: u)
+      u.process({'preferences' => {'phrase_categories' => ['a', 'b']}})
+      expect(u.settings['preferences']['phrase_categories']).to eq(['a', 'b'])
+      u.process({'offline_actions' => [
+        {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'asdf'}], 'category' => 'journal'},
+        {'action' => 'add_vocalization', 'id' => 'bbb', 'list' => [{'label' => 'qwer'}], 'category' => 'journal'},
+        {'action' => 'add_vocalization', 'id' => 'ccc', 'list' => [{'label' => 'zxcv'}], 'category' => 'c'},
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(3)
+      expect(u.settings['vocalizations'][0]['id']).to eq('ccc')
+      expect(u.settings['vocalizations'][1]['id']).to eq('bbb')
+      expect(u.settings['vocalizations'][2]['id']).to eq('aaa')
+      expect(LogSession.where(log_type: 'journal', user_id: u.id).count).to eq(2)
+    end
+
+    it "should use the default category for saved phrases if none specified" do
+      u = User.create
+      u.process({'preferences' => {'phrase_categories' => ['a', 'b']}})
+      expect(u.settings['preferences']['phrase_categories']).to eq(['a', 'b'])
+      u.process({'offline_actions' => [
+        {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'asdf'}], 'category' => 'a'},
+        {'action' => 'add_vocalization', 'id' => 'bbb', 'list' => [{'label' => 'qwer'}], 'category' => 'default'},
+        {'action' => 'add_vocalization', 'id' => 'ccc', 'list' => [{'label' => 'zxcv'}], 'category' => 'c'},
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(3)
+      expect(u.settings['vocalizations'][0]['id']).to eq('ccc')
+      expect(u.settings['vocalizations'][0]['category']).to eq('default')
+      expect(u.settings['vocalizations'][1]['id']).to eq('bbb')
+      expect(u.settings['vocalizations'][1]['category']).to eq('default')
+      expect(u.settings['vocalizations'][2]['id']).to eq('aaa')
+      expect(u.settings['vocalizations'][2]['category']).to eq('a')
+    end
+
+    it "should remove old journal entries when a new vocalization is added" do
+      u = User.create
+      expect(u.settings['vocalizations']).to eq(nil)
+      u.settings['vocalizations'] = [
+        {'category' => 'journal', 'id' => 'asdf', 'sentence' => 'something', 'ts' => 6.months.ago.to_i},
+        {'category' => 'journal', 'id' => 'qwer', 'sentence' => 'something', 'ts' => 6.minutes.ago.to_i},
+        {'category' => 'default', 'id' => 'zxcv', 'sentence' => 'something', 'ts' => 6.months.ago.to_i},
+      ]
+      u.process({'offline_actions' => [
+        {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'asdf'}], 'category' => 'a'},
+        {'action' => 'add_vocalization', 'id' => 'bbb', 'list' => [{'label' => 'qwer'}], 'category' => 'default'},
+        {'action' => 'add_vocalization', 'id' => 'ccc', 'list' => [{'label' => 'zxcv'}], 'category' => 'c'},
+      ]})
+      expect(u.settings['vocalizations'].map{|v| v['id']}).to eq(['ccc', 'bbb', 'aaa', 'qwer', 'zxcv'])
+    end
+
+    it "should not log non-journal vocalization adds" do
+      u = User.create
+      u.process({'preferences' => {'phrase_categories' => ['a', 'b']}})
+      expect(u.settings['preferences']['phrase_categories']).to eq(['a', 'b'])
+      u.process({'offline_actions' => [
+        {'action' => 'add_vocalization', 'id' => 'aaa', 'list' => [{'label' => 'asdf'}], 'category' => 'a'},
+        {'action' => 'add_vocalization', 'id' => 'bbb', 'list' => [{'label' => 'qwer'}], 'category' => 'default'},
+        {'action' => 'add_vocalization', 'id' => 'ccc', 'list' => [{'label' => 'zxcv'}], 'category' => 'c'},
+      ]})
+      expect(u.settings['vocalizations'].length).to eq(3)
+      expect(u.settings['vocalizations'][0]['id']).to eq('ccc')
+      expect(u.settings['vocalizations'][0]['category']).to eq('default')
+      expect(u.settings['vocalizations'][1]['id']).to eq('bbb')
+      expect(u.settings['vocalizations'][1]['category']).to eq('default')
+      expect(u.settings['vocalizations'][2]['id']).to eq('aaa')
+      expect(u.settings['vocalizations'][2]['category']).to eq('a')
+      expect(LogSession.count).to eq(0)
     end
 
     it "should process offline_actions for managing contacts, removing duplicates" do

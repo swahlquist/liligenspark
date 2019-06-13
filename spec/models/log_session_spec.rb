@@ -1315,6 +1315,22 @@ describe LogSession, :type => :model do
       expect(s.user).to eq(nil)
       expect { Worker.process_queues }.to raise_error('no valid events to process')
     end
+
+    it "should create a journal log if specified" do
+      u1 = User.create
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'type' => 'journal',
+        'vocalization' => [{'label' => 'what'}, {'label' => 'now'}],
+        'category' => 'journal'
+      }, {:user => u1, :device => d, :author => u1})
+      
+      Worker.process_queues
+      s2 = LogSession.last
+      expect(s2.log_type).to eq('journal')
+      expect(s2.data['journal']['timestamp']).to be > 10.seconds.ago.to_i
+      expect(s2.data['journal']['sentence']).to eq('what now')
+    end
   end
 
   describe "process_params" do
@@ -1783,6 +1799,19 @@ describe LogSession, :type => :model do
         'goal_status' => 3,
       }, {'user' => u, 'author' => u, 'device' => d, 'ip_address' => '1.2.3.4', 'imported' => true})
       expect(s.data['imported']).to eq(true)
+    end
+
+    it "should process a journal entry" do
+      u1 = User.create
+      d = Device.create(:user => u1)
+      s2 = LogSession.process_new({
+        :type => 'journal',
+        :vocalization => [{'label' => 'what'}, {'label' => 'now'}],
+        :category => 'journal'
+      }, {:user => u1, :device => d, :author => u1})
+      expect(s2.log_type).to eq('journal')
+      expect(s2.data['journal']['timestamp']).to be > 10.seconds.ago.to_i
+      expect(s2.data['journal']['sentence']).to eq('what now')
     end
   end
 

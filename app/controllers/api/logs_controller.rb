@@ -15,8 +15,13 @@ class Api::LogsController < ApplicationController
     Stats.sanitize_find_options!(options)
     logs = LogSession.where({:user_id => user_ids}).where.not({:started_at => nil})
     params['type'] ||= 'all'
-    if params['type'] != 'all'
+    if params['type'] == 'journal'
+      return unless allowed?(user, 'delete')
+    end
+    if params['type'] != 'all' && ['session', 'note', 'assessment', 'journal'].include?(params['type'])
       logs = logs.where(:log_type => params['type'])
+    else
+      logs = logs.where(:log_type => ['session', 'note', 'assessment'])
     end
     if params['highlighted']
       logs = logs.where(:highlighted => true)

@@ -202,6 +202,87 @@ describe Api::LogsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['log'].length).to eq(0)
     end
+
+    it "should not include journal entries by default" do
+      token_user
+      a = LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      b = LogSession.process_new({
+        :events => [
+          {'timestamp' => 8.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 7.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      c = LogSession.process_new({
+        :type => 'journal',
+        :vocalization => [],
+        :category => 'journal'
+      }, {:user => @user, :device => @device, :author => @user})
+
+      get :index, params: {:user_id => @user.global_id}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['log'].length).to eq(2)
+      expect(json['log'].map{|l| l['id'] }.sort).to eq([a.global_id, b.global_id].sort)
+    end
+
+    it "should show journal entries if specified and authorized" do
+      token_user
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 8.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 7.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      j = LogSession.process_new({
+        :type => 'journal',
+        :vocalization => [],
+        :category => 'journal'
+      }, {:user => @user, :device => @device, :author => @user})
+      expect(j.id).to_not eq(nil)
+
+      get :index, params: {:user_id => @user.global_id, :type => 'journal'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['log'].length).to eq(1)
+      expect(json['log'][0]['id']).to eq(j.global_id)
+    end
+
+    it "should not show journal entries if specified but just a supervisor" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u, nil, true)
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => u, :device => @device, :author => @user})
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 8.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 7.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => u, :device => @device, :author => @user})
+      j = LogSession.process_new({
+        :type => 'journal',
+        :vocalization => [],
+        :category => 'journal'
+      }, {:user => u, :device => @device, :author => @user})
+
+      get :index, params: {:user_id => u.global_id, :type => 'journal'}
+      assert_unauthorized
+    end
   end
 
   
