@@ -388,34 +388,36 @@ class UserBadge < ActiveRecord::Base
         units.each do |unit|
           # TODO: sharding
           next if unit[:date] > today
-          sessions = LogSession.where(:user_id => user.id, :goal_id => goal.id, :log_type => 'assessment').where(['started_at >= ? AND started_at <= ? AND ended_at <= ?', unit[:date] - 1.0, unit[:date] + 1.0, unit[:date] + 1.0]).order('started_at ASC')
-          session = sessions.detect{|s| s.started_at.to_date == unit[:date] && s.data['assessment'] && s.data['assessment']['automatic'] }
-          if !session
-            session = LogSession.process_new({
-              'assessment' => {
-                'tallies' => [
-                  {'timestamp' => unit[:date].to_time.to_i, 'correct' => false}
-                ],
-                'totals' => {
-                  'correct' => 0,
-                  'incorrect' => 0
+          Octopus.using(:master) do
+            sessions = LogSession.where(:user_id => user.id, :goal_id => goal.id, :log_type => 'assessment').where(['started_at >= ? AND started_at <= ? AND ended_at <= ?', unit[:date] - 1.0, unit[:date] + 1.0, unit[:date] + 1.0]).order('started_at ASC')
+            session = sessions.detect{|s| s.started_at.to_date == unit[:date] && s.data['assessment'] && s.data['assessment']['automatic'] }
+            if !session
+              session = LogSession.process_new({
+                'assessment' => {
+                  'tallies' => [
+                    {'timestamp' => unit[:date].to_time.to_i, 'correct' => false}
+                  ],
+                  'totals' => {
+                    'correct' => 0,
+                    'incorrect' => 0
+                  },
+                  'description' => "Automatic goal assessment for #{goal.settings['summary']}"
                 },
-                'description' => "Automatic goal assessment for #{goal.settings['summary']}"
-              },
-              'goal_id' => goal.global_id
-            # TODO: picking a device at random is bad
-            }, {user: user, author: user, device: user.devices[0], automatic_assessment: true})
-          end
-          session.with_lock do
-            valid = valid_unit(unit, badge_level)
-            puts "  invalid unit at #{unit.to_json}" if !valid && verbose
-            session.data['assessment']['tallies'][0]['correct'] = !!valid
-            session.data['assessment']['totals']['correct'] = !!valid ? 1 : 0
-            session.data['assessment']['totals']['incorrect'] = !!valid ? 0 : 1
-            session.data['assessment']['explanation'] = valid && valid[:explanation]
-            session.data['assessment']['automatic'] = true
-            session.instance_variable_set('@goal_clustering_scheduled', true)
-            session.save
+                'goal_id' => goal.global_id
+              # TODO: picking a device at random is bad
+              }, {user: user, author: user, device: user.devices[0], automatic_assessment: true})
+            end
+            session.with_lock do
+              valid = valid_unit(unit, badge_level)
+              puts "  invalid unit at #{unit.to_json}" if !valid && verbose
+              session.data['assessment']['tallies'][0]['correct'] = !!valid
+              session.data['assessment']['totals']['correct'] = !!valid ? 1 : 0
+              session.data['assessment']['totals']['incorrect'] = !!valid ? 0 : 1
+              session.data['assessment']['explanation'] = valid && valid[:explanation]
+              session.data['assessment']['automatic'] = true
+              session.instance_variable_set('@goal_clustering_scheduled', true)
+              session.save
+            end
           end
         end
         units = []
