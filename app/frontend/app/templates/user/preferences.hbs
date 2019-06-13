@@ -110,7 +110,7 @@
           <div class="checkbox">
             <label>
               {{input type="checkbox" checked=pending_preferences.highlight_popup_text id="highlighted_popup_text"}}
-              {{t "Pop up a text box for developing sight word reading " key='popup_for_sight_reading'}}
+              {{t "Highlight buttons using a text box for developing sight word reading" key='popup_for_sight_reading'}}
             </label>
           </div>
         </div>
@@ -582,6 +582,14 @@
     </div>
   {{/unless}}
   {{#if advanced}}
+    <div class="form-group">
+      <label for="phrase_categories" class="col-sm-3 control-label">{{t "Saved Phrase Types" key='saved_phrases'}}</label>
+      <div class="col-sm-5">
+        {{input class='form-control' type='text' value=phrase_categories_string placeholder="list, of, phrase, categories"}}
+        <em>{{t "CoughDrop has \"Quick\" and \"Journal\" categories by default, but you can list more categories to add here." key='phrase_categories_explainer'}}</em><br/>
+        <button class='btn btn-default' {{action 'phrases'}}>{{t "Manage Phrases" key='manage_phrases'}}</button>
+      </div>
+    </div>
     <div class="form-group">
       <label for="enable_tags" class="col-sm-3 control-label">{{t "NFC Tags" key='nfc_tags'}}</label>
       <div class="col-sm-5">

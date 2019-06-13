@@ -17,6 +17,9 @@
         {{#if all_logs}}
           {{#link-to 'user.logs' model.user_name (query-params type='note' highlighted=null)}}{{t "Show Only Messages" key='show_only_messages'}}{{/link-to}} | 
           {{#link-to 'user.logs' model.user_name (query-params type='all' highlighted='1')}}{{t "Show Highlighted" key='show_highlighted'}}{{/link-to}}
+          {{#if model.permissions.delete}}
+            | {{#link-to 'user.logs' model.user_name (query-params type='journal' highlighted=null)}}{{t "Show Journal" key='show_journal'}}{{/link-to}}
+          {{/if}}
         {{else}}
           {{#link-to 'user.logs' model.user_name (query-params type='all' highlighted=null)}}{{t "Show Full Log" key='show_full_log'}}{{/link-to}}
         {{/if}}

@@ -18,6 +18,7 @@ export default Controller.extend({
     var str = JSON.stringify(this.get('model.preferences'));
     this.set('pending_preferences', JSON.parse(str));
     this.set('original_preferences', JSON.parse(str));
+    this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
   },
   speecher: speecher,
   buttonSpacingList: [
@@ -489,6 +490,10 @@ export default Controller.extend({
       }
       this.set(attribute, value);
     },
+    phrases: function() {
+      this.set('model.preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));
+      modal.open('modals/phrases', {user: this.get('model')})
+    },
     savePreferences: function() {
       // TODO: add a "save pending..." status somewhere
       // TODO: this same code is in utterance.js...
@@ -498,6 +503,11 @@ export default Controller.extend({
       if(isNaN(volume)) { volume = 1.0; }
       this.set('pending_preferences.device.voice.pitch', pitch);
       this.set('pending_preferences.device.voice.volume', volume);
+      if(this.get('phrase_categories_string')) {
+        this.set('pending_preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));
+      }
+      this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
+
       var _this = this;
       ['debounce', 'device.dwell_release_distance', 'device.scanning_next_keycode', 'device.scanning_prev_keycode', 'device.scanning_region_columns', 'device.scanning_region_rows', 'device.scanning_select_keycode', 'device.scanning_interval'].forEach(function(key) {
         var val = _this.get('pending_preferences.' + key);

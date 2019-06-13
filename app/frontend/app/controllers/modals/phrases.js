@@ -3,24 +3,45 @@ import modal from '../../utils/modal';
 import stashes from '../../utils/_stashes';
 import app_state from '../../utils/app_state';
 import utterance from '../../utils/utterance';
+import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
-
+import { set as emberSet } from '@ember/object';
 export default modal.ModalController.extend({
   opening: function() {
     var voc = stashes.get('working_vocalization') || [];
     this.set('sentence', voc.map(function(v) { return v.label; }).join(' '));
     this.set('app_state', app_state);
     this.set('stashes', stashes);
+    this.set('user', this.get('model.user') || app_state.get('referenced_user'));
+    this.set('current_category', 'default');
     this.update_list();
   },
+  update_categores: function() {
+    var current = this.get('current_category');
+    (this.get('categories') || []).forEach(function(c) {
+      emberSet(c, 'active', current == c.id);
+    });
+  }.observes('current_category', 'phrases'),
   update_list: function() {
     var utterances = stashes.get('remembered_vocalizations') || [];
-    if(app_state.get('currentUser')) {
+    var _this = this;
+    var categories = this.get('user.preferences.phrase_categories') || [];
+    categories = ['default'].concat(categories).concat(['journal']);
+    if(_this.get('user')) {
       utterances = utterances.filter(function(u) { return u.stash; });
-      (app_state.get('currentUser.vocalizations') || []).forEach(function(u) {
+      (_this.get('user.vocalizations') || []).forEach(function(u) {
         if(u && u.list) {
+          var cat = u.category || 'default';
+          if(categories.indexOf(cat) == -1) {
+            if(categories.indexOf('other') == -1) {
+              categories.push('other');
+            }
+            cat = 'other';
+          }
           utterances.push({
             id: u.id,
+            category: cat,
+            date: new Date(u.ts * 1000),
             sentence: u.list.map(function(v) { return v.label; }).join(" "),
             vocalizations: u.list,
             stash: false
@@ -29,7 +50,24 @@ export default modal.ModalController.extend({
       });
     }
     this.set('phrases', utterances);
-  }.observes('stashes.remembered_vocalizations.length', 'app_state.currentUser.vocalizations', 'app_state.currentUser.vocalizations.@each.id'),
+    var current = this.get('current_category');
+    this.set('categories', categories.map(function(c) { 
+      var cat = {name: c, active: c == current, id: c};
+      if(c == 'default') {
+        cat.name = i18n.t('quick', "Quick");
+      } else if(c == 'journal') {
+        cat.name = i18n.t('journal', "Journal");
+      }
+      return cat;
+    }));
+  }.observes('stashes.remembered_vocalizations.length', 'user.vocalizations', 'user.vocalizations.@each.id'),
+  category_phrases: function() {
+    var cat = this.get('current_category');
+    return (this.get('phrases') || []).filter(function(u) { return u.category == cat; });
+  }.property('phrases', 'phrases.length', 'phrases.@each.id', 'current_category'),
+  journaling: function() {
+    return this.get('current_category') == 'journal';
+  }.property('current_category'),
   actions: {
     select: function(button) {
       if(button.stash) {
@@ -41,6 +79,9 @@ export default modal.ModalController.extend({
         app_state.set_and_say_buttons(button.vocalizations);
       }
       modal.close();
+    },
+    set_category: function(cat) {
+      this.set('current_category', cat.id);
     },
     remove: function(phrase) {
       app_state.remove_phrase(phrase);
@@ -60,8 +101,16 @@ export default modal.ModalController.extend({
           {label: sentence}
         ];
       }
-      app_state.save_phrase(voc);
+      app_state.save_phrase(voc, this.get('current_category'));
       this.update_list();
+      var code = (new Date()).getTime() + "_" + Math.random();
+      this.set('added', code);
+      var _this = this;
+      setTimeout(function() {
+        if(_this.get('added') == code) {
+          _this.set('added', null);
+        }
+      }, 5000);
       this.set('sentence', null);
     }
   }

@@ -3,6 +3,8 @@
   <h2>{{t "Message Details" key='message_summary'}}</h2>
 {{else if model.assessment_type}}
   <h2>{{t "Assessment Details" key='assessment_details'}}</h2>
+{{else if model.journal_type}}
+  <h2>{{t "Journal Entry" key='journal_entry'}}</h2>
 {{else}}
   <h2>{{t "Log Entry Details" key='log_entry_details'}}</h2>
 {{/if}}
@@ -20,7 +22,7 @@
       <div class="panel-heading">{{t "Date" key='date'}}</div>
       <div class="panel-body">
         {{date model.started_at}}
-      </div>
+        </div>
     </div>
   </div>
   {{#unless model.note_type}}
@@ -74,6 +76,10 @@
         <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{model.note.prior}}</div>
       </div>
     {{/if}}
+  </div>
+{{else if model.journal_type}}
+  <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
+    {{model.journal.sentence}}
   </div>
 {{else if model.assessment_type}}
   <div class="row">

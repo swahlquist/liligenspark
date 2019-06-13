@@ -10,6 +10,9 @@
       {{else if log.assessment_type}}
         <span class="glyphicon glyphicon-list-alt"></span>
         <span class="sr-only">{{t "assessment" key='assessment'}}</span>
+      {{else if log.journal_type}}
+        <span class="glyphicon glyphicon-heart"></span>
+        <span class="sr-only">{{t "journal" key='journal'}}</span>
       {{else}}
         <span class="glyphicon glyphicon-time"></span>
         <span class="sr-only">{{t "session" key='session'}}</span>
@@ -38,6 +41,11 @@
       </div>
       {{log.assessment.description}}<br/>
       {{log.assessment.summary}}
+    {{else if log.journal_type}}
+      <div style="font-size: 10px; color: #888;">
+        {{t "Journal Entry" key='journal_entry'}}
+      </div>
+      {{log.journal.sentence}}
     {{else}}
       {{#if log.highlighted}}
       <div style='margin-bottom: 5px;'>
@@ -53,6 +61,8 @@
     <td style="white-space: nowrap;">
       {{#link-to 'user.log' user.user_name log.id}}
         {{#if log.note_type}}
+          ...
+        {{else if log.journal_type}}
           ...
         {{else}}
           {{t "minute" key='minute' count=log.minutes}}

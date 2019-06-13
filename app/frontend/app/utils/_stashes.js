@@ -389,6 +389,12 @@ var stashes = EmberObject.extend({
       log_event.window_height= window.outerHeight;
 
       if(log_event) {
+        stashes.last_id = stashes.last_id || 1;
+        if(stashes.last_id > 5000) { stashes.last_id = 1; }
+        stashes.id_seed = stashes.id_seed || Math.floor(Math.random() * 10);
+        // setting ids client-side may help me troubleshoot how
+        // they potentially get out of order in the logs
+        log_event.id = (stashes.last_id++ * 10) + stashes.id_seed;
         stashes.persist('last_event', log_event);
         usage_log.push(log_event);
       }

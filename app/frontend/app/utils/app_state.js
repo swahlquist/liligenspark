@@ -916,16 +916,20 @@ var app_state = EmberObject.extend({
   say_louder: function(pct) {
     this.controller.sayLouder(pct);
   },
-  save_phrase: function(voc) {
+  save_phrase: function(voc, category) {
     var user = app_state.get('currentUser');
     if(user) {
+      // TODO: needs to peresist locally if offline
       var vocs = user.get('vocalizations') || []
+      var id = Math.round(Math.random() * 9999).toString() + ((new Date()).getTime() % 1000).toString() + vocs.length;
       user.add_action({
         action: 'add_vocalization',
         value: voc,
-        id: Math.round(Math.random() * 9999).toString() + ((new Date()).getTime() % 1000).toString() + vocs.length
+        category: category || 'default',
+        ts: Math.round((new Date()).getTime() / 1000),
+        id: id
       });
-      vocs.push(voc);
+      vocs.unshift({list: voc, category: category, id: id, ts: Math.round((new Date()).getTime() / 1000)});
       user.set('vocalizations', vocs);
       user.save().then(function() { user.set('offline_actions', null); }, function() { });
     } else {
@@ -970,13 +974,21 @@ var app_state = EmberObject.extend({
       var idx = list.indexOf(voc);
       if(idx !== -1) {
         if(direction == 'up' && idx > 0) {
-          var ref = list[idx - 1];
-          list[idx - 1] = voc;
-          list[idx] = ref;
+          var pre = list.filter(function(v, jdx) { return (v.category || 'default') == (phrase.category || 'default') && jdx < idx; }).pop();
+          var pre_idx = list.indexOf(pre);
+          if(pre && pre_idx !== -1) {
+            var ref = list[pre_idx];
+            list[pre_idx] = voc;
+            list[idx] = ref;
+          }
         } else if(direction == 'down' && idx < list.length - 1) {
-          var ref = list[idx + 1];
-          list[idx + 1] = voc;
-          list[idx] = ref;
+          var post = list.find(function(v, jdx) { return (v.category || 'default') == (phrase.category || 'default') && jdx > idx; });
+          var post_idx = list.indexOf(post);
+          if(post && post_idx !== -1) {
+            var ref = list[post_idx];
+            list[post_idx] = voc;
+            list[idx] = ref;
+          }
         }
       }
       var ids = list.map(function(v) { return v && v.id; }).join(',');
@@ -1335,6 +1347,7 @@ var app_state = EmberObject.extend({
         _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
         _this.get('referenced_user').load_word_activities().then(function(activities) {
           if(activities && activities.list && activities.list.length > 0) {
+            // TODO: stick to goal-defined words if any are set and available
             var mod = (new Date()).getDate() % (activities.words || {length: 3}).length;
             var word = ((activities.words || [])[mod] || {}).word;
             _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id'), enabled: true, word: word});
@@ -2009,7 +2022,7 @@ var app_state = EmberObject.extend({
       var height = $button.outerHeight();
       var offset = $button.offset();
       var $clone = $button.clone().addClass('hover_button').addClass('touched');
-      var wait_to_fade = 10;
+      var wait_to_fade = 1500;
       // TODO: wait_to_fade should be configurable maybe
       if(app_state.get('referenced_user.preferences.highlight_popup_text')) {
         // https://rerc-aac.psu.edu/1819-2/
@@ -2070,7 +2083,7 @@ var app_state = EmberObject.extend({
         var max_text_width = context.measureText(text).width / 2;
         var trim_line = function(text, length) {
           var pre = length, post = length;
-          while(true) {
+          while(text) {
             if(text.charAt(pre).match(/\s/)) {
               return [text.substring(0, pre), text.substring(pre + 1)];
             } else if(text.charAt(post).match(/\s/)) {
@@ -2150,9 +2163,9 @@ var app_state = EmberObject.extend({
           position: 'absolute',
           top: offset.top - board_offset.top,
           left: offset.left - board_offset.left,
-          width: width + 4,
-          height: height + 4,
-          margin: -2
+          width: width + 8,
+          height: height + 8,
+          margin: -4
         });
       }
 

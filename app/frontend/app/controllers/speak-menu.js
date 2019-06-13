@@ -7,6 +7,7 @@ import app_state from '../utils/app_state';
 import utterance from '../utils/utterance';
 import speecher from '../utils/speecher';
 import { set as emberSet } from '@ember/object';
+import capabilities from '../utils/capabilities';
 import CoughDrop from '../app';
 
 export default modal.ModalController.extend({
@@ -14,7 +15,7 @@ export default modal.ModalController.extend({
     var utterances = stashes.get('remembered_vocalizations') || [];
     if(app_state.get('currentUser')) {
       utterances = utterances.filter(function(u) { return u.stash; }).slice(0, 2);
-      (app_state.get('currentUser.vocalizations') || []).forEach(function(u) {
+      (app_state.get('currentUser.vocalizations') || []).filter(function(v) { return !v.category || v.category == 'default'; }).forEach(function(u) {
         utterances.push({
           sentence: u.list.map(function(v) { return v.label; }).join(" "),
           vocalizations: u.list,
