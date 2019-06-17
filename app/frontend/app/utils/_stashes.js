@@ -499,6 +499,14 @@ var stashes = EmberObject.extend({
   push_log: function(only_if_convenient) {
     var usage_log = stashes.get('usage_log');
     var timestamp = stashes.current_timestamp();
+    // Wait at least 10 seconds between log pushes
+    if(stashes.last_log_push && timestamp - stashes.last_log_push < 10 && !stashes.wait_timer) {
+      stashes.wait_timer = runLater(function() {
+        stashes.wait_timer = null;
+        stashes.push_log();
+      }, 8000);
+      return;
+    }
     // Remove from local store and persist occasionally
     var diff = (usage_log && usage_log[0] && usage_log[0].timestamp) ? (timestamp - usage_log[0].timestamp) : -1;
     // If log pushes have been failing, don't keep trying on every button press
@@ -512,18 +520,19 @@ var stashes = EmberObject.extend({
         // If there are tons of events, break them up into smaller chunks, this may
         // be why user logs stopped getting persisted for one user's device.
         var to_persist = history.slice(0, 250);
-        var for_later = history.slice(250, history.length);
-        stashes.persist('usage_log', for_later);
+        var for_later = history.slice(250,  history.length);
+        stashes.persist('usage_log', [].concat(for_later));
         var log = CoughDrop.store.createRecord('log', {
           events: to_persist
         });
         log.cleanup();
+        stashes.last_log_push = timestamp;
         log.save().then(function() {
           stashes.errored_at = null;
           if(for_later.length > 0) {
             runLater(function() {
               stashes.push_log();
-            });
+            }, 10000);
           }
           // success!
         }, function(err) {
