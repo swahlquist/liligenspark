@@ -15,6 +15,8 @@ module ExtraData
       end
       # figure out a quick check to see if it's small enough to ignore
       if extra_data_too_big? || frd == 'force'
+        # This will check for any clobbered events as a last resort
+        self.generate_defaults if self.is_a?(LogSession)
         # generate large nonce to protect
         self.data['extra_data_nonce'] ||= GoSecure.nonce('extra_data_storage')
         # for button_sets, pull out self.data['buttons']

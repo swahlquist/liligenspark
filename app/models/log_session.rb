@@ -27,6 +27,16 @@ class LogSession < ActiveRecord::Base
     self.data ||= {}
     return true if skip_extra_data_processing?
     self.data['events'] ||= []
+    if self.user_id && self.id
+      Octopus.using(:master) do
+        # pull in missing job_stash events that might have gotten clobbered
+        ids = {}
+        self.data['events'].each{|e| ids[e['id']] = true }
+        JobStash.events_for(self) do |event|
+          self.data['events'] << event if event['id'] && !ids[event['id']]
+        end
+      end
+    end
     # if two events share the same timestamp, put the buttons before the actions
     self.data['events'].sort_by!{|e| [e['timestamp'] || 0, (e['type'] == 'button' ? 0 : 1)] }
     last = self.data['events'].last
@@ -890,17 +900,22 @@ class LogSession < ActiveRecord::Base
                   LogSession.schedule(:handle_alert, opts)
                   params = nil
                 end
-                LogSession.process_new(params, {
-                  :ip_address => self.data['id_address'], 
-                  :device => self.device,
-                  :author => self.author,
-                  :user => user
-                }) if params
+                if params
+                  log = LogSession.process_new(params, {
+                    :ip_address => self.data['id_address'], 
+                    :device => self.device,
+                    :author => self.author,
+                    :user => user
+                  })
+                  JobStash.remove_events_from(self, session)
+                  log.check_for_merger if log.log_type == 'session'
+                end
               end
             end
             self.processed = true
             if self.data['events'].length == 0
-              self.destroy
+              self.generate_defaults
+              self.destroy if self.data['events'].length == 0
             else
               self.save
             end
@@ -1020,7 +1035,11 @@ class LogSession < ActiveRecord::Base
       non_user_params[:author_id] = author.global_id
       non_user_params[:device_id] = device.global_id
       Rails.logger.warn("posted_log_size=#{params.to_json.length} total_events=#{(params['events'] || []).length}")
-      stash = JobStash.create(data: params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params)
+      stash_data = {
+        'params' => params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params,
+        'non_user_params' => non_user_params
+      }
+      stash = JobStash.create(data: stash_data)
       res.data['stash_id'] = stash.global_id
       Rails.logger.warn('scheduling process')
       schedule(:process_delayed_follow_on, stash.global_id, non_user_params)
@@ -1035,7 +1054,12 @@ class LogSession < ActiveRecord::Base
     if params_data.is_a?(String)
       stash = JobStash.find_by_global_id(params_data)
       raise "missing stash for #{params_data[0, 20]}" unless stash
-      params = stash.data
+      if stash.data && stash.data['params'] && stash.data['non_user_params']
+        params = stash.data['params']
+        non_user_params = stash.data['non_user_params']
+      else
+        params = stash.data
+      end
     end
     non_user_params = non_user_params.with_indifferent_access
 #    Octopus.using(:master) do
@@ -1270,9 +1294,13 @@ class LogSession < ActiveRecord::Base
               end
               if frd
                 if transferred_events.length > 0
+                  # TODO: job_stash so we don't lose anything
                   log.data['events'] ||= []
                   log.data['events'] += transferred_events
                   log.save
+                  # Save the transferred events to this log, remove them from any stashes in the old log
+                  JobStash.add_events_to(log, transferred_events)
+                  JobStash.remove_events_from(merger, transferred_events)
                   # If anything actually changed, let's check one more time
                   log.schedule_once(:check_for_merger)
                 end
@@ -1280,13 +1308,17 @@ class LogSession < ActiveRecord::Base
                   merger.data['events'] = kept_events
                   merger.save!
                 else
-                  merger.destroy
+                  # Check for any job_stashes kept events for merger before destroying
+                  merger.data['events'] = []
+                  merger.generate_defaults
+                  events = []
+                  merger.destroy if merger.data['events'].length == 0
                 end
               elsif transferred_events.length > 0 || kept_events.length != merger.data['events'].length
                 # If the merger is already scheduled, do nothing
                 # If the merger is in progress, schedule a new one
                 merger = LogMerger.find_or_create_by(log_session_id: log.id)
-                merger = LogMerger.create(log_session_id: log.id, merge_at: 60.minutes.from_now) if merger && merger.started
+                merger = LogMerger.create(log_session_id: log.id, merge_at: 30.minutes.from_now) if merger && merger.started
               end
             else
               # Swap the root and try again, always go for the lower-id record
@@ -1381,6 +1413,7 @@ class LogSession < ActiveRecord::Base
             e['id'] = ids
           end
           self.data['events'] << e
+          @just_added_events << e
         end
       end
       if params['notify'] && params['notify'] != 'false' && params['note']
