@@ -18,10 +18,11 @@ class JobStash < ApplicationRecord
     res
   end
 
-  def self.add_events_to(log, events)
+  def self.add_events_to(log, events, type='n/a')
     raise "Log need id and user id before stashing events" unless log && log.id && log.user_id
     JobStash.create(user_id: log.user_id, log_session_id: log.id, data: {
-      'events' => events
+      'events' => events,
+      'creation_type' => type
     })
   end
 

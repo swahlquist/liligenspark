@@ -32,8 +32,8 @@ class LogSession < ActiveRecord::Base
         # pull in missing job_stash events that might have gotten clobbered
         ids = {}
         self.data['events'].each{|e| ids[e['id']] = true }
-        JobStash.events_for(self) do |event|
-          self.data['events'] << event if event['id'] && !ids[event['id']]
+        JobStash.events_for(l).each do |event|
+          l.data['events'] << event if event['id'] && !ids[event['id']]
         end
       end
     end
@@ -845,6 +845,7 @@ class LogSession < ActiveRecord::Base
     current_user_id = nil
     current_session = []
     self.data ||= {}
+    self.assert_extra_data
     (self.data['events'] || []).each do |event|
       stamp = event['timestamp'] || last_stamp
       # when the user_id changes or there's a long delay, split out into another session
@@ -868,7 +869,7 @@ class LogSession < ActiveRecord::Base
   def split_out_later_sessions(frd=false)
     # Step 1: stash away any just-added events to prevent clobbering
     if @just_added_events && @just_added_events.length > 0
-      JobStash.add_events_to(self, @just_added_events)
+      JobStash.add_events_to(self, @just_added_events, 'initial')
       @just_added_events = nil
     end
 
@@ -1307,7 +1308,7 @@ class LogSession < ActiveRecord::Base
                   log.data['events'] += transferred_events
                   log.save
                   # Save the transferred events to this log, remove them from any stashes in the old log
-                  JobStash.add_events_to(log, transferred_events)
+                  JobStash.add_events_to(log, transferred_events, 'transferred')
                   JobStash.remove_events_from(merger, transferred_events)
                   # If anything actually changed, let's check one more time
                   log.schedule_once(:check_for_merger)
