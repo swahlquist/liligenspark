@@ -500,11 +500,13 @@ var stashes = EmberObject.extend({
     var usage_log = stashes.get('usage_log');
     var timestamp = stashes.current_timestamp();
     // Wait at least 10 seconds between log pushes
-    if(stashes.last_log_push && timestamp - stashes.last_log_push < 10 && !stashes.wait_timer) {
-      stashes.wait_timer = runLater(function() {
-        stashes.wait_timer = null;
-        stashes.push_log();
-      }, 8000);
+    if(stashes.last_log_push && timestamp - stashes.last_log_push < 10) {
+      if(!stashes.wait_timer) {
+        stashes.wait_timer = runLater(function() {
+          stashes.wait_timer = null;
+          stashes.push_log();
+        }, 8000);  
+      }
       return;
     }
     // Remove from local store and persist occasionally
@@ -513,9 +515,9 @@ var stashes = EmberObject.extend({
     var wait_on_error = stashes.errored_at && stashes.errored_at > 10 && ((timestamp - stashes.errored_at) < (2 * 60));
     // TODO: add listener on persistence.online and trigger this log save stuff when reconnected
     if(CoughDrop.session && CoughDrop.session.get('isAuthenticated') && stashes.get('online') && usage_log.length > 0 && !wait_on_error) {
-      // If there's more than 10 events, or it's been more than 1 hour
+      // If there's more than 25 events, or it's been more than 30 minutes
       // since the last recorded event.
-      if(usage_log.length > 10 || diff == -1 || diff > (60 * 60 * 1000) || !only_if_convenient) {
+      if(usage_log.length > 25 || diff == -1 || diff > (30 * 60 * 1000) || !only_if_convenient) {
         var history = [].concat(usage_log);
         // If there are tons of events, break them up into smaller chunks, this may
         // be why user logs stopped getting persisted for one user's device.
