@@ -32,8 +32,8 @@ class LogSession < ActiveRecord::Base
         # pull in missing job_stash events that might have gotten clobbered
         ids = {}
         self.data['events'].each{|e| ids[e['id']] = true }
-        JobStash.events_for(l).each do |event|
-          l.data['events'] << event if event['id'] && !ids[event['id']]
+        JobStash.events_for(self).each do |event|
+          self.data['events'] << event if event['id'] && !ids[event['id']]
         end
       end
     end
@@ -1279,6 +1279,7 @@ class LogSession < ActiveRecord::Base
               # remove dups based on timestamp or (event data if timestamps aren't precise enough)
               kept_events = []
               transferred_events = []
+              found_events = []
               merger_user_id = (log.data['events'] || []).map{|e| e['user_id'] }.first
               slices = ['type', 'percent_x', 'percent_y', 'timestamp', 'action', 'button', 'utterance']
               merger.data['events'].each do |e|
@@ -1300,9 +1301,12 @@ class LogSession < ActiveRecord::Base
                   else
                     kept_events << e
                   end
+                else
+                  found_events << e
                 end
               end
               if frd
+                JobStash.remove_events_from(merger, found_events) if found_events.length > 0
                 if transferred_events.length > 0
                   log.data['events'] ||= []
                   log.data['events'] += transferred_events

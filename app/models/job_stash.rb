@@ -28,12 +28,15 @@ class JobStash < ApplicationRecord
 
   def self.remove_events_from(log, events)
     to_remove = {}
-    events.each{|e| to_remove["#{e['id']}::#{e['timestamp']}"] = true }
+    events.each{|e| 
+      to_remove["#{e['id']}::#{e['timestamp']}"] = true 
+      to_remove[e.except('id').to_json] = true
+    }
     JobStash.where(user_id: log.user_id, log_session_id: log.id).each do |stash|
       stash.with_lock do
         if stash.data && stash.data['events']
           orig_cnt = stash.data['events'].length
-          stash.data['events'] = stash.data['events'].select{|e| !to_remove["#{e['id']}::#{e['timestamp']}"] }
+          stash.data['events'] = stash.data['events'].select{|e| !to_remove["#{e['id']}::#{e['timestamp']}"] && !to_remove[e.except('id').to_json] }
           stash.save if stash.data['events'] != orig_cnt
         end
       end

@@ -965,9 +965,11 @@ describe LogSession, :type => :model do
           {'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      expect(JobStash.count).to eq(1)
+      expect(JobStash.where(user_id: nil).count).to eq(1)
+      expect(JobStash.where(user_id: u.id).count).to eq(0)
       Worker.process_queues
-      expect(JobStash.count).to eq(0)
+      expect(JobStash.where(user_id: nil).count).to eq(0)
+      expect(JobStash.where(user_id: u.id).count).to eq(1)
       
       s.reload
       expect(s.data['events'].length).to eq(4)
@@ -995,9 +997,11 @@ describe LogSession, :type => :model do
           {'id' => 2, 'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      expect(JobStash.count).to eq(1)
+      expect(JobStash.where(user_id: nil).count).to eq(1)
+      expect(JobStash.where(user_id: u.id).count).to eq(0)
       Worker.process_queues
-      expect(JobStash.count).to eq(0)
+      expect(JobStash.where(user_id: nil).count).to eq(0)
+      expect(JobStash.where(user_id: u.id).count).to eq(1)
       
       s.reload
       expect(s.data['events'].length).to eq(4)
@@ -1025,9 +1029,11 @@ describe LogSession, :type => :model do
           {'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      expect(JobStash.count).to eq(1)
+      expect(JobStash.where(user_id: nil).count).to eq(1)
+      expect(JobStash.where(user_id: u.id).count).to eq(0)
       Worker.process_queues
-      expect(JobStash.count).to eq(0)
+      expect(JobStash.where(user_id: nil).count).to eq(0)
+      expect(JobStash.where(user_id: u.id).count).to eq(1)
       
       s.reload
       expect(s.data['events'].length).to eq(4)
@@ -3199,7 +3205,7 @@ describe LogSession, :type => :model do
       s1.check_for_merger
       expect(LogMerger.count).to eq(2)
       expect(LogMerger.last.started).to eq(false)
-      expect(LogMerger.last.merge_at).to be > 45.minutes.from_now
+      expect(LogMerger.last.merge_at).to be > 25.minutes.from_now
       expect(LogSession.count).to eq(2)
     end
 
