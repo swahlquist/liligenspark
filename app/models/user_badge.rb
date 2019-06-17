@@ -407,7 +407,7 @@ class UserBadge < ActiveRecord::Base
               # TODO: picking a device at random is bad
               }, {user: user, author: user, device: user.devices[0], automatic_assessment: true})
             end
-            session.with_lock do
+            # session.with_lock do
               valid = valid_unit(unit, badge_level)
               puts "  invalid unit at #{unit.to_json}" if !valid && verbose
               session.data['assessment']['tallies'][0]['correct'] = !!valid
@@ -417,7 +417,7 @@ class UserBadge < ActiveRecord::Base
               session.data['assessment']['automatic'] = true
               session.instance_variable_set('@goal_clustering_scheduled', true)
               session.save
-            end
+            # end
           end
         end
         units = []

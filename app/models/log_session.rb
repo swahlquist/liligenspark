@@ -879,9 +879,10 @@ class LogSession < ActiveRecord::Base
         schedule(:split_out_later_sessions, true)
       else
         Octopus.using(:master) do
-          self.with_lock do
+          # self.with_lock do
             self.assert_extra_data
             sessions = session_split_check
+            # NOTE: first session will always be a session-type log
             self.data['events'] = sessions.shift
             sessions.each do |session|
               user_id = session.map{|e| e['user_id'] }.compact.first || (self.user && self.user.global_id)
@@ -927,7 +928,7 @@ class LogSession < ActiveRecord::Base
             else
               self.save
             end
-          end
+          # end
         end
       end
     elsif !self.processed
@@ -1098,10 +1099,10 @@ class LogSession < ActiveRecord::Base
       params['events'] = valid_events
       if active_session && !non_user_params['imported']
         Octopus.using(:master) do
-          active_session.with_lock do
+          # active_session.with_lock do
             active_session.process(params, non_user_params)
             active_session.schedule(:check_for_merger)
-          end
+          # end
         end
       else
         session = self.process_new(params, non_user_params)
@@ -1256,7 +1257,7 @@ class LogSession < ActiveRecord::Base
   def check_for_merger(frd=false)
     log = self
     Octopus.using(:master) do
-      log.with_lock do
+      # log.with_lock do
         log.assert_extra_data
         cutoff = (log.user && log.user.log_session_duration) || User.default_log_session_duration
         matches = LogSession.where(log_type: 'session', user_id: log.user_id, author_id: log.author_id, device_id: log.device_id); matches.count
@@ -1264,7 +1265,7 @@ class LogSession < ActiveRecord::Base
         stop_iterating = false
         mergers.each do |merger|
           next if merger.id == log.id || merger == log || stop_iterating
-          merger.with_lock do
+          # merger.with_lock do
             merger.assert_extra_data
             # always merge the newer log into the older log
             if log.id < merger.id
@@ -1302,7 +1303,6 @@ class LogSession < ActiveRecord::Base
               end
               if frd
                 if transferred_events.length > 0
-                  # TODO: job_stash so we don't lose anything
                   log.data['events'] ||= []
                   log.data['events'] += transferred_events
                   log.save
@@ -1333,9 +1333,9 @@ class LogSession < ActiveRecord::Base
               merger.schedule_once(:check_for_merger)
               stop_iterating = true
             end
-          end
+          # end
         end
-      end
+      # end
     end
   end
 
