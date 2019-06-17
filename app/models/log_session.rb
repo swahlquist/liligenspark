@@ -861,10 +861,18 @@ class LogSession < ActiveRecord::Base
       last_stamp = stamp
     end
     sessions << current_session if current_session.length > 0
+    sessions << [] if sessions.length == 0
     sessions += more_sessions
   end
   
   def split_out_later_sessions(frd=false)
+    # Step 1: stash away any just-added events to prevent clobbering
+    if @just_added_events && @just_added_events.length < 0
+      JobStash.add_events_to(self, @just_added_events)
+      @just_added_events = null
+    end
+
+    # Step 2: check for actual splits that need to happen
     sessions = session_split_check
     if sessions.length > 1
       if !frd
@@ -1404,6 +1412,8 @@ class LogSession < ActiveRecord::Base
         User.find_all_by_global_id(ref_user_ids).each do |u|
           valid_ref_user_ids[u.global_id] = true if u.allows?(self.author, 'supervise')
         end
+        # TODO: job_stash so we don't lose anything
+        @just_added_events = []
         params['events'].each do |e|
           e['timestamp'] = e['timestamp'].to_f
           e.delete('referenced_user_id') unless valid_ref_user_ids[e['referenced_user_id']]
