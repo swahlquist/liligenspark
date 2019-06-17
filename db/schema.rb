@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190531212444) do
+ActiveRecord::Schema.define(version: 20190614171939) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -181,9 +181,12 @@ ActiveRecord::Schema.define(version: 20190531212444) do
 
   create_table "job_stashes", force: :cascade do |t|
     t.text     "data"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
+    t.integer  "log_session_id"
+    t.integer  "user_id"
     t.index ["created_at"], name: "index_job_stashes_on_created_at", using: :btree
+    t.index ["user_id", "log_session_id"], name: "index_job_stashes_on_user_id_and_log_session_id", using: :btree
   end
 
   create_table "log_mergers", force: :cascade do |t|

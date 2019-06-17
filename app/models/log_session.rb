@@ -1000,7 +1000,7 @@ class LogSession < ActiveRecord::Base
     session = LogSession.process_new({
       'note' => {'text' => opts[:message], 'prior' => prior[:message], 'prior_contact' => prior[:contact], 'prior_record_code' => prior[:record_code]},
       'notify' => notify
-    }, {'user' => recipient, 'contact' => contact, 'author' => sender, 'device' => device})
+    }, {'user' => recipient, 'contact' => contact, 'author' => sender, 'device' => device, 'message' => true})
     return session
   end
   
@@ -1420,6 +1420,7 @@ class LogSession < ActiveRecord::Base
         @push_message = true
         self.data['notify_user'] = true if params['notify'] == 'user_only' || params['notify'] == 'include_user'
         self.data['notify_user_only'] = true if params['notify'] == 'user_only'
+        self.data['message']= true if non_user_params['message']
         self.data['unread'] = true if self.data['unread'] == nil && self.data['notify_user']
       end
       self.data['note'] = params['note'] if params['note']

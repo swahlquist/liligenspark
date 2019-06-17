@@ -7,6 +7,7 @@ import { htmlSafe } from '@ember/string';
 
 export default DS.Model.extend({
   type: DS.attr('string'),
+  message_type: DS.attr('boolean'),
   events: DS.attr('raw'),
   note: DS.attr('raw'),
   device: DS.attr('raw'),

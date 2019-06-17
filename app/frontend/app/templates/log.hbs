@@ -5,7 +5,11 @@
         <span class="glyphicon glyphicon-film"></span>
         <span class="sr-only">{{t "video" key='video'}}</span>
       {{else if log.note_type}}
-        <span class="glyphicon glyphicon-envelope"></span>
+        {{#if log.message_type}}
+          <span class="glyphicon glyphicon-comment"></span>
+        {{else}}
+          <span class="glyphicon glyphicon-envelope"></span>
+        {{/if}}
         <span class="sr-only">{{t "message" key='message'}}</span>
       {{else if log.assessment_type}}
         <span class="glyphicon glyphicon-list-alt"></span>
