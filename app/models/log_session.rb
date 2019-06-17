@@ -867,9 +867,9 @@ class LogSession < ActiveRecord::Base
   
   def split_out_later_sessions(frd=false)
     # Step 1: stash away any just-added events to prevent clobbering
-    if @just_added_events && @just_added_events.length < 0
+    if @just_added_events && @just_added_events.length > 0
       JobStash.add_events_to(self, @just_added_events)
-      @just_added_events = null
+      @just_added_events = nil
     end
 
     # Step 2: check for actual splits that need to happen
@@ -1412,7 +1412,6 @@ class LogSession < ActiveRecord::Base
         User.find_all_by_global_id(ref_user_ids).each do |u|
           valid_ref_user_ids[u.global_id] = true if u.allows?(self.author, 'supervise')
         end
-        # TODO: job_stash so we don't lose anything
         @just_added_events = []
         params['events'].each do |e|
           e['timestamp'] = e['timestamp'].to_f

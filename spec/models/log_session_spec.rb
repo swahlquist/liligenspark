@@ -1592,7 +1592,26 @@ describe LogSession, :type => :model do
       expect(s.data['events'][0]['referenced_user_id']).to eq(u2.global_id)
       expect(s.data['events'][1]['referenced_user_id']).to eq(nil)
     end
-    
+
+    it "should stash events as they're recorded for the first time" do
+      d = Device.create
+      u = User.create
+      s = LogSession.process_new({
+        'events' => [
+          {'user_id' => u.global_id, 'geo' => ['1', '2'], 'timestamp' => 1431461204, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}},
+          {'user_id' => u.global_id, 'geo' => ['2', '3'], 'timestamp' => 1431461206, 'type' => 'button', 'button' => {'label' => 'cow', 'board' => {'id' => '1_1'}}},
+        ]
+      }, {:user => u, :author => u, :device => d})
+      
+      expect(s).not_to eq(nil)
+      expect(s.errored?).to eq(false)
+      expect(s.user).to eq(u)
+      expect(s.data['events'].length).to eq(2)
+      expect(LogSession.count).to eq(1)
+      expect(JobStash.events_for(s).length).to eq(2)
+      
+    end
+
     it "should not attach referenced user if not valid" do
       d = Device.create
       u = User.create
