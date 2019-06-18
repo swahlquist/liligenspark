@@ -97,7 +97,7 @@ export default modal.ModalController.extend({
               var found_any = false;
               list.forEach(function(step) {
                 if(step.button && step.button.label) {
-                  var part = parts_list.find(function(p) { return !p.image && p.str == step.button.label || p.str == step.button.vocalization; });
+                  var part = parts_list.find(function(p) { return !p.image && p.str.toLowerCase() == step.button.label.toLowerCase() || p.str.toLowerCase() == (step.button.vocalization || '').toLowerCase(); });
                   if(part) {
                     found_any = true;
                     part.image = step.button.image;
