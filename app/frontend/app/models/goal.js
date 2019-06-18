@@ -37,6 +37,7 @@ CoughDrop.Goal = DS.Model.extend({
   duration: DS.attr('number'),
   stats: DS.attr('raw'),
   related: DS.attr('raw'),
+  ref_data: DS.attr('raw'),
   sequence: DS.attr('boolean'),
   date_based: DS.attr('boolean'),
   next_template_id: DS.attr('string'),

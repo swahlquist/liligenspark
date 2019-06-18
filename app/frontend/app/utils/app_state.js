@@ -1347,9 +1347,14 @@ var app_state = EmberObject.extend({
         _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
         _this.get('referenced_user').load_word_activities().then(function(activities) {
           if(activities && activities.list && activities.list.length > 0) {
-            // TODO: stick to goal-defined words if any are set and available
-            var mod = (new Date()).getDate() % (activities.words || {length: 3}).length;
-            var word = ((activities.words || [])[mod] || {}).word;
+            var list = activities.words;
+            // If user-defined goal words are set, use one of those if possible
+            var goal_list = (activities.words || []).filter(function(w) {
+              return w && w.reasons && w.reasons.indexOf('primary_words') !== -1;
+            });
+            if(goal_list.length > 0) { list = goal_list; }
+            var mod = (new Date()).getDate() % (list || {length: 3}).length;
+            var word = ((list || [])[mod] || {}).word;
             _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id'), enabled: true, word: word});
           }
         }, function() { });

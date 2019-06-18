@@ -165,6 +165,7 @@ export default modal.ModalController.extend({
               watch_total: count.toString(),
               simple_type: 'words_per_day'
             });
+            goal.set('ref_data', {words_list: strings});
           }
         } else if(type == 'modeling') {
           var strings = goal.get('strings_list');
@@ -180,6 +181,7 @@ export default modal.ModalController.extend({
               watch_total: count.toString(),
               simple_type: 'modeling_per_day'
             });
+            goal.set('ref_data', {modeled_words_list: strings});
           }
         }
       }

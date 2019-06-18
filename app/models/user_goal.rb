@@ -330,6 +330,7 @@ class UserGoal < ActiveRecord::Base
     self.template = !!params['template'] if params['template'] != nil
     self.template_header = !!params['template_header'] if params['template_header'] && self.template_header == nil
     self.settings['badge_name']  = params['badge_name'] if params['badge_name']
+    self.settings['ref_data'] = params['ref_data'] if params['ref_data']
     badges = UserBadge.process_goal_badges(params['badges'], params['assessment_badge']) if params['badges'] || params['assessment_badge']
     self.settings['badges'] = badges.select{|b| b['level']} if badges
     self.settings['assessment_badge'] = badges.detect{|b| b['assessment'] } if badges

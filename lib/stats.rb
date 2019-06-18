@@ -876,17 +876,21 @@ module Stats
     if current && user
       goals = UserGoal.where(user_id: user.id, active: true)
       goals.each do |goal|
-        if goal.settings['assessment_badge'] && goal.settings['assessment_badge']['watchlist']
-          if goal.settings['assessment_badge']['words_list']
-            key = goal.primary ? :primary_words : :primary_modeled_words
+        word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['words_list']
+        word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['words_list']
+        modeled_word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['modeled_words_list']
+        modeled_word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['modeled_words_list']
+        if word_list || modeled_word_list
+          if primary_word_list
+            key = goal.primary ? :primary_words : :secondary_words
             res[:watchwords][key] ||= {}
-            goal.settings['assessment_badge']['words_list'].each do |word|
+            word_list.each do |word|
               res[:watchwords][key][word] = 1.0
             end
-          elsif goal.settings['assessment_badge']['modeled_words_list']
-            key = goal.primary ? :secondary_words : :secondary_modeled_words
+          elsif modeled_words_list
+            key = goal.primary ? :primary_modeled : :secondary_modeled_words
             res[:watchwords][key] ||= {}
-            goal.settings['assessment_badge']['modeled_words_list'].each do |word|
+            modeled_words_list.each do |word|
               res[:watchwords][key][word] = 1.0
             end
           end

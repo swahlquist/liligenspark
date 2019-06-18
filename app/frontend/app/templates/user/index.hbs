@@ -90,7 +90,7 @@
         </button>
       </div>
       <div class='col-sm-3 col-xs-6 big_button_holder'>
-        {{#link-to 'user.goals' app_state.currentUser.user_name class='btn big_button btn-default alternate_button'}}
+        {{#link-to 'user.goals' model.user_name class='btn big_button btn-default alternate_button'}}
           <span class='glyphicon glyphicon-flag'></span>
           {{t "Goals" key='goals'}}
         {{/link-to}}
