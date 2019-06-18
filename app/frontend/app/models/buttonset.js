@@ -240,7 +240,7 @@ CoughDrop.Buttonset = DS.Model.extend({
 
     var partial_matches = [];
     var all_buttons_enabled = true;
-    var parts = query.split(/\s+/);
+    var parts = query.match(/\b\w+\b/g);
     var cnt = 0;
     var buttons = [];
     var board_map = null;

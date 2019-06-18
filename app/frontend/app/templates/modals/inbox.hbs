@@ -11,7 +11,30 @@
       {{/if}}
       {{t "from" key='from'}} <strong>{{current.author.name}}</strong> <span class='text-muted'>{{t "at" key='at'}} {{date current.sent}}</span>
       <div style='clear: left;'></div>
-      <div id='alert_message' class={{current_class}}>{{current.text}}</div>
+      <div id='alert_message' class={{current_class}}>
+        {{#if current_with_images}}
+          <div style='white-space: normal; margin-top: -50px;'>
+            {{#each current_with_images as |part|}}<span style='display: inline-block; text-align: center; margin-bottom: 5px;'>
+              {{#if part.image}}
+                <div style='border: 1px solid #ddd; padding: 5px; border-radius: 10px; min-width: 100px;'>
+                  <span style='height: 40px; display: block; width: 100%;'>
+                    {{#if part.image}}
+                      <img src={{part.image}} class='fit_image' style='height: 40px; 100%; min-width: 40px;'/>
+                    {{/if}}
+                  </span>
+                  <span style='white-space: pre;'>{{part.str}}</span>
+                </div>
+              {{else}}
+                <span style='height: 40px; display: block; width: 100%;'>
+                </span>
+                <span style='white-space: pre;'>{{part.str}}</span>
+              {{/if}}
+            </span>{{/each}}
+          </div>
+        {{else}}
+          {{current.text}}
+        {{/if}}
+      </div>
       {{#if current.prior}}
         <div style='white-space: normal; margin-top: 30px;'>
           <div class='text-muted'>{{t "in reply to" key='in_reply_to'}}{{#if current.prior_author}}{{t "message from " key='message_from'}}{{current.prior_author}}{{/if}}:</div>
@@ -55,6 +78,7 @@
     {{/unless}}
     {{#if current}}
       <button class='btn btn-default btn-lg' {{action 'back'}}>{{t "Back" key='back'}}</button>
+      <button class='btn btn-default btn-lg' {{action 'speak'}}><span class='glyphicon glyphicon-volume-up'></span> {{t "Speak" key='speak'}}</button>      
       <button class='btn btn-default btn-lg' {{action 'reply'}}><span class='glyphicon glyphicon-envelope'></span> {{t "Reply" key='reply'}}</button>      
     {{else}}
       {{#if working_vocalization}}

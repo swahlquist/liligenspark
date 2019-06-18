@@ -380,6 +380,7 @@ export default Controller.extend({
     var alt = this.get('pending_preferences.device.alternate_voice') || {};
     if(alt.enabled && alt.for_scanning === undefined && alt.for_fishing === undefined && alt.for_buttons === undefined) {
       emberSet(alt, 'for_scanning', true);
+      emberSet(alt, 'for_messages', true);
     }
     if(alt.for_scanning || alt.for_fishing || alt.for_buttons) {
       emberSet(alt, 'enabled', true);

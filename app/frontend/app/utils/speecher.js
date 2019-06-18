@@ -768,11 +768,6 @@ var speecher = EmberObject.extend({
 
     var $audio = this.find_or_create_element(url);
     if($audio.length) {
-      if(opts.alternate_voice) {
-        // set to the secondary audio target, if defined
-      } else {
-        // re-set to primary audio target
-      }
       var playAudio = function() {
         var audio = $audio[0];
         if(type == 'text') {

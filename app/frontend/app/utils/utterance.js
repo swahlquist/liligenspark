@@ -277,12 +277,13 @@ var utterance = EmberObject.extend({
     return utterance.get('last_spoken_button');
   },
   speak_button: function(button) {
+    var alt_voice = speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_buttons === true;
     if(button.sound) {
       var collection_id = null;
       if(button.blocking_speech) {
         collection_id = Math.round(Math.random() * 99999) + "-" + (new Date()).getTime();
       }
-      speecher.speak_audio(button.sound, 'text', collection_id);
+      speecher.speak_audio(button.sound, 'text', collection_id, {alternate_voice: alt_voice});
     } else {
       if(speecher.ready) {
         if(button.vocalization == ":beep") {
@@ -293,7 +294,7 @@ var utterance = EmberObject.extend({
             collection_id = Math.round(Math.random() * 99999) + "-" + (new Date()).getTime();
           }
           var text = button.vocalization || button.label;
-          speecher.speak_text(text, collection_id);
+          speecher.speak_text(text, collection_id, {alternate_voice: alt_voice});
         }
       } else {
         this.silent_speak_button(button);

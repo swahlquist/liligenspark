@@ -3,6 +3,7 @@ import modal from '../../utils/modal';
 import stashes from '../../utils/_stashes';
 import persistence from '../../utils/persistence';
 import app_state from '../../utils/app_state';
+import speecher from '../../utils/speecher';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
@@ -84,6 +85,33 @@ export default modal.ModalController.extend({
       if(alert.note) {
         this.set('current', alert);
         var _this = this;
+        var text = alert.text;
+        _this.set('current_with_images', null);
+        var parts_list = text.split(/\b/).map(function(str) { return { str: str }; });
+        var board_id = app_state.get('referenced_user.preferences.home_board.id');
+        if(board_id && app_state.get('referenced_user.preferences.device.button_text') != 'text_only' && app_state.get('referenced_user.preferences.device.button_text_position') != 'text_only') {
+          CoughDrop.Buttonset.load_button_set(board_id).then(function(button_set) {
+            var search = button_set.find_sequence(text, board_id, app_state.get('referenced_user'), false);
+            search.then(function(results) {
+              var list = results[0].steps;
+              var found_any = false;
+              list.forEach(function(step) {
+                if(step.button && step.button.label) {
+                  var part = parts_list.find(function(p) { return !p.image && p.str == step.button.label || p.str == step.button.vocalization; });
+                  if(part) {
+                    found_any = true;
+                    part.image = step.button.image;
+                  }
+                }
+              });
+              if(found_any) {
+                _this.set('current_with_images', parts_list);
+              }
+            });
+          })
+        }
+
+        var _this = this;
         emberSet(alert, 'unread', false);
         // persist the updated version of the inbox results
         stashes.log_event({
@@ -98,6 +126,13 @@ export default modal.ModalController.extend({
     },
     back: function() {
       this.set('current', null);
+    },
+    speak: function() {
+      var text = this.get('current.text');
+      if(text) {
+        var alt_voice = speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_messages != false;
+        speecher.speak_text(text, false, {alternate_voice: alt_voice});
+      }
     },
     reply: function() {
       app_state.set('reply_note', this.get('current'));
