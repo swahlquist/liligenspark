@@ -1911,9 +1911,12 @@ var app_state = EmberObject.extend({
     }
 
     // additional actions (besides just speaking) will be necessary for some buttons
-    if(button.load_board && button.load_board.key) {
-      var user_prefers_native_keyboard = app_state.get('referenced_user.preferences.prefer_native_keyboard') || window.user_preferences.any_user.prefer_native_keyboard;
-      var native_keyboard_available = capabilities.install_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && !buttonTracker.scanning_enabled;
+    if((button.load_board && button.load_board.key) || (button.vocalization || '').match(/:native-keyboard/)) {
+      var user_prefers_native_keyboard = app_state.get('referenced_user.preferences.prefer_native_keyboard');
+      if(user_prefers_native_keyboard == undefined) {
+        user_prefers_native_keyboard = window.user_preferences.any_user.prefer_native_keyboard;
+      }
+      var native_keyboard_available = capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && !buttonTracker.scanning_enabled;
       if((button.vocalization || '').match(/:native-keyboard/) && native_keyboard_available && user_prefers_native_keyboard && window.Keyboard && window.Keyboard.hide) {
         scanner.native_keyboard();
       } else if(stashes.get('sticky_board') && app_state.get('speak_mode')) {

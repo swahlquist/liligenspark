@@ -561,11 +561,11 @@ var scanner = EmberObject.extend({
     buttonTracker.keyboard_listen = true;
     buttonTracker.native_keyboard = true;
     var listener = function() {
-      window.Keyboard.removeEventListener('keyboardDidHide', listener);
+      window.removeEventListener('keyboardDidHide', listener);
       buttonTracker.keyboard_listen = prior_keyboard_listen;
       buttonTracker.native_keyboard = false;
     };
-    window.Keyboard.addEventListener('keyboardDidHide', listener)
+    window.addEventListener('keyboardDidHide', listener)
     scanner.listen_for_input();
     runLater(function() {
       window.Keyboard.hideFormAccessoryBar(false, function() { });
