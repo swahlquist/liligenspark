@@ -39,6 +39,15 @@ export default modal.ModalController.extend({
     });
     return res;
   }.property('model.home_board', 'model.id', 'model.categories'),
+  locales: function() {
+    var list = i18n.get('locales');
+    var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
+    for(var key in list) {
+      res.push({name: list[key], id: key});
+    }
+    res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
+    return res;
+  }.property(),
   licenseOptions: CoughDrop.licenseOptions,
   public_options: CoughDrop.publicOptions,
   iconUrls: CoughDrop.iconUrls,
