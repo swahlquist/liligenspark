@@ -38,13 +38,14 @@ class DeletedBoard < ActiveRecord::Base
   end
   
   def self.process(board)
-    db = DeletedBoard.new
-    db.key = board.key
+    db = DeletedBoard.find_or_create_by(key: board.key)
+    prior_board_id = db.board_id if db.board_id
     db.board_id = board.id
     db.user_id = board.user_id
-    db.settings = {
-      :stats => board.settings['stats']
-    }
+    db.settings ||= {}
+    db.settings[:stats] = board.settings['stats']
+    db.settings[:board_ids] ||= []
+    db.settings[:board_ids] << prior_board_id if prior_board_id
     db.save
     db
   end
