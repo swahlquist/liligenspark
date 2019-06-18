@@ -97,11 +97,11 @@ export default modal.ModalController.extend({
               var found_any = false;
               list.forEach(function(step) {
                 if(step.button && step.button.label) {
-                  var part = parts_list.find(function(p) { return !p.image && p.str.toLowerCase() == step.button.label.toLowerCase() || p.str.toLowerCase() == (step.button.vocalization || '').toLowerCase(); });
-                  if(part) {
+                  var parts = parts_list.filter(function(p) { return !p.image && p.str.toLowerCase() == step.button.label.toLowerCase() || p.str.toLowerCase() == (step.button.vocalization || '').toLowerCase(); });
+                  parts.forEach(function(part) {
                     found_any = true;
                     part.image = step.button.image;
-                  }
+                  });
                 }
               });
               if(found_any) {
