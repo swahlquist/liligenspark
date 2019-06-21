@@ -62,13 +62,15 @@ export default modal.ModalController.extend({
     return htmlSafe(size);
   }.property('model.text_only', 'model.text'),
   actions: {
-    speak: function() {
+    speak: function(close) {
       if(this.get('holding')) { return; }
       utterance.vocalize_list(null, {button_triggered: true});
       if(app_state.get('currentUser.preferences.vibrate_buttons') && app_state.get('speak_mode')) {
         capabilities.vibrate();
       }
-      modal.close();
+      if(close) {
+        modal.close();
+      }
     },
     hold: function() {
       this.set('holding', !this.get('holding'));
