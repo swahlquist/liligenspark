@@ -2,6 +2,7 @@ import Ember from 'ember';
 import CoughDrop from '../app';
 import $ from 'jquery';
 import app_state from '../utils/app_state';
+import i18n from '../utils/i18n';
 import modal from '../utils/modal';
 import { set as emberSet } from '@ember/object';
 
