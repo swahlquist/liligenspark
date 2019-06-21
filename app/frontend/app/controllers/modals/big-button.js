@@ -43,12 +43,20 @@ export default modal.ModalController.extend({
         size = 'small';
       } else if(text.length > 100) {
         size = 'medium';
+      } else if(text.length < 50) {
+        size = 'big';
+      } else if(text.length < 20) {
+        size = 'huge';
       }
     } else {
       if(text.length > 100) {
         size = 'small';
       } else if(text.length > 50) {
         size = 'medium';
+      } else if(text.length < 25) {
+        size = 'big';
+      } else if(text.length < 10) {
+        size = 'huge';
       }
     }
     return htmlSafe(size);

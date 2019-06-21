@@ -781,8 +781,8 @@ footer .wide_links {
       height: calc(100vh - 180px); 
       overflow: auto;
       white-space: normal; 
-      font-size: 40px;
-      line-height: 45px;
+      font-size: 50px;
+      line-height: 55px;
       border-width: 4px;
       border-radius: 10px;
       span {
@@ -795,6 +795,14 @@ footer .wide_links {
       .small {
         font-size: 20px;
         line-height: 25px;
+      }
+      .big {
+        font-size: 80px;
+        line-height: 85px;
+      }
+      .huge {
+        font-size: 100px;
+        line-height: 105px;
       }
     }
   }
