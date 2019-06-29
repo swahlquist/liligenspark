@@ -877,7 +877,7 @@ class LogSession < ActiveRecord::Base
     sessions = session_split_check
     if sessions.length > 1
       if !frd
-        schedule(:split_out_later_sessions, true)
+        schedule_once(:split_out_later_sessions, true)
       else
         Octopus.using(:master) do
           # self.with_lock do
@@ -901,13 +901,15 @@ class LogSession < ActiveRecord::Base
                     button_list: event['share']['utterance'],
                     sentence: event['share']['sentence']
                   }, {:user => user})
+                  JobStash.remove_events_from(self, [event])
                   utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
                   params = nil
                   # TODO: schedule background job to process user share
                 elsif event && event['alert']
                   opts = {}.merge(event['alert'])
                   opts['author_id'] = self.author.global_id
-                  LogSession.schedule(:handle_alert, opts)
+                  JobStash.remove_events_from(self, [event])
+                  LogSession.schedule_once(:handle_alert, opts)
                   params = nil
                 end
                 if params
