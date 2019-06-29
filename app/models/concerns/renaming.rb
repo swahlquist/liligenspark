@@ -128,7 +128,7 @@ module Renaming
       LogSessionBoard.where(:board_id => record.id).each do |lsb|
         Octopus.using(:master) do
           session = lsb.log_session
-          session.with_lock do
+#          session.with_lock do
             session.assert_extra_data
             changed = false
             (session.data['events'] || []).each do |event|
@@ -142,7 +142,7 @@ module Renaming
               end
             end
             session.save if changed
-          end
+#          end
         end
       end
     elsif record_type == 'user'
