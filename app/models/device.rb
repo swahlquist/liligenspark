@@ -187,6 +187,7 @@ class Device < ActiveRecord::Base
   
   def clean_old_keys
     self.settings ||= {}
+    self.settings['app'] = true if self.token_type == :unknown && self.settings['name'] && self.settings['name'].match(/App/)
     keys = self.settings['keys'] || []
     @expired_keys ||= {}
     @refreshable_keys ||= {}
