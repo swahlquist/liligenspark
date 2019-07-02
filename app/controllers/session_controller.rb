@@ -201,7 +201,6 @@ class SessionController < ApplicationController
     set_browser_token_header
     if @api_user
       device = Device.find_by_global_id(@api_device_id)
-      puts "check the token... #{params['access_token']}"
       valid = device && device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
       expired = device && (device.instance_variable_get('@expired_keys') || {})[params['access_token']]
       needs_refresh = device && (device.instance_variable_get('@refreshable_keys') || {})[params['access_token']]
