@@ -7,6 +7,7 @@ import RSVP from 'rsvp';
 import CoughDrop from '../app';
 import stashes from './_stashes';
 import session from './session';
+import i18n from './i18n';
 import capabilities from './capabilities';
 
 (function() {
@@ -147,6 +148,8 @@ import capabilities from './capabilities';
   }
 
   $.ajax = function(opts) {
+    // TODO: on expired token, try refreshing the token and
+    // if that succeeds, re-attempt the process
     var _this = this;
     var args = [];
     var options = arguments[0];
@@ -194,25 +197,22 @@ import capabilities from './capabilities';
         if(options.url && options.url.match(/^\/(api\/v\d+\/|token)/) && capabilities.installed_app && capabilities.api_host) {
           options.url = capabilities.api_host + options.url;
         }
+        options.headers = options.headers || {};
+        options.headers['X-INSTALLED-COUGHDROP'] = (!!capabilities.installed_app).toString();
         if(capabilities.access_token) {
-          options.headers = options.headers || {};
           options.headers['Authorization'] = "Bearer " + capabilities.access_token;
           options.headers['X-Device-Id'] = device_id;
           options.headers['X-CoughDrop-Version'] = window.CoughDrop.VERSION;
         }
         if(CoughDrop.protected_user || stashes.get('protected_user')) {
-          options.headers = options.headers || {};
           options.headers['X-SILENCE-LOGGER'] = 'true';
         }
         // TODO: remove this when no longer needed
-        options.headers = options.headers || {};
         options.headers['X-SUPPORTS-REMOTE-BUTTONSET'] = 'true';
         if(CoughDrop.session && CoughDrop.session.get('as_user_id')) {
-          options.headers = options.headers || {};
           options.headers['X-As-User-Id'] = CoughDrop.session.get('as_user_id');
         }
         if(window.ApplicationCache) {
-          options.headers = options.headers || {};
           options.headers['X-Has-AppCache'] = "true";
         }
       }
@@ -226,27 +226,52 @@ import capabilities from './capabilities';
           data = {text: data};
         }
         if(data && data.error && data.status && !data.ok) {
-          console.log("ember ajax error: " + data.status + ": " + data.error + " (" + options.url + ")");
-          if(error) {
-            error.call(this, xhr, message, data);
-            // The bowels of ember aren't expecting $.ajax to return a real
-            // promise and so they don't catch the rejection properly, which
-            // potentially causes all sorts of unexpected uncaught errors.
-            // NOTE: this means that any CoughDrop code should not use the error parameter
-            // if it expects to receive a proper promise.
-            // TODO: raise an error somehow if the caller provides an error function
-            // and expects a proper promise in response.
-            return RSVP.resolve(null);
+          var handle_error = function() {
+            console.log("ember ajax error: " + data.status + ": " + data.error + " (" + options.url + ")");
+            if(error) {
+              error.call(this, xhr, message, data);
+              // The bowels of ember aren't expecting $.ajax to return a real
+              // promise and so they don't catch the rejection properly, which
+              // potentially causes all sorts of unexpected uncaught errors.
+              // NOTE: this means that any CoughDrop code should not use the error parameter
+              // if it expects to receive a proper promise.
+              // TODO: raise an error somehow if the caller provides an error function
+              // and expects a proper promise in response.
+              return RSVP.resolve(null);
+            } else {
+              var rej = RSVP.reject({
+                stack: data.status + ": " + data.error + " (" + options.url + ")",
+                fakeXHR: fakeXHR(xhr),
+                message: message,
+                result: data
+              });
+              rej.then(null, function() { });
+              return rej;
+            }
+          };
+          if(data.invalid_token && data.refreshable) {
+            // If we're caught with an old access token, try to
+            // refresh it and re-run the request
+            return session.refresh_access_token().then(function() {
+              original_options.attempt = (original_options.attempt || 1);
+              return new RSVP.Promise(function(res, rej) {
+                runLater(function() {
+                  $.ajax(original_options).then(function(r) {
+                    res(r);
+                  }, function(e) {
+                    rej(e);
+                  });
+                });
+              });
+            }, function(err) {
+              handle_error();
+            })
+          } else if(data.invalid_token) {
+            // force a login prompt for invalid tokens
+            session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
           } else {
-            var rej = RSVP.reject({
-              stack: data.status + ": " + data.error + " (" + options.url + ")",
-              fakeXHR: fakeXHR(xhr),
-              message: message,
-              result: data
-            });
-            rej.then(null, function() { });
-            return rej;
-           }
+            handle_error();
+          }
         } else {
           if(typeof(data) == 'string') {
           }

@@ -38,6 +38,24 @@ var session = EmberObject.extend({
     }
     return null;
   },
+  confirm_authentication: function(response) {
+    session.persist({
+      access_token: response.access_token,
+      refresh_token: response.refresh_token,
+      token_type: response.token_type,
+      user_name: response.user_name,
+      user_id: response.user_id
+    });
+    // update selfUserId, in the off chance that it has changed from our local copy
+    // due to my user_name being renamed, and then me logging in to a new account
+    // with the old user_name.
+    if(response.user_id) {
+      persistence.store('settings', {id: response.user_id}, 'selfUserId').then(null, function() {
+        return RSVP.reject({error: "selfUserId not persisted from login"});
+      });
+    }
+    stashes.persist_object('just_logged_in', true, false);
+  },
   authenticate: function(credentials) {
     var _this = this;
     var res = new RSVP.Promise(function(resolve, reject) {
@@ -53,23 +71,8 @@ var session = EmberObject.extend({
       };
 
       persistence.ajax('/token', {method: 'POST', data: data}).then(function(response) {
-        run(function() {
-          session.persist({
-            access_token: response.access_token,
-            user_name: response.user_name,
-            user_id: response.user_id
-          });
-          // update selfUserId, in the off chance that it has changed from our local copy
-          // due to my user_name being renamed, and then me logging in to a new account
-          // with the old user_name.
-          if(response.user_id) {
-            persistence.store('settings', {id: response.user_id}, 'selfUserId').then(null, function() {
-              return RSVP.reject({error: "selfUserId not persisted from login"});
-            });
-          }
-          stashes.persist_object('just_logged_in', true, false);
-          resolve(response);
-        });
+        session.confirm_authentication(response);
+        resolve(response);
       }, function(data) {
         var xhr = data.fakeXHR || {};
         run(function() {
@@ -80,22 +83,53 @@ var session = EmberObject.extend({
     res.then(null, function() { });
     return res;
   },
+  refresh_access_token: function() {
+    var store_data = stashes.get_object('auth_settings', true) || session.auth_settings_fallback() || {};
+    if(session.refresh_promise) {
+      return session.refresh_promise;
+    }
+    if(store_data.refresh_token && store_data.access_token) {
+      var url = '/api/v1/token_refresh';
+      var promise_id = Math.random();
+      session.refresh_promise = persistence.ajax(url, {
+        type: 'POST',
+        data: {
+          access_token: store_data.access_token, 
+          refresh_token: store_data.refresh_token
+        }
+      }).then(function(res) {
+        session.confirm_authentication(res);
+        if(session.refresh_promise && session.refresh_promise.promise_id == promise_id) { session.refresh_promise = null; }
+        return RSVP.resolve(res);
+      }, function(err) {
+        if(session.refresh_promise && session.refresh_promise.promise_id == promise_id) { session.refresh_promise = null; }
+        return RSVP.reject(err);
+      });
+      session.refresh_promise.promise_id = promise_id;
+      return session.refresh_promise;
+    } else {
+      return RSVP.reject({error: 'no refresh token found'});
+    }
+  },
   check_token: function(allow_invalidate) {
     var store_data = stashes.get_object('auth_settings', true) || session.auth_settings_fallback() || {};
     var key = store_data.access_token || "none";
     persistence.tokens = persistence.tokens || {};
     persistence.tokens[key] = true;
-    var url = '/api/v1/token_check?access_token=' + store_data.access_token + "&rnd=" + Math.round(Math.random * 999999);
+    var url = '/api/v1/token_check?access_token=' + store_data.access_token + "&rnd=" + Math.round(Math.random() * 999999);
     if(store_data.as_user_id) {
       url = url + "&as_user_id=" + store_data.as_user_id;
     }
     return persistence.ajax(url, {
       type: 'GET'
     }).then(function(data) {
+      // TODO: what happens if the session token gets invalidated mid-session (i.e. without reload?)
+      // TODO: if expired, then re-submit with the refresh token
       if(data.authenticated === false) {
         session.set('invalid_token', true);
         if(allow_invalidate && store_data.access_token) {
           session.force_logout(i18n.t('session_token_invalid', "This session is no longer valid, please log back in"));
+          return;
         }
       } else {
         session.set('invalid_token', false);
@@ -152,6 +186,7 @@ var session = EmberObject.extend({
     if(store_data.access_token && !session.get('isAuthenticated')) {
       session.set('isAuthenticated', true);
       session.set('access_token', store_data.access_token);
+      session.set('refresh_token', store_data.refresh_token);
       session.set('user_name', store_data.user_name);
       session.set('user_id', store_data.user_id);
       if(window.ga && store_data.user_id) {
@@ -183,6 +218,7 @@ var session = EmberObject.extend({
   override: function(options) {
     var data = session.restore();
     data.access_token = options.access_token;
+    data.refresh_token = options.refresh_token;
     data.user_name = options.user_name;
     data.user_id = options.user_id;
     stashes.flush();
@@ -243,6 +279,7 @@ var session = EmberObject.extend({
       later(function() {
         session.set('isAuthenticated', false);
         session.set('access_token', null);
+        session.set('refresh_token', null);
         session.set(' ', null);
         session.set('user_id', null);
         session.set('as_user_id', null);
