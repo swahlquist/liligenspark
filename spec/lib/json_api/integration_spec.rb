@@ -30,7 +30,7 @@ describe JsonApi::Integration do
       i.settings['custom_integration'] = true
       hash = JsonApi::Integration.build_json(i, permissions: u)
       expect(hash['access_token']).to_not eq(nil)
-      expect(hash['access_token']).to eq(d.token)
+      expect(hash['access_token']).to eq(d.tokens[0])
       expect(hash['token']).to_not eq(nil)
       expect(hash['token']).to eq(i.settings['token'])
     end

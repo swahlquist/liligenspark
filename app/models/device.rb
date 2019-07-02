@@ -20,6 +20,40 @@ class Device < ActiveRecord::Base
     self.settings['name'] ||= self.device_key.split(/\s/, 2)[1] if self.system_generated?
     true
   end
+
+  def token_timeout
+    # force a logout for tokens that have been used for an extended period of time
+    if self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
+      if self.settings['long_token']
+        5.years.to_i
+      else
+        28.days.to_i
+      end
+    else
+      # browser tokens can last 3 months max before needing a re-login
+      if self.settings['long_token']
+        3.months.to_i
+      else
+        28.days.to_i
+      end
+    end
+  end
+
+  def token_type
+    if self.user_integration_id
+      :integration
+    elsif !self.developer_key_id || self.developer_key_id == 0
+      if self.settings && self.settings['browser']
+        :browser
+      elsif self.settings && self.settings['app']
+        :app
+      else
+        :unknown
+      end
+    else
+      :integration
+    end
+  end
   
   def system_generated?
     self.developer_key_id == 0
@@ -67,16 +101,29 @@ class Device < ActiveRecord::Base
   def update_user_device_name
     # if the device_name changed the it'll need to be updated on the user record
   end
+
+  def new_access_token
+    key = "#{self.global_id}~#{Digest::SHA512.hexdigest(Time.now.to_i.to_s + rand(99999).to_s + self.global_id)}"  
+  end
   
-  def generate_token!(force_long_token=false)
+  def generate_token!(long_token=nil)
     raise "device must already be saved" unless self.id
     clean_old_keys
-    # TODO: this check should probably be based on developer key whenever we do that part
-    if !self.system_generated?
-      # browsers are different than devices in that they can have multiple tokens for the same device
+    if self.token_type == :app
+      # app installations can only have one access token at a time, there will be
+      # no risk of concurrency from different sources
+      # also, app tokens need long_token to be manually set
       self.settings['keys'] = []
+    elsif self.token_type == :integration
+      # integrations always use long tokens
+      long_token = true
+    elsif self.token_type == :browser
+      # browser sessions set long_token at authentication, everyone else sets it after
+      long_token = !!long_token
+      self.settings['long_token_set'] = true
     end
-    key = "#{self.global_id}~#{Digest::SHA512.hexdigest(Time.now.to_i.to_s + rand(99999).to_s + self.global_id)}"
+    self.settings['long_token'] = long_token if long_token != nil
+    key = new_access_token
     
     # Keep track of which devices were used most recently/frequently to help
     # display most-relevant ones in the UI under "user devices".
@@ -86,7 +133,7 @@ class Device < ActiveRecord::Base
       'value' => key,
       'timestamp' => Time.now.to_i,
       'last_timestamp' => Time.now.to_i,
-      'timeout' => self.inactivity_timeout(force_long_token)
+      'refresh' => GoSecure.nonce('device_refresh_token')
     }
     self.save
   end
@@ -103,13 +150,23 @@ class Device < ActiveRecord::Base
     "#{self.device_key}_#{self.developer_key_id}"
   end
   
-  def inactivity_timeout(force_long_timeout=false)
-    if self.user_integration_id
-      6.months.to_i
-    elsif force_long_timeout
-      28.days.to_i
-    else
+  def inactivity_timeout
+    if self.token_type == :integration
+      # integration tokens must be refreshed every 24 hours
       24.hours.to_i
+    elsif self.settings && self.settings['long_token']
+      if self.token_type == :app
+        # app tokens can go a long time between uses if on a trusted device
+        12.months.to_i
+      elsif self.token_type == :browser
+        # browser tokens can go for a little while between uses if on a trusted device
+        28.days.to_i
+      else
+        14.days.to_i
+      end
+    else
+      # if not on a trusted device, inactivity timeout is very short
+      12.hours.to_i
     end
   end
 
@@ -132,9 +189,24 @@ class Device < ActiveRecord::Base
     self.settings ||= {}
     keys = self.settings['keys'] || []
     @expired_keys ||= {}
+    @refreshable_keys ||= {}
     new_keys = []
     keys.each do |k|
-      if k['last_timestamp'] > Time.now.to_i - (k['timeout'] || self.inactivity_timeout)
+      # tokens that haven't been inactive for too long, 
+      # AND tokens that were created too long ago (or were
+      # scheduled for expiry due to refresh request)
+      inactive_too_long = self.token_type != :integration && k['last_timestamp'] <= Time.now.to_i - (k['timeout'] || self.inactivity_timeout)
+      needs_refresh = self.token_type == :integration && (Time.now.to_i - (k['timestamp'] || k['last_timestamp']) > (k['timeout'] || self.inactivity_timeout))
+      created_too_long_ago = (Time.now.to_i - (k['timestamp'] || k['last_timestamp']) > self.token_timeout) || (k['expire_at'] && k['expire_at'] < Time.now.to_i)
+      if created_too_long_ago
+        # force token removal after a certain duration
+        @expired_keys[k['value']] = true
+      elsif !inactive_too_long && !needs_refresh
+        new_keys << k
+      elsif k['refresh']
+        # mark unused tokens as needing a refresh
+        @refreshable_keys[k['value']] = true
+        k['needs_refresh'] = true
         new_keys << k
       else
         @expired_keys[k['value']] = true
@@ -159,13 +231,17 @@ class Device < ActiveRecord::Base
       device_id = device && device.global_id
       if !device || !device.valid_token?(token, app_version)
         expired = device && (device.instance_variable_get('@expired_keys') || {})[token]
-        res[:error] = expired ? "Expired token" : "Invalid token"
-        if !expired
+        needs_refresh = device && (device.instance_variable_get('@refreshable_keys') || {})[token]
+        res[:error] = "Invalid token"
+        res[:error] = "Expired token" if expired
+        res[:error] = "Token needs refresh" if needs_refresh
+        if !expired && !needs_refresh
           device_id = nil
           user_id = nil
         end
         res[:error] = "Disabled token" if device && device.disabled?
         res[:skip_on_token_check] = true
+        res[:can_refresh] = true if needs_refresh && device && !device.disabled?
         res[:invalid_token] = true
       end
       scopes = device && device.permission_scopes
@@ -200,7 +276,7 @@ class Device < ActiveRecord::Base
     keys = (self.settings && self.settings['keys']) || []
     key = keys.detect{|k| k['value'] == token }
     do_save = false
-    if key && key['last_timestamp'] < 30.minutes.ago.to_i
+    if key && key['last_timestamp'] < 30.minutes.ago.to_i && !key['needs_refresh']
       self.settings['keys'].each_with_index do |key, idx|
         if key['value'] == token
           key['last_timestamp'] = Time.now.to_i
@@ -218,14 +294,37 @@ class Device < ActiveRecord::Base
       do_save = true
     end
     self.save if do_save
-    !!key
+    !!(key && !key['needs_refresh'])
   end
   
-  def token
+  def tokens
     clean_old_keys
-    if self.settings['keys'].empty?
+    if self.settings['keys'].empty? && self.id
       self.generate_token!
     end
-    self.settings['keys'][-1]['value']
+    [(self.settings['keys'][-1] || {})['value'], (self.settings['keys'][-1] || {})['refresh']]
+  end
+
+  def generate_from_refresh_token!(access_token, refresh_token)
+    return [nil, nil] unless self.token_type == :integration
+    # keep the old key around, but mark it as about to expire,
+    # generate a new key with the old refresh_token and expiration
+    clean_old_keys
+    new_key = nil
+    new_refresh = nil
+    do_save = false
+    self.settings['keys'].each_with_index do |key, idx|
+      if access_token && key['value'] == access_token && refresh_token && key['refresh'] == refresh_token
+        # give a concurrency window before expiring the access/refresh pair
+        self.settings['keys'][idx]['expire_at'] = 5.minutes.from_now.to_i
+        self.generate_token!
+        self.settings['keys'][-1]['refresh'] = refresh_token
+        self.settings['keys'][-1]['timestamp'] = key['timestamp']
+        do_save = true
+        new_key, new_refresh = self.tokens
+      end
+    end
+    self.save if do_save
+    [new_key, new_refresh]
   end
 end

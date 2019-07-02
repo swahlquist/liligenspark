@@ -85,7 +85,7 @@ describe Device, :type => :model do
       expect(d.settings['keys'].length).to eq(1)
       expect(d.settings['keys'][0]['timestamp']).to be > Time.now.to_i - 100
       expect(d.settings['keys'][0]['value']).not_to eq(nil)
-      expect(d.settings['keys'][0]['timeout']).to eq(24.hours.to_i)
+      expect(d.inactivity_timeout).to eq(12.hours.to_i)
     end
     
     it "should generate a short key for non-default devices when not specified" do
@@ -95,7 +95,8 @@ describe Device, :type => :model do
       expect(d.settings['keys'].length).to eq(1)
       expect(d.settings['keys'][0]['timestamp']).to be > Time.now.to_i - 100
       expect(d.settings['keys'][0]['value']).not_to eq(nil)
-      expect(d.settings['keys'][0]['timeout']).to eq(24.hours.to_i)
+      expect(d.token_type).to eq(:unknown)
+      expect(d.inactivity_timeout).to eq(12.hours.to_i)
     end
     
     it "should generate a long key for default devices if specified" do
@@ -105,7 +106,7 @@ describe Device, :type => :model do
       expect(d.settings['keys'].length).to eq(1)
       expect(d.settings['keys'][0]['timestamp']).to be > Time.now.to_i - 100
       expect(d.settings['keys'][0]['value']).not_to eq(nil)
-      expect(d.settings['keys'][0]['timeout']).to eq(28.days.to_i)
+      expect(d.inactivity_timeout).to eq(14.days.to_i)
     end
     
     it "should track token generation history" do
@@ -121,7 +122,7 @@ describe Device, :type => :model do
       expect(d.settings['token_history'].length).to eq(3)
     end
     
-    it "should allow only the system-generated devices to have multiple keys" do
+    it "should not allow app devices to have multiple keys" do
       d = Device.create(:device_key => 'default', :developer_key_id => 0)
       expect(d.default_device?).to eq(true)
       expect(d.system_generated?).to eq(true)
@@ -140,6 +141,13 @@ describe Device, :type => :model do
       d.developer_key_id = 1
       expect(d.default_device?).to eq(false)
       expect(d.system_generated?).to eq(false)
+      expect(d.token_type).to eq(:integration)
+      d.generate_token!
+      expect(d.settings['keys'].length).to eq(5)
+
+      d.developer_key_id = 0
+      d.settings['app'] = true
+      expect(d.token_type).to eq(:app)
       d.generate_token!
       expect(d.settings['keys'].length).to eq(1)
     end
@@ -153,6 +161,73 @@ describe Device, :type => :model do
       d.generate_token!
       expect(d.settings['keys'].length).to eq(2)
       expect(d.settings['keys'][0]['value']).to eq('fred')
+    end
+
+    it "should clear old keys for app devices" do
+      d = Device.create(:device_key => 'default', :developer_key_id => 0)
+      d.settings['app'] = true
+      d.settings['keys'] = [
+        {'value' => 'bob', 'last_timestamp' => 12.days.ago.to_i},
+        {'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}
+      ]
+      expect(d.token_type).to eq(:app)
+      d.generate_token!
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
+    end
+
+    it "should always set to long_token for integration devices" do
+      d = Device.create(:device_key => 'default', :developer_key_id => 19)
+      d.settings['keys'] = [
+        {'value' => 'bob', 'last_timestamp' => 12.days.ago.to_i},
+        {'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}
+      ]
+      expect(d.token_type).to eq(:integration)
+      d.generate_token!
+      expect(d.settings['keys'].length).to eq(2)
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
+    end
+
+    it "should not mark the long_token as set by the user for app device tokens" do
+      d = Device.create
+      expect(d.token_type).to eq(:unknown)
+      d.settings['app'] = true
+      expect(d.token_type).to eq(:app)
+      d.generate_token!
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
+
+      d = Device.create
+      expect(d.token_type).to eq(:unknown)
+      d.settings['app'] = true
+      expect(d.token_type).to eq(:app)
+      d.generate_token!(true)
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
+    end
+
+    it "should mark the long_token as set by the user for browser device tokens" do
+      d = Device.create
+      expect(d.token_type).to eq(:unknown)
+      d.settings['browser'] = true
+      expect(d.token_type).to eq(:browser)
+      d.generate_token!
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['long_token']).to eq(false)
+      expect(d.settings['long_token_set']).to eq(true)
+
+      d = Device.create
+      expect(d.token_type).to eq(:unknown)
+      d.settings['browser'] = true
+      expect(d.token_type).to eq(:browser)
+      d.generate_token!(true)
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(true)
     end
   end
 
@@ -174,12 +249,12 @@ describe Device, :type => :model do
       expect(d.settings['keys']).to eq([{'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}])
     end
     
-    it "should remove tokens based on their timeout if provided" do
+    it "should remove tokens based on their timeouts" do
       d = Device.new
       d.settings = {}
-      d.settings['keys'] = [{'value' => 'bob', 'last_timestamp' => 30.days.ago.to_i, 'timeout' => 40.days.to_i}, {'value' => 'fred', 'last_timestamp' => 1.hour.ago.to_i, 'timeout' => 10.minutes.to_i}]
+      d.settings['keys'] = [{'value' => 'bob', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 25.days.ago.to_i}, {'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}, {'value' => 'sue', 'timestamp' => 30.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i}, {'value' => 'alice', 'timestamp' => 5.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i, 'expire_at' => 5.minutes.ago.to_i}]
       d.clean_old_keys
-      expect(d.settings['keys']).to eq([{'value' => 'bob', 'last_timestamp' => 30.days.ago.to_i, 'timeout' => 40.days.to_i}])
+      expect(d.settings['keys']).to eq([{'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}])
     end
   end
 
@@ -255,27 +330,27 @@ describe Device, :type => :model do
       d = Device.new
       d.settings = {}
       d.settings['keys'] = [{'value' => 'ham', 'last_timestamp' => 1.second.ago.to_i}, {'value' => 'bacon', 'last_timestamp' => 1.second.ago.to_i}]
-      expect(d.token).to eq('bacon')
-      expect(d.token).to eq('bacon')
+      expect(d.tokens[0]).to eq('bacon')
+      expect(d.tokens[0]).to eq('bacon')
     end
     
     it "should ignore old tokens" do
       d = Device.new
       d.settings = {}
       d.settings['keys'] = [{'value' => 'ham', 'last_timestamp' => 1.second.ago.to_i}, {'value' => 'bacon', 'last_timestamp' => 30.days.ago.to_i}]
-      expect(d.token).to eq('ham')
+      expect(d.tokens[0]).to eq('ham')
     end
     
     it "should generate a token if none are yet available" do
       d = Device.create
       d.settings = {}
       d.settings['keys'] = [{'value' => 'bacon', 'last_timestamp' => 30.days.ago.to_i}]
-      expect(d.token).not_to eq('ham')
-      expect(d.token.length).to be > 24
+      expect(d.tokens[0]).not_to eq('ham')
+      expect(d.tokens[0].length).to be > 24
       expect(d.settings['keys'].length).to eq(1)
       
       d.settings['keys'] = []
-      expect(d.token.length).to be > 24
+      expect(d.tokens[0].length).to be > 24
       expect(d.settings['keys'].length).to eq(1)
     end
   end
@@ -336,11 +411,14 @@ describe Device, :type => :model do
   describe "inactivity_timeout" do
     it "should return the correct value" do
       d = Device.new
-      expect(d.inactivity_timeout).to eq(24.hours.to_i)
-      expect(d.inactivity_timeout(true)).to eq(28.days.to_i)
+      d.settings = {}
+      expect(d.inactivity_timeout).to eq(12.hours.to_i)
+      d.settings['long_token'] = true
+      expect(d.inactivity_timeout).to eq(14.days.to_i)
       d.user_integration_id = 1
-      expect(d.inactivity_timeout).to eq(6.months.to_i)
-      expect(d.inactivity_timeout(true)).to eq(6.months.to_i)
+      expect(d.inactivity_timeout).to eq(24.hours.to_i)
+      d.settings['long_token'] = false
+      expect(d.inactivity_timeout).to eq(24.hours.to_i)
     end
   end
   
@@ -399,14 +477,28 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
-      expect(d).to receive(:valid_token?).with(d.token, '1.2.3').and_return(true)
-      res = Device.check_token(d.token, '1.2.3')
+      expect(d).to receive(:valid_token?).with(d.tokens[0], '1.2.3').and_return(true)
+      res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
     end
 
     it 'should mark a token as expired' do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      d.generate_token!
+      d.settings['keys'][0]['timestamp'] = 200.months.ago.to_i
+      d.settings['keys'][0]['last_timestamp'] = 200.months.ago.to_i
+      d.save
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.settings['keys'][0]['value'], '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq("Expired token")
+    end
+
+    it 'should mark a token as needing refresh' do
       u = User.create
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       d.generate_token!
@@ -417,8 +509,11 @@ describe Device, :type => :model do
       res = Device.check_token(d.settings['keys'][0]['value'], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
-      expect(res[:error]).to eq("Expired token")
+      expect(res[:error]).to eq("Token needs refresh")
+      expect(res[:can_refresh]).to eq(true)
     end
+
+    it 'should specify'
 
     it 'should mark a token as invalid' do
       u = User.create
@@ -463,7 +558,7 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
-      res = Device.check_token(d.token, '1.2.3')
+      res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
@@ -485,8 +580,8 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
-      expect(d).to receive(:valid_token?).with(d.token, '1.2.3').and_return(true)
-      res = Device.check_token(d.token, '1.2.3')
+      expect(d).to receive(:valid_token?).with(d.tokens[0], '1.2.3').and_return(true)
+      res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
@@ -498,12 +593,12 @@ describe Device, :type => :model do
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
       expect(RedisInit.permissions).to receive(:setex) do |key, ts, val|
-        expect(key).to eq("user_token/#{d.token}")
+        expect(key).to eq("user_token/#{d.tokens[0]}")
         expect(ts).to be > (12.hours.from_now.to_i - 100)
         expect(ts).to be < (12.hours.from_now.to_i + 100)
         expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b")
       end
-      res = Device.check_token(d.token, '1.2.3')
+      res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
@@ -513,11 +608,82 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
-      res = Device.check_token(d.token, '1.2.3')
+      res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
       expect(res[:user].permission_scopes).to eq(['full'])
+    end
+  end
+
+  describe "token_timeout" do
+    it "should return the correct timeout based on the token type" do
+      u = User.create
+      d = Device.create(user: u)
+      d.settings['browser'] = true
+      expect(d.token_timeout).to eq(28.days.to_i)
+      d.settings['long_token'] = true
+      expect(d.token_timeout).to eq(3.months.to_i)
+      d.settings['browser'] = false
+      expect(d.token_timeout).to eq(5.years)
+      d.settings['long_token'] = false
+      expect(d.token_timeout).to eq(28.days.to_i)
+    end
+  end
+
+  describe "token_type" do
+    it "should return the correct token type" do
+      u = User.create
+      d = Device.create(user: u)
+      expect(d.token_type).to eq(:unknown)
+      d.developer_key_id = 0
+      expect(d.token_type).to eq(:unknown)
+      d.settings['app'] = true
+      expect(d.token_type).to eq(:app)
+      d.settings['browser'] = true
+      expect(d.token_type).to eq(:browser)
+      d.user_integration_id = 9
+      expect(d.token_type).to eq(:integration)
+      d.user_integration_id = nil
+      d.developer_key_id = 11
+      expect(d.token_type).to eq(:integration)
+    end
+  end
+
+  describe "generate_from_refresh_token!" do
+    it "should generate a new token with the same start and refresh token if match found" do
+      u = User.create
+      d = Device.create(user: u)
+      d.developer_key_id = 1
+      a, b = d.tokens
+      g, h = d.generate_from_refresh_token!(a, b)
+      e, f = d.tokens
+      expect(a).to_not eq(e)
+      expect(b).to eq(f)
+      expect(g).to eq(e)
+      expect(d.settings['keys'].length).to eq(2)
+      expect(d.settings['keys'][0]['timestamp']).to eq(d.settings['keys'][1]['timestamp'])
+    end
+
+    it "should only allow for integration devices" do
+      u = User.create
+      d = Device.create(user: u)
+      a, b = d.tokens
+      g, h = d.generate_from_refresh_token!(a, b)
+      expect(g).to eq(nil)
+      expect(h).to eq(nil)
+      expect(d.settings['keys'].length).to eq(1)
+    end
+
+    it "should return nothing if no match found" do
+      u = User.create
+      d = Device.create(user: u)
+      d.developer_key_id = 1
+      a, b = d.tokens
+      g, h = d.generate_from_refresh_token!(a, "fff")
+      expect(g).to eq(nil)
+      expect(h).to eq(nil)
+      expect(d.settings['keys'].length).to eq(1)
     end
   end
 end

@@ -65,10 +65,11 @@ module JsonApi::Integration
     end
     if obj.settings['custom_integration']
       json['asdf'] = 'asdf'
-      device_token = obj.device.token
+      device_token, refresh_token = obj.device.tokens
       if obj.device && json['permissions'] && json['permissions']['edit']
         if obj.created_at > 24.hours.ago 
           json['access_token'] = device_token
+          json['refresh_token'] = refresh_token
           json['token'] = obj.settings['token']
         end
         json['truncated_access_token'] = "...#{device_token[-5, 5]}"

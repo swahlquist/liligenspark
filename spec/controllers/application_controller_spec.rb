@@ -16,7 +16,7 @@ describe ApplicationController, :type => :controller do
     it "should find by user and device for the specified token" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:access_token => d.token, :check_token => true}
+      get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
@@ -25,14 +25,14 @@ describe ApplicationController, :type => :controller do
     it "should set correct whodunnit" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:access_token => d.token, :check_token => true}
+      get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(PaperTrail.request.whodunnit).to eq("user:#{u.global_id}.anonymous.index")
     end
     
     it "should check for the token as a query parameter" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:access_token => d.token, :check_token => true}
+      get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
@@ -41,7 +41,7 @@ describe ApplicationController, :type => :controller do
     it "should check for the token as an http header" do
       u = User.create
       d = Device.create(:user => u)
-      request.headers['Authorization'] = "Bearer #{d.token}"
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
@@ -71,7 +71,7 @@ describe ApplicationController, :type => :controller do
       u2 = User.create
       o.add_manager(u.user_name, true)
       d = Device.create(:user => u)
-      request.headers['Authorization'] = "Bearer #{d.token}"
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
       get :index, params: {:check_token => true, :as_user_id => u2.global_id}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u2)
@@ -85,7 +85,7 @@ describe ApplicationController, :type => :controller do
       u2 = User.create
       o.add_manager(u.user_name, true)
       d = Device.create(:user => u)
-      request.headers['Authorization'] = "Bearer #{d.token}"
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
       request.headers['X-As-User-Id'] = u2.global_id
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
@@ -97,7 +97,7 @@ describe ApplicationController, :type => :controller do
     it "should not allow disabled tokens" do
       u = User.create
       d = Device.create(:user => u, :settings => {'disabled' => true})
-      request.headers['Authorization'] = "Bearer #{d.token}"
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
@@ -109,7 +109,7 @@ describe ApplicationController, :type => :controller do
     it "should not allow invalid tokens" do
       u = User.create
       d = Device.create(:user => u)
-      request.headers['Authorization'] = "Bearer #{d.token}9"
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}9"
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
@@ -123,8 +123,8 @@ describe ApplicationController, :type => :controller do
       d = Device.create(:user => u)
       d.generate_token!
       key = d.settings['keys'][0]
-      key['timestamp'] = 36.months.ago.to_i
-      key['last_timestamp'] = 36.months.ago.to_i
+      key['timestamp'] = 200.months.ago.to_i
+      key['last_timestamp'] = 200.months.ago.to_i
       d.settings['keys'] = [key]
       d.save!
       request.headers['Authorization'] = "Bearer #{d.settings['keys'][0]['value']}"
@@ -150,7 +150,7 @@ describe ApplicationController, :type => :controller do
       
       token_user
       expect(ApiCall).to receive(:log) do |token, user, request, response, time|
-        expect(token).to eq(@device.token)
+        expect(token).to eq(@device.tokens[0])
         expect(user).to eq(@user)
         expect(request.path).not_to eq(nil)
         expect(response.code).to eq('200')
@@ -165,7 +165,7 @@ describe ApplicationController, :type => :controller do
     it "should return user information if there is a user" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:access_token => d.token, :check_token => true}
+      get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(controller.user_for_paper_trail).to eq("user:#{u.global_id}.anonymous.index")
     end
     
@@ -184,7 +184,7 @@ describe ApplicationController, :type => :controller do
       
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:id => 'self', :user_id => 'self', :author_id => 'self', :access_token => d.token, :check_token => true}
+      get :index, params: {:id => 'self', :user_id => 'self', :author_id => 'self', :access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_user]).to eq(u)
       expect(controller.params['id']).to eq(u.global_id)
       expect(controller.params['user_id']).to eq(u.global_id)
@@ -201,7 +201,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u.reload)
       u.settings['manager_for'] = {'9' => {'full_manager' => true}}
-      get :index, params: {:id => 'my_org', :user_id => 'my_org', :author_id => 'my_org', :access_token => d.token, :check_token => true}
+      get :index, params: {:id => 'my_org', :user_id => 'my_org', :author_id => 'my_org', :access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_user]).to eq(u)
       expect(controller.params['id']).to eq('my_org')
       expect(controller.params['user_id']).to eq('my_org')
@@ -210,7 +210,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       o.add_manager(u.user_name, true)
       d = Device.create(:user => u.reload)
-      get :index, params: {:id => 'my_org', :user_id => 'my_org', :author_id => 'my_org', :access_token => d.token, :check_token => true}
+      get :index, params: {:id => 'my_org', :user_id => 'my_org', :author_id => 'my_org', :access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_user]).to eq(u)
       expect(controller.params['id']).to eq(o.global_id)
       expect(controller.params['user_id']).to eq(o.global_id)
@@ -233,7 +233,7 @@ describe ApplicationController, :type => :controller do
     it "should not error if token is sent" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:access_token => d.token, :check_token => true}
+      get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
       expect(response).to be_success
@@ -284,7 +284,7 @@ describe ApplicationController, :type => :controller do
     it "should not intercept if permission succeeds" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:id => u.id, :access_token => d.token, :check_token => true}
+      get :index, params: {:id => u.id, :access_token => d.tokens[0], :check_token => true}
       expect(response).to be_success
     end
     
@@ -292,28 +292,28 @@ describe ApplicationController, :type => :controller do
       u = User.create
       u2 = User.create
       d = Device.create(:user => u)
-      get :index, params: {:id => u2.id, :access_token => d.token, :check_token => true}
+      get :index, params: {:id => u2.id, :access_token => d.tokens[0], :check_token => true}
       assert_unauthorized
     end
     
     it "should error gracefully with nil object" do
       u = User.create
       d = Device.create(:user => u)
-      get :index, params: {:id => u.id + 1, :access_token => d.token, :check_token => true}
+      get :index, params: {:id => u.id + 1, :access_token => d.tokens[0], :check_token => true}
       assert_unauthorized
     end
     
     it "should honor scope permissions" do
       u = User.create
       d = Device.create(:user => u, :user_integration_id => 1, :settings => {'permission_scopes' => ['read_profile']})
-      get :index, params: {:id => u.id, :access_token => d.token, :check_token => true}
+      get :index, params: {:id => u.id, :access_token => d.tokens[0], :check_token => true}
       assert_unauthorized
     end
     
     it "should notify the user if permission rejected due to api token scope" do
       u = User.create
       d = Device.create(:user => u, :user_integration_id => 1, :settings => {'permission_scopes' => ['read_profile']})
-      get :index, params: {:id => u.id, :access_token => d.token, :check_token => true}
+      get :index, params: {:id => u.id, :access_token => d.tokens[0], :check_token => true}
       expect(response).to_not be_success
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Not authorized')

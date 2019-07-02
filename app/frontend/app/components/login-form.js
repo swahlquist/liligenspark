@@ -9,12 +9,14 @@ import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import session from '../utils/session';
 import { isEmpty } from '@ember/utils';
+import CoughDrop from '../app';
 
 export default Component.extend({
   willInsertElement: function() {
     var _this = this;
     this.set('stashes', stashes);
     this.set('checking_for_secret', false);
+    this.set('login_followup', null);
     this.browserTokenChange = function() {
       _this.set('client_id', 'browser');
       _this.set('client_secret', persistence.get('browserToken'));
@@ -77,6 +79,44 @@ export default Component.extend({
     return !this.get('client_secret');
   }.property('client_secret'),
   actions: {
+    login_success: function() {
+      var _this = this;
+      stashes.flush(null, 'auth_');
+      stashes.setup();
+      _this.set('logging_in', false);
+      _this.set('login_followup', false);
+      _this.set('logged_in', true);
+      if(Ember.testing) {
+        console.error("would have redirected to home");
+      } else {
+        if(_this.get('return')) {
+          location.reload();
+          session.set('return', true);
+        } else if(capabilities.installed_app) {
+          location.href = '#/';
+          location.reload();
+        } else {
+          location.href = '/';
+        }
+      }
+    },
+    login_followup: function(choice) {
+      var _this = this;
+      CoughDrop.store.findRecord('user', 'self').then(function(u) {
+        u.set('preferences.device.long_token', !!choice);
+        u.save().then(function() {
+          _this.send('login_success');
+        }, function(err) {
+          _this.set('login_followup', false);
+          _this.set('logging_in', false);
+          _this.set('login_error', i18n.t('user_update_failed', "Updating login preferences failed"));
+        });
+      }, function(err) {
+        _this.set('login_followup', false);
+        _this.set('logging_in', false);
+        _this.set('login_error', i18n.t('user_update_failed', "Retrieving login preferences failed"));
+      });
+    },
     authenticate: function() {
       this.set('logging_in', true);
       this.set('login_error', null);
@@ -89,22 +129,11 @@ export default Component.extend({
         this.set('password', null);
         var _this = this;
         session.authenticate(data).then(function(data) {
-          stashes.flush(null, 'auth_');
-          stashes.setup();
-          _this.set('logging_in', false);
-          _this.set('logged_in', true);
-          if(Ember.testing) {
-            console.error("would have redirected to home");
+          if(capabilities.installed_app && !data.long_token_set) {
+            // follow-up question, is this a shared device?
+            _this.set('login_followup', true);
           } else {
-            if(_this.get('return')) {
-              location.reload();
-              session.set('return', true);
-            } else if(capabilities.installed_app) {
-              location.href = '#/';
-              location.reload();
-            } else {
-              location.href = '/';
-            }
+            _this.send('login_success');
           }
         }, function(err) {
           err = err || {};

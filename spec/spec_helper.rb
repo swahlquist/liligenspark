@@ -108,7 +108,7 @@ def token_user(scopes=nil)
   else
     @device = Device.create(:user => @user, :developer_key_id => 0, :device_key => 'hippo')
   end
-  request.headers['Authorization'] = "Bearer #{@device.token}"
+  request.headers['Authorization'] = "Bearer #{@device.tokens[0]}"
   request.headers['Check-Token'] = "true"
 end
 

@@ -795,6 +795,11 @@ class User < ActiveRecord::Base
         device['voice']['voice_uris'] = voice_uris.uniq[0, 10]
         device['voice'].delete('voice_uri')
       end
+      if non_user_params['device'] && device['long_token'] != nil
+        non_user_params['device'].settings['long_token'] = !!device['long_token']
+        non_user_params['device'].settings['long_token_set'] = true
+        non_user_params['device'].save
+      end
       device['voice']['voice_uris'].uniq! if device['voice'] && device['voice']['voice_uris']
       device['alternate_voice']['voice_uris'].uniq! if device['alternate_voice'] && device['alternate_voice']['voice_uris']
 

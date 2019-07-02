@@ -777,6 +777,20 @@ describe User, :type => :model do
       expect(u.settings['authored_organization_id']).to eq(nil)
       expect(u.settings['pending']).to eq(true)
     end
+
+    it "should set the device as long_token_set if long_token is set" do
+      u = User.create
+      d = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Other One')
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
+      u.process_params({
+        'preferences' => {'device' => {
+          'long_token' => true
+        }}
+      }, {'device' => d})
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(true)
+    end
   end
 
   describe "replace_board" do

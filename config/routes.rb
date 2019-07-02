@@ -4,7 +4,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'boards', 'users', 'groups', 'organizations', 'pages', 'people', 'videos', 
   'root', 'www', 'add', 'self', 'files', 'feeds', 
   'dev', 'auth', 'config', 'jobs', 'ssl', 'integration', 'integrations',
-  'api', 'account', 'accounts', 'oauth', 'oauth_suggess', 'token', 
+  'api', 'account', 'accounts', 'oauth', 'oauth_success', 'token', 
   'login', 'logout', 'register', 'profile', 'forgot_password', 
   'support', 'help', 'forum', 'talk', 'chat', 'feedback', 'faq', 
   'about', 'contact', 'info', 'docs', 'purchase', 'pricing', 'careers', 
@@ -46,6 +46,7 @@ Coughdrop::Application.routes.draw do
   post 'oauth2/token' => 'session#oauth_token'
   delete 'oauth2/token' => 'session#oauth_logout'
   get 'oauth2/token/status' => 'session#oauth_local', :as => 'oauth_local'
+  post 'api/v1/token/refresh' => 'session#oauth_token_refresh'
   post 'token' => 'session#token'
   
   # if Rails.env.production?

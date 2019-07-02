@@ -19,7 +19,8 @@ module FeatureFlags
     'folder_icons' => 'Mar 7, 2017',
     'symbol_background' => 'May 10, 2017',
     'new_index' => 'Feb 17, 2018',
-    'click_buttons' => 'May 1, 2019'
+    'click_buttons' => 'May 1, 2019',
+    'token_refresh' => 'July 10, 2019'
   }
   def self.frontend_flags_for(user)
     flags = {}

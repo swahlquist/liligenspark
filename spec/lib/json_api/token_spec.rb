@@ -7,8 +7,8 @@ describe JsonApi::Token do
       d.generate_token!
       u = User.new(user_name: 'fred')
       hash = JsonApi::Token.as_json(u, d)
-      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'scopes', 'token_type', 'user_id', 'user_name'])
-      expect(hash['access_token']).to eq(d.token)
+      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'scopes', 'token_type', 'user_id', 'user_name'])
+      expect(hash['access_token']).to eq(d.tokens[0])
       expect(hash['token_type']).to eq('bearer')
       expect(hash['user_name']).to eq('fred')
     end
@@ -20,8 +20,8 @@ describe JsonApi::Token do
       d.generate_token!
       u = User.new(user_name: 'fred')
       hash = JsonApi::Token.as_json(u, d)
-      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'scopes', 'token_type', 'user_id', 'user_name'])
-      expect(hash['access_token']).to eq(d.token)
+      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'scopes', 'token_type', 'user_id', 'user_name'])
+      expect(hash['access_token']).to eq(d.tokens[0])
       expect(hash['scopes']).to eq(['a', 'b'])
     end
 
@@ -31,6 +31,24 @@ describe JsonApi::Token do
       u = User.new(user_name: 'fred')
       hash = JsonApi::Token.as_json(u, d)
       expect(hash['anonymized_user_id']).to eq(u.anonymized_identifier('external_for_14'))
+    end
+
+    it "should include long_token information" do
+      d = Device.create
+      u = User.new(user_name: 'fred')
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['long_token']).to eq(nil)
+      expect(hash['long_token_set']).to eq(false)
+      d.settings['long_token'] = false
+      d.settings['long_token_set'] = true
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['long_token']).to eq(false)
+      expect(hash['long_token_set']).to eq(true)
+      d.created_at = Date.parse('Jan 1, 2000')
+      d.settings['long_token_set'] = nil
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['long_token']).to eq(false)
+      expect(hash['long_token_set']).to eq(true)
     end
   end
 end

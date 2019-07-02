@@ -54,10 +54,12 @@ class ApplicationController < ActionController::Base
     if token
       status = Device.check_token(token, request.headers['X-CoughDrop-Version'])
       @cached = true if status[:cached]
-      ignorable_error = ['/api/v1/token_check'].include?(request.path) && status[:skip_on_token_check]
+      ignorable_error = ['/api/v1/token_check', '/oauth/token/refresh'].include?(request.path) && status[:skip_on_token_check]
       if status[:error] && !ignorable_error
         set_browser_token_header
-        api_error 400, {error: status[:error], token: token, invalid_token: status[:invalid_token]}
+        error = {error: status[:error], token: token, invalid_token: status[:invalid_token]}
+        error[:refreshable] = true if status[:can_refresh]
+        api_error 400, error
         return false
       else
         @api_user = status[:user]

@@ -114,7 +114,7 @@ class SessionController < ApplicationController
         device.settings['permission_scopes'].push(scope) if Device::VALID_API_SCOPES[scope]
       end
       device.generate_token!
-      render json: JsonApi::Token.as_json(device.user, device).to_json
+      render json: JsonApi::Token.as_json(device.user, device, :include_refresh => true).to_json
     end
   end
   
@@ -126,7 +126,35 @@ class SessionController < ApplicationController
   def oauth_local
     response.headers.except! 'X-Frame-Options'
   end
-  
+
+  def oauth_token_refresh
+    device = Device.find_by_global_id(@api_device_id)
+
+    key = DeveloperKey.find_by(:key => params['client_id'])
+    error = nil
+    if !key
+      error = 'invalid_key'
+    elsif key.secret != params['client_secret']
+      error = 'invalid_secret'
+    elsif !device || device.developer_key_id != key.id
+      error = 'invalid_token'
+    end
+
+    if error
+      api_error 400, {error: error}
+    elsif @api_user && device && device.token_type == :integration
+      token, refresh_token = device.generate_from_refresh_token!(params['access_token'], params['refresh_token'])
+      if token
+        render json: JsonApi::Token.as_json(@api_user, device, :include_refresh => true).to_json
+      else
+        api_error 400, { error: "Invalid refresh token" }
+      end
+    else
+      api_error 400, { error: "Could not find refresh token"}
+    end
+  end
+
+
   def token
     set_browser_token_header
     if params['grant_type'] == 'password'
@@ -148,7 +176,8 @@ class SessionController < ApplicationController
         d.settings['ip_address'] = store_user_data ? request.remote_ip : nil
         d.settings['user_agent'] = store_user_data ? request.headers['User-Agent'] : nil
         d.settings['mobile'] = params['mobile'] == 'true'
-        d.settings['browserless'] = params['browserless']
+        d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'
+        d.settings['app'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
         d.generate_token!(!!params['long_token'])
         # find or create a device based on the request information
         # some devices (i.e. generic browser) are allowed multiple
@@ -172,16 +201,22 @@ class SessionController < ApplicationController
     set_browser_token_header
     if @api_user
       device = Device.find_by_global_id(@api_device_id)
+      puts "check the token... #{params['access_token']}"
       valid = device && device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
-      render json: {
+      expired = device && (device.instance_variable_get('@expired_keys') || {})[params['access_token']]
+      needs_refresh = device && (device.instance_variable_get('@refreshable_keys') || {})[params['access_token']]
+      json = {
         authenticated: valid, 
+        expired: !!(expired || needs_refresh),
         user_name: @api_user.user_name, 
         user_id: @api_user.global_id,
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
         scopes: device && device.permission_scopes,
         sale: ENV['CURRENT_SALE'],
         global_integrations: UserIntegration.global_integrations.keys
-      }.to_json
+      }
+      json[:can_refresh] = true if needs_refresh && !expired
+      render json: json.to_json
     else
       render json: {
         authenticated: false, 

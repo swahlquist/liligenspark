@@ -165,7 +165,7 @@ describe JsonApi::User do
       u.settings['preferences']['devices'][d.unique_device_key] = {'b' => 3}
       hash = JsonApi::User.build_json(u, permissions: u, device: d)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
+      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'long_token' => nil})
     end
     
     it "should find the most-recent matching device and fall back to those settings rather than default if available" do
@@ -179,7 +179,7 @@ describe JsonApi::User do
       u.settings['preferences']['devices'][d2.unique_device_key] = {'c' => 3}
       hash = JsonApi::User.build_json(u, permissions: u, device: d)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'c' => 3, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
+      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'c' => 3, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'long_token' => nil})
     end
     
     it "should include prior home boards but not the current home board only when edit permission is available" do

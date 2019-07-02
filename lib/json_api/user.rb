@@ -84,6 +84,7 @@ module JsonApi::User
         json['preferences']['device'] = json['preferences']['device'].merge(user.settings['preferences']['devices'][args[:device].unique_device_key])
         json['preferences']['device']['id'] = args[:device].global_id
         json['preferences']['device']['name'] = args[:device].settings['name'] || json['preferences']['device']['name']
+        json['preferences']['device']['long_token'] = args[:device].settings['long_token']
       end
       if !args[:device] || FeatureFlags.user_created_after?(args[:device], 'browser_no_autosync')
         json['preferences']['device']['ever_synced'] ||= false

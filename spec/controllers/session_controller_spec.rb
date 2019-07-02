@@ -186,7 +186,7 @@ describe SessionController, :type => :controller do
       key_with_stash
 
       d = Device.create(:user => u, :developer_key_id => 0, :device_key => 'asdf')
-      token = d.token
+      token = d.tokens[0]
 
       post :oauth_login, params: {:code => @code, :username => u.user_name, :approve_token => token}
       expect(response).to be_redirect
@@ -306,6 +306,89 @@ describe SessionController, :type => :controller do
       expect(Device.count).to eq(1)
       d = Device.last
       expect(d.permission_scopes).to eq([])
+    end
+  end
+
+  describe "oauth_token_refresh" do
+    it "should ask for refresh on old tokens" do
+      token_user
+      @device.settings['keys'][-1]['last_timestamp'] = 6.months.ago.to_i  
+      @device.save!
+      get :token_check, params: {:access_token => @device.tokens[0]}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(false)
+      expect(json['expired']).to eq(true)
+      expect(json['can_refresh']).to eq(true)
+    end
+
+    it "should allow refreshing an integration token" do
+      token_user
+      k = DeveloperKey.create
+      @device.developer_key_id = k.id
+      @device.save!
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
+      json = assert_success_json
+      expect(json['access_token']).to_not eq(token)
+      expect(json['refresh_token']).to eq(refresh)
+      expect(@device.reload.settings['keys'].length).to eq(2)
+      expect(@device.settings['keys'][0]['timestamp']).to eq(@device.settings['keys'][1]['timestamp'])
+      expect(@device.settings['keys'][0]['expire_at']).to be > Time.now.to_i
+      expect(@device.settings['keys'][0]['expire_at']).to be < 10.minutes.from_now.to_i
+    end
+
+    it "should not allow refreshing a non-integration token" do
+      token_user
+      k = DeveloperKey.create
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
+      assert_error('invalid_token')
+    end
+
+    it "should error on invalid token" do
+      token_user
+      k = DeveloperKey.create
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => 'asdf', 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
+      assert_error('Missing user')
+    end
+
+    it "should error on invalid refresh token" do
+      token_user
+      k = DeveloperKey.create
+      @device.developer_key_id = k.id
+      @device.save!
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => 'whatever', 'client_id' => k.key, 'client_secret' => k.secret}
+      assert_error('Invalid refresh token')
+    end
+
+    it "should error on invalid developer key" do
+      token_user
+      k = DeveloperKey.create
+      @device.developer_key_id = k.id
+      @device.save!
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => refresh, 'client_id' => 'xxx', 'client_secret' => k.secret}
+      assert_error('invalid_key')
+    end
+
+    it "should error on invalid developer secret" do
+      token_user
+      k = DeveloperKey.create
+      @device.developer_key_id = k.id
+      @device.save!
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => 'secret'}
+      assert_error('invalid_secret')
+    end
+
+    it "should error on mismatched developer key id" do
+      token_user
+      k = DeveloperKey.create
+      token, refresh = @device.tokens
+      post :oauth_token_refresh, params: {'access_token' => token, 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
+      assert_error('invalid_token')
     end
   end
 
@@ -443,6 +526,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       expect(Device.count).to eq(0)
+      request.headers['X-INSTALLED-COUGHDROP'] = 'false'
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
       expect(response).to be_success
       json = JSON.parse(response.body)
@@ -450,6 +534,7 @@ describe SessionController, :type => :controller do
       expect(Device.count).to eq(1)
       d = Device.find_by_global_id(json['access_token'])
       expect(d).not_to eq(nil)
+      expect(d.token_type).to eq(:browser)
       expect(d.developer_key_id).to eq(0)
       expect(d.default_device?).to eq(true)
       expect(d.user).to eq(u)
@@ -511,7 +596,91 @@ describe SessionController, :type => :controller do
       d2 = Device.find_by_global_id(json['access_token'])
       expect(d2).to eq(d)
     end
-    
+
+    it "should handle long_token for browser" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred")
+      u.generate_password("seashell")
+      u.save
+      d = Device.create(:user => u, :device_key => 'default', :developer_key_id => 0)
+      d.generate_token!
+      expect(Device.count).to eq(1)
+      request.headers['X-INSTALLED-COUGHDROP'] = 'false'
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :long_token => true, :client_secret => token, :username => 'fred', :password => 'seashell'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['access_token']).not_to eq(nil)
+      expect(Device.count).to eq(1)
+      d2 = Device.find_by_global_id(json['access_token'])
+      expect(d2).to eq(d)
+      expect(d.reload.token_type).to eq(:browser)
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(true)
+    end
+
+    it "should handle no long_token for browser" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred")
+      u.generate_password("seashell")
+      u.save
+      d = Device.create(:user => u, :device_key => 'default', :developer_key_id => 0)
+      d.settings['browser'] = true
+      d.generate_token!
+      expect(Device.count).to eq(1)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['access_token']).not_to eq(nil)
+      expect(Device.count).to eq(1)
+      d2 = Device.find_by_global_id(json['access_token'])
+      expect(d2).to eq(d)
+      expect(d.reload.token_type).to eq(:browser)
+      expect(d.settings['long_token']).to eq(false)
+      expect(d.settings['long_token_set']).to eq(true)
+    end
+
+    it "should handle long_token for app" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred")
+      u.generate_password("seashell")
+      u.save
+      d = Device.create(:user => u, :device_key => 'default', :developer_key_id => 0)
+      d.generate_token!
+      expect(Device.count).to eq(1)
+      request.headers['X-INSTALLED-COUGHDROP'] = 'true'
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :long_token => true, :client_secret => token, :username => 'fred', :password => 'seashell'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['access_token']).not_to eq(nil)
+      expect(Device.count).to eq(1)
+      d2 = Device.find_by_global_id(json['access_token'])
+      expect(d2).to eq(d)
+      expect(d.reload.token_type).to eq(:app)
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
+    end
+
+    it "should handle no long_token for app" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred")
+      u.generate_password("seashell")
+      u.save
+      d = Device.create(:user => u, :device_key => 'default', :developer_key_id => 0)
+      d.settings['app'] = true
+      d.generate_token!
+      expect(Device.count).to eq(1)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json['access_token']).not_to eq(nil)
+      expect(Device.count).to eq(1)
+      d2 = Device.find_by_global_id(json['access_token'])
+      expect(d2).to eq(d)
+      expect(d.reload.token_type).to eq(:app)
+      expect(d.settings['long_token']).to eq(false)
+      expect(d.settings['long_token_set']).to eq(nil)
+    end
+
     it "should note a user name change if the password is correct" do
       token = GoSecure.browser_token
       u = User.new(:user_name => "fred")
@@ -580,7 +749,7 @@ describe SessionController, :type => :controller do
       expect(json['authenticated']).to eq(false)
       
       token_user
-      get :token_check, params: {:access_token => @device.token}
+      get :token_check, params: {:access_token => @device.tokens[0]}
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
@@ -589,7 +758,7 @@ describe SessionController, :type => :controller do
       device = Device.find(@device.id)
       expect(device.settings).not_to eq(nil)
       expect(device.settings).not_to eq("null")
-      expect(device.settings['keys'][0]['value']).to eq(@device.token)
+      expect(device.settings['keys'][0]['value']).to eq(@device.tokens[0])
     end
 
     it "should error correctly (honor skip_on_token_check) on expired or invalid tokens" do
@@ -597,7 +766,7 @@ describe SessionController, :type => :controller do
       d = @user.devices[0]
       d.settings['disabled'] = true
       d.save
-      get :token_check, params: {:access_token => @device.token}
+      get :token_check, params: {:access_token => @device.tokens[0]}
       expect(response).to be_success
       expect(assigns[:cached]).to eq(nil)
       json = JSON.parse(response.body)
@@ -606,19 +775,43 @@ describe SessionController, :type => :controller do
 
     it "should used cached values on repeat requests" do
       token_user
-      get :token_check, params: {:access_token => @device.token}
+      get :token_check, params: {:access_token => @device.tokens[0]}
       expect(response).to be_success
       expect(assigns[:cached]).to eq(nil)
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
       expect(json['user_name']).to eq(@user.user_name)
 
-      get :token_check, params: {:access_token => @device.token}
+      get :token_check, params: {:access_token => @device.tokens[0]}
       expect(assigns[:cached]).to eq(true)
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
       expect(json['user_name']).to eq(@user.user_name)
+    end
+
+    it "should notify if the token is expired" do
+      token_user
+      token = @device.tokens[0]
+      @device.settings['keys'][-1]['timestamp'] = 10.years.ago.to_i  
+      @device.save!
+      expect(@device.token_timeout).to eq(28.days.to_i)
+      get :token_check, params: {:access_token => token}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(false)
+      expect(json['expired']).to eq(true)
+      expect(json['can_refresh']).to eq(nil)
+    end
+
+    it "should notify if the token has been inactive too long" do
+      token_user
+      @device.settings['keys'][-1]['last_timestamp'] = 6.months.ago.to_i  
+      @device.save!
+      get :token_check, params: {:access_token => @device.tokens[0]}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(false)
+      expect(json['expired']).to eq(true)
+      expect(json['can_refresh']).to eq(true)
     end
   end
 end

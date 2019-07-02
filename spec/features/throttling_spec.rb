@@ -135,7 +135,7 @@ describe "throttling URLs" do
       p = Progress.create
       expect(Progress).to receive(:schedule).with(GiftPurchase, :process_subscription_token, {'id' => 'abc'}, {'type' => 'long_term_150', 'email' => nil, 'user_id' => @user.global_id, 'code' => nil, 'extras' => false, 'donate' => false}).and_return(p).exactly(10).times
       aggressive_throttle_check(->{
-        header 'Authorization', "Bearer #{@device.token}"
+        header 'Authorization', "Bearer #{@device.tokens[0]}"
         header 'Check-Token', 'true'
         post "/api/v1/purchase_gift", {:token => {'id' => 'abc'}, :type => 'long_term_150'}, {'REMOTE_ADDR' => '1.2.3.4'}
       }, ->{

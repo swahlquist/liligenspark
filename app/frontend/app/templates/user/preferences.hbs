@@ -695,6 +695,19 @@
       </div>
     </div>
   {{/if}}
+  {{#if advanced}}
+    <div class="form-group">
+      <label for="long_token" class="col-sm-3 control-label">{{t "Session Timeout" key='long_token'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.device.long_token id="long_token"}}
+            {{t "Keep me logged in on this device. It is a private device and I will secure it by means outside of the app itself" key='enable_long_token'}}
+          </label>
+        </div>
+      </div>
+    </div>
+  {{/if}}
   <div class="form-group">
     <label for="auto_sync" class="col-sm-3 control-label">{{t "Auto-Sync" key='auto_sync'}}</label>
     <div class="col-sm-5">
