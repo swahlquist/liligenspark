@@ -41,7 +41,6 @@ var session = EmberObject.extend({
   confirm_authentication: function(response) {
     session.persist({
       access_token: response.access_token,
-      refresh_token: response.refresh_token,
       token_type: response.token_type,
       user_name: response.user_name,
       user_id: response.user_id
@@ -82,34 +81,6 @@ var session = EmberObject.extend({
     });
     res.then(null, function() { });
     return res;
-  },
-  refresh_access_token: function() {
-    var store_data = stashes.get_object('auth_settings', true) || session.auth_settings_fallback() || {};
-    if(session.refresh_promise) {
-      return session.refresh_promise;
-    }
-    if(store_data.refresh_token && store_data.access_token) {
-      var url = '/api/v1/token_refresh';
-      var promise_id = Math.random();
-      session.refresh_promise = persistence.ajax(url, {
-        type: 'POST',
-        data: {
-          access_token: store_data.access_token, 
-          refresh_token: store_data.refresh_token
-        }
-      }).then(function(res) {
-        session.confirm_authentication(res);
-        if(session.refresh_promise && session.refresh_promise.promise_id == promise_id) { session.refresh_promise = null; }
-        return RSVP.resolve(res);
-      }, function(err) {
-        if(session.refresh_promise && session.refresh_promise.promise_id == promise_id) { session.refresh_promise = null; }
-        return RSVP.reject(err);
-      });
-      session.refresh_promise.promise_id = promise_id;
-      return session.refresh_promise;
-    } else {
-      return RSVP.reject({error: 'no refresh token found'});
-    }
   },
   check_token: function(allow_invalidate) {
     var store_data = stashes.get_object('auth_settings', true) || session.auth_settings_fallback() || {};
@@ -186,7 +157,6 @@ var session = EmberObject.extend({
     if(store_data.access_token && !session.get('isAuthenticated')) {
       session.set('isAuthenticated', true);
       session.set('access_token', store_data.access_token);
-      session.set('refresh_token', store_data.refresh_token);
       session.set('user_name', store_data.user_name);
       session.set('user_id', store_data.user_id);
       if(window.ga && store_data.user_id) {
@@ -218,7 +188,6 @@ var session = EmberObject.extend({
   override: function(options) {
     var data = session.restore();
     data.access_token = options.access_token;
-    data.refresh_token = options.refresh_token;
     data.user_name = options.user_name;
     data.user_id = options.user_id;
     stashes.flush();
@@ -279,7 +248,6 @@ var session = EmberObject.extend({
       later(function() {
         session.set('isAuthenticated', false);
         session.set('access_token', null);
-        session.set('refresh_token', null);
         session.set(' ', null);
         session.set('user_id', null);
         session.set('as_user_id', null);

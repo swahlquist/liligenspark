@@ -249,24 +249,7 @@ import capabilities from './capabilities';
               return rej;
             }
           };
-          if(data.invalid_token && data.refreshable) {
-            // If we're caught with an old access token, try to
-            // refresh it and re-run the request
-            return session.refresh_access_token().then(function() {
-              original_options.attempt = (original_options.attempt || 1);
-              return new RSVP.Promise(function(res, rej) {
-                runLater(function() {
-                  $.ajax(original_options).then(function(r) {
-                    res(r);
-                  }, function(e) {
-                    rej(e);
-                  });
-                });
-              });
-            }, function(err) {
-              handle_error();
-            })
-          } else if(data.invalid_token) {
+          if(data.invalid_token) {
             // force a login prompt for invalid tokens
             session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
           } else {
