@@ -34,6 +34,7 @@ class LogSession < ActiveRecord::Base
         self.data['events'].each{|e| ids[e['id']] = true }
         JobStash.events_for(self).each do |event|
           self.data['events'] << event if event['id'] && !ids[event['id']]
+          ids[event['id']] = true
         end
       end
     end
@@ -867,6 +868,7 @@ class LogSession < ActiveRecord::Base
   end
   
   def split_out_later_sessions(frd=false)
+    return if @skip_split_out_later_sessions 
     # Step 1: stash away any just-added events to prevent clobbering
     if @just_added_events && @just_added_events.length > 0
       JobStash.add_events_to(self, @just_added_events, 'initial')
@@ -929,7 +931,9 @@ class LogSession < ActiveRecord::Base
               self.generate_defaults
               self.destroy if self.data['events'].length == 0
             else
+              @skip_split_out_later_sessions = true
               self.save
+              @skip_split_out_later_sessions = false
             end
           # end
         end
