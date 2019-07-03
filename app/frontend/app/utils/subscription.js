@@ -6,10 +6,12 @@ import $ from 'jquery';
 import i18n from './i18n';
 import CoughDrop from '../app';
 import persistence from './persistence';
+import app_state from './app_state';
 
 var types = ['communicator_type', 'supporter_type', 'monthly_subscription', 'long_term_subscription',
   'communicator_monthly_subscription', 'communicator_long_term_subscription',
   'monthly_3', 'monthly_4', 'monthly_5', 'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10',
+  'monthly_ios', 'long_term_ios',
   'long_term_150', 'long_term_200', 'long_term_250', 'long_term_300', 'long_term_custom',
   'slp_monthly_free', 'slp_monthly_3', 'slp_monthly_4', 'slp_monthly_5',
   'slp_long_term_free', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150',
@@ -18,6 +20,8 @@ var obs_properties = [];
 types.forEach(function(type) {
   obs_properties.push('subscription.' + type);
 });
+var one_time_id = 'CoughDropiOSBundle';
+var subscription_id = 'b'
 
 var obs_func = function() {
   var _this = this;
@@ -59,14 +63,14 @@ var Subscription = EmberObject.extend({
 
     var now = window.moment()._d;
     var sale = new Date(CoughDrop.sale * 1000);
-    if(sale && now && sale > now) {
+    if(sale && now && sale > now && !Subscription.product_types) {
       this.set('sale', !!CoughDrop.sale);
       this.set('sale_ends', sale);
     }
     var _this = this;
     runLater(function() {
       var sale = new Date(CoughDrop.sale * 1000);
-      if(sale && now && sale > now) {
+      if(sale && now && sale > now && !Subscription.product_types) {
         _this.set('sale', !!CoughDrop.sale);
         _this.set('sale_ends', sale);
       }
@@ -150,9 +154,9 @@ var Subscription = EmberObject.extend({
       return false;
     } else if(this.get('user_type') == 'communicator') {
       if(this.get('subscription_type') == 'monthly') {
-        return ['monthly_3', 'monthly_4', 'monthly_5', 'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10'].indexOf(this.get('subscription_amount')) != -1;
+        return ['monthly_3', 'monthly_4', 'monthly_5', 'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10', 'monthly_ios'].indexOf(this.get('subscription_amount')) != -1;
       } else {
-        return ['long_term_100', 'long_term_150', 'long_term_200', 'long_term_250', 'long_term_300'].indexOf(this.get('subscription_amount')) != -1;
+        return ['long_term_100', 'long_term_150', 'long_term_200', 'long_term_250', 'long_term_300', 'long_term_ios'].indexOf(this.get('subscription_amount')) != -1;
       }
     } else {
       if(this.get('subscription_type') == 'monthly') {
@@ -174,9 +178,11 @@ var Subscription = EmberObject.extend({
     return !!(this.get('user.subscription.plan_id') || '').match(/monthly_3/);
   }.property('user.subscription.plan_id'),
   much_cheaper_offer: function() {
+    if(Subscription.product_types) { return false; }
     return !!(this.get('sale') || (this.get('user.subscription.plan_id') || '').match(/monthly_3/));
   }.property('sale', 'user.subscription.plan_id'),
   cheaper_offer: function() {
+    if(Subscription.product_types) { return false; }
     return !!(this.get('sale') || this.get('discount_period') || (this.get('user.subscription.plan_id') || '').match(/monthly_4/) || (this.get('user.subscription.plan_id') || '').match(/monthly_3/));
   }.property('sale', 'discount_period', 'user.subscription.plan_id'),
   update_on_much_cheaper_offer: function() {
@@ -184,6 +190,19 @@ var Subscription = EmberObject.extend({
       this.set('subscription_amount', 'long_term_100');
     }
   }.observes('subscription_amount', 'discount_percent', 'much_cheaper_offer'),
+  hide_default_pricing: function() {
+    return !!Subscription.product_types;
+  }.property(),
+  monthly_app_price: function() {
+    var prod = Subscription.product_types[subscription_id];
+    if(!prod || !prod.price) { return "???"; }
+    return prod.price + " " + prod.currency;
+  }.property(),
+  long_term_app_price: function() {
+    var prod = Subscription.product_types[one_time_id];
+    if(!prod || !prod.price) { return "???"; }
+    return prod.price + " " + prod.currency;
+  }.property(),
   set_default_subscription_amount: function(obj, changes) {
     if(this.get('user_type') == 'communicator') {
       if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(monthly_|long_term_)/)) {
@@ -191,7 +210,9 @@ var Subscription = EmberObject.extend({
       }
       if(this.get('subscription_type') == 'monthly') {
         if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^monthly_/)) {
-          if(this.get('subscription_discount')) {
+          if(Subscription.product_types) {
+            this.set('subscription_amount', 'monthly_ios');
+          } else if(this.get('subscription_discount')) {
             this.set('subscription_amount', 'monthly_3');
           } else if(this.get('cheaper_offer')) {
             this.set('subscription_amount', 'monthly_6');
@@ -201,7 +222,9 @@ var Subscription = EmberObject.extend({
         }
       } else if(this.get('subscription_type') == 'long_term') {
         if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^long_term_/)) {
-          if(this.get('much_cheaper_offer')) {
+          if(Subscription.product_types) {
+            this.set('subscription_amount', 'long_term_ios');
+          } else if(this.get('much_cheaper_offer')) {
             this.set('subscription_amount', 'long_term_100');
           } else if(this.get('cheaper_offer')) {
             this.set('subscription_amount', 'long_term_150');
@@ -249,8 +272,14 @@ var Subscription = EmberObject.extend({
   monthly_6: function() {
     return this.get('subscription_amount') == 'monthly_6';
   }.property('subscription_amount'),
+  monthly_ios: function() {
+    return this.get('subscriptionn_amount') == 'monthly_ios';
+  }.property('subscription_amount'),
   slp_monthly_free: function() {
     return this.get('subscription_amount') == 'slp_monthly_free';
+  }.property('subscription_amount'),
+  long_term_ios: function() {
+    return this.get('subscriptionn_amount') == 'long_term_ios';
   }.property('subscription_amount'),
   long_term_100: function() {
     return this.get('subscription_amount') == 'long_term_100';
@@ -327,6 +356,9 @@ var Subscription = EmberObject.extend({
   amount_in_dollars: function() {
     return (this.get('amount_in_cents') || 0) / 100;
   }.property('amount_in_cents'),
+  partial_gift_allowed: function() {
+    return !Subscription.product_types;
+  }.property(),
   check_gift: function() {
     var _this = this;
     var code = _this.get('gift_code');
@@ -335,7 +367,7 @@ var Subscription = EmberObject.extend({
       type: 'GET'
     }).then(function(res) {
       var num = 1.0;
-      if(res.valid) {
+      if(res.valid && (res.discount_percent >= 1.0 || _this.get('partial_gift_allowed'))) {
         _this.set('discount_percent', res.discount_percent);
         _this.set('subscription_type', 'long_term');
         if(res.extras) {
@@ -472,33 +504,109 @@ Subscription.reopenClass({
     check_for_ready();
   },
   purchase: function(subscription) {
-    if(!window.StripeCheckout || !Subscription.handler) {
-      alert('not ready');
-      return RSVP.reject({error: "not ready"});
-    }
-    var amount = subscription.get('amount_in_cents');
-    if(subscription.get('subscription_amount').match(/free/)) {
-      if (subscription.get('extras')) {
-        amount = (25 * 100);
-      } else {
-        return RSVP.resolve({id: 'free'});
+    if(Subscription.in_app_store) {
+      var defer = RSVP.defer();
+      var purchase_id = one_time_id;
+      if(subscription.get('subscription_type') == 'monthly') {
+        purchase_id = subscription_id;
       }
+      Subscription.in_app_store.defer = defer;
+      Subscription.in_app_store.order(purchase_id);
+      return defer.promise;
+    } else {
+      if(!window.StripeCheckout || !Subscription.handler) {
+        alert('not ready');
+        return RSVP.reject({error: "not ready"});
+      }
+      var amount = subscription.get('amount_in_cents');
+      if(subscription.get('subscription_amount').match(/free/)) {
+        if (subscription.get('extras')) {
+          amount = (25 * 100);
+        } else {
+          return RSVP.resolve({id: 'free'});
+        }
+      }
+      var defer = RSVP.defer();
+      if(Subscription.handler.defer) {
+        console.error('purchase_resetting_defer');
+      }
+      Subscription.handler.open({
+        name: subscription.get('name') || subscription.get('user.name') || CoughDrop.app_name,
+        description: subscription.get('description'),
+        amount: amount,
+        panelLabel: subscription.get('purchase_description'),
+        email: subscription.get('email') || subscription.get('user.email'),
+        zipCode: true
+      });
+      Subscription.handler.defer = defer;
+      return defer.promise;
     }
-    var defer = RSVP.defer();
-    if(Subscription.handler.defer) {
-      console.error('purchase_resetting_defer');
-    }
-    Subscription.handler.open({
-      name: subscription.get('name') || subscription.get('user.name') || CoughDrop.app_name,
-      description: subscription.get('description'),
-      amount: amount,
-      panelLabel: subscription.get('purchase_description'),
-      email: subscription.get('email') || subscription.get('user.email'),
-      zipCode: true
-    });
-    Subscription.handler.defer = defer;
-    return defer.promise;
   }
 });
+document.addEventListener("deviceready", function() {
+  if(window.store) {
+    Subscription.in_app_store = window.store;
+    var store = Subscription.in_app_store;
+    store.register({
+      id: one_time_id,
+      alias: 'Long-Term Purchase',
+      type: store.NON_CONSUMABLE
+    });
+    store.register({
+      id: subscription_id,
+      alias: 'Monthly Subscription',
+      type: store.PAID_SUBSCRIPTION
+    });
+    store.validator = function(product, callback) {
+      persistence.ajax('/api/v1/receipt', {
+        type: 'POST',
+        data: product.transaction
+      }).then(function(res) {
+        if(res.expired) {
+          callback(false, {
+            code: store.PURCHASE_EXPIRED,
+            error: { message: "expired" }
+          });
+        } else {
+          callback(true, res);
+        }
+      }, function(err) {
+        callback(false, {
+          code: store.INTERNAL_ERROR,
+          error: (err || {}).message || "Receipt validation failed"
+        });
+      });
+    };
+    store.error(function(err) {
+      if(store.defer) {
+        store.defer.reject(err);
+      }
+    });
+    store.when("product").loaded(function(product) {
+      if(product.valid) {
+        Subscription.product_types = Subscription.product_types || {};
+        Subscription.product_types[product.id] = product;
+      }
+    });
+    store.when("product").approved(function(product) {
+      product.verify();
+    });
+    store.when("product").cancelled(function(product) {
+      if(store.defer) {
+        store.defer.reject({error: 'cancelled'});
+      }
+    });
+    store.when("product").verified(function(product) {
+      product.finish();
+    });
+    store.when("product").finished(function(product) {
+      app_state.get('sessionUser').reload();
+      if(store.defer) {
+        store.defer.resolve();
+      }
+    });
+    store.refresh();
+  }
+}, false);
 
 export default Subscription;
