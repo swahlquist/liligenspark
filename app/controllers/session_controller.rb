@@ -178,7 +178,7 @@ class SessionController < ApplicationController
         d.settings['mobile'] = params['mobile'] == 'true'
         d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'
         d.settings['app'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
-        d.generate_token!(!!params['long_token'])
+        d.generate_token!(!!(params['long_token'] && params['long_token'] != 'false'))
         # find or create a device based on the request information
         # some devices (i.e. generic browser) are allowed multiple
         # tokens, so the token 
@@ -209,6 +209,7 @@ class SessionController < ApplicationController
         expired: !!(expired || needs_refresh),
         user_name: @api_user.user_name, 
         user_id: @api_user.global_id,
+        device_id: @api_device_id,
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
         scopes: device && device.permission_scopes,
         sale: ENV['CURRENT_SALE'],

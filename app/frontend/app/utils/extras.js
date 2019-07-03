@@ -9,6 +9,7 @@ import stashes from './_stashes';
 import session from './session';
 import i18n from './i18n';
 import capabilities from './capabilities';
+import app_state from './app_state';
 
 (function() {
   var console_debug = function(str) {
@@ -249,7 +250,7 @@ import capabilities from './capabilities';
               return rej;
             }
           };
-          if(data.invalid_token) {
+          if(data.invalid_token && !app_state.get('speak_mode')) {
             // force a login prompt for invalid tokens
             session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
           } else {

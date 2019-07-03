@@ -124,6 +124,8 @@ var stashes = EmberObject.extend({
       var key = localStorage.key(idx);
       if(key && key.indexOf(full_prefix) === 0) {
         if(ignore_prefix && key.indexOf(full_ignore_prefix) === 0) {
+        } else if(key && key.match(/usage_log/)) {
+          // don't flush the usage_log
         } else {
           try {
             stashes.set(key.replace(stashes.prefix, ''), undefined);

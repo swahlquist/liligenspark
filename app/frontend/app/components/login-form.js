@@ -10,6 +10,7 @@ import app_state from '../utils/app_state';
 import session from '../utils/session';
 import { isEmpty } from '@ember/utils';
 import CoughDrop from '../app';
+import { htmlSafe } from '@ember/string';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -60,6 +61,15 @@ export default Component.extend({
       });
     }
   },
+  box_class: function() {
+    if(this.get('wide')) {
+      return htmlSafe('col-md-8 col-md-offset-2 col-sm-offset-1 col-sm-10');
+    } else if(this.get('left')) {
+      return htmlSafe('col-md-4 col-sm-6');
+    } else {
+      return htmlSafe('col-md-offset-4 col-md-4 col-sm-offset-3 col-sm-6');
+    }
+  }.property('left', 'wide'),
   app_state: function() {
     return app_state;
   }.property(),
@@ -116,6 +126,9 @@ export default Component.extend({
         _this.set('logging_in', false);
         _this.set('login_error', i18n.t('user_update_failed', "Retrieving login preferences failed"));
       });
+    },
+    logout: function() {
+      session.invalidate(true);
     },
     authenticate: function() {
       this.set('logging_in', true);
