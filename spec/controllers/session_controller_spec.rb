@@ -794,6 +794,7 @@ describe SessionController, :type => :controller do
       token_user
       token = @device.tokens[0]
       @device.settings['keys'][-1]['timestamp'] = 10.years.ago.to_i  
+      @device.settings['long_token'] = false
       @device.save!
       expect(@device.token_timeout).to eq(28.days.to_i)
       get :token_check, params: {:access_token => token}

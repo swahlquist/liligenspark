@@ -252,6 +252,7 @@ describe Device, :type => :model do
     it "should remove tokens based on their timeouts" do
       d = Device.new
       d.settings = {}
+      d.settings['long_token'] = false
       d.settings['keys'] = [{'value' => 'bob', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 25.days.ago.to_i}, {'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}, {'value' => 'sue', 'timestamp' => 30.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i}, {'value' => 'alice', 'timestamp' => 5.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i, 'expire_at' => 5.minutes.ago.to_i}]
       d.clean_old_keys
       expect(d.settings['keys']).to eq([{'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}])
@@ -621,9 +622,10 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u)
       d.settings['browser'] = true
+      d.settings['long_token'] = false
       expect(d.token_timeout).to eq(28.days.to_i)
       d.settings['long_token'] = true
-      expect(d.token_timeout).to eq(3.months.to_i)
+      expect(d.token_timeout).to eq(6.months.to_i)
       d.settings['browser'] = false
       expect(d.token_timeout).to eq(5.years)
       d.settings['long_token'] = false

@@ -39,11 +39,13 @@ describe JsonApi::Token do
       hash = JsonApi::Token.as_json(u, d)
       expect(hash['long_token']).to eq(nil)
       expect(hash['long_token_set']).to eq(false)
+
       d.settings['long_token'] = false
       d.settings['long_token_set'] = true
       hash = JsonApi::Token.as_json(u, d)
       expect(hash['long_token']).to eq(false)
       expect(hash['long_token_set']).to eq(true)
+      
       d.created_at = Date.parse('Jan 1, 2000')
       d.settings['long_token_set'] = nil
       hash = JsonApi::Token.as_json(u, d)

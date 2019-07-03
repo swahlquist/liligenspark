@@ -566,7 +566,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['columns']).to eq(4)
       expect(b.settings['grid']['order']).to eq([[nil, nil, nil, nil], [nil, nil, nil, nil]])
       expect(b.settings['immediately_downstream_board_ids']).to eq([])
-      expect(b.search_string).to eq("unnamed board    locale:")
+      expect(b.search_string).to eq("unnamed board    locale:en")
       expect(b.settings['image_url']).to eq(Board::DEFAULT_ICON)
     end
     

@@ -22,17 +22,17 @@ class Device < ActiveRecord::Base
   end
 
   def token_timeout
-    self.settings['long_token'] = true if self.settings['long_token'] == nil
+    long_token = self.settings['long_token'] == nil ? true : self.settings['long_token']
     # force a logout for tokens that have been used for an extended period of time
     if self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
-      if self.settings['long_token']
+      if long_token
         5.years.to_i
       else
         28.days.to_i
       end
     else
       # browser tokens can last 3 months max before needing a re-login
-      if self.settings['long_token']
+      if long_token
         6.months.to_i
       else
         28.days.to_i
@@ -203,15 +203,18 @@ class Device < ActiveRecord::Base
       if created_too_long_ago
         # force token removal after a certain duration
         @expired_keys[k['value']] = true
+        RedisInit.permissions.del("user_token/#{k['value']}")
       elsif !inactive_too_long && !needs_refresh
         new_keys << k
       elsif k['refresh']
         # mark unused tokens as needing a refresh
         @refreshable_keys[k['value']] = true
+        RedisInit.permissions.del("user_token/#{k['value']}") unless k['needs_refresh']
         k['needs_refresh'] = true
         new_keys << k
       else
         @expired_keys[k['value']] = true
+        RedisInit.permissions.del("user_token/#{k['value']}")
       end
     end
     self.settings['keys'] = new_keys
