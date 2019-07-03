@@ -376,7 +376,7 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('lessonpix_images', "LessonPix Images"), id: 'lessonpix'});
     }
     if(this.get('premium_symbols')) {
-      res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Images"), id: 'pcs'});
+      res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox"), id: 'pcs'});
     }
     if(window.flickr_key) {
       res.push({name: i18n.t('flickr', "Flickr Creative Commons"), id: 'flickr'});
@@ -395,7 +395,7 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('lessonpix_images', "LessonPix Images"), id: 'lessonpix_required'});
     }
     if(!this.get('premium_symbols')) {
-      res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Images"), id: 'pcs_required'});
+      res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox"), id: 'pcs_required'});
     }
 
 //    res.push({name: i18n.t('openclipart', "OpenClipart"), id: 'openclipart'});

@@ -43,7 +43,7 @@ export default modal.ModalController.extend({
       res.push({id: 'lessonpix', name: i18n.t('lessonpix', "LessonPix")});
     }
     if(this.get('premium_symbols_enabled')) {
-      res.push({id: 'pcs', name: i18n.t('pcs', "PCS (BoardMaker)")});
+      res.push({id: 'pcs', name: i18n.t('pcs', "PCS (BoardMaker) Symbols by Tobii Dynavox")});
     }
     return res;
   }.property('lessonpix_enabled', 'premium_symbols_enabled'),
