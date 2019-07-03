@@ -22,6 +22,7 @@ class Device < ActiveRecord::Base
   end
 
   def token_timeout
+    self.settings['long_token'] = true if self.settings['long_token'] == nil
     # force a logout for tokens that have been used for an extended period of time
     if self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
       if self.settings['long_token']
@@ -32,7 +33,7 @@ class Device < ActiveRecord::Base
     else
       # browser tokens can last 3 months max before needing a re-login
       if self.settings['long_token']
-        3.months.to_i
+        6.months.to_i
       else
         28.days.to_i
       end
