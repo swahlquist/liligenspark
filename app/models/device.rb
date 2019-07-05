@@ -158,7 +158,7 @@ class Device < ActiveRecord::Base
     elsif self.settings && self.settings['long_token']
       if self.token_type == :app
         # app tokens can go a long time between uses if on a trusted device
-        12.months.to_i
+        14.months.to_i
       elsif self.token_type == :browser
         # browser tokens can go for a little while between uses if on a trusted device
         28.days.to_i
@@ -189,6 +189,8 @@ class Device < ActiveRecord::Base
   def clean_old_keys
     self.settings ||= {}
     self.settings['app'] = true if self.token_type == :unknown && self.settings['name'] && self.settings['name'].match(/App/)
+    # apps should set the long token setting not long after being created
+    self.settings['long_token'] = (self.created_at < FeatureFlags::FEATURE_DATES['token_refresh'] ? true : false) if self.token_type == :app && self.settings['long_token'] == nil && self.created_at < 12.hours.ago
     keys = self.settings['keys'] || []
     @expired_keys ||= {}
     @refreshable_keys ||= {}

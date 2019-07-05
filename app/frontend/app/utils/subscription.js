@@ -547,6 +547,7 @@ document.addEventListener("deviceready", function() {
   if(window.store) {
     Subscription.in_app_store = window.store;
     var store = Subscription.in_app_store;
+    store.disableHostedContent = true;
     store.register({
       id: one_time_id,
       alias: 'Long-Term Purchase',
