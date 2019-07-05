@@ -190,6 +190,9 @@ var Subscription = EmberObject.extend({
       this.set('subscription_amount', 'long_term_100');
     }
   }.observes('subscription_amount', 'discount_percent', 'much_cheaper_offer'),
+  no_purchasing: function() {
+    return app_state.get('installed_app') && !Subscription.product_types;
+  }.property(''),
   hide_default_pricing: function() {
     return !!Subscription.product_types;
   }.property(),

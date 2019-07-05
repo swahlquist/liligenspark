@@ -89,24 +89,26 @@ export default Component.extend({
     return !this.get('client_secret');
   }.property('client_secret'),
   actions: {
-    login_success: function() {
+    login_success: function(reload) {
       var _this = this;
       stashes.flush(null, 'auth_');
       stashes.setup();
       _this.set('logging_in', false);
       _this.set('login_followup', false);
       _this.set('logged_in', true);
-      if(Ember.testing) {
-        console.error("would have redirected to home");
-      } else {
-        if(_this.get('return')) {
-          location.reload();
-          session.set('return', true);
-        } else if(capabilities.installed_app) {
-          location.href = '#/';
-          location.reload();
+      if(reload) {
+        if(Ember.testing) {
+          console.error("would have redirected to home");
         } else {
-          location.href = '/';
+          if(_this.get('return')) {
+            location.reload();
+            session.set('return', true);
+          } else if(capabilities.installed_app) {
+            location.href = '#/';
+            location.reload();
+          } else {
+            location.href = '/';
+          }
         }
       }
     },
@@ -115,7 +117,7 @@ export default Component.extend({
       CoughDrop.store.findRecord('user', 'self').then(function(u) {
         u.set('preferences.device.long_token', !!choice);
         u.save().then(function() {
-          _this.send('login_success');
+          _this.send('login_success', true);
         }, function(err) {
           _this.set('login_followup', false);
           _this.set('logging_in', false);
@@ -144,9 +146,10 @@ export default Component.extend({
         session.authenticate(data).then(function(data) {
           if(capabilities.installed_app && !data.long_token_set) {
             // follow-up question, is this a shared device?
+            _this.send('login_success', false);
             _this.set('login_followup', true);
           } else {
-            _this.send('login_success');
+            _this.send('login_success', true);
           }
         }, function(err) {
           err = err || {};
