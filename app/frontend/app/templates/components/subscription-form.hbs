@@ -66,13 +66,17 @@
           </td>
           <td class='separator semi_dim' style='opacity: 1.0; position: relative; width: 25%; vertical-align: top; padding-top: 40px; color: #888;'>
             <span style='font-size: 40px; vertical-align: middle; color: #000;'>free</span>
-            <div class='middle' style='opacity: 1.0;'>{{t "- or -" key='dash_or_dash'}}</div>
+            {{#unless subscription.app_pricing_override}}
+              <div class='middle' style='opacity: 1.0;'>{{t "- or -" key='dash_or_dash'}}</div>
+            {{unless}}
             <div style='margin-top: -5px; line-height: 17px;'>{{t "when supporting communicators" key='when_supporting_communicators'}}</div>
           </td>
-          <td class='' style='width: 25%; vertical-align: top; padding-top: 40px; color: #888;'>
-            $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>50</span>
-            <div style='margin-top: -5px; line-height: 17px;'>{{t "donate a license<br/> to those in need" key='donate_a_license'}}</div>
-          </td>
+          {{#unless subscription.app_pricing_override}}
+            <td class='' style='width: 25%; vertical-align: top; padding-top: 40px; color: #888;'>
+              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>50</span>
+              <div style='margin-top: -5px; line-height: 17px;'>{{t "donate a license<br/> to those in need" key='donate_a_license'}}</div>
+            </td>
+          {{/unless}}
         </tr>
         <tr>
           <td colspan="2">{{t "run on multiple devices" key='run_on_multiple_devices'}}</td>
@@ -153,12 +157,14 @@
                 {{t "free supporter" key='free_for_supporters'}}
               </button>
             </td>
-            <td class='semi_dim' style='width: 25%;'>
-              <button type="button" rel='slp_paid' class={{slp_long_term_50_class}} {{action "set_subscription" 'slp_long_term_50'}}>
-                <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                {{t "$50 donation" key='50_donation'}}
-              </button>
-            </td>
+            {{#unless subscription.app_pricing_override}}
+              <td class='semi_dim' style='width: 25%;'>
+                <button type="button" rel='slp_paid' class={{slp_long_term_50_class}} {{action "set_subscription" 'slp_long_term_50'}}>
+                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                  {{t "$50 donation" key='50_donation'}}
+                </button>
+              </td>
+            {{/unless}}
           </tr>
           {{#unless subscription.gift_type}}
             <tr>

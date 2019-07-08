@@ -223,6 +223,7 @@ task "extras:mobile" => :environment do
     if domain_settings
       sub = domain_settings['settings'] || {}
       domain_settings = sub.merge(domain_settings)
+      domain_settings['logo_url'] = domain_settings['logo_url'].sub(/^\//, '') if domain_settings['logo_url']
       puts "FOR DOMAIN: #{domain}"
       js = nil
       css = nil
