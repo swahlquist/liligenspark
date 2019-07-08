@@ -308,13 +308,24 @@
             {{#if subscription.amount_in_dollars}}
               ({{#if subscription.long_term_subscription}}
                 {{t "process" key='process'}}
-                ${{subscription.amount_in_dollars}}
+                {{#if subscription.app_pricing_override}}
+                  {{subscription.long_term_app_price}}
+                  {{subscription.app_currency}}
+                {{else}}
+                  ${{subscription.amount_in_dollars}}
+                {{/if}}
               {{else}}
                 {{t "paying" key='paying'}}
-                ${{subscription.amount_in_dollars}}
-                {{t "monthly"}}
-                {{#if subscription.extras}}
-                  {{t "+ $25 one-time fee" key='plus_one_time_extras'}}
+                {{#if subscription.app_pricing_override}}
+                  {{subscription.monthly_app_price}}
+                  {{subscription.app_currency}}
+                  {{t "monthly" key='monthly'}}
+                {{else}}
+                  ${{subscription.amount_in_dollars}}
+                  {{t "monthly" key='monthly'}}
+                  {{#if subscription.extras}}
+                    {{t "+ $25 one-time fee" key='plus_one_time_extras'}}
+                  {{/if}}
                 {{/if}}
               {{/if}})
             {{else if subscription.extras}}
@@ -325,7 +336,9 @@
             {{#if subscription.user.grace_period}}
               {{#if subscription.monthly_subscription}}
                 {{#if subscription.communicator_type}}
-                  <br/><em>{{t "monthly fee starts after your free trial" key='billing_after_trial'}}</em>
+                  {{#unless subscription.app_pricing_override}}
+                    <br/><em>{{t "monthly fee starts after your free trial" key='billing_after_trial'}}</em>
+                  {{/unless}}
                 {{/if}}
               {{/if}}
             {{/if}}

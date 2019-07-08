@@ -338,13 +338,19 @@ var Subscription = EmberObject.extend({
       } else {
         if(this.get('subscription_amount') == 'long_term_custom') {
           num = parseInt(this.get('subscription_custom_amount'), 10);
+        } else if(this.get('subscription_amount') == 'monthly_ios') {
+          num = this.get('monthly_app_price');
+        } else if(this.get('subscription_amount') == 'long_term_ios') {
+          num = this.get('long_term_app_price');
         }
         var num = parseInt(num, 10) * 100;
-        if(this.get('discount_percent') && this.get('communicator_type') && this.get('long_term_subscription')) {
-          num = Math.max(0, num * (1 - this.get('discount_percent')));
-        }
-        if(this.get('extras') && !this.get('free_extras') && this.get('long_term_subscription')) {
-          num = num + (25 * 100);
+        if(!this.get('app_pricing_override')) {
+          if(this.get('discount_percent') && this.get('communicator_type') && this.get('long_term_subscription')) {
+            num = Math.max(0, num * (1 - this.get('discount_percent')));
+          }
+          if(this.get('extras') && !this.get('free_extras') && this.get('long_term_subscription')) {
+            num = num + (25 * 100);
+          }
         }
         if(this.get('subscription_type') == 'long_term_gift') {
           if(this.get('extras') && !this.get('free_extras')) {
