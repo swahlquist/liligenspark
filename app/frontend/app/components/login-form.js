@@ -113,6 +113,7 @@ export default Component.extend({
       }
     },
     login_followup: function(choice) {
+      debugger
       var _this = this;
       CoughDrop.store.findRecord('user', 'self').then(function(u) {
         u.set('preferences.device.long_token', !!choice);
