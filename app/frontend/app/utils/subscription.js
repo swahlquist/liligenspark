@@ -562,6 +562,7 @@ Subscription.reopenClass({
 document.addEventListener("deviceready", function() {
   if(window.store) {
     Subscription.in_app_store = window.store;
+    Subscription.ready = true;
     var store = Subscription.in_app_store;
     store.disableHostedContent = true;
     store.register({
@@ -600,7 +601,7 @@ document.addEventListener("deviceready", function() {
       }
     });
     store.when("product").loaded(function(product) {
-      if(product.valid || true) {
+      if(product.valid) {
         Subscription.product_types = Subscription.product_types || {};
         Subscription.product_types[product.id] = product;
       }
