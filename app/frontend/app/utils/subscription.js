@@ -472,7 +472,7 @@ Subscription.reopenClass({
     document.body.appendChild($div[0]);
 
     var check_for_ready = function() {
-      if(window.StripeCheckout) {
+      if(window.StripeCheckout && window.stripe_public_key) {
         Subscription.handler = window.StripeCheckout.configure({
           key: window.stripe_public_key,
           image: '/images/logo-big.png',
@@ -499,7 +499,7 @@ Subscription.reopenClass({
           }
         });
         Subscription.ready = true;
-      } else {
+      } else if(window.stripe_public_key) {
         setTimeout(check_for_ready, 500);
       }
     };
@@ -587,7 +587,7 @@ document.addEventListener("deviceready", function() {
       }
     });
     store.when("product").loaded(function(product) {
-      if(product.valid) {
+      if(product.valid || true) {
         Subscription.product_types = Subscription.product_types || {};
         Subscription.product_types[product.id] = product;
       }
@@ -612,5 +612,7 @@ document.addEventListener("deviceready", function() {
     store.refresh();
   }
 }, false);
+
+CoughDrop.Subscription = Subscription;
 
 export default Subscription;
