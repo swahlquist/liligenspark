@@ -193,18 +193,25 @@ var Subscription = EmberObject.extend({
   no_purchasing: function() {
     return app_state.get('installed_app') && !Subscription.product_types;
   }.property(''),
-  hide_default_pricing: function() {
+  app_currency: function() {
+
+  }.property();
+  app_pricing_override: function() {
     return !!Subscription.product_types;
   }.property(),
   monthly_app_price: function() {
     var prod = Subscription.product_types[subscription_id];
-    if(!prod || !prod.price) { return "???"; }
-    return prod.price + " " + prod.currency;
+    if(!prod || !prod.price) { return "8.99"; }
+    return prod.price;
   }.property(),
   long_term_app_price: function() {
     var prod = Subscription.product_types[one_time_id];
-    if(!prod || !prod.price) { return "???"; }
-    return prod.price + " " + prod.currency;
+    if(!prod || !prod.price) { return "249" }
+    return prod.price;
+  }.property(),
+  app_currency: function() {
+    var prod = Subscription.product_types[subscription_id] || Subscription.product_types[one_time_id];
+    return prod.currency || "USD";
   }.property(),
   set_default_subscription_amount: function(obj, changes) {
     if(this.get('user_type') == 'communicator') {

@@ -28,7 +28,10 @@
         </tr>
         <tr>
           <td style='width: 25%; vertical-align: top; padding-top: 40px; color: #888; position: relative;'>
-            {{#if subscription.subscription_discount}}
+            {{#if subscription.app_pricing_override}}
+              <span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>{{subscription.monthly_app_price}}</span>
+              {{subscription.app_currency}}
+            {{else if subscription.subscription_discount}}
               <div class='sale'>
                 {{t "sale! 50% off" key='save_50_percent'}}
               </div>
@@ -41,6 +44,9 @@
             <div style='margin-top: -5px; line-height: 17px;'>{{t "per month" key='per_month'}}</div>
           </td>
           <td style='width: 25%; vertical-align: top; padding-top: 40px; color: #888; position: relative;'>
+            {{#if subscription.app_pricing_override}}
+              <span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>{{subscription.long_term_app_price}}</span>
+              {{subscription.app_currency}}
             {{#if subscription.much_cheaper_offer}}
               <div class='sale'>
                 {{t "sale! 50% off" key='save_50_percent'}}
@@ -85,7 +91,7 @@
             {{#if subscription.user.subscription.extras_enabled}}
               <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
               <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-            {{else if subscription.hide_default_pricing}}
+            {{else if subscription.app_pricing_override}}
               <td colspan='2'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
               <td colspan='2' class='separator semi_dim'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
             {{else}}
@@ -120,8 +126,8 @@
             <td style='width: 25%;'>
               <button style='width: 100%;' rel='monthly' class={{communicator_monthly_subscription_class}} type="button" {{action "set_subscription_type" 'monthly_communicator'}}>
                 <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                {{#if subscription.hide_default_pricing}}
-                  {{subscription.monthly_app_price}} {{t "per_month" key='per month'}}
+                {{#if subscription.app_pricing_override}}
+                  {{subscription.monthly_app_price}} {{subscription.app_currency}} {{t "per month" key='per_month'}}
                 {{else}}
                   {{#if subscription.subscription_discount}}
                     {{t "$3 per month" key='3_per_month'}}
@@ -134,8 +140,8 @@
             <td style='width: 25%;'>
               <button style='width: 100%;' rel='long_term' class={{communicator_long_term_subscription_class}} type="button" {{action "set_subscription_type" 'long_term_communicator'}}>
                 <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                {{#if subscription.hide_default_pricing}}
-                  {{subscription.long_term_app_price}} {{t "purchase" key='purchase'}}
+                {{#if subscription.app_pricing_override}}
+                  {{subscription.long_term_app_price}} {{subscription.app_currency}} {{t "purchase" key='purchase'}}
                 {{else}}
                   ${{subscription.long_term_amount}} {{t "purchase" key='purchase'}}
                 {{/if}}
@@ -159,7 +165,7 @@
               {{#if subscription.user.subscription.extras_enabled}}
                 <td colspan='2'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
                 <td colspan='2' class='separator semi_dim'>{{t "premium symbols already added" key='premium_symbols_added'}}</td>
-              {{else if subscription.hide_default_pricing}}
+              {{else if subscription.app_pricing_override}}
                 <td colspan='2'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
                 <td colspan='2' class='separator semi_dim'>{{t "premium symbols included" key='premium_symbols_included'}}</td>
               {{else}}
