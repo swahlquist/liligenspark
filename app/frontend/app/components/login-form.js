@@ -93,6 +93,8 @@ export default Component.extend({
       var _this = this;
       stashes.flush(null, 'auth_');
       stashes.setup();
+      var auth_settings = stashes.get_object('auth_settings', true) || {};
+      capabilities.access_token = auth_settings.access_token;
       _this.set('logging_in', false);
       _this.set('login_followup', false);
       _this.set('logged_in', true);
@@ -113,7 +115,6 @@ export default Component.extend({
       }
     },
     login_followup: function(choice) {
-      debugger
       var _this = this;
       CoughDrop.store.findRecord('user', 'self').then(function(u) {
         u.set('preferences.device.long_token', !!choice);
