@@ -193,9 +193,6 @@ var Subscription = EmberObject.extend({
   no_purchasing: function() {
     return app_state.get('installed_app') && !Subscription.product_types;
   }.property(''),
-  app_currency: function() {
-
-  }.property();
   app_pricing_override: function() {
     return !!Subscription.product_types;
   }.property(),
