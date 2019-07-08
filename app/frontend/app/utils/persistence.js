@@ -569,14 +569,14 @@ var persistence = EmberObject.extend({
         try {
           var json = JSON.parse(atob(data_uri.split(/,/)[1])) || [];
         } catch(e) {
-          console.error("json storage", url, e);
+          console.error("json storage", e);
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
       }
       if(json !== undefined) {
         return json;
       } else {
-        console.error("nothing", url, data_uri);
+        console.error("nothing", url, json);
         return RSVP.reject({error: "No JSON dataURI storage result"});
       }
     });
