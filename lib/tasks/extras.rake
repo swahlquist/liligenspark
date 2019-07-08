@@ -115,6 +115,8 @@ task "extras:desktop" => :environment do
     res = Typhoeus.get("https://#{domain}/api/v1/domain_settings")
     domain_settings = JSON.parse(res.body) rescue nil
     if domain_settings
+      sub = domain_settings['settings'] || {}
+      domain_settings = sub.merge(domain_settings)
       puts "FOR DOMAIN: #{domain}"
       js = nil
       css = nil
@@ -219,6 +221,8 @@ task "extras:mobile" => :environment do
     res = Typhoeus.get("https://#{domain}/api/v1/domain_settings")
     domain_settings = JSON.parse(res.body) rescue nil
     if domain_settings
+      sub = domain_settings['settings'] || {}
+      domain_settings = sub.merge(domain_settings)
       puts "FOR DOMAIN: #{domain}"
       js = nil
       css = nil

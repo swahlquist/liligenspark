@@ -85,7 +85,7 @@ export default Controller.extend({
       this.get('subscription').reset();
     },
     show_options: function() {
-      if(!app_state.get('installed_app')) {
+      if(!app_state.get('installed_app') || !this.get('subscription.no_purchasing')) {
         this.set('subscription.show_options', true);
         this.set('subscription.show_cancel', false);
       }
