@@ -192,7 +192,7 @@ var Subscription = EmberObject.extend({
     }
   }.observes('subscription_amount', 'discount_percent', 'much_cheaper_offer'),
   no_purchasing: function() {
-    return app_state.get('feature_flags.app_store_purchases') && app_state.get('installed_app') && !Subscription.product_types;
+    return app_state.get('installed_app') && (!Subscription.product_types || !app_state.get('feature_flags.app_store_purchases'));
   }.property('app_state.feature_flags.app_store_purchases', 'app_state.installed_app', 'app_state.app_store_purchase_types'),
   app_pricing_override: function() {
     return !!Subscription.product_types;
