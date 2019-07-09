@@ -422,7 +422,7 @@
           </div>
         {{/if}}
         <div class='col-md-3 col-xs-4 big_button_holder'>
-          <button id='nav_extras' class='btn big_button btn-default' {{action 'toggle_extras'}}>
+          <button id='nav_extras' class='btn big_button btn-default' {{action 'toggle_extras'}} style='touch-action: manipulation;'>
             <img src={{path 'images/extras.svg'}}>
             {{t "Extras" key='new_board'}} <span class={{if show_main_extras 'caret' 'caret-right'}}></span>
           </button>
