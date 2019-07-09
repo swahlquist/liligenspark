@@ -7,6 +7,7 @@ import i18n from './i18n';
 import CoughDrop from '../app';
 import persistence from './persistence';
 import app_state from './app_state';
+import progress_tracker from './progress_tracker';
 
 var types = ['communicator_type', 'supporter_type', 'monthly_subscription', 'long_term_subscription',
   'communicator_monthly_subscription', 'communicator_long_term_subscription',
@@ -527,6 +528,7 @@ Subscription.reopenClass({
         purchase_id = subscription_id;
       }
       Subscription.in_app_store.defer = defer;
+      Subscription.in_app_store.user_id = subscription.get('user.id');
       Subscription.in_app_store.order(purchase_id);
       return defer.promise;
     } else {
@@ -576,22 +578,38 @@ document.addEventListener("deviceready", function() {
       type: store.PAID_SUBSCRIPTION
     });
     store.validator = function(product, callback) {
-      persistence.ajax('/api/v1/receipt', {
+      var user_id = store.user_id || Subscription.in_app_store.user_id;
+      persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
         type: 'POST',
-        data: product.transaction
+        data: {receipt_data: product.transaction}
       }).then(function(res) {
-        if(res.expired) {
-          callback(false, {
-            code: store.PURCHASE_EXPIRED,
-            error: { message: "expired" }
-          });
-        } else {
-          callback(true, res);
-        }
+        progress_tracker.track(res.progress, function(event) {
+          if(event.status == 'errored') {
+            callback(false, {
+              code: store.INTERNAL_ERROR,
+              error: (event.result || {}).error || "Receipt validation failed"
+            });
+          } else if (event.result && event.result.success === false) {
+            callback(false, {
+              code: store.INTERNAL_ERROR,
+              error: (event.result || {}).error || "Receipt validation did not succeed"
+            });
+          } else if(event.status == 'finished') {
+            var res = event.result;
+            if(res.expired) {
+              callback(false, {
+                code: store.PURCHASE_EXPIRED,
+                error: { message: "expired" }
+              });
+            } else {
+              callback(true, res);
+            }
+          }
+        });
       }, function(err) {
         callback(false, {
           code: store.INTERNAL_ERROR,
-          error: (err || {}).message || "Receipt validation failed"
+          error: (err || {}).message || "Receipt validation failed to initiate"
         });
       });
     };

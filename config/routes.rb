@@ -164,6 +164,7 @@ Coughdrop::Application.routes.draw do
       post 'copy_board_links'
       post 'subscription' => 'users#subscribe'
       delete 'subscription' => 'users#unsubscribe'
+      post 'verify_receipt' => 'users#verify_receipt'
       post 'flush/logs' => 'users#flush_logs'
       post 'flush/user' => 'users#flush_user'
       delete 'devices/:device_id' => 'users#hide_device'

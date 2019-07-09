@@ -302,6 +302,13 @@ class Api::UsersController < ApplicationController
     progress = Progress.schedule(user, :process_subscription_token, 'token', 'unsubscribe')
     render json: JsonApi::Progress.as_json(progress, :wrapper => true)
   end
+
+  def verify_receipt
+    user = User.find_by_path(params['user_id'])
+    return unless allowed?(user, 'edit')
+    progress = Progress.schedule(user, :verify_receipt, user.global_id, params['receipt_data'])
+    render json: JsonApi::Progress.as_json(progress, :wrapper => true)
+  end
   
   def replace_board
     user = User.find_by_path(params['user_id'])
