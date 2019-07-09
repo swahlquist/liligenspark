@@ -180,36 +180,36 @@ var Subscription = EmberObject.extend({
   much_cheaper_offer: function() {
     if(Subscription.product_types) { return false; }
     return !!(this.get('sale') || (this.get('user.subscription.plan_id') || '').match(/monthly_3/));
-  }.property('sale', 'user.subscription.plan_id'),
+  }.property('sale', 'user.subscription.plan_id', 'app_state.app_store_purchase_types'),
   cheaper_offer: function() {
     if(Subscription.product_types) { return false; }
     return !!(this.get('sale') || this.get('discount_period') || (this.get('user.subscription.plan_id') || '').match(/monthly_4/) || (this.get('user.subscription.plan_id') || '').match(/monthly_3/));
-  }.property('sale', 'discount_period', 'user.subscription.plan_id'),
+  }.property('sale', 'discount_period', 'user.subscription.plan_id', 'app_state.app_store_purchase_types'),
   update_on_much_cheaper_offer: function() {
     if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
       this.set('subscription_amount', 'long_term_100');
     }
   }.observes('subscription_amount', 'discount_percent', 'much_cheaper_offer'),
   no_purchasing: function() {
-    return app_state.get('installed_app') && !Subscription.product_types;
-  }.property(''),
+    return app_state.get('feature_flags.app_store_purchases') && app_state.get('installed_app') && !Subscription.product_types;
+  }.property('app_state.feature_flags.app_store_purchases', 'app_state.installed_app', 'app_state.app_store_purchase_types'),
   app_pricing_override: function() {
     return !!Subscription.product_types;
-  }.property(),
+  }.property('app_state.app_store_purchase_types'),
   monthly_app_price: function() {
     var prod = Subscription.product_types[subscription_id];
     if(!prod || !prod.price) { return "8.99"; }
     return prod.price;
-  }.property(),
+  }.property('app_state.app_store_purchase_types'),
   long_term_app_price: function() {
     var prod = Subscription.product_types[one_time_id];
     if(!prod || !prod.price) { return "249" }
     return prod.price;
-  }.property(),
+  }.property('app_state.app_store_purchase_types'),
   app_currency: function() {
     var prod = Subscription.product_types[subscription_id] || Subscription.product_types[one_time_id];
     return prod.currency || "USD";
-  }.property(),
+  }.property('app_state.app_store_purchase_types'),
   set_default_subscription_amount: function(obj, changes) {
     if(this.get('user_type') == 'communicator') {
       if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(monthly_|long_term_)/)) {
@@ -257,7 +257,7 @@ var Subscription = EmberObject.extend({
         this.set('subscription_type', 'monthly');
       }
     }
-  }.observes('user_type', 'subscription_type', 'subscription_amount'),
+  }.observes('user_type', 'subscription_type', 'subscription_amount', 'app_state.app_store_purchase_types'),
   communicator_type: function() {
     return this.get('user_type') == 'communicator';
   }.property('user_type'),
@@ -374,7 +374,7 @@ var Subscription = EmberObject.extend({
   }.property('amount_in_cents'),
   partial_gift_allowed: function() {
     return !Subscription.product_types;
-  }.property(),
+  }.property('app_state.app_store_purchase_types'),
   check_gift: function() {
     var _this = this;
     var code = _this.get('gift_code');
@@ -604,6 +604,7 @@ document.addEventListener("deviceready", function() {
       if(product.valid) {
         Subscription.product_types = Subscription.product_types || {};
         Subscription.product_types[product.id] = product;
+        app_state.set('app_store_purchase_types', Subscription.product_types);
       }
     });
     store.when("product").approved(function(product) {
