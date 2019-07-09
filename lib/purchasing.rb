@@ -582,8 +582,7 @@ module Purchasing
     cancel_other_subscriptions(user, 'all')
   end
 
-  def self.verify_receipt(user_id, data)
-    user = User.find_by_global_id(user_id)
+  def self.verify_receipt(user, data)
     res = {}
     if data['ios']
       # https://developer.apple.com/documentation/storekit/in-app_purchase/validating_receipts_with_the_app_store
@@ -597,7 +596,7 @@ module Purchasing
       if json && (json['status'] == 21007 || json['status'] >= 21100)
         url = "https://sandbox.itunes.apple.com/verifyReceipt"
         req = Typhoeus.post(url, body: {
-          'receipt-data' => data['data'],
+          'receipt-data' => data['receipt'],
           'password' => ENV['IOS_RECEIPT_SECRET']
         }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'})
         json = JSON.parse(req.body) rescue nil
@@ -607,11 +606,12 @@ module Purchasing
         res['quantity'] = json['quantity']
         res['bundle_id'] = json['bundle_id']
         res['transaction_id'] = json['transaction_id']
+        res['subscription_id'] = json['original_transaction_id']
         res['product_id'] = json['product_id']
         res['customer_id'] = "ios.#{user.global_id}"
         res['expires'] = json['expiration_date']
-        res['one_time_purchase'] = true if [].include?(res['bundle_id'])
-        res['subscription'] = true if [].include?(res['bundle_id'])
+        res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['bundle_id'])
+        res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['bundle_id'])
         if json['expiration_intent']
           res['expired'] = true
           res['reason'] = {
@@ -629,22 +629,26 @@ module Purchasing
         res['free_trial'] = json['is_trial_period'] == 'true'
         hash = user.subscription_hash
         if res['expired']
-          User.schedule(:subscription_event, {
-            'unsubscribe' => true,
-            'user_id' => user.global_id,
-            'reason' => res['reason'],
-            'customer_id' => res['custoner_id'],
-            'subscription_id' => res['transaction_id'],
-            'cancel_others_on_update' => true,
-            'source' => 'ios.subscription.updated'
-          })
-          res['canceled'] = true
+          if hash['plan_id'] == 'monthly_ios'
+            User.subscription_event({
+              'unsubscribe' => true,
+              'user_id' => user.global_id,
+              'reason' => res['reason'],
+              'customer_id' => res['custoner_id'],
+              'subscription_id' => res['subscription_id'],
+              'cancel_others_on_update' => true,
+              'source' => 'ios.subscription.updated'
+            })
+            res['canceled'] = true
+          else
+            res['canceled'] = false
+          end
         elsif res['subscription']
           if hash['plan_id'] != 'monthly_ios'
             updated = User.subscription_event({
               'subscribe' => true,
               'user_id' => user.global_id,
-              'subscription_id' => res['transaction_id'],
+              'subscription_id' => res['subscription_id'],
               'customer_id' => res['customer_id'],
               'token_summary' => res['bundle_id'],
               'plan_id' => 'monthly_ios',
@@ -680,11 +684,11 @@ module Purchasing
         end
       else
         res['error'] = true
-        res['error_message'] = "Error retrieving receipt #{json && json['status']}"
+        res['error_message'] = "Error retrieving receipt, status #{json && json['status']}"
       end
     else
       res['error'] = true
-      res['error_message'] = "unrecongized purchase type"
+      res['error_message'] = "unrecognized purchase type"
     end
     res
   end

@@ -1135,6 +1135,12 @@ describe Api::UsersController, :type => :controller do
       assert_missing_token
     end
     
+    it "should require a valid user" do
+      token_user
+      delete :unsubscribe, params: {:user_id => 'asdf'}
+      assert_not_found('asdf')
+    end
+
     it "should require edit permissions" do
       token_user
       u = User.create
@@ -1152,7 +1158,39 @@ describe Api::UsersController, :type => :controller do
       expect(json['progress']).not_to eq(nil)
     end
   end
-  
+
+  describe "verify_receipt" do
+    it "should require an api token" do
+      post :verify_receipt, params: {user_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user 
+      post :verify_receipt, params: {user_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require edit permissions" do
+      token_user 
+      u = User.create
+      post :verify_receipt, params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should return a progress object" do
+      token_user
+      post :verify_receipt, params: {user_id: @user.global_id, receipt_data: {a: 1, b: 'asdf', c: true}}
+      json = assert_success_json
+      expect(json['progress']['id']).to_not eq(nil)
+      progress = Progress.find_by_global_id(json['progress']['id'])
+      expect(progress.settings['class']).to eq('User')
+      expect(progress.settings['method']).to eq('verify_receipt')
+      expect(progress.settings['id']).to eq(@user.id)
+      expect(progress.settings['arguments']).to eq([{'a' => '1', 'b' => 'asdf', 'c' => 'true'}])
+    end
+  end
+
   describe "claim_voice" do
     it "should require api token" do
       post :claim_voice, params: {:user_id => '1_99999'}

@@ -2141,4 +2141,454 @@ describe Purchasing do
       expect(problems.detect{|p| p.match(users[9].global_id)}).to match(/tied to a different customer record www/)
     end
   end
+
+  describe "verify_receipt" do
+    it "should error for non-iOS purchases" do
+      res = Purchasing.verify_receipt(nil, {})
+      expect(res['error']).to eq(true)
+      expect(res['error_message']).to eq('unrecognized purchase type')
+    end
+
+    describe "iOS receipt validation" do
+      it "should call the production endpoint" do
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {status: 111}.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq("Error retrieving receipt, status 111")
+      end
+
+      it "should fall back to the development endpoint if instructed" do
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {status: 21007}.to_json
+        }))
+        expect(Typhoeus).to receive(:post).with("https://sandbox.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {status: 999}.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq("Error retrieving receipt, status 999")
+      end
+
+      it "should error on non-success error codes" do
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {status: 111}.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq("Error retrieving receipt, status 111")
+      end
+
+      it "should notify of pending expiration" do
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2010').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '1',
+            expiration_intent: '3'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2010-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(false)
+        expect(res['billing_issue']).to eq(true)
+        expect(res['reason']).to eq("Customer did not agree to a recent price increase.")
+        expect(res['free_trial']).to eq(false)
+      end
+
+      it "should send correct expiration message" do
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2010').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '1',
+            expiration_intent: '1'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['reason']).to eq("Customer canceled their subscription.")
+
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2010').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '1',
+            expiration_intent: '2'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['reason']).to eq("Billing error; for example customer’s payment information was no longer valid.")
+
+        u = User.create
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2010').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '1',
+            expiration_intent: '4'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['reason']).to eq("Product was not available for purchase at the time of renewal.")
+      end
+
+      it "should unsubscribe if expired" do
+        u = User.create
+        updated = User.subscription_event({
+          'subscribe' => true,
+          'user_id' => u.global_id,
+          'subscription_id' => 'x984h3ag834g',
+          'customer_id' => "ios.#{u.global_id}",
+          'token_summary' => 'CoughDropiOSMonthly',
+          'plan_id' => 'monthly_ios',
+          'cancel_others_on_update' => true,
+          'source' => 'new iOS subscription'
+        })        
+        hash = u.reload.subscription_hash
+        expect(hash['plan_id']).to eq('monthly_ios')
+        expect(hash['active']).to eq(true)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSMonthly',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '0',
+            expiration_intent: '3'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSMonthly')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
+        expect(res['expired']).to eq(true)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq("Customer did not agree to a recent price increase.")
+        expect(res['free_trial']).to eq(false)
+        expect(res['canceled']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to_not eq(true)
+      end
+
+      it "should not unsubscribe if no longer on an ios subscription" do
+        u = User.create
+        updated = User.subscription_event({
+          'subscribe' => true,
+          'user_id' => u.global_id,
+          'subscription_id' => 'x984h3ag834g',
+          'customer_id' => "ios.#{u.global_id}",
+          'token_summary' => 'CoughDropiOSMonthly',
+          'plan_id' => 'monthly_6',
+          'cancel_others_on_update' => true,
+          'source' => 'new iOS subscription'
+        })        
+        hash = u.reload.subscription_hash
+        expect(hash['plan_id']).to eq('monthly_6')
+        expect(hash['active']).to eq(true)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSMonthly',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+            is_trial_period: 'false',
+            is_in_billing_retry_period: '0',
+            expiration_intent: '3'
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSMonthly')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
+        expect(res['expired']).to eq(true)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq("Customer did not agree to a recent price increase.")
+        expect(res['free_trial']).to eq(false)
+        expect(res['canceled']).to eq(false)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+      end
+
+      it "should subscribe if specified" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSMonthly',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSMonthly')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(false)
+        expect(res['subscribed']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['plan_id']).to eq('monthly_ios')
+      end
+
+      it "should respond with already_subscribed if true" do
+        u = User.create
+        updated = User.subscription_event({
+          'subscribe' => true,
+          'user_id' => u.global_id,
+          'subscription_id' => 'x984h3ag834g',
+          'customer_id' => "ios.#{u.global_id}",
+          'token_summary' => 'CoughDropiOSMonthly',
+          'plan_id' => 'monthly_ios',
+          'cancel_others_on_update' => true,
+          'source' => 'new iOS subscription'
+        })        
+        hash = u.reload.subscription_hash
+        expect(hash['plan_id']).to eq('monthly_ios')
+        expect(hash['active']).to eq(true)
+        
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSMonthly',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSMonthly')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(false)
+        expect(res['subscribed']).to eq(true)
+        expect(res['already_subscribed']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['plan_id']).to eq('monthly_ios')
+      end
+
+      it "should process one-time purchase if specified" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(false)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+      end
+
+      it "should respond with already_purchased if purchase token already used" do
+        u = User.create
+        User.subscription_event({
+          'purchase' => true,
+          'user_id' => u.global_id,
+          'purchase_id' => '984h3ag834g',
+          'customer_id' => "ios.#{u.global_id}",
+          'token_summary' => 'CoughDropiOSBundle',
+          'plan_id' => 'long_term_ios',
+          'seconds_to_add' => 5.years.to_i,
+          'source' => 'new iOS purchase'
+        })
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['plan_id']).to eq('long_term_ios')
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => {'secret' => 'asdf'},
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            bundle_id: 'CoughDropiOSBundle',
+            quantity: 1,
+            transaction_id: '984h3ag834g',
+            original_transaction_id: 'x984h3ag834g',
+            product_id: 'com.mycoughdrop.coughdrop',
+            expiration_date: Date.parse('Jan 2, 2020').iso8601,
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'secret' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['bundle_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['product_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(false)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+      end
+    end
+  end
 end

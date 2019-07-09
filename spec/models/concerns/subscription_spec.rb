@@ -1294,6 +1294,14 @@ describe Subscription, :type => :model do
     end
   end
 
+  describe "verify_receipt" do
+    it "should call purchasing code" do
+      u = User.create
+      expect(Purchasing).to receive(:verify_receipt).with(u, {'a' => 1, 'b' => 'asdf', 'c' => true})
+      u.verify_receipt({'a' => 1, 'b' => 'asdf', 'c' => true})
+    end
+  end
+
   describe 'purchase_extras' do
     it 'should error no invalid user' do
       expect { User.purchase_extras({}) }.to raise_error('user not found')

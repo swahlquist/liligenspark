@@ -294,6 +294,10 @@ module Subscription
       Purchasing.purchase(self, token, type, code)
     end
   end
+
+  def verify_receipt(receipt_data)
+    Purchasing.verify_receipt(self, receipt_data)
+  end
   
   def subscription_override(type, user_id=nil)
     if type == 'never_expires'

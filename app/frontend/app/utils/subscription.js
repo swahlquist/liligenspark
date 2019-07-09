@@ -22,7 +22,7 @@ types.forEach(function(type) {
   obs_properties.push('subscription.' + type);
 });
 var one_time_id = 'CoughDropiOSBundle';
-var subscription_id = 'b'
+var subscription_id = 'CoughDropiOSMonthly';
 
 var obs_func = function() {
   var _this = this;
@@ -581,18 +581,18 @@ document.addEventListener("deviceready", function() {
       var user_id = store.user_id || Subscription.in_app_store.user_id;
       persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
         type: 'POST',
-        data: {receipt_data: product.transaction}
+        data: {receipt_data: {ios: true, receipt: product.transaction}}
       }).then(function(res) {
         progress_tracker.track(res.progress, function(event) {
           if(event.status == 'errored') {
             callback(false, {
               code: store.INTERNAL_ERROR,
-              error: (event.result || {}).error || "Receipt validation failed"
+              error: (event.result || {}).error_message || "Receipt validation failed"
             });
           } else if (event.result && event.result.success === false) {
             callback(false, {
               code: store.INTERNAL_ERROR,
-              error: (event.result || {}).error || "Receipt validation did not succeed"
+              error: (event.result || {}).error_message || "Receipt validation did not succeed"
             });
           } else if(event.status == 'finished') {
             var res = event.result;
