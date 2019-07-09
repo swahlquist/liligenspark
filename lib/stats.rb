@@ -881,7 +881,7 @@ module Stats
         modeled_word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['modeled_words_list']
         modeled_word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['modeled_words_list']
         if word_list || modeled_word_list
-          if primary_word_list
+          if word_list
             key = goal.primary ? :primary_words : :secondary_words
             res[:watchwords][key] ||= {}
             word_list.each do |word|
