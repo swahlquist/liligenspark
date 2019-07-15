@@ -508,7 +508,7 @@ var speecher = EmberObject.extend({
       } else if(speak.text) {
         var stashVolume = speecher.volume;
         if(speak.volume) { speecher.volume = speak.volume; }
-        speecher.speak_text(speak.text, speecher.speaking_from_collection);
+        speecher.speak_text(speak.text, speecher.speaking_from_collection, speak);
         speecher.volume = stashVolume;
       }
     } else {

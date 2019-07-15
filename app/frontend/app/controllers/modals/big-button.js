@@ -20,6 +20,7 @@ export default modal.ModalController.extend({
     };
     _this.set('snap', snap);
     _this.set('holding', false);
+    _this.set('flipped', false);
     runLater(snap);
     window.addEventListener('resize', snap);
   },
@@ -71,6 +72,9 @@ export default modal.ModalController.extend({
       if(close) {
         modal.close();
       }
+    },
+    flip: function() {
+      this.set('flipped', !this.get('flipped'));
     },
     hold: function() {
       this.set('holding', !this.get('holding'));

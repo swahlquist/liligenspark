@@ -1,6 +1,6 @@
 {{#modal-dialog desired_width=850 action="close" opening='opening' closing='closing'}}
   <div class="modal-body advanced_selection modal_targets" style='padding-top: 5px; padding-bottom: 5px;'>
-    <div class='cursor_holder'>
+    <div class='cursor_holder' style={{if flipped "transform: rotate(180deg);"}}>
       <div class='cursor_navigation repair_buttons'>
         <button class='btn btn-default btn-lg up' {{action 'move' 'up'}} disabled={{not_scrollable}}>
           <span class='glyphicon glyphicon-chevron-up'></span>
@@ -31,6 +31,10 @@
         <button class='btn btn-lg btn-default' {{action 'speak'}} disabled={{holding}}>
           <span class='glyphicon glyphicon-volume-up'></span>
           {{t "Speak" key='speak'}}
+        </button>
+        <button class='btn btn-lg btn-default' {{action 'flip'}}>
+          <span class='glyphicon glyphicon-repeat'></span>
+          {{t "Flip Text" key='flip_text'}}
         </button>
         <button class='btn btn-lg btn-default' {{action 'hold'}}>
           {{#if holding}}

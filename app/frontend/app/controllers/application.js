@@ -1014,8 +1014,8 @@ export default Controller.extend({
       more: more.length > 0
     };
   }.property('app_state.currentUser.supervisees', 'app_state.currentBoardState.key'),
-  sayLouder: function() {
-    this.vocalize(3.0);
+  sayLouder: function(pct) {
+    this.vocalize(pct || 3.0);
   },
   vocalize: function(volume, opts) {
     if(app_state.get('currentUser.preferences.repair_on_vocalize')) {
@@ -1050,7 +1050,12 @@ export default Controller.extend({
   }.property('stashes.root_board_state.id', 'app_state.currentBoardState.id'),
   button_list_class: function() {
     var res = "button_list ";
-    if(stashes.get('ghost_utterance')) {
+    var flipped = app_state.get('flipped');
+    if(flipped) {
+      res = res + "flipped ";
+      // always show text-only when flipping
+    }
+    if(stashes.get('ghost_utterance') && !flipped) {
       res = res + "ghost_utterance ";
     }
     if(this.get('extras.eye_gaze_state')) {
@@ -1064,12 +1069,17 @@ export default Controller.extend({
     }
     var text_position = (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
     var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
-    if(text_position == 'text_only' || show_always) {
+    if(text_position == 'text_only' || show_always || flipped) {
       res = res + "text_only ";
     }
 
     if(this.get('board.text_style')) {
-      res = res + this.get('board.text_style') + " ";
+      var style = this.get('board.text_style') || ' ';
+      var big_header = this.get('app_state.header_size') == 'large' || this.get('app_state.header_size') == 'huge';
+      if(flipped && big_header && (style == ' ' || style == 'text_small' || style == 'text_medium')) {
+        style = 'text_large';
+      }
+      res = res + style + " ";
     }
     if(this.get('board.button_style')) {
       var style = Button.style(this.get('board.button_style'));
@@ -1082,9 +1092,12 @@ export default Controller.extend({
         res = res + style.font_class + " ";
       }
     }
+    if(stashes.get('working_vocalization.length')) {
+      res = res + "has_content ";
+    }
 
     return htmlSafe(res);
-  }.property('stashes.ghost_utterance', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style'),
+  }.property('stashes.ghost_utterance', 'stashes.working_vocalization', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style', 'app_state.header_size', 'app_state.flipped'),
   no_paint_mode_class: function() {
     var res = "btn ";
     if(this.get('board.paint_mode')) {

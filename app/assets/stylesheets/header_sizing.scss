@@ -51,6 +51,11 @@ header {
       width: calc(100% - 225px); 
     }
     padding-right: 50px;
+    &.has_content.flipped {
+      padding-left: 60px;
+      transform: rotate(180deg);
+      padding-right: 0;
+    }
     .history_button {
       max-width: 60px; 
       height: 60px; 
@@ -181,7 +186,7 @@ header {
             width: 40px; 
           }
         }
-              }
+      }
     }
     &.tiny {
       height: 50px;
@@ -329,6 +334,10 @@ header {
             max-width: 90px;
           }
         }
+        &.text_only .history_button {
+          margin-left: 0;
+          margin-right: 0;
+        }
         &.text_only .history_button img{
           margin-top: -31px;
         }
@@ -401,6 +410,11 @@ header {
         width: -webkit-calc(100% - 396px); 
         width: calc(100% - 396px); 
         padding-right: 65px;
+        &.has_content.flipped {
+          padding-left: 75px;
+          transform: rotate(180deg);
+          padding-right: 0
+        }
         &.with_back {
           width: -webkit-calc(100% - 517px); 
           width: calc(100% - 517px); 
@@ -415,6 +429,10 @@ header {
             height: 100px; 
             max-width: 140px;
           }
+        }
+        &.text_only .history_button {
+          margin-left: 0;
+          margin-right: 0;
         }
         &.text_only .history_button img{
           margin-top: -53px;
@@ -504,6 +522,11 @@ header {
           width: calc(100% - 670px); 
         }
         padding-right: 85px;
+        &.has_content.flipped {
+          padding-left: 95px;
+          transform: rotate(180deg);
+          padding-right: 0
+        }
         .history_button {
           max-width: 190px; 
           height: 188px; 
@@ -514,6 +537,10 @@ header {
             height: 120px; 
             max-width: 140px;
           }
+        }
+        &.text_only .history_button {
+          margin-left: 0;
+          margin-right: 0;
         }
         &.text_only .history_button img{
           margin-top: -63px;

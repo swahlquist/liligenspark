@@ -24,6 +24,7 @@ export default modal.ModalController.extend({
       });
     }
     this.set('model', {});
+    this.set('repeat_menu', false);
     this.set('rememberedUtterances', utterances.slice(0, 7));
     var height = app_state.get('header_height');
     runLater(function() {
@@ -75,6 +76,10 @@ export default modal.ModalController.extend({
         }
       }
     },
+    flip_text: function() {
+      app_state.flip_text();
+      modal.close(true);
+    },
     button_event: function(event, button) {
       if(event == 'speakMenuSelect') {
         var click = function() {
@@ -85,13 +90,24 @@ export default modal.ModalController.extend({
             capabilities.vibrate();
           }
         };
-        modal.close(true);
+        if(button != 'menu_repeat_button') {
+          modal.close(true);
+        }
         if(button == 'menu_share_button') {
           modal.open('share-utterance', {utterance: stashes.get('working_vocalization'), inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_repeat_button') {
+          this.set('repeat_menu', !this.get('repeat_menu'));
+
+          // right for louder, left for quieter, down for big button target, up for flip text
+        } else if(button == 'menu_repeat_louder') {
           app_state.say_louder();
-          // right for louder, left for quieter, down for big target, up for text box
+        } else if(button == 'menu_repeat_quieter') {
+          app_state.say_louder(0.3);
+        } else if(button == 'menu_repeat_text') {
+          modal.open('modals/big-button', {text: this.get('working_vocalization_text'), text_only: app_state.get('referenced_user.preferences.device.button_text_position') == 'text_only'});
+        } else if(button == 'menu_repeat_flip') {
+          app_state.flip_text();
         } else if(button == 'menu_hold_thought_button') {
           stashes.remember({stash: true});
           utterance.clear();

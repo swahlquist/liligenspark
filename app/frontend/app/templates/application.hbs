@@ -23,6 +23,8 @@
         <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
       {{else if app_state.insertion}}
         <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
+      {{else if app_state.flipped}}
+        <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-repeat'></span></div>
       {{/if}}
       <div tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">
         {{#unless app_state.button_list}}

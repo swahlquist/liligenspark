@@ -916,6 +916,9 @@ var app_state = EmberObject.extend({
   say_louder: function(pct) {
     this.controller.sayLouder(pct);
   },
+  flip_text: function() {
+    this.set('flipped', !this.get('flipped'));
+  },
   save_phrase: function(voc, category) {
     var user = app_state.get('currentUser');
     if(user) {
