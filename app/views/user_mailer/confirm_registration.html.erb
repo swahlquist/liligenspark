@@ -6,7 +6,7 @@ difference for you.<br/><br/>
 
 You've signed up for an account with the user name <b><%= @user.display_user_name %></b>.
 To finish registering just
-<a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/confirm_registration/<%= @user.registration_code %>">open this link in your web browser of choice</a>.
+<a href="<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/confirm_registration/<%= @user.registration_code %>">open this link (<%= JsonApi::Json.current_host %>/<%= @user.user_name %>/confirm_registration/<%= @user.registration_code %>) in your web browser of choice</a>.
 <% if @user.grace_period? %><%= app_name %> comes with "cloud extras" features that include
 logging, reports, goals and badges, and your <%= app_name %> account will have access to these
 features through <b><%= @user.expires_at.to_s(:long_ordinal) %></b>. Don't worry, we won't 
