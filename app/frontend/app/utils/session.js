@@ -99,7 +99,7 @@ var session = EmberObject.extend({
       if(data.authenticated === false) {
         session.set('invalid_token', true);
         if(allow_invalidate && store_data.access_token) {
-          session.force_logout(i18n.t('session_token_invalid', "This session is no longer valid, please log back in"));
+          session.force_logout(i18n.t('session_token_invalid', "This session has expired, please log back in"));
           return;
         }
       } else {
