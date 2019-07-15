@@ -15,7 +15,7 @@ module JsonApi::Log
     end
     json['pending'] = true if !log.global_id
     json['type'] = log.log_type
-    json['message_type'] = true if log.log_type == 'note' && (log.data['message'] || log.data['author_contact'] || log.data['note']['prior_contact'])
+    json['message_type'] = true if log.log_type == 'note' && (log.data['message'] || log.data['author_contact'] || (log.data['note'] || {})['prior_contact'])
     json['started_at'] = log.started_at.iso8601 if log.started_at
     json['ended_at'] = log.ended_at.iso8601 if log.ended_at
     json['time_id'] = (log.started_at || 0).to_i
