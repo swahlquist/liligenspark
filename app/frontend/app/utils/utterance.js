@@ -400,7 +400,6 @@ var utterance = EmberObject.extend({
   },
   vocalize_list: function(volume, opts) {
     opts = opts || {};
-    // TODO: this is ignoring volume right now :-(
     var list = app_state.get('button_list');
     var text = list.map(function(i) { return i.vocalization || i.label; }).join(' ');
     var items = [];
