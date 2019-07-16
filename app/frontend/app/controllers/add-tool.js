@@ -65,6 +65,8 @@ export default modal.ModalController.extend({
             _this.set('selected_tool.error', {bad_credentials: true});
           } else if(err.errors[0] == 'account credentials already in use') {
             _this.set('selected_tool.error', {credential_collision: true});
+          } else if(err.errors[0] == 'invalid IFTTT Webhook URL') {
+            _this.set('selected_tool.error', {bad_webhook: true});
           }
         }
       });
