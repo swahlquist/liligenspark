@@ -331,7 +331,8 @@ var speecher = EmberObject.extend({
     }
     if(allow_fallbacks) {
       // Can't find an exact match? Look for a best match by locale
-      voice = voice || voices.find(function(v) { return locale && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+      voice = voice || voices.find(function(v) { return language && v.name && v.name.match(/^Google/) && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
+      voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
       voice = voice || voices.find(function(v) { return language && v.lang && v.lang.toLowerCase().split(/[-_]/)[0] == language; });
       voice = voice || voices.find(function(v) { return v['default']; });
       voice = voice || voices[0];
