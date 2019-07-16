@@ -213,6 +213,10 @@
                 {{#if trial_option}}
                   <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
                 {{/if}}
+              {{else if subscription.app_pricing_override}}
+                {{#if trial_option}}
+                  <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
+                {{/if}}
               {{else}}
                 {{#if subscription.gift_type}}
                   <button class='btn btn-primary btn-sm'>{{t "I have a gift/discount code" key='have_a_gift_code'}}</button>
@@ -238,9 +242,11 @@
               {{/if}}
             </td>
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim' style='text-align: right;'>
-              <a href="#" {{action 'bulk_purchase'}}>
-                {{t "Bulk Purchase or PO?" key='bulk_purchase_or_po'}}
-              </a>
+              {{#unless subscription.app_pricing_override}}
+                <a href="#" {{action 'bulk_purchase'}}>
+                  {{t "Bulk Purchase or PO?" key='bulk_purchase_or_po'}}
+                </a>
+              {{/unless}}
             </td>
           </tr>
         {{/if}}
