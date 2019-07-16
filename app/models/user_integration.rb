@@ -195,7 +195,7 @@ class UserIntegration < ActiveRecord::Base
           return false
         end
       elsif params['integration_key'] == 'ifttt' && user_params['webhook_url']
-        match = user_params['webhook_url']['value'].strip.match(/^https\:\/\/maker\.ifttt\.com\/use\/([^\?]+)$/)
+        match = (user_params['webhook_url']['value'] || '').strip.match(/^https\:\/\/maker\.ifttt\.com\/use\/([^\?]+)$/)
         if match 
           self.settings['button_webhook_url'] = "https://maker.ifttt.com/trigger/{code}/with/key/#{match[1]}"
         else
