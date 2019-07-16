@@ -1138,13 +1138,16 @@ var app_state = EmberObject.extend({
   }.property('default_mode', 'currentBoardState', 'hide_search'),
   header_size: function() {
     var size = this.get('currentUser.preferences.device.vocalization_height') || ((window.user_preferences || {}).device || {}).vocalization_height || 100;
+    if(this.get('currentUser.preferences.device.flipped_override') && this.get('flipped') && this.get('currentUser.preferences.device.flipped_height')) {
+      size = this.get('currentUser.preferences.device.flipped_height');
+    }
     if(window.innerHeight < 400) {
       size = 'tiny';
     } else if(window.innerHeight < 600 && size != 'tiny') {
       size = 'small';
     }
     return size;
-  }.property('currentUser.preferences.device.vocalization_height', 'window_inner_width'),
+  }.property('currentUser.preferences.device.vocalization_height', 'window_inner_width', 'flipped', 'currentUser.preferences.device.flipped_override'),
   header_height: function() {
     if(this.get('speak_mode')) {
       var size = this.get('header_size');

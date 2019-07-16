@@ -91,6 +91,12 @@ export default Controller.extend({
     {name: i18n.t('headset_or_earpiece', "Play on Headset or Earpiece"), id: "headset_or_earpiece"},
     {name: i18n.t('earpiece', "Play on Earpiece"), id: "earpiece"},
   ],
+  update_flipped_settings: function() {
+    if(this.get('pending_preferences.device.flipped_override')) {
+      this.set('pending_preferences.device.flipped_text', this.get('pending_preferences.device.button_text'));
+      this.set('pending_preferences.device.flipped_height', this.get('pending_preferences.device.vocalization_height'));
+    }
+  }.observes('pending_preferences.device.flipped_override'),
   text_sample_class: function() {
     var res = "text_sample ";
     var style = Button.style(this.get('pending_preferences.device.button_style'));
@@ -106,7 +112,8 @@ export default Controller.extend({
   }.property('pending_preferences.device.button_style'),
   activationLocationList: [
     {name: i18n.t('pointer_release', "Where I Release My Pointer"), id: "end"},
-    {name: i18n.t('pointer_start', "Where I First Press"), id: "start"}
+    {name: i18n.t('pointer_start', "Where I First Press"), id: "start"},
+    {name: i18n.t('tap_and_swipe_inflections', "Tap to Select, Swipe for Inflections"), id: "swipe"},
   ],
   buttonSpaceList: [
     {name: i18n.t('dont_stretch', "Don't Stretch Buttons"), id: "none"},

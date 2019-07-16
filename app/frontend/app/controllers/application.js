@@ -1073,13 +1073,17 @@ export default Controller.extend({
       res = res + "text_only ";
     }
 
-    if(this.get('board.text_style')) {
-      var style = this.get('board.text_style') || ' ';
-      var big_header = this.get('app_state.header_size') == 'large' || this.get('app_state.header_size') == 'huge';
-      if(flipped && big_header && (style == ' ' || style == 'text_small' || style == 'text_medium')) {
-        style = 'text_large';
+    if(app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {
+      res = res + 'text_' + app_state.get('currentUser.preferences.device.flipped_text') + ' ';
+    } else {
+      if(this.get('board.text_style')) {
+        var style = this.get('board.text_style') || ' ';
+        var big_header = this.get('app_state.header_size') == 'large' || this.get('app_state.header_size') == 'huge';
+        if(flipped && big_header && (style == ' ' || style == 'text_small' || style == 'text_medium')) {
+          style = 'text_large';
+        }
+        res = res + style + " ";
       }
-      res = res + style + " ";
     }
     if(this.get('board.button_style')) {
       var style = Button.style(this.get('board.button_style'));
@@ -1097,7 +1101,7 @@ export default Controller.extend({
     }
 
     return htmlSafe(res);
-  }.property('stashes.ghost_utterance', 'stashes.working_vocalization', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style', 'app_state.header_size', 'app_state.flipped'),
+  }.property('stashes.ghost_utterance', 'stashes.working_vocalization', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style', 'app_state.header_size', 'app_state.flipped', 'app_state.currentUser.preferences.device.flipped_override'),
   no_paint_mode_class: function() {
     var res = "btn ";
     if(this.get('board.paint_mode')) {
