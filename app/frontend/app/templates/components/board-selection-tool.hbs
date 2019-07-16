@@ -5,7 +5,7 @@
     {{t "Error Loading Layouts" key='error_loading_layouts'}}
   {{else if boards}}
     {{#if base_level}}
-      <button class='btn btn-default btn-lg' disabled={{no_previous}} {{action 'previous'}} style='float: left;'>
+      <button class='btn btn-default btn-lg' disabled={{no_previous}} {{action 'previous'}} style='float: left; position: absolute; left: 5px; top: calc(50vh - 35px); height: 110px; box-shadow: 10px 10px 10px; border-width: 4px; z-index: 2;'>
         <span class='glyphicon glyphicon-chevron-left'></span> 
         {{#if level_select}}
           {{t "Fewer Buttons" key='fewer_buttons'}}
@@ -13,7 +13,7 @@
           {{t "Bigger Buttons" key='bigger_buttons'}}
         {{/if}}
       </button>
-      <button class='btn btn-default btn-lg' disabled={{no_next}} {{action 'next'}} style='float: right;'>
+      <button class='btn btn-default btn-lg' disabled={{no_next}} {{action 'next'}} style='float: right; position: absolute; right: 5px; top: calc(50vh - 35px); height: 110px; box-shadow: -10px 10px 10px; border-width: 4px; z-index: 2;'>
         {{#if level_select}}
           {{t "More Buttons" key='more_buttons'}}
         {{else}}
@@ -24,26 +24,28 @@
     {{/if}}
     <div style='text-align: center;'>
       {{#if level_select}}
-        <button class='btn btn-primary btn-lg' {{action 'select'}}>{{t "Make This My Home Board" key='make_this_my_home_board'}}
+        <button class='btn btn-primary btn-lg' {{action 'select'}} style='position: relative; box-shadow: 0 3px 8px #000;height: 70px; border-width: 4px;'>{{t "Make This My Home Board" key='make_this_my_home_board'}}
         </button>
         <button class='btn btn-default btn-sm' {{action 'deselect'}}>{{t "Change Layouts" key='change_layouts'}}</button>
-        <div>
-          {{current_board.name}},
-          <b>{{t "Level " key='level'}}
-            {{#if current_level}}
-              {{current_level}}
-            {{else if base_level}}
-              {{base_level}}
+        <div style='margin-bottom: -60px; position: relative; margin-top: 10px;'>
+          <span style='display: inline-block; background: rgba(255, 255, 255, 0.85); padding: 10px; border-radius: 5px; border: 1px solid #aaa;'>
+            {{current_board.name}},
+            <b>{{t "Level " key='level'}}
+              {{#if current_level}}
+                {{current_level}}
+              {{else if base_level}}
+                {{base_level}}
+              {{/if}}
+            </b>
+            {{#if level_buttons}}
+              ( {{t "visible button" key='n_buttons' count=level_buttons}}
+              {{t "available" key='available'}} )
             {{/if}}
-          </b>
-          {{#if level_buttons}}
-            ( {{t "visible button" key='n_buttons' count=level_buttons}}
-            {{t "available" key='available'}} )
-          {{/if}}
+          </span>
         </div>
       {{else}}
         {{#if base_level}}
-          <button class='btn btn-primary btn-lg' {{action 'select'}}>{{t "Select This Layout" key='select_this_layout'}}</button>
+          <button class='btn btn-primary btn-lg' {{action 'select'}} style='box-shadow: 0 5px 10px #000; position: relative; height: 70px; margin-bottom: -20px; border-width: 4px;'>{{t "Select This Layout" key='select_this_layout'}}</button>
         {{/if}}
         <button class='btn btn-default btn-sm' {{action 'advanced'}}>{{t "Let Me Browse On My Own" key='browse_on_my_own'}}</button>
       {{/if}}
@@ -72,24 +74,24 @@
   {{/if}}
 {{else}}
   <div style='margin: 10px auto; max-width: 600px;'>
-    <p>{{t "Let's get you a home board! First thing, how many buttons do you want to start with? This will depend on how comfortable the communicator is with speech apps, and with making choices. Don't worry, this will be easy to adjust later." key='base_level_prompt'}}</p>
+    <p>{{t "Let's get you a home board! First thing, how comfortable is the communicator with speech apps and tapping to make choices? Don't worry, this will be easy to adjust later." key='base_level_prompt'}}</p>
     <div class='row' class='grid_choices' style='margin-top: 30px;'>
       <div class='col-sm-4'>
         <button class='btn btn-default' {{action 'set_base_level' 1}}>
           <img src={{path 'images/grid-few.svg'}} />
-          {{t "A Few Buttons" key='a_few_buttons'}}
+          {{t "Brand New User" key='brand_new_user'}}
         </button>
       </div>
       <div class='col-sm-4'>
         <button class='btn btn-default' {{action 'set_base_level' 4}}>
           <img src={{path 'images/grid-some.svg'}} />
-          {{t "Some Buttons" key='some_buttons'}}
+          {{t "Some Experience" key='some_experience'}}
         </button>
       </div>
       <div class='col-sm-4'>
         <button class='btn btn-default' {{action 'set_base_level' 10}}>
           <img src={{path 'images/grid-full.svg'}} />
-          {{t "All The Buttons" key='all_buttons'}}
+          {{t "Very Experienced" key='very_experienced'}}
         </button>
       </div>
     </div>
