@@ -189,6 +189,7 @@ var editManager = EmberObject.extend({
     var bounds = elem.getBoundingClientRect();
     var screen_width = window.innerWidth;
     var screen_height = window.innerHeight;
+    var header_height = $("header").height();
     if(bounds.width > 0 && bounds.height > 0) {
       var margin = 5; // TODO: this is a user pref
       var button_width = bounds.width + (margin * 2);
@@ -196,12 +197,14 @@ var editManager = EmberObject.extend({
       var top = bounds.top;
       var left = bounds.left;
       var vertical_close = true;
-      if(button_height > screen_height / 3) {
+      var resize_images = false;
+      if(button_height > (screen_height - header_height) / 3) {
         // grid won't fit, needs to shrink
         if(screen_height < screen_width) {
           vertical_close = false;
         }
-        button_height = screen_height / (vertical_close ? 3.5 : 3);
+        resize_images = true;
+        button_height = (screen_height - header_height - margin - margin) / (vertical_close ? 3.5 : 3);
         top = event.clientY - (button_height / 2);
       }
       if(button_width > screen_width / 3) {
@@ -213,6 +216,7 @@ var editManager = EmberObject.extend({
       var left = Math.min(left, screen_width - button_width - button_width);
       var top = Math.max(top - margin, button_height);
       var top = Math.min(top, screen_height - button_height - button_height);
+      top = Math.max(top, header_height + margin + button_height);
       var layout = [];
       var hash = {'nw': 0, 'n': 1, 'ne': 2, 'w': 3, 'c': 4, 'e': 5, 'sw': 6, 's': 7, 'se': 8};
       grid.forEach(function(e) {
@@ -220,7 +224,6 @@ var editManager = EmberObject.extend({
           layout[hash[e.location]] = e;
         }
       });
-      console.log(bounds);
       var far_left = left - button_width;
       var far_right = left + button_width + button_width;
       var far_top = top - button_height;
@@ -272,15 +275,22 @@ var editManager = EmberObject.extend({
         btn.style.margin = button_margin + 'px';
         btn.style.width = (button_width - (button_margin * 2)) + 'px';
         btn.style.height = (button_height - (button_margin * 2)) + 'px';
-        btn.innerHTML = "<span style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; max-height: " + img.style.maxHeight + ";\"/></span><div class='button-label-holder top'><span class='button-label'>" + label + "</span></div>";
-        
+        btn.innerHTML = "<span class='img_holder' style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; height: 100%; object-fit: contain; object-position: center;\"/></span><div class='button-label-holder top'><span class='button-label'>" + label + "</span></div>";
+        var holder = btn.getElementsByClassName('img_holder')[0];
+        var lbl = elem.getElementsByClassName('button-label-holder')[0];
+        var lbl_height = lbl.getBoundingClientRect().height;
+        holder.style.height = (button_height - lbl_height - margin - margin) + 'px';
+        holder.style.lineHeight = holder.style.height;
+        holder.getElementsByTagName('IMG')[0].style.height = holder.style.height;
         return btn;
       };
       var close_row = document.createElement('div');
       close_row.classList.add('overlay_row');
       close_row.classList.add('button_row');
       var close = formatted_button('close', "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg");
-      close.style.float = 'right';
+      if(close_position != 'w') {
+        close.style.float = 'right';
+      }
       close.select_callback = function() {
         div.parentNode.removeChild(div);
         // TODO: log the close event somewhere

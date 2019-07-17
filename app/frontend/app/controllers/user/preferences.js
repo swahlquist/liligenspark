@@ -110,11 +110,16 @@ export default Controller.extend({
     }
     return res;
   }.property('pending_preferences.device.button_style'),
-  activationLocationList: [
-    {name: i18n.t('pointer_release', "Where I Release My Pointer"), id: "end"},
-    {name: i18n.t('pointer_start', "Where I First Press"), id: "start"},
-    {name: i18n.t('tap_and_swipe_inflections', "Tap to Select, Swipe for Inflections"), id: "swipe"},
-  ],
+  activationLocationList: function() {
+    var res = [
+      {name: i18n.t('pointer_release', "Where I Release My Pointer"), id: "end"},
+      {name: i18n.t('pointer_start', "Where I First Press"), id: "start"},
+    ]
+    if(this.get('model.feature_flags.inflections_overlay')) {
+      res.push({name: i18n.t('tap_and_swipe_inflections', "Tap to Select, Swipe for Inflections"), id: "swipe"});
+    }
+    return res;
+  }.property('model.feature_flags.inflections_overlay'),
   buttonSpaceList: [
     {name: i18n.t('dont_stretch', "Don't Stretch Buttons"), id: "none"},
     {name: i18n.t('prefer_tall', "Stretch Buttons, Taller First"), id: "prefer_tall"},

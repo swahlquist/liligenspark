@@ -1794,6 +1794,16 @@ var app_state = EmberObject.extend({
     } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > (now - 500)) {
       obj.modeling = true;
     }
+    if(obj.swipe_direction) {
+      var grid = editManager.grid_for(button.id);
+      var inflection = (grid || []).find(function(i) { return i.location == obj.swipe_direction; });
+      if(inflection) {
+        obj.label = inflection.label;
+        obj.swipe_inflection = true;
+      }
+    } else if(obj.overlay) {
+      obj.overlay_inflection = true;
+    }
 
     // update button attributes preemptively
     app_state.set('last_activation', now);
@@ -1912,7 +1922,7 @@ var app_state = EmberObject.extend({
 
     if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
       if(button_added_or_spoken || app_state.get('referenced_user.preferences.highlighted_buttons') == 'all') {
-        app_state.highlight_selected_button(button, overlay);
+        app_state.highlight_selected_button(button, overlay, obj.label);
       }
     }
 
@@ -2024,7 +2034,7 @@ var app_state = EmberObject.extend({
     });
     return res;
   },
-  highlight_selected_button: function(button, overlay) {
+  highlight_selected_button: function(button, overlay, label_override) {
     var $button = $(".button[data-id='" + button.id + "']");
     if(overlay) {
       $button = $(overlay);
@@ -2036,6 +2046,9 @@ var app_state = EmberObject.extend({
       var height = $button.outerHeight();
       var offset = $button.offset();
       var $clone = $button.clone().addClass('hover_button').addClass('touched');
+      if(label_override) {
+        $clone.find(".button-label").text(label_override);
+      }
       var wait_to_fade = 1500;
       // TODO: wait_to_fade should be configurable maybe
       if(app_state.get('referenced_user.preferences.highlight_popup_text')) {

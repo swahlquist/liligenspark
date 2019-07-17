@@ -345,6 +345,12 @@ var buttonTracker = EmberObject.extend({
     if((event.type == 'touchstart' || event.type == 'mousedown') && $(event.target).closest('.hover_button').length) {
       var text_popup = $(event.target).closest('.hover_button').hasClass('text_popup');
       $(event.target).closest('.hover_button').remove();
+      if(buttonTracker.initialEvent) {
+        var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
+        if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
+          buttonTracker.initialTarget = button_wrap;
+        }
+      }
       if(text_popup) { 
         event.preventDefault(); 
         buttonTracker.ignoreUp = true; 
@@ -542,6 +548,21 @@ var buttonTracker = EmberObject.extend({
       if(event.type != 'gazelinger' && event.total_touches && event.total_touches > 1) {
         buttonTracker.multi_touch.multis++;
       }
+      if(buttonTracker.initialEvent) {
+        buttonTracker.initialEvent.drag_locations = buttonTracker.initialEvent.drag_locations || [];
+        buttonTracker.initialEvent.drag_locations.push([event.clientX, event.clientY]);
+        if(buttonTracker.initialEvent.drag_locations.length > 30) {
+          // If too many, thin them out. Note, the longer the drag
+          // happens, the more lossy the data at the beginning will be
+          var locations = [];
+          for(var idx = 0; idx < buttonTracker.initialEvent.drag_locations.length; idx = idx + 2) {
+            var a = buttonTracker.initialEvent.drag_locations[idx];
+            var b = buttonTracker.initialEvent.drag_locations[idx + 1] || a;
+            locations.push([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+          }
+          buttonTracker.initialEvent.drag_locations = locations;
+        }
+      }
 
       if(!elem_wrap || !app_state.get('edit_mode')) {
       } else {
@@ -701,6 +722,7 @@ var buttonTracker = EmberObject.extend({
       // selecting a button
       event.preventDefault();
       var frame_event = event;
+      var swipe_direction = null;
       var ts = (new Date()).getTime();
 
       if(event.type != 'gazelinger' && !event.dwell_linger) {
@@ -709,6 +731,17 @@ var buttonTracker = EmberObject.extend({
         if(buttonTracker.activation_location == 'start') {
           elem_wrap = buttonTracker.initialTarget;
           frame_event = buttonTracker.initialEvent;
+        } else if(buttonTracker.activation_location == 'swipe' && buttonTracker.initialTarget && buttonTracker.initialEvent) {
+          swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations);
+          if(swipe_direction == 'initial') {
+            elem_wrap = buttonTracker.initialTarget;
+            frame_event = buttonTracker.initialEvent;      
+          } else if(swipe_direction == 'final') {
+          } else if(swipe_direction) {
+            console.log("SWIPE!", swipe_direction);
+            elem_wrap = buttonTracker.initialTarget;
+            frame_event = buttonTracker.initialEvent;
+          }
         } else if(buttonTracker.activation_location == 'average') {
           // TODO: implement weighted average. Sample pointer location
           // from start to release and find the most likely target, ideally
@@ -799,8 +832,10 @@ var buttonTracker = EmberObject.extend({
           } else if(elem_wrap.dom.classList.contains('speak_menu_button')) {
             var e = $.Event( 'speakmenuselect' );
             e.button_id = elem_wrap.dom.id;
+            e.swipe_direction = swipe_direction;
             $(elem_wrap.dom).trigger(e);
           } else if((elem_wrap.dom.className || "").match(/button/) || elem_wrap.virtual_button) {
+            event.swipe_direction = swipe_direction;
             buttonTracker.button_release(elem_wrap, event);
           } else if(elem_wrap.dom.classList.contains('integration_target')) {
             frame_listener.trigger_target(elem_wrap.dom);
@@ -856,7 +891,7 @@ var buttonTracker = EmberObject.extend({
     if(editManager.finding_target()) {
       buttonTracker.button_select(elem_wrap);
     } else if(!app_state.get('edit_mode')) {
-      buttonTracker.button_select(elem_wrap, {clientX: event.clientX, clientY: event.clientY});
+      buttonTracker.button_select(elem_wrap, {clientX: event.clientX, clientY: event.clientY, swipe_direction: event.swipe_direction});
     } else if(app_state.get('edit_mode') && !editManager.paint_mode) {
       event.preventDefault();
       if($target.closest('.action').length > 0) {
@@ -875,6 +910,75 @@ var buttonTracker = EmberObject.extend({
       var gp = gamepads[i];
       if (gp) {
         buttonTracker.gamepads[gp.id] = gp;
+      }
+    }
+  },
+  swipe_direction: function(dom, event, targets) {
+    var final = [event.clientX, event.clientY];
+    var rect = dom.getBoundingClientRect();
+    var non_event_cutoff = 15;
+    var x_diff = Math.abs(final[0] - targets[0][0]);
+    var y_diff = Math.abs(final[1] - targets[0][1]);
+
+    if(x_diff < non_event_cutoff && y_diff < non_event_cutoff) {
+      // they got back to the beginning, use the starting element
+      return 'initial';
+    } else if(x_diff < Math.min(rect.width * 0.65, window.innerWidth * 0.1) && y_diff < Math.min(rect.height * 0.65, window.innerHeight * 0.1)) {
+      // distance from start to end should be at least 65% of 
+      // the button size or 10% of the screen size (for big buttons)
+      return 'final';
+    } else {
+      var ptr = [buttonTracker.initialEvent.clientX, buttonTracker.initialEvent.clientY];
+      var n = null, s = null, e = null, w = null;
+      var vert = null, horiz = null;
+      for(var idx = 0; idx < targets.length; idx++) {
+        var curr = targets[idx];
+        if(curr[0] < ptr[0]) {
+          w = (w || 0) + 1;
+        } else if(curr[0] > ptr[0]) {
+          e = (e || 0) + 1;
+        }
+        if(curr[1] < ptr[1]) {
+          n = (n || 0) + 1;
+        } else if(curr[1] > ptr[1]) {
+          s = (s || 0) + 1;
+        }
+        ptr = curr;
+      }
+      if(n && (!s || n > (s / 10))) {
+        vert = n;
+      } else if(s && (!n || s > (n / 10))) {
+        vert = -1 * s;
+      }
+      if(e && (!w || e > (w / 10))) {
+        horiz = e;
+      } else if(w && (!e || w > (e / 10))) {
+        horiz = -1 * w;
+      }
+      if(vert || horiz) {
+        var ratio = vert / horiz;
+        if(vert && horiz && ratio > 0.8 && ratio < 1.2) {
+          if(vert > 0) {
+            return 'ne';
+          } else {
+            return 'sw';
+          }
+        } else if(vert && horiz && ratio < -0.8 && ratio > -1.2) {
+          if(vert > 0) {
+            return 'nw';
+          } else {
+            return 'se';
+          }
+        } else if(vert && Math.abs(vert) > Math.abs(horiz || 0)) {
+          return vert > 0 ? 'n' : 's';
+        } else if(horiz) {
+          return horiz > 0 ? 'e' : 'w';
+        } else {
+          return 'final';
+        }
+      } else {
+        // inconsistent direction, use the final location
+        return 'final';
       }
     }
   },

@@ -939,6 +939,7 @@ export default Controller.extend({
       obj.label = options.overlay_label || obj.label;
       obj.vocalization = options.overlay_vocalization || obj.vocalization;
       if(options.event && options.event.overlay_target) { obj.overlay = options.event.overlay_target; }
+      if(options.event && options.event.swipe_direction) { obj.swipe_direction = options.event.swipe_direction; }
       var location = buttonTracker.locate_button_on_board(button.id, options.event);
       if(location) {
         obj.percent_x = location.percent_x;
