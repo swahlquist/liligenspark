@@ -662,14 +662,18 @@ CoughDrop.Visualizations = {
       var one_done = function(type) {
         one_done[type] = true;
         if(one_done.graphs && one_done.maps) {
-          window.google.load("visualization", "1.1", {packages:["corechart", "sankey"], callback: CoughDrop.Visualizations.handle_callbacks});
+          window.google.charts.load('current', {packages:["corechart", "sankey"], callback: CoughDrop.Visualizations.handle_callbacks});
         }
       };
 
       window.ready_to_load_graphs = function() {
         one_done('graphs');
       };
-      script.src = 'https://www.google.com/jsapi?callback=ready_to_load_graphs';
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      document.body.appendChild(script);
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.appendChild(document.createTextNode("window.ready_to_load_graphs();"));
       document.body.appendChild(script);
 
       window.ready_to_do_maps = function() {
