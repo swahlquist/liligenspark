@@ -936,10 +936,22 @@ export default Controller.extend({
         blocking_speech: button.blocking_speech,
         type: 'speak'
       };
+      if(options.overlay_location) {
+        obj.overlay_location = options.overlay_location;
+      } else if(options.event && options.event.swipe_direction) {
+        obj.swipe_location = options.event.swipe_direction;
+        var grid = editManager.grid_for(button.id);
+        var inflection = (grid || []).find(function(i) { return i.location == options.event.swipe_direction; });
+        if(inflection) {
+          options.overlay_label = inflection.label;
+          options.overlay_vocalization = inflection.vocalization;
+        }
+        button = editManager.overlay_button_from(button);
+      }
+  
       obj.label = options.overlay_label || obj.label;
       obj.vocalization = options.overlay_vocalization || obj.vocalization;
       if(options.event && options.event.overlay_target) { obj.overlay = options.event.overlay_target; }
-      if(options.event && options.event.swipe_direction) { obj.swipe_direction = options.event.swipe_direction; }
       var location = buttonTracker.locate_button_on_board(button.id, options.event);
       if(location) {
         obj.percent_x = location.percent_x;

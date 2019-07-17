@@ -736,7 +736,9 @@ var buttonTracker = EmberObject.extend({
           if(swipe_direction == 'initial') {
             elem_wrap = buttonTracker.initialTarget;
             frame_event = buttonTracker.initialEvent;      
+            swipe_direction = null;
           } else if(swipe_direction == 'final') {
+            swipe_direction = null;
           } else if(swipe_direction) {
             console.log("SWIPE!", swipe_direction);
             elem_wrap = buttonTracker.initialTarget;

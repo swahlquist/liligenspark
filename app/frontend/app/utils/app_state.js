@@ -1789,20 +1789,11 @@ var app_state = EmberObject.extend({
 
     // track modeling events correctly
     var now = (new Date()).getTime();
+    var skip_navigation = false;
     if(app_state.get('modeling')) {
       obj.modeling = true;
     } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > (now - 500)) {
       obj.modeling = true;
-    }
-    if(obj.swipe_direction) {
-      var grid = editManager.grid_for(button.id);
-      var inflection = (grid || []).find(function(i) { return i.location == obj.swipe_direction; });
-      if(inflection) {
-        obj.label = inflection.label;
-        obj.swipe_inflection = true;
-      }
-    } else if(obj.overlay) {
-      obj.overlay_inflection = true;
     }
 
     // update button attributes preemptively

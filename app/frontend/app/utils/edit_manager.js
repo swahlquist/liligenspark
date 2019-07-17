@@ -92,24 +92,28 @@ var editManager = EmberObject.extend({
       }
     }
   },
+  overlay_button_from: function(button) {
+    return editManager.Button.create({
+      overlay: true,
+      id: button.get('id'),
+      label: button.get('label'),
+      image_id: button.get('image_id'),
+      part_of_speech: button.get('part_of_speech')
+    });
+  },
   grid_for: function(button_id) {
     var button = editManager.find_button(button_id);
     var res = null;
     if(!button) { return null; }
     var select_button = function(label, vocalization, event) {
-      var overlay_button = editManager.Button.create({
-        overlay: true,
-        id: button.get('id'),
-        label: button.get('label'),
-        image_id: button.get('image_id'),
-        part_of_speech: button.get('part_of_speech')
-      });
+      var overlay_button = editManager.overlay_button_from(button);
   
       app_state.controller.activateButton(overlay_button, {
         board: editManager.controller.get('model'),
         overlay_label: label,
         overlay_vocalization: vocalization,
-        event: event
+        event: event,
+        overlay_location: event.overlay_location
       });
     };
     var voc_locale = app_state.get('vocalization_locale');
@@ -177,6 +181,7 @@ var editManager = EmberObject.extend({
       ];
     }
     res.select = function(obj, event) {
+      event.overlay_location = obj.location;
       select_button(obj.label, obj.vocalization, event);
     };
     return res;
