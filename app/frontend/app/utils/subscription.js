@@ -589,7 +589,7 @@ document.addEventListener("deviceready", function() {
               code: store.INTERNAL_ERROR,
               error: (event.result || {}).error_message || "Receipt validation failed"
             });
-          } else if (event.result && event.result.success === false) {
+          } else if (event.result && (event.result.success === false || event.result.error === true)) {
             callback(false, {
               code: store.INTERNAL_ERROR,
               error: (event.result || {}).error_message || "Receipt validation did not succeed"
@@ -639,7 +639,7 @@ document.addEventListener("deviceready", function() {
     store.when("product").finished(function(product) {
       app_state.get('sessionUser').reload();
       if(store.defer) {
-        store.defer.resolve();
+        store.defer.resolve({id: 'ios_iap'});
       }
     });
     store.refresh();
