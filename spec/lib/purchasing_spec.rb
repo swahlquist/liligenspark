@@ -751,13 +751,14 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
+                purchase_date_ms: '9',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,  
-              }
+              }]
             }
           }.to_json
         }))
@@ -802,13 +803,14 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
+                purchase_date_ms: '9',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSMonthly',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,
-              }
+              }]
             }
           }.to_json
         }))
@@ -2366,15 +2368,16 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '1',
                 expiration_intent: '3'
-              }
+              }]
             }
           }.to_json
         }))
@@ -2404,15 +2407,16 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '1',
                 expiration_intent: '1'
-              }
+              }]
             } 
           }.to_json
         }))
@@ -2429,15 +2433,16 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '1',
                 expiration_intent: '2'
-              }
+              }]
             }
           }.to_json
         }))
@@ -2454,15 +2459,16 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '1',
                 expiration_intent: '4'
-              }
+              }]
             }
           }.to_json
         }))
@@ -2495,16 +2501,17 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 original_transaction_id: 'x984h3ag834g',
+                purchase_date_ms: '9',
                 product_id: 'CoughDropiOSMonthly',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '0',
                 expiration_intent: '3'
-              }
+              }]
             }
           }.to_json
         }))
@@ -2552,16 +2559,17 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSMonthly',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,
                 is_trial_period: 'false',
                 is_in_billing_retry_period: '0',
                 expiration_intent: '3'
-              }
+              }]
             }
           }.to_json
         }))
@@ -2598,13 +2606,21 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3834g',
+                original_transaction_id: 'x884h3ag834g',
+                purchase_date_ms: '9',
+                product_id: 'BadBacon',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,
+              }, {
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 original_transaction_id: 'x984h3ag834g',
+                purchase_date_ms: '10',
                 product_id: 'CoughDropiOSMonthly',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,
-              }
+              }]
             }
           }.to_json
         }))
@@ -2654,13 +2670,14 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
+                purchase_date_ms: '9',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSMonthly',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,
-              }
+              }]
             }
           }.to_json
         }))
@@ -2699,13 +2716,14 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,  
-              }
+              }]
             }
           }.to_json
         }))
@@ -2757,13 +2775,14 @@ describe Purchasing do
             status: 0,
             receipt: {
               bundle_id: 'com.mycoughdrop.coughdrop',
-              in_app: {
+              in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
+                purchase_date_ms: '9',
                 original_transaction_id: 'x984h3ag834g',
                 product_id: 'CoughDropiOSBundle',
                 expiration_date: Date.parse('Jan 2, 2020').iso8601,  
-              }
+              }]
             }
           }.to_json
         }))

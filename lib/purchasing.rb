@@ -611,31 +611,32 @@ module Purchasing
           json = JSON.parse(req.body) rescue nil
         end
         if json && json['status'] == 0
+          in_app = json['receipt']['in_app'].sort_by{|a| a['purchase_date_ms'].to_i }[-1]
           res['success'] = true
-          res['quantity'] = json['receipt']['in_app']['quantity']
+          res['quantity'] = in_app['quantity']
           res['bundle_id'] = json['receipt']['bundle_id']
-          res['transaction_id'] = json['receipt']['in_app']['transaction_id']
-          res['subscription_id'] = json['receipt']['in_app']['original_transaction_id']
-          res['product_id'] = json['receipt']['in_app']['product_id']
+          res['transaction_id'] = in_app['transaction_id']
+          res['subscription_id'] = in_app['original_transaction_id']
+          res['product_id'] = in_app['product_id']
           res['customer_id'] = "ios.#{user.global_id}"
-          res['expires'] = json['receipt']['in_app']['expiration_date']
+          res['expires'] = in_app['expiration_date']
           res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['product_id'])
           res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['product_id'])
-          if json['receipt']['in_app']['expiration_intent']
+          if in_app['expiration_intent']
             res['expired'] = true
             res['reason'] = {
               '1' => "Customer canceled their subscription.",
               '2' => "Billing error; for example customer’s payment information was no longer valid.",
               '3' => "Customer did not agree to a recent price increase.",
               '4' => "Product was not available for purchase at the time of renewal.",
-            }[json['receipt']['in_app']['expiration_intent']] || "Unknown iOS Cancellation"
-            if json['receipt']['in_app']['is_in_billing_retry_period'] == '1'
+            }[in_app['expiration_intent']] || "Unknown iOS Cancellation"
+            if in_app['is_in_billing_retry_period'] == '1'
               # still trying to renew...
               res['expired'] = false
               res['billing_issue'] = true
             end
           end
-          res['free_trial'] = json['receipt']['in_app']['is_trial_period'] == 'true'
+          res['free_trial'] = in_app['is_trial_period'] == 'true'
           hash = user.subscription_hash
           if res['expired']
             if hash['plan_id'] == 'monthly_ios'
