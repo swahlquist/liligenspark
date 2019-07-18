@@ -529,7 +529,23 @@ Subscription.reopenClass({
       }
       Subscription.in_app_store.defer = defer;
       Subscription.in_app_store.user_id = subscription.get('user.id');
-      Subscription.in_app_store.order(purchase_id);
+      // TODO: long-term purchase is a one-time offering right now,
+      // meaning you can't re-buy it. We
+      // will need a subscription/credit purchase fallback to
+      // offer 5 in the future.
+      if(Subscription.product_types[purchase_id] && Subscription.product_types[purchase_id].valid && Subscription.product_types[purchase_id].owned) {
+        // If already owned, don't try to re-purchase, skip straight to
+        // the verification phase
+        Subscription.in_app_store.validator(Subscription.product_types[purchase_id], function(success, data) {
+          if(success) {
+            defer.resolve({id: 'ios_iap'});
+          } else {
+            defer.reject(data);
+          }
+        });        
+      } else {
+        Subscription.in_app_store.order(purchase_id);
+      }
       return defer.promise;
     } else {
       if(!window.StripeCheckout || !Subscription.handler) {

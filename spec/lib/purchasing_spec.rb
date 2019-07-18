@@ -2766,6 +2766,8 @@ describe Purchasing do
         hash = u.reload.subscription_hash
         expect(hash['active']).to eq(true)
         expect(hash['plan_id']).to eq('long_term_ios')
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
 
         expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
           'receipt-data' => 'asdf',
