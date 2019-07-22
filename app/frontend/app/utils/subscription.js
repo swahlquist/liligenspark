@@ -578,11 +578,17 @@ Subscription.reopenClass({
   }
 });
 document.addEventListener("deviceready", function() {
+  var app_bundle_id = 'blah.blah.blah'; // TODO: ...
   if(window.store) {
     Subscription.in_app_store = window.store;
     Subscription.ready = true;
     var store = Subscription.in_app_store;
     store.disableHostedContent = true;
+    store.register({
+      id: app_bundle_id,
+      alias: 'App Pre-Purchase',
+      type: store.NON_CONSUMABLE
+    })
     store.register({
       id: one_time_id,
       alias: 'Long-Term Purchase',
