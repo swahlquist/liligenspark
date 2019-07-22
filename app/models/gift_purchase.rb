@@ -150,7 +150,7 @@ class GiftPurchase < ActiveRecord::Base
       self.settings['giver_email'] = non_user_params['giver'].settings['email'] if non_user_params['giver'].settings['email']
     end
 
-    ['customer_id', 'token_summary', 'plan_id', 'purchase_id'].each do |arg|
+    ['customer_id', 'token_summary', 'plan_id', 'purchase_id', 'source_id'].each do |arg|
       self.settings[arg] = non_user_params[arg] if non_user_params[arg]
     end
     self.settings['seconds_to_add'] = non_user_params['seconds'].to_i if non_user_params['seconds']

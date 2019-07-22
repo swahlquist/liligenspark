@@ -595,9 +595,11 @@ document.addEventListener("deviceready", function() {
     });
     store.validator = function(product, callback) {
       var user_id = store.user_id || Subscription.in_app_store.user_id;
+      var pre_purchase = product.alias == 'App Pre-Purchase';
+      var device_id = (window.device && window.device.uuid) || stashes.get_raw('coughDropDeviceId');
       persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
         type: 'POST',
-        data: {receipt_data: {ios: true, receipt: product.transaction}}
+        data: {receipt_data: {ios: true, receipt: product.transaction, pre_purchase: pre_purchase, device_id: device_id}}
       }).then(function(res) {
         progress_tracker.track(res.progress, function(event) {
           if(event.status == 'errored') {

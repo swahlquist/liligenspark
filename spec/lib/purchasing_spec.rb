@@ -579,6 +579,7 @@ describe Purchasing do
           'purchase_amount' => 6,
           'plan_id' => 'monthly_6',
           'source' => 'new subscription',
+          'source_id' => 'stripe',
           'cancel_others_on_update' => true
         })
         Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
@@ -708,6 +709,7 @@ describe Purchasing do
           'customer_id' => '9876',
           'token_summary' => 'Unknown Card',
           'plan_id' => 'monthly_6',
+          'source_id' => 'stripe',
           'source' => 'new subscription',
           'cancel_others_on_update' => true
         })
@@ -776,7 +778,7 @@ describe Purchasing do
         expect(res['expired']).to eq(nil)
         expect(res['billing_issue']).to eq(nil)
         expect(res['reason']).to eq(nil)
-        expect(res['free_trial']).to eq(false)
+        expect(res['free_trial']).to eq(nil)
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(nil)
         hash = u.reload.subscription_hash
@@ -973,6 +975,7 @@ describe Purchasing do
           'customer_id' => '45678',
           'discount_code' => nil,
           'plan_id' => 'long_term_150',
+          'source_id' => 'stripe',
           'purchase_amount' => 150,
           'token_summary' => 'Unknown Card',
           'seconds_to_add' => 5.years.to_i,
@@ -1006,6 +1009,7 @@ describe Purchasing do
           'discount_code' => nil,
           'plan_id' => 'long_term_150',
           'purchase_amount' => 150,
+          'source_id' => 'stripe',
           'token_summary' => 'Unknown Card',
           'seconds_to_add' => 5.years.to_i,
           'source' => 'new purchase'
@@ -1474,6 +1478,7 @@ describe Purchasing do
       expect(g.reload.settings).to eq({
         'customer_id' => '12345',
         'token_summary' => 'Unknown Card',
+        'source_id' => 'stripe',
         'plan_id' => 'long_term_150',
         'purchase_id' => '23456',
       })
@@ -1508,6 +1513,7 @@ describe Purchasing do
         'customer_id' => '12345',
         'token_summary' => 'Unknown Card',
         'plan_id' => 'long_term_custom_500',
+        'source_id' => 'stripe',
         'purchase_id' => '23456'
       })
     end
@@ -1540,6 +1546,7 @@ describe Purchasing do
       expect(g.reload.settings).to eq({
         'customer_id' => '12345',
         'token_summary' => 'Unknown Card',
+        'source_id' => 'stripe',
         'plan_id' => 'long_term_custom_500',
         'purchase_id' => '23456',
         'include_extras' => true,
@@ -1622,6 +1629,7 @@ describe Purchasing do
         'token_summary' => 'Unknown Card',
         'code_length' => 20,
         'amount' => 500,
+        'source_id' => 'stripe',
         'memo' => 'PO #12345',
         'licenses' => 4,
         'organization' => 'org name'
@@ -1846,6 +1854,7 @@ describe Purchasing do
       'seconds_to_add' => 157788000,
       'purchase_amount' => 200,
       'source' => 'new purchase',
+      'source_id' => 'stripe',
       'token_summary' => 'Unknown Card',
       'user_id' => u.global_id
     })
@@ -1875,6 +1884,7 @@ describe Purchasing do
       'purchase' => true,
       'purchase_id' => 'asdf',
       'seconds_to_add' => 157788000,
+      'source_id' => 'stripe',
       'source' => 'charge.succeeded',
       'user_id' => u.global_id
     })
@@ -1961,6 +1971,7 @@ describe Purchasing do
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
+      'source_id' => 'stripe',
       'seconds_to_add' => 157788000,
       'purchase_amount' => 200,
       'source' => 'new purchase',
@@ -2371,7 +2382,7 @@ describe Purchasing do
               in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
-                product_id: 'CoughDropiOSBundle',
+                product_id: 'CoughDropiOSMonthly',
                 purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
@@ -2384,13 +2395,13 @@ describe Purchasing do
         res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
         expect(res['success']).to eq(true)
         expect(res['quantity']).to eq(1)
-        expect(res['product_id']).to eq('CoughDropiOSBundle')
+        expect(res['product_id']).to eq('CoughDropiOSMonthly')
         expect(res['transaction_id']).to eq('984h3ag834g')
         expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
         expect(res['customer_id']).to eq("ios.#{u.global_id}")
         expect(res['expires']).to eq('2010-01-02')
-        expect(res['one_time_purchase']).to eq(true)
-        expect(res['subscription']).to eq(nil)
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
         expect(res['expired']).to eq(false)
         expect(res['billing_issue']).to eq(true)
         expect(res['reason']).to eq("Customer did not agree to a recent price increase.")
@@ -2410,7 +2421,7 @@ describe Purchasing do
               in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
-                product_id: 'CoughDropiOSBundle',
+                product_id: 'CoughDropiOSMonthly',
                 purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
@@ -2436,7 +2447,7 @@ describe Purchasing do
               in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
-                product_id: 'CoughDropiOSBundle',
+                product_id: 'CoughDropiOSMonthly',
                 purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
@@ -2462,7 +2473,7 @@ describe Purchasing do
               in_app: [{
                 quantity: 1,
                 transaction_id: '984h3ag834g',
-                product_id: 'CoughDropiOSBundle',
+                product_id: 'CoughDropiOSMonthly',
                 purchase_date_ms: '9',
                 expiration_date: Date.parse('Jan 2, 2010').iso8601,
                 is_trial_period: 'false',
@@ -2703,6 +2714,29 @@ describe Purchasing do
         expect(hash['plan_id']).to eq('monthly_ios')
       end
 
+      it "should error if no in-app purchases listed" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: []
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to_not eq(true)
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq('Not a pre-purchase and no in-app receipts to validate')
+      end
+
       it "should process one-time purchase if specified" do
         u = User.create
         hash = u.reload.subscription_hash
@@ -2741,7 +2775,7 @@ describe Purchasing do
         expect(res['expired']).to eq(nil)
         expect(res['billing_issue']).to eq(nil)
         expect(res['reason']).to eq(nil)
-        expect(res['free_trial']).to eq(false)
+        expect(res['free_trial']).to eq(nil)
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(nil)
         hash = u.reload.subscription_hash
@@ -2749,6 +2783,151 @@ describe Purchasing do
         expect(hash['expires']).to be > 4.years.from_now.iso8601
         expect(hash['expires']).to be < 6.years.from_now.iso8601
         expect(hash['plan_id']).to eq('long_term_ios')
+      end
+
+      it "should process pre-purchase if specified" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.paidcoughdrop',
+              in_app: []
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'pre_purchase' => true, 'device_id' => 'asdfqwer', 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('AppPrePurchase')
+        expect(res['transaction_id']).to eq('pre.asdfqwer')
+        expect(res['subscription_id']).to eq(nil)
+        expect(res['bundle_id']).to eq('com.mycoughdrop.paidcoughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq(nil)
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+      end
+
+      it "should not process pre-purchase for free app versions" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.mycoughdrop',
+              in_app: []
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'pre_purchase' => true, 'device_id' => 'asdfqwer', 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to_not eq(true)
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq('Not a pre-purchase and no in-app receipts to validate')
+      end
+
+      it "should not allow purchasing for a different user than started with" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3ag834g',
+                original_transaction_id: 'x984h3ag834g',
+                product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,  
+              }]
+            }
+          }.to_json
+        })).exactly(3).times
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+
+        u2 = User.create
+        res = Purchasing.verify_receipt(u2, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(nil)
+        expect(res['error']).to eq(true)
+        expect(res['error_message']).to eq('That purchase has already been applied to a different user')
+        hash = u2.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+        expect(hash['expires']).to be < 3.months.from_now.iso8601
+        expect(hash['plan_id']).to eq(nil)
       end
 
       it "should respond with already_purchased if purchase token already used" do
@@ -2802,7 +2981,7 @@ describe Purchasing do
         expect(res['expired']).to eq(nil)
         expect(res['billing_issue']).to eq(nil)
         expect(res['reason']).to eq(nil)
-        expect(res['free_trial']).to eq(false)
+        expect(res['free_trial']).to eq(nil)
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(true)
         hash = u.reload.subscription_hash

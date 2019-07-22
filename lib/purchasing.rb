@@ -39,6 +39,7 @@ module Purchasing
               'customer_id' => object['customer'],
               'plan_id' => object['metadata'] && object['metadata']['plan_id'],
               'seconds_to_add' => time,
+              'source_id' => 'stripe',
               'source' => 'charge.succeeded'
             })
           end
@@ -53,6 +54,7 @@ module Purchasing
               User.schedule(:subscription_event, {
                 'user_id' => customer['metadata'] && customer['metadata']['user_id'],
                 'purchase_failed' => true,
+                'source_id' => 'stripe',
                 'source' => 'charge.failed'
               })
             end
@@ -66,6 +68,7 @@ module Purchasing
               User.schedule(:subscription_event, {
                 'user_id' => charge['metadata'] && charge['metadata']['user_id'],
                 'chargeback_created' => true,
+                'source_id' => 'stripe',
                 'source' => 'charge.dispute.created'
               })
             end
@@ -93,6 +96,7 @@ module Purchasing
               'customer_id' => object['customer'],
               'subscription_id' => object['id'],
               'plan_id' => object['plan'] && object['plan']['id'],
+              'source_id' => 'stripe',
               'cancel_others_on_update' => true,
               'source' => 'customer.subscription.created'
             })
@@ -112,6 +116,7 @@ module Purchasing
                   'reason' => reason,
                   'customer_id' => object['customer'],
                   'subscription_id' => object['id'],
+                  'source_id' => 'stripe',
                   'cancel_others_on_update' => false,
                   'source' => 'customer.subscription.updated'
                 })
@@ -126,6 +131,7 @@ module Purchasing
                 'customer_id' => object['customer'],
                 'subscription_id' => object['id'],
                 'plan_id' => object['plan'] && object['plan']['id'],
+                'source_id' => 'stripe',
                 'cancel_others_on_update' => true,
                 'source' => 'customer.subscription.updated'
               })
@@ -141,6 +147,7 @@ module Purchasing
               'reason' => 'Deleted by purchasing system',
               'user_id' => customer['metadata'] && customer['metadata']['user_id'],
               'customer_id' => object['customer'],
+              'source_id' => 'stripe',
               'subscription_id' => object['id'],
               'source' => 'customer.subscription.deleted'
             })
@@ -279,6 +286,7 @@ module Purchasing
             'token_summary' => token['summary'],
             'discount_code' => discount_code,
             'purchase_amount' => amount,
+            'source_id' => 'stripe',
             'plan_id' => plan_id,
             'seconds_to_add' => time,
             'source' => 'new purchase'
@@ -364,6 +372,7 @@ module Purchasing
             'purchase_amount' => one_time_amount,
             'plan_id' => plan_id,
             'cancel_others_on_update' => true,
+            'source_id' => 'stripe',
             'source' => 'new subscription'
           })
         else
@@ -514,6 +523,7 @@ module Purchasing
         'include_extras' => opts['extras'],
         'extra_donation' => opts['donate'],
         'plan_id' => type,
+        'source_id' => 'stripe',
         'purchase_id' => charge['id'],
       })
       gift.notify_of_creation
@@ -548,6 +558,7 @@ module Purchasing
       'plan_id' => 'gift_code',
       'gift_id' => gift.global_id,
       'code' => code,
+      'source_id' => 'gift',
       'seconds_to_add' => gift.settings['seconds_to_add'].to_i
     })
     if gift.settings['include_extras']
@@ -592,7 +603,10 @@ module Purchasing
 
   def self.verify_receipt(user, data)
     res = {}
+    prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
     if data['ios']
+      # look up the transaction_id/original_transaction_id and refuse it if
+      # it's already been registered, but for a different user
       if data['receipt'] && data['receipt']['appStoreReceipt']
         # https://developer.apple.com/documentation/storekit/in-app_purchase/validating_receipts_with_the_app_store
         # https://developer.apple.com/library/archive/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html
@@ -611,32 +625,55 @@ module Purchasing
           json = JSON.parse(req.body) rescue nil
         end
         if json && json['status'] == 0
-          in_app = json['receipt']['in_app'].sort_by{|a| a['purchase_date_ms'].to_i }[-1]
+          in_app = (json['receipt']['in_app'] || []).sort_by{|a| a['purchase_date_ms'].to_i }[-1]
           res['success'] = true
-          res['quantity'] = in_app['quantity']
           res['bundle_id'] = json['receipt']['bundle_id']
-          res['transaction_id'] = in_app['transaction_id']
-          res['subscription_id'] = in_app['original_transaction_id']
-          res['product_id'] = in_app['product_id']
-          res['customer_id'] = "ios.#{user.global_id}"
-          res['expires'] = in_app['expiration_date']
-          res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['product_id'])
-          res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['product_id'])
-          if in_app['expiration_intent']
-            res['expired'] = true
-            res['reason'] = {
-              '1' => "Customer canceled their subscription.",
-              '2' => "Billing error; for example customer’s payment information was no longer valid.",
-              '3' => "Customer did not agree to a recent price increase.",
-              '4' => "Product was not available for purchase at the time of renewal.",
-            }[in_app['expiration_intent']] || "Unknown iOS Cancellation"
-            if in_app['is_in_billing_retry_period'] == '1'
-              # still trying to renew...
-              res['expired'] = false
-              res['billing_issue'] = true
-            end
+          if data['pre_purchase'] && prepaid_bundle_ids.include?(res['bundle_id'])
+            res['quantity'] = 1
+            res['pre_purchase'] = true
+            res['product_id'] = 'AppPrePurchase'
+            res['transaction_id'] = "pre.#{data['device_id']}"
+          elsif in_app
+            res['quantity'] = in_app['quantity'].to_i
+            res['transaction_id'] = in_app['transaction_id']
+            res['subscription_id'] = in_app['original_transaction_id']
+            res['product_id'] = in_app['product_id']
+            res['expires'] = in_app['expiration_date']
+          else
+            return {'error' => true, 'error_message' => 'Not a pre-purchase and no in-app receipts to validate'}
           end
-          res['free_trial'] = in_app['is_trial_period'] == 'true'
+          res['customer_id'] = "ios.#{user.global_id}"
+          res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['product_id']) || res['pre_purchase']
+          res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['product_id'])
+
+          # Make sure if the token has already been used, we're applying it to the right user
+          existing_user = nil
+          if res['one_time_purchase']
+            existing_user = PurchaseToken.retrieve("purchase.iap.#{res['transaction_id']}")
+          elsif res['subscription']
+            existing_user = PurchaseToken.retrieve("subscribe.iap.#{res['subscription_id']}")
+          end
+          if existing_user && existing_user != user
+            return {'error' => true, 'error_message' => 'That purchase has already been applied to a different user'}
+          end
+
+          if res['subscription']
+            if in_app && in_app['expiration_intent']
+              res['expired'] = true
+              res['reason'] = {
+                '1' => "Customer canceled their subscription.",
+                '2' => "Billing error; for example customer’s payment information was no longer valid.",
+                '3' => "Customer did not agree to a recent price increase.",
+                '4' => "Product was not available for purchase at the time of renewal.",
+              }[in_app['expiration_intent']] || "Unknown iOS Cancellation"
+              if in_app['is_in_billing_retry_period'] == '1'
+                # still trying to renew...
+                res['expired'] = false
+                res['billing_issue'] = true
+              end
+            end
+            res['free_trial'] = in_app && in_app['is_trial_period'] == 'true'
+          end
           hash = user.subscription_hash
           if res['expired']
             if hash['plan_id'] == 'monthly_ios'
@@ -647,6 +684,7 @@ module Purchasing
                 'customer_id' => res['custoner_id'],
                 'subscription_id' => res['subscription_id'],
                 'cancel_others_on_update' => true,
+                'source_id' => 'iap',
                 'source' => 'ios.subscription.updated'
               })
               res['canceled'] = true
@@ -658,6 +696,7 @@ module Purchasing
               updated = User.subscription_event({
                 'subscribe' => true,
                 'user_id' => user.global_id,
+                'source_id' => 'iap',
                 'subscription_id' => res['subscription_id'],
                 'customer_id' => res['customer_id'],
                 'token_summary' => res['product_id'],
@@ -672,10 +711,11 @@ module Purchasing
             end
           elsif res['one_time_purchase']
             transaction_ids = (user.settings['subscription']['prior_purchase_ids'] || []) + [user.settings['subscription']['last_purchase_id'] || 'xx']
-            if hash['plan_id'] != 'long_term_ios' || !transaction_ids.include?(res['transaction_id'])
+            if !existing_user && (hash['plan_id'] != 'long_term_ios' || !transaction_ids.include?(res['transaction_id']))
               User.subscription_event({
                 'purchase' => true,
                 'user_id' => user.global_id,
+                'source_id' => 'iap',
                 'purchase_id' => res['transaction_id'],
                 'customer_id' => res['customer_id'],
                 'token_summary' => res['product_id'],
