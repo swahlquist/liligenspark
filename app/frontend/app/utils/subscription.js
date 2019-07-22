@@ -7,6 +7,7 @@ import i18n from './i18n';
 import CoughDrop from '../app';
 import persistence from './persistence';
 import app_state from './app_state';
+import capabilities from './capabilities';
 import progress_tracker from './progress_tracker';
 
 var types = ['communicator_type', 'supporter_type', 'monthly_subscription', 'long_term_subscription',
@@ -578,17 +579,11 @@ Subscription.reopenClass({
   }
 });
 document.addEventListener("deviceready", function() {
-  var app_bundle_id = 'blah.blah.blah'; // TODO: ...
   if(window.store) {
     Subscription.in_app_store = window.store;
     Subscription.ready = true;
     var store = Subscription.in_app_store;
     store.disableHostedContent = true;
-    store.register({
-      id: app_bundle_id,
-      alias: 'App Pre-Purchase',
-      type: store.NON_CONSUMABLE
-    })
     store.register({
       id: one_time_id,
       alias: 'Long-Term Purchase',
@@ -666,7 +661,18 @@ document.addEventListener("deviceready", function() {
         store.defer.resolve({id: 'ios_iap'});
       }
     });
-    store.refresh();
+    capabilities.bundle_id().then(function(res) {
+      var app_bundle_id = res.bundle_id;
+      store.register({
+        id: app_bundle_id,
+        alias: 'App Pre-Purchase',
+        type: store.NON_CONSUMABLE
+      });
+      store.refresh();
+    }, function(err) {
+      console.error("bundle id not found", err);
+      store.refresh();
+    });
   }
 }, false);
 

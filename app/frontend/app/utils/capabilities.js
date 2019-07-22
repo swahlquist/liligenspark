@@ -266,6 +266,19 @@ var capabilities;
           navigator.vibrate(duration);
         }
       },
+      bundle_id: function() {
+        var promise = capabilities.mini_promise();
+        if(window.cordova && window.cordova.exec) {
+          window.cordova.exec(function(res) {
+            promise.resolve(res);
+          }, function(err) { 
+            promise.reject(err);
+          }, 'CoughDropMisc', 'bundleId', []);
+        } else {
+          promise.reject({error: 'no cordova object found'});
+        }
+        return promise;        
+      },
       nfc: {
         available: function() {
           var promise = capabilities.mini_promise();
