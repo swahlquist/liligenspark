@@ -930,6 +930,9 @@ Button.extra_actions = function(button) {
     }
   }
 };
+var sample = function(range) {
+  return Math.ceil(Math.random() * (range - .01) + .01);
+};
 
 Button.load_actions = function() {
   if(!CoughDrop || CoughDrop.special_actions) { return; }
@@ -1403,7 +1406,7 @@ Button.load_actions = function() {
       },
       content: function(match) {
         var range = (match && parseInt(match[1], 10)) || 6;
-        return [{sound_url: 'dice_url', text: "... rolling ..."}, {text: Math.round(Math.random() * range).toString() + ","}];
+        return [{sound_url: 'dice_url', text: "... rolling ..."}, {text: sample(range).toString() + ","}];
       }
     },
     {
@@ -1417,7 +1420,7 @@ Button.load_actions = function() {
       },
       content: function(match) {
         var range = (match && parseInt(match[1], 10)) || 10;
-        return [{text: Math.round(Math.random() * range).toString() + ","}];
+        return [{text: sample(range).toString() + ","}];
       }
     },
     {
@@ -1431,7 +1434,7 @@ Button.load_actions = function() {
       },
       content: function(match) {
         var range = (match && parseInt(match[1], 10)) || 4;
-        return [{sound_url: 'spinner_url', text: "... spinning ..."}, {text: Math.round(Math.random() * range).toString() + ","}];
+        return [{sound_url: 'spinner_url', text: "... spinning ..."}, {text: sample(range).toString() + ","}];
       }
     },
     {
