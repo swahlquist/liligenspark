@@ -227,7 +227,10 @@ import app_state from './app_state';
           data = {text: data};
         }
         if(data && data.error && data.status && !data.ok) {
-          var handle_error = function() {
+          if(data.invalid_token && !app_state.get('speak_mode')) {
+            // force a login prompt for invalid tokens
+            session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
+          } else {
             console.log("ember ajax error: " + data.status + ": " + data.error + " (" + options.url + ")");
             if(error) {
               error.call(this, xhr, message, data);
@@ -249,12 +252,6 @@ import app_state from './app_state';
               rej.then(null, function() { });
               return rej;
             }
-          };
-          if(data.invalid_token && !app_state.get('speak_mode')) {
-            // force a login prompt for invalid tokens
-            session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
-          } else {
-            handle_error();
           }
         } else {
           if(typeof(data) == 'string') {
