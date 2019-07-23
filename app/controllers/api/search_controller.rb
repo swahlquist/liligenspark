@@ -20,8 +20,9 @@ class Api::SearchController < ApplicationController
         return api_error 400, {error: 'premium search not allowed'}
       end
     end
-    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}", :timeout => 3, :ssl_verifypeer => false)
-    results = JSON.parse(res.body)
+    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}", :timeout => 5, :ssl_verifypeer => false)
+    results = JSON.parse(res.body) rescue nil
+    results ||= []
     results.each do |result|
       type = MIME::Types.type_for(result['extension'])[0]
       result['content_type'] = type.content_type
