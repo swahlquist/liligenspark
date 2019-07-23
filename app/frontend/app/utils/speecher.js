@@ -17,6 +17,9 @@ var speecher = EmberObject.extend({
   chimes_url: "https://opensymbols.s3.amazonaws.com/chimes.mp3",
   click_url: "https://opensymbols.s3.amazonaws.com/click.mp3",
   ding_url: "https://opensymbols.s3.amazonaws.com/ding.mp3",
+  bleep_url: "https://opensymbols.s3.amazonaws.com/bleep.mp3",
+  spinner_url: "https://opensymbols.s3.amazonaws.com/spinner.mp3",
+  dice_url: "https://opensymbols.s3.amazonaws.com/dice.mp3",
   voices: [],
   text_direction: function() {
     var voice = speecher.get('voices').find(function(v) { return v.voiceURI == speecher.voiceURI; });
@@ -535,6 +538,9 @@ var speecher = EmberObject.extend({
     var p2 = this.load_sound('chimes_url');
     var p3 = this.load_sound('click_url');
     var p4 = this.load_sound('ding_url');
+    var p5 = this.load_sound('bleep_url');
+    var p6 = this.load_sound('spinner_url');
+    var p7 = this.load_sound('dice_url');
     return RSVP.all_wait([p1, p2, p3, p4]);
   },
   load_sound: function(attr) {
@@ -796,7 +802,7 @@ var speecher = EmberObject.extend({
     }
     if($res.length === 0 && url) {
       var new_url = persistence.url_cache[url] || url;
-      $res = $("<audio>", {preload: 'auto', src: new_url, rel: url}).appendTo($("#button_list"));
+      $res = $("<audio>", {preload: 'auto', src: new_url, rel: url}).appendTo($("#button_list,#button_settings"));
     } else if($res.closest("#button_list").length == 0) {
       $("#button_list").append($res[0]);
     }

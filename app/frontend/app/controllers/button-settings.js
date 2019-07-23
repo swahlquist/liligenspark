@@ -10,6 +10,7 @@ import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import utterance from '../utils/utterance';
+import speecher from '../utils/speecher';
 import capabilities from '../utils/capabilities';
 import app_state from '../utils/app_state';
 import persistence from '../utils/persistence';
@@ -509,7 +510,7 @@ export default modal.ModalController.extend({
   modifiers: function() {
     var voc = (this.get('model.vocalization') || "");
     if(!voc || !voc.match(/^(:|\+)/)) {
-      if(!voc.match(/\&\&/)) {
+      if(!voc.match(/\&\&/) && !voc.match(/:/)) {
         return null;
       }
     }
@@ -529,17 +530,42 @@ export default modal.ModalController.extend({
         }
 
         if(special.modifier) {
-          list.push({modifier: part});
+          any_basic = true;
+          list.push({modifier: part, basic: true, special: description});
         } else {
           list.push({modifier: part, special: description});
         }
       } else if(part.match(/^\+/)) {
         list.push({basic: true, modifier: part});
         any_basic = true;
-      } else if(part.match(/^\:/)) {
-        list.push({modifier: part});
+      } else if(part.match(/^\:[^\s\&]+$/)) {
+        list.push({modifier: part + " (??)"});
       } else {
-        list.push({text: part});
+        var re = /:[^\s\&]+/g;
+        var match = null;
+        var matches = [];
+        while((match = re.exec(part)) != null) {
+          matches.unshift(match);
+        }
+        var orig = part;
+        if(matches.length > 0) {
+          matches.forEach(function(match) {
+            var action = CoughDrop.find_special_action(match[0]);
+            if(action && action.inline_description) {
+              var desc = action.inline_description.toString();
+              if(action.inline_description.call) {
+                if(action.match) {
+                  desc = action.inline_description(match[0].match(action.match));
+                } else {
+                  desc = action.inline_description(match[0]);
+                }                
+              }
+              part = part.slice(0, match.index) + "[" + desc + "]" + part.slice(match.index + match[0].length);
+            } else {
+            }
+          });
+        }
+        list.push({text: part, original: orig, matches: matches});
       }
     });
     if(any_basic) {
@@ -796,16 +822,51 @@ export default modal.ModalController.extend({
       contentGrabbers.pictureGrabber.select_image_preview(url);
     },
     testVocalization: function() {
+      // TODO: this doesn't handle multi-part vocaliations well
+      // like "what the && :beep"
       var text = this.get('model.vocalization') || this.get('model.label');
-      if(this.get('modifiers.length') && this.get('modifier_text')) {
-        var b = Button.create({label: this.get('modifier_text')});
-        var m = Button.create({label: this.get('modifier')});
-        var res = b;
+      if(this.get('modifiers.length')) {
+        var pre = null;
+        if(this.get('modifier_text')) {
+          pre = Button.create({label: this.get('modifier_text')});
+        }
+        var chunks = [];
         this.get('modifiers').forEach(function(mod) {
-          b.set('in_progress', true);
-          res = utterance.modify_button(res, Button.create({label: mod.modifier}));
-        })
-        utterance.speak_text(res.get('label'));
+          if(mod.basic) {
+            if(pre) {
+              pre.set('in_progress', true);
+              var b = utterance.modify_button(pre, Button.create({label: mod.modifier}));
+              pre = null;
+              chunks.push({text: b.label});
+            } else {
+              chunks.push({text: b.label});
+            }
+          } else if(!mod.modifier) {
+            var str = mod.original || mod.text;
+            if(mod.matches) {
+              var inline_actions = [];
+              mod.matches.forEach(function(match) {
+                var action = CoughDrop.find_special_action(match[0]);
+                if(action) {
+                  action = Object.assign({}, action);
+                  action.str = match[0];
+                  action.index = match.index;
+                  inline_actions.push(action);
+                }
+              });
+              chunks = chunks.concat(utterance.process_inline_content(str, inline_actions));
+            } else {
+              chunks.push({text: str});
+            }
+          }
+        });
+        chunks.forEach(function(c) {
+          c.sound = c.sound_url;
+          if(c.sound_url && c.sound_url.match(/_url$/)) {
+            c.sound = speecher[c.sound_url];
+          }
+        });
+        speecher.speak_collection(utterance.combine_content(chunks), Math.round(Math.random() * 99999) + "-" + (new Date()).getTime());
       } else {
         utterance.speak_text(text);
       }

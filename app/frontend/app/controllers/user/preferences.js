@@ -704,7 +704,7 @@ export default Controller.extend({
         }
         var image_url = "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/touch_437_g.svg";
         var special = CoughDrop.find_special_action(key);
-        if(special && !special.completion && !special.modifier) {
+        if(special && !special.completion && !special.modifier && !special.inline) {
           add_board({
             name: action.slice(1),
             special: true,

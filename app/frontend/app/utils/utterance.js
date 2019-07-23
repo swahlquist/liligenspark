@@ -48,9 +48,8 @@ var utterance = EmberObject.extend({
       var last = rawList[idx - 1] || {};
       var last_computed = buttonList[buttonList.length - 1];
       var text = (button && (button.vocalization || button.label)) || '';
-      // TODO: this used to check whether the last button was a sound,
-      // but I have no idea why.
-      var plusses = [], colons = [];
+
+      var plusses = [], colons = [], inlines = [];
       if(button.specialty_with_modifiers) {
         var parts = text.split(/\s*&&\s*/);
         parts.forEach(function(text) {
@@ -60,7 +59,17 @@ var utterance = EmberObject.extend({
             colons.push(text);
           }
         });
-      } 
+      }
+      var regex = /.\s*:[^\s\&]+\s*./g;
+      var group = null;
+      while((group = regex.exec(text)) != null) {
+        var txt = group[0];
+        if(!txt.match(/^&/) || !txt.metch(/&$/)) {
+          var mod = txt.match(/:[^\s\&]+/);
+          inlines.push([mod[0], group.index + mod.index]);
+        }
+      }
+      
       var added = false;
       if(plusses.length > 0) {
         last = {};
@@ -72,6 +81,7 @@ var utterance = EmberObject.extend({
         added = true;
         buttonList.push(altered);
       }
+      var inline_actions = false;
       if(colons.length > 0) {
         colons.forEach(function(text) {
           last = buttonList.pop();
@@ -84,13 +94,40 @@ var utterance = EmberObject.extend({
           var action = CoughDrop.find_special_action(text);
           if(action && (action.modifier || action.completion) && !added) {
             var altered = _this.modify_button(last || {}, button);
-            added = true;
+            added = true;                           
             buttonList.push(altered);
           } else if(last) {
             buttonList.push(last);
           }
         });
-      } 
+      }
+      if(inlines.length > 0) {
+        inlines.forEach(function(arr) {
+          var action = CoughDrop.find_special_action(arr[0]);
+          if(action && action.inline) {
+            inline_actions = inline_actions || [];
+            action = Object.assign({}, action);
+            action.str = arr[0];
+            action.index = arr[1];
+            inline_actions.unshift(action);
+          }
+        });
+      }
+      if(inline_actions && !button.inline_content) {
+        rawList[idx].inline_content = utterance.combine_content(utterance.process_inline_content(text, inline_actions));
+      }
+      if(button.inline_content) {
+        // Collect all the text components and inline components
+        // and aggregate them together. Combine all adjacent text
+        // components, then add the button as-is if no sounds
+        // are attached, otherwise add a list of buttons as needed.
+        // Mark the buttons as inline_generated so we don't
+        // re-call .content() on future button adds/modifications
+        var btn = Object.assign({}, button);
+        btn.vocalization = button.inline_content.map(function(c) { return c.text; }).join(' ');
+        added = true;
+        buttonList.push(btn);
+      }
       if(!added) {
         buttonList.push(rawList[idx]);
       }
@@ -111,7 +148,7 @@ var utterance = EmberObject.extend({
       }
       if(button.sound && button.sound.match(/^http/)) {
         visualButton.set('original_sound', button.sound);
-        persistence.find_url(button.sound, 'image').then(function(data_uri) {
+        persistence.find_url(button.sound, 'sound').then(function(data_uri) {
           visualButton.set('sound', data_uri);
         }, function() { });
       }
@@ -147,6 +184,47 @@ var utterance = EmberObject.extend({
     utterance.set('last_spoken_button', last_spoken_button);
     stashes.persist('working_vocalization', buttonList);
   }.observes('app_state.insertion.index', 'rawButtonList', 'rawButtonList.[]', 'rawButtonList.length', 'rawButtonList.@each.image', 'hint_button', 'hint_button.label', 'hint_button.image_url'),
+  process_inline_content: function(text, inline_actions) {
+    var content = [];
+    var loc = 0;
+    inline_actions.forEach(function(action) {
+      var pre = text.slice(loc, action.index);
+      if(pre && !pre.match(/^\s*$/)) {
+        content.push({text: pre});
+      }
+      loc = action.index + action.str.length;
+      if(action.match) {
+        content = content.concat(action.content(action.str.match(action.match)));
+      } else {
+        content = content.concat(action.content(action.str));
+      }
+    });
+    var left = text.slice(loc);
+    if(left && !left.match(/^\s*$/)) {
+      content.push({text: left});
+    }
+    return content;
+  },
+  combine_content: function(content) {
+    var final_content = [];
+    var text_pad = null;
+    var clear_pad = function() {
+      if(text_pad) { final_content.push({text: text_pad}); text_pad = null; }
+    };
+    for(var jdx = 0; jdx < content.length; jdx++) {
+      var content_text = content[jdx].text.toString();
+      if(content[jdx].sound_url) {
+        clear_pad();
+        final_content.push(content[jdx]);
+      } else if(content_text && text_pad) {
+        text_pad = (text_pad || '').replace(/\s+$/, '') + " " + content_text.replace(/^\s+/, '');
+      } else if(content_text) {
+        text_pad = content_text.replace(/^\s+/, '');
+      }
+    }
+    clear_pad();
+    return final_content;
+  },
   update_hint: function() {
     if(this.get('hint_button.label')) {
 //      console.error("hint button!", this.get('hint_button.label'));
@@ -204,7 +282,7 @@ var utterance = EmberObject.extend({
     var specialty = null;
     vocs.forEach(function(voc) {
       var action = CoughDrop.find_special_action(voc);
-      if(action && !action.completion && !action.modifier) {
+      if(action && !action.completion && !action.modifier && !action.inline) {
         if(action.has_sound) {
           button.has_sound = true;
         }
@@ -293,8 +371,23 @@ var utterance = EmberObject.extend({
           if(button.blocking_speech) {
             collection_id = Math.round(Math.random() * 99999) + "-" + (new Date()).getTime();
           }
-          var text = button.vocalization || button.label;
-          speecher.speak_text(text, collection_id, {alternate_voice: alt_voice});
+          if(button.inline_content) {
+            var items = [];
+            var list = button.inline_content;
+            for(var idx = 0; idx < list.length; idx++) {
+              if(list[idx].sound_url) {
+                var url = list[idx].sound_url;
+                if(url.match(/_url$/)) { url = speecher[url]; }
+                items.push({sound: url});
+              } else {
+                items.push({text: list[idx].text});
+              }
+            }
+            speecher.speak_collection(items, collection_id, {alternate_voice: alt_voice});
+          } else {
+            var text = button.vocalization || button.label;
+            speecher.speak_text(text, collection_id, {alternate_voice: alt_voice});
+          }
         }
       } else {
         this.silent_speak_button(button);
@@ -302,7 +395,7 @@ var utterance = EmberObject.extend({
     }
   },
   sentence: function(u) {
-      return u.map(function(b) { return b.vocalization || b.label; }).join(" ");
+    return u.map(function(b) { return b.vocalization || b.label; }).join(" ");
   },
   silent_speak_button: function(button) {
     var selector = '#speak_mode';
@@ -404,7 +497,17 @@ var utterance = EmberObject.extend({
     var text = list.map(function(i) { return i.vocalization || i.label; }).join(' ');
     var items = [];
     for(var idx = 0; idx < list.length; idx++) {
-      if(list[idx].sound) {
+      if(list[idx].inline_content) {
+        list[idx].inline_content.forEach(function(content) {
+          if(content.sound_url) {
+            var url = content.sound_url;
+            if(url.match(/_url$/)) { url = speecher[url]; }
+            items.push({sound: url});
+          } else if(content.text) {
+            items.push({text: content.text, volume: volume});
+          }
+        });
+      } else if(list[idx].sound) {
         items.push({sound: list[idx].sound});
       } else if(items.length && items[items.length - 1].text) {
         var item = items.pop();

@@ -1044,6 +1044,14 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':whisper',
+      description: i18n.t('speak_quieter', "Speak the current utterance, quieter"),
+      has_sound: true,
+      trigger: function() {
+        app_state.say_louder(0.5);
+      }
+    },
+    {
       action: ':phrases',
       description: i18n.t('phrases_window', "Open the Phrases window"),
       trigger: function() {
@@ -1235,6 +1243,195 @@ Button.load_actions = function() {
         altered.vocalization = i18n.tense(prior_text, {present_participle: true});
         altered.label = i18n.tense(prior_label, {present_participle: true});
         altered.in_progress = false;
+      }
+    },
+    {
+      action: ':bleep',
+      inline: true,
+      inline_description: "bleep",
+      description: i18n.t('beep_sound', "Play a beep sound inline"),
+      content: function() {
+        return [{sound_url: 'bleep_url', text: "bleep"}];
+      }
+    },
+    {
+      action: ':current-date',
+      inline: true,
+      inline_description: "date",
+      description: i18n.t('current_calendar_date', "Speak the current calendar date"),
+      content: function() {
+        var now = window.moment();
+        return [{text: Ember.templateHelpers.date(now, 'day')}];
+      }
+    },
+    {
+      action: ':current-time',
+      inline: true,
+      inline_description: "now",
+      description: i18n.t('current_time', "Speak the current time"),
+      content: function() {
+        var now = window.moment();
+        return [{text: Ember.templateHelpers.time(now, 'day')}];
+      }
+    },
+    {
+      action: ':current-day',
+      inline: true,
+      inline_description: "day",
+      description: i18n.t('current_day', "Speak the current day of the week"),
+      content: function() {
+        var now = window.moment();
+        return [{text: now.format('dddd')}];
+      }
+    },
+    {
+      action: ':yesterday-date',
+      inline: true,
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return "date " + n_days + " day(s) ago";
+      },
+      match: /^:yesterday-date\((\d+)\)/,
+      description: i18n.t('yesterday_calendar_date', "Speak yesterday's calendar date"),
+      content: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(-1 * n_days, 'day');
+        return [{text: Ember.templateHelpers.date(now, 'day')}];
+      }
+    },
+    {
+      action: ':yesterday-day',
+      inline: true,
+      match: /^:yesterday-day\((\d+)\)/,
+      description: i18n.t('yesterday_day', "Speak the day of the week for yesterday"),
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return "day " + n_days + " day(s) ago";
+      },
+      content: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(-1 * n_days, 'day');
+        return [{text: now.format('dddd')}];
+      }
+    },
+    {
+      action: ':tomorrow-date',
+      inline: true,
+      match: /^:tomorrow-date\((\d+)\)/,
+      description: i18n.t('tomorrow_calendar_date', "Speak tomorrow's calendar date"),
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return "date " + n_days + " day(s) from now";
+      },
+      content: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(n_days, 'day');
+        return [{text: Ember.templateHelpers.date(now, 'day')}];
+      }
+    },
+    {
+      action: ':tomorrow-day',
+      inline: true,
+      match: /^:tomorrow-day\((\d+)\)/,
+      description: i18n.t('tomorrow_day', "Speak the day of the week for tomorrow"),
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return "day " + n_days + " day(s) from now";
+      },
+      content: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(-1 * n_days, 'day');
+        return [{text: now.format('dddd')}];
+      }
+    },
+    {
+      action: ':current-month',
+      inline: true,
+      inline_description: "this month",
+      description: i18n.t('current_month', "Speak the name of the current month"),
+      content: function() {
+        return "DATE";
+      }
+    },
+    {
+      action: ':next-month',
+      inline: true,
+      match: /^:next-month\((\d+)\)/,
+      description: i18n.t('next_month', "Speak the name of the next month"),
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return n_days + " month(s) from now";
+      },
+      content: function(match) {
+        var n_months = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(n_months, 'month');
+        return [{text: now.format('MMMM')}];
+      }
+    },
+    {
+      action: ':last-month',
+      inline: true,
+      match: /^:last-month\((\d+)\)/,
+      description: i18n.t('last_month', "Speak the name of the previous month"),
+      inline_description: function(match) {
+        var n_days = (match && parseInt(match[1], 10)) || 1;
+        return n_days + " months(s) ago";
+      },
+      content: function(match) {
+        var n_months = (match && parseInt(match[1], 10)) || 1;
+        var now = window.moment().add(-1 * n_months, 'month');
+        return [{text: now.format('MMMM')}];
+      }
+    },
+    {
+      action: ':battery-level',
+      inline: true,
+      inline_description: "battery",
+      description: i18n.t('battery_level', "Speak the current battery level"),
+      content: function() {
+        return (app_state.get('battery') || i18n.t('unknown', "Unknown")) + " " + i18n.t('percent_battery', "percent battery left");
+      }
+    },
+    {
+      action: ':roll-dice',
+      match: /^:roll-dice\((\d+)\)/,
+      inline: true,
+      description: i18n.t('random_dice_number', "Play a dice rolling sound and then speak a random number from 1 to n"),
+      inline_description: function(match) {
+        var n = (match && parseInt(match[1], 10)) || 6;
+        return "roll " + n + "-sided die";
+      },
+      content: function(match) {
+        var range = (match && parseInt(match[1], 10)) || 6;
+        return [{sound_url: 'dice_url', text: "... rolling ..."}, {text: Math.round(Math.random() * range).toString() + ","}];
+      }
+    },
+    {
+      action: ':random',
+      match: /^:random\((\d+)\)/,
+      inline: true,
+      description: i18n.t('pick_random_number', "Speak a random number from 1 to n"),
+      inline_description: function(match) {
+        var n = (match && parseInt(match[1], 10)) || 10;
+        return "pick 1-" + n;
+      },
+      content: function(match) {
+        var range = (match && parseInt(match[1], 10)) || 10;
+        return [{text: Math.round(Math.random() * range).toString() + ","}];
+      }
+    },
+    {
+      action: ':spinner',
+      match: /^:spinner\((\d+)\)/,
+      inline: true,
+      description: i18n.t('random_spinner_number', "Play a spinner sound and then speak a random number from 1 to n"),
+      inline_description: function(match) {
+        var n = (match && parseInt(match[1], 10)) || 4;
+        return "spin from " + n + " choices";
+      },
+      content: function(match) {
+        var range = (match && parseInt(match[1], 10)) || 4;
+        return [{sound_url: 'spinner_url', text: "... spinning ..."}, {text: Math.round(Math.random() * range).toString() + ","}];
       }
     },
     {
