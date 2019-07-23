@@ -792,6 +792,8 @@ var speecher = EmberObject.extend({
 
       _this.set_output_target(opts, playAudio);
     } else {
+      _this.speak_id++;
+      _this.speak_end_handler(_this.speak_id);
       console.log("couldn't find sound to play");
     }
   },
