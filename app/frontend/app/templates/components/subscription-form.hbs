@@ -122,7 +122,9 @@
         {{#if pricing_only}}
           <tr>
             <td colspan={{if subscription.app_pricing_override "1" "2"}}>
-              <a href="#" {{action 'bulk_purchase'}}>{{t "interested in a bulk purchase or PO?" key='interested_in_bulk_purchase'}}</a>
+              {{#unless subscription.app_pricing_override}}
+                <a href="#" {{action 'bulk_purchase'}}>{{t "interested in a bulk purchase or PO?" key='interested_in_bulk_purchase'}}</a>
+              {{/unless}}
             </td>
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim'>
               {{t "user management tools available for organizations," key='org_tools_available'}}
@@ -286,7 +288,9 @@
         <div class="form-group">
           <div class="col-sm-12">
             {{#link-to 'register' class='btn btn-lg btn-primary'}}{{t "Sign Up for a Free Trial of %app_name%" key='sign_up_for_trial_coughdrop'}}{{/link-to}}
-            {{#link-to 'gift_purchase' class='btn btn-lg btn-default'}}{{t "Purchase as a Gift" key='purchase_as_a_Gift'}}{{/link-to}}
+            {{#unless subscription.app_pricing_override}}
+              {{#link-to 'gift_purchase' class='btn btn-lg btn-default'}}{{t "Purchase as a Gift" key='purchase_as_a_Gift'}}{{/link-to}}
+            {{/unless}}
           </div>
         </div>
       {{/if}}
