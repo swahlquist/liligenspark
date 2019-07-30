@@ -2,12 +2,26 @@ import modal from '../../utils/modal';
 import app_state from '../../utils/app_state';
 import utterance from '../../utils/utterance';
 import RSVP from 'rsvp';
+import stashes from '../../utils/_stashes';
 
 export default modal.ModalController.extend({
   opening: function() {
     // which step are we on?
     var step = this.get('model.step') || 0;
     this.set('current_step', (this.get('model.board.intro.sections') || [])[step]);
+
+    // as part of the intro, set the board to level 10 and
+    // make it the root board to keep everything consistent
+    var state = {
+      id: this.get('model.board.id'),
+      key: this.get('model.board.key'),
+      level: 10
+    };
+    stashes.set('root_board_state', state);
+    stashes.set('board_level', state.level);
+    stashes.set('temporary_root_board_state', null);
+    app_state.set('temporary_root_board_key', null);
+
     var user = app_state.get('currentUser');
     var intros = app_state.get('currentUser.preferences.progress.board_intros') || [];
     if(intros.indexOf(this.get('model.board.id')) == -1) {
@@ -46,7 +60,17 @@ export default modal.ModalController.extend({
       if(board.get('button_set')) {
         var user = app_state.get('currentUser');
         var search = null;
-        var search = board.get('button_set').find_sequence(_this.get('current_step.prompt'), board.get('id'), user, false);
+        var prompt = _this.get('current_step.prompt');
+        var level = _this.get('current_step.level');
+        var re = /^Lvl:(\d+)\s*/;
+        if(prompt.match(re)) {
+          var lvl = parseInt(prompt.match(re)[1], 10);
+          if(lvl && lvl <= 10) {
+            level = lvl;
+          }
+          prompt = prompt.replace(re, '');
+        }
+        var search = board.get('button_set').find_sequence(prompt, board.get('id'), user, false);
         var show_sequence = function(result) {
           var buttons = result.pre_buttons || [];
           if(result.pre_action == 'home') {
@@ -66,6 +90,8 @@ export default modal.ModalController.extend({
             buttons.push(result);
           }
 
+          // Allow setting the level as part of the steps
+          stashes.set('board_level', level || 10);
           app_state.controller.highlight_button(buttons, board.get('button_set'), {wait_to_prompt: true}).then(function() {
             utterance.clear();
             // re-open the modal at the next step
