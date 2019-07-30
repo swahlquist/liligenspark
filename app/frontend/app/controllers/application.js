@@ -706,6 +706,7 @@ export default Controller.extend({
       if(buttons && buttons.length > 0) {
         var button = buttons[0];
         if(button.pre == 'home' || button.pre == 'true_home' || button.pre == 'home' || button.pre == 'sidebar') {
+          // handle pre-buttons if there are any
           this.set('button_highlights', buttons);
           var $button = $("#speak > button:first");
           if(button.pre == 'sidebar') {
@@ -749,10 +750,12 @@ export default Controller.extend({
             }
           });
         } else if(button && button.board_id == this.get('board.model').get('id')) {
+          // otherwise if you're currently on the correct board
           var findButtonElem = function() {
             if(button.board_id == _this.get('board.model').get('id')) {
               var $button = $(".button[data-id='" + button.id + "']");
               if($button[0] && $button.width()) {
+                // Find the (visible) button in the UI
                 if(options.picture_hint) {
                   picture_prompt($button);
                 }
@@ -770,12 +773,18 @@ export default Controller.extend({
                   var board = _this.get('board.model');
                   _this.activateButton(found_button, {board: board, skip_highlight_check: true});
                   var next_button = buttons[0];
-                  // If there is more to the sequence, and the 
-                  // user selection isn't going to involve loading
-                  // a different board, then call highlight_button again
                   if(next_button && (next_button.board_id == board.id || next_button.pre)) {
+                    // If there is more to the sequence, and the 
+                    // user selection isn't going to involve loading
+                    // a different board, then call highlight_button again
                     _this.highlight_button('resume'); 
+                  } else if(next_button && (next_button.board_id != board.id)) {
+                    // If there is more to the sequence but we're
+                    // in the process of navigating, do nothing, the
+                    // load board process should highlight the next
+                    // step on its own
                   } else {
+                    // If there aren't any more valid steps, end the sequence
                     defer.resolve();
                   }
                 }, function(err) {
@@ -790,7 +799,7 @@ export default Controller.extend({
                   }
                 });
               } else {
-                // TODO: really? is this the best you can figure out?
+                // If you can't find the correct button, try again in a minute
                 runLater(findButtonElem, 100);
               }
             }
