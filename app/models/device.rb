@@ -31,7 +31,7 @@ class Device < ActiveRecord::Base
         28.days.to_i
       end
     else
-      # browser tokens can last 3 months max before needing a re-login
+      # browser tokens can last 6 months max before needing a re-login
       if long_token
         6.months.to_i
       else
@@ -283,7 +283,7 @@ class Device < ActiveRecord::Base
     keys = (self.settings && self.settings['keys']) || []
     key = keys.detect{|k| k['value'] == token }
     do_save = false
-    if key && key['last_timestamp'] < 30.minutes.ago.to_i && !key['needs_refresh']
+    if key && key['last_timestamp'] < 15.minutes.ago.to_i && !key['needs_refresh']
       self.settings['keys'].each_with_index do |key, idx|
         if key['value'] == token
           key['last_timestamp'] = Time.now.to_i
