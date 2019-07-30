@@ -95,6 +95,9 @@ export default modal.ModalController.extend({
   }.observes('searchString', 'button_set'),
   actions: {
     pick_result: function(result) {
+      if(!result) {
+        result = this.get('results')[0];
+      }
       if(result.board_id == editManager.controller.get('model.id')) {
         var $button = $(".button[data-id='" + result.id + "']");
         var _this = this;

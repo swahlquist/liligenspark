@@ -7,6 +7,7 @@ import i18n from './i18n';
 import CoughDrop from '../app';
 import persistence from './persistence';
 import app_state from './app_state';
+import stashes from './_stashes';
 import capabilities from './capabilities';
 import progress_tracker from './progress_tracker';
 

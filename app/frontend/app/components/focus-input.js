@@ -10,5 +10,14 @@ export default TextField.extend({
   }.on('didInsertElement'),
   focusOut: function() {
     this.sendAction();
+  },
+  keyDown: function(event) {
+    if(event.keyCode == 13) {
+      event.preventDefault();
+      event.stopPropagation();
+      if(this.get('select')) {
+        this.sendAction('select');
+      }
+    }
   }
 });

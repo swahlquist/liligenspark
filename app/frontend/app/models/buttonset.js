@@ -171,7 +171,7 @@ CoughDrop.Buttonset = DS.Model.extend({
   board_map: function(button_sets) {
     var _this = this;
     if(_this.last_board_map) {
-      if(_this.last_board_map.list = button_sets) {
+      if(_this.last_board_map.list == button_sets) {
         return _this.last_board_map.result;
       }
     }
@@ -245,7 +245,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     var buttons = [];
     var board_map = null;
 
-    var build_map = RSVP.all_wait(lookups).then(function() {
+    var build_map =   RSVP.all_wait(lookups).then(function() {
       var res = _this.board_map(button_sets);
       buttons = res.buttons;
       board_map = res.map;

@@ -7,6 +7,7 @@ import speecher from '../../utils/speecher';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default modal.ModalController.extend({
   opening: function() {

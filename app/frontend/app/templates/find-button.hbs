@@ -6,7 +6,7 @@
     </h3>
   </div>
   <div class="modal-body">
-    {{focus-input force="true" type="text" id="button_search_string" value=searchString class="form-control" placeholder="Word or phrase you're looking for"}}
+    {{focus-input force="true" type="text" id="button_search_string" value=searchString class="form-control" select='pick_result' placeholder="Word or phrase you're looking for"}}
     {{#if searchString}}
       <div class="row" id="button_results">
         {{#if results}}

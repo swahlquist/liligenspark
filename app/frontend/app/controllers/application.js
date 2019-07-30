@@ -103,8 +103,11 @@ export default Controller.extend({
     // TODO: also show if checking out the board in the 
     // setup process (except that's really only under 
     // advanced now), or if enabled on the embed
-    return app_state.get('currentUser.preferences.home_board.id') == this.get('board.model.id') && this.get('board.model.intro') && !this.get('board.model.intro.unapproved');
-  }.property('app_state.currentUser.preferences.home_board.id', 'board.model.intro', 'board.model.intro.unapproved'),
+    var root_board = stashes.get('root_board_state.id') == this.get('board.model.id') || stashes.get('temporary_root_board_state.id') == this.get('board.model.id');
+    // TODO: option to set board level for board_intro prompt
+    // TODO: when entering board intro, set root_board_state to the board's id
+    return root_board && this.get('board.model.intro') && !this.get('board.model.intro.unapproved');
+  }.property('stashes.root_board_state.id', 'stashes.temporary_root_board_state.id', 'app_state.currentUser.preferences.home_board.id', 'board.model.intro', 'board.model.intro.unapproved'),
   highlight_button: function(buttons, button_set, options) {
     options = options || {};
     if(buttons && buttons != 'resume') {
@@ -122,90 +125,92 @@ export default Controller.extend({
       options = this.get('last_highlight_options') || options;
     }
     // TODO: make sure the board level is temporary set to 10
-    var defer = this.get('highlight_button_defer') || RSVP.defer();
-    var will_render = false;
-    if(defer.revert_board_level == undefined && buttons != 'resume') {
-      defer.revert_board_level = stashes.get('board_level') || 'none';
-      var was = stashes.get('board_level');
-      var level_changed = stashes.get('board_level') && stashes.get('board_level') != 10;
-      if(level_changed) {
-        this.send('set_level', 10);
-        will_render = true;
-      }
-    }
-    this.set('highlight_button_defer', defer);
     var _this = this;
-    if(!defer.promise.registered) {
-      defer.promise.registered = true;
-      defer.wait_a_bit = function(timeout) {
-        if(!defer.promise.already_waiting_a_bit) {
-          defer.promise.already_waiting_a_bit = true;
-          runLater(function() {
-            defer.promise.already_waiting_a_bit = false;
-            _this.highlight_button('resume');
-          }, timeout)
+    var defer = _this.get('highlight_button_defer') || RSVP.defer();
+    runLater(function() {
+      var will_render = false;
+      if(defer.revert_board_level == undefined && buttons != 'resume') {
+        defer.revert_board_level = stashes.get('board_level') || 'none';
+        var was = stashes.get('board_level');
+        var level_changed = stashes.get('board_level') && stashes.get('board_level') != 10;
+        if(level_changed) {
+          _this.send('set_level', 10);
+          will_render = true;
         }
       }
-      defer.promise.then(null, function(err) { 
-        console.error("highlight sequence failed", err);
-        _this.set('button_highlights', null);
-        return RSVP.resolve(); 
-      }).then(function() {
-        if(_this.get('highlight_button_defer') == defer) {
-          _this.set('highlight_button_defer', null);
-          _this.set('last_highlight_selection', null);
-          _this.set('last_highlight_explore_action', null);
-          _this.set('last_highlight_options', null);
-          utterance.set('hint_button', null);
-          if(defer.revert_board_level) {
-            var new_level = 10;
-            if(defer.revert_board_level == 'none') {
-              new_level = 10;
-            } else {
-              new_level = defer.revert_board_level;
-            }
-            var level_changed = stashes.get('board_level') != new_level;
-            var was = stashes.get('board_level');
-            if(level_changed) {
-              _this.send('set_level', new_level);
-            }
+      _this.set('highlight_button_defer', defer);
+      if(!defer.promise.registered) {
+        defer.promise.registered = true;
+        defer.wait_a_bit = function(timeout) {
+          if(!defer.promise.already_waiting_a_bit) {
+            defer.promise.already_waiting_a_bit = true;
+            runLater(function() {
+              defer.promise.already_waiting_a_bit = false;
+              _this.highlight_button('resume');
+            }, timeout)
           }
         }
-      });
-    }
-    if(options.wait_to_prompt) {
-      options.delay_prompt = true;
-      var now = (new Date()).getTime();
-      var last_action = _this.get('last_highlight_selection') || _this.get('last_highlight_explore_action') || now;
-      var waiting_duration = (new Date()).getTime() - last_action;
-      var factor = defer.already_waited ? 0.3 : (defer.not_first_action ? 1.0 : 1.5);
-      options.picture_hint = true;
-      if(waiting_duration > 1000) {
-        // afteer 1 second change the sentence box hint to the right picture
+        defer.promise.then(null, function(err) { 
+          console.error("highlight sequence failed", err);
+          _this.set('button_highlights', null);
+          return RSVP.resolve(); 
+        }).then(function() {
+          if(_this.get('highlight_button_defer') == defer) {
+            _this.set('highlight_button_defer', null);
+            _this.set('last_highlight_selection', null);
+            _this.set('last_highlight_explore_action', null);
+            _this.set('last_highlight_options', null);
+            utterance.set('hint_button', null);
+            if(defer.revert_board_level) {
+              var new_level = 10;
+              if(defer.revert_board_level == 'none') {
+                new_level = 10;
+              } else {
+                new_level = defer.revert_board_level;
+              }
+              var level_changed = stashes.get('board_level') != new_level;
+              var was = stashes.get('board_level');
+              if(level_changed) {
+                _this.send('set_level', new_level);
+              }
+            }
+          }
+        });
       }
-      if(waiting_duration > (5000 * factor)) {
-        // afte 5 seconds do a subtle highlight
-        options.subtle_highlight = true;
-        options.delay_prompt = false;
-        defer.wait_a_bit(1000);
-        defer.did_wait = true;
+      if(options.wait_to_prompt) {
+        options.delay_prompt = true;
+        var now = (new Date()).getTime();
+        var last_action = _this.get('last_highlight_selection') || _this.get('last_highlight_explore_action') || now;
+        var waiting_duration = (new Date()).getTime() - last_action;
+        var factor = defer.already_waited ? 0.3 : (defer.not_first_action ? 1.0 : 1.5);
+        options.picture_hint = true;
+        if(waiting_duration > 1000) {
+          // afteer 1 second change the sentence box hint to the right picture
+        }
+        if(waiting_duration > (5000 * factor)) {
+          // afte 5 seconds do a subtle highlight
+          options.subtle_highlight = true;
+          options.delay_prompt = false;
+          defer.wait_a_bit(1000);
+          defer.did_wait = true;
+        }
+        if(waiting_duration > (10000 * factor)) {
+          // after 10 seconds do a strong highlight
+          options.subtle_highlight = false;
+        }
+        var buttons = _this.get('button_highlights') || [];
+        var next_actual_button = buttons.find(function(b) { return b.actual_button; });
+        if(next_actual_button) {
+          utterance.set('hint_button', utterance.get('hint_button') || {});
+          utterance.set('hint_button.label', next_actual_button.label);
+        } else {
+          utterance.set('hint_button', null);
+        }
       }
-      if(waiting_duration > (10000 * factor)) {
-        // after 10 seconds do a strong highlight
-        options.subtle_highlight = false;
+      if(!will_render) {
+        _this.send('highlight_button', options);
       }
-      var buttons = _this.get('button_highlights') || [];
-      var next_actual_button = buttons.find(function(b) { return b.actual_button; });
-      if(next_actual_button) {
-        utterance.set('hint_button', utterance.get('hint_button') || {});
-        utterance.set('hint_button.label', next_actual_button.label);
-      } else {
-        utterance.set('hint_button', null);
-      }
-    }
-    if(!will_render) {
-      _this.send('highlight_button', options);
-    }
+    });
     return defer.promise;
   },
   allow_search: function() {
