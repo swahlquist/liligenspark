@@ -147,30 +147,44 @@ var editManager = EmberObject.extend({
     // TODO: only use fallbacks if we know it's 'en' locale
     if(res) {
     } else if(button.part_of_speech == 'noun') {
+      // N - more/plural
+      // S - for me/possessive
+      // NW - negation
+      // W - in the past
+      // E - in the future
+      // SE?? - opposite
+      // next to close need a "more" option that
+      // can be replaced by up/down
       res = [
         {location: 'n', label: i18n.pluralize(button.label)},
         {location: 'c', label: button.label},
-        {location: 'w', label: i18n.negation(button.label)},
+        {location: 'nw', label: i18n.negation(button.label)},
         {location: 's', label: i18n.possessive(button.label)},
-      ]
+      ];
     } else if(button.part_of_speech == 'adjective') {
       res = [
-        {location: 'n', label: i18n.pluralize(button.label)},
-        {location: 'e', label: i18n.comparative(button.label)},
-        {location: 'ne', label: i18n.superlative(button.label)},
-        {location: 'w', label: i18n.negation(button.label)},
+        {location: 'ne', label: i18n.pluralize(button.label)},
+        {location: 'n', label: i18n.comparative(button.label)},
+        {location: 'e', label: i18n.superlative(button.label)},
+        {location: 'nw', label: i18n.negation(button.label)},
         {location: 'c', label: button.label},
-      ]
+      ];
     } else if(button.part_of_speech == 'verb') {
       res = [
         {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
         {location: 's', label: i18n.tense(button.label, {present_participle: true})},
-        {location: 'nw', label: i18n.tense(button.label, {past_participle: true})},
+        {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
         {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
         {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
         // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
         {location: 'c', label: button.label}
-      ]
+      ];
+    // for pronouns:
+    // C - subjective
+    // E - objective
+    // N - possessive
+    // NE - possessive adjective
+    // W - reflexive
     } else {
       console.log("unrecognized button type", button.part_of_speech, button);
       res = [
