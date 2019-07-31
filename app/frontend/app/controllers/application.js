@@ -975,12 +975,15 @@ export default Controller.extend({
         obj.percent_travel = location.percent_travel;
       }
       _this.set('last_highlight_explore_action', (new Date()).getTime());
-      // TODO: if this is the next actual_button in the highlight
+      
+      // if this is the next actual_button in the highlight
       // queue then shift off everything up to and including that button
       var highlight_buttons = _this.get('button_highlights') || [];
       var next_actual_button = highlight_buttons.find(function(b) { return b.actual_button; })
       utterance.set('hint_button', null);
-      if(!options.skip_highlight_check && next_actual_button && (next_actual_button.vocalization || next_actual_button.label) == (button.vocalization || button.label)) {
+      if(!options.skip_highlight_check && next_actual_button && (!button.load_board || button.link_disabled) && (next_actual_button.vocalization || next_actual_button.label) == (button.vocalization || button.label)) {
+        // If we hit a button that works without being prompted, 
+        // move on to the next actual button and wait again
         var btn = null;
         while(btn != next_actual_button) {
           btn = highlight_buttons.shift();

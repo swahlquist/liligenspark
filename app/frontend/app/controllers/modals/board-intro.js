@@ -52,6 +52,7 @@ export default modal.ModalController.extend({
     },
     start: function() {
       var board = this.get('model.board');
+      utterance.clear();
       var _this = this;
       if(!this.get('current_step.prompt')) {
         this.send('next');
@@ -93,7 +94,6 @@ export default modal.ModalController.extend({
           // Allow setting the level as part of the steps
           stashes.set('board_level', level || 10);
           app_state.controller.highlight_button(buttons, board.get('button_set'), {wait_to_prompt: true}).then(function() {
-            utterance.clear();
             // re-open the modal at the next step
             modal.open('modals/board-intro', {board: _this.get('model.board'), step: (_this.get('model.step') + 1)});
           }, function() {
@@ -125,7 +125,11 @@ export default modal.ModalController.extend({
           alert('nopety nope');
         });
       } else {
-        alert('nopety nope');
+        board.load_button_set().then(function() {
+          _this.send('start');
+        }, function() {
+          alert('nopety nope');
+        });
       }
     }
   }
