@@ -22,6 +22,9 @@ export default Controller.extend({
     premium_symbols: function(show) {
       this.set('show_premium_symbols', !!show);
     },
+    refresh_subscription: function() {
+      this.get('subscription').refresh_store();
+    },
     purchase_premium_symbols: function() {
       var user = this.get('model');
       var _this = this;

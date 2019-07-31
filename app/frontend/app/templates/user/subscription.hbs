@@ -143,6 +143,11 @@
                   <a class='btn btn-default' href="#" {{action 'premium_symbols' true}}>{{t "Purchase Premium Symbols" key='purchase_premium_symbols'}}</a>
                 {{/unless}}
               {{/unless}}
+              {{#if subscription.app_pricing_override}}
+                {{#if subscription.manual_refresh}}
+                  <a class='btn btn-default' href="#" {{action 'refresh_subscription'}}>{{t "Restore Purchases" key='restore_purchases'}}</a>
+                {{/if}}
+              {{/if}}
               {{#if subscription.user.subscription.started}}
                 <a class='btn btn-default' href="#" {{action 'cancel_subscription'}}>{{t "Cancel my Subscription" key='cancel_my_subscription'}}</a>
               {{/if}}

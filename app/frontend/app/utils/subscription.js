@@ -199,6 +199,12 @@ var Subscription = EmberObject.extend({
   app_pricing_override: function() {
     return !!Subscription.product_types;
   }.property('app_state.app_store_purchase_types'),
+  manual_refresh: function() {
+    return this.get('app_pricing_override') && capabilities.system == 'iOS' && capabilities.installed_app;
+  }.property('app_pricing_override'),
+  refresh_store: function() {
+    Subscription.in_app_store.refresh();
+  },
   monthly_app_price: function() {
     var prod = Subscription.product_types[subscription_id];
     if(!prod || !prod.price) { return "8.99"; }
