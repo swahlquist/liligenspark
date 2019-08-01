@@ -1156,7 +1156,7 @@ var i18n = EmberObject.extend({
     he_IL: "Hebrew (Israel)",
     he: "Hebrew",
   },
-  lang_map: {
+  lang_map: { //https://www.loc.gov/standards/iso639-2/php/code_list.php
     aa: "aar",
     ab: "abk",
     ae: "ave",
