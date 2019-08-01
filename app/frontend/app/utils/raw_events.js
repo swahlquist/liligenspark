@@ -919,6 +919,7 @@ var buttonTracker = EmberObject.extend({
     var final = [event.clientX, event.clientY];
     var rect = dom.getBoundingClientRect();
     var non_event_cutoff = 15;
+    if(targets.length == 0) { return 'final'; }
     var x_diff = Math.abs(final[0] - targets[0][0]);
     var y_diff = Math.abs(final[1] - targets[0][1]);
 

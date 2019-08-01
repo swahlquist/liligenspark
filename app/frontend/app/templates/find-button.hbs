@@ -82,7 +82,11 @@
               {{#if error}}
                 {{error}}
               {{else}}
-                {{t "No buttons found" key='no_buttons_found'}}
+                {{#if button_set.buttons.length}}
+                  {{t "No buttons found" key='no_buttons_found'}}
+                {{else}}
+                  {{t "Couldn't load button set" key='couldnt_load_button_set'}}
+                {{/if}}
                 <div style='margin-top: 30px;'>
                   <a href="#" {{action 'request_button'}}>{{t "Request this phrase as a new button" key='request_as_a_new_button'}}</a>
                 </div>
