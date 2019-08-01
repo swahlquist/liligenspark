@@ -269,10 +269,10 @@ CoughDrop.board_levels = [
   {name: i18n.t('level_5', "5 - Introducing Multiple Levels"), id: '5'},
   {name: i18n.t('level_6', "6 - Broadening Core & Fringe"), id: '6'},
   {name: i18n.t('level_7', "7 - Sentence Supports"), id: '7'},
-  {name: i18n.t('level_8', "8 - Robust Core and Fringe"), id: '8'},
-  {name: i18n.t('level_9', "9 - Inflections and Tenses"), id: '9'},
+  {name: i18n.t('level_8', "8 - Additional Fringe Levels"), id: '8'},
+  {name: i18n.t('level_9', "9 - Robust Core and Fringe"), id: '9'},
   {name: i18n.t('level_10', "10 - Full Vocabulary"), id: '10'},
-];
+];    
 CoughDrop.parts_of_speech = [
   {name: i18n.t('unspecified', "Unspecified"), id: ''},
   {name: i18n.t('noun', "Noun (dog, Dad)"), id: 'noun'},

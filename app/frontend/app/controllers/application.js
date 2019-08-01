@@ -124,7 +124,6 @@ export default Controller.extend({
     } else if(buttons == 'resume') {
       options = this.get('last_highlight_options') || options;
     }
-    // TODO: make sure the board level is temporary set to 10
     var _this = this;
     var defer = _this.get('highlight_button_defer') || RSVP.defer();
     runLater(function() {
