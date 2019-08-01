@@ -198,8 +198,8 @@ export default Controller.extend({
           // after 10 seconds do a strong highlight
           options.subtle_highlight = false;
         }
-        var buttons = _this.get('button_highlights') || [];
-        var next_actual_button = buttons.find(function(b) { return b.actual_button; });
+        var button_highlights = _this.get('button_highlights') || [];
+        var next_actual_button = button_highlights.find(function(b) { return b.actual_button; });
         if(next_actual_button) {
           utterance.set('hint_button', utterance.get('hint_button') || {});
           utterance.set('hint_button.label', next_actual_button.label);
