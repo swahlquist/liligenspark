@@ -786,6 +786,9 @@ describe Purchasing do
         expect(hash['expires']).to be > 4.years.from_now.iso8601
         expect(hash['expires']).to be < 6.years.from_now.iso8601
         expect(hash['plan_id']).to eq('long_term_ios')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.settings['premium_voices']['allowed']).to eq(4)
 
         res = Purchasing.purchase(u, {'id' => 'ios_iap'}, 'long_term_ios')
         expect(res[:success]).to eq(true)
@@ -835,6 +838,9 @@ describe Purchasing do
         hash = u.reload.subscription_hash
         expect(hash['active']).to eq(true)
         expect(hash['plan_id']).to eq('monthly_ios')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.reload.settings['premium_voices']).to eq(nil)
         res = Purchasing.purchase(u, {'id' => 'ios_iap'}, 'monthly_ios')
         expect(res[:success]).to eq(true)
         expect(res[:type]).to eq('monthly_ios')

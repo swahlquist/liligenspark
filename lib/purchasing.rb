@@ -645,6 +645,7 @@ module Purchasing
           res['customer_id'] = "ios.#{user.global_id}"
           res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['product_id']) || res['pre_purchase']
           res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['product_id'])
+          res['extras'] = true
 
           # Make sure if the token has already been used, we're applying it to the right user
           existing_user = nil
@@ -704,6 +705,15 @@ module Purchasing
                 'cancel_others_on_update' => true,
                 'source' => 'new iOS subscription'
               })
+              if res['extras']
+                User.schedule(:purchase_extras, {
+                  'user_id' => user.global_id,
+                  'customer_id' => res['customer_id'],
+                  'purchase_id' => res['subscription_id'],
+                  'source' => 'iap.subscription.include',
+                  'notify' => false
+                })
+              end
               res['subscribed'] = true
             else
               res['subscribed'] = true
@@ -723,6 +733,19 @@ module Purchasing
                 'seconds_to_add' => 5.years.to_i,
                 'source' => 'new iOS purchase'
               })
+              if res['extras']
+                user.reload
+                user.settings['premium_voices'] ||= User.default_premium_voices
+                user.allow_additional_premium_voice!                
+                user.allow_additional_premium_voice!                
+                User.schedule(:purchase_extras, {
+                  'user_id' => user.global_id,
+                  'customer_id' => res['customer_id'],
+                  'purchase_id' => res['transaction_id'],
+                  'source' => 'iap.purchase.include',
+                  'notify' => false
+                })
+              end
               res['purchased'] = true
             else
               res['purchased'] = true
