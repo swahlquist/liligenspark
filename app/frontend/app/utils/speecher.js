@@ -318,12 +318,17 @@ var speecher = EmberObject.extend({
   find_voice_by_uri: function(uri, locale, allow_fallbacks) {
     if(uri == 'force_default') { return null; }
     var voices = speecher.get('voices');
-    // Try to find the exact voice
-    var voice = voices.find(function(v) { return v.voiceURI == uri; });
-    // Sometimes voiceURI is just the string
-    voice = voice || voices.find(function(v) { return (v.name + " " + v.lang) == uri; });
-    // Sometimes voiceURI is just the lang
-    voice = voice || voices.find(function(v) { return v.lang == uri; });
+    var uri_match = function() {
+      // Try to find the exact voice
+      var voice = voices.find(function(v) { return v.voiceURI == uri; });
+      // Sometimes voiceURI is just the string
+      voice = voice || voices.find(function(v) { return (v.name + " " + v.lang) == uri; });
+      // Sometimes voiceURI is just the lang
+      voice = voice || voices.find(function(v) { return v.lang == uri; });
+      return voice;
+    };
+    // Try to find the matching voice if you can
+    var voice = uri_match();
     var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
     var language = locale && locale.split(/-/)[0];
     var mapped_lang = i18n.lang_map[language] || language;
@@ -343,6 +348,8 @@ var speecher = EmberObject.extend({
       voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
       // Then look for voices that match the lang portion of the locale string
       voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
+      // Then try again with matching, since that'll be better than whatever just comse first
+      voice = voice || uri_match();
       // Then look for the first default voice
       voice = voice || voices.find(function(v) { return v['default']; });
       voice = voice || voices[0];

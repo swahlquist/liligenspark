@@ -917,9 +917,9 @@ var buttonTracker = EmberObject.extend({
   },
   swipe_direction: function(dom, event, targets) {
     var final = [event.clientX, event.clientY];
+    if(!dom || targets.length == 0) { return 'final'; }
     var rect = dom.getBoundingClientRect();
     var non_event_cutoff = 15;
-    if(targets.length == 0) { return 'final'; }
     var x_diff = Math.abs(final[0] - targets[0][0]);
     var y_diff = Math.abs(final[1] - targets[0][1]);
 
