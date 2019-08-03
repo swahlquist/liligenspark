@@ -545,11 +545,12 @@ var scanner = EmberObject.extend({
       }
 
       $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
-      $elem.css({position: 'absolute', left: '-1000px'});
+      $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
       document.body.appendChild($elem[0]);
     }
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
       $elem.select().focus();
+      window.scrollTo(0, 0);
     }
     // DO NOT hide_input in this method, as it is used by 
     // :native-keyboard action now
@@ -881,8 +882,14 @@ window.addEventListener('keyboardWillShow', function() {
   }
 });
 window.addEventListener('keyboardDidShow', function() {
-  if(app_state.get('speak_mode')) {
+  if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode')) {
     window.scrollTo(0, 0);
+    window.Keyboard.hideFormAccessoryBar(false, function() { });
+  }
+});
+window.addEventListener('keyboardDidHide', function() {
+  if(window.Keyboard && window.Keyboard.hide) {
+    window.Keyboard.hideFormAccessoryBar(true, function() { });
   }
 });
 window.scanner = scanner;
