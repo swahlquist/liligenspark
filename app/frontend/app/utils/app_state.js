@@ -876,10 +876,17 @@ var app_state = EmberObject.extend({
 
       CoughDrop.store.findRecord('user', board_user_id).then(function(u) {
         var data = RSVP.resolve(u);
-        if(!u.get('fresh') && stashes.get('online')) {
+        if(!u.get('preferences') || (!u.get('fresh') && stashes.get('online'))) {
           data = u.reload();
         }
-        data.then(function(u) {
+        data.then(null, function() {
+          // go with what you have, you might not actually be online like you thought you were
+          if(u.get('preferences')) {
+            return RSVP.resolve(u);
+          } else {
+            return RSVP.reject();
+          }
+        }).then(function(u) {
           if(keep_as_self) {
             app_state.set('speakModeUser', null);
             stashes.persist('speak_mode_user_id', null);
