@@ -548,7 +548,7 @@ var scanner = EmberObject.extend({
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
       $elem[0].addEventListener('textInput', function(event) {
         event.preventDefault();
-        if(event.data && event.data != "") {
+        if(event.data && event.data != "" && !event.composed) {
           if(buttonTracker.check('keyboard_listen')) {
             // add autocomplete to the sentence box
             var key = event.data;
@@ -567,6 +567,19 @@ var scanner = EmberObject.extend({
       document.body.appendChild($elem[0]);
     }
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
+      if(buttonTracker.native_keyboard) {
+        window.Keyboard.hideFormAccessoryBar(false, function() { });
+        $elem.attr({
+          autocomplete: 'on',
+          autocorrect: 'on',
+        });
+      } else {
+        window.Keyboard.hideFormAccessoryBar(true, function() { });
+        $elem.attr({
+          autocomplete: 'off',
+          autocorrect: 'off',
+        });
+      }
       $elem.select().focus();
       window.scrollTo(0, 0);
     }
@@ -899,25 +912,9 @@ window.addEventListener('keyboardWillShow', function() {
     scanner.hide_input();
   }
 });
-window.addEventListener('keyboardDidShow', function() {
-  if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode')) {
-    window.scrollTo(0, 0);
-    window.Keyboard.hideFormAccessoryBar(false, function() { });
-    var $elem = scanner.find_elem("#hidden_input");
-    if($elem.length) {
-      $elem.attr('autocomplete', 'on');
-      $elem.attr('autocorrect', 'on');
-    }
-  }
-});
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {
-    window.Keyboard.hideFormAccessoryBar(true, function() { });
-    var $elem = scanner.find_elem("#hidden_input");
-    if($elem.length) {
-      $elem.attr('autocomplete', 'on');
-      $elem.attr('autocorrect', 'off');
-    }
+    window.Keyboard.hideFormAccessoryBar(false, function() { });
   }
 });
 window.scanner = scanner;
