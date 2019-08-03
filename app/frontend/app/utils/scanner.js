@@ -880,6 +880,11 @@ window.addEventListener('keyboardWillShow', function() {
     scanner.hide_input();
   }
 });
+window.addEventListener('keyboardDidShow', function() {
+  if(app_state.get('speak_mode')) {
+    window.scrollTo(0, 0);
+  }
+});
 window.scanner = scanner;
 
 export default scanner;

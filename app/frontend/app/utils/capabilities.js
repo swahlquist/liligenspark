@@ -121,7 +121,8 @@ var capabilities;
         capabilities.credentials = capabilities.auth_credentials;
         capabilities.access_token = auth_settings.access_token;
         if(window.Keyboard && window.Keyboard.shrinkView) {
-          window.Keyboard.shrinkView(false);
+          window.Keyboard.shrinkView(false, function() { });
+//          window.Keyboard.disableScrollingInShrinkView(true, function() { });
         }
 
         return res;

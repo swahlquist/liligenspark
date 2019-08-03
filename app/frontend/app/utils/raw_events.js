@@ -732,7 +732,7 @@ var buttonTracker = EmberObject.extend({
           elem_wrap = buttonTracker.initialTarget;
           frame_event = buttonTracker.initialEvent;
         } else if(buttonTracker.activation_location == 'swipe' && buttonTracker.initialTarget && buttonTracker.initialEvent) {
-          swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations);
+          swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations || []);
           if(swipe_direction == 'initial') {
             elem_wrap = buttonTracker.initialTarget;
             frame_event = buttonTracker.initialEvent;      
@@ -926,7 +926,7 @@ var buttonTracker = EmberObject.extend({
   },
   swipe_direction: function(dom, event, targets) {
     var final = [event.clientX, event.clientY];
-    if(!dom || targets.length == 0) { return 'final'; }
+    if(!dom || (targets || []).length == 0) { return 'final'; }
     var rect = dom.getBoundingClientRect();
     var non_event_cutoff = 15;
     var x_diff = Math.abs(final[0] - targets[0][0]);
