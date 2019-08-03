@@ -546,6 +546,24 @@ var scanner = EmberObject.extend({
 
       $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
+      $elem[0].addEventListener('textInput', function(event) {
+        event.preventDefault();
+        if(event.data && event.data != "") {
+          if(buttonTracker.check('keyboard_listen')) {
+            // add autocomplete to the sentence box
+            var key = event.data;
+            if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
+            app_state.activate_button({}, {
+              label: event.key,
+              vocalization: key,
+              prevent_return: true,
+              button_id: null,
+              board: {id: 'external_keyboard', key: 'core/external_keyboard'},
+              type: 'speak'
+            });
+          }
+        }
+      });
       document.body.appendChild($elem[0]);
     }
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
@@ -885,11 +903,21 @@ window.addEventListener('keyboardDidShow', function() {
   if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode')) {
     window.scrollTo(0, 0);
     window.Keyboard.hideFormAccessoryBar(false, function() { });
+    var $elem = scanner.find_elem("#hidden_input");
+    if($elem.length) {
+      $elem.attr('autocomplete', 'on');
+      $elem.attr('autocorrect', 'on');
+    }
   }
 });
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {
     window.Keyboard.hideFormAccessoryBar(true, function() { });
+    var $elem = scanner.find_elem("#hidden_input");
+    if($elem.length) {
+      $elem.attr('autocomplete', 'on');
+      $elem.attr('autocorrect', 'off');
+    }
   }
 });
 window.scanner = scanner;
