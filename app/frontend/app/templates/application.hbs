@@ -609,7 +609,7 @@
           {{/if}}
           <span class="caret"></span>
         </a>
-        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style="right: 0; left: inherit; text-align: left; touch-action: none;">
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style="right: 0; left: inherit; text-align: left;">
           {{#if app_state.speak_mode}}
             {{#if app_state.currentBoardState.id}}
               {{#if simple_board_header}}
@@ -628,7 +628,7 @@
               {{/if}}
             {{/if}}
             <li role="presentation" class='big' id='exit_speak_mode'>
-              <a href="#" {{action "toggleSpeakMode"}} style='touch-action: manipulation;'>
+              <a href="#" {{action "toggleSpeakMode"}}>
                 {{t "Exit Speak Mode" key="exit_speak_mode"}}
                 <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
               </a>

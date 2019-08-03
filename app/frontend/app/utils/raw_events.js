@@ -792,6 +792,14 @@ var buttonTracker = EmberObject.extend({
 
         // selection events can be prevented by a debounce setting
         if(track.proceed) {
+          if(capabilities.system == 'iOS' && capabilities.installed_app && window.Hammer && window.Hammer.time) {
+            // iOS's old webview struggles with touch-action so we
+            // use hammer-time, but it causes problems with dropdowns.
+            // This can go away when hammer-time is not necessary
+            $(".dropdown-menu").each(function() {
+              this.style['touch-action'] = 'auto';
+            });
+          }
           if(elem_wrap.dom.id == 'highlight_box') {
             var found = false;
             // special case to make sure you can always hit the identity box,
@@ -804,7 +812,7 @@ var buttonTracker = EmberObject.extend({
             });
           }
           // different elements have different selection styles
-          if(elem_wrap.dom.id == 'identity') {
+          if(elem_wrap.dom.id == 'identity' || elem_wrap.dom.id == 'identity_button') {
             event.preventDefault();
             // click events are eaten by our listener above, unless you
             // explicitly tell it to pass them through
@@ -812,6 +820,7 @@ var buttonTracker = EmberObject.extend({
             e.clientX = event.clientX;
             e.clientY = event.clientY;
             e.pass_through = true;
+      
             if(elem_wrap.wait) {
               runLater(function() {
                 if($("#identity .dropdown-menu:visible").length == 0) {
