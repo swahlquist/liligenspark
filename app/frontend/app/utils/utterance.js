@@ -524,6 +524,7 @@ var utterance = EmberObject.extend({
     });
     app_state.set('insertion', null);
     speecher.speak_collection(items, Math.round(Math.random() * 99999) + '-' + (new Date()).getTime(), {override_volume: volume});
+    $("#hidden_input").val("");
     this.set('list_vocalized', true);
   },
   set_ghost_utterance: function() {

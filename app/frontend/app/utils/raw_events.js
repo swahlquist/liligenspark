@@ -116,6 +116,10 @@ $(document).on('mousedown touchstart', function(event) {
   if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !dwell_key && !modal.is_open()) {
     // add letter to the sentence box
     var key = "+" + event.key;
+    var $input = $("#hidden_input");
+    if($input[0]) {
+      $input.val($input.val() + event.key);
+    }
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
     app_state.activate_button({}, {
       label: event.key,
@@ -145,6 +149,7 @@ $(document).on('mousedown touchstart', function(event) {
       buttonTracker.clear_tab();
     }
   } else if(event.keyCode == 13 || event.keyCode == 32) { // return
+    $("#hidden_input").val("");
     if(event.target.tagName == 'CANVAS') {
       buttonTracker.select_tab();
     }
@@ -152,6 +157,7 @@ $(document).on('mousedown touchstart', function(event) {
     if(modal.is_open() && modal.is_closeable()) {// && (event.target.tagName == 'INPUT' || event.target.tagName == 'BUTTON' || event.target.tagName == 'TEXTAREA' || event.target.tagName == 'A')) {
       modal.close();
     } else if(buttonTracker.check('keyboard_listen') && !modal.is_open()) {
+      $("#hidden_input").val("");
       app_state.activate_button({vocalization: ':clear'}, {
         label: 'escape',
         vocalization: ':clear',
@@ -193,7 +199,7 @@ $(document).on('mousedown touchstart', function(event) {
     modal.cancel_auto_close();
   }
   if(!buttonTracker.check('scanning_enabled')) { return; }
-  if(event.target.tagName == 'INPUT' && event.target.id != 'hidden_input') { return; }
+  if(event.target.tagName == 'INPUT') { return; }
   if(event.keyCode && event.keyCode == buttonTracker.check('select_keycode')) { // spacebar key
     scanner.pick();
     event.preventDefault();

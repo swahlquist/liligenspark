@@ -1248,6 +1248,7 @@ var app_state = EmberObject.extend({
             }
           });
         }
+        $("#hidden_input").val("");
         capabilities.tts.reload().then(function(res) {
           console.log("tts reload status");
           console.log(res);

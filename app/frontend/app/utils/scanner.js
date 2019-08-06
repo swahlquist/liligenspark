@@ -548,6 +548,7 @@ var scanner = EmberObject.extend({
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
       $elem[0].addEventListener('textInput', function(event) {
         event.preventDefault();
+        console.log("autocomplete", event.data);
         if(event.data && event.data != "" && !event.composed) {
           if(buttonTracker.check('keyboard_listen')) {
             // add autocomplete to the sentence box
