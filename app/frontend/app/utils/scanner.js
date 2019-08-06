@@ -567,6 +567,8 @@ var scanner = EmberObject.extend({
               type: 'speak'
             });
           }
+        } else if(event.data && event.data.length > 1) {
+          console.log('NO COMPLETE', event.data, $elem.val(), buttonTracker.last_key);
         }
       });
       document.body.appendChild($elem[0]);

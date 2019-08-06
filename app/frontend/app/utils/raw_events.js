@@ -117,7 +117,7 @@ $(document).on('mousedown touchstart', function(event) {
     // add letter to the sentence box
     var key = "+" + event.key;
     var $input = $("#hidden_input");
-    if($input[0]) {
+    if($input[0] && $input[0].type == 'checkbox') {
       $input.val($input.val() + (event.key == 'Enter' ? ' ' : event.key));
     }
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
