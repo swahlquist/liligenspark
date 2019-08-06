@@ -1111,18 +1111,18 @@ var capabilities;
           capabilities.battery_callbacks = capabilities.battery_callbacks || [];
           var start_listening = capabilities.battery_callbacks.length === 0;
           capabilities.battery_callbacks.push(callback);
+          var notify = function() {
+            if(capabilities.battery_callbacks.last_result) {
+              var res = {
+                level: capabilities.battery_callbacks.last_result.level,
+                charging: capabilities.battery_callbacks.last_result.charging
+              };
+              capabilities.battery_callbacks.forEach(function(cb) {
+                cb(res);
+              });
+            }
+          };
           if(start_listening) {
-            var notify = function() {
-              if(capabilities.battery_callbacks.last_result) {
-                var res = {
-                  level: capabilities.battery_callbacks.last_result.level,
-                  charging: capabilities.battery_callbacks.last_result.charging
-                };
-                capabilities.battery_callbacks.forEach(function(cb) {
-                  cb(res);
-                });
-              }
-            };
             if(navigator.getBattery) {
               navigator.getBattery().then(function(battery) {
                 battery.addEventListener('chargingchange', function() {
@@ -1158,6 +1158,9 @@ var capabilities;
                 window.cordova.exec(function(r) { console.log(r); }, function(e) { console.error(e); }, 'Battery', 'updateBatteryStatus', [])
               }, 1000);
             }
+          }
+          if(capabilities.battery_callbacks.last_result) {
+            notify();
           }
           if(capabilities.battery_callbacks.last_result) {
             callback(capabilities.battery_callbacks.last_result);
@@ -1589,6 +1592,20 @@ var capabilities;
       capabilities.last_lux = event.lux || event.value;
       stashes.ambient_light = capabilities.last_lux;
     });
+    if(capabilities.system != 'Android') {
+      document.addEventListener('deviceready', function() {
+        // on non-Android devices, just start listening right away
+        // since there's no cost, and then we'll have data for Speak Mode
+        window.addEventListener('batterystatus', function(data) {
+          if(data && data.level) {
+            capabilities.battery_callbacks = capabilities.battery_callbacks || [];
+            capabilities.battery_callbacks.last_result = capabilities.battery_callbacks.last_result || {};
+            capabilities.battery_callbacks.last_result.level = data.level / 100;
+            capabilities.battery_callbacks.last_result.charging = data.isPlugged ? true : undefined;
+          }
+        }, false);
+      });
+    }
 
     // TODO: ProximitySensor?
   };
