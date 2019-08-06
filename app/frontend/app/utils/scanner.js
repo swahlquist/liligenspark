@@ -550,10 +550,10 @@ var scanner = EmberObject.extend({
         // check the text box (are single key strokes getting added?)
         // and send :complete if it's replacing keystrokes,
         // or :predict if it's auto-suggest not autocomplete
-        event.preventDefault();
         var action = null;
-        if(event.data && buttonTracker.last_key != event.data) {
-          var action = (event.data == '' || event.data.match(/\s$/)) ? ':predict' : ':complete';
+        if(event.data && event.data != ' ' && buttonTracker.last_key != event.data) {
+          var existing = $elem.val();
+          var action = (existing == '' || existing.match(/\s$/)) ? ':predict' : ':complete';
           if(buttonTracker.check('keyboard_listen')) {
             console.log("autocomplete", event.data);
             // add autocomplete to the sentence box
