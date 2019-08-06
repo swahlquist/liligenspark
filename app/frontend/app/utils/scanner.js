@@ -577,6 +577,10 @@ var scanner = EmberObject.extend({
       if(buttonTracker.native_keyboard) {
         window.Keyboard.hideFormAccessoryBar(false, function() { });
         $elem.attr({
+          // TODO: set these to 'on' to enable keyboard suggestions,
+          // but note that for reason if you hit more than one character
+          // and then autocomplete, it doesn't appear to be triggering 
+          // any events like you would think
           autocomplete: 'on',
           autocorrect: 'on',
         });
