@@ -547,16 +547,20 @@ var scanner = EmberObject.extend({
       $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
       $elem[0].addEventListener('textInput', function(event) {
+        // check the text box (are single key strokes getting added?)
+        // and send :complete if it's replacing keystrokes,
+        // or :predict if it's auto-suggest not autocomplete
         event.preventDefault();
-        console.log("autocomplete", event.data);
-        if(event.data && event.data != "" && !event.composed) {
+        var action = null;
+        if(event.data && buttonTracker.last_key != event.data) {
+          var action = (event.data == '' || event.data.match(/\s$/)) ? ':predict' : ':complete';
           if(buttonTracker.check('keyboard_listen')) {
+            console.log("autocomplete", event.data);
             // add autocomplete to the sentence box
-            var key = event.data;
-            if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
             app_state.activate_button({}, {
-              label: event.key,
-              vocalization: key,
+              label: event.data,
+              vocalization: action,
+              completion: event.data,
               prevent_return: true,
               button_id: null,
               board: {id: 'external_keyboard', key: 'core/external_keyboard'},

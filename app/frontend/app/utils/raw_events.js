@@ -118,9 +118,10 @@ $(document).on('mousedown touchstart', function(event) {
     var key = "+" + event.key;
     var $input = $("#hidden_input");
     if($input[0]) {
-      $input.val($input.val() + event.key);
+      $input.val($input.val() + (event.key == 'Enter' ? ' ' : event.key));
     }
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
+    buttonTracker.last_key = event.key;
     app_state.activate_button({}, {
       label: event.key,
       vocalization: key,
@@ -169,6 +170,10 @@ $(document).on('mousedown touchstart', function(event) {
     }
   } else if(event.keyCode == 8) { // backspace
     if(buttonTracker.check('keyboard_listen') && !modal.is_open()) {
+      var $input = $("#hidden_input");
+      if($input.val()) {
+        $input.val($input.val().slice(0, -1));
+      }
       app_state.activate_button({vocalization: ':backspace'}, {
         label: 'backspace',
         vocalization: ':backspace',
