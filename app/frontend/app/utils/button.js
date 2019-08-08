@@ -381,7 +381,7 @@ var Button = EmberObject.extend({
       }, function() { return RSVP.resolve(sound); });
     };
     if(!sound) {
-      var sound_urls = _this.get('sound_urls');
+      var sound_urls = _this.get('board.sound_urls');
       if(sound_urls && sound_urls[_this.sound_id]) {
         var snd = CoughDrop.store.createRecord('sound', {
           url: sound_urls[_this.sound_id]
@@ -457,6 +457,12 @@ var Button = EmberObject.extend({
       return RSVP.resolve(true);
     }
     this.set('content_status', 'pending');
+    if(!_this.image_url && _this.get('board') && _this.image_id) {
+      _this.image_url = (_this.get('board.image_urls') || {})[_this.image_id];
+    }
+    if(!_this.sound_url && _this.get('board') && _this.sound_id) {
+      _this.sound_url = (_this.get('board.sound_urls') || {})[_this.sound_id];
+    }
     return new RSVP.Promise(function(resolve, reject) {
       var promises = [];
       if(_this.image_id && _this.image_url && persistence.url_cache && persistence.url_cache[_this.image_url] && (!persistence.url_uncache || !persistence.url_uncache[_this.image_url])) {

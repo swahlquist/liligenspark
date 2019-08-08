@@ -92,24 +92,24 @@ var editManager = EmberObject.extend({
       }
     }
   },
-  overlay_button_from: function(button) {
+  overlay_button_from: function(button, board) {
     return editManager.Button.create({
       overlay: true,
+      board: board,
       id: button.get('id'),
       label: button.get('label'),
       image_id: button.get('image_id'),
-      image_url: button.get('image_url'),
       sound_id: button.get('sound_id'),
-      sound_url: button.get('sound_url'),
       part_of_speech: button.get('part_of_speech')
     });
   },
   grid_for: function(button_id) {
     var button = editManager.find_button(button_id);
+    var board = this.controller.get('model');
     var res = null;
     if(!button) { return null; }
     var select_button = function(label, vocalization, event) {
-      var overlay_button = editManager.overlay_button_from(button);
+      var overlay_button = editManager.overlay_button_from(button, board);
   
       app_state.controller.activateButton(overlay_button, {
         board: editManager.controller.get('model'),
