@@ -193,7 +193,7 @@ var editManager = EmberObject.extend({
       res = [
 //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
         {location: 'c', label: button.label},
-        {location: 'w', label: i18n.negation(button.label)},
+        {location: 'nw', label: i18n.negation(button.label)},
 //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
       ];
     }
@@ -236,9 +236,18 @@ var editManager = EmberObject.extend({
       }
       var left = Math.max(left - margin, button_width);
       var left = Math.min(left, screen_width - button_width - button_width);
+      // don't let it go above the fold
       var top = Math.max(top - margin, button_height);
+      // don't let it go below the screen edge
       var top = Math.min(top, screen_height - button_height - button_height);
+      // keep it below the header
       top = Math.max(top, header_height + margin + button_height);
+      // shift up just a little if it's not on the bottom, but will get clipped
+      if(vertical_close) {
+        if((top + button_height) < screen_height - (button_height * 1.5)) {
+          top = Math.min(top, screen_height - (button_height * 3) + (margin * 2));
+        }
+      }
       var layout = [];
       var hash = {'nw': 0, 'n': 1, 'ne': 2, 'w': 3, 'c': 4, 'e': 5, 'sw': 6, 's': 7, 'se': 8};
       grid.forEach(function(e) {

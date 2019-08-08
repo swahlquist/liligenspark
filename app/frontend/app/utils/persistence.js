@@ -1106,6 +1106,7 @@ var persistence = EmberObject.extend({
         persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg', 'image', false, false).then(null, function() { });
         persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
         persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
+        persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
       }
 
       var confirm_quota_for_user = find_user.then(check_first(function(user) {
