@@ -5,10 +5,10 @@
   <img src={{path 'walkthrough/supervisors.gif'}} style='width: 100%;' />
 </div>
 <div class='col-sm-5'>
-  <p>{{t "%app_name% works best when a team of supporters are connected to the communicator. We encourage every user to have their own %app_name% account (supporter accounts are free), and communicators can then connect team members to their account by adding them as \"supervisors\"." key='supervisors_explainer'}}</p>
+  <p class='prompt'>{{t "%app_name% works best with a team of supporters around the communicator. Every user can have their own %app_name% account (supporters are free), and communicators can connect team members to their account by adding them as \"supervisors\"." key='supervisors_explainer'}}</p>
   {{#if app_state.currentUser.supporter_role}}
-    <p>{{t "In order to see the boards and reports for communicators you work with, those users will have to add your account as a supervisor from their dashboard. You can encourage them to add everyone around the communicator as supervisors to help build a strong support team." key='get_added_as_supervisor'}}</p>
+    <p class='prompt'>{{t "In order to see the boards and reports for communicators you work with, those users need to add you from their dashboard. You can encourage them to add everyone around the communicator as supervisors to help build a strong support team." key='get_added_as_supervisor'}}</p>
   {{else}}
-    <p>{{t "AAC intervention works best when a strong team is supporting the communicator. You can encourage people like family members, teachers, therapists, etc. to sign up for a free supporter account, and then you can add them as supervisors to grant access to the communicator's boards, reports and goals." key='add_lots_of_supervisors'}}</p>
+    <p class='prompt'>{{t "Learning AAC works best with lots of supporters around communicator. You can encourage people like family members, teachers, therapists, etc. to sign up for a free supporter account, and then add them as supervisors to grant access to boards, reports and goals." key='add_lots_of_supervisors'}}</p>
   {{/if}}
 </div>

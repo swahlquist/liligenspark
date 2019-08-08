@@ -75,6 +75,16 @@ header #normal_mode .btn {
   z-index: 3; 
   border-top: 1px solid #aaa;  
 }
+.btn-success {
+  box-shadow: 5px 5px 10px #fff, -5px -5px 10px #fff, 5px -5px 10px #fff, -5px 5px 10px #fff;
+}
+.btn-success.throb {
+  animation: throb-shadow 1.5s ease-in-out infinite;
+}
+@keyframes throb-shadow {
+  0%, 100% {   color: #fff; box-shadow: 5px 5px 10px #fff, -5px -5px 10px #fff, 5px -5px 10px #fff, -5px 5px 10px #fff;  }
+  50% {   color: #ff0; box-shadow: 5px 5px 10px #ff0, -5px -5px 10px #ff0, 5px -5px 10px #ff0, -5px 5px 10px #ff0;  }
+}
 .bold {
   font-weight: bold;
 }
@@ -930,6 +940,7 @@ footer .wide_links {
 #setup_container {
   margin-bottom: 60px; 
   margin-top: 0px; 
+  position: relative;
   font-size: 18px;
   p {
     margin-bottom: 30px;

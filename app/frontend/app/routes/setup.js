@@ -1,6 +1,7 @@
 import Ember from 'ember';
 import Route from '@ember/routing/route';
 import app_state from '../utils/app_state';
+import speecher from '../utils/speecher';
 
 export default Route.extend({
   setupController: function(controller) {
@@ -16,5 +17,8 @@ export default Route.extend({
       user.save().then(null, function() { });
     }
     controller.update_on_page_change();
+  },
+  deactivate: function() {
+    speecher.stop('all');
   }
 });

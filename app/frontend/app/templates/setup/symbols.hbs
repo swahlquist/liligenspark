@@ -1,5 +1,5 @@
 <div class='col-sm-10 col-sm-offset-1'>
-  <p>{{t "Here in a moment we'll show you some different options for home boards you can use. Before we do, let's decide on a couple things. Keep in mind that you can always change these settings later under \"Preferences\"." key='start_deciding'}}</p>
+  <p class='prompt'>{{t "In addition to selecting a board, there are some other settings that can change based on the communicator's situation. Keep in mind that you can always change these settings later under \"Preferences\"." key='start_deciding'}}</p>
 </div>
 <div class='row'>
   <div class='col-sm-5 col-sm-offset-1'>
@@ -7,8 +7,8 @@
       <label>{{t "How do you want buttons to appear?" key='text_placement'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">
         <a href="#" class={{if text_position.text_on_top 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.button_text_position' 'top'}} >{{t "Pictures with text above" key='text_above_pictures'}}</a>
-        <a href="#" class={{if text_position.text_on_bottom 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.button_text_position' 'bottom'}} >{{t "Pictures with text below" key='text_below_pictures'}}</a>
         <a href="#" class={{if text_position.text_only 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.button_text_position' 'text_only'}} >{{t "Text only (no pictures)" key='no_pictures'}}</a>
+        <a href="#" class={{if text_position.text_on_bottom 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.button_text_position' 'bottom'}} >{{t "Pictures with text below" key='text_below_pictures'}}</a>
       </div>
     </div>
   </div>
@@ -44,7 +44,7 @@
         {{/if}}
       {{/if}}
     </div>
-    <p style='font-size: 16px;'>{{t "If you're not sure what to do, \"pictures with text above\" is a good default, it will allow the communicator to recognize intents based on pictures, and help develop literacy by learning the corresponding words over time." key='text_above_suggestion'}}</p>
+    <p style='font-size: 16px;'>{{t "If you're not sure, having text above is a good option for starting with pictures but learning to read words over time." key='text_above_suggestion'}}</p>
   </div>
 </div>
 {{#unless text_position.text_only}}
@@ -91,7 +91,7 @@
         {{/if}}
       {{/if}}
     </div>
-    <p style='font-size: 16px;'>{{t "For most users, matching the button color will work well and looks cleaner, but for some communicators having a white background on all images will help with contrast and recognition." key='background_suggestion'}}</p>
+    <p style='font-size: 16px;'>{{t "For most users, matching the button color works well, but for some communicators having a white background can help with contrast and recognition." key='background_suggestion'}}</p>
   </div>
 </div>
 <div class='row'>
@@ -178,7 +178,7 @@
     {{else if lessonpix_but_not_allowed}}
       <p class='text-warning' style='font-size: 16px;'>{{t "NOTE: You will need to connect your LessonPix account to your %app_name% account on your Profile page before you can use these symbols." key='lessonpix_upgrade_required'}}</p>
     {{else}}
-      <p style='font-size: 16px;'>{{t "Some communicators already have practice or experience with certain symbol libraries, and %app_name% can automatically swap symbols in a user's boards based on what they're familiar with. If you're not sure, you can just use the board's original symbols and everything will work fine." key='symbols_suggestion'}}</p>
+      <p style='font-size: 16px;'>{{t "Some communicators already know a symbol library or can benefit from a certain style, and %app_name% can be set to use they're familiar with. Using the board's original symbols is also fine." key='symbols_suggestion'}}</p>
     {{/if}}
   </div>
 </div>

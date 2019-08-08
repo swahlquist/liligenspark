@@ -1,11 +1,11 @@
 <div class='col-sm-6 col-sm-offset-3'>
   <h4>{{t "Welcome to %app_name%!" key='welcome_to_coughdrop'}}</h4>
   <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} style='width: 50px; float: left; margin-right: 10px; margin-bottom: 5px;' />
-  <p>{{t "Thanks for signing up for %app_name%! We're excited you're here and hope %app_name% makes a difference for you. If you haven't used %app_name% before, this walkthrough will help you get started, and explain a little more about what %app_name% is trying to accomplish." key='intro_1'}}</p>
+  <p class='prompt'>{{t "Thanks for signing up for %app_name%! We're excited you're here and hope %app_name% makes a difference for you. If you're new to %app_name%, this walkthrough will help you get started." key='intro_1'}}</p>
   {{#if app_state.currentUser.user_name}}
-    <p>{{t "First thing's first, make a note of your username (<b>%{un}</b>), you can use it to log in using the free iOS, Android and Windows apps, or using any web browser. That's right, you can edit boards, practice and view reports from any computer with a web browser!" un=app_state.currentUser.user_name key='intro_3'}}</p>
+    <p class='prompt'>{{t "First, remember your username (<b>%{un}</b>), you can use it to log in when you download the free app. You can also edit boards, practice and view reports from any computer with a web browser!" un=app_state.currentUser.user_name key='intro_3'}}</p>
   {{/if}}
-  <p>{{t "Next we'd like to start by teaching you a little about AAC (Augmentative and Alternative Communication), and then help make sure you've got %app_name% set up correctly. Hit \"Next\" in the bottom corner to get started." key='intro_2'}}</p>
+  <p class='prompt'>{{t "Next we'd like teach just a little about AAC (Augmentative and Alternative Communication), and then help make sure you've got %app_name% set up correctly. Hit \"Next\" in the bottom corner to get started." key='intro_2'}}</p>
   <div style='float: left'>
     <button class='btn btn-default btn-lg' {{action 'choose_board'}}>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
   </div>

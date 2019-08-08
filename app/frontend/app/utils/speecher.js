@@ -442,6 +442,24 @@ var speecher = EmberObject.extend({
             CoughDrop.track_error("error rendering synthesized voice", opts);
             handle_callback();
           });
+          var hit_boundary = null;
+          var any_boundary = false;
+          utterance.addEventListener('boundary', function(e) {
+            any_boundary = true;
+            hit_boundary = (new Date()).getTime();
+          });
+          var check_boundary = function() {
+            if(utterance.handled) { return; }
+            if(any_boundary && !hit_boundary) {
+              console.log("stopped talking");
+              handle_callback();
+            } else {
+              hit_boundary = false;
+              runLater(check_boundary, 1000);
+            }
+          };
+          runLater(check_boundary, 2500);
+
           utterance.addEventListener('pause', function() {
             console.log("paused");
             handle_callback();
@@ -456,6 +474,7 @@ var speecher = EmberObject.extend({
         // 4 times the estimated duration, go ahead and assume there was a problem and mark completion
         runLater(function() {
           if(!utterance.handled) {
+            speecher.scope.speechSynthesis.cancel();
             handle_callback();
           }
         }, 1000 * Math.ceil(text.length / 15) * 4 / (utterance.rate || 1.0));
@@ -528,17 +547,31 @@ var speecher = EmberObject.extend({
         if(speak.volume) { speecher.volume = speak.volume; }
         speecher.speak_text(speak.text, speecher.speaking_from_collection, speak);
         speecher.volume = stashVolume;
+      } else if(speak.wait) {
+        runLater(function() {
+          speecher.next_speak();
+        }, speak.wait);
+      } else {
+        speecher.next_speak();
       }
     } else {
+      if(speecher.speaking_from_collection) {
+        var defer = (speecher.speak_defers || {})[speecher.speaking_from_collection];
+        if(defer) { defer.resolve(); }
+      }
       // console.log("no speaks left");
     }
   },
   speak_end_handler: function(speak_id) {
     if(speak_id == speecher.last_speak_id) {
       if(!speecher.speaks || speecher.speaks.length === 0) {
+        if(speecher.speaking_from_collection && speecher.speak_defers) {
+          var defer = speecher.speak_defers[speecher.speaking_from_collection];
+          if(defer) { defer.resolve(); }
+        }
         speecher.speaking_from_collection = false;
-        speecher.speaking = false;
       }
+      speecher.speaking = false;
       speecher.next_speak();
     } else {
       // console.log('unexpected speak_id');
@@ -825,7 +858,12 @@ var speecher = EmberObject.extend({
     return $res;
   },
   speak_collection: function(list, collection_id, opts) {
+    this.speak_defers = this.speak_defers || {};
     this.stop('text');
+    var defer = RSVP.defer();
+    if(collection_id) {
+      this.speak_defers[collection_id] = defer;
+    }
     this.speaks = list;
     if(opts && opts.override_volume) {
       list.forEach(function(s) { s.volume = opts.override_volume; });
@@ -834,6 +872,7 @@ var speecher = EmberObject.extend({
       this.speaking_from_collection = collection_id;
       this.next_speak();
     }
+    return defer.promise;
   },
   stop: function(type) {
     this.audio = this.audio || {};
@@ -842,6 +881,11 @@ var speecher = EmberObject.extend({
     $("audio.throwaway").remove();
     if(type == 'text' || type == 'all') {
       this.speaking = false;
+      this.speak_defers = this.speak_defers || {};
+      for(var key in this.speak_defers) {
+        this.speak_defers[key].reject();
+        delete this.speak_defers[key];
+      }
       this.speaking_from_collection = false;
       if(type === 'all') { this.speaks = []; }
       speecher.scope.speechSynthesis.cancel();

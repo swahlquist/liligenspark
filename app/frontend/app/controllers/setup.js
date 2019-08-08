@@ -13,7 +13,7 @@ import utterance from '../utils/utterance';
 import Utils from '../utils/misc';
 import Stats from '../utils/stats';
 
-var order = ['intro', 'usage', 'home_boards', 'core', 'symbols', 'access', 'board_category', 'voice', 'logging', 'supervisors', 'notifications', 'done'];
+var order = ['intro', 'usage', 'board_category', 'core', 'symbols', 'access', 'voice', 'logging', 'supervisors', 'done'];
 var extra_order = ['extra-dashboard', 'extra-home-boards', 'extra-speak-mode', 'extra-folders', 'extra-exit-speak-mode', 'extra-modeling', 'extra-supervisors', 'extra-reports', 'extra-logs', 'extra-done'];
 export default Controller.extend({
   speecher: speecher,
@@ -87,7 +87,7 @@ export default Controller.extend({
     var res = {};
     var user = app_state.get('currentUser') || this.get('fake_user');
     if(user.get('preferences.preferred_symbols')) {
-      res[user.get('preferences.preferred_symbols')] = true;
+      res[user.get('preferences.preferred_symbols').replace(/-/, '_')] = true;
     } else {
       res.original = true;
     }
@@ -235,8 +235,40 @@ export default Controller.extend({
     if(this.get('page') != 'board_category') {
       this.set('advanced', false);
     }
+    var _this = this;
+    speecher.stop('all');
+    _this.set('reading', false);
+    if(!_this.get('reading_disabled')) {
+      runLater(function() {
+        _this.read_step();
+      });
+    }
     $('html,body').scrollTop(0);
   }.observes('page'),
+  read_step: function() {
+    var _this = this;
+    var prompts = [];
+    $("#setup_container .prompt").each(function() {
+      var sentences = this.innerText.split(/\.\s/);
+      sentences.forEach(function(s) {
+        if(s) {
+          prompts.push({text: s + "."});
+        }
+      })
+      prompts.push({wait: 500});
+    });
+    console.log("prompt", prompts);
+    speecher.stop('all');
+    _this.set('reading', true);
+    speecher.speak_collection(prompts, "setup-prompt" + Math.random()).then(function() {
+      _this.set('reading', false);
+    }, function() {
+      if(speecher.speaking_from_collection && speecher.speaking_from_collection.match(/^setup-prompt/)) {
+      } else {
+        _this.set('reading', false);
+      }
+    });
+  },
   actions: {
     set_preference: function(preference, value) {
       var user = app_state.get('currentUser') || this.get('fake_user');
@@ -278,6 +310,16 @@ export default Controller.extend({
     },
     update_scroll: function(val) {
       this.set('scroll_disableable', val);
+    },
+    toggle_speaking: function() {
+      if(this.get('reading')) {
+        speecher.stop('all');
+        this.set('reading_disabled', true);
+        this.set('reading', false);
+      } else {
+        this.set('reading_disabled', false);
+        this.read_step();
+      }
     },
     home: function(plus_video) {
       this.transitionToRoute('index');
