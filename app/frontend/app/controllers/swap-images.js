@@ -23,6 +23,7 @@ export default modal.ModalController.extend({
         _this.set('premium_symbols_enabled', true);
       }
     });
+    if(this.get('model.library')) { this.set('library', this.get('model.library')); }
     app_state.get('currentUser').find_integration('lessonpix', this.get('model.board.user_name')).then(function(res) {
       _this.set('lessonpix_enabled', true);
       if(stashes.get('last_image_library') == 'lessonpix') { _this.set('image_library', 'lessonpix'); }

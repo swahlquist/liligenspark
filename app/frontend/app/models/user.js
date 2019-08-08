@@ -13,7 +13,10 @@ import Utils from '../utils/misc';
 import {set as emberSet, get as emberGet} from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 import stashes from '../utils/_stashes';
+import i18n from '../utils/i18n';
 import ButtonSet from '../models/buttonset';
+import modal from '../utils/modal';
+import BoardHierarchy from '../utils/board_hierarchy';
 
 CoughDrop.User = DS.Model.extend({
   didLoad: function() {
@@ -504,12 +507,12 @@ CoughDrop.User = DS.Model.extend({
     var board_key = emberGet(board, 'key');
     var board_id = emberGet(board, 'id');
     var preferred_symbols = user.get('preferences.preferred_symbols') || 'original';
-    return new RSVP.Promise(function(resolve, reject) {
+    var copy_promise = new RSVP.Promise(function(resolve, reject) {
       user.set('home_board_pending', board_key);
       CoughDrop.store.findRecord('board', board_id).then(function(board) {
         var swap_library = null;
         if(swap_images && preferred_symbols && preferred_symbols != 'original') { swap_library = user.get('preferences.preferred_symbols'); }
-        editManager.copy_board(board, 'links_copy_as_home', user, false, swap_library).then(function() {
+        editManager.copy_board(board, 'links_copy_as_home', user, false, swap_library).then(function(new_board) {
           user.set('home_board_pending', false);
           if(persistence.get('online') && persistence.get('auto_sync')) {
             runLater(function() {
@@ -517,7 +520,8 @@ CoughDrop.User = DS.Model.extend({
               persistence.sync('self').then(null, function() { });
             }, 1000);
           }
-          resolve();
+          user.set('home_board_copy', {id: user.get('preferences.home_board.id'), at: (new Date()).getTime()});
+          resolve(new_board);
         }, function() {
           user.set('home_board_pending', false);
           reject({error: 'copy failed'});
@@ -527,6 +531,84 @@ CoughDrop.User = DS.Model.extend({
         reject({error: 'board not found'});
       });
     });
+    copy_promise.then(null, function() { return RSVP.resolve(); }).then(function() {
+      if(user.get('copy_promise') == copy_promise) {
+        user.set('copy_promise', null);
+      }
+    });
+    user.set('copy_promise', copy_promise);
+    return copy_promise;
+  },
+  swap_home_board_images: function(swap_library) {
+    var user = this;
+    user.set('preferred_symbols_changed', null);
+    user.set('original_preferred_symbols', null);
+    var now = (new Date()).getTime();
+    var re = new RegExp("^" + user.get('user_name') + "\\\/");
+    var board_id = user.get('preferences.home_board.id');
+    var swap_library = user.get('preferences.preferred_symbols')
+    var defer = RSVP.defer();
+    var find = CoughDrop.store.findRecord('board', board_id).then(function(board) {
+      defer.ready_to_swap = function(board_id) {
+        var err = function() {
+          modal.error(i18n.t('error_swapping_images', "There was an unexpected error when trying to update your home board's symbol library"));
+          defer.reject();
+        };
+        // retrieve board
+        BoardHierarchy.load_with_button_set(board, {prevent_keyboard: true, prevent_different: true}).then(function(hierarchy) {
+          var board_ids_to_include = hierarchy.selected_board_ids();
+          persistence.ajax('/api/v1/boards/' + board_id + '/swap_images', {
+            type: 'POST',
+            data: {
+              library: swap_library,
+              board_ids_to_convert: board_ids_to_include
+            }
+          }).then(function(res) {
+            progress_tracker.track(res.progress, function(event) {
+              if(event.status == 'errored') {
+                err();
+              } else if(event.status == 'finished') {
+                // reload board and re-sync
+                runLater(function() {
+                  board.reload(true).then(function() {
+                    console.debug('syncing because home board symbol changes');
+                    persistence.sync('self').then(null, function() { });
+                  }, function() { });
+                  defer.resolve();
+                });
+              }
+            });
+          }, function(res) {
+            err();
+          });  
+        }, function(err) {
+          err();
+        });
+      }
+    }, function() { defer.reject(); });
+    if(user.get('copy_promise')) {
+      // If the user's home board is copying, queue a swap_images call
+      user.get('copy_promise').then(function(new_board) {
+        find.then(function() {
+          defer.ready_to_swap(new_board.get('id')); 
+        })
+      });
+    } else if(user.get('home_board_copy') && user.get('home_board_copy.at') > (now - (60 * 60 * 1000)) && user.get('home_board_copy.id') == board_id) {
+      // If the user's home board is brand new, trigger a swap_images call
+      find.then(function() {
+        defer.ready_to_swap(board_id);
+      })
+    } else if(user.get('preferences.home_board.key').match(re)) {
+      // If the user's home board is owned by them but not brand new, open the swap-images modal with a special prompt
+      defer.promise.wait = true;
+      find.then(function(board) {
+        modal.open('swap-images', {board: board, button_set: board.get('button_set'), library: swap_library, confirmation: true}).then(function() {
+          defer.resolve();        
+        });  
+      });
+    }
+
+    return defer.promise;
   },
   check_user_name: function() {
     if(this.get('watch_user_name_and_cookies')) {

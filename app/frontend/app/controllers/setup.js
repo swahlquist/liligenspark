@@ -291,6 +291,12 @@ export default Controller.extend({
           this.set('auto_home_return', false);
           return;
         }
+      } else if(preference == 'preferred_symbols') {
+        if(!user.get('original_preferred_symbols')) {
+          user.set('original_preferred_symbols', user.get('preferences.preferred_symbols') || 'none')
+        }
+        user.set('preferences.' + preference, value);
+        user.set('preferred_symbols_changed', user.get('preferred_symbols') != user.get('original_preferred_symbols'));
       } else {
         user.set('preferences.' + preference, value);
       }

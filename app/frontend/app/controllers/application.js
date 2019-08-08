@@ -887,12 +887,20 @@ export default Controller.extend({
       var order = this.get('setup_order');
       var current = this.get('setup_page') || 'intro';
       var current_index = order.indexOf(current) || 0;
+      var wait = RSVP.resolve();
       if(direction == 'forward') {
+        if(order[current_index] == 'symbols' && app_state.get('currentUser.preferred_symbols_changed') && app_state.get('currentUser.preferences.preferred_symbols') != 'original') {
+          var promise = app_state.get('currentUser').swap_home_board_images();
+          if(promise.wait) { wait = promise; }
+        }
         current_index = Math.min(current_index + 1, order.length - 1);
       } else if(direction == 'backward') {
         current_index = Math.max(current_index - 1, 0);
       }
-      this.transitionToRoute('setup', {queryParams: {page: order[current_index]}});
+      var _this = this;
+      wait.then(function() {
+        _this.transitionToRoute('setup', {queryParams: {page: order[current_index]}});
+      }, function() { });
     },
     speak_mode_notification: function() {
       if(app_state.get('speak_mode_modeling_ideas.enabled')) {
