@@ -98,8 +98,9 @@ var editManager = EmberObject.extend({
       id: button.get('id'),
       label: button.get('label'),
       image_id: button.get('image_id'),
-      image: button.get('image'),
-      sound: button.get('sound'),
+      image_url: button.get('image_url'),
+      sound_id: button.get('sound_id'),
+      sound_url: button.get('sound_url'),
       part_of_speech: button.get('part_of_speech')
     });
   },

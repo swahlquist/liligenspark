@@ -360,13 +360,22 @@ CoughDrop.User = DS.Model.extend({
   }.property('preferences.device.auto_sync', 'preferences.device.ever_synced'),
   load_more_supervision: function() {
     var _this = this;
-    
+    var localize_connections = function(sups) {
+      (sups || []).forEach(function(sup) {
+        if(sup.avatar_url && sup.avatar_url.match(/^http/)) {
+          persistence.find_url(sup.avatar_url, 'image').then(function(uri) {
+            emberSet(sup, 'avatar_url', uri);
+          }, function() { });
+        }
+      });
+    };
     if(this.get('load_all_connections') && (!this.get('all_connections.loaded') || this.get('all_connections.stamp') != this.get('sync_stamp'))) {
       _this.set('all_connections', {loading: true, sync_stamp: _this.get('sync_stamp')});
       if((this.get('supervisors') || []).length >= 10) {
         Utils.all_pages('/api/v1/users/' + this.get('id') + '/supervisors', {result_type: 'user', type: 'GET', data: {}}, function(data) {
         }).then(function(res) {
           _this.set('supervisors', res);
+          localize_connections(res);
           _this.set('all_connections.supervisors', true);
         }, function(err) {
           console.log('error loading supervisors');
@@ -374,6 +383,7 @@ CoughDrop.User = DS.Model.extend({
           _this.set('all_connections.error', true);
         });
       } else {
+        localize_connections(_this.get('supervisors'));
         _this.set('all_connections.supervisors', true);
       }
       if((this.get('supervisees') || []).length >= 10) {
@@ -381,6 +391,7 @@ CoughDrop.User = DS.Model.extend({
         }).then(function(res) {
           _this.set('supervisees', res);
           _this.set('all_supervisees', res);
+          localize_connections(res);
           _this.set('all_connections.supervisees', true);
         }, function(err) {
           console.log('error loading supervisees');
@@ -388,6 +399,7 @@ CoughDrop.User = DS.Model.extend({
           _this.set('all_connections.error', true);
         });
       } else {
+        localize_connections(_this.get('supervisees'));
         _this.set('all_connections.supervisees', true);
       }
       _this.set('all_connections_loaded', true);
