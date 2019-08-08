@@ -245,7 +245,7 @@ var editManager = EmberObject.extend({
       // shift up just a little if it's not on the bottom, but will get clipped
       if(vertical_close) {
         if((top + button_height) < screen_height - (button_height * 1.5)) {
-          top = Math.min(top, screen_height - (button_height * 3) + (margin * 2));
+          top = Math.min(top, screen_height - (button_height * 3) + (margin * 4));
         }
       }
       var layout = [];
