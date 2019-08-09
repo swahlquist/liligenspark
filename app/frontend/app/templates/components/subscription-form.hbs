@@ -123,7 +123,7 @@
           <tr>
             <td colspan={{if subscription.app_pricing_override "1" "2"}}>
               {{#unless subscription.app_pricing_override}}
-                <a href="#" {{action 'bulk_purchase'}}>{{t "interested in a bulk purchase or PO?" key='interested_in_bulk_purchase'}}</a>
+                <a href="#" {{action 'bulk_purchase'}}>{{t "interested in a bulk purchase or PO/PCard purchase?" key='interested_in_bulk_purchase'}}</a>
               {{/unless}}
             </td>
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim'>
@@ -246,7 +246,7 @@
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim' style='text-align: right;'>
               {{#unless subscription.app_pricing_override}}
                 <a href="#" {{action 'bulk_purchase'}}>
-                  {{t "Bulk Purchase or PO?" key='bulk_purchase_or_po'}}
+                  {{t "Bulk Purchase, PO or PCard?" key='bulk_purchase_or_po'}}
                 </a>
               {{/unless}}
             </td>
@@ -260,7 +260,7 @@
         <div class='col-sm-12' style='margin-top: 30px; padding-bottom: 20px;'>
           <p>
             <span class='glyphicon glyphicon-paperclip' style='float: left; font-size: 30px; margin-right: 10px;'></span>
-            {{t "We love working with school districts and organizations who want to support multiple communicators! If you're interested in purchasing multiple licenses, or purchasing without using a credit card, please <a href='/contact?to=sales'>contact our sales team for more information</a>." key='bulk_purchase_explainer'}}
+            {{t "We love working with school districts and organizations who want to support multiple communicators! If you're interested in purchasing multiple licenses, using a PCard, or purchasing without using a credit card, please <a href='/contact?to=sales'>contact our sales team for more information</a>. Note that many PCards will work with our online credit card processing system as well." key='bulk_purchase_explainer'}}
           </p>
         </div>
       </div>
