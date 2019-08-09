@@ -252,7 +252,11 @@ export default Controller.extend({
       var sentences = this.innerText.split(/\.\s/);
       sentences.forEach(function(s) {
         if(s) {
-          prompts.push({text: s + "."});
+          s = s + ".";
+          var more_splits = s.split(/\?\s/);
+          more_splits.forEach(function(t) {
+            prompts.push({text: t + "?"});
+          })
         }
       })
       prompts.push({wait: 500});
