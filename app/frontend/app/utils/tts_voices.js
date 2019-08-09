@@ -31,8 +31,9 @@ var voices = EmberObject.extend({
           voice.voice_url = "https://s3.amazonaws.com/coughdrop/voices/" + voice.voice_dir + ".zip";
         }
         var simple_voice_dir = voice.voice_dir_v2018 || voice.voice_dir;
-        if(capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && voice.voice_dir_v2018) {
+        if(!capabilities.installed_app || (capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && voice.voice_dir_v2018)) {
           voice.voice_url = "https://s3.amazonaws.com/coughdrop/voices/v2018/" + voice.voice_dir_v2018 + ".zip";
+          voice.available = !!(capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && voice.voice_dir_v2018);
         }
         voice.voice_sample = voice.voice_sample || "https://s3.amazonaws.com/coughdrop/voices/" + voice.name.toLowerCase().replace(/\s+/g, '-') + "-sample.mp3";
         voice.language_dir = (simple_voice_dir || "").split(/-/)[2];
@@ -1089,5 +1090,6 @@ var voices = EmberObject.extend({
   ]
 });
 window.acapela_versions = voices.get('versions');
+window.acapela_voices = voices;
 
 export default voices;
