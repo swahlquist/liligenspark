@@ -43,7 +43,7 @@ export default modal.ModalController.extend({
         var now = (new Date()).getTime();
         var search_id = Math.random() + "-" + now;
         _this.set('search_id', search_id);
-        var interval = this.get('search_interval') || (capabilities.system == 'iOS' ? 300 : null);
+        var interval = this.get('search_interval') || (capabilities.system == 'iOS' ? 400 : null);
         // on iOS the search process is really slow, somehow
         // the promises take 300ms-ish to resolve, so we try to
         // debounce them a little and see if that helps
@@ -61,7 +61,7 @@ export default modal.ModalController.extend({
             if(timing > interval + 200) {
               // If the search takes too long, assume subsequent searches
               // will also be slow and debounce accordingly
-              _this.set('search_interval', Math.min(interval + 100, 1000));
+              _this.set('search_interval', Math.min(interval + 200, 1000));
             }
             if(persistence.get('online')) {
               _this.set('results', results);

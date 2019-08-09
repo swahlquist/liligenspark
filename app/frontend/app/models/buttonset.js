@@ -212,6 +212,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     // TODO: consider optional support for keyboard for missing words
     if(str.length === 0) { return RSVP.resolve([]); }
     var query = str.toLowerCase();
+    query_pre = new RegExp(query.split(/[^\w]/)[0].replace(/(.)/g, "($1)?"), 'i');
     var _this = this;
     from_board_id = from_board_id || app_state.get('currentBoardState.id');
     var button_sets = [_this];
@@ -248,6 +249,12 @@ CoughDrop.Buttonset = DS.Model.extend({
     var build_map =   RSVP.all_wait(lookups).then(function() {
       var res = _this.board_map(button_sets);
       buttons = res.buttons;
+      buttons.forEach(function(b) {
+        b.lookup_parts = b.lookup_parts || [
+          [b.label, b.label && b.label.toLowerCase().split(/\s+/)], 
+          [b.vocalization, b.vocalization && b.vocalization.toLowerCase().split(/\s+/)]
+        ];
+      });
       board_map = res.map;
     });
 
@@ -255,15 +262,14 @@ CoughDrop.Buttonset = DS.Model.extend({
     var button_sweep = build_map.then(function() {
 //      console.log("all buttons", buttons, board_map);
       buttons.forEach(function(button, idx) {
-        var lookups = [button.label, button.vocalization];
+        var lookups = button.lookup_parts;
         var found_some = false;
         // check for a match on either the label or vocalization
-        lookups.forEach(function(label) {
+        lookups.forEach(function(arr) {
+          var label = arr[0];
           if(found_some || !label) { return true; }
-          var label_parts = label.toLowerCase().split(/\s+/);
-          var jdx = 0;
+          var label_parts = arr[1];
           var running_totals = [];
-          var total_edit_distance = 0;
           // iterate through all the parts of the query, looking for
           // any whole or partial matches
           parts.forEach(function(part, jdx) {
@@ -309,6 +315,10 @@ CoughDrop.Buttonset = DS.Model.extend({
           var matches = running_totals.filter(function(tot) { return tot.valid && tot.label_part == label_parts.length; });
           matches.forEach(function(match) {
             found_some = true;
+            var prefix = (label.match(query_pre) || [undefined]).indexOf(undefined) - 1;
+            if(prefix < 0) { prefix = query.length; }
+            // bonus for starting with the exactly-correct sequence of letters
+            match.total_edit_distance = match.total_edit_distance - (prefix / 2);
             partial_matches.push({
               total_edit_distance: match.total_edit_distance,
               text: label,
