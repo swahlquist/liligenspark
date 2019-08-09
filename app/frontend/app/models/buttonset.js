@@ -212,7 +212,8 @@ CoughDrop.Buttonset = DS.Model.extend({
     // TODO: consider optional support for keyboard for missing words
     if(str.length === 0) { return RSVP.resolve([]); }
     var query = str.toLowerCase();
-    query_pre = new RegExp(query.split(/[^\w]/)[0].replace(/(.)/g, "($1)?"), 'i');
+    var query_start = query.split(/[^\w]/)[0];
+    var query_pre = new RegExp(query_start.replace(/(.)/g, "($1)?"), 'i');
     var _this = this;
     from_board_id = from_board_id || app_state.get('currentBoardState.id');
     var button_sets = [_this];
@@ -315,10 +316,6 @@ CoughDrop.Buttonset = DS.Model.extend({
           var matches = running_totals.filter(function(tot) { return tot.valid && tot.label_part == label_parts.length; });
           matches.forEach(function(match) {
             found_some = true;
-            var prefix = (label.match(query_pre) || [undefined]).indexOf(undefined) - 1;
-            if(prefix < 0) { prefix = query.length; }
-            // bonus for starting with the exactly-correct sequence of letters
-            match.total_edit_distance = match.total_edit_distance - (prefix / 2);
             partial_matches.push({
               total_edit_distance: match.total_edit_distance,
               text: label,
@@ -437,6 +434,12 @@ CoughDrop.Buttonset = DS.Model.extend({
     // then sort by number of words covered (bonus for > 50% coverage)
     // finally by number of button hits required
     var sort_combos = build_combos.then(function() {
+      combos.forEach(function(c) {
+        var prefix = (c.text.match(query_pre) || [undefined]).indexOf(undefined) - 1;
+        if(prefix < 0) { prefix = query_start.length; }
+        // bonus for starting with the exactly-correct sequence of letters
+        c.match_scores[2] = c.match_scores[2] - (prefix / 2);
+      });
       combos = combos.filter(function(c) { return c.text; });
       combos = combos.sort(function(a, b) {
         for(var idx = 0; idx < a.match_scores.length; idx++) {
