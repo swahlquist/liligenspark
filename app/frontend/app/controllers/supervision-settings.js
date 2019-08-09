@@ -7,6 +7,10 @@ export default modal.ModalController.extend({
     this.set('model', this.get('model.user'));
     this.set('model.load_all_connections', true);
   },
+  show_supervisees: function() {
+    var res = this.get('model.supervisees.length') || this.get('model.known_supervisees.length');
+    return res > 0;
+  }.property('model.supervisees', 'model.known_supervisees', 'model.all_connections.loading', 'model.all_connections.error'),
   actions: {
     close: function() {
       modal.close();

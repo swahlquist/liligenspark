@@ -10,5 +10,10 @@
     <p class='prompt'>{{t "In order to see the boards and reports for communicators you work with, those users need to add you from their dashboard. You can encourage them to add everyone around the communicator as supervisors to help build a strong support team." key='get_added_as_supervisor'}}</p>
   {{else}}
     <p class='prompt'>{{t "Learning AAC works best with lots of supporters around communicator. You can encourage people like family members, teachers, therapists, etc. to sign up for a free supporter account, and then add them as supervisors to grant access to boards, reports and goals." key='add_lots_of_supervisors'}}</p>
+    {{#if app_state.currentUser}}
+      <p style='margin-top: 20px;'><button class='btn btn-default btn-lg' {{action 'manage_supervision'}}>
+        {{t "Add or Manage Supervisors" key='add_of_manage_supervisors'}}
+      </button></p>
+    {{/if}}
   {{/if}}
 </div>

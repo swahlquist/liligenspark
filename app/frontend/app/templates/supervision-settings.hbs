@@ -1,10 +1,10 @@
 {{#modal-dialog action="close" opening='opening' closing='closing'}}
   <div class="modal-header">
     <button type="button" class="close" {{action 'close'}}>&times;</button>
-    <h3>{{t "Supervision Settings" key='supervision_settings'}}</h3>
+    <h3>{{t "Supervision Settings for" key='supervision_settings_for'}} {{model.user_name}}</h3>
   </div>
   <div class="modal-body">
-    <h3>{{t "My Supervisors" key='my_supervisors'}}</h3>
+    <h3 style='margin-top: 0;'>{{t "My Supervisors" key='my_supervisors'}}</h3>
     {{#if model.supervisors_or_managing_org}}
       <table class="table table-hover">
         <tbody>
@@ -75,38 +75,40 @@
         <p class='text-info'><em>{{t "For security reasons, communicators must add you as a supervisor from their account. On the communicator's device or account, enter your user name to add yourself as a supervisor." key='supervisor_adding_explainer'}}</em></p>
       {{/if}}
     {{/if}}
-    <h3>{{t "People I Supervise" key='my_supervisees'}}</h3>
-    {{#if model.known_supervisees}}
-      <table class="table table-hover">
-        <tbody>
-        {{#each model.known_supervisees as |supervisee|}}
-          <tr>
-            <td style="width: 60px;">
-              <img src={{supervisee.avatar_url}} style="height: 50px; width: 50px;"/>
-            </td>
-            <td>
-              <div style="font-size: 20px;">{{supervisee.name}}</div>
-              {{#link-to 'user' supervisee.user_name}}{{supervisee.user_name}}{{/link-to}}
-              {{#if supervisee.edit_permission}}
-                <span class="text-muted">{{t "(editing allowed)" key='editing_allowed'}}</span>
-              {{/if}}
-            </td>
-            <td style="width: 30px; font-size: 20px; vertical-align: middle;">
-              {{#if model.permissions.manage_supervision}}
-                <a href='#' {{action "remove_supervisee" supervisee.id}} class="glyphicon glyphicon-trash"><span class='text-hide'>delete</span></a>
-              {{/if}}
-            </td>
-          </tr>
-        {{/each}}
-        </tbody>
-      </table>
-    {{else}}
-      <p>{{t "None found" key='none_found'}}</p>
-    {{/if}}
-    {{#if app_state.currentUser.all_connections.loading}}
-      <p>{{t "Loading more..." key='loading_more'}}</p>
-    {{else if app_state.currentUser.all_connections.error}}
-      <p class='text-danger'>{{t "There was an error loading supervision users" key='error_loading_connections'}}</p>
+    {{#if show_supervisees}}
+      <h3>{{t "People I Supervise" key='my_supervisees'}}</h3>
+      {{#if model.known_supervisees}}
+        <table class="table table-hover">
+          <tbody>
+          {{#each model.known_supervisees as |supervisee|}}
+            <tr>
+              <td style="width: 60px;">
+                <img src={{supervisee.avatar_url}} style="height: 50px; width: 50px;"/>
+              </td>
+              <td>
+                <div style="font-size: 20px;">{{supervisee.name}}</div>
+                {{#link-to 'user' supervisee.user_name}}{{supervisee.user_name}}{{/link-to}}
+                {{#if supervisee.edit_permission}}
+                  <span class="text-muted">{{t "(editing allowed)" key='editing_allowed'}}</span>
+                {{/if}}
+              </td>
+              <td style="width: 30px; font-size: 20px; vertical-align: middle;">
+                {{#if model.permissions.manage_supervision}}
+                  <a href='#' {{action "remove_supervisee" supervisee.id}} class="glyphicon glyphicon-trash"><span class='text-hide'>delete</span></a>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+      {{else}}
+        <p>{{t "None found" key='none_found'}}</p>
+      {{/if}}
+      {{#if model.all_connections.loading}}
+        <p>{{t "Loading more..." key='loading_more'}}</p>
+      {{else if model.all_connections.error}}
+        <p class='text-danger'>{{t "There was an error loading supervision users" key='error_loading_connections'}}</p>
+      {{/if}}
     {{/if}}
   </div>
   <div class="modal-footer">

@@ -241,7 +241,7 @@ export default Controller.extend({
     if(!_this.get('reading_disabled')) {
       runLater(function() {
         _this.read_step();
-      });
+      }, 500);
     }
     $('html,body').scrollTop(0);
   }.observes('page'),
@@ -348,6 +348,9 @@ export default Controller.extend({
       var user = app_state.get('currentUser') || this.get('fake_user');
       var voice_uri = user.get('preferences.device.voice.voice_uri');
       utterance.test_voice(voice_uri, app_state.get('currentUser.preferences.device.voice.rate'), app_state.get('currentUser.preferences.device.voice.pitch'), app_state.get('currentUser.preferences.device.voice.volume'));
+    },
+    manage_supervision: function() {
+      modal.open('supervision-settings', {user: app_state.get('currentUser')});
     },
     premium_voices: function() {
       var _this = this;
