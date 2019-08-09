@@ -6,6 +6,8 @@ import utterance from '../utils/utterance';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
 import { htmlSafe } from '@ember/string';
+import { set as emberSet} from '@ember/object';
+import persistence from '../utils/persistence';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -49,6 +51,13 @@ export default modal.ModalController.extend({
         reply: app_state.get('reply_note')
       })
     }
+    res.forEach(function(contact) {
+      if(contact.avatar_url && contact.avatar_url.match(/^http/)) {
+        persistence.find_url(contact.avatar_url, 'image').then(function(uri) {
+          emberSet(contact, 'avatar_url', uri);
+        }, function() { });
+      }
+    });
     return res;
   }.property('app_state.referenced_user.supervisors', 'app_state.referenced_user.known_supervisees', 'app_state.referenced_user.supporter_role', 'app_state.referenced_user.contacts', 'app_state.reply_note'),
   sentence: function() {

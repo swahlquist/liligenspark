@@ -374,20 +374,31 @@ CoughDrop.User = DS.Model.extend({
     };
     if(this.get('load_all_connections') && (!this.get('all_connections.loaded') || this.get('all_connections.stamp') != this.get('sync_stamp'))) {
       _this.set('all_connections', {loading: true, sync_stamp: _this.get('sync_stamp')});
+      var defer = RSVP.defer();
+      _this.set('all_connections_promise', defer.promise);
+      var advance = function(type) {
+        defer[type] = true;
+        if(defer.supervisors && defer.supervisees) {
+          defer.resolve();
+        }
+      };
       if((this.get('supervisors') || []).length >= 10) {
         Utils.all_pages('/api/v1/users/' + this.get('id') + '/supervisors', {result_type: 'user', type: 'GET', data: {}}, function(data) {
         }).then(function(res) {
           _this.set('supervisors', res);
           localize_connections(res);
           _this.set('all_connections.supervisors', true);
+          advance('supervisors');
         }, function(err) {
           console.log('error loading supervisors');
           console.log(err);
           _this.set('all_connections.error', true);
+          advance('supervisors');
         });
       } else {
         localize_connections(_this.get('supervisors'));
         _this.set('all_connections.supervisors', true);
+        advance('supervisors');
       }
       if((this.get('supervisees') || []).length >= 10) {
         Utils.all_pages('/api/v1/users/' + this.get('id') + '/supervisees', {result_type: 'user', type: 'GET', data: {}}, function(data) {
@@ -396,14 +407,17 @@ CoughDrop.User = DS.Model.extend({
           _this.set('all_supervisees', res);
           localize_connections(res);
           _this.set('all_connections.supervisees', true);
+          advance('supervisees');
         }, function(err) {
           console.log('error loading supervisees');
           console.log(err);
           _this.set('all_connections.error', true);
+          advance('supervisees');
         });
       } else {
         localize_connections(_this.get('supervisees'));
         _this.set('all_connections.supervisees', true);
+        advance('supervisees');
       }
       _this.set('all_connections_loaded', true);
     }

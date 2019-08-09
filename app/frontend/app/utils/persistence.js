@@ -1212,6 +1212,9 @@ var persistence = EmberObject.extend({
         // Step 7: Sync user tags
         sync_promises.push(persistence.sync_tags(user));
 
+        // Step 8: Sync contacts
+        sync_promises.push(persistence.sync_contacts(user));
+
         // reject on any errors
         RSVP.all_wait(sync_promises).then(function() {
           // Step 4: If online
@@ -1355,6 +1358,29 @@ var persistence = EmberObject.extend({
       };
       runLater(next_tag, 500);
     });
+  },
+  sync_contacts: function(user) {
+    var wait = RSVP.resolve();
+    if(user.get('all_connections_promise')) {
+      wait = user.get('all_connections_promise');
+    }
+    var retrieve_list = wait.then(null, function() { return RSVP.resolve(); }).then(function() {
+      var all_store_images = [];
+      (user.get('supervisors') || []).forEach(function(sup) {
+        if(sup.avatar_url && sup.avatar_url.match(/^http/)) {
+          all_store_images.push(persistence.store_url(sup.avatar_url, 'image'));
+        }
+      });
+      (user.get('contacts') || []).forEach(function(contact) {
+        if(contact.image_url && contact.image_url.match(/^http/)) {
+          all_store_images.push(persistence.store_url(contact.image_url, 'image'));
+        }
+      });
+      return all_store_images;
+    });
+    return retrieve_list.then(function(list) {
+      return RSVP.all_wait(list);
+    })
   },
   sync_logs: function(user) {
     return persistence.find('settings', 'bigLogs').then(function(res) {
