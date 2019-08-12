@@ -28,7 +28,7 @@ export default Component.extend({
     return $button.attr('data-id') || $(event.target).attr('id');
   },
   speakMenuSelect: function(event) {
-    this.sendAction('button_event', 'speakMenuSelect', event.button_id);
+    this.sendAction('button_event', 'speakMenuSelect', event.button_id, event);
   },
   buttonSelect: function(event) {
     // if(app_state.get('feature_flags.super_fast_html')) {

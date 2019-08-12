@@ -80,7 +80,7 @@ export default modal.ModalController.extend({
       app_state.flip_text();
       modal.close(true);
     },
-    button_event: function(event, button) {
+    button_event: function(event, button, full_event) {
       if(event == 'speakMenuSelect') {
         var click = function() {
           if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
@@ -97,7 +97,22 @@ export default modal.ModalController.extend({
           modal.open('share-utterance', {utterance: stashes.get('working_vocalization'), inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_repeat_button') {
-          this.set('repeat_menu', !this.get('repeat_menu'));
+          if(full_event.swipe_direction) {
+            modal.close(true);
+            if(full_event.swipe_direction == 'e') {
+              app_state.say_louder();
+            } else if(full_event.swipe_direction == 'w') {
+              app_state.say_louder(0.3);
+            } else if(full_event.swipe_direction == 'n') {
+              click();
+              app_state.flip_text();
+            } else if(full_event.swipe_direction == 's') {
+              click();
+              modal.open('modals/big-button', {text: this.get('working_vocalization_text'), text_only: app_state.get('referenced_user.preferences.device.button_text_position') == 'text_only'});
+            }
+          } else {
+            this.set('repeat_menu', !this.get('repeat_menu'));
+          }
 
           // right for louder, left for quieter, down for big button target, up for flip text
         } else if(button == 'menu_repeat_louder') {
@@ -105,8 +120,10 @@ export default modal.ModalController.extend({
         } else if(button == 'menu_repeat_quieter') {
           app_state.say_louder(0.3);
         } else if(button == 'menu_repeat_text') {
+          click();
           modal.open('modals/big-button', {text: this.get('working_vocalization_text'), text_only: app_state.get('referenced_user.preferences.device.button_text_position') == 'text_only'});
         } else if(button == 'menu_repeat_flip') {
+          click();
           app_state.flip_text();
         } else if(button == 'menu_hold_thought_button') {
           stashes.remember({stash: true});

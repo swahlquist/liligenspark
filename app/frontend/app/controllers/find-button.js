@@ -45,10 +45,10 @@ export default modal.ModalController.extend({
         _this.set('search_id', search_id);
         var interval = this.get('search_interval') || (capabilities.system == 'iOS' ? 400 : null);
         // on iOS the search process is really slow, somehow
-        // the promises take 300ms-ish to resolve, so we try to
+        // the promises take longer to resolve, so we try to
         // debounce them a little and see if that helps
         runLater(function() {
-          if(_this.get('search_id') != search_id) { return; }
+          if(_this.get('search_id') != search_id) { _this.set('loading', true); return; }
           var results = null;
           if(app_state.get('feature_flags.find_multiple_buttons')) {
             search = board.get('button_set').find_sequence(_this.get('searchString'), board.get('id'), user, include_home);
