@@ -366,6 +366,9 @@ export default Controller.extend({
       });
     },
     choose_board: function() {
+      if(window.ga) {
+        window.ga('send', 'event', 'Setup', 'skip', 'Extra Setup Pursued');
+      }
       this.transitionToRoute('home-boards');
     },
     show_advanced: function() {

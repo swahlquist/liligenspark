@@ -894,6 +894,11 @@ export default Controller.extend({
           if(promise.wait) { wait = promise; }
         }
         current_index = Math.min(current_index + 1, order.length - 1);
+        this.set('max_index', Math.max(current_index, this.get('max_index') || 0));
+        if(window.ga) {
+          window.ga('send', 'event', 'Setup', 'step_' + this.get('max_index'),'Progressed to Step ' + this.get('max_index'));
+        }
+  
       } else if(direction == 'backward') {
         current_index = Math.max(current_index - 1, 0);
       }

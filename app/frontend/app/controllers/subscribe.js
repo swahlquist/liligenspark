@@ -18,6 +18,9 @@ export default modal.ModalController.extend({
   actions: {
     subscription_skip: function() {
       modal.close();
+      if(window.ga) {
+        window.ga('send', 'event', 'Setup', 'launch', 'Setup started');
+      }
       this.transitionToRoute('setup');
     },
     subscription_error: function(err) {
