@@ -323,8 +323,8 @@ module Uploader
       valid = false unless cred
       results = nil
       if cred
-        url = "http://lessonpix.com/apiKWSearch.php?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&word=#{CGI.escape(keyword)}&fmt=json&allstyles=n&limit=30"
-        req = Typhoeus.get(url, timeout: 5)
+        url = "https://lessonpix.com/apiKWSearch.php?pid=#{cred['pid']}&username=#{cred['username']}&token=#{cred['token']}&word=#{CGI.escape(keyword)}&fmt=json&allstyles=n&limit=30"
+        req = Typhoeus.get(url, timeout: 5, followlocation: true)
         valid = true
         valid = false if req.body && (req.body.match(/Token Mismatch/) || req.body.match(/Unkonwn User/) || req.body.match(/Unknown User/))
         results = JSON.parse(req.body) rescue nil
