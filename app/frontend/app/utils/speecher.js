@@ -249,6 +249,11 @@ var speecher = EmberObject.extend({
       if(rate > 1) {
         rate = 1.0 + ((rate - 1.0) * 0.8);
       }
+    } else if(capabilities.system == 'Android') {
+      // android: 1.0, 2.0, 3.0
+      if(rate > 1) {
+        rate = 1.0 + ((rate - 1.0) * 2);
+      }
     } else if(ios && voiceURI.match(/acap:/)) {
       // acap: 1.4, 2.0, 2.6      
       if(rate >= 1) {
@@ -441,7 +446,7 @@ var speecher = EmberObject.extend({
       // Try to render default prompts in the locale's language
       if(opts.default_prompt) {
         var prompts = tts_voices.get('prompts') || {};
-        var lang = voice.lang.toLowerCase().split(/-|_/)[0];
+        var lang = ((voice && voice.lang) || navigator.language).toLowerCase().split(/-|_/)[0];
         var prompt = prompts[lang] || prompts[i18n.lang_map[lang]];
         if(prompt) {
           utterance.text = prompt;
