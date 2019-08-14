@@ -108,6 +108,12 @@ export default Controller.extend({
     // TODO: when entering board intro, set root_board_state to the board's id
     return root_board && this.get('board.model.intro') && !this.get('board.model.intro.unapproved');
   }.property('stashes.root_board_state.id', 'stashes.temporary_root_board_state.id', 'app_state.currentUser.preferences.home_board.id', 'board.model.intro', 'board.model.intro.unapproved'),
+  speak_mode_needing_hammer_js: function() {
+    // iOS needs hammer.js because it's an older version of safari,
+    // this causes problems when in speak mode and with dropdowns
+    // since we get double-hit events
+    return app_state.get('speak_mode') && capabilities.installed_app && capabilities.system == 'iOS';
+  }.property('app_state.speak_mode'),
   highlight_button: function(buttons, button_set, options) {
     options = options || {};
     if(buttons && buttons != 'resume') {
