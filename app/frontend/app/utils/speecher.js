@@ -262,7 +262,7 @@ var speecher = EmberObject.extend({
     } else if(ios) {
       // ios: 1.0, 1.2, 1.4
       if(rate >= 1) {
-        rate = 1.0 + ((rate - 1.0) * 0.4);
+        rate = 1.1 + ((rate - 1.0) * 0.3);
       }
     }
     return rate;
