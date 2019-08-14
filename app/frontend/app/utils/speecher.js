@@ -228,9 +228,9 @@ var speecher = EmberObject.extend({
     var too_fast_voice = (ios && (capabilities.browser == 'Safari' || capabilities.browser == 'App') && (!capabilities.system_version || capabilities.system_version < 9.0));
     // 1.0 should be normal speed, 1.5 should be abrupt, 2.0 should fast & barely understandable
     if(ios && (voiceURI.match(/tts:/) || voiceURI == 'force_default')) {
-      // ios tts: 1.1, 1.25, 1.4
+      // ios tts: 1.1, 1.2, 1.3
       if(rate >= 1) {
-        rate = 1.1 + ((rate - 1.0) / 3.33);
+        rate = 1.1 + ((rate - 1.0) * 0.1);
       }
     } else if(ios && too_fast_voice) {
       rate = rate * 0.2;
@@ -258,6 +258,11 @@ var speecher = EmberObject.extend({
       // acap: 1.4, 2.0, 2.6      
       if(rate >= 1) {
         rate = 1.4 + ((rate - 1.0) * 1.2);
+      }
+    } else if(ios) {
+      // ios: 1.0, 1.2, 1.4
+      if(rate >= 1) {
+        rate = 1.0 + ((rate - 1.0) * 0.4);
       }
     }
     return rate;
