@@ -221,16 +221,42 @@ var speecher = EmberObject.extend({
       this.alternate_voice = alternate_voice;
     }
   },
-  rate_multiplier: function(voiceURI) {
-    var agent = navigator.userAgent.toLowerCase();
+  adjusted_rate: function(rate, voiceURI) {
+    rate = rate || 1.0;
+    voiceURI = voiceURI || 'default';
     var ios = capabilities.system == 'iOS';
     var too_fast_voice = (ios && (capabilities.browser == 'Safari' || capabilities.browser == 'App') && (!capabilities.system_version || capabilities.system_version < 9.0));
-    if(too_fast_voice) {
-      return 0.2;
-    } else if(ios && ((voiceURI && voiceURI.match(/tts:/)) || voiceURI == 'force_default')) {
-      return 0.7;
+    if(ios && (voiceURI.match(/tts:/) || voiceURI == 'force_default')) {
+      // ios tts: 1.1, 1.25, 1.4
+      if(rate > 1) {
+        rate = 1.1 + ((rate - 1.0) / 3.33);
+      }
+    } else if(ios && too_fast_voice) {
+      rate = rate * 0.2;
+    } else if(voiceURI.match(/Google/)) {
+      // chrome: 1.0, 1.25, 1.5
+      if(rate > 1) {
+        rate = 1.0 + ((rate - 1.0) / 2);
+      }
+    } else if(capabilities.system == 'Android' && (voiceURI.match(/tts:/) || voiceURI == 'force_default')) {
+      // android: 1.0, 2.0, 3.0
+      if(rate > 1) {
+        rate = 1.0 + ((rate - 1.0) * 2);
+      }
+    } else if(voiceURI.match(/acap:/)) {
+      // acap: 1.0, 2.0, 3.0      
+      if(rate > 1) {
+        rate = 1.0 + ((rate - 1.0) * 2);
+      }
     }
-    return 1.0;
+    return rate;
+    // var too_fast_voice = (ios && (capabilities.browser == 'Safari' || capabilities.browser == 'App') && (!capabilities.system_version || capabilities.system_version < 9.0));
+    // if(too_fast_voice) {
+    //   return rate * 0.2;
+    // } else if(ios && ((voiceURI && voiceURI.match(/tts:/)) || voiceURI == 'force_default')) {
+    //   return 0.7;
+    // }
+    // return 1.0;
   },
   speak_id: 0,
   speak_text: function(text, collection_id, opts) {
@@ -416,7 +442,7 @@ var speecher = EmberObject.extend({
           text = utterance.text;
         }
       }
-      utterance.rate = utterance.rate * speecher.rate_multiplier((voice && voice.voiceURI) || opts.voiceURI);
+      utterance.rate = speecher.adjusted_rate(utterance.rate, (voice && voice.voiceURI) || opts.voiceURI);
 
       var speak_utterance = function() {
         speecher.last_utterance = utterance;
@@ -502,7 +528,7 @@ var speecher = EmberObject.extend({
         console.log("using native iOS tts");
         window.TTS.speak({
           text: utterance.text,
-          rate: (utterance.rate || 1.0) * 1.3,
+          rate: utterance.rate,
           locale: (voice && voice.lang)
         }).then(function() {
           callback();
