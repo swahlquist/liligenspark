@@ -878,9 +878,9 @@ module Stats
       goals.each do |goal|
         word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['words_list']
         word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['words_list']
-        modeled_word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['modeled_words_list']
-        modeled_word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['modeled_words_list']
-        if word_list || modeled_word_list
+        modeled_words_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['modeled_words_list']
+        modeled_words_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['modeled_words_list']
+        if word_list || modeled_words_list
           if word_list
             key = goal.primary ? :primary_words : :secondary_words
             res[:watchwords][key] ||= {}

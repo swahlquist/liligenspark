@@ -686,7 +686,7 @@ class Board < ActiveRecord::Base
               types = (inflections[word] || {})['types']
               # if we've changed our assumption of the default, and the user hasn't updated
               # from what the system suggested, go ahead and update for them
-              if types && typees.length > 0 && types[0] != button['part_of_speech']
+              if types && types.length > 0 && types[0] != button['part_of_speech']
                 button['part_of_speech'] = types[0]
                 button['suggested_part_of_speech'] = types[0]
                 any_changed = true
