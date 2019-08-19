@@ -406,7 +406,13 @@ CoughDrop.Buttonset = DS.Model.extend({
           // calculate match scores
           var primary_score = combo.total_edit_distance + (combo.extra_steps / (combo.parts_covered || 1) * 3);
           if(combo.total_edit_distance == 0) { primary_score = primary_score / 5; }
-          combo.match_scores = [combo.total_edit_distance ? 1 : 0, combo.parts_covered == parts_current_count ? 0 : 1, combo.parts_covered > cutoff ? (parts_current_count - combo.parts_covered + primary_score) : 1000, parts_current_count - combo.parts_covered + primary_score, combo.steps.length];
+          // prioritize:
+          // 1. covering the most steps
+          // 2. perfect spelling matches
+          // 3. covering more steps than the cutoff
+          // 4. minimal spelling changes and navigation steps
+          // 5. minimal number of found buttons needed
+          combo.match_scores = [parts_current_count - combo.parts_covered, combo.total_edit_distance ? 1 : 0, combo.parts_covered > cutoff ? (parts_current_count - combo.parts_covered + primary_score) : 1000, parts_current_count - combo.parts_covered + primary_score, combo.steps.length];
         });
         // limit results as we go so we don't balloon memory usage
         combos = new_combos.sort(function(a, b) {
