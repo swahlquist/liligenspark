@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190718222128) do
+ActiveRecord::Schema.define(version: 20190819173540) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -125,7 +125,7 @@ ActiveRecord::Schema.define(version: 20190718222128) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -307,8 +307,10 @@ ActiveRecord::Schema.define(version: 20190718222128) do
   create_table "purchase_tokens", force: :cascade do |t|
     t.string   "token"
     t.integer  "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at",       null: false
+    t.string   "hashed_device_id"
+    t.index ["hashed_device_id"], name: "index_purchase_tokens_on_hashed_device_id", using: :btree
     t.index ["token"], name: "index_purchase_tokens_on_token", unique: true, using: :btree
   end
 

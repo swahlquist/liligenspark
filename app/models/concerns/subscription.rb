@@ -188,7 +188,7 @@ module Subscription
         else
           self.clear_existing_subscription(:track_seconds_left => true)
           self.settings['subscription']['subscription_id'] = args['subscription_id']
-          PurchaseToken.map("subscribe.#{args['source_id']}.#{args['subscription_id']}", self)
+          PurchaseToken.map("subscribe.#{args['source_id']}.#{args['subscription_id']}", args['device_id'], self)
           if self.settings['subscription']['subscription_id'] && !self.settings['subscription']['subscription_id'].match(/free/)
             self.settings['subscription']['prior_subscription_ids'] << self.settings['subscription']['subscription_id']
           end
@@ -261,7 +261,7 @@ module Subscription
           self.settings['subscription']['last_purchased'] = Time.now.iso8601
           self.settings['subscription']['last_purchase_plan_id'] = args['plan_id']
           self.settings['subscription']['last_purchase_id'] = args['purchase_id']
-          PurchaseToken.map("purchase.#{args['source_id']}.#{args['purchase_id']}", self)
+          PurchaseToken.map("purchase.#{args['source_id']}.#{args['purchase_id']}", args['device_id'], self)
           self.settings['subscription']['discount_code'] = args['discount_code'] if args['discount_code']
           self.settings['subscription']['last_purchase_seconds_added'] = args['seconds_to_add']
           self.settings['subscription']['purchase_amount'] = args['purchase_amount']

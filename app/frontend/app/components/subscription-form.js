@@ -183,8 +183,12 @@ export default Component.extend({
         Subscription.purchase(subscription).then(function(result) {
           console.error('purchase_promise_resolved');
           subscribe(result, subscription.get('subscription_amount_plus_trial'), subscription.get('gift_code'));
-        }, function() {
-          modal.error(i18n.t('purchasing_not_completed', "There was an unexpected problem completing your purchase"));
+        }, function(err) {
+          if(err && err.wrong_user) {
+            modal.error(i18n.t('purchasing_wrong_user', "This device has already been used to purchase the app, but for a different user"));
+          } else {
+            modal.error(i18n.t('purchasing_not_completed', "There was an unexpected problem completing your purchase"));
+          }
           console.error('purchase_promise_rejected');
         });
       }

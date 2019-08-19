@@ -605,6 +605,12 @@ module Purchasing
     res = {}
     prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
     if data['ios']
+      if data['device_id'] && (!data['receipt'] || !data['receipt']['appStoreReceipt'])
+        token = PurchaseToken.for_device(data['device_id'])
+        if token && token.user != user
+          return {'error' => true, 'wrong_user' => true, 'error_message' => 'The app has already been purchased for a different user on this device'}
+        end
+      end
       # look up the transaction_id/original_transaction_id and refuse it if
       # it's already been registered, but for a different user
       if data['receipt'] && data['receipt']['appStoreReceipt']
@@ -633,9 +639,11 @@ module Purchasing
             res['pre_purchase'] = true
             res['product_id'] = 'AppPrePurchase'
             res['transaction_id'] = "pre.#{data['device_id']}"
+            res['device_id'] = "ios.#{data['device_id']}"
           elsif in_app
             res['quantity'] = in_app['quantity'].to_i
             res['transaction_id'] = in_app['transaction_id']
+            res['device_id'] = "ios.#{data['device_id']}"
             res['subscription_id'] = in_app['original_transaction_id']
             res['product_id'] = in_app['product_id']
             res['expires'] = in_app['expiration_date']
@@ -655,7 +663,7 @@ module Purchasing
             existing_user = PurchaseToken.retrieve("subscribe.iap.#{res['subscription_id']}")
           end
           if existing_user && existing_user != user
-            return {'error' => true, 'error_message' => 'That purchase has already been applied to a different user'}
+            return {'error' => true, 'wrong_user' => true, 'error_message' => 'That purchase has already been applied to a different user'}
           end
 
           if res['subscription']

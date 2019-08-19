@@ -24,6 +24,7 @@ types.forEach(function(type) {
   obs_properties.push('subscription.' + type);
 });
 var one_time_id = 'CoughDropiOSBundle';
+var long_term_id = 'CoughDropiOSPlusExtras';
 var subscription_id = 'CoughDropiOSMonthly';
 
 var obs_func = function() {
@@ -132,6 +133,9 @@ var Subscription = EmberObject.extend({
         _this.check_gift();
       })
     }
+    if(Subscription.in_app_store) {
+      Subscription.in_app_store.refresh();
+    }
     this.set_default_subscription_amount();
   },
   discount_period: function() {
@@ -211,12 +215,12 @@ var Subscription = EmberObject.extend({
     return prod.price;
   }.property('app_state.app_store_purchase_types'),
   long_term_app_price: function() {
-    var prod = Subscription.product_types[one_time_id];
+    var prod = Subscription.product_types[long_term_id] || Subscription.product_types[one_time_id];
     if(!prod || !prod.price) { return "249" }
     return prod.price;
   }.property('app_state.app_store_purchase_types'),
   app_currency: function() {
-    var prod = Subscription.product_types[subscription_id] || Subscription.product_types[one_time_id];
+    var prod = Subscription.product_types[subscription_id] || Subscription.product_types[long_term_id] || Subscription.product_types[one_time_id];
     return prod.currency || "USD";
   }.property('app_state.app_store_purchase_types'),
   set_default_subscription_amount: function(obj, changes) {
@@ -532,6 +536,9 @@ Subscription.reopenClass({
     if(Subscription.in_app_store) {
       var defer = RSVP.defer();
       var purchase_id = one_time_id;
+      if(Subscription.product_types && Subscription.product_types[long_term_id]) {
+        purchase_id = long_term_id;
+      }
       if(subscription.get('subscription_type') == 'monthly') {
         purchase_id = subscription_id;
       }
@@ -541,7 +548,7 @@ Subscription.reopenClass({
       // meaning you can't re-buy it. We
       // will need a subscription/credit purchase fallback to
       // offer 5 in the future.
-      if(Subscription.product_types[purchase_id] && Subscription.product_types[purchase_id].valid && Subscription.product_types[purchase_id].owned) {
+      if(Subscription.product_types && Subscription.product_types[purchase_id] && Subscription.product_types[purchase_id].valid && Subscription.product_types[purchase_id].owned) {
         // If already owned, don't try to re-purchase, skip straight to
         // the verification phase
         Subscription.in_app_store.validator(Subscription.product_types[purchase_id], function(success, data) {
@@ -619,6 +626,7 @@ document.addEventListener("deviceready", function() {
           } else if (event.result && (event.result.success === false || event.result.error === true)) {
             callback(false, {
               code: store.INTERNAL_ERROR,
+              wrong_user: (event.result || {}).wrong_user,
               error: (event.result || {}).error_message || "Receipt validation did not succeed"
             });
           } else if(event.status == 'finished') {
@@ -652,6 +660,23 @@ document.addEventListener("deviceready", function() {
         app_state.set('app_store_purchase_types', Subscription.product_types);
       }
     });
+    store.when("subscription").updated(function(product) {
+      if(!product.owned) {
+        if(!product.transaction) {
+          var now = (new Date()).getTime();
+          if(!Subscription.in_app_store.checked_for_transaction || (now - Subscription.in_app_store.checked_for_transaction) > (5 * 60 * 1000)) {
+            Subscription.in_app_store.refresh();
+          }
+          Subscription.in_app_store.checked_for_transaction = now;
+        } else {
+          Subscription.in_app_store.validator(Subscription.product_types[purchase_id], function(success, data) {
+            if(!success && data.code == store.PURCHASE_EXPIRED) {
+              app_state.get('sessionUser').reload(true);
+            }
+          });        
+        }
+      }
+    });
     store.when("product").approved(function(product) {
       product.verify();
     });
@@ -681,6 +706,9 @@ document.addEventListener("deviceready", function() {
       console.error("bundle id not found", err);
       store.refresh();
     });
+    document.addEventListener("resume", function() {
+      store.refresh();
+    }, false);
   }
 }, false);
 
