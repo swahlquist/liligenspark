@@ -297,6 +297,19 @@
       </div>
     </div>
   </div>
+  {{#if app_state.feature_flags.inflections_overlay}}
+    <div class="form-group">
+      <label for="inflections_overlay" class="col-sm-3 control-label">{{t "Long-Press" key='long_press'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.inflections_overlay id="inflections_overlay"}}
+            {{t "Show inflection options on long-press in Speak Mode" key='inflections_overlay'}}
+          </label>
+        </div>
+      </div>
+    </div>
+  {{/if}}
   {{#unless pending_preferences.activation_on_start}}
     <div class="form-group">
       <label for="activation_location" class="col-sm-3 control-label">{{t "Select Based on" key='activation_location'}}</label>
