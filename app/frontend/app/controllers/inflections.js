@@ -217,7 +217,7 @@ export default Controller.extend({
       var regulars = [];
       for(var key in options) {
         if(key == 'regulars') {
-          regulars = regulars.concat(options[key]).uniq();
+          // regulars = regulars.concat(options[key]).uniq();
         } else if(key == 'base') {
           overrides[key] = options[key]
           if(options[key] == word.get('word')) {
