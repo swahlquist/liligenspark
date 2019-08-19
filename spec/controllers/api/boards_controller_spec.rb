@@ -1258,7 +1258,7 @@ describe Api::BoardsController, :type => :controller do
       expect(b).to_not eq(nil)
       Worker.process_queues
 
-      bi1 = ButtonImage.process_new({"url": "http://localhost:3000/api/v1/users/1_1/protected_image/lessonpix/30983","content_type": nil,"width": nil,"height": nil,"pending": false,"avatar": false,"badge": false,"protected": true,"suggestion": "cat","external_id": nil,"search_term": nil,"license": {"type": "private","source_url": "http://lessonpix.com/pictures/30983/cat","author_name": "LessonPix","author_url": "http://lessonpix.com","uneditable": true},"file": false,"retrieved": nil}, {:user => @user, :remote_upload_possible => true})
+      bi1 = ButtonImage.process_new({"url": "http://localhost:3000/api/v1/users/1_1/protected_image/lessonpix/30983","content_type": nil,"width": nil,"height": nil,"pending": false,"avatar": false,"badge": false,"protected": true,"suggestion": "cat","external_id": nil,"search_term": nil,"license": {"type": "private","source_url": "https://lessonpix.com/pictures/30983/cat","author_name": "LessonPix","author_url": "https://lessonpix.com","uneditable": true},"file": false,"retrieved": nil}, {:user => @user, :remote_upload_possible => true})
       expect(bi1.protected?).to eq(true)
       bi2 = ButtonImage.create(:settings => {'protected' => true})
       bi3 = ButtonImage.create(:settings => {'protected' => false})

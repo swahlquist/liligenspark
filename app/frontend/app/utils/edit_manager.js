@@ -106,7 +106,7 @@ var editManager = EmberObject.extend({
   grid_for: function(button_id) {
     var button = editManager.find_button(button_id);
     var board = this.controller.get('model');
-    var res = null;
+    var res = [];
     if(!button) { return null; }
     var select_button = function(label, vocalization, event) {
       var overlay_button = editManager.overlay_button_from(button, board);
@@ -126,11 +126,26 @@ var editManager = EmberObject.extend({
     var lab = (trans || {})[lab_locale];
     var locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
     var list = [];
+    var ignore_defaults = false;
+    var defaults_used = false;
+    // If the button has been set to a different part of speech than
+    // what the defaults were expecting, don't use the defaults
+    if(button.inflection_defaults && button.inflection_defaults.types && button.inflection_defaults.types[0] != button.part_of_speech) {
+      ignore_defaults = true;
+    }
     if(button.inflections || trans || button.inflection_defaults) {
       for(var idx = 0; idx < 8; idx++) {
         var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
-        var trans_voc = voc && ((voc.inflections || [])[idx] || (voc.inflection_defaults || [])[idx]);
-        var trans_lab = lab && ((lab.inflections || [])[idx] || (lab.inflection_defaults || [])[idx]);
+        var trans_voc = voc && (voc.inflections || [])[idx];
+        if(!ignore_defaults && !trans_voc) { 
+          trans_voc = (voc.inflection_defaults || [])[idx] 
+          defaults_used = defaults_used || !!trans_voc;
+        }
+        var trans_lab = lab && (lab.inflections || [])[idx];
+        if(!ignore_defaults && !trans_lab) { 
+          trans_lab = (lab.inflection_defaults || [])[idx] ;
+          defaults_used = defaults_used || !!trans_lab;
+        }
         // If it's for the current locale we can just use the inflections
         // list or suggested defaults, otherwise we need to check the
         // translations for inflections/suggested defaults
@@ -147,61 +162,76 @@ var editManager = EmberObject.extend({
         res = list; 
       }
     }
-    // TODO: only use fallbacks if we know it's 'en' locale
-    if(res) {
-    } else if(button.part_of_speech == 'noun') {
-      // N - more/plural
-      // S - for me/possessive
-      // NW - negation
-      // W - in the past
-      // E - in the future
-      // SE?? - opposite
-      // next to close need a "more" option that
-      // can be replaced by up/down
-      res = [
-        {location: 'n', label: i18n.pluralize(button.label)},
-        {location: 'c', label: button.label},
-        {location: 'nw', label: i18n.negation(button.label)},
-        {location: 's', label: i18n.possessive(button.label)},
-      ];
-    } else if(button.part_of_speech == 'adjective') {
-      res = [
-        {location: 'ne', label: i18n.pluralize(button.label)},
-        {location: 'n', label: i18n.comparative(button.label)},
-        {location: 'e', label: i18n.superlative(button.label)},
-        {location: 'nw', label: i18n.negation(button.label)},
-        {location: 'c', label: button.label},
-      ];
-    } else if(button.part_of_speech == 'verb') {
-      res = [
-        {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
-        {location: 's', label: i18n.tense(button.label, {present_participle: true})},
-        {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
-        {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
-        {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
-        // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
-        {location: 'c', label: button.label}
-      ];
-    // for pronouns:
-    // C - subjective
-    // E - objective
-    // N - possessive
-    // NE - possessive adjective
-    // W - reflexive
-    } else {
-      console.log("unrecognized button type", button.part_of_speech, button);
-      res = [
-//        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
-        {location: 'c', label: button.label},
-        {location: 'nw', label: i18n.negation(button.label)},
-//        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
-      ];
+    // Only use the fallacks if it's a known locale,
+    // and there are no existing values populated or the default values were used,
+    // i.e. don't use fallbacks if the user manually set any inflections
+    if(lab_locale.match(/^en/i) && (res.length == 0 || defaults_used)) {
+      if(button.part_of_speech == 'noun') {
+        // N - more/plural
+        // S - for me/possessive
+        // NW - negation
+        // W - in the past
+        // E - in the future
+        // SW - opposite
+        // next to close need a "more" option that
+        // can be replaced by up/down
+        res = res.concat([
+          {location: 'n', label: i18n.pluralize(button.label)},
+          {location: 'c', label: button.label},
+          {location: 'nw', label: i18n.negation(button.label)},
+          {location: 's', label: i18n.possessive(button.label)},
+        ]);
+      } else if(button.part_of_speech == 'adjective') {
+        res = res.concat([
+          {location: 'n', label: i18n.pluralize(button.label)},
+          {location: 'ne', label: i18n.comparative(button.label)},
+          {location: 'e', label: i18n.superlative(button.label)},
+          {location: 'nw', label: i18n.negation(button.label)},
+          {location: 'w', label: i18n.negative_comparative(button.label)},
+          {location: 'c', label: button.label},
+        ]);
+      } else if(button.part_of_speech == 'pronoun') {
+        res = res.concat([
+          {location: 'c', label: button.label},
+          {location: 's', label: i18n.possessive(button.label, {pronoun: true})},
+          {location: 'n', label: i18n.possessive(button.label, {objective: true})},
+          {location: 'w', label: i18n.possessive(button.label, {})},
+          {location: 'e', label: i18n.possessive(button.label, {reflexive: true})}
+        ]);
+      } else if(button.part_of_speech == 'verb') {
+        res = res.concat([
+          {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
+          {location: 's', label: i18n.tense(button.label, {present_participle: true})},
+          {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
+          {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
+          {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
+          // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
+          {location: 'c', label: button.label}
+        ]);
+      } else {
+        console.log("unrecognized en button type", button.part_of_speech, button);
+        res = res.concat([
+  //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
+          {location: 'c', label: button.label},
+          {location: 'nw', label: i18n.negation(button.label)},
+  //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
+        ]);
+      }
     }
-    res.select = function(obj, event) {
+    var final = [];
+    var seen_locations = {};
+    res.forEach(function(i) { 
+      if(!seen_locations[i.location]) {
+        final.push(i);
+      }
+      seen_locations[i.location] = true;
+    })
+    final.select = function(obj, event) {
       event.overlay_location = obj.location;
       select_button(obj.label, obj.vocalization, event);
     };
-    return res;
+    if(final.length == 0) { return null; }
+    return final;
   },
   overlay_grid: function(grid, elem, event) {
     // TODO: log the overlay being opened somewhere

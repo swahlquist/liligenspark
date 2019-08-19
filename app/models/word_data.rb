@@ -3,6 +3,7 @@ class WordData < ActiveRecord::Base
   include Async
   include GlobalId
   include Processable
+  INFLECTIONS_VERSION = 1
 
   secure_serialize :data
   replicated_model  
@@ -58,7 +59,7 @@ class WordData < ActiveRecord::Base
         if params['inflection_overrides']
           hash = self.data['inflection_overrides'] || {}
           params['inflection_overrides'].each do |key, str|
-            if str == ""
+            if str == "" || str == nil
               hash.delete(key)
             else
               hash[key] = str
@@ -67,6 +68,8 @@ class WordData < ActiveRecord::Base
           self.data['inflection_overrides'] = hash
         end
       end
+    else
+      add_processing_error('only admins can update currently')
     end
   end
 
@@ -528,7 +531,88 @@ class WordData < ActiveRecord::Base
       backwards_word.save
     end
   end
-  
+
+  def self.inflection_locations_for(words, locale)
+    hash = {}
+    return hash if words.blank? || !locale
+    locales = [locale.downcase, locale.split(/-|_/)[0].downcase]
+    WordData.where(locale: locales, word: words.map(&:downcase)).each do |word_data|
+      data = word_data.data || {}
+      types = data['types'] || []
+      overrides = data['inflection_overrides'] || {}
+      overrides.keys.each do |key|
+        overrides.delete(key) if overrides[key] == 'N/A' || overrides[key] == 'na' || overrides[key] == 'NA' || overrides[key] == 'n/a'
+      end
+      overrides['regulars'] ||= []
+      pos = types[0]
+      locations = {}
+      #// N - more/plural
+      #// S - for me/possessive
+      #// NW - negation
+      #// W - in the past
+      #// E - in the future
+      #// SW - opposite
+      if locale.match(/^en/i)
+        if pos == 'adjective' && overrides['superlative']
+          locations['n'] = overrides['plural'] if !overrides['plural'].blank? && !overrides['regulars'].include?('plural')
+          locations['ne'] = overrides['comparative'] if !overrides['comparative'].blank? && !overrides['regulars'].include?('comparative')
+          locations['e'] = overrides['superlative'] if !overrides['superlative'].blank? && !overrides['regulars'].include?('superlative')
+          locations['w'] = overrides['negative_comparative'] if !overrides['negative_comparative'].blank? && !overrides['regulars'].include?('negative_comparative')
+          locations['nw'] = overrides['negation'] if !overrides['negation'].blank? && !overrides['regulars'].include?('negation')
+          locations['c'] = overrides['base'] if !overrides['base'].blank? && !overrides['regulars'].include?('base')
+          locations['c'] = overrides['base'] if locations.keys.length == 0
+        elsif pos == 'noun' && overrides['plural']
+          locations['n'] = overrides['plural'] if !overrides['plural'].blank? && !overrides['regulars'].include?('plural')
+          locations['c'] = overrides['base'] if !overrides['base'].blank? && !overrides['regulars'].include?('base')
+          locations['nw'] = overrides['negation'] if !overrides['past'].blank? && !overrides['regulars'].include?('negation')
+          locations['s'] = overrides['possessive'] if !overrides['possessive'].blank? && !overrides['regulars'].include?('possessive')
+          locations['c'] = overrides['base'] if locations.keys.length == 0
+        elsif pos == 'verb' && overrides['infinitive']
+          # missing: "am" doesn't offer "be" in its inflection list currently
+          # non-progressive verbs are not flagged here for use in 
+          # expanding (i.e. "jump" => "am jumping", "will be jumping", etc.)
+          locations['nw'] = overrides['simple_past'] if !overrides['simple_past'].blank? && !overrides['regulars'].include?('simple_past')
+          locations['w'] = overrides['past'] if !overrides['past'].blank? && !overrides['regulars'].include?('past')
+          locations['s'] = overrides['present_participle'] if !overrides['present_participle'].blank? && !overrides['regulars'].include?('present_participle')
+          locations['sw'] = overrides['past_participle'] if !overrides['past_participle'].blank? && !overrides['regulars'].include?('past_participle')
+          locations['ne'] = overrides['plural_present'] if !overrides['plural_present'].blank? && !overrides['regulars'].include?('plural_present')
+          locations['n'] = overrides['simple_present'] if !overrides['simple_present'].blank? && !overrides['regulars'].include?('simple_present')
+          locations['e'] = overrides['infinitive'] if !overrides['infinitive'].blank? && !overrides['regulars'].include?('infinitive')
+          locations['c'] = (overrides['present'] || overrides['base']) if !(overrides['present'] || overrides['base']).blank? && !overrides['regulars'].include?('present')
+          locations['c'] = (overrides['present'] || overrides['base']) if locations.keys.length == 0
+        elsif pos == 'adverb' && overrides['superlative']
+          locations['ne'] = overrides['comparative'] if !overrides['comparative'].blank? && !overrides['regulars'].include?('comparative')
+          locations['e'] = overrides['superlative'] if !overrides['superlative'].blank? && !overrides['regulars'].include?('superlative')
+          locations['w'] = overrides['negative_comparative'] if !overrides['negative_comparative'].blank? && !overrides['regulars'].include?('v')
+          locations['nw'] = overrides['negation'] if !overrides['negation'].blank? && !overrides['regulars'].include?('negation')
+          locations['c'] = overrides['base'] if !overrides['base'].blank? && !overrides['regulars'].include?('base')
+          locations['c'] = overrides['base'] if locations.keys.length == 0
+        elsif pos == 'pronoun' && overrides['objective']
+          locations['c'] = (overrides['subjective'] || overrides['base']) if !(overrides['subjective'] || overrides['base']).blank? && !overrides['regulars'].include?('base')
+          locations['s'] = overrides['possessive'] if !overrides['possessive'].blank? && !overrides['regulars'].include?('possessive')
+          locations['n'] = overrides['objective'] if !overrides['objective'].blank? && !overrides['regulars'].include?('objective')
+          locations['w'] = overrides['possessive_adjective'] if !overrides['possessive_adjective'].blank? && !overrides['regulars'].include?('possessive_adjective')
+          locations['e'] = overrides['reflexive'] if !overrides['reflexive'].blank? && !overrides['regulars'].include?('reflexive')
+          locations['c'] = overrides['base'] if locations.keys.length == 0
+        end
+      end
+      if locations.keys.length > 0
+        locations.keys.each{|k| locations.delete(k) if locations[k] == nil }
+        locations['v'] = WordData::INFLECTIONS_VERSION
+        locations['src'] = word_data.word
+        locations['c'] ||= word_data.word
+        if word_data.data['antonyms'] && word_data.data['antonyms'][0] && locale.match(/^en/i)
+          locations['se'] ||= word_data.data['antonyms'][0]
+        end
+      end
+      locations['types'] = types
+      words.select{|w| w.downcase == word_data.word}.each do |match|
+        hash[match] = locations
+      end
+    end
+    hash
+  end
+
   def self.core_for?(word, user)
     self.core_list_for(user).map(&:downcase).include?(word.downcase.sub(/[^\w]+$/, ''))
   end

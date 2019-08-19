@@ -24,6 +24,7 @@ class Board < ActiveRecord::Base
   before_save :generate_defaults
   before_save :generate_stats
   before_save :require_key
+  before_save :check_inflections
   after_save :post_process
   after_destroy :flush_related_records
 #  replicated_model
@@ -279,6 +280,15 @@ class Board < ActiveRecord::Base
           
     # TODO: encrypted search, lol
     self.settings['locale'] ||= 'en'
+    langs = []
+    if self.settings['translations']
+      self.settings['translations'].each do |k, trans|
+        if trans.is_a?(Hash)
+          langs += trans.keys
+        end
+      end
+    end
+    self.settings['locales'] = ([self.settings['locale']] + langs).uniq
     self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
     self.search_string = self.fully_listed? ? self.settings['search_string'] : nil
     true
@@ -389,12 +399,20 @@ class Board < ActiveRecord::Base
     end
     
     if @check_for_parts_of_speech
-      self.schedule(:check_for_parts_of_speech)
+      self.schedule(:check_for_parts_of_speech_and_inflections)
       @check_for_parts_of_speech = nil
     end
     schedule(:update_affected_users, @brand_new) if @button_links_changed || @brand_new
 
     schedule_downstream_checks
+  end
+
+  def check_inflections
+    # this used to be a background job, but I think it needs to be part of the original save now
+    if @check_for_parts_of_speech
+      self.check_for_parts_of_speech_and_inflections(false)
+      @check_for_parts_of_speech = nil
+    end
   end
   
   def update_self_references
@@ -641,37 +659,61 @@ class Board < ActiveRecord::Base
     res << 'layout' if self.settings['layout_category']
     res
   end
-  
-  def check_for_parts_of_speech!
-    self.check_for_parts_of_speech
-    self.save!
-  end
-  
-  def check_for_parts_of_speech
+    
+  def check_for_parts_of_speech_and_inflections(do_save=true)
     if self.settings && self.settings['buttons']
       any_changed = false
-      # TODO: race condition?
-      self.settings['buttons'].each do |button|
-        word = button['vocalization'] || button['label']
-        if word && !button['part_of_speech']
-          speech ||= WordData.find_word(word)
-          if speech && speech['types'] && speech['types'].length > 0
-            button['part_of_speech'] = speech['types'][0]
-            button['suggested_part_of_speech'] = speech['types'][0]
+      (self.settings['locales'] || ['en']).each do |loc|
+        words_to_check = self.settings['buttons'].map{|b|
+          btn = ((self.settings['translations'] || {})[b['id'].to_s] || {})[loc] || b
+          already_updated = btn['inflection_defaults'] && btn['inflection_defaults']['v'] == WordData::INFLECTIONS_VERSION
+          already_updated ? nil : (btn['vocalization'] || btn['label'])
+        }.compact
+        inflections = WordData.inflection_locations_for(words_to_check, loc)
+        self.settings['buttons'].each do |button|
+          if loc == self.settings['locale'] || !self.settings['locale']
+            # look for part of speech when loading the default locale
+            word = button['vocalization'] || button['label']
+            if word && !button['part_of_speech']
+              types = (inflections[word] || {})['types']
+              types ||= (WordData.find_word(word) || {})['types'] || []
+              if types && types.length > 0
+                button['part_of_speech'] = types[0]
+                button['suggested_part_of_speech'] = types[0]
+                any_changed = true
+              end
+            elsif button['part_of_speech'] && button['part_of_speech'] == button['suggested_part_of_speech']
+              types = (inflections[word] || {})['types']
+              # if we've changed our assumption of the default, and the user hasn't updated
+              # from what the system suggested, go ahead and update for them
+              if types && typees.length > 0 && types[0] != button['part_of_speech']
+                button['part_of_speech'] = types[0]
+                button['suggested_part_of_speech'] = types[0]
+                any_changed = true
+              end
+            elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
+              str = "#{word}-#{button['part_of_speech']}"
+              RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
+            end
+            if word && inflections[word] && inflections[word]['v']
+              button['inflection_defaults'] = inflections[word]
+              any_changed = true
+            end
+          end
+          btn = ((self.settings['translations'] || {})[button['id'].to_s] || {})[loc]
+          if btn && inflections[btn['vocalization'] || btn['label']] && inflections[btn['vocalization'] || btn['label']]['v']
+            self.settings['translations'][button['id'].to_s][loc]['inflection_defaults'] = inflections[btn['vocalization'] || btn['label']]
             any_changed = true
           end
-        elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
-          str = "#{button['vocalization'] || button['label']}-#{button['part_of_speech']}"
-          RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
         end
       end
-      if any_changed
+      if any_changed && do_save
         self.assert_current_record!
         self.save 
       end
     end
   rescue ActiveRecord::StaleObjectError
-    self.schedule_once(:check_for_parts_of_speech)
+    self.schedule_once(:check_for_parts_of_speech_and_inflections, do_save)
   end
   
   def process_button(button)

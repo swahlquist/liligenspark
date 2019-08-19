@@ -400,6 +400,9 @@ var i18n = EmberObject.extend({
     // difficult == more difficult
     return this.modify_ad(str, opts && opts.negative ? 'negative' : 'positive');
   },
+  negative_comparative: function(str, opts) {
+    return "less " + str;
+  },
   superlative: function(str) {
     // happy == happiest
     // beautiful == most beautiful (or the most beautiful??)

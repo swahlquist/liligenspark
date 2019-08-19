@@ -1678,12 +1678,12 @@ describe Board, :type => :model do
     end
   end
   
-  describe "check_for_parts_of_speech" do
-    it "should schedule call when board is processed" do
+  describe "check_for_parts_of_speech_and_inflections" do
+    it "should call when board is processed" do
       u = User.create
       b = Board.create(:user => u)
+      expect(b).to receive(:check_for_parts_of_speech_and_inflections).with(false).and_return(true)
       b.process({'buttons' => []})
-      expect(Worker.scheduled?(Board, :perform_action, {'id' => b.id, 'method' => 'check_for_parts_of_speech', 'arguments' => []})).to be_truthy
     end
     
     it "should set part_of_speech for any buttons that don't have one set" do
@@ -1694,7 +1694,7 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb'}
       ]
       b.save
-      b.check_for_parts_of_speech
+      b.check_for_parts_of_speech_and_inflections
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][1]['part_of_speech']).to eq('verb')
@@ -1709,7 +1709,7 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb'}
       ]
       b.save
-      b.check_for_parts_of_speech
+      b.check_for_parts_of_speech_and_inflections
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][1]['part_of_speech']).to eq('verb')
@@ -1725,7 +1725,7 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat', 'part_of_speech' => 'verb', 'suggested_part_of_speech' => 'noun'}
       ]
       b.save
-      b.check_for_parts_of_speech
+      b.check_for_parts_of_speech_and_inflections
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][1]['part_of_speech']).to eq('verb')
@@ -1735,6 +1735,101 @@ describe Board, :type => :model do
       expect(words).not_to eq(nil)
       expect(words['cat-verb']).to eq("1")
       expect(words['cat']).to eq(nil)
+    end
+
+    it "should look up inflections for any buttons that have content" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'bacon', locale: 'en') || WordData.create(word: 'bacon', locale: 'en')
+      w.process({
+        'primary_part_of_speech' => 'noun',
+        'parts_of_speech' => ['noun'],
+        'antonyms' => 'grossness',
+        'inflection_overrides' => {
+          'plural' => 'bacons',
+          'possessive' => "bacon's",
+          'regulars' => ['possessive']
+        }
+      }, {updater: u.reload})
+      b = Board.create(user: u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'bacon'},
+        {'id' => 2, 'label' => 'cat'}
+      ]
+      b.check_for_parts_of_speech_and_inflections
+      expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][1]['part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][1]['suggested_part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][0]['inflection_defaults']).to eq({
+        'c' => 'bacon',
+        'n' => 'bacons',
+        'se' => 'grossness',
+        'src' => 'bacon',
+        'types' => ['noun'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+      expect(b.settings['buttons'][1]['inflection_defaults']).to eq(nil)
+    end
+
+    it "should look up inflections for all locales for a board" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'bacon', locale: 'en') || WordData.create(word: 'bacon', locale: 'en')
+      w.process({
+        'primary_part_of_speech' => 'noun',
+        'parts_of_speech' => ['noun'],
+        'antonyms' => 'grossness',
+        'inflection_overrides' => {
+          'plural' => 'bacons',
+          'possessive' => "bacon's",
+          'regulars' => ['possessive']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'chat', locale: 'fr') || WordData.create(word: 'chat', locale: 'fr')
+      w.process({
+        'primary_part_of_speech' => 'noun',
+        'parts_of_speech' => ['noun']
+      }, {updater: u.reload})
+
+      b = Board.create(user: u)
+      b.settings['locale'] = 'fr'
+      b.settings['locales'] = ['en', 'fr']
+      b.settings['translations'] = {
+        'default' => 'fr',
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        '1' => {
+          'en' => {'label' => 'bacon'}, 'fr' => {'label' => 'baconne'}
+        },
+        '2' => {
+          'en' => {'label' => 'cat'}, 'fr' => {'label' => 'chat'}
+        }
+      }
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'baconne'},
+        {'id' => 2, 'label' => 'chat'}
+      ]
+      b.check_for_parts_of_speech_and_inflections
+      expect(b.settings['buttons'][0]['part_of_speech']).to eq(nil)
+      expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq(nil)
+      expect(b.settings['buttons'][1]['part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][1]['suggested_part_of_speech']).to eq('noun')
+      expect(b.settings['buttons'][0]['inflection_defaults']).to eq(nil)
+      expect(b.settings['buttons'][1]['inflection_defaults']).to eq(nil)
+      expect(b.settings['translations']['1']['en']['inflection_defaults']).to eq({
+        'c' => 'bacon',
+        'n' => 'bacons',
+        'se' => 'grossness',
+        'src' => 'bacon',
+        'types' => ['noun'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+      expect(b.settings['translations']['1']['fr']['inflection_defaults']).to eq(nil)
+      expect(b.settings['translations']['2']['en']['inflection_defaults']).to eq(nil)
+      expect(b.settings['translations']['2']['fr']['inflection_defaults']).to eq(nil)
     end
   end
   

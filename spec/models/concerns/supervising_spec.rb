@@ -488,7 +488,8 @@ describe Supervising, :type => :model do
       expect(u.reload.settings['subscription']['plan_id']).to eq(nil)
       expect(u.settings['subscription']['subscription_id']).to eq(nil)
       expect(u.settings['subscription']['seconds_left']).to eq(nil)
-      expect(u.expires_at.to_i).to eq(exp)
+      expect(u.expires_at.to_i).to be > (exp - 5)
+      expect(u.expires_at.to_i).to be < (exp + 5)
       expect(u.grace_period?).to eq(true)
     end
     

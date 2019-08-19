@@ -137,9 +137,9 @@ describe DeletedBoard, :type => :model do
       
       b = Board.find_by_path(key)
       expect(b.settings['buttons']).to eq([
-          {'id' => 1, 'label' => 'hat'},
-          {'id' => 2, 'label' => 'freedom'},
-          {'id' => 3, 'label' => 'polygon'}
+          {'id' => 1, 'label' => 'hat', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'},
+          {'id' => 2, 'label' => 'freedom', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'},
+          {'id' => 3, 'label' => 'polygon', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
       ])
     end
   end
