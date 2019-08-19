@@ -161,7 +161,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: [
       ].to_json}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
@@ -175,7 +175,7 @@ describe Api::SearchController, :type => :controller do
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(@user).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return(nil)
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: [
       ].to_json}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
@@ -189,9 +189,9 @@ describe Api::SearchController, :type => :controller do
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(@user).and_return({'pid' =>  '1', 'username' => 'bob', 'token' => 'asdf'})
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({'pid' =>  '1', 'username' => 'sue', 'token' => 'jkl'})
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=1&username=bob&token=asdf&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: [
       ].to_json}))
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=1&username=sue&token=jkl&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new({body: "Unknown User"}))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=1&username=sue&token=jkl&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: "Unknown User"}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
       expect(response).to be_success

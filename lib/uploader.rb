@@ -353,11 +353,11 @@ module Uploader
           'protected_source' => 'lessonpix',
           'license' => {
             'type' => 'private',
-            'source_url' => "http://lessonpix.com/pictures/#{obj['image_id']}/#{CGI.escape(obj['title'] || '')}",
+            'source_url' => "https://lessonpix.com/pictures/#{obj['image_id']}/#{CGI.escape(obj['title'] || '')}",
             'author_name' => 'LessonPix',
-            'author_url' => 'http://lessonpix.com',
+            'author_url' => 'https://lessonpix.com',
             'uneditable' => true,
-            'copyright_notice_url' => 'http://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+            'copyright_notice_url' => 'https://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
           }          
         }
       end

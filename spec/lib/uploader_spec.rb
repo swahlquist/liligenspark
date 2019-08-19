@@ -463,10 +463,10 @@ describe Uploader do
         'pid' => '99999',
         'token' => 'for_the_team'
       }).exactly(2).times
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: 'Token Mismatch'))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: 'Token Mismatch'))
       expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
 
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
         {
           'image_id' => '2345',
@@ -487,11 +487,11 @@ describe Uploader do
           'protected_source' => 'lessonpix',
           'license' => {
             'type' => 'private',
-            'source_url' => "http://lessonpix.com/pictures/2345/good+pic",
+            'source_url' => "https://lessonpix.com/pictures/2345/good+pic",
             'author_name' => 'LessonPix',
-            'author_url' => 'http://lessonpix.com',
+            'author_url' => 'https://lessonpix.com',
             'uneditable' => true,
-            'copyright_notice_url' => 'http://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+            'copyright_notice_url' => 'https://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
           }
         }
       ])
@@ -514,8 +514,8 @@ describe Uploader do
         'token' => 'i_got_wet'
       }).exactly(1).times
 
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: "Token Mismatch"))
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=88888&username=nimue&token=i_got_wet&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: "Token Mismatch"))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=88888&username=nimue&token=i_got_wet&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
         {
           'image_id' => '2345',
@@ -536,11 +536,11 @@ describe Uploader do
           'protected_source' => 'lessonpix',
           'license' => {
             'type' => 'private',
-            'source_url' => "http://lessonpix.com/pictures/2345/good+pic",
+            'source_url' => "https://lessonpix.com/pictures/2345/good+pic",
             'author_name' => 'LessonPix',
-            'author_url' => 'http://lessonpix.com',
+            'author_url' => 'https://lessonpix.com',
             'uneditable' => true,
-            'copyright_notice_url' => 'http://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+            'copyright_notice_url' => 'https://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
           }
         }
       ])
@@ -656,10 +656,10 @@ describe Uploader do
         'pid' => '99999',
         'token' => 'for_the_team'
       }).exactly(2).times
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: 'Token Mismatch'))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: 'Token Mismatch'))
       expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
 
-      expect(Typhoeus).to receive(:get).with("http://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5}).and_return(OpenStruct.new(body: [
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
         {
           'image_id' => '2345',
@@ -682,11 +682,11 @@ describe Uploader do
           'protected_source' => 'lessonpix',
           'license' => {
             'type' => 'private',
-            'source_url' => "http://lessonpix.com/pictures/2345/good+pic",
+            'source_url' => "https://lessonpix.com/pictures/2345/good+pic",
             'author_name' => 'LessonPix',
-            'author_url' => 'http://lessonpix.com',
+            'author_url' => 'https://lessonpix.com',
             'uneditable' => true,
-            'copyright_notice_url' => 'http://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+            'copyright_notice_url' => 'https://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
           }
         }
       ])
