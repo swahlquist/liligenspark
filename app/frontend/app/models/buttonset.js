@@ -342,6 +342,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       text: "", 
       next_part: 0, 
       parts_covered: 0, 
+      imperfect_parts: 0,
       steps: [], 
       total_edit_distance: 0, 
       extra_steps: 0,
@@ -379,6 +380,9 @@ CoughDrop.Buttonset = DS.Model.extend({
                 dup.text = dup.text + (dup.text == "" ? "" : " ") + starter.text;
                 dup.next_part = part_idx + (starter.part_end - starter.part_start);
                 dup.parts_covered = dup.parts_covered + (starter.part_end - starter.part_start);
+                if(starter.total_edit_distance > 0) {
+                  dup.imperfect_parts = dup.imperfect_parts + (starter.part_end - starter.part_start);
+                }
                 dup.total_edit_distance = dup.total_edit_distance + starter.total_edit_distance;
                 dup.extra_steps = dup.extra_steps + (button_steps.steps || 0);
                 dup.total_steps = dup.steps.length + dup.extra_steps;
@@ -409,10 +413,11 @@ CoughDrop.Buttonset = DS.Model.extend({
           // prioritize:
           // 1. covering the most steps
           // 2. perfect spelling matches
+          // 2.5. having the most perfect spelling parts
           // 3. covering more steps than the cutoff
           // 4. minimal spelling changes and navigation steps
           // 5. minimal number of found buttons needed
-          combo.match_scores = [parts_current_count - combo.parts_covered, combo.total_edit_distance ? 1 : 0, combo.parts_covered > cutoff ? (parts_current_count - combo.parts_covered + primary_score) : 1000, parts_current_count - combo.parts_covered + primary_score, combo.steps.length];
+          combo.match_scores = [parts_current_count - combo.parts_covered, combo.total_edit_distance ? (combo.imperfect_parts || (parts_current_count - combo.parts_covered)) : 0, , combo.parts_covered > cutoff ? (parts_current_count - combo.parts_covered + primary_score) : 1000, parts_current_count - combo.parts_covered + primary_score, combo.steps.length];
         });
         // limit results as we go so we don't balloon memory usage
         combos = new_combos.sort(function(a, b) {
