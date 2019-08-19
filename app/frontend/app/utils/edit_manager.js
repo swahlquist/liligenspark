@@ -149,9 +149,9 @@ var editManager = EmberObject.extend({
         // translations for inflections/suggested defaults
         if(for_current_locale && button.inflections && button.inflections[idx]) {
           list.push({location: locs[idx], label: button.inflections[idx]});
-        } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[loc[idx]]) {
+        } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[locs[idx]]) {
           defaults_used = true;
-          list.push({location: locs[idx], label: button.inflection_defaults[loc[idx]]});
+          list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]]});
         } else if(trans_voc && trans_lab) {
           defaults_used = true;
           list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
