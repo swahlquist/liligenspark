@@ -554,7 +554,7 @@ class WordData < ActiveRecord::Base
       #// SW - opposite
       if locale.match(/^en/i)
         if pos == 'adjective' && overrides['superlative']
-          locations['n'] = overrides['plural'] if !overrides['plural'].blank? && !overrides['regulars'].include?('plural')
+#          locations['n'] = overrides['plural'] if !overrides['plural'].blank? && !overrides['regulars'].include?('plural')
           locations['ne'] = overrides['comparative'] if !overrides['comparative'].blank? && !overrides['regulars'].include?('comparative')
           locations['e'] = overrides['superlative'] if !overrides['superlative'].blank? && !overrides['regulars'].include?('superlative')
           locations['w'] = overrides['negative_comparative'] if !overrides['negative_comparative'].blank? && !overrides['regulars'].include?('negative_comparative')

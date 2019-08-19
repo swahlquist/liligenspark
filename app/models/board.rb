@@ -667,6 +667,7 @@ class Board < ActiveRecord::Base
         words_to_check = self.settings['buttons'].map{|b|
           btn = ((self.settings['translations'] || {})[b['id'].to_s] || {})[loc] || b
           already_updated = btn['inflection_defaults'] && btn['inflection_defaults']['v'] == WordData::INFLECTIONS_VERSION
+          already_updated = false if do_save == 'force'
           already_updated ? nil : (btn['vocalization'] || btn['label'])
         }.compact
         inflections = WordData.inflection_locations_for(words_to_check, loc)

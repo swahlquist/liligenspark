@@ -137,23 +137,23 @@ var editManager = EmberObject.extend({
       for(var idx = 0; idx < 8; idx++) {
         var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
         var trans_voc = voc && (voc.inflections || [])[idx];
-        if(!ignore_defaults && !trans_voc) { 
-          trans_voc = (voc.inflection_defaults || [])[idx] 
-          defaults_used = defaults_used || !!trans_voc;
+        if(!ignore_defaults && !trans_voc) {
+          trans_voc = (voc.inflection_defaults || [])[locs[idx]]; 
         }
         var trans_lab = lab && (lab.inflections || [])[idx];
         if(!ignore_defaults && !trans_lab) { 
-          trans_lab = (lab.inflection_defaults || [])[idx] ;
-          defaults_used = defaults_used || !!trans_lab;
+          trans_lab = (lab.inflection_defaults || [])[locs[idx]];
         }
         // If it's for the current locale we can just use the inflections
         // list or suggested defaults, otherwise we need to check the
         // translations for inflections/suggested defaults
         if(for_current_locale && button.inflections && button.inflections[idx]) {
           list.push({location: locs[idx], label: button.inflections[idx]});
-        } else if(for_current_locale && button.inflections_defaults && button.inflections_defaults[idx]) {
-          list.push({location: locs[idx], label: button.inflections_defaults[idx]});
+        } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[loc[idx]]) {
+          defaults_used = true;
+          list.push({location: locs[idx], label: button.inflection_defaults[loc[idx]]});
         } else if(trans_voc && trans_lab) {
+          defaults_used = true;
           list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
         }
       }
@@ -183,7 +183,7 @@ var editManager = EmberObject.extend({
         ]);
       } else if(button.part_of_speech == 'adjective') {
         res = res.concat([
-          {location: 'n', label: i18n.pluralize(button.label)},
+//          {location: 'n', label: i18n.pluralize(button.label)},
           {location: 'ne', label: i18n.comparative(button.label)},
           {location: 'e', label: i18n.superlative(button.label)},
           {location: 'nw', label: i18n.negation(button.label)},
