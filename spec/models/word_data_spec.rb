@@ -556,8 +556,7 @@ RSpec.describe WordData, :type => :model do
       User.link_supervisor_to_user(u, u2)
       res = WordData.activities_for(u.reload, true)
       expect(res.instance_variable_get('@fresh')).to eq(true)
-      expect(res).to eq({
-        'generated' => Time.now.iso8601,
+      expect(res.except('generated')).to eq({
         'checked' => Time.now.iso8601,
         'list' => [
           {"id"=>"1", "score"=>11, "user_ids"=>[u.global_id, u2.global_id]}, 
@@ -573,6 +572,8 @@ RSpec.describe WordData, :type => :model do
           {"word"=>"most", "locale"=>"en", "user_ids"=>[u2.global_id]}
         ]
       })
+      expect(res['generated']).to be > (Time.now - 5).iso8601
+      expect(res['generated']).to be < (Time.now + 5).iso8601
     end
 
     it 'should as fresh if all are fresh' do
@@ -1135,6 +1136,443 @@ RSpec.describe WordData, :type => :model do
         "mask"=>{"types"=>["noun"]}, 
         "run"=>{"types"=>["verb"]}, 
         "ugly"=>{"types"=>["adjective"]}
+      })
+    end
+
+    it "should override with extras settings if defined" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'he', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'pronoun',
+        antonyms: 'she',
+        inflection_overrides: {
+          base: 'he',
+          plural: 'hes',
+          subjective: 'he',
+          possessive: 'his',
+          N: 'bacon',
+          objective: 'him',
+          possessive_adjective: 'his',
+          reflexive: 'himself',
+          regulars: ['possessive', 'base']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'ugly', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'adjective',
+        antonyms: 'pretty',
+        inflection_overrides: {
+          base: 'ugly',
+          comparative: 'uglier',
+          superlative: 'ugliest',
+          NW: 'water',
+          NE: 'wet',
+          S: 'washing',
+          negative_comparative: 'less ugly',
+          plural: 'uglies',
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'mask', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'noun',
+        inflection_overrides: {
+          base: 'mask',
+          plural: 'masks',
+          SW: 'masking',
+          possessive: "mask's",
+          regulars: ['plural']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'run', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'verb',
+        antonyms: 'walk,stroll',
+        inflection_overrides: {
+          base: 'run',
+          infinitive: 'to run',
+          present: 'run',
+          simple_present: 'runs',
+          plural_present: 'run',
+          S: 'mother',
+          SE: 'monkey',
+          personal_past: 'ran',
+          past: 'ran',
+          simple_past: '',
+          present_participle: 'running',
+          past_participle: 'run',
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'angrily', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'adverb',
+        inflection_overrides: {
+          base: 'angrily',
+          comparative: 'more angrily',
+          superlative: 'most angrily',
+          N: 'broccoli',
+          S: 'brother',
+          negative_comparative: 'N/A',
+          regulars: ['comparative']
+        }
+      }, {updater: u.reload})
+      hash = WordData.inflection_locations_for(['he', 'ugly', 'mask', 'run', 'angrily'], 'en-AU')
+      expect(hash['he']).to eq({
+        'c' => 'he',
+        'e' => 'himself',
+        'n' => 'bacon',
+        'src' => 'he',
+        'se' => 'she',
+        'types' => ['pronoun', 'noun', 'interjection'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'his'
+      })
+      expect(hash['ugly']).to eq({
+        "c"=>"ugly", 
+        "e"=>"ugliest", 
+#        "n"=>"uglies", 
+        "ne"=>"wet", 
+        "nw"=>"water",
+        "s"=>"washing",
+        'se' => 'pretty',
+        "src"=>"ugly", 
+        "types"=>["adjective"], 
+        "v"=>WordData::INFLECTIONS_VERSION, 
+        "w"=>"less ugly"
+      })
+      expect(hash['mask']).to eq({
+        "c"=>"mask", 
+        "s"=>"mask's", 
+        "sw"=>"masking",
+        "src"=>"mask", 
+        "types"=>["noun", "verb", "usu participle verb", "transitive verb"], 
+        "v"=>WordData::INFLECTIONS_VERSION
+      })
+      expect(hash['run']).to eq({
+        "c"=>"run", 
+        "e"=>"to run", 
+        "n"=>"runs", 
+        "ne"=>"run", 
+        "s"=>"mother", 
+        "se"=>"monkey", 
+        'sw' => 'run',
+        'src' => 'run',
+        'types' => ['verb', 'usu participle verb', 'intransitive verb', 'transitive verb'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'ran'
+      })
+      expect(hash['angrily']).to eq({
+        'c' => 'angrily',
+        'e' => 'most angrily',
+        'n' => 'broccoli',
+        's' => 'brother',
+        'src' => 'angrily',
+        'types' => ['adverb'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+    end
+
+    it "should ignore extras settings if same as the expected inflection" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'he', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'pronoun',
+        antonyms: 'she',
+        inflection_overrides: {
+          base: 'he',
+          plural: 'hes',
+          subjective: 'he',
+          possessive: 'his',
+          N: 'him',
+          objective: 'him',
+          possessive_adjective: 'his',
+          reflexive: 'himself',
+          regulars: ['possessive', 'base', 'objective']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'run', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'verb',
+        parts_of_speech: 'verb',
+        antonyms: 'walk,stroll',
+        inflection_overrides: {
+          base: 'run',
+          infinitive: 'to run',
+          present: 'run',
+          simple_present: 'runs',
+          plural_present: 'run',
+          S: 'running',
+          NE: 'run',
+          personal_past: 'ran',
+          past: 'ran',
+          simple_past: '',
+          present_participle: 'running',
+          past_participle: 'run',
+          regulars: ['present_participle', 'plural_present']
+        }
+      }, {updater: u.reload})
+      hash = WordData.inflection_locations_for(['he', 'ugly', 'mask', 'run', 'angrily'], 'en-AU')
+      expect(hash['he']).to eq({
+        'c' => 'he',
+        'e' => 'himself',
+        'src' => 'he',
+        'se' => 'she',
+        'types' => ['pronoun', 'noun', 'interjection'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'his'
+      })
+      expect(hash['run']).to eq({
+        "c"=>"run", 
+        "e"=>"to run", 
+        "n"=>"runs", 
+        "sw"=>"run", 
+        "se"=>"walk", 
+        'src' => 'run',
+        'types' => ['verb'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'ran'
+      })
+    end
+
+    it "should include secondary parts of speech inflections where possible" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'he', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'pronoun',
+        
+        antonyms: 'she',
+        inflection_overrides: {
+          base: 'he',
+          plural: 'hes',
+          subjective: 'he',
+          possessive: 'his',
+          objective: 'him',
+          possessive_adjective: 'his',
+          reflexive: 'himself',
+          regulars: ['possessive', 'base']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'ugly', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'adjective',
+        parts_of_speech: 'adjective,noun,verb',
+        antonyms: 'pretty',
+        inflection_overrides: {
+          base: 'ugly',
+          comparative: 'uglier',
+          superlative: 'ugliest',
+          negative_comparative: 'less ugly',
+          plural: 'uglies',
+          possessive: "ugly's",
+          simple_past: 'uglied',
+          past: 'uglified',
+          present_participle: 'uglying',
+          past_participle: 'uglificated',
+          plural_present: 'uglyo',
+          simple_present: 'uglya',
+          infinitive: 'to ugly'
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'mask', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'noun',
+        parts_of_speech: 'noun,verb',
+        inflection_overrides: {
+          base: 'mask',
+          plural: 'masks',
+          possessive: "mask's",
+          simple_past: 'masked',
+          past: 'maskeded',
+          present_participle: 'masking',
+          past_participle: 'maskered',
+          plural_present: 'masks',
+          simple_present: 'maskss',
+          infinitive: 'to mask',
+          regulars: ['plural', 'possessive', 'plural_present']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'foul', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'noun',
+        parts_of_speech: 'noun,adjective',
+        inflection_overrides: {
+          base: 'foul',
+          plural: 'fouls',
+          possessive: "foul's",
+          comparative: "fouler",
+          superlative: "foulest",
+          negative_comparative: "less foul",
+          regulars: ['plural', 'superlative']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'grave', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'noun',
+        parts_of_speech: 'noun,adverb',
+        inflection_overrides: {
+          base: 'grave',
+          plural: 'graves',
+          possessive: "grave's",
+          comparative: "graver",
+          superlative: "gravest",
+          negative_comparative: "less grave",
+          regulars: ['plural', 'comparative']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'run', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'verb',
+        parts_of_speech: 'verb,noun',
+        antonyms: 'walk,stroll',
+        inflection_overrides: {
+          base: 'run',
+          infinitive: 'to run',
+          present: 'run',
+          plural_present: 'run',
+          personal_past: 'ran',
+          past: 'ran',
+          simple_past: '',
+          plural: 'runs',
+          possessive: "run's",
+          present_participle: 'running',
+          past_participle: 'run',
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'mute', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'verb',
+        parts_of_speech: 'verb,adjective',
+        antonyms: 'vocal',
+        inflection_overrides: {
+          base: 'mute',
+          infinitive: 'to mute',
+          present: 'mutee',
+          simple_present: 'mutes',
+          plural_present: 'mute',
+          personal_past: 'muted',
+          past: 'muted',
+          simple_past: '',
+          comparative: 'muter',
+          superlative: 'mutest',
+          negative_comparative: 'less mute',
+          present_participle: 'muting',
+          past_participle: 'muten',
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'down', locale: 'en')
+      w.process({
+        primary_part_of_speech: 'adverb',
+        parts_of_speech: 'adverb,verb',
+        inflection_overrides: {
+          base: 'down',
+          comparative: 'downer',
+          superlative: 'downest',
+          negative_comparative: 'N/A',
+          infinitive: 'to down',
+          present: 'down',
+          simple_present: 'downs',
+          plural_present: 'down',
+          personal_past: 'downed',
+          past: 'downed',
+          simple_past: '',
+          present_participle: 'downing',
+          past_participle: 'downelly',
+          regulars: ['comparative', 'past', 'personal_past']
+        }
+      }, {updater: u.reload})
+      hash = WordData.inflection_locations_for(['he', 'ugly', 'mask', 'foul', 'grave', 'run', 'mute', 'down'], 'en-AU')
+      expect(hash['he']).to eq({
+        'c' => 'he',
+        'e' => 'himself',
+        'n' => 'him',
+        'src' => 'he',
+        'se' => 'she',
+        'types' => ['pronoun', 'noun', 'interjection'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'his'
+      })
+      expect(hash['ugly']).to eq({
+        "c"=>"ugly", 
+        "e"=>"ugliest", 
+        "n"=>"uglies", 
+        "nw"=>"uglied",
+        "s"=>"ugly's",
+        "sw"=>"uglificated",
+        "ne"=>"uglier", 
+        'se' => 'pretty',
+        "src"=>"ugly", 
+        "types"=>["adjective","noun","verb"], 
+        "v"=>WordData::INFLECTIONS_VERSION, 
+        "w"=>"less ugly"
+      })
+      expect(hash['mask']).to eq({
+        "c"=>"mask",
+        "e"=>"to mask",
+        "nw"=>"masked",
+        "sw"=>"maskered",
+        "w"=>"maskeded",
+        "src"=>"mask", 
+        "types"=>["noun", "verb"], 
+        "v"=>WordData::INFLECTIONS_VERSION
+      })
+      expect(hash['run']).to eq({
+        "c"=>"run", 
+        "e"=>"to run", 
+        "n"=>"runs", 
+        "ne"=>"run", 
+        "s"=>"running", 
+        "se"=>"walk", 
+        'sw' => 'run',
+        'src' => 'run',
+        'types' => ['verb', 'noun'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'ran'
+      })
+      expect(hash['foul']).to eq({
+        "c"=>"foul", 
+        "ne"=>"fouler", 
+        "s"=>"foul's", 
+        'src'=>'foul',
+        'types' => ['noun', 'adjective'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        'w' => 'less foul'
+      })
+      expect(hash['grave']).to eq({
+        "c"=>"grave", 
+        "s"=>"grave's", 
+        'src'=>'grave',
+        'e'=>'gravest',
+        'w'=>'less grave',
+        'types' => ['noun', 'adverb'],
+        'v' => WordData::INFLECTIONS_VERSION,
+      })
+      expect(hash['mute']).to eq({
+        'c' => 'mutee',
+        'n' => 'mutes',
+        'e' => 'to mute',
+        'w' => 'muted',
+        'ne' => 'muter',
+        'sw' => 'muten',
+        's' => 'muting',
+        'se' => 'vocal',
+        'src' => 'mute',
+        'types' => ['verb', 'adjective'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+      expect(hash['down']).to eq({
+        'c' => 'down',
+        'e' => 'downest',
+        's' => 'downing',
+        'n' => 'downs',
+        'sw' => 'downelly',
+        'src' => 'down',
+        'types' => ['adverb', 'verb'],
+        'v' => WordData::INFLECTIONS_VERSION
       })
     end
   end

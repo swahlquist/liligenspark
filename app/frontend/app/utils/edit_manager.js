@@ -105,6 +105,7 @@ var editManager = EmberObject.extend({
   },
   grid_for: function(button_id) {
     var button = editManager.find_button(button_id);
+    var expected_inflections_version = 1;
     var board = this.controller.get('model');
     var res = [];
     if(!button) { return null; }
@@ -138,11 +139,13 @@ var editManager = EmberObject.extend({
         var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
         var trans_voc = voc && (voc.inflections || [])[idx];
         if(!ignore_defaults && !trans_voc) {
-          trans_voc = (voc.inflection_defaults || [])[locs[idx]]; 
+          trans_voc = (voc.inflection_defaults || {})[locs[idx]]; 
+          defaults_used = (voc.inflection_defaults || {}).v == expected_inflections_version;
         }
         var trans_lab = lab && (lab.inflections || [])[idx];
         if(!ignore_defaults && !trans_lab) { 
-          trans_lab = (lab.inflection_defaults || [])[locs[idx]];
+          trans_lab = (lab.inflection_defaults || {})[locs[idx]];
+          defaults_used = (lab.inflection_defaults || {}).v == expected_inflections_version;
         }
         // If it's for the current locale we can just use the inflections
         // list or suggested defaults, otherwise we need to check the
@@ -150,10 +153,9 @@ var editManager = EmberObject.extend({
         if(for_current_locale && button.inflections && button.inflections[idx]) {
           list.push({location: locs[idx], label: button.inflections[idx]});
         } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[locs[idx]]) {
-          defaults_used = true;
+          defaults_used = (button.inflection_defaults.v == expected_inflections_version);
           list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]]});
         } else if(trans_voc && trans_lab) {
-          defaults_used = true;
           list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
         }
       }

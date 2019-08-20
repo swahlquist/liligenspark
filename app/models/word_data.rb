@@ -557,7 +557,7 @@ class WordData < ActiveRecord::Base
       #// SW - opposite
       known_locations = {}
       set_location = lambda{|loc, key|
-        if !overrides[key].blank? && !locations[loc]
+        if !overrides[key].blank? && !locations[loc] && !known_locations[loc]
           locations[loc] = overrides[key] if !(overrides['regulars'] || []).include?(key)
           known_locations[loc] = overrides[key]
         end
