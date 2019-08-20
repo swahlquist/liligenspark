@@ -1022,7 +1022,7 @@ RSpec.describe WordData, :type => :model do
       expect(hash['ugly']).to eq({
         "c"=>"ugly", 
         "e"=>"ugliest", 
-        "n"=>"uglies", 
+#        "n"=>"uglies", 
         "ne"=>"uglier", 
         'se' => 'pretty',
         "src"=>"ugly", 

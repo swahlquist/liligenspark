@@ -166,6 +166,7 @@ var editManager = EmberObject.extend({
     // and there are no existing values populated or the default values were used,
     // i.e. don't use fallbacks if the user manually set any inflections
     if(lab_locale.match(/^en/i) && (res.length == 0 || defaults_used)) {
+      var inflection_types = (button.inflection_defaults || {}).types || [];
       if(button.part_of_speech == 'noun') {
         // N - more/plural
         // S - for me/possessive
@@ -178,8 +179,28 @@ var editManager = EmberObject.extend({
         res = res.concat([
           {location: 'n', label: i18n.pluralize(button.label)},
           {location: 'c', label: button.label},
-          {location: 'nw', label: i18n.negation(button.label)},
           {location: 's', label: i18n.possessive(button.label)},
+        ]);
+        if(inflection_types.indexOf('verb') != -1) {
+          res = res.concat([
+            {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
+            {location: 's', label: i18n.tense(button.label, {present_participle: true})},
+            {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
+            {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
+            {location: 'e', label: i18n.tense(button.label, {infinitive: true})},  
+            {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
+            {location: 'ne', label: button.label}, // dup
+          ]);
+        }
+        if(inflection_types.indexOf('adjective')) {
+          res = res.concat([
+            {location: 'ne', label: i18n.comparative(button.label)},
+            {location: 'e', label: i18n.superlative(button.label)},
+            {location: 'w', label: i18n.negative_comparative(button.label)},
+          ]);
+        }
+        res = res.concat([
+          {location: 'nw', label: i18n.negation(button.label)},
         ]);
       } else if(button.part_of_speech == 'adjective') {
         res = res.concat([
@@ -190,6 +211,21 @@ var editManager = EmberObject.extend({
           {location: 'w', label: i18n.negative_comparative(button.label)},
           {location: 'c', label: button.label},
         ]);
+        if(inflection_types.indexOf('noun') != -1) {
+          {location: 'n', label: i18n.pluralize(button.label)},
+          {location: 's', label: i18n.possessive(button.label)},
+        }
+        if(inflection_types.indexOf('verb') != -1) {
+          res = res.concat([
+            {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
+            {location: 's', label: i18n.tense(button.label, {present_participle: true})},
+            {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
+            {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
+            {location: 'e', label: i18n.tense(button.label, {infinitive: true})},  
+            {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
+            {location: 'ne', label: button.label}, // dup
+          ]);
+        }
       } else if(button.part_of_speech == 'pronoun') {
         res = res.concat([
           {location: 'c', label: button.label},
@@ -207,6 +243,23 @@ var editManager = EmberObject.extend({
           {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
           // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
           {location: 'c', label: button.label}
+        ]);
+        if(inflection_types.indexOf('noun') != -1) {
+          res = res.concat([
+            {location: 'n', label: i18n.pluralize(button.label)},
+            {location: 's', label: i18n.possessive(button.label)},  
+          ]);
+        }
+        if(inflection_types.indexOf('adjective') != -1) {
+          res = res.concat([
+            {location: 'ne', label: i18n.comparative(button.label)},
+            {location: 'e', label: i18n.superlative(button.label)},
+            {location: 'w', label: i18n.negative_comparative(button.label)},
+          ]);
+        }
+        res = res.concat([
+          {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
+          {location: 'ne', label: button.label}, // dup
         ]);
       } else {
         console.log("unrecognized en button type", button.part_of_speech, button);
