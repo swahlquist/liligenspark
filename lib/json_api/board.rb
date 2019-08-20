@@ -64,6 +64,14 @@ module JsonApi::Board
         json['permissions'] = board.permissions_for(args[:permissions])
         json['starred'] = board.starred_by?(args[:permissions])
       end
+      if !FeatureFlags.feature_enabled_for?('inflections_overlay', args[:permissions])
+        json['buttons'].each{|b| b.delete('inflection_defaults') }
+      end
+
+    else
+      if json['buttons']
+        json['buttons'].each{|b| b.delete('inflection_defaults') }
+      end
     end
     
     if json['permissions'] && json['permissions']['edit']

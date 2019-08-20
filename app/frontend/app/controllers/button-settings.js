@@ -291,11 +291,11 @@ export default modal.ModalController.extend({
         inflections[grid_map[idx]] = str;
       }
     });
-    (this.get('model.inflection_defaults') || []).forEach(function(str, idx) {
-      if(str && grid_map[idx]) {
-        inflection_defaults[grid_map[idx]] = str;
-      }
-    });
+    // (this.get('model.inflection_defaults') || {}).forEach(function(str, idx) {
+    //   if(str && grid_map[idx]) {
+    //     inflection_defaults[grid_map[idx]] = str;
+    //   }
+    // });
     if(this.get('model.translations')) {
       this.get('model.translations').forEach(function(trans) {
         var i = {}, id = {};
@@ -310,13 +310,13 @@ export default modal.ModalController.extend({
             }
           });
         }
-        if(trans.inflection_defaults) {
-          trans.inflection_defaults.forEach(function(str, idx) {
-            if(str && grid_map[idx]) {
-              id[grid_map[idx]] = str;
-            }
-          });
-        }
+        // if(trans.inflection_defaults) {
+        //   trans.inflection_defaults.forEach(function(str, idx) {
+        //     if(str && grid_map[idx]) {
+        //       id[grid_map[idx]] = str;
+        //     }
+        //   });
+        // }
         emberSet(trans, 'inflections_hash', i);
         emberSet(trans, 'inflections_suggestions', id);
       });
