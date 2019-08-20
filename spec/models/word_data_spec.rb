@@ -1150,7 +1150,7 @@ RSpec.describe WordData, :type => :model do
         inflection_overrides: {
           base: 'he',
           plural: 'hes',
-          subjective: 'he',
+          subjective: 'hee',
           possessive: 'his',
           N: 'bacon',
           objective: 'him',
@@ -1219,7 +1219,8 @@ RSpec.describe WordData, :type => :model do
       }, {updater: u.reload})
       hash = WordData.inflection_locations_for(['he', 'ugly', 'mask', 'run', 'angrily'], 'en-AU')
       expect(hash['he']).to eq({
-        'c' => 'he',
+        'c' => 'hee',
+        'base' => 'he',
         'e' => 'himself',
         'n' => 'bacon',
         'src' => 'he',
@@ -1254,6 +1255,7 @@ RSpec.describe WordData, :type => :model do
         "e"=>"to run", 
         "n"=>"runs", 
         "ne"=>"run", 
+        'no'=>1,
         "s"=>"mother", 
         "se"=>"monkey", 
         'sw' => 'run',
@@ -1553,6 +1555,7 @@ RSpec.describe WordData, :type => :model do
       })
       expect(hash['mute']).to eq({
         'c' => 'mutee',
+        'base' => 'mute',
         'n' => 'mutes',
         'e' => 'to mute',
         'w' => 'muted',

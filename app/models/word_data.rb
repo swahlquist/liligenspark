@@ -686,7 +686,12 @@ class WordData < ActiveRecord::Base
         locations['v'] = WordData::INFLECTIONS_VERSION
         locations['src'] = word_data.word
         locations['c'] ||= word_data.word
-        if word_data.data['antonyms'] && word_data.data['antonyms'][0] && locale.match(/^en/i)
+        if !locations['c'].blank? && !overrides['base'].blank? && locations['c'] != overrides['base']
+          locations['base'] = overrides['base']
+        end
+        if locations['se'] && locale.match(/^en/i)
+          locations['no'] = 1
+        elsif word_data.data['antonyms'] && word_data.data['antonyms'][0] && locale.match(/^en/i)
           locations['se'] ||= word_data.data['antonyms'][0]
         end
       end

@@ -1353,6 +1353,18 @@ footer .wide_links {
     .overlay_button {
       position: relative;
       float: left;
+      .img_holder {
+        position: relative;
+      }
+      &.opposite .img_holder::before {
+        position: absolute;
+        content: " ";
+        left: 0;
+        top: 50%;
+        right: 0;
+        border-top: 5px solid rgba(0, 0, 0, 0.7);
+        transform: rotate(-30deg);        
+      }
     }
   }
 }

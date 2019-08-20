@@ -122,39 +122,54 @@ var editManager = EmberObject.extend({
     };
     var voc_locale = app_state.get('vocalization_locale');
     var lab_locale = app_state.get('label_locale');
+    var base_label = button.label;
     var trans = (app_state.controller.get('board.model.translations') || {})[button_id];
     var voc = (trans || {})[voc_locale];
     var lab = (trans || {})[lab_locale];
     var locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
     var list = [];
     var ignore_defaults = false;
-    var defaults_used = false;
+    var defaults_allowed = true;
     // If the button has been set to a different part of speech than
     // what the defaults were expecting, don't use the defaults
     if(button.inflection_defaults && button.inflection_defaults.types && button.inflection_defaults.types[0] != button.part_of_speech) {
       ignore_defaults = true;
     }
     if(button.inflections || trans || button.inflection_defaults) {
+      if(button.inflection_defaults) {
+        base_label = button.inflection_defaults['base'] || button.inflection_defaults['c'] || button.inflection_defaults['src'] || button.label;
+      }
       for(var idx = 0; idx < 8; idx++) {
         var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
         var trans_voc = voc && (voc.inflections || [])[idx];
         if(!ignore_defaults && !trans_voc) {
           trans_voc = (voc.inflection_defaults || {})[locs[idx]]; 
-          defaults_used = (voc.inflection_defaults || {}).v == expected_inflections_version;
+          if((voc.inflection_defaults || {}).v != expected_inflections_version) {
+            defaults_allowed = false;
+          }
         }
         var trans_lab = lab && (lab.inflections || [])[idx];
         if(!ignore_defaults && !trans_lab) { 
           trans_lab = (lab.inflection_defaults || {})[locs[idx]];
-          defaults_used = (lab.inflection_defaults || {}).v == expected_inflections_version;
+          if((voc.inflection_defaults || {}).v != expected_inflections_version) {
+            defaults_allowed = false;
+          }
         }
         // If it's for the current locale we can just use the inflections
         // list or suggested defaults, otherwise we need to check the
         // translations for inflections/suggested defaults
         if(for_current_locale && button.inflections && button.inflections[idx]) {
+          defaults_allowed = false;
           list.push({location: locs[idx], label: button.inflections[idx]});
         } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[locs[idx]]) {
-          defaults_used = (button.inflection_defaults.v == expected_inflections_version);
-          list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]]});
+          if(button.inflection_defaults.v != expected_inflections_version) {
+            defaults_allowed = false;
+          }
+          if(locs[idx] == 'se' && !button.inflection_defaults.no) {
+            list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]], opposite: true});
+          } else {
+            list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]]});
+          }
         } else if(trans_voc && trans_lab) {
           list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
         }
@@ -164,113 +179,107 @@ var editManager = EmberObject.extend({
         res = list; 
       }
     }
-    // Only use the fallacks if it's a known locale,
+    // Only use the fallacks if it's a known locale for label and vocalization,
     // and there are no existing values populated or the default values were used,
     // i.e. don't use fallbacks if the user manually set any inflections
-    if(lab_locale.match(/^en/i) && (res.length == 0 || defaults_used)) {
+    if(lab_locale.match(/^en/i) && lab_locale == voc_locale && (res.length == 0 || defaults_allowed)) {
       var inflection_types = (button.inflection_defaults || {}).types || [];
       if(button.part_of_speech == 'noun') {
-        // N - more/plural
-        // S - for me/possessive
-        // NW - negation
-        // W - in the past
-        // E - in the future
-        // SW - opposite
         // next to close need a "more" option that
         // can be replaced by up/down
         res = res.concat([
-          {location: 'n', label: i18n.pluralize(button.label)},
+          {location: 'n', label: i18n.pluralize(base_label)},
           {location: 'c', label: button.label},
-          {location: 's', label: i18n.possessive(button.label)},
+          {location: 's', label: i18n.possessive(base_label)},
         ]);
         if(inflection_types.indexOf('verb') != -1) {
           res = res.concat([
-            {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
-            {location: 's', label: i18n.tense(button.label, {present_participle: true})},
-            {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
-            {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
-            {location: 'e', label: i18n.tense(button.label, {infinitive: true})},  
-            {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
-            {location: 'ne', label: button.label}, // dup
+            {location: 'w', label: i18n.tense(base_label, {simple_past: true})},
+            {location: 's', label: i18n.tense(base_label, {present_participle: true})},
+            {location: 'sw', label: i18n.tense(base_label, {past_participle: true})},
+            {location: 'n', label: i18n.tense(base_label, {simple_present: true})},
+            {location: 'e', label: i18n.tense(base_label, {infinitive: true})},  
+            {location: 'nw', label: i18n.tense(base_label, {simple_past: true})}, // dup
+            {location: 'ne', label: base_label}, // dup
           ]);
         }
         if(inflection_types.indexOf('adjective')) {
           res = res.concat([
-            {location: 'ne', label: i18n.comparative(button.label)},
-            {location: 'e', label: i18n.superlative(button.label)},
-            {location: 'w', label: i18n.negative_comparative(button.label)},
+            {location: 'ne', label: i18n.comparative(base_label)},
+            {location: 'e', label: i18n.superlative(base_label)},
+            {location: 'w', label: i18n.negative_comparative(base_label)},
           ]);
         }
         res = res.concat([
-          {location: 'nw', label: i18n.negation(button.label)},
+          {location: 'nw', label: i18n.negation(base_label)},
         ]);
       } else if(button.part_of_speech == 'adjective') {
         res = res.concat([
 //          {location: 'n', label: i18n.pluralize(button.label)},
-          {location: 'ne', label: i18n.comparative(button.label)},
-          {location: 'e', label: i18n.superlative(button.label)},
-          {location: 'nw', label: i18n.negation(button.label)},
-          {location: 'w', label: i18n.negative_comparative(button.label)},
+          {location: 'ne', label: i18n.comparative(base_label)},
+          {location: 'e', label: i18n.superlative(base_label)},
+          {location: 'nw', label: i18n.negation(base_label)},
+          {location: 'w', label: i18n.negative_comparative(base_label)},
           {location: 'c', label: button.label},
         ]);
         if(inflection_types.indexOf('noun') != -1) {
           res = res.concat([
-            {location: 'n', label: i18n.pluralize(button.label)},
-            {location: 's', label: i18n.possessive(button.label)},
+            {location: 'n', label: i18n.pluralize(base_label)},
+            {location: 's', label: i18n.possessive(base_label)},
           ]);
         }
         if(inflection_types.indexOf('verb') != -1) {
           res = res.concat([
-            {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
-            {location: 's', label: i18n.tense(button.label, {present_participle: true})},
-            {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
-            {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
-            {location: 'e', label: i18n.tense(button.label, {infinitive: true})},  
-            {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
-            {location: 'ne', label: button.label}, // dup
+            {location: 'w', label: i18n.tense(base_label, {simple_past: true})},
+            {location: 's', label: i18n.tense(base_label, {present_participle: true})},
+            {location: 'sw', label: i18n.tense(base_label, {past_participle: true})},
+            {location: 'n', label: i18n.tense(base_label, {simple_present: true})},
+            {location: 'e', label: i18n.tense(base_label, {infinitive: true})},  
+            {location: 'nw', label: i18n.tense(base_label, {simple_past: true})}, // dup
+            {location: 'ne', label: base_label}, // dup
           ]);
         }
       } else if(button.part_of_speech == 'pronoun') {
         res = res.concat([
           {location: 'c', label: button.label},
-          {location: 's', label: i18n.possessive(button.label, {pronoun: true})},
-          {location: 'n', label: i18n.possessive(button.label, {objective: true})},
-          {location: 'w', label: i18n.possessive(button.label, {})},
-          {location: 'e', label: i18n.possessive(button.label, {reflexive: true})}
+          {location: 's', label: i18n.possessive(base_label, {pronoun: true})},
+          {location: 'n', label: i18n.possessive(base_label, {objective: true})},
+          {location: 'w', label: i18n.possessive(base_label, {})},
+          {location: 'e', label: i18n.possessive(base_label, {reflexive: true})}
         ]);
       } else if(button.part_of_speech == 'verb') {
         res = res.concat([
-          {location: 'w', label: i18n.tense(button.label, {simple_past: true})},
-          {location: 's', label: i18n.tense(button.label, {present_participle: true})},
-          {location: 'sw', label: i18n.tense(button.label, {past_participle: true})},
-          {location: 'n', label: i18n.tense(button.label, {simple_present: true})},
-          {location: 'e', label: i18n.tense(button.label, {infinitive: true})},
+          {location: 'w', label: i18n.tense(base_label, {simple_past: true})},
+          {location: 's', label: i18n.tense(base_label, {present_participle: true})},
+          {location: 'sw', label: i18n.tense(base_label, {past_participle: true})},
+          {location: 'n', label: i18n.tense(base_label, {simple_present: true})},
+          {location: 'e', label: i18n.tense(base_label, {infinitive: true})},
           // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
           {location: 'c', label: button.label}
         ]);
         if(inflection_types.indexOf('noun') != -1) {
           res = res.concat([
-            {location: 'n', label: i18n.pluralize(button.label)},
-            {location: 's', label: i18n.possessive(button.label)},  
+            {location: 'n', label: i18n.pluralize(base_label)},
+            {location: 's', label: i18n.possessive(base_label)},  
           ]);
         }
         if(inflection_types.indexOf('adjective') != -1) {
           res = res.concat([
-            {location: 'ne', label: i18n.comparative(button.label)},
-            {location: 'e', label: i18n.superlative(button.label)},
-            {location: 'w', label: i18n.negative_comparative(button.label)},
+            {location: 'ne', label: i18n.comparative(base_label)},
+            {location: 'e', label: i18n.superlative(base_label)},
+            {location: 'w', label: i18n.negative_comparative(base_label)},
           ]);
         }
         res = res.concat([
-          {location: 'nw', label: i18n.tense(button.label, {simple_past: true})}, // dup
-          {location: 'ne', label: button.label}, // dup
+          {location: 'nw', label: i18n.tense(base_label, {simple_past: true})}, // dup
+          {location: 'ne', label: base_label}, // dup
         ]);
       } else {
         console.log("unrecognized en button type", button.part_of_speech, button);
         res = res.concat([
   //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
           {location: 'c', label: button.label},
-          {location: 'nw', label: i18n.negation(button.label)},
+          {location: 'nw', label: i18n.negation(base_label)},
   //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
         ]);
       }
@@ -383,11 +392,14 @@ var editManager = EmberObject.extend({
       div.style.padding = pad + 'px';
       var button_margin = 5; // TODO: this is a user preference
       var img = elem.getElementsByClassName('symbol')[0];
-      var formatted_button = function(label, image_url) {
+      var formatted_button = function(label, image_url, opposite) {
         image_url = image_url || (img || {}).src || "https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg";
         var btn = document.createElement('div');
         btn.setAttribute('class', elem.getAttribute('class').replace(/b_[\w\d_]+_/, ''));
         btn.classList.add('overlay_button');
+        if(opposite) {
+          btn.classList.add('opposite');
+        }
         btn.classList.add('b__');
         btn.classList.remove('touched');
         btn.style.margin = button_margin + 'px';
@@ -433,7 +445,7 @@ var editManager = EmberObject.extend({
             }
           }
         }
-        var btn = formatted_button((layout[idx] || {}).label || "nothing");
+        var btn = formatted_button((layout[idx] || {}).label || "nothing", (layout[idx] || {}).opposite);
         if(idx == 4) { 
           btn.setAttribute('class', elem.getAttribute('class')); 
           btn.classList.remove('touched');
