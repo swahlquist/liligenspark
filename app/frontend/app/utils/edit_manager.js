@@ -445,7 +445,7 @@ var editManager = EmberObject.extend({
             }
           }
         }
-        var btn = formatted_button((layout[idx] || {}).label || "nothing", (layout[idx] || {}).opposite);
+        var btn = formatted_button((layout[idx] || {}).label || "nothing", null, (layout[idx] || {}).opposite);
         if(idx == 4) { 
           btn.setAttribute('class', elem.getAttribute('class')); 
           btn.classList.remove('touched');
