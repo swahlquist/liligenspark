@@ -338,6 +338,7 @@ var Button = EmberObject.extend({
         })
         img.set('id', _this.image_id);
         img.set('incomplete', true);
+        _this.set('image', img);
         return check_image(img);
       }
       if(_this.get('no_lookups')) {
@@ -388,6 +389,7 @@ var Button = EmberObject.extend({
         })
         snd.set('id', _this.sound_id);
         snd.set('incomplete', true);
+        _this.set('sound', snd);
         return check_sound(snd);
       }
       if(_this.get('no_lookups')) {

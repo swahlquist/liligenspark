@@ -63,13 +63,12 @@ module JsonApi::Board
       self.trace_execution_scoped(['json/board/permissions']) do
         json['permissions'] = board.permissions_for(args[:permissions])
         json['starred'] = board.starred_by?(args[:permissions])
-      end
-      if !FeatureFlags.feature_enabled_for?('inflections_overlay', args[:permissions])
+      end      
+      if Date.today.year == 2019 && json['buttons'] && !FeatureFlags.feature_enabled_for?('inflections_overlay', args[:permissions])
         json['buttons'].each{|b| b.delete('inflection_defaults') }
-      end
-
+      end 
     else
-      if json['buttons']
+      if json['buttons'] && Date.today.year == 2019
         json['buttons'].each{|b| b.delete('inflection_defaults') }
       end
     end
