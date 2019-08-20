@@ -317,7 +317,7 @@ var Button = EmberObject.extend({
     }
     return true;
   },
-  load_image: function() {
+  load_image: function(prefer_remote) {
     var _this = this;
     if(!_this.image_id) { return RSVP.resolve(); }
     var image = CoughDrop.store.peekRecord('image', _this.image_id);
@@ -332,7 +332,7 @@ var Button = EmberObject.extend({
     };
     if(!image) {
       var image_urls = this.get('board.image_urls');
-      if(image_urls && image_urls[_this.image_id]) {
+      if(image_urls && image_urls[_this.image_id] && !prefer_remote) {
         var img = CoughDrop.store.createRecord('image', {
           url: image_urls[_this.image_id]
         })
@@ -345,7 +345,7 @@ var Button = EmberObject.extend({
         // TODO: if in Speak Mode, this shouldn't hold up the rendering
         // process, so if it has to make a remote call then consider
         // killing it or coming back to it somehow. Same applies for Sound records.
-        if(!(_this.image_id || '').match(/^tmp/)) {
+        if(!(_this.image_id || '').match(/^tmp/) && !prefer_remote) {
           console.error("had to revert to image record lookup");
         }
         return CoughDrop.store.findRecord('image', _this.image_id).then(function(image) {
@@ -367,7 +367,7 @@ var Button = EmberObject.extend({
       this.set('local_image_url', this.get('image.best_url'));
     }
   }.observes('image.best_url'),
-  load_sound: function() {
+  load_sound: function(prefer_remote) {
     var _this = this;
     if(!_this.sound_id) { return RSVP.resolve(); }
     var sound = CoughDrop.store.peekRecord('sound', _this.sound_id);
@@ -382,7 +382,7 @@ var Button = EmberObject.extend({
     };
     if(!sound) {
       var sound_urls = _this.get('board.sound_urls');
-      if(sound_urls && sound_urls[_this.sound_id]) {
+      if(sound_urls && sound_urls[_this.sound_id] && !prefer_remote) {
         var snd = CoughDrop.store.createRecord('sound', {
           url: sound_urls[_this.sound_id]
         })
