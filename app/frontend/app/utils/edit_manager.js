@@ -214,8 +214,10 @@ var editManager = EmberObject.extend({
           {location: 'c', label: button.label},
         ]);
         if(inflection_types.indexOf('noun') != -1) {
-          {location: 'n', label: i18n.pluralize(button.label)},
-          {location: 's', label: i18n.possessive(button.label)},
+          res = res.concat([
+            {location: 'n', label: i18n.pluralize(button.label)},
+            {location: 's', label: i18n.possessive(button.label)},
+          ]);
         }
         if(inflection_types.indexOf('verb') != -1) {
           res = res.concat([
