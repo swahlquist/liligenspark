@@ -57,7 +57,7 @@ export default Controller.extend({
     if(!this.get('word.word')) { return; }
     var opts = this.get('inflection_options') || {};
     if(this.get('word.word') || emberGet(opts, 'base') != "") {
-      emberSet(opts, 'base', emberGet(opts, 'base') || this.get('word.word'));
+      emberSet(opts, 'base', emberGet(opts, 'base') || this.get('word.inflection_overrides.base') || this.get('word.word'));
     }
     if(this.get('word.inflection_overrides')) {
       var overrides = this.get('word.inflection_overrides');
