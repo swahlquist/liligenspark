@@ -13,6 +13,12 @@ module Worker
     methods
   end
 
+  def self.find_record(klass, id)
+    obj = klass.find_by(id: id)
+    obj.using(:master).reload if obj
+    obj
+  end
+
   def self.domain_id
     JsonApi::Json.current_host || 'default'
   end
