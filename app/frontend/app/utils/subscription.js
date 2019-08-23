@@ -134,7 +134,7 @@ var Subscription = EmberObject.extend({
       })
     }
     if(Subscription.in_app_store) {
-      Subscription.in_app_store.refresh();
+      this.refresh_store();
     }
     this.set_default_subscription_amount();
   },
@@ -207,7 +207,9 @@ var Subscription = EmberObject.extend({
     return this.get('app_pricing_override') && capabilities.system == 'iOS' && capabilities.installed_app;
   }.property('app_pricing_override'),
   refresh_store: function() {
-    Subscription.in_app_store.refresh();
+    if(Subscription.in_app_store) {
+      Subscription.in_app_store.refresh();
+    }
   },
   monthly_app_price: function() {
     var prod = Subscription.product_types[subscription_id];
@@ -651,6 +653,7 @@ document.addEventListener("deviceready", function() {
     store.error(function(err) {
       if(store.defer) {
         store.defer.reject(err);
+        store.defer = null;
       }
     });
     store.when("product").loaded(function(product) {
@@ -683,6 +686,7 @@ document.addEventListener("deviceready", function() {
     store.when("product").cancelled(function(product) {
       if(store.defer) {
         store.defer.reject({error: 'cancelled'});
+        store.defer = null;
       }
     });
     store.when("product").verified(function(product) {
@@ -692,6 +696,7 @@ document.addEventListener("deviceready", function() {
       app_state.get('sessionUser').reload();
       if(store.defer) {
         store.defer.resolve({id: 'ios_iap'});
+        store.defer = null;
       }
     });
     capabilities.bundle_id().then(function(res) {
@@ -707,7 +712,9 @@ document.addEventListener("deviceready", function() {
       store.refresh();
     });
     document.addEventListener("resume", function() {
-      store.refresh();
+      if(Subscription.in_app_store && Subscription.in_app_store.defer) {
+        store.refresh();
+      }
     }, false);
   }
 }, false);
