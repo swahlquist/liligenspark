@@ -98,7 +98,7 @@
       <div class="form-group">
         <label for="global" class="col-sm-2 control-label">{{t "Global" key='global'}}</label>
         <div class="col-sm-5">
-          <div class="checkbox">
+          <div class= big_checkbox>
             <label>
               {{input type="checkbox" checked=new_goal.global id="global"}}
               {{t "This will be a global goal" key='make_goal_global'}}
@@ -111,7 +111,7 @@
       <div class="form-group">
         <label for="sequence" class="col-sm-2 control-label">{{t "Sequence" key='sequence'}}</label>
         <div class="col-sm-5">
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=new_goal.sequence id="sequence"}}
               {{t "This will be a sequence of goals" key='make_goal_sequence'}}
@@ -138,7 +138,7 @@
       <div class="form-group">
         <label for="auto_assessment" class="col-sm-2 control-label">{{t "Assessment" key='auto_assessment'}}</label>
         <div class="col-sm-5">
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=new_goal.auto_assessment id="auto_assessment"}}
               {{t "Assess this goal daily based on usage data" key='auto_assess_goal_daily'}}
@@ -153,7 +153,7 @@
     <div class="form-group">
       <label for="badges_enabled" class="col-sm-2 control-label">{{t "Badges" key='badges'}}</label>
       <div class="col-sm-5">
-        <div class="checkbox">
+        <div class="checkbox big_checkbox">
           <label>
             {{input type="checkbox" checked=new_goal.badges_enabled id="badges"}}
             {{t "This goal will have one or more badges attached" key='goal_has_badges'}}

@@ -17,8 +17,8 @@
           {{input type='password' id='password' class='form-control input-lg touchy' value=password placeholder='password'}}
         </div>
         {{#unless browserless}}
-          <div class="form-group">
-            <div class="checkbox">
+          <div class="form-group" style='display: none;'>
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=long_token id="long_token"}}
                 Keep me logged in on this device

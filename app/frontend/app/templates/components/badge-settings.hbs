@@ -36,7 +36,7 @@
   {{#if custom_badge}}
     <div class="form-group">
       <div class="col-sm-8 col-sm-offset-2">
-        <div class="checkbox">
+        <div class="checkbox big_checkbox">
           <label>
             {{input type="checkbox" checked=badge.enable_auto_tracking}}
             {{t "This badge is automatically awarded based on user activity" key='auto_tracking'}}
@@ -98,7 +98,7 @@
       </div>
       <div class='form-group'>
         <div class='col-sm-3 col-sm-offset-2'>
-          <div class="checkbox">
+          <div class= big_checkbox>
             <label>
               {{input type="checkbox" checked=badge.enable_watch_type_minimum}}
               {{t "limit to %{types} used at least" types=watchlist_type_plural key='watch_type_minimum'}}
@@ -114,7 +114,7 @@
       </div>
       <div class='form-group'>
         <div class='col-sm-3 col-sm-offset-2'>
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=badge.enable_watch_total}}
               {{t "require a total every %{unit_type} of" unit_type=unit_type key='watch_total'}}
@@ -130,7 +130,7 @@
       </div>
       <div class='form-group'>
         <div class='col-sm-3 col-sm-offset-2'>
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=badge.enable_watch_type_count}}
               {{t "require different %{types}, at least" types=watchlist_type_plural key='watch_type_count'}}
@@ -150,7 +150,7 @@
       {{#if in_list}}
         <div class='form-group'>
           <div class='col-sm-3 col-sm-offset-2'>
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=badge.enable_watch_type_interval}}
                 {{t "also require different %{types}, at least" types=watchlist_type_plural key='watch_type_interval_count'}}

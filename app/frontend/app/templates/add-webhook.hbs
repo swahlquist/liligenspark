@@ -22,13 +22,13 @@
       <div class="form-group">
         <label class="col-sm-3 control-label">{{t "Events to Handle" key='events_to_handle'}}</label>
         <div class="col-sm-9">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=webhook.new_session_event}}
                 {{t "New Log Session (up to 3 hour delay)" key='new_log_session'}}
               </label>
             </div>
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=webhook.new_utterance_event}}
                 {{t "New Shared Utterance (short delay)" key='new_utterance'}}
@@ -41,7 +41,7 @@
         <fieldset>
           <label class="col-sm-3 control-label">{{t "Content" key='content'}}</label>
           <div class="col-sm-9">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=webhook.include_content}}
                 {{t "Send content with update if available" key='send_content_with_update'}}

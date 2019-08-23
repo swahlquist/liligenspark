@@ -86,7 +86,7 @@
           <fieldset>
             <label class="col-sm-2 control-label">{{t "Primary" key='primary'}}</label>
             <div class="col-sm-10">
-              <div class="checkbox">
+              <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" checked=selected_goal.user_primary id="primary"}}
                   {{t "Set as the User's Primary Goal" key='set_as_primary_user_goal'}}
@@ -225,7 +225,7 @@
           <div class="form-group">
             <label for="auto_assessment" class="col-sm-2 control-label">{{t "Assessment" key='auto_assessment'}}</label>
             <div class="col-sm-10">
-              <div class="checkbox">
+              <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" checked=goal.auto_assessment id="auto_assessment"}}
                   {{t "Generate a daily progress report for mastery of this goal" key='auto_assess_goal_daily'}}
@@ -263,7 +263,7 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">{{t "Badges" key='badges'}}</label>
                 <div class="col-sm-10">
-                  <div class="checkbox">
+                  <div class="checkbox big_checkbox">
                     <label>
                       {{input type="checkbox" checked=goal.set_badges id="set_badges"}}
                       {{t "I want to create earnable badges as part of this goal" key='created_badges'}}
@@ -276,7 +276,7 @@
               <fieldset>
                 <label class="col-sm-2 control-label">{{t "Primary" key='primary'}}</label>
                 <div class="col-sm-10">
-                  <div class="checkbox">
+                  <div class="checkbox big_checkbox">
                     <label>
                       {{input type="checkbox" checked=goal.primary id="primary"}}
                       {{#if model.user.user_goal}}

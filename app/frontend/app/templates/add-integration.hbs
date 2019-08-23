@@ -15,7 +15,7 @@
       </div>
       <div class="form-group" style="margin-top: -15px;">
         <div class="col-sm-9 col-sm-offset-3">
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input checked=integration.with_button_url type="checkbox"}}
               {{t "enable custom button triggers via this tool" key='enable_button_actions'}}
@@ -35,7 +35,7 @@
         </div>
         <div class="form-group" style="margin-top: -15px;">
           <div class="col-sm-8 col-sm-offset-4">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input checked=integration.button_webhook_local type="checkbox"}}
                 {{t "this URL is to a local address on the same network" key='local_address'}}
@@ -52,7 +52,7 @@
 
       <div class="form-group" style="margin-top: -15px;">
         <div class="col-sm-9 col-sm-offset-3">
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input checked=integration.with_board_url type="checkbox"}}
               {{t "enable custom page renderings via this tool" key='enable_board_renders'}}

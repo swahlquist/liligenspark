@@ -43,7 +43,7 @@
       {{#unless model.button.alert}}
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type='checkbox' checked=model.button.home_lock}}
                 {{t "Set as temporary Home when loaded from the sidebar" key='set_home_lock'}}
@@ -56,7 +56,7 @@
         <div class="form-group">
           <label for="highlighting" class="col-sm-2 control-label">{{t "Highlighting" key='highlightin'}}</label>
           <div class="col-sm-10">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type='checkbox' checked=model.button.fenced}}
                 {{t "Highlight this board at certain locations/times" key='geo_fence_button'}}

@@ -234,14 +234,18 @@
               {{bound-select select_class="form-control" select_id="registration_type" content=registration_types selection=user.preferences.registration_type action=(action (mut user.preferences.registration_type)) }}
             </div>
             <div class="form-group">
-              <p><label style="font-weight: normal;">
-                {{input type="checkbox" checked=user.preferences.cookies}}
-                {{t "Send usage data to %app_name% for analytics, error tracking and feature improvements" key='allow_cookies'}}
-              </label></p>
-              <p><label style="font-weight: normal;">
-                {{input type="checkbox" checked=user.terms_agree}}
-                By registering or using the product, you are agreeing that you have read and understood the <a href="/terms">Terms of Use and License Agreement</a>, and are capable of binding to a legal contract.
-              </label></p>
+              <div class="checkbox big_checkbox">
+                <label style="font-weight: normal;">
+                  {{input type="checkbox" checked=user.preferences.cookies}}
+                  {{t "Send usage data to %app_name% for analytics, error tracking and feature improvements" key='allow_cookies'}}
+                </label>
+              </div>
+              <div class="checkbox big_checkbox" style='margin-bottom: 10px;'>
+                <label style="font-weight: normal;">
+                  {{input type="checkbox" checked=user.terms_agree}}
+                  By registering or using the product, you are agreeing that you have read and understood the <a href="/terms">Terms of Use and License Agreement</a>, and are capable of binding to a legal contract.
+                </label>
+              </div>
               {{#if persistence.online}}
                 <button type="submit" class="btn btn-primary" disabled={{registering.saving}} style="width: 100px;">
                   {{#if registering.saving}}

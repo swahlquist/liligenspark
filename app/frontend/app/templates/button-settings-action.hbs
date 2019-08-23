@@ -169,7 +169,7 @@
       </div>
       <div class="form-group">
         <div class="col-sm-10 col-sm-offset-2">
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input checked=pending_board.copy_access type="checkbox"}}
               {{t "Use same license and access settings as are set for this board" key='use_same_license'}}
@@ -253,7 +253,7 @@
       {{#if model.video.type}}
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=model.video.popup}}
                 {{t "Show video in a popup" key='show_video_popup'}}
@@ -306,7 +306,7 @@
       {{else if model.book.type}}
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
-            <div class="checkbox">
+            <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=model.book.popup}}
                 {{t "Show book in a popup" key='show_book_popup'}}
@@ -586,21 +586,21 @@
   {{#unless model.talkAction}}
     <div class={{if pending_board "form-group dim" "form-group"}}>
       <div class="col-sm-10">
-        <div class="checkbox">
+        <div class="checkbox big_checkbox">
           <label>
             {{input checked=model.add_to_vocalization type="checkbox"}}
             {{t "Also add button to the vocalization box" key='add_to_vocalization'}}
           </label>
         </div>
         {{#if model.folderAction}}
-          <div class="checkbox">
+          <div class="checkbox big_checkbox">
             <label>
               {{input checked=model.home_lock type="checkbox"}}
               {{t "Set as temporary home when loaded" key='set_home_lock'}}
             </label>
           </div>
         {{/if}}
-        <div class="checkbox">
+        <div class="checkbox big_checkbox">
           <label>
             {{input checked=model.link_disabled type="checkbox"}}
             {{t "Disable this link action for now" key='disable_link_action'}}
