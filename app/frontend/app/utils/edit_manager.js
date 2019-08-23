@@ -203,7 +203,7 @@ var editManager = EmberObject.extend({
             {location: 'ne', label: base_label}, // dup
           ]);
         }
-        if(inflection_types.indexOf('adjective')) {
+        if(inflection_types.indexOf('adjective') != -1) {
           res = res.concat([
             {location: 'ne', label: i18n.comparative(base_label)},
             {location: 'e', label: i18n.superlative(base_label)},
