@@ -142,14 +142,14 @@ var editManager = EmberObject.extend({
       for(var idx = 0; idx < 8; idx++) {
         var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
         var trans_voc = voc && (voc.inflections || [])[idx];
-        if(!ignore_defaults && !trans_voc) {
+        if(!ignore_defaults && !trans_voc && voc) {
           trans_voc = (voc.inflection_defaults || {})[locs[idx]]; 
           if((voc.inflection_defaults || {}).v != expected_inflections_version) {
             defaults_allowed = false;
           }
         }
         var trans_lab = lab && (lab.inflections || [])[idx];
-        if(!ignore_defaults && !trans_lab) { 
+        if(!ignore_defaults && !trans_lab && lab) { 
           trans_lab = (lab.inflection_defaults || {})[locs[idx]];
           if((voc.inflection_defaults || {}).v != expected_inflections_version) {
             defaults_allowed = false;
