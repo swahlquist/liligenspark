@@ -9,6 +9,7 @@ module JsonApi::Device
     json = {}
     json['id'] = device.global_id
     json['name'] = device.settings['name']
+    json['ref_id'] = (device.device_key || '').split(/\s/)[0]
     json['ip_address'] = device.settings['ip_address']
     json['app_version'] = device.settings['app_version']
     json['user_agent'] = device.settings['user_agent']
