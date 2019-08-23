@@ -64,7 +64,7 @@ var session = EmberObject.extend({
         client_secret: credentials.client_secret,
         username: credentials.identification,
         password: credentials.password,
-        device_id: capabilities.device_id,
+        device_id: capabilities.device_id(),
         long_token: credentials.long_token,
         mobile: (!!capabilities.mobile).toString()
       };

@@ -119,15 +119,17 @@ import app_state from './app_state';
       CoughDrop.track_error(message);
     }
   }).create();
-  var device_id = stashes.get_raw('coughDropDeviceId');
-  if(!device_id) {
-    // http://cordova.apache.org/docs/en/6.x/reference/cordova-plugin-device/index.html#deviceuuid
-    device_id = (window.device && window.device.uuid) || ((new Date()).getTime() + Math.random()).toString();
-    var readable = capabilities.readable_device_name;
-    device_id = device_id + " " + readable;
-  }
-  stashes.persist_raw('coughDropDeviceId', device_id);
-  capabilities.device_id = device_id;
+  capabilities.device_id = function() {
+    var device_id = stashes.get_raw('coughDropDeviceId');
+    if(!device_id) {
+      // http://cordova.apache.org/docs/en/6.x/reference/cordova-plugin-device/index.html#deviceuuid
+      device_id = (window.device && window.device.uuid) || ((new Date()).getTime() + Math.random()).toString();
+      var readable = capabilities.readable_device_name;
+      device_id = device_id + " " + readable;
+    }
+    stashes.persist_raw('coughDropDeviceId', device_id);
+    return device_id;
+  };
 
   $.realAjax = $.ajax;
   function fakeXHR(xhr) {
@@ -202,7 +204,7 @@ import app_state from './app_state';
         options.headers['X-INSTALLED-COUGHDROP'] = (!!capabilities.installed_app).toString();
         if(capabilities.access_token) {
           options.headers['Authorization'] = "Bearer " + capabilities.access_token;
-          options.headers['X-Device-Id'] = device_id;
+          options.headers['X-Device-Id'] = capabilities.device_id();
           options.headers['X-CoughDrop-Version'] = window.CoughDrop.VERSION;
         }
         if(CoughDrop.protected_user || stashes.get('protected_user')) {
