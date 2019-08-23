@@ -264,9 +264,10 @@ var stashes = EmberObject.extend({
     if(!stashes.get('history_enabled')) { return; }
     // TODO: this should be persisted server-side
     var list = stashes.get('remembered_vocalizations');
-    if(stashes.get('working_vocalization').length === 0) { return; }
+    var voc = opts.override || stashes.get('working_vocalization') || [];
+    if(voc.length === 0) { return; }
     var obj = {
-      vocalizations: opts.override || stashes.get('working_vocalization'),
+      vocalizations: voc,
       stash: !!opts.stash
     };
     obj.sentence = obj.vocalizations.map(function(v) { return v.label; }).join(" ");

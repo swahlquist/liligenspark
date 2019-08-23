@@ -50,12 +50,27 @@ export default modal.ModalController.extend({
       } else if(button == 'sayLouder') {
         app_state.say_louder();
       } else {
+        var existing = [].concat(stashes.get('working_vocalization') || []);
+        var ids = existing.map(function(b){ return b.button_id + ":" + (b.board || {}).id}).join('::');
+        var already_there = (stashes.get('remembered_vocalizations') || []).find(function(list) { 
+          return ids == (list.vocalizations || []).map(function(b) { return b.button_id + ":" + (b.board || {}).id}).join('::');
+        });
         if(button.stash) {
+          // If there is a working vocalization, swap it into the stash
+          // when you swap this one out
           utterance.set('rawButtonList', button.vocalizations);
           utterance.set('list_vocalized', false);
-          var list = (stashes.get('remembered_vocalizations') || []).filter(function(v) { return !v.stash || v.sentence != button.sentence; });
+          var list = (stashes.get('remembered_vocalizations') || []).filter(function(v) { return !v.stash && v.sentence != button.sentence; });
           stashes.persist('remembered_vocalizations', list);
+          if(existing.length > 0 && !already_there) {
+            stashes.remember({override: existing, stash: true});
+          }
         } else {
+          // If there is nothing in the held thought,
+          // but there is a working vocalization, stash it
+          if(existing.length > 0 && !(stashes.get('remembered_vocalizations') || []).find(function(v) { return v.stash; })) {
+            stashes.remember({override: existing, stash: true});
+          }
           app_state.set_and_say_buttons(button.vocalizations);
         }
       }

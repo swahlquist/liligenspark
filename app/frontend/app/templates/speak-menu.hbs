@@ -83,9 +83,11 @@
         <a href="#" {{action 'close'}}>{{t "Cancel" key='cancel'}}</a>
       </li>
       {{#if app_state.feature_flags.new_speak_menu}}
-        <li style='text-align: right; float: left; width: 50%;'>
-          <a href="#" {{action "selectButton" "remember"}}>{{t "Remember this" key="remember_this"}}</a>
-        </li>
+        {{#if working_vocalization_text}}
+          <li style='text-align: right; float: left; width: 50%;'>
+            <a href="#" {{action "selectButton" "remember"}}>{{t "Remember this" key="remember_this"}}</a>
+          </li>
+        {{/if}}
       {{/if}}
       {{#if app_state.reply_note}}
         <li style='clear: left;'>
@@ -113,7 +115,6 @@
         </li>
       {{/if}}
       {{#each rememberedUtterances as |utterance|}}
-
         <li style='clear: left;'>
           <a href="#" {{action "selectButton" utterance}} style='font-size: 13px; height: 55px; padding-top: 15px;'>
             {{#if utterance.stash }}
