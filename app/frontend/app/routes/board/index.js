@@ -111,9 +111,9 @@ export default Route.extend({
     } else if(persistence.get('online') || insufficient_data) {
       CoughDrop.log.track('considering reload');
       _this.set('load_state', {not_local: true});
-      var reload = RSVP.resolve();
+      var reload = RSVP.resolve(model);
       // if we're online then we should reload, but do it softly if we're in speak mode
-      if(persistence.get('online')) {
+      if(persistence.get('online') && !model.get('local_only')) {
         // reload(false) says "hey, reload but you can use the local copy if you need to"
         // reload(true) says "definitely ping the server" (same as reload() )
         // TODO: this is failing when the board is available locally but the image isn't available locally
@@ -133,7 +133,7 @@ export default Route.extend({
           }
         });
       // if we're offline, then we should only reload if we absolutely have to (i.e. ordered_buttons isn't set)
-      } else if(!controller.get('has_rendered_material')) {
+      } else if(!controller.get('has_rendered_material') && !model.get('local_only')) {
         _this.set('load_state', {local_reload: true});
         reload = model.reload(false).then(null, function(err) {
           _this.set('load_state', {local_reload_local_reload: true});

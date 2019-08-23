@@ -1,12 +1,12 @@
 module FeatureFlags
-  # TODO: remove unused feature flags after like June 2019
+  # TODO: remove unused feature flags after like December 2019
   AVAILABLE_FRONTEND_FEATURES = ['subscriptions', 'assessments', 'custom_sidebar', 
               'canvas_render', 'snapshots', 'enable_all_buttons', 
               'video_recording', 'goals', 'app_connections', 'translation', 'geo_sidebar',
               'modeling', 'edit_before_copying', 'core_reports', 'lessonpix',
               'audio_recordings', 'fast_render', 'badge_progress', 'board_levels', 'premium_symbols',
               'find_multiple_buttons', 'new_speak_menu', 'native_keyboard', 'inflections_overlay',
-              'app_store_purchases']
+              'app_store_purchases', 'emergency_boards']
   ENABLED_FRONTEND_FEATURES = ['subscriptions', 'assessments', 'custom_sidebar', 'snapshots',
               'video_recording', 'goals', 'modeling', 'geo_sidebar', 'edit_before_copying',
               'core_reports', 'lessonpix', 'translation', 'fast_render',

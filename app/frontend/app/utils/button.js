@@ -317,7 +317,7 @@ var Button = EmberObject.extend({
     }
     return true;
   },
-  load_image: function(prefer_remote) {
+  load_image: function(preference) {
     var _this = this;
     if(!_this.image_id) { return RSVP.resolve(); }
     var image = CoughDrop.store.peekRecord('image', _this.image_id);
@@ -332,7 +332,7 @@ var Button = EmberObject.extend({
     };
     if(!image) {
       var image_urls = this.get('board.image_urls');
-      if(image_urls && image_urls[_this.image_id] && !prefer_remote) {
+      if(image_urls && image_urls[_this.image_id] && preference != 'remote') {
         var img = CoughDrop.store.createRecord('image', {
           url: image_urls[_this.image_id]
         })
@@ -342,19 +342,25 @@ var Button = EmberObject.extend({
         return check_image(img);
       }
       if(_this.get('no_lookups')) {
+        return RSVP.reject('no image lookups');
       } else {
         // TODO: if in Speak Mode, this shouldn't hold up the rendering
         // process, so if it has to make a remote call then consider
         // killing it or coming back to it somehow. Same applies for Sound records.
-        if(!(_this.image_id || '').match(/^tmp/) && !prefer_remote) {
+        if(!(_this.image_id || '').match(/^tmp/) && preference != 'remote') {
           console.error("had to revert to image record lookup");
         }
-        return CoughDrop.store.findRecord('image', _this.image_id).then(function(image) {
+        var find = CoughDrop.store.findRecord('image', _this.image_id).then(function(image) {
           // There was a runLater of 100ms here, I have no idea why but
           // it seemed like a bad idea so I removed it.
           _this.set('image', image);
           return check_image(image);
         });
+        if(preference == 'local') {
+          return RSVP.reject('no image lookups');
+        } else {
+          return find;
+        }
       }
     } else {
       if(!image.get('incomplete')) {
@@ -368,7 +374,7 @@ var Button = EmberObject.extend({
       this.set('local_image_url', this.get('image.best_url'));
     }
   }.observes('image.best_url'),
-  load_sound: function(prefer_remote) {
+  load_sound: function(preference) {
     var _this = this;
     if(!_this.sound_id) { return RSVP.resolve(); }
     var sound = CoughDrop.store.peekRecord('sound', _this.sound_id);
@@ -383,7 +389,7 @@ var Button = EmberObject.extend({
     };
     if(!sound) {
       var sound_urls = _this.get('board.sound_urls');
-      if(sound_urls && sound_urls[_this.sound_id] && !prefer_remote) {
+      if(sound_urls && sound_urls[_this.sound_id] && preference != 'remote') {
         var snd = CoughDrop.store.createRecord('sound', {
           url: sound_urls[_this.sound_id]
         })
@@ -395,10 +401,15 @@ var Button = EmberObject.extend({
       if(_this.get('no_lookups')) {
         return RSVP.reject('no sound lookups');
       } else {
-        return CoughDrop.store.findRecord('sound', _this.sound_id).then(function(sound) {
+        var find = CoughDrop.store.findRecord('sound', _this.sound_id).then(function(sound) {
           _this.set('sound', sound);
           return check_sound(sound);
         });
+        if(preference == 'local') {
+          return RSVP.reject('no sound lookups');
+        } else {
+          return find;
+        }
       }
     } else {
       return check_sound(sound);
@@ -472,14 +483,14 @@ var Button = EmberObject.extend({
         _this.set('original_image_url', _this.image_url);
         promises.push(RSVP.resolve());
       } else if(_this.image_id) {
-        promises.push(_this.load_image());
+        promises.push(_this.load_image('local'));
       }
       if(_this.sound_id && _this.sound_url && persistence.url_cache && persistence.url_cache[_this.sound_url] && (!persistence.url_uncache || !persistence.url_uncache[_this.sound_url])) {
         _this.set('local_sound_url', persistence.url_cache[_this.sound_url]);
         _this.set('original_sound_url', _this.sound_url);
         promises.push(RSVP.resolve());
       } else if(_this.sound_id) {
-        promises.push(_this.load_sound());
+        promises.push(_this.load_sound('local'));
       }
 
       RSVP.all(promises).then(function() {

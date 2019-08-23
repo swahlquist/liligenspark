@@ -120,8 +120,8 @@ var editManager = EmberObject.extend({
         overlay_location: event.overlay_location
       });
     };
-    var voc_locale = app_state.get('vocalization_locale');
-    var lab_locale = app_state.get('label_locale');
+    var voc_locale = app_state.get('vocalization_locale') || navigator.language;
+    var lab_locale = app_state.get('label_locale') || navigator.language;
     var base_label = button.label;
     var trans = (app_state.controller.get('board.model.translations') || {})[button_id];
     var voc = (trans || {})[voc_locale];

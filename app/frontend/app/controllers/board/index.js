@@ -195,7 +195,7 @@ export default Controller.extend({
     var columns = this.get('current_grid.columns') || this.get('model.grid.columns') || 1;
     var column_width = inner_width / columns;
     app_state.set('skinny_sidebar', column_width < 160);
-    if(this.get('current_grid.columns'))
+
     if((!this.get('model.public') || this.get('model.license.type') != 'private') && !app_state.get('edit_mode') && stashes.get('current_mode') != 'speak') {
       show_description = show_description || this.get('model.name');
       if(!this.get('model.public')) {
@@ -227,6 +227,26 @@ export default Controller.extend({
   board_style: function() {
     return htmlSafe("position: relative; height: " + (this.get('height') + 5) + "px");
   }.property('height'),
+  bg_style: function() {
+    var rows = this.get('model.grid.rows');
+    var cols = this.get('model.grid.columns');
+    var pos = (this.get('model.background_position') || '').split(',');
+    var xmin = Math.max(parseInt(pos[1], 10) || 0, 0), xmax = Math.min(parseInt(pos[3], 10) || rows - 1, rows - 1) + 1,
+        ymin = Math.max(parseInt(pos[2], 10) || 0, 0), ymax = Math.min(parseInt(pos[4], 10) || cols - 1, cols - 1) + 1;
+    var width = 100 * (xmax - xmin) / rows;
+    var height = 100 * (ymax - ymin) / cols;
+    var left = 100 * xmin / rows;
+    var top = 100 * ymin / cols;
+    return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%;');
+  }.property('model.background_image_url', 'model.grid.rows', 'model.grid.columns', 'model.background_position'),
+  bg_img_style: function() {
+    var pos = (this.get('model.background_position') || '').split(',');
+    var fit = 'fill';
+    if(pos[0] == 'center') {
+      fit = 'contain';
+    }
+    return htmlSafe('width: 100%; height: 100%; object-fit: ' + fit + '; object-position: center;');
+  }.property('model.background_image_url', 'model.grid.rows', 'model.grid.columns', 'model.background_position'),
   redraw_if_needed: function() {
     var now = (new Date()).getTime();
     if(now - last_redraw > 100) {
@@ -697,9 +717,9 @@ export default Controller.extend({
     var stretchable = !app_state.get('edit_mode') && app_state.get('currentUser.preferences.stretch_buttons') && app_state.get('currentUser.preferences.stretch_buttons') != 'none'; // not edit mode and user-enabled
     if(this.get('stashes.all_buttons_enabled')) {
       res = res + 'show_all_buttons ';
-    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint') {
+    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint' && !this.get('model.hide_empty')) {
       res = res + 'hint_hidden_buttons ';
-    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid') {
+    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid' && !this.get('model.hide_empty')) {
       res = res + 'grid_hidden_buttons ';
     }
     if(app_state.get('currentUser.hide_symbols')) {
@@ -732,7 +752,7 @@ export default Controller.extend({
       }
     }
     return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons'),
+  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons'),
   suggestion_class: function() {
     var res = "advanced_selection ";
     if(this.get('text_style')) {

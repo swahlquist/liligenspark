@@ -1789,12 +1789,17 @@ var persistence = EmberObject.extend({
 
               if(board.get('icon_url_with_fallback').match(/^http/)) {
                   // store_url already has a queue, we don't need to fill the sync queue with these
-                visited_board_promises.push(//persistence.queue_sync_action('store_icon', function() {
-                    /*return*/ persistence.store_url(board.get('icon_url_with_fallback'), 'image', false, force, true).then(null, function() {
-                    console.log("icon url failed to sync, " + board.get('icon_url_with_fallback'));
-                    return RSVP.resolve();
-                  })
-               /*})*/);
+                visited_board_promises.push(persistence.store_url(board.get('icon_url_with_fallback'), 'image', false, force, true).then(null, function() {
+                  console.log("icon url failed to sync, " + board.get('icon_url_with_fallback'));
+                  return RSVP.resolve();
+                }));
+                importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
+              }
+              if(board.get('background_image_url').match(/^http/)) {
+                visited_board_promises.push(persistence.store_url(board.get('icon_url_with_fallback'), 'image', true, force, true).then(null, function() {
+                  console.log("bg url failed to sync, " + board.get('background_image_url'));
+                  return RSVP.resolve();
+                }));
                 importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
               }
 

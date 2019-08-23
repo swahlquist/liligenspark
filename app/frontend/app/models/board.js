@@ -413,6 +413,9 @@ CoughDrop.Board = DS.Model.extend({
   parent_board_key: DS.attr('string'),
   link: DS.attr('string'),
   image_url: DS.attr('string'),
+  background_image_url: DS.attr('string'),
+  background_position: DS.attr('string'),
+  hide_empty: DS.attr('boolean'),
   buttons: DS.attr('raw'),
   grid: DS.attr('raw'),
   license: DS.attr('raw'),
@@ -588,11 +591,24 @@ CoughDrop.Board = DS.Model.extend({
     } else if(url && url.match(/^data/)) {
       return RSVP.resolve(this);
     }
+    var url = this.get('background_image_url');
+    if(!this.get('background_image_data_uri') && url && url.match(/^http/)) {
+      persistence.find_url(url, 'image').then(function(data_uri) {
+        _this.set('background_image_data_uri', data_uri);
+        return _this;
+      });
+    }
     return RSVP.reject('no board data url');
   },
+  background_image_url_with_fallback: function() {
+    return this.get('background_image_data_url') || this.get('background_image_url');
+  }.property('background_image_url', 'background_image_data_uri'),
+  has_background: function() {
+    return this.get('background_image_url') || this.get('background_text');
+  }.property('background_image_url', 'background_text'),
   checkForDataURLOnChange: function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('image_url'),
+  }.observes('image_url', 'background_image_url'),
   for_sale: function() {
     if(this.get('protected')) {
       var settings = this.get('protected_settings') || {};

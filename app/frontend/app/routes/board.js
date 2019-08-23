@@ -2,6 +2,7 @@ import Ember from 'ember';
 import Route from '@ember/routing/route';
 import RSVP from 'rsvp';
 import editManager from '../utils/edit_manager';
+import obf from '../utils/obf';
 import stashes from '../utils/_stashes';
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
@@ -53,6 +54,9 @@ export default Route.extend({
       }, function(err) {
         return RSVP.resolve(obj);
       });
+    } else if(params.key.match(/^obf\//)) {
+      var board = obf.lookup(params.key.split(/\//)[1]);
+      return RSVP.resolve(board);
     } else {
       var _this = this;
       var find_board = function(allow_retry) {

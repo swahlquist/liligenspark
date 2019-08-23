@@ -67,6 +67,16 @@
   {{/if}}
   {{#with model as |board|}}
   <div style={{board_style}} class={{display_class}} data-id={{board.id}}>
+    {{#if board.has_background}}
+      <div style={{bg_style}} id='board_bg'>
+        {{#if board.background_image_url}}
+          <img src={{board.background_image_url_with_fallback}} style={{bg_img_style}}/>
+        {{/if}}
+        {{#if board.background_text}}
+          <div class='text'><span>{{board.background_text}}</span></div>
+        {{/if}}
+      </div>
+    {{/if}}
     {{#if nothing_visible_not_edit}}
       <div class="board_status">
         <p>{{t "This board hasn't been set up yet, or doesn't have any visible buttons." key='no_visible_buttons'}}</p>

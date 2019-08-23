@@ -314,14 +314,14 @@ var utterance = EmberObject.extend({
     // append button attributes as needed
     var b = $.extend({}, button);
     if(original_button && original_button.load_image) {
-      original_button.load_image().then(function(image) {
+      original_button.load_image('local').then(function(image) {
         image = image || original_button.get('image');
         if(image) {
           emberSet(b, 'image', image.get('best_url'));
           emberSet(b, 'image_license', image.get('license'));
         }
       });
-      original_button.load_sound().then(function(sound) {
+      original_button.load_sound('local').then(function(sound) {
         sound = sound || original_button.get('sound');
         if(sound) {
           emberSet(b, 'sound', sound.get('best_url'));

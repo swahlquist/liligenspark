@@ -48,6 +48,7 @@ Router.map(function() {
   this.route('pricing', { path: '/pricing' });
   this.route('contact', { path: '/contact' });
   this.route('home-boards', { path: '/search/home' });
+  this.route('emergency', { path: '/search/emergency' });
   this.route('search', { path: '/search/:l/:q' });
   this.route('inflections', { path: '/inflections' });
   this.route('inflections', { path: '/inflections/:ref/:locale' });
