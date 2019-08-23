@@ -146,7 +146,7 @@ export default Component.extend({
         this.set('password', null);
         var _this = this;
         session.authenticate(data).then(function(data) {
-          if(capabilities.installed_app && !data.long_token_set) {
+          if(!data.long_token_set) {
             // follow-up question, is this a shared device?
             _this.send('login_success', false);
             _this.set('login_followup', true);

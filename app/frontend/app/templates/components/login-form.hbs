@@ -6,10 +6,19 @@
     {{#if login_followup}}
       <h2>{{t "Activate New Device" key='activate_new_device'}}</h2>
       <p>{{t "It looks like you haven't logged in before on this device. How would you like to proceed?" key='confirm_device_long_token'}}</p>
-      <button {{action 'login_followup' true}} class='btn btn-primary' style='width: 100%;'><div style='font-size: 25px;'>{{t "Trust this Device" key='trust_this_device'}}</div>{{t "Keep me logged in" key='keep_me_logged_in'}}</button>
+      <button {{action 'login_followup' true}} class={{if browserless 'btn btn-primary' 'btn btn-default'}} style='width: 100%;'><div style='font-size: 25px;'>{{t "Trust this Device" key='trust_this_device'}}</div>{{t "Keep me logged in" key='keep_me_logged_in'}}</button>
       <button {{action 'login_followup' false}} class='btn btn-default' style='width: 100%; margin-top: 10px;'><div style='font-size: 25px;'>{{t "This is a Shared Device" key='not_trust_this_device'}}</div>{{t "Log me out after a period of inactivity" key='log_me_out_when_inactive'}}</button>
     {{else if stashes.enabled}}
       <form {{action "authenticate" on='submit'}} autocomplete="off" class="form-horizontal" id="login_form">
+        {{#unless prompt}}
+          {{#unless force_logout}}
+            {{#if app_state.feature_flags.emergency_boards}}
+              <div style='font-size: 18px; text-align: right; margin-bottom: 10px; margin-top: -20px;'>
+                <a href="#">emergency boards</a>
+              </div>
+            {{/if}}
+          {{/unless}}
+        {{/unless}}
         <div class="form-group">
           {{lowercase-text-field id='identification' class="form-control input-lg touchy" value=identification placeholder='username'}}
         </div>
