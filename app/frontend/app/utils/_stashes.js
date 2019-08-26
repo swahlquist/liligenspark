@@ -98,6 +98,13 @@ var stashes = EmberObject.extend({
       stashes.set(idx, val);
       memory_stash[idx] = val;
     }
+    if(stashes.get('user_name')) {
+      runLater(function() {
+        if(stashes.get('user_name') && window.kvstash && window.kvstash.store) {
+          window.kvstash.store('user_name', stashes.get('user_name'));
+        }
+      }, 5000);
+    }
     if(stashes.get('global_integrations') && window.user_preferences) {
       window.user_preferences.global_integrations = stashes.get('global_integrations');
     } else if(!Ember.testing) {
