@@ -122,9 +122,11 @@ if(capabilities.wait_for_deviceready) {
         window.kvstash = {
           values: {user_name: user_name},
           store: function(key, value) {
+            window.kvstash.values[key] = value;
             window.cordova.exec(function() { }, function() { }, klass, 'save', [key.toString(), value.toString()]);
           },
           remove: function(key) {
+            delete window.kvstash.values[key];
             window.cordova.exec(function() { }, function() { }, klass, 'remove', [key.toString()]);
           }
         };
@@ -134,7 +136,7 @@ if(capabilities.wait_for_deviceready) {
         make_stash(dict.user_name);
       }, function() {
         // fall back to key-value lookup, since sync fails for some reason
-        window.corova.exec(function(val) {
+        window.cordova.exec(function(val) {
           make_stash(val);
         }, done, klass, 'load', ['user_name']);
       }, klass, 'sync', []);
@@ -147,9 +149,11 @@ if(capabilities.wait_for_deviceready) {
           window.kvstash = {
             values: {user_name: user_name},
             store: function(key, value) {
+              window.kvstash.values[key] = value;
               window.cordova.exec(function() { }, function() { }, klass, 'putString', [key.toString(), value.toString()]);
             },
             remove: function(key) {
+              delete window.kvstash.values[key];
               window.cordova.exec(function() { }, function() { }, klass, 'remove', [key.toString()]);
             }
           };
