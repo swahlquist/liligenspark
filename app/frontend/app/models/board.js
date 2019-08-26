@@ -415,6 +415,7 @@ CoughDrop.Board = DS.Model.extend({
   image_url: DS.attr('string'),
   background_image_url: DS.attr('string'),
   background_position: DS.attr('string'),
+  background_prompt: DS.attr('raw'),
   hide_empty: DS.attr('boolean'),
   buttons: DS.attr('raw'),
   grid: DS.attr('raw'),
@@ -598,11 +599,21 @@ CoughDrop.Board = DS.Model.extend({
         return _this;
       });
     }
+    var url = this.get('background_prompt.sound_url');
+    if(!this.get('background_sound_data_uri') && url && url.match(/^http/)) {
+      persistence.find_url(url, 'sound').then(function(data_uri) {
+        _this.set('background_sound_data_uri', data_uri);
+        return _this;
+      });
+    }
     return RSVP.reject('no board data url');
   },
   background_image_url_with_fallback: function() {
-    return this.get('background_image_data_url') || this.get('background_image_url');
+    return this.get('background_image_data_uri') || this.get('background_image_url');
   }.property('background_image_url', 'background_image_data_uri'),
+  background_sound_url_with_fallback: function() {
+    return this.get('background_sound_data_uri') || this.get('background_prompt.sound_url');
+  }.property('background_sound_data_uri', 'background_prompt.sound_url'),
   has_background: function() {
     return this.get('background_image_url') || this.get('background_text');
   }.property('background_image_url', 'background_text'),
@@ -658,6 +669,11 @@ CoughDrop.Board = DS.Model.extend({
     var _this = this;
     if(this.get('button_set') && !force) {
       return this.get('button_set').load_buttons();
+    }
+    if(this.get('local_only')) { 
+      var res = RSVP.reject({error: 'board is local only'}); 
+      res.then(null, function() { });
+      return res;
     }
     if(!this.get('id')) { return RSVP.reject({error: 'board has no id'}); }
     var button_set = CoughDrop.store.peekRecord('buttonset', this.get('id'));

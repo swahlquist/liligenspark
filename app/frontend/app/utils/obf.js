@@ -15,6 +15,8 @@ var obf = EmberObject.extend({
     board.set('background_image_url', hash['background_image_url']);
     board.set('background_position', hash['background_position']);
     board.set('background_text', hash['background_text']);
+    board.set('background_prompt', hash['background_prompt']);
+
     board.set('hide_empty', true);
     board.key = "obf/whatever"; // TODO: ...
     var image_urls = {};
@@ -141,16 +143,21 @@ obf.register("eval", function(key) {
     board.background_image_url = "https://thetechnoskeptic.com/wp-content/uploads/2019/03/NightSky_iStock_den-belitsky_900.jpg";
     board.background_position = "stretch,1,1,2,2";
     board.background_text = "This is some super\ncool text!";
+    board.background_prompt = {
+      text: "Find the cat",
+//      sound_url: "https://sample-videos.com/audio/mp3/crowd-cheering.mp3",
+      loop: true
+    };
     board.add_button({
       label: 'cat', 
       image: {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f431.svg"}, 
       sound: {}
-    }, Math.round(Math.random() * 4), Math.round(Math.random() * 4));
+    }, 0, Math.floor(Math.random() * 4));
     board.add_button({
       label: 'rat', 
       image: {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f400.svg"}, 
       sound: {}
-    }, 3, 1);
+    }, 3, Math.floor(Math.random() * 4));
     board.add_button({
       label: '', 
     }, 2, 1);

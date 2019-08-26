@@ -715,6 +715,9 @@ CoughDrop.Buttonset.load_button_set = function(id) {
   CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
   var promise = CoughDrop.Buttonset.pending_promises[id];
   if(promise) { return promise; }
+  if(id && id.match(/^b/)) {
+    return RSVP.reject();
+  }
 
   var button_sets = CoughDrop.store.peekAll('buttonset');
   var found = CoughDrop.store.peekRecord('buttonset', id) || button_sets.find(function(bs) { return bs.get('key') == id; });

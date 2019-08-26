@@ -853,7 +853,7 @@ var speecher = EmberObject.extend({
     } else if(this.speaking && opts.interrupt === false) {
       return;
     }
-    if(opts.interrupt !== false) {
+    if(opts.interrupt !== false && type != 'background') {
       this.speaking = true;
       this.speaking_from_collection = collection_id;
     }
@@ -866,6 +866,7 @@ var speecher = EmberObject.extend({
 
     var $audio = this.find_or_create_element(url);
     if($audio.length) {
+      $audio[0].loop = !!opts.loop;
       var playAudio = function() {
         var audio = $audio[0];
         if(type == 'text') {
@@ -897,6 +898,7 @@ var speecher = EmberObject.extend({
     } else if($res.closest("#button_list").length == 0) {
       $("#button_list").append($res[0]);
     }
+    $res[0].loop = false;
     return $res;
   },
   speak_collection: function(list, collection_id, opts) {
