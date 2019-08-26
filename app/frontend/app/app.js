@@ -118,9 +118,9 @@ if(capabilities.wait_for_deviceready) {
     var klass;
     if(capabilities.system == 'iOS' && capabilities.installed_app) {
       klass = 'iCloudKV';
-      window.cordova.exec(function(dict) {
+      var make_stash = function(user_name) {
         window.kvstash = {
-          values: dict,
+          values: {user_name: user_name},
           store: function(key, value) {
             window.cordova.exec(function() { }, function() { }, klass, 'save', [key.toString(), value.toString()]);
           },
@@ -129,7 +129,15 @@ if(capabilities.wait_for_deviceready) {
           }
         };
         done();
-      }, done, klass, 'sync', []);
+      };
+      window.cordova.exec(function(dict) {
+        make_stash(dict.user_name);
+      }, function() {
+        // fall back to key-value lookup, since sync fails for some reason
+        window.corova.exec(function(val) {
+          make_stash(val);
+        }, done, klass, 'load', ['user_name']);
+      }, klass, 'sync', []);
       RunLater(done, 500);
     } else if(capabilities.system == 'Android' && capabilities.installed_app) {
       klass = 'SharedPreferences';
