@@ -111,6 +111,8 @@ obf.register("eval", function(key) {
   //   on the harder tests or if they fail, try more than once
   // Visual Discrimination
   //   same but full of distractors
+  // Range of Access
+  //   different fields, can I access all regions of the screen?
   // Noun Vocabulary
   //   field of 3, find the [noun]
   //   (with/without words on the buttons, but maybe words in prompt)
