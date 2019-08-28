@@ -1855,13 +1855,27 @@ var app_state = EmberObject.extend({
         button_added_or_spoken = true;
       }
     } else if(skip_speaking_by_default && !button.add_to_vocalization) {
+    } else if(button.skip_vocalization) {
     } else {
       button_to_speak = utterance.add_button(obj, button);
       button_added_or_spoken = true;
     }
 
+    var skip_highlight = false;
+    var skip_sound = false;
+    // check if the button is part of a board that has a custom handler,
+    // and skip the other actions if handled
+    if(button.board == app_state.controller.get('board.model') && button.board.get('button_handler')) {
+      var button_handled = button.board.get('button_handler')(button);
+      if(button_handled) { 
+        if(button_handled.highlight === false) { skip_highlight = true; }
+        if(button_handled.sound === false) { skip_sound = true; }
+        return; 
+      }
+    }
+
     // speak or make a sound to show the button was selected
-    if(obj.label) {
+    if(obj.label && !skip_sound) {
       var click_sound = function() {
         if(app_state.get('currentUser.preferences.click_buttons')) {
           if(specialty_button && specialty_button.has_sound) {
@@ -1889,6 +1903,10 @@ var app_state = EmberObject.extend({
             // don't say it...
             click_sound();
             vibrate();
+          } else if(button.skip_vocalization) {
+            // don't say it...
+            click_sound();
+            vibrate();
           } else {
             obj.spoken = true;
             obj.for_speaking = true;
@@ -1908,7 +1926,6 @@ var app_state = EmberObject.extend({
     if(button_to_speak.modified && !button_to_speak.in_progress) {
       obj.completion = obj.completion || button_to_speak.label;
     }
-
     // TODO: If the user just navigated to a home-locked board
     // then it'll be logged with a depth of 0 even though it
     // took them any number of steps to get there. On average
@@ -1919,11 +1936,13 @@ var app_state = EmberObject.extend({
     stashes.log(obj);
     var _this = this;
 
-    if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode')) {
+    // highlight the button that if highlights are enabled
+    if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode') && !skip_highlight) {
       if(button_added_or_spoken || app_state.get('referenced_user.preferences.highlighted_buttons') == 'all') {
         app_state.highlight_selected_button(button, overlay, obj.label);
       }
     }
+
 
     // additional actions (besides just speaking) will be necessary for some buttons
     if((button.load_board && button.load_board.key) || (button.vocalization || '').match(/:native-keyboard/)) {
