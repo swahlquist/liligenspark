@@ -4,8 +4,13 @@
   {{/if}}
   <div class={{box_class}}>
     {{#if login_followup}}
-      <h2>{{t "Activate New Device" key='activate_new_device'}}</h2>
-      <p>{{t "It looks like you haven't logged in before on this device. How would you like to proceed?" key='confirm_device_long_token'}}</p>
+      {{#if login_followup_already_long_token}}
+        <h2>{{t "Approve This Device" key='approve_this_device'}}</h2>
+        <p>{{t "Currently this device is set to log out after a short period of inactivity. Would you like to change this?" key='confirm_device_long_token_with_long_token'}}</p>
+      {{else}}
+        <h2>{{t "Activate New Device" key='activate_new_device'}}</h2>
+        <p>{{t "It looks like you haven't logged in before on this device. How would you like to proceed?" key='confirm_device_long_token'}}</p>
+      {{/if}}
       <button {{action 'login_followup' true}} class={{if browserless 'btn btn-primary' 'btn btn-default'}} style='width: 100%;'><div style='font-size: 25px;'>{{t "Trust this Device" key='trust_this_device'}}</div>{{t "Keep me logged in" key='keep_me_logged_in'}}</button>
       <button {{action 'login_followup' false}} class='btn btn-default' style='width: 100%; margin-top: 10px;'><div style='font-size: 25px;'>{{t "This is a Shared Device" key='not_trust_this_device'}}</div>{{t "Log me out after a period of inactivity" key='log_me_out_when_inactive'}}</button>
     {{else if stashes.enabled}}

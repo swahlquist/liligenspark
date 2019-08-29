@@ -145,11 +145,13 @@ export default Component.extend({
       if (!isEmpty(data.identification) && !isEmpty(data.password)) {
         this.set('password', null);
         var _this = this;
+        _this.set('login_followup_already_long_token', false);
         session.authenticate(data).then(function(data) {
-          if(!data.long_token_set) {
+          if(!data.long_token) {
             // follow-up question, is this a shared device?
+            _this.send('login')
             _this.send('login_success', false);
-            _this.set('login_followup', true);
+            _this.set('login_followup_already_long_token', data.long_token_set);
           } else {
             _this.send('login_success', true);
           }
