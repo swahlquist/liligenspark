@@ -119,9 +119,10 @@ class Device < ActiveRecord::Base
       # integrations always use long tokens
       long_token = true
     elsif self.token_type == :browser
-      # browser sessions set long_token at authentication, everyone else sets it after
-      long_token = !!long_token
-      self.settings['long_token_set'] = true
+      # browser sessions have the same confirmation step now
+      long_token = true if self.settings['long_token']
+#      long_token = !!long_token
+#      self.settings['long_token_set'] = true
     end
     self.settings['long_token'] = long_token if long_token != nil
     key = new_access_token

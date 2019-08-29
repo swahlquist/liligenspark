@@ -83,7 +83,7 @@ export default Component.extend({
     return capabilities.browserless;
   }.property(),
   noSubmit: function() {
-    return this.get('noSecret') || this.get('logging_in') || this.get('logged_in');
+    return this.get('noSecret') || this.get('logging_in') || this.get('logged_in') || this.get('login_followup');
   }.property('logging_in', 'logged_in', 'noSecret'),
   noSecret: function() {
     return !this.get('client_secret');
@@ -149,8 +149,8 @@ export default Component.extend({
         session.authenticate(data).then(function(data) {
           if(!data.long_token) {
             // follow-up question, is this a shared device?
-            _this.send('login')
             _this.send('login_success', false);
+            _this.set('login_followup', true);
             _this.set('login_followup_already_long_token', data.long_token_set);
           } else {
             _this.send('login_success', true);
