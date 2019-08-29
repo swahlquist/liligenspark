@@ -538,6 +538,8 @@ export default modal.ModalController.extend({
       } else if(part.match(/^\+/)) {
         list.push({basic: true, modifier: part});
         any_basic = true;
+      } else if(part == ':space') {
+        list.push({modifier: part, basic: true, special: i18n.t('finish_word', "Finish the current word")});
       } else if(part.match(/^\:[^\s\&]+$/)) {
         list.push({modifier: part + " (??)"});
       } else {
