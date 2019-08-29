@@ -140,11 +140,13 @@
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
             {{t "Select any categories that this home board may fit well into." key='select_categories'}}
-            {{#each board_categories as |category|}}
-              <label>
-                {{input type='checkbox' checked=category.selected}}
-                {{category.name}}
-              </label><br/>
+              {{#each board_categories as |category|}}
+                <div><div class="checkbox big_checkbox">
+                  <label>
+                    {{input type='checkbox' checked=category.selected}}
+                    {{category.name}}
+                  </label><br/>
+                </div></div>
             {{/each}}
           </div>
         </div>
@@ -157,7 +159,7 @@
                 {{input type="checkbox" checked=model.word_suggestions}}
                 {{t "Show word completion suggestions" key='show_word_suggestions'}}
               </label>
-            </div>
+            </div><br/>
             <em style="padding-left: 20px;">{{t "(helpful for keyboard-style boards)" key='helpful_for_keyboard_boards'}}</em>
           </div>
         </div>
