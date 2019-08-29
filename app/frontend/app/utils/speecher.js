@@ -29,6 +29,11 @@ var speecher = EmberObject.extend({
   refresh_voices: function() {
     var list = [];
     var voices = speecher.scope.speechSynthesis.getVoices();
+    if(capabilities.system == 'iOS' && capabilities.installed_app) {
+      // iOS has such strict rules around not abusing speechSynthesis
+      // that is basically unusable, despite my best efforts.
+      voices = [];
+    }
     for(var idx = 0; idx < voices.length; idx++) {
       list.push((voices._list || voices)[idx]);
     }
@@ -710,7 +715,7 @@ var speecher = EmberObject.extend({
     };
     elem.lastListener = handler;
     if(capabilities.mobile && capabilities.installed_app && window.Media) {
-      console.log("using native media playback!");
+      // console.log("using native media playback!");
       var src = (elem.src || '');
       // iOS media plugin can't handle file:/// paths, so we strip it off and things work fine
       if(capabilities.system == 'iOS') {
