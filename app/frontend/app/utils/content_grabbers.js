@@ -2423,6 +2423,7 @@ $(document).on('change', '#image_upload,#sound_upload,#board_upload,#avatar_uplo
     }
   }
 });
+capabilities.data_uri_to_blob = contentGrabbers.data_uri_to_blob;
 
 contentGrabbers.boardGrabber = boardGrabber;
 contentGrabbers.soundGrabber = soundGrabber;

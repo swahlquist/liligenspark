@@ -186,7 +186,7 @@ var stashes = EmberObject.extend({
       }
       if(stash_capabilities) {
         var data_uri = "data:text/json;base64," + btoa(JSON.stringify({ db_id: obj.user_name, filename: "db_stats.json" }));
-        var blob = contentGrabbers.data_uri_to_blob(data_uri);
+        var blob = stash_capabilities.data_uri_to_blob(data_uri);
         stash_capabilities.storage.write_file('json', 'db_stats.json', blob).then(function(res) {
           console.log("COUGHDROP: db_stats persisted!");
           defer.resolve();
