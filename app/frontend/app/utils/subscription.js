@@ -614,6 +614,12 @@ document.addEventListener("deviceready", function() {
       var user_id = store.user_id || Subscription.in_app_store.user_id || app_state.get('currentUser.id');
       var pre_purchase = product.alias == 'App Pre-Purchase';
       var device_id = (window.device && window.device.uuid) || stashes.get_raw('coughDropDeviceId');
+      if(!user_id) {
+        return callback(false, {
+          code: store.INTERNAL_ERROR,
+          error: "User not initialized"
+        });
+      }
 
       persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
         type: 'POST',

@@ -256,10 +256,10 @@ var stashes = EmberObject.extend({
           if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
             return RSVP.resolve({ db_id: window.kvstash.values.user_name });
           }
-          return RSVP.resolve({});
-        });
+          return RSVP.resolve({db_id: null});
+        }).then(null, function() { return RSVP.resolve({db_id: null}); });
       } else {
-        return RSVP.resolve({});
+        return RSVP.resolve({db_id: null});
       }
     }
   },
