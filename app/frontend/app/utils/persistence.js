@@ -1125,6 +1125,14 @@ var persistence = EmberObject.extend({
         persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
       }
 
+      if(window.app_state) {
+        window.app_state.check_free_space().then(function(res) {
+          if(res.too_little) {
+            modal.error(i18n.t('too_little_free_space', "Your device is almost out of free space, you may need to delete some data to make room for CoughDrop"));
+          }
+        }, function() { });
+      }
+
       var confirm_quota_for_user = find_user.then(check_first(function(user) {
         if(user) {
           persistence.set('online', true);

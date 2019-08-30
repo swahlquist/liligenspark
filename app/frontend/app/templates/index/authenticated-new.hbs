@@ -380,6 +380,10 @@
               </span>
             {{/link-to}}
           </div>
+        {{else if app_state.limited_free_space}}
+          <div class='alert alert-danger'>
+            {{t "Your device is almost out of free space! You only have %{mb}Mb of storage available. You may need to delete some data from other apps for CoughDrop to work properly offline." mb=app_state.limited_free_space.mb key='need_memory_for_offline'}}
+          </div>
         {{else if model.earned_badge}}
           <div>
             {{badge-earned badge=model.earned_badge}}

@@ -857,6 +857,17 @@ var app_state = EmberObject.extend({
       window.persistence.set('auto_sync', auto_sync);
     }
   }.observes('sessionUser', 'sessionUser.auto_sync'),
+  check_free_space: function() {
+    return capabilities.storage.free_space().then(function(res) {
+      if(res.mb < 100) {
+        res.too_little = true;
+        if(res.gb < 1) { res.gb = null; }
+        app_state.set('limited_free_space', res);
+      } else {
+        app_state.set('limited_free_space', false);
+      }
+    }, function(err) { });
+  },
   set_speak_mode_user: function(board_user_id, jump_home, keep_as_self) {
     var session_user_id = this.get('sessionUser.id');
     if(board_user_id == 'self' || (session_user_id && board_user_id == session_user_id)) {

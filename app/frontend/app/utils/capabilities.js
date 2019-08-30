@@ -748,6 +748,23 @@ var capabilities;
           });
           return promise;
         },
+        free_space: function() {
+          var promise = capabilities.mini_promise();
+          if(window.cordova && window.cordova.exec) {
+            window.cordova.exec(function(result) {
+              promise.resolve({
+                free: result,
+                mb: Math.round(result / 1024 / 1024),
+                gb: Math.round(result * 100 / 1024 / 1024 / 1024 / 1024) * 100
+              });
+            }, function(error) {
+              promise.reject({error: error});
+            }, "File", "getFreeDiskSpace", []);
+          } else {
+            promise.reject({error: "currently no way to check free space"});
+          }
+          return promise;
+        },
         all_files: function() {
           // uses native calls
           var promise = capabilities.mini_promise();

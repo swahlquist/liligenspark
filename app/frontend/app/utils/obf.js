@@ -3,6 +3,7 @@ import EmberObject from '@ember/object';
 import CoughDrop from '../app';
 import app_state from './app_state';
 import speecher from './speecher';
+import persistence from './persistence';
 import { later as runLater } from '@ember/runloop';
 
 var handlers = {};
