@@ -113,7 +113,9 @@ var capabilities;
         if(capabilities.api_host) {
           console_debug("COUGHDROP: extension connected, pointing requests to " + capabilities.api_host);
         }
-        capabilities.db_key = stashes.get_db_key();
+        stashes.db_settings(capabilities).then(function(res) {
+          capabilities.db_key = res.db_key;
+        });
         var res = true;
         if(indexedDBSafe) {
           res = capabilities.setup_database();
@@ -1613,37 +1615,43 @@ var capabilities;
 
   capabilities.setup_database = function() {
     delete capabilities['db'];
-    var user_name = stashes.get_db_id(capabilities);
-    var db_key = stashes.get_db_key(true);
-    // keep using legacy db ids, but for new dbs don't worry about the key anymore
-    if(!db_key || db_key.match(/^db2/)) {
-      db_key = "db";
-    }
-    var key = "coughDropStorage::" + (user_name || "__") + "===" + db_key;
-    capabilities.db_name = key;
-
     var promise = capabilities.mini_promise();
-
-    var setup = capabilities.dbman.setup_database(key, capabilities.dbman.dbversion);
-    setup.then(function(db) {
-      // Don't proceed with app initialization until db_connect completes, ensuring
-      // stashes is populated with whatever data is available.
-      var connect = stashes.db_connect(capabilities);
-      connect.then(function() {
-        (capabilities.queued_db_actions || []).forEach(function(m) {
-          m[0](m[1]).then(function(res) {
-            m[2].resolve(res);
-          }, function(err) {
-            m[2].reject(err);
+    stashes.db_settings(capabilities).then(function(res) {
+      var user_name = res.db_id; //stashes.get_db_id(capabilities);
+      var db_key = res.db_key; //stashes.get_db_key(true);
+      // keep using legacy db ids, but for new dbs don't worry about the key anymore
+      if(!db_key || db_key.match(/^db2/)) {
+        db_key = "db";
+      }
+      var key = "coughDropStorage::" + (user_name || "__") + "===" + db_key;
+      capabilities.db_name = key;
+  
+  
+      var setup = capabilities.dbman.setup_database(key, capabilities.dbman.dbversion);
+      setup.then(function(db) {
+        // Don't proceed with app initialization until db_connect completes, ensuring
+        // stashes is populated with whatever data is available.
+        var connect = stashes.db_connect(capabilities);
+        connect.then(function() {
+          (capabilities.queued_db_actions || []).forEach(function(m) {
+            m[0](m[1]).then(function(res) {
+              m[2].resolve(res);
+            }, function(err) {
+              m[2].reject(err);
+            });
           });
+          capabilities.queued_db_actions = [];
+          promise.resolve();
+        }, function(err) {
+          promise.reject(err);
         });
-        capabilities.queued_db_actions = [];
-        promise.resolve();
       }, function(err) {
         promise.reject(err);
       });
+  
+
     }, function(err) {
-      promise.reject(err);
+      promise.reject({error: err});
     });
 
     return promise;
@@ -1651,7 +1659,7 @@ var capabilities;
   capabilities.delete_database = function() {
     return capabilities.dbman.delete_database(capabilities.db_name).then(function() {
       stashes.persist_raw('cd_db_key', '');
-      stashes.get_db_key();
+      stashes.db_settings(capabilities);
     });
   };
   capabilities.idb = indexedDBSafe;

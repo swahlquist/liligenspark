@@ -543,7 +543,7 @@ var persistence = EmberObject.extend({
   find_json: function(url) {
     var _this = this;
     return _this.find_url(url, 'json').then(function(uri) {
-      if(uri.match(/^data:/)) {
+      if(typeof(uri) == 'string' && uri.match(/^data:/)) {
         var json = null;
         try {
           json = JSON.parse(atob(uri.split(/,/)[1]));
@@ -555,13 +555,19 @@ var persistence = EmberObject.extend({
         } else {
           return RSVP.reject({error: "No JSON dataURI result"});
         }
-      } else {
+      } else if(typeof(uri) == 'string') {
         return _this.ajax(uri, {type: 'GET', dataType: 'json'});
+      } else {
+        return uri;
       }
     });
   },
-  store_json: function(url) {
+  store_json: function(url, json) {
     var _this = this;
+    if(json && url.match(/^cache:/)) {
+      persistence.json_cache = persistence.json_cache || {};
+      persistence.json_cache[url] = json;
+    }
     return _this.store_url(url, 'json').then(function(data_uri) {
       if(data_uri && data_uri.data_uri) { data_uri = data_uri.data_uri; }
       var json = undefined;
@@ -811,6 +817,16 @@ var persistence = EmberObject.extend({
     var _this = persistence;
     return new RSVP.Promise(function(resolve, reject) {
       var lookup = RSVP.reject();
+
+      if(url && url.match(/^cache:/) && persistence.json_cache && persistence.json_cache[url]) {
+        lookup = RSVP.resolve({
+          url: url,
+          type: type,
+          content_type: 'text/json',
+          data_uri: "data:text/json;base64," + btoa(JSON.stringify(persistence.json_cache[url])),
+          locale_filename: persistence.json_cache[url].filename
+        });
+      }
 
       var trusted_not_to_change = url.match(/opensymbols\.s3\.amazonaws\.com/) || url.match(/s3\.amazonaws\.com\/opensymbols/) ||
                   url.match(/coughdrop-usercontent\.s3\.amazonaws\.com/) || url.match(/s3\.amazonaws\.com\/coughdrop-usercontent/) ||

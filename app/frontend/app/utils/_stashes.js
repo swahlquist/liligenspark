@@ -187,6 +187,9 @@ var stashes = EmberObject.extend({
       if(window.kvstash && window.kvstash.store) {
         window.kvstash.store('user_name', obj.user_name);
       }
+      if(window.persistence) {
+        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name });
+      }
     }
   },
   flush_db_id: function() {
@@ -211,17 +214,38 @@ var stashes = EmberObject.extend({
   get_db_id: function(cap) {
     var auth_settings = stashes.get_object('auth_settings', true);
     if(auth_settings) {
-      return auth_settings.user_name;
+      return RSVP.resolve({ db_id: auth_settings.user_name });
     } else {
       var keys = (document.cookie || "").split(/\s*;\s*/);
       var key = keys.find(function(k) { return k.match(/^authDBID=/); });
       var user_name = key && key.replace(/^authDBID=/, '');
       if(user_name) {
-        return user_name;
-      } else if(cap && window.kvstash && window.kvstash.values) {
-        return window.kvstash.values.user_name || null;
+        return RSVP.resolve({ db_id: user_name });
+      } else if(stashes.fs_user_name) {
+        return RSVP.resolve({ db_id: stashes.fs_user_name });
+      } else if(cap && cap.installed_app) {
+        // try file-system lookup, fall back to kvstash I guess
+        var lookup = cap.storage.get_file_url('json', 'cache://db_stats.json').then(function(local_url) {
+          var local_url = capabilities.storage.fix_url(local_url);
+          console.log("got file!", local_url);
+          if(typeof(capabilities) == 'string' && window.persistence) {
+            return window.persistence.ajax(capabilities, {type: 'GET', dataType: 'json'});
+          } else {
+            console.log("nope", window.persistence);
+            return RSVP.reject();
+          }
+        });
+        return lookup.then(function(json) {
+          stashes.fs_user_name = json.db_id;
+          return { db_id: json.db_id };
+        }, function() {
+          if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
+            return RSVP.resolve({ db_id: window.kvstash.values.user_name });
+          }
+          return RSVP.resolve({});
+        });
       } else {
-        return null;
+        return RSVP.resolve({});
       }
     }
   },
@@ -232,6 +256,15 @@ var stashes = EmberObject.extend({
       stashes.persist_raw('cd_db_key', key);
     }
     return key
+  },
+  db_settings: function(cap) {
+    var db_key = stashes.get_db_key();
+    return stashes.get_db_id(cap).then(function(res) {
+      return {
+        db_id: res.db_id, 
+        db_key: res.db_key || db_key
+      }
+    });
   },
   get_raw: function(key, include_prefix) {
     if(include_prefix) { key = stashes.prefix + key; }

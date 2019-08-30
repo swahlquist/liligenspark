@@ -404,7 +404,9 @@ var contentGrabbers = EmberObject.extend({
     'video/mpeg4': '.mp4',
     'video/3gpp': '.3gp',
     'video/x-msvideo': '.avi',
-    'video/x-ms-wmv': '.wmv'
+    'video/x-ms-wmv': '.wmv',
+    'text/json': '.json',
+    'application/json': '.json'
   }
 }).create();
 var pictureGrabber = EmberObject.extend({
