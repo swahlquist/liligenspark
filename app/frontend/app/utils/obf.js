@@ -141,6 +141,7 @@ var levels = [
     {id: 'diff-4', rows: 1, cols: 4, distractors: true},
     {id: 'diff-8', rows: 2, cols: 4, distractors: true},
     {id: 'diff-15', rows: 3, cols: 5, distractors: true},
+    // lower_level means didn't really succeed above this point
     {id: 'diff-12-24', rows: 4, cols: 6, distractors: true, spacing: 2},
     {id: 'diff-24', rows: 4, cols: 6, distractors: true},
     {id: 'diff-20-60', rows: 6, cols: 10, distractors: true, spacing: 3},
@@ -148,6 +149,7 @@ var levels = [
     {id: 'diff-60', rows: 6, cols: 10, distractors: true},
     {id: 'diff-28-112', rows: 8, cols: 14, distractors: true, spacing: 4},
     {id: 'diff-56-112', rows: 8, cols: 14, distractors: true, spacing: 2},
+    // higher_level means < 3x increase in time on next step vs. previous
     {id: 'diff-112-112', rows: 8, cols: 14, distractors: true},
   ], 
   // at this point, settle on a grid size that the user was 
@@ -156,34 +158,25 @@ var levels = [
   // (min of 3, max of, say, 15)
   [
     {intro: 'symbols'},
-    {id: 'symbols-photos', symbols: 'photos', min_attempts: 3},
-    {id: 'symbols-opensymbols', symbols: 'opensymbols', min_attempts: 3},
-    {id: 'symbols-emoji', symbols: 'twemoji', min_attempts: 3},
-//    {id: 'symbols-noun-project', symbols: 'noun-project', contrast: true, min_attempts: 3},
-    {id: 'symbols-pcs', symbols: 'pcs', contrast: true, min_attempts: 3},
-    {id: 'symbols-pcs-hc', symbols: 'pcs_hc', contrast: true, min_attempts: 3},
-    {id: 'symbols-lessonpix', symbols: 'lessonpix', min_attempts: 3}
+    {id: 'symbols-below', difficulty: -1, symbols: 'auto', distractors: true, min_attempts: 2},
+    {id: 'symbols-at', difficulty: 0, symbols: 'auto', distractors: true, min_attempts: 3},
+    {id: 'symbols-above', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 3},
+    // TODO: include text-only as a possible option
   ],[
-    {intro: 'range'},
+    {intro: 'range'}, // ensure you're hitting all edges and regions? should be able to handle within previous steps
     {id: 'range', all_range: true}
   ],[
     {intro: 'core'} // grid of core words, find (with symbols)
   ], [
-    {intro: 'literacy'} // grid of words without symbols
-  ], [
     {intro: 'open_ended'}, // open-ended commenary on pictures, only up to observed proficiency level
-    {id: 'open_24', rows: 4, cols: 6, prompts: [
+    {id: 'open-1', difficulty: 0, prompts: [
 
-    ]},
-    {id: 'open_60', rows: 6, cols: 10, prompts: [
-
-    ]},
-    {id: 'open_112', rows: 8, cols: 14, prompts: [
-
-    ]},
-    {id: 'open_keyboard', rows: 6, cols: 10, prompts: [
+    ]}, // allow cycling through while staying on the same step
+    {id: 'open_keyboard', keyboard: true, prompts: [
 
     ]}
+  ], [
+    
   ]
 ];
 var words = [
@@ -315,7 +308,26 @@ var words = [
   {label: 'satellite', type: 'noun', category: 'space', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/satellite.jpg', 'lessonpix': 'https://lessonpix.com/drawings/592029/150x150/592029.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/06887/c4a44d084e37fd7a7f088197609759b914a33d2c4b05a249cf84461cd9c301dea03ba5e91cb5c4f4bade3c5ca2aca151ff0cd29a0ea06185e289851955bcab4c/06887.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/06887/c4a44d084e37fd7a7f088197609759b914a33d2c4b05a249cf84461cd9c301dea03ba5e91cb5c4f4bade3c5ca2aca151ff0cd29a0ea06185e289851955bcab4c/06887.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f6f0.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/satellite.svg'}},
   {label: 'comet', type: 'noun', category: 'space', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/comet.jpg', 'lessonpix': 'https://lessonpix.com/drawings/594891/150x150/594891.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/08190/8d28e493771f54f4e1392a1ee8af05382aa745dbd1e7eb51fd0321740a811da832358d6dd461b43ebaed7fe8de96e6392cb409a1916502f59609c08efdc988d3/08190.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/08190/8d28e493771f54f4e1392a1ee8af05382aa745dbd1e7eb51fd0321740a811da832358d6dd461b43ebaed7fe8de96e6392cb409a1916502f59609c08efdc988d3/08190.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2604.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2604.svg'}},
 ];
+var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
+obf.offline_urls = [];
 obf.register("eval", function(key) {
+  if(!words.prefetched) {
+    words.forEach(function(w) {
+      for(var key in w.urls) {
+        if(w.urls[key] && w.urls[key].match(/^http/)) {
+          // TODO: sync should store obf.offline_urls as another step
+          obf.offline_urls.push(w.urls[key]);
+          persistence.find_url(w.urls[key], 'image').then(function(data_uri) {
+            w.urls[key] = data_uri;
+          }, function(err) {
+            var img = new Image();
+            img.src = w.urls[key];
+          });
+        }
+      }
+    });
+    words.prefetched = true;
+  }
   // https://www.youtube.com/watch?v=I71jXvIysSA&feature=youtu.be
   // https://www.youtube.com/watch?v=82XZ2cKV-VQ
   // https://www.youtube.com/watch?v=7ylVk9n5ne0
@@ -374,28 +386,111 @@ obf.register("eval", function(key) {
     } else if(step.intro == 'find_target') {
       board.background_text = "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.";
     } else if(step.intro == 'diff_target') {
-      board.background_text = "Next will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.";
+      board.background_text = "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.";
     } else if(step.intro == 'symbols') {
       board.background_text = "This next evaluation will use different styles of pictures to see if the user has more success with one style over another";
     }
+    level.libraries_used = {
+      'default': true
+    };
+    if(false) { // not a premium_symbols account
+      level.libraries_used = 'pcs';
+      level.libraries_used = 'pcs_hc';
+    }
+    if(false) { // not a lessonpix account
+      level.libraries_used = 'lessonpix';
+    }
     board.add_button({
-      label: 'start',
+      label: step.intro == 'intro' ? 'next' : 'start',
+      id: 'button_start',
       skip_vocalization: true
     }, 2, 5);
-    res.handler = function() {
+    if(step.intro == 'intro') {
+      // TODO: add buttons for options:
+      // 1. try text-only/keyboard options
+      // 2. 
+    } else {
+      board.add_button({
+        label: 'skip',
+        id: 'button_skip',
+        skip_vocalization: true
+      }, 2, 4);
+    }
+    res.handler = function(button) {
       if(app_state.get('speak_mode')) {
-        assessment.step++;
-        if(!level[assessment.step]) {
-          assessment.level++;
+        if(button.id == 'button_start') {
+          assessment.step++;
+          if(!level[assessment.step]) {
+            assessment.level++;
+            assessment.step = 0;
+          }
+          app_state.jump_to_board({key: 'obf/eval-' + assessment.level + '-' + assessment.step});
+          app_state.set_history([]);
+        } else if(button.id == 'button_skip') {
           assessment.step = 0;
+          assessment.level++;          
+          app_state.jump_to_board({key: 'obf/eval-' + assessment.level + '-' + assessment.step});
+          app_state.set_history([]);
         }
-        app_state.jump_to_board({key: 'obf/eval-' + assessment.level + '-' + assessment.step});
-        app_state.set_history([]);
       }
       return {highlight: false};
     };
   } else {
-    board = obf.shell(step.rows, step.cols);
+    var step_rows = step.rows, step_cols = step.cols;
+    if(step.symbols == 'auto' && !level.current_library) {
+      level.more_libraries = false;
+      var found = false;
+      libraries.forEach(function(lib) {
+        if(!level.libraries_used[lib]) {
+          if(!found) {
+            level.current_library = lib;
+          } else {
+            level.more_libraries = true;
+          }
+          found = true;
+        }
+      });
+    }
+    var library = level.current_library || 'default';
+    level.libraries_used[library] = true;
+    if(Object.keys(level.libraries_used).length >= 4) {
+      // don't make communicators do more than 4 libraries
+      level.more_libraries = false;
+    }
+    if(step.level != null) {
+      if(step.difficulty < 0) {
+        step_rows = 1;
+        step_cols = 3;
+        if(assessment.lower_level) { // below-level
+          step_rows = 1;
+          step_cols = 2;
+        } else if(assessment.higher_level) { // above-level
+          step_rows = 2;
+          step_cols = 2;
+        }
+      } else if(step.difficulty == 0) {
+        step_rows = 2;
+        step_cols = 3;
+        if(assessment.lower_level) { // below-level
+          step_rows = 1;
+          step_cols = 4;
+        } else if(assessment_higher_level) { // above-level
+          step_rows = 2;
+          step_cols = 4;
+        }
+      } else {
+        step_rows = 3;
+        step_cols = 4;
+        if(assessment.lower_level) { // below-level
+          step_rows = 2;
+          step_cols = 4;
+        } else if(assessment.higher_level) { // above-level
+          step_rows = 4;
+          step_cols = 5;
+        }
+      }
+    }
+    board = obf.shell(step_rows, step_cols);
     var prompt = words.find(function(w) { return w.label == 'cat'; });
     board.background_position = "stretch";
     board.background_text = "Find the " + prompt.label;
@@ -405,8 +500,8 @@ obf.register("eval", function(key) {
     };
     var loc = null;
     var spacing = step.spacing || 1;
-    var rows = step.rows / spacing;
-    var cols = step.cols / spacing;
+    var rows = step_rows / spacing;
+    var cols = step_cols / spacing;
     var offset = (assessment.attempts || 0) % spacing;
     var events = (((assessment.events || [])[assessment.level] || [])[assessment.step] || []);
     var prior = events[events.length - 1];
@@ -426,7 +521,7 @@ obf.register("eval", function(key) {
       id: 'button_correct',
       label: prompt.label, 
       skip_vocalization: true,
-      image: {url: prompt.urls.default}, 
+      image: {url: prompt.urls[library]}, 
       sound: {}
     }, loc[0] * spacing + offset, loc[1] * spacing + offset);
     var used_words = {};
@@ -437,7 +532,7 @@ obf.register("eval", function(key) {
           var unused = words.filter(function(w) { return w != prompt && !used_words[w.label]; });
           var fails = 0;
           var tries = 0;
-          while(tries < 20 && (!word || used_words[word.label] || !word.urls.default)) {
+          while(tries < 20 && (!word || used_words[word.label] || !word.urls[library])) {
             tries++;
             word = unused[Math.floor(Math.random() * unused.length)];
             if(word && word.category == prompt.category && fails < 3 && tries < 15) {
@@ -450,7 +545,7 @@ obf.register("eval", function(key) {
         board.add_button({
           label: !step.distractors ? '' : word.label,
           skip_vocalization: true,
-          image: !step.distractors ? null : {url: word.urls.default},
+          image: !step.distractors ? null : {url: word.urls[library]},
         }, idx * spacing + offset, jdx * spacing + offset)
       }
     }
@@ -489,6 +584,7 @@ obf.register("eval", function(key) {
           srow: r,
           scol: c,
           crow: cr,
+          library: library,
           ccol: cc,
           q: (cr < (button.board.get('grid.rows') / 2) ? 0 : 1) + ((cc < (button.board.get('grid.columns') / 2) ? 0 : 2)),
           correct: button.id == 'button_correct',
@@ -508,23 +604,26 @@ obf.register("eval", function(key) {
           assessment.fails = (assessment.fails || 0) + 1;
           next_step = true;
         }
+        var short_circuit = false;
         if(assessment.fails >= 2) {
-          assessment.fails = 0;
-          assessment.attempts = 0;
-          assessment.correct = 0;
-          assessment.step = 0;
-          assessment.level++;
-          // next level
-        } else if(next_step) {
+          next_step = true;
+          short_circuit = true;
+        }
+        if(next_step) {
+          // next step
           assessment.step++;
           assessment.attempts = 0;
           assessment.correct = 0;
-          // next step
-          if(!levels[assessment.level][assessment.step]) {
+          if(short_circuit || !levels[assessment.level][assessment.step]) {
+            // next level
             assessment.step = 0;
             assessment.level++;
             assessment.fails = 0;
-            // next level
+            if(level.more_libraries) {
+              assessment.level--;
+              assessment.step++;
+              level.current_library = null;
+            }
           }
         }
         runLater(function() {
