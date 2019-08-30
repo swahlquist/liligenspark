@@ -23,15 +23,17 @@ var stashes = EmberObject.extend({
     stash_capabilities = cap;
     if(!cap.dbman) { return RSVP.resolve(); }
     return stash_capabilities.storage_find({store: 'settings', key: 'stash'}).then(function(stash) {
-      var count = 0;
+      var keys = [];
       for(var idx in stash) {
         if(idx != 'raw' && idx != 'storageId' && idx != 'changed' && stash[idx] !== undefined) {
           memory_stash[idx] = JSON.parse(stash[idx]);
-          count++;
-          stashes.set(idx, JSON.parse(stash[idx]));
+          if(stashes.get(idx) != memory_stash[idx]) {
+            keys.push(idx);
+            stashes.set(idx, memory_stash[idx]);              
+          }
         }
       }
-      console.debug('COUGHDROP: restoring stashes from db, ' + count + ' values');
+      console.debug('COUGHDROP: restoring stashes from db, ' + (keys.join(',') || 'nothing updated');
     }, function(err) {
       console.debug('COUGHDROP: db storage stashes not found');
       return RSVP.resolve();
