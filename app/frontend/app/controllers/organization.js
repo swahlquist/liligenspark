@@ -4,6 +4,7 @@ import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import session from '../utils/session';
 import CoughDrop from '../app';
+import { later as runLater } from '@ember/runloop';
 
 export default Controller.extend({
   actions: {
@@ -23,9 +24,12 @@ export default Controller.extend({
           data.original_user_name = data.user_name;
           data.as_user_id = user_name;
           data.user_name = user_name;
-          session.persist(data);
-          _this.transitionToRoute('index');
-          location.reload();
+          session.persist(data).then(function() {
+            _this.transitionToRoute('index');
+            runLater(function() {
+              location.reload();
+            });
+          });
         }, function() {
           modal.error(i18n.t('couldnt_find_user', "Couldn't retrieve user \"%{user_name}\" for masquerading", {user_name: user_name}));
         });

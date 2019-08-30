@@ -450,8 +450,9 @@ export default Controller.extend({
       data.user_name = data.original_user_name;
       delete data.original_user_name;
       delete data.as_user_id;
-      session.persist(data);
-      location.reload();
+      session.persist(data).then(function() {
+        location.reload();
+      });
     },
     back: function(opts) {
       // TODO: true back button vs. separate history? one is better for browser,

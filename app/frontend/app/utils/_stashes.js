@@ -23,17 +23,17 @@ var stashes = EmberObject.extend({
     stash_capabilities = cap;
     if(!cap.dbman) { return RSVP.resolve(); }
     return stash_capabilities.storage_find({store: 'settings', key: 'stash'}).then(function(stash) {
-      var keys = [];
+      var count = 0;
       for(var idx in stash) {
         if(idx != 'raw' && idx != 'storageId' && idx != 'changed' && stash[idx] !== undefined) {
           memory_stash[idx] = JSON.parse(stash[idx]);
           if(stashes.get(idx) != memory_stash[idx]) {
-            keys.push(idx);
+            count++;
             stashes.set(idx, memory_stash[idx]);              
           }
         }
       }
-      console.debug('COUGHDROP: restoring stashe fallbacks from db, ' + (keys.join(',') || 'nothing updated'));
+      console.debug('COUGHDROP: restoring stash fallbacks from db, ' + count + ' value');
     }, function(err) {
       console.debug('COUGHDROP: db storage stashes not found');
       return RSVP.resolve();
@@ -120,14 +120,14 @@ var stashes = EmberObject.extend({
   flush: function(prefix, ignore_prefix) {
     var full_prefix = stashes.prefix + (prefix || "");
     var full_ignore_prefix = ignore_prefix && (stashes.prefix + ignore_prefix);
+    var promises = [];
     if((!prefix || prefix == 'auth_') && ignore_prefix != 'auth_') {
-      stashes.flush_db_id();
+      promises.push(stashes.flush_db_id());
     }
-    var promise = RSVP.resolve();
     if(stash_capabilities && stash_capabilities.dbman) {
       var stash = {};
       stash.storageId = 'stash';
-      promise = stash_capabilities.storage_store({store: 'settings', id: 'stash', record: stash});
+      promises.push(stash_capabilities.storage_store({store: 'settings', id: 'stash', record: stash}));
     }
     for(var idx = 0; idx < localStorage.length; idx++) {
       var key = localStorage.key(idx);
@@ -145,7 +145,7 @@ var stashes = EmberObject.extend({
         }
       }
     }
-    return promise;
+    return RSVP.all_wait(promises).then(null, function() { return RSVP.resolve(); });
   },
   db_persist: function() {
     if(stash_capabilities && stash_capabilities.dbman) {
@@ -173,7 +173,7 @@ var stashes = EmberObject.extend({
   persist_object: function(key, obj, include_prefix) {
     var _this = this;
     stashes.persist_raw(key, JSON.stringify(obj), include_prefix);
-
+    var defer = RSVP.defer();
     if(key == 'auth_settings' && obj.user_name) {
       // Setting the cookie is a last-resort fallback to try not to lose user information
       // unnecessarily. We probably don't actually need it, but that's why it's here.
@@ -185,18 +185,31 @@ var stashes = EmberObject.extend({
         window.kvstash.store('user_name', obj.user_name);
       }
       if(window.persistence) {
-        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name, filename: "db_stats.json" });
+        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name, filename: "db_stats.json" }).then(function() {
+          defer.resolve();
+        }, function() { defer.resolve(); });
+      } else {
+        defer.resolve();
       }
+    } else {
+      defer.resolve();
     }
+    return defer.promise;
   },
   flush_db_id: function() {
+    var defer = RSVP.defer();
     document.cookie = 'authDBID=';
     if(window.kvstash && window.kvstash.remove) {
       window.kvstash.remove('user_name');
     }
     if(stash_capabilities) {
-      stash_capabilities.storage.remove_file('json', 'db_stats.json')
+      stash_capabilities.storage.remove_file('json', 'db_stats.json').then(function() {
+        defer.resolve();
+      }, function() { defer.resolve(); });
+    } else {
+      defer.resolve();
     }
+    return defer.promise;
   },
   persist_raw: function(key, obj, include_prefix) {
     if(include_prefix) { key = stashes.prefix + key; }
@@ -226,7 +239,7 @@ var stashes = EmberObject.extend({
       } else if(cap && cap.installed_app) {
         // try file-system lookup, fall back to kvstash I guess
         var lookup = cap.storage.get_file_url('json', 'cache://db_stats.json').then(function(local_url) {
-          var local_url = capabilities.storage.fix_url(local_url);
+          var local_url = cap.storage.fix_url(local_url);
           console.log("got file!", local_url);
           if(typeof(capabilities) == 'string' && window.persistence) {
             return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});

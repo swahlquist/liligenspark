@@ -96,8 +96,9 @@ export default Component.extend({
           window.navigator.splashscreen.show();
         }
       }
-      stashes.flush(null, 'auth_');
-      stashes.setup();
+      var wait = stashes.flush(null, 'auth_').then(function() {
+        stashes.setup();
+      });
       var auth_settings = stashes.get_object('auth_settings', true) || {};
       capabilities.access_token = auth_settings.access_token;
       _this.set('logging_in', false);
@@ -107,15 +108,17 @@ export default Component.extend({
         if(Ember.testing) {
           console.error("would have redirected to home");
         } else {
-          if(_this.get('return')) {
-            location.reload();
-            session.set('return', true);
-          } else if(capabilities.installed_app) {
-            location.href = '#/';
-            location.reload();
-          } else {
-            location.href = '/';
-          }
+          wait.then(function() {
+            if(_this.get('return')) {
+              location.reload();
+              session.set('return', true);
+            } else if(capabilities.installed_app) {
+              location.href = '#/';
+              location.reload();
+            } else {
+              location.href = '/';
+            }
+          });
         }
       }
     },

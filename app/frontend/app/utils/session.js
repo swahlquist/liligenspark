@@ -21,10 +21,11 @@ var session = EmberObject.extend({
     CoughDrop.session = session;
   },
   persist: function(data) {
-    stashes.persist_object('auth_settings', data, true);
     session.set('auth_settings_fallback_data', data);
+    return stashes.persist_object('auth_settings', data, true);
   },
   clear: function() {
+    // only used for testing
     stashes.flush('auth_');
   },
   auth_settings_fallback: function() {
@@ -39,21 +40,23 @@ var session = EmberObject.extend({
     return null;
   },
   confirm_authentication: function(response) {
-    session.persist({
+    var promises = [];
+    promises.push(session.persist({
       access_token: response.access_token,
       token_type: response.token_type,
       user_name: response.user_name,
       user_id: response.user_id
-    });
+    }));
     // update selfUserId, in the off chance that it has changed from our local copy
     // due to my user_name being renamed, and then me logging in to a new account
     // with the old user_name.
     if(response.user_id) {
-      persistence.store('settings', {id: response.user_id}, 'selfUserId').then(null, function() {
+      promises.push(persistence.store('settings', {id: response.user_id}, 'selfUserId').then(null, function() {
         return RSVP.reject({error: "selfUserId not persisted from login"});
-      });
+      }));
     }
     stashes.persist_object('just_logged_in', true, false);
+    return RSVP.all_wait(promises).then(null, function() { return RSVP.resolve(); });
   },
   authenticate: function(credentials) {
     var _this = this;
@@ -70,8 +73,9 @@ var session = EmberObject.extend({
       };
 
       persistence.ajax('/token', {method: 'POST', data: data}).then(function(response) {
-        session.confirm_authentication(response);
-        resolve(response);
+        session.confirm_authentication(response).then(function() {
+          resolve(response);
+        });
       }, function(data) {
         var xhr = data.fakeXHR || {};
         run(function() {
@@ -200,11 +204,12 @@ var session = EmberObject.extend({
     data.access_token = options.access_token;
     data.user_name = options.user_name;
     data.user_id = options.user_id;
-    stashes.flush();
-    stashes.setup();
-    session.persist(data);
-
-    session.reload('/');
+    stashes.flush().then(function() {
+      stashes.setup();
+      session.persist(data).then(function() {
+        session.reload('/');
+      });  
+    });
   },
   reload: function(path) {
     if(path) {
