@@ -22,7 +22,9 @@ var session = EmberObject.extend({
   },
   persist: function(data) {
     session.set('auth_settings_fallback_data', data);
-    return stashes.persist_object('auth_settings', data, true);
+    var res = stashes.persist_object('auth_settings', data, true);
+    res.then(function(r) { console.log("stashes.persist", r) }, function(e) { console.error("stashes.persist", e); });
+    return res;
   },
   clear: function() {
     // only used for testing

@@ -186,8 +186,9 @@ var stashes = EmberObject.extend({
       }
       if(window.persistence) {
         window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name, filename: "db_stats.json" }).then(function() {
+          console.log("db_stats persisted!");
           defer.resolve();
-        }, function() { defer.resolve(); });
+        }, function() { console.error("db_stats failed.."); defer.resolve(); });
       } else {
         defer.resolve();
       }
