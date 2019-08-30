@@ -570,17 +570,17 @@ var persistence = EmberObject.extend({
     }
     return _this.store_url(url, 'json').then(function(data_uri) {
       if(data_uri && data_uri.data_uri) { data_uri = data_uri.data_uri; }
-      var json = undefined;
+      var result = undefined;
       if(data_uri) {
         try {
-          var json = JSON.parse(atob(data_uri.split(/,/)[1])) || [];
+          var result = JSON.parse(atob(data_uri.split(/,/)[1])) || [];
         } catch(e) {
           console.error("json storage", e);
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
       }
-      if(json !== undefined) {
-        return json;
+      if(data_uri || result !== undefined) {
+        return result || json;
       } else {
         console.error("nothing", url, json);
         return RSVP.reject({error: "No JSON dataURI storage result"});
@@ -824,7 +824,7 @@ var persistence = EmberObject.extend({
           type: type,
           content_type: 'text/json',
           data_uri: "data:text/json;base64," + btoa(JSON.stringify(persistence.json_cache[url])),
-          locale_filename: persistence.json_cache[url].filename
+          local_filename: persistence.json_cache[url].filename
         });
       }
 

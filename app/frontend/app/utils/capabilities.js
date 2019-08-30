@@ -113,9 +113,6 @@ var capabilities;
         if(capabilities.api_host) {
           console_debug("COUGHDROP: extension connected, pointing requests to " + capabilities.api_host);
         }
-        stashes.db_settings(capabilities).then(function(res) {
-          capabilities.db_key = res.db_key;
-        });
         var res = true;
         if(indexedDBSafe) {
           res = capabilities.setup_database();
@@ -141,20 +138,10 @@ var capabilities;
         }
       },
       encrypt: function(obj) {
-        if(capabilities.encryption_enabled) {
-          alert('encryption not supported');
-          return window.CryptoJS.AES.encrypt(JSON.stringify(obj), capabilities.db_key).toString();
-        } else {
-          return JSON.stringify(obj);
-        }
+        return JSON.stringify(obj);
       },
       decrypt: function(obj) {
-        if(capabilities.encryption_enabled) {
-          alert('encryption not supported');
-          return JSON.parse(window.CryptoJS.AES.decrypt(obj, capabilities.db_key).toString(window.CryptoJS.enc.Utf8));
-        } else {
-          return JSON.parse(obj);
-        }
+        return JSON.parse(obj);
       },
       apps: {
         all: function() {
@@ -1634,13 +1621,13 @@ var capabilities;
     delete capabilities['db'];
     var promise = capabilities.mini_promise();
     stashes.db_settings(capabilities).then(function(res) {
-      var user_name = res.db_id; //stashes.get_db_id(capabilities);
-      var db_key = res.db_key; //stashes.get_db_key(true);
+      var db_id = res.db_id;
+      var db_key = res.db_key;
       // keep using legacy db ids, but for new dbs don't worry about the key anymore
       if(!db_key || db_key.match(/^db2/)) {
         db_key = "db";
       }
-      var key = "coughDropStorage::" + (user_name || "__") + "===" + db_key;
+      var key = "coughDropStorage::" + (db_id || "__") + "===" + db_key;
       capabilities.db_name = key;
   
   

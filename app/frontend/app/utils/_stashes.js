@@ -170,11 +170,6 @@ var stashes = EmberObject.extend({
   },
   persist_object: function(key, obj, include_prefix) {
     var _this = this;
-    // Why aren't we using client-side encryption, you ask?
-    // http://matasano.com/articles/javascript-cryptography/
-    // Since the encryption key would have to be stored in either localStorage
-    // or IndexedDB, anyone who has access to the datastores also has
-    // access to the unprotected encryption key.
     stashes.persist_raw(key, JSON.stringify(obj), include_prefix);
 
     if(key == 'auth_settings' && obj.user_name) {

@@ -32,8 +32,10 @@ import app_state from './app_state';
     if(ready.types.init && ready.types.extras && ready.types.device && !ready.done) {
       ready.done = true;
       ready('all');
-      CoughDrop.app.advanceReadiness();
       session.restore();
+      runLater(function() {
+        CoughDrop.app.advanceReadiness();
+      });
     }
   };
   ready.watch = function(type, callback) {
