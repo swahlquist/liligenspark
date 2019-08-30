@@ -249,6 +249,11 @@ var session = EmberObject.extend({
   },
   invalidate: function(force) {
     var full_invalidate = force || !!(app_state.get('currentUser') || stashes.get_object('auth_settings', true) || session.auth_settings_fallback());
+    if(full) {
+      if(window.navigator.splashscreen) {
+        window.navigator.splashscreen.show();
+      }
+    }
     stashes.flush().then(null, function() { return RSVP.resolve(); }).then(function() {
       stashes.setup();
       var later = function(callback, delay) { callback(); };

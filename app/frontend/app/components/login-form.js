@@ -91,6 +91,11 @@ export default Component.extend({
   actions: {
     login_success: function(reload) {
       var _this = this;
+      if(reload) {
+        if(window.navigator.splashscreen) {
+          window.navigator.splashscreen.show();
+        }
+      }
       stashes.flush(null, 'auth_');
       stashes.setup();
       var auth_settings = stashes.get_object('auth_settings', true) || {};
