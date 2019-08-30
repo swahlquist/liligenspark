@@ -239,25 +239,28 @@ var stashes = EmberObject.extend({
         return RSVP.resolve({ db_id: stashes.fs_user_name });
       } else if(cap && cap.installed_app) {
         // try file-system lookup, fall back to kvstash I guess
-        var lookup = cap.storage.get_file_url('json', 'cache://db_stats.json').then(function(local_url) {
-          var local_url = cap.storage.fix_url(local_url);
-          console.log("got file!", local_url);
-          if(typeof(capabilities) == 'string' && window.persistence) {
-            return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
-          } else {
-            console.log("nope", window.persistence);
-            return RSVP.resolve({});
-          }
+        return new RSVP.Promise(function(resolve, reject) {
+          var lookup = cap.storage.get_file_url('json', 'cache://db_stats.json').then(function(local_url) {
+            var local_url = cap.storage.fix_url(local_url);
+            console.log("got file!", local_url);
+            if(typeof(capabilities) == 'string' && window.persistence) {
+              return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
+            } else {
+              console.log("nope", window.persistence);
+              return {};
+            }
+          });
+          lookup.then(function(json) {
+            stashes.fs_user_name = json.db_id;
+            resolve({ db_id: json.db_id });
+          }, function() {
+            if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
+              resolve({ db_id: window.kvstash.values.user_name });
+            } else {
+              resolve({db_id: null});
+            }
+          });
         });
-        return lookup.then(function(json) {
-          stashes.fs_user_name = json.db_id;
-          return { db_id: json.db_id };
-        }, function() {
-          if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
-            return RSVP.resolve({ db_id: window.kvstash.values.user_name });
-          }
-          return RSVP.resolve({db_id: null});
-        }).then(null, function() { return RSVP.resolve({db_id: null}); });
       } else {
         return RSVP.resolve({db_id: null});
       }
