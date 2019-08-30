@@ -184,11 +184,13 @@ var stashes = EmberObject.extend({
       if(window.kvstash && window.kvstash.store) {
         window.kvstash.store('user_name', obj.user_name);
       }
-      if(window.persistence) {
-        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name, filename: "db_stats.json" }).then(function() {
-          console.log("db_stats persisted!");
+      if(stash_capabilities) {
+        var data_uri = "data:text/json;base64," + btoa(JSON.stringify({ db_id: obj.user_name, filename: "db_stats.json" })),
+        var blob = contentGrabbers.data_uri_to_blob(data_uri);
+        stash_capabilities.storage.write_file('json', 'db_stats.json', blob).then(function(res) {
+          console.log("COUGHDROP: db_stats persisted!");
           defer.resolve();
-        }, function() { console.error("db_stats failed.."); defer.resolve(); });
+        }, function() { console.error("COUGHDROP: db_stats failed.."); defer.resolve(); });
       } else {
         defer.resolve();
       }
@@ -240,7 +242,7 @@ var stashes = EmberObject.extend({
       } else if(cap && cap.installed_app) {
         // try file-system lookup, fall back to kvstash I guess
         return new RSVP.Promise(function(resolve, reject) {
-          var lookup = cap.storage.get_file_url('json', 'cache://db_stats.json').then(function(local_url) {
+          var lookup = cap.storage.get_file_url('json', 'db_stats.json').then(function(local_url) {
             var local_url = cap.storage.fix_url(local_url);
             console.log("got file!", local_url);
             if(typeof(capabilities) == 'string' && window.persistence) {
