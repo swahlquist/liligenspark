@@ -183,7 +183,7 @@ var stashes = EmberObject.extend({
         window.kvstash.store('user_name', obj.user_name);
       }
       if(window.persistence) {
-        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name });
+        window.persistence.store_json("cache://db_stats.json", { db_id: obj.user_name, filename: "db_stats.json" });
       }
     }
   },
@@ -224,7 +224,7 @@ var stashes = EmberObject.extend({
           var local_url = capabilities.storage.fix_url(local_url);
           console.log("got file!", local_url);
           if(typeof(capabilities) == 'string' && window.persistence) {
-            return window.persistence.ajax(capabilities, {type: 'GET', dataType: 'json'});
+            return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
           } else {
             console.log("nope", window.persistence);
             return RSVP.resolve({});
