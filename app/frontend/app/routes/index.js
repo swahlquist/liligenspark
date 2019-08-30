@@ -107,7 +107,6 @@ export default Route.extend({
       }
     },
     saveProfile: function() {
-      // TODO: add a "save pending..." status somewhere
       var controller = this.get('controller');
       var user = controller.get('user');
       controller.set('triedToSave', true);

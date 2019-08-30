@@ -571,7 +571,7 @@ var persistence = EmberObject.extend({
     return _this.store_url(url, 'json').then(function(data_uri) {
       if(data_uri && data_uri.data_uri) { data_uri = data_uri.data_uri; }
       var result = undefined;
-      if(data_uri) {
+      if(typeof(data_uri) == 'string') {
         try {
           var result = JSON.parse(atob(data_uri.split(/,/)[1])) || [];
         } catch(e) {

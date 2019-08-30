@@ -192,6 +192,9 @@ var stashes = EmberObject.extend({
     if(window.kvstash && window.kvstash.remove) {
       window.kvstash.remove('user_name');
     }
+    if(stash_capabilities) {
+      stash_capabilities.storage.remove_file('json', 'db_stats.json')
+    }
   },
   persist_raw: function(key, obj, include_prefix) {
     if(include_prefix) { key = stashes.prefix + key; }
