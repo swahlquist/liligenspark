@@ -34,6 +34,7 @@ import app_state from './app_state';
       ready('all');
       session.restore();
       runLater(function() {
+        session.get('isAuthenticated'); // this prevents a flash of unauthenticated content on ios
         CoughDrop.app.advanceReadiness();
       });
     }
