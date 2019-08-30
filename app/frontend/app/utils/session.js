@@ -168,11 +168,21 @@ var session = EmberObject.extend({
       // This should not run until stashes.db_connect has completed, so stashes has its
       // best chance to be populated.
       var any_proof_of_existing_login = Object.keys(store_data).length > 0;
-      any_proof_of_existing_login = any_proof_of_existing_login || stashes.get_db_id() || (window.kvstash && window.kvstash.values && window.kvstash.user_name); 
+      any_proof_of_existing_login = any_proof_of_existing_login || stashes.fs_user_name || (window.kvstash && window.kvstash.values && window.kvstash.user_name); 
+      var do_it = function() {
+        if(any_proof_of_existing_login) {
+          session.force_logout(i18n.t('session_lost', "Session data has been lost, please log back in"));
+        } else {
+          session.invalidate();
+        }
+      };
       if(any_proof_of_existing_login) {
-        session.force_logout(i18n.t('session_lost', "Session data has been lost, please log back in"));
+         do_it();
       } else {
-        session.invalidate();
+        stashes.get_db_id(capabilities).then(function(obj) {
+          any_proof_of_existing_login = any_proof_of_existing_login || obj.db_id; 
+          do_it();
+        });
       }
     }
     if(force_check_for_token || (persistence.tokens[key] == null && !Ember.testing && persistence.get('online'))) {
@@ -204,6 +214,9 @@ var session = EmberObject.extend({
         if(capabilities.installed_app) {
           location.href = '#' + path;
           location.reload();
+          if(window.navigator.splashscreen) {
+            window.navigator.splashscreen.show();
+          }
         } else {
           location.href = path;
         }

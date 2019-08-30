@@ -227,7 +227,7 @@ var stashes = EmberObject.extend({
             return window.persistence.ajax(capabilities, {type: 'GET', dataType: 'json'});
           } else {
             console.log("nope", window.persistence);
-            return RSVP.reject();
+            return RSVP.resolve({});
           }
         });
         return lookup.then(function(json) {

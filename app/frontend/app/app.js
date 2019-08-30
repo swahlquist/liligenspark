@@ -68,7 +68,7 @@ var CoughDrop = EmberApplication.extend({
         if($("footer").length > 0) {
           if(navigator && navigator.splashscreen && navigator.splashscreen.hide) {
             window.splash_hidden = true;
-            RunLater(navigator.splashscreen.hide, 500);
+            RunLater(navigator.splashscreen.hide, 700);
           } else {
             console.log("splash screen expected but not found");
           }
