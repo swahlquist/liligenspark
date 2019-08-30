@@ -33,7 +33,7 @@ var stashes = EmberObject.extend({
           }
         }
       }
-      console.debug('COUGHDROP: restoring stashes from db, ' + (keys.join(',') || 'nothing updated');
+      console.debug('COUGHDROP: restoring stashe fallbacks from db, ' + (keys.join(',') || 'nothing updated'));
     }, function(err) {
       console.debug('COUGHDROP: db storage stashes not found');
       return RSVP.resolve();
