@@ -195,9 +195,15 @@ class UserIntegration < ActiveRecord::Base
           return false
         end
       elsif params['integration_key'] == 'ifttt' && user_params['webhook_url']
-        match = (user_params['webhook_url']['value'] || '').strip.match(/^https\:\/\/maker\.ifttt\.com\/use\/([^\?]+)$/)
-        if match 
-          self.settings['button_webhook_url'] = "https://maker.ifttt.com/trigger/{code}/with/key/#{match[1]}"
+        url = user_params['webhook_url']['value'].strip
+        key = url
+        if key.match(/http/)
+          key = (url.match(/^https?\:\/\/maker\.ifttt\.com\/use\/([^\?]+)$/) || [])[1]
+          key ||= (url.match(/^https?\:\/\/maker\.ifttt\.com\/trigger\/\{event\}\/with\/key\/([^\?]+)$/) || [])[1]
+        end
+
+        if key 
+          self.settings['button_webhook_url'] = "https://maker.ifttt.com/trigger/{code}/with/key/#{key}"
         else
           add_processing_error('invalid IFTTT Webhook URL')
           return false
@@ -211,7 +217,7 @@ class UserIntegration < ActiveRecord::Base
       self.settings['token'] = self.class.security_token
     end
   end
-  
+
   def delete_webhooks
     Webhook.where(:user_integration_id => self.id).each{|h| h.destroy }
     true
