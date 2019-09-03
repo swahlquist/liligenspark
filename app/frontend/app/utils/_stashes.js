@@ -20,6 +20,7 @@ var stashes = EmberObject.extend({
     });
   },
   db_connect: function(cap) {
+    // NOTE: this may be called before or after a call to stashes.setup
     stash_capabilities = cap;
     if(!cap.dbman) { return RSVP.resolve(); }
     return stash_capabilities.storage_find({store: 'settings', key: 'stash'}).then(function(stash) {
@@ -33,7 +34,8 @@ var stashes = EmberObject.extend({
           }
         }
       }
-      console.debug('COUGHDROP: restoring stash fallbacks from db, ' + count + ' value');
+      console.debug('COUGHDROP: restoring stash from db, ' + count + ' values');
+      return {};
     }, function(err) {
       console.debug('COUGHDROP: db storage stashes not found');
       return RSVP.resolve();
@@ -145,7 +147,13 @@ var stashes = EmberObject.extend({
         }
       }
     }
-    return RSVP.all_wait(promises).then(null, function() { return RSVP.resolve(); });
+    var defer = RSVP.defer();
+    var done = false;
+    RSVP.all_wait(promises).then(function() { done = true; defer.resolve(); }, function() { done = true; defer.resolve(); });
+    runLater(function() {
+      if(!done) { console.error("failed to flush stash"); defer.resolve(); }
+    }, 1500);
+    return defer.promise;
   },
   db_persist: function() {
     if(stash_capabilities && stash_capabilities.dbman) {
@@ -174,6 +182,7 @@ var stashes = EmberObject.extend({
     var _this = this;
     stashes.persist_raw(key, JSON.stringify(obj), include_prefix);
     var defer = RSVP.defer();
+    var done = false;
     if(key == 'auth_settings' && obj.user_name) {
       // Setting the cookie is a last-resort fallback to try not to lose user information
       // unnecessarily. We probably don't actually need it, but that's why it's here.
@@ -184,19 +193,26 @@ var stashes = EmberObject.extend({
       if(window.kvstash && window.kvstash.store) {
         window.kvstash.store('user_name', obj.user_name);
       }
-      if(stash_capabilities) {
+      if(stash_capabilities && stash_capabilities.installed_app) {
         var data_uri = "data:text/json;base64," + btoa(JSON.stringify({ db_id: obj.user_name, filename: "db_stats.json" }));
         var blob = stash_capabilities.data_uri_to_blob(data_uri);
         stash_capabilities.storage.write_file('json', 'db_stats.json', blob).then(function(res) {
           console.log("COUGHDROP: db_stats persisted!");
+          done = true;
           defer.resolve();
         }, function() { console.error("COUGHDROP: db_stats failed.."); defer.resolve(); });
       } else {
+        done = true;
         defer.resolve();
       }
     } else {
+      done = true;
       defer.resolve();
     }
+    runLater(function() {
+      // Prevent blocking on unexpected unresolve
+      if(!done) { console.error("failed to persist auth settings"); defer.resolve(); }
+    }, 500);
     return defer.promise;
   },
   flush_db_id: function() {
@@ -205,13 +221,19 @@ var stashes = EmberObject.extend({
     if(window.kvstash && window.kvstash.remove) {
       window.kvstash.remove('user_name');
     }
-    if(stash_capabilities) {
+    var done = false;
+    if(stash_capabilities && stash_capabilities.installed_app) {
       stash_capabilities.storage.remove_file('json', 'db_stats.json').then(function() {
+        done = true;
         defer.resolve();
-      }, function() { defer.resolve(); });
+      }, function() { done = true; defer.resolve(); });
     } else {
+      done = true;
       defer.resolve();
     }
+    runLater(function() {
+      if(!done) { console.error("failed to flush db id"); defer.resolve(); }
+    }, 500);
     return defer.promise;
   },
   persist_raw: function(key, obj, include_prefix) {
@@ -241,28 +263,34 @@ var stashes = EmberObject.extend({
         return RSVP.resolve({ db_id: stashes.fs_user_name });
       } else if(cap && cap.installed_app) {
         // try file-system lookup, fall back to kvstash I guess
-        return new RSVP.Promise(function(resolve, reject) {
-          var lookup = cap.storage.get_file_url('json', 'db_stats.json').then(function(local_url) {
-            var local_url = cap.storage.fix_url(local_url);
-            console.log("got file!", local_url);
-            if(typeof(capabilities) == 'string' && window.persistence) {
-              return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
-            } else {
-              console.log("nope", window.persistence);
-              return {};
-            }
-          });
-          lookup.then(function(json) {
-            stashes.fs_user_name = json.db_id;
-            resolve({ db_id: json.db_id });
-          }, function() {
-            if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
-              resolve({ db_id: window.kvstash.values.user_name });
-            } else {
-              resolve({db_id: null});
-            }
-          });
+        var defer = RSVP.defer();
+        var done = false;
+        var lookup = cap.storage.get_file_url('json', 'db_stats.json').then(function(local_url) {
+          var local_url = cap.storage.fix_url(local_url);
+          if(typeof(capabilities) == 'string' && window.persistence) {
+            return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
+          } else {
+            return {};
+          }
         });
+        lookup.then(function(json) {
+          stashes.fs_user_name = json.db_id;
+          done = true;
+          defer.resolve({ db_id: json.db_id });
+        }, function() {
+          if(window.kvstash && window.kvstash.values && window.kvstash.values.user_name) {
+            done = true;
+            defer.resolve({ db_id: window.kvstash.values.user_name });
+          } else {
+            done = true;
+            defer.resolve({db_id: null});
+          }
+        });
+        runLater(function() {
+          if(!done) { console.error("failed to retrieve db id"); defer.resolve({db_id: null}); }
+        }, 1000);
+
+        return defer.promise;
       } else {
         return RSVP.resolve({db_id: null});
       }

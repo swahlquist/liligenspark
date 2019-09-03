@@ -279,9 +279,9 @@ var session = EmberObject.extend({
         if(full_invalidate) {
           later(function() {
             session.reload('/');
-          }, 300);
+          });
         }
-      }, 300);
+      });
     });
 
   }
