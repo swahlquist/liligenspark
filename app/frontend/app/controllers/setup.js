@@ -129,18 +129,24 @@ export default Controller.extend({
     }
     return res;
   }.property('fake_user.preferences.notification_frequency', 'app_state.currentUser.preferences.notification_frequency', 'fake_user.preferences.share_notifications', 'app_state.currentUser.preferences.share_notifications'),
-  update_cell: function() {
+  update_cell: function(o, change) {
+    if(!app_state.controller.get('setup_footer')) { return; }
     var user = app_state.get('currentUser') || this.get('fake_user');
     if(!this.get('cell') && user.get('cell_phone')) {
+      this.set('cell', user.get('cell_phone'));
+    } else if(change == 'app_state.currentUser.cell_phone') {
       this.set('cell', user.get('cell_phone'));
     } else if(this.get('cell')) {
       user.set('cell_phone', this.get('cell'));
       this.send('set_preference', 'cell_phone', this.get('cell'));
     }
   }.observes('cell', 'fake_user.cell_phone', 'app_state.currentUser.cell_phone'),
-  update_pin: function() {
+  update_pin: function(o, change) {
+    if(!app_state.controller.get('setup_footer')) { return; }
     var user = app_state.get('currentUser') || this.get('fake_user');
     if(!this.get('pin') && user.get('preferences.speak_mode_pin') && user.get('preferences.require_speak_mode_pin')) {
+      this.set('pin', user.get('preferences.speak_mode_pin') || "");
+    } else if(change == 'app_state.currentUser.preferences.speak_mode_pin') {
       this.set('pin', user.get('preferences.speak_mode_pin') || "");
     } else {
       var pin = (parseInt(this.get('pin'), 10) || "").toString().substring(0, 4);
@@ -159,6 +165,7 @@ export default Controller.extend({
     }
   }.observes('pin', 'fake_user.preferences.require_speak_mode_pin', 'app_state.currentUser.preferences.require_speak_mode_pin', 'fake_user.preferences.speak_mode_pin', 'app_state.currentUser.preferences.speak_mode_pin'),
   update_checkbox_preferences: function(a, b, c) {
+    if(!app_state.controller.get('setup_footer')) { return; }
     var do_update = false;
     var _this = this;
     if(_this.get('ignore_update')) { return; }
