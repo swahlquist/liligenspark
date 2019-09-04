@@ -82,7 +82,7 @@ module Uploader
     bucket = service.buckets.find(config[:static_bucket_name])
     object = bucket.objects.find(remote_path) rescue nil
     if object
-      object.temporary_url
+      object.temporary_url.sub(/^http:/, 'https:')
     else
       nil
     end
