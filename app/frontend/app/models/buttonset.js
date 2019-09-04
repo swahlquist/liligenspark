@@ -74,10 +74,12 @@ CoughDrop.Buttonset = DS.Model.extend({
     return new RSVP.Promise(function(resolve, reject) {
       if(bs.get('root_url') && !bs.get('buttons_loaded')) {
         var process_buttons = function(buttons) {
-          bs.set('buttons_loaded', true);
-          bs.set('buttons', buttons);
-          if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
-            bs.set('buttons', bs.redepth(board_id));
+          if(buttons) {
+            bs.set('buttons_loaded', true);
+            bs.set('buttons', buttons);
+            if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
+              bs.set('buttons', bs.redepth(board_id));
+            }
           }
           resolve(bs);
         };
