@@ -23,7 +23,7 @@ export default Controller.extend({
       this.set('show_premium_symbols', !!show);
     },
     refresh_subscription: function() {
-      this.get('subscription').refresh_store();
+      this.get('subscription').refresh_store(true);
     },
     purchase_premium_symbols: function() {
       var user = this.get('model');

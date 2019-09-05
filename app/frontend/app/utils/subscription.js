@@ -206,9 +206,9 @@ var Subscription = EmberObject.extend({
   manual_refresh: function() {
     return this.get('app_pricing_override') && capabilities.system == 'iOS' && capabilities.installed_app;
   }.property('app_pricing_override'),
-  refresh_store: function() {
+  refresh_store: function(force) {
     if(Subscription.in_app_store) {
-      if(!Subscription.in_app_store.last_refresh || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
+      if(force || !Subscription.in_app_store.last_refresh || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
         Subscription.in_app_store.last_refresh = (new Date()).getTime();
         Subscription.in_app_store.refresh();
       }
