@@ -208,7 +208,10 @@ var Subscription = EmberObject.extend({
   }.property('app_pricing_override'),
   refresh_store: function() {
     if(Subscription.in_app_store) {
-      Subscription.in_app_store.refresh();
+      if(!Subscription.in_app_store.last_refresh || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
+        Subscription.in_app_store.last_refresh = (new Date()).getTime();
+        Subscription.in_app_store.refresh();
+      }
     }
   },
   monthly_app_price: function() {
@@ -674,6 +677,7 @@ document.addEventListener("deviceready", function() {
         if(!product.transaction) {
           var now = (new Date()).getTime();
           if(!Subscription.in_app_store.checked_for_transaction || (now - Subscription.in_app_store.checked_for_transaction) > (5 * 60 * 1000)) {
+            Subscription.in_app_store.last_refresh = (new Date()).getTime();
             Subscription.in_app_store.refresh();
           }
           Subscription.in_app_store.checked_for_transaction = now;
@@ -712,13 +716,16 @@ document.addEventListener("deviceready", function() {
         alias: 'App Pre-Purchase',
         type: store.NON_CONSUMABLE
       });
+      store.last_refresh = (new Date()).getTime();
       store.refresh();
     }, function(err) {
       console.error("bundle id not found", err);
+      store.last_refresh = (new Date()).getTime();
       store.refresh();
     });
     document.addEventListener("resume", function() {
       if(Subscription.in_app_store && Subscription.in_app_store.defer) {
+        store.last_refresh = (new Date()).getTime();
         store.refresh();
       }
     }, false);
