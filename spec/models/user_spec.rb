@@ -2068,6 +2068,20 @@ describe User, :type => :model do
       expect(User.find_for_login('bob@example.com', nil, 'bacon')).to eq(u1)
       expect(User.find_for_login('bob@example.com', nil, 'cheddar')).to eq(u2)
     end
+
+    it "should return nothing if multiple email address accounts have the same password" do
+      u1 = User.create(:user_name => 'bob', :settings => {'email' => 'bob@example.com'})
+      u1.generate_password('bacon')
+      u1.save
+      u2 = User.create(:user_name => 'bob_2', :settings => {'email' => 'bob@example.com'})
+      u2.generate_password('bacon')
+      u2.save
+      expect(User.find_for_login('bob')).to eq(u1)
+      expect(User.find_for_login('bob_2')).to eq(u2)
+      expect(User.find_for_login('bob@example.com')).to eq(u1)
+      expect(User.find_for_login('bob@example.com', nil, 'bacon')).to eq(nil)
+      expect(User.find_for_login('bob@example.com', nil, 'cheddar')).to eq(nil)
+    end
   end
   
   describe "record_locking" do

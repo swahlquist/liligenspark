@@ -62,7 +62,8 @@ class User < ActiveRecord::Base
       emails = self.find_by_email(user_name)
       emails = self.find_by_email(user_name.downcase) if emails.length == 0
       if emails.length > 1 && password
-        emails = [emails.detect{|u| u.valid_password?(password)}]
+        emails = emails.select{|u| u.valid_password?(password)}
+        emails = [] if emails.length > 1
       end
       res = emails[0] if emails.length > 0
     end
