@@ -791,6 +791,14 @@ describe User, :type => :model do
       expect(d.settings['long_token']).to eq(true)
       expect(d.settings['long_token_set']).to eq(true)
     end
+    
+    it "should schedule inflection updates for a user's board set and sidebar board set when they enable inflections" do
+      write_this_test
+    end
+
+    it "should not schedule inflection updates for a user's board set and sidebar board set when inflections are enabled but were already enabled" do
+      write_this_test
+    end
   end
 
   describe "replace_board" do

@@ -597,8 +597,12 @@ class User < ActiveRecord::Base
         end
       end
     end
+    swipe_was_set = self.settings['preferences']['activation_location'] == 'swipe'
     PREFERENCE_PARAMS.each do |attr|
       self.settings['preferences'][attr] = params['preferences'][attr] if params['preferences'] && params['preferences'][attr] != nil
+    end
+    if self.id && self.settings['preferences']['activation_location'] == 'swipe' && !swipe_was_set
+      self.schedule(:update_home_board_inflections)
     end
     if self.settings['preferences']['external_links']
       self.settings['preferences'].delete('confirm_external_links')
@@ -771,6 +775,20 @@ class User < ActiveRecord::Base
       self.settings['display_user_name'] = new_user_name
     end
     true
+  end
+
+  def update_home_board_inflections
+    board = Board.find_by_path(self.settings['preferences']['home_board']['id']) if self.settings['preferences'] && self.settings['preferences']['home_board']
+    if board
+      board.schedule(:check_for_parts_of_speech_and_inflections, true)
+      Board.find_all_by_global_id(board.settings['downstream_board_ids'] || []).each do |brd|
+        brd.schedule(:check_for_parts_of_speech_and_inflections, true)
+      end
+    end
+    ((self.settings['preferences'] || {})['sidebar_boards'] || []).each do |brd|
+      board = Board.find_by_path(brd['key'])
+      board.schedule(:check_for_parts_of_speech_and_inflections, true)
+    end
   end
 
   def lookup_contact(user_id)
