@@ -47,12 +47,14 @@ var obf = EmberObject.extend({
       var re = new RegExp("^" + prefix);
       if(key.match(re)) {
         var opts = handlers[prefix](key);
-        var board = obf.parse(opts.json);
-        board.set('rendered', (new Date()).getTime());
-        if(opts.handler) {
-          board.set('button_handler', opts.handler);
+        if(opts) {
+          var board = obf.parse(opts.json);
+          board.set('rendered', (new Date()).getTime());
+          if(opts.handler) {
+            board.set('button_handler', opts.handler);
+          }
+          return board;
         }
-        return board;
       }
     }
     return null;
@@ -166,7 +168,7 @@ var levels = [
     {intro: 'range'}, // ensure you're hitting all edges and regions? should be able to handle within previous steps
     {id: 'range', all_range: true}
   ],[
-    {intro: 'core'} // grid of core words, find (with symbols)
+    {intro: 'core'} // lower grid of core words, find word at the top (with symbols)
   ], [
     {intro: 'open_ended'}, // open-ended commenary on pictures, only up to observed proficiency level
     {id: 'open-1', difficulty: 0, prompts: [
@@ -215,7 +217,7 @@ var words = [
   {label: 'happy', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/happy.jpg', 'lessonpix': 'https://lessonpix.com/drawings/13748/150x150/13748.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31517/ba0f40648afbeeb045cc688bd2227a4abd7e23791d2b0c40e83b542179336a356990260267d4197f235632cc535694263d8bfe81ed4a03e13f1a6551eb670e94/31517.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00047/5fc50fd308c61df38e26e426845a6c055b9b900f2fec0936f916bf104172ab020da82c0a598c7df0d834310223644d93ffb2e802e0df75b6a6c0dcb61a6fe3f0/00047.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f60a.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/happy.png'}},
   {label: 'sad', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/sad.jpg', 'lessonpix': 'https://lessonpix.com/drawings/1695/150x150/1695.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31523/09217e95b98a9b56a119d509f1e3f04c4f9d30d9af5ac32438121bdfaeef0f15792b0403bc249e595b1e60a59a6dee6976959c8ee5c47145daff9f97f12591a0/31523.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00075/5447142ec6f3342a1940d988c325d3bbf1e02cebd54c947d93759caf0a3a49bb36d7ff13a25092327a027cf88619c5fabf6e0f281b45a3bfa63b4f14e7d76cb1/00075.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f622.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/sad.png'}},
   {label: 'angry', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/angry.jpg', 'lessonpix': 'https://lessonpix.com/drawings/124/150x150/124.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31521/02f7bb91e06f39f8eb31e02f5faec0d9f81d2c8b3fe64ddc15e0e1f97bbb935c35fb91b6d3431e66e86a0f550f0296e68d363182542778344650cd319dbe9209/31521.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00067/e0afb1eb5daa9550ca7bf2a2b1d8e695f9c375cb1477d13e8c83aaf0d7183c7c276ff711a5518cfe1a64d7bdf2af9200618f5a7dfe1c7fae6b702c18051c28a6/00067.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f621.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/angry.png'}},
-  {label: 'surprised', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/surprised.jpg', 'lessonpix': 'https://lessonpix.com/drawings/1701/150x150/1701.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31526/36bffac158fcc53f75aa0dfb6a2c0b83901d21da5371da2018cc5d158e4a127cbd14ca92212515ef8fd858552e199a67a6fd70943bd64609258d2b124ae5f9d1/31526.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00085/dbdf67515134145ca01b09f9c4402df6993b32fe0d151afc95c7e55c01b9afe312b8050cbc25b1807348afa86834661b9522fa8b76e3464844d214485655c07c/00085.svg  ', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f633.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/surprised.png'}},
+  {label: 'surprised', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/suprised.jpg', 'lessonpix': 'https://lessonpix.com/drawings/1701/150x150/1701.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31526/36bffac158fcc53f75aa0dfb6a2c0b83901d21da5371da2018cc5d158e4a127cbd14ca92212515ef8fd858552e199a67a6fd70943bd64609258d2b124ae5f9d1/31526.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00085/dbdf67515134145ca01b09f9c4402df6993b32fe0d151afc95c7e55c01b9afe312b8050cbc25b1807348afa86834661b9522fa8b76e3464844d214485655c07c/00085.svg  ', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f633.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/surprised.png'}},
   {label: 'confused', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/confused.jpg', 'lessonpix': 'https://lessonpix.com/drawings/1782/150x150/1782.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31509/fb7f7fd51af255cd442fd8a8880e14b203189295598c8f375432d07e29a4665f7d033b69c46256d4e8911590cfdfcff30cc6b3be1fabad2350fe47938d7d4311/31509.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00024/6582d8b2789fb8253f988f7ea667b50a0061be3ad9986b7460f6e9f49619b767a4b48435521f8943646bb1b6a4140bc886137a5ac389be158b648be9f3f792d8/00024.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f615.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/confused.png'}},
   {label: 'silly', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/silly.jpg', 'lessonpix': 'https://lessonpix.com/drawings/33597/150x150/33597.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/32494/79b711041cdd057bfbb839c6c9f6563bfb54520905e2637e2b340ffea6342619fe65a4fe7c3a957059599129f4f4cfe337dc31928bd2f6e9497a344f1e863128/32494.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00081/2e433bf8b5c2ef17fcfd4dcc3ba1a7d6eee99582c3b9511a7c9fdddffe40946a9d88c9f0b037044d338083d1f391cb8ea76dea9d52dc9e76be1d74f5335a4545/00081.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f643.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/silly_787_320383.svg'}},
   {label: 'bored', type: 'adjective', category: 'feeling', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/bored.jpg', 'lessonpix': 'https://lessonpix.com/drawings/1697/150x150/1697.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/31507/ecb4a645918864c47f5161e2d3d468227fd81e905aea04d1bdf9621d2e74b3fa8a3f73bd1120bb4bab18fb2161f408859161ab9971ee47662963a89e03ebdec1/31507.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00020/571a78b3d6f35444c92ee6579829718766d9714460bddc6ced30bf936e98b3e9ce68f6247a9b56ca9fddf07684dec608112562fac8d1c87eb3bd63c08121e09a/00020.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f4a4.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/boring_2.png'}},
@@ -308,22 +310,25 @@ var words = [
   {label: 'satellite', type: 'noun', category: 'space', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/satellite.jpg', 'lessonpix': 'https://lessonpix.com/drawings/592029/150x150/592029.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/06887/c4a44d084e37fd7a7f088197609759b914a33d2c4b05a249cf84461cd9c301dea03ba5e91cb5c4f4bade3c5ca2aca151ff0cd29a0ea06185e289851955bcab4c/06887.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/06887/c4a44d084e37fd7a7f088197609759b914a33d2c4b05a249cf84461cd9c301dea03ba5e91cb5c4f4bade3c5ca2aca151ff0cd29a0ea06185e289851955bcab4c/06887.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f6f0.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/satellite.svg'}},
   {label: 'comet', type: 'noun', category: 'space', urls: {'photos': 'https://d18vdu4p71yql0.cloudfront.net/libraries/photos/comet.jpg', 'lessonpix': 'https://lessonpix.com/drawings/594891/150x150/594891.png', 'pcs_hc': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/08190/8d28e493771f54f4e1392a1ee8af05382aa745dbd1e7eb51fd0321740a811da832358d6dd461b43ebaed7fe8de96e6392cb409a1916502f59609c08efdc988d3/08190.svg', 'pcs': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/08190/8d28e493771f54f4e1392a1ee8af05382aa745dbd1e7eb51fd0321740a811da832358d6dd461b43ebaed7fe8de96e6392cb409a1916502f59609c08efdc988d3/08190.svg', 'twemoji': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2604.svg', 'default': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2604.svg'}},
 ];
+obf.words = words;
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
 obf.offline_urls = [];
 obf.register("eval", function(key) {
   if(!words.prefetched) {
     words.forEach(function(w) {
       for(var key in w.urls) {
-        if(w.urls[key] && w.urls[key].match(/^http/)) {
-          // TODO: sync should store obf.offline_urls as another step
-          obf.offline_urls.push(w.urls[key]);
-          persistence.find_url(w.urls[key], 'image').then(function(data_uri) {
-            w.urls[key] = data_uri;
-          }, function(err) {
-            var img = new Image();
-            img.src = w.urls[key];
-          });
-        }
+        (function(key) {
+          if(w.urls[key] && w.urls[key].match(/^http/)) {
+            // TODO: sync should store obf.offline_urls as another step
+            obf.offline_urls.push(w.urls[key]);
+            persistence.find_url(w.urls[key], 'image').then(function(data_uri) {
+              w.urls[key] = data_uri;
+            }, function(err) {
+              var img = new Image();
+              img.src = w.urls[key];
+            });
+          }
+        })(key);
       }
     });
     words.prefetched = true;
@@ -367,11 +372,13 @@ obf.register("eval", function(key) {
       step: 0
     };
   } else if(!assessment || assessment.step == undefined) {
+    board = obf.shell(1, 1);
     runLater(function() {
       app_state.jump_to_board({key: 'obf/eval-start'});
       app_state.set_history([]);
     })
-    return;
+    res.json = board.to_json();
+    return res;
   }
   window.assessment = assessment;
   assessment.level = assessment.level || 0;
@@ -381,6 +388,7 @@ obf.register("eval", function(key) {
     board = obf.shell(3, 6);
     board.background_image_url = "https://thetechnoskeptic.com/wp-content/uploads/2019/03/NightSky_iStock_den-belitsky_900.jpg";
     board.background_position = "stretch";
+    assessment.level_id = step.intro;
     if(step.intro == 'intro') {
       board.background_text = "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.";
     } else if(step.intro == 'find_target') {
@@ -399,6 +407,32 @@ obf.register("eval", function(key) {
     }
     if(false) { // not a lessonpix account
       level.libraries_used = 'lessonpix';
+    }
+    if(assessment.events) {
+      var level_check = assessment.events['diff_target'] || assessment.events['find_target'];
+      if(level_check) {
+        var max_level = 0;
+        var last_avg_time = 0;
+        level_check.forEach(function(step, idx) {
+          var time_tally = 0;
+          var size = 0;
+          var correct_tally = 0;
+          step.forEach(function(event, jdx) {
+            time_tally = time_tally + event.time;
+            size = event.vsize;
+            if(event.correct) { correct_tally++; }
+          });
+          var avg_time = (time_tally / step.length);
+          var avg_correct = (correct_tally / step.length)
+          if(size >= 16 && avg_correct > mastery_cutoff) {
+            max_level = Math.max(max_level, 1);
+          } else if(size >= 110 && avg_correct > mastery_cutoff && last_avg_time && avg_time < (last_avg_time * 3)) {
+            max_level = Math.max(max_level, 2);
+          }
+          last_avg_time = avg_time;
+        });
+        assessment.skill = max_level;
+      }
     }
     board.add_button({
       label: step.intro == 'intro' ? 'next' : 'start',
@@ -457,34 +491,34 @@ obf.register("eval", function(key) {
       // don't make communicators do more than 4 libraries
       level.more_libraries = false;
     }
-    if(step.level != null) {
+    if(step.difficulty != null) {
       if(step.difficulty < 0) {
         step_rows = 1;
         step_cols = 3;
-        if(assessment.lower_level) { // below-level
+        if(assessment.skill === 0) { // below-level
           step_rows = 1;
           step_cols = 2;
-        } else if(assessment.higher_level) { // above-level
+        } else if(assessment.skill === 2) { // above-level
           step_rows = 2;
           step_cols = 2;
         }
-      } else if(step.difficulty == 0) {
+      } else if(step.difficulty === 0) {
         step_rows = 2;
         step_cols = 3;
-        if(assessment.lower_level) { // below-level
+        if(assessment.skill === 0) { // below-level
           step_rows = 1;
           step_cols = 4;
-        } else if(assessment_higher_level) { // above-level
+        } else if(assessment.skill === 2) { // above-level
           step_rows = 2;
           step_cols = 4;
         }
       } else {
         step_rows = 3;
         step_cols = 4;
-        if(assessment.lower_level) { // below-level
+        if(assessment.skill === 0) { // below-level
           step_rows = 2;
           step_cols = 4;
-        } else if(assessment.higher_level) { // above-level
+        } else if(assessment.skill === 2) { // above-level
           step_rows = 4;
           step_cols = 5;
         }
@@ -503,7 +537,7 @@ obf.register("eval", function(key) {
     var rows = step_rows / spacing;
     var cols = step_cols / spacing;
     var offset = (assessment.attempts || 0) % spacing;
-    var events = (((assessment.events || [])[assessment.level] || [])[assessment.step] || []);
+    var events = (((assessment.events || [])[assessment.level_id] || [])[assessment.step] || []);
     var prior = events[events.length - 1];
     var resets = 0;
     while(!loc || (prior && loc[0] == prior.crow && loc[1] == prior.ccol)) {
@@ -515,14 +549,49 @@ obf.register("eval", function(key) {
         loc = null;
       }
     }
-    // TODO: make sure we're occasionally hitting the edges
-    // TODO: occasionally add a little gravity near areas where they're getting it wrong
+    if(step_rows * step_cols > 8) {
+      assessment.big_hits = (assessment.big_hits || 0) + 1;
+      var edge_cutoff = Math.floor(assessment.big_hits / 10);
+      if(assessment.n_cnt < 2 || assessment.s_cnt < 2 || assessment.e_cnt < 2 || assessment.w_cnt < 2) {
+        edge_cutoff = Math.floor(assessment.big_hits / 7);
+      } else if(assessment.n_cnt < 1 || assessment.s_cnt < 1 || assessment.e_cnt < 1 || assessment.w_cnt < 1) {
+        edge_cutoff = Math.floor(assessment.big_hits / 3);
+      }
+      console.log("edging", edge_cutoff, assessment.n_cnt, assessment.s_cnt, assessment.e_cnt, assessment.w_cnt);
+      if(assessment.n_cnt < edge_cutoff) {
+        debugger
+        console.log("N!");
+        loc[0] = 0;
+      } else if(((rows - 1) * spacing) + offset == step_rows - 1 && assessment.s_cnt < edge_cutoff) {
+        debugger
+        loc[0] = rows - 1;
+        console.log("S!");
+      } else if(assessment.w_cnt < edge_cutoff) {
+        debugger
+        loc[1] = 0;
+        console.log("W!");
+      } else if(((cols - 1) * spacing) + offset == step_cols - 1 && assessment.e_cnt < edge_cutoff) {
+        debugger
+        loc[1] = cols - 1;
+        console.log("E!");
+      }
+    }
+    if(loc[0] == 0) {
+      assessment.n_cnt = (assessment.n_cnt || 0) + 1;
+    } else if(loc[0] == step_rows - 1) {
+      assessment.s_cnt = (assessment.s_cnt || 0) + 1;
+    }
+    if(loc[1] == 0) {
+      assessment.w_cnt = (assessment.w_cnt || 0) + 1;
+    } else if(loc[1] == step_rows - 1) {
+      assessment.e_cnt = (assessment.e_cnt || 0) + 1;
+    }
     board.add_button({
       id: 'button_correct',
       label: prompt.label, 
       skip_vocalization: true,
       image: {url: prompt.urls[library]}, 
-      sound: {}
+//      sound: {}
     }, loc[0] * spacing + offset, loc[1] * spacing + offset);
     var used_words = {};
     for(var idx = 0; idx < rows; idx++) {
@@ -576,11 +645,12 @@ obf.register("eval", function(key) {
         assessment.attempts = (assessment.attempts || 0) + 1;
         assessment.correct = (assessment.correct || 0);
         assessment.events = assessment.events || [];
-        assessment.events[assessment.level] = assessment.events[assessment.level] || [];
-        assessment.events[assessment.level][assessment.step] = assessment.events[assessment.level][assessment.step] || [];
-        assessment.events[assessment.level][assessment.step].push({
+        assessment.events[assessment.level_id] = assessment.events[assessment.level_id] || [];
+        assessment.events[assessment.level_id][assessment.step] = assessment.events[assessment.level_id][assessment.step] || [];
+        var e = {
           rows: button.board.get('grid.rows'),
           cols: button.board.get('grid.columns'),
+          vsize: (rows * cols),
           srow: r,
           scol: c,
           crow: cr,
@@ -589,9 +659,33 @@ obf.register("eval", function(key) {
           q: (cr < (button.board.get('grid.rows') / 2) ? 0 : 1) + ((cc < (button.board.get('grid.columns') / 2) ? 0 : 2)),
           correct: button.id == 'button_correct',
           time: time_to_select
-        });
+        };
+        if(spacing > 0) {
+          e.gap = spacing;
+          e.offset = offset;
+        }
+        assessment.events[assessment.level_id][assessment.step].push(e);
         if(button.id == 'button_correct') {
           assessment.correct++;
+        } else {
+          // if incorrect, add gravity (likelihood to be drawn to the area) to the correct row/col, and
+          // add ungravity (likelihood to avoid the area) to the selected row/col
+          assessment.gravities = assessment.gravities || [];
+          assessment.gravities.push([
+            ((cr + .5) / button.board.get('grid.rows')),
+            ((cc + .5) / button.board.get('grid.columns'))
+          ]);
+          assessment.antigravities = assessment.antigravities || [];
+          assessment.antigravities.push([
+            ((r + .5) / button.board.get('grid.rows')),
+            ((c + .5) / button.board.get('grid.columns'))
+          ]);
+          // look for repeating regions, rows or columns and add them to the
+          // final list to be sampled from on occasion
+          // gravities on location, row or column can be randomly sampled occasionally
+          // and the randomizer can try to get as close to them as possible
+          // antigravities on location, row or column can be randomly sampled 
+          // more often and the randomizer can retry if too close to any of them
         }
         var next_step = false;
         if(assessment.attempts >= (step.min_attempts || attempt_minimum) && assessment.correct / assessment.attempts >= mastery_cutoff) {
