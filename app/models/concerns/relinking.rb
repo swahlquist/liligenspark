@@ -31,11 +31,15 @@ module Relinking
     board.settings['description'] = self.settings['description']
     board.settings['image_url'] = self.settings['image_url']
     board.settings['locale'] = self.settings['locale']
+    board.settings['locales'] = self.settings['locales']
     board.settings['translations'] = self.settings['translations']
     board.settings['buttons'] = self.settings['buttons']
     board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
+    board.settings['word_suggestions'] = self.settings['word_suggestions']
+    board.settings['categories'] = self.settings['categories']
     board.settings['license'] = self.settings['license']
     board.settings['intro'] = self.settings['intro']
+    board.settings['intro']['unapproved'] = true if board.settings['intro']
     board.settings['grid'] = self.settings['grid']
     board.settings['never_edited'] = true
     board.public = true if make_public

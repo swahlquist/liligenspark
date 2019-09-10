@@ -494,10 +494,16 @@ CoughDrop.Board = DS.Model.extend({
       public: (make_public || false),
       buttons: this.get('buttons'),
       grid: this.get('grid'),
+      categories: this.get('categories'),
+      intro: this.get('intro'),
       locale: this.get('locale'),
+      locales: this.get('locales'),
       for_user_id: (user && user.get('id')),
       translations: this.get('translations')
     });
+    if(board.get('intro')) {
+      board.set('intro.unapproved', true);
+    }
     this.set('copy_name', null);
     var _this = this;
     var res = board.save();

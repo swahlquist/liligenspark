@@ -574,6 +574,9 @@ class Board < ActiveRecord::Base
         self.settings['locale'] ||= ref_board.settings['locale']
       end
     end
+    if !self.id && params['parent_board_id']
+      self.settings['never_edited'] = true
+    end
 
     @edit_notes << "renamed the board" if params['name'] && self.settings['name'] != params['name']
     self.settings['name'] = process_string(params['name']) if params['name']
@@ -592,7 +595,7 @@ class Board < ActiveRecord::Base
     end
     self.settings['home_board'] = params['home_board'] if params['home_board']
     self.settings['categories'] = params['categories'] if params['categories']
-    self.settings['never_edited'] = false
+    self.settings['never_edited'] = false if self.id
     process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author]) if params['buttons']
     prior_license = self.settings['license'].to_json
     process_license(params['license']) if params['license']
