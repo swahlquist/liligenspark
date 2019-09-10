@@ -2020,22 +2020,7 @@ describe User, :type => :model do
       expect(u.processing_errors).to eq(['blocked email address'])
     end
   end
-  
-  def self.find_for_login(user_name)
-    user_name = user_name.strip
-    res = nil
-    if !user_name.match(/@/)
-      res = self.find_by(:user_name => user_name)
-      res ||= self.find_by(:user_name => user_name.downcase)
-      res ||= self.find_by(:user_name => User.clean_path(user_name.downcase))
-    end
-    if !res
-      emails = self.find_by_email(user_name)
-      emails = self.find_by_email(user_name.downcase) if emails.length == 0
-      res = emails[0] if emails.length == 1
-    end
-    res
-  end
+
 
   describe "find_for_login" do
     it "should find the right user_name" do
@@ -2062,12 +2047,26 @@ describe User, :type => :model do
       expect(User.find_for_login('BOB@example.Com')).to eq(u)
     end
     
-    it "should return nothing if multiple logins for the same email address" do
+    it "should return the first result if multiple logins for the same email address" do
       u1 = User.create(:user_name => 'bob', :settings => {'email' => 'bob@example.com'})
       u2 = User.create(:user_name => 'bob_2', :settings => {'email' => 'bob@example.com'})
       expect(User.find_for_login('bob')).to eq(u1)
       expect(User.find_for_login('bob_2')).to eq(u2)
-      expect(User.find_for_login('bob@example.com')).to eq(nil)
+      expect(User.find_for_login('bob@example.com')).to eq(u1)
+    end
+
+    it "should return the first password-matching email address" do
+      u1 = User.create(:user_name => 'bob', :settings => {'email' => 'bob@example.com'})
+      u1.generate_password('bacon')
+      u1.save
+      u2 = User.create(:user_name => 'bob_2', :settings => {'email' => 'bob@example.com'})
+      u2.generate_password('cheddar')
+      u2.save
+      expect(User.find_for_login('bob')).to eq(u1)
+      expect(User.find_for_login('bob_2')).to eq(u2)
+      expect(User.find_for_login('bob@example.com')).to eq(u1)
+      expect(User.find_for_login('bob@example.com', nil, 'bacon')).to eq(u1)
+      expect(User.find_for_login('bob@example.com', nil, 'cheddar')).to eq(u2)
     end
   end
   

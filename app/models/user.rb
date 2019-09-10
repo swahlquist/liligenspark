@@ -50,7 +50,7 @@ class User < ActiveRecord::Base
   add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
   cache_permissions
   
-  def self.find_for_login(user_name, org_id=nil)
+  def self.find_for_login(user_name, org_id=nil, password=nil)
     user_name = user_name.strip
     res = nil
     if !user_name.match(/@/)
@@ -61,7 +61,10 @@ class User < ActiveRecord::Base
     if !res
       emails = self.find_by_email(user_name)
       emails = self.find_by_email(user_name.downcase) if emails.length == 0
-      res = emails[0] if emails.length == 1
+      if emails.length > 1 && password
+        emails = [emails.detect{|u| u.valid_password?(password)}]
+      end
+      res = emails[0] if emails.length > 0
     end
     if org_id
       if res.settings['authored_organization_id'] == org_id

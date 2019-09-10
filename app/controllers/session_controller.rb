@@ -54,7 +54,7 @@ class SessionController < ApplicationController
         end
         return
       end
-      user = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'])
+      user = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'])
       if user && params['approve_token']
         id = params['approve_token'].split(/~/)[0]
         device = Device.find_by_global_id(id)
@@ -158,7 +158,7 @@ class SessionController < ApplicationController
   def token
     set_browser_token_header
     if params['grant_type'] == 'password'
-      pending_u = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'])
+      pending_u = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'])
       u = nil
       if params['client_id'] == 'browser' && GoSecure.valid_browser_token?(params['client_secret'])
         u = pending_u
