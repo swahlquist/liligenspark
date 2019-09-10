@@ -93,8 +93,8 @@ export default Controller.extend({
   ],
   update_flipped_settings: function() {
     if(this.get('pending_preferences.device.flipped_override')) {
-      this.set('pending_preferences.device.flipped_text', this.get('pending_preferences.device.button_text'));
-      this.set('pending_preferences.device.flipped_height', this.get('pending_preferences.device.vocalization_height'));
+      this.set('pending_preferences.device.flipped_text', this.get('pending_preferences.device.flipped_text') || this.get('pending_preferences.device.button_text'));
+      this.set('pending_preferences.device.flipped_height', this.get('pending_preferences.device.flipped_height') || this.get('pending_preferences.device.vocalization_height'));
     }
   }.observes('pending_preferences.device.flipped_override'),
   text_sample_class: function() {

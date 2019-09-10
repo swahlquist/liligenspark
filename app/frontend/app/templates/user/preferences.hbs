@@ -708,7 +708,7 @@
       <div class="form-group">
         <label for="flipped_text" class="col-sm-3 control-label">{{t "Flipped Text Size" key='flipped_text'}}</label>
         <div class="col-sm-5">
-          {{bound-select select_class="form-control" select_id="button_text" content=buttonTextList selection=pending_preferences.device.flipped_text action=(action (mut pending_preferences.device.flipped_text)) }}
+          {{bound-select select_class="form-control" select_id="flipped_text" content=buttonTextList selection=pending_preferences.device.flipped_text action=(action (mut pending_preferences.device.flipped_text)) }}
         </div>
       </div>
     {{/if}}

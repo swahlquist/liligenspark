@@ -223,7 +223,7 @@ export default Controller.extend({
       this.set('model.fast_html', null);
       editManager.process_for_displaying();
     }
-  }.observes('app_state.speak_mode', 'app_state.edit_mode', 'model.word_suggestions', 'model.description', 'app_state.sidebar_pinned', 'app_state.currentUser.preferences.word_suggestion_images', 'text_position', 'stashes.board_level'),
+  }.observes('app_state.speak_mode', 'app_state.edit_mode', 'model.word_suggestions', 'model.description', 'app_state.sidebar_pinned', 'app_state.currentUser.preferences.word_suggestion_images', 'text_position', 'stashes.board_level', 'app_state.flipped'),
   board_style: function() {
     return htmlSafe("position: relative; height: " + (this.get('height') + 5) + "px");
   }.property('height'),
