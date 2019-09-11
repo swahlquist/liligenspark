@@ -204,7 +204,7 @@ $(document).on('mousedown touchstart', function(event) {
     modal.cancel_auto_close();
   }
   if(!buttonTracker.check('scanning_enabled')) { return; }
-  if(event.target.tagName == 'INPUT') { return; }
+  if(event.target.tagName == 'INPUT' && event.target.id != 'hidden_input') { return; }
   if(event.keyCode && event.keyCode == buttonTracker.check('select_keycode')) { // spacebar key
     scanner.pick();
     event.preventDefault();

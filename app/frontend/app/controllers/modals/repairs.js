@@ -108,7 +108,7 @@ export default modal.ModalController.extend({
       }
     },
     begin_insertion: function() {
-      if(this.get('button_index')) {
+      if(this.get('button_index') != null) {
         app_state.set('insertion', {index: this.get('button_index')})
         modal.close();
         modal.notice(i18n.t('insertion_instructions', "You are now inserting text. Hit the sentence dropdown again to go back to adding text at the end."), true);
