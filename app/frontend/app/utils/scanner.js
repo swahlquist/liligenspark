@@ -575,7 +575,9 @@ var scanner = EmberObject.extend({
     }
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
       if(buttonTracker.native_keyboard) {
-        window.Keyboard.hideFormAccessoryBar(false, function() { });
+        if(window.Keyboard && window.Keyboard.hide) {
+          window.Keyboard.hideFormAccessoryBar(false, function() { });
+        }
         $elem.attr({
           // TODO: set these to 'on' to enable keyboard suggestions,
           // but note that for reason if you hit more than one character
@@ -585,7 +587,9 @@ var scanner = EmberObject.extend({
           autocorrect: 'on',
         });
       } else {
-        window.Keyboard.hideFormAccessoryBar(true, function() { });
+        if(window.Keyboard && window.Keyboard.hide) {
+          window.Keyboard.hideFormAccessoryBar(true, function() { });
+        }
         $elem.attr({
           autocomplete: 'off',
           autocorrect: 'off',
@@ -611,8 +615,10 @@ var scanner = EmberObject.extend({
     window.addEventListener('keyboardDidHide', listener)
     scanner.listen_for_input();
     runLater(function() {
-      window.Keyboard.hideFormAccessoryBar(false, function() { });
-      window.Keyboard.show();
+      if(window.Keyboard && window.Keyboard.hide) {
+        window.Keyboard.hideFormAccessoryBar(false, function() { });
+        window.Keyboard.show();
+      }
     });
   },
   axes_advance: function() {
