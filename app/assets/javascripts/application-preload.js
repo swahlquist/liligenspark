@@ -1,4 +1,4 @@
 //= require simple_state.js
 //= require globals.js
 
-window.app_version = "2019.09.11";
+window.app_version = "2019.09.11a";
