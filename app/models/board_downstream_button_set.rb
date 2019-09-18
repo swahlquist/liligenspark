@@ -212,7 +212,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       bs = board && board.board_downstream_button_set
       if bs && bs.data['remote_paths']
         bs.data['remote_paths'].each do |hash, obj|
-          if obj['generated'] < timestamp
+          if obj['generated'] < timestamp && obj['path']
             path = obj['path']
             Uploader.remote_remove(path)
             bs.data['remote_paths'].delete(hash)

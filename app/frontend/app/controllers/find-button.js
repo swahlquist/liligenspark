@@ -104,6 +104,7 @@ export default modal.ModalController.extend({
       if(!result) {
         result = this.get('results')[0];
       }
+      if(!result) { return; }
       if(result.board_id == editManager.controller.get('model.id')) {
         var $button = $(".button[data-id='" + result.id + "']");
         var _this = this;

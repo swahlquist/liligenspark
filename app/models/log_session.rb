@@ -709,9 +709,9 @@ class LogSession < ActiveRecord::Base
         if event['parts_of_speech'] && event['parts_of_speech']['types']
           current_part = event['parts_of_speech']
           if prior_parts[-1] && prior_parts[-1]['types'] && prior_parts[-2] && prior_parts[-2]['types']
-            from_from = prior_parts[-2]['types'][0]
-            from = prior_parts[-1]['types'][0]
-            to = current_part['types'][0]
+            from_from = prior_parts[-2]['types'][0] || '?'
+            from = prior_parts[-1]['types'][0] || '?' 
+            to = current_part['types'][0] || '?'
             sequences[from_from + "," + from + "," + to] ||= 0
             sequences[from_from + "," + from + "," + to] += 1
             sequences[from_from + "," + from] -= 1 if sequences[from_from + "," + from]
@@ -719,8 +719,8 @@ class LogSession < ActiveRecord::Base
             sequences[from + "," + to] ||= 0
             sequences[from + "," + to] += 1
           elsif prior_parts[-1] && prior_parts[-1]['types']
-            from = prior_parts[-1]['types'][0]
-            to = current_part['types'][0]
+            from = prior_parts[-1]['types'][0] || '?'
+            to = current_part['types'][0] || '?'
             sequences[from + "," + to] ||= 0
             sequences[from + "," + to] += 1
           end
@@ -1098,7 +1098,7 @@ class LogSession < ActiveRecord::Base
     valid_events -= modeling_events
     modeling_events.each{|e| process_modeling_event(e, non_user_params) }
     return if modeling_events.length > 0 && valid_events.blank?
-    raise "no valid events to process" if valid_events.blank?
+    raise "no valid events to process out of #{(params['events'] || []).length}" if valid_events.blank?
     non_user_params[:user] = valid_users[valid_events[0]['user_id']]
     
     active_session = LogSession.all.where(['log_type = ? AND device_id = ? AND author_id = ? AND user_id = ? AND ended_at > ?', 'session', non_user_params[:device].id, non_user_params[:author].id, non_user_params[:user].id, 1.hour.ago]).order('ended_at DESC').first

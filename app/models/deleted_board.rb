@@ -23,6 +23,8 @@ class DeletedBoard < ActiveRecord::Base
       board.load_secure_object unless board.settings
       board.instance_variable_set('@buttons_changed', true)
       board.save!
+      self.cleared = true
+      self.save
     else
       raise "no valid version found"
     end
@@ -46,13 +48,14 @@ class DeletedBoard < ActiveRecord::Base
     db.settings[:stats] = board.settings['stats']
     db.settings[:board_ids] ||= []
     db.settings[:board_ids] << prior_board_id if prior_board_id
+    db.cleared = false
     db.save
     db
   end
   
   def self.flush_old_records
     count = 0
-    DeletedBoard.where(['cleared = ? AND created_at < ?', false, 60.days.ago]).each do |db|
+    DeletedBoard.where(['cleared = ? AND created_at < ?', false, 120.days.ago]).each do |db|
       # TODO: Flusher assumes the board object still exists, which is a bad assumption here
       Flusher.flush_board_by_db_id(db.board_id, db.key)
       db.cleared = true

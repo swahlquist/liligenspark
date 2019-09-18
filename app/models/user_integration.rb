@@ -164,7 +164,7 @@ class UserIntegration < ActiveRecord::Base
             'type' => template_param['type'],
             'label' => template_param['label']
           }
-          value = user_param['value']
+          value = user_param['value'] || ''
           if template_param['type'] == 'password'
             if template_param['downcase']
               value = value.downcase

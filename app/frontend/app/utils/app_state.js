@@ -1874,10 +1874,11 @@ var app_state = EmberObject.extend({
 
     var skip_highlight = false;
     var skip_sound = false;
+    var skip_auto_return = false;
     // check if the button is part of a board that has a custom handler,
     // and skip the other actions if handled
     if(button.board == app_state.controller.get('board.model') && button.board.get('button_handler')) {
-      var button_handled = button.board.get('button_handler')(button);
+      var button_handled = button.board.get('button_handler')(button, obj);
       if(button_handled) { 
         if(button_handled.highlight === false) { skip_highlight = true; }
         if(button_handled.sound === false) { skip_sound = true; }
@@ -2013,7 +2014,7 @@ var app_state = EmberObject.extend({
       app_state.track_depth('clear');
       var res = app_state.specialty_actions(button.vocalization);
       var auto_return_possible = !!specialty_button.default_speak || res.auto_return_possible;
-      if(auto_return_possible && !res.already_navigating) {
+      if(auto_return_possible && !res.already_navigating && !skip_auto_return) {
         app_state.possible_auto_home(obj);
       }
     } else if(button.integration && button.integration.action_type == 'webhook') {
@@ -2028,7 +2029,7 @@ var app_state = EmberObject.extend({
         home_lock: button.home_lock
       }, obj.board);
       }, 100);
-    } else {
+    } else if(!skip_auto_return) {
       app_state.possible_auto_home(obj);
     }
     frame_listener.notify_of_button(button, obj);

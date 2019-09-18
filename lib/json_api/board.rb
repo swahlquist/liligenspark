@@ -106,8 +106,8 @@ module JsonApi::Board
         json['sounds'] = hash['sounds']
       end
       json['board'] ||= {}
-      json['board']['image_urls'] = {}
-      json['board']['sound_urls'] = {}
+      json['board']['image_urls'] = board.settings['image_urls'] || {}
+      json['board']['sound_urls'] = board.settings['sound_urls'] || {}
       hash['images'].each{|i| 
         json['board']['image_urls'][i['id']] = i['url'] 
         json['board']['has_fallbacks'] = true if i['fallback']

@@ -185,7 +185,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       if(bs == _this) {
         button_set_buttons = _this.redepth(bs.get('id'));
       }
-      button_set_buttons.forEach(function(button) {
+      (button_set_buttons || []).forEach(function(button) {
         var ref_id = button.id + ":" + button.board_id;
         if(!buttons_hash['all'][ref_id]) {
           if(!button.linked_board_id || button.force_vocalize || button.link_disabled) {
@@ -249,7 +249,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     var buttons = [];
     var board_map = null;
 
-    var build_map =   RSVP.all_wait(lookups).then(function() {
+    var build_map = RSVP.all_wait(lookups).then(function() {
       var res = _this.board_map(button_sets);
       buttons = res.buttons;
       buttons.forEach(function(b) {
