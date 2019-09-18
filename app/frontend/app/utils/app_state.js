@@ -1882,7 +1882,10 @@ var app_state = EmberObject.extend({
       if(button_handled) { 
         if(button_handled.highlight === false) { skip_highlight = true; }
         if(button_handled.sound === false) { skip_sound = true; }
-        return; 
+        if(button_handled.auto_return === false) { skip_auto_return = true; }
+        if(button_handled.ignore) {
+          return;
+        }
       }
     }
 

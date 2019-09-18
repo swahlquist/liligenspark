@@ -2002,7 +2002,12 @@ var persistence = EmberObject.extend({
                   nextBoard(defer);
                 }, 150);
               } else {
-                board_errors.push({error: "board " + (key || id) + " failed retrieval for syncing, linked from " + source, board_unauthorized: board_unauthorized, board_id: id, board_key: key});
+                // TODO: if a board has been deleted
+                if(err && err.error == "Record not found" && err.deleted) {
+                  board_errors.push({error: "board " + (key || id) + " has been deleted, linked from " + source, board_unauthorized: board_unauthorized, board_id: id, board_key: key});
+                } else {
+                  board_errors.push({error: "board " + (key || id) + " failed retrieval for syncing, linked from " + source, board_unauthorized: board_unauthorized, board_id: id, board_key: key});
+                }
                 runLater(function() {
                   nextBoard(defer);
                 }, 150);
