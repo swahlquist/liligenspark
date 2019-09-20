@@ -6,6 +6,22 @@ import utterance from './utterance';
 import obf from './obf';
 import $ from 'jquery';
 
+var evaluation = {
+  register: function() {
+    obf.register("eval", eval_setup);
+  },
+  analyze: function(assessment) {
+    var res = Object.assign({}, assessment);
+    res.label = "My Eval";
+    res.date = new Date(assessment.started);
+    res.avg_accuracy = 74;
+    res.avg_response_time = 1300;
+    res.assessments = [];
+    res.open_ended_sections = [];
+    return res;
+  }
+};
+
 
 var assessment = {};
 var working = {};
@@ -418,7 +434,7 @@ function shuffle(array) {
 
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
 var core_prompts = {};
-var eval_setup = function(key) {
+evaluation.callback = function(key) {
   obf.offline_urls = obf.offline_urls || [];
   if(!words.prefetched) {
     words.forEach(function(w) {
@@ -473,10 +489,8 @@ var eval_setup = function(key) {
   // TODO: prevent home button navigation during an eval
   var opts = key.split(/-/);
   if(opts[1] == 'start') {
-    assessment = {
-      step: 0
-    };
-    working = {};
+    assessment = {};
+    working = {step: 0};
   } else if(!working || working.step == undefined) {
     board = obf.shell(1, 1);
     runLater(function() {
@@ -1492,23 +1506,6 @@ var eval_setup = function(key) {
     res.json = board.to_json();
   }
   return res;
-};
-var evaluation = {
-  register: function() {
-    runLater(function() {
-      obf.register("eval", eval_setup);
-    });
-  },
-  analyze: function(assessment) {
-    var res = Object.assign({}, assessment);
-    res.label = "My Eval";
-    res.date = new Date(assessment.started);
-    res.avg_accuracy = 74;
-    res.avg_response_time = 1300;
-    res.assessments = [];
-    res.open_ended_sections = [];
-    return res;
-  }
 };
 
 export default evaluation;

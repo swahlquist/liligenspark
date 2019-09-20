@@ -2,6 +2,7 @@ import Ember from 'ember';
 import EmberObject from '@ember/object';
 import CoughDrop from '../app';
 import evaluation from './eval';
+import { later as runLater } from '@ember/runloop';
 
 // allow user-defined prompt image/label
 // in the user menu add options for "repeat prompt", "end this section", "skip this step", "end assessment"
@@ -118,7 +119,7 @@ var obf = EmberObject.extend({
   }
 }).create();
 
-evaluation.register();
+obf.register("eval", evaluation.callback);
 
 obf.register("emergency", function(key) {
 
