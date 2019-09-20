@@ -414,12 +414,12 @@ function shuffle(array) {
   return array;
 };
 
-obf.words = words;
+//obf.words = words;
 
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
 var core_prompts = {};
-obf.offline_urls = [];
 var eval_setup = function(key) {
+  obf.offline_urls = obf.offline_urls || [];
   if(!words.prefetched) {
     words.forEach(function(w) {
       for(var key in w.urls) {
@@ -1495,7 +1495,9 @@ var eval_setup = function(key) {
 };
 var evaluation = {
   register: function() {
-    obf.register("eval", eval_setup);
+    runLater(function() {
+      obf.register("eval", eval_setup);
+    });
   },
   analyze: function(assessment) {
     var res = Object.assign({}, assessment);
