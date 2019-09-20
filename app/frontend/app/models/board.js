@@ -785,7 +785,7 @@ CoughDrop.Board = DS.Model.extend({
       res = res + "</div>";
 
       res = res + "<span style='" + opts.image_holder_style + "'>";
-      if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none') {
+      if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only')) {
         res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol' />";
       }
       res = res + "</span>";
@@ -794,7 +794,8 @@ CoughDrop.Board = DS.Model.extend({
         var url = Button.clean_url(local_sound_url);
         res = res + "<audio style='display: none;' preload='auto' src=\"" + url + "\" rel=\"" + rel_url + "\"></audio>";
       }
-      res = res + "<div class='" + size.button_symbol_class + "'>";
+      var button_class = button.text_only ? size.text_only_button_symbol_class : size.button_symbol_class;
+      res = res + "<div class='" + button_class + "'>";
       res = res + "<span class='button-label " + (button.hide_label ? "hide-label" : "") + "'>" + opts.label + "</span>";
       res = res + "</div>";
 
@@ -804,6 +805,7 @@ CoughDrop.Board = DS.Model.extend({
     var html = "";
 
     var text_position = "text_position_" + (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
+    if(this.get('text_only')) { text_position = "text_position_text_only"; }
 
     CoughDrop.log.track('computing dimensions');
     ob.forEach(function(row, i) {

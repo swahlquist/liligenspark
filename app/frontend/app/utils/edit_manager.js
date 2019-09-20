@@ -1058,6 +1058,7 @@ var editManager = EmberObject.extend({
           inner_pad: controller.get('inner_pad'),
           display_level: board_level,
           base_text_height: controller.get('base_text_height'),
+          text_only_button_symbol_class: controller.get('text_only_button_symbol_class'),
           button_symbol_class: controller.get('button_symbol_class')
         });
 

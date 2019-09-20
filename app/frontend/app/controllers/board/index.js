@@ -677,8 +677,11 @@ export default Controller.extend({
     return "text_" + size;
   }.property('app_state.currentUser.preferences.device.button_text', 'app_state.currentUser.preferences.device.button_text_position'),
   text_position: function() {
+    if(this.get('model.text_only')) {
+      return 'text_position_text_only';
+    }
     return "text_position_" + (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
-  }.property('app_state.currentUser.preferences.device.button_text_position'),
+  }.property('model.text_only', 'app_state.currentUser.preferences.device.button_text_position'),
   symbol_background: function() {
     var bg = app_state.get('currentUser.preferences.symbol_background');
     if(!bg) {
@@ -780,17 +783,19 @@ export default Controller.extend({
   }.property('text_style', 'button_style', 'text_style', 'app_state.currentUser.preferences.word_suggestion_images'),
   update_button_symbol_class: function() {
     var res = "button-label-holder ";
-    if(this.get('app_state.currentUser.hide_symbols')) {
+    if(this.get('app_state.currentUser.hide_symbols') || this.get('model.text_only')) {
       res = res + "no_image ";
     }
     var position = this.get('app_state.currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position;
-    if(position == 'top') {
+    if(position == 'top' && !this.get('model.text_only')) {
       res = res + "top ";
     }
     app_state.set('button_symbol_class', res);
     this.set('button_symbol_class', res);
+    this.set('text_only_button_symbol_class', (res + " no_image").replace(/top/, ''));
+    app_state.set('text_only_button_symbol_class', this.get('text_only_button_symbol_class'));
     return res;
-  }.observes('app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.device.button_text_position'),
+  }.observes('model.text_only', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.device.button_text_position'),
   reload_on_connect: function() {
     if(persistence.get('online') && !this.get('model.id')) {
       try {

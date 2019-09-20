@@ -264,24 +264,25 @@ var Button = EmberObject.extend({
     res = res + "</div>";
 
     res = res + "<span style='" + this.get('image_holder_style') + "'>";
-    if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url')) {
+    if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url') && !this.get('board.text_only') && !this.get('text_only')) {
       res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol' />";
     }
     res = res + "</span>";
     if(this.get('sound')) {
       res = res + "<audio style='display: none;' preload='auto' src=\"" + clean_url(this.get('local_sound_url')) + "\" rel=\"" + clean_url(this.get('sound.url')) + "\"></audio>";
     }
-    res = res + "<div class='" + app_state.get('button_symbol_class') + "'>";
+    var button_class = this.get('text_only') ? app_state.get('text_only_button_symbol_class') : app_state.get('button_symbol_class');
+    res = res + "<div class='" + button_class + "'>";
     res = res + "<span class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + clean_text(this.get('label')) + "</span>";
     res = res + "</div>";
 
     res = res + "</div>";
     return htmlSafe(res);
-  }.property('refresh_token', 'positioning', 'computed_style', 'computed_class', 'label', 'action_class', 'action_image', 'action_alt', 'image_holder_style', 'local_image_url', 'image_style', 'local_sound_url', 'sound.url', 'hide_label', 'level_modifications', 'board.display_level'),
+  }.property('refresh_token', 'positioning', 'computed_style', 'computed_class', 'label', 'action_class', 'action_image', 'action_alt', 'image_holder_style', 'text_only', 'local_image_url', 'image_style', 'local_sound_url', 'sound.url', 'hide_label', 'level_modifications', 'board.display_level'),
   image_holder_style: function() {
     var pos = this.get('positioning');
-    return htmlSafe(Button.image_holder_style(pos));
-  }.property('positioning', 'positioning.image_height', 'positioning.image_top_margin', 'positioning.image_square'),
+    return htmlSafe(Button.image_holder_style(pos, this.get('text_only')));
+  }.property('positioning', 'positioning.image_height', 'positioning.image_top_margin', 'positioning.image_square', 'text_only'),
   image_style: function() {
     var pos = this.get('positioning');
     return htmlSafe(Button.image_style(pos));
@@ -686,9 +687,9 @@ Button.action_styling = function(action, button) {
 
   return res;
 };
-Button.image_holder_style = function(pos) {
+Button.image_holder_style = function(pos, text_only) {
   if(!pos || !pos.image_height) { return ""; }
-  return "margin-top: " + pos.image_top_margin + "px; vertical-align: top; display: inline-block; width: " + pos.image_square + "px; height: " + pos.image_height + "px; line-height: " + pos.image_height + "px;";
+  return "margin-top: " + (text_only ? 0 : pos.image_top_margin) + "px; vertical-align: top; display: inline-block; width: " + pos.image_square + "px; height: " + pos.image_height + "px; line-height: " + pos.image_height + "px;";
 };
 Button.image_style = function(pos) {
   if(!pos || !pos.image_height) { return ""; }
@@ -708,7 +709,7 @@ Button.button_styling = function(button, board, pos) {
   res.action_class = action.action_class; //"action_container talk"; // TODO
   res.action_image = action.action_image; //Ember.templateHelpers.path('images/folder.png'); // TODO
   res.action_alt = action.action_alt; //"alt"; // TODO
-  res.image_holder_style = Button.image_holder_style(pos);
+  res.image_holder_style = Button.image_holder_style(pos, emberGet(button, 'text_only'));
   res.image_style = Button.image_style(pos);
   res.label = clean_text(button.label); // TODO: clean
 
