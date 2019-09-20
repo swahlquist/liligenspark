@@ -556,7 +556,14 @@ var persistence = EmberObject.extend({
           return RSVP.reject({error: "No JSON dataURI result"});
         }
       } else if(typeof(uri) == 'string') {
-        return _this.ajax(uri, {type: 'GET', dataType: 'json'});
+        var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
+        res.then(null, function(err) {
+          if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
+            persistence.remove('dataCache', url);
+            persistence.url_cache[url] = null;
+          }
+        });
+        return res;
       } else {
         return uri;
       }
