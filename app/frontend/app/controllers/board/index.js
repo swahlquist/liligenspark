@@ -237,7 +237,7 @@ export default Controller.extend({
     var height = 100 * (ymax - ymin) / rows;
     var left = 100 * xmin / cols;
     var top = 100 * ymin / rows;
-    return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%;');
+    return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%; overflow: hidden;');
   }.property('model.background_image_url', 'model.grid.rows', 'model.grid.columns', 'model.background_position'),
   bg_img_style: function() {
     var pos = (this.get('model.background_position') || '').split(',');

@@ -6,6 +6,8 @@ import i18n from '../../utils/i18n';
 import modal from '../../utils/modal';
 import capabilities from '../../utils/capabilities';
 import CoughDrop from '../../app';
+import app_state from '../../utils/app_state';
+import evaluation from '../../utils/eval';
 
 export default Controller.extend({
   title: function() {
