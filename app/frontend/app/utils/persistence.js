@@ -975,14 +975,18 @@ var persistence = EmberObject.extend({
             return new RSVP.Promise(function(write_resolve, write_reject) {
               var blob = contentGrabbers.data_uri_to_blob(object.data_uri);
               if(svg && blob.size > svg.length) { console.error('blob generation caused double-content'); }
-              capabilities.storage.write_file(type, local_system_filename, blob).then(function(res) {
-                object.data_uri = null;
-                object.local_filename = local_system_filename;
-                object.local_url = res;
-                object.persisted = true;
-                object.url = url_id;
-                write_resolve(persistence.store('dataCache', object, object.url));
-              }, function(err) { write_reject(err); });
+              // For some reason, writing to an existing file that is larger than what
+              // is to be written doesn't properly end the file and the shorter point. Maybe I'm doing something wrong?
+              capabilities.storage.remove_file(typee, local_system_filename).then(null, function() { return RSVP.resolve(); }).then(function() {
+                capabilities.storage.write_file(type, local_system_filename, blob).then(function(res) {
+                  object.data_uri = null;
+                  object.local_filename = local_system_filename;
+                  object.local_url = res;
+                  object.persisted = true;
+                  object.url = url_id;
+                  write_resolve(persistence.store('dataCache', object, object.url));
+                }, function(err) { write_reject(err); });
+              });
             });
           } else {
             return object;
