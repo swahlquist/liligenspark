@@ -402,6 +402,10 @@ class Board < ActiveRecord::Base
       self.schedule(:check_for_parts_of_speech_and_inflections)
       @check_for_parts_of_speech = nil
     end
+
+    if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])
+      self.schedule(:restore_urls)
+    end
     schedule(:update_affected_users, @brand_new) if @button_links_changed || @brand_new
 
     schedule_downstream_checks
