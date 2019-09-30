@@ -51,7 +51,7 @@ module Subscription
     end
     self.settings['managed_by'] = nil
     
-    extra_expiration = opts[:allow_grace_period] ? 2.weeks.from_now : self.expires_at
+    extra_expiration = (opts[:allow_grace_period] && !self.supporter_role?) ? 2.weeks.from_now : self.expires_at
     
     if self.settings['subscription']['org_sponsored']
       self.settings['subscription']['org_sponsored'] = nil
@@ -463,7 +463,6 @@ module Subscription
     self.settings['eval_duration'] || self.class.default_eval_duration
   end
   
-  
   def org_sponsored?
     Organization.sponsored?(self)
   end
@@ -585,7 +584,7 @@ module Subscription
       [1, 3].each do |num|
         approaching_expires = User.where(['expires_at > ? AND expires_at < ?', num.months.from_now - 0.5.days, num.months.from_now + 0.5.days])
         approaching_expires.each do |user|
-          if !user.grace_period? && user.premium?
+          if !user.grace_period? && user.premium? && !user.supporter_role?
             alerts[:approaching] += 1
             user.settings['subscription'] ||= {}
             last_message = Time.parse(user.settings['subscription']['last_approaching_notification']) rescue Time.at(0)
