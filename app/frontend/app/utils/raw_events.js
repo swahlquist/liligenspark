@@ -767,7 +767,14 @@ var buttonTracker = EmberObject.extend({
         // ignore presses that are too short
         if(buttonTracker.check('minimum_press') && buttonTracker.initialTarget && (ts - buttonTracker.initialTarget.timestamp) < buttonTracker.minimum_press) {
           elem_wrap = null;
+        } else if(buttonTracker.clear_on_wiggle && !swipe_direction) {
+          swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations || []);
         }
+      }
+      if(swipe_direction == 'clear' && buttonTracker.clear_on_wiggle) {
+        event.preventDefault();
+        app_state.controller.send('clear');
+        return;
       }
       buttonTracker.frame_event(frame_event, 'select');
 
@@ -940,67 +947,147 @@ var buttonTracker = EmberObject.extend({
     if(!dom || (targets || []).length == 0) { return 'final'; }
     var rect = dom.getBoundingClientRect();
     var non_event_cutoff = 15;
-    var x_diff = Math.abs(final[0] - targets[0][0]);
-    var y_diff = Math.abs(final[1] - targets[0][1]);
+    // max diff is the largest distance between the intial target and all subsequent targets
+    var max_x_diff = Math.max.apply(null, targets.map(function(t) { return Math.abs(targets[0][0] - t[0]); }).concat([Math.abs(targets[0][0] - final[0])]));
+    var max_y_diff = Math.max.apply(null, targets.map(function(t) { return Math.abs(targets[0][1] - t[1]); }).concat([Math.abs(targets[0][1] - final[1])]));
 
-    if(x_diff < non_event_cutoff && y_diff < non_event_cutoff) {
-      // they got back to the beginning, use the starting element
+    if(max_x_diff < non_event_cutoff && max_y_diff < non_event_cutoff) {
+      // they never strayed far from the beginning, use the starting element
       return 'initial';
-    } else if(x_diff < Math.min(rect.width * 0.65, window.innerWidth * 0.1) && y_diff < Math.min(rect.height * 0.65, window.innerHeight * 0.1)) {
-      // distance from start to end should be at least 65% of 
+    } else if(max_x_diff < Math.min(rect.width * 0.45, window.innerWidth * 0.1) && max_y_diff < Math.min(rect.height * 0.45, window.innerHeight * 0.1)) {
+      // farthest distance should be at least 45% of 
       // the button size or 10% of the screen size (for big buttons)
+      // TODO: angles shouldn't require as strict a threshold
       return 'final';
     } else {
       var ptr = [buttonTracker.initialEvent.clientX, buttonTracker.initialEvent.clientY];
-      var n = null, s = null, e = null, w = null;
-      var vert = null, horiz = null;
-      for(var idx = 0; idx < targets.length; idx++) {
-        var curr = targets[idx];
-        if(curr[0] < ptr[0]) {
-          w = (w || 0) + 1;
-        } else if(curr[0] > ptr[0]) {
-          e = (e || 0) + 1;
+      var segments = [], segment = {count: 0};
+      var ns = null, ew = null, jitter = null;
+      var new_segment = function() {
+        console.log("segment!");
+        var vert = null, horiz = null;
+        jitter = null;
+        ns = null;
+        ew = null;
+        if(segment.count > 0) {
+          if(segment.n && (!segment.s || segment.n > (segment.s * 10))) {
+            vert = segment.n;
+          } else if(segment.s && (!segment.n || segment.s > (segment.n * 10))) {
+            vert = -1 * segment.s;
+          }
+          if(segment.e && (!segment.w || segment.e > (segment.w * 10))) {
+            horiz = segment.e;
+          } else if(segment.w && (!segment.e || segment.w > (segment.e * 10))) {
+            horiz = -1 * segment.w;
+          }
+          if(vert || horiz) {
+            var ratio = vert / horiz;
+            if(vert && horiz && ratio > 0.8 && ratio < 1.2) {
+              if(vert > 0) {
+                segment.direction = 'ne';
+                segment.mag = Math.pow(segment.n, 2) + Math.pow(segment.e, 2);
+              } else {
+                segment.direction = 'sw';
+                segment.max = Math.pow(segment.s, 2) + Math.pow(segment.e, 2);
+              }
+            } else if(vert && horiz && ratio < -0.8 && ratio > -1.2) {
+              if(vert > 0) {
+                segment.direction = 'nw';
+              } else {
+                segment.direction = 'se';
+              }
+            } else if(vert && Math.abs(vert) > Math.abs(horiz || 0)) {
+              segment.direction = vert > 0 ? 'n' : 's';
+              segment.mag = Math.pow(segment[segment.direction], 2);
+            } else if(horiz) {
+              segment.direction = horiz > 0 ? 'e' : 'w';
+              segment.mag = Math.pow(segment[segment.direction], 2);
+            } else {
+              segment.direction = '?';
+              segment.mag = Math.pow(Math.max.call(null, segment.n, segment.s, segment.e, segment.w), 2);
+            }
+          }
+        
+          segments.push(segment);
         }
+        segment = {count: 0, mag: 0, n: 0, s: 0, e: 0, w: 0};
+      };
+      new_segment();
+      for(var idx = 0; idx < targets.length; idx++) {
+        segment.count++;
+        var curr = targets[idx];
         if(curr[1] < ptr[1]) {
-          n = (n || 0) + 1;
+          if(ns == 's') {
+            if(jitter == 'ew') {
+              new_segment();
+            } else {
+              jitter = 'ns';
+            }
+          }
+          segment.n = (segment.n || 0) + ptr[1] - curr[1];
+          ns = 'n';
         } else if(curr[1] > ptr[1]) {
-          s = (s || 0) + 1;
+          if(ns == 'n') {
+            if(jitter == 'ew') {
+              new_segment();
+            } else {
+              jitter = 'ns';
+            }
+          }
+          segment.s = (segment.s || 0) + curr[1] - ptr[1];
+          ns = 's';
+        }
+        if(curr[0] < ptr[0]) {
+          if(ew == 'e') {
+            if(jitter = 'ns') {
+              new_segment();
+            } else {
+              jitter = 'ew';
+            }
+          }
+          segment.w = (segment.w || 0) + ptr[0] - curr[0];
+          ew = 'w';
+        } else if(curr[0] > ptr[0]) {
+          if(ew == 'w') {
+            if(jitter = 'ns') {
+              new_segment();
+            } else {
+              jitter = 'ew';
+            }
+          }
+          segment.e = (segment.e || 0) + curr[0] - ptr[0];
+          ew = 'e';
         }
         ptr = curr;
       }
-      if(n && (!s || n > (s / 10))) {
-        vert = n;
-      } else if(s && (!n || s > (n / 10))) {
-        vert = -1 * s;
-      }
-      if(e && (!w || e > (w / 10))) {
-        horiz = e;
-      } else if(w && (!e || w > (e / 10))) {
-        horiz = -1 * w;
-      }
-      if(vert || horiz) {
-        var ratio = vert / horiz;
-        if(vert && horiz && ratio > 0.8 && ratio < 1.2) {
-          if(vert > 0) {
-            return 'ne';
-          } else {
-            return 'sw';
-          }
-        } else if(vert && horiz && ratio < -0.8 && ratio > -1.2) {
-          if(vert > 0) {
-            return 'nw';
-          } else {
-            return 'se';
-          }
-        } else if(vert && Math.abs(vert) > Math.abs(horiz || 0)) {
-          return vert > 0 ? 'n' : 's';
-        } else if(horiz) {
-          return horiz > 0 ? 'e' : 'w';
-        } else {
-          return 'final';
+      new_segment();
+      var directions = {n: 0, s: 0, e: 0, w: 0, nw: 0, ne: 0, sw: 0, se: 0, '?': 0};
+      segments.forEach(function(segment) {
+        if(segment.direction) { directions[segment.direction] = directions[segment.direction] + segment.mag; }
+      });
+      var max_key = null, max_total = 0;
+      Object.keys(directions).forEach(function(dir) {
+        if(directions[dir] >= max_total) {
+          max_key = dir;
+          max_total = directions[dir];
         }
+      });
+      var max_segment = Math.max.apply(null, segments.filter(function(s) { return s.direction == max_key; }).map(function(s) { return s.mag; }));
+      var big_segments = segments.filter(function(segment) { return segment.mag > (max_segment / 25)});
+      var directions = [];
+      big_segments.forEach(function(segment) {
+        if(!directions.length || directions[directions.length - 1] != segment.direction) {
+          directions.push(segment.direction);
+        }
+      });
+      var sorted = directions.sort().join('');
+      if(directions.length == 1) {
+        return directions[0]
+      } else if(directions.length == 2 && (sorted == 'ew' || sorted == 'ns')) {
+        return 'c';
+      } else if(directions.length >= 4 && (sorted.match(/^e+w+$/) || sorted.match(/^n+s+$/) || sorted.match(/^(nw)+(se)+$/) || sorted.match(/^(ne)+(sw)+$/)) && buttonTracker.clear_on_wiggle) {
+        return 'clear';
       } else {
-        // inconsistent direction, use the final location
         return 'final';
       }
     }

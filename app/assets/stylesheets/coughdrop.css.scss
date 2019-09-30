@@ -1498,6 +1498,11 @@ tr.accuracy_non_mastered {
         right: 0;
         border-top: 5px solid rgba(0, 0, 0, 0.7);
         transform: rotate(-30deg);        
+        z-index: 2;
+      }
+      &.opposite .img_holder img {
+        opacity: 0.7;
+        filter: grayscale(0.3);
       }
     }
   }

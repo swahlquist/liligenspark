@@ -1088,6 +1088,7 @@ var app_state = EmberObject.extend({
     if(app_state.get('speak_mode')) {
       buttonTracker.minimum_press = this.get('currentUser.preferences.activation_minimum');
       buttonTracker.activation_location = this.get('currentUser.preferences.activation_location');
+      buttonTracker.clear_on_wiggle = true; // TODO: make this a user pref
       buttonTracker.short_press_delay = this.get('currentUser.preferences.activation_cutoff');
       if(this.get('currentUser.preferences.activation_on_start')) {
         buttonTracker.short_press_delay = 50;
