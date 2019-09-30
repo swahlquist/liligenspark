@@ -1598,6 +1598,10 @@ tr.accuracy_non_mastered {
 .form-group .checkbox.big_checkbox {
   padding-top: 12px;
 }
+.form-inline .checkbox.big_checkbox input[type='checkbox'] {
+  position: absolute;
+  margin-left: -20px;
+}
 .big_checkbox input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
