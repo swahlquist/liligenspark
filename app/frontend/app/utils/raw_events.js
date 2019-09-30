@@ -964,7 +964,7 @@ var buttonTracker = EmberObject.extend({
       var segments = [], segment = {count: 0};
       var ns = null, ew = null, jitter = null;
       var new_segment = function() {
-        console.log("segment!");
+        // console.log("segment!");
         var vert = null, horiz = null;
         jitter = null;
         ns = null;
@@ -1010,7 +1010,11 @@ var buttonTracker = EmberObject.extend({
         
           segments.push(segment);
         }
-        segment = {count: 0, mag: 0, n: 0, s: 0, e: 0, w: 0};
+        var prior = segment.es && segment.es[segment.es.length - 1];
+        segment = {count: 0, mag: 0, n: 0, s: 0, e: 0, w: 0, es: []};
+        if(prior) {
+          segment.es.push(prior);
+        }
       };
       new_segment();
       for(var idx = 0; idx < targets.length; idx++) {
@@ -1018,6 +1022,9 @@ var buttonTracker = EmberObject.extend({
         var curr = targets[idx];
         if(curr[1] < ptr[1]) {
           if(ns == 's') {
+            if(!jitter && segment.n == 0 && segment.s > (segment.e + segment.w) * 5) {
+              jitter = 'ew';
+            }
             if(jitter == 'ew') {
               new_segment();
             } else {
@@ -1028,6 +1035,9 @@ var buttonTracker = EmberObject.extend({
           ns = 'n';
         } else if(curr[1] > ptr[1]) {
           if(ns == 'n') {
+            if(!jitter && segment.s == 0 && segment.n > (segment.e + segment.w) * 5) {
+              jitter = 'ew';
+            }
             if(jitter == 'ew') {
               new_segment();
             } else {
@@ -1039,6 +1049,9 @@ var buttonTracker = EmberObject.extend({
         }
         if(curr[0] < ptr[0]) {
           if(ew == 'e') {
+            if(!jitter && segment.w == 0 && segment.e > (segment.n + segment.s) * 5) {
+              jitter = 'ns';
+            }
             if(jitter = 'ns') {
               new_segment();
             } else {
@@ -1049,6 +1062,9 @@ var buttonTracker = EmberObject.extend({
           ew = 'w';
         } else if(curr[0] > ptr[0]) {
           if(ew == 'w') {
+            if(!jitter && segment.e == 0 && segment.w > (segment.n + segment.s) * 5) {
+              jitter = 'ns';
+            }
             if(jitter = 'ns') {
               new_segment();
             } else {
@@ -1058,6 +1074,7 @@ var buttonTracker = EmberObject.extend({
           segment.e = (segment.e || 0) + curr[0] - ptr[0];
           ew = 'e';
         }
+        segment.es.push(curr);
         ptr = curr;
       }
       new_segment();
