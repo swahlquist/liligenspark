@@ -40,6 +40,7 @@ CoughDrop.Board = DS.Model.extend({
   source_id: DS.attr('string'),
   image_urls: DS.attr('raw'),
   sound_urls: DS.attr('raw'),
+  hc_image_ids: DS.attr('raw'),
   translations: DS.attr('raw'),
   intro: DS.attr('raw'),
   categories: DS.attr('raw'),
@@ -774,6 +775,7 @@ CoughDrop.Board = DS.Model.extend({
       // TODO: sanitize all these for safety?
 
       var local_image_url = persistence.url_cache[(_this.get('image_urls') || {})[button.image_id] || 'none'] || (_this.get('image_urls') || {})[button.image_id] || 'none';
+      var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
       var opts = Button.button_styling(button, _this, pos);
 
@@ -786,7 +788,7 @@ CoughDrop.Board = DS.Model.extend({
 
       res = res + "<span style='" + opts.image_holder_style + "'>";
       if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only')) {
-        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol' />";
+        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
       }
       res = res + "</span>";
       if(button.sound_id && local_sound_url && local_sound_url != 'none') {

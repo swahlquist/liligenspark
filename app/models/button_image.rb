@@ -126,6 +126,7 @@ class ButtonImage < ActiveRecord::Base
       self.settings['content_type'] = params['content_type'] if params['content_type']
       self.settings['width'] = params['width'].to_i if params['width']
       self.settings['height'] = params['height'].to_i if params['height']
+      self.settings['hc'] = !!params['hc'] if params['hc']
       
       # TODO: when cleaning up orphan images, don't delete avatar images
       self.settings['avatar'] = !!params['avatar'] if params['avatar'] != nil

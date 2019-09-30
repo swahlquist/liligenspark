@@ -1916,6 +1916,9 @@ tr.accuracy_non_mastered {
   max-width: 100%;
   min-width: 100%;
 }
+.board.high_contrast .button img.symbol:not(.hc) {
+  filter: contrast(4.0) saturate(500);
+}
 .symbol_background_white .button img.symbol {
   background: #fff; 
 }

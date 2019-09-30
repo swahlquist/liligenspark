@@ -265,7 +265,7 @@ var Button = EmberObject.extend({
 
     res = res + "<span style='" + this.get('image_holder_style') + "'>";
     if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url') && !this.get('board.text_only') && !this.get('text_only')) {
-      res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol' />";
+      res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol" + (this.get('hc_image') ? ' hc' : '') + "' />";
     }
     res = res + "</span>";
     if(this.get('sound')) {
@@ -324,8 +324,10 @@ var Button = EmberObject.extend({
     var image = CoughDrop.store.peekRecord('image', _this.image_id);
     if(image && (!image.get('isLoaded') || !image.get('best_url'))) { image = null; }
     _this.set('image', image);
+    if(image && image.get('hc')) { _this.set('hc_image', true); }
     var check_image = function(image) {
       _this.set('local_image_url', image.get('best_url'));
+      if(image.get('hc')) { _this.set('hc_image', true); }
       return image.checkForDataURL().then(function() {
         _this.set('local_image_url', image.get('best_url'));
         return image;
@@ -333,6 +335,8 @@ var Button = EmberObject.extend({
     };
     if(!image) {
       var image_urls = this.get('board.image_urls');
+      var hc = (_this.get('board.hc_image_ids') || {})[_this.image_id];
+      if(hc) { _this.set('hc_image', true); }
       if(image_urls && image_urls[_this.image_id] && preference != 'remote') {
         var img = CoughDrop.store.createRecord('image', {
           url: image_urls[_this.image_id]

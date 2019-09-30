@@ -17,6 +17,7 @@ CoughDrop.Image = DS.Model.extend({
   content_type: DS.attr('string'),
   width: DS.attr('number'),
   height: DS.attr('number'),
+  hc: DS.attr('boolean'),
   pending: DS.attr('boolean'),
   avatar: DS.attr('boolean'),
   badge: DS.attr('boolean'),

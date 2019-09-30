@@ -615,6 +615,7 @@ var pictureGrabber = EmberObject.extend({
     this.controller.set('image_preview', {
       url: preview.image_url,
       search_term: this.controller.get('image_search.term'),
+      hc: preview.hc,
       external_id: preview.id,
       protected: preview.protected,
       protected_source: preview.protected_source,
@@ -908,6 +909,7 @@ var pictureGrabber = EmberObject.extend({
     _this.controller.set('image_preview', {
       editor: true,
       word_editor: true,
+      hc: true,
       license: {
         type: 'CC By',
         copyright_notice_url: 'https://creativecommons.org/licenses/by/3.0/us/',
@@ -990,6 +992,7 @@ var pictureGrabber = EmberObject.extend({
         content_type: preview.content_type,
         width: data.width,
         height: data.height,
+        hc: preview.hc,
         external_id: preview.external_id,
         search_term: preview.search_term,
         button_label: label || preview.suggestion,

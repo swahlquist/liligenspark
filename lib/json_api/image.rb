@@ -24,7 +24,7 @@ module JsonApi::Image
       json['fallback'] = true
       protected_source = false
     end
-    ['pending', 'content_type', 'width', 'height', 'source_url'].each do |key|
+    ['pending', 'content_type', 'width', 'height', 'source_url', 'hc'].each do |key|
       json[key] = settings[key]
     end
     json['protected'] = protected_source
