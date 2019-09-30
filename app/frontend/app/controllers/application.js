@@ -18,6 +18,7 @@ import buttonTracker from '../utils/raw_events';
 import capabilities from '../utils/capabilities';
 import speecher from '../utils/speecher';
 import session from '../utils/session';
+import obf from '../utils/obf';
 import Button from '../utils/button';
 import { htmlSafe } from '@ember/string';
 import { inject } from '@ember/controller';
@@ -299,8 +300,32 @@ export default Controller.extend({
         stashes.persist('all_buttons_enabled', true);
       }
     },
+    end_evaluation: function() {
+      obf.eval.conclude();
+    },
+    assessment_settings: function() {
+      modal.open('modals/assessment-settings');
+    },
+    change_section: function(direction) {
+      obf.eval.move(direction);
+    },
+    repeat_prompt: function() {
+      var model = this.get('board.model');
+      runLater(function() {
+        if(model.get('background_prompt.text')) {
+          speecher.speak_text(model.get('background_prompt.text'), false, {alternate_voice: speecher.alternate_voice});
+        }
+        if(model.get('background_prompt.sound_url')) {
+          speecher.speak_audio(model.get('background_sound_url_with_fallback'), 'background', false, {loop: model.get('background_prompt.loop')});
+        }
+      }, 100);
+    },
     home: function(opts) {
       opts = opts || {};
+      if(app_state.get('eval_mode') && app_state.get('speak_mode')) {
+        modal.notice(i18n.t('eval_mode_home_disabled', "Home is disabled during an evaluation, you can end the evaluation using the menu icon"), true);
+        return;
+      }
       var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
       var current = app_state.get('currentBoardState');
       this.set('last_highlight_explore_action', (new Date()).getTime());
@@ -1093,11 +1118,11 @@ export default Controller.extend({
     return [].concat(CoughDrop.keyed_colors);
   }.property('app_state.colored_keys'),
   show_back: function() {
-    return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back'));
-  }.property('app_state.empty_board_history', 'app_state.currentUser.preferences.device.always_show_back'),
+    return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back') || this.get('eval_mode'));
+  }.property('app_state.empty_board_history', 'app_state.currentUser.preferences.device.always_show_back', 'app_state.eval_mode'),
   on_home: function() {
-    return !!(app_state.get('currentBoardState.id') && app_state.get('currentBoardState.id') == stashes.get('root_board_state.id'));
-  }.property('stashes.root_board_state.id', 'app_state.currentBoardState.id'),
+    return !!((app_state.get('currentBoardState.id') && app_state.get('currentBoardState.id') == stashes.get('root_board_state.id')) || app_state.get('eval_mode'));
+  }.property('stashes.root_board_state.id', 'app_state.currentBoardState.id', 'app_state.eval_mode'),
   button_list_class: function() {
     var res = "button_list ";
     var flipped = app_state.get('flipped');

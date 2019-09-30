@@ -718,12 +718,14 @@ export default Controller.extend({
       res = res + this.get('stashes.current_mode')  + " ";
     }
     var stretchable = !app_state.get('edit_mode') && app_state.get('currentUser.preferences.stretch_buttons') && app_state.get('currentUser.preferences.stretch_buttons') != 'none'; // not edit mode and user-enabled
-    if(this.get('stashes.all_buttons_enabled')) {
-      res = res + 'show_all_buttons ';
-    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint' && !this.get('model.hide_empty')) {
-      res = res + 'hint_hidden_buttons ';
-    } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid' && !this.get('model.hide_empty')) {
-      res = res + 'grid_hidden_buttons ';
+    if(!app_state.get('eval_mode')) {
+      if(this.get('stashes.all_buttons_enabled')) {
+        res = res + 'show_all_buttons ';
+      } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint' && !this.get('model.hide_empty')) {
+        res = res + 'hint_hidden_buttons ';
+      } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid' && !this.get('model.hide_empty')) {
+        res = res + 'grid_hidden_buttons ';
+      }
     }
     if(app_state.get('currentUser.hide_symbols')) {
       res = res + 'show_labels ';
@@ -755,7 +757,7 @@ export default Controller.extend({
       }
     }
     return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons'),
+  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons', 'app_state.eval_mode'),
   suggestion_class: function() {
     var res = "advanced_selection ";
     if(this.get('text_style')) {

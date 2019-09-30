@@ -7,11 +7,13 @@
       <button class={{if on_home "btn btn-default access dim" "btn btn-default access"}} id="home_button" {{action "home"}} style='position: relative;'>
         <span class="sr-only">{{t "Home" key="home"}}</span>
         <span class="glyphicon glyphicon-home button_icon"></span>
-        {{#if stashes.temporary_root_board_state}}
-          <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Home or Board Lock Set" key='home_or_board_lock_set'}}></span>
-        {{else if stashes.sticky_board}}
-          <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Board Lock Set" key='board_lock_set'}}></span>
-        {{/if}}
+        {{#unless app_state.eval_mode}}
+          {{#if stashes.temporary_root_board_state}}
+            <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Home or Board Lock Set" key='home_or_board_lock_set'}}></span>
+          {{else if stashes.sticky_board}}
+            <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Board Lock Set" key='board_lock_set'}}></span>
+          {{/if}}
+        {{/unless}}
       </button>
       {{#if show_back}}
         <button class="btn btn-default access skinnier" id="back_button" {{action "back"}}>
@@ -19,13 +21,15 @@
           <span class="glyphicon glyphicon-arrow-left button_icon"></span>
         </button>
       {{/if}}
-      {{#if app_state.reply_note}}
-        <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
-      {{else if app_state.insertion}}
-        <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
-      {{else if app_state.flipped}}
-        <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-repeat'></span></div>
-      {{/if}}
+      {{#unless app_state.eval_mode}}
+        {{#if app_state.reply_note}}
+          <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
+        {{else if app_state.insertion}}
+          <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
+        {{else if app_state.flipped}}
+          <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-repeat'></span></div>
+        {{/if}}
+      {{/unless}}
       <div tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">
         {{#unless app_state.button_list}}
           {{#if app_state.embedded}}
@@ -76,44 +80,48 @@
       </div>
       {{#unless app_state.button_list}}
         {{#if app_state.currentUser.preferences.blank_status}}
-          <!-- TODO: these popups should be dwellable, but if opened via dwell they should auto-close after like ten seconds -->
-          <button id='speak_mode_notification' class='btn btn-default' {{action 'speak_mode_notification'}}>
-            {{#if stashes.board_level}}
-              <span style='color: #ddd; font-size: 12px; position: absolute; top: 3px; text-align: right;'>L{{stashes.board_level}}</span>
-            {{/if}}
-            {{#if app_state.speak_mode_modeling_ideas.enabled}}
-              <span class='notification' style='height: 100%; position: absolute; top: 5px; left: 0; right: 0; bottom: 5px; height: auto;'>
-                <img src={{path 'images/modeling_ideas.svg'}} style='height: 100%; width: 100%; opacity: 0.7;' class='fit_image'/>
-                {{#if app_state.speak_mode_modeling_ideas.word}}
-                  <div style='position: absolute; left: 0; top: 3px; width: 100%; text-align: center;'>
-                    <span style='border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 3px;'>
-                      <span style='background: rgba(255, 255, 255, 0.9);'>"{{app_state.speak_mode_modeling_ideas.word}}"</span>
-                    </span>
-                  </div>
-                {{/if}}
-              </span>
-            {{else if app_state.user_badge}}
-              <span class='notification'>
-                {{#if app_state.user_badge.earned}}
-                  {{badge-earned badge=app_state.user_badge inline=true}}
-                {{else}}
-                  {{badge-progress badge=app_state.user_badge inline=true}}
-                {{/if}}
-              </span>
-            {{else if app_state.speak_mode_modeling_ideas.timeout}}
-              <span class='notification' style='height: 100%; position: absolute; top: 5px; left: 0; right: 0; bottom: 5px; height: auto;'>
-                <img src={{path 'images/modeling_ideas.svg'}} style='height: 100%; width: 100%; opacity: 0.3;' class='fit_image'/>
-              </span>
-            {{/if}}
-          </button>
+          {{#unless app_state.eval_mode}}
+            <!-- TODO: these popups should be dwellable, but if opened via dwell they should auto-close after like ten seconds -->
+            <button id='speak_mode_notification' class='btn btn-default' {{action 'speak_mode_notification'}}>
+              {{#if stashes.board_level}}
+                <span style='color: #ddd; font-size: 12px; position: absolute; top: 3px; text-align: right;'>L{{stashes.board_level}}</span>
+              {{/if}}
+              {{#if app_state.speak_mode_modeling_ideas.enabled}}
+                <span class='notification' style='height: 100%; position: absolute; top: 5px; left: 0; right: 0; bottom: 5px; height: auto;'>
+                  <img src={{path 'images/modeling_ideas.svg'}} style='height: 100%; width: 100%; opacity: 0.7;' class='fit_image'/>
+                  {{#if app_state.speak_mode_modeling_ideas.word}}
+                    <div style='position: absolute; left: 0; top: 3px; width: 100%; text-align: center;'>
+                      <span style='border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 3px;'>
+                        <span style='background: rgba(255, 255, 255, 0.9);'>"{{app_state.speak_mode_modeling_ideas.word}}"</span>
+                      </span>
+                    </div>
+                  {{/if}}
+                </span>
+              {{else if app_state.user_badge}}
+                <span class='notification'>
+                  {{#if app_state.user_badge.earned}}
+                    {{badge-earned badge=app_state.user_badge inline=true}}
+                  {{else}}
+                    {{badge-progress badge=app_state.user_badge inline=true}}
+                  {{/if}}
+                </span>
+              {{else if app_state.speak_mode_modeling_ideas.timeout}}
+                <span class='notification' style='height: 100%; position: absolute; top: 5px; left: 0; right: 0; bottom: 5px; height: auto;'>
+                  <img src={{path 'images/modeling_ideas.svg'}} style='height: 100%; width: 100%; opacity: 0.3;' class='fit_image'/>
+                </span>
+              {{/if}}
+            </button>
+          {{/unless}}
         {{/if}}
       {{/unless}}
-      <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
-        {{#if app_state.referenced_user.unread_alerts}}
-          <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
-        {{/if}}
-        <span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span>
-      </button>
+      {{#unless app_state.eval_mode}}
+        <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
+          {{#if app_state.referenced_user.unread_alerts}}
+            <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
+          {{/if}}
+          <span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span>
+        </button>
+      {{/unless}}
       <button class="btn btn-default access skinnier" id="backspace_button" {{action "backspace"}}>
         <span class="sr-only">{{t "backspace" key='backspace'}}</span>
         <img src="{{path "images/delete.svg"}}"/>
@@ -627,35 +635,44 @@
                 {{/if}}
               {{/if}}
             {{/if}}
-            <li role="presentation" class='big' id='exit_speak_mode'>
-              <a href="#" {{action "toggleSpeakMode"}}>
-                {{t "Exit Speak Mode" key="exit_speak_mode"}}
-                <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
-              </a>
-            </li>
-            {{#if app_state.embedded}}
+            {{#if app_state.eval_mode}}
+              <li role="presentation" class='big' id='exit_speak_mode'>
+                <a href="#" {{action "end_evaluation"}}>
+                  <span class='glyphicon glyphicon-ok'></span> {{t "End Evaluation" key="end_evaluation"}}
+                </a>
+              </li>
               <li class="divider"></li>
-              <li role="presentation">
-                <a href="#" {{action 'printBoard'}}>{{t "Print this Board" key="print_this_board"}}</a>
+            {{else}}
+              <li role="presentation" class='big' id='exit_speak_mode'>
+                <a href="#" {{action "toggleSpeakMode"}}>
+                  {{t "Exit Speak Mode" key="exit_speak_mode"}}
+                  <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
+                </a>
               </li>
-              <li role="presentation">
-                <a href="#" {{action 'launch_board'}}>{{t "Open in %app_name%" key="open_in_coughdrop"}}</a>
-              </li>
-              {{#if app_state.full_screen_capable}}
-                <li role="presentation">
-                  <a href="#" {{action "full_screen"}}>{{t "Full Screen" key="full_screen"}}</a>
-                </li>
-              {{/if}}
-              <li role="presentation">
-                <a href="#" {{action "about_modal"}}>{{t "About %app_name%" key="about_coughdrop"}}</a>
-              </li>
-              <li><a href="#" {{action "find_button"}}>{{t "Find a Button" key='find_a_button'}}</a></li>
-            {{/if}}
-            {{#unless app_state.superProtectedSpeakMode}}
-              {{#if session.isAuthenticated}}
+              {{#if app_state.embedded}}
                 <li class="divider"></li>
+                <li role="presentation">
+                  <a href="#" {{action 'printBoard'}}>{{t "Print this Board" key="print_this_board"}}</a>
+                </li>
+                <li role="presentation">
+                  <a href="#" {{action 'launch_board'}}>{{t "Open in %app_name%" key="open_in_coughdrop"}}</a>
+                </li>
+                {{#if app_state.full_screen_capable}}
+                  <li role="presentation">
+                    <a href="#" {{action "full_screen"}}>{{t "Full Screen" key="full_screen"}}</a>
+                  </li>
+                {{/if}}
+                <li role="presentation">
+                  <a href="#" {{action "about_modal"}}>{{t "About %app_name%" key="about_coughdrop"}}</a>
+                </li>
+                <li><a href="#" {{action "find_button"}}>{{t "Find a Button" key='find_a_button'}}</a></li>
               {{/if}}
-            {{/unless}}
+              {{#unless app_state.superProtectedSpeakMode}}
+                {{#if session.isAuthenticated}}
+                  <li class="divider"></li>
+                {{/if}}
+              {{/unless}}
+            {{/if}}
           {{/if}}
           {{#if session.invalid_token}}
             {{#if session.isAuthenticated}}
@@ -707,57 +724,68 @@
             {{#if app_state.speak_mode}}
               {{#if app_state.feature_flags.enable_all_buttons}}
                 {{#unless app_state.currentUser.preferences.prevent_hide_buttons}}
-                  <li><a href="#" {{action 'toggle_all_buttons'}}>
-                    <span class="glyphicon glyphicon-apple"></span>
-                    {{#if stashes.all_buttons_enabled}}
-                      {{t "Hide Hidden Buttons" key='hide_disabled_buttons'}}
-                    {{else}}
-                      {{t "Show Hidden Buttons" key='show_all_buttons'}}
-                    {{/if}}
-                  </a></li>
+                  {{#unless app_state.eval_mode}}
+                    <li><a href="#" {{action 'toggle_all_buttons'}}>
+                      <span class="glyphicon glyphicon-apple"></span>
+                      {{#if stashes.all_buttons_enabled}}
+                        {{t "Hide Hidden Buttons" key='hide_disabled_buttons'}}
+                      {{else}}
+                        {{t "Show Hidden Buttons" key='show_all_buttons'}}
+                      {{/if}}
+                    </a></li>
+                  {{/unless}}
                 {{/unless}}
               {{/if}}
             {{/if}}
-            {{#if app_state.sessionUser.supervisees}}
-              {{#if app_state.speak_mode}}
-                <li><a href="#" {{action "switch_communicators"}}>{{t "Switch Communicators" key='switch_communicators'}}</a></li>
+            {{#unless app_state.eval_mode}}
+              {{#if app_state.sessionUser.supervisees}}
+                {{#if app_state.speak_mode}}
+                  <li><a href="#" {{action "switch_communicators"}}>{{t "Switch Communicators" key='switch_communicators'}}</a></li>
+                {{/if}}
               {{/if}}
-            {{/if}}
-            {{#if app_state.currentBoardState}}
-              <li><a href="#" {{action "find_button"}}>{{t "Find a Button" key='find_a_button'}}</a></li>
-            {{/if}}
+              {{#if app_state.currentBoardState}}
+                <li><a href="#" {{action "find_button"}}>{{t "Find a Button" key='find_a_button'}}</a></li>
+              {{/if}}
+            {{/unless}}
             {{#if session.isAuthenticated}}
               {{#if app_state.currentBoardState}}
                 {{#if app_state.speak_mode}}
-                    <!--li><a href="#" {{action "startRecording"}}>{{t "Recording (not yet)" key='start_recording'}}</a></li-->
-                  {{#if app_state.currentBoardState.translatable}}
-                    <li><a href="#" {{action "switch_languages"}}>{{t "Switch Languages" key='switch_languages'}}</a></li>
-                  {{/if}}
-                  {{#if stashes.sticky_board}}
-                    <li><a href="#" {{action "toggle_sticky_board"}}>{{t "Release Board Lock" key='release_board_lock'}}</a></li>
+                  {{#if app_state.eval_mode}}
+                    <li><a href="#" {{action "repeat_prompt"}}><span class='glyphicon glyphicon-volume-up'></span> {{t "Repeat Prompt" key='repeat_prompt'}}</a></li>
+                    <li><a href="#" {{action "change_section" 'back'}}><span class='glyphicon glyphicon-chevron-left'></span> {{t "Previous Section" key='previous_section'}}</a></li>
+                    <li><a href="#" {{action "change_section" 'forward'}}><span class='glyphicon glyphicon-chevron-right'></span> {{t "Next Section" key='next_section'}}</a></li>
+                    <li><a href="#" {{action "assessment_settings"}}><span class='glyphicon glyphicon-cog'></span> {{t "Eval Settings" key='eval_settings'}}</a></li>
                   {{else}}
-                    <li><a href="#" {{action "toggle_sticky_board"}}>{{t "Stay on this Board" key='stay_on_board'}}</a></li>
-                  {{/if}}
-                  {{#if stashes.temporary_root_board_state}}
-                    <li><a href="#" {{action "toggle_home_lock"}}>{{t "Release Home Lock" key='release_home_lock'}}</a></li>
-                  {{else}}
-                    {{#unless app_state.current_board_is_speak_mode_home}}
-                      <li><a href="#" {{action "toggle_home_lock"}}>{{t "Set As Temporary Home" key='temporary_home'}}</a></li>
-                    {{/unless}}
-                  {{/if}}
-                  {{#if app_state.feature_flags.find_multiple_buttons}}
-                    {{#if has_board_intro}}
-                      <li><a href="#" {{action "board_intro"}}>{{t "Board Intro" key='board_intro'}}</a></li>
+                      <!--li><a href="#" {{action "startRecording"}}>{{t "Recording (not yet)" key='start_recording'}}</a></li-->
+                    {{#if app_state.currentBoardState.translatable}}
+                      <li><a href="#" {{action "switch_languages"}}>{{t "Switch Languages" key='switch_languages'}}</a></li>
                     {{/if}}
-                  {{/if}}
-                  {{#if app_state.currentUser.preferences.logging}}
-                    {{#if app_state.logging_paused}}
-                      <li><a href="#" {{action "toggle_pause_logging"}}>
-                        <span class="label label-primary" style='padding: 3px;'><span class='glyphicon glyphicon-play'></span></span>
-                        {{t "Resume Logging" key='resume_logging'}}
-                      </a></li>
+                    {{#if stashes.sticky_board}}
+                      <li><a href="#" {{action "toggle_sticky_board"}}>{{t "Release Board Lock" key='release_board_lock'}}</a></li>
                     {{else}}
-                      <li><a href="#" {{action "toggle_pause_logging"}}>{{t "Pause Logging" key='pause_logging'}}</a></li>
+                      <li><a href="#" {{action "toggle_sticky_board"}}>{{t "Stay on this Board" key='stay_on_board'}}</a></li>
+                    {{/if}}
+                    {{#if stashes.temporary_root_board_state}}
+                      <li><a href="#" {{action "toggle_home_lock"}}>{{t "Release Home Lock" key='release_home_lock'}}</a></li>
+                    {{else}}
+                      {{#unless app_state.current_board_is_speak_mode_home}}
+                        <li><a href="#" {{action "toggle_home_lock"}}>{{t "Set As Temporary Home" key='temporary_home'}}</a></li>
+                      {{/unless}}
+                    {{/if}}
+                    {{#if app_state.feature_flags.find_multiple_buttons}}
+                      {{#if has_board_intro}}
+                        <li><a href="#" {{action "board_intro"}}>{{t "Board Intro" key='board_intro'}}</a></li>
+                      {{/if}}
+                    {{/if}}
+                    {{#if app_state.currentUser.preferences.logging}}
+                      {{#if app_state.logging_paused}}
+                        <li><a href="#" {{action "toggle_pause_logging"}}>
+                          <span class="label label-primary" style='padding: 3px;'><span class='glyphicon glyphicon-play'></span></span>
+                          {{t "Resume Logging" key='resume_logging'}}
+                        </a></li>
+                      {{else}}
+                        <li><a href="#" {{action "toggle_pause_logging"}}>{{t "Pause Logging" key='pause_logging'}}</a></li>
+                      {{/if}}
                     {{/if}}
                   {{/if}}
                 {{/if}}
@@ -805,61 +833,65 @@
   {{ outlet }}
 </div>
 {{#if app_state.sidebar_visible}}
-  <div id="sidebar" class='noselect' style={{sidebar_style}} class="advanced_selection">
-    {{#unless app_state.currentUser.preferences.quick_sidebar}}
-      <span style="margin: 5px; text-align: right; white-space: nowrap;">
-        {{#if app_state.currentUser}}
-          <button class='btn btn-default' style="width: 50%;" {{action "stickSidebar"}}><span class="glyphicon glyphicon-pushpin"></span></button>
-          <button class='btn btn-default' id='sidebar_close' style="width: calc(50% - 14px); padding-left: 0; padding-right: 0;">&times;</button>
-        {{else}}
-          <button id='sidebar_close' class='btn btn-default' style="width: 90%;">&times; {{t "Hide" key='hide'}}</button>
-        {{/if}}
-      </span>
-    {{/unless}}
-    {{#each app_state.sidebar_boards as |board|}}
-      {{#if board.alert}}
-        <a href="#" {{action 'alert' 'sidebar'}} class='sidebar_item'>
-          <span class="glyphicon glyphicon-bullhorn"></span>
-          <img src={{board.image}} class='pic' alt=""/>
-          {{board.name}}
-        </a>
-      {{else if board.special}}
-        <a href="#" {{action 'special' board}} class='sidebar_item'>
-          <span class="glyphicon glyphicon-flash"></span>
-          <img src={{board.image}} class='pic' alt=""/>
-          {{board.name}}
-        </a>
-      {{else}}
-        <a href={{board.key}} class='sidebar_item' {{action 'jump' board.key 'sidebar' board}} data-key={{board.key}}>
-          {{#if board.home_lock}}
-            <span class="glyphicon glyphicon-home"></span>
+  {{#unless app_state.eval_mode}}
+    <div id="sidebar" class='noselect' style={{sidebar_style}} class="advanced_selection">
+      {{#unless app_state.currentUser.preferences.quick_sidebar}}
+        <span style="margin: 5px; text-align: right; white-space: nowrap;">
+          {{#if app_state.currentUser}}
+            <button class='btn btn-default' style="width: 50%;" {{action "stickSidebar"}}><span class="glyphicon glyphicon-pushpin"></span></button>
+            <button class='btn btn-default' id='sidebar_close' style="width: calc(50% - 14px); padding-left: 0; padding-right: 0;">&times;</button>
+          {{else}}
+            <button id='sidebar_close' class='btn btn-default' style="width: 90%;">&times; {{t "Hide" key='hide'}}</button>
           {{/if}}
-          {{#if board.fenced}}
-            <span class="glyphicon glyphicon-map-marker"></span>
-          {{/if}}
-          <img src={{board.image}} class='pic' alt=""/>
-          {{board.name}}
-        </a>
-      {{/if}}
-    {{/each}}
-    {{#if app_state.currentUser.preferences.quick_sidebar}}
-      {{#unless app_state.currentUser.preferences.lock_quick_sidebar}}
-        <span style="margin: 5px; text-align: right;">
-          <button class='btn btn-default' style="width: 90px; margin-bottom: 5px; " {{action "stickSidebar"}}>Hide</button>
         </span>
       {{/unless}}
-    {{/if}}
-  </div>
+      {{#each app_state.sidebar_boards as |board|}}
+        {{#if board.alert}}
+          <a href="#" {{action 'alert' 'sidebar'}} class='sidebar_item'>
+            <span class="glyphicon glyphicon-bullhorn"></span>
+            <img src={{board.image}} class='pic' alt=""/>
+            {{board.name}}
+          </a>
+        {{else if board.special}}
+          <a href="#" {{action 'special' board}} class='sidebar_item'>
+            <span class="glyphicon glyphicon-flash"></span>
+            <img src={{board.image}} class='pic' alt=""/>
+            {{board.name}}
+          </a>
+        {{else}}
+          <a href={{board.key}} class='sidebar_item' {{action 'jump' board.key 'sidebar' board}} data-key={{board.key}}>
+            {{#if board.home_lock}}
+              <span class="glyphicon glyphicon-home"></span>
+            {{/if}}
+            {{#if board.fenced}}
+              <span class="glyphicon glyphicon-map-marker"></span>
+            {{/if}}
+            <img src={{board.image}} class='pic' alt=""/>
+            {{board.name}}
+          </a>
+        {{/if}}
+      {{/each}}
+      {{#if app_state.currentUser.preferences.quick_sidebar}}
+        {{#unless app_state.currentUser.preferences.lock_quick_sidebar}}
+          <span style="margin: 5px; text-align: right;">
+            <button class='btn btn-default' style="width: 90px; margin-bottom: 5px; " {{action "stickSidebar"}}>Hide</button>
+          </span>
+        {{/unless}}
+      {{/if}}
+    </div>
+  {{/unless}}
 {{else}}
   {{#if app_state.speak_mode}}
     {{#unless app_state.currentUser.preferences.disable_quick_sidebar}}
       {{#unless app_state.sidebar_relegated}}
-        <div id="sidebar_tease" class={{if app_state.skinny_sidebar "advanced_selection noselect skinny" "advanced_selection noselect"}}>
-          {{#if app_state.fenced_sidebar_board}}
-            <span class='glyphicon glyphicon-map-marker' style='font-size: 20px; vertical-align: middle;'></span>
-          {{/if}}
-          {{t "sidebar" key='sidebar'}}
-        </div>
+        {{#unless app_state.eval_mode}}
+          <div id="sidebar_tease" class={{if app_state.skinny_sidebar "advanced_selection noselect skinny" "advanced_selection noselect"}}>
+            {{#if app_state.fenced_sidebar_board}}
+              <span class='glyphicon glyphicon-map-marker' style='font-size: 20px; vertical-align: middle;'></span>
+            {{/if}}
+            {{t "sidebar" key='sidebar'}}
+          </div>
+        {{/unless}}
       {{/unless}}
     {{/unless}}
   {{/if}}

@@ -4,13 +4,6 @@ import CoughDrop from '../app';
 import evaluation from './eval';
 import { later as runLater } from '@ember/runloop';
 
-// allow user-defined prompt image/label
-// in the user menu add options for "repeat prompt", "end this section", "skip this step", "end assessment"
-// select language when starting assessment
-// track full duration of the assessment
-// prevent home button while in evaluation
-// way to go back to a previous section
-
 var handlers = {};
 var obf = EmberObject.extend({
   parse: function(json) {
@@ -19,7 +12,7 @@ var obf = EmberObject.extend({
     var hash = JSON.parse(json);
     var buttons = [];
     board.set('grid', hash['grid']);
-    board.set('id', 'b123'); // TODO: ...
+    board.set('id', hash['id'] || 'b123');
     board.set('permissions', {view: true});
     board.set('background_image_url', hash['background_image_url']);
     board.set('background_image_exclusion', hash['background_image_exclusion']);
@@ -29,7 +22,7 @@ var obf = EmberObject.extend({
     board.set('text_only', hash['text_only']);
 
     board.set('hide_empty', true);
-    board.key = "obf/whatever"; // TODO: ...
+    board.key = hash['key'] || "obf/whatever";
     var image_urls = {};
     var sound_urls = {};
     var buttons = [];
@@ -92,7 +85,6 @@ var obf = EmberObject.extend({
       return JSON.stringify(shell, 2);
     };
     shell.add_button = function(button, row, col) {
-      console.log("adding", button && button.label, row, col);
       button.id = button.id || "btn_" + (++shell.id_index);
       if(button.image) {
         var img = Object.assign({}, button.image);

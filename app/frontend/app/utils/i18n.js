@@ -21,6 +21,8 @@ Ember.templateHelpers.date = function(date, precision) {
     return moment.format('MMMM Do YYYY');
   } else if(precision == 'short_day') {
     return moment.format('MMM Do YYYY');
+  } else if(precision == 'abbrev') {
+    return moment.format('MMM Do YYYY, h:mm a');
   } else {
     return moment.format('MMMM Do YYYY, h:mm a');
   }
@@ -95,20 +97,32 @@ Ember.templateHelpers.locale = function(str) {
 
 Ember.templateHelpers.seconds_ago = function(seconds, distance) {
   seconds = (Math.round(seconds * 10) / 10);
-  if(!seconds || seconds < 1) {
+  if(!seconds || seconds <= 0) {
     return "";
   } else if(seconds < 60) {
-    return i18n.t('seconds_ago', "second", {hash: {count: seconds}});
+    if(distance == 'brief') {
+      return i18n.t('brief_seconds_ago', "%{n}s", {hash: {n: seconds}});
+    } else {
+      return i18n.t('seconds_ago', "second", {hash: {count: seconds}});
+    }
   } else if(seconds < 3600) {
     var minutes = Math.round(seconds / 60 * 10) / 10;
-    return i18n.t('minutes_ago', "minute", {hash: {count: minutes}});
+    if(distance == 'brief') {
+      return i18n.t('brief_minutes_ago', "%{n}m", {hash: {n: minutes}});
+    } else {
+      return i18n.t('minutes_ago', "minute", {hash: {count: minutes}});
+    }
   } else {
     var hours = Math.round(seconds / 3600 * 10) / 10;
     if(distance != 'long' || hours < 24) {
       if(hours > 999) {
         hours = Ember.templateHelpers.delimit(hours);
       }
-      return i18n.t('hours_ago', "hour", {hash: {count: hours, number: true}});
+      if(distance == 'brief') {
+        return i18n.t('brief_hours_ago', "%{n}hr", {hash: {n: hours, number: true}});
+      } else {
+        return i18n.t('hours_ago', "hour", {hash: {count: hours, number: true}});
+      }
     } else {
       var days = Math.round(hours / 24);
       if(days < 7) {

@@ -53,6 +53,12 @@ export default Controller.extend({
         });
     }
   }.observes('model.geo', 'user'),
+  processed_assessment: function() {
+    return null;
+    if(app_state.get('assessment') || true) {
+      return evaluation.analyze(app_state.get('assessment') || {});
+    }
+  }.property('app_state.assessment'),
   actions: {
     reply: function() {
       var _this = this;

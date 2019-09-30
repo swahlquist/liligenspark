@@ -4,20 +4,371 @@ import persistence from './persistence';
 import { later as runLater } from '@ember/runloop';
 import utterance from './utterance';
 import obf from './obf';
+import modal from './modal';
+import i18n from './i18n';
 import $ from 'jquery';
+import { htmlSafe } from '@ember/string';
+// allow user-defined prompt image/label
+// in the user menu add options for "repeat prompt", "end this section", "skip this step", "end assessment"
+// select language when starting assessment
+// track full duration of the assessment
+// prevent home button while in evaluation
+// hide the sidebar when in eval mode
+// way to go back to a previous section
 
+
+// "find the on ethat people use for eating" had no correct answers
+// "find the group that train belongs to" had no correct answers
+// "in the report, all the symbols events are bunched together" instead of splitting out each library
+
+var pixels_per_inch = 96;
+window.ppi = 96;
 var evaluation = {
   register: function() {
-    obf.register("eval", eval_setup);
+    obf.register("eval", evaluation.callback);
+    obf.eval = evaluation;
+    var msr = document.createElement('div');
+    msr.style.width = '1in';
+    msr.style.height = '30px';
+    msr.style.position = 'absolute';
+    msr.style.left = '-1000px';
+    document.body.appendChild(msr);
+    pixels_per_inch = msr.getBoundingClientRect().width;
+    window.ppi = pixels_per_inch;
+    runLater(function() {
+      document.body.removeChild(msr);
+    });
+    if(window.plugins && window.plugins.aboutScreen) {
+      window.plugins.aboutScreen.getInfo(function (e) {
+        window.ppix = window.screen.width / e.width;
+        window.ppiy = window.screen.height / e.height;
+      });
+    }
+  },
+  conclude: function() {
+    alert('save!');
+    app_state.set('last_assessment', assessment);
+    assessment = {};
+    // save the evaluation
+    // navigate to the results page (should work even if offline and haven't been able to push yet)
+  },
+  move: function() {
+
   },
   analyze: function(assessment) {
+    assessment = {"mastery_cutoff":0.69,"non_mastery_cutoff":0.32,"attempt_minimum":2,"attempt_maximum":8,"ppi":96,"started":1569429802318,"events":{"find_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.663,"pcty":0.588,"srow":0,"scol":1,"library":"default","q":2,"time":866,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.426,"pcty":0.435,"srow":0,"scol":1,"library":"default","q":0,"time":744,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.135,"pcty":0.353,"srow":0,"scol":0,"library":"default","q":0,"time":922,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.839,"pcty":0.44,"srow":0,"scol":3,"library":"default","q":2,"time":1025,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.672,"pcty":0.236,"srow":0,"scol":2,"library":"default","q":2,"time":951,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.15,"pcty":0.589,"srow":1,"scol":0,"library":"default","q":1,"time":886,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.146,"pcty":0.722,"srow":2,"scol":0,"library":"default","q":1,"time":839,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.289,"pcty":0.253,"srow":0,"scol":1,"library":"default","q":0,"time":1022,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.107,"pcty":0.182,"srow":0,"scol":0,"library":"default","q":0,"time":1098,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.904,"pcty":0.763,"srow":3,"scol":5,"library":"default","q":3,"time":1145,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.121,"pcty":0.746,"srow":3,"scol":0,"library":"default","q":1,"time":1111,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.898,"pcty":0.365,"srow":1,"scol":5,"library":"default","q":2,"time":951,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":5,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.673,"pcty":0.576,"srow":3,"scol":6,"library":"default","q":3,"time":1281,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.13,"pcty":0.276,"srow":1,"scol":1,"library":"default","q":0,"time":1000,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":3,"offset":1}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.87,"pcty":0.714,"srow":4,"scol":8,"library":"default","q":3,"time":1431,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":8,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.727,"pcty":0.252,"srow":1,"scol":7,"library":"default","q":2,"time":986,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.053,"pcty":0.506,"srow":3,"scol":0,"library":"default","q":1,"time":1020,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.766,"pcty":0.256,"srow":1,"scol":7,"library":"default","q":2,"time":733,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.163,"pcty":0.671,"srow":4,"scol":1,"library":"default","q":1,"time":905,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":1,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.094,"srow":0,"scol":9,"library":"default","q":2,"time":912,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.6,"pcty":0.079,"srow":0,"scol":8,"library":"default","q":2,"time":974,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":8,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.129,"pcty":0.158,"srow":1,"scol":1,"library":"default","q":0,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.903,"pcty":0.497,"srow":4,"scol":12,"library":"default","q":3,"time":1063,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":12,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.509,"pcty":0.189,"srow":1,"scol":7,"library":"default","q":2,"time":845,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"fail":true,"pcxt":0.176,"pcty":0.805,"srow":7,"scol":2,"library":"default","q":1,"time":1443,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":2,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.828,"pcty":0.73,"srow":6,"scol":11,"library":"default","q":3,"time":966,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":6,"ccol":11,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.467,"pcty":0.815,"srow":7,"scol":6,"library":"default","q":1,"time":1657,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":6,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.947,"pcty":0.088,"srow":0,"scol":13,"library":"default","q":2,"time":1111,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":13,"gap":1,"offset":0}]],"diff_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.619,"pcty":0.442,"srow":0,"scol":1,"library":"default","q":2,"time":985,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.176,"pcty":0.477,"srow":0,"scol":0,"library":"default","q":0,"time":717,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.563,"pcty":0.398,"srow":0,"scol":2,"library":"default","q":2,"time":1128,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.324,"pcty":0.394,"srow":0,"scol":1,"library":"default","q":0,"time":912,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.862,"pcty":0.185,"srow":0,"scol":3,"library":"default","q":2,"time":1211,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.108,"pcty":0.216,"srow":0,"scol":0,"library":"default","q":0,"time":1163,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.864,"pcty":0.416,"srow":1,"scol":4,"library":"default","q":2,"time":1110,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":4,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.284,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1148,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.728,"pcty":0.147,"srow":0,"scol":4,"library":"default","q":2,"time":1185,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":4,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.281,"pcty":0.341,"srow":1,"scol":1,"library":"default","q":0,"time":1017,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.358,"pcty":0.072,"srow":0,"scol":2,"library":"default","q":0,"time":1055,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.763,"pcty":0.776,"srow":3,"scol":4,"library":"default","q":3,"time":1657,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.04,"pcty":0.106,"srow":0,"scol":0,"library":"default","q":0,"time":1571,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.44,"pcty":0.707,"srow":4,"scol":4,"library":"default","q":0,"time":1446,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.551,"pcty":0.396,"srow":2,"scol":5,"library":"default","q":0,"time":2183,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.672,"pcty":0.544,"srow":3,"scol":6,"library":"default","q":3,"time":2770,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.734,"pcty":0.233,"srow":1,"scol":7,"library":"default","q":2,"time":1331,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.823,"pcty":0.829,"srow":5,"scol":8,"library":"default","q":3,"time":1311,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":8,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.653,"pcty":0.059,"srow":0,"scol":6,"library":"default","q":2,"time":1008,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":6,"gap":3,"offset":0}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.233,"pcty":0.408,"srow":2,"scol":2,"library":"default","q":0,"time":1095,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.379,"pcty":0.806,"srow":5,"scol":3,"library":"default","q":1,"time":1467,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":3,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.013,"pcty":0.202,"srow":1,"scol":0,"library":"default","q":0,"time":1880,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.651,"pcty":0.395,"srow":2,"scol":6,"library":"default","q":1,"time":840,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":4,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.364,"pcty":0.395,"srow":2,"scol":3,"library":"default","q":2,"time":817,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":2,"ccol":6,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.465,"pcty":0.388,"srow":2,"scol":4,"library":"default","q":0,"time":1052,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.444,"pcty":0.507,"srow":3,"scol":4,"library":"default","q":1,"time":1347,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.56,"pcty":0.519,"srow":3,"scol":5,"library":"default","q":3,"time":3783,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.569,"srow":3,"scol":9,"library":"default","q":3,"time":1741,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.049,"pcty":0.481,"srow":4,"scol":0,"library":"default","q":1,"time":2198,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":0,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.096,"pcty":0.194,"srow":1,"scol":1,"library":"default","q":0,"time":2000,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.308,"pcty":0.274,"srow":2,"scol":4,"library":"default","q":0,"time":2407,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.945,"pcty":0.201,"srow":1,"scol":13,"library":"default","q":2,"time":2538,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":13,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"pcxt":0.625,"pcty":0.265,"srow":2,"scol":8,"library":"default","q":3,"time":1873,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":5,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.945,"pcty":0.399,"srow":3,"scol":13,"library":"default","q":2,"time":3114,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":3,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.593,"pcty":0.521,"srow":4,"scol":8,"library":"default","q":3,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":6,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.304,"pcty":0.269,"srow":2,"scol":4,"library":"default","q":2,"time":1740,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":3,"ccol":13,"gap":1,"offset":0}]],"symbols":[null,[{"rows":1,"cols":3,"vsize":3,"pcxt":0.821,"pcty":0.478,"srow":0,"scol":2,"library":"photos","q":2,"time":1236,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.47,"pcty":0.364,"srow":0,"scol":1,"library":"photos","q":0,"time":753,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.769,"pcty":0.376,"srow":0,"scol":2,"library":"lessonpix","q":2,"time":1197,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.332,"srow":0,"scol":1,"library":"lessonpix","q":0,"time":837,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.755,"pcty":0.486,"srow":0,"scol":2,"library":"pcs_hc","q":2,"time":1135,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.496,"pcty":0.442,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":628,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":3,"vsize":6,"pcxt":0.76,"pcty":0.649,"srow":1,"scol":2,"library":"photos","q":3,"time":1051,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.527,"pcty":0.236,"srow":0,"scol":1,"library":"photos","q":0,"time":1262,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.45,"pcty":0.711,"srow":1,"scol":1,"library":"photos","q":1,"time":1462,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.767,"pcty":0.708,"srow":1,"scol":2,"library":"lessonpix","q":3,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.47,"pcty":0.653,"srow":1,"scol":1,"library":"lessonpix","q":1,"time":942,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.214,"srow":0,"scol":0,"library":"lessonpix","q":0,"time":1075,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.823,"pcty":0.793,"srow":1,"scol":2,"library":"pcs_hc","q":3,"time":824,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.663,"srow":1,"scol":0,"library":"pcs_hc","q":1,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.449,"pcty":0.26,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":776,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":3,"cols":4,"vsize":12,"pcxt":0.863,"pcty":0.788,"srow":2,"scol":3,"library":"photos","q":3,"time":1515,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.889,"pcty":0.493,"srow":1,"scol":3,"library":"photos","q":2,"time":3651,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.815,"pcty":0.723,"srow":2,"scol":3,"library":"photos","q":3,"time":1184,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.868,"pcty":0.159,"srow":0,"scol":3,"library":"lessonpix","q":2,"time":1353,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.726,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1419,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.73,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1168,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.433,"pcty":0.158,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":858,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.839,"pcty":0.375,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":896,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.867,"pcty":0.396,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":915,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0}]],"find_shown":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.779,"pcty":0.692,"srow":2,"scol":2,"library":"default","q":3,"time":1456,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.498,"pcty":0.744,"srow":2,"scol":1,"library":"default","q":1,"time":1193,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.493,"pcty":0.715,"srow":2,"scol":1,"library":"default","q":1,"time":1409,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.243,"pcty":0.771,"srow":2,"scol":0,"library":"default","q":1,"time":1187,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.169,"pcty":0.779,"srow":2,"scol":0,"library":"default","q":1,"time":1345,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.56,"pcty":0.656,"srow":2,"scol":1,"library":"default","q":1,"time":1240,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.793,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1480,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.814,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":1450,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.221,"pcty":0.748,"srow":2,"scol":0,"library":"default","q":1,"time":1989,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.299,"pcty":0.743,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.719,"srow":2,"scol":1,"library":"default","q":1,"time":1647,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.765,"pcty":0.724,"srow":2,"scol":2,"library":"default","q":3,"time":1819,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.242,"pcty":0.556,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.28,"pcty":0.779,"srow":3,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.53,"pcty":0.557,"srow":2,"scol":1,"library":"default","q":1,"time":1299,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}],[{"rows":5,"cols":5,"vsize":15,"pcxt":0.683,"pcty":0.806,"srow":4,"scol":3,"library":"default","q":3,"time":2833,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":4,"ccol":3,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.492,"pcty":0.45,"srow":2,"scol":2,"library":"default","q":0,"time":1317,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.647,"pcty":0.601,"srow":3,"scol":3,"library":"default","q":3,"time":1347,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":3,"ccol":3,"gap":1,"offset":0,"skiprow":2}]],"open_ended":[null,[{"rows":6,"cols":4,"vsize":12,"pcxt":0.146,"pcty":0.473,"srow":3,"scol":0,"library":"default","q":0,"time":3091,"win":3.22,"hin":1.06,"approxin":true,"lbl":"he","label":"he","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.371,"pcty":0.531,"srow":3,"scol":1,"library":"default","q":0,"time":3681,"win":3.22,"hin":1.06,"approxin":true,"lbl":"is","label":"is","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.841,"pcty":0.564,"srow":3,"scol":3,"library":"default","q":0,"time":4411,"win":3.22,"hin":1.06,"approxin":true,"lbl":"happy","label":"happy","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.095,"srow":0,"scol":3,"library":"default","q":0,"time":5446,"win":3.22,"hin":1.06,"approxin":true,"lbl":"next","label":"next","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.187,"pcty":0.689,"srow":4,"scol":0,"library":"default","q":0,"time":8106,"win":3.22,"hin":1.06,"approxin":true,"lbl":"she","label":"she","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.162,"pcty":0.813,"srow":5,"scol":0,"library":"default","q":0,"time":9474,"win":3.22,"hin":1.06,"approxin":true,"lbl":"they","label":"they","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.425,"pcty":0.861,"srow":5,"scol":1,"library":"default","q":0,"time":11235,"win":3.22,"hin":1.06,"approxin":true,"lbl":"are","label":"are","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.631,"pcty":0.819,"srow":5,"scol":2,"library":"default","q":0,"time":12120,"win":3.22,"hin":1.06,"approxin":true,"lbl":"read","label":"read","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.833,"pcty":0.248,"srow":1,"scol":3,"library":"default","q":0,"time":13700,"win":3.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}],[{"rows":6,"cols":10,"vsize":30,"pcxt":0.532,"pcty":0.811,"srow":5,"scol":5,"library":"default","q":0,"time":1802,"win":1.22,"hin":1.06,"approxin":true,"lbl":"b","voc":"+b","label":"b","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.037,"pcty":0.667,"srow":4,"scol":0,"library":"default","q":0,"time":2534,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.338,"pcty":0.818,"srow":5,"scol":3,"library":"default","q":0,"time":3295,"win":1.22,"hin":1.06,"approxin":true,"lbl":"c","voc":"+c","label":"c","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.739,"pcty":0.665,"srow":4,"scol":7,"library":"default","q":0,"time":3937,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.967,"pcty":0.485,"srow":3,"scol":9,"library":"default","q":0,"time":4770,"win":1.22,"hin":1.06,"approxin":true,"lbl":"p","voc":"+p","label":"p","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.082,"pcty":0.671,"srow":4,"scol":0,"library":"default","q":0,"time":5929,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.73,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":7411,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.938,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":8014,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.147,"pcty":0.64,"srow":4,"scol":1,"library":"default","q":0,"time":9952,"win":1.22,"hin":1.06,"approxin":true,"lbl":"s","voc":"+s","label":"s","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.719,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":11115,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.838,"pcty":0.554,"srow":3,"scol":8,"library":"default","q":0,"time":11740,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.846,"pcty":0.527,"srow":3,"scol":8,"library":"default","q":0,"time":13083,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.854,"pcty":0.645,"srow":4,"scol":8,"library":"default","q":0,"time":13830,"win":1.22,"hin":1.06,"approxin":true,"lbl":"l","voc":"+l","label":"l","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.935,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":14539,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.962,"pcty":0.241,"srow":1,"scol":9,"library":"default","q":0,"time":15594,"win":1.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}]],"categories":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.267,"pcty":0.696,"srow":2,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.571,"pcty":0.728,"srow":2,"scol":1,"library":"default","q":1,"time":1828,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.3,"pcty":0.712,"srow":2,"scol":0,"library":"default","q":0,"time":42771,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.823,"pcty":0.708,"srow":2,"scol":2,"library":"default","q":3,"time":3110,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.226,"pcty":0.746,"srow":2,"scol":0,"library":"default","q":1,"time":2211,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.836,"pcty":0.736,"srow":2,"scol":2,"library":"default","q":3,"time":1845,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.245,"pcty":0.668,"srow":2,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.791,"pcty":0.635,"srow":2,"scol":2,"library":"default","q":3,"time":2234,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1790,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.529,"pcty":0.774,"srow":2,"scol":1,"library":"default","q":1,"time":1488,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.184,"pcty":0.772,"srow":2,"scol":0,"library":"default","q":1,"time":1697,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.771,"srow":2,"scol":2,"library":"default","q":0,"time":16261,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.544,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1640,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.679,"srow":2,"scol":0,"library":"default","q":1,"time":1696,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.248,"pcty":0.73,"srow":2,"scol":0,"library":"default","q":1,"time":1730,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.252,"pcty":0.758,"srow":2,"scol":0,"library":"default","q":1,"time":1756,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}]],"inclusion_exclusion_association":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.255,"pcty":0.68,"srow":2,"scol":0,"library":"default","q":1,"time":1794,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.514,"pcty":0.689,"srow":2,"scol":1,"library":"default","q":1,"time":1660,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.241,"pcty":0.692,"srow":2,"scol":0,"library":"default","q":1,"time":1613,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.739,"srow":2,"scol":0,"library":"default","q":1,"time":2123,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.847,"pcty":0.744,"srow":2,"scol":2,"library":"default","q":3,"time":1911,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.194,"pcty":0.691,"srow":2,"scol":0,"library":"default","q":1,"time":2325,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.772,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":2712,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.178,"pcty":0.672,"srow":2,"scol":0,"library":"default","q":1,"time":1948,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.505,"pcty":0.699,"srow":2,"scol":1,"library":"default","q":1,"time":1910,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]],"literacy":[null,[{"rows":4,"cols":3,"vsize":6,"pcxt":0.748,"pcty":0.588,"srow":2,"scol":2,"library":"default","q":3,"time":2556,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.764,"srow":3,"scol":1,"library":"default","q":1,"time":1524,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.51,"pcty":0.798,"srow":3,"scol":1,"library":"default","q":1,"time":1612,"win":4.33,"hin":1.65,"approxin":true,"correct":false,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.281,"pcty":0.596,"srow":2,"scol":0,"library":"default","q":1,"time":1688,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.827,"srow":3,"scol":0,"library":"default","q":1,"time":4745,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.771,"pcty":0.649,"srow":2,"scol":2,"library":"default","q":3,"time":2193,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.759,"pcty":0.584,"srow":2,"scol":2,"library":"default","q":3,"time":3310,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.778,"srow":3,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.754,"pcty":0.552,"srow":2,"scol":2,"library":"default","q":3,"time":2327,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.267,"pcty":0.604,"srow":2,"scol":0,"library":"default","q":1,"time":2832,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.794,"pcty":0.542,"srow":2,"scol":2,"library":"default","q":3,"time":2640,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.566,"srow":2,"scol":1,"library":"default","q":1,"time":4314,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]]}}
     var res = Object.assign({}, assessment);
     res.label = "My Eval";
-    res.date = new Date(assessment.started);
-    res.avg_accuracy = 74;
-    res.avg_response_time = 1300;
+    res.total_time = 0;
+    res.total_correct = 0;
+    res.total_possibly_correct = 0;
+    res.hits = 0;
+    res.hit_locations = [];
+    res.date = new Date(assessment.started || 0);
     res.assessments = [];
+    var button_sizes = {};
+    var field_sizes = {};
+    var symbol_libraries = {};
+    var open_prompts = {};
+    var event_types = []
+    for(var key in assessment.events) {
+      if(key == 'symbols') {
+        var types = {};
+        assessment.events[key].forEach(function(step, idx) {
+          if(step) {
+            step.forEach(function(event) {
+              types[event.library] = types[event.library] || [];
+              types[event.library][idx] = types[event.library][idx] || [];
+              types[event.library][idx].push(event);
+            });
+          }
+        });
+        for(var type_key in types) {
+          types[type_key][0] = null;
+          event_types.push({ type: key, library: type_key, list: types[type_key] });
+        }
+      } else {
+        event_types.push({ type: key, list: assessment.events[key] });
+      }
+    }
+    var already_done = {};
+    var maxes = {};
+    event_types.forEach(function(type) {
+      var key = type.type;
+      var list = type.list;
+      var level = levels.find(function(l) { return l[0].intro == key; });
+      list.forEach(function(step, idx) {
+        if(!step) { 
+          var level_name = key;
+          if(key == 'find_target') { level_name = i18n.t('find_target_level', "Find a target in a grid of empty buttons"); }
+          else if(key == 'diff_target') { level_name = i18n.t('diff_target_level', "Find a target in a grid of populated buttons"); }
+          else if(key == 'symbols') { level_name = i18n.t('symbols_level', "Find targets using different symbol libraries"); }
+          else if(key == 'find_shown') { level_name = i18n.t('find_shown_level', "Find named targets from different parts of speech"); }
+          else if(key == 'open_ended') { level_name = i18n.t('open_ended_level', "Comment on open-ended image prompts"); }
+          else if(key == 'categories') { level_name = i18n.t('categories_level', "Find targets by category or grouping"); }
+          else if(key == 'inclusion_exclusion_association') { level_name = i18n.t('inclusion_exclusion_association_level', "Find targets by inclusion, exclusion or association"); }
+          else if(key == 'literacy') { level_name = i18n.t('literacy_level', "Find the words (no pictures) that identify or describe images"); }
+          if(!already_done[key]) {
+            already_done[key] = true;
+            res.assessments.push({category: level_name});
+          }
+          return; 
+        }
+        var correct = 0;
+        var full_time = 0;
+        var library = null;
+        var possibly_correct = 0;
+        var level_step = level[idx];
+        if(step[0] && step[0].id) {
+          level_step = level.find(function(s) { return s.id == step.id; });
+        }
+        step.forEach(function(event) {
+          res.hits++;
+          library = library || event.library;
+          if(event.correct) { 
+            correct++; 
+            res.total_correct++;
+          }
+          if(event.crow != null && event.ccol != null) {
+            res.total_possibly_correct++;
+            possibly_correct++;
+          }
+          res.hit_locations.push({
+            possibly_correct: (event.crow != null && event.ccol != null),
+            correct: event.correct,
+            partial: (event.skiprow && event.skiprow > 0),
+            cpctx: (event.ccol / event.cols) + (1 / event.cols * 0.5),
+            cpcty: (event.crow / event.rows) + (1 / event.rows * 0.5),
+            pctx: event.pcxt || event.pctx,
+            pcty: event.pcty,
+          });
+          full_time = full_time + event.time;
+          res.total_time = res.total_time + event.time;
+          if(key == 'open_ended') {
+            var prompt_key = event.prompt + "::" + level_step.id;
+            open_prompts[prompt_key] = open_prompts[prompt_key] || [];
+            open_prompts[prompt_key].push(event);
+          }
+          if(event.win != null && event.hin != null && (key == 'find_target' || key == 'diff_target' || key == 'symbols')) {
+            var btn_dim = event.win + "x" + event.hin;
+            button_sizes[btn_dim] = button_sizes[btn_dim] || {win: event.win, hin: event.hin, rows: event.rows, cols: event.cols, cnt: 0, correct: 0, possibly_correct: 0};
+            button_sizes[btn_dim].cnt++;
+            if(event.approxin) { button_sizes[btn_dim].approximate = true; }
+            if(event.correct) { button_sizes[btn_dim].correct++; }            
+            if(event.fail) { button_sizes[btn_dim].fail = true; }
+            if(event.crow != null && event.ccol != null) { button_sizes[btn_dim].possibly_correct++; }
+          }
+          if(event.vsize && (key == 'find_target' || key == 'diff_target' || key == 'symbols')) {
+            field_sizes[event.vsize] = field_sizes[event.vsize] || {size: event.vsize, cnt: 0, correct: 0, possibly_correct: 0};
+            field_sizes[event.vsize].cnt++;
+            if(event.correct) { field_sizes[event.vsize].correct++; }            
+            if(event.fail) { field_sizes[event.vsize].fail = true; }
+            if(event.crow != null && event.ccol != null) { field_sizes[event.vsize].possibly_correct++; }
+          }
+          if(((key == 'diff_target' && event.vsize < 60) || key == 'symbols') && event.library) {
+            symbol_libraries[event.library] = symbol_libraries[event.library] || {library: event.library, cnt: 0, correct: 0, possibly_correct: 0, time_tally: 0};
+            symbol_libraries[event.library].cnt++;
+            symbol_libraries[event.library].time_tally = symbol_libraries[event.library].time_tally + event.time;
+            // TODO: ignore the hardest-levels of diff_target, since that's not a fair comparison
+            if(event.correct) { symbol_libraries[event.library].correct++; }            
+            if(event.fail) { symbol_libraries[event.library].fail = true; }
+            if(event.crow != null && event.ccol != null) { symbol_libraries[event.library].possibly_correct++; }
+          }
+        });
+        var pct = Math.round(correct / Math.max(step.length) * 100) / 100;
+        var name = key + "-" + (idx + 1);
+        if(level_step) {
+          name = level_step.id + " (" + key;
+          if(key == 'symbols') { name = name + ", " + library; }
+          name = name + ")";
+        }
+        var accuracy_class = null;
+        if(possibly_correct > 0) {
+          if(pct >= assessment.mastery_cutoff) {
+            accuracy_class = 'accuracy_mastered';
+          } else if(pct <= assessment.non_mastery_cutoff) {
+            accuracy_class = 'accuracy_non_mastered';
+          } else {
+            accuracy_class = 'accuracy_middle';
+          }
+        }
+
+        var library = {key: library};
+        library[library[key]] = true;
+        var long_name = name;
+        if(level_step.id == 'find-2') { long_name = i18n.t('find-2-name', "Find in a field of 2"); }
+        else if(level_step.id == 'find-3') { long_name = i18n.t('find-3-name', "Find in a field of 3"); }
+        else if(level_step.id == 'find-4') { long_name = i18n.t('find-4-name', "Find in a field of 4"); }
+        else if(level_step.id == 'find-8') { long_name = i18n.t('find-8-name', "Find in a field of 8"); }
+        else if(level_step.id == 'find-15') { long_name = i18n.t('find-15-name', "Find in a field of 15"); }
+        else if(level_step.id == 'find-6-24') { long_name = i18n.t('find-6-24-name', "Find in a 24-button grid with a visible field of 6"); }
+        else if(level_step.id == 'find-24') { long_name = i18n.t('find-24-name', "Find in a field of 24"); }
+        else if(level_step.id == 'find-6-60') { long_name = i18n.t('find-6-60-name', "Find in a 60-button grid with a visible field of 6"); }
+        else if(level_step.id == 'find-15-60') { long_name = i18n.t('find-15-60-name', "Find in a 60-button grid with a visible field of 15"); }
+        else if(level_step.id == 'find-30-60') { long_name = i18n.t('find-30-60-name', "Find in a 60-button grid with a visible field of 30"); }
+        else if(level_step.id == 'find-60') { long_name = i18n.t('find-60-name', "Find in a field of 60"); }
+        else if(level_step.id == 'find-6-112') { long_name = i18n.t('find-6-112-name', "Find in a 112-button grid with a visible field of 6"); }
+        else if(level_step.id == 'find-28-112') { long_name = i18n.t('find-28-112-name', "Find in a 112-button grid with a visible field of 28"); }
+        else if(level_step.id == 'find-56-112') { long_name = i18n.t('find-56-112-name', "Find in a 112-button grid with a visible field of 56"); }
+        else if(level_step.id == 'find-112') { long_name = i18n.t('find-112-name', "Find in a field of 112"); }
+        else if(level_step.id == 'diff-2') { long_name = i18n.t('diff-2-name', "Discriminate in a field of 2"); }
+        else if(level_step.id == 'diff-3') { long_name = i18n.t('diff-3-name', "Discriminate in a field of 3"); }
+        else if(level_step.id == 'diff-4') { long_name = i18n.t('diff-4-name', "Discriminate in a field of 4"); }
+        else if(level_step.id == 'diff-8') { long_name = i18n.t('diff-8-name', "Discriminate in a field of 8"); }
+        else if(level_step.id == 'diff-15') { long_name = i18n.t('diff-15-name', "Discriminate in a field of 15"); }
+        else if(level_step.id == 'diff-6-24') { long_name = i18n.t('diff-6-24-name', "Discriminate in a 24-button grid with a visible field of 6"); }
+        else if(level_step.id == 'diff-24') { long_name = i18n.t('diff-24-name', "Discriminate in a field of 24"); }
+        else if(level_step.id == 'diff-6-60') { long_name = i18n.t('diff-6-60-name', "Discriminate in a 60-button grid with a visible field of 6"); }
+        else if(level_step.id == 'diff-15-60') { long_name = i18n.t('diff-15-60-name', "Discriminate in a 60-button grid with a visible field of 15"); }
+        else if(level_step.id == 'diff-30-60') { long_name = i18n.t('diff-30-60-name', "Discriminate in a 60-button grid with a visible field of 30"); }
+        else if(level_step.id == 'diff-60') { long_name = i18n.t('diff-60-name', "Discriminate in a field of 60"); }
+        else if(level_step.id == 'diff-6-112') { long_name = i18n.t('diff-6-112-name', "Discriminate in a 112-button grid with a visible field of 6"); }
+        else if(level_step.id == 'diff-28-112') { long_name = i18n.t('diff-28-112-name', "Discriminate in a 112-button grid with a visible field of 28"); }
+        else if(level_step.id == 'diff-56-112') { long_name = i18n.t('diff-56-112-name', "Discriminate in a 112-button grid with a visible field of 56"); }
+        else if(level_step.id == 'diff-112') { long_name = i18n.t('diff-112-name', "Discriminate in a field of 112"); }
+        else if(level_step.id == 'symbols-below') { long_name = '(' + library.key + ') ' + i18n.t('symbols-below-name', "Find symbol at a simpler-than-mastered grid size"); }
+        else if(level_step.id == 'symbols-at') { long_name = '(' + library.key + ') ' + i18n.t('symbols-at-name', "Find symbol at a mastered grid size"); }
+        else if(level_step.id == 'symbols-above') { long_name = '(' + library.key + ') ' + i18n.t('symbols-above-name', "Find symbol at a more difficult mastered grid size"); }
+        else if(level_step.id == 'noun-find') { long_name = i18n.t('noun-find-name', "Find nouns by name"); }
+        else if(level_step.id == 'adjective-find') { long_name = i18n.t('adjective-find-name', "Find adjectives by name"); }
+        else if(level_step.id == 'verb-find') { long_name = i18n.t('verb-find-name', "Find verbs by name"); }
+        else if(level_step.id == 'core-find') { long_name = i18n.t('core-find-name', "Find core words by name"); }
+        else if(level_step.id == 'core-find+') { long_name = i18n.t('core-find+-name', "Find core words by name on a larger grid size"); }
+        else if(level_step.id == 'open-core') { long_name = i18n.t('open-core-name', "Make observations about picture prompts using core words"); }
+        else if(level_step.id == 'open-keyboard') { long_name = i18n.t('open-keyboard-name', "Make observations about picture prompts using a keyboard"); }
+        else if(level_step.id == 'functional') { long_name = i18n.t('functional-name', "Find based on a prompt of functional usage"); }
+        else if(level_step.id == 'functional-association') { long_name = i18n.t('functional-association-name', "Find action for the named object"); }
+        else if(level_step.id == 'find-the-group') { long_name = i18n.t('find-the-group-name', "Find group for the named object or concept"); }
+        else if(level_step.id == 'what-kind') { long_name = i18n.t('what-kind-name', "Find object based on a photograph and group-based prompt"); }
+        else if(level_step.id == 'inclusion') { long_name = i18n.t('inclusion-name', "Find which belongs in the named category"); }
+        else if(level_step.id == 'exclusion') { long_name = i18n.t('exclusion-name', "Find which does not belong in the named category"); }
+        else if(level_step.id == 'association') { long_name = i18n.t('association-name', "Find which is associated with the named object"); }
+        else if(level_step.id == 'word-description') { long_name = i18n.t('word-description-name', "Find the word that matches the picture's name"); }
+        else if(level_step.id == 'word-category') { long_name = i18n.t('word-category-name', "Find the word that is a category the picture belongs to"); }
+        else if(level_step.id == 'word-descriptor') { long_name = i18n.t('word-descriptor-name', "Find the word that describes the picture"); }
+
+        var fail = step.find(function(e) { return e && e.fail; });
+        if(key == 'find_target' || key == 'diff_target') {
+          var size = step[0].rows * step[0].cols;
+          maxes[key] = maxes[key] || {size: 0};
+          if(maxes[key].size <= size && pct > assessment.mastery_cutoff && !fail) {
+            maxes[key] = {size: size, rows: step[0].rows, cols: step[0].cols, hin: step[0].hin, win: step[0].win};
+          }
+        }
+        if(fail) { accuracy_class = 'accuracy_non_mastered'; }
+
+        res.assessments.push({
+          accuracy_class: accuracy_class ? htmlSafe(accuracy_class) : null,
+          library: library,
+          fail: !!fail,
+          type: name,
+          name: long_name,
+          pct: pct * 100,
+          attempts: step.length,
+          avg_time: Math.round(full_time / Math.max(step.length, 1) / 1000 * 100) / 100
+        });
+      });
+    });
+    res.avg_response_time = Math.round(res.total_time / Math.max(res.hits, 1) / 1000 * 10) / 10;
+    res.avg_accuracy = Math.round(res.total_correct / Math.max(res.total_possibly_correct, 1) * 100);
+    res.duration = (assessment.ended ? (assessment.ended - assessment.started) : res.total_time) / 1000;
+
+    [[button_sizes, 'button_sizes'], [field_sizes, 'field_sizes'], [symbol_libraries, 'symbol_libraries']].forEach(function(ref) {
+      var items = ref[0];
+      var item_key = ref[1];
+      var list = [];
+      if(Object.keys(items).length > 0) {
+        for(var key in items) {
+          if(items[key].approximate) { res.approximate = true; }
+          if(items[key].possibly_correct > 0) {
+            var pct = Math.round(items[key].correct / items[key].possibly_correct * 100)
+            var item = {
+              count: items[key].cnt,
+              pct: pct,
+              fail: !!items[key].fail,
+              bar_class: htmlSafe('bar ' + (items[key].cnt > 10 ? 'confident ' : (items[key].cnt > 5) ? 'semi_confident ' : 'unconfident ') + (items[key].fail ? 'failure ' : '') + ((pct >= assessment.mastery_cutoff * 100) ? (pct >= 100 ? 'perfect' : 'mastered') : (pct <= assessment.non_mastery_cutoff * 100 ? 'non_mastered' : ''))),
+              bar_style: htmlSafe("margin-top: " + Math.min(100 - pct, 99) + "px; height: " + Math.max(1, pct) + "px;")
+            };  
+            if(item_key == 'field_sizes') {
+              maxes[item_key] = maxes[item_key] || {size: 0};
+              item.size = items[key].size;
+              item.name = "field of " + items[key].size;
+              item.title = pct + "% accuracy over " + items[key].possibly_correct + " trials";
+              if(item.fail) { item.title = item.title + " (stopped early from errors)"; }
+              if(pct >= assessment.mastery_cutoff * 100 && !item.fail) {
+                if(maxes[item_key]['size'] <= item.size) {
+                  maxes[item_key] = {size: item.size}                  
+                }
+              }
+            } else if(item_key == 'symbol_libraries') {
+              item.name = items[key].library;
+              item.title = pct + "% accuracy over " + items[key].possibly_correct + " trials";
+              item.avg_response = Math.round(items[key].time_tally / item.count / 1000 * 10) / 10;
+              if(items[key]) {
+                item.title = item.title + ", " + Ember.templateHelpers.seconds_ago(item.avg_response) + " avg. response time";
+              }
+              if(item.fail) { item.title = item.title + " (stopped early from errors)"; }
+            } else if(item_key == 'button_sizes') {
+              item.size = items[key].win * items[key].hin;
+              item.name = items[key].rows + " x " + items[key].cols + "\n" + (items[key].approximate ? '~' : '') + (Math.round(items[key].win * 10) / 10) + "\" x " + (Math.round(items[key].hin * 10) / 10) + "\"";
+              item.title = pct + "% accuracy over " + items[key].possibly_correct + " trials";
+              if(item.fail) { item.title = item.title + " (stopped early from errors)"; }
+            }
+            list.push(item);
+          }
+        }
+        list.forEach(function(i) { i.box_style = htmlSafe("width: " + (Math.floor(1000 / list.length) / 10) + "%;")});
+        if(item_key == 'button_sizes') {
+          list = list.sortBy('size').reverse();
+        } else if(item_key == 'field_sizes') {
+          list = list.sortBy('size');
+        } else if(item_key == 'symbol_libraries') {
+          // list = list;
+        }
+        res[item_key] = list;
+      }
+    });
+
     res.open_ended_sections = [];
+    for(var key in open_prompts) {
+      var list = open_prompts[key];
+      var parts = key.split(/::/);
+      var words = [];
+      var word = "";
+      var tally = 0;
+      list.forEach(function(event) {
+        tally = tally + event.time;
+        if(event.voc && event.voc.match(/^\+/)) {
+          word = word + event.voc.substring(1);
+        }
+        if(event.voc == ':space' || !event.voc) {
+          if(word) {
+            words.push(word);
+            word = "";
+          }
+          if(event.voc != ':space') {
+            words.push(event.lbl);
+          }
+        }
+      });
+      res.open_ended_sections.push({
+        prompt: parts[0],
+        step: parts[1],
+        sentence: words.join(' '),
+        avg_time: tally / Math.max(list.length, 1) / 1000
+      });
+    }
+
+    // TODO: open-ended sections shouldn't have an attempts tally
+    //         <!-- list of words/spelling for each prompt (check spelling against word list for accuracy), including total # of words -->
+    res.literacy_responses = [];
+    //       <!-- list of literacy words, including prompt and distractors -->
+    res.access_method = "Touch";
+    res.field = (maxes['field_sizes'] || {}).size || 0;
+    res.button_width = (maxes['diff_target'] || maxes['find_target'] || {}).win || 0;
+    res.button_height = (maxes['diff_target'] || maxes['find_target'] || {}).hin || 0;
+    res.grid_width = (maxes['diff_target'] || maxes['find_target'] || {}).rows || 0;
+    res.grid_height = (maxes['diff_target'] || maxes['find_target'] || {}).cols || 0; 
     return res;
   }
 };
@@ -41,14 +392,16 @@ var levels = [
     {id: 'find-4', rows: 1, cols: 4, distractors: false},
     {id: 'find-8', rows: 2, cols: 4, distractors: false},
     {id: 'find-15', rows: 3, cols: 5, distractors: false},
-    {id: 'find-12-24', rows: 4, cols: 6, distractors: false, spacing: 2},
-    {id: 'find-24', rows: 4, cols: 6, distractors: false},
-    {id: 'find-20-60', rows: 6, cols: 10, distractors: false, spacing: 3},
-    {id: 'find-30-60', rows: 6, cols: 10, distractors: false, spacing: 2},
-    {id: 'find-60', rows: 6, cols: 10, distractors: false, min_attempts: 4},
-    {id: 'find-28-112', rows: 8, cols: 14, distractors: false, spacing: 4},
-    {id: 'find-56-112', rows: 8, cols: 14, distractors: false, spacing: 2},
-    {id: 'find-112', rows: 8, cols: 14, distractors: false, min_attempts: 4},
+    {id: 'find-6-24', cluster: '24', rows: 4, cols: 6, distractors: false, spacing: 2},
+    {id: 'find-24', cluster: '24', rows: 4, cols: 6, distractors: false},
+    {id: 'find-6-60', cluster: '60', rows: 6, cols: 10, distractors: false, spacing: 3},
+    {id: 'find-15-60', cluster: '60', rows: 6, cols: 10, distractors: false, spacing: 2},
+    {id: 'find-30-60', cluster: '60', rows: 6, cols: 10, distractors: false, alternating: true},
+    {id: 'find-60', cluster: '60', rows: 6, cols: 10, distractors: false, min_attempts: 4},
+    {id: 'find-6-112', cluster: '112', rows: 8, cols: 14, distractors: false, spacing: 4},
+    {id: 'find-28-112', cluster: '112', rows: 8, cols: 14, distractors: false, spacing: 2},
+    {id: 'find-56-112', cluster: '112', rows: 8, cols: 14, distractors: false, alternating: true},
+    {id: 'find-112', cluster: '112', rows: 8, cols: 14, distractors: false, min_attempts: 4},
     // TODO: on the higher levels, also do continuous rows/continuous columns before everything
     // TODO: maybe make it more adaptive, when you get to the level
     //       they start to struggle on, go down in between that and the last level
@@ -60,15 +413,17 @@ var levels = [
     {id: 'diff-8', rows: 2, cols: 4, distractors: true},
     {id: 'diff-15', rows: 3, cols: 5, distractors: true},
     // lower_level means didn't really succeed above this point
-    {id: 'diff-12-24', rows: 4, cols: 6, distractors: true, spacing: 2},
-    {id: 'diff-24', rows: 4, cols: 6, distractors: true},
-    {id: 'diff-20-60', rows: 6, cols: 10, distractors: true, spacing: 3},
-    {id: 'diff-30-60', rows: 6, cols: 10, distractors: true, spacing: 2},
-    {id: 'diff-60', rows: 6, cols: 10, distractors: true},
-    {id: 'diff-28-112', rows: 8, cols: 14, distractors: true, spacing: 4},
-    {id: 'diff-56-112', rows: 8, cols: 14, distractors: true, spacing: 2},
-    // higher_level means < 3x increase in time on next step vs. previous
-    {id: 'diff-112-112', rows: 8, cols: 14, distractors: true},
+    {id: 'diff-6-24', cluster: '24', rows: 4, cols: 6, distractors: true, spacing: 2},
+    {id: 'diff-24', cluster: '24', rows: 4, cols: 6, distractors: true},
+    {id: 'diff-6-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 3},
+    {id: 'diff-15-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 2},
+    {id: 'diff-30-60', cluster: '60', rows: 6, cols: 10, distractors: true, alternating: true},
+    {id: 'diff-60', cluster: '60', rows: 6, cols: 10, distractors: true},
+    {id: 'diff-6-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 4},
+    {id: 'diff-28-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 2},
+    {id: 'diff-56-112', cluster: '112', rows: 8, cols: 14, distractors: true, alternating: true},
+    // higher_level means < 10x increase in time on next step vs. previous
+    {id: 'diff-112-112', cluster: '112', rows: 8, cols: 14, distractors: true},
   ], 
   // at this point, settle on a grid size that the user was 
   // really good with, maybe try occasionally bumping a little,
@@ -80,25 +435,27 @@ var levels = [
     {id: 'symbols-at', difficulty: 0, symbols: 'auto', distractors: true, min_attempts: 3},
     {id: 'symbols-above', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 3},
     // TODO: include text-only as a possible option
-  ],[
+  ],
+  // TODO: at this point if there is an obviously-better symbol library, start using it (unless explicitly told not to in the settings)
+  [
     {intro: 'find_shown'}, // lower grid of core words, find word at the top (with symbols)
     // TODO: when doing well, try removing the visual prompt
     {id: 'noun-find', find: 'noun', difficulty: -1, distractors: true, min_attempts: 4},
     {id: 'adjective-find', find: 'adjective', difficulty: -1, distractors: true, min_attempts: 4},
     {id: 'verb-find', find: 'verb', difficulty: -1, distractors: true, min_attempts: 4},
     {id: 'core-find', core: true, find: 'core', difficulty: 0, distractors: true, min_attempts: 3},
-    {id: 'core-find', core: true, find: 'core', difficulty: 1, distractors: true, min_attempts: 3},
+    {id: 'core-find+', core: true, find: 'core', difficulty: 1, distractors: true, min_attempts: 3},
   ], [
     {intro: 'open_ended'}, // open-ended commenary on pictures, only up to observed proficiency level
-    {id: 'open-1', core: true, difficulty: 1, distractors: true, prompts: [
-      {url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+    {id: 'open-core', core: true, difficulty: 1, distractors: true, prompts: [
+      {id: 'kid1', url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kid2', url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kid3', url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
     ]}, // allow cycling through while staying on the same step
     {id: 'open-keyboard', core: true, keyboard: true, prompts: [
-      {url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kid4', url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kid5', url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kid6', url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
     ]}
   ], [
     {intro: 'categories', continue_on_non_mastery: true}, 
@@ -489,7 +846,13 @@ evaluation.callback = function(key) {
   // TODO: prevent home button navigation during an eval
   var opts = key.split(/-/);
   if(opts[1] == 'start') {
-    assessment = {};
+    assessment = {
+      mastery_cutoff: mastery_cutoff,
+      non_mastery_cutoff: non_mastery_cutoff,
+      attempt_minimum: attempt_minimum,
+      attempt_maximum: attempt_maximum,
+      ppi: window.ppi
+    };
     working = {step: 0};
   } else if(!working || working.step == undefined) {
     board = obf.shell(1, 1);
@@ -501,12 +864,14 @@ evaluation.callback = function(key) {
     return res;
   }
   window.assessment = assessment;
+  window.working = working;
   working.level = working.level || 0;
   assessment.started = (new Date()).getTime();
   var level = levels[working.level];
   var step = level[working.step];
   if(working.step == 0) {
     board = obf.shell(3, 6);
+    board.key = 'obf/eval';
     if(step.continue_on_non_mastery) {
       level.continue_on_non_mastery = true;
     }
@@ -516,25 +881,25 @@ evaluation.callback = function(key) {
     working.ref = working.ref || {};
     working.ref.prompt_index = null;
     if(step.intro == 'intro') {
-      board.background_text = "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.";
+      board.background_text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.");
     } else if(step.intro == 'find_target') {
-      board.background_text = "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.";
+      board.background_text = i18n.t('find_target_intro', "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.");
     } else if(step.intro == 'diff_target') {
-      board.background_text = "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.";
+      board.background_text = i18n.t('diff_target_intro', "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.");
     } else if(step.intro == 'symbols') {
-      board.background_text = "This next evaluation will use different styles of pictures to see if the user has more success with one style over another";
+      board.background_text = i18n.t('symbols_intro', "This next evaluation will use different styles of pictures to see if the user has more success with one style over another");
     } else if(step.intro == 'find_shown') {
-      board.background_text = "Now the evaluation will show a photograph or concept and have the user find the corresponding symbol below";
+      board.background_text = i18n.t('find_show_intro', "Now the evaluation will show a photograph or concept and have the user find the corresponding symbol below");
     } else if(step.intro == 'open_ended') {
-      board.background_text = "Next the evaluation will show simple photographs. Encourage the user to make observations or discuss the picture using the buttons or keys provided";
+      board.background_text = i18n.t('open_ended_intro', "Next the evaluation will show simple photographs. Encourage the user to make observations or discuss the picture using the buttons or keys provided");
     } else if(step.intro == 'categories') {
-      board.background_text = "The next evaluation will focus on classifying items based on their category";
+      board.background_text = i18n.t('categories_intro', "The next evaluation will focus on classifying items based on their category");
     } else if(step.intro == 'inclusion_exclusion_association') {
-      board.background_text = "Next the evaluation will prompt for related or unrelated items for the user to try to match or identify";
+      board.background_text = i18n.t('inclusion_exclusion_association_intro', "Next the evaluation will prompt for related or unrelated items for the user to try to match or identify");
     } else if(step.intro == 'literacy') {
-      board.background_text = "This next evaluation will show an image and a list of possible words (without images) to check for reading skills";
+      board.background_text = i18n.t('literacy_intro', "This next evaluation will show an image and a list of possible words (without images) to check for reading skills");
     } else if(step.intro == 'done') {
-      board.background_text = "Done! Hit the final button to save the evaluation and see the results!";
+      board.background_text = i18n.t('done_eval', "Done! Hit the final button to save the evaluation and see the results!");
     }
     level.libraries_used = {
       'default': true
@@ -564,39 +929,46 @@ evaluation.callback = function(key) {
           });
           var avg_time = (time_tally / step.length);
           var avg_correct = (correct_tally / step.length)
-          if(size >= 3 && avg_correct > mastery_cutoff) {
-            max_level = Math.max(max_level, 0);
-          } else if(size >= 16 && avg_correct > mastery_cutoff) {
-            max_level = Math.max(max_level, 1);
-          } else if(size >= 110 && avg_correct > mastery_cutoff && last_avg_time && avg_time < (last_avg_time * 3)) {
+          if(size >= 110 && avg_correct > assessment.mastery_cutoff && last_avg_time && avg_time < (last_avg_time * 10)) {
             max_level = Math.max(max_level, 2);
+          } else if(size >= 16 && avg_correct > assessment.mastery_cutoff) {
+            max_level = Math.max(max_level, 1);
+          } else if(size >= 3 && avg_correct > assessment.mastery_cutoff) {
+            max_level = Math.max(max_level, 0);
           }
           last_avg_time = avg_time;
         });
         working.skill = max_level;
       }
     }
+    console.log("skill level", working.skill);
     if(step.intro == 'done') {
       board.add_button({
-        label: "Save",
+        label: "save",
         id: 'button_save',
-        skip_vocalization: true
+        skip_vocalization: true,
+        image: {url: words.find(function(w) { return w.label == 'done'; }).urls['default']},
       }, 2, 5);
     } else {
       board.add_button({
         label: step.intro == 'intro' ? 'next' : 'start',
         id: 'button_start',
-        skip_vocalization: true
+        skip_vocalization: true,
+        image: {url: words.find(function(w) { return w.label == 'go'; }).urls['default']},
       }, 2, 5);
       if(step.intro == 'intro') {
-        // TODO: add buttons for options:
-        // 1. try text-only/keyboard options
-        // 2. 
+        board.add_button({
+          label: 'settings',
+          id: 'button_settings',
+          skip_vocalization: true,
+          image: {url: words.find(function(w) { return w.label == 'think'; }).urls['default']},
+        }, 2, 0);
       } else {
         board.add_button({
           label: 'skip',
           id: 'button_skip',
-          skip_vocalization: true
+          skip_vocalization: true,
+          image: {url: words.find(function(w) { return w.label == 'right'; }).urls['default']},
         }, 2, 4);
       }
     }
@@ -611,22 +983,21 @@ evaluation.callback = function(key) {
           }
           app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
           app_state.set_history([]);
+        } else if(button.id == 'button_settings') {
+          modal.open('modals/assessment-settings');
         } else if(button.id == 'button_skip') {
           working.step = 0;
           working.level++;          
           app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
           app_state.set_history([]);
         } else if(button.id == 'button_save') {
-          alert('save!');
-          app_state.set('last_assessment', assessment);
-          assessment = {};
-          // save the evaluation
-          // navigate to the results page (should work even if offline and haven't been able to push yet)
+          eval.conclude();
         }
       }
       return {ignore: true, highlight: false};
     };
   } else {
+    console.log("step", step.id, working)
     var step_rows = step.rows, step_cols = step.cols;
     if(step.symbols == 'auto' && !level.current_library) {
       level.more_libraries = false;
@@ -641,6 +1012,8 @@ evaluation.callback = function(key) {
           found = true;
         }
       });
+    } else if(assessment.library) {
+      level.current_library = assessment.library;
     }
     var library = level.current_library || 'default';
     if(library == 'photos' && step.find) {
@@ -776,7 +1149,7 @@ evaluation.callback = function(key) {
       }
     }
     board = obf.shell(step_rows, step_cols);
-    var prompt = words.find(function(w) { return w.label == 'cat'; });
+    var prompt = words.find(function(w) { return w.label == (assessment.label || 'cat'); });
     var distractor_words = words.filter(function(w) { return w.label && w.type && w.type != 'filler'; });
 
     if(step.find) {
@@ -982,7 +1355,8 @@ evaluation.callback = function(key) {
         assert('spelling');
         assert('groups');
         working.ref.literacy_used = working.ref.literacy_used || {};
-        var spelling_words = working.ref.all_group_words.filter(function(w) { return w.category && w.category != 'filler' && w.urls['photos'] && !working.ref.literacy_used[w.label]; });
+        // don't use colors for this exercise, it's too abstract
+        var spelling_words = working.ref.all_group_words.filter(function(w) { return w.category && w.category != 'filler' && w.category != 'color' && w.urls['photos'] && !working.ref.literacy_used[w.label]; });
         if(spelling_words.length == 0) { working.ref.all_group_words.filter(function(w) { return w.urls['photos']; }) }
         var word = spelling_words[Math.floor(Math.random() * spelling_words.length)];
         var category = working.ref.groups.find(function(g) { return g.group == word.category; });
@@ -1013,9 +1387,9 @@ evaluation.callback = function(key) {
       prompt = filtered[Math.floor(Math.random() * filtered.length)];
       prompt_text = prompt_text || "Find " + prompt.label;
       core_list[prompt.label] = true;
-      var not_nailed_yet = (assessment.attempts || 0) < 2 || (assessment.correct / assessment.attempts) < 0.65;
-      var none_yet = (assessment.correct || 0) == 0;
-      if(step.always_visual || not_nailed_yet || assessment.attempts < 15) {
+      var not_nailed_yet = (working.attempts || 0) < 2 || (working.correct / working.attempts) < 0.65;
+      var none_yet = (working.correct || 0) == 0;
+      if(step.always_visual || not_nailed_yet || working.attempts < 15) {
         board.background_image_url = board.background_image_url || prompt.urls['photos'] || prompt.urls['default'];
         if(none_yet) {
           board.background_text = prompt_text;
@@ -1072,7 +1446,7 @@ evaluation.callback = function(key) {
       }, 1, step_cols - 1);
     } else {
       board.background_position = "stretch";
-      board.background_text = "Find the " + prompt.label;
+      // board.background_text = "Find the " + prompt.label;
       board.background_prompt = {
         text: "Find the " + prompt.label,
         loop: true
@@ -1080,10 +1454,11 @@ evaluation.callback = function(key) {
     }
     var loc = null;
     var spacing = step.spacing || 1;
-    var rows = step_rows / spacing - skip_rows;
-    var cols = step_cols / spacing;
-    var offset = (assessment.attempts || 0) % spacing;
-    var events = (((assessment.events || [])[working.level_id] || [])[working.step] || []);
+    var alternating = step.alternating || false;
+    var rows = Math.floor(step_rows / spacing) - skip_rows;
+    var cols = Math.floor(step_cols / spacing);
+    var offset = (working.attempts || 0) % spacing;
+    var events = (((assessment.events || {})[working.level_id] || [])[working.step] || []);
     var prior = events[events.length - 1];
     var resets = 0;
     var sample_rand = Math.random();
@@ -1119,20 +1494,41 @@ evaluation.callback = function(key) {
         if(spaced_col > 0 && spaced_col == Math.round(spaced_col)) {
           sample.col = spaced_col;
         }
+        if(alternating) {
+          if(sample.col % 2 != sample.row % 2) {
+            sample.row = null;
+            sample.col = null;
+          }
+        }
       }
     }
     if(sample && sample.in) {
       // try to render near the target(s)
       loc = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
-      if(sample.col && (sample.type == 'x' || sample.type == 'xy')) {
-        loc[1] = sample.col;
-      }
-      if(sample.row && (sample.type == 'y' || sample.type == 'xy')) {
-        loc[0] = sample.row;
+      if(alternating) {
+        if(sample.type == 'xy' && sample.row && sample.col) {
+          loc[0] = sample.row;
+          loc[1] = sample.col;
+        }
+      } else {
+        if(sample.col && (sample.type == 'x' || sample.type == 'xy')) {
+          loc[1] = sample.col;
+        }
+        if(sample.row && (sample.type == 'y' || sample.type == 'xy')) {
+          loc[0] = sample.row;
+        }
       }
     }
     while(!loc || (prior && loc[0] == prior.crow && loc[1] == prior.ccol)) {
       loc = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
+      if(alternating && loc[1] % 2 != loc[0] % 2) {
+        // force onto alternating spot if possible
+        if(loc[1] < step_cols - 2) {
+          loc[1]++;
+        } else {
+          loc[1]--;
+        }
+      }
       var q = (loc[0] < (rows / 2) ? 0 : 1) + (loc[1] < (cols / 2) ? 0 : 2);
       // try (but not too hard) to jump to a different quadrant
       if(resets < 3 && prior && prior.q == q) {
@@ -1150,7 +1546,8 @@ evaluation.callback = function(key) {
         }
       }
     }
-    if(step_rows * step_cols > 8) {
+    working.edge = null;
+    if(step_rows * step_cols > 8 && !alternating) {
       working.big_hits = (working.big_hits || 0) + 1;
       var edge_cutoff = Math.floor(working.big_hits / 10);
       if(working.n_cnt < 2 || working.s_cnt < 2 || working.e_cnt < 2 || working.w_cnt < 2) {
@@ -1159,12 +1556,16 @@ evaluation.callback = function(key) {
         edge_cutoff = Math.floor(working.big_hits / 3);
       }
       if(working.n_cnt < edge_cutoff) {
+        working.edge = 'n';
         loc[0] = 0;
       } else if(((rows - 1) * spacing) + offset + skip_rows == step_rows - 1 && working.s_cnt < edge_cutoff) {
+        working.edge = 's';
         loc[0] = rows - 1;
       } else if(working.w_cnt < edge_cutoff) {
+        working.edge = 'w';
         loc[1] = 0;
       } else if(((cols - 1) * spacing) + offset == step_cols - 1 && working.e_cnt < edge_cutoff) {
+        working.edge = 'e';
         loc[1] = cols - 1;
       }
     }
@@ -1200,51 +1601,55 @@ evaluation.callback = function(key) {
     var used_words = {};
     for(var idx = 0; idx < rows; idx++) {
       for(var jdx = 0; jdx < cols; jdx++) {
-        var word = null, letter = null;;
-        if(step.keyboard) {
-          letter = core[idx][jdx];
-        } else if(step.distractors) {
-          if(core.length > 0) {
-            var word = core[idx][jdx];
-            word = words.find(function(w) { return w.label == word; });
-            if(!word) { debugger }
-            used_words[word.label] = true;
-          } else {
-            var unused = distractor_words.filter(function(w) { return w != prompt && !used_words[w.label]; });
-            var fails = 0;
-            var tries = 0;
-            while(tries < 20 && (!word || used_words[word.label] || !(word && (word.urls[library] || word.urls['default'])))) {
-              tries++;
-              var maybe = unused;
-              if(step.find) {
-                // show a slight preference for words of the same type/category
-                maybe = unused.filter(function(w) { return w.type == prompt.type && (w.category == prompt.category || (Math.random() < 0.5))});
-              }
-              if(maybe.length == 0) { maybe = unused; }
-              word = maybe[Math.floor(Math.random() * maybe.length)];
-              if(step.literacy && typeof(word) == 'string') {
-                word = {label: word, urls: {'default': 'na'}};
-              }
-              if(!step.find && word && word.category == prompt.category && fails < 3 && tries < 15) {
-                word = null;
-                fails++;
-              }
-            }
-            used_words[word.label] = true;
-          }
-        }
-        if(letter) {
-          board.add_button({
-            label: letter,
-            vocalization: letter == '_' ? ':space' : '+' + letter,
-            image: null,
-          }, idx * spacing + offset + skip_rows, jdx * spacing + offset)            
+        if(alternating && jdx % 2 != idx % 2) {
+          // skip every other when alternating
         } else {
-          board.add_button({
-            label: !step.distractors ? '' : word.label,
-            skip_vocalization: !step.prompts,
-            image: !step.distractors ? null : {url: word.urls[library] || word.urls['default']},
-          }, idx * spacing + offset + skip_rows, jdx * spacing + offset)  
+          var word = null, letter = null;;
+          if(step.keyboard) {
+            letter = core[idx][jdx];
+          } else if(step.distractors) {
+            if(core.length > 0) {
+              var word = core[idx][jdx];
+              word = words.find(function(w) { return w.label == word; });
+              if(!word) { debugger }
+              used_words[word.label] = true;
+            } else {
+              var unused = distractor_words.filter(function(w) { return w != prompt && !used_words[w.label]; });
+              var fails = 0;
+              var tries = 0;
+              while(tries < 20 && (!word || used_words[word.label] || !(word && (word.urls[library] || word.urls['default'])))) {
+                tries++;
+                var maybe = unused;
+                if(step.find) {
+                  // show a slight preference for words of the same type/category
+                  maybe = unused.filter(function(w) { return w.type == prompt.type && (w.category == prompt.category || (Math.random() < 0.5))});
+                }
+                if(maybe.length == 0) { maybe = unused; }
+                word = maybe[Math.floor(Math.random() * maybe.length)];
+                if(step.literacy && typeof(word) == 'string') {
+                  word = {label: word, urls: {'default': 'na'}};
+                }
+                if(!step.find && word && word.category == prompt.category && fails < 3 && tries < 15) {
+                  word = null;
+                  fails++;
+                }
+              }
+              used_words[word.label] = true;
+            }
+          }
+          if(letter) {
+            board.add_button({
+              label: letter,
+              vocalization: letter == '_' ? ':space' : '+' + letter,
+              image: null,
+            }, idx * spacing + offset + skip_rows, jdx * spacing + offset)            
+          } else {
+            board.add_button({
+              label: !step.distractors ? '' : word.label,
+              skip_vocalization: !step.prompts,
+              image: !step.distractors ? null : {url: word.urls[library] || word.urls['default']},
+            }, idx * spacing + offset + skip_rows, jdx * spacing + offset)  
+          }
         }
       }
     }
@@ -1253,18 +1658,24 @@ evaluation.callback = function(key) {
       obj = obj || {};
       var r = -1, c = -1;
       var cr = -1, cc = -1;
+      var skip_event = false;
       if(button.id == 'button_repeat') {
         speecher.speak_text(button.vocalization, false, {alternate_voice: speecher.alternate_voice});
+        skip_event = true;
         runLater(function() {
           utterance.clear();
         });
         return {ignore: true, highlight: false, sound: false};
       } else if(button.id == 'button_next') {
+        skip_event = true;
         working.ref.prompt_index++;
         if(working.ref.prompt_index >= step.prompts.length) { working.ref.prompt_index = 0; }
       } else if(button.id == 'button_prev') {
+        skip_event = true;
         working.ref.prompt_index--;
         if(working.ref.prompt_index < 0) { working.ref.prompt_index = step.prompts.length - 1; }
+      } else if(button.id == 'button_done') {
+        skip_event = true;
       }
       if(working.ref.prompt_index != null) {
         var prompt = step.prompts[working.ref.prompt_index];
@@ -1306,42 +1717,67 @@ evaluation.callback = function(key) {
         // ding, wait, then jump!
         if(!step.prompts) {
           speecher.click(button.id == 'button_correct' ? 'ding' : null);
-          assessment.attempts = (assessment.attempts || 0) + 1;
-          assessment.correct = (assessment.correct || 0);
+          working.attempts = (working.attempts || 0) + 1;
+          working.correct = (working.correct || 0);
         } else if(button.id == 'button_done') {
           speecher.click();          
         }
-        assessment.events = assessment.events || [];
+        assessment.events = assessment.events || {};
         assessment.events[working.level_id] = assessment.events[working.level_id] || [];
         assessment.events[working.level_id][working.step] = assessment.events[working.level_id][working.step] || [];
         var e = {
           rows: button.board.get('grid.rows'),
           cols: button.board.get('grid.columns'),
-          vsize: (rows * cols),
+          vsize:$(".button:not(.empty)").length, // Math.round(rows * cols / (alternating ? 2 : 1)),
+          pctx: obj.percent_x,
+          pcty: obj.percent_y,
           srow: r,
           scol: c,
-          crow: cr,
           library: library,
-          ccol: cc,
           q: (cr < (button.board.get('grid.rows') / 2) ? 0 : 1) + ((cc < (button.board.get('grid.columns') / 2) ? 0 : 2)),
-          correct: button.id == 'button_correct',
           time: time_to_select
         };
-        if(step.prompts && step.core) {
-          e.label = button.get('label');
-          e.prompt = 'some_prompt';
+        if(assessment.events[working.level_id][working.step].length == 0) {
+          e.id = step.id;
+        }
+        var btn = $(".button:visible")[0];
+        if(btn && window.ppi) {
+          var rect = btn.getBoundingClientRect();
+          e.win = Math.round(rect.width / (window.ppix || window.ppi) * 100) / 100;
+          e.hin = Math.round(rect.height / (window.ppiy || window.ppi) * 100) / 100;
+          if(!window.ppix || !window.ppiy) {
+            e.approxin = true;
+          }
+        }
+        if(step.prompts) {
+          e.lbl = button.label;
+          e.voc = button.vocalization;
+        } else { // if has_correct_answer
+          e.correct = button.id == 'button_correct';
+          e.crow = cr;
+          e.ccol = cc;
+        }
+        if(step.prompts && step.core && working.ref.prompt_index != null) {
+          var prompt = step.prompts[working.ref.prompt_index];
+          if(prompt) {
+            e.label = button.get('label');
+            e.prompt = prompt.id;
+          }
           // note the name/label/whatever for the current prompt
         }
         if(spacing > 0) {
           e.gap = spacing;
           e.offset = offset;
         }
+        if(alternating) {
+          e.alt = true;
+        }
         if(skip_rows) {
           e.skiprow = skip_rows;
         }
         assessment.events[working.level_id][working.step].push(e);
         if(button.id == 'button_correct') {
-          assessment.correct++;
+          working.correct++;
         } 
         var has_correct_button = true;
         if(step.prompts) {
@@ -1449,17 +1885,19 @@ evaluation.callback = function(key) {
           }, 500);
         }
         var next_step = false;
-        if(assessment.attempts >= (step.min_attempts || attempt_minimum) && assessment.correct / assessment.attempts >= mastery_cutoff) {
+        if(working.attempts >= (step.min_attempts || assessment.attempt_minimum) && working.correct / working.attempts >= assessment.mastery_cutoff) {
           next_step = true;
           working.fails = 0;
-        } else if(assessment.attempts > 1 && assessment.attempts >= (step.min_attempts || attempt_minimum) && assessment.correct / assessment.attempts <= non_mastery_cutoff) {
+        } else if(working.attempts > 1 && working.attempts >= (step.min_attempts || assessment.attempt_minimum) && working.correct / working.attempts <= assessment.non_mastery_cutoff) {
           working.fails = (working.fails || 0) + 1;
+          e.fail = true;  
           next_step = true;
-        } else if(assessment.attempts >= attempt_maximum && assessment.attempts >= step.min_attempts) {
+        } else if(working.attempts >= assessment.attempt_maximum && working.attempts >= step.min_attempts) {
           working.fails = (working.fails || 0) + 1;
           next_step = true;
         } else if(button.id == 'button_done') {
           next_step = true;
+          working.fails = 0;
         }
         var short_circuit = false;
         if(working.fails >= Math.max(2, (step.min_attempts || 0) * 0.75)) {
@@ -1471,8 +1909,15 @@ evaluation.callback = function(key) {
         if(next_step) {
           // next step
           working.step++;
-          assessment.attempts = 0;
-          assessment.correct = 0;
+          working.attempts = 0;
+          working.correct = 0;
+          if(step.cluster && short_circuit) {
+              while(levels[working.level][working.step] && levels[working.level][working.step].cluster == step.cluster) {
+              working.step++;              
+            }
+            working.fails = 1;
+            short_circuit = false;
+          }
           if(short_circuit || !levels[working.level][working.step]) {
             // next level
             working.step = 0;
@@ -1487,7 +1932,7 @@ evaluation.callback = function(key) {
         }
         if(!step.prompts || next_step) {
           runLater(function() {
-            app_state.jump_to_board({key: 'obf/eval-' + working.level + "-" + working.step + "-" + assessment.attempts});
+            app_state.jump_to_board({key: 'obf/eval-' + working.level + "-" + working.step + "-" + working.attempts});
             app_state.set_history([]);  
             utterance.clear();
           }, button.id == 'button_done' ? 200 : 1000);

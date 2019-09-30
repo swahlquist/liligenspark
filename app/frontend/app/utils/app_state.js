@@ -2281,6 +2281,9 @@ var app_state = EmberObject.extend({
       }
     }
   },
+  eval_mode: function() {
+    return (this.get('currentBoardState.key') || '').match(/^obf\/eval/);
+  }.property('currentBoardState.key'),
   launch_url: function(button, force, board) {
     var _this = this;
     if(!force && _this.get('currentUser.preferences.external_links') == 'confirm_all') {
