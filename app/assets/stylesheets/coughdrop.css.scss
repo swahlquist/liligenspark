@@ -857,6 +857,9 @@ tr.accuracy_non_mastered {
     animation: throb 1.5s ease-in-out infinite;
   }
 }
+.button_list.text_only {
+  max-width: none;
+}
 .cursor_holder {
   position: relative;
   .cursor_navigation {
