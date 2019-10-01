@@ -769,6 +769,7 @@ var buttonTracker = EmberObject.extend({
           elem_wrap = null;
         } else if(buttonTracker.clear_on_wiggle && !swipe_direction) {
           swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations || []);
+          if(swipe_direction != 'clear') { swipe_direction = null; }
         }
       }
       if(swipe_direction == 'clear' && buttonTracker.clear_on_wiggle) {

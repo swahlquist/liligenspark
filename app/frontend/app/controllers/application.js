@@ -997,7 +997,7 @@ export default Controller.extend({
       };
       if(options.overlay_location) {
         obj.overlay_location = options.overlay_location;
-      } else if(options.event && options.event.swipe_direction) {
+      } else if(options.event && options.event.swipe_direction && options.swipe_direction != 'clear') {
         obj.swipe_location = options.event.swipe_direction;
         var grid = editManager.grid_for(button.id);
         var inflection = (grid || []).find(function(i) { return i.location == options.event.swipe_direction; });
