@@ -984,7 +984,7 @@ var persistence = EmberObject.extend({
               if(svg && blob.size > svg.length) { console.error('blob generation caused double-content'); }
               // For some reason, writing to an existing file that is larger than what
               // is to be written doesn't properly end the file at the shorter point. Maybe I'm doing something wrong?
-              capabilities.storage.remove_file(type, local_system_filename).then(null, function() { return RSVP.resolve(); }).then(function() {
+              var then_write = function() {
                 capabilities.storage.write_file(type, local_system_filename, blob).then(function(res) {
                   object.data_uri = null;
                   object.local_filename = local_system_filename;
@@ -993,7 +993,8 @@ var persistence = EmberObject.extend({
                   object.url = url_id;
                   write_resolve(persistence.store('dataCache', object, object.url));
                 }, function(err) { write_reject(err); });
-              });
+              };
+              capabilities.storage.remove_file(type, local_system_filename).then(then_write, then_write);
             });
           } else {
             return object;
@@ -1827,7 +1828,8 @@ var persistence = EmberObject.extend({
               visited_boards.push(id);
 
               if(board.get('icon_url_with_fallback').match(/^http/)) {
-                  // store_url already has a queue, we don't need to fill the sync queue with these
+                console.log("BRD", "storing icon_url_with_fallback", key);
+                // store_url already has a queue, we don't need to fill the sync queue with these
                 visited_board_promises.push(persistence.store_url(board.get('icon_url_with_fallback'), 'image', false, force, true).then(null, function() {
                   console.log("icon url failed to sync, " + board.get('icon_url_with_fallback'));
                   return RSVP.resolve();
@@ -1835,6 +1837,7 @@ var persistence = EmberObject.extend({
                 importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
               }
               if((board.get('background_image_url') || '').match(/^http/)) {
+                console.log("BRD", "storing background_imageE_url", key);
                 visited_board_promises.push(persistence.store_url(board.get('background_image_url'), 'image', true, force, true).then(null, function() {
                   console.log("bg url failed to sync, " + board.get('background_image_url'));
                   return RSVP.resolve();
@@ -1842,6 +1845,7 @@ var persistence = EmberObject.extend({
                 importantIds.push("dataCache_" + board.get('background_image_url'));
               }
               if((board.get('background_prompt.sound_url') || '').match(/^http/)) {
+                console.log("BRD", "storing background sound url", key);
                 visited_board_promises.push(persistence.store_url(board.get('background_prompt.sound_url'), 'sound', true, force, true).then(null, function() {
                   console.log("bg sound url failed to sync, " + board.get('background_prompt.sound_url'));
                   return RSVP.resolve();
@@ -1851,6 +1855,7 @@ var persistence = EmberObject.extend({
               console.log("BRD", "links being stored", key);
 
               if(next.image) {
+                console.log("BRD", "storing sidebar icon url", key);
                 visited_board_promises.push(//persistence.queue_sync_action('store_sidebar_image', function() {
                   /*return*/ persistence.store_url(next.image, 'image', false, force, true).then(null, function() {
                     return RSVP.reject({error: "sidebar icon url failed to sync, " + next.image});
@@ -1870,6 +1875,7 @@ var persistence = EmberObject.extend({
                     personalized = CoughDrop.Image.personalize_url(image.url, user.get('user_token'));
                   }
 
+                  console.log("BRD", "storing image url", key, personalized);
                   visited_board_promises.push(//persistence.queue_sync_action('store_button_image', function() {
                     /*return*/ persistence.store_url(personalized, 'image', keep_big, force, true).then(null, function() {
                       return RSVP.reject({error: "button image failed to sync, " + image.url});
