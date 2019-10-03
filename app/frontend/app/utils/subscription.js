@@ -678,9 +678,11 @@ document.addEventListener("deviceready", function() {
         if(!product.transaction) {
           var now = (new Date()).getTime();
           if(!Subscription.in_app_store.checked_for_transaction || (now - Subscription.in_app_store.checked_for_transaction) > (5 * 60 * 1000)) {
-            Subscription.in_app_store.last_refresh = (new Date()).getTime();
-            console.log("app store refresh due to subscription update");
-            Subscription.in_app_store.refresh();
+            if(now - Subscription.in_app_store.last_refresh > (30 * 1000)) {
+              Subscription.in_app_store.last_refresh = (new Date()).getTime();
+              console.log("app store refresh due to subscription update");
+              Subscription.in_app_store.refresh();
+            }
           }
           Subscription.in_app_store.checked_for_transaction = now;
         } else {
