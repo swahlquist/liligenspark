@@ -208,8 +208,9 @@ var Subscription = EmberObject.extend({
   }.property('app_pricing_override'),
   refresh_store: function(force) {
     if(Subscription.in_app_store) {
-      if(force || !Subscription.in_app_store.last_refresh || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
+      if(force || !Subscription.in_app_store.last_refresh) { // || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
         Subscription.in_app_store.last_refresh = (new Date()).getTime();
+        console.log("app store refresh due to external call", force);
         Subscription.in_app_store.refresh();
       }
     }
@@ -678,11 +679,12 @@ document.addEventListener("deviceready", function() {
           var now = (new Date()).getTime();
           if(!Subscription.in_app_store.checked_for_transaction || (now - Subscription.in_app_store.checked_for_transaction) > (5 * 60 * 1000)) {
             Subscription.in_app_store.last_refresh = (new Date()).getTime();
+            console.log("app store refresh due to subscription update");
             Subscription.in_app_store.refresh();
           }
           Subscription.in_app_store.checked_for_transaction = now;
         } else {
-          Subscription.in_app_store.validator(Subscription.product_types[purchase_id], function(success, data) {
+          Subscription.in_app_store.validator(Subscription.product_types[subscription_id], function(success, data) {
             if(!success && data.code == store.PURCHASE_EXPIRED) {
               app_state.get('sessionUser').reload(true);
             }
@@ -716,16 +718,23 @@ document.addEventListener("deviceready", function() {
         alias: 'App Pre-Purchase',
         type: store.NON_CONSUMABLE
       });
-      store.last_refresh = (new Date()).getTime();
-      store.refresh();
+      if(!store.last_refresh) {
+        store.last_refresh = (new Date()).getTime();
+        console.log("app store refresh due to init");
+        store.refresh();
+      }
     }, function(err) {
       console.error("bundle id not found", err);
-      store.last_refresh = (new Date()).getTime();
-      store.refresh();
+      if(!store.last_refresh) {
+        store.last_refresh = (new Date()).getTime();
+        console.log("app store refresh due to init");
+        store.refresh();
+      }
     });
     document.addEventListener("resume", function() {
       if(Subscription.in_app_store && Subscription.in_app_store.defer) {
         store.last_refresh = (new Date()).getTime();
+        console.log("app store refresh due to returning to app");
         store.refresh();
       }
     }, false);
