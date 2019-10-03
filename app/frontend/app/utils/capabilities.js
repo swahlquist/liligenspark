@@ -742,7 +742,7 @@ var capabilities;
               promise.resolve({
                 free: result,
                 mb: Math.round(result / 1024 / 1024),
-                gb: Math.round(result * 100 / 1024 / 1024 / 1024 / 1024) * 100
+                gb: Math.round(result * 100 / 1024 / 1024 / 1024) / 100
               });
             }, function(error) {
               promise.reject({error: error});

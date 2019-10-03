@@ -6,6 +6,8 @@ import { later as runLater } from '@ember/runloop';
 import $ from 'jquery';
 import speecher from '../utils/speecher';
 import modal from '../utils/modal';
+import coughDropExtras from '../utils/extras';
+import app_state from '../utils/app_state';
 import stashes from '../utils/_stashes';
 import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';

@@ -6,6 +6,7 @@ import CoughDrop from '../app';
 import speecher from '../utils/speecher';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
+import coughDropExtras from '../utils/extras';
 import editManager from '../utils/edit_manager';
 import progress_tracker from '../utils/progress_tracker';
 import capabilities from '../utils/capabilities';

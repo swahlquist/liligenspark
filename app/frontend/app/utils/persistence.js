@@ -1138,7 +1138,7 @@ var persistence = EmberObject.extend({
 
       if(window.app_state) {
         window.app_state.check_free_space().then(function(res) {
-          if(res.too_little) {
+          if(res && res.too_little) {
             modal.error(i18n.t('too_little_free_space', "Your device is almost out of free space, you may need to delete some data to make room for CoughDrop"));
           }
         }, function() { });
