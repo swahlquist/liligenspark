@@ -208,7 +208,7 @@ var Subscription = EmberObject.extend({
   }.property('app_pricing_override'),
   refresh_store: function(force) {
     if(Subscription.in_app_store) {
-      if(force || !Subscription.in_app_store.last_refresh) { // || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
+      if(force) { // || !Subscription.in_app_store.last_refresh) { // || Subscription.in_app_store.last_refresh < ((new Date()).getTime() - (5 * 60 * 1000))) {
         Subscription.in_app_store.last_refresh = (new Date()).getTime();
         console.log("app store refresh due to external call", force);
         Subscription.in_app_store.refresh();
@@ -681,7 +681,7 @@ document.addEventListener("deviceready", function() {
             if(now - Subscription.in_app_store.last_refresh > (30 * 1000)) {
               Subscription.in_app_store.last_refresh = (new Date()).getTime();
               console.log("app store refresh due to subscription update");
-              Subscription.in_app_store.refresh();
+               Subscription.in_app_store.refresh();
             }
           }
           Subscription.in_app_store.checked_for_transaction = now;
