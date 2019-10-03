@@ -1777,6 +1777,7 @@ var persistence = EmberObject.extend({
         var board_load_promises = [];
         var dead_thread = false;
         function nextBoard(defer) {
+          console.log("BRD", "next board started");
           if(dead_thread) { defer.reject({error: "someone else failed"}); return; }
           if(!persistence.get('sync_progress') || persistence.get('sync_progress.canceled')) {
             defer.reject({error: 'canceled'});
@@ -1796,12 +1797,14 @@ var persistence = EmberObject.extend({
           var key = next && next.key;
           var source = next && next.visit_source;
           if(next && next.depth < 20 && id && !visited_boards.find(function(i) { return i == id; })) {
+            console.log("BRD", "not visited yet", key);
             var local_full_set_revision = null;
 
             // check if there's a local copy that's already been loaded
             var find_board = persistence.board_lookup(id, safely_cached_boards, fresh_revisions);
 
             find_board.then(function(board) {
+              console.log("BRD", "looked up", key);
               local_full_set_revision = board.get('local_full_set_revision');
               importantIds.push('board_' + id);
               board.load_button_set();
@@ -1819,6 +1822,7 @@ var persistence = EmberObject.extend({
               if(safely_cached) {
                 console.log("this board (" + board.get('key') + ") has already been cached locally");
               }
+              console.log("BRD", "mark as synced", key);
               synced_boards.push(board);
               visited_boards.push(id);
 
@@ -1844,6 +1848,7 @@ var persistence = EmberObject.extend({
                 }));
                 importantIds.push("dataCache_" + board.get('background_prompt.sound_url'));
               }
+              console.log("BRD", "links being stored", key);
 
               if(next.image) {
                 visited_board_promises.push(//persistence.queue_sync_action('store_sidebar_image', function() {
@@ -1885,6 +1890,7 @@ var persistence = EmberObject.extend({
                   importantIds.push("dataCache_" + sound.url);
                 }
               });
+              console.log("BRD", "adding linked boards", key);
               var prior_board = board;
               board.get('linked_boards').forEach(function(board) {
                 // don't re-visit if we've already grabbed it for this sync
@@ -1908,6 +1914,7 @@ var persistence = EmberObject.extend({
                   // (this check is here because it's possible to lose some data via leakage,
                   // since if a board is safely cached it's sub-boards should be as well,
                   // but unfortunately sometimes they're not)
+                  console.log("BRD", "trying to find", key, board.id);
                   var find = persistence.queue_sync_action('find_board', function() {
                     return persistence.find('board', board.id);
                   });
@@ -1915,6 +1922,7 @@ var persistence = EmberObject.extend({
                   // and sounds are already in the cache then mark the board as safely cached.
                   visited_board_promises.push(
                     find.then(function(b) {
+                      console.log("BRD", "found", key, board.id);
                       var necessary_finds = [];
                       // this is probably a protective thing, but I have no idea why anymore,
                       // it may not even be necessary anymore
@@ -1973,6 +1981,7 @@ var persistence = EmberObject.extend({
                         return RSVP.resolve();
                       });
                     }, function(error) {
+                      console.log("BRD", "did not find", key, board.id);
                       if(safely_cached) {
                         console.log(error);
                         console.log("should have been safely cached, but board wasn't in db:" + board.id);
@@ -1985,11 +1994,13 @@ var persistence = EmberObject.extend({
               });
 
               RSVP.all_wait(visited_board_promises).then(function() {
+                console.log("BRD", "all promises resolved", key);
                 full_set_revisions[board.get('id')] = board.get('full_set_revision');
                 runLater(function() {
                   nextBoard(defer);
                 }, 150);
               }, function(err) {
+                console.log("BRD", "some promise not resolved", key);
                 var msg = "board " + (key || id) + " failed to sync completely";
                 if(typeof err == 'string') {
                   msg = msg + ": " + err;
@@ -2005,6 +2016,7 @@ var persistence = EmberObject.extend({
                 }, 150);
               });
             }, function(err) {
+              console.log("BRD", "not looked up", key);
               var board_unauthorized = (err && err.error == "Not authorized");
               if(next.link_disabled && board_unauthorized) {
                 // TODO: if a link is disabled, can we get away with ignoring an unauthorized board?
