@@ -19,6 +19,7 @@ export default Controller.extend({
     this.set('pending_preferences', JSON.parse(str));
     this.set('original_preferences', JSON.parse(str));
     this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
+    this.set('advanced', true);
   },
   speecher: speecher,
   buttonSpacingList: [

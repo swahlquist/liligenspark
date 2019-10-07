@@ -73,14 +73,16 @@ export default modal.ModalController.extend({
   check_native_shares: function() {
     var _this = this;
     _this.set('native', {});
-    capabilities.sharing.available().then(function(list) {
-      if(list.indexOf('facebook') != -1) { _this.set('native.facebook', true); }
-      if(list.indexOf('twitter') != -1) { _this.set('native.twitter', true); }
-      if(list.indexOf('instagram') != -1) { _this.set('native.instagram', true); }
-      if(list.indexOf('email') != -1) { _this.set('native.email', true); }
-      if(list.indexOf('clipboard') != -1) { _this.set('native.clipboard', true); }
-      if(list.indexOf('generic') != -1) { _this.set('native.generic', true); }
-    });
+    if(app_state.get('referenced_user.preferences.sharing') !== false) {
+      capabilities.sharing.available().then(function(list) {
+        if(list.indexOf('facebook') != -1) { _this.set('native.facebook', true); }
+        if(list.indexOf('twitter') != -1) { _this.set('native.twitter', true); }
+        if(list.indexOf('instagram') != -1) { _this.set('native.instagram', true); }
+        if(list.indexOf('email') != -1) { _this.set('native.email', true); }
+        if(list.indexOf('clipboard') != -1) { _this.set('native.clipboard', true); }
+        if(list.indexOf('generic') != -1) { _this.set('native.generic', true); }
+      });
+    }
   },
   shares: function() {
     var res = {};
