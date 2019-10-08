@@ -473,6 +473,19 @@ class WeeklyStatsSummary < ActiveRecord::Base
   def self.minimum_session_modeling_events
     3
   end
+
+  def self.recent_for_system(system)
+    weekyear = WeeklyStatsSummary.date_to_weekyear(4.weeks.ago)
+    sums = WeeklyStatsSummary.where(['user_id IS NOT NULL AND weekyear > ?', weekyear]); sums.count
+    ids = []
+    sums.find_in_batches(batch_size: 20) do |batch|
+      batch.each do |sum|
+        puts ((sum.data['stats'] || {})['device'] || {})['systems'].to_json
+        ids << sum.user_id if (((sum.data['stats'] || {})['device'] || {})['systems'] || {})[system]
+      end
+    end
+    User.where(id: ids.uniq)
+  end
   
   def self.trends(include_admin=false)
     res = {}
