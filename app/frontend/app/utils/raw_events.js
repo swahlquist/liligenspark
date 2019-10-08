@@ -1053,7 +1053,7 @@ var buttonTracker = EmberObject.extend({
             if(!jitter && segment.w == 0 && segment.e > (segment.n + segment.s) * 5) {
               jitter = 'ns';
             }
-            if(jitter = 'ns') {
+            if(jitter == 'ns') {
               new_segment();
             } else {
               jitter = 'ew';
@@ -1066,7 +1066,7 @@ var buttonTracker = EmberObject.extend({
             if(!jitter && segment.e == 0 && segment.w > (segment.n + segment.s) * 5) {
               jitter = 'ns';
             }
-            if(jitter = 'ns') {
+            if(jitter == 'ns') {
               new_segment();
             } else {
               jitter = 'ew';
