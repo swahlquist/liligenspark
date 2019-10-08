@@ -597,11 +597,14 @@ class User < ActiveRecord::Base
         end
       end
     end
-    swipe_was_set = self.settings['preferences']['activation_location'] == 'swipe'
+    inflections_were_set = self.settings['preferences']['activation_location'] == 'swipe' || self.settings['preferences']['inflections_overlay']
     PREFERENCE_PARAMS.each do |attr|
       self.settings['preferences'][attr] = params['preferences'][attr] if params['preferences'] && params['preferences'][attr] != nil
     end
-    if self.id && self.settings['preferences']['activation_location'] == 'swipe' && !swipe_was_set
+    if self.settings['preferences']['inflections_overlay']
+      self.settings['preferences'].delete('long_press_edit')
+    end
+    if self.id && (self.settings['preferences']['activation_location'] == 'swipe' || self.settings['preferences']['inflections_overlay']) && !inflections_were_set
       self.schedule(:update_home_board_inflections)
     end
     if self.settings['preferences']['external_links']
