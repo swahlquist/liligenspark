@@ -604,6 +604,13 @@ class Board < ActiveRecord::Base
     prior_license = self.settings['license'].to_json
     process_license(params['license']) if params['license']
     @edit_notes << "changed the license" if self.settings['license'].to_json != prior_license
+
+    if params['translations']
+      self.settings['translations'] ||= {}
+      self.settings['translations']['default'] = params['translations']['default']
+      self.settings['translations']['current_label'] = params['translations']['current_label']
+      self.settings['translations']['current_vocalization'] = params['translations']['current_vocalization']
+    end
     self.star(non_user_params[:starrer], params['starred']) if params['starred'] != nil
     
     self.settings['grid'] = params['grid'] if params['grid']
@@ -670,7 +677,7 @@ class Board < ActiveRecord::Base
   def check_for_parts_of_speech_and_inflections(do_save=true)
     if self.settings && self.settings['buttons']
       any_changed = false
-      (self.settings['locales'] || ['en']).each do |loc|
+      (self.settings['locales'] || [self.settings['locale']]).each do |loc|
         words_to_check = self.settings['buttons'].map{|b|
           btn = ((self.settings['translations'] || {})[b['id'].to_s] || {})[loc] || b
           already_updated = btn['inflection_defaults'] && btn['inflection_defaults']['v'] == WordData::INFLECTIONS_VERSION
@@ -780,9 +787,16 @@ class Board < ActiveRecord::Base
       end
       if trans
         self.settings['translations'] ||= {}
-        trans.each do |tran|
+        trans.each do |loc, tran|
           self.settings['translations'][button['id'].to_s] ||= {}
-          self.settings['translations'][button['id'].to_s][tran['locale']] = tran.slice('label', 'vocalization', 'inflections')
+          self.settings['translations'][button['id'].to_s][tran['locale']] ||= {}
+          self.settings['translations'][button['id'].to_s][tran['locale']]['label'] = tran['label'].to_s if tran['label']
+          self.settings['translations'][button['id'].to_s][tran['locale']]['vocalization'] = tran['vocalization'].to_s if tran['vocalization']
+          tran['inflections'].to_a.each_with_index do |str, idx|
+            self.settings['translations'][button['id'].to_s][tran['locale']]['inflections'] ||= []
+            self.settings['translations'][button['id'].to_s][tran['locale']]['inflections'][idx] = str.to_s if str
+          end
+          # ignore inflection_defaults, those should get re-added on their own
         end
       end
       if button['part_of_speech'] && button['part_of_speech'] == ''

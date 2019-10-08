@@ -352,6 +352,194 @@ describe Converters::CoughDrop do
         'ext_coughdrop_apps' =>  {'web' => {'launch_url' => 'http://www.example.com'}}
       })
     end
+
+    it "should include translations and inflections" do
+      u = User.create
+      u.settings['email'] = 'bob@example.com'
+      u.save
+      b = Board.new(:user => u, :settings => {'name' => 'My Board'})
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'cat', 'vocalization' => 'it is a cat', 'inflections' => ['catty', 'catted']},
+        {'id' => '2', 'label' => 'more'}
+      ]
+      b.settings['translations'] = {
+        'default' => 'en',
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        'en' => {
+          '1' => {
+            'label' => 'cat',
+            'vocalization' => 'it is a cat',
+            'inflections' => ['catty', 'catted'],
+            'inflection_defaults' => {'s' => 'catydid', 'se' => 'caterpillar'}
+          },
+          '2' => {
+            'label' => 'more',
+            'inflections' => [nil, nil, 'moreover'],
+            'inflection_defaults' => {'ne' => 'morose'}
+          }
+        },
+        'fr' => {
+          '1' => {
+            'label' => 'chat',
+            'vocalization' => "c'est un chat",
+            'inflections' => [nil, nil, nil, nil, nil, 'chateau'],
+            'inflection_defaults' => {'n' => 'chats'}
+          },
+          '2' => {
+            'label' => 'plus',
+            'inflections' => ['minus'],
+            'inflection_defaults' => {'s' => 'bien'}
+          }
+        }
+      }
+      b.settings['grid'] = {
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [['1',nil],[nil,'2']]
+      }
+      b.save
+      file = Tempfile.new("stash")
+      Converters::CoughDrop.to_obf(b, file.path)
+      json = JSON.parse(file.read)
+      file.unlink
+      expect(json['default_locale']).to eq('en')
+      expect(json['label_locale']).to eq('en')
+      expect(json['vocalization_locale']).to eq('en')
+      expect(json['buttons'].length).to eq(2)
+      expect(json['buttons'][0]['translations']).to eq({
+        'en' => {
+          'label' => 'cat',
+          'vocalization' => 'it is a cat',
+          'inflections' => {
+            'n' => 'catted',
+            'nw' => 'catty',
+            's' => 'catydid',
+            'se' => 'caterpillar',
+            'ext_coughdrop_defaults' => ['s', 'se']
+          }
+        },
+        'fr' => {
+          'label' => 'chat',
+          'vocalization' => "c'est un chat",
+          'inflections' => {
+            'n' => 'chats',
+            'sw' => 'chateau',
+            'ext_coughdrop_defaults' => ['n']
+          }
+        }
+      })
+      expect(json['buttons'][1]['translations']).to eq({
+        'en' => {
+          'label' => 'more',
+          'inflections' => {
+            'ne' => 'moreover'
+          }
+        },
+        'fr' => {
+          'label' => 'plus',
+          'inflections' => {
+            'nw' => 'minus',
+            's' => 'bien',
+            'ext_coughdrop_defaults' => ['s']
+          }
+        }
+      })
+    end
+
+    it "should merge inflections with inflection_defaults" do
+      u = User.create
+      u.settings['email'] = 'bob@example.com'
+      u.save
+      b = Board.new(:user => u, :settings => {'name' => 'My Board'})
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'cat', 'vocalization' => 'it is a cat', 'inflections' => ['catty', 'catted']},
+        {'id' => '2', 'label' => 'more'}
+      ]
+      b.settings['translations'] = {
+        'default' => 'en',
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        'en' => {
+          '1' => {
+            'label' => 'cat',
+            'vocalization' => 'it is a cat',
+            'inflections' => ['catty', 'catted'],
+            'inflection_defaults' => {'s' => 'catydid', 'se' => 'caterpillar'}
+          },
+          '2' => {
+            'label' => 'more',
+            'inflections' => [nil, nil, 'moreover'],
+            'inflection_defaults' => {'ne' => 'morose'}
+          }
+        },
+        'fr' => {
+          '1' => {
+            'label' => 'chat',
+            'vocalization' => "c'est un chat",
+            'inflections' => [nil, nil, nil, nil, nil, 'chateau'],
+            'inflection_defaults' => {'n' => 'chats'}
+          },
+          '2' => {
+            'label' => 'plus',
+            'inflections' => ['minus'],
+            'inflection_defaults' => {'s' => 'bien'}
+          }
+        }
+      }
+      b.settings['grid'] = {
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [['1',nil],[nil,'2']]
+      }
+      b.save
+      file = Tempfile.new("stash")
+      Converters::CoughDrop.to_obf(b, file.path)
+      json = JSON.parse(file.read)
+      file.unlink
+      expect(json['default_locale']).to eq('en')
+      expect(json['label_locale']).to eq('en')
+      expect(json['vocalization_locale']).to eq('en')
+      expect(json['buttons'].length).to eq(2)
+      expect(json['buttons'][0]['translations']).to eq({
+        'en' => {
+          'label' => 'cat',
+          'vocalization' => 'it is a cat',
+          'inflections' => {
+            'n' => 'catted',
+            'nw' => 'catty',
+            's' => 'catydid',
+            'se' => 'caterpillar',
+            'ext_coughdrop_defaults' => ['s', 'se']
+          }
+        },
+        'fr' => {
+          'label' => 'chat',
+          'vocalization' => "c'est un chat",
+          'inflections' => {
+            'n' => 'chats',
+            'sw' => 'chateau',
+            'ext_coughdrop_defaults' => ['n']
+          }
+        }
+      })
+      expect(json['buttons'][1]['translations']).to eq({
+        'en' => {
+          'label' => 'more',
+          'inflections' => {
+            'ne' => 'moreover'
+          }
+        },
+        'fr' => {
+          'label' => 'plus',
+          'inflections' => {
+            'nw' => 'minus',
+            's' => 'bien',
+            'ext_coughdrop_defaults' => ['s']
+          }
+        }
+      })
+    end
   end
 
   describe "from_obf" do
@@ -410,8 +598,6 @@ describe Converters::CoughDrop do
       expect(b.settings['buttons']).not_to be_empty
       expect(b.settings['buttons'][0]['load_board']).to eq(nil)
     end
-    
-    it "should update an existing board if matching by data_url"
     
     it "should find and connect to an existing image if matching by data_url"
     
@@ -524,6 +710,194 @@ describe Converters::CoughDrop do
       expect(button).not_to eq(nil)
       expect(button['url']).to eq(nil)
       expect(button['apps']).to eq({'a' => 1})
+    end
+
+    it "should restore translations and inflections" do
+      u = User.create
+      u.settings['email'] = 'fred@example.com'
+      u.save
+      path = OBF::Utils.temp_path("stash")
+      shell = OBF::Utils.obf_shell
+      shell['id'] = '2345'
+      shell['name'] = "Cool Board"
+      shell['locale'] = 'en'
+      shell['default_locale'] = 'en'
+      shell['label_locale'] = 'en'
+      shell['vocalization_locale'] = 'en'
+      shell['protected_content_user_identifier'] = 'fred@example.com'
+      shell['ext_coughdrop_settings'] = {
+        'protected' => true,
+        'key' => "#{u.user_name}/test"
+      }
+      shell['buttons'] = [{
+        'id' => '1',
+        'label' => 'hardly',
+        'url' => 'http://www.example.com',
+        'ext_coughdrop_apps' => {
+          'a' => 1
+        },
+        'translations' => {
+          'en' => {
+            'label' => 'hardly'
+          }
+        }
+      }, {
+        'id' => '2',
+        'label' => 'apple',
+        'translations' => {
+          'en' => {
+            'label' => 'apple',
+            'inflections' => {
+              'a' => 'asdf',
+              'n' => 'qwer'
+            }
+          },
+          'fr' => {
+            'label' => 'pomme',
+            'inflections' => {
+              'nw' => 'pomodor',
+              's' => 'pomme de terre',
+              'ext_coughdrop_defaults' => ['nw']
+            }
+          }
+        }
+      }]      
+      File.open(path, 'w') do |f|
+        f.puts shell.to_json
+      end
+      b = Converters::CoughDrop.from_obf(path, {'user' => u})
+      expect(b).to be_is_a(Board)
+      expect(b.settings['name']).to eq("Cool Board")
+      expect(b.settings['locale']).to eq('en')
+      expect(b.settings['buttons'].length).to eq(2)
+      expect(b.settings['buttons'][0]).to eq({
+        'apps' => {'a' => 1},
+        'background_color' => nil,
+        'border_color' => nil,
+        'hidden' => nil,
+        'id' => '1',
+        'label' => 'hardly',
+        'part_of_speech' => 'adverb',
+        'suggested_part_of_speech' => 'adverb'
+      })
+      expect(b.settings['buttons'][1]).to eq({
+        'background_color' => nil,
+        'border_color' => nil,
+        'hidden' => nil,
+        'id' => '2',
+        'label' => 'apple',
+        'part_of_speech' => 'noun',
+        'suggested_part_of_speech' => 'noun'        
+      })
+      expect(b.settings['translations']).to eq({
+        'default' => 'en',
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        '2' => {
+          'en' => {
+            'label' => 'apple',
+            'inflections' => [nil, 'qwer']
+          },
+          'fr' => {
+            'label' => 'pomme',
+            'inflections' => [nil, nil, nil, nil, nil, nil, 'pomme de terre']
+          }
+        }
+      })
+    end
+
+    it "should pull out inflection_defaults from overrides when available" do
+      u = User.create
+      u.settings['email'] = 'fred@example.com'
+      u.save
+      path = OBF::Utils.temp_path("stash")
+      shell = OBF::Utils.obf_shell
+      shell['id'] = '2345'
+      shell['name'] = "Cool Board"
+      shell['locale'] = 'en'
+      shell['default_locale'] = 'en'
+      shell['label_locale'] = 'en'
+      shell['vocalization_locale'] = 'en'
+      shell['protected_content_user_identifier'] = 'fred@example.com'
+      shell['ext_coughdrop_settings'] = {
+        'protected' => true,
+        'key' => "#{u.user_name}/test"
+      }
+      shell['buttons'] = [{
+        'id' => '1',
+        'label' => 'hardly',
+        'url' => 'http://www.example.com',
+        'ext_coughdrop_apps' => {
+          'a' => 1
+        },
+        'translations' => {
+          'en' => {
+            'label' => 'hardly'
+          }
+        }
+      }, {
+        'id' => '2',
+        'label' => 'apple',
+        'translations' => {
+          'en' => {
+            'label' => 'apple',
+            'inflections' => {
+              'a' => 'asdf',
+              'n' => 'qwer'
+            }
+          },
+          'fr' => {
+            'label' => 'pomme',
+            'inflections' => {
+              'nw' => 'pomodor',
+              's' => 'pomme de terre',
+              'ext_coughdrop_defaults' => ['nw']
+            }
+          }
+        }
+      }]      
+      File.open(path, 'w') do |f|
+        f.puts shell.to_json
+      end
+      b = Converters::CoughDrop.from_obf(path, {'user' => u})
+      expect(b).to be_is_a(Board)
+      expect(b.settings['name']).to eq("Cool Board")
+      expect(b.settings['locale']).to eq('en')
+      expect(b.settings['buttons'].length).to eq(2)
+      expect(b.settings['buttons'][0]).to eq({
+        'apps' => {'a' => 1},
+        'background_color' => nil,
+        'border_color' => nil,
+        'hidden' => nil,
+        'id' => '1',
+        'label' => 'hardly',
+        'part_of_speech' => 'adverb',
+        'suggested_part_of_speech' => 'adverb'
+      })
+      expect(b.settings['buttons'][1]).to eq({
+        'background_color' => nil,
+        'border_color' => nil,
+        'hidden' => nil,
+        'id' => '2',
+        'label' => 'apple',
+        'part_of_speech' => 'noun',
+        'suggested_part_of_speech' => 'noun'        
+      })
+      expect(b.settings['translations']).to eq({
+        'default' => 'en',
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        '2' => {
+          'en' => {
+            'label' => 'apple',
+            'inflections' => [nil, 'qwer']
+          },
+          'fr' => {
+            'label' => 'pomme',
+            'inflections' => [nil, nil, nil, nil, nil, nil, 'pomme de terre']
+          }
+        }
+      })
     end
   end
 

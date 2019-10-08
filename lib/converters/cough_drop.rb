@@ -18,6 +18,11 @@ module Converters::CoughDrop
     res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}"
     res['description_html'] = board.settings['description'] || "built with CoughDrop"
     res['license'] = OBF::Utils.parse_license(board.settings['license'])
+    if board.settings['translations']
+      res['default_locale'] = board.settings['translations']['default']
+      res['label_locale'] = board.settings['translations']['current_label']
+      res['vocalization_locale'] = board.settings['translations']['current_vocalization']
+    end
     res['ext_coughdrop_settings'] = {
       'private' => !board.public,
       'key' => board.key,
@@ -32,6 +37,7 @@ module Converters::CoughDrop
     grid = []
     res['buttons'] = []
     button_count = board.settings['buttons'].length
+    locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']
     board.settings['buttons'].each_with_index do |original_button, idx|
       button = {
         'id' => original_button['id'],
@@ -44,6 +50,34 @@ module Converters::CoughDrop
         'background_color' => original_button['background_color'] || "#fff",
         'hidden' => original_button['hidden'],
       }
+      inflection_defaults = nil
+      trans = {}
+      (board.settings['translations'] || {}).each do |loc, hash|
+        if hash[original_button['id']]
+          trans[loc] = hash[original_button['id']]
+        end
+      end
+      trans[board.settings['locale']] ||= original_button if original_button['inflections']
+      trans.each do |loc, hash|
+        button['translations'] ||= {}
+        button['translations'][loc] ||= {}
+        button['translations'][loc] ||= {}
+        button['translations'][loc]['label'] = hash['label']
+        button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
+        (hash['inflections'] || []).each_with_index do |str, idx| 
+          next unless str
+          button['translations'][loc]['inflections'] ||= {}
+          button['translations'][loc]['inflections'][locs[idx]] = str
+        end
+        (hash['inflection_defaults'] || []).each do |key, str|
+          if button['translations'][loc]['inflections'][key]
+          elsif locs.include?(key)
+            button['translations'][loc]['inflections'][key] = str
+            button['translations'][loc]['inflections']['ext_coughdrop_defaults'] ||= []
+            button['translations'][loc]['inflections']['ext_coughdrop_defaults'].push(key)
+          end
+        end
+      end
       if original_button['vocalization']
         if original_button['vocalization'].match(/^(\:|\+)/) || original_button['vocalization'].match(/&&/)
           if original_button['vocalization'].match(/&&/)
@@ -189,6 +223,16 @@ module Converters::CoughDrop
     params['description'] = obj['description_html']
     params['image_url'] = obj['image_url']
     params['license'] = OBF::Utils.parse_license(obj['license'])
+    params['locale'] = obj['locale'] || 'en'
+
+    if obj['default_locale']
+      params['translations'] ||= {}
+      params['translations']['default'] = obj['default_locale'] if obj['default_locale']
+      params['translations']['current_label'] = obj['label_locale'] if obj['label_locale']
+      params['translations']['current_vocalization'] = obj['vocalization_locale'] if obj['vocalization_locale']
+    end
+
+    loc_hash = {'nw' => 0, 'n' => 1, 'ne' => 2, 'w' => 3, 'e' => 4, 'sw' => 5, 's' => 6, 'se' => 7};
     params['buttons'] = obj['buttons'].map do |button|
       new_button = {
         'id' => button['id'],
@@ -220,6 +264,28 @@ module Converters::CoughDrop
       EXT_PARAMS.each do |param|
         if button["ext_coughdrop_#{param}"]
           new_button[param] = button["ext_coughdrop_#{param}"]
+        end
+      end
+
+      if button['translations']
+        new_button['translations'] ||= {}
+        button['translations'].each do |loc, hash|
+          ref = nil
+          if button['translations'].keys == [params['locale']] && (hash['label'] || button['label']) == button['label'] && (hash['vocalization'] || button['vocalization']) == button['vocalization']
+            ref = button
+          else
+            new_button['translations'][loc] ||= {'locale' => loc}
+            ref = new_button['translations'][loc]
+          end
+          ref['label'] ||= hash['label'] if hash['label']
+          ref['vocalization'] ||= hash['vocalization'] if hash['vocalization']
+          (hash['inflections'] || {}).each do |key, str|
+            if str == 'ext_coughdrop_defaults'
+            elsif loc_hash[key] && !(hash['inflections']['ext_coughdrop_defaults'] || []).include?(key)
+              ref['inflections'] ||= []
+              ref['inflections'][loc_hash[key]] = str.to_s if str
+            end
+          end
         end
       end
 
