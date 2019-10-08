@@ -793,11 +793,16 @@ describe User, :type => :model do
     end
     
     it "should schedule inflection updates for a user's board set and sidebar board set when they enable inflections" do
-      write_this_test
+      u = User.create
+      u.process({'preferences' => {'inflections_overlay' => true}})
+      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_home_board_inflections', 'arguments' => []})).to eq(true)
     end
 
     it "should not schedule inflection updates for a user's board set and sidebar board set when inflections are enabled but were already enabled" do
-      write_this_test
+      u = User.create
+      u.settings['preferences']['inflections_overlay'] = true
+      u.process({'preferences' => {'inflections_overlay' => true}})
+      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_home_board_inflections', 'arguments' => []})).to eq(false)
     end
   end
 
