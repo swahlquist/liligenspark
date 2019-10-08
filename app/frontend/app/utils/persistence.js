@@ -994,6 +994,7 @@ var persistence = EmberObject.extend({
                   write_resolve(persistence.store('dataCache', object, object.url));
                 }, function(err) { write_reject(err); });
               };
+              // this is a promise-lite, to it can't handle reframing rejects into resolves
               capabilities.storage.remove_file(type, local_system_filename).then(then_write, then_write);
             });
           } else {
