@@ -496,7 +496,7 @@ describe Api::BoardsController, :type => :controller do
       u = User.create
       token_user
       put :update, params: {:id => "1_19999"}
-      assert_not_found
+      assert_not_found('1_19999')
     end
 
     it "should require edit permissions" do

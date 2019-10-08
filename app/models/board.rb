@@ -832,6 +832,8 @@ class Board < ActiveRecord::Base
       if trans
         self.settings['translations'] ||= {}
         trans.each do |loc, tran|
+          next unless tran
+          tran['locale'] ||= loc
           self.settings['translations'][button['id'].to_s] ||= {}
           self.settings['translations'][button['id'].to_s][tran['locale']] ||= {}
           self.settings['translations'][button['id'].to_s][tran['locale']]['label'] = tran['label'].to_s if tran['label']

@@ -67,7 +67,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'bacon'})
-      expect(s).to receive(:assert_extra_data)
+      expect(s).to receive(:assert_extra_data).at_least(1).times
       expect(s).to receive(:extra_data_too_big?).and_return(true)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|

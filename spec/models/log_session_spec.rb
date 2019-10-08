@@ -1164,7 +1164,7 @@ describe LogSession, :type => :model do
           {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      expect { Worker.process_queues }.to raise_error('no valid events to process')
+      expect { Worker.process_queues }.to raise_error('no valid events to process out of 2')
       
       s.reload
       expect(s.data['events'].length).to eq(2)
@@ -1333,7 +1333,7 @@ describe LogSession, :type => :model do
       }, {device: d, author: u1, user: u1})
       
       expect(s.user).to eq(nil)
-      expect { Worker.process_queues }.to raise_error('no valid events to process')
+      expect { Worker.process_queues }.to raise_error('no valid events to process out of 4')
     end
 
     it "should create a journal log if specified" do

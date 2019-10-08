@@ -615,7 +615,7 @@ describe SessionController, :type => :controller do
       expect(d2).to eq(d)
       expect(d.reload.token_type).to eq(:browser)
       expect(d.settings['long_token']).to eq(true)
-      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
     end
 
     it "should handle no long_token for browser" do
@@ -636,7 +636,7 @@ describe SessionController, :type => :controller do
       expect(d2).to eq(d)
       expect(d.reload.token_type).to eq(:browser)
       expect(d.settings['long_token']).to eq(false)
-      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
     end
 
     it "should handle long_token for app" do
