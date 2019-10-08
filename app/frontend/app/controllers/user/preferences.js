@@ -20,6 +20,7 @@ export default Controller.extend({
     this.set('original_preferences', JSON.parse(str));
     this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
     this.set('advanced', true);
+    this.set('skip_save_on_transition', false);
   },
   speecher: speecher,
   buttonSpacingList: [
@@ -511,6 +512,7 @@ export default Controller.extend({
     savePreferences: function() {
       // TODO: add a "save pending..." status somewhere
       // TODO: this same code is in utterance.js...
+      this.set('skip_save_on_transition', true);
       var pitch = parseFloat(this.get('pending_preferences.device.voice.pitch'));
       if(isNaN(pitch)) { pitch = 1.0; }
       var volume = parseFloat(this.get('pending_preferences.device.voice.volume'));
@@ -581,6 +583,7 @@ export default Controller.extend({
       this.set('advanced', false);
       var user = this.get('model');
       user.rollbackAttributes();
+      this.set('skip_save_on_transition', true);
       this.transitionToRoute('user', user.get('user_name'));
     },
     sidebar_button_settings: function(button) {
