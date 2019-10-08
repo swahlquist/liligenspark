@@ -414,9 +414,48 @@ class Board < ActiveRecord::Base
   def check_inflections
     # this used to be a background job, but I think it needs to be part of the original save now
     if @check_for_parts_of_speech
+      puts "go go go!"
       self.check_for_parts_of_speech_and_inflections(false)
       @check_for_parts_of_speech = nil
     end
+  end
+
+  def restore_urls
+    (self.settings['image_urls'] || {}).each do |id, url|
+      bi = ButtonImage.find_by_global_id(id)
+      if !bi
+        bi = ButtonImage.new
+        hash = Board.id_pieces(id)
+        @buttons_changed = true
+        parts = id.split(/_/)
+        bi.id = hash[:id]
+        bi.nonce = hash[:nonce]
+        bi.user_id = self.user_id
+        bi.settings = {'avatar' => false, 'badge' => false, 'protected' => false, 'pending' => false}
+        bi.url = url
+        bi.save
+      end
+    end
+    (self.settings['sound_urls'] || {}).each do |id, url|
+      bs = ButtonSound.find_by_global_id(id)
+      if !bs
+        bs = ButtonSound.new
+        hash = Board.id_pieces(id)
+        @buttons_changed = true
+        parts = id.split(/_/)
+        bs.id = hash[:id]
+        bs.nonce = hash[:nonce]
+        bs.user_id = self.user_id
+        bs.settings = {'protected' => false, 'pending' => false}
+        bs.url = url
+        bs.save
+      end
+    end
+    self.settings.delete('undeleted')
+    self.settings.delete('image_urls')
+    self.settings.delete('sound_urls')
+    @buttons_changed = true
+    self.save
   end
   
   def update_self_references
@@ -657,6 +696,11 @@ class Board < ActiveRecord::Base
       non_user_params[:key].sub!(/^tmp\//, '')
       non_user_params[:key] = nil if non_user_params[:key].match(/^tmp_/)
       self.key = generate_board_key(non_user_params[:key]) if non_user_params[:key]
+    end
+
+    if self.settings['undeleted']
+      self.settings['image_urls'] = params['image_urls']
+      self.settings['sound_urls'] = params['sound_urls']
     end
 #    @edit_description = nil
     if self.id && @edit_notes.length > 0

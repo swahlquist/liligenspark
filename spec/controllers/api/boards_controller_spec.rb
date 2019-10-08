@@ -607,6 +607,96 @@ describe Api::BoardsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['board']['buttons'][1]).to eq({'id' => '2', 'label' => 'drop dead', 'sound_id' => '12345'})
     end
+
+    it "should allow restoring a deleted board" do
+      token_user
+      b = Board.create(user: @user)
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      get :show, params: {id: b.global_id}
+      json = assert_success_json
+      expect(json['board']['id']).to eq(b.global_id)
+      b.destroy
+      expect(Board.find_by_global_id(b.global_id)).to eq(nil)
+      get :show, params: {id: b.global_id}
+      assert_error('Record not found')
+      put :update, params: {
+        id: b.global_id, board: {key: b.key, buttons: [{'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}]}
+      }
+      json = assert_success_json
+      b.reload
+      expect(Board.find_by_global_id(b.global_id)).to_not eq(nil)
+    end
+
+    it "should not allow restoring a deleted board without supervise permission" do
+      u = User.create
+      token_user
+      b = Board.create(user: u)
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      b.destroy
+      put :update, params: {
+        id: b.global_id, board: {key: b.key, buttons: [{'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}]}
+      }
+      assert_unauthorized
+      expect(Board.find_by_global_id(b.global_id)).to eq(nil)
+    end
+
+    it "should not allow restoring a deleted board when the board has been replaced already" do
+      token_user
+      b = Board.create(user: @user)
+      DeletedBoard.create(key: b.key, board_id: b.id)
+      put :update, params: {
+        id: b.related_global_id(b.id - 1), board: {key: b.key, buttons: [{'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}]}
+      }
+      assert_unauthorized
+    end
+
+    it "should save image_urls and sound_urls to the board when restoring for reliable access" do
+      token_user
+      b = Board.create(user: @user)
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      get :show, params: {id: b.global_id}
+      json = assert_success_json
+      expect(json['board']['id']).to eq(b.global_id)
+      b.destroy
+      expect(Board.find_by_global_id(b.global_id)).to eq(nil)
+      get :show, params: {id: b.global_id}
+      assert_error('Record not found')
+      put :update, params: {
+        id: b.global_id, board: {
+          key: b.key, 
+          buttons: [{'id' => '1', 'label' => 'fred', 'image_id' => '123'}, {'id' => '2', 'label' => 'drop dead', 'image_id' => '234', 'sound_id' => '345'}],
+          image_urls: {
+            '123' => 'https://www.example.com/pic.png',
+            '234' => 'https://www.example.com/pic2.png'
+          },
+          sound_urls: {
+            '345' => 'https://www.example.com/sound.mp3'
+          }
+        }
+      }
+      json = assert_success_json
+      expect(json['board']['image_urls']).to eq({
+        '123' => 'https://www.example.com/pic.png',
+        '234' => 'https://www.example.com/pic2.png'
+      })
+      expect(json['board']['sound_urls']).to eq({
+        '345' => 'https://www.example.com/sound.mp3'
+      })
+      b.reload
+      expect(b.settings['image_urls']).to_not eq(nil)
+      expect(b.settings['sound_urls']).to_not eq(nil)
+      expect(b.settings['undeleted']).to eq(true)
+      expect(Board.find_by_global_id(b.global_id)).to_not eq(nil)
+    end
   end
   
   describe "star" do

@@ -350,6 +350,15 @@ export default Controller.extend({
         _this.set('db', {type: 'IndexedDB'});
       }
     }
+
+    if(coughDropExtras.storage) {
+      var user_name = app_state.get('currentUser.user_name');
+      coughDropExtras.storage.find_all('board').then(function(list) {
+        _this.set('local_boards', list.filter(function(d) { return d.data && d.data.raw && d.data.raw.user_name == user_name; }).length);
+      }, function(err) {
+        _this.set('local_boards', null);
+      })
+    }
   },
   actions: {
     reload: function() {
@@ -366,6 +375,9 @@ export default Controller.extend({
       if(capabilities.debugging.available()) {
         capabilities.debugging.show();
       }
+    },
+    push_to_cloud: function() {
+      modal.open('modals/push_to_cloud', {type: 'board'});
     },
     clear_file_storage: function() {
       var _this = this;

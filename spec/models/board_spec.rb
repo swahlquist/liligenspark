@@ -2876,4 +2876,156 @@ describe Board, :type => :model do
       expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b3.global_id]})).to eq(true)
     end
   end
+
+  describe "restore_urls" do
+    # if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])
+    #   self.schedule(:restore_urls)
+    # end
+
+    # def restore_urls
+    #   (self.settings['image_urls'] || {}).each do |id, url|
+    #     bi = ButtonImage.find_by_global_id(id)
+    #     if !bi
+    #       bi = ButtonImage.new
+    #       hash = Board.id_pieces(id)
+    #       @buttons_changed = true
+    #       parts = id.split(/_/)
+    #       bi.id = hash[:id]
+    #       bi.nonce = hash[:nonce]
+    #       bi.user_id = self.user_id
+    #       bi.settings = {'avatar' => false, 'badge' => false, 'protected' => false, 'pending' => false}
+    #       bi.url = url
+    #       bi.save
+    #     end
+    #   end
+    #   (self.settings['sound_urls'] || {}).each do |id, url|
+    #     bs = ButtonSound.find_by_global_id(id)
+    #     if !bs
+    #       bs = ButtonSound.new
+    #       hash = Board.id_pieces(id)
+    #       @buttons_changed = true
+    #       parts = id.split(/_/)
+    #       bs.id = hash[:id]
+    #       bs.nonce = hash[:nonce]
+    #       bs.user_id = self.user_id
+    #       bs.settings = {'protected' => false, 'pending' => false}
+    #       bs.url = url
+    #       bs.save
+    #     end
+    #   end
+    #   self.settings.delete('undeleted')
+    #   self.settings.delete('image_urls')
+    #   self.settings.delete('sound_urls')
+    #   @buttons_changed = true
+    #   self.save
+    # end
+    it "should schedule url restores when a board is undeleted" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['undeleted'] = true
+      b.settings['image_urls'] = {}
+      b.save
+      expect(Worker.scheduled?(Board, :perform_action, {'id' => b.id, 'method' => 'restore_urls', 'arguments' => []})).to eq(true)
+    end
+
+    it "should use existing image if they haven't been deleted" do
+      u = User.create
+      b = Board.create(user: u)
+      bi1 = ButtonImage.create(user: u, board: b, settings: {}, url: 'http://www.example.com/pic1.png')
+      b.settings['buttons'] = [
+        {'id' => 1, 'image_id' => bi1.global_id, 'label' => 'one'},
+        {'id' => 2, 'image_id' => "1_#{bi1.id - 1}_298g4hag3g", 'label' => 'two'}
+      ]
+      b.settings['image_urls'] = {"1_#{bi1.id - 1}_298g4hag3g" => 'https://www.example.com/pic2.png'}
+      b.settings['undeleted'] = true
+      b.restore_urls
+      expect(b.settings['undeleted']).to eq(nil)
+      expect(b.settings['image_urls']).to eq(nil)
+      json = JsonApi::Board.as_json(b, wrapper: true, permissions: u)
+
+      expect(json['board']['image_urls'][bi1.global_id]).to eq('http://www.example.com/pic1.png')
+      expect(json['board']['image_urls'].keys.length).to eq(2)
+      expect(json['board']['image_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/pic2.png')
+    end
+
+    it "should restore images if they have been deleted" do
+      u = User.create
+      b = Board.create(user: u)
+      bi1 = ButtonImage.create(user: u, board: b, settings: {}, url: 'http://www.example.com/pic1.png')
+      b.settings['buttons'] = [
+        {'id' => 1, 'image_id' => bi1.global_id, 'label' => 'one'},
+        {'id' => 2, 'image_id' => "1_#{bi1.id - 1}_298g4hag3g", 'label' => 'two'}
+      ]
+      b.settings['image_urls'] = {"1_#{bi1.id - 1}_298g4hag3g" => 'https://www.example.com/pic2.png'}
+      b.settings['undeleted'] = true
+      b.restore_urls
+      expect(b.settings['undeleted']).to eq(nil)
+      expect(b.settings['image_urls']).to eq(nil)
+      json = JsonApi::Board.as_json(b, wrapper: true, permissions: u)
+
+      expect(json['board']['image_urls'][bi1.global_id]).to eq('http://www.example.com/pic1.png')
+      expect(json['board']['image_urls'].keys.length).to eq(2)
+      expect(json['board']['image_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/pic2.png')
+    end
+
+    it "should use sounds if they haven't been deleted" do
+      u = User.create
+      b = Board.create(user: u)
+      bi1 = ButtonSound.create(user: u, board: b, settings: {}, url: 'http://www.example.com/sound1.mp3')
+      b.settings['buttons'] = [
+        {'id' => 1, 'sound_id' => bi1.global_id, 'label' => 'one'},
+        {'id' => 2, 'sound_id' => "1_#{bi1.id - 1}_298g4hag3g", 'label' => 'two'}
+      ]
+      b.settings['sound_urls'] = {"1_#{bi1.id - 1}_298g4hag3g" => 'https://www.example.com/sound2.mp3'}
+      b.settings['undeleted'] = true
+      b.restore_urls
+      expect(b.settings['undeleted']).to eq(nil)
+      expect(b.settings['sound_urls']).to eq(nil)
+      json = JsonApi::Board.as_json(b, wrapper: true, permissions: u)
+
+      expect(json['board']['sound_urls'][bi1.global_id]).to eq('http://www.example.com/sound1.mp3')
+      expect(json['board']['sound_urls'].keys.length).to eq(2)
+      expect(json['board']['sound_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/sound2.mp3')
+    end
+    
+    it "should restore sounds if they haven't been deleted" do
+      u = User.create
+      b = Board.create(user: u)
+      bi1 = ButtonSound.create(user: u, board: b, settings: {}, url: 'http://www.example.com/sound1.mp3')
+      b.settings['buttons'] = [
+        {'id' => 1, 'sound_id' => bi1.global_id, 'label' => 'one'},
+        {'id' => 2, 'sound_id' => "1_#{bi1.id - 1}_298g4hag3g", 'label' => 'two'}
+      ]
+      b.settings['sound_urls'] = {"1_#{bi1.id - 1}_298g4hag3g" => 'https://www.example.com/sound2.mp3'}
+      b.settings['undeleted'] = true
+      b.restore_urls
+      expect(b.settings['undeleted']).to eq(nil)
+      expect(b.settings['sound_urls']).to eq(nil)
+      json = JsonApi::Board.as_json(b, wrapper: true, permissions: u)
+
+      expect(json['board']['sound_urls'][bi1.global_id]).to eq('http://www.example.com/sound1.mp3')
+      expect(json['board']['sound_urls'].keys.length).to eq(2)
+      expect(json['board']['sound_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/sound2.mp3')
+    end
+
+    it "should remove cached image_urls and sound_urls once restored" do
+      u = User.create
+      b = Board.create(user: u)
+      bi1 = ButtonSound.create(user: u, board: b, settings: {}, url: 'http://www.example.com/sound1.mp3')
+      b.settings['buttons'] = [
+        {'id' => 1, 'sound_id' => bi1.global_id, 'label' => 'one'},
+        {'id' => 2, 'sound_id' => "1_#{bi1.id - 1}_298g4hag3g", 'label' => 'two'}
+      ]
+      b.settings['sound_urls'] = {"1_#{bi1.id - 1}_298g4hag3g" => 'https://www.example.com/sound2.mp3'}
+      b.settings['undeleted'] = true
+      b.restore_urls
+      expect(b.settings['undeleted']).to eq(nil)
+      expect(b.settings['sound_urls']).to eq(nil)
+      json = JsonApi::Board.as_json(b, wrapper: true, permissions: u)
+
+      expect(json['board']['sound_urls'][bi1.global_id]).to eq('http://www.example.com/sound1.mp3')
+      expect(json['board']['sound_urls'].keys.length).to eq(2)
+      expect(json['board']['sound_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/sound2.mp3')
+    end
+  end
 end

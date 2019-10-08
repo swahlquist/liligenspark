@@ -93,7 +93,7 @@
                 {{/if}}
               </td>
               <td style='vertical-align: middle;'>
-                <button class='btn btn-default' {{action 'clear_file_storage'}}>{{t "Clear" key='clear'}}</button>
+                <button class='btn btn-default' {{action 'clear_file_storage'}} style='width: 150px;'>{{t "Clear" key='clear'}}</button>
               </td>
             </tr>
           {{/if}}
@@ -110,7 +110,7 @@
             </td>
             <td style='vertical-align: middle;'>
               {{#if db}}
-                <button class='btn btn-default' {{action 'clear_databases'}}>{{t "Clear" key='clear'}}</button>
+                <button class='btn btn-default' {{action 'clear_databases'}} style='width: 150px;'>{{t "Clear" key='clear'}}</button>
               {{/if}}
             </td>
           </tr>
@@ -125,7 +125,7 @@
             </td>
             <td style='vertical-align: middle;'>
               {{#if local_storage}}
-                <button class='btn btn-default' {{action 'clear_local_storage'}}>{{t "Clear" key='clear'}}</button>
+                <button class='btn btn-default' {{action 'clear_local_storage'}} style='width: 150px;'>{{t "Clear" key='clear'}}</button>
               {{/if}}
             </td>
           </tr>
@@ -143,6 +143,23 @@
               <td colspan='2'><a href="#" {{action 'show_debugging'}}>{{t "Available" key='available'}}</a></td>
             </tr>
           {{/if}}
+          <tr>
+            <td style='vertical-align: middle;'>{{t "Local Boards" key='local_boards'}}</td>
+            <td style='vertical-align: middle;'>
+              {{#if local_boards}}
+                {{local_boards}}
+              {{else}}
+                {{t "not available" key='not_available'}}
+              {{/if}}
+            </td>
+            <td style='vertical-align: middle;'>
+              {{#if local_boards}}
+                {{#if persistence.online}}
+                  <button class='btn btn-default' {{action 'push_to_cloud'}} style='width: 150px;'>{{t "Push to Cloud" key='push_to_cloud'}}</button>
+                {{/if}}
+              {{/if}}
+            </td>
+          </tr>
         </tbody>
       </table>
     {{else if errors}}

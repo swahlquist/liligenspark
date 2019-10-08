@@ -228,7 +228,26 @@ class Api::BoardsController < ApplicationController
   
   def update
     board = Board.find_by_path(params['id'])
-    return unless exists?(board)
+    if !board
+      deleted_board = DeletedBoard.find_by_path(params['id'])
+      deleted_board ||= DeletedBoard.find_by_path((params['board'] || {})['key'])
+      if deleted_board && params['board'] && deleted_board.key == params['board']['key']
+        # TODO: it should be allowable to restore a deleted board that has a different 
+        # key, it should just use a different key instead
+        user_name = deleted_board.key && deleted_board.key.split(/\//)[0]
+        user = User.find_by_path(user_name)
+        return unless allowed?(user, 'supervise')
+        return allowed?(user, 'never_allow') if deleted_board.board
+        board = Board.new
+        board.id = deleted_board.board_id
+        board.user = user
+        board.generate_unique_key(deleted_board.key)
+        board.settings = {}
+        board.settings['undeleted'] = true
+        board.save
+      end
+    end    
+    return unless exists?(board, params['id'])
     return unless allowed?(board, 'edit')
     processed_params = params
     # Necessary because by default Rails is stripping out nil references in an array, which

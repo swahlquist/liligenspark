@@ -578,12 +578,26 @@ describe LogSession, :type => :model do
       # TODO: should we implement this??
     end
 
-    it "should track button depths" do
-      write_this_test
-    end
-
-    it "should track button travel distances" do
-      write_this_test
+    it "should track button depths and travel distances" do
+      u = User.create
+      d = Device.create
+      s1 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'depth' => 0, 'percent_travel' => 0.2, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+        {'type' => 'button', 'button' => {'depth' => 1, 'percent_travel' => 0.5, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
+        {'type' => 'button', 'button' => {'depth' => 0, 'percent_travel' => 0.1, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 1},
+        {'type' => 'button', 'button' => {'depth' => 0, 'percent_travel' => 0.3, 'label' => 'ok go ok', 'button_id' => 2, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 1},
+        {'type' => 'button', 'button' => {'depth' => 1, 'percent_travel' => 0.4, 'label' => 'ok go ok', 'button_id' => 3, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 1},
+        {'type' => 'button', 'button' => {'depth' => 2, 'percent_travel' => 0.6, 'label' => 'ok go ok', 'button_id' => 4, 'board' => {'id' => '1_1'}, 'spoken' => true}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 1},
+        {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+      ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      
+      day = s1.data['stats']
+      expect(day['utterances']).to eq(1)
+      expect(day['utterances']).to eq(1)
+      expect(day['all_button_counts']['1::1_1']).to eq({'button_id' => 1, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 3, 'depth_sum' => 1, 'spoken' => true, 'full_travel_sum' => 1.5})
+      expect(day['all_button_counts']['2::1_1']).to eq({'button_id' => 2, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 1, 'depth_sum' => 0, 'spoken' => true, 'full_travel_sum' => 0.3})
+      expect(day['all_button_counts']['3::1_1']).to eq({'button_id' => 3, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 1, 'depth_sum' => 1, 'spoken' => true, 'full_travel_sum' => 1.2})
+      expect(day['all_button_counts']['4::1_1']).to eq({'button_id' => 4, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 1, 'depth_sum' => 2, 'spoken' => true, 'full_travel_sum' => 2.3})
     end
   end
 

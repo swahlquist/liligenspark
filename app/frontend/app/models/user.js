@@ -569,6 +569,47 @@ CoughDrop.User = DS.Model.extend({
     user.set('copy_promise', copy_promise);
     return copy_promise;
   },
+  assert_local_boards: function() {
+    var _this = this;
+    var user_name = _this.get('user_name');
+    return new RSVP.Promise(function(resolve, reject) {
+      // ensure you're online
+      if(persistence.get('online')) {
+        // retrieve all locally-saved boards
+        return coughDropExtras.storage.find_all('board').then(function(list) {
+          var promises = [];
+          list.forEach(function(item) {
+            // filter to only those owned by the current user
+            if(item.data && item.data.raw && item.data.raw.user_name == user_name) {
+              // load each local copy and call .save to PUT the local version
+              var existing = CoughDrop.store.peekRecord('board', item.data.raw.id);
+              if(!existing) {
+                var json_api = { data: {
+                  id: item.data.raw.id,
+                  type: 'board',
+                  attributes: item.data.raw
+                }};
+                existing = CoughDrop.store.push(json_api);
+              }
+              for(var key in item.data.raw) {
+                existing.set(key, item.data.raw[key]);
+              }
+              promises.push(existing.save());
+            }
+          });
+          RSVP.all_wait(promises).then(function(res) {
+            resolve(list);
+          }, function(err) {
+            reject({error: err, save_failed: true});
+          });
+        }, function(err) {
+          reject(err);
+        });      
+      } else {
+        reject({error: 'not online'});
+      }
+    });
+  },
   swap_home_board_images: function(swap_library) {
     var user = this;
     user.set('preferred_symbols_changed', null);
