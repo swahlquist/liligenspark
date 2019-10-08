@@ -69,14 +69,14 @@
   <div style={{board_style}} class={{display_class}} data-id={{board.id}}>
     {{#if board.has_background}}
       <div style={{bg_style}} id='board_bg'>
-        {{#if board.background_image_url}}
-          {{#if board.background_image_exclusion}}
+        {{#if board.background.image}}
+          {{#if board.background.image_exclusion}}
             <div class='exclude'></div>
           {{/if}}
           <img src={{board.background_image_url_with_fallback}} style={{bg_img_style}}/>
         {{/if}}
-        {{#if board.background_text}}
-          <div class='text'><span>{{board.background_text}}</span></div>
+        {{#if board.background.text}}
+          <div class='text'><span>{{board.background.text}}</span></div>
         {{/if}}
       </div>
     {{/if}}

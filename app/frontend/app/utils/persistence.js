@@ -1831,19 +1831,19 @@ var persistence = EmberObject.extend({
                 }));
                 importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
               }
-              if((board.get('background_image_url') || '').match(/^http/)) {
-                visited_board_promises.push(persistence.store_url(board.get('background_image_url'), 'image', true, force, true).then(null, function() {
-                  console.log("bg url failed to sync, " + board.get('background_image_url'));
+              if((board.get('background.image') || '').match(/^http/)) {
+                visited_board_promises.push(persistence.store_url(board.get('background.image'), 'image', true, force, true).then(null, function() {
+                  console.log("bg url failed to sync, " + board.get('background.image'));
                   return RSVP.resolve();
                 }));
-                importantIds.push("dataCache_" + board.get('background_image_url'));
+                importantIds.push("dataCache_" + board.get('background.image'));
               }
-              if((board.get('background_prompt.sound_url') || '').match(/^http/)) {
-                visited_board_promises.push(persistence.store_url(board.get('background_prompt.sound_url'), 'sound', true, force, true).then(null, function() {
-                  console.log("bg sound url failed to sync, " + board.get('background_prompt.sound_url'));
+              if((board.get('background.prompt.sound') || '').match(/^http/)) {
+                visited_board_promises.push(persistence.store_url(board.get('background.prompt.sound'), 'sound', true, force, true).then(null, function() {
+                  console.log("bg sound url failed to sync, " + board.get('background.prompt.sound'));
                   return RSVP.resolve();
                 }));
-                importantIds.push("dataCache_" + board.get('background_prompt.sound_url'));
+                importantIds.push("dataCache_" + board.get('background.prompt.sound'));
               }
 
               if(next.image) {

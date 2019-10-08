@@ -230,7 +230,7 @@ export default Controller.extend({
   bg_style: function() {
     var rows = this.get('model.grid.rows');
     var cols = this.get('model.grid.columns');
-    var pos = (this.get('model.background_position') || '').split(',');
+    var pos = (this.get('model.background.position') || '').split(',');
     var xmin = Math.max(parseInt(pos[1], 10) || 0, 0), xmax = Math.min(parseInt(pos[3], 10) || cols - 1, cols - 1) + 1,
         ymin = Math.max(parseInt(pos[2], 10) || 0, 0), ymax = Math.min(parseInt(pos[4], 10) || rows - 1, rows - 1) + 1;
     var width = 100 * (xmax - xmin) / cols;
@@ -238,15 +238,15 @@ export default Controller.extend({
     var left = 100 * xmin / cols;
     var top = 100 * ymin / rows;
     return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%; overflow: hidden;');
-  }.property('model.background_image_url', 'model.grid.rows', 'model.grid.columns', 'model.background_position'),
+  }.property('model.background.image', 'model.grid.rows', 'model.grid.columns', 'model.background.position'),
   bg_img_style: function() {
-    var pos = (this.get('model.background_position') || '').split(',');
+    var pos = (this.get('model.background.position') || '').split(',');
     var fit = 'fill';
     if(pos[0] == 'center') {
       fit = 'contain';
     }
     return htmlSafe('width: 100%; height: 100%; object-fit: ' + fit + '; object-position: center; background: rgb(125, 125, 125); box-shadow: 5px 5px 10px rgb(125, 125, 125), -5px -5px 10px rgb(125, 125, 125), -5px 5px 10px rgb(125, 125, 125), 5px -5px 10px rgb(125, 125, 125)');
-  }.property('model.background_image_url', 'model.grid.rows', 'model.grid.columns', 'model.background_position'),
+  }.property('model.background.image', 'model.grid.rows', 'model.grid.columns', 'model.background.position'),
   redraw_if_needed: function() {
     var now = (new Date()).getTime();
     if(now - last_redraw > 100) {

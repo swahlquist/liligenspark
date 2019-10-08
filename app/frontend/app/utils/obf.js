@@ -14,11 +14,15 @@ var obf = EmberObject.extend({
     board.set('grid', hash['grid']);
     board.set('id', hash['id'] || 'b123');
     board.set('permissions', {view: true});
-    board.set('background_image_url', hash['background_image_url']);
-    board.set('background_image_exclusion', hash['background_image_exclusion']);
-    board.set('background_position', hash['background_position']);
-    board.set('background_text', hash['background_text']);
-    board.set('background_prompt', hash['background_prompt']);
+    hash['background'] = hash['background'] || {};
+    board.set('background', {
+      image: hash['background']['image'],
+      image_exclusion: hash['background']['ext_coughdrop_image_exclusion'],
+      color: hash['background']['color'],
+      position: hash['background']['position'],
+      text: hash['background']['text'],
+      prompt: hash['background']['prompt']
+    })
     board.set('text_only', hash['text_only']);
 
     board.set('hide_empty', true);
@@ -71,6 +75,7 @@ var obf = EmberObject.extend({
     var shell = {
       format: 'open-board-0.1',
       license: {type: 'private'},
+      background: {},
       buttons: [],
       grid: {
         rows: rows,

@@ -109,15 +109,15 @@ export default Route.extend({
 
     controller.get('valid_fast_html');
     var insufficient_data = model.get('id') && (!controller.get('has_rendered_material') || (!model.get('pseudo_board') && model.get('permissions') === undefined));
-    if(model.get('background_prompt') && app_state.get('speak_mode')) {
+    if(model.get('background.prompt') && app_state.get('speak_mode')) {
       // TODO: is there a way to wait until current speaking has
       // finished to activate the prompt?
       runLater(function() {
-        if(model.get('background_prompt.text')) {
-          speecher.speak_text(model.get('background_prompt.text'), false, {alternate_voice: speecher.alternate_voice});
+        if(model.get('background.prompt.text')) {
+          speecher.speak_text(model.get('background.prompt.text'), false, {alternate_voice: speecher.alternate_voice});
         }
-        if(model.get('background_prompt.sound_url')) {
-          speecher.speak_audio(model.get('background_sound_url_with_fallback'), 'background', false, {loop: model.get('background_prompt.loop')});
+        if(model.get('background.prompt.sound_url')) {
+          speecher.speak_audio(model.get('background_sound_url_with_fallback'), 'background', false, {loop: model.get('background.prompt.loop')});
         }
       }, 100);
     }

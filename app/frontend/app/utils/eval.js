@@ -875,31 +875,31 @@ evaluation.callback = function(key) {
     if(step.continue_on_non_mastery) {
       level.continue_on_non_mastery = true;
     }
-    board.background_image_url = "https://thetechnoskeptic.com/wp-content/uploads/2019/03/NightSky_iStock_den-belitsky_900.jpg";
-    board.background_position = "stretch";
+    board.background.image = "https://thetechnoskeptic.com/wp-content/uploads/2019/03/NightSky_iStock_den-belitsky_900.jpg";
+    board.background.position = "stretch";
     working.level_id = step.intro;
     working.ref = working.ref || {};
     working.ref.prompt_index = null;
     if(step.intro == 'intro') {
-      board.background_text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.");
+      board.background.text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.");
     } else if(step.intro == 'find_target') {
-      board.background_text = i18n.t('find_target_intro', "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.");
+      board.background.text = i18n.t('find_target_intro', "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.");
     } else if(step.intro == 'diff_target') {
-      board.background_text = i18n.t('diff_target_intro', "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.");
+      board.background.text = i18n.t('diff_target_intro', "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.");
     } else if(step.intro == 'symbols') {
-      board.background_text = i18n.t('symbols_intro', "This next evaluation will use different styles of pictures to see if the user has more success with one style over another");
+      board.background.text = i18n.t('symbols_intro', "This next evaluation will use different styles of pictures to see if the user has more success with one style over another");
     } else if(step.intro == 'find_shown') {
-      board.background_text = i18n.t('find_show_intro', "Now the evaluation will show a photograph or concept and have the user find the corresponding symbol below");
+      board.background.text = i18n.t('find_show_intro', "Now the evaluation will show a photograph or concept and have the user find the corresponding symbol below");
     } else if(step.intro == 'open_ended') {
-      board.background_text = i18n.t('open_ended_intro', "Next the evaluation will show simple photographs. Encourage the user to make observations or discuss the picture using the buttons or keys provided");
+      board.background.text = i18n.t('open_ended_intro', "Next the evaluation will show simple photographs. Encourage the user to make observations or discuss the picture using the buttons or keys provided");
     } else if(step.intro == 'categories') {
-      board.background_text = i18n.t('categories_intro', "The next evaluation will focus on classifying items based on their category");
+      board.background.text = i18n.t('categories_intro', "The next evaluation will focus on classifying items based on their category");
     } else if(step.intro == 'inclusion_exclusion_association') {
-      board.background_text = i18n.t('inclusion_exclusion_association_intro', "Next the evaluation will prompt for related or unrelated items for the user to try to match or identify");
+      board.background.text = i18n.t('inclusion_exclusion_association_intro', "Next the evaluation will prompt for related or unrelated items for the user to try to match or identify");
     } else if(step.intro == 'literacy') {
-      board.background_text = i18n.t('literacy_intro', "This next evaluation will show an image and a list of possible words (without images) to check for reading skills");
+      board.background.text = i18n.t('literacy_intro', "This next evaluation will show an image and a list of possible words (without images) to check for reading skills");
     } else if(step.intro == 'done') {
-      board.background_text = i18n.t('done_eval', "Done! Hit the final button to save the evaluation and see the results!");
+      board.background.text = i18n.t('done_eval', "Done! Hit the final button to save the evaluation and see the results!");
     }
     level.libraries_used = {
       'default': true
@@ -1149,6 +1149,7 @@ evaluation.callback = function(key) {
       }
     }
     board = obf.shell(step_rows, step_cols);
+    board.key = 'obf/eval';
     var prompt = words.find(function(w) { return w.label == (assessment.label || 'cat'); });
     var distractor_words = words.filter(function(w) { return w.label && w.type && w.type != 'filler'; });
 
@@ -1266,7 +1267,7 @@ evaluation.callback = function(key) {
         prompt_text = "Find the one that people " + cat.prompt;
         filtered = cat.words;
         var cat_word = words.find(function(w) { return w.group == cat.category});
-        board.background_image_url = cat_word.urls['photos'] || cat_word.urls['default'];
+        board.background.image = cat_word.urls['photos'] || cat_word.urls['default'];
         distractor_words = shuffle(working.ref.all_functional_words.filter(function(w) { return w.category != cat.category && !(cat.exclude || {})[w.category]; }));
       } else if(step.find == 'functional_association') {
         assert('functional_association');
@@ -1278,7 +1279,7 @@ evaluation.callback = function(key) {
         prompt_text = "What do you do with " + cat.prompt + "?";
         filtered = [cat.action];
         distractor_words = working.ref.all_functional_association_words.filter(function(w) { return w != cat.action; });
-        board.background_image_url = cat.word.urls['photos'] || cat.word.urls['default'];
+        board.background.image = cat.word.urls['photos'] || cat.word.urls['default'];
       } else if(step.find == 'category') {
         assert('groups');
         working.ref.groups_index = working.ref.groups_index || 0;
@@ -1289,7 +1290,7 @@ evaluation.callback = function(key) {
         working.ref.groups_index++;
         if(working.ref.groups_index >= working.ref.all_group_words.length) { working.ref.groups_index = 0; }
         prompt_text = "Find the group that " + word.label + " belongs to";
-        board.background_image_url = word.urls['photos'] || word.urls['default'];
+        board.background.image = word.urls['photos'] || word.urls['default'];
       } else if(step.find == 'from_category') {
         assert('groups');
         working.ref.category_group_index = working.ref.category_group_index || 0;
@@ -1300,7 +1301,7 @@ evaluation.callback = function(key) {
         filtered = [word];
         distractor_words = working.ref.all_group_words.concat(category.words);
         prompt_text = "What kind of " + category.category + " is this?";
-        board.background_image_url = word.urls['photos'] || word.urls['default'];
+        board.background.image = word.urls['photos'] || word.urls['default'];
       } else if(step.find == 'inclusion') {
         assert('groups');
         working.ref.category_group_index = working.ref.category_group_index || 0;
@@ -1311,7 +1312,7 @@ evaluation.callback = function(key) {
         filtered = [word];
         distractor_words = working.ref.all_group_words.filter(function(w) { return w.category != category.group });
         prompt_text = "Find the one that is " + category.prompt;
-        board.background_image_url = category.word.urls['photos'] || category.word.urls['default'];
+        board.background.image = category.word.urls['photos'] || category.word.urls['default'];
       } else if(step.find == 'exclusion') {
         assert('groups');
         working.ref.category_group_index = working.ref.category_group_index || 0;
@@ -1323,8 +1324,8 @@ evaluation.callback = function(key) {
         filtered = [word];
         distractor_words = category.words;
         prompt_text = "Find the one that is not " + category.prompt;
-        board.background_image_url = category.word.urls['photos'] || category.word.urls['default'];
-        board.background_image_exclusion = true;
+        board.background.image = category.word.urls['photos'] || category.word.urls['default'];
+        board.background.ext_coughdrop_image_exclusion = true;
       } else if(step.find == 'association') {
         assert('associations');
         working.ref.association_index = working.ref.association_index || 0;
@@ -1332,7 +1333,7 @@ evaluation.callback = function(key) {
         working.ref.association_index++;
         if(working.ref.association_index >= working.ref.associations.length) { working.ref.association_index = 0; }
         prompt_text = "Find the one that goes with " + item.name;
-        board.background_image_url = item.prompt.urls['photos'] || item.prompt.urls['default'];        
+        board.background.image = item.prompt.urls['photos'] || item.prompt.urls['default'];        
         filtered = [item.answer];
         distractor_words = working.ref.association_answers.filter(function(w) { return w != item.answer && !(item.exclude || {})[w.label]; });
       } else if(step.find == 'spelling') {
@@ -1349,7 +1350,7 @@ evaluation.callback = function(key) {
         filtered = [word];
         distractor_words = word.distractors;
         prompt_text = "Find the name of this picture";
-        board.background_image_url = word.urls['photos'];
+        board.background.image = word.urls['photos'];
       } else if(step.find == 'spelling_category') {
         board.text_only = true;
         assert('spelling');
@@ -1358,13 +1359,14 @@ evaluation.callback = function(key) {
         // don't use colors for this exercise, it's too abstract
         var spelling_words = working.ref.all_group_words.filter(function(w) { return w.category && w.category != 'filler' && w.category != 'color' && w.urls['photos'] && !working.ref.literacy_used[w.label]; });
         if(spelling_words.length == 0) { working.ref.all_group_words.filter(function(w) { return w.urls['photos']; }) }
+        // TODO: prevent repeat words
         var word = spelling_words[Math.floor(Math.random() * spelling_words.length)];
         var category = working.ref.groups.find(function(g) { return g.group == word.category; });
         working.ref.literacy_used[word.label] = true;
         filtered = [category.word];
         distractor_words = working.ref.groups.filter(function(g) { return g.group != word.category; }).map(function(g) { return g.name });
         prompt_text = "Find the category that this picture belongs to";
-        board.background_image_url = word.urls['photos'];
+        board.background.image = word.urls['photos'];
       } else if(step.find == 'spelling_descriptor') {
         board.text_only = true;
         assert('spelling');
@@ -1381,7 +1383,7 @@ evaluation.callback = function(key) {
         filtered = [{label: desc, urls: {'default': 'na'}}];
         distractor_words = word.simple_adjectives.filter(function(w) { return w.match(/^-/); }).map(function(w) { return w.substring(1); });
         prompt_text = "Find the word that describes this picture";
-        board.background_image_url = word.urls['photos'];
+        board.background.image = word.urls['photos'];
       }
   
       prompt = filtered[Math.floor(Math.random() * filtered.length)];
@@ -1390,12 +1392,12 @@ evaluation.callback = function(key) {
       var not_nailed_yet = (working.attempts || 0) < 2 || (working.correct / working.attempts) < 0.65;
       var none_yet = (working.correct || 0) == 0;
       if(step.always_visual || not_nailed_yet || working.attempts < 15) {
-        board.background_image_url = board.background_image_url || prompt.urls['photos'] || prompt.urls['default'];
+        board.background.image = board.background.image || prompt.urls['photos'] || prompt.urls['default'];
         if(none_yet) {
-          board.background_text = prompt_text;
+          board.background.text = prompt_text;
         }
       } else {
-        board.background_image_url = null;
+        board.background.image = null;
         board.add_button({
           id: 'button_repeat',
           label: 'repeat',
@@ -1404,23 +1406,23 @@ evaluation.callback = function(key) {
         }, 0, 0);
         // add button for repeating the audio prompt
       }
-      if(board.background_image_url) {
-        board.background_position = board.background_position || "center,0,0,6,1";
+      if(board.background.image) {
+        board.background.position = board.background.position || "center,0,0,6,1";
       }
-      board.background_prompt = {
+      board.background.prompt = {
         text: prompt_text
       };
     } else if(step.core) {
-      board.background_position = 'center,0,0,10,2';
-      board.background_prompt = null;
-      board.background_text = null;
+      board.background.position = 'center,0,0,10,2';
+      board.background.prompt = null;
+      board.background.text = null;
 
       working.ref.prompt_index = working.ref.prompt_index || Math.floor(Math.random() * step.prompts.length);
       working.ref.prompt_index++;
       if(working.ref.prompt_index >= step.prompts.length) { working.ref.prompt_index = 0; }
       var prompt = step.prompts[working.ref.prompt_index];
       
-      board.background_image_url = prompt.url;
+      board.background.image = prompt.url;
       $("#board_bg img").attr('src', prompt.url);
       
       board.add_button({
@@ -1445,9 +1447,9 @@ evaluation.callback = function(key) {
         skip_vocalization: true
       }, 1, step_cols - 1);
     } else {
-      board.background_position = "stretch";
-      // board.background_text = "Find the " + prompt.label;
-      board.background_prompt = {
+      board.background.position = "stretch";
+      // board.background.text = "Find the " + prompt.label;
+      board.background.prompt = {
         text: "Find the " + prompt.label,
         loop: true
       };

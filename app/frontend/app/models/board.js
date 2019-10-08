@@ -414,9 +414,7 @@ CoughDrop.Board = DS.Model.extend({
   parent_board_key: DS.attr('string'),
   link: DS.attr('string'),
   image_url: DS.attr('string'),
-  background_image_url: DS.attr('string'),
-  background_position: DS.attr('string'),
-  background_prompt: DS.attr('raw'),
+  background: DS.attr('raw'),
   hide_empty: DS.attr('boolean'),
   buttons: DS.attr('raw'),
   grid: DS.attr('raw'),
@@ -599,14 +597,14 @@ CoughDrop.Board = DS.Model.extend({
     } else if(url && url.match(/^data/)) {
       return RSVP.resolve(this);
     }
-    var url = this.get('background_image_url');
+    var url = this.get('background.image');
     if(!this.get('background_image_data_uri') && url && url.match(/^http/)) {
       persistence.find_url(url, 'image').then(function(data_uri) {
         _this.set('background_image_data_uri', data_uri);
         return _this;
       });
     }
-    var url = this.get('background_prompt.sound_url');
+    var url = this.get('background.prompt.sound');
     if(!this.get('background_sound_data_uri') && url && url.match(/^http/)) {
       persistence.find_url(url, 'sound').then(function(data_uri) {
         _this.set('background_sound_data_uri', data_uri);
@@ -616,17 +614,17 @@ CoughDrop.Board = DS.Model.extend({
     return RSVP.reject('no board data url');
   },
   background_image_url_with_fallback: function() {
-    return this.get('background_image_data_uri') || this.get('background_image_url');
-  }.property('background_image_url', 'background_image_data_uri'),
+    return this.get('background_image_data_uri') || this.get('background.image');
+  }.property('background.image', 'background_image_data_uri'),
   background_sound_url_with_fallback: function() {
-    return this.get('background_sound_data_uri') || this.get('background_prompt.sound_url');
-  }.property('background_sound_data_uri', 'background_prompt.sound_url'),
+    return this.get('background_sound_data_uri') || this.get('background.prompt.sound');
+  }.property('background_sound_data_uri', 'background.prompt.sound'),
   has_background: function() {
-    return this.get('background_image_url') || this.get('background_text');
-  }.property('background_image_url', 'background_text'),
+    return this.get('background.image') || this.get('background.text');
+  }.property('background.image', 'background.text'),
   checkForDataURLOnChange: function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('image_url', 'background_image_url'),
+  }.observes('image_url', 'background.image'),
   for_sale: function() {
     if(this.get('protected')) {
       var settings = this.get('protected_settings') || {};
