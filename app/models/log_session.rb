@@ -428,7 +428,7 @@ class LogSession < ActiveRecord::Base
                 if event['button']['percent_travel']
                   self.data['stats']['all_button_counts'][ref]['spoken'] = true if (event['button']['spoken'] || event['button']['for_speaking'])
                   self.data['stats']['all_button_counts'][ref]['full_travel_sum'] ||= 0
-                  self.data['stats']['all_button_counts'][ref]['full_travel_sum'] += travel_tally
+                  self.data['stats']['all_button_counts'][ref]['full_travel_sum'] += travel_tally.round(2)
                   # add total travel distance for the button, and mark if it was spoken or not,
                   # because we really mostly just care about travel distance for spoken buttons
                 end
