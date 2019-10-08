@@ -397,6 +397,7 @@ class Board < ActiveRecord::Base
     if @update_self_references
       self.update_self_references
     end
+
     
     if @check_for_parts_of_speech
       self.schedule(:check_for_parts_of_speech_and_inflections)
@@ -414,7 +415,6 @@ class Board < ActiveRecord::Base
   def check_inflections
     # this used to be a background job, but I think it needs to be part of the original save now
     if @check_for_parts_of_speech
-      puts "go go go!"
       self.check_for_parts_of_speech_and_inflections(false)
       @check_for_parts_of_speech = nil
     end

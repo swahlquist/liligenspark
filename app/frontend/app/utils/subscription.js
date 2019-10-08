@@ -97,11 +97,11 @@ var Subscription = EmberObject.extend({
         var expires = window.moment(u.get('subscription.expires'));
         var now = window.moment(new Date());
         var future = window.moment(new Date()).add(30, 'day');
-        if(expires < now) {
+        if(expires < now && !u.get('supporter_role')) {
           // expired
           this.set('user_expired', true);
           this.set('show_options', true);
-        } else if(expires < future) {
+        } else if(expires < future && !u.get('supporter_role')) {
           // expiring soon-ish
           this.set('user_expiring', true);
           this.set('show_options', true);
