@@ -1920,6 +1920,9 @@ tr.accuracy_non_mastered {
 .board.high_contrast .button img.symbol:not(.hc) {
   filter: contrast(4.0) saturate(500);
 }
+#word_suggestions.high_contrast .suggestion img:not(.hc) {
+  filter: contrast(4.0) saturate(500);
+}
 .symbol_background_white .button img.symbol {
   background: #fff; 
 }

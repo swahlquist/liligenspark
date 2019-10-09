@@ -266,6 +266,7 @@ var word_suggestions = EmberObject.extend({
                         emberSet(word, 'original_image', button.original_image);
                         emberSet(word, 'safe_image', emberGet(word, 'image'));
                         emberSet(word, 'image', button.image);
+                        emberSet(word, 'hc_image', !!button.image);
                         if(button.image.match(/^data/) || !button.image.match(/^http/)) {
                           emberSet(word, 'safe_image', button.image);
                         }

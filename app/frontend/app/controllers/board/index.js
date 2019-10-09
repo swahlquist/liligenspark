@@ -711,6 +711,9 @@ export default Controller.extend({
     if(!app_state.get('currentUser.preferences.folder_icons')) {
       res = res + "colored_icons ";
     }
+    if(app_state.get('currentUser.preferences.high_contrast')) {
+      res = res + "high_contrast ";
+    }
     if(this.get('model.finding_target')) {
       res = res + "finding_target ";
     }
@@ -757,7 +760,7 @@ export default Controller.extend({
       }
     }
     return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons', 'app_state.eval_mode'),
+  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons', 'app_state.eval_mode', 'app_state.currentUser.preferences.high_contrast'),
   suggestion_class: function() {
     var res = "advanced_selection ";
     if(this.get('text_style')) {
@@ -777,12 +780,15 @@ export default Controller.extend({
         res = res + style.font_class + " ";
       }
     }
+    if(this.get('app_state.currentUser.preferences.high_contrast')) {
+      res = res + "high_contrast ";
+    }
 
     if(this.get('app_state.currentUser.preferences.word_suggestion_images')) {
       res = res + "with_images ";
     }
     return res;
-  }.property('text_style', 'button_style', 'text_style', 'app_state.currentUser.preferences.word_suggestion_images'),
+  }.property('text_style', 'button_style', 'text_style', 'app_state.currentUser.preferences.word_suggestion_images', 'app_state.currentUser.preference.high_contrast'),
   update_button_symbol_class: function() {
     var res = "button-label-holder ";
     if(this.get('app_state.currentUser.hide_symbols') || this.get('model.text_only')) {

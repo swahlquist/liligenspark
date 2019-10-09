@@ -112,6 +112,17 @@
       </div>
     </div>
     <div class="form-group">
+      <label for="high_contrast" class="col-sm-3 control-label">{{t "High Contrast" key='high_contrast'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.high_contrast id="high_contrast"}}
+            {{t "Show all button images in high-contrast mode" key='high_contrast_images'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
       <label for="dim_header" class="col-sm-3 control-label">{{t "Dim Header" key='dim_header'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">

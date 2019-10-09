@@ -332,6 +332,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
             'visible_level' => visible_level,
             'linked_level' => linked_level,
             'image' => image && image.url,
+            'hc' => image && image.settings['hc'],
             'image_id' => button['image_id'],
             'sound_id' => button['sound_id'],
             'label' => button['label'],
