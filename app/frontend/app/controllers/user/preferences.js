@@ -509,7 +509,7 @@ export default Controller.extend({
       this.set('model.preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));
       modal.open('modals/phrases', {user: this.get('model')})
     },
-    savePreferences: function() {
+    savePreferences: function(skip_redirect) {
       // TODO: add a "save pending..." status somewhere
       // TODO: this same code is in utterance.js...
       this.set('skip_save_on_transition', true);
@@ -574,7 +574,9 @@ export default Controller.extend({
         if(user.get('id') == app_state.get('currentUser.id')) {
           app_state.set('currentUser', user);
         }
-        _this.transitionToRoute('user', user.get('user_name'));
+        if(!skip_redirect) {
+          _this.transitionToRoute('user', user.get('user_name'));
+        }
       }, function() {
         _this.set('status', {error: true});
       });

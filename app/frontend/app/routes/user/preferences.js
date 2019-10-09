@@ -27,7 +27,7 @@ export default Route.extend({
         var orig_prefs = JSON.stringify(this.get('controller.original_preferences') || {});
         var new_prefs = JSON.stringify(this.get('controller.pending_preferences') || {});
         if(orig_prefs != new_prefs) {
-          this.controller.send('savePreferences');
+          this.controller.send('savePreferences', true);
         }
       }
       return true;
