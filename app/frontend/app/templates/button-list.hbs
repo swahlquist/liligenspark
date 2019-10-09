@@ -18,9 +18,7 @@
     {{#if button.sound}}
       <audio style="display: none;" preload="auto" src={{button.sound}}></audio>
     {{/if}}
-    <div class={{if button.modeling 'text modeled' 'text'}}>
-      {{ button.label }}
-    </div>
+    <div class={{if button.modeling 'text modeled' 'text'}}>{{ button.label }} </div>
   </div>
   {{#unless button.ghost}}
     {{#if button.insert_after}}

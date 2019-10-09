@@ -646,6 +646,7 @@ footer .wide_links {
         display: none;
       }
       .text {
+        white-space: pre;
         display: inline;
         &.modeled {
           text-decoration: underline;

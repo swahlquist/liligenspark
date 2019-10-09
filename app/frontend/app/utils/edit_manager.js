@@ -392,6 +392,19 @@ var editManager = EmberObject.extend({
       div.style.padding = pad + 'px';
       var button_margin = 5; // TODO: this is a user preference
       var img = elem.getElementsByClassName('symbol')[0];
+      var lbl = elem.getElementsByClassName('button-label-holder')[0];
+      var inner = lbl.getElementsByClassName('button-label')[0];
+      inner.style.display = 'inline';
+      var lbl_height = Math.max(lbl.getBoundingClientRect().height);
+      inner.style.display = '';
+      var text_position = 'top';
+      if(app_state.get('referenced_user.preferences.device.button_text_position') == 'bottom') {
+        text_position = 'bottom';
+      } else if(app_state.get('referenced_user.preferences.device.button_text_position') == 'text_only') {
+        text_position = 'no_image';
+      } else if(app_state.get('referenced_user.preferences.device.button_text_position') == 'none') {
+        text_position = 'bottom';
+      }
       var formatted_button = function(label, image_url, opposite) {
         image_url = image_url || (img || {}).src || "https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg";
         var btn = document.createElement('div');

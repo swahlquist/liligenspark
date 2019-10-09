@@ -10,7 +10,7 @@
       <img src={{button.action_image}} alt={{button.action_alt}} draggable='false' />
     </span>
   </div>
-  <span style={{button.image_holder_style}}>
+  <span class='img_holder' style={{button.image_holder_style}}>
     {{#unless app_state.currentUser.hide_symbols}}
       {{#unless button.board.text_only}}
         <img src={{button.local_image_url}} draggable='false' onerror="button_broken_image(this);" style={{button.image_style}} class={{if button.hc_image 'symbol hc' 'symbol'}}>

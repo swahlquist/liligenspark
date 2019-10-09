@@ -73,7 +73,9 @@ var utterance = EmberObject.extend({
       var added = false;
       if(plusses.length > 0) {
         last = {};
-        if(idx === 0 || last_computed.in_progress) {
+        // Append to the last button if that one is still in progress,
+        // or this is a punctuation mark, or it's part of a decimal number
+        if(idx === 0 || last_computed.in_progress || plusses[0].match(punctuation_at_start) || ((last_computed.vocalization || last_computed.label).match(/[\.\,]$/) && plusses[0].match(/^\+\d/))) {
           last = buttonList.pop() || {};
         }
         // append to previous
@@ -152,6 +154,10 @@ var utterance = EmberObject.extend({
           visualButton.set('sound', data_uri);
         }, function() { });
       }
+      visualButton.set('label', visualButton.get('label').replace(/\s$/g, ''));
+      if(visualButton.get('vocalization')) {
+        visualButton.set('vocalization', visualButton.get('vocalization').replace(/\s$/g, ''));
+      }
       if(app_state.get('insertion.index') == idx) {
         visualButton.set('insert_after', true);
         if(hint) {
@@ -168,9 +174,10 @@ var utterance = EmberObject.extend({
     });
     var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
     var last_spoken_button = visualButtonList[idx];
-    if(last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "").match(/^\s*[\.\?\,\!]\s*$/)) {
+    // If the last event was a punctuation mark, speak the whole last sentence
+    if(last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "").match(punctuation_at_end)) {
       var prior = utterance.sentence(visualButtonList.slice(0, -1));
-      var parts = prior.split(/[\.\?\!]/);
+      var parts = prior.split(punctuation_ending_sentence);
       var last_part = parts[parts.length - 1];
       var str = last_part + " " + (last_spoken_button.vocalization || last_spoken_button.label);
       last_spoken_button = {
@@ -256,10 +263,10 @@ var utterance = EmberObject.extend({
         var prior_label = (altered.label || '');
         var action = CoughDrop.find_special_action(text);
     
-        if(text.match(/^\+/) && (altered.in_progress || !prior_text)) {
+        if(text.match(/^\+/) && (altered.in_progress || !prior_text || text.match(punctuation_at_start))) {
           altered.vocalization = prior_text + text.substring(1);
           altered.label = prior_label + text.substring(1);
-          altered.in_progress = true;
+          altered.in_progress = !altered.vocalization.match(punctuation_at_end);
         } else if(action && action.alter) {
           action.alter(text, prior_text, prior_label, altered, addition);
         }
