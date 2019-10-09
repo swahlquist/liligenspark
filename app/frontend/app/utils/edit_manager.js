@@ -418,13 +418,21 @@ var editManager = EmberObject.extend({
         btn.style.margin = button_margin + 'px';
         btn.style.width = (button_width - (button_margin * 2)) + 'px';
         btn.style.height = (button_height - (button_margin * 2)) + 'px';
-        btn.innerHTML = "<span class='img_holder' style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; height: 100%; object-fit: contain; object-position: center;\"/></span><div class='button-label-holder top'><span class='button-label'>" + label + "</span></div>";
+        var html = "";
+        if(text_position != 'no_image' && img && img.parentNode) {
+          html = html + "<span class='img_holder' style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; height: 100%; object-fit: contain; object-position: center;\"/></span>";
+        } else {
+          html = html + "<span class='img_holder'></span>";
+        }
+        html = html + "<div class='button-label-holder " + text_position + "'><span class='button-label' style='display: inline;'>" + label + "</span></div>";
+        btn.innerHTML = html
         var holder = btn.getElementsByClassName('img_holder')[0];
-        var lbl = elem.getElementsByClassName('button-label-holder')[0];
-        var lbl_height = lbl.getBoundingClientRect().height;
+        holder.style.display = 'inline-block';
         holder.style.height = (button_height - lbl_height - margin - margin) + 'px';
         holder.style.lineHeight = holder.style.height;
-        holder.getElementsByTagName('IMG')[0].style.height = holder.style.height;
+        if(img) {
+          holder.getElementsByTagName('IMG')[0].style.height = holder.style.height;
+        }
         return btn;
       };
       var close_row = document.createElement('div');
