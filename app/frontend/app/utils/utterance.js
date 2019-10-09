@@ -10,6 +10,10 @@ import persistence from './persistence';
 import $ from 'jquery';
 import CoughDrop from '../app';
 
+var punctuation_at_start = /^\+[\.\?\,\!]/;
+var punctuation_with_space = /^\s*[\.\?\,\!]\s*$/;
+var punctuation_at_end = /[\.\?\,\!]$/;
+var punctuation_ending_sentence = /[\.\?\!]/;
 var utterance = EmberObject.extend({
   setup: function(controller) {
     this.controller = controller;

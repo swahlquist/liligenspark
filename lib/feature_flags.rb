@@ -12,7 +12,7 @@ module FeatureFlags
               'core_reports', 'lessonpix', 'translation', 'fast_render',
               'audio_recordings', 'app_connections', 'enable_all_buttons', 'badge_progress',
               'premium_symbols', 'board_levels', 'native_keyboard', 'app_store_purchases',
-              'find_multiple_buttons', 'new_speak_menu',]
+              'find_multiple_buttons', 'new_speak_menu']
   DISABLED_CANARY_FEATURES = []
   FEATURE_DATES = {
     'word_suggestion_images' => 'Jan 21, 2017',
