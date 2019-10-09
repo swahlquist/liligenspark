@@ -201,7 +201,9 @@ export default Component.extend({
     for(var r = 0; r < rows; r++) {
       for(var c = 0; c < cols; c++) {
         rounded((pad/2) + (c * button_outer_width) + x_padding, pad + top + (r * button_outer_height) + y_padding, button_outer_width - x_padding - x_padding, button_outer_height - y_padding - y_padding, {border: border, text_height: text_height, text: 'abcdefghij'.substring(0, 3 + Math.round(Math.random() * 7)), position: position});
-        circle((c * button_outer_width) + pad + x_padding, pad + top + (r * button_outer_height) + y_padding + text_height + pad + pad, button_outer_width - x_padding - x_padding - pad, button_outer_height - y_padding - y_padding - text_height - text_height - pad - pad - pad - pad);
+        if(!text_only) {
+          circle((c * button_outer_width) + pad + x_padding, pad + top + (r * button_outer_height) + y_padding + text_height + pad + pad, button_outer_width - x_padding - x_padding - pad, button_outer_height - y_padding - y_padding - text_height - text_height - pad - pad - pad - pad);
+        }
         // draw text
         // draw shape
       }
