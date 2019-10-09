@@ -105,13 +105,20 @@ describe Purchasing do
     describe "charge.succeeded" do
       it "should trigger a purchase event" do
         u = User.create
+        u.settings['purchase_bounced'] = true
+        u.save
         exp = u.expires_at
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
         
+        expect(Stripe::Customer).to receive(:retrieve).with('qwer').and_return({
+          'metadata' => {
+            'user_id' => u.global_id
+          }
+        })
         res = stripe_event_request 'charge.succeeded', {
           'id' => '12345',
-          'customer' => '23456',
+          'customer' => 'qwer',
           'metadata' => {
             'user_id' => u.global_id,
             'plan_id' => 'long_term_100'
@@ -119,9 +126,10 @@ describe Purchasing do
         }
         u.reload
         expect(u.settings['subscription']['last_purchase_plan_id']).to eq('long_term_100')
-        expect(u.settings['subscription']['customer_id']).to eq('23456')
+        expect(u.settings['subscription']['customer_id']).to eq('qwer')
         expect(u.settings['subscription']['last_purchase_id']).to eq('12345')
         expect(u.settings['subscription']['prior_purchase_ids']).to eq([])
+        expect(u.settings['purchase_bounced']).to eq(false)
         expect(u.expires_at).to eq(exp + 5.years.to_i)
         expect(res[:data]).to eq({:purchase => true, :purchase_id => '12345', :valid => true})
       end
