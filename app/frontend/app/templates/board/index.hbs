@@ -1,15 +1,20 @@
 {{#button-listener compute_height='compute_height' button_event='button_event'}}
 {{#if model.integration}}
-  {{#if teaser_description}}
-    <div id="board_description">
-      <span>{{model.integration_name}}</span>
-    </div>
-  {{/if}}
-  {{#if model.embed_url}}
-    {{embed-frame board_style=board_style code=model.action embed_url=model.embed_url user_token=model.user_token}}
+  {{#unless app_state.sessionUser.currently_premium_or_supporter_role}}
+    <!-- only show integrations for currently-premium users, or supervisors with at least one premium user? -->
+    <p class='text-danger'>{{t "Installed tools will only work correctly for currently-active premium accounts" key='premium_required_for_tools'}}</p>
   {{else}}
-    <p class='text-danger'>{{t "There was an error loading the tool's page, it appears to not be configured properly" key='misconfigured_integration'}}</p>
-  {{/if}}
+    {{#if teaser_description}}
+      <div id="board_description">
+        <span>{{model.integration_name}}</span>
+      </div>
+    {{/if}}
+    {{#if model.embed_url}}
+      {{embed-frame board_style=board_style code=model.action embed_url=model.embed_url user_token=model.user_token}}
+    {{else}}
+      <p class='text-danger'>{{t "There was an error loading the tool's page, it appears to not be configured properly" key='misconfigured_integration'}}</p>
+    {{/if}}
+  {{/unless}}
 {{else if model.id}}
   {{#if teaser_description}}
     <div id="board_description">

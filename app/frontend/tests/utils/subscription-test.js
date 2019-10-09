@@ -414,8 +414,7 @@ describe('subscription', function() {
       var exp = window.moment().add(6, 'day').toISOString();
       user.set('subscription', {expires: exp, free_premium: false, grace_period: true, fully_purchased: false});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -429,9 +428,8 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
       expect(user.get('really_expired')).toEqual(false);
@@ -444,8 +442,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-20, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -459,8 +456,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'year').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -479,8 +475,7 @@ describe('subscription', function() {
       user.set('preferences', {role: 'supporter'});
       user.set('subscription', {expires: exp, free_premium: false, grace_period: true, fully_purchased: false});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -494,9 +489,8 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
       expect(user.get('really_expired')).toEqual(false);
@@ -509,8 +503,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-20, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -524,8 +517,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'year').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -538,8 +530,7 @@ describe('subscription', function() {
       expect(user.get('limited_supervisor')).toEqual(false);
 
       user.set('subscription.limited_supervisor', true);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -557,8 +548,7 @@ describe('subscription', function() {
       var exp = window.moment().add(6, 'day').toISOString();
       user.set('subscription', {expires: exp, free_premium: false, grace_period: true, active: true, purchased: true, plan_id: 'long_term_150'});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -572,9 +562,8 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
       expect(user.get('really_expired')).toEqual(false);
@@ -586,8 +575,7 @@ describe('subscription', function() {
       expect(user.get('grace_period')).toEqual(false);
 
       user.set('subscription.fully_purchased', true);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -601,8 +589,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'year').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -621,8 +608,7 @@ describe('subscription', function() {
       user.set('subscription', {expires: exp, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'slp_long_term_50'});
       user.set('preferences', {role: 'supporter'});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -636,8 +622,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'year').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -656,8 +641,7 @@ describe('subscription', function() {
       user.set('preferences', {role: 'supporter'});
       user.set('subscription', {expires: null, free_premium: true, grace_period: false, fully_purchased: false});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -671,8 +655,7 @@ describe('subscription', function() {
 
       exp = window.moment().add(-6, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -685,8 +668,7 @@ describe('subscription', function() {
       expect(user.get('limited_supervisor')).toEqual(false);
 
       user.set('subscription.limited_supervisor', true);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -704,8 +686,7 @@ describe('subscription', function() {
       var exp = window.moment().add(6, 'day').toISOString();
       user.set('subscription', {expires: null, free_premium: false, grace_period: false, active: true, purchased: true, plan_id: 'monthly_6'});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -718,8 +699,7 @@ describe('subscription', function() {
       expect(user.get('grace_period')).toEqual(false);
 
       user.set('subscription.fully_purchased', true);
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -734,8 +714,7 @@ describe('subscription', function() {
       user.set('subscription.expires', exp);
       user.set('subscription.active', false);
       user.set('subscription.purchased', false);
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -749,8 +728,7 @@ describe('subscription', function() {
 
       var exp = window.moment().add(-6, 'day').toISOString();
       user.set('subscription.expires', exp);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(true);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -763,8 +741,7 @@ describe('subscription', function() {
       expect(user.get('grace_period')).toEqual(false);
 
       user.set('subscription.fully_purchased', false);
-      expect(user.get('full_premium')).toEqual(false);
-      expect(user.get('full_premium_or_trial_period')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(true);
       expect(user.get('expired_or_limited_supervisor')).toEqual(true);
@@ -781,8 +758,7 @@ describe('subscription', function() {
       var user = CoughDrop.store.createRecord('user');
       user.set('subscription', {active: true});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -797,8 +773,7 @@ describe('subscription', function() {
       var exp = window.moment().add(6, 'day').toISOString();
       user.set('subscription.expires', exp);
       user.set('subscription.grace_period', true);
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);
@@ -815,8 +790,7 @@ describe('subscription', function() {
       var user = CoughDrop.store.createRecord('user');
       user.set('subscription', {active: true, never_expires: true});
       user.set('membership_type', 'premium');
-      expect(user.get('full_premium')).toEqual(true);
-      expect(user.get('full_premium_or_trial_period')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
       expect(user.get('free_premium')).toEqual(false);
       expect(user.get('expired')).toEqual(false);
       expect(user.get('expired_or_limited_supervisor')).toEqual(false);

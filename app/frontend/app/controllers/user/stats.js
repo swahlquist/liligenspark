@@ -148,7 +148,7 @@ export default Controller.extend({
   load_charts: function(side) {
     side = side || "left";
     // must have an active paid subscription to access reports for a user's account
-    if(!this.get('model.preferences.logging') || !this.get('model.full_premium_or_trial_period')) {
+    if(!this.get('model.preferences.logging') || !this.get('model.currently_premium')) {
       return;
     }
 

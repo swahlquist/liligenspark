@@ -26,7 +26,7 @@ export default modal.ModalController.extend({
     }
     if(this.get('model.users')) {
       this.get('model.users').forEach(function(u) {
-        emberSet(u, 'not_premium', !emberGet(u, 'premium') && !emberGet(u, 'full_premium'));
+        emberSet(u, 'not_premium', !emberGet(u, 'premium') && !emberGet(u, 'currently_premium'));
       });
       this.set('goal.simple_type', 'words');
     } else if(!this.get('model.user.goal')) {

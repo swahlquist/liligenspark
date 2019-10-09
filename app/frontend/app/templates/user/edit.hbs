@@ -83,6 +83,9 @@
             {{/each}}
           </ul>
         {{/if}}
+        {{#if model.expired_or_limited_supervisor}}
+          <p class='text-danger'>{{t "NOTE: contacts will not show up in Speak Mode for users who do not have a currently-active premium account" key='premium_required_for_contacts'}}</p>
+        {{/if}}
       </div>
       {{#if model.permissions.edit}}
         <div class='col-sm-3 col-sm-offset-3'>
@@ -183,6 +186,9 @@
           </div>
         {{/each}}
         <div style='clear: left;'></div>
+        {{#unless model.currently_premium_or_supporter_role}}
+          <p class='text-danger'>{{t "Installed tools will only work correctly for currently-active premium accounts" key='premium_required_for_tools'}}</p>
+        {{/unless}}
       </div>
     </div>
   {{/if}}

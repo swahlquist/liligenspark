@@ -902,7 +902,9 @@ export default Controller.extend({
       $stash_hover.removeClass('on_button').data('button_id', null);
     },
     toggleEditMode: function() {
-      app_state.toggle_edit_mode();
+      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
+        app_state.toggle_edit_mode(decision);
+      }, function() { });
     },
     compute_height: function(force) {
       this.computeHeight(force);

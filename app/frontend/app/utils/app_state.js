@@ -753,8 +753,11 @@ var app_state = EmberObject.extend({
       } else if(mode == 'speak') {
         var already_speaking_as_someone_else = app_state.get('speakModeUser.id') && app_state.get('speakModeUser.id') != app_state.get('sessionUser.id');
         if(app_state.get('currentBoardState')) { delete app_state.get('currentBoardState').reload_token }
-        if(app_state.get('currentUser') && !opts.reminded && app_state.get('currentUser.expired') && !already_speaking_as_someone_else) {
-          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), limited_supervisor: app_state.get('currentUser.subscription.limited_supervisor'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
+        // when entering speak mode, if the user is expired or the 
+        // supervisor doesn't have any premium supervisees,
+        // pop up a closeable notice about purchasing the app
+        if(app_state.get('currentUser') && !opts.reminded && !app_state.get('currentUser.currently_premium') && (!app_state.get('currentUser.supporter_role') || app_state.get('currentUser.limited_supervisor')) && !already_speaking_as_someone_else) {
+          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), limited_supervisor: app_state.get('currentUser.limited_supervisor'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
             opts.reminded = true;
             app_state.toggle_mode(mode, opts);
           });
@@ -1216,19 +1219,27 @@ var app_state = EmberObject.extend({
       return 70;
     }
   }.property('header_size', 'speak_mode'),
-  check_for_full_premium: function(user, action) {
-    if(user && user.get('expired')) {
+  check_for_currently_premium: function(user, action, allow_fully_purchased) {
+    var allowed = user && user.get('currently_premium');
+    if(allow_fully_purchased && user && user.get('fully_purchased')) {
+      allowed = true;
+    }
+    if(allowed) {
+      return RSVP.resolve({dialog: false});
+    } else {
       return modal.open('premium-required', {user_name: user.get('user_name'), action: action}).then(function() {
         return RSVP.reject({dialog: true});
       });
-    } else {
-      return RSVP.resolve({dialog: false});
     }
   },
-  check_for_really_expired: function(user) {
-    if(user && user.get('really_expired')) {
-      return modal.open('premium-required', {user_name: user.get('user_name'), cancel_on_close: true, remind_to_upgrade: true}).then(function() {
-        return RSVP.reject({dialog: true});
+  check_for_edit_mode_needing_purchase: function(user) {
+    // If the user is very expired, or they are a supervisor with no
+    // supervisees, remind them when they to go edit that they really
+    // should purchase or connect with a purchased account, but don't
+    // prevent them from editing, just remind them regularly?
+    if(user && (user.get('really_expired') || user.get('limited_supervisor'))) {
+      return modal.open('premium-required', {user_name: user.get('user_name'), cancel_on_close: false, remind_to_upgrade: true}).then(function() {
+        return RSVP.resolve({dialog: true});
       });
     } else {
       return RSVP.resolve({dialog: false});
@@ -1400,7 +1411,7 @@ var app_state = EmberObject.extend({
       return;
     }
     if(_this.get('currentUser.preferences.progress.modeling_ideas_viewed')) {
-      if(_this.get('referenced_user.full_premium') && !_this.get('referenced_user.supporter_role')) {
+      if(_this.get('referenced_user.currently_premium') && !_this.get('referenced_user.supporter_role')) {
         _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
         _this.get('referenced_user').load_word_activities().then(function(activities) {
           if(activities && activities.list && activities.list.length > 0) {
@@ -1780,7 +1791,7 @@ var app_state = EmberObject.extend({
       // load recent badges, debounced by ten minutes
       var last_check = (user && _this.get('last_user_badge_load_for_' + user.get('id'))) || 0;
       var now = (new Date()).getTime();
-      if(CoughDrop.store && user && !user.get('supporter_role') && user.get('full_premium_or_trial_period') && last_check < (now - 600000)) {
+      if(CoughDrop.store && user && !user.get('supporter_role') && user.get('currently_premium') && last_check < (now - 600000)) {
         _this.set('last_user_badge_load_for_' + user.get('id'), now);
         runLater(function() {
           _this.set('user_badge_hash', badge_hash);

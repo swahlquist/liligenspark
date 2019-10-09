@@ -180,17 +180,20 @@ CoughDrop.User = DS.Model.extend({
     return (joined < a_while_ago);
   }.property('joined', 'app_state.refresh_stamp'),
   // full premium means fully-featured premium, as in a paid communicator or free trial period
-  full_premium: function() {
+  currently_premium: function() {
     return !this.get('expired') && !this.get('free_premium');
   }.property('expired', 'free_premium'),
-  full_premium_or_trial_period: function() {
-    return this.get('full_premium') || (this.get('free_premium') && this.get('grace_period'));
-  }.property('full_premium', 'free_premium', 'grace_period'),
-  // limited_supervisor means they aren't tied to an org or any non-expired supervisees, so
+  currently_premium_or_fully_purchased: function() {
+    return !!(this.get('currently_premium') || this.get('fully_purchased'));
+  }.property('currently_premium', 'fully_purchased'),
+  currently_premium_or_supporter_role: function() {
+    return !!(this.get('currently_premium') || this.get('supporter_role'));
+  }.property('currently_premium', 'supporter_role'),
+  // limited_supervisor means they aren't tied to an org or any non-currently-premium supervisees, so
   // they need a little bit of reminding of the purpose of supervisor accounts.
   limited_supervisor: function() {
-    return !!this.get('subscription.limited_supervisor');
-  }.property('subscription.limited_supervisor'),
+    return !!(this.get('subscription.limited_supervisor') && !this.get('currently_premium'));
+  }.property('subscription.limited_supervisor', 'currently_premium'),
   // free premium means limited functionality, as in a free supporter
   free_premium: function() {
     if(this.get('subscription.free_premium')) { return true; }
@@ -215,8 +218,8 @@ CoughDrop.User = DS.Model.extend({
     return !!passed;
   }.property('expiration_passed', 'membership_type', 'supporter_role'),
   expired_or_limited_supervisor: function() {
-    return !!(this.get('expired') || this.get('limited_supervisor'));
-  }.property('expired', 'limited_supervisor'),
+    return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_supervisor'));
+  }.property('expired', 'limited_supervisor', 'supporter_role'),
   joined_within_24_hours: function() {
     var one_day_ago = window.moment().add(-1, 'day');
     if(this.get('joined') && this.get('joined') > one_day_ago) {

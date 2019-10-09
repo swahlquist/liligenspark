@@ -550,12 +550,12 @@ export default Controller.extend({
     },
     startRecording: function() {
       // currently-speaking user must have active paid subscription to do video recording
-      app_state.check_for_full_premium(app_state.get('speakModeUser'), 'record_session').then(function() {
+      app_state.check_for_currently_premium(app_state.get('speakModeUser'), 'record_session').then(function() {
         alert("not yet implemented");
       }, function() { });
     },
     toggleEditMode: function(decision) {
-      app_state.check_for_really_expired(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
         app_state.toggle_edit_mode(decision);
       }, function() { });
     },
@@ -597,7 +597,7 @@ export default Controller.extend({
     },
     copy_and_edit_board: function() {
       var _this = this;
-      app_state.check_for_really_expired(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
         _this.copy_board(null, true).then(function(board) {
           if(board) {
             app_state.jump_to_board({
@@ -613,7 +613,7 @@ export default Controller.extend({
     },
     tweakBoard: function(decision) {
       var _this = this;
-      app_state.check_for_really_expired(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
         if(app_state.get('edit_mode')) {
           app_state.toggle_mode('edit');
         }

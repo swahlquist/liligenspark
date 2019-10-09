@@ -254,7 +254,7 @@ export default Controller.extend({
     },
     quick_assessment: function() {
       var _this = this;
-      app_state.check_for_full_premium(_this.get('model', 'quick_assessment')).then(function() {
+      app_state.check_for_currently_premium(_this.get('model', 'quick_assessment')).then(function() {
         modal.open('quick-assessment', {user: _this.get('model')}).then(function() {
           _this.reload_logs();
         });
@@ -283,7 +283,7 @@ export default Controller.extend({
     },
     add_supervisor: function() {
       var _this = this;
-      app_state.check_for_full_premium(this.get('model'), 'add_supervisor').then(function() {
+      app_state.check_for_currently_premium(this.get('model'), 'add_supervisor', true).then(function() {
         modal.open('add-supervisor', {user: _this.get('model')});
       }, function() { });
     },

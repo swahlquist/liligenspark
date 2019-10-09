@@ -259,7 +259,7 @@ export default Controller.extend({
     if(model && for_users[model.get('id')]) {
       var b = _this.best_badge(for_users[model.get('id')], model.get('goal.id'));
       var eb = _this.earned_badge(for_users[model.get('id')]);
-      if(!app_state.get('sessionUser.full_premium') || app_state.get('sessionUser.supporter_role')) {
+      if(!app_state.get('sessionUser.currently_premium') || app_state.get('sessionUser.supporter_role')) {
         b = null;
       }
       // If no badge for the current user use the supervisee if there's only one
@@ -295,11 +295,11 @@ export default Controller.extend({
       if(any_premium_supervisees) {
         return true;
       }
-    } else if(app_state.get('sessionUser.full_premium')) {
+    } else if(app_state.get('sessionUser.currently_premium')) {
       return true;
     }
     return false;
-  }.property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.full_premium'),
+  }.property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.currently_premium'),
   many_supervisees: function() {
     return (app_state.get('currentUser.supervisees') || []).length > 5;
   }.property('app_state.currentUser.supervisees'),

@@ -27,8 +27,8 @@ export default Component.extend({
   }.property('video_recording.started', 'app_state.short_refresh_stamp'),
   video_allowed: function() {
     // must have an active paid subscription to access video logs on your account
-    return this.get('user.full_premium');
-  }.property('user', 'user.full_premium'),
+    return this.get('user.currently_premium');
+  }.property('user', 'user.currently_premium'),
   actions: {
     setup_recording: function() {
       contentGrabbers.videoGrabber.record_video();

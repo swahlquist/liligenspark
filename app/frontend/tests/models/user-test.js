@@ -172,18 +172,18 @@ describe('User', function() {
     });
   });
 
-  describe('full_premium', function() {
+  describe('currently_premium', function() {
     it('should return the correct value', function() {
       var user = CoughDrop.store.createRecord('user');
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       user.set('expired', true);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       user.set('free_premium', true);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       user.set('expired', false);
-      expect(user.get('full_premium')).toEqual(false);
+      expect(user.get('currently_premium')).toEqual(false);
       user.set('free_premium', false);
-      expect(user.get('full_premium')).toEqual(true);
+      expect(user.get('currently_premium')).toEqual(true);
     });
   });
 

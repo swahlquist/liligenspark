@@ -792,7 +792,7 @@ describe('app_state', function() {
       var u = EmberObject.create({
         preferences: {logging: true}
       });
-      u.set('full_premium', true);
+      u.set('currently_premium', true);
       expect(app_state.get('speak_mode')).toEqual(false);
       app_state.set('sessionUser', u);
       expect(app_state.get('speak_mode')).toEqual(false);
@@ -1049,7 +1049,7 @@ describe('app_state', function() {
 
       app_state.set('speakModeUser', EmberObject.create({id: '3456'}));
       var u = EmberObject.create({id: '1234'});
-      u.set('full_premium', true);
+      u.set('currently_premium', true);
       app_state.set('sessionUser', u);
       app_state.set_speak_mode_user('1234');
       expect(app_state.get('speakModeUser')).toEqual(null);

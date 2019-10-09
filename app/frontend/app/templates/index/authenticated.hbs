@@ -153,12 +153,12 @@
             <strong>{{app_state.currentUser.preferences.home_board.key}}</strong>
           {{/link-to}}
           {{#unless app_state.currentUser.subscription.limited_supervisor}}
-            <a class="list-group-item" style={{if app_state.currentUser.full_premium "height: 85px;" "height: 60px;"}}>
+            <a class="list-group-item" style={{if app_state.currentUser.currently_premium "height: 85px;" "height: 60px;"}}>
               <span class="glyphicon glyphicon-volume-up"></span>
               <span class="btn btn-primary" {{action "homeInSpeakMode"}} style="padding-top: 13px; padding-bottom: 13px; margin-top: -5px;">
               {{t "Open In Speak Mode" key='open_in_speak_mode'}}
               </span>
-              {{#if app_state.currentUser.full_premium}}
+              {{#if app_state.currentUser.currently_premium_or_fully_purchased}}
                 <div style="margin: 5px 0 5px 60px;">
                   <label style="font-weight: normal;">
                     {{input type="checkbox" checked=app_state.currentUser.preferences.auto_open_speak_mode}}

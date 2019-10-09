@@ -38,7 +38,7 @@ export default modal.ModalController.extend({
     },
     add_supervisor: function() {
       var _this = this;
-      app_state.check_for_full_premium(_this.get('model'), 'add_supervisor').then(function() {
+      app_state.check_for_currently_premium(_this.get('model'), 'add_supervisor', true).then(function() {
         modal.open('add-supervisor', {user: _this.get('model')});
       }, function() { });
     },

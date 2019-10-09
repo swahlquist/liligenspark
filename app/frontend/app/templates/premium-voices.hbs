@@ -13,7 +13,7 @@
         </p>
 
         {{#unless premium_available}}
-          {{#if app_state.currentUser.full_premium}}
+          {{#if app_state.currentUser.currently_premium}}
             <p class="text-info">{{t "Premium voices are only available on the iOS, Android and Amazon apps. Please install from the app store and try again." key='premium_only_available_mobile'}}</p>
           {{else}}
             <p class="text-info">{{t "Premium voices are available to paid users. If you would like to install a premium voice during your free trial, please reach out to us and let us know." key='premium_only_available_paid'}}</p>
