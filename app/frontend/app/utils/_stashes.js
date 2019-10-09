@@ -87,6 +87,7 @@ var stashes = EmberObject.extend({
       'last_stream_id': null,
       'protected_user': false,
       'label_locale': null,
+      'last_root': null,
       'vocalization_locale': null,
       'global_integrations': null
     };

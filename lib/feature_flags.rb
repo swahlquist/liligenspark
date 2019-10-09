@@ -6,13 +6,13 @@ module FeatureFlags
               'modeling', 'edit_before_copying', 'core_reports', 'lessonpix',
               'audio_recordings', 'fast_render', 'badge_progress', 'board_levels', 'premium_symbols',
               'find_multiple_buttons', 'new_speak_menu', 'native_keyboard', 'inflections_overlay',
-              'app_store_purchases', 'emergency_boards', 'evaluations']
+              'app_store_purchases', 'emergency_boards', 'evaluations', 'swipe_pages']
   ENABLED_FRONTEND_FEATURES = ['subscriptions', 'assessments', 'custom_sidebar', 'snapshots',
               'video_recording', 'goals', 'modeling', 'geo_sidebar', 'edit_before_copying',
               'core_reports', 'lessonpix', 'translation', 'fast_render',
               'audio_recordings', 'app_connections', 'enable_all_buttons', 'badge_progress',
               'premium_symbols', 'board_levels', 'native_keyboard', 'app_store_purchases',
-              'find_multiple_buttons', 'new_speak_menu']
+              'find_multiple_buttons', 'new_speak_menu',]
   DISABLED_CANARY_FEATURES = []
   FEATURE_DATES = {
     'word_suggestion_images' => 'Jan 21, 2017',

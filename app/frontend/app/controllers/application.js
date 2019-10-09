@@ -363,6 +363,7 @@ export default Controller.extend({
       } else {
         this.jumpToBoard({
           key: path,
+          source: source,
           level: board.level,
           home_lock: board.home_lock
         });

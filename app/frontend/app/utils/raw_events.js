@@ -644,9 +644,48 @@ var buttonTracker = EmberObject.extend({
       }
     }
 
+    var swipe_page = false;    
+    if(buttonTracker.swipe_pages) {
+      var cutoff = buttonTracker.activation_location == 'swipe' ? 0.5 : 0.3;
+      var check_swipe = false;
+      if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX > (window.innerWidth * cutoff)) {
+        check_swipe = 'e';
+      } else if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX < (-1 * window.innerWidth * cutoff)) {
+        check_swipe = 'w';
+      } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY < (-1 * window.innerHeight * cutoff)) {
+        check_swipe = 'n';
+      } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY > (window.innerHeight * cutoff)) {
+        check_swipe = 's';
+      }
+      console.log("I think we're going here", check_swipe);
+      if(check_swipe) {
+        var offs = 0, ons = 0;
+        var last = [buttonTracker.initialEvent.clientX, buttonTracker.initialEvent.clientY];
+        (buttonTracker.initialEvent.drag_locations || []).forEach(function(loc) {
+          if(check_swipe == 'e') {
+            if(loc[0] > last[0]) { ons++; } else { offs++; }
+          } else if(check_swipe == 'w') {
+            if(loc[0] < last[0]) { ons++; } else { offs++; }
+          } else if(check_swipe == 'n') {
+            if(loc[1] < last[1]) { ons++; } else { offs++; }
+          } else if(check_swipe == 's') {
+            if(loc[1] > last[1]) { ons++; } else { offs++; }
+          }
+          last = loc;
+        });
+        if(ons > 0 && ons / (ons + offs) > 0.9) {
+          swipe_page = check_swipe;
+        }
+      }
+    }
+
+
     var selectable_wrap = buttonTracker.find_selectable_under_event(event);
     // if dragging a button, behavior is very different than otherwise
-    if(buttonTracker.drag) {
+    if(swipe_page) {
+      app_state.jump_to_next(swipe_page == 'e' || swipe_page == 's');
+      
+    } else if(buttonTracker.drag) {
       // hide the dragged button for a second to find what's underneath it
       buttonTracker.drag.hide();
       var under = document.elementFromPoint(event.clientX, event.clientY);

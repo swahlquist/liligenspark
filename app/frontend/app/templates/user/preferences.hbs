@@ -218,6 +218,17 @@
         </div>
       </div>
     </div>
+    <div class="form-group">
+      <label for="swipe_pages" class="col-sm-3 control-label">{{t "Swipe Pages" key='swipe_pages'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.swipe_pages id="swipe_pages"}}
+            {{t "Use long swipe action to toggle between home and sidebar boards" key='swipe_pages_enabled'}}
+          </label>
+        </div>
+      </div>
+    </div>
     {{#if app_state.feature_flags.inflections_overlay}}
       <div class="form-group">
         <label for="inflections_overlay" class="col-sm-3 control-label">{{t "Long-Press" key='long_press'}}</label>

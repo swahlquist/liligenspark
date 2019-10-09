@@ -391,6 +391,9 @@ var app_state = EmberObject.extend({
       // transition was getting stuck when staying on the same board
       buttonTracker.transitioning = false;
     }
+    if(new_state && (new_state.source == 'sidebar' || new_state.source == 'swipe')) {
+      stashes.persist('last_root', new_state);
+    }
     var history = this.get_history();
     old_state = old_state || this.get('currentBoardState');
     if(stashes.get('board_level')) {
@@ -540,6 +543,29 @@ var app_state = EmberObject.extend({
           key: state.key
         }
       });
+    }
+  },
+  jump_to_next(forward) {
+    var jump_between_boards = true;
+    if(jump_between_boards) {
+      var last_root = stashes.get('last_root') || app_state.get('referenced_user.home_board') || {};
+      var roots = [app_state.get('referenced_user.preferences.home_board') || {}];
+      roots = roots.concat((app_state.get('current_sidebar_boards') || []).filter(function(i) { return i.key; }));
+      var found = roots.find(function(r) { return r && ((r.key && r.key == last_root.key) || (r.id && r.id == last_root.id)); });
+      var current = Math.max(0, roots.indexOf(found));
+      if(forward) { current++; } else { current--; }
+      if(current < 0) { current = roots[roots.length - 1]; }
+      else if(current >= roots.length) { current = 0; }
+      if(roots[current]) {
+        var ref = Object.assign({}, roots[current]);
+        ref.source = 'swipe';
+        app_state.jump_to_board(ref);
+      }
+      // for the list of boards including home and sidebar, figure out
+      // which board they jumped to using the sidebar/home/entering speak mode
+      // and jump to the next one instead
+    } else {
+      // TODO: option to jump between communicators? Nah.
     }
   },
   toggle_speak_mode: function(decision) {
@@ -732,6 +758,9 @@ var app_state = EmberObject.extend({
             opts.reminded = true;
             app_state.toggle_mode(mode, opts);
           });
+        }
+        if(app_state.get('currentBoardState')) {
+          stashes.persist('last_root', {id: app_state.get('currentBoardState.id'), key: app_state.get('currentBoardState.key')});
         }
         // if scanning mode... has to be here because focus will only reliably work when
         // a user-controlled event has occurred, so can't be on a listener
@@ -1094,6 +1123,7 @@ var app_state = EmberObject.extend({
       if(this.get('currentUser.preferences.activation_on_start')) {
         buttonTracker.short_press_delay = 50;
       }
+      buttonTracker.swipe_pages = !!this.get('currentUser.preferences.swipe_pages');
       buttonTracker.long_press_delay = Math.max((buttonTracker.short_press_delay || 50) * 2, 1500);
       buttonTracker.debounce = this.get('currentUser.preferences.debounce');
     } else if (window.user_preferences) {
