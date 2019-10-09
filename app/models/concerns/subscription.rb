@@ -199,6 +199,7 @@ module Subscription
             end
             self.settings['subscription']['customer_id'] = args['customer_id']
           end
+          self.settings['purchase_bounced'] = false
           self.settings['subscription']['started'] = Time.now.iso8601 
           self.settings['subscription']['started'] = nil if args['plan_id'] == 'monthly_free' || args['plan_id'] == 'slp_monthly_free'
           self.settings['subscription']['token_summary'] = args['token_summary']
@@ -253,6 +254,7 @@ module Subscription
             self.settings['subscription']['gift_ids'] ||= []
             self.settings['subscription']['gift_ids'] << args['gift_id']
           end
+          self.settings['purchase_bounced'] = false
           self.settings['subscription']['free_premium'] = (args['plan_id'] == 'slp_long_term_free')
           self.settings['pending'] = false unless self.settings['subscription']['free_premium']
 
@@ -356,8 +358,13 @@ module Subscription
   def subscription_event(args)
     self.log_subscription_event(:log => 'subscription event triggered remotely', :args => args)
     if args['purchase_failed']
+      self.settings['purchase_bounced'] = true
+      self.save
       SubscriptionMailer.schedule_delivery(:purchase_bounced, self.global_id)
       return true
+    elsif args['purchase_succeeded']
+      self.settings['purchase_bounced'] = false
+      self.save
     elsif args['purchase']
       is_new = update_subscription(args)
       if is_new

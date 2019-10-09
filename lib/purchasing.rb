@@ -43,6 +43,18 @@ module Purchasing
               'source' => 'charge.succeeded'
             })
           end
+          if object['customer'] && object['customer'] != 'free'
+            customer = Stripe::Customer.retrieve(object['customer'])
+            valid = customer && customer['metadata'] && customer['metadata']['user_id']
+            if valid
+              User.schedule(:subscription_event, {
+                'user_id' => customer['metadata'] && customer['metadata']['user_id'],
+                'purchase_succeeded' => true,
+                'source_id' => 'stripe',
+                'source' => 'charge.succeeded'
+              })
+            end
+          end
           data = {:purchase => true, :purchase_id => object['id'], :valid => !!valid}
         elsif event['type'] == 'charge.failed'
           valid = false
@@ -776,6 +788,11 @@ module Purchasing
       res['error_message'] = "unrecognized purchase type"
     end
     res
+  end
+
+  def self.overdue
+    users = User.where(possibly_full_premium: true).where(['updated_at > ?', 10.days.ago]); users.count
+    users.select{|u| u.settings['needs_billing_update']}
   end
   
   def self.reconcile(with_side_effects=false)

@@ -37,6 +37,7 @@ CoughDrop.User = DS.Model.extend({
   terms_agree: DS.attr('boolean'),
   name: DS.attr('string'),
   email: DS.attr('string'),
+  needs_billing_update: DS.attr('string'),
   public: DS.attr('boolean'),
   pending: DS.attr('boolean'),
   description: DS.attr('string'),

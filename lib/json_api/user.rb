@@ -23,6 +23,7 @@ module JsonApi::User
     end
     
     if json['permissions'] && json['permissions']['supervise']
+      json['needs_billing_update'] = !!user.settings['purchase_bounced']
       json['sync_stamp'] = user.updated_at.utc.iso8601
       json['unread_messages'] = user.settings['unread_messages'] || 0
       json['unread_alerts'] = user.settings['unread_alerts'] || 0

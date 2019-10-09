@@ -149,6 +149,7 @@ export default Component.extend({
               console.log(event);
               console.error('purchase_other_error');
             } else if(event.status == 'finished') {
+              user.set('needs_billing_update', false);
               if(user.get('preferences')) {
                 user.reload().then(function() {
                   user.set('preferences.progress.subscription_set', true);
