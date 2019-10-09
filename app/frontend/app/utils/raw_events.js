@@ -753,7 +753,18 @@ var buttonTracker = EmberObject.extend({
         return;
       }
     }
-
+    var modeling_sequence = false;
+    if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom && buttonTracker.initialTarget.dom.id == 'clear_button' && elem_wrap && elem_wrap.dom && elem_wrap.dom.id == 'home_button') {
+      modeling_sequence = true;
+    } else if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom && buttonTracker.initialTarget.dom.id == 'home_button' && elem_wrap && elem_wrap.dom && elem_wrap.dom.id == 'clear_button') {
+      modeling_sequence = true;
+    }
+    if(modeling_sequence) {
+      app_state.toggle_modeling();
+      event.preventDefault();
+      buttonTracker.ignoreUp = true;
+      return;
+    }
     if(buttonTracker.drag || !buttonTracker.buttonDown || buttonTracker.ignoreUp) {
       // when dragging or nothing selected, do nothing
       event.preventDefault();
