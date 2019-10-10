@@ -80,6 +80,9 @@ export default modal.ModalController.extend({
   destination_language: function() {
     return i18n.readable_language(this.get('model.locale'));
   }.property('model.locale'),
+  source_language: function() {
+    return i18n.readable_language(this.get('model.board.locale'));
+  }.property('model.board.locale'),
   sorted_buttons: function() {
     var words = this.get('model.button_set.buttons') || [];
     if(this.get('model.board.buttons')) {
