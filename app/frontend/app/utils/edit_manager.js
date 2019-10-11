@@ -56,7 +56,7 @@ var editManager = EmberObject.extend({
   long_press_mode: function(opts) {
     var app = app_state.controller;
     if(!app_state.get('edit_mode')) {
-      if(opts.button_id && app_state.get('speak_mode') && app_state.get('currentUser.preferences.long_press_edit')) {
+      if(opts.button_id && app_state.get('speak_mode') && app_state.get('currentUser.preferences.long_press_edit_disabled')) {
         if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.require_speak_mode_pin') && app_state.get('currentUser.preferences.speak_mode_pin')) {
           modal.open('speak-mode-pin', {actual_pin: app_state.get('currentUser.preferences.speak_mode_pin'), action: 'edit'});
         } else if(app_state.get('currentUser.preferences.long_press_edit')) {
