@@ -627,6 +627,9 @@ footer .wide_links {
     &.lower .text {
       text-transform: lowercase;
     }
+    &.arial .text {
+      font-family: "Arial", sans-serif;
+    }
     &.comic_sans .text {
       font-family: "Comic Sans MS", cursive, sans-serif;
     }
@@ -1528,6 +1531,9 @@ tr.accuracy_non_mastered {
   &.lower .button .button-label {
     text-transform: lowercase;
   }
+  &.arial .button .button-label {
+    font-family: "Arial", sans-serif;
+  }
   &.comic_sans .button .button-label {
     font-family: "Comic Sans MS", cursive, sans-serif;
   }
@@ -1611,6 +1617,9 @@ tr.accuracy_non_mastered {
   }
   &.lower .suggestion {
     text-transform: lowercase;
+  }
+  &.arial .suggestion {
+    font-family: "Arial", sans-serif;
   }
   &.comic_sans .suggestion {
     font-family: "Comic Sans MS", cursive, sans-serif;
@@ -1951,11 +1960,15 @@ tr.accuracy_non_mastered {
   100% { transform: rotate(360deg); }
 }
 .text_sample {
+  font-family: serif;
   &.upper {
     text-transform: uppercase;
   }
   &.lower {
     text-transform: lowercase;
+  }
+  &.arial {
+    font-family: "Arial", sans-serif;
   }
   &.comic_sans {
     font-family: "Comic Sans MS", cursive, sans-serif;

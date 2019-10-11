@@ -49,6 +49,8 @@ export default Component.extend({
     }
     if(font_style.match(/^comic_sans/)) {
       font = 'Comic Sans MS'
+    } else if(font_style.match(/^arial/)) {
+      font = 'Arial';
     } else if(font_style.match(/^open_dyslexic/)) {
       font = 'OpenDyslexic';
     } else if(font_style.match(/^architects_daughter/)) {

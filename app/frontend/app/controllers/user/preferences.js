@@ -76,6 +76,9 @@ export default Controller.extend({
     {name: i18n.t('default_font_small', "Default Font, All Lowercase"), id: "default_small"},
     // Don't hate on me, Comic Sans is not my fave, but it's the only web safe font I could find
     // that had the handwritten "a", which could be important for emergent readers.
+    {name: i18n.t('arial', "Arial"), id: "arial"},
+    {name: i18n.t('arial_caps', "Arial, All Uppercase"), id: "arial_caps"},
+    {name: i18n.t('arial_small', "Arial, All Lowercase"), id: "arial_small"},
     {name: i18n.t('comic_sans', "Comic Sans"), id: "comic_sans"},
     {name: i18n.t('comic_sans_caps', "Comic Sans, All Uppercase"), id: "comic_sans_caps"},
     {name: i18n.t('comic_sans_small', "Comic Sans, All Lowercase"), id: "comic_sans_small"},
