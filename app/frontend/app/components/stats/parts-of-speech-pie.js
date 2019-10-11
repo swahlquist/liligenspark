@@ -10,9 +10,9 @@ export default Component.extend({
   },
   elem_class: function() {
     if(this.get('side_by_side')) {
-      return htmlSafe('col-sm-6');
+      return htmlSafe('col-sm-6 col-xs-6');
     } else {
-      return htmlSafe('col-sm-4');
+      return htmlSafe('col-sm-4 col-xs-6');
     }
   }.property('side_by_side'),
   elem_style: function() {
