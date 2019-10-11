@@ -245,8 +245,15 @@ class UserIntegration < ActiveRecord::Base
   
   def self.integration_keys_for(user)
     return [] unless user
+
+    data = user.get_cached('integrations_for')
+    return data if data
+
     # TODO: sharding
-    UserIntegration.where(user_id: user.id).map(&:integration_key).compact.uniq
+    res = UserIntegration.where(user_id: user.id).map{|ui| ui.settings['template_key'] || ui.integration_key }.compact.uniq
+    expires = 72.hours.to_i
+    user.set_cached('integrations_for', res, expires)
+    res
   end
   
   def self.global_integrations
