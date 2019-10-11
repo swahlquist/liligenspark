@@ -237,6 +237,13 @@ class LogSession < ActiveRecord::Base
       self.ended_at ||= DateTime.strptime(last_tally['timestamp'].to_s, '%s') if last_tally
       self.started_at ||= Time.now
       self.ended_at ||= self.started_at
+    elsif self.data['eval']
+      self.log_type = 'eval'
+      str = "Evaluation by #{self.author.user_name}: "
+      str += self.data['eval']['name'] || "Evaluation"
+      self.started_at = DateTime.strptime(self.data['eval']['started'].to_s, '%s') if self.data['eval']['started']
+      self.ended_at = DateTime.strptime(self.data['eval']['ended'].to_s, '%s') if self.data['eval']['ended']
+      # TODO: ...
     elsif self.data['journal']
       self.log_type = 'journal'
       self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
@@ -391,6 +398,9 @@ class LogSession < ActiveRecord::Base
           self.data['stats']['utterance_words'] += event['utterance']['text'].split(/\s+/).length
           self.data['stats']['utterance_buttons'] += (event['utterance']['buttons'] || []).length
         elsif event['type'] == 'button'
+          if event['button']['access']
+            self.data['stats']['access_method'] = event['button']['access']
+          end
           if event['button'] && event['button']['board']
             button = {
               'button_id' => event['button']['button_id'],
@@ -850,7 +860,7 @@ class LogSession < ActiveRecord::Base
     (self.data['events'] || []).each do |event|
       stamp = event['timestamp'] || last_stamp
       # when the user_id changes or there's a long delay, split out into another session
-      if event['note'] || event['assessment'] || event['share'] || event['alert']
+      if event['note'] || event['assessment'] || event['share'] || event['alert'] || event['eval']
         more_sessions << [event]
       elsif (!stamp || !last_stamp || stamp - last_stamp < cutoff) && (!current_user_id || event['user_id'] == current_user_id)
         current_session << event
@@ -895,9 +905,11 @@ class LogSession < ActiveRecord::Base
                 params = {:events => session}
                 event = session[0] if session.length == 1
                 if event && event['note']
-                  params = event['note']
+                  params = {note: event['note']}
                 elsif event && event['assessment']
-                  params = event['assessment']
+                  params = {assessment: event['assessment']}
+                elsif event && event['eval']
+                  params = {eval: event['eval']}
                 elsif event && event['share']
                   utterance = Utterance.process_new({
                     button_list: event['share']['utterance'],
@@ -1033,6 +1045,10 @@ class LogSession < ActiveRecord::Base
     elsif params['assessment']
       params['events'] = nil
       Rails.logger.warn('processing assessment creation in client request')
+      self.process_new(params, non_user_params)
+    elsif params['eval']
+      params['events'] = nil
+      Rails.logger.warn('processing eval creation in client request')
       self.process_new(params, non_user_params)
     elsif params['type'] == 'daily_use'
       Rails.logger.warn('processing daily_use creation in client request')
@@ -1444,6 +1460,7 @@ class LogSession < ActiveRecord::Base
         self.data['unread'] = true if self.data['unread'] == nil && self.data['notify_user']
       end
       self.data['note'] = params['note'] if params['note']
+      self.data['eval'] = params['eval'] if params['eval']
       if params['video_id']
         video = UserVideo.find_by_global_id(params['video_id'])
         if video

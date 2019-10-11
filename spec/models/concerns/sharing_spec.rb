@@ -111,7 +111,7 @@ describe Sharing, :type => :model do
     it "should allow sharing protected material if both users have access" do
       u = User.create
       u2 = User.create
-      UserIntegration.create(user: u2, integration_key: 'lessonpix')
+      UserIntegration.create(user: u2, integration_key: 'lessonpix', settings: {'template_key' => 'lessonpix'})
       bi = ButtonImage.create(:settings => {'protected' => true, 'protected_source' => 'lessonpix'})
       b = Board.create(:user => u)
       expect(b.protected_material?).to eq(false)

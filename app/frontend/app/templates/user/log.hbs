@@ -5,13 +5,15 @@
   <h2>{{t "Assessment Details" key='assessment_details'}}</h2>
 {{else if model.journal_type}}
   <h2>{{t "Journal Entry" key='journal_entry'}}</h2>
+{{else if processed_assessment}}
+  <h2>{{t "Assessment Results" key='assessment_results'}}
+    {{#if processed_assessment.label}} - {{processed_assessment.label}}{{/if}}
+  </h2>
 {{else}}
   <h2>{{t "Log Entry Details" key='log_entry_details'}}</h2>
 {{/if}}
 {{#if processed_assessment}}
-    <h2>{{t "Assessment Results" key='assessment_results'}}
-      {{#if processed_assessment.label}} - {{processed_assessment.label}}{{/if}}
-    </h2>
+  {{#if processed_assessment.date}}
     <div class="row" style='page-break-inside: avoid;'>
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary smaller">
@@ -100,9 +102,9 @@
         </div>
         <div class='col-xs-4'>
           <div style='line-height: 30px; margin-bottom: 10px;'>
-            <span style='display: inline-block; width: 20px; height: 20px; vertical-align: middle; background: rgba(0, 255, 0, 0.7); border-radius: 20px;'></span> - {{t "correctly hit here" key='correctly_hit_here'}}<br/>
-            <span style='display: inline-block; width: 20px; height: 20px; vertical-align: middle; background: rgba(255, 0, 0, 0.7); border-radius: 20px'></span> - {{t "failed to hit here" key='failed_to_hit_here'}}<br/>
-            <span style='display: inline-block; width: 20px; height: 20px; vertical-align: middle; border: 2px solid rgba(0, 0, 255, 0.7); border-radius: 20px;'></span> - {{t "hit here with regular grid" key='hit_here_with_full_grid'}}<br/>
+            <span style='display: inline-block; width: 1px; height: 1px; vertical-align: middle; border: 10px solid rgba(0, 255, 0, 0.7); border-radius: 20px;'></span> - {{t "correctly hit here" key='correctly_hit_here'}}<br/>
+            <span style='display: inline-block; width: 1px; height: 1px; vertical-align: middle; border: 10px solid rgba(255, 0, 0, 0.7); border-radius: 20px'></span> - {{t "failed to hit here" key='failed_to_hit_here'}}<br/>
+            <span style='display: inline-block; width: 20px; height: 20px; vertical-align: middle; border: 2px solid rgba(0, 0, 255, 0.7); border-radius: 20px;'></span> - {{t "hit here with full-size grid" key='hit_here_with_full_grid'}}<br/>
             <span style='display: inline-block; width: 20px; height: 20px; vertical-align: middle; border: 2px solid rgba(150, 150, 0, 0.7); border-radius: 20px'></span> - {{t "hit here with visual prompt" key='hit_here_with_partial_grid'}}<br/>
           </div>
           <span class='text-muted' style='font-size: 12px; font-style: italic;'>{{t "look for areas without any blue circles where the communicator wasn't able to reach, or for dark red areas where the communicator chose other (incorrect) options multiple times" key='key_hint'}}</span>
@@ -131,8 +133,21 @@
     {{#if processed_assessment.access_settings}}
       <div  style='page-break-inside: avoid;'>
         <h3>{{t "Evaluation Settings" key='evaluation_settings'}}</h3>
+        {{#each processed_assessment.access_settings as |setting|}}
+          {{#if setting.val}}
+            <span class='label label-default'>
+              {{setting.key}}:
+              {{#if setting.percent}}
+                {{setting.val}}%
+              {{else if setting.ms}}
+                {{seconds_ago setting.val}}
+              {{else}}
+                {{setting.val}}
+              {{/if}}
+            </span>&nbsp;
+          {{/if}}
+        {{/each}}
         <!-- mastery cutoff, non-mastery cutoff, default library, button spacing, text position, etc. -->
-        ...
       </div>
     {{/if}}
     <h3>{{t "Assessment Types" key='assessment_types'}}</h3>
@@ -217,322 +232,351 @@
     {{#if processed_assessment.literacy_responses}}
       <div style='page-break-inside: avoid;'>
         <h3>{{t "Literacy Responses" key='literacy_responses'}}</h3>
+        <table class="table table-hover table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>{{t "Prompt" key='prompt'}}</th>
+              <th>{{t "Answer" key='answer'}}</th>
+              <th>{{t "Distractors" key='distractors'}}</th>
+              <th>{{t "Button Delay" key='delay'}}</th>
+            </tr>          
+          </thead>
+          <tbody>
+            {{#each processed_assessment.literacy_responses as |response|}}
+              <tr class={{if response.correct 'accuracy_mastered' 'accuracy_non_mastered'}}>
+                <td>{{response.prompt}}</td>
+                <td>{{response.correct_answer}}</td>
+                <td>"{{response.distractors}}"</td>
+                <td>{{seconds_ago response.time}}</td>
+              </tr>
+              <!-- list of words/spelling for each prompt (check spelling against word list for accuracy), including total # of words -->
+            {{/each}}
+          </tbody>
+        </table>
         ...
         <!-- list of literacy words, including prompt and distractors -->
       </div>
     {{/if}}
-{{/if}}
-{{#if model.imported}}
-  {{t "NOTE: This log entry was imported from an outside source" key='data_imported'}}
-{{/if}}
-{{#if model.goal.id}}
-  <div style='margin: -5px 0 10px; font-size: 16px;'>
-    {{#link-to 'user.goal' user.user_name model.goal.id}}{{t "Goal: " key='goal_colon'}}{{model.goal.summary}}{{/link-to}}
-  </div>
-{{/if}}
-<div class="row">
-  <div class="col-sm-4">
-    <div class="panel panel-default summary smaller">
-      <div class="panel-heading">{{t "Date" key='date'}}</div>
-      <div class="panel-body">
-        {{date model.started_at}}
-        </div>
+  {{else if model.eval_in_memory}}
+    <p>{{t "We could not find the latest evaluation results for this user" key='no_eval_in_memory'}}</p>
+  {{else}}
+    <p>{{t "No data found for this evaluation" key='no_data_for_evaluation'}}</p>
+  {{/if}}
+{{else}}
+  {{#if model.imported}}
+    {{t "NOTE: This log entry was imported from an outside source" key='data_imported'}}
+  {{/if}}
+  {{#if model.goal.id}}
+    <div style='margin: -5px 0 10px; font-size: 16px;'>
+      {{#link-to 'user.goal' user.user_name model.goal.id}}{{t "Goal: " key='goal_colon'}}{{model.goal.summary}}{{/link-to}}
     </div>
-  </div>
-  {{#unless model.note_type}}
-    <div class="col-sm-4">
-      <div class="panel panel-default summary smaller">
-        <div class="panel-heading">{{t "Duration" key='duration'}}</div>
-        <div class="panel-body">
-          {{t "minute" key='minute' count=model.minutes}}
-        </div>
-      </div>
-    </div>
-  {{/unless}}
-  <div class="col-sm-4">
-    <div class="panel panel-default summary smaller">
-      {{#if model.note_type}}
-        <div class="panel-heading">{{t "Author" key='author'}}</div>
-        <div class="panel-body">
-          {{#if model.author.contact}}
-            {{model.author.contact.name}}
-          {{else}}
-            {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
-          {{/if}}
-        </div>
-      {{else if model.assessment_type}}
-        <div class="panel-heading">{{t "Assessor" key='assessor'}}</div>
-        <div class="panel-body">
-          {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
-        </div>
-      {{else}}
-        <div class="panel-heading">{{t "Device" key='device'}}</div>
-        <div class="panel-body">
-          {{#link-to 'user.stats' user.user_name (query-params highlighted=null start=null end=null location_id=null device_id=model.device.id split=null start2=null end2=null device_id2=null location_id2=null)}}
-            {{model.device.name}}
-          {{/link-to}}
-        </div>
-      {{/if}}
-    </div>
-  </div>
-</div>
-{{#if model.note_type}}
-  <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
-    {{model.note.text}}
-    {{#if model.video}}
-      <div style="margin-top: 10px;">
-        <video src={{model.video.url}} controls style='max-width: 100%; max-height: 400px; border: 1px solid #ccc;'></video>
-      </div>
-    {{/if}}
-    {{#if model.note.prior}}
-      <div style='white-space: normal; margin-top: 30px;'>
-        <div class='text-muted'>{{t "in reply to" key='in_reply_to'}}{{#if model.note.prior_contact}}{{t "message from " key='message_from'}}{{model.note.prior_contact.name}}{{/if}}:</div>
-        <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{model.note.prior}}</div>
-      </div>
-    {{/if}}
-  </div>
-{{else if model.journal_type}}
-  <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
-    {{model.journal.sentence}}
-  </div>
-{{else if model.assessment_type}}
+  {{/if}}
   <div class="row">
     <div class="col-sm-4">
       <div class="panel panel-default summary smaller">
-        <div class="panel-heading">{{t "Percent Correct" key='percent_correct'}}</div>
+        <div class="panel-heading">{{t "Date" key='date'}}</div>
         <div class="panel-body">
-          {{model.assessment.stats.percent_correct}}%
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <div class="panel panel-default summary smaller">
-        <div class="panel-heading">{{t "Total Correct" key='total_correct'}}</div>
-        <div class="panel-body">
-          {{model.assessment.stats.total_correct}} /
-          {{model.assessment.stats.total_tallies}}
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <div class="panel panel-default summary smaller">
-          <div class="panel-heading">{{t "Longest Streak" key='longest_correct_streak'}}</div>
-          <div class="panel-body">
-            {{model.assessment.stats.longest_correct_streak}}
+          {{date model.started_at}}
           </div>
       </div>
     </div>
+    {{#unless model.note_type}}
+      <div class="col-sm-4">
+        <div class="panel panel-default summary smaller">
+          <div class="panel-heading">{{t "Duration" key='duration'}}</div>
+          <div class="panel-body">
+            {{t "minute" key='minute' count=model.minutes}}
+          </div>
+        </div>
+      </div>
+    {{/unless}}
+    <div class="col-sm-4">
+      <div class="panel panel-default summary smaller">
+        {{#if model.note_type}}
+          <div class="panel-heading">{{t "Author" key='author'}}</div>
+          <div class="panel-body">
+            {{#if model.author.contact}}
+              {{model.author.contact.name}}
+            {{else}}
+              {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
+            {{/if}}
+          </div>
+        {{else if model.assessment_type}}
+          <div class="panel-heading">{{t "Assessor" key='assessor'}}</div>
+          <div class="panel-body">
+            {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
+          </div>
+        {{else}}
+          <div class="panel-heading">{{t "Device" key='device'}}</div>
+          <div class="panel-body">
+            {{#link-to 'user.stats' user.user_name (query-params highlighted=null start=null end=null location_id=null device_id=model.device.id split=null start2=null end2=null device_id2=null location_id2=null)}}
+              {{model.device.name}}
+            {{/link-to}}
+          </div>
+        {{/if}}
+      </div>
+    </div>
   </div>
-  <div class="table-reponsive">
-    <table class="table table-hover table-bordered">
-      <thead>
-        <tr>
-          <td>{{t "Event Type" key='event_type'}}</td>
-          <td>{{t "Delay" key='delay'}}</td>
-          <td>{{t "Running Total" key='running_total'}}</td>
-        </tr>
-      </thead>
-      <tbody>
-        {{#each model.processed_tallies as |tally|}}
+  {{#if model.note_type}}
+    <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
+      {{model.note.text}}
+      {{#if model.video}}
+        <div style="margin-top: 10px;">
+          <video src={{model.video.url}} controls style='max-width: 100%; max-height: 400px; border: 1px solid #ccc;'></video>
+        </div>
+      {{/if}}
+      {{#if model.note.prior}}
+        <div style='white-space: normal; margin-top: 30px;'>
+          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}}{{#if model.note.prior_contact}}{{t "message from " key='message_from'}}{{model.note.prior_contact.name}}{{/if}}:</div>
+          <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{model.note.prior}}</div>
+        </div>
+      {{/if}}
+    </div>
+  {{else if model.journal_type}}
+    <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
+      {{model.journal.sentence}}
+    </div>
+  {{else if model.assessment_type}}
+    <div class="row">
+      <div class="col-sm-4">
+        <div class="panel panel-default summary smaller">
+          <div class="panel-heading">{{t "Percent Correct" key='percent_correct'}}</div>
+          <div class="panel-body">
+            {{model.assessment.stats.percent_correct}}%
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="panel panel-default summary smaller">
+          <div class="panel-heading">{{t "Total Correct" key='total_correct'}}</div>
+          <div class="panel-body">
+            {{model.assessment.stats.total_correct}} /
+            {{model.assessment.stats.total_tallies}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="panel panel-default summary smaller">
+            <div class="panel-heading">{{t "Longest Streak" key='longest_correct_streak'}}</div>
+            <div class="panel-body">
+              {{model.assessment.stats.longest_correct_streak}}
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="table-reponsive">
+      <table class="table table-hover table-bordered">
+        <thead>
           <tr>
-            <td>
-              {{#if tally.correct}}
-                <span class="glyphicon glyphicon-stop text-success"></span>
-                {{t "Correct" key='correct'}}
-              {{else}}
-                <span class="glyphicon glyphicon-stop text-danger"></span>
-                {{t "Incorrect" key='incorrect'}}
-              {{/if}}
-            </td>
-            <td>
-              {{seconds_ago tally.delay}}
-            </td>
-            <td>
-              {{#if tally.running_correct_total}}
-                {{tally.running_correct_total}} / {{tally.running_total}}
-                {{t "correct" key='correct'}}
-              {{/if}}
-            </td>
+            <td>{{t "Event Type" key='event_type'}}</td>
+            <td>{{t "Delay" key='delay'}}</td>
+            <td>{{t "Running Total" key='running_total'}}</td>
           </tr>
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
-{{else}}
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered">
-      <thead>
-        <tr>
-          <th style="width: 10px;">{{t "Type" key='type'}}</th>
-          <th>{{t "Summary" key='summary'}}</th>
-          <th>{{t "Delay" key='delay'}}</th>
-          <th>{{t "Board" key='board'}}</th>
-          <th style="width: 100px;">{{t "Notes" key='notes'}}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{#each model.processed_events as |event|}}
-          <tr class={{if event.long_delay 'long_delay'}}>
-            <td style={{if event.highlighted 'white-space: nowrap; background: #ffc;' 'white-space: nowrap;'}}>
-              <span class={{event.type_class}} title={{event.type}}>
-                <span class="sr-only">{{event.type}}</span>
-              </span>
-              {{#if event.spoken}}
-                <span class="glyphicon glyphicon-volume-up">
-                  <span class="sr-only">{{t "spoken" key='spoken'}}</span>
-                </span>
-              {{/if}}
-            </td>
-            <td style={{if event.highlighted 'background: #ffc;'}}>
-              <span class={{event.part_of_speech_class}} title={{event.part_of_speech}}>
-                <span class="sr-only">{{event.part_of_speech}}</span>
-              </span>
-              {{#if event.modeling}}
-                <span class='glyphicon glyphicon-hand-up' title={{t "modeled event" key='modeled_event'}}></span>
-                <span class='sr-only'>{{t "modeled event" key='modeled_event'}}</span>
-              {{/if}}
-              <span class={{if event.button_type '' 'text-muted'}}>
-                <span class={{if event.spoken 'spoken_log_event' 'text-muted'}}>
-                  {{event.processed_summary}}
-                </span>
-              </span>
-            </td>
-            <td>
-              <span class={{if event.long_delay 'text-muted'}} title={{date event.timestamp}}>
-                {{seconds_ago event.delay}}
-              </span>
-            </td>
-            <td style='max-width: 100px; overflow: hidden;'>
-              {{#if event.new_board}}
-                {{#link-to 'board' event.new_board.key}}
-                  {{event.new_board.key}}
-                {{/link-to}}
-              {{else}}
-                {{#if event.board}}
-                  {{#link-to 'board' event.board.key class='text-muted'}}
-                    {{event.board.key}}
-                  {{/link-to}}
-                {{/if}}
-              {{/if}}
-            </td>
-            <td style="text-align: right;">
-              {{#if event.highlighted}}
-                <button {{action 'highlight' event.id false}} class='btn btn-warning btn-sm' style='margin: -8px -5px -6px 5px; width: 35px;' >
-                  <span class='glyphicon glyphicon-star'></span>
-                </button>
-              {{else}}
-                <button {{action 'highlight' event.id true}} class='btn btn-default btn-sm' style='margin: -8px -5px -6px 5px; width: 35px;' >
-                  <span class='glyphicon glyphicon-star-empty'></span>
-                </button>
-              {{/if}}
-              {{#if event.note_count}}
-                <button {{action 'toggle_notes' event.id}} class='btn btn-primary btn-sm' style="margin: -8px 0 -6px 5px; width: 35px; font-weight: bold;">
-                  {{event.note_count}}
-                  <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
-                </button>
-              {{else}}
-                <button {{action 'toggle_notes' event.id 'add'}} class='btn btn-default btn-sm' style="opacity: 0.8; margin: -8px 0 -6px 5px; width: 35px;">
-                  <span class='glyphicon glyphicon-comment'></span>
-                  <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
-                </button>
-              {{/if}}
-            </td>
-          </tr>
-          {{#if event.show_notes}}
+        </thead>
+        <tbody>
+          {{#each model.processed_tallies as |tally|}}
             <tr>
-              <td colspan="5" style="padding-left: 50px;">
-                Notes:<br/>
-                {{#each event.notes as |note|}}
-                  <div>
-                    {{#link-to 'user' note.author.user_name}}
-                      {{note.author.user_name}}
-                    {{/link-to}} -
-                    {{note.note}}
-                  </div>
-                {{/each}}
-                <form class="form-inline" style="margin-top: 15px;" {{action 'add_note' event.id}}>
-                  <div class="form-group">
-                    <input type="text" class="form-control input-sm" data-event_id={{event.id}} placeholder="note text"/>
-                  </div>
-                  <div class="form-group">
-                    <button type="submit" class='btn btn-default btn-sm'>{{t "Save" key='save'}}</button>
-                  </div>
-                </form>
+              <td>
+                {{#if tally.correct}}
+                  <span class="glyphicon glyphicon-stop text-success"></span>
+                  {{t "Correct" key='correct'}}
+                {{else}}
+                  <span class="glyphicon glyphicon-stop text-danger"></span>
+                  {{t "Incorrect" key='incorrect'}}
+                {{/if}}
+              </td>
+              <td>
+                {{seconds_ago tally.delay}}
+              </td>
+              <td>
+                {{#if tally.running_correct_total}}
+                  {{tally.running_correct_total}} / {{tally.running_total}}
+                  {{t "correct" key='correct'}}
+                {{/if}}
               </td>
             </tr>
-          {{/if}}
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
-{{/if}}
-
-<div class="row" style="margin-bottom: 20px;">
-  {{#if model.geo}}
-    <div class="col-sm-8">
-      {{map-with-markers action="marker_link_select"}}
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered">
+        <thead>
+          <tr>
+            <th style="width: 10px;">{{t "Type" key='type'}}</th>
+            <th>{{t "Summary" key='summary'}}</th>
+            <th>{{t "Delay" key='delay'}}</th>
+            <th>{{t "Board" key='board'}}</th>
+            <th style="width: 100px;">{{t "Notes" key='notes'}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each model.processed_events as |event|}}
+            <tr class={{if event.long_delay 'long_delay'}}>
+              <td style={{if event.highlighted 'white-space: nowrap; background: #ffc;' 'white-space: nowrap;'}}>
+                <span class={{event.type_class}} title={{event.type}}>
+                  <span class="sr-only">{{event.type}}</span>
+                </span>
+                {{#if event.spoken}}
+                  <span class="glyphicon glyphicon-volume-up">
+                    <span class="sr-only">{{t "spoken" key='spoken'}}</span>
+                  </span>
+                {{/if}}
+              </td>
+              <td style={{if event.highlighted 'background: #ffc;'}}>
+                <span class={{event.part_of_speech_class}} title={{event.part_of_speech}}>
+                  <span class="sr-only">{{event.part_of_speech}}</span>
+                </span>
+                {{#if event.modeling}}
+                  <span class='glyphicon glyphicon-hand-up' title={{t "modeled event" key='modeled_event'}}></span>
+                  <span class='sr-only'>{{t "modeled event" key='modeled_event'}}</span>
+                {{/if}}
+                <span class={{if event.button_type '' 'text-muted'}}>
+                  <span class={{if event.spoken 'spoken_log_event' 'text-muted'}}>
+                    {{event.processed_summary}}
+                  </span>
+                </span>
+              </td>
+              <td>
+                <span class={{if event.long_delay 'text-muted'}} title={{date event.timestamp}}>
+                  {{seconds_ago event.delay}}
+                </span>
+              </td>
+              <td style='max-width: 100px; overflow: hidden;'>
+                {{#if event.new_board}}
+                  {{#link-to 'board' event.new_board.key}}
+                    {{event.new_board.key}}
+                  {{/link-to}}
+                {{else}}
+                  {{#if event.board}}
+                    {{#link-to 'board' event.board.key class='text-muted'}}
+                      {{event.board.key}}
+                    {{/link-to}}
+                  {{/if}}
+                {{/if}}
+              </td>
+              <td style="text-align: right;">
+                {{#if event.highlighted}}
+                  <button {{action 'highlight' event.id false}} class='btn btn-warning btn-sm' style='margin: -8px -5px -6px 5px; width: 35px;' >
+                    <span class='glyphicon glyphicon-star'></span>
+                  </button>
+                {{else}}
+                  <button {{action 'highlight' event.id true}} class='btn btn-default btn-sm' style='margin: -8px -5px -6px 5px; width: 35px;' >
+                    <span class='glyphicon glyphicon-star-empty'></span>
+                  </button>
+                {{/if}}
+                {{#if event.note_count}}
+                  <button {{action 'toggle_notes' event.id}} class='btn btn-primary btn-sm' style="margin: -8px 0 -6px 5px; width: 35px; font-weight: bold;">
+                    {{event.note_count}}
+                    <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
+                  </button>
+                {{else}}
+                  <button {{action 'toggle_notes' event.id 'add'}} class='btn btn-default btn-sm' style="opacity: 0.8; margin: -8px 0 -6px 5px; width: 35px;">
+                    <span class='glyphicon glyphicon-comment'></span>
+                    <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
+                  </button>
+                {{/if}}
+              </td>
+            </tr>
+            {{#if event.show_notes}}
+              <tr>
+                <td colspan="5" style="padding-left: 50px;">
+                  Notes:<br/>
+                  {{#each event.notes as |note|}}
+                    <div>
+                      {{#link-to 'user' note.author.user_name}}
+                        {{note.author.user_name}}
+                      {{/link-to}} -
+                      {{note.note}}
+                    </div>
+                  {{/each}}
+                  <form class="form-inline" style="margin-top: 15px;" {{action 'add_note' event.id}}>
+                    <div class="form-group">
+                      <input type="text" class="form-control input-sm" data-event_id={{event.id}} placeholder="note text"/>
+                    </div>
+                    <div class="form-group">
+                      <button type="submit" class='btn btn-default btn-sm'>{{t "Save" key='save'}}</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            {{/if}}
+          {{/each}}
+        </tbody>
+      </table>
     </div>
   {{/if}}
-  <div class="col-sm-4">
-    <dl>
-      <dt>{{t "Location" key='location'}}</dt>
-        <dd>
-        {{#if model.geo}}
-          {{t "See map" key='see_map'}}
-        {{else}}
-          {{t "Not available" key='not_available'}}
-        {{/if}}
-        {{#if model.geo_cluster_id}}
-          <br/>
-          {{#link-to 'user.logs' model.user.user_name (query-params highlighted=null start='' end='' location_id=model.geo_cluster_id device_id='' type='session') class='btn btn-default'}}
-            {{t "more entries" key='see_more'}}
-          {{/link-to}}
 
-          {{#link-to 'user.stats' model.user.user_name (query-params highlighted=null start=null end=null location_id=model.geo_cluster_id device_id=null split=null start2=null end2=null device_id2=null location_id2=null type='session') class='btn btn-default'}}
-            {{t "filtered report" key='see_stats'}}
-          {{/link-to}}
-        {{/if}}
-        </dd>
-      <dt style="margin-top: 15px;">{{t "IP Address" key='ip_address'}}</dt>
-        <dd>
-          {{#if model.readable_ip_address}}
-            {{model.readable_ip_address}}
+  <div class="row" style="margin-bottom: 20px;">
+    {{#if model.geo}}
+      <div class="col-sm-8">
+        {{map-with-markers action="marker_link_select"}}
+      </div>
+    {{/if}}
+    <div class="col-sm-4">
+      <dl>
+        <dt>{{t "Location" key='location'}}</dt>
+          <dd>
+          {{#if model.geo}}
+            {{t "See map" key='see_map'}}
+          {{else}}
+            {{t "Not available" key='not_available'}}
           {{/if}}
-          {{#if model.ip_cluster_id}}
+          {{#if model.geo_cluster_id}}
             <br/>
-            {{#link-to 'user.logs' model.user.user_name (query-params highlighted=null start='' end='' location_id=model.ip_cluster_id device_id='' type='session') class='btn btn-default'}}
+            {{#link-to 'user.logs' model.user.user_name (query-params highlighted=null start='' end='' location_id=model.geo_cluster_id device_id='' type='session') class='btn btn-default'}}
               {{t "more entries" key='see_more'}}
             {{/link-to}}
 
-            {{#link-to 'user.stats' model.user.user_name (query-params highlighted=null start=null end=null location_id=model.ip_cluster_id device_id=null split=null start2=null end2=null device_id2=null location_id2=null type='session') class='btn btn-default'}}
+            {{#link-to 'user.stats' model.user.user_name (query-params highlighted=null start=null end=null location_id=model.geo_cluster_id device_id=null split=null start2=null end2=null device_id2=null location_id2=null type='session') class='btn btn-default'}}
               {{t "filtered report" key='see_stats'}}
             {{/link-to}}
           {{/if}}
-        </dd>
-    </dl>
+          </dd>
+        <dt style="margin-top: 15px;">{{t "IP Address" key='ip_address'}}</dt>
+          <dd>
+            {{#if model.readable_ip_address}}
+              {{model.readable_ip_address}}
+            {{/if}}
+            {{#if model.ip_cluster_id}}
+              <br/>
+              {{#link-to 'user.logs' model.user.user_name (query-params highlighted=null start='' end='' location_id=model.ip_cluster_id device_id='' type='session') class='btn btn-default'}}
+                {{t "more entries" key='see_more'}}
+              {{/link-to}}
+
+              {{#link-to 'user.stats' model.user.user_name (query-params highlighted=null start=null end=null location_id=model.ip_cluster_id device_id=null split=null start2=null end2=null device_id2=null location_id2=null type='session') class='btn btn-default'}}
+                {{t "filtered report" key='see_stats'}}
+              {{/link-to}}
+            {{/if}}
+          </dd>
+      </dl>
+    </div>
   </div>
-</div>
 
-{{#if model.session_type}}
-  <button type="button" {{action "obl_export"}} class='btn btn-default'>{{t "Download Log File" key='download_log_file'}}</button>
-  <button type="button" {{action "lam_export"}} class='btn btn-default'>{{t "View LAM Report" key='export_as_lam'}}</button>
 {{/if}}
-{{#if model.previous_log_id}}
-  {{#link-to 'user.log' user.user_name model.previous_log_id class="btn btn-default"}}
-    <span class="glyphicon glyphicon-arrow-left"></span>
-    {{t "Previous Entry" key='previous_entry'}}
-  {{/link-to}}
-{{/if}}
-{{#if model.note_type}}
-  {{#if user.permissions.supervise}}
-    <button class='btn btn-default' {{action "reply" "text"}}>{{t "Reply" key='reply'}}</button>
+<div class='hide_print'>
+  {{#if model.session_type}}
+    <button type="button" {{action "obl_export"}} class='btn btn-default'>{{t "Download Log File" key='download_log_file'}}</button>
+    <button type="button" {{action "lam_export"}} class='btn btn-default'>{{t "View LAM Report" key='export_as_lam'}}</button>
   {{/if}}
-{{/if}}
-
-{{#if model.next_log_id}}
-  {{#link-to 'user.log' user.user_name model.next_log_id class="btn btn-default"}}
-    {{t "Next Entry" key='next_entry'}}
-    <span class="glyphicon glyphicon-arrow-right"></span>
-  {{/link-to}}
-{{/if}}
+  <button type="button" {{action "print"}} class='btn btn-default'>{{t "Print" key='print'}}</button>
+  {{#if model.previous_log_id}}
+    {{#link-to 'user.log' user.user_name model.previous_log_id class="btn btn-default"}}
+      <span class="glyphicon glyphicon-arrow-left"></span>
+      {{t "Previous Entry" key='previous_entry'}}
+    {{/link-to}}
+  {{/if}}
+  {{#if model.note_type}}
+    {{#if user.permissions.supervise}}
+      <button class='btn btn-default' {{action "reply" "text"}}>{{t "Reply" key='reply'}}</button>
+    {{/if}}
+  {{/if}}
+  {{#if model.next_log_id}}
+    {{#link-to 'user.log' user.user_name model.next_log_id class="btn btn-default"}}
+      {{t "Next Entry" key='next_entry'}}
+      <span class="glyphicon glyphicon-arrow-right"></span>
+    {{/link-to}}
+  {{/if}}
+</div>
 {{/opening-observer}}

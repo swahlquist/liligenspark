@@ -54,16 +54,23 @@ export default Controller.extend({
     }
   }.observes('model.geo', 'user'),
   processed_assessment: function() {
-    return null;
-    if(app_state.get('assessment') || true) {
-      return evaluation.analyze(app_state.get('assessment') || {});
+    if(this.get('model.type') == 'eval') {
+      var assessment = this.get('model.evaluation');
+      if(this.get('model.eval_in_memory')) {
+        assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
+      }
+      return evaluation.analyze(assessment);
     }
-  }.property('app_state.assessment'),
+  }.property('model.type', 'app_state.assessment'),
   actions: {
     reply: function() {
       var _this = this;
       var user = _this.get('user');
       modal.open('record-note', {note_type: 'text', user: user, prior: _this.get('model')});
+    },
+    print: function() {
+      capabilities.print();
+
     },
     lam_export: function() {
       capabilities.window_open('/api/v1/logs/' + this.get('model.id') + '/lam?nonce=' + this.get('model.nonce'), '_system');

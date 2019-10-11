@@ -18,10 +18,10 @@ class Api::LogsController < ApplicationController
     if params['type'] == 'journal'
       return unless allowed?(user, 'delete')
     end
-    if params['type'] != 'all' && ['session', 'note', 'assessment', 'journal'].include?(params['type'])
+    if params['type'] != 'all' && ['session', 'note', 'assessment', 'eval', 'journal'].include?(params['type'])
       logs = logs.where(:log_type => params['type'])
     else
-      logs = logs.where(:log_type => ['session', 'note', 'assessment'])
+      logs = logs.where(:log_type => ['session', 'note', 'assessment', 'eval'])
     end
     if params['highlighted']
       logs = logs.where(:highlighted => true)

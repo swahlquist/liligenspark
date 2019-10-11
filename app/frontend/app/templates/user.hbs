@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="dropdown skinny_bio" style="margin-bottom: 10px;">
+  <div class="dropdown skinny_bio hide_print" style="margin-bottom: 10px;">
     <a class='btn btn-default' href="#" data-toggle="dropdown">
       <img src={{model.avatar_url_with_fallback}} style="max-height: 30px;"/>
       {{ model.name }}
@@ -44,7 +44,7 @@
       </li>
     </ul>
   </div>
-  <div class="col-md-3 col-sm-12 wide_bio">
+  <div class="col-md-3 col-sm-12 wide_bio hide_print">
     {{partial "user_summary"}}
     {{#if model.permissions.supervise}}
       <div class="btn-group-vertical" style="width: 100%;">

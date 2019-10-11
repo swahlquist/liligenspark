@@ -457,7 +457,7 @@ module Subscription
     WeeklyStatsSummary.where(user_id: self.id).where(['created_at > ?', eval_start]).each do |summary|
       summary.schedule(:update!)
     end
-    LogSession.where(user_id: self.id, log_type: ['session', 'note', 'assessment']).where(['started_at >= ?', eval_start]).each do |session|
+    LogSession.where(user_id: self.id, log_type: ['session', 'note', 'assessment', 'eval']).where(['started_at >= ?', eval_start]).each do |session|
       LogSession.where(id: session.id).update_all(user_id: destination_user.id)
       # session.user_id = destination_user.id
       # session.save

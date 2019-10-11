@@ -752,8 +752,8 @@
                 {{#if app_state.speak_mode}}
                   {{#if app_state.eval_mode}}
                     <li><a href="#" {{action "repeat_prompt"}}><span class='glyphicon glyphicon-volume-up'></span> {{t "Repeat Prompt" key='repeat_prompt'}}</a></li>
-                    <li><a href="#" {{action "change_section" 'back'}}><span class='glyphicon glyphicon-chevron-left'></span> {{t "Previous Section" key='previous_section'}}</a></li>
                     <li><a href="#" {{action "change_section" 'forward'}}><span class='glyphicon glyphicon-chevron-right'></span> {{t "Next Section" key='next_section'}}</a></li>
+                    <li><a href="#" {{action "change_section" 'back'}}><span class='glyphicon glyphicon-chevron-left'></span> {{t "Previous Section" key='previous_section'}}</a></li>
                     <li><a href="#" {{action "assessment_settings"}}><span class='glyphicon glyphicon-cog'></span> {{t "Eval Settings" key='eval_settings'}}</a></li>
                   {{else}}
                       <!--li><a href="#" {{action "startRecording"}}>{{t "Recording (not yet)" key='start_recording'}}</a></li-->

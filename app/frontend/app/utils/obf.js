@@ -117,6 +117,7 @@ var obf = EmberObject.extend({
 }).create();
 
 obf.register("eval", evaluation.callback);
+obf.eval = evaluation;
 
 obf.register("emergency", function(key) {
 

@@ -64,6 +64,8 @@ module JsonApi::Log
       json['assessment'] = log.data['assessment']
     elsif log.data['journal']
       json['journal'] = log.data['journal'].slice('vocalization', 'sentence', 'timestamp', 'id')
+    elsif log.data['eval']
+      json['evaluation'] = log.data['eval']
     else
       json['duration'] = log.data['duration']
       json['button_count'] = log.data['button_count']
@@ -109,6 +111,8 @@ module JsonApi::Log
     if json['log']['type'] == 'assessment'
       json['log']['assessment'] = {}.merge(log.data['assessment'] || {})
       json['log']['assessment']['stats'] = log.data['stats']
+    elsif json['log']['type'] == 'eval'
+      json['log']['evaluation']['stats'] = log.data['stats']
     end
     
     if json['log']['goal'] && json['log']['goal']['id']

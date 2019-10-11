@@ -196,6 +196,7 @@ module JsonApi::User
       json['extras_enabled'] = true if sub_hash['extras_enabled']
       if args[:subscription]
         json['subscription'] = sub_hash
+        json['subscription']['lessonpix'] = true if UserIntegration.integration_keys_for(user).include?('lessonpix')
       end
       if args[:organization]
         if args[:organization_manager]

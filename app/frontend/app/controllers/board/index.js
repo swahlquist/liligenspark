@@ -227,6 +227,14 @@ export default Controller.extend({
   board_style: function() {
     return htmlSafe("position: relative; height: " + (this.get('height') + 5) + "px");
   }.property('height'),
+  bg_class: function() {
+    var pos = (this.get('model.background.position') || '').split(',');
+    var fit = 'stretch';
+    if(pos[0] == 'center') {
+      fit = 'contain';
+    }
+    return htmlSafe(fit);
+  }.property('model.background.position'),
   bg_style: function() {
     var rows = this.get('model.grid.rows');
     var cols = this.get('model.grid.columns');
@@ -245,7 +253,7 @@ export default Controller.extend({
     if(pos[0] == 'center') {
       fit = 'contain';
     }
-    return htmlSafe('width: 100%; height: 100%; object-fit: ' + fit + '; object-position: center; background: rgb(125, 125, 125); box-shadow: 5px 5px 10px rgb(125, 125, 125), -5px -5px 10px rgb(125, 125, 125), -5px 5px 10px rgb(125, 125, 125), 5px -5px 10px rgb(125, 125, 125)');
+    return htmlSafe('object-fit: ' + fit + '; object-position: center;');
   }.property('model.background.image', 'model.grid.rows', 'model.grid.columns', 'model.background.position'),
   redraw_if_needed: function() {
     var now = (new Date()).getTime();

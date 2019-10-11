@@ -6,7 +6,14 @@ export default Route.extend({
   model: function(params) {
     var user = this.modelFor('user');
     user.set('subroute_name', i18n.t('messages', 'messages'));
-    return this.store.findRecord('log', params.log_id);
+    if(params.log_id == 'last-eval') {
+      var log = this.store.createRecord('log', {});
+      log.set('type', 'eval');
+      log.set('eval_in_memory', true);
+      return log;
+    } else {
+      return this.store.findRecord('log', params.log_id);
+    }
   },
   setupController: function(controller, model) {
     if(!model.get('events')) {

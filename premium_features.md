@@ -22,6 +22,7 @@ These features require a "full-premium" or a currently-premium
 - Creating and Tracking Goals
 - Badge Tracking and Notifications
 - Quick Assessments
+- Unlimited Evaluations
 - Reviewing Logs/Team Messaging
 - Messaging Supervisors and Contacts (supervisors may message premium communicators w/o premium account)
 - Third-Party Integrations (supervisors can preview integrations w/o premium account)

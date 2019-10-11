@@ -41,6 +41,7 @@ export default DS.Model.extend({
   goal: DS.attr('raw'),
   journal: DS.attr('raw'),
   video: DS.attr('raw'),
+  evaluation: DS.attr('raw'),
   nonce: DS.attr('string'),
   event_note_count: DS.attr('number'),
   minutes: function() {
@@ -60,6 +61,9 @@ export default DS.Model.extend({
   }.property('type'),
   journal_type: function() {
     return this.get('type') == 'journal';
+  }.property('type'),
+  eval_type: function() {
+    return this.get('type') == 'eval';
   }.property('type'),
   goal_status_class: function() {
     var status = this.get('goal.status');

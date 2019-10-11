@@ -1,3 +1,4 @@
+import Ember from 'ember';
 import app_state from './app_state';
 import speecher from './speecher';
 import persistence from './persistence';
@@ -8,6 +9,7 @@ import modal from './modal';
 import i18n from './i18n';
 import $ from 'jquery';
 import { htmlSafe } from '@ember/string';
+import stashes from './_stashes';
 // allow user-defined prompt image/label
 // in the user menu add options for "repeat prompt", "end this section", "skip this step", "end assessment"
 // select language when starting assessment
@@ -46,19 +48,36 @@ var evaluation = {
     }
   },
   conclude: function() {
-    alert('save!');
-    app_state.set('last_assessment', assessment);
-    assessment = {};
+    assessment.ended = (new Date()).getTime() / 1000;
     // save the evaluation
+    app_state.set('last_assessment_for_' + assessment.user_id, assessment);
+    stashes.log_event(assessment, assessment.user_id, app_state.get('sessionUser.id'));
+    if(persistence.get('online')) {
+      stashes.push_log();
+    }
     // navigate to the results page (should work even if offline and haven't been able to push yet)
+    assessment = {};
+    app_state.controller.transitionToRoute('user.log', assessment.user_name, 'last-eval');
   },
-  move: function() {
-
+  settings: function() {
+    modal.open('modals/assessment-settings');
+  },
+  move: function(direction) {
+    if(direction == 'forward') {
+      working.level = Math.min(working.level + 1, levels.length - 1);
+    } else {
+      working.level = Math.max(working.level - 1, 0);
+    }
+    working.step = 0;
+    app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
   },
   analyze: function(assessment) {
-    assessment = {"mastery_cutoff":0.69,"non_mastery_cutoff":0.32,"attempt_minimum":2,"attempt_maximum":8,"ppi":96,"started":1569429802318,"events":{"find_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.663,"pcty":0.588,"srow":0,"scol":1,"library":"default","q":2,"time":866,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.426,"pcty":0.435,"srow":0,"scol":1,"library":"default","q":0,"time":744,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.135,"pcty":0.353,"srow":0,"scol":0,"library":"default","q":0,"time":922,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.839,"pcty":0.44,"srow":0,"scol":3,"library":"default","q":2,"time":1025,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.672,"pcty":0.236,"srow":0,"scol":2,"library":"default","q":2,"time":951,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.15,"pcty":0.589,"srow":1,"scol":0,"library":"default","q":1,"time":886,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.146,"pcty":0.722,"srow":2,"scol":0,"library":"default","q":1,"time":839,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.289,"pcty":0.253,"srow":0,"scol":1,"library":"default","q":0,"time":1022,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.107,"pcty":0.182,"srow":0,"scol":0,"library":"default","q":0,"time":1098,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.904,"pcty":0.763,"srow":3,"scol":5,"library":"default","q":3,"time":1145,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.121,"pcty":0.746,"srow":3,"scol":0,"library":"default","q":1,"time":1111,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.898,"pcty":0.365,"srow":1,"scol":5,"library":"default","q":2,"time":951,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":5,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.673,"pcty":0.576,"srow":3,"scol":6,"library":"default","q":3,"time":1281,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.13,"pcty":0.276,"srow":1,"scol":1,"library":"default","q":0,"time":1000,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":3,"offset":1}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.87,"pcty":0.714,"srow":4,"scol":8,"library":"default","q":3,"time":1431,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":8,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.727,"pcty":0.252,"srow":1,"scol":7,"library":"default","q":2,"time":986,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.053,"pcty":0.506,"srow":3,"scol":0,"library":"default","q":1,"time":1020,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.766,"pcty":0.256,"srow":1,"scol":7,"library":"default","q":2,"time":733,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.163,"pcty":0.671,"srow":4,"scol":1,"library":"default","q":1,"time":905,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":1,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.094,"srow":0,"scol":9,"library":"default","q":2,"time":912,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.6,"pcty":0.079,"srow":0,"scol":8,"library":"default","q":2,"time":974,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":8,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.129,"pcty":0.158,"srow":1,"scol":1,"library":"default","q":0,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.903,"pcty":0.497,"srow":4,"scol":12,"library":"default","q":3,"time":1063,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":12,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.509,"pcty":0.189,"srow":1,"scol":7,"library":"default","q":2,"time":845,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"fail":true,"pcxt":0.176,"pcty":0.805,"srow":7,"scol":2,"library":"default","q":1,"time":1443,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":2,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.828,"pcty":0.73,"srow":6,"scol":11,"library":"default","q":3,"time":966,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":6,"ccol":11,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.467,"pcty":0.815,"srow":7,"scol":6,"library":"default","q":1,"time":1657,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":6,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.947,"pcty":0.088,"srow":0,"scol":13,"library":"default","q":2,"time":1111,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":13,"gap":1,"offset":0}]],"diff_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.619,"pcty":0.442,"srow":0,"scol":1,"library":"default","q":2,"time":985,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.176,"pcty":0.477,"srow":0,"scol":0,"library":"default","q":0,"time":717,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.563,"pcty":0.398,"srow":0,"scol":2,"library":"default","q":2,"time":1128,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.324,"pcty":0.394,"srow":0,"scol":1,"library":"default","q":0,"time":912,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.862,"pcty":0.185,"srow":0,"scol":3,"library":"default","q":2,"time":1211,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.108,"pcty":0.216,"srow":0,"scol":0,"library":"default","q":0,"time":1163,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.864,"pcty":0.416,"srow":1,"scol":4,"library":"default","q":2,"time":1110,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":4,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.284,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1148,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.728,"pcty":0.147,"srow":0,"scol":4,"library":"default","q":2,"time":1185,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":4,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.281,"pcty":0.341,"srow":1,"scol":1,"library":"default","q":0,"time":1017,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.358,"pcty":0.072,"srow":0,"scol":2,"library":"default","q":0,"time":1055,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.763,"pcty":0.776,"srow":3,"scol":4,"library":"default","q":3,"time":1657,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.04,"pcty":0.106,"srow":0,"scol":0,"library":"default","q":0,"time":1571,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.44,"pcty":0.707,"srow":4,"scol":4,"library":"default","q":0,"time":1446,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.551,"pcty":0.396,"srow":2,"scol":5,"library":"default","q":0,"time":2183,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.672,"pcty":0.544,"srow":3,"scol":6,"library":"default","q":3,"time":2770,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.734,"pcty":0.233,"srow":1,"scol":7,"library":"default","q":2,"time":1331,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.823,"pcty":0.829,"srow":5,"scol":8,"library":"default","q":3,"time":1311,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":8,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.653,"pcty":0.059,"srow":0,"scol":6,"library":"default","q":2,"time":1008,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":6,"gap":3,"offset":0}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.233,"pcty":0.408,"srow":2,"scol":2,"library":"default","q":0,"time":1095,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.379,"pcty":0.806,"srow":5,"scol":3,"library":"default","q":1,"time":1467,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":3,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.013,"pcty":0.202,"srow":1,"scol":0,"library":"default","q":0,"time":1880,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.651,"pcty":0.395,"srow":2,"scol":6,"library":"default","q":1,"time":840,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":4,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.364,"pcty":0.395,"srow":2,"scol":3,"library":"default","q":2,"time":817,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":2,"ccol":6,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.465,"pcty":0.388,"srow":2,"scol":4,"library":"default","q":0,"time":1052,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.444,"pcty":0.507,"srow":3,"scol":4,"library":"default","q":1,"time":1347,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.56,"pcty":0.519,"srow":3,"scol":5,"library":"default","q":3,"time":3783,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.569,"srow":3,"scol":9,"library":"default","q":3,"time":1741,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.049,"pcty":0.481,"srow":4,"scol":0,"library":"default","q":1,"time":2198,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":0,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.096,"pcty":0.194,"srow":1,"scol":1,"library":"default","q":0,"time":2000,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.308,"pcty":0.274,"srow":2,"scol":4,"library":"default","q":0,"time":2407,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.945,"pcty":0.201,"srow":1,"scol":13,"library":"default","q":2,"time":2538,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":13,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"pcxt":0.625,"pcty":0.265,"srow":2,"scol":8,"library":"default","q":3,"time":1873,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":5,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.945,"pcty":0.399,"srow":3,"scol":13,"library":"default","q":2,"time":3114,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":3,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.593,"pcty":0.521,"srow":4,"scol":8,"library":"default","q":3,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":6,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.304,"pcty":0.269,"srow":2,"scol":4,"library":"default","q":2,"time":1740,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":3,"ccol":13,"gap":1,"offset":0}]],"symbols":[null,[{"rows":1,"cols":3,"vsize":3,"pcxt":0.821,"pcty":0.478,"srow":0,"scol":2,"library":"photos","q":2,"time":1236,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.47,"pcty":0.364,"srow":0,"scol":1,"library":"photos","q":0,"time":753,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.769,"pcty":0.376,"srow":0,"scol":2,"library":"lessonpix","q":2,"time":1197,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.332,"srow":0,"scol":1,"library":"lessonpix","q":0,"time":837,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.755,"pcty":0.486,"srow":0,"scol":2,"library":"pcs_hc","q":2,"time":1135,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.496,"pcty":0.442,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":628,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":3,"vsize":6,"pcxt":0.76,"pcty":0.649,"srow":1,"scol":2,"library":"photos","q":3,"time":1051,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.527,"pcty":0.236,"srow":0,"scol":1,"library":"photos","q":0,"time":1262,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.45,"pcty":0.711,"srow":1,"scol":1,"library":"photos","q":1,"time":1462,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.767,"pcty":0.708,"srow":1,"scol":2,"library":"lessonpix","q":3,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.47,"pcty":0.653,"srow":1,"scol":1,"library":"lessonpix","q":1,"time":942,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.214,"srow":0,"scol":0,"library":"lessonpix","q":0,"time":1075,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.823,"pcty":0.793,"srow":1,"scol":2,"library":"pcs_hc","q":3,"time":824,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.663,"srow":1,"scol":0,"library":"pcs_hc","q":1,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.449,"pcty":0.26,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":776,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":3,"cols":4,"vsize":12,"pcxt":0.863,"pcty":0.788,"srow":2,"scol":3,"library":"photos","q":3,"time":1515,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.889,"pcty":0.493,"srow":1,"scol":3,"library":"photos","q":2,"time":3651,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.815,"pcty":0.723,"srow":2,"scol":3,"library":"photos","q":3,"time":1184,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.868,"pcty":0.159,"srow":0,"scol":3,"library":"lessonpix","q":2,"time":1353,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.726,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1419,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.73,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1168,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.433,"pcty":0.158,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":858,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.839,"pcty":0.375,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":896,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.867,"pcty":0.396,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":915,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0}]],"find_shown":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.779,"pcty":0.692,"srow":2,"scol":2,"library":"default","q":3,"time":1456,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.498,"pcty":0.744,"srow":2,"scol":1,"library":"default","q":1,"time":1193,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.493,"pcty":0.715,"srow":2,"scol":1,"library":"default","q":1,"time":1409,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.243,"pcty":0.771,"srow":2,"scol":0,"library":"default","q":1,"time":1187,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.169,"pcty":0.779,"srow":2,"scol":0,"library":"default","q":1,"time":1345,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.56,"pcty":0.656,"srow":2,"scol":1,"library":"default","q":1,"time":1240,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.793,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1480,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.814,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":1450,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.221,"pcty":0.748,"srow":2,"scol":0,"library":"default","q":1,"time":1989,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.299,"pcty":0.743,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.719,"srow":2,"scol":1,"library":"default","q":1,"time":1647,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.765,"pcty":0.724,"srow":2,"scol":2,"library":"default","q":3,"time":1819,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.242,"pcty":0.556,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.28,"pcty":0.779,"srow":3,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.53,"pcty":0.557,"srow":2,"scol":1,"library":"default","q":1,"time":1299,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}],[{"rows":5,"cols":5,"vsize":15,"pcxt":0.683,"pcty":0.806,"srow":4,"scol":3,"library":"default","q":3,"time":2833,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":4,"ccol":3,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.492,"pcty":0.45,"srow":2,"scol":2,"library":"default","q":0,"time":1317,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.647,"pcty":0.601,"srow":3,"scol":3,"library":"default","q":3,"time":1347,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":3,"ccol":3,"gap":1,"offset":0,"skiprow":2}]],"open_ended":[null,[{"rows":6,"cols":4,"vsize":12,"pcxt":0.146,"pcty":0.473,"srow":3,"scol":0,"library":"default","q":0,"time":3091,"win":3.22,"hin":1.06,"approxin":true,"lbl":"he","label":"he","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.371,"pcty":0.531,"srow":3,"scol":1,"library":"default","q":0,"time":3681,"win":3.22,"hin":1.06,"approxin":true,"lbl":"is","label":"is","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.841,"pcty":0.564,"srow":3,"scol":3,"library":"default","q":0,"time":4411,"win":3.22,"hin":1.06,"approxin":true,"lbl":"happy","label":"happy","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.095,"srow":0,"scol":3,"library":"default","q":0,"time":5446,"win":3.22,"hin":1.06,"approxin":true,"lbl":"next","label":"next","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.187,"pcty":0.689,"srow":4,"scol":0,"library":"default","q":0,"time":8106,"win":3.22,"hin":1.06,"approxin":true,"lbl":"she","label":"she","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.162,"pcty":0.813,"srow":5,"scol":0,"library":"default","q":0,"time":9474,"win":3.22,"hin":1.06,"approxin":true,"lbl":"they","label":"they","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.425,"pcty":0.861,"srow":5,"scol":1,"library":"default","q":0,"time":11235,"win":3.22,"hin":1.06,"approxin":true,"lbl":"are","label":"are","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.631,"pcty":0.819,"srow":5,"scol":2,"library":"default","q":0,"time":12120,"win":3.22,"hin":1.06,"approxin":true,"lbl":"read","label":"read","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.833,"pcty":0.248,"srow":1,"scol":3,"library":"default","q":0,"time":13700,"win":3.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}],[{"rows":6,"cols":10,"vsize":30,"pcxt":0.532,"pcty":0.811,"srow":5,"scol":5,"library":"default","q":0,"time":1802,"win":1.22,"hin":1.06,"approxin":true,"lbl":"b","voc":"+b","label":"b","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.037,"pcty":0.667,"srow":4,"scol":0,"library":"default","q":0,"time":2534,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.338,"pcty":0.818,"srow":5,"scol":3,"library":"default","q":0,"time":3295,"win":1.22,"hin":1.06,"approxin":true,"lbl":"c","voc":"+c","label":"c","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.739,"pcty":0.665,"srow":4,"scol":7,"library":"default","q":0,"time":3937,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.967,"pcty":0.485,"srow":3,"scol":9,"library":"default","q":0,"time":4770,"win":1.22,"hin":1.06,"approxin":true,"lbl":"p","voc":"+p","label":"p","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.082,"pcty":0.671,"srow":4,"scol":0,"library":"default","q":0,"time":5929,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.73,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":7411,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.938,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":8014,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.147,"pcty":0.64,"srow":4,"scol":1,"library":"default","q":0,"time":9952,"win":1.22,"hin":1.06,"approxin":true,"lbl":"s","voc":"+s","label":"s","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.719,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":11115,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.838,"pcty":0.554,"srow":3,"scol":8,"library":"default","q":0,"time":11740,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.846,"pcty":0.527,"srow":3,"scol":8,"library":"default","q":0,"time":13083,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.854,"pcty":0.645,"srow":4,"scol":8,"library":"default","q":0,"time":13830,"win":1.22,"hin":1.06,"approxin":true,"lbl":"l","voc":"+l","label":"l","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.935,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":14539,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.962,"pcty":0.241,"srow":1,"scol":9,"library":"default","q":0,"time":15594,"win":1.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}]],"categories":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.267,"pcty":0.696,"srow":2,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.571,"pcty":0.728,"srow":2,"scol":1,"library":"default","q":1,"time":1828,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.3,"pcty":0.712,"srow":2,"scol":0,"library":"default","q":0,"time":42771,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.823,"pcty":0.708,"srow":2,"scol":2,"library":"default","q":3,"time":3110,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.226,"pcty":0.746,"srow":2,"scol":0,"library":"default","q":1,"time":2211,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.836,"pcty":0.736,"srow":2,"scol":2,"library":"default","q":3,"time":1845,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.245,"pcty":0.668,"srow":2,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.791,"pcty":0.635,"srow":2,"scol":2,"library":"default","q":3,"time":2234,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1790,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.529,"pcty":0.774,"srow":2,"scol":1,"library":"default","q":1,"time":1488,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.184,"pcty":0.772,"srow":2,"scol":0,"library":"default","q":1,"time":1697,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.771,"srow":2,"scol":2,"library":"default","q":0,"time":16261,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.544,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1640,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.679,"srow":2,"scol":0,"library":"default","q":1,"time":1696,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.248,"pcty":0.73,"srow":2,"scol":0,"library":"default","q":1,"time":1730,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.252,"pcty":0.758,"srow":2,"scol":0,"library":"default","q":1,"time":1756,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}]],"inclusion_exclusion_association":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.255,"pcty":0.68,"srow":2,"scol":0,"library":"default","q":1,"time":1794,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.514,"pcty":0.689,"srow":2,"scol":1,"library":"default","q":1,"time":1660,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.241,"pcty":0.692,"srow":2,"scol":0,"library":"default","q":1,"time":1613,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.739,"srow":2,"scol":0,"library":"default","q":1,"time":2123,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.847,"pcty":0.744,"srow":2,"scol":2,"library":"default","q":3,"time":1911,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.194,"pcty":0.691,"srow":2,"scol":0,"library":"default","q":1,"time":2325,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.772,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":2712,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.178,"pcty":0.672,"srow":2,"scol":0,"library":"default","q":1,"time":1948,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.505,"pcty":0.699,"srow":2,"scol":1,"library":"default","q":1,"time":1910,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]],"literacy":[null,[{"rows":4,"cols":3,"vsize":6,"pcxt":0.748,"pcty":0.588,"srow":2,"scol":2,"library":"default","q":3,"time":2556,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.764,"srow":3,"scol":1,"library":"default","q":1,"time":1524,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.51,"pcty":0.798,"srow":3,"scol":1,"library":"default","q":1,"time":1612,"win":4.33,"hin":1.65,"approxin":true,"correct":false,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.281,"pcty":0.596,"srow":2,"scol":0,"library":"default","q":1,"time":1688,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.827,"srow":3,"scol":0,"library":"default","q":1,"time":4745,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.771,"pcty":0.649,"srow":2,"scol":2,"library":"default","q":3,"time":2193,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.759,"pcty":0.584,"srow":2,"scol":2,"library":"default","q":3,"time":3310,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.778,"srow":3,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.754,"pcty":0.552,"srow":2,"scol":2,"library":"default","q":3,"time":2327,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.267,"pcty":0.604,"srow":2,"scol":0,"library":"default","q":1,"time":2832,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.794,"pcty":0.542,"srow":2,"scol":2,"library":"default","q":3,"time":2640,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.566,"srow":2,"scol":1,"library":"default","q":1,"time":4314,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]]}}
+    if(!assessment || !assessment.mastery_cutoff) {
+      return {};
+      assessment = {"name": "Sample Results", "mastery_cutoff":0.69,"non_mastery_cutoff":0.32,"attempt_minimum":2,"attempt_maximum":8,"ppi":96,"started":1569429802318,"events":{"find_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.663,"pcty":0.588,"srow":0,"scol":1,"library":"default","q":2,"time":866,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.426,"pcty":0.435,"srow":0,"scol":1,"library":"default","q":0,"time":744,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.135,"pcty":0.353,"srow":0,"scol":0,"library":"default","q":0,"time":922,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.839,"pcty":0.44,"srow":0,"scol":3,"library":"default","q":2,"time":1025,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.672,"pcty":0.236,"srow":0,"scol":2,"library":"default","q":2,"time":951,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.15,"pcty":0.589,"srow":1,"scol":0,"library":"default","q":1,"time":886,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.146,"pcty":0.722,"srow":2,"scol":0,"library":"default","q":1,"time":839,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.289,"pcty":0.253,"srow":0,"scol":1,"library":"default","q":0,"time":1022,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.107,"pcty":0.182,"srow":0,"scol":0,"library":"default","q":0,"time":1098,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.904,"pcty":0.763,"srow":3,"scol":5,"library":"default","q":3,"time":1145,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.121,"pcty":0.746,"srow":3,"scol":0,"library":"default","q":1,"time":1111,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.898,"pcty":0.365,"srow":1,"scol":5,"library":"default","q":2,"time":951,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":5,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.673,"pcty":0.576,"srow":3,"scol":6,"library":"default","q":3,"time":1281,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.13,"pcty":0.276,"srow":1,"scol":1,"library":"default","q":0,"time":1000,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":3,"offset":1}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.87,"pcty":0.714,"srow":4,"scol":8,"library":"default","q":3,"time":1431,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":8,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.727,"pcty":0.252,"srow":1,"scol":7,"library":"default","q":2,"time":986,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.053,"pcty":0.506,"srow":3,"scol":0,"library":"default","q":1,"time":1020,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.766,"pcty":0.256,"srow":1,"scol":7,"library":"default","q":2,"time":733,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.163,"pcty":0.671,"srow":4,"scol":1,"library":"default","q":1,"time":905,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":4,"ccol":1,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.094,"srow":0,"scol":9,"library":"default","q":2,"time":912,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.6,"pcty":0.079,"srow":0,"scol":8,"library":"default","q":2,"time":974,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":8,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.129,"pcty":0.158,"srow":1,"scol":1,"library":"default","q":0,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.903,"pcty":0.497,"srow":4,"scol":12,"library":"default","q":3,"time":1063,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":12,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.509,"pcty":0.189,"srow":1,"scol":7,"library":"default","q":2,"time":845,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"fail":true,"pcxt":0.176,"pcty":0.805,"srow":7,"scol":2,"library":"default","q":1,"time":1443,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":2,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.828,"pcty":0.73,"srow":6,"scol":11,"library":"default","q":3,"time":966,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":6,"ccol":11,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.467,"pcty":0.815,"srow":7,"scol":6,"library":"default","q":1,"time":1657,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":7,"ccol":6,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.947,"pcty":0.088,"srow":0,"scol":13,"library":"default","q":2,"time":1111,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":0,"ccol":13,"gap":1,"offset":0}]],"diff_target":[null,[{"rows":1,"cols":2,"vsize":2,"pcxt":0.619,"pcty":0.442,"srow":0,"scol":1,"library":"default","q":2,"time":985,"win":6.54,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":1,"cols":3,"vsize":3,"pcxt":0.176,"pcty":0.477,"srow":0,"scol":0,"library":"default","q":0,"time":717,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":1,"cols":4,"vsize":4,"pcxt":0.563,"pcty":0.398,"srow":0,"scol":2,"library":"default","q":2,"time":1128,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":4,"vsize":4,"pcxt":0.324,"pcty":0.394,"srow":0,"scol":1,"library":"default","q":0,"time":912,"win":3.22,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":4,"vsize":8,"pcxt":0.862,"pcty":0.185,"srow":0,"scol":3,"library":"default","q":2,"time":1211,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":2,"cols":4,"vsize":8,"pcxt":0.108,"pcty":0.216,"srow":0,"scol":0,"library":"default","q":0,"time":1163,"win":3.22,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0}],[{"rows":3,"cols":5,"vsize":15,"pcxt":0.864,"pcty":0.416,"srow":1,"scol":4,"library":"default","q":2,"time":1110,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":4,"gap":1,"offset":0},{"rows":3,"cols":5,"vsize":15,"pcxt":0.284,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1148,"win":2.55,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0}],[{"rows":4,"cols":6,"vsize":6,"pcxt":0.728,"pcty":0.147,"srow":0,"scol":4,"library":"default","q":2,"time":1185,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":4,"gap":2,"offset":0},{"rows":4,"cols":6,"vsize":6,"pcxt":0.281,"pcty":0.341,"srow":1,"scol":1,"library":"default","q":0,"time":1017,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":2,"offset":1}],[{"rows":4,"cols":6,"vsize":24,"pcxt":0.358,"pcty":0.072,"srow":0,"scol":2,"library":"default","q":0,"time":1055,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":4,"cols":6,"vsize":24,"pcxt":0.763,"pcty":0.776,"srow":3,"scol":4,"library":"default","q":3,"time":1657,"win":2.11,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0}],[{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.04,"pcty":0.106,"srow":0,"scol":0,"library":"default","q":0,"time":1571,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.44,"pcty":0.707,"srow":4,"scol":4,"library":"default","q":0,"time":1446,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.551,"pcty":0.396,"srow":2,"scol":5,"library":"default","q":0,"time":2183,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.672,"pcty":0.544,"srow":3,"scol":6,"library":"default","q":3,"time":2770,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":6,"gap":3,"offset":0},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.734,"pcty":0.233,"srow":1,"scol":7,"library":"default","q":2,"time":1331,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":7,"gap":3,"offset":1},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.823,"pcty":0.829,"srow":5,"scol":8,"library":"default","q":3,"time":1311,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":8,"gap":3,"offset":2},{"rows":6,"cols":10,"vsize":6.666666666666667,"pcxt":0.653,"pcty":0.059,"srow":0,"scol":6,"library":"default","q":2,"time":1008,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":0,"ccol":6,"gap":3,"offset":0}],[{"rows":6,"cols":10,"vsize":15,"pcxt":0.233,"pcty":0.408,"srow":2,"scol":2,"library":"default","q":0,"time":1095,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":2,"offset":0},{"rows":6,"cols":10,"vsize":15,"pcxt":0.379,"pcty":0.806,"srow":5,"scol":3,"library":"default","q":1,"time":1467,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":5,"ccol":3,"gap":2,"offset":1}],[{"rows":6,"cols":10,"vsize":60,"pcxt":0.013,"pcty":0.202,"srow":1,"scol":0,"library":"default","q":0,"time":1880,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.651,"pcty":0.395,"srow":2,"scol":6,"library":"default","q":1,"time":840,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":4,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.364,"pcty":0.395,"srow":2,"scol":3,"library":"default","q":2,"time":817,"win":1.22,"hin":1.06,"approxin":true,"correct":false,"crow":2,"ccol":6,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.465,"pcty":0.388,"srow":2,"scol":4,"library":"default","q":0,"time":1052,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.444,"pcty":0.507,"srow":3,"scol":4,"library":"default","q":1,"time":1347,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":4,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.56,"pcty":0.519,"srow":3,"scol":5,"library":"default","q":3,"time":3783,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":5,"gap":1,"offset":0},{"rows":6,"cols":10,"vsize":60,"pcxt":0.924,"pcty":0.569,"srow":3,"scol":9,"library":"default","q":3,"time":1741,"win":1.22,"hin":1.06,"approxin":true,"correct":true,"crow":3,"ccol":9,"gap":1,"offset":0}],[{"rows":8,"cols":14,"vsize":7,"pcxt":0.049,"pcty":0.481,"srow":4,"scol":0,"library":"default","q":1,"time":2198,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":4,"ccol":0,"gap":4,"offset":0},{"rows":8,"cols":14,"vsize":7,"pcxt":0.096,"pcty":0.194,"srow":1,"scol":1,"library":"default","q":0,"time":2000,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":4,"offset":1}],[{"rows":8,"cols":14,"vsize":28,"pcxt":0.308,"pcty":0.274,"srow":2,"scol":4,"library":"default","q":0,"time":2407,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":2,"ccol":4,"gap":2,"offset":0},{"rows":8,"cols":14,"vsize":28,"pcxt":0.945,"pcty":0.201,"srow":1,"scol":13,"library":"default","q":2,"time":2538,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":1,"ccol":13,"gap":2,"offset":1}],[{"rows":8,"cols":14,"vsize":112,"pcxt":0.625,"pcty":0.265,"srow":2,"scol":8,"library":"default","q":3,"time":1873,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":5,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.945,"pcty":0.399,"srow":3,"scol":13,"library":"default","q":2,"time":3114,"win":0.85,"hin":0.77,"approxin":true,"correct":true,"crow":3,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.593,"pcty":0.521,"srow":4,"scol":8,"library":"default","q":3,"time":1246,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":6,"ccol":13,"gap":1,"offset":0},{"rows":8,"cols":14,"vsize":112,"pcxt":0.304,"pcty":0.269,"srow":2,"scol":4,"library":"default","q":2,"time":1740,"win":0.85,"hin":0.77,"approxin":true,"correct":false,"crow":3,"ccol":13,"gap":1,"offset":0}]],"symbols":[null,[{"rows":1,"cols":3,"vsize":3,"pcxt":0.821,"pcty":0.478,"srow":0,"scol":2,"library":"photos","q":2,"time":1236,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.47,"pcty":0.364,"srow":0,"scol":1,"library":"photos","q":0,"time":753,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.769,"pcty":0.376,"srow":0,"scol":2,"library":"lessonpix","q":2,"time":1197,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.332,"srow":0,"scol":1,"library":"lessonpix","q":0,"time":837,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.755,"pcty":0.486,"srow":0,"scol":2,"library":"pcs_hc","q":2,"time":1135,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":2,"gap":1,"offset":0},{"rows":1,"cols":3,"vsize":3,"pcxt":0.496,"pcty":0.442,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":628,"win":4.33,"hin":6.9,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":2,"cols":3,"vsize":6,"pcxt":0.76,"pcty":0.649,"srow":1,"scol":2,"library":"photos","q":3,"time":1051,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.527,"pcty":0.236,"srow":0,"scol":1,"library":"photos","q":0,"time":1262,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.45,"pcty":0.711,"srow":1,"scol":1,"library":"photos","q":1,"time":1462,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.767,"pcty":0.708,"srow":1,"scol":2,"library":"lessonpix","q":3,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.47,"pcty":0.653,"srow":1,"scol":1,"library":"lessonpix","q":1,"time":942,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":1,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.214,"srow":0,"scol":0,"library":"lessonpix","q":0,"time":1075,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.823,"pcty":0.793,"srow":1,"scol":2,"library":"pcs_hc","q":3,"time":824,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":2,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.663,"srow":1,"scol":0,"library":"pcs_hc","q":1,"time":970,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":1,"ccol":0,"gap":1,"offset":0},{"rows":2,"cols":3,"vsize":6,"pcxt":0.449,"pcty":0.26,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":776,"win":4.33,"hin":3.4,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0}],[{"rows":3,"cols":4,"vsize":12,"pcxt":0.863,"pcty":0.788,"srow":2,"scol":3,"library":"photos","q":3,"time":1515,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.889,"pcty":0.493,"srow":1,"scol":3,"library":"photos","q":2,"time":3651,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.815,"pcty":0.723,"srow":2,"scol":3,"library":"photos","q":3,"time":1184,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.868,"pcty":0.159,"srow":0,"scol":3,"library":"lessonpix","q":2,"time":1353,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.726,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1419,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.73,"srow":2,"scol":3,"library":"lessonpix","q":3,"time":1168,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.433,"pcty":0.158,"srow":0,"scol":1,"library":"pcs_hc","q":0,"time":858,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":0,"ccol":1,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.839,"pcty":0.375,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":896,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0},{"rows":3,"cols":4,"vsize":12,"pcxt":0.867,"pcty":0.396,"srow":1,"scol":3,"library":"pcs_hc","q":2,"time":915,"win":3.22,"hin":2.23,"approxin":true,"correct":true,"crow":1,"ccol":3,"gap":1,"offset":0}]],"find_shown":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.779,"pcty":0.692,"srow":2,"scol":2,"library":"default","q":3,"time":1456,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.498,"pcty":0.744,"srow":2,"scol":1,"library":"default","q":1,"time":1193,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.493,"pcty":0.715,"srow":2,"scol":1,"library":"default","q":1,"time":1409,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.243,"pcty":0.771,"srow":2,"scol":0,"library":"default","q":1,"time":1187,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.169,"pcty":0.779,"srow":2,"scol":0,"library":"default","q":1,"time":1345,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.56,"pcty":0.656,"srow":2,"scol":1,"library":"default","q":1,"time":1240,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.793,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1480,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.814,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":1450,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.221,"pcty":0.748,"srow":2,"scol":0,"library":"default","q":1,"time":1989,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.299,"pcty":0.743,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.444,"pcty":0.719,"srow":2,"scol":1,"library":"default","q":1,"time":1647,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.765,"pcty":0.724,"srow":2,"scol":2,"library":"default","q":3,"time":1819,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.242,"pcty":0.556,"srow":2,"scol":0,"library":"default","q":1,"time":1504,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.28,"pcty":0.779,"srow":3,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.53,"pcty":0.557,"srow":2,"scol":1,"library":"default","q":1,"time":1299,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}],[{"rows":5,"cols":5,"vsize":15,"pcxt":0.683,"pcty":0.806,"srow":4,"scol":3,"library":"default","q":3,"time":2833,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":4,"ccol":3,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.492,"pcty":0.45,"srow":2,"scol":2,"library":"default","q":0,"time":1317,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":5,"cols":5,"vsize":15,"pcxt":0.647,"pcty":0.601,"srow":3,"scol":3,"library":"default","q":3,"time":1347,"win":2.55,"hin":1.3,"approxin":true,"correct":true,"crow":3,"ccol":3,"gap":1,"offset":0,"skiprow":2}]],"open_ended":[null,[{"rows":6,"cols":4,"vsize":12,"pcxt":0.146,"pcty":0.473,"srow":3,"scol":0,"library":"default","q":0,"time":3091,"win":3.22,"hin":1.06,"approxin":true,"lbl":"he","label":"he","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.371,"pcty":0.531,"srow":3,"scol":1,"library":"default","q":0,"time":3681,"win":3.22,"hin":1.06,"approxin":true,"lbl":"is","label":"is","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.841,"pcty":0.564,"srow":3,"scol":3,"library":"default","q":0,"time":4411,"win":3.22,"hin":1.06,"approxin":true,"lbl":"happy","label":"happy","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.846,"pcty":0.095,"srow":0,"scol":3,"library":"default","q":0,"time":5446,"win":3.22,"hin":1.06,"approxin":true,"lbl":"next","label":"next","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.187,"pcty":0.689,"srow":4,"scol":0,"library":"default","q":0,"time":8106,"win":3.22,"hin":1.06,"approxin":true,"lbl":"she","label":"she","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.162,"pcty":0.813,"srow":5,"scol":0,"library":"default","q":0,"time":9474,"win":3.22,"hin":1.06,"approxin":true,"lbl":"they","label":"they","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.425,"pcty":0.861,"srow":5,"scol":1,"library":"default","q":0,"time":11235,"win":3.22,"hin":1.06,"approxin":true,"lbl":"are","label":"are","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.631,"pcty":0.819,"srow":5,"scol":2,"library":"default","q":0,"time":12120,"win":3.22,"hin":1.06,"approxin":true,"lbl":"read","label":"read","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":4,"vsize":12,"pcxt":0.833,"pcty":0.248,"srow":1,"scol":3,"library":"default","q":0,"time":13700,"win":3.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}],[{"rows":6,"cols":10,"vsize":30,"pcxt":0.532,"pcty":0.811,"srow":5,"scol":5,"library":"default","q":0,"time":1802,"win":1.22,"hin":1.06,"approxin":true,"lbl":"b","voc":"+b","label":"b","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.037,"pcty":0.667,"srow":4,"scol":0,"library":"default","q":0,"time":2534,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.338,"pcty":0.818,"srow":5,"scol":3,"library":"default","q":0,"time":3295,"win":1.22,"hin":1.06,"approxin":true,"lbl":"c","voc":"+c","label":"c","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.739,"pcty":0.665,"srow":4,"scol":7,"library":"default","q":0,"time":3937,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.967,"pcty":0.485,"srow":3,"scol":9,"library":"default","q":0,"time":4770,"win":1.22,"hin":1.06,"approxin":true,"lbl":"p","voc":"+p","label":"p","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.082,"pcty":0.671,"srow":4,"scol":0,"library":"default","q":0,"time":5929,"win":1.22,"hin":1.06,"approxin":true,"lbl":"a","voc":"+a","label":"a","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.73,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":7411,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.938,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":8014,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.147,"pcty":0.64,"srow":4,"scol":1,"library":"default","q":0,"time":9952,"win":1.22,"hin":1.06,"approxin":true,"lbl":"s","voc":"+s","label":"s","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.719,"pcty":0.692,"srow":4,"scol":7,"library":"default","q":0,"time":11115,"win":1.22,"hin":1.06,"approxin":true,"lbl":"k","voc":"+k","label":"k","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.838,"pcty":0.554,"srow":3,"scol":8,"library":"default","q":0,"time":11740,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.846,"pcty":0.527,"srow":3,"scol":8,"library":"default","q":0,"time":13083,"win":1.22,"hin":1.06,"approxin":true,"lbl":"o","voc":"+o","label":"o","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.854,"pcty":0.645,"srow":4,"scol":8,"library":"default","q":0,"time":13830,"win":1.22,"hin":1.06,"approxin":true,"lbl":"l","voc":"+l","label":"l","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.935,"pcty":0.817,"srow":5,"scol":9,"library":"default","q":0,"time":14539,"win":1.22,"hin":1.06,"approxin":true,"lbl":"_","voc":":space","label":"_","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3},{"rows":6,"cols":10,"vsize":30,"pcxt":0.962,"pcty":0.241,"srow":1,"scol":9,"library":"default","q":0,"time":15594,"win":1.22,"hin":1.06,"approxin":true,"lbl":"done","label":"done","prompt":"some_prompt","gap":1,"offset":0,"skiprow":3}]],"categories":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.267,"pcty":0.696,"srow":2,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.571,"pcty":0.728,"srow":2,"scol":1,"library":"default","q":1,"time":1828,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.3,"pcty":0.712,"srow":2,"scol":0,"library":"default","q":0,"time":42771,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.823,"pcty":0.708,"srow":2,"scol":2,"library":"default","q":3,"time":3110,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.226,"pcty":0.746,"srow":2,"scol":0,"library":"default","q":1,"time":2211,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.836,"pcty":0.736,"srow":2,"scol":2,"library":"default","q":3,"time":1845,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.245,"pcty":0.668,"srow":2,"scol":0,"library":"default","q":1,"time":1782,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.791,"pcty":0.635,"srow":2,"scol":2,"library":"default","q":3,"time":2234,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.697,"srow":2,"scol":2,"library":"default","q":3,"time":1790,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.529,"pcty":0.774,"srow":2,"scol":1,"library":"default","q":1,"time":1488,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.184,"pcty":0.772,"srow":2,"scol":0,"library":"default","q":1,"time":1697,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.782,"pcty":0.771,"srow":2,"scol":2,"library":"default","q":0,"time":16261,"win":4.33,"hin":2.23,"approxin":true,"correct":false,"crow":-1,"ccol":-1,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.544,"pcty":0.7,"srow":2,"scol":1,"library":"default","q":1,"time":1640,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.679,"srow":2,"scol":0,"library":"default","q":1,"time":1696,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.248,"pcty":0.73,"srow":2,"scol":0,"library":"default","q":1,"time":1730,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.252,"pcty":0.758,"srow":2,"scol":0,"library":"default","q":1,"time":1756,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}]],"inclusion_exclusion_association":[null,[{"rows":3,"cols":3,"vsize":3,"pcxt":0.255,"pcty":0.68,"srow":2,"scol":0,"library":"default","q":1,"time":1794,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.514,"pcty":0.689,"srow":2,"scol":1,"library":"default","q":1,"time":1660,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.241,"pcty":0.692,"srow":2,"scol":0,"library":"default","q":1,"time":1613,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.253,"pcty":0.739,"srow":2,"scol":0,"library":"default","q":1,"time":2123,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.847,"pcty":0.744,"srow":2,"scol":2,"library":"default","q":3,"time":1911,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.194,"pcty":0.691,"srow":2,"scol":0,"library":"default","q":1,"time":2325,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":3,"cols":3,"vsize":3,"pcxt":0.772,"pcty":0.746,"srow":2,"scol":2,"library":"default","q":3,"time":2712,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.178,"pcty":0.672,"srow":2,"scol":0,"library":"default","q":1,"time":1948,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":3,"cols":3,"vsize":3,"pcxt":0.505,"pcty":0.699,"srow":2,"scol":1,"library":"default","q":1,"time":1910,"win":4.33,"hin":2.23,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]],"literacy":[null,[{"rows":4,"cols":3,"vsize":6,"pcxt":0.748,"pcty":0.588,"srow":2,"scol":2,"library":"default","q":3,"time":2556,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.764,"srow":3,"scol":1,"library":"default","q":1,"time":1524,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":1,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.51,"pcty":0.798,"srow":3,"scol":1,"library":"default","q":1,"time":1612,"win":4.33,"hin":1.65,"approxin":true,"correct":false,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.281,"pcty":0.596,"srow":2,"scol":0,"library":"default","q":1,"time":1688,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.212,"pcty":0.827,"srow":3,"scol":0,"library":"default","q":1,"time":4745,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.771,"pcty":0.649,"srow":2,"scol":2,"library":"default","q":3,"time":2193,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.759,"pcty":0.584,"srow":2,"scol":2,"library":"default","q":3,"time":3310,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.237,"pcty":0.778,"srow":3,"scol":0,"library":"default","q":1,"time":2541,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":3,"ccol":0,"gap":1,"offset":0,"skiprow":2}],[{"rows":4,"cols":3,"vsize":6,"pcxt":0.754,"pcty":0.552,"srow":2,"scol":2,"library":"default","q":3,"time":2327,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.267,"pcty":0.604,"srow":2,"scol":0,"library":"default","q":1,"time":2832,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":0,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.794,"pcty":0.542,"srow":2,"scol":2,"library":"default","q":3,"time":2640,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":2,"gap":1,"offset":0,"skiprow":2},{"rows":4,"cols":3,"vsize":6,"pcxt":0.462,"pcty":0.566,"srow":2,"scol":1,"library":"default","q":1,"time":4314,"win":4.33,"hin":1.65,"approxin":true,"correct":true,"crow":2,"ccol":1,"gap":1,"offset":0,"skiprow":2}]]}}
+    }
     var res = Object.assign({}, assessment);
-    res.label = "My Eval";
+    res.label = assessment.name || "Unnamed Eval";
     res.total_time = 0;
     res.total_correct = 0;
     res.total_possibly_correct = 0;
@@ -70,6 +89,7 @@ var evaluation = {
     var field_sizes = {};
     var symbol_libraries = {};
     var open_prompts = {};
+    var literacies = [];
     var event_types = []
     for(var key in assessment.events) {
       if(key == 'symbols') {
@@ -84,7 +104,7 @@ var evaluation = {
           }
         });
         for(var type_key in types) {
-          types[type_key][0] = null;
+          types[type_key][0] = [];
           event_types.push({ type: key, library: type_key, list: types[type_key] });
         }
       } else {
@@ -98,8 +118,8 @@ var evaluation = {
       var list = type.list;
       var level = levels.find(function(l) { return l[0].intro == key; });
       list.forEach(function(step, idx) {
-        if(!step) { 
-          var level_name = key;
+        if(!step || idx == 0) { 
+          var level_name = key || 'no-key';
           if(key == 'find_target') { level_name = i18n.t('find_target_level', "Find a target in a grid of empty buttons"); }
           else if(key == 'diff_target') { level_name = i18n.t('diff_target_level', "Find a target in a grid of populated buttons"); }
           else if(key == 'symbols') { level_name = i18n.t('symbols_level', "Find targets using different symbol libraries"); }
@@ -112,7 +132,7 @@ var evaluation = {
             already_done[key] = true;
             res.assessments.push({category: level_name});
           }
-          return; 
+          return;
         }
         var correct = 0;
         var full_time = 0;
@@ -120,7 +140,7 @@ var evaluation = {
         var possibly_correct = 0;
         var level_step = level[idx];
         if(step[0] && step[0].id) {
-          level_step = level.find(function(s) { return s.id == step.id; });
+          level_step = level.find(function(s) { return s.id == step[0].id; });
         }
         step.forEach(function(event) {
           res.hits++;
@@ -132,6 +152,9 @@ var evaluation = {
           if(event.crow != null && event.ccol != null) {
             res.total_possibly_correct++;
             possibly_correct++;
+          }
+          if(event.clbl && event.prompt) {
+            literacies.push(event);
           }
           res.hit_locations.push({
             possibly_correct: (event.crow != null && event.ccol != null),
@@ -159,6 +182,7 @@ var evaluation = {
             if(event.crow != null && event.ccol != null) { button_sizes[btn_dim].possibly_correct++; }
           }
           if(event.vsize && (key == 'find_target' || key == 'diff_target' || key == 'symbols')) {
+            event.vsize = Math.round(event.vsize * 10) / 10;
             field_sizes[event.vsize] = field_sizes[event.vsize] || {size: event.vsize, cnt: 0, correct: 0, possibly_correct: 0};
             field_sizes[event.vsize].cnt++;
             if(event.correct) { field_sizes[event.vsize].correct++; }            
@@ -362,8 +386,76 @@ var evaluation = {
     // TODO: open-ended sections shouldn't have an attempts tally
     //         <!-- list of words/spelling for each prompt (check spelling against word list for accuracy), including total # of words -->
     res.literacy_responses = [];
+    literacies.forEach(function(e) {
+      res.literacy_responses.push({
+        prompt: e.prompt,
+        correct_answer: e.clbl,
+        correct: e.correct,
+        distractors: e.distr.join(', '),
+        time: e.time
+      });
+    });
+
     //       <!-- list of literacy words, including prompt and distractors -->
-    res.access_method = "Touch";
+    res.access_method = i18n.t('touch', "Touch");
+    if(assessment.access_method == 'scanning') {
+      res.access_method = i18n.t('scanning', "Scanning");
+    } else if(assessment.access_method == 'axis_scanning') {
+      res.access_method = i18n.t('axis_scanning', "Axis Scanning");
+    } else if(assessment.access_method == 'dwell') {
+      res.access_method = i18n.t('dwell', "Dwell/Eye Gaze");
+    } else if(assessment.access_meethod == 'arrow_dwell') {
+      res.access_method = i18n.t('arrow_dwell', "Cursor-Guided Dwell");
+    }
+    res.access_settings = []; //assessment;
+    res.access_settings.push({key: i18n.t('mastery', "mastery"), val: assessment.mastery_cutoff * 100, percent: true});
+    res.access_settings.push({key: i18n.t('non-mastery', "non-mastery"), val: assessment.non_mastery_cutoff * 100, percent: true});
+    res.access_settings.push({key: i18n.t('library', "library"), val: assessment.default_library});
+    res.access_settings.push({key: i18n.t('access', "access"), val: res.access_method.toLowerCase().replace(/\s+/g, '-')});
+    res.access_settings.push({key: i18n.t('background', "background"), val: assessment.board_background});
+    res.access_settings.push({key: i18n.t('button-spacing', "button-spacing"), val: assessment.button_spacing});
+    res.access_settings.push({key: i18n.t('button-border', "button-border"), val: assessment.button_border});
+    res.access_settings.push({key: i18n.t('button-text', "button-text"), val: assessment.button_text});
+    res.access_settings.push({key: i18n.t('text-position', "text-position"), val: assessment.text_position});
+    res.access_settings.push({key: i18n.t('font', "font"), val: assessment.text_font});
+    if(assessment.high_contrast) {
+      res.access_settings.push({key: i18n.t('high-contrast', "high-contrast"), val: "true"});
+    }
+    res.access_settings.push({key: i18n.t('', ""), val: assessment.val});
+
+    if(assessment.access_method == 'touch') {
+      res.access_settings.push({key: i18n.t('hold-time', "hold-time"), val: assessment.activation_cutoff / 1000, ms: true});
+      res.access_settings.push({key: i18n.t('hold-min', "hold-min"), val: assessment.activation_minimum / 1000, ms: true});
+      res.access_settings.push({key: i18n.t('debounce', "debounce"), val: assessment.debounce / 1000, ms: true});
+    } else if(assessment.access_method == 'scanning' || assessment.access_method == 'axis_scanning') {
+      if(assessment.access_method == 'axis_scanning') {
+        res.access_settings.push({key: i18n.t('sweep', "sweep"), val: assessment.scanninng_sweep_speed / 1000, ms: true});
+      } else {
+        res.access_settings.push({key: i18n.t('scan-step', "scan-step"), val: assessment.scanning_interval / 1000, ms: true});
+      }
+      if(assessment.scanning_wait) {
+        res.access_settings.push({key: i18n.t('scan-wait', "scan-wait"), val: assessment.scanning_wait});
+      }
+      res.access_settings.push({key: i18n.t('scan-prompt', "scan-prompt"), val: assessment.scanning.prompts});
+      res.access_settings.push({key: i18n.t('scan-auto-select', "scan-auto-select"), val: assessment.scanning_auto_select});
+      res.access_settings.push({key: i18n.t('scan-keys', "scan-keys"), val: assessment.scanning_keys.join(',').replace(/,+$/, '')});
+    } else if(assessment.access_method == 'dwell' || assessment.access_method == 'arrow_dwell') {
+      res.access_settings.push({key: i18n.t('dwell-type', "dwell-type"), val: assessment.dwell_type});
+      if(assessment.access_method == 'arrow-dwell') {
+        res.access_settings.push({key: i18n.t('dwell-speed', "dwell-speed"), val: assessment.dwell_arrow_speed});
+      }
+      res.access_settings.push({key: i18n.t('dwell-select', "dwell-select"), val: assessment.dwell_selection});
+      if(assessment.dwell_selection == 'button') {
+        res.access_settings.push({key: i18n.t('dwell-key', "dwell-key"), val: assessment.dwell_selection_code});
+      } else {
+        res.access_settings.push({key: i18n.t('dwell-time', "dwell-time"), val: assessment.dwell_time / 1000, ms: true});
+      }
+      res.access_settings.push({key: i18n.t('dwell-delay', "dwell-delay"), val: assessment.dwell_delay / 1000, ms: true});
+      res.access_settings.push({key: i18n.t('dwell-release', "dwell-release"), val: assessment.dwell_release});
+      res.access_settings.push({key: i18n.t('dwell-style', "dwell-style"), val: assessment.dwell_style});
+          
+    }
+
     res.field = (maxes['field_sizes'] || {}).size || 0;
     res.button_width = (maxes['diff_target'] || maxes['find_target'] || {}).win || 0;
     res.button_height = (maxes['diff_target'] || maxes['find_target'] || {}).hin || 0;
@@ -385,6 +477,8 @@ var levels = [
   // TODO: ensure you are checking/tracking range of access
   [
     {intro: 'intro'},
+  ],[
+    {intro: 'intro2'},
   ],[
     {intro: 'find_target'},
     {id: 'find-2', rows: 1, cols: 2, distractors: false, min_attempts: 1},
@@ -776,6 +870,7 @@ var words = [
   {label: 'dinner', group: 'food', urls: {photos: "", lessonpix: "", pcs_hc: "", pcs: "", twemoji: "", default: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/food.png"}},
   {label: 'sleep', group: 'sleep', urls: {photos: "", lessonpix: "", pcs_hc: "", pcs: "", twemoji: "", default: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20sleep_2.png"}},
   {label: 'done', type: 'filler', urls: {photos: "", lessonpix: "", pcs_hc: "", pcs: "", twemoji: "", default: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2705.svg"}},
+  {label: 'backgrounds', type: 'filler', urls: {intro: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20enter_1.png", intro2: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/service_235_g.svg", find_target: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Magnifying-Glass_918_708000.svg", diff_target: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/choose.png", symbols: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f5bc.svg", find_shown: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/point.png", open_ended: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/tell.png", categories: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/living%20thing.png", inclusion_exclusion_association: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/groups.png", literacy: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20read_2.png", done: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f389.svg"}},
 ];
 
 function shuffle(array) {
@@ -790,6 +885,7 @@ function shuffle(array) {
 //obf.words = words;
 
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
+var shuffled_libraries = shuffle(libraries);
 var core_prompts = {};
 evaluation.callback = function(key) {
   obf.offline_urls = obf.offline_urls || [];
@@ -811,6 +907,23 @@ evaluation.callback = function(key) {
       }
     });
     words.prefetched = true;
+  }
+  evaluation.checks_for = evaluation.checks_for || {};
+  var user_id = app_state.get('currentUser.id');
+  if(!evaluation.checks_for[user_id]) {
+    evaluation.checks_for[user_id] = {};
+    if(app_state.get('currentUser')) {
+      app_state.get('currentUser').find_integration('lessonpix').then(function(res) {
+        evaluation.checks_for[user_id].lessonpix = true;
+      }, function(err) { });
+    }
+    if(app_state.get('currentUser.subscription.lessonpix')) {
+      evaluation.checks_for[user_id].lessonpix = true;
+    }
+    if(app_state.get('currentUser.subscription.extras_enabled')) {
+      evaluation.checks_for[user_id].pcs = true;
+      evaluation.checks_for[user_id].pcs_hc = true;
+    }
   }
   // https://www.youtube.com/watch?v=I71jXvIysSA&feature=youtu.be
   // https://www.youtube.com/watch?v=82XZ2cKV-VQ
@@ -851,7 +964,9 @@ evaluation.callback = function(key) {
       non_mastery_cutoff: non_mastery_cutoff,
       attempt_minimum: attempt_minimum,
       attempt_maximum: attempt_maximum,
-      ppi: window.ppi
+      ppi: window.ppi,
+      default_library: 'default',
+      name: 'Unnamed Eval',
     };
     working = {step: 0};
   } else if(!working || working.step == undefined) {
@@ -863,10 +978,66 @@ evaluation.callback = function(key) {
     res.json = board.to_json();
     return res;
   }
+  if(!assessment.populated) {
+    var prefs = app_state.get('currentUser.preferences');
+    if(prefs) {
+      assessment.populated = true;
+      Object.assign(assessment, {
+        user_id: app_state.get('currentUser.id'),
+        user_name: app_state.get('currentUser.user_name'),
+        board_background: prefs.board_background,
+        button_spacing: prefs.device.button_spacing,
+        button_border: prefs.device.button_border,
+        button_text: prefs.device.button_text,
+        text_position: prefs.device.button_text_position,
+        text_font: prefs.device.button_style,
+        activation_cutoff: prefs.activation_cutoff,
+        activation_minimum: prefs.activation_minimum,
+        debounce: prefs.activation_minimum,
+        high_contrast: prefs.high_contrast,
+      });
+      if(assessment.scanning) {
+        Object.assign(assessment, {
+          scanning: prefs.device.scanning,
+          scanning_mode: prefs.device.scanning_mode,
+          scanninng_sweep_speed: prefs.device.scanning_sweep_speed,
+          scanning_rows: prefs.device.scanning_region_rows,
+          scanning_cols: prefs.device.scanning_region_columns,
+          scanning_wait: prefs.device.scanning_wait_for_input,
+          scanning_interval: prefs.device.scanning_interval,
+          scanning_prompts: prefs.device.scanning_prompt,
+          scanning_screen_switch: prefs.device.scanning_select_on_any_event,
+          scanning_screen_left: prefs.device.scanning_left_screen_action,
+          scanning_screen_right: prefs.device.scanning_right_screen_action,
+          scanning_auto_select: prefs.device.scanning_auto_select,
+          scanning_keys: [prefs.device.scanning_select_keycode, prefs.devices.scanning_next_keycode, prefs.device.scanning_prev_keycode, prefs.device.scanning_cancel_keycode],
+        });
+      }
+      if(assessment.dwell) {
+        Object.assign(assessment, {
+          dwell: prefs.device.dwell,
+          dwell_type: prefs.device.dwell_type,
+          dwell_arrow_speed: prefs.device.dwell_arrow_speed,
+          dwell_selection: prefs.device.dwell_selection,
+          dwell_selection_code: prefs.device.scanning_select_keycode,
+          dwell_no_cutoff: prefs.device.dwell_no_cutoff,
+          dwell_time: prefs.device.dwell_duration,
+          dwell_delay: prefs.device.dwell_delay,
+          dwell_release: prefs.device.dwell_release_distance,
+          dwell_style: prefs.device.dwell_targeting
+        });
+      }
+    }
+    for(var key in assessment) {
+      if(!assessment[key]) {
+        delete assessment[key];
+      }
+    }
+  }
   window.assessment = assessment;
   window.working = working;
   working.level = working.level || 0;
-  assessment.started = (new Date()).getTime();
+  assessment.started = (new Date()).getTime() / 1000;
   var level = levels[working.level];
   var step = level[working.step];
   if(working.step == 0) {
@@ -875,43 +1046,45 @@ evaluation.callback = function(key) {
     if(step.continue_on_non_mastery) {
       level.continue_on_non_mastery = true;
     }
-    board.background.image = "https://thetechnoskeptic.com/wp-content/uploads/2019/03/NightSky_iStock_den-belitsky_900.jpg";
-    board.background.position = "stretch";
+    var bg_word = words.find(function(w) { return w.label == 'backgrounds'; });
+    board.background.image = (bg_word && bg_word.urls[step.intro]) || "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f49b.svg";
+    board.background.position = "center";
     working.level_id = step.intro;
     working.ref = working.ref || {};
     working.ref.prompt_index = null;
     if(step.intro == 'intro') {
-      board.background.text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols. Feel free to stop the evaluation at any time by Exiting Speak Mode. You can add notes on the supports you offered once the evaluation has completed.");
+      board.background.text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols.");
+    } else if(step.intro == 'intro2') {
+      board.background.text = i18n.t('eval_intro_2', "You can use the top right menu to end or configure the evaluation any time. You can also add notes once the evaluation has completed.");
     } else if(step.intro == 'find_target') {
-      board.background.text = i18n.t('find_target_intro', "The first evaluation will show a single target at different locations and sizes to help assess ability to identify and access targets.");
+      board.background.text = i18n.t('find_target_intro', "This section shows a single target at different locations and sizes to help assess ability to identify and access targets.");
     } else if(step.intro == 'diff_target') {
-      board.background.text = i18n.t('diff_target_intro', "This next evaluation will show multiple targets at different sizes and layouts to determine ability to differentiate between multiple targets.");
+      board.background.text = i18n.t('diff_target_intro', "This section shows multiple targets at different sizes and layouts to determine ability to differentiate.");
     } else if(step.intro == 'symbols') {
-      board.background.text = i18n.t('symbols_intro', "This next evaluation will use different styles of pictures to see if the user has more success with one style over another");
+      board.background.text = i18n.t('symbols_intro', "This section shows different styles of pictures to see if the user has more success with one style over another");
     } else if(step.intro == 'find_shown') {
-      board.background.text = i18n.t('find_show_intro', "Now the evaluation will show a photograph or concept and have the user find the corresponding symbol below");
+      board.background.text = i18n.t('find_show_intro', "This section shows a photograph or concept and prompts the user to find the corresponding symbol below");
     } else if(step.intro == 'open_ended') {
-      board.background.text = i18n.t('open_ended_intro', "Next the evaluation will show simple photographs. Encourage the user to make observations or discuss the picture using the buttons or keys provided");
+      board.background.text = i18n.t('open_ended_intro', "This section shows simple scenes. Encourage the user to make observations or discuss the scene using the buttons/keys provided");
     } else if(step.intro == 'categories') {
-      board.background.text = i18n.t('categories_intro', "The next evaluation will focus on classifying items based on their category");
+      board.background.text = i18n.t('categories_intro', "This section shows photographs and prompts the user to classify them based on their category");
     } else if(step.intro == 'inclusion_exclusion_association') {
-      board.background.text = i18n.t('inclusion_exclusion_association_intro', "Next the evaluation will prompt for related or unrelated items for the user to try to match or identify");
+      board.background.text = i18n.t('inclusion_exclusion_association_intro', "This section shows photographs and prompts the user to identify related or unrelated items");
     } else if(step.intro == 'literacy') {
-      board.background.text = i18n.t('literacy_intro', "This next evaluation will show an image and a list of possible words (without images) to check for reading skills");
+      board.background.text = i18n.t('literacy_intro', "This section shows an image and a list of possible words (without images) to check for reading skills");
     } else if(step.intro == 'done') {
       board.background.text = i18n.t('done_eval', "Done! Hit the final button to save the evaluation and see the results!");
     }
-    level.libraries_used = {
-      'default': true
-    };
+    level.libraries_used = {};
+    level.libraries_used[assessment.default_library] = true;
 
     // TODO: include sclera or some auto-high-contrast feature as an option if pcs is not available
-    if(false) { // not a premium_symbols account
-      level.libraries_used = 'pcs';
-      level.libraries_used = 'pcs_hc';
+    if(!evaluation.checks_for[user_id].pcs) { // not a premium_symbols account
+      level.libraries_used['pcs'] = true;
+      level.libraries_used['pcs_hc'] = true;
     }
-    if(false) { // not a lessonpix account
-      level.libraries_used = 'lessonpix';
+    if(evaluation.checks_for[user_id].lessonpix) { // not a lessonpix account
+      level.libraries_used['lessonpix'] = true;
     }
     if(assessment.events) {
       var level_check = assessment.events['diff_target'] || assessment.events['find_target'];
@@ -949,14 +1122,20 @@ evaluation.callback = function(key) {
         skip_vocalization: true,
         image: {url: words.find(function(w) { return w.label == 'done'; }).urls['default']},
       }, 2, 5);
-    } else {
       board.add_button({
-        label: step.intro == 'intro' ? 'next' : 'start',
+        label: 'settings',
+        id: 'button_settings',
+        skip_vocalization: true,
+        image: {url: words.find(function(w) { return w.label == 'think'; }).urls['default']},
+      }, 2, 0);
+  } else {
+      board.add_button({
+        label: step.intro.match(/intro/) ? 'next' : 'start',
         id: 'button_start',
         skip_vocalization: true,
         image: {url: words.find(function(w) { return w.label == 'go'; }).urls['default']},
       }, 2, 5);
-      if(step.intro == 'intro') {
+      if(step.intro.match(/intro/)) {
         board.add_button({
           label: 'settings',
           id: 'button_settings',
@@ -984,14 +1163,14 @@ evaluation.callback = function(key) {
           app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
           app_state.set_history([]);
         } else if(button.id == 'button_settings') {
-          modal.open('modals/assessment-settings');
+          evaluation.settings();
         } else if(button.id == 'button_skip') {
           working.step = 0;
           working.level++;          
           app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
           app_state.set_history([]);
         } else if(button.id == 'button_save') {
-          eval.conclude();
+          evaluation.conclude();
         }
       }
       return {ignore: true, highlight: false};
@@ -1002,7 +1181,7 @@ evaluation.callback = function(key) {
     if(step.symbols == 'auto' && !level.current_library) {
       level.more_libraries = false;
       var found = false;
-      libraries.forEach(function(lib) {
+      shuffled_libraries.forEach(function(lib) {
         if(!level.libraries_used[lib]) {
           if(!found) {
             level.current_library = lib;
@@ -1015,7 +1194,7 @@ evaluation.callback = function(key) {
     } else if(assessment.library) {
       level.current_library = assessment.library;
     }
-    var library = level.current_library || 'default';
+    var library = level.current_library || assessment.default_library || 'default';
     if(library == 'photos' && step.find) {
       library = 'default';
     }
@@ -1256,6 +1435,7 @@ evaluation.callback = function(key) {
         }
       };
       if(step.find == 'core') {
+        // TODO: prevent repeats if possible
         var core_word = core_list[Math.floor(Math.random() * core_list.length)];
         filtered = words.filter(function(w) { return w.label == core_word; });
       } else if(step.find == 'functional') {
@@ -1338,6 +1518,7 @@ evaluation.callback = function(key) {
         distractor_words = working.ref.association_answers.filter(function(w) { return w != item.answer && !(item.exclude || {})[w.label]; });
       } else if(step.find == 'spelling') {
         board.text_only = true;
+        board.spelling = true;
         assert('spelling');
         working.ref.literacy_used = working.ref.literacy_used || {};
         var spelling_words = working.ref.simple_words.filter(function(w) { return w.urls['photos'] && !working.ref.literacy_used[w.label]; });
@@ -1351,8 +1532,11 @@ evaluation.callback = function(key) {
         distractor_words = word.distractors;
         prompt_text = "Find the name of this picture";
         board.background.image = word.urls['photos'];
+        board.prompt_name = word.label;
+        board.correct_answer = word.label;
       } else if(step.find == 'spelling_category') {
         board.text_only = true;
+        board.spelling = true;
         assert('spelling');
         assert('groups');
         working.ref.literacy_used = working.ref.literacy_used || {};
@@ -1367,8 +1551,11 @@ evaluation.callback = function(key) {
         distractor_words = working.ref.groups.filter(function(g) { return g.group != word.category; }).map(function(g) { return g.name });
         prompt_text = "Find the category that this picture belongs to";
         board.background.image = word.urls['photos'];
+        board.prompt_name = word.label;
+        board.correct_answer = category.word.label;
       } else if(step.find == 'spelling_descriptor') {
         board.text_only = true;
+        board.spelling = true;
         assert('spelling');
         working.ref.literacy_used = working.ref.literacy_used || {};
         var spelling_words = working.ref.simple_adjectives.filter(function(w) { return w.urls['photos'] && !working.ref.literacy_used[w.label]; });
@@ -1384,6 +1571,8 @@ evaluation.callback = function(key) {
         distractor_words = word.simple_adjectives.filter(function(w) { return w.match(/^-/); }).map(function(w) { return w.substring(1); });
         prompt_text = "Find the word that describes this picture";
         board.background.image = word.urls['photos'];
+        board.prompt_name = word.label;
+        board.correct_answer = list[0];
       }
   
       prompt = filtered[Math.floor(Math.random() * filtered.length)];
@@ -1656,7 +1845,9 @@ evaluation.callback = function(key) {
       }
     }
     var handling = false;
+    var original_board = board;
     res.handler = function(button, obj) {
+      assessment.access_method = assessment.access_method || app_state.get('currentUser.access_method');
       obj = obj || {};
       var r = -1, c = -1;
       var cr = -1, cc = -1;
@@ -1665,7 +1856,7 @@ evaluation.callback = function(key) {
         speecher.speak_text(button.vocalization, false, {alternate_voice: speecher.alternate_voice});
         skip_event = true;
         runLater(function() {
-          utterance.clear();
+          utterance.clear({skip_logging: true});
         });
         return {ignore: true, highlight: false, sound: false};
       } else if(button.id == 'button_next') {
@@ -1696,8 +1887,7 @@ evaluation.callback = function(key) {
           }
         }
       }
-      var board = button.board;
-      var time_to_select = (new Date()).getTime() - board.get('rendered');
+      var time_to_select = (new Date()).getTime() - button.board.get('rendered');
       var typical_time_to_select = time_to_select;
       var typ_tally = 0, typ_sum = 0;
       for(var key in assessment.events) {
@@ -1758,6 +1948,19 @@ evaluation.callback = function(key) {
           e.correct = button.id == 'button_correct';
           e.crow = cr;
           e.ccol = cc;
+        }
+        if(step.literacy) {
+          var $btns = $(".button:visible .button-label");
+          var distractors = [];
+          for(var idx = 0; idx < $btns.length; idx++) {
+            if($btns[idx].innerText && $btns[idx].innerText != original_board.correct_answer) {
+              distractors.push($btns[idx].innerText);
+            }
+          }
+          e.distr = distractors;
+          e.prompt = original_board.prompt_name;
+          e.clbl = original_board.correct_answer;
+          // find the name of the image, the correct answer, the answer they selected, and a list of all distractors
         }
         if(step.prompts && step.core && working.ref.prompt_index != null) {
           var prompt = step.prompts[working.ref.prompt_index];
@@ -1894,7 +2097,7 @@ evaluation.callback = function(key) {
           working.fails = (working.fails || 0) + 1;
           e.fail = true;  
           next_step = true;
-        } else if(working.attempts >= assessment.attempt_maximum && working.attempts >= step.min_attempts) {
+        } else if(working.attempts >= assessment.attempt_maximum && working.attempts >= (step.min_attempts || assessment.attempt_minimum)) {
           working.fails = (working.fails || 0) + 1;
           next_step = true;
         } else if(button.id == 'button_done') {

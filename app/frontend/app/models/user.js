@@ -269,6 +269,23 @@ CoughDrop.User = DS.Model.extend({
     var device = (this.get('devices') || []).findBy('current_device', true);
     return (device && device.name) || "Unknown device";
   }.property('devices'),
+  access_method: function() {
+    if(this.get('preferences.device.scanning')) {
+      if(this.get('preferences.device.scan_mode') == 'axes') {
+        return 'axis_scanning';
+      } else {
+        return 'scanning';
+      }
+    } else if(this.get('preferences.device.dwell')) {
+      if(this.get('preferences.device.dwell_type') == 'arrow_dwell') {
+        return 'arrow_dwell';
+      } else {
+        return 'dwell';
+      }
+    } else {
+      return 'touch';
+    }
+  }.property('preferences.device.scanning', 'preferences.device.scan_mode', 'preferences.device.dwell', 'preferences.device.dwell_type'),
   hide_symbols: function() {
     return this.get('preferences.device.button_text') == 'text_only' || this.get('preferences.device.button_text_position') == 'text_only';
   }.property('preferences.device.button_text', 'preferences.device.button_text_position'),

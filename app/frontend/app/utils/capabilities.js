@@ -126,6 +126,24 @@ var capabilities;
 
         return res;
       },
+      print: function() {
+        var promise = capabilities.mini_promise();
+        // TODO: consider supporting https://electronjs.org/docs/api/web-contents#contentsprinttopdfoptions-callback
+        // iOS version is something like https://www.swiftdevcenter.com/create-pdf-from-uiview-wkwebview-and-uitableview/
+        // Android https://stackoverflow.com/questions/42376613/create-a-pdf-from-webview-on-android
+        //         https://medium.com/@madhavanmadhav6/android-webview-to-pdf-conversion-a64eba653df2
+        //         https://gist.github.com/brettwold/838c092329c486b6112c8ebe94c8007e
+        if(window.cordova && window.cordova.plugins && window.cordova.plugins.printer && window.cordova.plugins.printer.print) {
+          window.cordova.plugins.printer.print(null, null, function() {
+            promise.resolve();
+          });
+        } else {
+          window.print();
+          promise.resolve();
+        }
+        return promise;
+      
+      },
       eye_gaze: {
         listen: function() {
         },

@@ -400,11 +400,13 @@ var app_state = EmberObject.extend({
       old_state.level = stashes.get('board_level');
     }
     history.push(old_state);
-    stashes.log({
-      action: 'open_board',
-      previous_key: old_state,
-      new_id: new_state
-    });
+    if(!this.get('eval_mode')) {
+      stashes.log({
+        action: 'open_board',
+        previous_key: old_state,
+        new_id: new_state
+      });
+    }
     if(new_state && new_state.home_lock) {
       this.set('temporary_root_board_key', new_state.key);
     }
@@ -1990,6 +1992,7 @@ var app_state = EmberObject.extend({
     // it will probably be fine, but some buttons won't get 
     // enough weight.
     obj.depth = app_state.get('depth_actions.depth') || 0; // || (stashes.get('boardHistory') || []).length;
+    obj.access = app_state.get('currentUser.access_method');
     obj.overlay = !!overlay;
     stashes.log(obj);
     var _this = this;

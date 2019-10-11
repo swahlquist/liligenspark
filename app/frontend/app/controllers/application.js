@@ -304,7 +304,7 @@ export default Controller.extend({
       obf.eval.conclude();
     },
     assessment_settings: function() {
-      modal.open('modals/assessment-settings');
+      obf.eval.settings();
     },
     change_section: function(direction) {
       obf.eval.move(direction);
