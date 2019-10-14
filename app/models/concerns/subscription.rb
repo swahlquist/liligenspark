@@ -326,6 +326,7 @@ module Subscription
     elsif type == 'add_1' || type == 'communicator_trial'
       if type == 'communicator_trial'
         self.settings['preferences']['role'] = 'communicator'
+        self.settings['pending'] = false
         self.save
         self.update_subscription({
           'subscribe' => true,

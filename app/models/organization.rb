@@ -133,6 +133,7 @@ class Organization < ActiveRecord::Base
 #     user.settings['supervisor_for'] ||= {}
 #     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
     user.settings['preferences']['role'] = 'supporter'
+    user.settings['pending'] = false
     user.assert_current_record!
     user.save
 #     self.attach_user(user, 'supervisor')
