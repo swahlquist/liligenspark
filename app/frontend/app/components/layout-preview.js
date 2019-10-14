@@ -39,7 +39,7 @@ export default Component.extend({
       context.rect(0, 0, canvas.width, canvas.height);
       context.fill();
     }
-    var font_style = prefs.device.button_style;
+    var font_style = prefs.device.button_style || '';
     var font = 'Arial';
     var font_case = 'toString';
     if(font_style.match(/_caps$/)) {
