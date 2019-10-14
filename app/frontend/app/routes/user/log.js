@@ -5,7 +5,9 @@ import i18n from '../../utils/i18n';
 export default Route.extend({
   model: function(params) {
     var user = this.modelFor('user');
-    user.set('subroute_name', i18n.t('messages', 'messages'));
+    if(user) {
+      user.set('subroute_name', i18n.t('messages', 'messages'));
+    }
     if(params.log_id == 'last-eval') {
       var log = this.store.createRecord('log', {});
       log.set('type', 'eval');
