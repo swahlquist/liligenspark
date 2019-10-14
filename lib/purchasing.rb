@@ -913,7 +913,16 @@ module Purchasing
         sub = customer_subs[0]
         if sub && sub['start']
           time = Time.at(sub['start']) rescue nil
-          years[time.year] = (years[time.year] || 0) + 1
+          if time
+            yr = 0
+            if time < 3.years.ago
+              yr = 3
+            elsif time < 2.years.ago
+              yr = 2
+            elsif time < 1.years.ago
+              yr = 1
+            end
+          years[yr] = (years[yr] || 0) + 1
         end
         if user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
           customer_active = sub['status'] == 'active'
