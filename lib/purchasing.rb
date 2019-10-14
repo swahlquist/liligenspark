@@ -821,7 +821,7 @@ module Purchasing
       end
       user_id = customer['metadata'] && customer['metadata']['user_id']
       user = user_id && User.find_by_global_id(user_id)
-      if !user
+      if !user && cancels[customer['id']].blank?
         problems << "#{customer['id']} no user found"
         output "\tuser not found"
         next
@@ -921,6 +921,8 @@ module Purchasing
               yr = 2
             elsif time < 1.years.ago
               yr = 1
+            elsif time < 4.months.ago
+              yr = 0.3
             end
             years[yr] = (years[yr] || 0) + 1
           end
