@@ -922,7 +922,8 @@ module Purchasing
             elsif time < 1.years.ago
               yr = 1
             end
-          years[yr] = (years[yr] || 0) + 1
+            years[yr] = (years[yr] || 0) + 1
+          end
         end
         if user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
           customer_active = sub['status'] == 'active'
