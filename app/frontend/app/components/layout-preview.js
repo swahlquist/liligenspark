@@ -87,7 +87,8 @@ export default Component.extend({
     else if(prefs.device.button_text == 'huge') { text_height = 35 * text_ratio; }
     var voc_text_height = text_height;
     var position = prefs.device.button_text_position || 'top';
-    var text_only = prefs.device.utterance_text_only || position == 'text_only';
+    var text_only = position == 'text_only';
+    var voc_text_only = prefs.device.utterance_text_only;
     var flipped_voc_height = voc_height;
     var flipped_text_height = voc_text_height;
     if(prefs.device.flipped_override) {
@@ -178,13 +179,13 @@ export default Component.extend({
     };
     var text_opts = {};
     var voc_left = pad + voc_height + pad + pad;
-    if(text_only || flipping) {
+    if(voc_text_only || flipping) {
       text_opts = {text: "abc defg hijkl mno pqr stuv wxy z", text2: "qwer tyu io pasd fgh j klz xcvb nm", position: 'top', align: 'left', text_height: voc_text_height, flipped: flipping};
       // draw text either normal or flipped
     }
     rounded(pad, pad, voc_height, voc_height);
     rounded(voc_left, pad, canvas.width - pad - pad - pad - pad - voc_height - voc_height - pad - pad, voc_height, text_opts);
-    if(text_only || flipping) { } else {
+    if(voc_text_only || flipping) { } else {
       for(var idx = 0; idx < 5; idx++) {
         var btn_width = Math.min(voc_height, canvas.width / 8);
         circle(voc_left + pad + (idx * btn_width) + pad, pad + pad, btn_width - pad - pad, voc_height - pad - pad - voc_text_height);
