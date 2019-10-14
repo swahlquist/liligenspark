@@ -646,35 +646,38 @@ var buttonTracker = EmberObject.extend({
 
     var swipe_page = false;    
     if(buttonTracker.swipe_pages) {
-      var cutoff = buttonTracker.activation_location == 'swipe' ? 0.5 : 0.3;
-      var check_swipe = false;
-      if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX > (window.innerWidth * cutoff)) {
-        check_swipe = 'e';
-      } else if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX < (-1 * window.innerWidth * cutoff)) {
-        check_swipe = 'w';
-      } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY < (-1 * window.innerHeight * cutoff)) {
-        check_swipe = 'n';
-      } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY > (window.innerHeight * cutoff)) {
-        check_swipe = 's';
-      }
-      console.log("I think we're going here", check_swipe);
-      if(check_swipe) {
-        var offs = 0, ons = 0;
-        var last = [buttonTracker.initialEvent.clientX, buttonTracker.initialEvent.clientY];
-        (buttonTracker.initialEvent.drag_locations || []).forEach(function(loc) {
-          if(check_swipe == 'e') {
-            if(loc[0] > last[0]) { ons++; } else { offs++; }
-          } else if(check_swipe == 'w') {
-            if(loc[0] < last[0]) { ons++; } else { offs++; }
-          } else if(check_swipe == 'n') {
-            if(loc[1] < last[1]) { ons++; } else { offs++; }
-          } else if(check_swipe == 's') {
-            if(loc[1] > last[1]) { ons++; } else { offs++; }
+      if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom && (buttonTracker.initialTarget.dom.id == 'clear_button' || buttonTracker.initialTarget.dom.id == 'home_button')) {
+        // home/clear gestures are reserved for modeling mode
+      } else {
+        var cutoff = buttonTracker.activation_location == 'swipe' ? 0.5 : 0.3;
+        var check_swipe = false;
+        if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX > (window.innerWidth * cutoff)) {
+          check_swipe = 'e';
+        } else if(buttonTracker.initialEvent && event.clientX - buttonTracker.initialEvent.clientX < (-1 * window.innerWidth * cutoff)) {
+          check_swipe = 'w';
+        } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY < (-1 * window.innerHeight * cutoff)) {
+          check_swipe = 'n';
+        } else if(buttonTracker.initialEvent && event.clientY - buttonTracker.initialEvent.clientY > (window.innerHeight * cutoff)) {
+          check_swipe = 's';
+        }
+        if(check_swipe) {
+          var offs = 0, ons = 0;
+          var last = [buttonTracker.initialEvent.clientX, buttonTracker.initialEvent.clientY];
+          (buttonTracker.initialEvent.drag_locations || []).forEach(function(loc) {
+            if(check_swipe == 'e') {
+              if(loc[0] > last[0]) { ons++; } else { offs++; }
+            } else if(check_swipe == 'w') {
+              if(loc[0] < last[0]) { ons++; } else { offs++; }
+            } else if(check_swipe == 'n') {
+              if(loc[1] < last[1]) { ons++; } else { offs++; }
+            } else if(check_swipe == 's') {
+              if(loc[1] > last[1]) { ons++; } else { offs++; }
+            }
+            last = loc;
+          });
+          if(ons > 0 && ons / (ons + offs) > 0.9) {
+            swipe_page = check_swipe;
           }
-          last = loc;
-        });
-        if(ons > 0 && ons / (ons + offs) > 0.9) {
-          swipe_page = check_swipe;
         }
       }
     }
