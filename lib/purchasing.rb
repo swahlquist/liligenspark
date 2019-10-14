@@ -809,6 +809,7 @@ module Purchasing
     end
     problems = []
     user_active_ids = []
+    years = {}
     customers.auto_paging_each do |customer|
       total += 1
       cus_id = customer['id']
@@ -910,6 +911,10 @@ module Purchasing
         end
       else
         sub = customer_subs[0]
+        if sub && sub['start']
+          time = Time.at(sub['start']) rescue nil
+          years[time.year] = (years[time.year] || 0) + 1
+        end
         if user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
           customer_active = sub['status'] == 'active'
           customer_active_ids << user.global_id if customer_active
@@ -933,6 +938,7 @@ module Purchasing
     if problems.length > 0
       output "PROBLEMS:\n#{problems.join("\n")}\n"
     end
+    output "YEARS: #{years.to_json}"
     output "TOTALS: checked #{total}, paying customers (not trialing, not duplicates) #{customer_active_ids.uniq.length}, subscription users #{user_active_ids.uniq.length}"
     cancel_months.each{|k, a| 
       res = []
