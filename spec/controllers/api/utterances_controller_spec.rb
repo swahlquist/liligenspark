@@ -337,6 +337,7 @@ describe Api::UtterancesController, :type => :controller do
     it "should allow sharing to a supervisee's supervisor" do
       token_user
       com = User.create
+      Device.create(user: com)
       sup = User.create
       User.link_supervisor_to_user(@user, com)
       User.link_supervisor_to_user(sup, com)
@@ -437,6 +438,7 @@ describe Api::UtterancesController, :type => :controller do
     it "should return additional information if a reply_code is set" do
       token_user
       user = User.create
+      Device.create(user: user)
       u = Utterance.create(:data => {:button_list => [{label: 'ok'}], :sentence => 'ok'})
       u.share_with({'user_id' => user.global_id}, user)
 

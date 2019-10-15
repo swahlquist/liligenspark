@@ -798,7 +798,9 @@ class User < ActiveRecord::Base
     return nil unless user_id
     a, b = user_id.split(/x/)
     contact = b || a
-    return (self.settings['contacts'] || []).detect{|c| c && c['hash'] == contact}
+    res = (self.settings['contacts'] || []).detect{|c| c && c['hash'] == contact}
+    res['id'] = "#{self.global_id}x#{res['hash']}" if res
+    res
   end
   
   def display_user_name

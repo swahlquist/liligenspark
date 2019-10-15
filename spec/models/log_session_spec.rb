@@ -203,7 +203,7 @@ describe LogSession, :type => :model do
       expect(s.data['event_count']).to eq(4)
       expect(s.started_at.to_i).to eq(time1.to_i)
       expect(s.ended_at.to_i).to eq(time3.to_i)
-      expect(s.data['event_summary']).to eq('hat.. cow... [home]')
+      expect(s.data['event_summary']).to eq('hat.. cow... ⌂')
     end
     
     it "should mark buttons as modified_by_next" do
@@ -721,11 +721,65 @@ describe LogSession, :type => :model do
       expect(LogSession.count).to eq(0)
 
       s.split_out_later_sessions(true)
+      expect(Utterance.count).to eq(1)
       utterance = Utterance.last
       expect(utterance.user).to eq(u)
       expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil}, u.global_id]})).to eq(true)
       Worker.process_queues
       expect(LogSession.count).to eq(2)
+    end
+
+    it "should not deliver 'share' events more than once, even if processed more than once" do
+      u = User.create
+      cutoff = 12.weeks.ago.to_i
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => cutoff, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => cutoff + User.default_log_session_duration + 101,
+        'type' => 'share',
+        'share' => {
+          'utterance' => [{'label' => 'how'}, {'label' => 'do'}, {'label' => 'you'}, {'label' => 'do'}],
+          'message_uid' => 'asdf',
+          'recipient_id' => u.global_id
+        }
+      }
+      events << {
+        'timestamp' => cutoff + User.default_log_session_duration + 103,
+        'type' => 'share',
+        'share' => {
+          'utterance' => [{'label' => 'how'}, {'label' => 'do'}, {'label' => 'you'}, {'label' => 'do'}],
+          'message_uid' => 'asdf',
+          'recipient_id' => u.global_id
+        }
+      }
+      
+      d = Device.create(user: u)
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      expect(Utterance.count).to eq(1)
+      utterance = Utterance.last
+      expect(utterance.nonce).to eq(GoSecure.sha512('asdf', 'utterance_message_uid'))
+      expect(utterance.user).to eq(u)
+      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u.global_id, 'reply_id' => nil}, u.global_id]})).to eq(true)
+
+      Worker.process_queues
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['note', 'session', 'session'])
+      expect(LogSession.find_by(log_type: 'note').started_at).to eq(Time.at(cutoff + User.default_log_session_duration + 101))
+
+      actions = Worker.scheduled_actions('priority')
+      expect(actions.select{|a| a['args'][0] == 'Utterance' && a['args'][2]['method'] == 'deliver_to' }.length).to eq(1)
     end
 
     it 'should handle alert events' do
@@ -1695,7 +1749,7 @@ describe LogSession, :type => :model do
       User.link_supervisor_to_user(u, u2, nil, true)
       s = LogSession.process_new({
         'events' => [
-          {'user_id' => u2.global_id, 'geo' => ['1', '2'], 'timestamp' => 1431461200, 'type' => 'note', 'note' => {'note' => {'text' => 'ok cool', 'timestamp' => 1431461200}, 'notify' => false}},
+          {'user_id' => u2.global_id, 'geo' => ['1', '2'], 'timestamp' => 1431461200, 'type' => 'note', 'note' => {'text' => 'ok cool', 'timestamp' => 1431461200}, 'notify' => false},
           {'user_id' => u.global_id, 'geo' => ['1', '2'], 'timestamp' => 1431461204, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}},
           {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 1431461206, 'type' => 'assessment', 'assessment' => {'assessment' => {
             'start_timestamp' => 1431461200,

@@ -50,6 +50,7 @@ export default modal.ModalController.extend({
           stashes.log_event({
             share: true,
             utterance: _this.get('model.raw'),
+            message_uid: Math.random() + ":" + (new Date()).getTime(),
             sentence: _this.get('model.sentence'),
             recipient_id: _this.get('model.user.id'),
             reply_id: _this.get('model.reply_id')

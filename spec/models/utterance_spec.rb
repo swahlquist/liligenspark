@@ -92,6 +92,7 @@ describe Utterance, :type => :model do
   describe "share_with" do
     it "should allow sharing with a supervisor" do
       u1 = User.create
+      Device.create(user: u1)
       u2 = User.create
       User.link_supervisor_to_user(u2, u1)
       u1.reload
@@ -134,7 +135,9 @@ describe Utterance, :type => :model do
         'user_id' => u2.global_id
       }, u1)
       expect(res).to eq({:to => u2.global_id, :from => u1.global_id, :type => 'utterance'})
-      s = LogSession.last
+      s = LogSession.where(user: u2).last
+      s2 = LogSession.where(user: u1).last
+      # check that it was recorded to recipient
       expect(s.user).to eq(u2)
       expect(s.author).to eq(u1)
       expect(s.data['note']['text']).to eq('hat cat scat')
@@ -143,12 +146,17 @@ describe Utterance, :type => :model do
         'sharer_id' => u1.global_id,
         'share_index' => 0
       }]})).to eq(false)
+      # check that it was recorded for sharer
+      expect(s2.log_type).to eq('note')
+      expect(s2.data['event_summary']).to eq('Note by no-name: hat cat scat')
     end
 
     it "should allow sharing with one of the supervisors of one of my supervisees" do
       u1 = User.create
       u2 = User.create
       u3 = User.create
+      Device.create(user: u2)
+      Device.create(user: u3)
       User.link_supervisor_to_user(u2, u1)
       User.link_supervisor_to_user(u3, u1)
       u1.reload
@@ -175,6 +183,7 @@ describe Utterance, :type => :model do
 
     it "should allow sharing to an email address" do
       u1 = User.create
+      Device.create(user: u1)
       button_list = [
         {'label' => 'hat', 'image' => 'http://www.example.com/pib.png'},
         {'label' => 'cat', 'image' => 'http://www.example.com/pib.png'},
@@ -199,6 +208,7 @@ describe Utterance, :type => :model do
     
     it "should schedule a delivery for email shares" do
       u1 = User.create
+      Device.create(user: u1)
       button_list = [
         {'label' => 'hat', 'image' => 'http://www.example.com/pib.png'},
         {'label' => 'cat', 'image' => 'http://www.example.com/pib.png'},
@@ -256,6 +266,7 @@ describe Utterance, :type => :model do
 
     it "should allow sending an sms message to a user contact" do
       u = User.create
+      d = Device.create(user: u)
       u.settings['cell_phone'] = '123456'
       u.settings['contacts'] = [
         { 
@@ -440,6 +451,7 @@ describe Utterance, :type => :model do
 
     it "should allow sending an sms message to a user contact" do
       u = User.create
+      Device.create(user: u)
       u.settings['cell_phone'] = '123456'
       u.settings['contacts'] = [
         { 
@@ -464,6 +476,7 @@ describe Utterance, :type => :model do
 
     it "should send an email to a user" do
       u = User.create
+      Device.create(user: u)
       u.settings['email'] = 'bob@example.com'
       utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'howdy'}]})
       expect(UserMailer).to receive(:schedule_delivery).with(:utterance_share, {
@@ -482,6 +495,7 @@ describe Utterance, :type => :model do
 
     it "should allow sending an email to a user contact" do
       u = User.create
+      Device.create(user: u)
       u.settings['email'] = 'bob@example.com'
       u.settings['contacts'] = [
         { 

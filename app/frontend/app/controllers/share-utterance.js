@@ -18,6 +18,7 @@ export default modal.ModalController.extend({
     controller.set('utterance', settings.utterance);
     var u = CoughDrop.store.createRecord('utterance', {
       button_list: settings.utterance, 
+      timestamp: (new Date()).getTime() / 1000,
       sentence: utterance.sentence(settings.utterance),
       user_id: app_state.get('referenced_user.id')
     });

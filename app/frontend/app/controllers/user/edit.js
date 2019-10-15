@@ -155,6 +155,7 @@ export default Controller.extend({
       var u = CoughDrop.store.createRecord('utterance', {
         button_list: [{'label': "You can use this link to message me!"}], 
         sentence: "You can use this link to message me!",
+        timestamp: (new Date()).getTime() / 1000,
         private_only: true,
         user_id: this.get('model.id')
       });

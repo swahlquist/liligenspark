@@ -155,8 +155,11 @@ class LogSession < ActiveRecord::Base
       event_string = nil if event['button'] && !event['button']['spoken'] && !event['button']['for_speaking']
       event_string = "[#{event['action']['action']}]" if event['action'] && ['clear', 'vocalize', 'backspace', 'home'].include?(event['action']['action'])
       event_string = "_" if event['action'] && event['action']['action'] == 'open_board'
+      event_string = "⌂" if event['action'] && event['action']['action'] == 'home'
+      event_string = "‹" if event['action'] && event['action']['action'] == 'backspace'
+      event_string = "💬" if event['action'] && event['action']['action'] == 'vocalize'
       event_string = event['button']['completion'] if event && event['button'] && event['button']['completion']
-      event_string = "[vocalize]" if event['utterance']
+      event_string = "💬" if event['utterance']
       event_string ||= ""
       if !last_stamp
         str += event_string
@@ -398,7 +401,7 @@ class LogSession < ActiveRecord::Base
           self.data['stats']['utterance_words'] += event['utterance']['text'].split(/\s+/).length
           self.data['stats']['utterance_buttons'] += (event['utterance']['buttons'] || []).length
         elsif event['type'] == 'button'
-          if event['button']['access']
+          if event['button'] && event['button']['access']
             self.data['stats']['access_method'] = event['button']['access']
           end
           if event['button'] && event['button']['board']
@@ -905,20 +908,42 @@ class LogSession < ActiveRecord::Base
                 params = {:events => session}
                 event = session[0] if session.length == 1
                 if event && event['note']
-                  params = {note: event['note']}
+                  note = event['note']
+                  note = note['note'] if note['note'].is_a?(Hash)
+                  params = {note: note}
                 elsif event && event['assessment']
-                  params = {assessment: event['assessment']}
+                  assmnt = event['assessment']
+                  assmnt = assmnt['assessment'] if assmnt['assessment'].is_a?(Hash)
+                  params = {assessment: assmnt}
                 elsif event && event['eval']
-                  params = {eval: event['eval']}
+                  evl = event['eval']
+                  evl = evl['eval'] if evl['eval'].is_a?(Hash)
+                  params = {eval: evl}
                 elsif event && event['share']
-                  utterance = Utterance.process_new({
-                    button_list: event['share']['utterance'],
-                    sentence: event['share']['sentence']
-                  }, {:user => user})
                   JobStash.remove_events_from(self, [event])
-                  utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
+                  already_sent = false
+                  if event['share']['message_uid']
+                    # if the message_uid was already used to create an utterance, don't do it again
+                    already_sent = Utterance.where(user: user, nonce: GoSecure.sha512(event['share']['message_uid'], 'utterance_message_uid')).where(['created_at > ?', 7.days.ago]).count > 0
+                  end
+                  if !already_sent
+                    utterance = Utterance.process_new({
+                      button_list: event['share']['utterance'],
+                      timestamp: event['timestamp'],
+                      message_uid: event['share']['message_uid'],
+                      sentence: event['share']['sentence']
+                    }, {:user => user})
+                    if !event['share']['recipient_id'] && event['share']['reply_id']
+                      # TODO: remove this after like June 2020
+                      reply = LogSession.find_reply(event['share']['reply_id']) rescue nil
+                      if reply && reply[:contact]
+                        contact = (user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
+                        event['share']['recipient_id'] = "#{user.global_id}x#{contact['hash']}" if contact
+                      end
+                    end
+                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
+                  end
                   params = nil
-                  # TODO: schedule background job to process user share
                 elsif event && event['alert']
                   opts = {}.merge(event['alert'])
                   opts['author_id'] = self.author.global_id
@@ -1045,10 +1070,6 @@ class LogSession < ActiveRecord::Base
     elsif params['assessment']
       params['events'] = nil
       Rails.logger.warn('processing assessment creation in client request')
-      self.process_new(params, non_user_params)
-    elsif params['eval']
-      params['events'] = nil
-      Rails.logger.warn('processing eval creation in client request')
       self.process_new(params, non_user_params)
     elsif params['type'] == 'daily_use'
       Rails.logger.warn('processing daily_use creation in client request')
@@ -1460,7 +1481,6 @@ class LogSession < ActiveRecord::Base
         self.data['unread'] = true if self.data['unread'] == nil && self.data['notify_user']
       end
       self.data['note'] = params['note'] if params['note']
-      self.data['eval'] = params['eval'] if params['eval']
       if params['video_id']
         video = UserVideo.find_by_global_id(params['video_id'])
         if video

@@ -327,7 +327,7 @@
       {{/if}}
       {{#if model.note.prior}}
         <div style='white-space: normal; margin-top: 30px;'>
-          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}}{{#if model.note.prior_contact}}{{t "message from " key='message_from'}}{{model.note.prior_contact.name}}{{/if}}:</div>
+          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if model.note.prior_contact}}{{t "message from " key='message_from'}}{{model.note.prior_contact.name}}{{/if}}:</div>
           <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{model.note.prior}}</div>
         </div>
       {{/if}}

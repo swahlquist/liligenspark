@@ -12,6 +12,7 @@ CoughDrop.Utterance = DS.Model.extend({
   user_id: DS.attr('string'),
   image_url: DS.attr('string'),
   large_image_url: DS.attr('string'),
+  timestamp: DS.attr('number'),
   private_only: DS.attr('boolean'),
   permissions: DS.attr('raw'),
   prior: DS.attr('raw'),

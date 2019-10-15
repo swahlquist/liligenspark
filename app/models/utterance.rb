@@ -92,7 +92,7 @@ class Utterance < ActiveRecord::Base
         sup = User.find_by_path(user_id.split(/x/)[0])
         return false unless sup
         contact = sup.lookup_contact(user_id)
-        if contact || (my_supervisor_ids + my_supervisees_contact_ids).include?(user_id)
+        if contact || user_id == sharer.global_id || (my_supervisor_ids + my_supervisees_contact_ids).include?(user_id)
           # message from a communicator to a supervisor
           Worker.schedule_for(:priority, Utterance, :perform_action, {
             'id' => self.id,
@@ -110,6 +110,17 @@ class Utterance < ActiveRecord::Base
             reply_id: params['reply_id']
           })
         end
+        if !self.data['private_only']
+          LogSession.process_new({
+            type: 'note',
+            note: {
+              timestamp: self.data['timestamp'],
+              recipient_string: contact ? contact['name'] : sup.user_name,
+              text: message,
+              reply_id: params['reply_id']      
+            }
+          }, {user: sharer, device: sharer.devices[0], author: sharer})
+        end
         return {to: user_id, from: sharer.global_id, type: 'utterance'}
       end
     elsif params['email']
@@ -121,9 +132,21 @@ class Utterance < ActiveRecord::Base
           'email' => params['email'],
           'share_index' => self.data['share_user_ids'].length - 1,
           'subject' => params['subject'] || params['message'] || params['sentence'],
-          'message' => params['message'] || params['sentence']
+          'message' => params['message'] || params['sentence'] || self.data['sentence']
         }]
       })
+      LogSession.process_new({
+        type: 'note',
+        data: {
+          note: {
+            timestamp: self.data['timestamp'],
+            recipient_string: 'email',
+            message: params['message'] || params['sentence'] || self.data['sentence'],
+            subject: params['subject'] || params['message'] || params['sentence'],
+            reply_id: params['reply_id']      
+          }
+        }
+      }, {user: sharer, device: sharer.devices[0], author: sharer})
       return {to: params['email'], from: sharer.global_id, type: 'email'}
     end
     return false
@@ -272,6 +295,8 @@ class Utterance < ActiveRecord::Base
       end
     end
     self.data['sentence'] = params['sentence'] if params['sentence'] # TODO: process this for real
+    self.nonce = GoSecure.sha512(params['message_uid'], 'utterance_message_uid') if params['message_uid']
+    self.data['timestamp'] = params['timestamp'].to_i if params['timestamp']
     if params['image_url'] && params['image_url'] != self.data['image_url']
       self.data['image_url'] = params['image_url'] 
       self.data['default_image_url'] = false

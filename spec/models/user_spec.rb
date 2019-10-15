@@ -2227,8 +2227,8 @@ describe User, :type => :model do
         {'hash' => 'qwer'},
         {'hash' => 'asdf', 'name' => 'bob'}
       ]
-      expect(u.lookup_contact('asdf')).to eq({'name' => 'bob', 'hash' => 'asdf'})
-      expect(u.lookup_contact("#{u.global_id}xasdf")).to eq({'name' => 'bob', 'hash' => 'asdf'})
+      expect(u.lookup_contact('asdf')).to eq({'name' => 'bob', 'hash' => 'asdf', 'id' => "#{u.global_id}xasdf"})
+      expect(u.lookup_contact("#{u.global_id}xasdf")).to eq({'name' => 'bob', 'hash' => 'asdf', 'id' => "#{u.global_id}xasdf"})
 
     end
   end
