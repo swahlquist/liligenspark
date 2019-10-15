@@ -820,7 +820,7 @@ var buttonTracker = EmberObject.extend({
         // ignore presses that are too short
         if(buttonTracker.check('minimum_press') && buttonTracker.initialTarget && (ts - buttonTracker.initialTarget.timestamp) < buttonTracker.minimum_press) {
           elem_wrap = null;
-        } else if(buttonTracker.clear_on_wiggle && !swipe_direction) {
+        } else if(buttonTracker.clear_on_wiggle && !swipe_direction && buttonTracker.initialTarget) {
           swipe_direction = buttonTracker.swipe_direction(buttonTracker.initialTarget.dom, event, buttonTracker.initialEvent.drag_locations || []);
           if(swipe_direction != 'clear') { swipe_direction = null; }
         }
