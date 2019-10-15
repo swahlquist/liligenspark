@@ -21,7 +21,9 @@ var obf = EmberObject.extend({
       color: hash['background']['color'],
       position: hash['background']['position'],
       text: hash['background']['text'],
-      prompt: hash['background']['prompt']
+      prompt: hash['background']['prompt'],
+      delay_prompts: hash['background']['delay_prompts'],
+      delay_prompt_timeout: hash['background']['delay_prompt_timeout']
     })
     board.set('text_only', hash['text_only']);
 

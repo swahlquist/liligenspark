@@ -457,10 +457,10 @@ var evaluation = {
     }
 
     res.field = (maxes['field_sizes'] || {}).size || 0;
-    res.button_width = (maxes['diff_target'] || maxes['find_target'] || {}).win || 0;
-    res.button_height = (maxes['diff_target'] || maxes['find_target'] || {}).hin || 0;
-    res.grid_width = (maxes['diff_target'] || maxes['find_target'] || {}).rows || 0;
-    res.grid_height = (maxes['diff_target'] || maxes['find_target'] || {}).cols || 0; 
+    res.button_width = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).win || 0;
+    res.button_height = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).hin || 0;
+    res.grid_width = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).rows || 0;
+    res.grid_height = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).cols || 0; 
     return res;
   }
 };
@@ -885,7 +885,8 @@ function shuffle(array) {
 //obf.words = words;
 
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
-var shuffled_libraries = shuffle(libraries);
+var shuffled_libraries = shuffle(libraries.filter(function(w) { return w != 'words_only'; }));
+shuffled_libraries.push('words_only');
 var core_prompts = {};
 evaluation.callback = function(key) {
   obf.offline_urls = obf.offline_urls || [];
@@ -1037,7 +1038,7 @@ evaluation.callback = function(key) {
   window.assessment = assessment;
   window.working = working;
   working.level = working.level || 0;
-  assessment.started = (new Date()).getTime() / 1000;
+  assessment.started = assessment.started || (new Date()).getTime() / 1000;
   var level = levels[working.level];
   var step = level[working.step];
   if(working.step == 0) {
@@ -1332,6 +1333,9 @@ evaluation.callback = function(key) {
     var prompt = words.find(function(w) { return w.label == (assessment.label || 'cat'); });
     var distractor_words = words.filter(function(w) { return w.label && w.type && w.type != 'filler'; });
 
+    if(level.current_library == 'words_only') {
+      board.text_only = true;      
+    }
     if(step.find) {
       // {id: 'functional', find: 'functional', difficulty: -1, distractors: true}, // find the one that people [eat, drive, draw] with
       // {id: 'functional-association', find: 'functional_association', difficulty: -1, distractors: true}, // what do you do with a ________
@@ -1638,8 +1642,24 @@ evaluation.callback = function(key) {
     } else {
       board.background.position = "stretch";
       // board.background.text = "Find the " + prompt.label;
+      var bg_prompt = i18n.t('find_the', "Find the %{item}", {item: prompt.label});
+      board.background.delay_prompts = [
+        i18n.t('can_you_find_the_item', "Can you find the %{item}?", {item: prompt.label}),
+        i18n.t('see_if_you_can_find_the_item', "See if you can find the %{item}", {item: prompt.label})
+      ];
+      // after a period of inactivity, go ahead and re-prompt (unless using slow access like scanning)
+      if(assessment.reprompt !== 0 && !(app_state.get('currentUser.access_method')).match(/scanning/)) {
+        board.background.delay_prompt_timeout = (assessment.reprompt || (board.background.delay_prompts ? 20 : 40)) * 1000;
+      }
+      if(level.current_library == 'words_only') {
+        bg_prompt = i18n.t('find_item', "Find %{item}", {item: prompt.label});
+        board.background.delay_prompts = [
+          i18n.t('can_you_find_item', "Can you find, %{item}?", {item: prompt.label}),
+          i18n.t('see_if_you_can_find_item', "See if you can find, %{item}", {item: prompt.label})
+        ];
+      }
       board.background.prompt = {
-        text: "Find the " + prompt.label,
+        text: bg_prompt,
         loop: true
       };
     }

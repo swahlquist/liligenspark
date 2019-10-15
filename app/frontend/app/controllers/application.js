@@ -312,12 +312,7 @@ export default Controller.extend({
     repeat_prompt: function() {
       var model = this.get('board.model');
       runLater(function() {
-        if(model.get('background.prompt.text')) {
-          speecher.speak_text(model.get('background.prompt.text'), false, {alternate_voice: speecher.alternate_voice});
-        }
-        if(model.get('background.prompt.sound_url')) {
-          speecher.speak_audio(model.get('background_sound_url_with_fallback'), 'background', false, {loop: model.get('background.prompt.loop')});
-        }
+        model.prompt();
       }, 100);
     },
     home: function(opts) {

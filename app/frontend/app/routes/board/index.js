@@ -27,6 +27,7 @@ export default Route.extend({
   setupController: function(controller, model) {
     CoughDrop.log.track('setting up controller');
     var _this = this;
+    _this.set('board', model);
     controller.set('model', model);
     controller.set('ordered_buttons', null);
     controller.set('preview_level', null);
@@ -113,12 +114,7 @@ export default Route.extend({
       // TODO: is there a way to wait until current speaking has
       // finished to activate the prompt?
       runLater(function() {
-        if(model.get('background.prompt.text')) {
-          speecher.speak_text(model.get('background.prompt.text'), false, {alternate_voice: speecher.alternate_voice});
-        }
-        if(model.get('background.prompt.sound_url')) {
-          speecher.speak_audio(model.get('background_sound_url_with_fallback'), 'background', false, {loop: model.get('background.prompt.loop')});
-        }
+        model.prompt();
       }, 100);
     }
     if(!model.get('valid_id')) {
@@ -220,6 +216,9 @@ export default Route.extend({
   }.property('load_state', 'load_state.has_permissions', 'model.id'),
   actions: {
     willTransition: function(transition) {
+      if(this.get('board')) {
+        this.get('board').prompt('clear');
+      }
       if(app_state.get('edit_mode')) {
         modal.warning(i18n.t('save_or_cancel_changes_first', "Save or cancel your changes before leaving this board!"));
         transition.abort();

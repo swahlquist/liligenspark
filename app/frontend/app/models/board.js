@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import { later as runLater } from '@ember/runloop';
+import { later as runLater, cancel as runCancel } from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import DS from 'ember-data';
@@ -10,6 +10,7 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import Button from '../utils/button';
 import editManager from '../utils/edit_manager';
+import speecher from '../utils/speecher';
 import boundClasses from '../utils/bound_classes';
 import ButtonSet from '../models/buttonset';
 import Utils from '../utils/misc';
@@ -625,6 +626,39 @@ CoughDrop.Board = DS.Model.extend({
   checkForDataURLOnChange: function() {
     this.checkForDataURL().then(null, function() { });
   }.observes('image_url', 'background.image'),
+  prompt: function(action) {
+    var _this = this;
+    if(action == 'clear') {
+      if(_this.get('reprompt_wait')) {
+        runCancel(_this.get('reprompt_wait'));
+        _this.set('reprompt_wait', null);
+      }
+    } else {
+      // TODO: schedule a delay and then re-prompt if any delay prompts are set
+      var text = _this.get('background.prompt.text');
+      if(action == 'reprompt' && _this.get('background.delay_prompts.length') > 0) {
+        var idx = _this.get('prompt_index') || 0;
+        text = _this.get('background.delay_prompts')[idx % _this.get('background.delay_prompts.length')];
+        idx++;
+        _this.set('prompt_index', idx);
+      }
+      if(_this.get('background.prompt.text')) {
+        speecher.speak_text(text, false, {alternate_voice: speecher.alternate_voice});
+      }
+      if(_this.get('background.prompt.sound_url') && action != 'reprompt') {
+        speecher.speak_audio(_this.get('background_sound_url_with_fallback'), 'background', false, {loop: _this.get('background.prompt.loop')});
+      }
+      if(_this.get('background.delay_prompt_timeout') && _this.get('background.delay_prompt_timeout') > 0) {
+        if(_this.get('reprompt_wait')) {
+          runCancel(_this.get('reprompt_wait'));
+          _this.set('reprompt_wait', null);
+        }
+        _this.set('reprompt_wait', runLater(function() {
+          _this.prompt('reprompt');
+        }, _this.get('background.delay_prompt_timeout')));
+      }
+    }
+  },
   for_sale: function() {
     if(this.get('protected')) {
       var settings = this.get('protected_settings') || {};
