@@ -61,7 +61,10 @@ export default Controller.extend({
       }
       return evaluation.analyze(assessment);
     }
-  }.property('model.type', 'app_state.assessment'),
+  }.property('model.type', 'model.eval_in_memory', 'model.evaluation', 'user.id'),
+  same_author: function() {
+    return this.get('model.author.id') == app_state.get('sessionUser.id');
+  }.property('model.author.id', 'app_state.sessionUser.id'),
   actions: {
     reply: function() {
       var _this = this;
@@ -92,6 +95,14 @@ export default Controller.extend({
         this.get('model').add_note(event_id, val);
       }
       $("input[data-event_id='" + event_id + "']").val("");
+    },
+    resume: function() {
+      var assessment = this.get('model.evaluation');
+      if(this.get('model.eval_in_memory')) {
+        assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
+      }
+      assessment.log_session_id = this.get('model.id');
+      evaluation.resume(assessment);
     },
     highlight: function(event_id, do_highlight) {
         this.get('model').highlight(event_id, !!do_highlight);

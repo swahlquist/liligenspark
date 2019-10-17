@@ -1505,6 +1505,7 @@ class LogSession < ActiveRecord::Base
       end
       @goal_clustering_scheduled = true if self.goal_id
       self.data['assessment'] = params['assessment'] if params['assessment']
+      self.data['eval'] = params['eval'] if params['eval']
       if self.data['assessment']
         if non_user_params[:automatic_assessment]
           self.data['assessment']['manual'] = false

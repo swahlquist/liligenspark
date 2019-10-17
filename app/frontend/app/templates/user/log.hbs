@@ -27,7 +27,11 @@
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">{{t "Duration" key='duration'}}</div>
           <div class="panel-body">
-            {{seconds_ago processed_assessment.duration}}
+            {{#if processed_assessment.multiple_sessions}}
+              {{duration processed_assessment.duration}}, {{t 'session' key='n_sessions' count=processed_assessment.sessions}}
+            {{else}}
+              {{seconds_ago processed_assessment.duration}}
+            {{/if}}
           </div>
         </div>
       </div>
@@ -559,6 +563,11 @@
   {{#if model.session_type}}
     <button type="button" {{action "obl_export"}} class='btn btn-default'>{{t "Download Log File" key='download_log_file'}}</button>
     <button type="button" {{action "lam_export"}} class='btn btn-default'>{{t "View LAM Report" key='export_as_lam'}}</button>
+  {{/if}}
+  {{#if processed_assessment.resumable}}
+    {{#if same_author}}
+      <button type='button' {{action "resume"}} class='btn btn-default'>{{t "Resume Evaluation" key='resume_eval'}}</button>
+    {{/if}}
   {{/if}}
   <button type="button" {{action "print"}} class='btn btn-default'>{{t "Print" key='print'}}</button>
   {{#if model.previous_log_id}}

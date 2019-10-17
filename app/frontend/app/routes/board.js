@@ -8,8 +8,8 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
-import contentGrabbers from '../utils/content_grabbers';
-import persistence from '../utils/persistence';
+import session from '../utils/session';
+import { later as runLater } from '@ember/runloop';
 
 export default Route.extend({
   model: function(params) {
@@ -55,8 +55,23 @@ export default Route.extend({
         return RSVP.resolve(obj);
       });
     } else if(params.key.match(/^obf\//)) {
-      var board = obf.lookup(params.key.split(/\//)[1]);
-      return RSVP.resolve(board);
+      var wait_for_user = RSVP.resolve();
+      if(session.get('access_token') && !app_state.get('currentUser')) {
+        wait_for_user = new RSVP.Promise(function(res, rej) {
+          var trying = function() {
+            trying.tries = (trying.tries || 0) + 1;
+            if(app_state.get('currentUser') || trying.tries > 3) {
+              res();
+            } else {
+              runLater(trying, 500);
+            }
+          };
+          runLater(trying, 500);
+        });
+      }
+      return wait_for_user.then(function() {
+        return obf.lookup(params.key.split(/\//)[1]);
+      });
     } else {
       var _this = this;
       var find_board = function(allow_retry) {

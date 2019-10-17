@@ -38,6 +38,21 @@ export default Controller.extend({
   all_logs: function() {
     return !this.get('filtered_results') && (!this.get('type') || this.get('type') == 'all') && this.get('highlighted') != '1';
   }.property('type', 'filtered_results', 'highlighted'),
+  pending_eval: function() {
+    var user_id = this.get('model.id');
+    var assessment = app_state.get('last_assessment_for_' + user_id) || {};
+    var saved = false;
+    var _this = this;
+    (_this.get('logs') || []).forEach(function(log) {
+      if(assessment.uid && log.get('eval.uid') == assessment.uid) {
+        saved = true;
+        app_state.set('last_assessment_for_' + user_id, null);
+      }
+    });
+    if(!saved && assessment.uid) {
+      return assessment;
+    }
+  }.property(),
   actions: {
     obl_export: function() {
       modal.open('download-log', {user: this.get('model')});

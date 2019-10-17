@@ -1,6 +1,7 @@
 import Ember from 'ember';
 import Route from '@ember/routing/route';
 import i18n from '../../utils/i18n';
+import app_state from '../../utils/app_state';
 
 export default Route.extend({
   model: function(params) {
@@ -11,6 +12,10 @@ export default Route.extend({
     if(params.log_id == 'last-eval') {
       var log = this.store.createRecord('log', {});
       log.set('type', 'eval');
+      log.set('author', {
+        id: app_state.get('sessionUser.id'),
+        user_name: app_state.get('sessionUser.user_name')
+      });
       log.set('eval_in_memory', true);
       return log;
     } else {

@@ -1089,7 +1089,11 @@ export default Controller.extend({
     this.vocalize(pct || 3.0);
   },
   vocalize: function(volume, opts) {
-    if(app_state.get('currentUser.preferences.repair_on_vocalize')) {
+    if(app_state.get('eval_mode')) {
+      if(this.get('board.model')) {
+        this.get('board.model').prompt();
+      }
+    } else if(app_state.get('currentUser.preferences.repair_on_vocalize')) {
       modal.open('modals/repairs', {inactivity_timeout: true, speak_on_done: true});
     } else {
       utterance.vocalize_list(volume, opts);
