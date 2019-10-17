@@ -39,15 +39,17 @@ class LogSession < ActiveRecord::Base
       end
     end
     # if two events share the same timestamp, put the buttons before the actions
-    self.data['events'].sort_by!{|e| [e['timestamp'] || 0, (e['type'] == 'button' ? 0 : 1)] }
-    last = self.data['events'].last
-    first = self.data['events'].first
-    self.ended_at = (last && last['timestamp']) ? DateTime.strptime(last['timestamp'].to_s, '%s') : nil
-    self.started_at = (first && first['timestamp']) ? DateTime.strptime(first['timestamp'].to_s, '%s') : nil
-    if self.ended_at && self.started_at == self.ended_at && self.data['events']
-      self.ended_at += 5
+    if !self.data['note']
+      self.data['events'].sort_by!{|e| [e['timestamp'] || 0, (e['type'] == 'button' ? 0 : 1)] }
+      last = self.data['events'].last
+      first = self.data['events'].first
+      self.ended_at = (last && last['timestamp']) ? DateTime.strptime(last['timestamp'].to_s, '%s') : nil
+      self.started_at = (first && first['timestamp']) ? DateTime.strptime(first['timestamp'].to_s, '%s') : nil
+      if self.ended_at && self.started_at == self.ended_at && self.data['events']
+        self.ended_at += 5
+      end
+      self.data['event_count'] = self.data['events'].length
     end
-    self.data['event_count'] = self.data['events'].length
 
     attrs = ClusterLocation.calculate_attributes(self)
     self.data['geo'] = attrs['geo']
@@ -155,6 +157,7 @@ class LogSession < ActiveRecord::Base
       event_string = nil if event['button'] && !event['button']['spoken'] && !event['button']['for_speaking']
       event_string = "[#{event['action']['action']}]" if event['action'] && ['clear', 'vocalize', 'backspace', 'home'].include?(event['action']['action'])
       event_string = "_" if event['action'] && event['action']['action'] == 'open_board'
+      event_string = "✖" if event['action'] && event['action']['action'] == 'clear'
       event_string = "⌂" if event['action'] && event['action']['action'] == 'home'
       event_string = "‹" if event['action'] && event['action']['action'] == 'backspace'
       event_string = "💬" if event['action'] && event['action']['action'] == 'vocalize'
@@ -305,6 +308,7 @@ class LogSession < ActiveRecord::Base
   def generate_stats
     self.data['stats'] ||= {}
     return true if skip_extra_data_processing?
+    return true if self.log_type == 'note' || self.log_type == 'journal'
     # TODO: questions we want to answer:
     # for board B, what's the most common starting location
     # for board B, how much travel and usage does each button get?
