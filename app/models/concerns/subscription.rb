@@ -239,6 +239,14 @@ module Subscription
         res = false
       else
         self.settings['subscription']['prior_purchase_ids'] ||= []
+        if args['purchase_id'] == 'restore' && self.settings['subscription']['last_purchase_id'] && self.settings['subscription']['seconds_left']
+          args['purchase_id'] = self.settings['subscription']['last_purchase_id']
+          args['plan_id'] = self.settings['subscription']['last_purchase_plan_id']
+          args['seconds_to_add'] = self.settings['subscription']['seconds_left']
+          args['purchase_amount'] = self.settings['subscription']['purchase_amount']
+          args['source_id'] = 'restore'
+          self.settings['subscription']['prior_purchase_ids'] -= [args['purchase_id']]
+        end
         if args['purchase_id'] && self.settings['subscription']['prior_purchase_ids'].include?(args['purchase_id'])
           res = false
         else
@@ -322,6 +330,11 @@ module Subscription
       User.purchase_extras({
         'user_id' => self.global_id,
         'source' => 'admin_override'
+      })
+    elsif type == 'restore'
+      self.update_subscription({
+        'purchase' => true,
+        'purchase_id' => 'restore'        
       })
     elsif type == 'add_1' || type == 'communicator_trial'
       if type == 'communicator_trial'
