@@ -487,6 +487,7 @@ var mastery_cutoff = 0.69;
 var non_mastery_cutoff = 0.32;
 var attempt_minimum = 2;
 var attempt_maximum = 8;
+var testing_min_attempts = null;
 var levels = [
   // TODO: best way to assess different symbol libraries
   // TODO: ensure you are checking/tracking range of access
@@ -509,7 +510,7 @@ var levels = [
     {id: 'find-60', cluster: '60', rows: 6, cols: 10, distractors: false, min_attempts: 4},
     {id: 'find-6-112', cluster: '112', rows: 8, cols: 14, distractors: false, spacing: 4},
     {id: 'find-28-112', cluster: '112', rows: 8, cols: 14, distractors: false, spacing: 2},
-    {id: 'find-56-112', cluster: '112', rows: 8, cols: 14, distractors: false, alternating: true},
+    {id: 'find-56-112', cluster: '112', rows: 8, cols: 14, distractors: false, alternating: true, min_attempts: testing_min_attempts},
     {id: 'find-112', cluster: '112', rows: 8, cols: 14, distractors: false, min_attempts: 4},
     // TODO: on the higher levels, also do continuous rows/continuous columns before everything
     // TODO: maybe make it more adaptive, when you get to the level
@@ -568,20 +569,20 @@ var levels = [
     ]}
   ], [
     {intro: 'categories', continue_on_non_mastery: true}, 
-    {id: 'functional', find: 'functional', difficulty: -1, distractors: true, min_attempts: 4}, // find the one that people [eat, drive, draw] with
-    {id: 'functional-association', find: 'functional_association', difficulty: -1, distractors: true, min_attempts: 4}, // what do you do with a ________
-    {id: 'find-the-group', find: 'category', difficulty: -1, distractors: true, min_attempts: 4}, // find the group that _____ belongs to
-    {id: 'what-kind', find: 'from_category', always_visual: true, difficulty: -1, distractors: true, min_attempts: 4}, // what kind of [fruit, animal, etc] is this
+    {id: 'functional', find: 'functional', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 4}, // was 4 // find the one that people [eat, drive, draw] with
+    {id: 'functional-association', find: 'functional_association', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 4}, // what do you do with a ________
+    {id: 'find-the-group', find: 'category', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 4}, // find the group that _____ belongs to
+    {id: 'what-kind', find: 'from_category', always_visual: true, difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 4}, // what kind of [fruit, animal, etc] is this
   ], [
-    {intro: 'inclusion_exclusion_association', continue_on_non_mastery: true, min_attempts: 3}, 
-    {id: 'inclusion', find: 'inclusion', difficulty: -1, distractors: true, min_attempts: 3}, // find the one that is/is not a _______
-    {id: 'exclusion', find: 'exclusion', difficulty: -1, distractors: true, min_attempts: 3},
-    {id: 'association', find: 'association', always_visual: true, difficulty: -1, distractors: true, min_attempts: 3} // find the one that goes with _________
+    {intro: 'inclusion_exclusion_association', continue_on_non_mastery: true, min_attempts: testing_min_attempts || 3}, // was 3
+    {id: 'inclusion', find: 'inclusion', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3}, // find the one that is/is not a _______
+    {id: 'exclusion', find: 'exclusion', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3},
+    {id: 'association', find: 'association', always_visual: true, difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3} // find the one that goes with _________
   ], [
     {intro: 'literacy', continue_on_non_mastery: true},
-    {id: 'word-description', find: 'spelling', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: 4}, // find the word for this picture
-    {id: 'word-category', find: 'spelling_category', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: 4}, // find the category for this picture
-    {id: 'word-descriptor', find: 'spelling_descriptor', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: 4}, // find the word for this picture
+    {id: 'word-description', find: 'spelling', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // was 4 // find the word for this picture
+    {id: 'word-category', find: 'spelling_category', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // find the category for this picture
+    {id: 'word-descriptor', find: 'spelling_descriptor', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // find the word for this picture
     // multiple difficulty levels, from basic labeling to categoric labeling to concrete adjectives (red, wet, soft, fast, etc.) to abstract adjectives (dangerous, young, heavy)
   ], [
     {intro: 'done'}
