@@ -50,6 +50,8 @@ describe Stats do
         :time_offset_blocks => {},
         :start_at => start_at.iso8601,
         :end_at => ((end_at.to_date + 1).to_time + offset - 1).utc.iso8601,
+        :depth_counts => {},
+        :word_travels => {},
         :started_at => nil,
         :ended_at => nil,
         :goals => [],
@@ -63,6 +65,8 @@ describe Stats do
         :buttons_per_minute => 0.0,
         :buttons_per_utterance => 0.0,
         :button_chains => {},
+        :depth_counts => {},
+        :word_travels => {},
         :total_buttons => 0,
         :total_utterances => 0.0,
         :total_words => 0,
@@ -512,6 +516,31 @@ describe Stats do
       expect(res[:time_offset_blocks]).not_to eq(nil)
       expect(res[:time_offset_blocks].keys.sort).to eq([525, 573, 581])
     end
+
+    it "should include travel and depth stats" do
+      u = User.create
+      d = Device.create
+      s1 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'a', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0, 'label' => 'boy', 'spoken' => true}, 'timestamp' => 1445037743}, {'type' => 'button', 'button_id' => 'e', 'board' => {'id' => 'aa'}, 'depth' => 1, 'percent_travel' => 0.5, 'button' => {'label' => 'girl', 'button_id' => 'f', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.82, 'spoken' => true}, 'timestamp' => 1445037743}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      puts s1.data['stats'].to_json
+      s2 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'b', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.1, 'label' => 'hand', 'spoken' => true}, 'timestamp' => 1445044954}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      s3 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'c', 'board' => {'id' => 'aa'}, 'depth' => 3, 'percent_travel' => 0.3, 'label' => 'dog', 'spoken' => true}, 'timestamp' => 1444994571}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      s4 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'd', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.2, 'label' => 'run', 'spoken' => true}, 'timestamp' => 1444994886}, {'type' => 'button', 'button' => {'button_id' => 'g', 'board' => {'id' => 'aa'}, 'depth' => 1, 'percent_travel' => 0.5, 'label' => 'dog', 'spoken' => true}, 'timestamp' => 1444994886}, {'type' => 'button', 'button' => {'button_id' => 'h', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.3, 'label' => 'funny', 'spoken' => true}, 'timestamp' => 1444994886}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      res = Stats.daily_use(u.global_id, {:start_at => Time.at(1444984571), :end_at => Time.at(1445137743)})
+
+      expect(res[:word_travels]).to eq({
+        "boy" => 0.0,
+        "dog" => 1.0,
+        "funny" => 0.3,
+        "girl" => 0.82,
+        "hand" => 0.1,
+        "run" => 0.2,        
+      })
+      expect(res[:depth_counts]).to eq({
+        0 => 5,
+        1 => 1,
+        3 => 1
+      })
+    end
     
     it "should include max time block value" do
       u = User.create
@@ -824,7 +853,6 @@ describe Stats do
       
       res = Stats.time_block_use_for_sessions([s1, s2, s3, s4])
       expect(res[:timed_blocks]).not_to eq(nil)
-      puts res[:timed_blocks].to_json
       expect(res[:timed_blocks][1445037743 / 15]).to eq(2)
       expect(res[:timed_blocks][1445044954 / 15]).to eq(1)
       expect(res[:timed_blocks][1444994571 / 15]).to eq(1)

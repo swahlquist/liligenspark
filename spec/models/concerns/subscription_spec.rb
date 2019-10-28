@@ -1667,6 +1667,31 @@ describe Subscription, :type => :model do
 
       expect(Worker.scheduled?(Purchasing, :cancel_subscription, u.global_id, '1234', '12345')).to eq(true)
     end
+
+    it "should restore purchase duration after accidentally setting to free supervisor" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_150',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.premium?).to eq(true)
+
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'slp_long_term_free',
+        'purchase_id' => '23456'
+      })
+      expect(u.premium?).to eq(false)
+
+      expect(u.subscription_override('restore')).to eq(true)
+      u.premium?
+    
+      
+      expect(u.premium?).to eq(true)
+    end
     
     it "should cancel existing subscription when setting to communicator trial" do
       u = User.create

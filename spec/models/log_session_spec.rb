@@ -813,6 +813,39 @@ describe LogSession, :type => :model do
       s.split_out_later_sessions(true)
       expect(Worker.scheduled?(LogSession, :perform_action, {'method' => 'handle_alert', 'arguments' => [{'a' => 1, 'author_id' => u.global_id}]})).to eq(true)
     end
+
+    it 'should handle eval events' do
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+    end
   end
 
   describe "handle_alert" do
@@ -1905,6 +1938,17 @@ describe LogSession, :type => :model do
       expect(s2.log_type).to eq('journal')
       expect(s2.data['journal']['timestamp']).to be > 10.seconds.ago.to_i
       expect(s2.data['journal']['sentence']).to eq('what now')
+    end
+
+    it "should process an eval entry" do
+      u1 = User.create
+      d = Device.create(:user => u1)
+      s2 = LogSession.process_new({
+        :type => 'eval',
+        :eval => {a: 1},
+      }, {:user => u1, :device => d, :author => u1})
+      expect(s2.log_type).to eq('eval')
+      expect(s2.data['eval']).to eq({'a' => 1})
     end
   end
 

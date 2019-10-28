@@ -1293,9 +1293,21 @@ describe Api::UsersController, :type => :controller do
       expect(response).not_to be_success
       json = JSON.parse(response.body)
       expect(json).not_to eq(nil)
-      expect(json['error']).to eq('user rename failed')
+      assert_unauthorized
     end
-    
+
+    it "should require a non-empty new_key" do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+
+      post :rename, params: {:user_id => @user.global_id, :old_key => @user.user_name, :new_key => ""}
+      expect(response).not_to be_success
+      json = JSON.parse(response.body)
+      expect(json).not_to eq(nil)
+      assert_unauthorized
+    end
+
     it "should report if there was a new_key name collision" do
       token_user
       o = Organization.create(:admin => true)

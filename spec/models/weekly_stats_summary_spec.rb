@@ -147,7 +147,7 @@ describe WeeklyStatsSummary, :type => :model do
       expect(sum.data['totals']['total_core_words']).to eq(0)
     end
     
-    it 'should include word counts and depth counts' do
+    it 'should include word counts, travel sums and depth counts' do
       u = User.create
       d = Device.create
       s1 = LogSession.process_new({'events' => [
@@ -164,9 +164,9 @@ describe WeeklyStatsSummary, :type => :model do
       u2 = User.create
       d2 = Device.create
       s3 = LogSession.process_new({'events' => [
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 5, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
-        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'depth' => 2, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
-        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 2, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 5, 'percent_travel' => 0.2, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'depth' => 2, 'percent_travel' => 0.8, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 2, 'percent_travel' => 0.5, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
         {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => 1431029747}
       ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
       expect(s3.data['stats']['all_button_counts']['1::1_1']['depth_sum']).to eq(5)
@@ -191,6 +191,7 @@ describe WeeklyStatsSummary, :type => :model do
         '0' => 1,
         '5' => 1
       })
+      expect(sum.data['word_travels']).to eq({'ok go ok' => 0.7})
     end
     
     it 'should include words available in user button sets' do

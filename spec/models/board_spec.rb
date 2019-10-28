@@ -520,7 +520,8 @@ describe Board, :type => :model do
         'transparent_background' => false,
         'text_only' => false,
         'text_case' => nil,
-        'font' => nil
+        'font' => nil,
+        'symbol_background' => nil,
       }).and_return("http://www.file.com")
       expect(b.generate_download(nil, 'obf', {})).to eq({:download_url => "http://www.file.com"})
     end
@@ -534,6 +535,7 @@ describe Board, :type => :model do
         'text_on_top' => false, 
         'transparent_background' => false,
         'text_only' => false,
+        'symbol_background' => nil,
         'text_case' => nil,
         'font' => nil
       }).and_return("http://www.file.com")
@@ -551,6 +553,7 @@ describe Board, :type => :model do
         'transparent_background' => false,
         'text_only' => false,
         'text_case' => nil,
+        'symbol_background' => nil,
         'font' => nil
       }).and_return("http://www.file.com")
       expect(b.generate_download(nil, 'obf', {})).to eq({:download_url => "http://www.file.com"})

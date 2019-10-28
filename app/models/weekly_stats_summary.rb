@@ -510,7 +510,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:total_words] = 0
     stash[:word_counts] = {}
     stash[:depth_counts] = {}
-    stats[:word_travels] = {}
+    stash[:word_travels] = {}
     stash[:board_usages] = {}
     stash[:board_locales] = {}
     stash[:home_board_user_ids] = []

@@ -535,9 +535,9 @@ module Stats
     res[:depth_counts] = {}
     word_travels = {}
     all_button_counts.each do |button_id, button|
-      word_travels[button['text']] ||= {:count => 0, full_travel_sum => 0.0}
-      word_travels[button['text']][:count] += button['cnt']
-      word_travels[button['text']][:full_travel_sum] += button['full_travel_sum']
+      word_travels[button['text']] ||= {:count => 0, :full_travel_sum => 0.0}
+      word_travels[button['text']][:count] += button['count']
+      word_travels[button['text']][:full_travel_sum] += (button['full_travel_sum'] || 0)
       if button['depth_sum']
         avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
         res[:depth_counts][avg_depth] ||= 0
