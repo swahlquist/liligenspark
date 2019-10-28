@@ -2001,6 +2001,9 @@ tr.accuracy_non_mastered {
 .symbol_background_white .button img.symbol {
   background: #fff; 
 }
+.symbol_background_black .button img.symbol {
+  background: #000; 
+}
 .button:hover {
   background: #fafafa;
   border-color: #aaa;

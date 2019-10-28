@@ -21,6 +21,7 @@ module Converters::Utils
     headerless = opts['headerless'] || false
     text_on_top = opts['text_on_top'] || false
     transparent_background = opts['transparent_background'] || false
+    symbol_background = opts['symbol_background'] || (transparent_background ? 'transparent' : 'white')
     text_case = opts['text_case'] || 'default'
     text_only = opts['text_only'] || false
 
@@ -78,6 +79,7 @@ module Converters::Utils
           'headerless' => !!headerless, 
           'text_on_top' => !!text_on_top, 
           'transparent_background' => !!transparent_background,
+          'symbol_background' => symbol_background,
           'font' => font,
           'text_case' => text_case,
           'text_only' => text_only

@@ -131,8 +131,9 @@ export default Controller.extend({
     {name: i18n.t('prefer_tall', "Stretch Buttons, Wider First"), id: "prefer_wide"},
   ],
   symbolBackgroundList: [
-    {name: i18n.t('white', "White"), id: "white"},
     {name: i18n.t('clear', "Clear"), id: "clear"}
+    {name: i18n.t('white', "White"), id: "white"},
+    {name: i18n.t('black', "Black"), id: "black"},
   ],
   buttonBackgroundList: [
     {name: i18n.t('white', "White"), id: "white"},

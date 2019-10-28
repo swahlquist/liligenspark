@@ -194,6 +194,7 @@ class Board < ActiveRecord::Base
           'headerless' => !!opts['headerless'],
           'text_on_top' => !!opts['text_on_top'],
           'transparent_background' => !!opts['transparent_background'],
+          'symbol_background' => opts['symbol_background'],
           'text_only' => !!opts['text_only'],
           'text_case' => opts['text_case'],
           'font' => opts['font']

@@ -347,6 +347,7 @@ class Api::BoardsController < ApplicationController
       'headerless' => params['headerless'] == '1',
       'text_on_top' => params['text_on_top'] == '1',
       'transparent_background' => params['transparent_background'] == '1',
+      'symbol_background' => params['symbol_background'],
       'text_only' => params['text_only'] == '1',
       'text_case' => params['text_case'],
       'font' => params['font']
