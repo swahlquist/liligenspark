@@ -246,6 +246,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total.data['totals']['total_core_words'] = 0
     total.data['totals']['modeled_session_events'] = {}
     total.data['word_counts'] = {}
+    total.data['word_travels'] = {}
     total.data['depth_counts'] = {}
     total.data['user_ids'] = []
     total.data['home_board_user_ids'] = []
@@ -302,6 +303,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
             avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
             total.data['depth_counts'][avg_depth] ||= 0
             total.data['depth_counts'][avg_depth] += button['count']
+          end
+          if button['full_travel_sum']
+            total.data['word_travels'][button['text']] ||= 0
+            total.data['word_travels'][button['text']] += button['full_travel_sum']
           end
         end
         
@@ -505,6 +510,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:total_words] = 0
     stash[:word_counts] = {}
     stash[:depth_counts] = {}
+    stats[:word_travels] = {}
     stash[:board_usages] = {}
     stash[:board_locales] = {}
     stash[:home_board_user_ids] = []
@@ -548,6 +554,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
           summary.data['depth_counts'].each do |depth, cnt|
             stash[:depth_counts][depth] ||= 0
             stash[:depth_counts][depth] += cnt
+          end
+        end
+        if summary.data['word_travels']
+          summary.data['word_travels'].each do |word, full_travel|
+            stash[:word_travels][word] = (start[:wort_travels][word] || 0) + full_travel
           end
         end
       
@@ -680,6 +691,15 @@ class WeeklyStatsSummary < ActiveRecord::Base
       stash[:depth_counts].each do |depth, cnt|
         res[:depth_counts] ||= {}
         res[:depth_counts][depth] = ((cnt.to_f / max_depth_count.to_f * 50.0).round(1) / 50.0).round(2)
+      end
+    end
+
+    if stash[:word_travels]
+      stash[:word_travels].each do |word, full_travel|
+        if stash[:word_counts][word] && stash[:word_counts][word] > (max_word_count / 500)
+          res[:word_travels] ||= {}
+          res[:word_travels][word] = (full_travel.to_f / stash[:word_counts][word].to_f).round(2)
+        end
       end
     end
 

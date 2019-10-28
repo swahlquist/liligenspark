@@ -377,6 +377,10 @@ module Stats
             all_button_counts[ref]['depth_sum'] ||= 0
             all_button_counts[ref]['depth_sum'] += button['depth_sum']
           end
+          if button['full_travel_sum']
+            all_button_counts[ref]['full_travel_sum'] ||= 0
+            all_button_counts[ref]['full_travel_sum'] += button['full_travel_sum']
+          end
         else
           all_button_counts[ref] = button.merge({})
         end
@@ -528,6 +532,23 @@ module Stats
     res[:buttons_per_minute] += total_session_seconds > 0 ? (total_buttons / total_session_seconds * 60) : 0.0
     res[:utterances_per_minute] +=  total_session_seconds > 0 ? (total_utterances / total_session_seconds * 60) : 0.0
     res[:buttons_by_frequency] = all_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text'] || 'zzz'] }.reverse.map(&:last)[0, 100]
+    res[:depth_counts] = {}
+    word_travels = {}
+    all_button_counts.each do |button_id, button|
+      word_travels[button['text']] ||= {:count => 0, full_travel_sum => 0.0}
+      word_travels[button['text']][:count] += button['cnt']
+      word_travels[button['text']][:full_travel_sum] += button['full_travel_sum']
+      if button['depth_sum']
+        avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
+        res[:depth_counts][avg_depth] ||= 0
+        res[:depth_counts][avg_depth] += button['count']
+      end
+    end
+
+    res[:word_travels] = {}
+    word_travels.to_a.sort_by{|w| w[1][:count] }.reverse[0, 250].each do |word, data|
+      res[:word_travels][word] = (data[:full_travel_sum].to_f / data[:count].to_f).round(2)
+    end
     res[:words_by_frequency] = all_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
     res[:modeled_buttons_by_frequency] = modeled_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text']] }.reverse.map(&:last)[0, 50]
     res[:modeled_words_by_frequency] = modeled_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
@@ -553,6 +574,10 @@ module Stats
             if button['depth_sum']
               stats[:all_button_counts][ref]['depth_sum'] ||= 0
               stats[:all_button_counts][ref]['depth_sum'] += button['depth_sum']
+            end
+            if button['full_travel_sum']
+              stats[:all_button_counts][ref]['full_travel_sum'] ||= 0
+              stats[:all_button_counts][ref]['full_travel_sum'] += button['full_travel_sum']
             end
           else
             stats[:all_button_counts][ref] = button.merge({})
@@ -626,6 +651,10 @@ module Stats
             if button['depth_sum']
               total_stats[:all_button_counts][ref]['depth_sum'] ||= 0
               total_stats[:all_button_counts][ref]['depth_sum'] += button['depth_sum']
+            end
+            if button['full_travel_sum']
+              total_stats[:all_button_counts][ref]['full_travel_sum'] ||= 0
+              total_stats[:all_button_counts][ref]['full_travel_sum'] += button['full_travel_sum']
             end
           else
             total_stats[:all_button_counts][ref] = button.merge({})

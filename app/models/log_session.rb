@@ -443,11 +443,11 @@ class LogSession < ActiveRecord::Base
                   self.data['stats']['all_button_counts'][ref]['depth_sum'] = (self.data['stats']['all_button_counts'][ref]['depth_sum'] || 0) + (event['button']['depth'])
                 end
                 if event['button']['percent_travel']
+                  # add total travel distance for the button, and mark if it was spoken or not,
+                  # because we really mostly just care about travel distance for spoken buttons
                   self.data['stats']['all_button_counts'][ref]['spoken'] = true if (event['button']['spoken'] || event['button']['for_speaking'])
                   self.data['stats']['all_button_counts'][ref]['full_travel_sum'] ||= 0
                   self.data['stats']['all_button_counts'][ref]['full_travel_sum'] += travel_tally.round(2)
-                  # add total travel distance for the button, and mark if it was spoken or not,
-                  # because we really mostly just care about travel distance for spoken buttons
                 end
                 if button['text'] && button['text'].length > 0 && (event['button']['spoken'] || event['button']['for_speaking'])
                   button['text'].split(/\s+/).each do |word|
@@ -923,6 +923,13 @@ class LogSession < ActiveRecord::Base
                   evl = event['eval']
                   evl = evl['eval'] if evl['eval'].is_a?(Hash)
                   params = {eval: evl}
+                  if evl['log_session_id']
+                    s = LogSession.find_by_global_id(evl['log_session_id'])
+                    if s && s.user == self.user && s.author == self.author
+                      s.process({eval: evl})
+                      params = nil
+                    end
+                  end
                 elsif event && event['share']
                   JobStash.remove_events_from(self, [event])
                   already_sent = false

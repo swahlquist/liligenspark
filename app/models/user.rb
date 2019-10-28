@@ -319,6 +319,7 @@ class User < ActiveRecord::Base
       self.next_notification_at ||= next_notification_schedule
     end
     self.expires_at ||= Date.today + 60 if !self.id
+    self.user_name = nil if self.user_name.blank?
     self.user_name ||= self.generate_user_name(self.settings['name'])
     self.email_hash = User.generate_email_hash(self.settings['email'])
     
