@@ -68,7 +68,7 @@ var utterance = EmberObject.extend({
       var group = null;
       while((group = regex.exec(text)) != null) {
         var txt = group[0];
-        if(!txt.match(/^&/) || !txt.metch(/&$/)) {
+        if(!txt.match(/^&/) || !txt.match(/&$/)) {
           var mod = txt.match(/:[^\s\&]+/);
           inlines.push([mod[0], group.index + mod.index]);
         }
