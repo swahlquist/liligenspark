@@ -558,7 +558,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         end
         if summary.data['word_travels']
           summary.data['word_travels'].each do |word, full_travel|
-            stash[:word_travels][word] = (start[:wort_travels][word] || 0) + full_travel
+            stash[:word_travels][word] = (stash[:word_travels][word] || 0) + full_travel
           end
         end
       
