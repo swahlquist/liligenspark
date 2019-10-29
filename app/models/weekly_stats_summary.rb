@@ -694,17 +694,17 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
 
-    if stash[:word_travels]
-      stash[:word_travels].each do |word, full_travel|
-        if stash[:word_counts][word] && stash[:word_counts][word] > (max_word_count / 500)
-          res[:word_travels] ||= {}
-          res[:word_travels][word] = (full_travel.to_f / stash[:word_counts][word].to_f).round(2)
-        end
-      end
-    end
 
     if stash[:word_counts]
       max_word_count = stash[:word_counts].map(&:last).max || 0.0
+      if stash[:word_travels]
+        stash[:word_travels].each do |word, full_travel|
+          if stash[:word_counts][word] && stash[:word_counts][word] > (max_word_count / 500)
+            res[:word_travels] ||= {}
+            res[:word_travels][word] = (full_travel.to_f / stash[:word_counts][word].to_f).round(2)
+          end
+        end
+      end
       res[:max_word_count] = max_word_count if include_admin
       stash[:word_counts].each do |word, cnt|
         res[:word_counts] ||= {}
