@@ -1150,14 +1150,14 @@ describe User, :type => :model do
       expect(u.settings['preferences']['sidebar_boards'][0]).to eq({
         'alert' => true,
         'name' => 'Alert',
-        'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/to%20sound.png',
+        'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/to%20sound.png',
         'special' => true
       })
       expect(u.settings['preferences']['sidebar_boards'][1]).to eq({
         'name' => b.settings['name'],
         'key' => b.key,
         'home_lock' => false,
-        'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png'
+        'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png'
       })
     end
 
@@ -1553,9 +1553,9 @@ describe User, :type => :model do
       it "should use the fallback if specified" do
         u = User.new
         u.id = 199
-        expect(u.generated_avatar_url('fallback')).to eq('https://s3.amazonaws.com/coughdrop/avatars/avatar-9.png')
+        expect(u.generated_avatar_url('fallback')).to eq('https://coughdrop.s3.amazonaws.com/avatars/avatar-9.png')
         u.settings = {'email' => 'bob@example.com'}
-        expect(u.generated_avatar_url('fallback')).to eq('https://s3.amazonaws.com/coughdrop/avatars/avatar-9.png')
+        expect(u.generated_avatar_url('fallback')).to eq('https://coughdrop.s3.amazonaws.com/avatars/avatar-9.png')
         u.settings['avatar_url'] = 'http://www.example.com/pic.png'
       end
       

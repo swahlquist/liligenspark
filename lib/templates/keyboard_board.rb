@@ -4,8 +4,8 @@ module KeyboardBoard
         'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ']
     buttons = []
     letters.each do |letter|
-      image_url = "https://s3.amazonaws.com/opensymbols/libraries/mulberry/#{letter}%20-%20lower%20case.svg"
-      image_url = "https://s3.amazonaws.com/opensymbols/libraries/arasaac/square.png" if letter == ' '
+      image_url = "https://opensymbols.s3.amazonaws.com/libraries/mulberry/#{letter}%20-%20lower%20case.svg"
+      image_url = "https://opensymbols.s3.amazonaws.com/libraries/arasaac/square.png" if letter == ' '
       image = ButtonImage.where(:user_id => user.id).detect{|i| i.url == image_url }
       image ||= ButtonImage.process_new({
         url: image_url,

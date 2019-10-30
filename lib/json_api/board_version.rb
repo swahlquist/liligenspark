@@ -92,7 +92,7 @@ module JsonApi::BoardVersion
     end
     json['modifier'] ||= {
       'description' => 'Unknown User',
-      'image' => "https://s3.amazonaws.com/#{bucket}/avatars/avatar-0.png"
+      'image' => "https://#{bucket}.s3.amazonaws.com/avatars/avatar-0.png"
     }
 
     json

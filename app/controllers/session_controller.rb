@@ -12,7 +12,7 @@ class SessionController < ApplicationController
       error = 'bad_redirect_uri'
     end
     @app_name = (key && key.name) || "the application"
-    @app_icon = (key && key.icon_url) || "https://s3.amazonaws.com/opensymbols/libraries/arasaac/friends_3.png"
+    @app_icon = (key && key.icon_url) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
     if error
       @error = error
       render #:status => 400
@@ -67,7 +67,7 @@ class SessionController < ApplicationController
     end
     if error
       @app_name = (config && config['app_name']) || 'the application'
-      @app_icon = (config && config['app_icon']) || "https://s3.amazonaws.com/opensymbols/libraries/arasaac/friends_3.png"
+      @app_icon = (config && config['app_icon']) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
       @code = params['code']
       @error = error
       render :oauth, :status => 400

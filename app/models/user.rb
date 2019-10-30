@@ -349,7 +349,7 @@ class User < ActiveRecord::Base
   def generated_avatar_url(override_url=nil)
     bucket = ENV['STATIC_S3_BUCKET'] || "coughdrop"
     id = self.id || 0
-    fallback = "https://s3.amazonaws.com/#{bucket}/avatars/avatar-#{id % 10}.png"
+    fallback = "https://#{bucket}.s3.amazonaws.com/avatars/avatar-#{id % 10}.png"
     url = self.settings && self.settings['avatar_url']
     url = override_url if override_url
     if url == 'fallback'
@@ -665,7 +665,7 @@ class User < ActiveRecord::Base
             if !image_url
               bucket = ENV['STATIC_S3_BUCKET'] || "coughdrop"
               id = hash.hex.to_i
-              image_url = "https://s3.amazonaws.com/#{bucket}/avatars/avatar-#{id % 10}.png"
+              image_url = "https://#{bucket}.s3.amazonaws.com/avatars/avatar-#{id % 10}.png"
             end
             action['value']['contact'].strip!
             ref = action['value']['contact'].strip.downcase
@@ -887,7 +887,7 @@ class User < ActiveRecord::Base
           'name' => board['name'] || 'Alert',
           'alert' => true,
           'special' => true,
-          'image' => board['image'] || 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/to%20sound.png'
+          'image' => board['image'] || 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/to%20sound.png'
         })
       elsif board['special'] && board['action']
         opts = {
@@ -909,7 +909,7 @@ class User < ActiveRecord::Base
           brd = {
             'name' => board['name'] || record.settings['name'] || 'Board',
             'key' => board['key'],
-            'image' => board['image'] || record.settings['image_url'] || 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png',
+            'image' => board['image'] || record.settings['image_url'] || 'https://opensymbols.s3.amazonaws.com//libraries/arasaac/board_3.png',
             'home_lock' => !!board['home_lock']
           }
           brd['level'] = board['level'] if board['level']
@@ -998,11 +998,11 @@ class User < ActiveRecord::Base
   
   def self.default_sidebar_boards
     [
-      {'name' => "Yes/No", 'key' => 'example/yesno', 'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/yes_2.png', 'home_lock' => false},
-      {'name' => "Inflections", 'key' => 'example/inflections', 'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/verb.png', 'home_lock' => false},
-      {'name' => "Keyboard", 'key' => 'example/keyboard', 'image' => 'https://s3.amazonaws.com/opensymbols/libraries/noun-project/Computer%20Keyboard-19d40c3f5a.svg', 'home_lock' => false},
-      {'name' => 'Social', 'key' => 'mbaud12/senner-baud-greetings', 'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/greet_2.png', 'home_lock' => false},
-      {'name' => "Alert", 'special' => true, 'alert' => true, 'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/to%20sound.png'}
+      {'name' => "Yes/No", 'key' => 'example/yesno', 'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/yes_2.png', 'home_lock' => false},
+      {'name' => "Inflections", 'key' => 'example/inflections', 'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/verb.png', 'home_lock' => false},
+      {'name' => "Keyboard", 'key' => 'example/keyboard', 'image' => 'https://opensymbols.s3.amazonaws.com//libraries/noun-project/Computer%20Keyboard-19d40c3f5a.svg', 'home_lock' => false},
+      {'name' => 'Social', 'key' => 'mbaud12/senner-baud-greetings', 'image' => 'https://opensymbols.s3.amazonaws.com//libraries/arasaac/greet_2.png', 'home_lock' => false},
+      {'name' => "Alert", 'special' => true, 'alert' => true, 'image' => 'https://opensymbols.s3.amazonaws.com//libraries/arasaac/to%20sound.png'}
     ]
   end
 

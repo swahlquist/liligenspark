@@ -49,7 +49,7 @@ describe JsonApi::UserVersion do
     expect(json['created']).to eq(v.created_at.iso8601)
     expect(json['modifier']).to eq({
       'description' => 'Unknown User',
-      'image' => "https://s3.amazonaws.com/#{ENV['STATIC_S3_BUCKET'] || "coughdrop"}/avatars/avatar-0.png"
+      'image' => "https://#{ENV['STATIC_S3_BUCKET'] || "coughdrop"}.s3.amazonaws.com/avatars/avatar-0.png"
     })
   end
 end

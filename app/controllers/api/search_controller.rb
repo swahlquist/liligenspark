@@ -111,7 +111,7 @@ class Api::SearchController < ApplicationController
   
   def proxy
     # TODO: must be escaped to correctly handle URLs like 
-    # "https://s3.amazonaws.com/opensymbols/libraries/arasaac/to be reflected.png"
+    # "https://opensymbols.s3.amazonaws.com/libraries/arasaac/to be reflected.png"
     # but it must also work for already-escaped URLs like
     # "http://www.stephaniequinn.com/Music/Commercial%2520DEMO%2520-%252013.mp3"
     uri = URI.parse(params['url']) rescue nil

@@ -1,5 +1,5 @@
 class Board < ActiveRecord::Base
-  DEFAULT_ICON = "https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png"
+  DEFAULT_ICON = "https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png"
   include Processable
   include Permissions
   include Async

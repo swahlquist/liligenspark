@@ -38,7 +38,7 @@ class Utterance < ActiveRecord::Base
       raise "can't generate nonce" if attempts > 10
     end
     self.reply_nonce = tmp_nonce if tmp_nonce
-    self.data['image_url'] ||= "https://s3.amazonaws.com/opensymbols/libraries/noun-project/Person-08e6d794b0.svg"
+    self.data['image_url'] ||= "https://opensymbols.s3.amazonaws.com/libraries/noun-project/Person-08e6d794b0.svg"
     self.data['show_user'] ||= false
     true
   end

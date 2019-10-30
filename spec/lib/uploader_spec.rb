@@ -131,7 +131,7 @@ describe Uploader do
       
       expect(Uploader.signed_download_url("asdf")).to eq("asdfjkl")
       expect(Uploader.signed_download_url("https://#{ENV['STATIC_S3_BUCKET']}.s3.amazonaws.com/asdf")).to eq("asdfjkl")
-      expect(Uploader.signed_download_url("https://s3.amazonaws.com/#{ENV['STATIC_S3_BUCKET']}/asdf")).to eq("asdfjkl")
+      expect(Uploader.signed_download_url("https://#{ENV['STATIC_S3_BUCKET']}.s3.amazonaws.com/asdf")).to eq("asdfjkl")
     end
   end
 
@@ -140,9 +140,9 @@ describe Uploader do
       expect(Uploader.valid_remote_url?("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon")).to eq(true)
       expect(Uploader.valid_remote_url?("http://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon")).to eq(false)
       expect(Uploader.valid_remote_url?("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon/downloads/maple.zip")).to eq(true)
-      expect(Uploader.valid_remote_url?("https://s3.amazonaws.com/#{ENV['OPENSYMBOLS_S3_BUCKET']}/hat.png")).to eq(true)
-      expect(Uploader.valid_remote_url?("http://s3.amazonaws.com/#{ENV['OPENSYMBOLS_S3_BUCKET']}/hat.png")).to eq(false)
-      expect(Uploader.valid_remote_url?("https://s3.amazonaws.com/#{ENV['OPENSYMBOLS_S3_BUCKET']}2/hat.png")).to eq(false)
+      expect(Uploader.valid_remote_url?("https://#{ENV['OPENSYMBOLS_S3_BUCKET']}.s3.amazonaws.com/hat.png")).to eq(true)
+      expect(Uploader.valid_remote_url?("http://#{ENV['OPENSYMBOLS_S3_BUCKET']}.s3.amazonaws.com/hat.png")).to eq(false)
+      expect(Uploader.valid_remote_url?("https://#{ENV['OPENSYMBOLS_S3_BUCKET']}.s3.amazonaws.com2/hat.png")).to eq(false)
       expect(Uploader.valid_remote_url?("https://images.com/cow.png")).to eq(false)
     end
   end  
@@ -150,7 +150,7 @@ describe Uploader do
   describe "remote_remove" do
     it "should raise error on unexpected path" do
       expect{ Uploader.remote_remove("https://www.google.com/bacon") }.to raise_error("scary delete, not a path I'm comfortable deleting...")
-      expect{ Uploader.remote_remove("https://s3.amazonaws.com/#{ENV['UPLOADS_S3_BUCKET']}/images/abcdefg/asdf/asdfasdf.asdf") }.to raise_error("scary delete, not a path I'm comfortable deleting...")
+      expect{ Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf/asdfasdf.asdf") }.to raise_error("scary delete, not a path I'm comfortable deleting...")
     end
     
     it "should remove the object if found" do
@@ -167,7 +167,7 @@ describe Uploader do
         buckets: buckets
       })
       expect(S3::Service).to receive(:new).and_return(service)
-      res = Uploader.remote_remove("https://s3.amazonaws.com/#{ENV['UPLOADS_S3_BUCKET']}/images/abcdefg/asdf-asdf.asdf")
+      res = Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf-asdf.asdf")
       expect(res).to eq(true)
     end
     
@@ -183,7 +183,7 @@ describe Uploader do
         buckets: buckets
       })
       expect(S3::Service).to receive(:new).and_return(service)
-      res = Uploader.remote_remove("https://s3.amazonaws.com/#{ENV['UPLOADS_S3_BUCKET']}/images/abcdefg/asdf-asdf.asdf")
+      res = Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf-asdf.asdf")
       expect(res).to eq(nil)
     end
     
@@ -1022,7 +1022,7 @@ describe Uploader do
           {
             "id": "title_page",
             "text": "Test Book",
-            "image_url": "https://s3.amazonaws.com/opensymbols/libraries/noun-project/Test-Tube_89_g.svg",
+            "image_url": "https://opensymbols.s3.amazonaws.com/libraries/noun-project/Test-Tube_89_g.svg",
             "image_content_type": "image/svg",
             "image_attribution_url": "http://creativecommons.org/licenses/by/3.0/us/",
             "image_attribution_author": "Hopkins"
@@ -1030,7 +1030,7 @@ describe Uploader do
           {
             "id": "page_1",
             "text": "I like cats",
-            "image_url": "https://s3.amazonaws.com/opensymbols/libraries/mulberry/cat.svg",
+            "image_url": "https://opensymbols.s3.amazonaws.com/libraries/mulberry/cat.svg",
             "image_content_type": "image/svg",
             "image_attribution_url": "http://creativecommons.org/licenses/by-sa/2.0/uk",
             "image_attribution_author": "Paxtoncrafts Charitable Trust"
@@ -1038,7 +1038,7 @@ describe Uploader do
           {
             "id": "page_2",
             "text": "Actually I really prefer dogs",
-            "image_url": "https://s3.amazonaws.com/opensymbols/libraries/arasaac/dog.png",
+            "image_url": "https://opensymbols.s3.amazonaws.com/libraries/arasaac/dog.png",
             "image_content_type": "image/png",
             "image_attribution_url": "http://creativecommons.org/licenses/by-nc-sa/3.0/",
             "image_attribution_author": "ARASAAC"
@@ -1049,7 +1049,7 @@ describe Uploader do
         {
           'id' => 'title_page',
           'title' => 'Test Book',
-          'image' => 'https://s3.amazonaws.com/opensymbols/libraries/noun-project/Test-Tube_89_g.svg',
+          'image' => 'https://opensymbols.s3.amazonaws.com/libraries/noun-project/Test-Tube_89_g.svg',
           'image_content_type' => 'image/svg',
           'url' => 'http://github.com/whitmer',
           'image_attribution' => 'http://creativecommons.org/licenses/by/3.0/us/',
@@ -1058,7 +1058,7 @@ describe Uploader do
         {
           'id' => 'page_1',
           'title' => 'I like cats',
-          'image' => 'https://s3.amazonaws.com/opensymbols/libraries/mulberry/cat.svg',
+          'image' => 'https://opensymbols.s3.amazonaws.com/libraries/mulberry/cat.svg',
           'image_content_type' => 'image/svg',
           'url' => 'http://github.com/whitmer',
           'image_attribution' => 'http://creativecommons.org/licenses/by-sa/2.0/uk',
@@ -1067,7 +1067,7 @@ describe Uploader do
         {
           'id' => 'page_2',
           'title' => 'Actually I really prefer dogs',
-          'image' => 'https://s3.amazonaws.com/opensymbols/libraries/arasaac/dog.png',
+          'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/dog.png',
           'image_content_type' => 'image/png',
           'url' => 'http://github.com/whitmer',
           'image_attribution' => 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
@@ -1094,7 +1094,7 @@ describe Uploader do
       expect(ENV).to receive('[]').with('OPENSYMBOLS_S3_CDN').and_return('https://abc.cdn.com').at_least(1).times
       expect(Uploader.fronted_url('https://cheese.s3.amazonaws.com/c/d/pic.png')).to eq('https://abc.cdn.com/c/d/pic.png')
       expect(Uploader.fronted_url('https://cheese.s3.amazonaws.com/pic.png')).to eq('https://abc.cdn.com/pic.png')
-      expect(Uploader.fronted_url('https://s3.amazonaws.com/cheese/c/d/pic.png')).to eq('https://abc.cdn.com/c/d/pic.png')
+      expect(Uploader.fronted_url('https://cheese.s3.amazonaws.com/c/d/pic.png')).to eq('https://abc.cdn.com/c/d/pic.png')
     end
   end
 
