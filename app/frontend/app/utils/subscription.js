@@ -624,36 +624,66 @@ document.addEventListener("deviceready", function() {
           error: "User not initialized"
         });
       }
-
-      persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
-        type: 'POST',
-        data: {receipt_data: {ios: true, receipt: product.transaction, pre_purchase: pre_purchase, device_id: device_id}}
-      }).then(function(res) {
-        progress_tracker.track(res.progress, function(event) {
-          if(event.status == 'errored') {
-            callback(false, {
-              code: store.INTERNAL_ERROR,
-              error: (event.result || {}).error_message || "Receipt validation failed"
-            });
-          } else if (event.result && (event.result.success === false || event.result.error === true)) {
-            callback(false, {
-              code: store.INTERNAL_ERROR,
-              wrong_user: (event.result || {}).wrong_user,
-              error: (event.result || {}).error_message || "Receipt validation did not succeed"
-            });
-          } else if(event.status == 'finished') {
-            var res = event.result;
-            if(res.expired) {
-              callback(false, {
-                code: store.PURCHASE_EXPIRED,
-                error: { message: "expired" }
-              });
-            } else {
-              callback(true, res);
+      var promise = null;
+      if(store.validator.promise) {
+        promise = store.validator.promise;
+      } else {
+        promise = persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
+          type: 'POST',
+          data: {receipt_data: {ios: true, receipt: product.transaction, pre_purchase: pre_purchase, device_id: device_id}}
+        }).then(function(res) {
+          var defer = RSVP.defer();
+          progress_tracker.track(res.progress, function(event) {
+            if(event.status == 'errored') {
+              defer.resolve({
+                error: true,
+                event: event
+              })
+            } else if (event.result && (event.result.success === false || event.result.error === true)) {
+              defer.resolve({
+                error2: true,
+                event: event
+              })
+            } else if(event.status == 'finished') {
+              defer.resolve({
+                success: true,
+                event: event
+              })
             }
-          }
+          });
+          return defer.promise;
         });
+        store.validator.promise = promise;
+      }
+      promise.then(function(res) {
+        var event = res.event;
+        store.validator.promise = null;
+        if(res.error) {
+          callback(false, {
+            code: store.INTERNAL_ERROR,
+            error: (event.result || {}).error_message || "Receipt validation failed"
+          });
+        } else if(res.success) {
+          var res = event.result;
+          if(res.expired) {
+            store.validator.promise = null;
+            callback(false, {
+              code: store.PURCHASE_EXPIRED,
+              error: { message: "expired" }
+            });
+          } else {
+            store.validator.promise = null;
+            callback(true, res);
+          }
+        } else {
+          callback(false, {
+            code: store.INTERNAL_ERROR,
+            wrong_user: (event.result || {}).wrong_user,
+            error: (event.result || {}).error_message || "Receipt validation did not succeed"
+          });
+        }
       }, function(err) {
+        store.validator.promise = null;
         callback(false, {
           code: store.INTERNAL_ERROR,
           error: (err || {}).message || "Receipt validation failed to initiate"
