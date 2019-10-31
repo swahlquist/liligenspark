@@ -144,6 +144,9 @@
                 {{/unless}}
               {{/unless}}
               {{#if subscription.app_pricing_override}}
+                {{#if subscription.has_app_subscription}}
+                  <a class='btn btn-default' href="#" {{action 'manage_subscriptions'}}>{{t "Manage Subscriptions" key='manage_subscriptions'}}</a>
+                {{/if}}
                 {{#if subscription.manual_refresh}}
                   <a class='btn btn-default' href="#" {{action 'refresh_subscription'}}>{{t "Restore Purchases" key='restore_purchases'}}</a>
                 {{/if}}

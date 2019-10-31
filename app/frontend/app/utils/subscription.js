@@ -203,6 +203,9 @@ var Subscription = EmberObject.extend({
   app_pricing_override: function() {
     return !!Subscription.product_types;
   }.property('app_state.app_store_purchase_types'),
+  app_pricing_override_no_monthly: function() {
+    return !!Subscription.product_types && !app_state.get('feature_flags.app_store_monthly_purchases');
+  }.property('app_state.app_store_purchase_types', 'app_state.feature_flags.app_store_monthly_purchases'),
   manual_refresh: function() {
     return this.get('app_pricing_override') && capabilities.system == 'iOS' && capabilities.installed_app;
   }.property('app_pricing_override'),
@@ -213,6 +216,17 @@ var Subscription = EmberObject.extend({
         console.log("app store refresh due to external call", force);
         Subscription.in_app_store.refresh();
       }
+    }
+  },
+  has_app_subscription: function() {
+    if(Subscription.product_types && Subscription.product_types[subscription_id] && Subscription.product_types[subscription_id].valid && Subscription.product_types[subscription_id].owned) {
+      return true;
+    }
+    return false;
+  }.property('app_state.app_store_purchase_types'),
+  manage_subscriptions: function() {
+    if(Subscsription.in_app_store) {
+      Subscription.in_app_store.manageSubscriptions();
     }
   },
   monthly_app_price: function() {

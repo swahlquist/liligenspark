@@ -25,6 +25,9 @@ export default Controller.extend({
     refresh_subscription: function() {
       this.get('subscription').refresh_store(true);
     },
+    manage_subscriptions: function() {
+      this.get('subscription').manage_subscriptions();
+    },
     purchase_premium_symbols: function() {
       var user = this.get('model');
       var _this = this;
