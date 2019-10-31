@@ -757,10 +757,14 @@ var capabilities;
           var promise = capabilities.mini_promise();
           if(window.cordova && window.cordova.exec) {
             window.cordova.exec(function(result) {
+              var num = parseInt(result);
+              if(capabilities.system == 'Android') {
+                num = num * 1024 * 1024;
+              }
               promise.resolve({
-                free: result,
-                mb: Math.round(result / 1024 / 1024),
-                gb: Math.round(result * 100 / 1024 / 1024 / 1024) / 100
+                free: num,
+                mb: Math.round(num / 1024 / 1024),
+                gb: Math.round(num * 100 / 1024 / 1024 / 1024) / 100
               });
             }, function(error) {
               promise.reject({error: error});

@@ -893,7 +893,7 @@ var app_state = EmberObject.extend({
   }.observes('sessionUser', 'sessionUser.auto_sync'),
   check_free_space: function() {
     return capabilities.storage.free_space().then(function(res) {
-      if(res && res.mb < 70) {
+      if(res && res.mb && res.mb < 70) {
         res.too_little = true;
         if(res.gb < 1) { res.gb = null; }
         app_state.set('limited_free_space', res);
