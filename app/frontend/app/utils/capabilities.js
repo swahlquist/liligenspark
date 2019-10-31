@@ -759,7 +759,7 @@ var capabilities;
             window.cordova.exec(function(result) {
               var num = parseInt(result);
               if(capabilities.system == 'Android') {
-                num = num * 1024 * 1024;
+                num = num * 1024;
               }
               promise.resolve({
                 free: num,
