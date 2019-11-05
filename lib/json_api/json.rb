@@ -23,6 +23,7 @@ module JsonApi::Json
   
   def paginate(params, where, args={})
     per_page = params['per_page'] ? [self::MAX_PAGE, params['per_page'].to_i].min : self::DEFAULT_PAGE
+    per_page = (args['per_page'] || args[:per_page]) if (args['per_page'] || args[:per_page])
     offset = params['offset'].to_i || 0
     if where.is_a?(Array)
       where = where[offset, per_page + 1]

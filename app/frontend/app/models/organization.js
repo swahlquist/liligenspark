@@ -27,11 +27,14 @@ CoughDrop.Organization = DS.Model.extend({
   admin: DS.attr('boolean'),
   allotted_licenses: DS.attr('number'),
   allotted_eval_licenses: DS.attr('number'),
+  allotted_extras: DS.attr('number'),
   used_licenses: DS.attr('number'),
   used_evals: DS.attr('number'),
+  used_extras: DS.attr('number'),
   total_users: DS.attr('number'),
   total_managers: DS.attr('number'),
   total_supervisors: DS.attr('number'),
+  total_extras: DS.attr('number'),
   include_extras: DS.attr('boolean'),
   licenses_expire: DS.attr('string'),
   created: DS.attr('date'),
@@ -56,6 +59,9 @@ CoughDrop.Organization = DS.Model.extend({
   eval_licenses_available: function() {
     return (this.get('allotted_eval_licenses') || 0) > (this.get('used_evals') || 0);
   }.property('allotted_eval_licenses', 'used_evals'),
+  extras_available: function() {
+    return (this.get('allotted_extras') || 0) > (this.get('used_extras') || 0);
+  }.property('allotted_extras', 'used_extras'),
   processed_purchase_history: function() {
     var res = [];
     (this.get('purchase_history') || []).forEach(function(e) {

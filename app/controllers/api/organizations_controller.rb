@@ -27,6 +27,13 @@ class Api::OrganizationsController < ApplicationController
     org_manager = @org.allows?(@api_user, 'manage')
     render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :organization_manager => org_manager})
   end
+
+  def extras
+    return unless allowed?(@org, 'edit')
+    users = @org.extras_users.sort_by(&:user_name)
+    prefix = "/organizations/#{@org.global_id}/extras"
+    render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :per_page => 500})
+  end
   
   def supervisors
     return unless allowed?(@org, 'edit')
@@ -175,7 +182,7 @@ class Api::OrganizationsController < ApplicationController
       users = User.where(:id => user_ids)
     elsif params['report'] == 'subscriptions'
       stats = {}
-      User.where(:possibly_full_premium => true).where(['created_at > ?', 4.months.ago]).each do |user|
+      User.where(:possibly_full_premium => true).where(['created_at > ? OR expires_at > ?', 4.months.ago, Time.now]).each do |user|
         if user.full_premium?
           amount = nil
           ts = nil

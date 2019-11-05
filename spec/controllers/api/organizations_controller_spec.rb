@@ -1171,20 +1171,20 @@ describe Api::OrganizationsController, :type => :controller do
   
   describe "evals" do
     it "should require api token" do
-      get :users, params: {:organization_id => 1}
+      get :evals, params: {:organization_id => 1}
       assert_missing_token
     end
     
     it "should return not found unless organization exists" do
       token_user
-      get :users, params: {:organization_id => "1"}
+      get :evals, params: {:organization_id => "1"}
       assert_not_found("1")
     end
     
     it "should return unauthorized unless edit permissions allowed" do
       o = Organization.create
       token_user
-      get :users, params: {:organization_id => o.global_id}
+      get :evals, params: {:organization_id => o.global_id}
       assert_unauthorized
     end
     
@@ -1203,6 +1203,45 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(25)
       expect(json['meta']['next_url']).to eq("#{JsonApi::Json.current_host}/api/v1/organizations/#{o.global_id}/evals?offset=#{JsonApi::User::DEFAULT_PAGE}&per_page=#{JsonApi::User::DEFAULT_PAGE}")
+    end
+  end
+
+  describe "extras" do
+    it "should require api token" do
+      get :extras, params: {:organization_id => 1}
+      assert_missing_token
+    end
+    
+    it "should return not found unless organization exists" do
+      token_user
+      get :extras, params: {:organization_id => "1"}
+      assert_not_found("1")
+    end
+    
+    it "should return unauthorized unless edit permissions allowed" do
+      o = Organization.create
+      token_user
+      get :extras, params: {:organization_id => o.global_id}
+      assert_unauthorized
+    end
+    
+    it "should return a paginated (above default max) list of extras users if authorized" do
+      o = Organization.create(:settings => {'total_licenses' => 200, 'total_extras' => 100})
+      token_user
+      o.add_manager(@user.user_name)
+      100.times do |i|
+        u = User.create
+        o.add_user(u.user_name, false)
+        o.reload
+        o.add_extras_to_user(u.user_name)
+      end
+      
+      get :extras, params: {:organization_id => o.global_id}
+      expect(response.success?).to eq(true)
+      json = JSON.parse(response.body)
+      expect(json['meta']).not_to eq(nil)
+      expect(json['user'].length).to eq(100)
+      expect(json['meta']['next_url']).to eq(nil)
     end
   end
 end

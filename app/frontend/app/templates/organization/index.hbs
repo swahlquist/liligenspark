@@ -91,6 +91,7 @@
     <li class={{if show_supervisors 'active'}}><a href="#" {{action 'pick' 'supervisors'}}>{{t "Supervisors" key='supervisors'}}</a></li>
     <li class={{if show_communicators 'active'}}><a href="#" {{action 'pick' 'communicators'}}>{{t "Communicators" key='communicators'}}</a></li>
     <li class={{if show_evals 'active'}}><a href="#" {{action 'pick' 'evals'}}>{{t "Evals" key='evals'}}</a></li>
+    <li class={{if show_extras 'active'}}><a href="#" {{action 'pick' 'extras'}}>{{t "Symbols" key='symbols'}}</a></li>
   </ul>
   {{#if show_managers}}
     {{#if managers.data}}
@@ -285,7 +286,7 @@
           {{/link-to}}
         </p>
       {{/if}}
-    {{else if users.loading}}
+    {{else if evals.loading}}
       <p style="margin-bottom: 30px;">{{t "Loading users..." key='loading_users'}}</p>
     {{else}}
       <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
@@ -301,6 +302,42 @@
           </p>
         {{/if}}
       {{/unless}}
+    </div>
+  {{/if}}
+
+  {{#if show_extras}}
+    {{#if model.permissions}}
+      <p>
+        {{model.used_extras}} {{t "out of" key='out_of' }}
+        {{model.allotted_extras}} {{t "premium symbol accounts used" key='extras_used' }}
+      </p>
+    {{/if}}
+    {{#if extras.data}}
+      <table class="table table-hover" style="width: 400px;">
+        <tbody>
+          {{#each extras.data as |user|}}
+            <tr>
+              <td>
+                {{#link-to 'user' user.user_name}}
+                  <img src={{user.avatar_url}} style="height: 30px;"/>
+                  {{user.user_name}}
+                {{/link-to}}
+              </td>
+              <td>
+                <a href='#' {{action "management_action" 'remove_extras' user.user_name true}} class="glyphicon glyphicon-remove"><span class='text-hide'>remove</span></a>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else if extras.loading}}
+      <p style="margin-bottom: 30px;">{{t "Loading users..." key='loading_users'}}</p>
+    {{else}}
+      <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
+    {{/if}}
+    <div style='margin-top: -15px;'>
+      {{input value=extras_user_name placeholder="user name" class="form-control inline inline-masquerade input-sm"}}
+      <button disabled={{no_extras}} class="btn btn-default btn-sm" {{action "management_action" 'add_extras' extras_user_name}}>{{t "Add Premium Symbols" key='add_extras'}}</button>
     </div>
   {{/if}}
 

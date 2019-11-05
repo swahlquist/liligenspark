@@ -139,6 +139,24 @@ describe JsonApi::Organization do
       expect(res['org_subscriptions']).to eq(nil)
       expect(res['allotted_licenses']).to eq(nil)
     end
+
+    it "should include extras allotments" do
+      u = User.create
+      o = Organization.create
+      o.add_manager(u.user_name, false)
+      
+      res = JsonApi::Organization.build_json(o.reload, :permissions => u.reload)
+      expect(res['name']).to eq('Unnamed Organization')
+      expect(res['allotted_extras']).to eq(0)
+      expect(res['used_extras']).to eq(0)
+
+      o.settings['total_extras'] = 5
+      o.save
+      res = JsonApi::Organization.build_json(o.reload, :permissions => u.reload)
+      expect(res['name']).to eq('Unnamed Organization')
+      expect(res['used_extras']).to eq(0)
+      expect(res['allotted_extras']).to eq(5)
+    end
     
   end
 end

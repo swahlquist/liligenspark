@@ -225,6 +225,7 @@ Coughdrop::Application.routes.draw do
       get 'evals'
       get 'users'
       get 'supervisors'
+      get 'extras'
       get 'logs'
       get 'stats'
       get 'admin_reports'

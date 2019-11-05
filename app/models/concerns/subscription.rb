@@ -239,18 +239,18 @@ module Subscription
         res = false
       else
         self.settings['subscription']['prior_purchase_ids'] ||= []
-        if args['purchase_id'] == 'restore' && self.settings['subscription']['last_purchase_id'] && self.settings['subscription']['seconds_left']
-          args['purchase_id'] = self.settings['subscription']['last_purchase_id']
-          args['plan_id'] = self.settings['subscription']['last_purchase_plan_id']
+        if args['purchase_id'] == 'restore' && self.settings['subscription']['last_paid_purchase_id'] && self.settings['subscription']['seconds_left']
+          args['purchase_id'] = self.settings['subscription']['last_paid_purchase_id']
+          args['plan_id'] = self.settings['subscription']['last_paid_purchase_plan_id']
           args['seconds_to_add'] = self.settings['subscription']['seconds_left']
-          args['purchase_amount'] = self.settings['subscription']['purchase_amount']
+          args['purchase_amount'] = self.settings['subscription']['last_paid_purchase_amount']
           args['source_id'] = 'restore'
           self.settings['subscription']['prior_purchase_ids'] -= [args['purchase_id']]
         end
         if args['purchase_id'] && self.settings['subscription']['prior_purchase_ids'].include?(args['purchase_id'])
           res = false
         else
-          self.clear_existing_subscription
+          self.clear_existing_subscription(:track_seconds_left => args['plan_id'] == 'slp_long_term_free')
           if args['customer_id'] || args['customer_id'] == nil
             if self.settings['subscription']['customer_id'] && self.settings['subscription']['customer_id'] != args['customer_id']
               self.settings['subscription']['prior_customer_ids'] ||= []
@@ -271,6 +271,11 @@ module Subscription
           self.settings['subscription']['last_purchased'] = Time.now.iso8601
           self.settings['subscription']['last_purchase_plan_id'] = args['plan_id']
           self.settings['subscription']['last_purchase_id'] = args['purchase_id']
+          if args['plan_id'] != 'slp_long_term_free'
+            self.settings['subscription']['last_paid_purchase_plan_id'] = args['plan_id']
+            self.settings['subscription']['last_paid_purchase_id'] = args['purchase_id']
+            self.settings['subscription']['last_paid_purchase_amount'] = args['purchase_amount']
+          end
           PurchaseToken.map("purchase.#{args['source_id']}.#{args['purchase_id']}", args['device_id'], self)
           self.settings['subscription']['discount_code'] = args['discount_code'] if args['discount_code']
           self.settings['subscription']['last_purchase_seconds_added'] = args['seconds_to_add']
@@ -279,7 +284,7 @@ module Subscription
           self.settings['preferences']['progress'] ||= {}
           self.settings['preferences']['progress']['subscription_set'] = true
           self.expires_at = [self.expires_at, Time.now].compact.max
-          self.expires_at += args['seconds_to_add']
+          self.expires_at += args['seconds_to_add'].to_i
         end
       
         self.assert_current_record!
@@ -550,6 +555,12 @@ module Subscription
   def recurring_subscription?
     !!(self.settings && self.settings['subscription'] && self.settings['subscription']['started'])
   end
+
+  def extras_for_org?(org)
+    self.settings ||= {}
+    extras = (self.settings['subscription'] || {})['extras'] || {}
+    return !!(org && extras && extras['enabled'] && extras['source'] == 'org_added' && extras['org_id'] == org.global_id)
+  end
   
   def subscription_hash
     json = {}
@@ -736,12 +747,21 @@ module Subscription
       raise "user not found" unless user
       user.settings['subscription'] ||= {}
       first_enabling = !(user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled'])
+      if opts['source'] == 'org_added' && user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled']
+        raise "extras already activated for user"
+      end
       user.settings['subscription']['extras'] = (user.settings['subscription']['extras'] || {}).merge({
         'enabled' => true,
         'purchase_id' => opts['purchase_id'],
         'customer_id' => opts['customer_id'],
         'source' => opts['source']
       })
+      if opts['source'] == 'org_added' && opts['org_id']
+        user.settings['subscription']['extras']['org_id'] = opts['org_id']
+      end
+      if opts['source'] == 'org_added' && !opts['new_activation']
+        first_enabling = false
+      end
       user.settings['subscription']['extras']['sources'] ||= []
       user.settings['subscription']['extras']['sources'] << {
         'timestamp' => Time.now.to_i,
@@ -756,6 +776,29 @@ module Subscription
         SubscriptionMailer.schedule_delivery(:extras_purchased, user.global_id)
       end
       true
+    end
+
+    def deactivate_extras(opts)
+      user = User.find_by_global_id(opts['user_id'])
+      if user && user.settings['subscription'] && user.settings['subscription']['extras']
+        if user.settings['subscription']['extras']['source'] == 'org_added'
+          if opts['org_id'] && user.settings['subscription']['extras']['org_id'] == opts['org_id']
+            user.settings['subscription']['extras']['enabled'] = false
+            user.settings['subscription']['extras']['sources'] ||= []
+            user.settings['subscription']['extras']['sources'] << {
+              'timestamp' => Time.now.to_i,
+              'source' => 'deactivated'
+            }
+            user.save
+          else
+            raise "deactivating from the wrong org" unless opts['ignore_errors']
+          end
+        else
+          raise "only org-added extras can be deactivated" unless opts['ignore_errors']
+        end
+      else
+        raise "extras not activated" unless opts['ignore_errors']
+      end
     end
     
     def subscription_event(args)

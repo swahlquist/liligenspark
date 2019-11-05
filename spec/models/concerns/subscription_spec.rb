@@ -1375,8 +1375,63 @@ describe Subscription, :type => :model do
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
       User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
     end
+
+    it "should mark org_id if specified" do
+      u = User.create
+      expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
+      User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true})
+      expect(u.reload.settings['subscription']['extras']['enabled']).to eq(true)
+      expect(u.reload.settings['subscription']['extras']['org_id']).to eq('asdf')
+    end
+
+    it "should mark as first_enabling if true" do
+      u = User.create
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
+      User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true, 'new_activation' => true})
+      expect(u.reload.settings['subscription']['extras']['enabled']).to eq(true)
+      expect(u.reload.settings['subscription']['extras']['org_id']).to eq('asdf')
+    end
+
+    it "should error when trying to add extras from an org but the user has already purchased" do
+      u = User.create
+      User.purchase_extras({'user_id' => u.global_id, 'source' => 'coolness'})
+      expect { User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf'}) }.to raise_error("extras already activated for user")
+    end
   end
-  
+
+  describe "deactivate_extras" do
+    it "should raise error with invalid on unpurchased user id" do
+      u = User.create
+      expect { User.deactivate_extras({'user_id' => 'asdf'}) }.to raise_error("extras not activated")
+      u = User.create
+      expect { User.deactivate_extras({'user_id' => u.global_id}) }.to raise_error("extras not activated")
+    end
+
+    it "should raise error if not org-added extras" do
+      u = User.create
+      u.settings['subscription'] = {'extras' => {'enabled' => true}}
+      u.save
+      expect { User.deactivate_extras({'user_id' => u.global_id}) }.to raise_error("only org-added extras can be deactivated")
+    end
+
+    it "should raise error if deactivating from the wrong org" do
+      u = User.create
+      o = Organization.create
+      u.settings['subscription'] = {'extras' => {'enabled' => true, 'source' => 'org_added', 'org_id' => 'asdf'}}
+      u.save
+      expect { User.deactivate_extras({'user_id' => u.global_id, 'org_id' => o.global_id}) }.to raise_error("deactivating from the wrong org")
+    end
+
+    it "should disable the extras if everything checks out" do
+      u = User.create
+      o = Organization.create
+      u.settings['subscription'] = {'extras' => {'enabled' => true, 'source' => 'org_added', 'org_id' => o.global_id}}
+      u.save
+      User.deactivate_extras({'user_id' => u.global_id, 'org_id' => o.global_id})
+      expect(u.reload.settings['subscription']['extras']['enabled']).to eq(false)
+    end
+  end
+
   describe "subscription_hash" do
     it "should correctly identify long-term subscription entries" do
       u = User.new
@@ -1992,6 +2047,23 @@ describe Subscription, :type => :model do
       u.settings['subscription']['last_purchased'] = (Time.now - cutoff).iso8601
       expect(u.purchase_credit_duration).to be >= (1.week.to_i - 3600)
       expect(u.purchase_credit_duration).to be <= (1.week.to_i + 3600)
+    end
+  end
+
+  describe "extras_for_org?" do
+    it "should specify whether extras are enabled from an org source" do
+      u = User.new
+      o = Organization.create
+      expect(u.extras_for_org?(o)).to eq(false)
+      u.settings = {}
+      u.settings['subscription'] = {}
+      expect(u.extras_for_org?(o)).to eq(false)
+      u.settings['subscription']['extras'] = {'enabled' => true}
+      expect(u.extras_for_org?(o)).to eq(false)
+      u.settings['subscription']['extras']['source'] = 'org_added'
+      expect(u.extras_for_org?(o)).to eq(false)
+      u.settings['subscription']['extras']['org_id'] = o.global_id
+      expect(u.extras_for_org?(o)).to eq(true)
     end
   end
 end

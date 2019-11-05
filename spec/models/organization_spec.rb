@@ -932,7 +932,53 @@ describe Organization, :type => :model do
           'admin_email' => 'admin@example.com'
         }
       }, {'updater' => u})
-      expect(o.settings['host_settings']).to eq({'css' => nil, 'app_name' => 'CoughDrop', 'company_name' => 'CoughDrop', 'admin_email' => 'admin@example.com'})
+      expect(o.settings['host_settings']).to eq({'css' => nil, 'app_name' => 'CoughDrop', 'company_name' => 'CoughDrop', 'admin_email' => 'admin@example.com', 'twitter_handle' => 'coughdrop'})
+    end
+
+    it "should log an event when updating extras count" do
+      u = User.create
+      o = Organization.create
+      o.add_manager(u.user_name, true)
+      o.process({
+        'allotted_extras' => 7
+      }, {'updater' => u})
+      expect(o.settings['total_extras']).to eq(7)
+      expect(o.settings['purchase_events'].length).to eq(1)
+      expect(o.settings['purchase_events'][0]['type']).to eq('update_extras_count')
+    end
+
+    it "should allow adding extras to a user" do
+      u = User.create
+      expect(u.reload.subscription_hash['extras_enabled']).to eq(nil)
+      o = Organization.create
+      o.settings['total_extras'] = 10
+      o.add_manager(u.user_name, true)
+      o.process({
+        'management_action' => "add_extras-#{u.user_name}"
+      }, 'updater' => u)
+      u.reload
+      expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+    end
+
+    it "should allow removing extras from a user" do
+      u = User.create
+      o = Organization.create
+      o.settings['total_extras'] = 10
+      o.add_supervisor(u.user_name, false)
+      o.process({
+        'management_action' => "add_extras-#{u.user_name}"
+      }, 'updater' => u)
+      u.reload
+      expect(u.settings['subscription']).to_not eq(true)
+      expect(u.settings['subscription']['extras']).to_not eq(nil)
+      expect(u.settings['subscription']['extras']['enabled']).to eq(true)
+      expect(u.settings['subscription']['extras']['source']).to eq('org_added')
+      expect(u.settings['subscription']['extras']['org_id']).to eq(o.global_id)
+      o.reload
+      o.process({
+        'management_action' => "remove_extras-#{u.user_name}"
+      }, 'updater' => u)
+      expect(u.reload.settings['subscription']['extras']['enabled']).to eq(false)
     end
   end
   
@@ -1592,7 +1638,7 @@ describe Organization, :type => :model do
       o.approve_supervisor(u1)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'supervisor']})).to eq(true)
       Worker.process_queues
-      expect(u1.reload.subscription_hash['extras_enabled']).to eq(true)
+      expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
     end
   end
 
@@ -1687,6 +1733,113 @@ describe Organization, :type => :model do
         'c.com' => {'app_name' => 'D', 'org_id' => o3.global_id},
         'd.com' => {'app_name' => 'D', 'org_id' => o3.global_id}
       })
+    end
+  end
+
+  describe "add_extras_to_user" do
+    it "should error on invalid user key" do
+      o = Organization.create
+      expect { o.add_extras_to_user('bacon') }.to raise_error("invalid user, bacon")
+    end
+
+    it "should error if the user is not part of the org" do
+      o = Organization.create
+      u = User.create
+      expect { o.add_extras_to_user(u.user_name) }.to raise_error("user not attached to org")
+    end
+
+    it "should error if no extras are available" do
+      o = Organization.create
+      u = User.create
+      o.add_supervisor(u.user_name, false)
+      expect { o.add_extras_to_user(u.user_name) }.to raise_error("no extras available")
+    end
+
+    it "should trigger the purchase with new_activation if an new activation" do
+      o = Organization.create(settings: {'total_extras' => 5, 'total_licenses' => 5})
+      u = User.create
+      o.add_user(u.user_name, false)
+      expect(User).to receive(:purchase_extras).with({
+        'user_id' => u.global_id,
+        'source' => 'org_added',
+        'org_id' => o.global_id,
+        'new_activation' => true
+      })
+      o.reload
+      o.add_extras_to_user(u.user_name)
+      expect(o.reload.settings['activated_extras']).to eq(1)
+    end
+
+    it "should not trigger new activation if already activated" do
+      o = Organization.create(settings: {'total_licenses' => 1, 'total_extras' => 5, 'activated_extras' => 5})
+      u = User.create
+      User.purchase_extras({'user_id' => u.global_id, 'source' => 'magic'})
+      o.add_user(u.user_name, false)
+      expect(User).to receive(:purchase_extras).with({
+        'user_id' => u.global_id,
+        'source' => 'org_added',
+        'org_id' => o.global_id,
+        'new_activation' => false
+      })
+      o.reload
+      o.add_extras_to_user(u.user_name)
+      expect(o.reload.settings['activated_extras']).to eq(5)
+    end
+
+    it "should tally activated extras" do
+      o = Organization.create(settings: {'total_licenses' => 1, 'total_extras' => 5})
+      u = User.create
+      o.add_user(u.user_name, false)
+      expect(User).to receive(:purchase_extras).with({
+        'user_id' => u.global_id,
+        'source' => 'org_added',
+        'org_id' => o.global_id,
+        'new_activation' => true
+      })
+      o.reload
+      o.add_extras_to_user(u.user_name)
+      expect(o.reload.settings['activated_extras']).to eq(1)
+    end
+  end
+
+  describe "remove_extras_from_user" do
+    it "should return false for a user not attached to the org" do
+      o = Organization.create
+      expect(o.remove_extras_from_user('asdf')).to eq(false)
+      u = User.create
+      expect(o.remove_extras_from_user(u.user_name)).to eq(false)
+      o.add_manager(u.user_name, false)
+      expect(o.remove_extras_from_user(u.user_name)).to eq(false)
+    end
+
+    it "should return true for a removable user" do
+      o = Organization.create
+      u = User.create
+      o.add_supervisor(u.user_name, false)
+      expect(User).to receive(:deactivate_extras).with({
+        'user_id' => u.global_id,
+        'org_id' => o.global_id, 
+        'ignore_errors' => true
+      })
+      expect(o.remove_extras_from_user(u.user_name)).to eq(true)
+    end
+  end
+
+  describe "extras_users" do
+    it "should return a list of all users with extras enabled by the org" do
+      o = Organization.create
+      o.settings['total_extras'] = 20
+      o.settings['total_licenses'] = 20
+      o.save
+      users = []
+      10.times do |i|
+        u = User.create
+        o.add_user(u.user_name, false)
+        o.reload
+        o.add_extras_to_user(u.user_name)
+        users << u
+      end
+      expect(o.extras_users.sort_by(&:id)).to eq(users.sort_by(&:id))
     end
   end
 end

@@ -15,14 +15,9 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="extras" class="col-sm-2 control-label">{{t "Premium Symbols" key='premium_symbols'}}</label>
-        <div class="col-sm-4">
-          <div class="checkbox big_checkbox">
-            <label>
-              {{input type="checkbox" checked=model.include_extras id="extras"}}
-              {{t "Enable premium symbols for all organization users and supervisors" key='enable_extras_for_members'}}
-            </label>
-          </div>
+        <label for="allotted_extras" class="col-sm-2 control-label">{{t "Premium Symbols" key='premium_symbols'}}</label>
+        <div class="col-sm-1">
+          {{input value=model.allotted_extras class="form-control" id="allotted_extras" placeholder="0"}}
         </div>
       </div>
       <div class="form-group">
@@ -102,6 +97,16 @@
         {{else if event.remove_subscription}}
           <li class="list-group-item">
             {{t "Purchase user \"%{user_name}\" was removed - " key='subscription_user_removed' user_name=event.user_name}}
+            <span class='text-muted'>{{date_ago event.logged_at}}</span>
+          </li>
+        {{else if event.update_extras_count}}
+          <li class="list-group-item">
+            {{t "Premium symbols total was updated to %{num} - " key='extras_count_updated' num=event.count}}
+            <span class='text-muted'>{{date_ago event.logged_at}}</span>
+          </li>
+        {{else}}
+          <li class="list-group-item">
+            {{t "Unrecognized event - " key='unrecognized_event'}} {{event.type}} - 
             <span class='text-muted'>{{date_ago event.logged_at}}</span>
           </li>
         {{/if}}

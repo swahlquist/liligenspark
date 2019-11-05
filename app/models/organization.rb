@@ -80,29 +80,29 @@ class Organization < ActiveRecord::Base
   def org_assertions(user_id, user_type)
     if user_type == 'user' || user_type == 'supervisor' || user_id == 'all'
       if self.settings['include_extras']
-        users = []
-        if user_id == 'all'
-          users += self.supervisors.select{|u| !self.pending_supervisor?(u) }
-          users += self.sponsored_users.select{|u| !self.pending_user?(u) }
-          users += self.eval_users.select{|u| !self.pending_user?(u) }
-        else
-          user = User.find_by_global_id(user_id)
-          if user
-            if user_type == 'user' && self.sponsored_users.include?(user) && !self.pending_user?(user)
-              users = [user]
-            elsif user_type == 'supervisor' && self.supervisors.include?(user) && !self.pending_supervisor?(user)
-              users = [user]
-            end
-          end
-        end
-        users.each do |user|
-          self.settings['extras_activations'] ||= []
-          if !user.reload.subscription_hash['extras_enabled']
-            User.purchase_extras({'user_id' => user.global_id, 'source' => 'org_added'})
-            self.settings['extras_activations'] << {user_id: user.global_id, activated_at: Time.now.iso8601}
-          end
-          self.save
-        end
+        # users = []
+        # if user_id == 'all'
+        #   users += self.supervisors.select{|u| !self.pending_supervisor?(u) }
+        #   users += self.sponsored_users.select{|u| !self.pending_user?(u) }
+        #   users += self.eval_users.select{|u| !self.pending_user?(u) }
+        # else
+        #   user = User.find_by_global_id(user_id)
+        #   if user
+        #     if user_type == 'user' && self.sponsored_users.include?(user) && !self.pending_user?(user)
+        #       users = [user]
+        #     elsif user_type == 'supervisor' && self.supervisors.include?(user) && !self.pending_supervisor?(user)
+        #       users = [user]
+        #     end
+        #   end
+        # end
+        # users.each do |user|
+        #   # self.settings['extras_activations'] ||= []
+        #   # if !user.reload.subscription_hash['extras_enabled']
+        #   #   User.purchase_extras({'user_id' => user.global_id, 'source' => 'org_added'})
+        #   #   self.settings['extras_activations'] << {user_id: user.global_id, activated_at: Time.now.iso8601}
+        #   # end
+        #   # self.save
+        # end
       end
     end
   end
@@ -457,6 +457,7 @@ class Organization < ActiveRecord::Base
       self.settings['attached_user_ids'][type].select!{|id| id != user.global_id }
     end
     self.save
+    self.remove_extras_from_user(user.user_name)
   end
   
   def self.detach_user(user, user_type, except_org=nil)
@@ -485,6 +486,7 @@ class Organization < ActiveRecord::Base
       links = links.select{|l| l['type'] == 'org_user' && !l['state']['pending'] }
     elsif user_type == 'sponsored_user'
       links = links.select{|l| l['type'] == 'org_user' && l['state']['sponsored'] }
+    elsif user_type == 'all'
     else
       raise "unrecognized type, #{user_type}"
     end
@@ -597,6 +599,28 @@ class Organization < ActiveRecord::Base
   def user?(user)
     managed_user?(user)
   end
+
+  def add_extras_to_user(user_key)
+    user = User.find_by_path(user_key)
+    raise "invalid user, #{user_key}" unless user
+    valid = self.attached_users('all').detect{|u| u.global_id == user.global_id }
+    raise "user not attached to org" unless valid
+    total_extras = (self.settings || {})['total_extras'] || 0
+    extras_count = self.extras_users.count
+    raise "no extras available" if total_extras <= extras_count
+    activated = (self.settings || {})['activated_extras'] || 0
+    new_activation = false;
+    if activated < total_extras
+      new_activation = true
+      self.settings['activated_extras'] = activated + 1
+      self.save
+    end
+    User.purchase_extras({'user_id' => user.global_id, 'source' => 'org_added', 'org_id' => self.global_id, 'new_activation' => new_activation})
+  end
+
+  def extras_users
+    self.attached_users('all').select{|u| u.extras_for_org?(self) }
+  end
   
   def add_user(user_key, pending, sponsored=true, eval_account=false)
     user = User.find_by_path(user_key)
@@ -626,7 +650,18 @@ class Organization < ActiveRecord::Base
       'removed_at' => Time.now.iso8601
     }) unless pending
     OrganizationUnit.schedule(:remove_as_member, user_key, 'communicator', self.global_id)
+    self.remove_extras_from_user(user.user_name)
     true
+  end
+
+  def remove_extras_from_user(user_key)
+    user = User.find_by_path(user_key)
+    any_link = user && !!UserLink.links_for(user).detect{|l| (l['type'] == 'org_user' || l['type'] == 'org_supervisor') && l['record_code'] == Webhook.get_record_code(self)}
+    if any_link
+      User.deactivate_extras({'user_id' => user.global_id, 'org_id' => self.global_id, 'ignore_errors' => true})
+      return true
+    end
+    false
   end
 
   def additional_listeners(type, args)
@@ -732,7 +767,23 @@ class Organization < ActiveRecord::Base
         }, false)
       end
     end
-    self.settings['include_extras'] = params[:include_extras] unless params[:include_extras] == nil
+    if params[:allotted_extras]
+      total = params[:allotted_extras].to_i
+      used = self.extras_users.count
+      if total < used
+        add_processing_error("too few extras (premium symbols), remove some users first")
+        return false
+      end
+      if self.settings['total_extras'] != total
+        self.settings['total_extras'] = total
+        self.log_purchase_event({
+          'type' => 'update_extras_count',
+          'count' => total,
+          'updater_id' => non_user_params['updater'].global_id,
+          'updater_user_name' => non_user_params['updater'].user_name
+        }, false)
+      end
+    end
     if params[:licenses_expire]
       time = Time.parse(params[:licenses_expire])
       self.settings['licenses_expire'] = time.iso8601
@@ -797,12 +848,16 @@ class Organization < ActiveRecord::Base
           self.add_supervisor(key, true)
         elsif action == 'add_assistant' || action == 'add_manager'
           self.add_manager(key, action == 'add_manager')
+        elsif action == 'add_extras'
+          self.add_extras_to_user(key)
         elsif action == 'remove_user'
           self.remove_user(key)
         elsif action == 'remove_supervisor'
           self.remove_supervisor(key)
         elsif action == 'remove_assistant' || action == 'remove_manager'
           self.remove_manager(key)
+        elsif action == 'remove_extras'
+          self.remove_extras_from_user(key)
         end
       rescue => e
         add_processing_error("user management action failed: #{e.message}")

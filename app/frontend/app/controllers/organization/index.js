@@ -13,12 +13,14 @@ export default Controller.extend({
     this.set('orgs', {});
     this.set('users', {});
     this.set('evals', {});
+    this.set('extras', {});
     this.set('logs', {});
     this.set('managers', {});
     this.set('supervisors', {});
     this.set('selected_view', null);
     this.refresh_users();
     this.refresh_evals();
+    this.refresh_extras();
     this.refresh_managers();
     this.refresh_supervisors();
     this.refresh_orgs();
@@ -76,6 +78,9 @@ export default Controller.extend({
   show_evals: function() {
     return this.get('shown_view') == 'evals';
   }.property('shown_view'),
+  show_extras: function() {
+    return this.get('shown_view') == 'extras';
+  }.property('shown_view'),
   show_supervisors: function() {
     return this.get('shown_view') == 'supervisors';
   }.property('shown_view'),
@@ -94,6 +99,9 @@ export default Controller.extend({
   no_eval_licenses: function() {
     return !this.get('model.eval_licenses_available');
   }.property('model.eval_licenses_available'),
+  no_extras: function() {
+    return !this.get('model.extras_available');
+  }.property('model.extras_available'),
   refresh_stats: function() {
     var _this = this;
     _this.set('weekly_stats', null);
@@ -162,7 +170,7 @@ export default Controller.extend({
     var _this = this;
     this.set('users.loading', true);
     var id = this.get('model.id');
-    persistence.ajax('/api/v1/organizations/' + id + '/users', {type: 'GET', data: {recent: true}}).then(function(data) {
+    persistence.ajax('/api/v1/organizations/' + id + '/users', {type: 'GET'}).then(function(data) {
       _this.set('users.loading', null);
       _this.set('users.data', data.user);
       _this.set('more_users', data.meta && data.meta.next_url);
@@ -175,7 +183,7 @@ export default Controller.extend({
     var _this = this;
     this.set('evals.loading', true);
     var id = this.get('model.id');
-    persistence.ajax('/api/v1/organizations/' + id + '/evals', {type: 'GET', data: {recent: true}}).then(function(data) {
+    persistence.ajax('/api/v1/organizations/' + id + '/evals', {type: 'GET'}).then(function(data) {
       _this.set('evals.loading', null);
       _this.set('evals.data', data.user);
       _this.set('more_evals', data.meta && data.meta.next_url);
@@ -184,11 +192,23 @@ export default Controller.extend({
       _this.set('evals.data', null);
     });
   },
+  refresh_extras: function() {
+    var _this = this;
+    this.set('extras.loading', true);
+    var id = this.get('model.id');
+    persistence.ajax('/api/v1/organizations/' + id + '/extras', {type: 'GET'}).then(function(data) {
+      _this.set('extras.loading', null);
+      _this.set('extras.data', data.user);
+    }, function() {
+      _this.set('extras.loading', null);
+      _this.set('extras.data', null);
+    });
+  },
   refresh_managers: function() {
     var _this = this;
     _this.set('managers.loading', true);
     var id = _this.get('model.id');
-    persistence.ajax('/api/v1/organizations/' + id + '/managers', {type: 'GET', data: {recent: true}}).then(function(data) {
+    persistence.ajax('/api/v1/organizations/' + id + '/managers', {type: 'GET'}).then(function(data) {
       _this.set('managers.loading', null);
       _this.set('managers.data', data.user);
     }, function() {
@@ -200,7 +220,7 @@ export default Controller.extend({
     var _this = this;
     _this.set('supervisors.loading', true);
     var id = _this.get('model.id');
-    persistence.ajax('/api/v1/organizations/' + id + '/supervisors', {type: 'GET', data: {recent: true}}).then(function(data) {
+    persistence.ajax('/api/v1/organizations/' + id + '/supervisors', {type: 'GET'}).then(function(data) {
       _this.set('supervisors.loading', null);
       _this.set('supervisors.data', data.user);
       _this.set('more_supervisors', data.meta && data.meta.next_url);
@@ -270,6 +290,9 @@ export default Controller.extend({
         } else if(action == 'add_eval') {
           user_name = this.get('eval_user_name');
           cleanup = function() { _this.set('eval_user_name', ''); };
+        } else if(action == 'add_extras') {
+          user_name = this.get('extras_user_name');
+          cleanup = function() { _this.set('extras_user_name', ''); };
         }
       }
       if(!user_name) { return; }
@@ -279,6 +302,8 @@ export default Controller.extend({
           _this.refresh_users();
         } else if(action.match(/eval/)) {
           _this.refresh_evals();
+        } else if(action.match(/extra/)) {
+          _this.refresh_extras();
         } else if(action.match(/manager/) || action.match(/assistant/)) {
           _this.refresh_managers();
         } else if(action.match(/supervisor/)) {

@@ -24,11 +24,13 @@ module JsonApi::Organization
       end
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0
+      json['allotted_extras'] = org.settings['total_extras'] || 0
       json['used_licenses'] = 0
       json['used_evals'] = 0
       json['total_users'] = 0
       json['total_managers'] = 0
       json['total_supervisors'] = 0
+      json['used_extras'] = org.extras_users.count || 0
       json['include_extras'] = org.settings['include_extras']
       user_ids = []
       UserLink.links_for(org).each do |link|
