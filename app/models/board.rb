@@ -833,6 +833,10 @@ class Board < ActiveRecord::Base
       if trans
         self.settings['translations'] ||= {}
         trans.each do |loc, tran|
+          if loc.is_a?(Hash)
+            tran = loc
+            loc = loc['locale']
+          end
           next unless tran
           tran['locale'] ||= loc
           self.settings['translations'][button['id'].to_s] ||= {}

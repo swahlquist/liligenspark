@@ -58,7 +58,7 @@ describe LogSession, :type => :model do
       expect(s.data['utterance_count']).to eq(0)
       expect(s.data['utterance_word_count']).to eq(0)
       expect(s.data['duration']).to eq(nil)
-      expect(s.data['event_count']).to eq(0)
+      expect(s.data['event_count']).to eq(nil)
       expect(s.started_at).to be > 1.second.ago
       expect(s.ended_at).to be > 1.second.ago
       expect(s.data['event_summary']).to eq('Note by fred: I am happy')
@@ -1251,7 +1251,7 @@ describe LogSession, :type => :model do
           {'user_id' => u2.global_id, 'geo' => ['2', '3'], 'timestamp' => 2.minutes.ago.to_i, 'type' => 'button', 'button' => {'label' => 'radish', 'board' => {'id' => '1_1'}}}
         ]
       }, {:device => d, :author => u, :user => u})
-      expect { Worker.process_queues }.to raise_error('no valid events to process out of 2')
+      expect { Worker.process_queues }.to raise_error("no valid events to process out of 2 #{u2.global_id}")
       
       s.reload
       expect(s.data['events'].length).to eq(2)
@@ -1420,7 +1420,7 @@ describe LogSession, :type => :model do
       }, {device: d, author: u1, user: u1})
       
       expect(s.user).to eq(nil)
-      expect { Worker.process_queues }.to raise_error('no valid events to process out of 4')
+      expect { Worker.process_queues }.to raise_error("no valid events to process out of 4 #{u2.global_id},#{u3.global_id}")
     end
 
     it "should create a journal log if specified" do

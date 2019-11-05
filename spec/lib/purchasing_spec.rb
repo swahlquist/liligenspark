@@ -2266,7 +2266,7 @@ describe Purchasing do
       expect(Stripe::Customer).to receive(:list).with(:limit => 10).and_return(cust)
       expect(Stripe::Subscription).to receive(:list).with(:limit => 20, :status => 'canceled').and_return(Pager.new(:subscriptions))
       Purchasing.reconcile
-      expect(outputs.length).to eq(25)
+      expect(outputs.length).to eq(28)
       problems = outputs.detect{|o| o.match(/^PROBLEM/)}
       expect(problems).to_not eq(nil)
       problems = problems.split(/\n/)

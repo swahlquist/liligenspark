@@ -210,15 +210,15 @@ describe Device, :type => :model do
       expect(d.settings['long_token_set']).to eq(nil)
     end
 
-    it "should mark the long_token as set by the user for browser device tokens" do
+    it "should not mark the long_token as set by the user for browser device tokens" do
       d = Device.create
       expect(d.token_type).to eq(:unknown)
       d.settings['browser'] = true
       expect(d.token_type).to eq(:browser)
       d.generate_token!
       expect(d.settings['keys'].length).to eq(1)
-      expect(d.settings['long_token']).to eq(false)
-      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
 
       d = Device.create
       expect(d.token_type).to eq(:unknown)
@@ -227,7 +227,7 @@ describe Device, :type => :model do
       d.generate_token!(true)
       expect(d.settings['keys'].length).to eq(1)
       expect(d.settings['long_token']).to eq(true)
-      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(nil)
     end
   end
 

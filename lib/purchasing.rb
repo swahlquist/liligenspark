@@ -807,6 +807,33 @@ module Purchasing
       cancels[sub['customer']] ||= []
       cancels[sub['customer']] << sub
     end
+    output "retrieving charges..."
+    list = Stripe::Charge.list(:limit => 20)
+    big_charges = []
+    tallies = {}
+    while(list && list.data && list.data[0] && list.data[0].created > 3.months.ago.to_i)
+      list.data.each do |charge|
+        if charge.captured && !charge.refunded
+          date = Time.at(charge.created).iso8601[0, 7]
+          tallies[date] = (tallies[date] || 0) + (charge.amount / 100)
+          if charge.amount > 90
+            big_charges << charge
+          end
+        end
+      end
+      list = list.next_page
+      puts "..." # TODO: output instead of puts
+    end
+    tally_months = {}
+    big_charges.each do |charge|
+      time = Time.at(charge.created)
+      date = time.iso8601[0, 7]
+      if charge.amount > 225
+        tally_months[date] = (tally_months[date] || 0) + (charge.amount / 100 / 150).floor
+      else
+        tally_months[date] = (tally_months[date] || 0) + 1
+      end
+    end.length
     problems = []
     user_active_ids = []
     years = {}
@@ -828,7 +855,7 @@ module Purchasing
       end
 
       customer_subs = customer['subscriptions'].to_a
-      user_active = user.recurring_subscription?
+      user_active = user && user.recurring_subscription?
       user_active_ids << user.global_id if user_active
       customer_active = false
       
@@ -950,6 +977,8 @@ module Purchasing
     if problems.length > 0
       output "PROBLEMS:\n#{problems.join("\n")}\n"
     end
+    output "PURCHASES: #{tallies.to_json}"
+    output "LICENSES (approx): #{tally_months.to_json}"
     output "YEARS: #{years.to_json}"
     output "TOTALS: checked #{total}, paying customers (not trialing, not duplicates) #{customer_active_ids.uniq.length}, subscription users #{user_active_ids.uniq.length}"
     cancel_months.each{|k, a| 

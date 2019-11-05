@@ -769,6 +769,12 @@ var capabilities;
             }, function(error) {
               promise.reject({error: error});
             }, "File", "getFreeDiskSpace", []);
+          } else if(window.file_storage && window.file_storage.free_space) {
+            window.file_storage.free_space().then(function(res) {
+              promise.resolve(res);
+            }, function(err) {
+              promise.reject(err);
+            });
           } else {
             promise.reject({error: "currently no way to check free space"});
           }

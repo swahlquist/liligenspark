@@ -24,7 +24,6 @@ class Organization < ActiveRecord::Base
   def generate_defaults
     self.settings ||= {}
     self.settings['name'] ||= "Unnamed Organization"
-    self.schedule(:org_assertions, 'all', nil) if self.settings['include_extras'] && @processed
     @processed = false
     true
   end
@@ -803,6 +802,9 @@ class Organization < ActiveRecord::Base
           self.settings['host_settings'][str] = val
           self.settings['host_settings'].delete(str) if val.blank?
         end
+      end
+      if self.settings['host_settings']['twitter_handle']
+        self.settings['host_settings']['twitter_handle'] = self.settings['host_settings']['twitter_handle'].sub(/^\@/, '')
       end
     end
     

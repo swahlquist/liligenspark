@@ -1732,20 +1732,20 @@ describe Subscription, :type => :model do
         'purchase_id' => '23456',
         'seconds_to_add' => 8.weeks.to_i
       })
+      expect(u.full_premium?).to eq(true)
       expect(u.premium?).to eq(true)
 
       res = u.update_subscription({
         'purchase' => true,
-        'plan_id' => 'slp_long_term_free',
-        'purchase_id' => '23456'
+        'plan_id' => 'slp_long_term_free'
       })
-      expect(u.premium?).to eq(false)
+      expect(u.reload.full_premium?).to eq(false)
+      expect(u.reload.premium?).to eq(true)
 
       expect(u.subscription_override('restore')).to eq(true)
-      u.premium?
-    
       
       expect(u.premium?).to eq(true)
+      expect(u.full_premium?).to eq(true)
     end
     
     it "should cancel existing subscription when setting to communicator trial" do

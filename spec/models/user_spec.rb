@@ -1563,9 +1563,9 @@ describe User, :type => :model do
         u = User.new
         u.id = 199
         u.settings = {'email' => 'bob@example.com'}
-        expect(u.generated_avatar_url('default')).to eq('https://www.gravatar.com/avatar/4b9bb80620f03eb3719e0a061c14283d?s=100&d=https%3A%2F%2Fs3.amazonaws.com%2Fcoughdrop%2Favatars%2Favatar-9.png');
+        expect(u.generated_avatar_url('default')).to eq('https://www.gravatar.com/avatar/4b9bb80620f03eb3719e0a061c14283d?s=100&d=https%3A%2F%2Fcoughdrop.s3.amazonaws.com%2Favatars%2Favatar-9.png');
         u.settings['avatar_url'] = 'http://www.example.com/pic.png'
-        expect(u.generated_avatar_url('default')).to eq('https://www.gravatar.com/avatar/4b9bb80620f03eb3719e0a061c14283d?s=100&d=https%3A%2F%2Fs3.amazonaws.com%2Fcoughdrop%2Favatars%2Favatar-9.png');
+        expect(u.generated_avatar_url('default')).to eq('https://www.gravatar.com/avatar/4b9bb80620f03eb3719e0a061c14283d?s=100&d=https%3A%2F%2Fcoughdrop.s3.amazonaws.com%2Favatars%2Favatar-9.png');
       end
       
       it "should use the passed-in url if specified" do
@@ -1745,14 +1745,13 @@ describe User, :type => :model do
       b = UserBadge.create(:user => u, :data => {'name' => 'badgy wadgy'}, :level => 1)
       u.handle_notification('badge_awarded', b, {})
       expect(u.settings['user_notifications'].length).to eq(1)
-      expect(u.settings['user_notifications'][0]).to eq({
+      expect(u.settings['user_notifications'][0].except('added_at')).to eq({
         'type' => 'badge_awarded',
         'occurred_at' => b.awarded_at,
         'user_name' => u.user_name,
         'badge_name' => 'badgy wadgy',
         'badge_level' => 1,
-        'id' => b.global_id,
-        'added_at' => Time.now.utc.iso8601
+        'id' => b.global_id
       })
     end
   end

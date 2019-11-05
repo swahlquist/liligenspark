@@ -1146,7 +1146,7 @@ class LogSession < ActiveRecord::Base
     valid_events -= modeling_events
     modeling_events.each{|e| process_modeling_event(e, non_user_params) }
     return if modeling_events.length > 0 && valid_events.blank?
-    raise "no valid events to process out of #{(params['events'] || []).length}" if valid_events.blank?
+    raise "no valid events to process out of #{(params['events'] || []).length} #{user_ids.join(',')}" if valid_events.blank?
     non_user_params[:user] = valid_users[valid_events[0]['user_id']]
     
     active_session = LogSession.all.where(['log_type = ? AND device_id = ? AND author_id = ? AND user_id = ? AND ended_at > ?', 'session', non_user_params[:device].id, non_user_params[:author].id, non_user_params[:user].id, 1.hour.ago]).order('ended_at DESC').first
