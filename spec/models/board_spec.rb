@@ -1390,6 +1390,17 @@ describe Board, :type => :model do
       expect(b.settings['grid']).to eq({})
       expect(b.key).to eq(nil)
     end
+
+    it "should process background settings" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({
+        'background' => {'a' => 1} 
+      })
+      expect(b.settings['background']).to eq({'a' => 1})
+      expect(b.settings['edit_description']['notes']).to eq(['changed the background'])
+    end
+
     it "should only set key if provided as a non-user parameter" do
       u = User.create
       b = Board.new(:user => u)

@@ -629,6 +629,14 @@ class Board < ActiveRecord::Base
     self.settings['description'] = process_string(params['description']) if params['description']
     @edit_notes << "changed the image" if params['image_url'] && params['image_url'] != self.settings['image_url']
     self.settings['image_url'] = params['image_url'] if params['image_url']
+    @edit_notes << "changed the background" if params['background'] && params['background'] != self.settings['background'].to_json
+    self.settings['background'] = params['background'] if params['background']
+    if self.settings['background']
+      self.settings['background']['delay_prompts'] ||= self.settings['background']['delayed_prompts']
+      self.settings['background']['image'] ||= self.settings['background']['image_url']
+      self.settings['background']['prompt'] ||= self.settings['background']['prompt_text']
+    end
+
     if params['intro']
       self.settings['intro'] = params['intro'] 
       # When a board is copied and buttons change, the intro
@@ -637,8 +645,10 @@ class Board < ActiveRecord::Base
       self.settings['intro']['unapproved'] = true if self.settings['never_edited'] && self.settings['intro'] && self.parent_board_id && params['intro']['unapproved'] != false
       self.settings['intro'].delete('unapproved') unless self.settings['intro']['unapproved']
     end
-    self.settings['home_board'] = params['home_board'] if params['home_board']
+    self.settings['home_board'] = params['home_board'] if params['home_board'] != nil
     self.settings['categories'] = params['categories'] if params['categories']
+    self.settings['hide_empty'] = params['hide_empty'] if params['hide_empty'] != nil
+    self.settings['text_only'] = params['text_only'] if params['text_only'] != nil
     self.settings['never_edited'] = false if self.id
     process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author]) if params['buttons']
     prior_license = self.settings['license'].to_json

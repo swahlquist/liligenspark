@@ -16,17 +16,16 @@ var obf = EmberObject.extend({
     board.set('permissions', {view: true});
     hash['background'] = hash['background'] || {};
     board.set('background', {
-      image: hash['background']['image'],
+      image: hash['background']['image'] || hash['background']['image_url'],
       image_exclusion: hash['background']['ext_coughdrop_image_exclusion'],
       color: hash['background']['color'],
       position: hash['background']['position'],
       text: hash['background']['text'],
-      prompt: hash['background']['prompt'],
-      delay_prompts: hash['background']['delay_prompts'],
+      prompt: hash['background']['prompt'] || hash['background']['prompt_text'],
+      delay_prompts: hash['background']['delay_prompts'] || hash['background']['delayed_prompts'],
       delay_prompt_timeout: hash['background']['delay_prompt_timeout']
     })
     board.set('text_only', hash['text_only']);
-
     board.set('hide_empty', true);
     board.key = hash['key'] || "obf/whatever";
     var image_urls = {};

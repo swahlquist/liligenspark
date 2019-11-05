@@ -23,13 +23,29 @@ module Converters::CoughDrop
       res['label_locale'] = board.settings['translations']['current_label']
       res['vocalization_locale'] = board.settings['translations']['current_vocalization']
     end
+    if board.settings['background']
+      res['background'] = {
+        'image_url' => board.settings['background']['image'] || board.settings['background']['image_url'],
+        'ext_coughdrop_image_exclusion' => board.settings['background']['ext_coughdrop_image_exclusion'],
+        'color' => board.settings['background']['color'],
+        'position' => board.settings['background']['position'],
+        'text' => board.settings['background']['text'],
+        'prompt_text' => board.settings['background']['prompt'] || board.settings['background']['prompt_text'],
+        'delayed_prompts' => board.settings['background']['delay_prompts'] || board.settings['background']['delayed_prompts'],
+        'delay_prompt_timeout' => board.settings['background']['delay_prompt_timeout']
+      }
+      res['background'].keys.each{|key| res['background'].delete(key) unless res['background'][key] }
+    end
+
     res['ext_coughdrop_settings'] = {
       'private' => !board.public,
       'key' => board.key,
       'word_suggestions' => !!board.settings['word_suggestions'],
       'protected' => board.protected_material?,
       'home_board' => board.settings['home_board'],
-      'categories' => board.settings['categories']
+      'categories' => board.settings['categories'],
+      'text_only' => board.settings['text_only'],
+      'hide_empty' => board.settings['hide_empty']
     }
     if board.protected_material? && board.user
       res['protected_content_user_identifier'] = board.user.settings['email']
@@ -315,6 +331,13 @@ module Converters::CoughDrop
     params['home_board'] = (obj['ext_coughdrop_settings'] || {})['home_board'] || false
     params['categories'] = (obj['ext_coughdrop_settings'] || {})['categories'] || []
     params['word_suggestions'] = obj['ext_coughdrop_settings'] && obj['ext_coughdrop_settings']['word_suggestions']
+    params['text_only'] = (obj['ext_coughdrop_settings'] || {})['text_only'] || false
+    params['hide_empty'] = (obj['ext_coughdrop_settings'] || {})['hide_empty'] || false
+
+    if obj['background']
+      params['background'] = obj['background']
+    end
+
     non_user_params[:key] = (obj['ext_coughdrop_settings'] && obj['ext_coughdrop_settings']['key'] && obj['ext_coughdrop_settings']['key'].split(/\//)[-1])
     board = nil
     # TODO: I removed this because I don't think the user expectation is ever that
