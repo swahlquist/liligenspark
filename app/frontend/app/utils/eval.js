@@ -1084,7 +1084,7 @@ evaluation.callback = function(key) {
     working.ref = working.ref || {};
     working.ref.prompt_index = null;
     if(step.intro == 'intro') {
-      board.background.text = i18n.t('eval_intro', "Welcome to the Assessment Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols.");
+      board.background.text = i18n.t('eval_intro', "Welcome to the Eval Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols.");
     } else if(step.intro == 'intro2') {
       board.background.text = i18n.t('eval_intro_2', "You can use the top right menu to end or configure the evaluation any time. You can also add notes once the evaluation has completed.");
     } else if(step.intro == 'find_target') {
