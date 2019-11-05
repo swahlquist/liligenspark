@@ -1360,6 +1360,10 @@ describe Subscription, :type => :model do
       u = User.create
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
       User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
+      ae = AuditEvent.last
+      expect(ae).to_not eq(nil)
+      expect(ae.event_type).to eq('extras_added')
+      expect(ae.created_at).to be > 5.seconds.ago
     end
 
     it 'should not notify if specified but not changed' do
@@ -1368,13 +1372,19 @@ describe Subscription, :type => :model do
       u.save
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
       User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
+      ae = AuditEvent.last
+      expect(ae).to eq(nil)
     end
 
     it 'should not notify if not specified but changed' do
       u = User.create
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
       User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
-    end
+      ae = AuditEvent.last
+      expect(ae).to_not eq(nil)
+      expect(ae.event_type).to eq('extras_added')
+      expect(ae.created_at).to be > 5.seconds.ago
+   end
 
     it "should mark org_id if specified" do
       u = User.create
