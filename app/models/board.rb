@@ -632,9 +632,9 @@ class Board < ActiveRecord::Base
     @edit_notes << "changed the background" if params['background'] && params['background'] != self.settings['background'].to_json
     self.settings['background'] = params['background'] if params['background']
     if self.settings['background']
-      self.settings['background']['delay_prompts'] ||= self.settings['background']['delayed_prompts']
-      self.settings['background']['image'] ||= self.settings['background']['image_url']
-      self.settings['background']['prompt'] ||= self.settings['background']['prompt_text']
+      self.settings['background']['delay_prompts'] ||= self.settings['background']['delayed_prompts'] if self.settings['background']['delayed_prompts']
+      self.settings['background']['image'] ||= self.settings['background']['image_url'] if self.settings['background']['image_url']
+      self.settings['background']['prompt'] ||= self.settings['background']['prompt_text'] if self.settings['background']['prompt_text']
     end
 
     if params['intro']
