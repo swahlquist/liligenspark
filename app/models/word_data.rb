@@ -5,6 +5,10 @@ class WordData < ActiveRecord::Base
   include Processable
   INFLECTIONS_VERSION = 1
 
+  # https://www.enchantedlearning.com/wordlist/opposites.shtml
+  # https://www.talkenglish.com/vocabulary/top-50-prepositions.aspx
+  # http://frequencylists.blogspot.com/2016/05/the-500-most-frequently-used-spanish.html
+
   secure_serialize :data
   replicated_model  
   before_save :generate_defaults
