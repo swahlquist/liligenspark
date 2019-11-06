@@ -5,6 +5,7 @@ import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import contentGrabbers from '../utils/content_grabbers';
+import { observer } from '@ember/object';
 
 CoughDrop.Sound = DS.Model.extend({
   didLoad: function() {

@@ -3,6 +3,7 @@ import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import { observer } from '@ember/object';
 
 CoughDrop.Video = DS.Model.extend({
   didLoad: function() {

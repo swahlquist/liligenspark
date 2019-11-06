@@ -1,6 +1,7 @@
 import Component from '@ember/component';
 import $ from 'jquery';
 import app_state from '../utils/app_state';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {

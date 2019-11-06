@@ -22,9 +22,10 @@ module.exports = {
     'no-empty': 'off',
     'no-redeclare': 'off',
     'no-debugger': 'off',
-    'quotes': 'off', // TODO: blech
     'ember/closure-actions': 'off', // TODO: fix this
-    'ember/avoid-leaking-state-in-ember-objects': 'off' // TODO: fix this
+    'ember/avoid-leaking-state-in-ember-objects': 'off', // TODO: fix this
+    'ember/no-observers': 'off',
+    'ember/no-ember-testing-in-module-scope': 'off',
   },
   overrides: [
     // node files
@@ -52,7 +53,7 @@ module.exports = {
 
         // this can be removed once the following is fixed
         // https://github.com/mysticatea/eslint-plugin-node/issues/77
-        'node/no-unpublished-require': 'off'
+        'node/no-unpublished-require': 'off',
       })
     }
   ]

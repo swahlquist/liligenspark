@@ -14,7 +14,7 @@
         <strong>{{t "Welcome to %app_name%!" key='welcome_to_coughdrop'}}</strong>
         <div class="progress" style="margin-bottom: 0;">
           <div class="progress-bar" role="progressbar" aria-valuenow={{blank_slate_percent}} aria-valuemin="0" aria-valuemax="100" style={{blank_slate_percent_style}}>
-            <span class="sr-only">{{t "%{pct}% Complete" key='percent_complete' key=blank_slate_percent}}</span>
+            <span class="sr-only">{{t "%{pct}% Complete" key='percent_complete' pct=blank_slate_percent}}</span>
           </div>
         </div>
         {{t "Finish setting up your account" key='on_your_way'}}

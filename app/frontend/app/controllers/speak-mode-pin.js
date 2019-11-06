@@ -1,5 +1,6 @@
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   pin: "",

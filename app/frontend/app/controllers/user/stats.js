@@ -10,6 +10,7 @@ import app_state from '../../utils/app_state';
 import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
 import Stats from '../../utils/stats';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: function() {

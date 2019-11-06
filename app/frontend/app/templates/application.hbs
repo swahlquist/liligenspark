@@ -34,7 +34,7 @@
         {{#unless app_state.button_list}}
           {{#if app_state.embedded}}
             <div style='float: left; margin: 5px; opacity: 0.7;'>
-              <img src="{{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}}" alt="CoughDrop" style='width: 20px;'/>
+              <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} alt="CoughDrop" style='width: 20px;'/>
               {{t "Powered by %app_name%" key='powered_by_coughdrop'}}
             </div>
           {{else if app_state.currentUser.preferences.blank_status}}
@@ -124,7 +124,7 @@
       {{/unless}}
       <button class="btn btn-default access skinnier" id="backspace_button" {{action "backspace"}}>
         <span class="sr-only">{{t "backspace" key='backspace'}}</span>
-        <img src="{{path "images/delete.svg"}}"/>
+        <img src={{path "images/delete.svg"}}/>
       </button>
       {{#triple-click-listener triple_click='toggle_modeling'}}
         <button class="btn btn-default access" id="clear_button" {{action "clear"}} style='position: relative;'>
@@ -153,7 +153,7 @@
     {{/if}}
     <h1 class={{app_state.h1_class}}>
       <a href="#" {{action "index"}}>
-        <img src="{{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}}" alt="CoughDrop"/>
+        <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} alt="CoughDrop"/>
         <span>
           {{t "%app_name_upper%" key="coughdrop"}}
         </span>
@@ -255,13 +255,13 @@
           <button class={{paint_mode_class}} data-toggle="dropdown">
             <span class="wide">{{t "Paint" key="paint"}}</span><span class="skinny glyphicon glyphicon-tint"></span>
             {{#if board.paint_mode}}
-              {{{board.paintColor}}}
+              {{board.paintColor}}
             {{/if}}
           </button>
           <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style='width: 285px;'>
             {{#each swatches as |swatch|}}
               <li role="presentation">
-                <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" swatch.fill swatch.border swatch.types}} style="float: left; width: 140px; clear: right; padding-top: 3px; padding-bottom: 3px;">
+                <a role="menuitem" href="#" tabindex="-1" {{action "paint" swatch.fill swatch.border swatch.types}} style="float: left; width: 140px; clear: right; padding-top: 3px; padding-bottom: 3px;">
                   <span class="swatch" style={{swatch.style}}></span>
                   <span style="width: 70px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: top;">{{swatch.color}}</span>
                   <span class="text-muted" style="margin-left: 22px; display: block; margin-top: -5px; font-size: 14px; vertical-align: top;">
@@ -271,18 +271,18 @@
               </li>
             {{/each}}
             <li role="presentation">
-              <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" "hide"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide"}}</a>
-              <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" "show"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-ok-sign"></span> {{t "Un-Hide" key="unhide"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "hide"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "show"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-ok-sign"></span> {{t "Un-Hide" key="unhide"}}</a>
               <span style="clear: left;"></span>
             </li>
             <li role="presentation" class="text-muted">
-              <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" "close"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="close"}}</a>
-              <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" "open"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-plus-sign"></span> {{t "Re-Link" key="open"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "close"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="close"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "open"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-plus-sign"></span> {{t "Re-Link" key="open"}}</a>
               <span style="clear: left;"></span>
             </li>
             {{#if app_state.feature_flags.board_levels}}
               <li role="presentation">
-                <a role="menuitem" href="#" tabindex="-1" href="#" {{action "paint" 'level'}}>
+                <a role="menuitem" href="#" tabindex="-1" {{action "paint" 'level'}}>
                   <span class="glyphicon glyphicon-signal"></span>
                   {{t "Level Modifications" key='level_modifications'}}
                 </a>
@@ -574,7 +574,7 @@
     </span>
   {{/if}}
     <span id="identity" class={{if app_state.speak_mode 'advanced_selection undwellable' 'advanced_selection'}}>
-      <span class="dropdown" style="display: inline-block;" class={{if app_state.super_no_linky 'hidden'}}>
+      <span style="display: inline-block;" class={{if app_state.super_no_linky 'dropdown hidden' 'dropdown'}}>
         <a class={{if persistence.online 'btn btn-default online' 'btn btn-default offline'}} id='identity_button' href="#" data-toggle="dropdown">
           {{#if app_state.currentUser}}
             <span class='user_holder'>
@@ -602,7 +602,7 @@
               <span class='status unread'></span>
             {{/if}}
           {{else}}
-            <img src="{{path 'images/settings.png'}}" style="opacity: 0.7; height: 25px; margin: -12px 3px -10px -25px;"/>
+            <img src={{path 'images/settings.png'}} style="opacity: 0.7; height: 25px; margin: -12px 3px -10px -25px;"/>
           {{/if}}
           {{#if session.isAuthenticated}}
             {{#unless app_state.currentUser.preferences.new_index}}
@@ -834,7 +834,7 @@
 </div>
 {{#if app_state.sidebar_visible}}
   {{#unless app_state.eval_mode}}
-    <div id="sidebar" class='noselect' style={{sidebar_style}} class="advanced_selection">
+    <div id="sidebar" class='noselect advanced_selection' style={{sidebar_style}}>
       {{#unless app_state.currentUser.preferences.quick_sidebar}}
         <span style="margin: 5px; text-align: right; white-space: nowrap;">
           {{#if app_state.currentUser}}

@@ -4,6 +4,7 @@ import utterance from '../utils/utterance';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import modal from '../utils/modal';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: function() {

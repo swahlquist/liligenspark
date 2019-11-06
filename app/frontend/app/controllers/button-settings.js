@@ -16,6 +16,7 @@ import persistence from '../utils/persistence';
 import boundClasses from '../utils/bound_classes';
 import Button from '../utils/button';
 import Utils from '../utils/misc';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

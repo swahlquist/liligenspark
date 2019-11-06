@@ -4,6 +4,7 @@ import modal from '../../utils/modal';
 import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
 import Utils from '../../utils/misc';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   load_goals: function() {

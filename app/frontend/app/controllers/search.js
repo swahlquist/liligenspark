@@ -4,6 +4,7 @@ import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import session from '../utils/session';
 import i18n from '../utils/i18n';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: function() {

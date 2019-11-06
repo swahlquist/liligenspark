@@ -6,6 +6,7 @@ import $ from 'jquery';
 import modal from '../utils/modal';
 import scanner from '../utils/scanner';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

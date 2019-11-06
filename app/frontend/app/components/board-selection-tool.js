@@ -9,6 +9,7 @@ import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {

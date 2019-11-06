@@ -1,5 +1,6 @@
 import Controller from '@ember/controller';
 import persistence from '../../utils/persistence';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: "Reset Password",

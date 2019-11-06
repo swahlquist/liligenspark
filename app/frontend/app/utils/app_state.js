@@ -30,6 +30,7 @@ import i18n from './i18n';
 import frame_listener from './frame_listener';
 import Button from './button';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 // tracks:
 // current mode (edit mode, speak mode, default)
@@ -226,47 +227,57 @@ var app_state = EmberObject.extend({
     }
   },
   global_transition: function(transition) {
-    if(transition.isAborted) { return; }
+    if(transition.aborted) { return; }
     app_state.set('from_url', app_state.get('route._router.url') || app_state.get('route.router.url'));
-    var rec = this.get('route._router._routerMicrolib.recognizer') || this.get('route.router._routerMicrolib.recognizer');
-    var pieces = rec && rec.recognize(app_state.get('from_url'));
-    if(pieces && pieces.length > 0) {
-      var args = [pieces[pieces.length - 1].handler];
-      var handle_piece = function(name) {
-        args.push(piece.params[name]);
-      };
-      for(var idx = 0; idx < pieces.length; idx++) {
-        var piece = pieces[idx];
-        if(piece && piece.isDynamic) {
-          (transition._router || transition.router).getHandler(piece.handler)._names.forEach(handle_piece);
-        }
-      }
-      if(args[0] != 'board.index') {
-        app_state.set('from_route', args);
-      }
+    var from = [transition.from_name].concat(transition.from_params);
+    // if(!from[0]) {
+    //   // TODO: this should go away
+    //   var rec = this.get('route._router._routerMicrolib.recognizer') || this.get('route.router._routerMicrolib.recognizer');
+    //   var pieces = rec && rec.recognize(app_state.get('from_url'));
+    //   if(pieces && pieces.length > 0) {
+    //     var args = [pieces[pieces.length - 1].handler];
+    //     var handle_piece = function(name) {
+    //       args.push(piece.params[name]);
+    //     };
+    //     for(var idx = 0; idx < pieces.length; idx++) {
+    //       var piece = pieces[idx];
+    //       if(piece && piece.isDynamic) {
+    //         (transition._router || transition.router).getHandler(piece.handler)._names.forEach(handle_piece);
+    //       }
+    //     }
+    //     from = args;
+    //   }
+    // }
+    if(from[0] && from[0] != 'board.index') {
+      app_state.set('from_route', from);
     }
 //     console.log("came from", app_state.get('from_route'));
     app_state.set('latest_board_id', null);
     app_state.set('login_modal', false);
-    app_state.set('to_target', transition.targetName);
-    var from_route = (app_state.get('from_route') || [])[0];
-    if(transition.targetName == 'board.index' && (from_route == 'setup' || from_route == 'home-boards')) {
+    app_state.set('to_target', transition.to_route);
+    var from_route = (app_state.get('from_route') || [])[0] || transition.from_route;
+    if(transition.to_route == 'board.index' && (from_route == 'setup' || from_route == 'home-boards')) {
       app_state.set('set_as_root_board_state', true);
     }
 
     // On desktop, setting too soon causes a re-render, but on mobile
     // calling it too late does.
     if(capabilities.mobile) {
-//       app_state.set('index_view', transition.targetName == 'index');
+//       app_state.set('index_view', transition.to_route == 'index');
     }
-    if(transition.targetName == 'board.index') {
+    if(transition.to_routee == 'board.index') {
       boundClasses.setup();
       var delay = app_state.get('currentUser.preferences.board_jump_delay') || window.user_preferences.any_user.board_jump_delay;
       CoughDrop.log.track('global transition handled');
       runLater(this, this.check_for_board_readiness, delay, 50);
     }
     var controller = this.controller;
-    controller.updateTitle();
+    runLater(function() {
+      if(controller && controller.updateTitle) {
+        controller.updateTitle();
+      }
+    }, controller && controller.updateTitle ? 0 : 500);
+    
     modal.close();
     modal.close_board_preview();
     if(app_state.get('edit_mode')) {
@@ -274,8 +285,8 @@ var app_state = EmberObject.extend({
       app_state.toggle_edit_mode();
     }
 //           $(".hover_button").remove();
-    this.set('hide_search', transition.targetName == 'search');
-    if(transition.targetName != 'board.index') {
+    this.set('hide_search', transition.to_route == 'search');
+    if(transition.to_route != 'board.index') {
       app_state.set('currentBoardState', null);
     }
     if(!app_state.get('sessionUser') && session.get('isAuthenticated')) {

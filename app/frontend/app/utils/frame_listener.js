@@ -8,6 +8,7 @@ import app_state from './app_state';
 import scanner from './scanner';
 import speecher from './speecher';
 import utterance from './utterance';
+import { observer } from '@ember/object';
 
 var raw_listeners = {};
 var frame_listener = EmberObject.extend({

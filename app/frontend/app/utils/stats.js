@@ -2,6 +2,7 @@ import Ember from 'ember';
 import EmberObject from '@ember/object';
 import CoughDrop from '../app';
 import i18n from './i18n';
+import { observer } from '@ember/object';
 
 CoughDrop.Stats = EmberObject.extend({
   no_data: function() {

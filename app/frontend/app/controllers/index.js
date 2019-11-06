@@ -14,6 +14,7 @@ import modal from '../utils/modal';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,

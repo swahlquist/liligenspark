@@ -10,7 +10,6 @@
       </thead>
       <tbody>
         {{#if usage_stats.ip_locations}}
-          {{#with this as |controller|}}
           {{#each usage_stats.ip_locations as |location|}}
             <tr>
               <td>
@@ -23,7 +22,6 @@
               </td>
             </tr>
           {{/each}}
-          {{/with}}
         {{else}}
           <tr>
             <td>{{t "No data available" key='no_data'}}</td>

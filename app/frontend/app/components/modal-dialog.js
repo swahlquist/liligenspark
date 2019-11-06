@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import $ from 'jquery';
 import capabilities from '../utils/capabilities';
 import modal from '../utils/modal';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   didRender: function() {

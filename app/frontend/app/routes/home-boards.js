@@ -2,6 +2,7 @@ import Route from '@ember/routing/route';
 import RSVP from 'rsvp';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
+import { observer } from '@ember/object';
 
 export default Route.extend({
   setupController: function(controller) {

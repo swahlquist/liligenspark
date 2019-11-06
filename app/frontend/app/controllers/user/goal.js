@@ -4,6 +4,7 @@ import modal from '../../utils/modal';
 import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   load_logs: function() {

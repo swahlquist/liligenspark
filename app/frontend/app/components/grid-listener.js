@@ -20,7 +20,7 @@ export default Component.extend({
       this.sendAction('grid_event', 'setGrid', parseInt($cell.attr('data-row'), 10), parseInt($cell.attr('data-col'), 10));
     }
   },
-  didInserteElement: function() {
+  didInsertElement: function() {
     var _this = this;
     this.set('handler', function(e) {
       _this.handleMouseMove(e);

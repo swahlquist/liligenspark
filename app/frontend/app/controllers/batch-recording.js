@@ -9,6 +9,7 @@ import Utils from '../utils/misc';
 import persistence from '../utils/persistence';
 import word_suggestions from '../utils/word_suggestions';
 import CoughDrop from '../app';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

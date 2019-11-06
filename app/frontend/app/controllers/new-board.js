@@ -7,6 +7,7 @@ import stashes from '../utils/_stashes';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import editManager from '../utils/edit_manager';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   uncloseable: true,

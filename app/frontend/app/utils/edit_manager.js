@@ -13,6 +13,7 @@ import persistence from './persistence';
 import progress_tracker from './progress_tracker';
 import word_suggestions from './word_suggestions';
 import i18n from './i18n';
+import { observer } from '@ember/object';
 
 var editManager = EmberObject.extend({
   setup: function(board) {

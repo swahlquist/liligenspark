@@ -236,9 +236,9 @@
       <div class="form-group">
         <label for="link_to" class="col-sm-2 control-label">
           {{#if model.video.popup}}
-            <img src="{{path 'images/video.svg'}}" style="height: 20px; margin-left: -10px;"/>
+            <img src={{path 'images/video.svg'}} style="height: 20px; margin-left: -10px;"/>
           {{else}}
-            <img src="{{path 'images/link.png'}}" style="height: 20px; margin-left: -10px;"/>
+            <img src={{path 'images/link.png'}} style="height: 20px; margin-left: -10px;"/>
           {{/if}}
            {{t "URL" key='url'}}
         </label>
@@ -579,7 +579,7 @@
         {{/if}}
 
       {{else}}
-        <img src="{{path 'images/talk.png'}}" style="height: 20px;"/> {{t "Button will play sound or speech" key='button_will_play'}}
+        <img src={{path 'images/talk.png'}} style="height: 20px;"/> {{t "Button will play sound or speech" key='button_will_play'}}
       {{/if}}
     {{/if}}
   {{/if}}

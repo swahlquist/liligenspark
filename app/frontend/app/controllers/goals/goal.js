@@ -4,6 +4,7 @@ import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   advance_options: [

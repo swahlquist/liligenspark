@@ -11,6 +11,7 @@ import persistence from '../../utils/persistence';
 import Button from '../../utils/button';
 import { set as emberSet } from '@ember/object';
 import CoughDrop from '../../app';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   setup: function() {
@@ -440,7 +441,6 @@ export default Controller.extend({
       _this.set('can_record_tags', false);
     });
   }),
-  needs: 'application',
   actions: {
     plus_minus: function(direction, attribute) {
       var default_value = 1.0;

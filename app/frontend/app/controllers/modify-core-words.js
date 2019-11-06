@@ -1,6 +1,7 @@
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

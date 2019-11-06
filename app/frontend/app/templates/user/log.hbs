@@ -1,4 +1,4 @@
-{{#opening-observer done_opening='draw_charts'}}
+{{#opening-observer done_opening=(action 'draw_charts')}}
 {{#if model.note_type}}
   <h2>{{t "Message Details" key='message_summary'}}</h2>
 {{else if model.assessment_type}}

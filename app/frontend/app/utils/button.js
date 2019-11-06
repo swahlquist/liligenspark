@@ -15,6 +15,7 @@ import i18n from './i18n';
 import stashes from './_stashes';
 import progress_tracker from './progress_tracker';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 var clean_url = function(str) {
   str = str || "";

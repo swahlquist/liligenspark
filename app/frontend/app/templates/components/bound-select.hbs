@@ -1,6 +1,6 @@
 <select {{action 'change' on='change'}} class={{select_class}} id={{select_id}} style={{select_style}}>
   {{#each content as |item|}}
-    <option value="{{item.id}}"
+    <option value={{item.id}}
             selected={{is_equal item.id selection}} disabled={{item.disabled}}>
       {{item.name}}
      </option>

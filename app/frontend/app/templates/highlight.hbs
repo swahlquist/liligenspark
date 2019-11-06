@@ -1,4 +1,4 @@
-{{#opening-observer opening='opening' closing='closing'}}
+{{#opening-observer opening=(action 'opening') closing=(action 'closing')}}
 <div class="highlight" style={{model.top_style}} {{action "close"}}>
 </div>
 <div class="highlight" style={{model.left_style}} {{action "close"}}>

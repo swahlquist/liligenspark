@@ -4,6 +4,7 @@ import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
+import { observer } from '@ember/object';
 
 CoughDrop.Image = DS.Model.extend({
   didLoad: function() {

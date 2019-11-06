@@ -1,6 +1,7 @@
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

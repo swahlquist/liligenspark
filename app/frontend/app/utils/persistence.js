@@ -17,6 +17,7 @@ import contentGrabbers from './content_grabbers';
 import Utils from './misc';
 import modal from './modal';
 import capabilities from './capabilities';
+import { observer } from '@ember/object';
 
 var valid_stores = ['user', 'board', 'image', 'sound', 'settings', 'dataCache', 'buttonset'];
 var loaded = (new Date()).getTime() / 1000;

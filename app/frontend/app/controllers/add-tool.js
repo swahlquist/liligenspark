@@ -3,6 +3,7 @@ import $ from 'jquery';
 import modal from '../utils/modal';
 import Utils from '../utils/misc';
 import CoughDrop from '../app';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

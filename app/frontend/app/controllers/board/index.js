@@ -15,6 +15,7 @@ import frame_listener from '../../utils/frame_listener';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
+import { observer } from '@ember/object';
 
 var cached_images = {};
 var last_redraw = (new Date()).getTime();
@@ -645,17 +646,17 @@ export default Controller.extend({
     var mode = this.get('paint_mode');
     if(mode) {
       if(mode.hidden === true) {
-        return "<span class='glyphicon glyphicon-minus-sign'></span>";
+        return htmlSafe("<span class='glyphicon glyphicon-minus-sign'></span>");
       } else if(mode.hidden === false) {
-        return "<span class='glyphicon glyphicon-ok-sign'></span>";
+        return htmlSafe("<span class='glyphicon glyphicon-ok-sign'></span>");
       } else if(mode.close_link === true) {
-        return "<span class='glyphicon glyphicon-remove-sign'></span>";
+        return htmlSafe("<span class='glyphicon glyphicon-remove-sign'></span>");
       } else if(mode.close_link === false) {
-        return "<span class='glyphicon glyphicon-plus-sign'></span>";
+        return htmlSafe("<span class='glyphicon glyphicon-plus-sign'></span>");
       } else if(mode.level) {
-        return "<span class='glyphicon glyphicon-signal'></span>";
+        return htmlSafe("<span class='glyphicon glyphicon-signal'></span>");
       } else {
-        return "<span class='swatch' style='width: 14px; height: 14px; border-color: " + mode.border + "; background-color: " + mode.fill + ";'></span>";
+        return htmlSafe("<span class='swatch' style='width: 14px; height: 14px; border-color: " + mode.border + "; background-color: " + mode.fill + ";'></span>");
       }
     } else {
       return '';

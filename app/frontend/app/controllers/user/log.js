@@ -7,6 +7,7 @@ import capabilities from '../../utils/capabilities';
 import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
 import evaluation from '../../utils/eval';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: function() {

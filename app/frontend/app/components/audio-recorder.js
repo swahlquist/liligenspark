@@ -3,6 +3,7 @@ import { later as runLater } from '@ember/runloop';
 import $ from 'jquery';
 import contentGrabbers from '../utils/content_grabbers';
 import app_state from '../utils/app_state';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'div',

@@ -3,6 +3,7 @@ import Component from '@ember/component';
 import CoughDrop from '../app';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {

@@ -9,7 +9,7 @@
     {{/if}}
   {{/unless}}
   <div style="margin-bottom: 30px;">
-    <img src="{{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path "images/logo-big.png")}}" style="width: 100px;"/>
+    <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path "images/logo-big.png")}} style="width: 100px;"/>
   </div>
   <h2>{{t "Communication is for everyone. %app_name%" key='communication_is_for_everyone'}}
     <span id="header_line_2">{{t "empowers people to make their voices heard." key='empowers_hearing'}}</span>
@@ -45,9 +45,9 @@
   {{#unless app_state.no_linky}}
     <div class="col-sm-5">
       <a href="https://blog.mycoughdrop.com/new-well-known-image-library-within-coughdrop/" target='_blank' style='position: absolute; top: -39px; right: 60px;'>
-        <img src="{{path 'images/pcs-coughdrop.png'}}" style='height: 90px;' />
+        <img src={{path 'images/pcs-coughdrop.png'}} style='height: 90px;' />
       </a>
-      <img src="{{path 'images/preview.png'}}" style="width: 100%; margin-top: 40px;"/>
+      <img src={{path 'images/preview.png'}} style="width: 100%; margin-top: 40px;"/>
     </div>
   {{/unless}}
   {{#unless app_state.installed_app}}

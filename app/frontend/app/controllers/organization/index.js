@@ -5,6 +5,7 @@ import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
 import i18n from '../../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   refresh_lists: function() {

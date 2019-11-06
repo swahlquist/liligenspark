@@ -3,7 +3,7 @@ import contentGrabbers from '../utils/content_grabbers';
 import app_state from '../utils/app_state';
 import word_suggestions from '../utils/word_suggestions';
 import Utils from '../utils/misc';
-
+import { observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',

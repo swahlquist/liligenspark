@@ -1,13 +1,13 @@
 <!-- TODO: I think this is never used anymore -->
-<div style={{button.computed_style}} class={{unbound button.computed_class}} data-id={{unbound button.id}} tabindex="0">
+<div style={{button.computed_style}} class={{button.computed_class}} data-id={{button.id}} tabindex="0">
   {{#if button.pending}}
     <div class="pending">
       <img src={{path 'images/spinner.gif'}} draggable='false' />
     </div>
   {{/if}}
-  <div class={{unbound button.action_class}}>
+  <div class={{button.action_class}}>
     <span class="action">
-      <img src={{button.action_image}} draggable='false' alt={{unbound button.action_alt}} />
+      <img src={{button.action_image}} draggable='false' alt={{button.action_alt}} />
     </span>
   </div>
   <span style={{button.image_holder_style}}>
@@ -18,9 +18,9 @@
     {{/unless}}
   </span>
   {{#if button.sound}}
-    <audio style="display: none;" preload="auto" src={{button.local_sound_url}} rel={{unbound button.sound.url}}></audio>
+    <audio style="display: none;" preload="auto" src={{button.local_sound_url}} rel={{button.sound.url}}></audio>
   {{/if}}
   <div class={{if button.text_only text_only_button_symbol_class button_symbol_class}}>
-    <span class={{if button.hide_label "button-label hide-label" "button-label"}}>!{{unbound button.label}}</span>
+    <span class={{if button.hide_label "button-label hide-label" "button-label"}}>!{{button.label}}</span>
   </div>
 </div>

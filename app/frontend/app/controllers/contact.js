@@ -3,6 +3,7 @@ import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   queryParams: ['to'],

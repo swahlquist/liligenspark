@@ -1,6 +1,7 @@
 import Component from '@ember/component';
 import $ from 'jquery';
 import editManager from '../utils/edit_manager';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'input',

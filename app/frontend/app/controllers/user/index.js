@@ -9,6 +9,7 @@ import app_state from '../../utils/app_state';
 import i18n from '../../utils/i18n';
 import progress_tracker from '../../utils/progress_tracker';
 import Subscription from '../../utils/subscription';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   title: function() {

@@ -6,6 +6,7 @@ import i18n from '../../utils/i18n';
 import contentGrabbers from '../../utils/content_grabbers';
 import app_state from '../../utils/app_state';
 import EmberObject from '@ember/object';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   queryParams: ['type', 'start', 'end', 'highlighted', 'device_id', 'location_id'],

@@ -22,6 +22,7 @@ import obf from '../utils/obf';
 import Button from '../utils/button';
 import { htmlSafe } from '@ember/string';
 import { inject } from '@ember/controller';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   board: inject('board.index'),

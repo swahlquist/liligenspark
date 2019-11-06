@@ -17,6 +17,7 @@ import i18n from '../utils/i18n';
 import ButtonSet from '../models/buttonset';
 import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';
+import { observer } from '@ember/object';
 
 CoughDrop.User = DS.Model.extend({
   didLoad: function() {

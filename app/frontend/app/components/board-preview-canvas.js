@@ -6,6 +6,7 @@ import persistence from '../utils/persistence';
 import $ from 'jquery';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {

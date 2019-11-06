@@ -1,6 +1,7 @@
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
+import { observer } from '@ember/object';
 
 CoughDrop.Gift = DS.Model.extend({
   didLoad: function() {

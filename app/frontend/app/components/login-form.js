@@ -11,6 +11,7 @@ import session from '../utils/session';
 import { isEmpty } from '@ember/utils';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {

@@ -7,7 +7,7 @@ import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import editManager from '../utils/edit_manager';
-
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

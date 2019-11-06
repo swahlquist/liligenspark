@@ -1,4 +1,4 @@
-{{#opening-observer done_opening='draw_charts'}}
+{{#opening-observer done_opening=(action 'draw_charts')}}
 {{#if model.currently_premium}}
   {{#if model.preferences.logging}}
     <h2>

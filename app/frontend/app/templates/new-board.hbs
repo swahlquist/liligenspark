@@ -61,8 +61,8 @@
           <div class="row">
             {{#each showGrid as |row|}}
               {{#each row as |cell|}}
-                <div style="width: 8.33%; float: left;" class={{cell.preview_class}} data-row="{{unbound cell.row}}" data-col="{{unbound cell.column}}">
-                  <div title="{{unbound cell.row}} x {{unbound cell.column}}">
+                <div style="width: 8.33%; float: left;" class={{cell.preview_class}} data-row={{cell.row}} data-col={{cell.column}}>
+                  <div title="{{cell.row}} x {{cell.column}}">
                     &nbsp;
                   </div>
                 </div>

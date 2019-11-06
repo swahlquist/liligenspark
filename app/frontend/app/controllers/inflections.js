@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
+import { observer } from '@ember/object';
 
 var extra_types = ['NW', 'N', 'NE', 'W', 'E', 'SW', 'S', 'SE'];
 export default Controller.extend({

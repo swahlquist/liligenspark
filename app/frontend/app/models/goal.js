@@ -4,6 +4,7 @@ import $ from 'jquery';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
+import { observer } from '@ember/object';
 
 CoughDrop.Goal = DS.Model.extend({
   didLoad: function() {

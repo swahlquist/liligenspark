@@ -5,6 +5,7 @@ import { later as runLater } from '@ember/runloop';
 import $ from 'jquery';
 import buttonTracker from '../utils/raw_events';
 import capabilities from '../utils/capabilities';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   draw: observer(

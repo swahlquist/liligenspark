@@ -8,6 +8,7 @@ import session from '../utils/session';
 import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
 import $ from 'jquery';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),

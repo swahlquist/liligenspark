@@ -11,6 +11,7 @@ import speecher from '../utils/speecher';
 import utterance from '../utils/utterance';
 import Utils from '../utils/misc';
 import Stats from '../utils/stats';
+import { observer } from '@ember/object';
 
 var order = ['intro', 'usage', 'board_category', 'core', 'symbols', 'access', 'voice', 'logging', 'supervisors', 'done'];
 var extra_order = ['extra-dashboard', 'extra-home-boards', 'extra-speak-mode', 'extra-folders', 'extra-exit-speak-mode', 'extra-modeling', 'extra-supervisors', 'extra-reports', 'extra-logs', 'extra-done'];

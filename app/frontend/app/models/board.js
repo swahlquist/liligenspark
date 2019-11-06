@@ -19,6 +19,7 @@ import ButtonSet from '../models/buttonset';
 import Utils from '../utils/misc';
 import { htmlSafe } from '@ember/string';
 import progress_tracker from '../utils/progress_tracker';
+import { observer } from '@ember/object';
 
 CoughDrop.Board = DS.Model.extend({
   didLoad: function() {

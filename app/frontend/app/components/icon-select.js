@@ -1,6 +1,7 @@
 import Component from '@ember/component';
 import CoughDrop from '../app';
 import { reads } from '@ember/object/computed';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'div',

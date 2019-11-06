@@ -6,6 +6,7 @@ import i18n from '../utils/i18n';
 import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import progress_tracker from '../utils/progress_tracker';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),

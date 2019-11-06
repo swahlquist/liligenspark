@@ -8,6 +8,7 @@ import editManager from '../utils/edit_manager';
 import contentGrabbers from '../utils/content_grabbers';
 import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

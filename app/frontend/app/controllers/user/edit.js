@@ -6,6 +6,7 @@ import i18n from '../../utils/i18n';
 import $ from 'jquery';
 import app_state from '../../utils/app_state';
 import persistence from '../../utils/persistence';
+import { observer } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,

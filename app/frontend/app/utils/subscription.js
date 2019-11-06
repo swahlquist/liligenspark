@@ -9,6 +9,7 @@ import app_state from './app_state';
 import stashes from './_stashes';
 import capabilities from './capabilities';
 import progress_tracker from './progress_tracker';
+import { observer } from '@ember/object';
 
 var types = ['communicator_type', 'supporter_type', 'monthly_subscription', 'long_term_subscription',
   'communicator_monthly_subscription', 'communicator_long_term_subscription',

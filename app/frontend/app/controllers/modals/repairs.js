@@ -8,6 +8,7 @@ import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
 import app_state from '../../utils/app_state';
 import capabilities from '../../utils/capabilities';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

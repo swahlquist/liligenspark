@@ -1,5 +1,6 @@
 import Component from '@ember/component';
 import $ from 'jquery';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'input',

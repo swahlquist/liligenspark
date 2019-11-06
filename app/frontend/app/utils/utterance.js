@@ -11,6 +11,7 @@ import app_state from './app_state';
 import persistence from './persistence';
 import $ from 'jquery';
 import CoughDrop from '../app';
+import { observer } from '@ember/object';
 
 var punctuation_at_start = /^\+[\.\?\,\!]/;
 var punctuation_with_space = /^\s*[\.\?\,\!]\s*$/;

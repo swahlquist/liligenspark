@@ -27,7 +27,7 @@ import audioBrowser from '../../components/audio-browser';
 import Button from '../../utils/button';
 
 describe('audio-browser', function() {
-  moduleForComponent('audio-browser', 'test', {unit: true});
+  moduleForComponent('audio-browser', 'test');
   var component = null;
   beforeEach(function() {
     component = this.subject();

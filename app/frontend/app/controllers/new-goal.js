@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import editManager from '../utils/edit_manager';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import RSVP from 'rsvp';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {

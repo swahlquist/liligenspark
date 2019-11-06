@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import $ from 'jquery';
 import CoughDrop from '../../app';
 import i18n from '../../utils/i18n';
+import { observer } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {

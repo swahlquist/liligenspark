@@ -5,6 +5,8 @@ import utterance from '../../utils/utterance';
 import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
 import { set as emberSet } from '@ember/object';
+import { observer } from '@ember/object';
+
 export default modal.ModalController.extend({
   opening: function() {
     var voc = stashes.get('working_vocalization') || [];
