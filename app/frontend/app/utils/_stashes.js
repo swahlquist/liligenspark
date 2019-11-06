@@ -415,7 +415,7 @@ var stashes = EmberObject.extend({
         log_event = {
           type: 'eval',
           timestamp: timestamp,
-          user_id, user_id,
+          user_id: user_id,
           geo: geo,
           eval: obj
         };

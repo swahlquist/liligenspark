@@ -64,7 +64,7 @@ var evaluation = {
     assessment.notes = settings.notes;
     assessment.accommodations = settings.accommodations;
     if(settings.for_user && !assessment.saved) {
-      assessment.user_id = setttings.for_user.id;
+      assessment.user_id = settings.for_user.id;
       assessment.user_namee = settings.for_user.user_name;
    }
     if(reload) {
@@ -915,7 +915,7 @@ function shuffle(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
-};
+}
 
 //obf.words = words;
 
@@ -1518,7 +1518,7 @@ evaluation.callback = function(key) {
         var cat = working.ref.functional_associations[working.ref.functional_association_index];
         working.ref.functional_association_index++;
         if(working.ref.functional_association_index >= working.ref.functional_associations.length) { working.ref.functional_association_index = 0; }
-        if(!cat.prompt) { debugger };
+        if(!cat.prompt) { debugger }
         prompt_text = "What do you do with " + cat.prompt + "?";
         filtered = [cat.action];
         distractor_words = working.ref.all_functional_association_words.filter(function(w) { return w != cat.action; });
@@ -1908,7 +1908,7 @@ evaluation.callback = function(key) {
         if(alternating && jdx % 2 != idx % 2) {
           // skip every other when alternating
         } else {
-          var word = null, letter = null;;
+          var word = null, letter = null;
           if(step.keyboard) {
             letter = core[idx][jdx];
           } else if(step.distractors) {
