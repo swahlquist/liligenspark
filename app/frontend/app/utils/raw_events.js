@@ -2160,6 +2160,20 @@ if (!('ongamepadconnected' in window)) {
   }, 10000);
 }
 
+document.addEventListener('selectionchange', function(event) {
+  // clear errant selections when they happen while in speak mode
+  if(app_state.get('speak_mode')) {
+    var sel = window.getSelection();
+    if(sel && sel.type == 'Range' && sel.empty) {
+      if(sel.anchorNode && sel.anchorNode.tagName == 'INPUT') {
+      } else if(sel.anchorNode && sel.anchorNode.tagName == 'TEXTAREA') {
+      } else if(sel.anchorNode && sel.anchorNode.childNodes && sel.anchorNode.childNodes[sel.anchorOffset] && sel.anchorNode.childNodes[sel.anchorOffset].tagName == 'INPUT') {
+      } else if(sel.anchorNode && sel.anchorNode.childNodes && sel.anchorNode.childNodes[sel.anchorOffset] && sel.anchorNode.childNodes[sel.anchorOffset].tagName == 'TEXTAREA') {
+        sel.empty();
+      }
+    }
+  }
+});
 
 window.buttons = buttonTracker;
 

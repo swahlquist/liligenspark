@@ -1,0 +1,59 @@
+{{#modal-dialog action='close' opening='opening' closing='closing'}}
+  <div class="modal-header">
+    <button type="button" class="close" {{action 'close'}}>&times;</button>
+    <h3>
+      {{t "Eval Settings" key='assessment_settings'}}
+    </h3>
+  </div>
+  <div class="modal-body">
+    <form class="form-horizontal">
+      <div class='form-group'>
+        <label class='control-label col-sm-3'>{{t "For" key='name'}}</label>
+        <div class='col-sm-6'>
+          {{#if settings.saved}}
+            <b>{{settings.user_name}}</b>
+          {{else}}
+            <!-- dropdown, or finalized user name if already saved and re-loading -->
+            {{input type='text' value=settings.target class="form-control"}}
+          {{/if}}
+        </div>
+      </div>
+      <div class='form-group'>
+        <label class='control-label col-sm-3'>{{t "Title" key='title'}}</label>
+        <div class='col-sm-6'>
+          {{input type='text' value=settings.name class="form-control" placeholder=name_placeholder}}
+        </div>
+      </div>
+      {{#unless save_option}}
+        <div class='form-group'>
+          <label class='control-label col-sm-3'>{{t "Default Symbols" key='default_symbols'}}</label>
+          <div class='col-sm-6'>
+            {{input type='text' value=settings.default_library class="form-control"}}
+          </div>
+        </div>
+      {{/unless}}
+      <!-- 
+        attempt_minimum, attempt_maximum, mastery_cutoff, target
+        -->
+      <div class='form-group'>
+        <label class='control-label col-sm-3'>{{t "Notes" key='notes'}}</label>
+        <div class='col-sm-9'>
+          {{textarea class='form-control' value=settings.accommodations placeholder="any accommodations or supports provided that wouldn't be otherwise noted" rows=2}}
+        </div>
+        <div class='col-sm-9 col-sm-offset-3' style='margin-top: 10px;'>
+          {{textarea class='form-control' value=settings.notes placeholder='additional notes' rows=4}}
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class='modal-footer'>
+    <button class='btn btn-primary btn-lg' {{action 'confirm'}}>
+      {{#if save_option}}
+        {{t "Save" key='save'}}
+      {{else}}
+        {{t "Update" key='update'}}
+      {{/if}}
+    </button>
+    <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+  </div>
+{{/modal-dialog}}

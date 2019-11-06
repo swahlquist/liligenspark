@@ -47,11 +47,31 @@ var evaluation = {
     var now = (new Date()).getTime() / 1000;
     assmnt.gaps.push([assmnt.ended, now]);
     assmnt.ended = null;
+    assmnt.saved = true;
     assessment = assmnt;
     working = assmnt.working_stash;
     app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
   },
+  clear: function() {
+    assessment = {};
+  },
   conclude: function() {
+    modal.open('modals/assessment-settings', {assessment: assessment, action: 'results'});
+  },
+  update: function(settings, reload) {
+    assessment.name = settings.name;
+    assessment.default_library = settings.default_library;
+    assessment.notes = settings.notes;
+    assessment.accommodations = settings.accommodations;
+    if(settings.for_user && !assessment.saved) {
+      assessment.user_id = setttings.for_user.id;
+      assessment.user_namee = settings.for_user.user_name;
+   }
+    if(reload) {
+      app_state.jump_to_board({key: 'obf/eval-' + (new Date()).getTime()});
+    }
+  },
+  persist: function() {
     assessment.ended = (new Date()).getTime() / 1000;
     assessment.working_stash = Object.assign({}, working);
     delete assessment.working_stash['ref'];
@@ -66,7 +86,7 @@ var evaluation = {
     assessment = {};
   },
   settings: function() {
-    modal.open('modals/assessment-settings');
+    modal.open('modals/assessment-settings', {assessment: assessment});
   },
   move: function(direction) {
     if(direction == 'forward') {
@@ -490,7 +510,6 @@ var attempt_maximum = 8;
 var testing_min_attempts = null;
 var levels = [
   // TODO: best way to assess different symbol libraries
-  // TODO: ensure you are checking/tracking range of access
   [
     {intro: 'intro'},
   ],[

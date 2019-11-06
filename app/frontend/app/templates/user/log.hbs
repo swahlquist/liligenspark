@@ -99,6 +99,18 @@
       </div>
     </div>
     <div style='page-break-inside: avoid;'>
+      {{#if processed_assessment.accommodations}}
+        <div style='margin-bottom: 10px;'>
+          <span style='white-space: pre-line;'>{{processed_assessment.accommodations}}</span>
+        </div>
+      {{/if}}
+      {{#if processed_assessment.notes}}
+        <div style='margin-bottom: 10px;'>
+          <em style='white-space: pre-line;'>{{processed_assessment.notes}}</em>
+        </div>
+      {{/if}}
+    </div>
+    <div style='page-break-inside: avoid;'>
       <h3>{{t "Grid Activations" key='activation_map'}}</h3>
       <div class='row'>
         <div class='col-xs-8'>
