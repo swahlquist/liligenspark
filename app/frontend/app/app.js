@@ -36,13 +36,6 @@ Ember.onerror = function(err) {
   }
 };
 
-// TODO: nice for catching unexpected errors, but it seems like
-// it also triggers anytime a reject isn't caught.
-// RSVP.on('error', function(err) {
-//   Ember.Logger.assert(false, err);
-//   debugger
-// });
-
 var customEvents = {
     'buttonselect': 'buttonSelect',
     'buttonpaint': 'buttonPaint',

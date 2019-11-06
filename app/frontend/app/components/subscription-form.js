@@ -8,6 +8,7 @@ import app_state from '../utils/app_state';
 import session from '../utils/session';
 import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
+import $ from 'jquery';
 
 export default Component.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),
@@ -15,8 +16,8 @@ export default Component.extend({
     return app_state;
   }.property(),
   didInsertElement: function() {
-    if(this.$().width() < 850) {
-      this.$().addClass('skinny_subscription');
+    if($(this.element).width() < 850) {
+      $(this.element).addClass('skinny_subscription');
     }
     this.set('session', session);
     this.set('see_pricing', false);

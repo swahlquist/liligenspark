@@ -50,15 +50,15 @@
         {{#if model.admin}}
           {{#if model.permissions.manage}}
             <span class="btn btn-default">
-              {{input value=masquerade_user_name enter='masquerade' placeholder="user name" class="form-control inline inline-masquerade"}}
+              {{input value=masquerade_user_name enter=(action 'masquerade') placeholder="user name" class="form-control inline inline-masquerade"}}
               <button class="btn btn-default" {{action "masquerade"}} style='width: 110px;'>{{t "masquerade" key='masquerade'}}</button>
             </span>
             <span class="btn btn-default">
-              {{input value=search_user enter='find_user' placeholder="user name/email" class="form-control inline inline-masquerade"}}
+              {{input value=search_user enter=(action 'find_user') placeholder="user name/email" class="form-control inline inline-masquerade"}}
               <button class="btn btn-default" {{action "find_user"}} style='width: 110px;'>{{t "find user" key='find_user'}}</button>
             </span>
             <span class="btn btn-default">
-              {{input value=search_board enter='find_board' placeholder="board id/key" class="form-control inline inline-masquerade"}}
+              {{input value=search_board enter=(action 'find_board') placeholder="board id/key" class="form-control inline inline-masquerade"}}
               <button class="btn btn-default" {{action "find_board"}} style='width: 110px;'>{{t "find board" key='find_board'}}</button>
             </span>
           {{/if}}

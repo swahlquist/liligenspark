@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import Component from '@ember/component';
+import $ from 'jquery';
 
 export default Component.extend({
   tagName: 'input',
@@ -9,12 +10,12 @@ export default Component.extend({
     this.update_placeholder();
   },
   update_placeholder: function() {
-    if(this.$()) {
+    if($(this.element)) {
       if(this.get('value')) {
-        this.$().attr('placeholder', '##');
-        this.$().attr('value', this.get('value'));
+        $(this.element).attr('placeholder', '##');
+        $(this.element).attr('value', this.get('value'));
       } else {
-        this.$().attr('placeholder', '');
+        $(this.element).attr('placeholder', '');
       }
     }
   }.observes('value'),
@@ -23,7 +24,7 @@ export default Component.extend({
       // double-tab to escape text entry lockage
       return;
     }
-    this.$().val(event.keyCode);
+    $(this.element).val(event.keyCode);
     event.preventDefault();
     this.set('value', event.keyCode);
   }

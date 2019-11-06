@@ -202,7 +202,7 @@
           {{#if allow_search}}
             <form id="header_search">
               <div style="float: left; margin-right: 4px; width: 150px;">
-              {{input type="text" value=searchString enter="searchBoards" class="form-control" placeholder="Search Boards"}}
+              {{input type="text" value=searchString enter=(action "searchBoards") class="form-control" placeholder="Search Boards"}}
               </div>
               <button class="btn btn-default" {{action "searchBoards"}}>{{t "Go" key='go'}}</button>
               <div style="clear: left;"></div>

@@ -27,7 +27,7 @@
         <button class="btn btn-default" {{action "find_board"}} style='display: none; margin-right: 20px;'>{{t "Find" key='find'}}</button>
         <button class="btn btn-default" {{action "build_board"}} style='margin-right: 20px;'>{{t "New" key='new'}}</button>
         <span class="board_search_field">
-          {{input value=linkedBoardName class="form-control" id="change_to" placeholder="Board name or key" enter="find_board"}}
+          {{input value=linkedBoardName class="form-control" id="change_to" placeholder="Board name or key" enter=(action "find_board")}}
         </span>
         <button class="btn btn-default" {{action "find_board"}}>{{t "Find" key='find'}}</button>
         {{#unless pending_board}}

@@ -2233,7 +2233,8 @@ describe('editManager', function() {
 
         var called = false;
         $(window).bind('message', function(event) {
-          if(event.originalEvent && event.originalEvent.data == 'imageDataRequest') {
+          event = event.originalEvent || event;
+          if(event && event.data == 'imageDataRequest') {
             called = true;
           }
         });

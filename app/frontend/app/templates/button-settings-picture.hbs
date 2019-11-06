@@ -16,7 +16,7 @@
   {{/if}}
   <div style="margin-bottom: 10px;" class="options">
     <span class="picture_search_field">
-      {{input id='find_picture' value=model.image_field enter="find_picture" placeholder=search_prompt class="form-control inline select_on_click"}}
+      {{input id='find_picture' value=model.image_field enter=(action "find_picture") placeholder=search_prompt class="form-control inline select_on_click"}}
     </span>
     <button type="button" class='btn btn-default' {{action "find_picture"}}>{{t "Search" key='search'}}</button>
     <button type="button" {{action "webcamPicture" on="click"}} disabled={{webcam_unavailable}} class="btn btn-default" style='width: 42px; height: 34px; overflow: hidden;'>

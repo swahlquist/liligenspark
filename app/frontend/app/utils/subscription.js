@@ -225,7 +225,7 @@ var Subscription = EmberObject.extend({
     return false;
   }.property('app_state.app_store_purchase_types'),
   manage_subscriptions: function() {
-    if(Subscsription.in_app_store) {
+    if(Subscription.in_app_store) {
       Subscription.in_app_store.manageSubscriptions();
     }
   },

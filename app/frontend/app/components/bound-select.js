@@ -2,6 +2,7 @@ import Ember from 'ember';
 import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 import { reads } from '@ember/object/computed';
+import $ from 'jquery';
 
 export default Component.extend({
   tagName: 'span',
@@ -24,7 +25,7 @@ export default Component.extend({
 
   actions: {
     change() {
-      const selectEl = this.$('select')[0];
+      const selectEl = $(this.element).find('select')[0];
       const selectedIndex = selectEl.selectedIndex;
       const content = this.get('content');
 

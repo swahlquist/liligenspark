@@ -1549,7 +1549,7 @@ var editManager = EmberObject.extend({
 });
 
 $(window).bind('message', function(event) {
-  event = event.originalEvent;
+  event = event.originalEvent || event;
   if(event.data && event.data.match && event.data.match(/^data:image/)) {
     editManager.edited_image_received(event.data);
   } else if(event.data && event.data.match && event.data.match(/state:{/)) {

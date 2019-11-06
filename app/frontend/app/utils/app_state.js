@@ -219,8 +219,8 @@ var app_state = EmberObject.extend({
   },
   global_transition: function(transition) {
     if(transition.isAborted) { return; }
-    app_state.set('from_url', app_state.get('route.router.url'));
-    var rec = this.get('route.router._routerMicrolib.recognizer')
+    app_state.set('from_url', app_state.get('route._router.url') || app_state.get('route.router.url'));
+    var rec = this.get('route._router._routerMicrolib.recognizer') || this.get('route.router._routerMicrolib.recognizer');
     var pieces = rec && rec.recognize(app_state.get('from_url'));
     if(pieces && pieces.length > 0) {
       var args = [pieces[pieces.length - 1].handler];
@@ -230,7 +230,7 @@ var app_state = EmberObject.extend({
       for(var idx = 0; idx < pieces.length; idx++) {
         var piece = pieces[idx];
         if(piece && piece.isDynamic) {
-          transition.router.getHandler(piece.handler)._names.forEach(handle_piece);
+          (transition._router || transition.router).getHandler(piece.handler)._names.forEach(handle_piece);
         }
       }
       if(args[0] != 'board.index') {

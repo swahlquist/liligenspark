@@ -1956,19 +1956,20 @@ var buttonTracker = EmberObject.extend({
     this.longPressEvent = null;
   },
   normalize_event: function(event) {
-    if(event.originalEvent && event.originalEvent.touches && event.originalEvent.touches[0]) {
-      event.pageX = event.originalEvent.touches[0].pageX;
-      event.pageY = event.originalEvent.touches[0].pageY;
-      event.clientX = event.originalEvent.touches[0].clientX;
-      event.clientY = event.originalEvent.touches[0].clientY;
-      event.total_touches = event.originalEvent.touches.length;
+    var ref_event = event.originalEvent || event;
+    if(ref_event && ref_event.touches && ref_event.touches[0]) {
+      event.pageX = ref_event.touches[0].pageX;
+      event.pageY = ref_event.touches[0].pageY;
+      event.clientX = ref_event.touches[0].clientX;
+      event.clientY = ref_event.touches[0].clientY;
+      event.total_touches = ref_event.touches.length;
     }
-    if(event.originalEvent && event.originalEvent.changedTouches && event.originalEvent.changedTouches[0]) {
-      event.pageX = event.originalEvent.changedTouches[0].pageX;
-      event.pageY = event.originalEvent.changedTouches[0].pageY;
-      event.clientX = event.originalEvent.changedTouches[0].clientX;
-      event.clientY = event.originalEvent.changedTouches[0].clientY;
-      event.total_touches = event.originalEvent.touches.length;
+    if(ref_event && ref_event.changedTouches && ref_event.changedTouches[0]) {
+      event.pageX = ref_event.changedTouches[0].pageX;
+      event.pageY = ref_event.changedTouches[0].pageY;
+      event.clientX = ref_event.changedTouches[0].clientX;
+      event.clientY = ref_event.changedTouches[0].clientY;
+      event.total_touches = ref_event.touches.length;
     }
     return event;
   },
@@ -2008,11 +2009,11 @@ var buttonTracker = EmberObject.extend({
     if(this.shortPressEvents) {
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
-        var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target
+        var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target;
         var event = $.Event('touchend', target);
         event.target = target;
-        event.clientX = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientX;
-        event.clientY = (this.shortPressEvent || this.shortPressEvent.originalEvent).clientY;
+        event.clientX = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientX;
+        event.clientY = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientY;
         buttonTracker.element_release(selectable_wrap, event);
         this.ignoreUp = true;
       }

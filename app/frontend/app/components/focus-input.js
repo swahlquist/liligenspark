@@ -1,11 +1,12 @@
 import Ember from 'ember';
 import capabilities from '../utils/capabilities';
 import TextField from '@ember/component/text-field';
+import $ from 'jquery';
 
 export default TextField.extend({
   becomeFocused: function() {
     if(!capabilities.mobile || this.get('force')) {
-      this.$().focus().select();
+      $(this.element).focus().select();
     }
   }.on('didInsertElement'),
   focusOut: function() {

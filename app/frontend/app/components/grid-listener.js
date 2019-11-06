@@ -21,7 +21,17 @@ export default Component.extend({
       this.sendAction('grid_event', 'setGrid', parseInt($cell.attr('data-row'), 10), parseInt($cell.attr('data-col'), 10));
     }
   },
-  mouseMove: function(event) {
+  didInserteElement: function() {
+    var _this = this;
+    this.set('handler', function(e) {
+      _this.handleMouseMove(e);
+    })
+    this.element.addEventListener('mousemove', this.get('handler'));
+  }, 
+  willDestroyElement: function() {
+    this.element.removeEventListener('mousemove', this.get('handler'));
+  },
+  handleMouseMove: function(event) {
     var $cell = $(event.target).closest('div.cell');
     if($cell.length) {
       this.sendAction('grid_event', 'hoverGrid', parseInt($cell.attr('data-row'), 10), parseInt($cell.attr('data-col'), 10));
