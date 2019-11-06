@@ -23,7 +23,7 @@ export default modal.ModalController.extend({
   default_core_list: function() {
     return this.get('core_list') && this.get('core_list') != 'new' && this.get('core_list') != 'custom';
   }.property('core_list'),
-  update_on_change: function() {
+  update_on_change: observer('core_list', function() {
     if(this.get('core_list') == 'custom') {
       this.set('words', []);
       this.set('editing', true);
@@ -36,7 +36,7 @@ export default modal.ModalController.extend({
         }
       });
     }
-  }.observes('core_list'),
+  }),
   word_lines: function() {
     return (this.get('words') || []).join('\n');
   }.property('words'),

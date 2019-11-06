@@ -17,7 +17,7 @@ export default Component.extend({
     var height = this.get('height') || 200;
     return htmlSafe("width: " + width + "px; height: " + height + "px;");
   }.property('width', 'height'),
-  redraw: function() {
+  redraw: observer('button.id', function() {
     var button = this.get('button');
     var $canvas = $(this.element).find("canvas");
     var _this = this;
@@ -85,5 +85,5 @@ export default Component.extend({
       context.restore();
       context.restore();
     }
-  }.observes('button.id')
+  })
 });

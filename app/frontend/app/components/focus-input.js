@@ -1,13 +1,14 @@
+import { on } from '@ember/object/evented';
 import capabilities from '../utils/capabilities';
 import TextField from '@ember/component/text-field';
 import $ from 'jquery';
 
 export default TextField.extend({
-  becomeFocused: function() {
+  becomeFocused: on('didInsertElement', function() {
     if(!capabilities.mobile || this.get('force')) {
       $(this.element).focus().select();
     }
-  }.on('didInsertElement'),
+  }),
   focusOut: function() {
     this.sendAction();
   },

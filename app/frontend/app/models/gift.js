@@ -34,11 +34,11 @@ CoughDrop.Gift = DS.Model.extend({
   discount_hundred: function() {
     return (this.get('discount') || 1.0) * 100;
   }.property('discount'),
-  update_gift_types: function() {
+  update_gift_types: observer('gift_type', function() {
     var res = {};
     res[this.get('gift_type') || 'user_gift'] = true;
     this.set('gift_types', res);
-  }.observes('gift_type')
+  })
 });
 
 export default CoughDrop.Gift;

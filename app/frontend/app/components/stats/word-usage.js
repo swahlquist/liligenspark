@@ -21,7 +21,7 @@ export default Component.extend({
       return htmlSafe('');
     }
   }.property('right_side'),
-  draw: function() {
+  draw: observer('usage_stats.draw_id', 'ref_stats.draw_id', function() {
     var stats = this.get('usage_stats');
     var ref_stats = this.get('ref_stats');
     var elem = this.get('element').getElementsByClassName('daily_stats')[0];
@@ -78,7 +78,7 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('usage_stats.draw_id', 'ref_stats.draw_id'),
+  }),
   actions: {
     set_modeling: function(modeling) {
       this.set('usage_stats.modeling', !!modeling);

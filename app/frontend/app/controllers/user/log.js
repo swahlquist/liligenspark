@@ -12,7 +12,7 @@ export default Controller.extend({
   title: function() {
     return "Log Details";
   }.property('model.user_name'),
-  draw_charts: function() {
+  draw_charts: observer('model.geo', 'user', function() {
     if(!this.get('model.geo')) {
       return;
     }
@@ -51,7 +51,7 @@ export default Controller.extend({
           }
         });
     }
-  }.observes('model.geo', 'user'),
+  }),
   processed_assessment: function() {
     if(this.get('model.type') == 'eval') {
       var assessment = this.get('model.evaluation');

@@ -95,12 +95,12 @@ export default Controller.extend({
     {name: i18n.t('headset_or_earpiece', "Play on Headset or Earpiece"), id: "headset_or_earpiece"},
     {name: i18n.t('earpiece', "Play on Earpiece"), id: "earpiece"},
   ],
-  update_flipped_settings: function() {
+  update_flipped_settings: observer('pending_preferences.device.flipped_override', function() {
     if(this.get('pending_preferences.device.flipped_override')) {
       this.set('pending_preferences.device.flipped_text', this.get('pending_preferences.device.flipped_text') || this.get('pending_preferences.device.button_text'));
       this.set('pending_preferences.device.flipped_height', this.get('pending_preferences.device.flipped_height') || this.get('pending_preferences.device.vocalization_height'));
     }
-  }.observes('pending_preferences.device.flipped_override'),
+  }),
   text_sample_class: function() {
     var res = "text_sample ";
     var style = Button.style(this.get('pending_preferences.device.button_style'));
@@ -198,11 +198,11 @@ export default Controller.extend({
   ios_app: function() {
     return capabilities.system == 'iOS' && capabilities.installed_app;
   }.property(),
-  set_auto_sync: function() {
+  set_auto_sync: observer('model.id', 'model.auto_sync', function() {
     if(this.get('pending_preferences.device')) {
       this.set('pending_preferences.device.auto_sync', this.get('model.auto_sync'));
     }
-  }.observes('model.id', 'model.auto_sync'),
+  }),
   check_calibration: function() {
     var _this = this;
     capabilities.eye_gaze.calibratable(function(res) {
@@ -265,11 +265,11 @@ export default Controller.extend({
   native_keyboard_available: function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && window.Keyboard;
   }.property(),
-  enable_external_keyboard: function() {
+  enable_external_keyboard: observer('pending_preferences.device.prefer_native_keyboard', function() {
     if(this.get('pending_preferences.device.prefer_native_keyboard')) {
       this.set('pending_preferences.device.external_keyboard', true);
     }
-  }.observes('pending_preferences.device.prefer_native_keyboard'),
+  }),
   select_keycode_string: function() {
     if(this.get('pending_preferences.device.scanning_select_keycode')) {
       return (i18n.key_string(this.get('pending_preferences.device.scanning_select_keycode')) || 'unknown') + ' key';
@@ -310,13 +310,13 @@ export default Controller.extend({
   eyegaze_type: function() {
     return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
   }.property('pending_preferences.device.dwell', 'pending_preferences.device.dwell_type'),
-  update_dwell_defaults: function() {
+  update_dwell_defaults: observer('pending_preferences.device.dwell', function() {
     if(this.get('pending_preferences.device.dwell')) {
       if(!this.get('pending_preferences.device.dwell_type')) {
         this.set('pending_preferences.device.dwell_type', 'eyegaze');
       }
     }
-  }.observes('pending_preferences.device.dwell'),
+  }),
   wakelock_capable: function() {
     return capabilities.wakelock_capable();
   }.property(),
@@ -382,28 +382,34 @@ export default Controller.extend({
   disabled_sidebar_options_or_prior_sidebar_boards: function() {
     return (this.get('disabled_sidebar_options') || []).length > 0 || (this.get('pending_preferences.prior_sidebar_boards') || []).length > 0;
   }.property('disabled_sidebar_options', 'pending_preferences.prior_sidebar_boards'),
-  logging_changed: function() {
+  logging_changed: observer('pending_preferences.logging', function() {
     if(this.get('pending_preferences.logging')) {
       if(this.get('logging_set') === false) {
         modal.open('enable-logging', {save: false, user: this.get('model')});
       }
     }
     this.set('logging_set', this.get('pending_preferences.logging'));
-  }.observes('pending_preferences.logging'),
+  }),
   buttons_stretched: function() {
     return this.get('pending_preferences.stretch_buttons') && this.get('pending_preferences.stretch_buttons') != 'none';
   }.property('pending_preferences.stretch_buttons'),
-  enable_alternate_voice: function() {
-    var alt = this.get('pending_preferences.device.alternate_voice') || {};
-    if(alt.enabled && alt.for_scanning === undefined && alt.for_fishing === undefined && alt.for_buttons === undefined) {
-      emberSet(alt, 'for_scanning', true);
-      emberSet(alt, 'for_messages', true);
+  enable_alternate_voice: observer(
+    'pending_preferences.device.alternate_voice.enabled',
+    'pending_preferences.device.alternate_voice.for_scanning',
+    'pending_preferences.device.alternate_voice.for_fishing',
+    'pending_preferences.device.alternate_voice.for_buttons',
+    function() {
+      var alt = this.get('pending_preferences.device.alternate_voice') || {};
+      if(alt.enabled && alt.for_scanning === undefined && alt.for_fishing === undefined && alt.for_buttons === undefined) {
+        emberSet(alt, 'for_scanning', true);
+        emberSet(alt, 'for_messages', true);
+      }
+      if(alt.for_scanning || alt.for_fishing || alt.for_buttons) {
+        emberSet(alt, 'enabled', true);
+      }
+      this.set('pending_preferences.device.alternate_voice', alt);
     }
-    if(alt.for_scanning || alt.for_fishing || alt.for_buttons) {
-      emberSet(alt, 'enabled', true);
-    }
-    this.set('pending_preferences.device.alternate_voice', alt);
-  }.observes('pending_preferences.device.alternate_voice.enabled', 'pending_preferences.device.alternate_voice.for_scanning', 'pending_preferences.device.alternate_voice.for_fishing', 'pending_preferences.device.alternate_voice.for_buttons'),
+  ),
   not_scanning: function() {
     return !this.get('pending_preferences.device.scanning');
   }.property('pending_preferences.device.scanning'),
@@ -426,14 +432,14 @@ export default Controller.extend({
   audio_target_available: function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android');
   }.property(),
-  update_can_record_tags: function() {
+  update_can_record_tags: observer('model.id', function() {
     var _this = this;
     capabilities.nfc.available().then(function(res) {
       _this.set('can_record_tags', res);
     }, function() {
       _this.set('can_record_tags', false);
     });
-  }.observes('model.id'),
+  }),
   needs: 'application',
   actions: {
     plus_minus: function(direction, attribute) {

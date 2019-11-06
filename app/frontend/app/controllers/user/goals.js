@@ -24,7 +24,7 @@ export default Controller.extend({
       _this.set('badges', {error: true});
     });
   },
-  map_badges_to_goals: function() {
+  map_badges_to_goals: observer('goals.list', 'badges.list', function() {
     if(this.get('goals.list.length') !== undefined && this.get('badges.list.length') !== undefined) {
       var _this = this;
       this.get('goals.list').forEach(function(goal) {
@@ -34,7 +34,7 @@ export default Controller.extend({
       });
       this.set('badges_loaded', true);
     }
-  }.observes('goals.list', 'badges.list'),
+  }),
   any_goal: function() {
     return this.get('primary_goal') || this.get('secondary_goals').length > 0 || this.get('past_goals').length > 0;
   }.property('primary_goal', 'secondary_goals', 'past_goals'),

@@ -332,11 +332,11 @@ CoughDrop.Goal = DS.Model.extend({
     badges.pushObject(badge);
     this.set('badges', badges);
   },
-  check_badges: function() {
+  check_badges: observer('badges', 'badges.length', function() {
     var badges = this.get('badges') || [];
     this.set('badges_enabled', !!(badges.length > 0 && badges[badges.length - 1].level !== 0));
-  }.observes('badges', 'badges.length'),
-  set_zero_badge: function(obj, changed) {
+  }),
+  set_zero_badge: observer('auto_assessment', 'assessment_badge', function(obj, changed) {
     if(changed == 'auto_assessment' && this.get('auto_assessment') === false) {
       this.set('assessment_badge', null);
     }
@@ -349,7 +349,7 @@ CoughDrop.Goal = DS.Model.extend({
       this.set('auto_assessment', false);
       this.set('assessment_badge', null);
     }
-  }.observes('auto_assessment', 'assessment_badge')
+  })
 });
 
 export default CoughDrop.Goal;

@@ -3,7 +3,7 @@ import app_state from '../utils/app_state';
 
 export default modal.ModalController.extend({
   pin: "",
-  compare_pin: function() {
+  compare_pin: observer('pin', function() {
     var pin = this.get('pin');
     if(pin == this.get('model.actual_pin')) {
       this.set('pin', '');
@@ -18,12 +18,12 @@ export default modal.ModalController.extend({
       this.set('invalid_pin', true);
       this.set('pin', '');
     }
-  }.observes('pin'),
+  }),
   opening: function() {
     this.set('pin', '');
     this.set('invalid_pin', null);
   },
-  update_pin: function() {
+  update_pin: observer('pin_dots', function() {
     var str = this.get('pin_dots') || "";
     var pin = this.get('pin');
     for(var idx = 0; idx < str.length; idx++) {
@@ -34,8 +34,8 @@ export default modal.ModalController.extend({
     if(pin != this.get('pin')) {
       this.set('pin', pin);
     }
-  }.observes('pin_dots'),
-  update_pin_dots: function() {
+  }),
+  update_pin_dots: observer('pin', function() {
     var str = "●";
     var res = "";
     var steps = (this.get('pin') || '').length;
@@ -45,7 +45,7 @@ export default modal.ModalController.extend({
     if(res != this.get('pin_dots')) {
       this.set('pin_dots', res);
     }
-  }.observes('pin'),
+  }),
   actions: {
     add_digit: function(digit) {
       var pin = this.get('pin') || "";

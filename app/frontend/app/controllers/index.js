@@ -76,7 +76,7 @@ export default Controller.extend({
   blank_slate_percent_style: function() {
     return htmlSafe("width: " + this.get('blank_slate_percent') + "%;");
   }.property('blank_slate_percent'),
-  checkForBlankSlate: function() {
+  checkForBlankSlate: observer('persistence.online', function() {
     var _this = this;
     if(Ember.testing) { return; }
     persistence.find_recent('board').then(function(boards) {
@@ -94,7 +94,7 @@ export default Controller.extend({
     }, function() {
       _this.set('showOffline', false);
     });
-  }.observes('persistence.online'),
+  }),
   device: function() {
     var res = {
       added_somewhere: !!this.get('app_state.currentUser.preferences.progress.app_added'),
@@ -162,7 +162,7 @@ export default Controller.extend({
       return null;
     }
   }.property('app_state.currentUser.pending_org', 'app_state.currentUser.pending_supervision_org', 'app_state.currentUser.pending_board_shares', 'app_state.currentUser.unread_messages'),
-  update_selected: function() {
+  update_selected: observer('selected', 'persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
     var last_browse = stashes.get('last_index_browse');
@@ -215,8 +215,8 @@ export default Controller.extend({
         _this.set(key + '_selected', false);
       }
     });
-  }.observes('selected', 'persistence.online'),
-  reload_logs: function() {
+  }),
+  reload_logs: observer('model.id', 'persistence.online', function() {
     var model = this.get('model');
     var _this = this;
     if(model && model.get('id') && persistence.get('online')) {
@@ -245,45 +245,50 @@ export default Controller.extend({
       }, function(err) { });
       model.load_word_activities();
     }
-  }.observes('model.id', 'persistence.online'),
+  }),
   best_badge: function(badges, goal_id) {
     return Badge.best_next_badge(badges, goal_id);
   },
   earned_badge: function(badges) {
     return Badge.best_earned_badge(badges);
   },
-  update_current_badges: function() {
-    var _this = this;
-    var model = _this.get('model');
-    var for_users = _this.get('current_user_badges') || {};
-    if(model && for_users[model.get('id')]) {
-      var b = _this.best_badge(for_users[model.get('id')], model.get('goal.id'));
-      var eb = _this.earned_badge(for_users[model.get('id')]);
-      if(!app_state.get('sessionUser.currently_premium') || app_state.get('sessionUser.supporter_role')) {
-        b = null;
-      }
-      // If no badge for the current user use the supervisee if there's only one
-      if(!b && (app_state.get('sessionUser.known_supervisees') || []).length == 1) {
-        var sup = app_state.get('sessionUser.known_supervisees')[0];
-        if(sup.premium) {
-          b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id)
+  update_current_badges: observer(
+    'app_state.sessionUser',
+    'app_state.sessionUser.known_supervisees',
+    'current_user_badges',
+    function() {
+      var _this = this;
+      var model = _this.get('model');
+      var for_users = _this.get('current_user_badges') || {};
+      if(model && for_users[model.get('id')]) {
+        var b = _this.best_badge(for_users[model.get('id')], model.get('goal.id'));
+        var eb = _this.earned_badge(for_users[model.get('id')]);
+        if(!app_state.get('sessionUser.currently_premium') || app_state.get('sessionUser.supporter_role')) {
+          b = null;
         }
+        // If no badge for the current user use the supervisee if there's only one
+        if(!b && (app_state.get('sessionUser.known_supervisees') || []).length == 1) {
+          var sup = app_state.get('sessionUser.known_supervisees')[0];
+          if(sup.premium) {
+            b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id)
+          }
+        }
+        emberSet(model, 'current_badge', b);
+        emberSet(model, 'earned_badge', eb);
       }
-      emberSet(model, 'current_badge', b);
-      emberSet(model, 'earned_badge', eb);
+      var sups = [];
+      (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
+        if(for_users[emberGet(sup, 'id')] && emberGet(sup, 'premium')) {
+          var b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id);
+          emberSet(sup, 'current_badge', b);
+          var eb = _this.earned_badge(for_users[emberGet(sup, 'id')]);
+          emberSet(sup, 'earned_badge', eb);
+        }
+        sups.push(sup);
+      });
+      _this.set('supervisees_with_badges', sups);
     }
-    var sups = [];
-    (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
-      if(for_users[emberGet(sup, 'id')] && emberGet(sup, 'premium')) {
-        var b = _this.best_badge(for_users[emberGet(sup, 'id')], (sup.goal || {}).id);
-        emberSet(sup, 'current_badge', b);
-        var eb = _this.earned_badge(for_users[emberGet(sup, 'id')]);
-        emberSet(sup, 'earned_badge', eb);
-      }
-      sups.push(sup);
-    });
-    _this.set('supervisees_with_badges', sups);
-  }.observes('app_state.sessionUser', 'app_state.sessionUser.known_supervisees', 'current_user_badges'),
+  ),
   modeling_ideas_available: function() {
     if(app_state.get('sessionUser.supporter_role')) {
       var any_premium_supervisees = false;
@@ -306,7 +311,7 @@ export default Controller.extend({
   some_supervisees: function() {
     return (app_state.get('currentUser.supervisees') || []).length > 3;
   }.property('app_state.currentUser.supervisees'),
-  save_user_pref_change: function() {
+  save_user_pref_change: observer('app_state.currentUser.preferences.auto_open_speak_mode', function() {
     var mode = app_state.get('currentUser.preferences.auto_open_speak_mode');
     if(mode !== undefined) {
       var last_mode = this.get('last_auto_open_speak_mode');
@@ -315,7 +320,7 @@ export default Controller.extend({
       }
       this.set('last_auto_open_speak_mode', mode);
     }
-  }.observes('app_state.currentUser.preferences.auto_open_speak_mode'),
+  }),
   index_nav: function() {
     var res = {};
     if(this.get('index_nav_state')) {
@@ -332,7 +337,7 @@ export default Controller.extend({
     }
     return res;
   }.property('index_nav_state', 'model.supporter_role', 'app_state.currentUser.preference.device.last_index_nav'),
-  subscription_check: function() {
+  subscription_check: observer('app_state.sessionUser', function() {
     // if the user is in the free trial or is really expired, they need the subscription
     // modal to pop up
     if(this.get('app_state.sessionUser') && !this.get('app_state.installed_app')) {
@@ -356,7 +361,7 @@ export default Controller.extend({
         }
       }
     }
-  }.observes('app_state.sessionUser'),
+  }),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);

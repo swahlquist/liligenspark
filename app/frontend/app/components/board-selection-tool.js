@@ -38,15 +38,15 @@ export default Component.extend({
     this.set('height', (window_height - top));
     elem.style.height = this.get('height') + "px";
   },
-  update_level_buttons: function() {
+  update_level_buttons: observer('current_board', 'base_level', 'current_level', function() {
     var _this = this;
     if(this.get('current_board.id')) {
       this.get('current_board').load_button_set().then(function(bs) {
         _this.set('level_buttons', bs.buttons_for_level(_this.get('current_board.id'), _this.get('current_level') || _this.get('base_level')));
       }, function() { });
     }
-  }.observes('current_board', 'base_level', 'current_level'),
-  update_current_board: function() {
+  }),
+  update_current_board: observer('sorted_boards', 'current_index', function() {
     this.size_element();
     if(this.get('current_index') == undefined && this.get('sorted_boards.length')) {
       var _this = this;
@@ -67,8 +67,8 @@ export default Component.extend({
         _this.set('current_button_set', bs);
       });
     }
-  }.observes('sorted_boards', 'current_index'),
-  update_sorted_boards: function() {
+  }),
+  update_sorted_boards: observer('boards', function() {
     var res = (this.get('boards') || []).sort(function(a, b) {
       var a_size = a.get('grid.rows') * a.get('grid.columns');
       var b_size = b.get('grid.rows') * b.get('grid.columns');
@@ -79,7 +79,7 @@ export default Component.extend({
       }
     });
     this.set('sorted_boards', res);
-  }.observes('boards'),
+  }),
   load_boards: function() {
     var _this = this;
     _this.set('status', {loading: true});
@@ -100,7 +100,7 @@ export default Component.extend({
       _this.sendAction('load_error');
     });
   },
-  check_update_scroll: function() {
+  check_update_scroll: observer('base_level', function() {
     var scroll_disableable = this.get('base_level') != null;
     var _this = this;
     if(this.get('update_scroll')) {
@@ -108,7 +108,7 @@ export default Component.extend({
         _this.get('update_scroll')(scroll_disableable);
       });
     }
-  }.observes('base_level'),
+  }),
   no_next: function() {
     if(this.get('level_select')) {
       var max = this.get('max_level') || 10;

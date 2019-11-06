@@ -28,7 +28,7 @@ export default modal.ModalController.extend({
       _this.set('tools', {error: true});
     });
   },
-  set_user_parameters: function() {
+  set_user_parameters: observer('selected_tool.user_parameters', function() {
     var res = [];
     (this.get('selected_tool.user_parameters') || []).forEach(function(param) {
       res.push(EmberObject.create({
@@ -40,7 +40,7 @@ export default modal.ModalController.extend({
       }));
     });
     this.set('user_parameters', res);
-  }.observes('selected_tool.user_parameters'),
+  }),
   actions: {
     install: function() {
       var _this = this;

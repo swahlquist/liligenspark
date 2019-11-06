@@ -22,7 +22,7 @@ export default Component.extend({
       return htmlSafe('');
     }
   }.property('right_side'),
-  draw: function() {
+  draw: observer('usage_stats.draw_id', function() {
     var stats = this.get('usage_stats');
     var elem = this.get('element').getElementsByClassName('geo_map')[0];
 
@@ -71,7 +71,7 @@ export default Component.extend({
         }
       }
     });
-  }.observes('usage_stats.draw_id'),
+  }),
   actions: {
     marker_link_select: function(data) {
       if(data.location_id) {

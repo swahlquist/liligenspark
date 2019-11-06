@@ -8,7 +8,7 @@ export default Component.extend({
   willInsertElement: function() {
     this.set_board_record();
   },
-  set_board_record: function() {
+  set_board_record: observer('board', 'board.key', function() {
     var board = this.get('board');
     if(board.children) {
       this.set('children', board.children);
@@ -22,7 +22,7 @@ export default Component.extend({
     } else {
       this.set('board_record', board);
     }
-  }.observes('board', 'board.key'),
+  }),
   display_class: function() {
     var e = this.element;
     var bounds = e.getBoundingClientRect();

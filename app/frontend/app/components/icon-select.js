@@ -11,7 +11,7 @@ export default Component.extend({
     this._super(...arguments);
   },
   iconUrls: CoughDrop.iconUrls,
-  set_extra_urls: function() {
+  set_extra_urls: observer('selection', function() {
     if(this.get('selection')) {
       var _this = this;
       var i = new Image();
@@ -28,7 +28,7 @@ export default Component.extend({
       };
       i.src = this.get('selection');
     }
-  }.observes('selection'),
+  }),
   included_icon_urls: function() {
     var urls = this.get('extra_urls') || [];
     var icons = this.iconUrls;

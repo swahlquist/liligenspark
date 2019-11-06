@@ -305,15 +305,15 @@ var app_state = EmberObject.extend({
       }
     }
   },
-  check_for_protected_usage: function() {
+  check_for_protected_usage: observer('currentUser.preferences.protected_usage', function() {
     var protect_user = !!this.get('currentUser.preferences.protected_usage');
     if(window._trackJs) {
       window._trackJs.disabled = protect_user;
     }
     CoughDrop.protected_user = protect_user;
     stashes.persist('protected_user', protect_user);
-  }.observes('currentUser.preferences.protected_usage'),
-  set_root_board_state: function() {
+  }),
+  set_root_board_state: observer('set_as_root_board_state', 'currentBoardState', function() {
     // When browsing boards from the "select a home board" interface,
     // automatically set them as the temporary root board for browsing
     if(this.get('set_as_root_board_state') && this.get('currentBoardState')) {
@@ -322,7 +322,7 @@ var app_state = EmberObject.extend({
       stashes.persist('root_board_state', this.get('currentBoardState'));
       this.set('set_as_root_board_state', false);
     }
-  }.observes('set_as_root_board_state', 'currentBoardState'),
+  }),
   current_board_level: function() {
     return stashes.get('board_level') || 10;
   }.property('stashes.board_level'),
@@ -353,9 +353,9 @@ var app_state = EmberObject.extend({
     }
     return htmlSafe(res);
   }.property('currentBoardState.id', 'from_route'),
-  set_latest_board_id: function() {
+  set_latest_board_id: observer('currentBoardState.id', function() {
     this.set('latest_board_id', this.get('currentBoardState.id'));
-  }.observes('currentBoardState.id'),
+  }),
   check_for_board_readiness: function(delay) {
     if(this.check_for_board_readiness.timer) {
       runCancel(this.check_for_board_readiness.timer);
@@ -426,7 +426,7 @@ var app_state = EmberObject.extend({
     this.set('referenced_board', new_state);
     this.controller.transitionToRoute('board', new_state.key);
   },
-  check_for_lock_on_board_state: function() {
+  check_for_lock_on_board_state: observer('currentBoardState', function() {
     var state = this.get('currentBoardState');
     if(state && state.key) {
       if(state.key == this.get('temporary_root_board_key')) {
@@ -434,7 +434,7 @@ var app_state = EmberObject.extend({
       }
       this.set('temporary_root_board_key', null);
     }
-  }.observes('currentBoardState'),
+  }),
   toggle_home_lock: function(force) {
     var state = stashes.get('root_board_state');
     var current = app_state.get('currentBoardState');
@@ -457,11 +457,11 @@ var app_state = EmberObject.extend({
       app_state.set('modeling_started', (new Date()).getTime());
     }
   },
-  update_modeling: function() {
+  update_modeling: observer('modeling', function() {
     if(this.get('modeling') !== undefined && this.get('modeling') !== null) {
       stashes.set('modeling', !!this.get('modeling'));
     }
-  }.observes('modeling'),
+  }),
   modeling: function(ch) {
     var res = !!(this.get('manual_modeling') || this.get('modeling_for_user'));
     return res;
@@ -475,7 +475,7 @@ var app_state = EmberObject.extend({
     });
     return !!res;
   }.property('speak_mode', 'currentUser', 'referenced_speak_mode_user'),
-  auto_clear_modeling: function() {
+  auto_clear_modeling: observer('short_refresh_stamp', 'modeling', function() {
     if(this.get('manual_modeling')) {
       var now = (new Date()).getTime();
       if(!app_state.get('last_activation')) {
@@ -501,7 +501,7 @@ var app_state = EmberObject.extend({
         app_state.toggle_modeling();
       }
     }
-  }.observes('short_refresh_stamp', 'modeling'),
+  }),
   back_one_board: function(opts) {
     opts = opts || {};
     var history = this.get_history();
@@ -890,7 +890,7 @@ var app_state = EmberObject.extend({
       app_state.set('sessionUser', user);
     }, function() { });
   },
-  set_auto_synced: function() {
+  set_auto_synced: observer('sessionUser', 'sessionUser.auto_sync', function() {
     var auto_sync = this.get('sessionUser.auto_sync');
     if(auto_sync == null) {
       auto_sync = !!capabilities.installed_app;
@@ -898,7 +898,7 @@ var app_state = EmberObject.extend({
     if(window.persistence) {
       window.persistence.set('auto_sync', auto_sync);
     }
-  }.observes('sessionUser', 'sessionUser.auto_sync'),
+  }),
   check_free_space: function() {
     return capabilities.storage.free_space().then(function(res) {
       if(res && res.mb && res.mb < 70) {
@@ -1067,7 +1067,7 @@ var app_state = EmberObject.extend({
   set_and_say_buttons(vocalizations) {
     this.controller.set_and_say_buttons(vocalizations);
   },
-  set_current_user: function() {
+  set_current_user: observer('sessionUser', 'speak_mode', 'speakModeUser', function() {
     this.did_set_current_user = true;
     if(app_state.get('speak_mode') && app_state.get('speakModeUser')) {
       app_state.set('currentUser', app_state.get('speakModeUser'));
@@ -1082,7 +1082,7 @@ var app_state = EmberObject.extend({
     if(app_state.get('currentUser')) {
       app_state.set('currentUser.load_all_connections', true);
     }
-  }.observes('sessionUser', 'speak_mode', 'speakModeUser'),
+  }),
   eye_gaze_state: function() {
     if(!this.get('currentUser.preferences.device.dwell') || this.get('currentUser.preferences.device.dwell_type') != 'eyegaze') {
       return null;
@@ -1116,7 +1116,7 @@ var app_state = EmberObject.extend({
       status: (active && active.status) || (dormant && dormant.status) || (pending && pending.status)
     };
   }.property('currentUser.preferences.device.dwell', 'currentUser.preferences.device.dwell_type', 'eye_gaze.statuses'),
-  dom_changes_on_board_state_change: function() {
+  dom_changes_on_board_state_change: observer('currentBoardState', function() {
     if(!this.get('currentBoardState')) {
       $('#speak_mode').popover('destroy');
       $('html,body').css('overflow', '');
@@ -1126,55 +1126,69 @@ var app_state = EmberObject.extend({
         this.controller.set('footer', false);
       } catch(e) { }
     }
-  }.observes('currentBoardState'),
-  update_button_tracker: function() {
-    if(app_state.get('speak_mode')) {
-      buttonTracker.minimum_press = this.get('currentUser.preferences.activation_minimum');
-      buttonTracker.activation_location = this.get('currentUser.preferences.activation_location');
-      buttonTracker.clear_on_wiggle = true; // TODO: make this a user pref
-      buttonTracker.short_press_delay = this.get('currentUser.preferences.activation_cutoff');
-      if(this.get('currentUser.preferences.activation_on_start')) {
-        buttonTracker.short_press_delay = 50;
+  }),
+  update_button_tracker: observer(
+    'speak_mode',
+    'currentUser.preferences.activation_location',
+    'currentUser.preferences.activation_minimum',
+    'currentUser.preferences.activation_cutoff',
+    'currentUser.preferences.activation_on_start',
+    'currentUser.preferences.debounce',
+    function() {
+      if(app_state.get('speak_mode')) {
+        buttonTracker.minimum_press = this.get('currentUser.preferences.activation_minimum');
+        buttonTracker.activation_location = this.get('currentUser.preferences.activation_location');
+        buttonTracker.clear_on_wiggle = true; // TODO: make this a user pref
+        buttonTracker.short_press_delay = this.get('currentUser.preferences.activation_cutoff');
+        if(this.get('currentUser.preferences.activation_on_start')) {
+          buttonTracker.short_press_delay = 50;
+        }
+        buttonTracker.swipe_pages = !!this.get('currentUser.preferences.swipe_pages');
+        buttonTracker.long_press_delay = Math.max((buttonTracker.short_press_delay || 50) * 2, 1500);
+        buttonTracker.debounce = this.get('currentUser.preferences.debounce');
+      } else if (window.user_preferences) {
+        buttonTracker.minimum_press = null;
+        buttonTracker.activation_location = null;
+        buttonTracker.long_press_delay = 1500;
+        buttonTracker.short_press_delay = null;
+        buttonTracker.debounce = null;
       }
-      buttonTracker.swipe_pages = !!this.get('currentUser.preferences.swipe_pages');
-      buttonTracker.long_press_delay = Math.max((buttonTracker.short_press_delay || 50) * 2, 1500);
-      buttonTracker.debounce = this.get('currentUser.preferences.debounce');
-    } else if (window.user_preferences) {
-      buttonTracker.minimum_press = null;
-      buttonTracker.activation_location = null;
-      buttonTracker.long_press_delay = 1500;
-      buttonTracker.short_press_delay = null;
-      buttonTracker.debounce = null;
     }
-  }.observes('speak_mode', 'currentUser.preferences.activation_location', 'currentUser.preferences.activation_minimum', 'currentUser.preferences.activation_cutoff', 'currentUser.preferences.activation_on_start', 'currentUser.preferences.debounce'),
-  align_button_list: function() {
-    if(app_state.get('speak_mode')) {
-      runLater(function() {
-        var $button_list = $("#button_list");
-        var $item = null;
-        if(app_state.get('insertion.index')) {
-          $item = $button_list.find(".utterance_cursor");
-          if($item.length == 0) {
-            $item = $button_list.find(".history_button:not(.utterance_cursor)").eq(app_state.get('insertion.index'));
+  ),
+  align_button_list: observer(
+    'speak_mode',
+    'button_list',
+    'button_list.length',
+    'insertion.index',
+    function() {
+      if(app_state.get('speak_mode')) {
+        runLater(function() {
+          var $button_list = $("#button_list");
+          var $item = null;
+          if(app_state.get('insertion.index')) {
+            $item = $button_list.find(".utterance_cursor");
+            if($item.length == 0) {
+              $item = $button_list.find(".history_button:not(.utterance_cursor)").eq(app_state.get('insertion.index'));
+            }
           }
-        }
-        if(!$item || $item.length == 0) { $item = $button_list.find(".history_button").last(); }
-        if($item.length && $button_list.length) {
-          var box_bounds = $button_list[0].getBoundingClientRect();
-          var scroll_top = $button_list.scrollTop();
-          var item_bounds = $item[0].getBoundingClientRect();
-          // TODO: don't know why the 1 is necessary
-          var top = item_bounds.top + scroll_top - box_bounds.top - 1; 
-          $button_list.scrollTop(top);
-        } else {
-          $button_list.scrollTop(9999999);
-        }
-      }, 200);
+          if(!$item || $item.length == 0) { $item = $button_list.find(".history_button").last(); }
+          if($item.length && $button_list.length) {
+            var box_bounds = $button_list[0].getBoundingClientRect();
+            var scroll_top = $button_list.scrollTop();
+            var item_bounds = $item[0].getBoundingClientRect();
+            // TODO: don't know why the 1 is necessary
+            var top = item_bounds.top + scroll_top - box_bounds.top - 1; 
+            $button_list.scrollTop(top);
+          } else {
+            $button_list.scrollTop(9999999);
+          }
+        }, 200);
+      }
     }
-  }.observes('speak_mode', 'button_list', 'button_list.length', 'insertion.index'),
-  monitor_scanning: function() {
+  ),
+  monitor_scanning: observer('speak_mode', 'currentBoardState', function() {
     this.check_scanning();
-  }.observes('speak_mode', 'currentBoardState'),
+  }),
   get_history: function() {
     if(app_state.get('speak_mode')) {
       return stashes.get('boardHistory');
@@ -1255,194 +1269,206 @@ var app_state = EmberObject.extend({
       return RSVP.resolve({dialog: false});
     }
   },
-  on_user_change: function() {
+  on_user_change: observer('currentUser', function() {
     if(this.get('currentUser') && CoughDrop.Board) {
       CoughDrop.Board.clear_fast_html();
     }
-  }.observes('currentUser'),
-  speak_mode_handlers: function() {
-    if(session.get('isAuthenticated') && !app_state.get('currentUser.id')) {
-      // Don't run handlers on page reload until user is loaded
-      return;
-    }
-    if(this.get('speak_mode')) {
-      stashes.set('logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.logging')));
-      stashes.set('geo_logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.geo_logging')));
-      stashes.set('speaking_user_id', this.get('currentUser.id'));
-      stashes.set('session_user_id', this.get('sessionUser.id'));
-
-      var geo_enabled = app_state.get('currentUser.preferences.geo_logging') || app_state.get('sidebar_boards').find(function(b) { return b.highlight_type == 'locations' || b.highlight_type == 'custom'; });
-      if(geo_enabled) {
-        stashes.geo.poll();
+  }),
+  speak_mode_handlers: observer(
+    'speak_mode',
+    'currentUser.id',
+    'currentUser.preferences.logging',
+    'referenced_user.id',
+    function() {
+      if(session.get('isAuthenticated') && !app_state.get('currentUser.id')) {
+        // Don't run handlers on page reload until user is loaded
+        return;
       }
-      this.set('speak_mode_started', (new Date()).getTime());
+      if(this.get('speak_mode')) {
+        stashes.set('logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.logging')));
+        stashes.set('geo_logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.geo_logging')));
+        stashes.set('speaking_user_id', this.get('currentUser.id'));
+        stashes.set('session_user_id', this.get('sessionUser.id'));
 
-      // this method is getting called again on every board load, even if already in speak mode. This check
-      // limits the following block to once per speak-mode-activation.
-      if(!this.get('last_speak_mode')) {
-        if(this.get('currentUser.preferences.speak_on_speak_mode')) {
-          runLater(function() {
-            speecher.speak_text(i18n.t('here_we_go', "here we go"), null, {volume: 0.1});
-          }, 200);
+        var geo_enabled = app_state.get('currentUser.preferences.geo_logging') || app_state.get('sidebar_boards').find(function(b) { return b.highlight_type == 'locations' || b.highlight_type == 'custom'; });
+        if(geo_enabled) {
+          stashes.geo.poll();
         }
-        this.set('speak_mode_activities_at', (new Date()).getTime());
-        this.set('speak_mode_modeling_ideas', null);
-        if(this.get('currentUser.preferences.device.wakelock') !== false) {
-          capabilities.wakelock('speak!', true);
-        }
-        // When entering Speak Mode, use the board's default locale
-        if(this.get('currentBoardState.default_locale')) {
-          var loc = this.get('currentBoardState.default_locale');
-          app_state.set('label_locale', loc);
-          app_state.set('vocalization_locale', loc);
-        }
-        this.set_history([]);
-        var noticed = false;
-        if(stashes.get('logging_enabled')) {
-          noticed = true;
-          modal.notice(i18n.t('logging_enabled', "Logging is enabled"), true);
-        }
-        if(this.get('currentBoardState.has_fallbacks')) {
-          modal.notice(i18n.t('board_using_fallbacks', "This board uses premium assets which you don't have access to so you will see free images and sounds which may not perfectly match the author's intent"), true);
-        }
-        if(!capabilities.mobile && this.get('currentUser.preferences.device.fullscreen')) {
-          capabilities.fullscreen(true).then(null, function() {
-            if(!noticed) {
-              modal.warning(i18n.t('fullscreen_failed', "Full Screen Mode failed to load"), true);
+        this.set('speak_mode_started', (new Date()).getTime());
+
+        // this method is getting called again on every board load, even if already in speak mode. This check
+        // limits the following block to once per speak-mode-activation.
+        if(!this.get('last_speak_mode')) {
+          if(this.get('currentUser.preferences.speak_on_speak_mode')) {
+            runLater(function() {
+              speecher.speak_text(i18n.t('here_we_go', "here we go"), null, {volume: 0.1});
+            }, 200);
+          }
+          this.set('speak_mode_activities_at', (new Date()).getTime());
+          this.set('speak_mode_modeling_ideas', null);
+          if(this.get('currentUser.preferences.device.wakelock') !== false) {
+            capabilities.wakelock('speak!', true);
+          }
+          // When entering Speak Mode, use the board's default locale
+          if(this.get('currentBoardState.default_locale')) {
+            var loc = this.get('currentBoardState.default_locale');
+            app_state.set('label_locale', loc);
+            app_state.set('vocalization_locale', loc);
+          }
+          this.set_history([]);
+          var noticed = false;
+          if(stashes.get('logging_enabled')) {
+            noticed = true;
+            modal.notice(i18n.t('logging_enabled', "Logging is enabled"), true);
+          }
+          if(this.get('currentBoardState.has_fallbacks')) {
+            modal.notice(i18n.t('board_using_fallbacks', "This board uses premium assets which you don't have access to so you will see free images and sounds which may not perfectly match the author's intent"), true);
+          }
+          if(!capabilities.mobile && this.get('currentUser.preferences.device.fullscreen')) {
+            capabilities.fullscreen(true).then(null, function() {
+              if(!noticed) {
+                modal.warning(i18n.t('fullscreen_failed', "Full Screen Mode failed to load"), true);
+              }
+            });
+          }
+          $("#hidden_input").val("");
+          capabilities.tts.reload().then(function(res) {
+            console.log("tts reload status");
+            console.log(res);
+          });
+          capabilities.volume_check().then(function(level) {
+            console.log("volume is " + level);
+            if(level === 0) {
+              noticed = true;
+              modal.warning(i18n.t('volume_is_off', "Volume is muted, you will not be able to hear speech"), true);
+            } else if(level < 0.2) {
+              noticed = true;
+              modal.warning(i18n.t('volume_is_low', "Volume is low, you may not be able to hear speech"), true);
             }
           });
-        }
-        $("#hidden_input").val("");
-        capabilities.tts.reload().then(function(res) {
-          console.log("tts reload status");
-          console.log(res);
-        });
-        capabilities.volume_check().then(function(level) {
-          console.log("volume is " + level);
-          if(level === 0) {
-            noticed = true;
-            modal.warning(i18n.t('volume_is_off', "Volume is muted, you will not be able to hear speech"), true);
-          } else if(level < 0.2) {
-            noticed = true;
-            modal.warning(i18n.t('volume_is_low', "Volume is low, you may not be able to hear speech"), true);
+          capabilities.silent_mode().then(function(silent) {
+            if(silent && capabilities.system == 'iOS') {
+              modal.warning(i18n.t('ios_muted', "The app is currently muted, so you will not hear speech. To unmute, check the mute switch, and also swipe up from the bottom of the screen to check for app-level muting"), true);
+            }
+          });
+          var ref_user = this.get('referenced_speak_mode_user') || this.get('currentUser');
+          if(ref_user && ref_user.get('goal.summary')) {
+            runLater(function() {
+              noticed = true;
+              var str = i18n.t('user_apostrophe', "%{user_name}'s ", {user_name: ref_user.get('user_name')});
+              str = str + i18n.t('current_goal', "Current Goal: %{summary}", {summary: ref_user.get('goal.summary')});
+              modal.notice(str, true);
+            }, 100);
           }
-        });
-        capabilities.silent_mode().then(function(silent) {
-          if(silent && capabilities.system == 'iOS') {
-            modal.warning(i18n.t('ios_muted', "The app is currently muted, so you will not hear speech. To unmute, check the mute switch, and also swipe up from the bottom of the screen to check for app-level muting"), true);
+          speecher.set_output_target({}, function() { });
+          app_state.load_user_badge();
+          if(app_state.get('installed_app') && window.persistence) {
+            var get_local_revisions = window.persistence.find('settings', 'synced_full_set_revisions').then(function(res) {
+              if(app_state.get('currentBoardState.id') && !res[app_state.get('currentBoardState.id')]) {
+                if(!window.persistence.get('last_sync_at')) {
+                  // if not ever synced, remind them to sync before trying to use Speak Mode
+                  modal.warning(i18n.t('remember_to_sync', "Remember to sync before trying to use boards somewhere without a strong Internet connection!"), true);
+                } else if(app_state.get('current_board_in_extended_board_set')) {
+                  // if synced and this is in home board set, remind them to sync
+                  modal.warning(i18n.t('need_to_re_sync', "Remember to sync so you have access to all your boards offline!"), true);
+                } else {
+                  // otherwise, remind them about unsynced boards
+                  modal.warning(i18n.t('unsynced_boards_may_not_work', "This board isn't available from you home board or sidebar so it won't be synced, and may not work properly without a strong Internet connection"), true);
+                }
+              }
+            }, function() { });
           }
-        });
-        var ref_user = this.get('referenced_speak_mode_user') || this.get('currentUser');
-        if(ref_user && ref_user.get('goal.summary')) {
-          runLater(function() {
-            noticed = true;
-            var str = i18n.t('user_apostrophe', "%{user_name}'s ", {user_name: ref_user.get('user_name')});
-            str = str + i18n.t('current_goal', "Current Goal: %{summary}", {summary: ref_user.get('goal.summary')});
-            modal.notice(str, true);
-          }, 100);
         }
-        speecher.set_output_target({}, function() { });
-        app_state.load_user_badge();
-        if(app_state.get('installed_app') && window.persistence) {
-          var get_local_revisions = window.persistence.find('settings', 'synced_full_set_revisions').then(function(res) {
-            if(app_state.get('currentBoardState.id') && !res[app_state.get('currentBoardState.id')]) {
-              if(!window.persistence.get('last_sync_at')) {
-                // if not ever synced, remind them to sync before trying to use Speak Mode
-                modal.warning(i18n.t('remember_to_sync', "Remember to sync before trying to use boards somewhere without a strong Internet connection!"), true);
-              } else if(app_state.get('current_board_in_extended_board_set')) {
-                // if synced and this is in home board set, remind them to sync
-                modal.warning(i18n.t('need_to_re_sync', "Remember to sync so you have access to all your boards offline!"), true);
-              } else {
-                // otherwise, remind them about unsynced boards
-                modal.warning(i18n.t('unsynced_boards_may_not_work', "This board isn't available from you home board or sidebar so it won't be synced, and may not work properly without a strong Internet connection"), true);
+        this.set('eye_gaze', capabilities.eye_gaze);
+        this.set('embedded', !!(CoughDrop.embedded));
+        this.set('full_screen_capable', capabilities.fullscreen_capable());
+        if(this.get('currentBoardState') && this.get('currentUser.needs_speak_mode_intro')) {
+          var intro = this.get('currentUser.preferences.progress.speak_mode_intro_done');
+          if(!intro && !app_state.get('speak-mode-intro')) {
+            if(modal.route && !modal.is_open('speak-mode-intro')) {
+              modal.open('speak-mode-intro');
+            }
+          } else if(intro && !this.get('currentUser.preferences.progress.modeling_intro_done') && this.get('currentUser.preferences.logging') && !app_state.get('modeling-intro')) {
+            var now = (new Date()).getTime();
+            if(intro === true && this.get('currentUser.joined')) { intro = this.get('currentUser.joined').getTime(); }
+            if(now - intro > (4 * 24 * 60 * 60 * 1000)) {
+              if(modal.route && !modal.is_open('modeling-intro')) {
+                modal.open('modeling-intro');
               }
             }
-          }, function() { });
+          }
+        }
+      } else if(!this.get('speak_mode') && this.get('last_speak_mode') !== undefined) {
+        capabilities.wakelock('speak!', false);
+        capabilities.fullscreen(false);
+        buttonTracker.hit_spots = [];
+        if(this.get('last_speak_mode') !== false) {
+          stashes.persist('temporary_root_board_state', null);
+          stashes.persist('sticky_board', false);
+          stashes.persist('speak_mode_user_id', null);
+          stashes.persist('all_buttons_enabled', null);
+          app_state.set('label_locale', null);
+          stashes.persist('label_locale', null);
+          app_state.set('vocalization_locale', null);
+          stashes.persist('vocalization_locale', null);
+          app_state.set('manual_modeling', false);
+          app_state.set('referenced_speak_mode_user', null);
+          stashes.persist('referenced_speak_mode_user_id', null);
+          if(CoughDrop.Board) {
+            CoughDrop.Board.clear_fast_html();
+          }
         }
       }
-      this.set('eye_gaze', capabilities.eye_gaze);
-      this.set('embedded', !!(CoughDrop.embedded));
-      this.set('full_screen_capable', capabilities.fullscreen_capable());
-      if(this.get('currentBoardState') && this.get('currentUser.needs_speak_mode_intro')) {
-        var intro = this.get('currentUser.preferences.progress.speak_mode_intro_done');
-        if(!intro && !app_state.get('speak-mode-intro')) {
-          if(modal.route && !modal.is_open('speak-mode-intro')) {
-            modal.open('speak-mode-intro');
-          }
-        } else if(intro && !this.get('currentUser.preferences.progress.modeling_intro_done') && this.get('currentUser.preferences.logging') && !app_state.get('modeling-intro')) {
-          var now = (new Date()).getTime();
-          if(intro === true && this.get('currentUser.joined')) { intro = this.get('currentUser.joined').getTime(); }
-          if(now - intro > (4 * 24 * 60 * 60 * 1000)) {
-            if(modal.route && !modal.is_open('modeling-intro')) {
-              modal.open('modeling-intro');
+      if(!session.get('isAuthenticated') || app_state.get('currentUser')) {
+        this.set('last_speak_mode', !!this.get('speak_mode'));
+      }
+    }
+  ),
+  update_speak_mode_modeling_ideas: observer(
+    'speak_mode',
+    'referenced_user.id',
+    'speak_mode_activities_at',
+    'short_refresh_stamp',
+    function() {
+      var _this = this;
+      var cutoff = (new Date()).getTime() - (45 * 1000);
+      // Try showing modeling ideas as an icon for like thirty seconds when
+      // first entering speak mode, if there are any. (if the user has already checked out
+      // modeling ideas at least once)
+      if(_this.get('speak_mode_activities_at') < cutoff) {
+        if(_this.get('speak_mode_modeling_ideas')) {
+          _this.set('speak_mode_modeling_ideas.enabled', false);
+          _this.set('speak_mode_modeling_ideas.timeout', true);
+        }
+        return;
+      }
+      if(!_this.get('speak_mode') || _this.get('referenced_user.id') === _this.get('speak_mode_modeling_ideas.user_id')) {
+        return;
+      }
+      if(_this.get('currentUser.preferences.progress.modeling_ideas_viewed')) {
+        if(_this.get('referenced_user.currently_premium') && !_this.get('referenced_user.supporter_role')) {
+          _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
+          _this.get('referenced_user').load_word_activities().then(function(activities) {
+            if(activities && activities.list && activities.list.length > 0) {
+              var list = activities.words;
+              // If user-defined goal words are set, use one of those if possible
+              var goal_list = (activities.words || []).filter(function(w) {
+                return w && w.reasons && w.reasons.indexOf('primary_words') !== -1;
+              });
+              if(goal_list.length > 0) { list = goal_list; }
+              var mod = (new Date()).getDate() % (list || {length: 3}).length;
+              var word = ((list || [])[mod] || {}).word;
+              _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id'), enabled: true, word: word});
             }
-          }
+          }, function() { });
+        } else {
+          _this.set('speak_mode_modeling_ideas', false);
         }
-      }
-    } else if(!this.get('speak_mode') && this.get('last_speak_mode') !== undefined) {
-      capabilities.wakelock('speak!', false);
-      capabilities.fullscreen(false);
-      buttonTracker.hit_spots = [];
-      if(this.get('last_speak_mode') !== false) {
-        stashes.persist('temporary_root_board_state', null);
-        stashes.persist('sticky_board', false);
-        stashes.persist('speak_mode_user_id', null);
-        stashes.persist('all_buttons_enabled', null);
-        app_state.set('label_locale', null);
-        stashes.persist('label_locale', null);
-        app_state.set('vocalization_locale', null);
-        stashes.persist('vocalization_locale', null);
-        app_state.set('manual_modeling', false);
-        app_state.set('referenced_speak_mode_user', null);
-        stashes.persist('referenced_speak_mode_user_id', null);
-        if(CoughDrop.Board) {
-          CoughDrop.Board.clear_fast_html();
-        }
-      }
-    }
-    if(!session.get('isAuthenticated') || app_state.get('currentUser')) {
-      this.set('last_speak_mode', !!this.get('speak_mode'));
-    }
-  }.observes('speak_mode', 'currentUser.id', 'currentUser.preferences.logging', 'referenced_user.id'),
-  update_speak_mode_modeling_ideas: function() {
-    var _this = this;
-    var cutoff = (new Date()).getTime() - (45 * 1000);
-    // Try showing modeling ideas as an icon for like thirty seconds when
-    // first entering speak mode, if there are any. (if the user has already checked out
-    // modeling ideas at least once)
-    if(_this.get('speak_mode_activities_at') < cutoff) {
-      if(_this.get('speak_mode_modeling_ideas')) {
-        _this.set('speak_mode_modeling_ideas.enabled', false);
-        _this.set('speak_mode_modeling_ideas.timeout', true);
-      }
-      return;
-    }
-    if(!_this.get('speak_mode') || _this.get('referenced_user.id') === _this.get('speak_mode_modeling_ideas.user_id')) {
-      return;
-    }
-    if(_this.get('currentUser.preferences.progress.modeling_ideas_viewed')) {
-      if(_this.get('referenced_user.currently_premium') && !_this.get('referenced_user.supporter_role')) {
-        _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id')});      
-        _this.get('referenced_user').load_word_activities().then(function(activities) {
-          if(activities && activities.list && activities.list.length > 0) {
-            var list = activities.words;
-            // If user-defined goal words are set, use one of those if possible
-            var goal_list = (activities.words || []).filter(function(w) {
-              return w && w.reasons && w.reasons.indexOf('primary_words') !== -1;
-            });
-            if(goal_list.length > 0) { list = goal_list; }
-            var mod = (new Date()).getDate() % (list || {length: 3}).length;
-            var word = ((list || [])[mod] || {}).word;
-            _this.set('speak_mode_modeling_ideas', {user_id: _this.get('referenced_user.id'), enabled: true, word: word});
-          }
-        }, function() { });
       } else {
-        _this.set('speak_mode_modeling_ideas', false);
+        _this.set('speak_mode_modeling_ideas', false);      
       }
-    } else {
-      _this.set('speak_mode_modeling_ideas', false);      
     }
-  }.observes('speak_mode', 'referenced_user.id', 'speak_mode_activities_at', 'short_refresh_stamp'),
+  ),
   handle_tag: function(tag) {
     if(!app_state.get('speak_mode')) { return; }
     var text_fallback = function(text) {
@@ -1499,7 +1525,7 @@ var app_state = EmberObject.extend({
   superProtectedSpeakMode: function() {
     return this.get('speak_mode') && this.get('embedded');
   }.property('speak_mode', 'embedded'),
-  auto_exit_speak_mode: function() {
+  auto_exit_speak_mode: observer('speak_mode_started', 'medium_refresh_stamp', function() {
     var now = (new Date()).getTime();
     var redirect_option = false;
     // if we're speaking as the current user and they're a limited supervisor, or if
@@ -1536,8 +1562,8 @@ var app_state = EmberObject.extend({
     } else {
       this.set('speak_mode_started', null);
     }
-  }.observes('speak_mode_started', 'medium_refresh_stamp'),
-  check_inbox: function() {
+  }),
+  check_inbox: observer('referenced_user.id', 'medium_refresh_stamp', function() {
     var ref_user = app_state.get('referenced_user');
     if(window.persistence && window.persistence.get('online') && app_state.get('speak_mode') && ref_user) {
       var last_share = ref_user.get('last_share') || 0;
@@ -1563,7 +1589,7 @@ var app_state = EmberObject.extend({
         }, function() { });
       }
     }
-  }.observes('referenced_user.id', 'medium_refresh_stamp'),
+  }),
   current_board_name: function() {
     var state = this.get('currentBoardState');
     if(state && state.key) {
@@ -1747,14 +1773,24 @@ var app_state = EmberObject.extend({
     var res = this.get('referenced_user.sidebar_boards_with_fallbacks');
     return res;
   }.property('referenced_user.sidebar_boards_with_fallback'),
-  check_locations: function() {
-    if(!this.get('speak_mode')) { return RSVP.resolve([]); }
-    var boards = this.get('current_sidebar_boards') || [];
-    if(!boards.find(function(b) { return b.places; })) { return RSVP.reject(); }
-    var res = geolocation.check_locations();
-    res.then(null, function() { });
-    return res;
-  }.observes('speak_mode', 'persistence.online', 'stashes.geo.latest', 'modeling_for_user', 'currentUser', 'currentUser.sidebar_boards_with_fallbacks', 'referenced_speak_mode_user', 'referenced_speak_mode_user.sidebar_boards_with_fallback'),
+  check_locations: observer(
+    'speak_mode',
+    'persistence.online',
+    'stashes.geo.latest',
+    'modeling_for_user',
+    'currentUser',
+    'currentUser.sidebar_boards_with_fallbacks',
+    'referenced_speak_mode_user',
+    'referenced_speak_mode_user.sidebar_boards_with_fallback',
+    function() {
+      if(!this.get('speak_mode')) { return RSVP.resolve([]); }
+      var boards = this.get('current_sidebar_boards') || [];
+      if(!boards.find(function(b) { return b.places; })) { return RSVP.reject(); }
+      var res = geolocation.check_locations();
+      res.then(null, function() { });
+      return res;
+    }
+  ),
   sidebar_boards: function() {
     var res = this.get('current_sidebar_boards');
     if(!res && window.user_preferences && window.user_preferences.any_user && window.user_preferences.any_user.default_sidebar_boards) {
@@ -1777,14 +1813,14 @@ var app_state = EmberObject.extend({
     }
     return user;
   }.property('modeling_for_user', 'currentUser', 'referenced_speak_mode_user'),
-  ding_on_message: function() {
+  ding_on_message: observer('referenced_user.unread_alerts', function() {
     var ref_id = this.get('referenced_user.id') + ":" + this.get('referenced_user.unread_alerts');
     if(ref_id != this.get('last_ding_state') && this.get('speak_mode') && this.get('referenced_user.unread_alerts') > 0) {
       speecher.click('ding');
     }
     this.set('last_ding_state', ref_id);
-  }.observes('referenced_user.unread_alerts'),
-  load_user_badge: function() {
+  }),
+  load_user_badge: observer('speak_mode', 'referenced_user', 'persistence.online', function() {
     if(this.get('speak_mode') && this.get('persistence.online')) {
       var badge_hash = (this.get('referenced_user.id') || 'nobody') + "::" + ((new Date()).getTime() / 1000 / 3600)
       // don't check more than once an hour
@@ -1822,7 +1858,7 @@ var app_state = EmberObject.extend({
     } else if(this.get('user_badge') && this.get('user_badge.user_id') != this.get('referenced_user.id')) {
       this.set('user_badge', null);
     }
-  }.observes('speak_mode', 'referenced_user', 'persistence.online'),
+  }),
   testing: function() {
     return Ember.testing;
   }.property(),
@@ -1832,7 +1868,7 @@ var app_state = EmberObject.extend({
   current_time: function() {
     return (this.get('short_refresh_stamp') || new Date());
   }.property('short_refresh_stamp'),
-  check_for_user_updated: function(obj, changes) {
+  check_for_user_updated: observer('short_refresh_stamp', 'sessionUser', function(obj, changes) {
     if(window.persistence) {
       app_state.set('persistence', window.persistence);
       if(changes == 'sessionUser' || !window.persistence.get('last_sync_stamp')) {
@@ -1849,7 +1885,7 @@ var app_state = EmberObject.extend({
         console.error('persistence needed for checking user status');
       }
     }
-  }.observes('short_refresh_stamp', 'sessionUser'),
+  }),
   activate_button: function(button, obj) {
     CoughDrop.log.start();
     // skip hidden buttons
@@ -2386,12 +2422,12 @@ var app_state = EmberObject.extend({
       }
     }
   },
-  remember_global_integrations: function() {
+  remember_global_integrations: observer('sessionUser.global_integrations', function() {
     if(this.get('sessionUser.global_integrations')) {
       stashes.persist('global_integrations', this.get('sessionUser.global_integrations'));
     }
-  }.observes('sessionUser.global_integrations'),
-  toggle_cookies: function(state, change) {
+  }),
+  toggle_cookies: observer('sessionUser.preferences.cookies', function(state, change) {
     if(change == 'sessionUser.preferences.cookies') {
       state = !!this.get('sessionUser.preferences.cookies');
     }
@@ -2415,7 +2451,7 @@ var app_state = EmberObject.extend({
         elem.setAttribute('data-hidden', 'true');
       }
     }
-  }.observes('sessionUser.preferences.cookies'),
+  }),
   board_virtual_dom: function() {
     var _this = this;
     var dom = {

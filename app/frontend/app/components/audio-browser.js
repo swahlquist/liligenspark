@@ -25,9 +25,9 @@ export default Component.extend({
   more_audio_results: function() {
     return !!(this.get('browse_audio.results') && this.get('browse_audio.results').length < this.get('browse_audio.filtered_results').length);
   }.property('browse_audio.results', 'browse_audio.filtered_results'),
-  filter_audio_string: function() {
+  filter_audio_string: observer('browse_audio.filter_string', function() {
     this.send('filter_browsed_audio', this.get('browse_audio.filter_string'));
-  }.observes('browse_audio.filter_string'),
+  }),
   actions: {
     filter_browsed_audio: function(str) {
       var re = str ? new RegExp(str, 'i') : null;

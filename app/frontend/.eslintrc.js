@@ -22,6 +22,7 @@ module.exports = {
     'no-empty': 'off',
     'no-redeclare': 'off',
     'no-debugger': 'off',
+    'quotes': 'off', // TODO: blech
     'ember/closure-actions': 'off', // TODO: fix this
     'ember/avoid-leaking-state-in-ember-objects': 'off' // TODO: fix this
   },

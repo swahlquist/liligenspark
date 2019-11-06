@@ -7,67 +7,79 @@ import buttonTracker from '../utils/raw_events';
 import capabilities from '../utils/capabilities';
 
 export default Component.extend({
-  draw: function() {
-    var elem = this.get('element').getElementsByClassName('preview')[0];
-    var coords = this.getProperties('screen_width', 'screen_height', 'event_x', 'event_y', 'window_x', 'window_y', 'window_width', 'window_height');
-    if(elem && coords && coords.screen_width) {
-      var context = elem.getContext('2d');
-      var width = elem.width;
-      var height = elem.height;
-      context.clearRect(0, 0, width, height);
-      if(this.get('pending')) {
-        context.fillStyle = '#fff7b7';
-        context.strokeStyle = '#a59a47';
-      } else if(this.get('current_dwell')) {
-        context.fillStyle = '#eee';
-        context.strokeStyle = '#444';
-      } else {
-        context.fillStyle = '#fee';
-        context.strokeStyle = '#844';
-      }
-      context.beginPath();
-      context.rect(0, 0, width, height);
-      context.closePath();
-      context.fill();
-      context.stroke();
-
-
-      var ctx_window_width = width * (coords.window_width / coords.screen_width);
-      var ctx_window_height = height * (coords.window_height / coords.screen_height);
-      var ctx_window_x = width * (coords.window_x / coords.screen_width);
-      var ctx_window_y = height * (coords.window_y / coords.screen_height);
-      if(this.get('current_dwell')) {
-        context.fillStyle = '#fff';
-        context.strokeStyle = '#444';
-      } else {
-        context.fillStyle = '#fff';
-        context.strokeStyle = '#844';
-      }
-      context.beginPath();
-      context.rect(ctx_window_x, ctx_window_y, ctx_window_width, ctx_window_height);
-      context.closePath();
-      context.fill();
-      context.stroke();
-
-      if(coords.event_x) {
-        var ctx_point_x = width * (coords.event_x / coords.screen_width);
-        var ctx_point_y = height * (coords.event_y / coords.screen_height);
-        context.fillStyle = '#f00';
+  draw: observer(
+    'pending',
+    'current_dwell',
+    'screen_width',
+    'screen_height',
+    'event_x',
+    'event_y',
+    'window_x',
+    'window_y',
+    'window_width',
+    'window_height',
+    function() {
+      var elem = this.get('element').getElementsByClassName('preview')[0];
+      var coords = this.getProperties('screen_width', 'screen_height', 'event_x', 'event_y', 'window_x', 'window_y', 'window_width', 'window_height');
+      if(elem && coords && coords.screen_width) {
+        var context = elem.getContext('2d');
+        var width = elem.width;
+        var height = elem.height;
+        context.clearRect(0, 0, width, height);
+        if(this.get('pending')) {
+          context.fillStyle = '#fff7b7';
+          context.strokeStyle = '#a59a47';
+        } else if(this.get('current_dwell')) {
+          context.fillStyle = '#eee';
+          context.strokeStyle = '#444';
+        } else {
+          context.fillStyle = '#fee';
+          context.strokeStyle = '#844';
+        }
         context.beginPath();
-        context.arc(ctx_point_x, ctx_point_y, 10, 0, 2*Math.PI);
+        context.rect(0, 0, width, height);
         context.closePath();
         context.fill();
+        context.stroke();
+
+
+        var ctx_window_width = width * (coords.window_width / coords.screen_width);
+        var ctx_window_height = height * (coords.window_height / coords.screen_height);
+        var ctx_window_x = width * (coords.window_x / coords.screen_width);
+        var ctx_window_y = height * (coords.window_y / coords.screen_height);
+        if(this.get('current_dwell')) {
+          context.fillStyle = '#fff';
+          context.strokeStyle = '#444';
+        } else {
+          context.fillStyle = '#fff';
+          context.strokeStyle = '#844';
+        }
+        context.beginPath();
+        context.rect(ctx_window_x, ctx_window_y, ctx_window_width, ctx_window_height);
+        context.closePath();
+        context.fill();
+        context.stroke();
+
+        if(coords.event_x) {
+          var ctx_point_x = width * (coords.event_x / coords.screen_width);
+          var ctx_point_y = height * (coords.event_y / coords.screen_height);
+          context.fillStyle = '#f00';
+          context.beginPath();
+          context.arc(ctx_point_x, ctx_point_y, 10, 0, 2*Math.PI);
+          context.closePath();
+          context.fill();
+        }
       }
     }
-  }.observes('pending', 'current_dwell', 'screen_width', 'screen_height', 'event_x', 'event_y', 'window_x', 'window_y', 'window_width', 'window_height'),
-  clear_on_change: function() {
+  ),
+  clear_on_change: observer('type', function() {
     this.setProperties({
       ts: (new Date()).getTime(),
       pending: true,
       event_x: null,
       hardware: null
     });
-  }.observes('type'),
+  }),
   hardware_type: function() {
     var res = {};
     if(this.get('hardware')) {

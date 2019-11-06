@@ -26,11 +26,11 @@ export default Controller.extend({
       return this.get('model.button_list')[index].image;
     }
   }.property('model.image_url', 'model.large_image_url', 'image_index'),
-  show_share: function() {
+  show_share: observer('model.sentence', function() {
     if(!this.get('model.id')) { return; }
     this.get('model').check_for_large_image_url();
     this.set('speakable', speecher.ready);
-  }.observes('model.sentence'),
+  }),
   user_showable: function() {
     return this.get('model.show_user') && this.get('model.user.name') && this.get('model.user.user_name');
   }.property('model.show_user', 'model.user.name', 'model.user.user_name'),

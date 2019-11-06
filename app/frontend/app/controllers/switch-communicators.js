@@ -15,11 +15,11 @@ export default modal.ModalController.extend({
   self_currently_selected: function() {
     return app_state.get('currentUser.id') && app_state.get('currentUser.id') == app_state.get('sessionUser.id');
   }.property('app_state.currentUser.id'),
-  select_on_change: function() {
+  select_on_change: observer('currently_selected_id', function() {
     if(this.get('currently_selected_id')) {
       this.send('select', this.get('currently_selected_id'));
     }
-  }.observes('currently_selected_id'),
+  }),
   modeling_choice: function() {
     return this.get('model.modeling') !== undefined && this.get('model.modeling') != 'ask';
   }.property('model.modeling'),

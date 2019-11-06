@@ -21,7 +21,7 @@ export default Controller.extend({
     var now = (new Date()).getTime();
     return (now - persistence.get('last_sync_at')) > (7 * 24 * 60 * 60 * 1000);
   }.property('persistence.last_sync_at'),
-  check_daily_use: function() {
+  check_daily_use: observer('model.user_name', 'model.permissions.admin_support_actions', function() {
     var current_user_name = this.get('daily_use.user_name');
     if((this.get('model.user_name') && current_user_name != this.get('model.user_name') && this.get('model.permissions.admin_support_actions')) || !this.get('daily_use')) {
       var _this = this;
@@ -41,7 +41,7 @@ export default Controller.extend({
         }
       });
     }
-  }.observes('model.user_name', 'model.permissions.admin_support_actions'),
+  }),
   blank_slate: function() {
     return !this.get('model.preferences.home_board.key') &&
       (this.get('public_boards_shortened') || []).length === 0 &&
@@ -116,7 +116,7 @@ export default Controller.extend({
       'model.starred_boards', 'model.shared_boards',
       'model.my_boards.length', 'model.prior_home_boards.length', 'model.public_boards.length',
       'model.private_boards.length', 'model.starred_boards.length', 'model.shared_boards.length'),
-  reload_logs: function() {
+  reload_logs: observer('persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
     if(!(_this.get('model.logs') || {}).length) {
@@ -135,8 +135,8 @@ export default Controller.extend({
         }
       }
     });
-  }.observes('persistence.online'),
-  load_badges: function() {
+  }),
+  load_badges: observer('model.permissions', function() {
     if(this.get('model.permissions')) {
       var _this = this;
       if(!(_this.get('model.badges') || {}).length) {
@@ -150,8 +150,8 @@ export default Controller.extend({
         }
       });
     }
-  }.observes('model.permissions'),
-  load_goals: function() {
+  }),
+  load_goals: observer('model.permissions', function() {
     if(this.get('model.permissions')) {
       var _this = this;
       if(!(_this.get('model.goals') || {}).length) {
@@ -165,7 +165,7 @@ export default Controller.extend({
         }
       });
     }
-  }.observes('model.permissions'),
+  }),
   subscription: function() {
     if(this.get('model.permissions.admin_support_actions') && this.get('model.subscription')) {
       var sub = Subscription.create({user: this.get('model')});
@@ -207,7 +207,7 @@ export default Controller.extend({
       }
     });
   },
-  update_selected: function() {
+  update_selected: observer('selected', 'persistence.online', function() {
     var _this = this;
     var list_id = Math.random().toString();
     this.set('list_id', list_id);
@@ -245,7 +245,7 @@ export default Controller.extend({
         _this.generate_or_append_to_list({user_id: app_state.get('domain_board_user_name'), starred: true, public: true}, 'model.starting_boards', list_id);
       }
     }
-  }.observes('selected', 'persistence.online'),
+  }),
   actions: {
     sync: function() {
       console.debug('syncing because manually triggered');

@@ -198,7 +198,7 @@ var frame_listener = EmberObject.extend({
       }
     }
   },
-  size_targets: function() {
+  size_targets: observer('app_state.speak_mode', function() {
     var overlay = document.getElementById('integration_overlay');
     if(overlay) {
       var rect = overlay.getBoundingClientRect();
@@ -211,7 +211,7 @@ var frame_listener = EmberObject.extend({
         }
       });
     }
-  }.observes('app_state.speak_mode'),
+  }),
   clear_target: function(data) {
     var targets = this.get('targets') || [];
     var matches = targets.filter(function(t) { return t.session_id == data.session_id && t.id == data.id; });

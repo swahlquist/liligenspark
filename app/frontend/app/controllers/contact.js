@@ -15,13 +15,13 @@ export default Controller.extend({
   support_recipient: function() {
     return this.get('recipient') == 'technical support';
   }.property('recipient'),
-  set_recipient_if_sales: function() {
+  set_recipient_if_sales: observer('to', function() {
     this.set('recipient', this.get('to'));
-  }.observes('to'),
-  reset_on_load: function() {
+  }),
+  reset_on_load: observer('app_state.currentUser', function() {
     if(this.get('name') || this.get('email')) { return; }
     this.send('reset');
-  }.observes('app_state.currentUser'),
+  }),
   actions: {
     reset: function() {
       this.setProperties({

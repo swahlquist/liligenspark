@@ -7,7 +7,7 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  draw: function() {
+  draw: observer('hits', function() {
     var canvas = $(this.get('element')).find("canvas")[0];
     var bounds = canvas.getBoundingClientRect();
     canvas.width = bounds.width;
@@ -48,6 +48,6 @@ export default Component.extend({
         context.stroke();
       }
     });
-  }.observes('hits')
+  })
 });
 

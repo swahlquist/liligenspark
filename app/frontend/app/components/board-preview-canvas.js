@@ -197,12 +197,19 @@ export default Component.extend({
       }
     }
   },
-  update_board: function() {
-    var _this = this;
-    runLater(function() {
-      _this.render_canvas();
-    })
-  }.observes('board.id', 'show_links', 'current_level', 'base_level', 'board.image_urls'),
+  update_board: observer(
+    'board.id',
+    'show_links',
+    'current_level',
+    'base_level',
+    'board.image_urls',
+    function() {
+      var _this = this;
+      runLater(function() {
+        _this.render_canvas();
+      })
+    }
+  ),
   actions: {
   }
 });

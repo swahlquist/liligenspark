@@ -121,7 +121,7 @@ export default modal.ModalController.extend({
     res = res.sort(function(a, b) { if(a.label.toLowerCase() < b.label.toLowerCase()) { return -1; } else if(a.label.toLowerCase() > b.label.toLowerCase()) { return 1; } else { return 0; } });
     return res;
   }.property('model.button_set.buttons', 'model.locale', 'model.board_ids'),
-  update_sorted_buttons: function() {
+  update_sorted_buttons: observer('sorted_buttons', 'translation_index', 'translating.done', function() {
     var _this = this;
     var translations = _this.get('translations') || {};
     if(translations[_this.get('model.board.name')]) {
@@ -135,7 +135,7 @@ export default modal.ModalController.extend({
         emberSet(b, 'secondary_translation', translations[b.vocalization]);
       }
     });
-  }.observes('sorted_buttons', 'translation_index', 'translating.done'),
+  }),
   sorted_filtered_buttons: function() {
     var list = this.get('sorted_buttons') || [];
     var res = list;

@@ -323,14 +323,19 @@ CoughDrop.Board = DS.Model.extend({
     _this.set('fetch_promise', fetch_promise);
     return fetch_promise;
   },
-  set_all_ready: function() {
-    var allReady = true;
-    if(!this.get('pending_buttons')) { return; }
-    this.get('pending_buttons').forEach(function(b) {
-      if(b.get('content_status') != 'ready' && b.get('content_status') != 'errored') { allReady = false; }
-    });
-    this.set('all_ready', allReady);
-  }.observes('pending_buttons', 'pending_buttons.[]', 'pending_buttons.@each.content_status'),
+  set_all_ready: observer(
+    'pending_buttons',
+    'pending_buttons.[]',
+    'pending_buttons.@each.content_status',
+    function() {
+      var allReady = true;
+      if(!this.get('pending_buttons')) { return; }
+      this.get('pending_buttons').forEach(function(b) {
+        if(b.get('content_status') != 'ready' && b.get('content_status') != 'errored') { allReady = false; }
+      });
+      this.set('all_ready', allReady);
+    }
+  ),
   prefetch_linked_boards: function() {
     var boards = this.get('linked_boards');
     runLater(function() {
@@ -626,9 +631,9 @@ CoughDrop.Board = DS.Model.extend({
   has_background: function() {
     return this.get('background.image') || this.get('background.text');
   }.property('background.image', 'background.text'),
-  checkForDataURLOnChange: function() {
+  checkForDataURLOnChange: observer('image_url', 'background.image', function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('image_url', 'background.image'),
+  }),
   prompt: function(action) {
     var _this = this;
     if(action == 'clear') {

@@ -25,7 +25,7 @@ export default modal.ModalController.extend({
       $("#button_search_string").focus();
     }, 100);
   },
-  search: function() {
+  search: observer('searchString', 'button_set', function() {
     var board = modal.settings_for['find-button'].board;
     if(this.get('searchString')) {
       var _this = this;
@@ -97,7 +97,7 @@ export default modal.ModalController.extend({
     } else {
       this.set('results', null);
     }
-  }.observes('searchString', 'button_set'),
+  }),
   actions: {
     pick_result: function(result) {
       if(!result) {

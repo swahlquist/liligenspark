@@ -43,7 +43,7 @@ export default Controller.extend({
       return [];
     }
   }.property('model.permissions.edit', 'model.admin'),
-  get_report: function() {
+  get_report: observer('current_report', 'model.id', function() {
     if(this.get('current_report') && this.get('current_report') != 'select' && this.get('model.id')) {
       var _this = this;
       _this.set('results', {loading: true});
@@ -109,7 +109,7 @@ export default Controller.extend({
     } else {
       this.set('results', null);
     }
-  }.observes('current_report', 'model.id'),
+  }),
   removable_report: function() {
     return ['all_users', 'all_supervisors'].indexOf(this.get('current_report')) >= 0;
   }.property('current_report'),

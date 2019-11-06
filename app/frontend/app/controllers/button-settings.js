@@ -171,27 +171,33 @@ export default modal.ModalController.extend({
       });
     }
   },
-  labelChanged: function() {
+  labelChanged: observer('model.label', function() {
     if(!this.get('handle_updates')) { return; }
     editManager.change_button(this.get('model.id'), {
       label: this.get('model.label')
     });
-  }.observes('model.label'),
-  update_hidden: function(obj, attr) {
-    var hash = {'model.hidden': 'hidden', 'model.link_disabled': 'link_disabled'};
-    var ref = hash[attr];
-    var vals = this.get('last_values') || {};
-    if(this.get('model.id') && ref) {
-      var mod = vals[this.get('model.id')] || {};
-      if(mod[ref] == undefined) {
-      } else if(mod[ref] != this.get(attr)) {
-        Button.set_attribute(this.get('model'), ref, this.get(attr));
+  }),
+  update_hidden: observer(
+    'model',
+    'model.id',
+    'model.hidden',
+    'model.link_disabled',
+    function(obj, attr) {
+      var hash = {'model.hidden': 'hidden', 'model.link_disabled': 'link_disabled'};
+      var ref = hash[attr];
+      var vals = this.get('last_values') || {};
+      if(this.get('model.id') && ref) {
+        var mod = vals[this.get('model.id')] || {};
+        if(mod[ref] == undefined) {
+        } else if(mod[ref] != this.get(attr)) {
+          Button.set_attribute(this.get('model'), ref, this.get(attr));
+        }
+        mod[ref] = this.get(attr);
+        vals[this.get('model.id')] = mod;
+        this.set('last_values', vals);
       }
-      mod[ref] = this.get(attr);
-      vals[this.get('model.id')] = mod;
-      this.set('last_values', vals);
     }
-  }.observes('model', 'model.id', 'model.hidden', 'model.link_disabled'),
+  ),
   buttonActions: function() {
     var res = [
       {name: i18n.t('talk', "Add button to the vocalization box"), id: "talk"},
@@ -230,7 +236,7 @@ export default modal.ModalController.extend({
   non_https: function() {
     return (this.get('model.url') || '').match(/^http:/);
   }.property('model.url'),
-  load_book: function() {
+  load_book: observer('model.book.id', function() {
     var _this = this;
     var id = _this.get('model.book.id');
     if(id) {
@@ -248,7 +254,7 @@ export default modal.ModalController.extend({
         _this.set('book_status', {error: true});
       });
     }
-  }.observes('model.book.id'),
+  }),
   tool_action_types: function() {
     return [
       {name: i18n.t('trigger_webhook', "Trigger an external action"), id: 'webhook'},
@@ -323,7 +329,7 @@ export default modal.ModalController.extend({
     this.set('inflections_hash', inflections);
     this.set('inflections_suggestions', inflection_defaults);
   },
-  update_integration: function() {
+  update_integration: observer('integration_id', 'user_integrations', function() {
     var _this = this;
     if(!this.get('user_integrations.length')) { return; }
     if(this.get('integration_id')) {
@@ -345,12 +351,12 @@ export default modal.ModalController.extend({
       _this.set('selected_integration', null);
       _this.set('model.integration', null);
     }
-  }.observes('integration_id', 'user_integrations'),
-  update_integration_id: function() {
+  }),
+  update_integration_id: observer('model.integration.user_integration_id', function() {
     if(!this.get('integration_id') && this.get('model.integration.user_integration_id')) {
       this.set('integration_id', this.get('model.integration.user_integration_id'));
     }
-  }.observes('model.integration.user_integration_id'),
+  }),
   missing_library: function() {
     var res = false;
     if(this.get('image_library') == 'lessonpix_required') {
@@ -403,23 +409,27 @@ export default modal.ModalController.extend({
     if(res.length == 1) { return []; }
     return res;
   }.property('lessonpix_enabled', 'premium_symbols'),
-  load_user_integrations: function() {
-    var user_id = this.get('model.integration_user_id') || 'self';
-    var _this = this;
-    if(this.get('model.integrationOrWebhookAction')) {
-      if(!this.get('user_integrations.length')) {
-        _this.set('user_integrations', {loading: true});
-        Utils.all_pages('integration', {user_id: user_id, for_button: true}, function() {
-        }).then(function(res) {
-          _this.set('user_integrations', res);
-        }, function(err) {
-          _this.set('user_integrations', {error: true});
-        });
+  load_user_integrations: observer(
+    'model.integrationOrWebhookAction',
+    'model.integration_user_id',
+    function() {
+      var user_id = this.get('model.integration_user_id') || 'self';
+      var _this = this;
+      if(this.get('model.integrationOrWebhookAction')) {
+        if(!this.get('user_integrations.length')) {
+          _this.set('user_integrations', {loading: true});
+          Utils.all_pages('integration', {user_id: user_id, for_button: true}, function() {
+          }).then(function(res) {
+            _this.set('user_integrations', res);
+          }, function(err) {
+            _this.set('user_integrations', {error: true});
+          });
+        }
+      } else {
+        _this.set('user_integrations', []);
       }
-    } else {
-      _this.set('user_integrations', []);
     }
-  }.observes('model.integrationOrWebhookAction', 'model.integration_user_id'),
+  ),
   parts_of_speech: function() {
     return CoughDrop.parts_of_speech;
   }.property(),
@@ -449,41 +459,52 @@ export default modal.ModalController.extend({
   recorder_unavailable: function() {
     return !contentGrabbers.soundGrabber.recorder_available();
   }.property(),
-  notSetPrivateImageLicense: function() {
-    if(this.get('image_preview.license')) {
-      this.set('image_preview.license.private', this.get('image_preview.license.type') == 'private');
+  notSetPrivateImageLicense: observer(
+    'image_preview',
+    'image_preview.license.type',
+    'model.image.license.type',
+    function() {
+      if(this.get('image_preview.license')) {
+        this.set('image_preview.license.private', this.get('image_preview.license.type') == 'private');
+      }
+      if(this.get('model.image.license')) {
+        this.set('model.image.license.private', this.get('model.image.license.type') == 'private');
+      }
     }
-    if(this.get('model.image.license')) {
-      this.set('model.image.license.private', this.get('model.image.license.type') == 'private');
+  ),
+  notSetPrivateSoundLicense: observer(
+    'sound_preview',
+    'sound_preview.license.type',
+    'model.sound.license',
+    'model.sound.license.type',
+    function() {
+      if(this.get('sound_preview.license')) {
+        this.set('sound_preview.license.private', this.get('sound_preview.license.type') == 'private');
+      }
+      if(this.get('model.sound.license')) {
+        this.set('model.sound.license.private', this.get('model.sound.license.type') == 'private');
+      }
     }
-  }.observes('image_preview', 'image_preview.license.type', 'model.image.license.type'),
-  notSetPrivateSoundLicense: function() {
-    if(this.get('sound_preview.license')) {
-      this.set('sound_preview.license.private', this.get('sound_preview.license.type') == 'private');
-    }
-    if(this.get('model.sound.license')) {
-      this.set('model.sound.license.private', this.get('model.sound.license.type') == 'private');
-    }
-  }.observes('sound_preview', 'sound_preview.license.type', 'model.sound.license', 'model.sound.license.type'),
-  generateButtonStyle: function() {
+  ),
+  generateButtonStyle: observer('model.background_color', 'model.border_color', function() {
     boundClasses.add_rule({
       background_color: this.get('model.background_color'),
       border_color: this.get('model.border_color')
     });
     boundClasses.add_classes(this.get('model'));
-  }.observes('model.background_color', 'model.border_color'),
-  focus_on_state_change: function() {
+  }),
+  focus_on_state_change: observer('state', function() {
     var _this = this;
     runLater(function() {
       var $elem = $(".modal-body:visible .content :input:visible:not(button):not(.skip_select):first");
       $elem.focus().select();
     });
-  }.observes('state'),
-  re_find: function() {
+  }),
+  re_find: observer('board_search_type', function() {
     if(this.get('linkedBoardName')) {
       this.send('find_board');
     }
-  }.observes('board_search_type'),
+  }),
   state: 'general',
   helpState: function() {
     return this.get('state') == 'help';
@@ -585,14 +606,14 @@ export default modal.ModalController.extend({
   web_search: function() {
     return this.get('app_find_mode') == 'web';
   }.property('app_find_mode'),
-  track_video: function() {
+  track_video: observer('model.video.popup', 'model.video.test_url', function() {
     if(this.get('model.video.popup') && this.get('model.video.test_url') && !this.get('player')) {
       var _this = this;
       CoughDrop.Videos.track('link_video_preview').then(function(player) {
         _this.set('player', player);
       });
     }
-  }.observes('model.video.popup', 'model.video.test_url'),
+  }),
   video_test_url: function() {
     var host = window.default_host || capabilities.fallback_host;
     if(this.get('model.video.id') && this.get('model.video.type')) {

@@ -43,160 +43,170 @@ var utterance = EmberObject.extend({
       this.set('clear_on_vocalize', user.get('preferences.clear_on_vocalize'));
     }
   },
-  set_button_list: function() {
-    var buttonList = [];
-    var _this = this;
-    var rawList = _this.get('rawButtonList');
-    if(!rawList) { app_state.set('button_list', []); return; }
-    for(var idx = 0; idx < rawList.length; idx++) {
-      var button = rawList[idx];
-      button.raw_index = idx;
-      var last = rawList[idx - 1] || {};
-      var last_computed = buttonList[buttonList.length - 1];
-      var text = (button && (button.vocalization || button.label)) || '';
+  set_button_list: observer(
+    'app_state.insertion.index',
+    'rawButtonList',
+    'rawButtonList.[]',
+    'rawButtonList.length',
+    'rawButtonList.@each.image',
+    'hint_button',
+    'hint_button.label',
+    'hint_button.image_url',
+    function() {
+      var buttonList = [];
+      var _this = this;
+      var rawList = _this.get('rawButtonList');
+      if(!rawList) { app_state.set('button_list', []); return; }
+      for(var idx = 0; idx < rawList.length; idx++) {
+        var button = rawList[idx];
+        button.raw_index = idx;
+        var last = rawList[idx - 1] || {};
+        var last_computed = buttonList[buttonList.length - 1];
+        var text = (button && (button.vocalization || button.label)) || '';
 
-      var plusses = [], colons = [], inlines = [];
-      if(button.specialty_with_modifiers) {
-        var parts = text.split(/\s*&&\s*/);
-        parts.forEach(function(text) {
-          if(text.match(/^\+/)) {
-            plusses.push(text);
-          } else if(text.match(/^\:/)) {
-            colons.push(text);
+        var plusses = [], colons = [], inlines = [];
+        if(button.specialty_with_modifiers) {
+          var parts = text.split(/\s*&&\s*/);
+          parts.forEach(function(text) {
+            if(text.match(/^\+/)) {
+              plusses.push(text);
+            } else if(text.match(/^\:/)) {
+              colons.push(text);
+            }
+          });
+        }
+        var regex = /.\s*:[^\s\&]+\s*./g;
+        var group = null;
+        while((group = regex.exec(text)) != null) {
+          var txt = group[0];
+          if(!txt.match(/^&/) || !txt.match(/&$/)) {
+            var mod = txt.match(/:[^\s\&]+/);
+            inlines.push([mod[0], group.index + mod.index]);
           }
-        });
-      }
-      var regex = /.\s*:[^\s\&]+\s*./g;
-      var group = null;
-      while((group = regex.exec(text)) != null) {
-        var txt = group[0];
-        if(!txt.match(/^&/) || !txt.match(/&$/)) {
-          var mod = txt.match(/:[^\s\&]+/);
-          inlines.push([mod[0], group.index + mod.index]);
         }
-      }
-      
-      var added = false;
-      if(plusses.length > 0) {
-        last = {};
-        // Append to the last button if that one is still in progress,
-        // or this is a punctuation mark, or it's part of a decimal number
-        if(idx === 0 || last_computed.in_progress || plusses[0].match(punctuation_at_start) || ((last_computed.vocalization || last_computed.label).match(/[\.\,]$/) && plusses[0].match(/^\+\d/))) {
-          last = buttonList.pop() || {};
+        
+        var added = false;
+        if(plusses.length > 0) {
+          last = {};
+          // Append to the last button if that one is still in progress,
+          // or this is a punctuation mark, or it's part of a decimal number
+          if(idx === 0 || last_computed.in_progress || plusses[0].match(punctuation_at_start) || ((last_computed.vocalization || last_computed.label).match(/[\.\,]$/) && plusses[0].match(/^\+\d/))) {
+            last = buttonList.pop() || {};
+          }
+          // append to previous
+          var altered = _this.modify_button(last, button);
+          added = true;
+          buttonList.push(altered);
         }
-        // append to previous
-        var altered = _this.modify_button(last, button);
-        added = true;
-        buttonList.push(altered);
-      }
-      var inline_actions = false;
-      if(colons.length > 0) {
-        colons.forEach(function(text) {
-          last = buttonList.pop();
-          if((text == ':complete' || text == ':predict') && !(last || {}).in_progress) {
-            if(last) {
+        var inline_actions = false;
+        if(colons.length > 0) {
+          colons.forEach(function(text) {
+            last = buttonList.pop();
+            if((text == ':complete' || text == ':predict') && !(last || {}).in_progress) {
+              if(last) {
+                buttonList.push(last);
+              }
+              last = {};
+            }
+            var action = CoughDrop.find_special_action(text);
+            if(action && (action.modifier || action.completion) && !added) {
+              var altered = _this.modify_button(last || {}, button);
+              added = true;                           
+              buttonList.push(altered);
+            } else if(last) {
               buttonList.push(last);
             }
-            last = {};
-          }
-          var action = CoughDrop.find_special_action(text);
-          if(action && (action.modifier || action.completion) && !added) {
-            var altered = _this.modify_button(last || {}, button);
-            added = true;                           
-            buttonList.push(altered);
-          } else if(last) {
-            buttonList.push(last);
-          }
-        });
-      }
-      if(inlines.length > 0) {
-        inlines.forEach(function(arr) {
-          var action = CoughDrop.find_special_action(arr[0]);
-          if(action && action.inline) {
-            inline_actions = inline_actions || [];
-            action = Object.assign({}, action);
-            action.str = arr[0];
-            action.index = arr[1];
-            inline_actions.unshift(action);
-          }
-        });
-      }
-      if(inline_actions && !button.inline_content) {
-        rawList[idx].inline_content = utterance.combine_content(utterance.process_inline_content(text, inline_actions));
-      }
-      if(button.inline_content) {
-        // Collect all the text components and inline components
-        // and aggregate them together. Combine all adjacent text
-        // components, then add the button as-is if no sounds
-        // are attached, otherwise add a list of buttons as needed.
-        // Mark the buttons as inline_generated so we don't
-        // re-call .content() on future button adds/modifications
-        var btn = Object.assign({}, button);
-        btn.vocalization = button.inline_content.map(function(c) { return c.text; }).join(' ');
-        added = true;
-        buttonList.push(btn);
-      }
-      if(!added) {
-        buttonList.push(rawList[idx]);
-      }
-    }
-    var visualButtonList = [];
-    var hint = null;
-    if(utterance.get('hint_button')) {
-      hint = EmberObject.create({label: utterance.get('hint_button.label'), image: utterance.get('hint_button.image_url'), ghost: true});
-    }
-    buttonList.forEach(function(button, idx) {
-      var visualButton = EmberObject.create(button);
-      visualButtonList.push(visualButton);
-      if(button.image && button.image.match(/^http/)) {
-        visualButton.set('original_image', button.image);
-        persistence.find_url(button.image, 'image').then(function(data_uri) {
-          visualButton.set('image', data_uri);
-        }, function() { });
-      }
-      if(button.sound && button.sound.match(/^http/)) {
-        visualButton.set('original_sound', button.sound);
-        persistence.find_url(button.sound, 'sound').then(function(data_uri) {
-          visualButton.set('sound', data_uri);
-        }, function() { });
-      }
-      visualButton.set('label', visualButton.get('label').replace(/\s$/g, ''));
-      if(visualButton.get('vocalization')) {
-        visualButton.set('vocalization', visualButton.get('vocalization').replace(/\s$/g, ''));
-      }
-      if(app_state.get('insertion.index') == idx) {
-        visualButton.set('insert_after', true);
-        if(hint) {
-          visualButtonList.push(hint);
-          hint = null;
+          });
         }
-      } else if(app_state.get('insertion.index') == -1 && idx == 0) {
-        visualButton.set('insert_before', true);
-        if(hint) {
-          visualButtonList.unshift(hint);
-          hint = null;
+        if(inlines.length > 0) {
+          inlines.forEach(function(arr) {
+            var action = CoughDrop.find_special_action(arr[0]);
+            if(action && action.inline) {
+              inline_actions = inline_actions || [];
+              action = Object.assign({}, action);
+              action.str = arr[0];
+              action.index = arr[1];
+              inline_actions.unshift(action);
+            }
+          });
+        }
+        if(inline_actions && !button.inline_content) {
+          rawList[idx].inline_content = utterance.combine_content(utterance.process_inline_content(text, inline_actions));
+        }
+        if(button.inline_content) {
+          // Collect all the text components and inline components
+          // and aggregate them together. Combine all adjacent text
+          // components, then add the button as-is if no sounds
+          // are attached, otherwise add a list of buttons as needed.
+          // Mark the buttons as inline_generated so we don't
+          // re-call .content() on future button adds/modifications
+          var btn = Object.assign({}, button);
+          btn.vocalization = button.inline_content.map(function(c) { return c.text; }).join(' ');
+          added = true;
+          buttonList.push(btn);
+        }
+        if(!added) {
+          buttonList.push(rawList[idx]);
         }
       }
-    });
-    var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
-    var last_spoken_button = visualButtonList[idx];
-    // If the last event was a punctuation mark, speak the whole last sentence
-    if(last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "").match(punctuation_at_end)) {
-      var prior = utterance.sentence(visualButtonList.slice(0, -1));
-      var parts = prior.split(punctuation_ending_sentence);
-      var last_part = parts[parts.length - 1];
-      var str = last_part + " " + (last_spoken_button.vocalization || last_spoken_button.label);
-      last_spoken_button = {
-        label: str
-      };
+      var visualButtonList = [];
+      var hint = null;
+      if(utterance.get('hint_button')) {
+        hint = EmberObject.create({label: utterance.get('hint_button.label'), image: utterance.get('hint_button.image_url'), ghost: true});
+      }
+      buttonList.forEach(function(button, idx) {
+        var visualButton = EmberObject.create(button);
+        visualButtonList.push(visualButton);
+        if(button.image && button.image.match(/^http/)) {
+          visualButton.set('original_image', button.image);
+          persistence.find_url(button.image, 'image').then(function(data_uri) {
+            visualButton.set('image', data_uri);
+          }, function() { });
+        }
+        if(button.sound && button.sound.match(/^http/)) {
+          visualButton.set('original_sound', button.sound);
+          persistence.find_url(button.sound, 'sound').then(function(data_uri) {
+            visualButton.set('sound', data_uri);
+          }, function() { });
+        }
+        visualButton.set('label', visualButton.get('label').replace(/\s$/g, ''));
+        if(visualButton.get('vocalization')) {
+          visualButton.set('vocalization', visualButton.get('vocalization').replace(/\s$/g, ''));
+        }
+        if(app_state.get('insertion.index') == idx) {
+          visualButton.set('insert_after', true);
+          if(hint) {
+            visualButtonList.push(hint);
+            hint = null;
+          }
+        } else if(app_state.get('insertion.index') == -1 && idx == 0) {
+          visualButton.set('insert_before', true);
+          if(hint) {
+            visualButtonList.unshift(hint);
+            hint = null;
+          }
+        }
+      });
+      var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
+      var last_spoken_button = visualButtonList[idx];
+      // If the last event was a punctuation mark, speak the whole last sentence
+      if(last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "").match(punctuation_at_end)) {
+        var prior = utterance.sentence(visualButtonList.slice(0, -1));
+        var parts = prior.split(punctuation_ending_sentence);
+        var last_part = parts[parts.length - 1];
+        var str = last_part + " " + (last_spoken_button.vocalization || last_spoken_button.label);
+        last_spoken_button = {
+          label: str
+        };
+      }
+      if(hint) {
+        visualButtonList.push(hint);
+      }
+      app_state.set('button_list', visualButtonList);
+      utterance.set('last_spoken_button', last_spoken_button);
+      stashes.persist('working_vocalization', buttonList);
     }
-    if(hint) {
-      visualButtonList.push(hint);
-    }
-    app_state.set('button_list', visualButtonList);
-    utterance.set('last_spoken_button', last_spoken_button);
-    stashes.persist('working_vocalization', buttonList);
-  }.observes('app_state.insertion.index', 'rawButtonList', 'rawButtonList.[]', 'rawButtonList.length', 'rawButtonList.@each.image', 'hint_button', 'hint_button.label', 'hint_button.image_url'),
+  ),
   process_inline_content: function(text, inline_actions) {
     var content = [];
     var loc = 0;
@@ -238,7 +248,7 @@ var utterance = EmberObject.extend({
     clear_pad();
     return final_content;
   },
-  update_hint: function() {
+  update_hint: observer('hint_button.label', function() {
     if(this.get('hint_button.label')) {
 //      console.error("hint button!", this.get('hint_button.label'));
       // temporarily show hint overlay
@@ -246,7 +256,7 @@ var utterance = EmberObject.extend({
 //      console.error("hint button cleared");
       // clear hint overlay
     }
-  }.observes('hint_button.label'),
+  }),
   modify_button: function(original, addition) {
     addition.mod_id = addition.mod_id || Math.round(Math.random() * 9999);
     if(original && original.modifications && original.modifications.find(function(m) { return addition.button_id == m.button_id && m.mod_id == addition.mod_id; })) {
@@ -540,9 +550,9 @@ var utterance = EmberObject.extend({
     $("#hidden_input").val("");
     this.set('list_vocalized', true);
   },
-  set_ghost_utterance: function() {
+  set_ghost_utterance: observer('list_vocalized', 'clear_on_vocalize', function() {
     stashes.persist('ghost_utterance', !!(this.get('list_vocalized') && this.get('clear_on_vocalize')));
-  }.observes('list_vocalized', 'clear_on_vocalize'),
+  }),
   test_voice: function(voiceURI, rate, pitch, volume, target) {
     rate = parseFloat(rate);
     if(isNaN(rate)) { rate = 1.0; }

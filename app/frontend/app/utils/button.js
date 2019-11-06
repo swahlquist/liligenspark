@@ -35,24 +35,33 @@ var Button = EmberObject.extend({
     this.set('stashes', stashes);
   },
   buttonAction: 'talk',
-  updateAction: function() {
-    if(this.get('load_board')) {
-      this.set('buttonAction', 'folder');
-    } else if(this.get('integration') != null) {
-      this.set('buttonAction', 'integration');
-      if(this.get('integration.action_type') == 'webhook') {
-        this.set('integrationAction', 'webhook');
+  updateAction: observer(
+    'load_board',
+    'url',
+    'apps',
+    'integration',
+    'video',
+    'book',
+    'link_disabled',
+    function() {
+      if(this.get('load_board')) {
+        this.set('buttonAction', 'folder');
+      } else if(this.get('integration') != null) {
+        this.set('buttonAction', 'integration');
+        if(this.get('integration.action_type') == 'webhook') {
+          this.set('integrationAction', 'webhook');
+        } else {
+          this.set('integrationAction', 'render');
+        }
+      } else if(this.get('url') != null) {
+        this.set('buttonAction', 'link');
+      } else if(this.get('apps') != null) {
+        this.set('buttonAction', 'app');
       } else {
-        this.set('integrationAction', 'render');
+        this.set('buttonAction', 'talk');
       }
-    } else if(this.get('url') != null) {
-      this.set('buttonAction', 'link');
-    } else if(this.get('apps') != null) {
-      this.set('buttonAction', 'app');
-    } else {
-      this.set('buttonAction', 'talk');
     }
-  }.observes('load_board', 'url', 'apps', 'integration', 'video', 'book', 'link_disabled'),
+  ),
   talkAction: function() {
     return this.get('buttonAction') == 'talk';
   }.property('buttonAction'),
@@ -80,7 +89,7 @@ var Button = EmberObject.extend({
   action_alt: function() {
     return this.get('action_styling.action_alt');
   }.property('action_styling'),
-  resource_from_url: function() {
+  resource_from_url: observer('url', function() {
     var url = this.get('url');
     var resource = Button.resource_from_url(url);
     if(resource && resource.type == 'video' && resource.video_type == 'youtube') {
@@ -113,45 +122,61 @@ var Button = EmberObject.extend({
       }
       this.set('video', null);
     }
-  }.observes('url'),
-  set_book_url: function() {
-    if(this.get('book.type') == 'tarheel' && this.get('book.popup') && this.get('book.base_url')) {
-      var book = this.get('book');
-      var new_url = this.get('book.base_url').split(/\?/)[0] + "?";
-      if(book.speech) {
-        new_url = new_url + "voice=browser";
-      } else {
-        new_url = new_url + "voice=silent";
+  }),
+  set_book_url: observer(
+    'book.popup',
+    'book.type',
+    'book.base_url',
+    'book.id',
+    'book.speech',
+    'book.background',
+    'book.links',
+    function() {
+      if(this.get('book.type') == 'tarheel' && this.get('book.popup') && this.get('book.base_url')) {
+        var book = this.get('book');
+        var new_url = this.get('book.base_url').split(/\?/)[0] + "?";
+        if(book.speech) {
+          new_url = new_url + "voice=browser";
+        } else {
+          new_url = new_url + "voice=silent";
+        }
+        if(book.background == 'black') {
+          new_url = new_url + "&pageColor=000&textColor=fff";
+        } else {
+          new_url = new_url + "&pageColor=fff&textColor=000";
+        }
+        if(book.links == 'small') {
+          new_url = new_url + "&biglinks=0";
+        } else {
+          new_url = new_url + "&biglinks=2";
+        }
+        this.set('book.url', new_url);
       }
-      if(book.background == 'black') {
-        new_url = new_url + "&pageColor=000&textColor=fff";
-      } else {
-        new_url = new_url + "&pageColor=fff&textColor=000";
-      }
-      if(book.links == 'small') {
-        new_url = new_url + "&biglinks=0";
-      } else {
-        new_url = new_url + "&biglinks=2";
-      }
-      this.set('book.url', new_url);
     }
-  }.observes('book.popup', 'book.type', 'book.base_url', 'book.id', 'book.speech', 'book.background', 'book.links'),
-  set_video_url: function() {
-    if(this.get('video.type') == 'youtube' && this.get('video.popup') && this.get('video.id')) {
-      var video = this.get('video');
-      var new_url = "https://www.youtube.com/embed/" + video.id + "?rel=0&showinfo=0&enablejsapi=1&origin=" + encodeURIComponent(location.origin);
-      if(video.start) {
-        new_url = new_url + "&start=" + video.start;
+  ),
+  set_video_url: observer(
+    'video.popup',
+    'video.type',
+    'video.id',
+    'video.start',
+    'video.end',
+    function() {
+      if(this.get('video.type') == 'youtube' && this.get('video.popup') && this.get('video.id')) {
+        var video = this.get('video');
+        var new_url = "https://www.youtube.com/embed/" + video.id + "?rel=0&showinfo=0&enablejsapi=1&origin=" + encodeURIComponent(location.origin);
+        if(video.start) {
+          new_url = new_url + "&start=" + video.start;
+        }
+        if(video.end) {
+          new_url = new_url + "&end=" + video.end;
+        }
+        this.set('video.url', new_url + "&autoplay=1&controls=0");
+        this.set('video.thumbnail_url', "https://img.youtube.com/vi/" + this.get('video.id') + "/hqdefault.jpg");
+        this.set('video.thumbnail_content_type', 'image/jpeg');
+        this.set('video.test_url', new_url + "&autoplay=0");
       }
-      if(video.end) {
-        new_url = new_url + "&end=" + video.end;
-      }
-      this.set('video.url', new_url + "&autoplay=1&controls=0");
-      this.set('video.thumbnail_url', "https://img.youtube.com/vi/" + this.get('video.id') + "/hqdefault.jpg");
-      this.set('video.thumbnail_content_type', 'image/jpeg');
-      this.set('video.test_url', new_url + "&autoplay=0");
     }
-  }.observes('video.popup', 'video.type', 'video.id', 'video.start', 'video.end'),
+  ),
   videoAction: function() {
     return this.get('buttonAction') == 'link' && this.get('video.popup');
   }.property('buttonAction', 'video.popup'),
@@ -164,10 +189,17 @@ var Button = EmberObject.extend({
   empty_or_hidden: function() {
     return !!(this.get('empty') || (this.get('hidden') && !this.get('stashes.all_buttons_enabled')));
   }.property('empty', 'hidden', 'stashes.all_buttons_enabled'),
-  add_classes: function() {
-    boundClasses.add_rule(this);
-    boundClasses.add_classes(this);
-  }.observes('background_color', 'border_color', 'empty', 'hidden', 'link_disabled'),
+  add_classes: observer(
+    'background_color',
+    'border_color',
+    'empty',
+    'hidden',
+    'link_disabled',
+    function() {
+      boundClasses.add_rule(this);
+      boundClasses.add_classes(this);
+    }
+  ),
   link: function() {
     if(this.get('load_board.key')) {
       return "/" + this.get('load_board.key');
@@ -374,11 +406,11 @@ var Button = EmberObject.extend({
       return check_image(image);
     }
   },
-  update_local_image_url: function() {
+  update_local_image_url: observer('image.best_url', function() {
     if(this.get('image.best_url')) {
       this.set('local_image_url', this.get('image.best_url'));
     }
-  }.observes('image.best_url'),
+  }),
   load_sound: function(preference) {
     var _this = this;
     if(!_this.sound_id) { return RSVP.resolve(); }
@@ -420,12 +452,12 @@ var Button = EmberObject.extend({
       return check_sound(sound);
     }
   },
-  update_local_sound_url: function() {
+  update_local_sound_url: observer('image.best_url', function() {
     if(this.get('sound.best_url')) {
       this.set('local_sound_url', this.get('sound.best_url'));
     }
-  }.observes('image.best_url'),
-  update_translations: function() {
+  }),
+  update_translations: observer('translations_hash', 'label', 'vocalization', function() {
     var label_locale = app_state.get('label_locale') || this.get('board.translations.current_label') || this.get('board.locale') || 'en';
     var vocalization_locale = app_state.get('vocalization_locale') || this.get('board.translations.current_vocalization') || this.get('board.locale') || 'en';
     var _this = this;
@@ -454,21 +486,25 @@ var Button = EmberObject.extend({
       idx++;
     }
     this.set('translations', res);
-  }.observes('translations_hash', 'label', 'vocalization'),
-  update_settings_from_translations: function() {
-    var label_locale = app_state.get('label_locale') || this.get('board.translations.current_label') || this.get('board.locale') || 'en';
-    var vocalization_locale = app_state.get('vocalization_locale') || this.get('board.translations.current_vocalization') || this.get('board.locale') || 'en';
-    var _this = this;
-    (this.get('translations') || []).forEach(function(locale) {
-      if(locale.code == label_locale && locale.label) {
-        _this.set('label', locale.label);
-      }
-      if(locale.code == vocalization_locale && locale.vocalization) {
-        _this.set('vocalization', locale.vocalization);
-      }
-    });
-  }.observes('translations.@each.label', 'translations.@each.vocalization'),
-  findContentLocally: function() {
+  }),
+  update_settings_from_translations: observer(
+    'translations.@each.label',
+    'translations.@each.vocalization',
+    function() {
+      var label_locale = app_state.get('label_locale') || this.get('board.translations.current_label') || this.get('board.locale') || 'en';
+      var vocalization_locale = app_state.get('vocalization_locale') || this.get('board.translations.current_vocalization') || this.get('board.locale') || 'en';
+      var _this = this;
+      (this.get('translations') || []).forEach(function(locale) {
+        if(locale.code == label_locale && locale.label) {
+          _this.set('label', locale.label);
+        }
+        if(locale.code == vocalization_locale && locale.vocalization) {
+          _this.set('vocalization', locale.vocalization);
+        }
+      });
+    }
+  ),
+  findContentLocally: observer('image_id', 'sound_id', function() {
     var _this = this;
     if((!this.image_id || this.get('local_image_url')) && (!this.sound_id || this.get('local_sound_url'))) {
       _this.set('content_status', 'ready');
@@ -513,7 +549,7 @@ var Button = EmberObject.extend({
 
       promises.forEach(function(p) { p.then(null, function() { }); });
     });
-  }.observes('image_id', 'sound_id'),
+  }),
   check_for_parts_of_speech: function() {
     if(app_state.get('edit_mode') && !this.get('empty') && this.get('label')) {
       var text = this.get('vocalization') || this.get('label');

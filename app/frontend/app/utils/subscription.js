@@ -191,11 +191,16 @@ var Subscription = EmberObject.extend({
     if(Subscription.product_types) { return false; }
     return !!(this.get('sale') || this.get('discount_period') || (this.get('user.subscription.plan_id') || '').match(/monthly_4/) || (this.get('user.subscription.plan_id') || '').match(/monthly_3/));
   }.property('sale', 'discount_period', 'user.subscription.plan_id', 'app_state.app_store_purchase_types'),
-  update_on_much_cheaper_offer: function() {
-    if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
-      this.set('subscription_amount', 'long_term_100');
+  update_on_much_cheaper_offer: observer(
+    'subscription_amount',
+    'discount_percent',
+    'much_cheaper_offer',
+    function() {
+      if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
+        this.set('subscription_amount', 'long_term_100');
+      }
     }
-  }.observes('subscription_amount', 'discount_percent', 'much_cheaper_offer'),
+  ),
   no_purchasing: function() {
     return app_state.get('installed_app') && (!Subscription.product_types || !app_state.get('feature_flags.app_store_purchases'));
   }.property('app_state.feature_flags.app_store_purchases', 'app_state.installed_app', 'app_state.app_store_purchase_types'),
@@ -242,54 +247,60 @@ var Subscription = EmberObject.extend({
     var prod = Subscription.product_types[subscription_id] || Subscription.product_types[long_term_id] || Subscription.product_types[one_time_id];
     return prod.currency || "USD";
   }.property('app_state.app_store_purchase_types'),
-  set_default_subscription_amount: function(obj, changes) {
-    if(this.get('user_type') == 'communicator') {
-      if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(monthly_|long_term_)/)) {
-        this.set('subscription_type', 'monthly');
-      }
-      if(this.get('subscription_type') == 'monthly') {
-        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^monthly_/)) {
-          if(Subscription.product_types) {
-            // TODO: switch this for monthly_ios once it's an option
-            this.set('subscription_amount', 'monthly_ios');
-            this.set('subscription_type', 'long_term');
-            this.set('subscription_amount', 'long_term_ios');
-          } else if(this.get('subscription_discount')) {
-            this.set('subscription_amount', 'monthly_3');
-          } else if(this.get('cheaper_offer')) {
-            this.set('subscription_amount', 'monthly_6');
-          } else {
-            this.set('subscription_amount', 'monthly_6');
+  set_default_subscription_amount: observer(
+    'user_type',
+    'subscription_type',
+    'subscription_amount',
+    'app_state.app_store_purchase_types',
+    function(obj, changes) {
+      if(this.get('user_type') == 'communicator') {
+        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(monthly_|long_term_)/)) {
+          this.set('subscription_type', 'monthly');
+        }
+        if(this.get('subscription_type') == 'monthly') {
+          if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^monthly_/)) {
+            if(Subscription.product_types) {
+              // TODO: switch this for monthly_ios once it's an option
+              this.set('subscription_amount', 'monthly_ios');
+              this.set('subscription_type', 'long_term');
+              this.set('subscription_amount', 'long_term_ios');
+            } else if(this.get('subscription_discount')) {
+              this.set('subscription_amount', 'monthly_3');
+            } else if(this.get('cheaper_offer')) {
+              this.set('subscription_amount', 'monthly_6');
+            } else {
+              this.set('subscription_amount', 'monthly_6');
+            }
+          }
+        } else if(this.get('subscription_type') == 'long_term') {
+          if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^long_term_/)) {
+            if(Subscription.product_types) {
+              this.set('subscription_amount', 'long_term_ios');
+            } else if(this.get('much_cheaper_offer')) {
+              this.set('subscription_amount', 'long_term_100');
+            } else if(this.get('cheaper_offer')) {
+              this.set('subscription_amount', 'long_term_150');
+            } else {
+              this.set('subscription_amount', 'long_term_200');
+            }
           }
         }
-      } else if(this.get('subscription_type') == 'long_term') {
-        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^long_term_/)) {
-          if(Subscription.product_types) {
-            this.set('subscription_amount', 'long_term_ios');
-          } else if(this.get('much_cheaper_offer')) {
-            this.set('subscription_amount', 'long_term_100');
-          } else if(this.get('cheaper_offer')) {
-            this.set('subscription_amount', 'long_term_150');
-          } else {
-            this.set('subscription_amount', 'long_term_200');
-          }
+      } else {
+        if(changes == 'user_type') {
+          this.set('subscription_type', 'long_term');
         }
-      }
-    } else {
-      if(changes == 'user_type') {
-        this.set('subscription_type', 'long_term');
-      }
-      if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^slp_/)) {
-        this.set('subscription_type', 'monthly');
-        this.set('subscription_amount', 'slp_monthly_free');
-      }
-      if(this.get('subscription_amount') && this.get('subscription_amount').match(/^slp_long_term/)) {
-        this.set('subscription_type', 'long_term');
-      } else if(this.get('subscription_amount') && this.get('subscription_amount') == 'slp_monthly_free') {
-        this.set('subscription_type', 'monthly');
+        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^slp_/)) {
+          this.set('subscription_type', 'monthly');
+          this.set('subscription_amount', 'slp_monthly_free');
+        }
+        if(this.get('subscription_amount') && this.get('subscription_amount').match(/^slp_long_term/)) {
+          this.set('subscription_type', 'long_term');
+        } else if(this.get('subscription_amount') && this.get('subscription_amount') == 'slp_monthly_free') {
+          this.set('subscription_type', 'monthly');
+        }
       }
     }
-  }.observes('user_type', 'subscription_type', 'subscription_amount', 'app_state.app_store_purchase_types'),
+  ),
   communicator_type: function() {
     return this.get('user_type') == 'communicator';
   }.property('user_type'),

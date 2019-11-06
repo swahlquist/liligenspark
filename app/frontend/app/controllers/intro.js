@@ -15,13 +15,13 @@ export default modal.ModalController.extend({
       window.ga('send', 'event', 'Intro', 'start', 'Intro Modal Opened');
     }
   },
-  set_pages: function() {
+  set_pages: observer('page', function() {
     var page = this.get('page');
     this.set('pages', {});
     this.set('pages.page_' + page, true);
     this.set('pages.last_page', page == this.get('total_pages'));
     this.set('pages.first_page', page == 1);
-  }.observes('page'),
+  }),
   actions: {
     next: function() {
       var page = this.get('page') || 1;

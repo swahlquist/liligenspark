@@ -44,10 +44,10 @@ export default Controller.extend({
       return null;
     }
   }.property('model.integrations'),
-  load_integrations: function(reload) {
+  load_integrations: observer('model.id', function(reload) {
     var _this = this;
     this.get('model').check_integrations(reload);
-  }.observes('model.id'),
+  }),
   actions: {
     pick_avatar: function() {
       var _this = this;

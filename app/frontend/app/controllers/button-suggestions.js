@@ -80,7 +80,7 @@ export default modal.ModalController.extend({
     }
     return found;
   },
-  update_user: function() {
+  update_user: observer('for_user_id', 'user', function() {
     var _this = this;
     _this.set('premium_ideas', false);
     if(app_state.get('currentUser.premium')) {
@@ -97,8 +97,8 @@ export default modal.ModalController.extend({
  //       }
       });
     }
-  }.observes('for_user_id', 'user'),
-  update_list: function() {
+  }),
+  update_list: observer('list_type', 'user', function() {
     var type = this.get('list_type');
     this.set('core', false);
     this.set('fringe', false);
@@ -223,7 +223,7 @@ export default modal.ModalController.extend({
         _this.set_list({error: true}, 'recordings');
       });
     }
-  }.observes('list_type', 'user'),
+  }),
   actions: {
     select_list: function(list) {
       this.set('category', null);

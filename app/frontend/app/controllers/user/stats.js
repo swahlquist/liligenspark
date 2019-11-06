@@ -43,15 +43,31 @@ export default Controller.extend({
   some_data: function() {
     return !!((this.get('usage_stats.has_data') && !this.get('status')) || (this.get('usage_stats2.has_data') && !this.get('status2')));
   }.property('usage_stats.has_data', 'status', 'usage_stats2.has_data', 'status2'),
-  refresh_left_on_type_change: function() {
-    var _this = this;
-    scheduleOnce('actions', this, this.load_left_charts);
-  }.observes('start', 'end', 'location_id', 'device_id', 'snapshot_id', 'model.id'),
-  refresh_right_on_type_change: function() {
-    var _this = this;
-    scheduleOnce('actions', this, this.load_right_charts);
-  }.observes('start2', 'end2', 'location_id2', 'device_id2', 'snapshot_id2', 'model.id'),
-  handle_split: function() {
+  refresh_left_on_type_change: observer(
+    'start',
+    'end',
+    'location_id',
+    'device_id',
+    'snapshot_id',
+    'model.id',
+    function() {
+      var _this = this;
+      scheduleOnce('actions', this, this.load_left_charts);
+    }
+  ),
+  refresh_right_on_type_change: observer(
+    'start2',
+    'end2',
+    'location_id2',
+    'device_id2',
+    'snapshot_id2',
+    'model.id',
+    function() {
+      var _this = this;
+      scheduleOnce('actions', this, this.load_right_charts);
+    }
+  ),
+  handle_split: observer('split', 'usage_stats', 'usage_stats2', function() {
     if(this.get('split') && this.get('usage_stats') && !this.get('usage_stats2')) {
       this.load_right_charts();
     } else if(!this.get('split')) {
@@ -64,7 +80,7 @@ export default Controller.extend({
       this.set('location_id2', null);
       this.draw_charts();
     }
-  }.observes('split', 'usage_stats', 'usage_stats2'),
+  }),
   different_dates: function() {
     if(this.get('usage_stats') && this.get('usage_stats2')) {
       if(this.get('usage_stats').comes_before(this.get('usage_stats2'))) {

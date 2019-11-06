@@ -128,63 +128,86 @@ export default Controller.extend({
     }
     return res;
   }.property('fake_user.preferences.notification_frequency', 'app_state.currentUser.preferences.notification_frequency', 'fake_user.preferences.share_notifications', 'app_state.currentUser.preferences.share_notifications'),
-  update_cell: function(o, change) {
-    if(!app_state.controller.get('setup_footer')) { return; }
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(!this.get('cell') && user.get('cell_phone')) {
-      this.set('cell', user.get('cell_phone'));
-    } else if(change == 'app_state.currentUser.cell_phone') {
-      this.set('cell', user.get('cell_phone'));
-    } else if(this.get('cell')) {
-      user.set('cell_phone', this.get('cell'));
-      this.send('set_preference', 'cell_phone', this.get('cell'));
+  update_cell: observer(
+    'cell',
+    'fake_user.cell_phone',
+    'app_state.currentUser.cell_phone',
+    function(o, change) {
+      if(!app_state.controller.get('setup_footer')) { return; }
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(!this.get('cell') && user.get('cell_phone')) {
+        this.set('cell', user.get('cell_phone'));
+      } else if(change == 'app_state.currentUser.cell_phone') {
+        this.set('cell', user.get('cell_phone'));
+      } else if(this.get('cell')) {
+        user.set('cell_phone', this.get('cell'));
+        this.send('set_preference', 'cell_phone', this.get('cell'));
+      }
     }
-  }.observes('cell', 'fake_user.cell_phone', 'app_state.currentUser.cell_phone'),
-  update_pin: function(o, change) {
-    if(!app_state.controller.get('setup_footer')) { return; }
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(!this.get('pin') && user.get('preferences.speak_mode_pin') && user.get('preferences.require_speak_mode_pin')) {
-      this.set('pin', user.get('preferences.speak_mode_pin') || "");
-    } else if(change == 'app_state.currentUser.preferences.speak_mode_pin') {
-      this.set('pin', user.get('preferences.speak_mode_pin') || "");
-    } else {
-      var pin = (parseInt(this.get('pin'), 10) || "").toString().substring(0, 4);
-      var _this = this;
-      runLater(function() {
-        if(pin != _this.get('pin')) {
-          _this.set('pin', pin);
+  ),
+  update_pin: observer(
+    'pin',
+    'fake_user.preferences.require_speak_mode_pin',
+    'app_state.currentUser.preferences.require_speak_mode_pin',
+    'fake_user.preferences.speak_mode_pin',
+    'app_state.currentUser.preferences.speak_mode_pin',
+    function(o, change) {
+      if(!app_state.controller.get('setup_footer')) { return; }
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(!this.get('pin') && user.get('preferences.speak_mode_pin') && user.get('preferences.require_speak_mode_pin')) {
+        this.set('pin', user.get('preferences.speak_mode_pin') || "");
+      } else if(change == 'app_state.currentUser.preferences.speak_mode_pin') {
+        this.set('pin', user.get('preferences.speak_mode_pin') || "");
+      } else {
+        var pin = (parseInt(this.get('pin'), 10) || "").toString().substring(0, 4);
+        var _this = this;
+        runLater(function() {
+          if(pin != _this.get('pin')) {
+            _this.set('pin', pin);
+          }
+        }, 10);
+        if(pin.length == 4 && (!user.get('preferences.require_speak_mode_pin') || pin != user.get('preferences.speak_mode_pin'))) {
+          user.set('preferences.require_speak_mode_pin', true);
+          this.send('set_preference', 'speak_mode_pin', this.get('pin'));
+        } else if(pin.length != 4 && user.get('preferences.require_speak_mode_pin')) {
+          this.send('set_preference', 'require_speak_mode_pin', false);
         }
-      }, 10);
-      if(pin.length == 4 && (!user.get('preferences.require_speak_mode_pin') || pin != user.get('preferences.speak_mode_pin'))) {
-        user.set('preferences.require_speak_mode_pin', true);
-        this.send('set_preference', 'speak_mode_pin', this.get('pin'));
-      } else if(pin.length != 4 && user.get('preferences.require_speak_mode_pin')) {
-        this.send('set_preference', 'require_speak_mode_pin', false);
       }
     }
-  }.observes('pin', 'fake_user.preferences.require_speak_mode_pin', 'app_state.currentUser.preferences.require_speak_mode_pin', 'fake_user.preferences.speak_mode_pin', 'app_state.currentUser.preferences.speak_mode_pin'),
-  update_checkbox_preferences: function(a, b, c) {
-    if(!app_state.controller.get('setup_footer')) { return; }
-    var do_update = false;
-    var _this = this;
-    if(_this.get('ignore_update')) { return; }
+  ),
+  update_checkbox_preferences: observer(
+    'fake_user.preferences.vocalize_buttons',
+    'app_state.currentUser.preferences.vocalize_buttons',
+    'vocalize_buttons',
+    'fake_user.preferences.vocalize_linked_buttons',
+    'app_state.currentUser.preferences.vocalize_linked_buttons',
+    'vocalize_linked_buttons',
+    'fake_user.preferences.auto_home_return',
+    'app_state.currentUser.preferences.auto_home_return',
+    'auto_home_return',
+    function(a, b, c) {
+      if(!app_state.controller.get('setup_footer')) { return; }
+      var do_update = false;
+      var _this = this;
+      if(_this.get('ignore_update')) { return; }
 
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    ['vocalize_buttons', 'vocalize_linked_buttons', 'auto_home_return'].forEach(function(pref) {
-      if(b && b.match(/fake_user|currentUser/) /*_this.get(pref) == null*/ && user.get('preferences.' + pref) != null) {
-        _this.set('ignore_update', true);
-        _this.set(pref, user.get('preferences.' + pref));
-        _this.set('ignore_update', false);
-      } else if(_this.get(pref) != null && _this.get(pref) != user.get('preferences.' + pref)) {
-        user.set('preferences.' + pref, _this.get(pref));
-        do_update = true;
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      ['vocalize_buttons', 'vocalize_linked_buttons', 'auto_home_return'].forEach(function(pref) {
+        if(b && b.match(/fake_user|currentUser/) /*_this.get(pref) == null*/ && user.get('preferences.' + pref) != null) {
+          _this.set('ignore_update', true);
+          _this.set(pref, user.get('preferences.' + pref));
+          _this.set('ignore_update', false);
+        } else if(_this.get(pref) != null && _this.get(pref) != user.get('preferences.' + pref)) {
+          user.set('preferences.' + pref, _this.get(pref));
+          do_update = true;
+        }
+      });
+
+      if(do_update) {
+        this.send('set_preference', 'extra', true);
       }
-    });
-
-    if(do_update) {
-      this.send('set_preference', 'extra', true);
     }
-  }.observes('fake_user.preferences.vocalize_buttons', 'app_state.currentUser.preferences.vocalize_buttons', 'vocalize_buttons', 'fake_user.preferences.vocalize_linked_buttons', 'app_state.currentUser.preferences.vocalize_linked_buttons', 'vocalize_linked_buttons', 'fake_user.preferences.auto_home_return', 'app_state.currentUser.preferences.auto_home_return', 'auto_home_return'),
+  ),
   user_voice_list: function() {
     var list = speecher.get('voiceList');
     var result = [];
@@ -213,7 +236,7 @@ export default Controller.extend({
     }
     return result;
   }.property('speecher.voiceList', 'app_state.currentUser.premium_voices.claimed', 'fake_user.preferences.device.voice.voice_uri', 'app_state.currentUser.preferences.device.voice.voice_uris'),
-  update_on_page_change: function() {
+  update_on_page_change: observer('page', function() {
     if(!this.get('fake_user')) {
       this.set('fake_user', EmberObject.create({
         preferences:
@@ -250,7 +273,7 @@ export default Controller.extend({
       }, 500);
     }
     $('html,body').scrollTop(0);
-  }.observes('page'),
+  }),
   read_step: function() {
     var _this = this;
     var prompts = [];

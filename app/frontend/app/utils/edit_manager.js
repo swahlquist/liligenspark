@@ -45,13 +45,13 @@ var editManager = EmberObject.extend({
       app_state.controller.set('dragMode', enable);
     }
   },
-  edit_mode_triggers: function() {
+  edit_mode_triggers: observer('app_state.edit_mode', function() {
     if(this.controller && this.lucky_symbol.pendingSymbols && app_state.get('edit_mode')) {
       this.lucky_symbols(this.lucky_symbol.pendingSymbols);
       this.lucky_symbol.pendingSymbols = [];
     }
 
-  }.observes('app_state.edit_mode'),
+  }),
   long_press_mode: function(opts) {
     var app = app_state.controller;
     if(!app_state.get('edit_mode')) {
@@ -539,12 +539,12 @@ var editManager = EmberObject.extend({
       this.bogus_id_counter = (Math.min.apply(null, neg_ids) || -999);
     }
   },
-  update_history: function() {
+  update_history: observer('history', 'history.[]', 'future', 'future.[]', function() {
     if(this.controller) {
       this.controller.set('noRedo', this.get('future').length === 0);
       this.controller.set('noUndo', this.get('history').length === 0);
     }
-  }.observes('history', 'history.[]', 'future', 'future.[]'),
+  }),
   // TODO: should we be using this to ensure modifying proper board?
 //   forBoard: function(board, callback) {
 //     if(this.controller.get('model.id') == board.get('id')) {

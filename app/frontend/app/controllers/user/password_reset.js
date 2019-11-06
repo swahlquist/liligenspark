@@ -3,7 +3,7 @@ import persistence from '../../utils/persistence';
 
 export default Controller.extend({
   title: "Reset Password",
-  checkPassword: function() {
+  checkPassword: observer('model.password', 'model.password2', function() {
     var pw = this.get('model.password');
     var pw2 = this.get('model.password2');
     if(!pw) {
@@ -16,7 +16,7 @@ export default Controller.extend({
       console.log('good one!');
       this.set('badPassword', null);
     }
-  }.observes('model.password', 'model.password2'),
+  }),
   cantSubmit: function() {
     this.checkPassword();
     return !!(this.get('badPassword') || this.get('password_reset.succeeded'));

@@ -15,7 +15,7 @@ export default Component.extend({
   canvas_height: function() {
     return htmlSafe(this.get('short') ? (768 * 2 / 3) : 768);
   }.property('short'),
-  draw: function() {
+  draw: observer('stats', 'ref_stats', 'zoom', 'word_cloud_id', function() {
     var elem = this.get('element').getElementsByClassName('word_cloud')[0];
     if(elem) {
       var list = [];
@@ -45,5 +45,5 @@ export default Component.extend({
         }
       });
     }
-  }.observes('stats', 'ref_stats', 'zoom', 'word_cloud_id')
+  })
 });

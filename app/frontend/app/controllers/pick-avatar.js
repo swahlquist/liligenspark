@@ -55,14 +55,14 @@ export default modal.ModalController.extend({
     res = Utils.uniq(res, function(o) { return o.url; });
     return res;
   }.property('model.user.prior_avatar_urls', 'model.user.fallback_avatar_url', 'mode.user.avatar_url'),
-  update_selected: function() {
+  update_selected: observer('model.user.avatar_url', function() {
     var url = this.get('model.user.avatar_url');
     if(url && this.get('avatar_options')) {
       this.get('avatar_options').forEach(function(o) {
         emberSet(o, 'selected', o.url == url);
       });
     }
-  }.observes('model.user.avatar_url'),
+  }),
   actions: {
     pick: function(option) {
       modal.close({image_url: option.url});

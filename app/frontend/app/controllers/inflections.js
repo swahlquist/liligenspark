@@ -8,7 +8,7 @@ import { htmlSafe } from '@ember/string';
 
 var extra_types = ['NW', 'N', 'NE', 'W', 'E', 'SW', 'S', 'SE'];
 export default Controller.extend({
-  abort_if_unauthorized: function() {
+  abort_if_unauthorized: observer('session.isAuthenticated', 'app_state.currentUser', function() {
     if(!session.get('isAuthenticated')) {
       this.transitionToRoute('index');
     } else if(app_state.get('currentUser') && !app_state.get('currentUser.permissions.admin_support_actions')) {
@@ -16,7 +16,7 @@ export default Controller.extend({
     } else if(app_state.get('currentUser') && !this.get('word')) {
       this.load_word();
     }
-  }.observes('session.isAuthenticated', 'app_state.currentUser'),
+  }),
   load_word: function() {
     var _this = this;
     _this.set('status', null);
@@ -52,64 +52,72 @@ export default Controller.extend({
       _this.set('word', {error: true});
     });
   },
-  update_inflection_options: function() {
-    if(!this.get('word.word')) { return; }
-    var opts = this.get('inflection_options') || {};
-    if(this.get('word.word') || emberGet(opts, 'base') != "") {
-      emberSet(opts, 'base', emberGet(opts, 'base') || this.get('word.inflection_overrides.base') || this.get('word.word'));
-    }
-    if(this.get('word.inflection_overrides')) {
-      var overrides = this.get('word.inflection_overrides');
-      for(var type in overrides) {
-        emberSet(opts, type, emberGet(opts, type) || overrides[type]);
+  update_inflection_options: observer(
+    'word.word',
+    'word.primary_part_of_speech',
+    'inflection_options.base',
+    'word.antonyms',
+    'word.parts_of_speech',
+    'parts_of_speech',
+    function() {
+      if(!this.get('word.word')) { return; }
+      var opts = this.get('inflection_options') || {};
+      if(this.get('word.word') || emberGet(opts, 'base') != "") {
+        emberSet(opts, 'base', emberGet(opts, 'base') || this.get('word.inflection_overrides.base') || this.get('word.word'));
       }
-    }
-    var type = this.get('word.primary_part_of_speech');
-    var word = opts.base || "";
-    var write = function(attr, method) {
-      if(opts[attr] && opts[attr] == opts[attr + '_fallback']) {
-        opts[attr] = null;
+      if(this.get('word.inflection_overrides')) {
+        var overrides = this.get('word.inflection_overrides');
+        for(var type in overrides) {
+          emberSet(opts, type, emberGet(opts, type) || overrides[type]);
+        }
       }
-      emberSet(opts, attr + '_fallback', method.call(i18n, word));
-      emberSet(opts, attr, opts[attr] || opts[attr + '_fallback']);
-    }
-    var parts = this.get('parts_of_speech');
-    if(parts.noun) {
-      write('plural', i18n.pluralize);
-      write('possessive', i18n.possessive);
-    }
-    if(parts.verb) {
-      write('infinitive', function(word) { return i18n.tense(word, {infinitive: true}); });
-      write('present', function(word) { return word; });
-      write('simple_present', function(word) { return i18n.tense(word, {simple_present: true}); });
-      write('plural_present', function(word) { return word; });
-      write('past', function(word) { return i18n.tense(word, {simple_past: true}); });
-      write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
-      write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
-      write('past_participle', function(word) { return i18n.tense(word, {past_participle: true}); });
-    }
-    if(parts.adjective || parts.adverb) {
-      if(parts.adjective) {
+      var type = this.get('word.primary_part_of_speech');
+      var word = opts.base || "";
+      var write = function(attr, method) {
+        if(opts[attr] && opts[attr] == opts[attr + '_fallback']) {
+          opts[attr] = null;
+        }
+        emberSet(opts, attr + '_fallback', method.call(i18n, word));
+        emberSet(opts, attr, opts[attr] || opts[attr + '_fallback']);
+      }
+      var parts = this.get('parts_of_speech');
+      if(parts.noun) {
         write('plural', i18n.pluralize);
+        write('possessive', i18n.possessive);
       }
-      write('comparative', i18n.comparative);
-      write('negative_comparative', function(word) { return i18n.comparative(word, {negative: true}); });
-      write('superlative', i18n.superlative);
-      write('negation', i18n.negation);
-    }
-    if(parts.pronoun) {
-      write('objective',  function(word) { return i18n.possessive(word, {objective: true}); });
-      write('possessive', function(word) { return i18n.possessive(word, {pronoun: true}); });
-      write('possessive_adjective', function(word) { return i18n.possessive(word, {}); });
-      write('reflexive',  function(word) { return i18n.possessive(word, {reflexive: true}); });
-    }
-    if(parts.noun || parts.verb || parts.adjective || parts.adverb || parts.pronoun || parts.article || parts.preposition || parts.article || parts.determiner) {
-      write('negation', i18n.negation);
-    }
+      if(parts.verb) {
+        write('infinitive', function(word) { return i18n.tense(word, {infinitive: true}); });
+        write('present', function(word) { return word; });
+        write('simple_present', function(word) { return i18n.tense(word, {simple_present: true}); });
+        write('plural_present', function(word) { return word; });
+        write('past', function(word) { return i18n.tense(word, {simple_past: true}); });
+        write('simple_past', function(word) { return i18n.tense(word, {simple_past: true}); });
+        write('present_participle', function(word) { return i18n.tense(word, {present_participle: true}); });
+        write('past_participle', function(word) { return i18n.tense(word, {past_participle: true}); });
+      }
+      if(parts.adjective || parts.adverb) {
+        if(parts.adjective) {
+          write('plural', i18n.pluralize);
+        }
+        write('comparative', i18n.comparative);
+        write('negative_comparative', function(word) { return i18n.comparative(word, {negative: true}); });
+        write('superlative', i18n.superlative);
+        write('negation', i18n.negation);
+      }
+      if(parts.pronoun) {
+        write('objective',  function(word) { return i18n.possessive(word, {objective: true}); });
+        write('possessive', function(word) { return i18n.possessive(word, {pronoun: true}); });
+        write('possessive_adjective', function(word) { return i18n.possessive(word, {}); });
+        write('reflexive',  function(word) { return i18n.possessive(word, {reflexive: true}); });
+      }
+      if(parts.noun || parts.verb || parts.adjective || parts.adverb || parts.pronoun || parts.article || parts.preposition || parts.article || parts.determiner) {
+        write('negation', i18n.negation);
+      }
 
-    this.set('inflection_options', opts);
-    this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
-  }.observes('word.word', 'word.primary_part_of_speech', 'inflection_options.base', 'word.antonyms', 'word.parts_of_speech', 'parts_of_speech'),
+      this.set('inflection_options', opts);
+      this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
+    }
+  ),
   lookup_link: function() {
     return "https://www.google.com/search?q=define:" + encodeURIComponent(this.get('word.word'));
   }.property('word'),
@@ -156,28 +164,33 @@ export default Controller.extend({
     });
     return res;
   }.property('word.parts_of_speech'),
-  update_primary_on_single_word_type: function(ref, change) {
-    var single_type = null;
-    var multiple = false;
-    this.get('word_types').forEach(function(t) { 
-      if(t.checked && single_type) {
-        multiple = true;
-      } else if(t.checked) {
-        single_type = t.id;
+  update_primary_on_single_word_type: observer(
+    'word_types',
+    'word_types.@each.checked',
+    'word.primary_part_of_speech',
+    function(ref, change) {
+      var single_type = null;
+      var multiple = false;
+      this.get('word_types').forEach(function(t) { 
+        if(t.checked && single_type) {
+          multiple = true;
+        } else if(t.checked) {
+          single_type = t.id;
+        }
+      });
+      var types = this.get('word_types');
+      var pos = this.get('word.primary_part_of_speech');
+      var type = types.find(function(t) { return t.id == pos; });
+      if(single_type && !multiple) {
+        this.set('word.primary_part_of_speech', single_type);
+      } else if(change == 'word.primary_part_of_speech' && type) {
+        emberSet(type, 'checked', true);
+      } else if(multiple && type && !type.checked) {
+        type = types.find(function(t) { return t.checked; });
+        if(type) { this.set('word.primary_part_of_speech', type.id); }
       }
-    });
-    var types = this.get('word_types');
-    var pos = this.get('word.primary_part_of_speech');
-    var type = types.find(function(t) { return t.id == pos; });
-    if(single_type && !multiple) {
-      this.set('word.primary_part_of_speech', single_type);
-    } else if(change == 'word.primary_part_of_speech' && type) {
-      emberSet(type, 'checked', true);
-    } else if(multiple && type && !type.checked) {
-      type = types.find(function(t) { return t.checked; });
-      if(type) { this.set('word.primary_part_of_speech', type.id); }
     }
-  }.observes('word_types', 'word_types.@each.checked', 'word.primary_part_of_speech'),
+  ),
   word_type: function() {
     var res = {};
     if(this.get('word.primary_part_of_speech')) {

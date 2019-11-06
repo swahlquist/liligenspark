@@ -29,11 +29,11 @@ CoughDrop.Video = DS.Model.extend({
       return decodeURIComponent(name || 'video');
     }
   }.property('url'),
-  check_for_editable_license: function() {
+  check_for_editable_license: observer('license', 'id', function() {
     if(this.get('license') && this.get('id') && !this.get('permissions.edit')) {
       this.set('license.uneditable', true);
     }
-  }.observes('license', 'id'),
+  }),
   clean_license: function() {
     var _this = this;
     ['copyright_notice', 'source', 'author'].forEach(function(key) {
@@ -61,9 +61,9 @@ CoughDrop.Video = DS.Model.extend({
     }
     return RSVP.reject('no video data url');
   },
-  checkForDataURLOnChange: function() {
+  checkForDataURLOnChange: observer('url', function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('url')
+  })
 });
 
 CoughDrop.Video.reopenClass({

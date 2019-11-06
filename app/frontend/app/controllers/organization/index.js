@@ -46,11 +46,11 @@ export default Controller.extend({
       }
     });
   },
-  refresh_logs_on_reload: function() {
+  refresh_logs_on_reload: observer('model.permissions.manage', 'logs.loading', 'logs.data', function() {
     if(this.get('model.permissions.manage') && !this.get('logs.loading') && !this.get('logs.data')) {
       this.refresh_logs();
     }
-  }.observes('model.permissions.manage', 'logs.loading', 'logs.data'),
+  }),
   loading_org: function() {
     return !this.get('model.permissions');
   }.property('model.permissions'),

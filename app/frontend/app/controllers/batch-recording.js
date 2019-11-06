@@ -94,68 +94,73 @@ export default modal.ModalController.extend({
       this.set('recordings', this.get('model.recordings'));
     }
   },
-  align_repository: function() {
-    if(this.get('repository.id') && this.get('recordings')) {
-      var sounds = this.get('recordings') || [];
-      var sounds_hash = {};
-      sounds.forEach(function(s) {
-        (s.get('tags') || []).forEach(function(tag) {
-          sounds_hash[tag] = s;
+  align_repository: observer(
+    'recordings',
+    'repository.id',
+    'repository.categories.length',
+    function() {
+      if(this.get('repository.id') && this.get('recordings')) {
+        var sounds = this.get('recordings') || [];
+        var sounds_hash = {};
+        sounds.forEach(function(s) {
+          (s.get('tags') || []).forEach(function(tag) {
+            sounds_hash[tag] = s;
+          });
         });
-      });
-      var rep = this.get('repository');
-      // iterate through categories
-      (rep.categories || []).forEach(function(cat) {
-        emberSet(cat, 'pending_sound', false);
-        // check existing categories for matching sounds
-        (cat.phrases || []).forEach(function(phrase) {
-          if(emberGet(phrase, 'pending_sound')) {
-            emberSet(phrase, 'sound', false);
-            emberSet(phrase, 'pending_sound', false);
-          }
-          var tag = rep.id + ":" + cat.id + ":" + phrase.id;
-          if(sounds_hash[tag]) {
-            emberSet(phrase, 'sound', sounds_hash[tag]);
-          } else if(!emberGet(phrase, 'sound')) {
-            // try to fuzzy-match based on transcription
-            var match_distance = phrase.text.length + 10;
-            sounds.forEach(function(s) {
-              var trans = s.get('transcription') && s.get('transcription').toLowerCase();
-              if(trans) {
-                if(trans == phrase.text.toLowerCase()) {
-                  emberSet(phrase, 'sound', s);
-                  emberSet(phrase, 'pending_sound', true);
-                  emberSet(cat, 'pending_sound', true);
-                  match_distance = 0;
-                } else if(match_distance !== 0) {
-                  var dist = word_suggestions.edit_distance(trans, phrase.text.toLowerCase());
-                  if(dist < match_distance && dist < (Math.max(phrase.text.length, trans.length) * 0.15)) {
-                    if((s.get('tags') || []).indexOf("not:" + tag) == -1) {
-                      emberSet(phrase, 'sound', s);
-                      emberSet(phrase, 'pending_sound', true);
-                      emberSet(cat, 'pending_sound', true);
+        var rep = this.get('repository');
+        // iterate through categories
+        (rep.categories || []).forEach(function(cat) {
+          emberSet(cat, 'pending_sound', false);
+          // check existing categories for matching sounds
+          (cat.phrases || []).forEach(function(phrase) {
+            if(emberGet(phrase, 'pending_sound')) {
+              emberSet(phrase, 'sound', false);
+              emberSet(phrase, 'pending_sound', false);
+            }
+            var tag = rep.id + ":" + cat.id + ":" + phrase.id;
+            if(sounds_hash[tag]) {
+              emberSet(phrase, 'sound', sounds_hash[tag]);
+            } else if(!emberGet(phrase, 'sound')) {
+              // try to fuzzy-match based on transcription
+              var match_distance = phrase.text.length + 10;
+              sounds.forEach(function(s) {
+                var trans = s.get('transcription') && s.get('transcription').toLowerCase();
+                if(trans) {
+                  if(trans == phrase.text.toLowerCase()) {
+                    emberSet(phrase, 'sound', s);
+                    emberSet(phrase, 'pending_sound', true);
+                    emberSet(cat, 'pending_sound', true);
+                    match_distance = 0;
+                  } else if(match_distance !== 0) {
+                    var dist = word_suggestions.edit_distance(trans, phrase.text.toLowerCase());
+                    if(dist < match_distance && dist < (Math.max(phrase.text.length, trans.length) * 0.15)) {
+                      if((s.get('tags') || []).indexOf("not:" + tag) == -1) {
+                        emberSet(phrase, 'sound', s);
+                        emberSet(phrase, 'pending_sound', true);
+                        emberSet(cat, 'pending_sound', true);
+                      }
                     }
                   }
                 }
-              }
-            });
-          }
+              });
+            }
+          });
+          // look for any recordings custom-added to the category
+          sounds.forEach(function(s) {
+            if(s.get('transcription') && (s.get('tags') || []).indexOf(rep.id + ":" + cat.id) != -1) {
+              cat.phrases.pushObject({
+                id: s.get('id'),
+                text: s.get('transcription'),
+                custom: true,
+                sound: s
+              });
+            }
+          });
         });
-        // look for any recordings custom-added to the category
-        sounds.forEach(function(s) {
-          if(s.get('transcription') && (s.get('tags') || []).indexOf(rep.id + ":" + cat.id) != -1) {
-            cat.phrases.pushObject({
-              id: s.get('id'),
-              text: s.get('transcription'),
-              custom: true,
-              sound: s
-            });
-          }
-        });
-      });
+      }
+      this.count_totals();
     }
-    this.count_totals();
-  }.observes('recordings', 'repository.id', 'repository.categories.length'),
+  ),
   count_totals: function() {
     if(this.get('repository.id')) {
       var rep = this.get('repository');
@@ -186,7 +191,7 @@ export default modal.ModalController.extend({
   needs_user: function() {
     return !this.get('model.user');
   }.property('model.user'),
-  update_user: function() {
+  update_user: observer('for_user_id', function() {
     var for_user_id = this.get('for_user_id');
     var current_user_id = this.get('model.user.id');
     if(this.get('model.user.id') == app_state.get('currentUser.id')) { current_user_id = 'self'; }
@@ -199,7 +204,7 @@ export default modal.ModalController.extend({
       }
       this.load_recordings(true);
     }
-  }.observes('for_user_id'),
+  }),
   save_to_button: function(sound) {
     var _this = this;
     if(sound.get('id') && _this.get('phrase.saved_sound_id') == sound.get('id')) { return; }

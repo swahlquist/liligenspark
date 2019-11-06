@@ -15,51 +15,56 @@ export default modal.ModalController.extend({
     this.set('current_category', 'default');
     this.update_list();
   },
-  update_categores: function() {
+  update_categores: observer('current_category', 'phrases', function() {
     var current = this.get('current_category');
     (this.get('categories') || []).forEach(function(c) {
       emberSet(c, 'active', current == c.id);
     });
-  }.observes('current_category', 'phrases'),
-  update_list: function() {
-    var utterances = stashes.get('remembered_vocalizations') || [];
-    var _this = this;
-    var categories = this.get('user.preferences.phrase_categories') || [];
-    categories = ['default'].concat(categories).concat(['journal']);
-    if(_this.get('user')) {
-      utterances = utterances.filter(function(u) { return u.stash; });
-      (_this.get('user.vocalizations') || []).forEach(function(u) {
-        if(u && u.list) {
-          var cat = u.category || 'default';
-          if(categories.indexOf(cat) == -1) {
-            if(categories.indexOf('other') == -1) {
-              categories.push('other');
+  }),
+  update_list: observer(
+    'stashes.remembered_vocalizations.length',
+    'user.vocalizations',
+    'user.vocalizations.@each.id',
+    function() {
+      var utterances = stashes.get('remembered_vocalizations') || [];
+      var _this = this;
+      var categories = this.get('user.preferences.phrase_categories') || [];
+      categories = ['default'].concat(categories).concat(['journal']);
+      if(_this.get('user')) {
+        utterances = utterances.filter(function(u) { return u.stash; });
+        (_this.get('user.vocalizations') || []).forEach(function(u) {
+          if(u && u.list) {
+            var cat = u.category || 'default';
+            if(categories.indexOf(cat) == -1) {
+              if(categories.indexOf('other') == -1) {
+                categories.push('other');
+              }
+              cat = 'other';
             }
-            cat = 'other';
+            utterances.push({
+              id: u.id,
+              category: cat,
+              date: new Date(u.ts * 1000),
+              sentence: u.list.map(function(v) { return v.label; }).join(" "),
+              vocalizations: u.list,
+              stash: false
+            });
           }
-          utterances.push({
-            id: u.id,
-            category: cat,
-            date: new Date(u.ts * 1000),
-            sentence: u.list.map(function(v) { return v.label; }).join(" "),
-            vocalizations: u.list,
-            stash: false
-          });
-        }
-      });
-    }
-    this.set('phrases', utterances);
-    var current = this.get('current_category');
-    this.set('categories', categories.map(function(c) { 
-      var cat = {name: c, active: c == current, id: c};
-      if(c == 'default') {
-        cat.name = i18n.t('quick', "Quick");
-      } else if(c == 'journal') {
-        cat.name = i18n.t('journal', "Journal");
+        });
       }
-      return cat;
-    }));
-  }.observes('stashes.remembered_vocalizations.length', 'user.vocalizations', 'user.vocalizations.@each.id'),
+      this.set('phrases', utterances);
+      var current = this.get('current_category');
+      this.set('categories', categories.map(function(c) { 
+        var cat = {name: c, active: c == current, id: c};
+        if(c == 'default') {
+          cat.name = i18n.t('quick', "Quick");
+        } else if(c == 'journal') {
+          cat.name = i18n.t('journal', "Journal");
+        }
+        return cat;
+      }));
+    }
+  ),
   category_phrases: function() {
     var cat = this.get('current_category');
     return (this.get('phrases') || []).filter(function(u) { return u.category == cat; });

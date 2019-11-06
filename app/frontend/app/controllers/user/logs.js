@@ -28,9 +28,17 @@ export default Controller.extend({
   title: function() {
     return "Logs for " + this.get('model.user_name');
   }.property('model.user_name'),
-  refresh_on_params_change: function() {
-    this.send('refresh');
-  }.observes('type', 'start', 'end', 'device_id', 'location_id', 'highlighted'),
+  refresh_on_params_change: observer(
+    'type',
+    'start',
+    'end',
+    'device_id',
+    'location_id',
+    'highlighted',
+    function() {
+      this.send('refresh');
+    }
+  ),
   messages_only: function() {
     return this.get('type') == 'note';
   }.property('type'),

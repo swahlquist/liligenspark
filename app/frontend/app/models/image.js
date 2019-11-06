@@ -74,11 +74,11 @@ CoughDrop.Image = DS.Model.extend({
       return null;
     }
   }.property('license', 'license.author_url', 'license.author_email'),
-  check_for_editable_license: function() {
+  check_for_editable_license: observer('license', 'id', 'permissions.edit', function() {
     if(this.get('license') && this.get('id') && !this.get('permissions.edit')) {
       this.set('license.uneditable', true);
     }
-  }.observes('license', 'id', 'permissions.edit'),
+  }),
   personalized_url: function() {
     return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'));
   }.property('url', 'app_state.currentUser.user_token'),
@@ -102,9 +102,9 @@ CoughDrop.Image = DS.Model.extend({
     }
     return RSVP.reject('no image data url');
   },
-  checkForDataURLOnChange: function() {
+  checkForDataURLOnChange: observer('personalized_url', function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('personalized_url')
+  })
 });
 
 CoughDrop.Image.reopenClass({

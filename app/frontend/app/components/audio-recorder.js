@@ -15,7 +15,7 @@ export default Component.extend({
   willDestroyElement: function() {
     contentGrabbers.soundGrabber.clear_sound_work();
   },
-  check_status: function() {
+  check_status: observer('sound', 'id', function() {
     var _this = this;
     if(!_this.get('sound')) {
       runLater(function() {
@@ -23,18 +23,18 @@ export default Component.extend({
         _this.send('record_sound');
       });
     }
-  }.observes('sound', 'id'),
-  update_sound: function() {
+  }),
+  update_sound: observer('model.sound', function() {
     if(this.get('model.sound')) {
       this.send('audio_selected', this.get('model.sound'));
     }
-  }.observes('model.sound'),
-  update_sound_preview: function() {
+  }),
+  update_sound_preview: observer('sound_preview', function() {
     if(this.get('sound_preview') && !this.get('sound_preview.transcription') && this.get('text')) {
       this.set('sound_preview.name', this.get('text'));
       this.set('sound_preview.transcription', this.get('text'));
     }
-  }.observes('sound_preview'),
+  }),
   show_next_phrase: function() {
     return this.get('next_phrase') && !this.get('browse_audio') && !this.get('sound_preview');
   }.property('next_phrase', 'browse_audio', 'sound_preview', 'sound_recording', 'sound'),

@@ -27,12 +27,12 @@ export default Controller.extend({
       _this.set('global_goals', null);
     }
   },
-  reload_goals: function() {
+  reload_goals: observer('app_state.currentUser.permissions.admin_support_actions', function() {
     var _this = this;
     if(app_state.get('currentUser.permissions.admin_support_actions') && !_this.get('global_goals')) {
       _this.load_goals();
     }
-  }.observes('app_state.currentUser.permissions.admin_support_actions'),
+  }),
   actions: {
     new_goal: function() {
       var goal = CoughDrop.store.createRecord('goal');

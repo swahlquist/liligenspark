@@ -16,13 +16,13 @@ export default Controller.extend({
     {name: i18n.t('weeks', "Weeks"), id: "week"},
     {name: i18n.t('days', "Days"), id: "day"}
   ],
-  load_user_badges: function() {
+  load_user_badges: observer('app_state.currentUser.id', 'model.id', 'model.badges', function() {
     var _this = this;
     this.store.query('badge', {user_id: this.get('app_state.currentUser.id'), goal_id: this.get('model.id')}).then(function(badges) {
       _this.set('user_badges', badges.map(function(b) { return b; }));
     }, function(err) {
     });
-  }.observes('app_state.currentUser.id', 'model.id', 'model.badges'),
+  }),
   mapped_badges: function() {
     var user_badges = this.get('user_badges');
     if(user_badges) {
@@ -37,11 +37,11 @@ export default Controller.extend({
       return this.get('model.badges');
     }
   }.property('model.badges', 'user_badges'),
-  load_templates_for_header: function() {
+  load_templates_for_header: observer('model.template_header', function() {
     if(this.get('model.template_header')) {
       this.load_templates();
     }
-  }.observes('model.template_header'),
+  }),
   load_templates: function() {
     if(this.get('model.related.header.id') && this.get('templates_list_for') != this.get('model.related.header.id')) {
       var _this = this;
@@ -76,11 +76,11 @@ export default Controller.extend({
       });
     }
   },
-  load_templates_when_editing: function() {
+  load_templates_when_editing: observer('editing', function() {
     if(this.get('editing')) {
       this.load_templates();
     }
-  }.observes('editing'),
+  }),
   actions: {
     save: function() {
       var goal = this.get('model');

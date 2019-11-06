@@ -21,7 +21,7 @@ export default Component.extend({
       return htmlSafe('break-inside: avoid;');
     }
   }.property('right_side'),
-  draw: function() {
+  draw: observer('usage_stats.draw_id', 'usage_stats.modeling', function() {
     var stats = this.get('usage_stats');
     var elem = this.get('element').getElementsByClassName('core_words')[0];
 
@@ -70,5 +70,5 @@ export default Component.extend({
         elem.innerHTML = '';
       }
     });
-  }.observes('usage_stats.draw_id', 'usage_stats.modeling')
+  })
 });

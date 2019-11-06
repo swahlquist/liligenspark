@@ -6,7 +6,7 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  draw: function() {
+  draw: observer('weekly_stats', function() {
     var elem = this.get('element').getElementsByClassName('sessions_per_week')[0];
     var stats = this.get('weekly_stats');
 
@@ -46,5 +46,5 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('weekly_stats')
+  })
 });

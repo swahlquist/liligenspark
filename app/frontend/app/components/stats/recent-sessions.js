@@ -6,7 +6,7 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  draw: function() {
+  draw: observer('total', 'recent', function() {
     var total = this.get('total');
     var recent = this.get('recent');
     var elem = this.get('element').getElementsByClassName('recent_sessions')[0];
@@ -37,5 +37,5 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('total', 'recent')
+  })
 });

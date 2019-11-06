@@ -37,12 +37,12 @@ export default Component.extend({
     }
     this.set('users', this.get('users') || supervisees);
   },
-  include_me: function() {
+  include_me: observer('skip_me', function() {
     var self = (this.get('users') || []).find(function(u) { return u.id == 'self'; });
     if(self) {
       emberSet(self, 'disabled', !!this.get('skip_me'));
     }
-  }.observes('skip_me'),
+  }),
   for_user_image: function() {
     var res = null;
     var user_id = this.get('selection');

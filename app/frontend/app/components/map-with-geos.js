@@ -15,7 +15,7 @@ export default Component.extend({
     $(this.get('element')).empty();
     // teardown?
   },
-  fit_bounds: function() {
+  fit_bounds: observer('center', function() {
     var map = this.map;
     if(!map) { return; }
     var markers = this.get('markers') || [];
@@ -27,7 +27,7 @@ export default Component.extend({
       bounds.extend(this.get('center'));
     }
     map.fitBounds(bounds);
-  }.observes('center'),
+  }),
   set_geos: function() {
     var geos = [];
     (this.get('markers') || []).forEach(function(marker) {

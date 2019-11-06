@@ -27,14 +27,14 @@ export default Controller.extend({
   pending_save: function() {
     return !!this.get('video_pending');
   }.property('video_pending'),
-  load_user_badges: function() {
+  load_user_badges: observer('user.id', 'model.id', 'model.badges', function() {
     var _this = this;
     this.store.query('badge', {user_id: this.get('user.id'), goal_id: this.get('model.id')}).then(function(badges) {
       _this.set('user_badges', badges.map(function(i) { return i; }));
     }, function(err) {
     });
 
-  }.observes('user.id', 'model.id', 'model.badges'),
+  }),
   mapped_badges: function() {
     var user_badges = this.get('user_badges');
     if(user_badges) {

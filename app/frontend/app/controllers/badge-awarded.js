@@ -52,7 +52,7 @@ export default modal.ModalController.extend({
       return this.get('model.badge.user_name');
     }
   }.property('model.badge.user_name'),
-  load_user_badges: function() {
+  load_user_badges: observer('user_goals_and_badges', function() {
     var _this = this;
     if(_this.get('user_goals_and_badges')) {
       var user_id = _this.get('model.badge.user_id') || _this.get('model.user_id');
@@ -73,7 +73,7 @@ export default modal.ModalController.extend({
         });
       }
     }
-  }.observes('user_goals_and_badges'),
+  }),
   actions: {
     user_badges: function() {
       this.set('user_goals_and_badges', true);

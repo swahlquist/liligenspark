@@ -78,32 +78,38 @@ export default modal.ModalController.extend({
       return i18n.t('events', "events");
     }
   }.property('goal.simple_type'),
-  set_defaults_by_simple_type: function(obj, change) {
-    if(change == 'goal.summary' && !this.get('ignore_summary_change')) {
-      this.set('custom_summary', true);
-    }
-    if(change == 'goal.simple_type') { this.set('custom_summary', false); }
-    if(this.set('custom_summary')) { return; }
-    this.set('ignore_summary_change', true);
-    if(this.get('goal.simple_type') == 'buttons') {
-      var instance_count = this.get('goal.instance_count');
-      var extra = instance_count ? (" " + instance_count + " buttons per day!") : "";
-      this.set('goal.summary', "Keep Talking!" + extra);
-    } else if(this.get('goal.simple_type') == 'words') {
-      var words = this.get('goal.strings_list') || '[words]';
-      this.set('goal.summary', "Look for times to say: " + words);
-    } else if(this.get('goal.simple_type') == 'modeling') {
-      var words = this.get('goal.strings_list');
-      if(words) {
-        this.set('goal.summary', "Try to model: " + words);
-      } else {
+  set_defaults_by_simple_type: observer(
+    'goal.simple_type',
+    'goal.strings_list',
+    'goal.summary',
+    'goal.instance_count',
+    function(obj, change) {
+      if(change == 'goal.summary' && !this.get('ignore_summary_change')) {
+        this.set('custom_summary', true);
+      }
+      if(change == 'goal.simple_type') { this.set('custom_summary', false); }
+      if(this.set('custom_summary')) { return; }
+      this.set('ignore_summary_change', true);
+      if(this.get('goal.simple_type') == 'buttons') {
         var instance_count = this.get('goal.instance_count');
         var extra = instance_count ? (" " + instance_count + " buttons per day!") : "";
-        this.set('goal.summary', "More Modeling!" + extra);
+        this.set('goal.summary', "Keep Talking!" + extra);
+      } else if(this.get('goal.simple_type') == 'words') {
+        var words = this.get('goal.strings_list') || '[words]';
+        this.set('goal.summary', "Look for times to say: " + words);
+      } else if(this.get('goal.simple_type') == 'modeling') {
+        var words = this.get('goal.strings_list');
+        if(words) {
+          this.set('goal.summary', "Try to model: " + words);
+        } else {
+          var instance_count = this.get('goal.instance_count');
+          var extra = instance_count ? (" " + instance_count + " buttons per day!") : "";
+          this.set('goal.summary', "More Modeling!" + extra);
+        }
       }
+      this.set('ignore_summary_change', false);
     }
-    this.set('ignore_summary_change', false);
-  }.observes('goal.simple_type', 'goal.strings_list', 'goal.summary', 'goal.instance_count'),
+  ),
   save_disabled: function() {
     return this.get('pending_save') || (this.get('browse_goals') && !this.get('selected_goal')) || this.get('saving');
   }.property('pending_save', 'browse_goals', 'selected_goal', 'saving'),

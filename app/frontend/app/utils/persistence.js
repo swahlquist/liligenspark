@@ -1035,13 +1035,13 @@ var persistence = EmberObject.extend({
       });
     });
   },
-  enable_wakelock: function() {
+  enable_wakelock: observer('syncing', function() {
     if(this.get('syncing')) {
       capabilities.wakelock('sync', true);
     } else {
       capabilities.wakelock('sync', false);
     }
-  }.observes('syncing'),
+  }),
   syncing: function() {
     return this.get('sync_status') == 'syncing';
   }.property('sync_status'),
@@ -2288,7 +2288,7 @@ var persistence = EmberObject.extend({
       return RSVP.reject({offline: true, error: "not online"});
     }
   },
-  on_connect: function() {
+  on_connect: observer('online', function() {
     stashes.set('online', this.get('online'));
     if(this.get('online') && (!CoughDrop.testing || CoughDrop.sync_testing)) {
       var _this = this;
@@ -2303,8 +2303,8 @@ var persistence = EmberObject.extend({
         }
       }, 500);
     }
-  }.observes('online'),
-  check_for_needs_sync: function(ref) {
+  }),
+  check_for_needs_sync: observer('refresh_stamp', 'last_sync_at', function(ref) {
     var force = (ref === true);
     var _this = this;
 
@@ -2366,8 +2366,8 @@ var persistence = EmberObject.extend({
       }
     }
     return false;
-  }.observes('refresh_stamp', 'last_sync_at'),
-  check_for_sync_reminder: function() {
+  }),
+  check_for_sync_reminder: observer('refresh_stamp', 'last_sync_at', function() {
     var _this = this;
     if(stashes.get('auth_settings') && window.coughDropExtras && window.coughDropExtras.ready) {
       var synced = _this.get('last_sync_at') || 0;
@@ -2381,12 +2381,12 @@ var persistence = EmberObject.extend({
     } else {
       persistence.set('sync_reminder', false);
     }
-  }.observes('refresh_stamp', 'last_sync_at'),
-  check_for_new_version: function() {
+  }),
+  check_for_new_version: observer('refresh_stamp', function() {
     if(window.CoughDrop.update_version) {
       persistence.set('app_needs_update', true);
     }
-  }.observes('refresh_stamp')
+  })
 }).create({online: (navigator.onLine)});
 stashes.set('online', navigator.onLine);
 

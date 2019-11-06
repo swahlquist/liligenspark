@@ -9,7 +9,7 @@ export default Component.extend({
   change: function() {
     this.set('changed_value', this.get('element').value);
   },
-  valueChange: function() {
+  valueChange: observer('changed_value', function() {
     var id = $(this.get('element')).closest('.button').attr('data-id');
     var button = editManager.find_button(id);
     if(button && this.get('changed_value') != button.label) {
@@ -17,7 +17,7 @@ export default Component.extend({
         label: this.get('changed_value')
       });
     }
-  }.observes('changed_value'),
+  }),
   focusIn: function(event) {
     var id = $(this.get('element')).closest('.button').attr('data-id');
     editManager.clear_text_edit();

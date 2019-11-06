@@ -40,7 +40,7 @@ export default modal.ModalController.extend({
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
   }.property(),
-  user_board: function() {
+  user_board: observer('currently_selected_id', 'model.known_supervisees', function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');
     if(this.get('model.known_supervisees')) {
@@ -111,7 +111,7 @@ export default modal.ModalController.extend({
       this.set('in_sidebar_set', false);
       this.set('home_board', false);
     }
-  }.observes('currently_selected_id', 'model.known_supervisees'),
+  }),
   actions: {
     tweakBoard: function(decision) {
       if(this.get('model.known_supervisees').length > 0) {

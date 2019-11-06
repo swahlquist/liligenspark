@@ -12,24 +12,29 @@ export default modal.ModalController.extend({
     this.set('vocalization_locale', vocalizations);
     if(labels == vocalizations) { this.set('same_locale', true); }
   },
-  update_matching_other: function(stuff, change) {
-    if(change == 'vocalization_locale' && this.get('same_locale')) {
-      this.set('label_locale', this.get('vocalization_locale'));
+  update_matching_other: observer(
+    'label_locale',
+    'vocalization_locale',
+    'locales',
+    function(stuff, change) {
+      if(change == 'vocalization_locale' && this.get('same_locale')) {
+        this.set('label_locale', this.get('vocalization_locale'));
+      }
+      var _this = this;
+      this.get('locales').forEach(function(l) {
+        if(emberGet(l, 'id') == _this.get('vocalization_locale')) {
+          emberSet(l, 'vocalization_locale', true);
+        } else if(emberGet(l, 'vocalization_locale')) {
+          emberSet(l, 'vocalization_locale', false);
+        }
+        if(emberGet(l, 'id') == _this.get('label_locale')) {
+          emberSet(l, 'label_locale', true);
+        } else if(emberGet(l, 'label_locale')) {
+          emberSet(l, 'label_locale', false);
+        }
+      });
     }
-    var _this = this;
-    this.get('locales').forEach(function(l) {
-      if(emberGet(l, 'id') == _this.get('vocalization_locale')) {
-        emberSet(l, 'vocalization_locale', true);
-      } else if(emberGet(l, 'vocalization_locale')) {
-        emberSet(l, 'vocalization_locale', false);
-      }
-      if(emberGet(l, 'id') == _this.get('label_locale')) {
-        emberSet(l, 'label_locale', true);
-      } else if(emberGet(l, 'label_locale')) {
-        emberSet(l, 'label_locale', false);
-      }
-    });
-  }.observes('label_locale', 'vocalization_locale', 'locales'),
+  ),
   two_languages: function() {
     return this.get('locales.length') == 2;
   }.property('locales'),

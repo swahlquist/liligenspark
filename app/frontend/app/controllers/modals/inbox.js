@@ -24,7 +24,7 @@ export default modal.ModalController.extend({
     }
     this.update_list();
   },
-  update_list: function() {
+  update_list: observer('app_state.referenced_user', function() {
     var _this = this;
     if(!_this.get('status.ready')) {
       _this.set('status', {loading: true});
@@ -36,7 +36,7 @@ export default modal.ModalController.extend({
     }, function(err) {
       _this.set('status', {error: true});
     });
-  }.observes('app_state.referenced_user'),
+  }),
   update_inbox: function(updates) {
     var _this = this;
     stashes.push_log();

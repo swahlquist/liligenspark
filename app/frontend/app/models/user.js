@@ -133,38 +133,44 @@ CoughDrop.User = DS.Model.extend({
     });
     return notifs;
   }.property('notifications'),
-  update_voice_uri: function() {
-    if(this.get('preferences.device.voice')) {
-      var voice = null;
-      var voices = speecher.get('voices');
-      var voiceURIs = this.get('preferences.device.voice.voice_uris') || [];
-      if(this.get('preferences.device.voice.voice_uri')) { voiceURIs.unshift(this.get('preferences.device.voice.voice_uri')); }
-      var finder = function(v) { return v.voiceURI == voiceURI; };
-      for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
-        var voiceURI = voiceURIs[idx];
-        voice = voices.find(finder);
-        if(voiceURI == 'force_default') {
-          voice = {voiceURI: 'force_default'};
+  update_voice_uri: observer(
+    'preferences.device.voice.voice_uri',
+    'preferences.device.voice.voice_uris',
+    'preferences.device.alternate_voice.voice_uri',
+    'preferences.device.alternate_voice.voice_uris',
+    function() {
+      if(this.get('preferences.device.voice')) {
+        var voice = null;
+        var voices = speecher.get('voices');
+        var voiceURIs = this.get('preferences.device.voice.voice_uris') || [];
+        if(this.get('preferences.device.voice.voice_uri')) { voiceURIs.unshift(this.get('preferences.device.voice.voice_uri')); }
+        var finder = function(v) { return v.voiceURI == voiceURI; };
+        for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
+          var voiceURI = voiceURIs[idx];
+          voice = voices.find(finder);
+          if(voiceURI == 'force_default') {
+            voice = {voiceURI: 'force_default'};
+          }
         }
+        this.set('preferences.device.voice.voice_uri', voice && voice.voiceURI);
       }
-      this.set('preferences.device.voice.voice_uri', voice && voice.voiceURI);
-    }
-    if(this.get('preferences.device.alternate_voice')) {
-      var voice = null;
-      var voices = speecher.get('voices');
-      var voiceURIs = this.get('preferences.device.alternate_voice.voice_uris') || [];
-      if(this.get('preferences.device.alternate_voice.voice_uri')) { voiceURIs.unshift(this.get('preferences.device.alternate_voice.voice_uri')); }
-      var finder = function(v) { return v.voiceURI == voiceURI; };
-      for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
-        var voiceURI = voiceURIs[idx];
-        voice = voices.find(finder);
-        if(voiceURI == 'force_default') {
-          voice = {voiceURI: 'force_default'};
+      if(this.get('preferences.device.alternate_voice')) {
+        var voice = null;
+        var voices = speecher.get('voices');
+        var voiceURIs = this.get('preferences.device.alternate_voice.voice_uris') || [];
+        if(this.get('preferences.device.alternate_voice.voice_uri')) { voiceURIs.unshift(this.get('preferences.device.alternate_voice.voice_uri')); }
+        var finder = function(v) { return v.voiceURI == voiceURI; };
+        for(var idx = 0; idx < voiceURIs.length && !voice; idx++) {
+          var voiceURI = voiceURIs[idx];
+          voice = voices.find(finder);
+          if(voiceURI == 'force_default') {
+            voice = {voiceURI: 'force_default'};
+          }
         }
+        this.set('preferences.device.alternate_voice.voice_uri', voice && voice.voiceURI);
       }
-      this.set('preferences.device.alternate_voice.voice_uri', voice && voice.voiceURI);
     }
-  }.observes('preferences.device.voice.voice_uri', 'preferences.device.voice.voice_uris', 'preferences.device.alternate_voice.voice_uri', 'preferences.device.alternate_voice.voice_uris'),
+  ),
   stats: DS.attr('raw'),
   avatar_url_with_fallback: function() {
     var url = this.get('avatar_data_uri') || this.get('avatar_url');
@@ -344,16 +350,16 @@ CoughDrop.User = DS.Model.extend({
     }
     return RSVP.reject('no user data url');
   },
-  checkForDataURLOnChange: function() {
+  checkForDataURLOnChange: observer('avatar_url', function() {
     this.checkForDataURL().then(null, function() { });
-  }.observes('avatar_url'),
-  validate_pin: function() {
+  }),
+  validate_pin: observer('preferences.speak_mode_pin', function() {
     var pin = this.get('preferences.speak_mode_pin');
     var new_pin = (pin || "").replace(/[^\d]/g, '').substring(0, 4);
     if(pin && pin != new_pin) {
       this.set('preferences.speak_mode_pin', new_pin);
     }
-  }.observes('preferences.speak_mode_pin'),
+  }),
   needs_speak_mode_intro: function() {
     var joined = window.moment(this.get('joined'));
     var cutoff = window.moment('2018-02-20');
@@ -379,7 +385,7 @@ CoughDrop.User = DS.Model.extend({
       }
     }
   }.property('preferences.device.auto_sync', 'preferences.device.ever_synced'),
-  load_more_supervision: function() {
+  load_more_supervision: observer('load_all_connections', 'sync_stamp', function() {
     var _this = this;
     var localize_connections = function(sups) {
       (sups || []).forEach(function(sup) {
@@ -442,16 +448,21 @@ CoughDrop.User = DS.Model.extend({
       }
       _this.set('all_connections_loaded', true);
     }
-  }.observes('load_all_connections', 'sync_stamp'),
+  }),
   known_supervisees: function() {
     return this.get('all_supervisees') || this.get('supervisees') || [];
   }.property('all_supervisees', 'supervisees'),
-  check_all_connections: function() {
-    if(this.get('all_connections.supervisors') && this.get('all_connections.supervisees')) {
-      this.set('all_connections.loading', null);
-      this.set('all_connections.loaded', true);
+  check_all_connections: observer(
+    'all_connections',
+    'all_connections.supervisors',
+    'all_connections.supervisees',
+    function() {
+      if(this.get('all_connections.supervisors') && this.get('all_connections.supervisees')) {
+        this.set('all_connections.loading', null);
+        this.set('all_connections.loaded', true);
+      }
     }
-  }.observes('all_connections', 'all_connections.supervisors', 'all_connections.supervisees'),
+  ),
   load_active_goals: function() {
     var _this = this;
     this.store.query('goal', {active: true, user_id: this.get('id')}).then(function(list) {
@@ -701,7 +712,7 @@ CoughDrop.User = DS.Model.extend({
 
     return defer.promise;
   },
-  check_user_name: function() {
+  check_user_name: observer('watch_user_name_and_cookies', 'user_name', function() {
     if(this.get('watch_user_name_and_cookies')) {
       var user_name = this.get('user_name');
       var user_id = this.get('id');
@@ -721,12 +732,12 @@ CoughDrop.User = DS.Model.extend({
         });
       }
     }
-  }.observes('watch_user_name_and_cookies', 'user_name'),
-  toggle_cookies: function() {
+  }),
+  toggle_cookies: observer('watch_user_name_and_cookies', 'preferences.cookies', function() {
     if(this.get('watch_user_name_and_cookies') && this.get('preferences.cookies') != undefined) {
       app_state.toggle_cookies(!!this.get('preferences.cookies'));
     }
-  }.observes('watch_user_name_and_cookies', 'preferences.cookies'),
+  }),
   load_word_activities: function() {
     // if already loaded for the user, keep the local copy unless it's really old
     var _this = this;

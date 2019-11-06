@@ -20,7 +20,7 @@ export default Component.extend({
   willClearRender: function() {
     this.set('already_opened', false);
   },
-  stretch: function() {
+  stretch: observer('stretch_ratio', 'desired_width', function() {
     if(this.get('stretch_ratio')) {
       var height = $(window).height() - 50;
       var width = $(window).width();
@@ -44,7 +44,7 @@ export default Component.extend({
     } else {
       $(this.get('element')).find(".modal-dialog").css('width', '');
     }
-  }.observes('stretch_ratio', 'desired_width'),
+  }),
   willDestroy: function() {
     if(!this.get('already_closed')) {
       this.set('already_closed', true);

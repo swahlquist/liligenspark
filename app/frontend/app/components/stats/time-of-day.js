@@ -23,17 +23,22 @@ export default Component.extend({
       return htmlSafe('');
     }
   }.property('right_side'),
-  draw: function() {
-    var $elem = $(this.get('element'));
-    if(this.get('ref_stats') && this.get('usage_stats')) {
-      this.set('usage_stats.ref_max_time_block', this.get('ref_stats.max_time_block'));
-      this.set('usage_stats.ref_max_combined_time_block', this.get('ref_stats.max_combined_time_block'));
-      this.set('usage_stats.ref_max_modeled_time_block', this.get('ref_stats.max_modeled_time_block'));
-      this.set('usage_stats.ref_max_combined_modeled_time_block', this.get('ref_stats.max_combined_modeled_time_block'));
+  draw: observer(
+    'usage_stats.draw_id',
+    'ref_stats.draw_id',
+    'usage_stats.modeling',
+    function() {
+      var $elem = $(this.get('element'));
+      if(this.get('ref_stats') && this.get('usage_stats')) {
+        this.set('usage_stats.ref_max_time_block', this.get('ref_stats.max_time_block'));
+        this.set('usage_stats.ref_max_combined_time_block', this.get('ref_stats.max_combined_time_block'));
+        this.set('usage_stats.ref_max_modeled_time_block', this.get('ref_stats.max_modeled_time_block'));
+        this.set('usage_stats.ref_max_combined_modeled_time_block', this.get('ref_stats.max_combined_modeled_time_block'));
+      }
+      runLater(function() {
+        $elem.find(".time_block").tooltip({container: 'body'});
+      }, 1000);
     }
-    runLater(function() {
-      $elem.find(".time_block").tooltip({container: 'body'});
-    }, 1000);
-  }.observes('usage_stats.draw_id', 'ref_stats.draw_id', 'usage_stats.modeling')
+  )
 });
 

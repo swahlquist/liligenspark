@@ -21,7 +21,7 @@ export default Component.extend({
       return htmlSafe('');
     }
   }.property('right_side'),
-  draw: function() {
+  draw: observer('usage_stats.draw_id', function() {
     var stats = this.get('usage_stats');
     var elem = this.get('element').getElementsByClassName('parts_of_speech_combinations')[0];
 
@@ -72,5 +72,5 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('usage_stats.draw_id')
+  })
 });

@@ -58,9 +58,9 @@ export default modal.ModalController.extend({
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
   }.property(),
-  ahem: function() {
+  ahem: observer('model.for_user_id', function() {
     console.log(this.get('model.for_user_id'));
-  }.observes('model.for_user_id'),
+  }),
   license_options: CoughDrop.licenseOptions,
   public_options: CoughDrop.publicOptions,
   attributable_license_type: function() {
@@ -89,11 +89,11 @@ export default modal.ModalController.extend({
     {name: i18n.t('columns_first', "Populate buttons in columns, left to right"), id: "columns"},
     {name: i18n.t('rows_first', "Populate buttons in rows, top to bottom"), id: "rows"}
   ],
-  remember_labels_order: function() {
+  remember_labels_order: observer('model.grid.labels_order', function() {
     if(this.get('model.grid.labels_order')) {
       stashes.persist('new_board_labels_order', this.get('model.grid.labels_order'));
     }
-  }.observes('model.grid.labels_order'),
+  }),
   speech_enabled: function() {
     return !!this.get('speech');
   }.property('speech'),
@@ -304,11 +304,11 @@ export default modal.ModalController.extend({
       this.set('model.image_url', url);
     }
   },
-  updatePreview: function() {
+  updatePreview: observer('model.grid.rows', 'model.grid.columns', function() {
     this.set('previewRows', this.get('model.grid.rows'));
     this.set('previewColumns', this.get('model.grid.columns'));
-  }.observes('model.grid.rows', 'model.grid.columns'),
-  updateShow: function() {
+  }),
+  updateShow: observer('previewRows', 'previewColumns', function() {
     var grid = [];
     var maxRows = 6, maxColumns = 12;
     var previewEnabled = this.get('previewRows') <= maxRows && this.get('previewColumns') <= maxColumns;
@@ -326,5 +326,5 @@ export default modal.ModalController.extend({
       grid.push(row);
     }
     this.set('showGrid', grid);
-  }.observes('previewRows', 'previewColumns')
+  })
 });

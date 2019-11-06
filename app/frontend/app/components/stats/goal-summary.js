@@ -6,7 +6,7 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  draw: function() {
+  draw: observer('goal.draw_id', function() {
     var goal = this.get('goal');
     var elem = this.get('element').getElementsByClassName('stats')[0];
 
@@ -104,5 +104,5 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('goal.draw_id')
+  })
 });

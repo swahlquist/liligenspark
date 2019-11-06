@@ -28,47 +28,55 @@ export default modal.ModalController.extend({
   },
   closing: function() {
   },
-  update_selected: function() {
-    var buttons = this.get('buttons') || [];
-    var idx = this.get('button_index');
-    if(idx == null) { idx = buttons.length - 1; }
-    if(idx > buttons.length - 1) { idx = buttons.length - 1; }
-    if(idx < -1) { idx = -1;}
-    var selection_start = this.get('selection_start');
-    var selection_end = this.get('selection_end') || selection_start;
-    var moving = this.get('moving');
-    buttons.forEach(function(b, jdx) {
-      var classes = ['cursor_box'];
-      if(idx == jdx) {
-        classes.push('cursor');
-      }
-      if(selection_start != null && jdx >= selection_start && jdx <= selection_end) {
-        classes.push('selected');
-        if(moving) {
-          classes.push('moving');
+  update_selected: observer(
+    'buttons',
+    'button_index',
+    'selection_start',
+    'selection_end',
+    'ghost_index',
+    'moving',
+    function() {
+      var buttons = this.get('buttons') || [];
+      var idx = this.get('button_index');
+      if(idx == null) { idx = buttons.length - 1; }
+      if(idx > buttons.length - 1) { idx = buttons.length - 1; }
+      if(idx < -1) { idx = -1;}
+      var selection_start = this.get('selection_start');
+      var selection_end = this.get('selection_end') || selection_start;
+      var moving = this.get('moving');
+      buttons.forEach(function(b, jdx) {
+        var classes = ['cursor_box'];
+        if(idx == jdx) {
+          classes.push('cursor');
         }
-        if(jdx > selection_start) {
-          classes.push('internal_left');
-        }
-        if(jdx < selection_end) {
-          classes.push('internal_right');
-        }
-        if(selection_start == idx && selection_start != selection_end) {
+        if(selection_start != null && jdx >= selection_start && jdx <= selection_end) {
+          classes.push('selected');
+          if(moving) {
+            classes.push('moving');
+          }
+          if(jdx > selection_start) {
+            classes.push('internal_left');
+          }
+          if(jdx < selection_end) {
+            classes.push('internal_right');
+          }
+          if(selection_start == idx && selection_start != selection_end) {
+            classes.push('prior');
+          }
+        } else if(idx == jdx) {
+          classes.push('over');
+        } else if(idx == -1 && jdx == 0) {
+          classes.push('cursor');
           classes.push('prior');
         }
-      } else if(idx == jdx) {
-        classes.push('over');
-      } else if(idx == -1 && jdx == 0) {
-        classes.push('cursor');
-        classes.push('prior');
-      }
-      emberSet(b, 'cursor_class', htmlSafe(classes.join(' ')));
-    });
-    var _this = this;
-    runLater(function() {
-      _this.snap_scroll();
-    });
-  }.observes('buttons', 'button_index', 'selection_start', 'selection_end', 'ghost_index', 'moving'),
+        emberSet(b, 'cursor_class', htmlSafe(classes.join(' ')));
+      });
+      var _this = this;
+      runLater(function() {
+        _this.snap_scroll();
+      });
+    }
+  ),
   has_selection: function() {
     return this.get('selection_start') != null;
   }.property('selection_start'),

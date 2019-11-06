@@ -6,7 +6,7 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  draw: function() {
+  draw: observer('total', 'recent', function() {
     var total = this.get('total'); // all users
     var tracked = this.get('tracked'); // having goal set that has been tracked recently
     var untracked = this.get('set') - tracked; // having goal set but not tracked recently
@@ -39,6 +39,6 @@ export default Component.extend({
         chart.draw(data, options);
       }
     });
-  }.observes('total', 'recent')
+  })
 });
 

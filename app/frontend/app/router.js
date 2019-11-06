@@ -1,3 +1,4 @@
+import { on } from '@ember/object/evented';
 import Ember from 'ember';
 import EmberRouter from '@ember/routing/router';
 import config from './config/environment';
@@ -27,14 +28,14 @@ const Router = EmberRouter.extend({
 });
 
 Router.reopen({
-  notifyGoogleAnalytics: function() {
+  notifyGoogleAnalytics: on('didTransition', function() {
     if(window.ga) {
       return window.ga('send', 'pageview', {
         'page': this.get('url'),
         'title': this.get('url')
       });
     }
-  }.on('didTransition')
+  })
 });
 
 Router.map(function() {

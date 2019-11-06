@@ -22,7 +22,7 @@ export default modal.ModalController.extend({
   board_levels: function() {
     return CoughDrop.board_levels;
   }.property(),
-  user_board: function() {
+  user_board: observer('currently_selected_id', 'model.known_supervisees', function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');
     if(this.get('model.known_supervisees')) {
@@ -34,7 +34,7 @@ export default modal.ModalController.extend({
         }
       });
     }
-  }.observes('currently_selected_id', 'model.known_supervisees'),
+  }),
   actions: {
     add: function() {
       var board = this.get('model.board');
