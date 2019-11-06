@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import CoughDrop from '../app';
 import RSVP from 'rsvp';
 import modal from '../utils/modal';

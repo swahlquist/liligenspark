@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import buttonTracker from '../utils/raw_events';
 

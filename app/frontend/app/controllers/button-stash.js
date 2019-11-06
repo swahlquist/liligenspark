@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import CoughDrop from '../app';
 import editManager from '../utils/edit_manager';
 import modal from '../utils/modal';

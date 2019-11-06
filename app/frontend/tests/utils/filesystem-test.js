@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { db_wait } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import capabilities from '../../utils/capabilities';
 import persistence from '../../utils/persistence';
 import stashes from '../../utils/_stashes';
 import coughDropExtras from '../../utils/extras';
-import Ember from 'ember';
 import CoughDrop from '../../app';
 import { run as emberRun } from '@ember/runloop';
 

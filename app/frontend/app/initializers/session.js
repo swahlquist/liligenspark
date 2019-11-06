@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import coughDropExtras from '../utils/extras';

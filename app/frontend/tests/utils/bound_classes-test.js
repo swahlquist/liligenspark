@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import boundClasses from '../../utils/bound_classes';
 import Button from '../../utils/button';
 

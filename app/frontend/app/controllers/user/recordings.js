@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import i18n from '../../utils/i18n';
 import capabilities from '../../utils/capabilities';

@@ -3,7 +3,7 @@ import modal from '../../utils/modal';
 import app_state from '../../utils/app_state';
 import stashes from '../../utils/_stashes';
 import i18n from '../../utils/i18n';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 
 export default modal.ModalController.extend({

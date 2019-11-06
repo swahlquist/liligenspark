@@ -1,7 +1,6 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater, scheduleOnce } from '@ember/runloop';
 import $ from 'jquery';
 import i18n from '../../utils/i18n';

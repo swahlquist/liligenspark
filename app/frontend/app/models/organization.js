@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import DS from 'ember-data';
 import $ from 'jquery';

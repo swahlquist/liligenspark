@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import CoughDrop from '../app';
 
 import { helper } from '@ember/component/helper';

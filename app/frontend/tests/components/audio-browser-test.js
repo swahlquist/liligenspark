@@ -1,9 +1,21 @@
 import DS from 'ember-data';
 import RSVP from 'rsvp';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import { test, moduleForModel, moduleForComponent } from 'ember-qunit';
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  test,
+  moduleForModel,
+  moduleForComponent
+} from 'ember-qunit';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import CoughDrop from '../../app';
 import persistence from '../../utils/persistence';

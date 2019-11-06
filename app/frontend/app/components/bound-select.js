@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 import { reads } from '@ember/object/computed';

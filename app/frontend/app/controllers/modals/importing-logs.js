@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../../utils/modal';
 import { htmlSafe } from '@ember/string';
 

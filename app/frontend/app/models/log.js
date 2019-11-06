@@ -1,6 +1,5 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';

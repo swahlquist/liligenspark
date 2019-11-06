@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import RSVP from 'rsvp';
 import modal from '../utils/modal';
 import editManager from '../utils/edit_manager';

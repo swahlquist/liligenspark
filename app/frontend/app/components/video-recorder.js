@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import { later as runLater } from '@ember/runloop';
 import contentGrabbers from '../utils/content_grabbers';

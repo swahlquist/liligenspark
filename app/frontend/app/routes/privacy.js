@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Route from '@ember/routing/route';
 import { later as runLater } from '@ember/runloop';
 import app_state from '../utils/app_state';

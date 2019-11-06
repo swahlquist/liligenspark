@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { fakeRecorder, queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import contentGrabbers from '../../utils/content_grabbers';
@@ -6,7 +15,6 @@ import editManager from '../../utils/edit_manager';
 import app_state from '../../utils/app_state';
 import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 
 describe('soundGrabber', function() {

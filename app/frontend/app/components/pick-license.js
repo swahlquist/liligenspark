@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import app_state from '../utils/app_state';
 

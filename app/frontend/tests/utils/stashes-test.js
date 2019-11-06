@@ -1,13 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import stashes from '../../utils/_stashes';
 import capabilities from '../../utils/capabilities';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import CoughDrop from 'frontend/app';
 import { run as emberRun } from '@ember/runloop';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 var App;
 describe('stashes', function() {

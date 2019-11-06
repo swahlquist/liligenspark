@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';

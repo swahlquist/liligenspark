@@ -1,7 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import contentGrabbers from '../../utils/content_grabbers';
-import Ember from 'ember';
 import BoardHierarchy from '../../utils/board_hierarchy';
 import CoughDrop from '../../app';
 

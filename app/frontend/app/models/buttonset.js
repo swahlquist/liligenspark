@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import $ from 'jquery';
 import RSVP from 'rsvp';
 import DS from 'ember-data';
@@ -12,7 +12,7 @@ import app_state from '../utils/app_state';
 import stashes from '../utils/_stashes';
 import word_suggestions from '../utils/word_suggestions';
 import progress_tracker from '../utils/progress_tracker';
-import { later as runLater} from '@ember/runloop';
+import { later as runLater } from '@ember/runloop';
 import Utils from '../utils/misc';
 
 var button_set_cache = {};

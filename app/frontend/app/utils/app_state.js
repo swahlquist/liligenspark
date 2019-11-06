@@ -1,8 +1,16 @@
 import Ember from 'ember';
 import Route from '@ember/routing/route';
 import EmberObject from '@ember/object';
-import {set as emberSet, setProperties as setProperties, get as emberGet} from '@ember/object';
-import { later as runLater, cancel as runCancel, next as runNext } from '@ember/runloop';
+import {
+  set as emberSet,
+  setProperties as setProperties,
+  get as emberGet
+} from '@ember/object';
+import {
+  later as runLater,
+  cancel as runCancel,
+  next as runNext
+} from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import stashes from './_stashes';

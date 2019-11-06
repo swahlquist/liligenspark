@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import CoughDrop from '../../app';
 import i18n from '../../utils/i18n';

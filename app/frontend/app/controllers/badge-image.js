@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../utils/modal';
 import contentGrabbers from '../utils/content_grabbers';
 import app_state from '../utils/app_state';

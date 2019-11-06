@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import Controller from '@ember/controller';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';

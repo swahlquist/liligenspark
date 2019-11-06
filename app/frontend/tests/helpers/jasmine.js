@@ -3,10 +3,9 @@ import { test, moduleFor } from 'ember-qunit';
 import { async } from 'qunit';
 import QUnit from 'qunit';
 import testHelpers from 'ember-test-helpers';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import { run as emberRun } from '@ember/runloop';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 var names = [];
 var all_befores = [[]];

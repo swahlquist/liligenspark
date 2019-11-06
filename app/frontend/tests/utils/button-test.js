@@ -1,4 +1,12 @@
-import { describe, context, it, expect, stub, waitsFor, runs } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  context,
+  it,
+  expect,
+  stub,
+  waitsFor,
+  runs
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import Button from '../../utils/button';
@@ -6,7 +14,6 @@ import app_state from '../../utils/app_state';
 import persistence from '../../utils/persistence';
 import progress_tracker from '../../utils/progress_tracker';
 import CoughDrop from '../../app';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 
 context('Button', function() {

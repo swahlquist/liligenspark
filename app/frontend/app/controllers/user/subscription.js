@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import Subscription from '../../utils/subscription';
 import modal from '../../utils/modal';

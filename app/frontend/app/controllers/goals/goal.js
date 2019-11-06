@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import $ from 'jquery';
 import persistence from '../../utils/persistence';

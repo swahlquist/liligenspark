@@ -1,10 +1,18 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { db_wait } from 'frontend/tests/helpers/ember_helper';
 import capabilities from '../../utils/capabilities';
 import app_state from '../../utils/app_state';
 import scanner from '../../utils/scanner';
 import frame_listener from '../../utils/frame_listener';
-import Ember from 'ember';
 import CoughDrop from '../../app';
 
 describe("frame_listener", function() {

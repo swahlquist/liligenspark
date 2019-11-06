@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { easyPromise, db_wait, result_wrap } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import Utils from '../../utils/misc';
 import modal from '../../utils/modal';
 import persistence from '../../utils/persistence';
 import scanner from '../../utils/scanner';
-import Ember from 'ember';
 import CoughDrop from '../../app';
 
 describe("misc", function() {

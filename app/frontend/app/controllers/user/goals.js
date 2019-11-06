@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import RSVP from 'rsvp';
 import modal from '../../utils/modal';

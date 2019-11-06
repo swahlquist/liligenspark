@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import DS from 'ember-data';
 import CoughDrop from '../app';

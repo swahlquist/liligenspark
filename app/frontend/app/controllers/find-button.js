@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';

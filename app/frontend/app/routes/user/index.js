@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Route from '@ember/routing/route';
 import modal from '../../utils/modal';
 import coughDropExtras from '../../utils/extras';

@@ -6,7 +6,7 @@ import utterance from '../utils/utterance';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
 import { htmlSafe } from '@ember/string';
-import { set as emberSet} from '@ember/object';
+import { set as emberSet } from '@ember/object';
 import persistence from '../utils/persistence';
 
 export default modal.ModalController.extend({

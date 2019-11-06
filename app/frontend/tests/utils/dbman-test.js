@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { fake_dbman } from 'frontend/tests/helpers/ember_helper';
 import capabilities from '../../utils/capabilities';
 

@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Route from '@ember/routing/route';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';

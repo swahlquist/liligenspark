@@ -1,7 +1,6 @@
-import Ember from 'ember';
 import app_state from '../utils/app_state';
 import { htmlSafe } from '@ember/string';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 export default {
   name: 'color_keys',

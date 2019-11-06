@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import modal from '../utils/modal';
 import speecher from '../utils/speecher';

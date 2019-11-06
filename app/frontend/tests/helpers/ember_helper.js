@@ -2,7 +2,17 @@ import Ember from 'ember';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
 import CoughDrop from '../../app';
-import {context, describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub} from './jasmine';
+import {
+  context,
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from './jasmine';
 import app_state from '../../utils/app_state';
 import capabilities from '../../utils/capabilities';
 import persistence from '../../utils/persistence';
@@ -16,7 +26,7 @@ import { run as emberRun } from '@ember/runloop';
 import $ from 'jquery';
 import TestAdapter from '@ember/test/adapter';
 import { inspect } from '@ember/debug';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 window.user_preferences = {"device":{"voice":{"pitch":1,"volume":1},"button_spacing":"small","button_border":"small","button_text":"medium","vocalization_height":"small"},"any_user":{"activation_location":"end","auto_home_return":true,"vocalize_buttons":true,"confirm_external_links":true,"clear_on_vocalize":true,"sharing":true,"board_jump_delay":500},"authenticated_user":{"long_press_edit":true,"require_speak_mode_pin":false,"logging":false,"geo_logging":false,"role":"communicator","auto_open_speak_mode":true}};
 

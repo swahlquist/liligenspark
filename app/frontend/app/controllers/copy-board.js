@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import CoughDrop from '../app';
 import modal from '../utils/modal';

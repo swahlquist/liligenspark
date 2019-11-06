@@ -1,6 +1,9 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
-import { later as runLater, debounce as runDebounce } from '@ember/runloop';
+import {
+  later as runLater,
+  debounce as runDebounce
+} from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import CoughDrop from '../app';

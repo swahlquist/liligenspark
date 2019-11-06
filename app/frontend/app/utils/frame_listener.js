@@ -1,6 +1,8 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import { later as runLater, debounce as runDebounce} from '@ember/runloop';
+import {
+  later as runLater,
+  debounce as runDebounce
+} from '@ember/runloop';
 import $ from 'jquery';
 import app_state from './app_state';
 import scanner from './scanner';

@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
 import CoughDrop from '../app';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { assign as emberAssign } from '@ember/polyfills';
 

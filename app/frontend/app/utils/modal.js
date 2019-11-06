@@ -1,8 +1,10 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
-import { later as runLater, cancel as runCancel } from '@ember/runloop';
+import {
+  later as runLater,
+  cancel as runCancel
+} from '@ember/runloop';
 import $ from 'jquery';
 import scanner from './scanner';
 

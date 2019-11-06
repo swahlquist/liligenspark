@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../utils/modal';
 import speecher from '../utils/speecher';
 import app_state from '../utils/app_state';

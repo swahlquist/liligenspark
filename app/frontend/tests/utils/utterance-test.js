@@ -1,9 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import utterance from '../../utils/utterance';
 import stashes from '../../utils/_stashes';
 import app_state from '../../utils/app_state';
 import speecher from '../../utils/speecher';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 
 describe('utterance', function() {

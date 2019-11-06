@@ -1,6 +1,5 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';

@@ -1,9 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { fakeRecorder, queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import progress_tracker from '../../utils/progress_tracker';
 import persistence from '../../utils/persistence';
-import Ember from 'ember';
 
 describe('progress_tracker', function() {
   var old_success_wait = progress_tracker.success_wait;

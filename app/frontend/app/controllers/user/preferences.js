@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import { later as runLater } from '@ember/runloop';
 import i18n from '../../utils/i18n';
@@ -10,7 +9,7 @@ import modal from '../../utils/modal';
 import speecher from '../../utils/speecher';
 import persistence from '../../utils/persistence';
 import Button from '../../utils/button';
-import {set as emberSet} from '@ember/object';
+import { set as emberSet } from '@ember/object';
 import CoughDrop from '../../app';
 
 export default Controller.extend({

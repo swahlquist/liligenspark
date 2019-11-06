@@ -1,7 +1,6 @@
-import Ember from 'ember';
 import Component from '@ember/component';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 import $ from 'jquery';
 import buttonTracker from '../utils/raw_events';

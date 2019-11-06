@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Subscription from '../utils/subscription';
 import app_state from '../utils/app_state';
 import persistence from '../utils/persistence';

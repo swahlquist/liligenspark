@@ -1,5 +1,8 @@
 import Ember from 'ember';
-import { later as runLater, cancel as runCancel } from '@ember/runloop';
+import {
+  later as runLater,
+  cancel as runCancel
+} from '@ember/runloop';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import DS from 'ember-data';

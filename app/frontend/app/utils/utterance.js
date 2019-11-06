@@ -1,7 +1,9 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import { later as runLater, cancel as runCancel } from '@ember/runloop';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import {
+  later as runLater,
+  cancel as runCancel
+} from '@ember/runloop';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import i18n from './i18n';
 import stashes from './_stashes';
 import speecher from './speecher';

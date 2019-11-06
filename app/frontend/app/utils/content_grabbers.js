@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
 import { later as runLater, run } from '@ember/runloop';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import i18n from './i18n';

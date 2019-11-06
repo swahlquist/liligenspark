@@ -1,8 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { easyPromise, db_wait } from 'frontend/tests/helpers/ember_helper';
 import modal from '../../utils/modal';
 import scanner from '../../utils/scanner';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import { run as emberRun } from '@ember/runloop';
 

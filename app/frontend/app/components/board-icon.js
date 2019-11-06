@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { htmlSafe } from '@ember/string';
 import Component from '@ember/component';
 import CoughDrop from '../app';

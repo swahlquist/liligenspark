@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Route from '@ember/routing/route';
 import RSVP from 'rsvp';
 import editManager from '../../utils/edit_manager';
@@ -10,8 +9,8 @@ import CoughDrop from '../../app';
 import contentGrabbers from '../../utils/content_grabbers';
 import persistence from '../../utils/persistence';
 import speecher from '../../utils/speecher';
-import {set as emberSet, get as emberGet} from '@ember/object';
-import {later as runLater} from '@ember/runloop';
+import { set as emberSet, get as emberGet } from '@ember/object';
+import { later as runLater } from '@ember/runloop';
 
 export default Route.extend({
   model: function(params) {

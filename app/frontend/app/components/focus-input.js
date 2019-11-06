@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import capabilities from '../utils/capabilities';
 import TextField from '@ember/component/text-field';
 import $ from 'jquery';

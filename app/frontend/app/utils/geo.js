@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
 import stashes from './_stashes';

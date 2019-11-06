@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import $ from 'jquery';
 import boundClasses from '../../utils/bound_classes';
@@ -13,7 +12,7 @@ import i18n from '../../utils/i18n';
 import modal from '../../utils/modal';
 import Button from '../../utils/button';
 import frame_listener from '../../utils/frame_listener';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
 

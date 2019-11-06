@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import $ from 'jquery';
 import modal from '../utils/modal';

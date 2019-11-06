@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import EmberObject from '@ember/object';
 import { later as runLater } from '@ember/runloop';

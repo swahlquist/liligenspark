@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';

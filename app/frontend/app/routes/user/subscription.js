@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Route from '@ember/routing/route';
 import Subscription from '../../utils/subscription';
 import persistence from '../../utils/persistence';

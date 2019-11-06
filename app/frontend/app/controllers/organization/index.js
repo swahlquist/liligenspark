@@ -1,11 +1,10 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import { later as runLater } from '@ember/runloop';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
 import i18n from '../../utils/i18n';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 export default Controller.extend({
   refresh_lists: function() {

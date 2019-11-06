@@ -1,6 +1,5 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import $ from 'jquery';
 import modal from '../utils/modal';
 import CoughDrop from '../app';

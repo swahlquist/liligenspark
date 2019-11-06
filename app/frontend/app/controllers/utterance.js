@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import Controller from '@ember/controller';
 import speecher from '../utils/speecher';
 import utterance from '../utils/utterance';

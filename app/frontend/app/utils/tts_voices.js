@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import capabilities from './capabilities';
 import i18n from './i18n';

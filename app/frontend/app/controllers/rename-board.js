@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';

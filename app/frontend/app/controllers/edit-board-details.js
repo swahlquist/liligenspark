@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import CoughDrop from '../app';
 import $ from 'jquery';
 import app_state from '../utils/app_state';

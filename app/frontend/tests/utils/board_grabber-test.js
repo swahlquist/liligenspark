@@ -1,8 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import contentGrabbers from '../../utils/content_grabbers';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import modal from '../../utils/modal';
 import editManager from '../../utils/edit_manager';

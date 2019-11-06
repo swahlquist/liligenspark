@@ -1,10 +1,9 @@
-import Ember from 'ember';
 import modal from '../utils/modal';
 import CoughDrop from '../app';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import editManager from '../utils/edit_manager';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import RSVP from 'rsvp';
 
 export default modal.ModalController.extend({

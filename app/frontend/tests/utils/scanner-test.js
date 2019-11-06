@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { db_wait, fakeAudio } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import scanner from '../../utils/scanner';
@@ -8,7 +17,6 @@ import editManager from '../../utils/edit_manager';
 import frame_listener from '../../utils/frame_listener';
 import modal from '../../utils/modal';
 import buttonTracker from '../../utils/raw_events';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import { run as emberRun } from '@ember/runloop';
 

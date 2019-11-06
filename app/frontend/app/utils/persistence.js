@@ -1,7 +1,11 @@
 import Ember from 'ember';
 import EmberObject from '@ember/object';
-import {set as emberSet, get as emberGet} from '@ember/object';
-import { later as runLater, cancel as runCancel, run } from '@ember/runloop';
+import { set as emberSet, get as emberGet } from '@ember/object';
+import {
+  later as runLater,
+  cancel as runCancel,
+  run
+} from '@ember/runloop';
 import $ from 'jquery';
 import RSVP from 'rsvp';
 import CoughDrop from '../app';

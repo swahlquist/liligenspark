@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
 import DS from 'ember-data';
@@ -11,7 +10,7 @@ import editManager from '../utils/edit_manager';
 import progress_tracker from '../utils/progress_tracker';
 import capabilities from '../utils/capabilities';
 import Utils from '../utils/misc';
-import {set as emberSet, get as emberGet} from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';

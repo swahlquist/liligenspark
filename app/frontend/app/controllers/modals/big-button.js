@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import modal from '../../utils/modal';
 import utterance from '../../utils/utterance';
 import capabilities from '../../utils/capabilities';

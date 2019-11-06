@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';

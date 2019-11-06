@@ -1,5 +1,7 @@
-import Ember from 'ember';
-import { debounce as runDebounce, later as runLater } from '@ember/runloop';
+import {
+  debounce as runDebounce,
+  later as runLater
+} from '@ember/runloop';
 import $ from 'jquery';
 import modal from '../utils/modal';
 import scanner from '../utils/scanner';

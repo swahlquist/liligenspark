@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, waitsFor, runs, stub } from 'frontend/tests/helpers/jasmine';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  waitsFor,
+  runs,
+  stub
+} from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import RSVP from 'rsvp';
 import editManager from '../../utils/edit_manager';
@@ -10,7 +19,6 @@ import contentGrabbers from '../../utils/content_grabbers';
 import persistence from '../../utils/persistence';
 import progress_tracker from '../../utils/progress_tracker';
 import CoughDrop from '../../app';
-import Ember from 'ember';
 import EmberObject from '@ember/object';
 import $ from 'jquery';
 

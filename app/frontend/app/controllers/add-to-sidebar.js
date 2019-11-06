@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import { later as runLater } from '@ember/runloop';
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
