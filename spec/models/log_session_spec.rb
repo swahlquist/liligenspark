@@ -846,6 +846,10 @@ describe LogSession, :type => :model do
       expect(LogSession.count).to eq(3)
       expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
     end
+
+    it "should store evals to the correct user" do
+      write_this_test
+    end
   end
 
   describe "handle_alert" do
