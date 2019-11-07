@@ -22,6 +22,16 @@ export default modal.ModalController.extend({
     return this.get('model.action') == 'results';
   }),
   actions: {
+    abort: function(confirm) {
+      if(confirm) {
+        if(app_state.get('speak_mode')) {
+          app_state.toggle_speak_mode();
+        }
+        this.transitionToRoute('index');
+      } else {
+        this.set('aborting', true);
+      }
+    },
     confirm: function() {
       // update assessment settings
       modal.close();

@@ -24,6 +24,12 @@
           {{input type='text' value=settings.name class="form-control" placeholder=name_placeholder}}
         </div>
       </div>
+      <div class='form-group'>
+        <label class='control-label col-sm-3'>{{t "Search Target" key='search_target'}}</label>
+        <div class='col-sm-6'>
+          {{input type='text' value=settings.label class="form-control" placeholder="dropdown for target (single or list choices)"}}
+        </div>
+      </div>
       {{#unless save_option}}
         <div class='form-group'>
           <label class='control-label col-sm-3'>{{t "Default Symbols" key='default_symbols'}}</label>
@@ -47,13 +53,22 @@
     </form>
   </div>
   <div class='modal-footer'>
-    <button class='btn btn-primary btn-lg' {{action 'confirm'}}>
+    {{#if aborting}}
+      <p class='text-danger'>{{t "Are you sure you want to abort? All changed will be lost." key='confirm_abort'}}</p>
+      <button class='btn btn-default btn-lg' {{action 'abort' true}}>{{t "Abort" key='abort'}}</button>
+      <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+    {{else}}
+      <button class='btn btn-primary btn-lg' {{action 'confirm'}}>
+        {{#if save_option}}
+          {{t "Save" key='save'}}
+        {{else}}
+          {{t "Update" key='update'}}
+        {{/if}}
+      </button>
       {{#if save_option}}
-        {{t "Save" key='save'}}
-      {{else}}
-        {{t "Update" key='update'}}
+        <button class='btn btn-default btn-lg' {{action 'abort'}}>{{t "Abort" key='abort'}}</button>
       {{/if}}
-    </button>
-    <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+      <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+    {{/if}}
   </div>
 {{/modal-dialog}}

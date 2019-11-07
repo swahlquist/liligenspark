@@ -63,11 +63,12 @@ var evaluation = {
     assessment.name = settings.name;
     assessment.default_library = settings.default_library;
     assessment.notes = settings.notes;
+    assessment.label = settings.label;
     assessment.accommodations = settings.accommodations;
     if(settings.for_user && !assessment.saved) {
       assessment.user_id = settings.for_user.id;
       assessment.user_namee = settings.for_user.user_name;
-   }
+    }
     if(reload) {
       app_state.jump_to_board({key: 'obf/eval-' + (new Date()).getTime()});
     }
