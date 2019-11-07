@@ -20,7 +20,7 @@ export default Component.extend({
   core_words: computed(
     'core',
     'usage_stats',
-    'usage_stats.{weighted_words, usage_stats.draw_id}',
+    'usage_stats.{weighted_words,usage_stats.draw_id}',
     function() {
       var res = [];
       var words = this.get('core.for_user') || [];

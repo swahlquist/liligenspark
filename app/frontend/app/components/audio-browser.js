@@ -23,7 +23,7 @@ export default Component.extend({
       controller.set('browse_audio', {error: true});
     });
   },
-  more_audio_results: computed('browse_audio.{results, filtered_results}', function() {
+  more_audio_results: computed('browse_audio.{results,filtered_results}', function() {
     return !!(this.get('browse_audio.results') && this.get('browse_audio.results').length < this.get('browse_audio.filtered_results').length);
   }),
   filter_audio_string: observer('browse_audio.filter_string', function() {

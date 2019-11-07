@@ -26,7 +26,7 @@ var obf = EmberObject.extend({
     })
     board.set('text_only', hash['text_only']);
     board.set('hide_empty', true);
-    board.key = hash['key'] || "obf/whatever";
+    board.set('key', hash['key'] || "obf/whatever");
     var image_urls = {};
     var sound_urls = {};
     var buttons = [];

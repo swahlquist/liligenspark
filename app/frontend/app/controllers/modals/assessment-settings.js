@@ -2,12 +2,13 @@ import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
 import utterance from '../../utils/utterance';
 import RSVP from 'rsvp';
-import stashes from '../../utils/_stashes';
+import app_state from '../../utils/app_state';
 import evaluation from '../../utils/eval';
 import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
+    this.set('aborting', false);
     var settings = Object.assign({}, this.get('model.assessment'));
     if(settings.name == 'Unnamed Eval') {
       settings.name = "";

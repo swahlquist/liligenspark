@@ -40,8 +40,8 @@ export default Component.extend({
     return res;
   }),
   tall_filter: computed(
-    'usage_stats.{custom_filter, snapshot_id}',
-    'ref_stats.{custom_filter, snapshot_id}',
+    'usage_stats.{custom_filter,snapshot_id}',
+    'ref_stats.{custom_filter,snapshot_id}',
     function() {
       return this.get('usage_stats.custom_filter') || this.get('ref_stats.custom_filter') || this.get('usage_stats.snapshot_id') || this.get('ref_stats.snapshot_id');
     }
