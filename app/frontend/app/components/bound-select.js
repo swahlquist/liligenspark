@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 import { reads } from '@ember/object/computed';
 import $ from 'jquery';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',
@@ -14,13 +15,13 @@ export default Component.extend({
   init: function() {
     this._super(...arguments);
   },
-  select_style: function() {
+  select_style: computed('short', function() {
     if(this.get('short')) {
       return htmlSafe('height: 25px;');
     } else {
       return htmlSafe('');
     }
-  }.property('short'),
+  }),
 
   actions: {
     change() {

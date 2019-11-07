@@ -8,6 +8,7 @@ import { later as runLater } from '@ember/runloop';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet } from '@ember/object';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -30,47 +31,54 @@ export default modal.ModalController.extend({
     });
     this.check_native_shares();
   },
-  contacts: function() {
-    var res = [];
-    (app_state.get('referenced_user.contacts') || []).forEach(function(contact) {
-      res.push({
-        user_name: contact.name,
-        avatar_url: contact.image_url,
-        id: app_state.get('referenced_user.id') + 'x' + contact.hash
+  contacts: computed(
+    'app_state.referenced_user.supervisors',
+    'app_state.referenced_user.known_supervisees',
+    'app_state.referenced_user.supporter_role',
+    'app_state.referenced_user.contacts',
+    'app_state.reply_note',
+    function() {
+      var res = [];
+      (app_state.get('referenced_user.contacts') || []).forEach(function(contact) {
+        res.push({
+          user_name: contact.name,
+          avatar_url: contact.image_url,
+          id: app_state.get('referenced_user.id') + 'x' + contact.hash
+        });
       });
-    });
-    if(app_state.get('referenced_user.supporter_role')) {
-      res = res.concat(app_state.get('referenced_user.known_supervisees') || []);
-    } else {
-      res = res.concat(app_state.get('referenced_user.supervisors') || []);
-    }
-    if(app_state.get('reply_note.author')) {
-      res.unshift({
-        user_name: app_state.get('reply_note.author.name'),
-        id: app_state.get('reply_note.author.id'),
-        avatar_url: app_state.get('reply_note.author.image_url'),
-        reply: app_state.get('reply_note')
-      })
-    }
-    res.forEach(function(contact) {
-      if(contact.avatar_url && contact.avatar_url.match(/^http/)) {
-        persistence.find_url(contact.avatar_url, 'image').then(function(uri) {
-          emberSet(contact, 'avatar_url', uri);
-        }, function() { });
+      if(app_state.get('referenced_user.supporter_role')) {
+        res = res.concat(app_state.get('referenced_user.known_supervisees') || []);
+      } else {
+        res = res.concat(app_state.get('referenced_user.supervisors') || []);
       }
-    });
-    return res;
-  }.property('app_state.referenced_user.supervisors', 'app_state.referenced_user.known_supervisees', 'app_state.referenced_user.supporter_role', 'app_state.referenced_user.contacts', 'app_state.reply_note'),
-  sentence: function() {
+      if(app_state.get('reply_note.author')) {
+        res.unshift({
+          user_name: app_state.get('reply_note.author.name'),
+          id: app_state.get('reply_note.author.id'),
+          avatar_url: app_state.get('reply_note.author.image_url'),
+          reply: app_state.get('reply_note')
+        })
+      }
+      res.forEach(function(contact) {
+        if(contact.avatar_url && contact.avatar_url.match(/^http/)) {
+          persistence.find_url(contact.avatar_url, 'image').then(function(uri) {
+            emberSet(contact, 'avatar_url', uri);
+          }, function() { });
+        }
+      });
+      return res;
+    }
+  ),
+  sentence: computed('utterance', function() {
     if(this.get('utterance')) {
       return utterance.sentence(this.get('utterance'));
     } else {
       return "";
     }
-  }.property('utterance'),
-  escaped_sentence: function() {
+  }),
+  escaped_sentence: computed('sentence', function() {
     return encodeURIComponent(this.get('sentence'));
-  }.property('sentence'),
+  }),
   check_native_shares: function() {
     var _this = this;
     _this.set('native', {});
@@ -85,37 +93,46 @@ export default modal.ModalController.extend({
       });
     }
   },
-  shares: function() {
-    var res = {};
-    if(this.get('utterance_record.link')) {
-      res.facebook = true;
-      res.twitter = true;
-    }
-    var native = this.get('native');
-    for(var key in native) {
-      if(native[key] && this.get('utterance_record.link')) {
-        res[key] = true;
+  shares: computed(
+    'utterance_record.link',
+    'native',
+    'native.generic',
+    'native.facebook',
+    'native.twitter',
+    'native.instagram',
+    'native.clipboard',
+    function() {
+      var res = {};
+      if(this.get('utterance_record.link')) {
+        res.facebook = true;
+        res.twitter = true;
       }
+      var native = this.get('native');
+      for(var key in native) {
+        if(native[key] && this.get('utterance_record.link')) {
+          res[key] = true;
+        }
+      }
+      if(!this.get('utterance.best_image_url')) {
+        res.instagram = false;
+      }
+      if(document.queryCommandSupported && document.queryCommandSupported('copy')) {
+        res.clipboard = true;
+      }
+      return res;
     }
-    if(!this.get('utterance.best_image_url')) {
-      res.instagram = false;
-    }
-    if(document.queryCommandSupported && document.queryCommandSupported('copy')) {
-      res.clipboard = true;
-    }
-    return res;
-  }.property('utterance_record.link', 'native', 'native.generic', 'native.facebook', 'native.twitter', 'native.instagram', 'native.clipboard'),
-  facebook_url: function() {
+  ),
+  facebook_url: computed('utterance_record.link', function() {
     return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(this.get('utterance_record.link'));
-  }.property('utterance_record.link'),
-  twitter_url: function() {
+  }),
+  twitter_url: computed('utterance_record.link', 'sentence', function() {
     var res = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('utterance_record.link')) + '&text=' + encodeURIComponent(this.get('sentence'));
     if(app_state.get('domain_settings.twitter_handle')) {
       res = res + '&related=' + encodeURIComponent(app_state.get('domain_settings.twitter_handle'));
     } 
     return res;
-  }.property('utterance_record.link', 'sentence'),
-  clipboard_class: function() {
+  }),
+  clipboard_class: computed('copy_result', function() {
     if(this.get('copy_result.succeeded')) {
       return htmlSafe('btn btn-success');
     } else if(this.get('copy_result.failed')) {
@@ -123,7 +140,7 @@ export default modal.ModalController.extend({
     } else {
       return htmlSafe('btn btn-default');
     }
-  }.property('copy_result'),
+  }),
   actions: {
     copy_event(res) {
       if(res) {

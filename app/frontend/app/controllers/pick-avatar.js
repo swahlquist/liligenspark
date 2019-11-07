@@ -9,6 +9,7 @@ import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
 import editManager from '../utils/edit_manager';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -36,26 +37,31 @@ export default modal.ModalController.extend({
     contentGrabbers.avatar_result = null;
   },
   avatar_examples: CoughDrop.avatarUrls.concat(CoughDrop.iconUrls),
-  avatar_options: function() {
-    var res = [];
-    if(this.get('model.user.avatar_url')) {
-      res.push({selected: true, alt: i18n.t('current_avatar', 'current pic'), url: this.get('model.user.avatar_url')});
-    }
-    (this.get('model.user.prior_avatar_urls') || []).forEach(function(url, idx) {
-      res.push({alt: i18n.t('prior_idx', "prior pic %{idx}", {idx: idx}), url: url});
-    });
-    res = res.concat(this.get('avatar_examples'));
-    if(this.get('model.user.fallback_avatar_url')) {
-      res.push({alt: i18n.t('fallback', 'fallback'), url: this.get('model.user.fallback_avatar_url')});
-    }
-    res.forEach(function(option) {
-      var url = option.url.replace(/\(/, '\\(').replace(/\)/, '\\)'); //Ember.Handlebars.Utils.escapeExpression(option.url).replace(/\(/, '\\(').replace(/\)/, '\\)');
-      emberSet(option, 'div_style', htmlSafe("height: 0; width: 100%; padding-bottom: 100%; overflow: hidden; background-position: center; background-repeat: no-repeat; background-size: contain; background-image: url(" + url + ");"));
-    });
+  avatar_options: computed(
+    'model.user.prior_avatar_urls',
+    'model.user.fallback_avatar_url',
+    'mode.user.avatar_url',
+    function() {
+      var res = [];
+      if(this.get('model.user.avatar_url')) {
+        res.push({selected: true, alt: i18n.t('current_avatar', 'current pic'), url: this.get('model.user.avatar_url')});
+      }
+      (this.get('model.user.prior_avatar_urls') || []).forEach(function(url, idx) {
+        res.push({alt: i18n.t('prior_idx', "prior pic %{idx}", {idx: idx}), url: url});
+      });
+      res = res.concat(this.get('avatar_examples'));
+      if(this.get('model.user.fallback_avatar_url')) {
+        res.push({alt: i18n.t('fallback', 'fallback'), url: this.get('model.user.fallback_avatar_url')});
+      }
+      res.forEach(function(option) {
+        var url = option.url.replace(/\(/, '\\(').replace(/\)/, '\\)'); //Ember.Handlebars.Utils.escapeExpression(option.url).replace(/\(/, '\\(').replace(/\)/, '\\)');
+        emberSet(option, 'div_style', htmlSafe("height: 0; width: 100%; padding-bottom: 100%; overflow: hidden; background-position: center; background-repeat: no-repeat; background-size: contain; background-image: url(" + url + ");"));
+      });
 
-    res = Utils.uniq(res, function(o) { return o.url; });
-    return res;
-  }.property('model.user.prior_avatar_urls', 'model.user.fallback_avatar_url', 'mode.user.avatar_url'),
+      res = Utils.uniq(res, function(o) { return o.url; });
+      return res;
+    }
+  ),
   update_selected: observer('model.user.avatar_url', function() {
     var url = this.get('model.user.avatar_url');
     if(url && this.get('avatar_options')) {

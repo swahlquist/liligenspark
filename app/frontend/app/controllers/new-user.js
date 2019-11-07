@@ -3,6 +3,7 @@ import RSVP from 'rsvp';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -19,13 +20,13 @@ export default modal.ModalController.extend({
     this.set('model.user', user);
     this.set('model.user.org_management_action', this.get('model.default_org_management_action'));
   },
-  user_types: function() {
+  user_types: computed('model.no_licenses', function() {
     var res = [];
     res.push({id: '', name: i18n.t('select_user_type', "[ Add This User As ]")});
     if(this.get('model.no_licenses')) {
       res.push({id: 'add_user', disabled: true, name: i18n.t('add_sponsored_used', "Add this User As a Sponsored Communicator")});
       if(this.get('model.user.org_management_action') == 'add_user') {
-        this.set('model.user.org_management_action', 'add_unsponsored_user');
+        this.set_unsponsored_action();
       }
     } else {
       res.push({id: 'add_user', name: i18n.t('add_sponsored_used', "Add this User As a Sponsored Communicator")});
@@ -36,10 +37,13 @@ export default modal.ModalController.extend({
     res.push({id: 'add_assistant', name: i18n.t('add_assistant', "Add this User As a Management Assistant")});
     res.push({id: 'add_eval', name: i18n.t('add_eval', "Add this User As a Paid Eval Account")});
     return res;
-  }.property('model.no_licenses'),
-  linking_or_exists: function() {
+  }),
+  set_unsponsored_action() {
+    this.set('model.user.org_management_action', 'add_unsponsored_user');
+  },
+  linking_or_exists: computed('linking', 'model.user.user_name_check.exists', function() {
     return this.get('linking') || this.get('model.user.user_name_check.exists');
-  }.property('linking', 'model.user.user_name_check.exists'),
+  }),
   actions: {
     add: function() {
       var controller = this;

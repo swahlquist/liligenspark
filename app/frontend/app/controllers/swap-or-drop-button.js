@@ -1,14 +1,15 @@
 import modal from '../utils/modal';
 import editManager from '../utils/edit_manager';
 import i18n from '../utils/i18n';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.set('status', null);
   },
-  pending: function() {
+  pending: computed('status.message', 'status.need_decision', function() {
     return !!(this.get('status.message') || this.get('status.need_decision'));
-  }.property('status.message', 'status.need_decision'),
+  }),
   actions: {
     swap_buttons: function() {
       var a = this.get('model.button.id');

@@ -6,6 +6,7 @@ import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import CoughDrop from '../app';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -20,9 +21,9 @@ export default modal.ModalController.extend({
       this.set('currently_selected_id', 'self');
     }
   },
-  board_levels: function() {
+  board_levels: computed(function() {
     return CoughDrop.board_levels;
-  }.property(),
+  }),
   user_board: observer('currently_selected_id', 'model.known_supervisees', function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');

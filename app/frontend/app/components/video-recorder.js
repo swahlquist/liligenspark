@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import { later as runLater } from '@ember/runloop';
 import contentGrabbers from '../utils/content_grabbers';
 import app_state from '../utils/app_state';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'div',
@@ -16,18 +17,18 @@ export default Component.extend({
   willDestroyElement: function() {
     contentGrabbers.videoGrabber.clear_video_work();
   },
-  time_recording: function() {
+  time_recording: computed('video_recording.started', 'app_state.short_refresh_stamp', function() {
     if(this.get('video_recording.started')) {
       var now = (new Date()).getTime();
       return Math.round((now - this.get('video_recording.started')) / 1000);
     } else {
       return null;
     }
-  }.property('video_recording.started', 'app_state.short_refresh_stamp'),
-  video_allowed: function() {
+  }),
+  video_allowed: computed('user', 'user.currently_premium', function() {
     // must have an active paid subscription to access video logs on your account
     return this.get('user.currently_premium');
-  }.property('user', 'user.currently_premium'),
+  }),
   actions: {
     setup_recording: function() {
       contentGrabbers.videoGrabber.record_video();

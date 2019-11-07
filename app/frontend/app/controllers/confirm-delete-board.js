@@ -1,5 +1,6 @@
 import modal from '../utils/modal';
 import RSVP from 'rsvp';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -8,9 +9,9 @@ export default modal.ModalController.extend({
     }
     this.set('delete_downstream', false);
   },
-  using_user_names: function() {
+  using_user_names: computed('model.board.using_user_names', function() {
     return (this.get('model.board.using_user_names') || []).join(', ');
-  }.property('model.board.using_user_names'),
+  }),
   actions: {
     deleteBoard: function(decision) {
       var _this = this;

@@ -8,6 +8,7 @@ import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -50,14 +51,14 @@ export default modal.ModalController.extend({
     }
     persistence.fetch_inbox(app_state.get('referenced_user'), {persist: fetched_inbox}).then(null, function(err) { debugger });
   },
-  current_class: function() {
+  current_class: computed('current.text', function() {
     var str = this.get('current.text') || '';
     if(str.length < 25) {
       return htmlSafe('big');
     } else if(str.length < 140) {
       return htmlSafe('medium');
     }
-  }.property('current.text'),
+  }),
   actions: {
     clear: function(which) {
       var alerts = [which];

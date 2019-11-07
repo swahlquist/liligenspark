@@ -5,6 +5,7 @@ import app_state from '../utils/app_state';
 import modal from '../utils/modal';
 import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',
@@ -26,38 +27,38 @@ export default Component.extend({
       if(list.indexOf('generic') != -1) { _this.set('native.generic', true); }
     });
   },
-  facebook_enabled: function() {
+  facebook_enabled: computed('url', 'native.generic', 'native.facebook', function() {
     return !!(this.get('url') && (!this.get('native.generic') || this.get('native.facebook')));
-  }.property('url', 'native.generic', 'native.facebook'),
-  twitter_enabled: function() {
+  }),
+  twitter_enabled: computed('url', 'native.generic', 'native.twitter', function() {
     return !!(this.get('url') && (!this.get('native.generic') || this.get('native.twitter')));
-  }.property('url', 'native.generic', 'native.twitter'),
-  email_enabled: function() {
+  }),
+  email_enabled: computed('text', function() {
     return !!this.get('text');
-  }.property('text'),
-  instagram_enabled: function() {
+  }),
+  instagram_enabled: computed('url', 'native.instagram', 'utterance.best_image_url', function() {
     return !!(this.get('url') && this.get('native.instagram') && this.get('utterance.best_image_url'));
-  }.property('url', 'native.instagram', 'utterance.best_image_url'),
-  clipboard_enabled: function() {
+  }),
+  clipboard_enabled: computed('native.clipboard', function() {
     if(document.queryCommandSupported && document.queryCommandSupported('copy')) {
       return true;
     } else {
       return !!this.get('native.clipboard');
     }
-  }.property('native.clipboard'),
-  generic_enabled: function() {
+  }),
+  generic_enabled: computed('url', 'native.generic', function() {
     return !!(this.get('url') && this.get('native.generic'));
-  }.property('url', 'native.generic'),
-  facebook_url: function() {
+  }),
+  facebook_url: computed('url', function() {
     return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(this.get('url'));
-  }.property('url'),
-  twitter_url: function() {
+  }),
+  twitter_url: computed('url', 'text', function() {
     var res = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(this.get('url')) + '&text=' + encodeURIComponent(this.get('text'));
     if(app_state.get('domain_settings.twitter_handle')) {
       res = res + '&related=' + encodeURIComponent(app_state.get('domain_settings.twitter_handle'));
     }
     return res;
-  }.property('url', 'text'),
+  }),
   actions: {
     message: function(supervisor) {
       modal.open('confirm-notify-user', {user: supervisor, utterance: this.get('utterance'), sentence: this.get('utterance.sentence')});

@@ -5,6 +5,7 @@ import stashes from '../utils/_stashes';
 import app_state from '../utils/app_state';
 import persistence from '../utils/persistence';
 import progress_tracker from '../utils/progress_tracker';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -28,7 +29,7 @@ export default modal.ModalController.extend({
       if(stashes.get('last_image_library') == 'lessonpix') { _this.set('image_library', 'lessonpix'); }
     }, function(err) { });
   },
-  libraries: function() {
+  libraries: computed('lessonpix_enabled', 'premium_symbols_enabled', function() {
     var res = [];
     res.push({id: 'opensymbols', name: i18n.t('opensymbols', 'OpenSymbols.org')});
     res.push({id: 'arasaac', name: i18n.t('arasaac', 'ArasAAC')});
@@ -46,7 +47,7 @@ export default modal.ModalController.extend({
       res.push({id: 'pcs', name: i18n.t('pcs', "PCS (BoardMaker) Symbols by Tobii Dynavox")});
     }
     return res;
-  }.property('lessonpix_enabled', 'premium_symbols_enabled'),
+  }),
   actions: {
     swap: function() {
       var _this = this;

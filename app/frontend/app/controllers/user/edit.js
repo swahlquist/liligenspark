@@ -39,13 +39,13 @@ export default Controller.extend({
       _this.set('webhooks', {error: true});
     });
   },
-  tools: function() {
+  tools: computed('model.integrations', function() {
     if(this.get('model.integrations') && this.get('model.integrations').length > 0) {
       return this.get('model.integrations').filter(function(i) { return i.get('icon_url'); });
     } else {
       return null;
     }
-  }.property('model.integrations'),
+  }),
   load_integrations: observer('model.id', function(reload) {
     var _this = this;
     this.get('model').check_integrations(reload);

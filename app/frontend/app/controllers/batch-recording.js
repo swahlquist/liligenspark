@@ -10,6 +10,7 @@ import persistence from '../utils/persistence';
 import word_suggestions from '../utils/word_suggestions';
 import CoughDrop from '../app';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -189,9 +190,9 @@ export default modal.ModalController.extend({
       this.set('repository.recorded', recorded);
     }
   },
-  needs_user: function() {
+  needs_user: computed('model.user', function() {
     return !this.get('model.user');
-  }.property('model.user'),
+  }),
   update_user: observer('for_user_id', function() {
     var for_user_id = this.get('for_user_id');
     var current_user_id = this.get('model.user.id');

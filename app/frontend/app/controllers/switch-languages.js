@@ -4,6 +4,7 @@ import stashes from '../utils/_stashes';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -36,10 +37,10 @@ export default modal.ModalController.extend({
       });
     }
   ),
-  two_languages: function() {
+  two_languages: computed('locales', function() {
     return this.get('locales.length') == 2;
-  }.property('locales'),
-  locales: function() {
+  }),
+  locales: computed('model.board', 'model.board.locales', function() {
     var root_locales = {};
     var locales = this.get('model.board.locales') || [];
     var list = i18n.get('locales');
@@ -61,7 +62,7 @@ export default modal.ModalController.extend({
       }
     }
     return res;
-  }.property('model.board', 'model.board.locales'),
+  }),
   actions: {
     set_locale: function(type, val) {
       this.set(type + '_locale', val);

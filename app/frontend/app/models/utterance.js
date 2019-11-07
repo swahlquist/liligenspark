@@ -2,6 +2,7 @@ import { later as runLater } from '@ember/runloop';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 CoughDrop.Utterance = DS.Model.extend({
   button_list: DS.attr('raw'),
@@ -35,9 +36,9 @@ CoughDrop.Utterance = DS.Model.extend({
       }
     });
   },
-  best_image_url: function() {
+  best_image_url: computed('image_url', 'large_image_url', function() {
     return this.get('large_image_url') || this.get('image_url');
-  }.property('image_url', 'large_image_url'),
+  }),
   check_for_large_image_url: function() {
     var attempt = this.get('large_image_attempt') || 1;
     var _this = this;

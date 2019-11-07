@@ -3,6 +3,7 @@ import app_state from '../../utils/app_state';
 import utterance from '../../utils/utterance';
 import RSVP from 'rsvp';
 import stashes from '../../utils/_stashes';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -32,11 +33,11 @@ export default modal.ModalController.extend({
       user.save();
     }
   },
-  next_step: function() {
+  next_step: computed('model.step', function() {
     var step = (this.get('model.step') || 0);
     var section = (this.get('model.board.intro.sections') || [])[step];
     return !!section;
-  }.property('model.step'),
+  }),
   actions: {
     close: function() {
       // clear step and modal.close

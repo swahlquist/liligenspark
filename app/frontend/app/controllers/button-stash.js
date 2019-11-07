@@ -4,6 +4,7 @@ import modal from '../utils/modal';
 import stashes from '../utils/_stashes';
 import Button from '../utils/button';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -26,15 +27,15 @@ export default modal.ModalController.extend({
       modal.close(true);
     }
   },
-  outer_button_style: function() {
+  outer_button_style: computed('model.id', function() {
     return "width: 33%; height: 100px; padding: 5px;";
-  }.property('model.id'),
-  inner_button_style: function() {
+  }),
+  inner_button_style: computed('model.id', function() {
     var height = 100 - CoughDrop.borderPad;
     return "height: " + height + "px;";
-  }.property('model.id'),
-  image_style: function() {
+  }),
+  image_style: computed('model.id', function() {
     var height = 100 - CoughDrop.labelHeight - CoughDrop.boxPad;
     return htmlSafe("height: " + height + "px;");
-  }.property('model.id')
+  })
 });

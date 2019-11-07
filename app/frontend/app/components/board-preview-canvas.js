@@ -7,12 +7,13 @@ import $ from 'jquery';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {
     this.render_canvas();
   },
-  preview_style: function() {
+  preview_style: computed('size', function() {
     if(this.get('size') == 'modal') {
       this.element.style.height = 'calc(70vh - 140px)';
       return htmlSafe('width: 100%; height: 100%; border: 1px solid #ccc; padding: 2px; border-radius: 5px;');
@@ -20,7 +21,7 @@ export default Component.extend({
       this.element.style.height = 'calc(100% - 55px)';
       return htmlSafe('width: 100%; height: 100%;');
     }
-  }.property('size'), 
+  }), 
   render_canvas: function() {
     if(this.get('size') == 'modal') {
       this.element.style.height = 'calc(70vh - 140px)';

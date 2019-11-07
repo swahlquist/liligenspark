@@ -30,9 +30,14 @@ export default Component.extend({
     }
     this.update_classes();
   },
-  trial_choice: function() {
-    return this.get('trial_option') && !this.get('see_pricing') && !this.get('subscription.user.really_expired');
-  }.property('trial_option', 'see_pricing', 'subscription.user.really_expired'),
+  trial_choice: computed(
+    'trial_option',
+    'see_pricing',
+    'subscription.user.really_expired',
+    function() {
+      return this.get('trial_option') && !this.get('see_pricing') && !this.get('subscription.user.really_expired');
+    }
+  ),
   update_not_authenticated: observer('session.invalid_token', 'pricing_only', function() {
     if(!this.get('pricing_only') && this.get('session.invalid_token')) {
       this.set('not_authenticated', true);

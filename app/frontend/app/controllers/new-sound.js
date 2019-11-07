@@ -1,6 +1,7 @@
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import contentGrabbers from '../utils/content_grabbers';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -9,9 +10,9 @@ export default modal.ModalController.extend({
   closing: function() {
     contentGrabbers.soundGrabber.clear();
   },
-  recorder_unavailable: function() {
+  recorder_unavailable: computed(function() {
     return !contentGrabbers.soundGrabber.recorder_available();
-  }.property(),
+  }),
   actions: {
     nothing: function() {
       // I had some forms that were being used mainly for layout and I couldn't

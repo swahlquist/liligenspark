@@ -36,7 +36,7 @@ export default modal.ModalController.extend({
     if(this.get('note_type') === undefined) { this.set('note_type', 'text'); }
     if(this.get('notify') === undefined) { this.set('notify', true); }
   },
-  goal_options: function() {
+  goal_options: computed('model.active_goals', function() {
     var res = [];
     if((this.get('model.active_goals') || []).length > 0) {
       res.push({id: '', name: i18n.t('select_goal', "[ Select to Link this Note to a Goal ]")});
@@ -46,8 +46,8 @@ export default modal.ModalController.extend({
       res.push({id: '', name: i18n.t('no_goal', "Don't Link this Note to a Goal")});
     }
     return res;
-  }.property('model.active_goals'),
-  goal_statuses: function() {
+  }),
+  goal_statuses: computed(function() {
     var res = [];
     res.push({
       id: '1',
@@ -74,11 +74,11 @@ export default modal.ModalController.extend({
       button_display_class: 'btn btn-default face_button'
     });
     return res;
-  }.property(),
-  no_video_ready: function() {
+  }),
+  no_video_ready: computed('video_id', function() {
     return !this.get('video_id');
-  }.property('video_id'),
-  text_class: function() {
+  }),
+  text_class: computed('text_note', function() {
     var res = "btn ";
     if(this.get('text_note')) {
       res = res + "btn-primary";
@@ -86,8 +86,8 @@ export default modal.ModalController.extend({
       res = res + "btn-default";
     }
     return res;
-  }.property('text_note'),
-  video_class: function() {
+  }),
+  video_class: computed('text_note', function() {
     var res = "btn ";
     if(this.get('text_note')) {
       res = res + "btn-default";
@@ -95,7 +95,7 @@ export default modal.ModalController.extend({
       res = res + "btn-primary";
     }
     return res;
-  }.property('text_note'),
+  }),
   actions: {
     set_type: function(type) {
       this.set('note_type', type);

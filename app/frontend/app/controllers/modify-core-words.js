@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -21,9 +22,9 @@ export default modal.ModalController.extend({
       _this.set('words', words);
     }
   },
-  default_core_list: function() {
+  default_core_list: computed('core_list', function() {
     return this.get('core_list') && this.get('core_list') != 'new' && this.get('core_list') != 'custom';
-  }.property('core_list'),
+  }),
   update_on_change: observer('core_list', function() {
     if(this.get('core_list') == 'custom') {
       this.set('words', []);
@@ -38,14 +39,14 @@ export default modal.ModalController.extend({
       });
     }
   }),
-  word_lines: function() {
+  word_lines: computed('words', function() {
     return (this.get('words') || []).join('\n');
-  }.property('words'),
-  parsed_words: function() {
+  }),
+  parsed_words: computed('word_lines', function() {
     var words = (this.get('word_lines') || "").split(/[\n,]/).filter(function(w) { return w && w.length > 0; });
     return words;
-  }.property('word_lines'),
-  core_lists: function() {
+  }),
+  core_lists: computed('model.user.core_lists.defaults', function() {
     var res = [];
     res.push({name: i18n.t('chose_list', "[Choose List]"), id: ''});
     (this.get('model.user.core_lists.defaults') || []).forEach(function(list) {
@@ -53,10 +54,10 @@ export default modal.ModalController.extend({
     });
     res.push({name: i18n.t('customized_list', "Customized List"), id: 'custom'});
     return res;
-  }.property('model.user.core_lists.defaults'),
-  save_disabled: function() {
+  }),
+  save_disabled: computed('state.saving', 'words', function() {
     return !!(this.get('state.saving') || (this.get('words') || []).length === 0);
-  }.property('state.saving', 'words'),
+  }),
   actions: {
     modify_list: function() {
       var words = this.get('words');

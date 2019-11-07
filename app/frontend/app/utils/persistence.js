@@ -18,6 +18,7 @@ import Utils from './misc';
 import modal from './modal';
 import capabilities from './capabilities';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 var valid_stores = ['user', 'board', 'image', 'sound', 'settings', 'dataCache', 'buttonset'];
 var loaded = (new Date()).getTime() / 1000;
@@ -1043,18 +1044,18 @@ var persistence = EmberObject.extend({
       capabilities.wakelock('sync', false);
     }
   }),
-  syncing: function() {
+  syncing: computed('sync_status', function() {
     return this.get('sync_status') == 'syncing';
-  }.property('sync_status'),
-  sync_failed: function() {
+  }),
+  sync_failed: computed('sync_status', function() {
     return this.get('sync_status') == 'failed';
-  }.property('sync_status'),
-  sync_succeeded: function() {
+  }),
+  sync_succeeded: computed('sync_status', function() {
     return this.get('sync_status') == 'succeeded';
-  }.property('sync_status'),
-  sync_finished: function() {
+  }),
+  sync_finished: computed('sync_status', function() {
     return this.get('sync_status') == 'finished';
-  }.property('sync_status'),
+  }),
   update_sync_progress: function() {
     var progresses = (persistence.get('sync_progress') || {}).progress_for || {};
     var visited = 0;

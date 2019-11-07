@@ -4,6 +4,7 @@ import CoughDrop from '../app';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -24,7 +25,7 @@ export default Component.extend({
       this.set('board_record', board);
     }
   }),
-  display_class: function() {
+  display_class: computed('children', function() {
     var e = this.element;
     var bounds = e.getBoundingClientRect();
     var res ='btn simple_board_icon btn-default';
@@ -40,7 +41,7 @@ export default Component.extend({
     }
 
     return htmlSafe(res);
-  }.property('children'),
+  }),
   actions: {
     board_preview: function(board) {
       var _this = this;

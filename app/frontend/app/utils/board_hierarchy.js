@@ -1,11 +1,7 @@
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
-import CoughDrop from '../app';
-import boundClasses from './bound_classes';
-import app_state from './app_state';
-import persistence from './persistence';
 import i18n from './i18n';
-import stashes from './_stashes';
+import { computed } from '@ember/object';
 
 var BoardHierarchy = EmberObject.extend({
   init: function() {
@@ -93,9 +89,9 @@ var BoardHierarchy = EmberObject.extend({
     this.set('all_boards', all_boards);
     this.set('root', root_board);
   },
-  root_deselected: function() {
+  root_deselected: computed('root.selected', function() {
     return !this.get('root.selected');
-  }.property('root.selected'),
+  }),
   selected_board_ids: function() {
     var ids = [];
     this.get('all_boards').forEach(function(b) {

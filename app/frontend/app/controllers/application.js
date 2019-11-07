@@ -965,21 +965,21 @@ export default Controller.extend({
       }
     }
   },
-  setup_next: function() {
+  setup_next: computed('setup_page', 'setup_order', function() {
     if(this.get('setup_order')) {
       return this.get('setup_page') != this.get('setup_order')[this.get('setup_order').length - 1];
     }
-  }.property('setup_page', 'setup_order'),
-  setup_previous: function() {
+  }),
+  setup_previous: computed('setup_page', 'setup_order', function() {
     if(this.get('setup_order')) {
       return !!(this.get('setup_page') && this.get('setup_page') != this.get('setup_order')[0]);
     }
-  }.property('setup_page', 'setup_order'),
-  setup_index: function() {
+  }),
+  setup_index: computed('setup_order', 'setup_page', function() {
     var order = this.get('setup_order');
     var current = this.get('setup_page') || 'intro';
     return (order.indexOf(current) || 0) + 1;
-  }.property('setup_order', 'setup_page'),
+  }),
   activateButton: function(button, options) {
     var _this = this;
     button.findContentLocally().then(function() {
@@ -1059,51 +1059,60 @@ export default Controller.extend({
       app_state.activate_button(button, obj);
     }, function() { });
   },
-  background_class: function() {
-    var res = "";
-    if(app_state.get('speak_mode')) {
-      var color = app_state.get('currentUser.preferences.board_background');
-      if(color) {
-        if(color == '#000') { color = 'black'; }
-        res = res + "color_" + color;
+  background_class: computed(
+    'app_state.speak_mode',
+    'app_state.currentUser.preferences.board_background',
+    'app_state.currentUser.preferences.dim_header',
+    function() {
+      var res = "";
+      if(app_state.get('speak_mode')) {
+        var color = app_state.get('currentUser.preferences.board_background');
+        if(color) {
+          if(color == '#000') { color = 'black'; }
+          res = res + "color_" + color;
+        }
+        if(app_state.get('currentUser.preferences.dim_header')) {
+          res = res + " dim_sides";
+        }
       }
-      if(app_state.get('currentUser.preferences.dim_header')) {
-        res = res + " dim_sides";
-      }
+      return htmlSafe(res);
     }
-    return htmlSafe(res);
-  }.property('app_state.speak_mode', 'app_state.currentUser.preferences.board_background', 'app_state.currentUser.preferences.dim_header'),
+  ),
   set_and_say_buttons: function(buttons) {
     utterance.set_and_say_buttons(buttons);
   },
-  few_supervisees: function() {
-    var max_to_show = 2;
-    var sups = app_state.get('currentUser.supervisees') || [];
-    var list = sups;
-    var more = [];
-    var current_board_user_name = (app_state.get('currentBoardState.key') || '').split(/\//)[0];
-    if(current_board_user_name) {
-      var new_list = [];
-      var new_more = [];
-      sups.forEach(function(sup) {
-        if(sup.user_name == current_board_user_name) {
-          new_list.push(sup);
-        } else {
-          new_more.push(sup);
+  few_supervisees: computed(
+    'app_state.currentUser.supervisees',
+    'app_state.currentBoardState.key',
+    function() {
+      var max_to_show = 2;
+      var sups = app_state.get('currentUser.supervisees') || [];
+      var list = sups;
+      var more = [];
+      var current_board_user_name = (app_state.get('currentBoardState.key') || '').split(/\//)[0];
+      if(current_board_user_name) {
+        var new_list = [];
+        var new_more = [];
+        sups.forEach(function(sup) {
+          if(sup.user_name == current_board_user_name) {
+            new_list.push(sup);
+          } else {
+            new_more.push(sup);
+          }
+        });
+        // don't rearrange if all will be shown anyway, since that would be confusing
+        if(new_list.length > 0 && (new_list.length + new_more.length <= max_to_show)) {
+          list = new_list;
+          more = new_more;
         }
-      });
-      // don't rearrange if all will be shown anyway, since that would be confusing
-      if(new_list.length > 0 && (new_list.length + new_more.length <= max_to_show)) {
-        list = new_list;
-        more = new_more;
       }
+      if(list.length > max_to_show) { return null; }
+      return {
+        list: list,
+        more: more.length > 0
+      };
     }
-    if(list.length > max_to_show) { return null; }
-    return {
-      list: list,
-      more: more.length > 0
-    };
-  }.property('app_state.currentUser.supervisees', 'app_state.currentBoardState.key'),
+  ),
   sayLouder: function(pct) {
     this.vocalize(pct || 3.0);
   },
@@ -1133,70 +1142,94 @@ export default Controller.extend({
   toggleMode: function(mode, opts) {
     app_state.toggle_mode(mode, opts);
   },
-  swatches: function() {
+  swatches: computed('app_state.colored_keys', function() {
     return [].concat(CoughDrop.keyed_colors);
-  }.property('app_state.colored_keys'),
-  show_back: function() {
-    return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back') || this.get('eval_mode'));
-  }.property('app_state.empty_board_history', 'app_state.currentUser.preferences.device.always_show_back', 'app_state.eval_mode'),
-  on_home: function() {
-    return !!((app_state.get('currentBoardState.id') && app_state.get('currentBoardState.id') == stashes.get('root_board_state.id')) || app_state.get('eval_mode'));
-  }.property('stashes.root_board_state.id', 'app_state.currentBoardState.id', 'app_state.eval_mode'),
-  button_list_class: function() {
-    var res = "button_list ";
-    var flipped = app_state.get('flipped');
-    if(flipped) {
-      res = res + "flipped ";
-      // always show text-only when flipping
+  }),
+  show_back: computed(
+    'app_state.empty_board_history',
+    'app_state.currentUser.preferences.device.always_show_back',
+    'app_state.eval_mode',
+    function() {
+      return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back') || this.get('eval_mode'));
     }
-    if(stashes.get('ghost_utterance') && !flipped) {
-      res = res + "ghost_utterance ";
+  ),
+  on_home: computed(
+    'stashes.root_board_state.id',
+    'app_state.currentBoardState.id',
+    'app_state.eval_mode',
+    function() {
+      return !!((app_state.get('currentBoardState.id') && app_state.get('currentBoardState.id') == stashes.get('root_board_state.id')) || app_state.get('eval_mode'));
     }
-    if(this.get('extras.eye_gaze_state')) {
-      res = res + "with_eyes ";
-    }
-    if(this.get('show_back')) {
-      res = res + "with_back ";
-    }
-    if(speecher.text_direction() == 'rtl' || stashes.get('root_board_state.text_direction') == 'rtl') {
-      res = res + "rtl ";
-    }
-    var text_position = (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
-    var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
-    if(text_position == 'text_only' || show_always || flipped) {
-      res = res + "text_only ";
-    }
+  ),
+  button_list_class: computed(
+    'stashes.ghost_utterance',
+    'stashes.working_vocalization',
+    'stashes.root_board_state.text_direction',
+    'extras.eye_gaze_state',
+    'show_back',
+    'app_state.currentUser.preferences.device.button_text_position',
+    'app_state.currentUser.preferences.device.utterance_text_only',
+    'board.text_style',
+    'board.button_style',
+    'app_state.header_size',
+    'app_state.flipped',
+    'app_state.currentUser.preferences.device.flipped_override',
+    function() {
+      var res = "button_list ";
+      var flipped = app_state.get('flipped');
+      if(flipped) {
+        res = res + "flipped ";
+        // always show text-only when flipping
+      }
+      if(stashes.get('ghost_utterance') && !flipped) {
+        res = res + "ghost_utterance ";
+      }
+      if(this.get('extras.eye_gaze_state')) {
+        res = res + "with_eyes ";
+      }
+      if(this.get('show_back')) {
+        res = res + "with_back ";
+      }
+      if(speecher.text_direction() == 'rtl' || stashes.get('root_board_state.text_direction') == 'rtl') {
+        res = res + "rtl ";
+      }
+      var text_position = (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
+      var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
+      if(text_position == 'text_only' || show_always || flipped) {
+        res = res + "text_only ";
+      }
 
-    if(app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {
-      res = res + 'text_' + app_state.get('currentUser.preferences.device.flipped_text') + ' ';
-    } else {
-      if(this.get('board.text_style')) {
-        var style = this.get('board.text_style') || ' ';
-        var big_header = this.get('app_state.header_size') == 'large' || this.get('app_state.header_size') == 'huge';
-        if(flipped && big_header && (style == ' ' || style == 'text_small' || style == 'text_medium')) {
-          style = 'text_large';
+      if(app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {
+        res = res + 'text_' + app_state.get('currentUser.preferences.device.flipped_text') + ' ';
+      } else {
+        if(this.get('board.text_style')) {
+          var style = this.get('board.text_style') || ' ';
+          var big_header = this.get('app_state.header_size') == 'large' || this.get('app_state.header_size') == 'huge';
+          if(flipped && big_header && (style == ' ' || style == 'text_small' || style == 'text_medium')) {
+            style = 'text_large';
+          }
+          res = res + style + " ";
         }
-        res = res + style + " ";
       }
-    }
-    if(this.get('board.button_style')) {
-      var style = Button.style(this.get('board.button_style'));
-      if(style.upper) {
-        res = res + "upper ";
-      } else if(style.lower) {
-        res = res + "lower ";
+      if(this.get('board.button_style')) {
+        var style = Button.style(this.get('board.button_style'));
+        if(style.upper) {
+          res = res + "upper ";
+        } else if(style.lower) {
+          res = res + "lower ";
+        }
+        if(style.font_class) {
+          res = res + style.font_class + " ";
+        }
       }
-      if(style.font_class) {
-        res = res + style.font_class + " ";
+      if(stashes.get('working_vocalization.length')) {
+        res = res + "has_content ";
       }
-    }
-    if(stashes.get('working_vocalization.length')) {
-      res = res + "has_content ";
-    }
 
-    return htmlSafe(res);
-  }.property('stashes.ghost_utterance', 'stashes.working_vocalization', 'stashes.root_board_state.text_direction', 'extras.eye_gaze_state', 'show_back', 'app_state.currentUser.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.utterance_text_only', 'board.text_style', 'board.button_style', 'app_state.header_size', 'app_state.flipped', 'app_state.currentUser.preferences.device.flipped_override'),
-  no_paint_mode_class: function() {
+      return htmlSafe(res);
+    }
+  ),
+  no_paint_mode_class: computed('board.paint_mode', function() {
     var res = "btn ";
     if(this.get('board.paint_mode')) {
       res = res + "btn-default";
@@ -1204,8 +1237,8 @@ export default Controller.extend({
       res = res + "btn-info";
     }
     return res;
-  }.property('board.paint_mode'),
-  paint_mode_class: function() {
+  }),
+  paint_mode_class: computed('board.paint_mode', function() {
     var res = "btn ";
     if(this.get('board.paint_mode')) {
       res = res + "btn-info";
@@ -1213,52 +1246,63 @@ export default Controller.extend({
       res = res + "btn-default";
     }
     return res;
-  }.property('board.paint_mode'),
-  undo_class: function() {
+  }),
+  undo_class: computed('board.noUndo', function() {
     var res = "skinny ";
     if(this.get('board.noUndo')) {
       res = res + "disabled";
     }
     return res;
-  }.property('board.noUndo'),
-  redo_class: function() {
+  }),
+  redo_class: computed('board.noRedo', function() {
     var res = "skinny ";
     if(this.get('board.noRedo')) {
       res = res + "disabled";
     }
     return res;
-  }.property('board.noRedo'),
-  content_class: function() {
-    var res = "";
-    if(this.get('app_state.sidebar_visible')) {
-      res = res + "with_sidebar ";
+  }),
+  content_class: computed(
+    'app_state.sidebar_visible',
+    'app_state.index_view',
+    'session.isAuthenticated',
+    'app_state.currentUser.preferences.new_index',
+    function() {
+      var res = "";
+      if(this.get('app_state.sidebar_visible')) {
+        res = res + "with_sidebar ";
+      }
+      if(this.get('app_state.index_view')) {
+        res = res + "index ";
+      }
+      if(this.get('session.isAuthenticated')) {
+        res = res + "with_user ";
+      } else if(app_state.get('domain_settings.full_domain')) {
+        res = res + "no_user ";
+      } else {
+        res = res + "blank_user";
+      }
+      if(this.get('app_state.currentUser.preferences.new_index')) {
+        res = res + "new_index ";
+      }
+      return res;
     }
-    if(this.get('app_state.index_view')) {
-      res = res + "index ";
+  ),
+  header_class: computed(
+    'app_state.header_size',
+    'app_state.speak_mode',
+    'app_state.currentUser.preferences.new_index',
+    function() {
+      var res = "row ";
+      if(this.get('app_state.currentUser.preferences.new_index')) {
+        res = res + 'new_index ';
+      }
+      if(this.get('app_state.header_size')) {
+        res = res + this.get('app_state.header_size') + ' ';
+      }
+      if(this.get('app_state.speak_mode')) {
+        res = res + 'speaking advanced_selection';
+      }
+      return res;
     }
-    if(this.get('session.isAuthenticated')) {
-      res = res + "with_user ";
-    } else if(app_state.get('domain_settings.full_domain')) {
-      res = res + "no_user ";
-    } else {
-      res = res + "blank_user";
-    }
-    if(this.get('app_state.currentUser.preferences.new_index')) {
-      res = res + "new_index ";
-    }
-    return res;
-  }.property('app_state.sidebar_visible', 'app_state.index_view', 'session.isAuthenticated', 'app_state.currentUser.preferences.new_index'),
-  header_class: function() {
-    var res = "row ";
-    if(this.get('app_state.currentUser.preferences.new_index')) {
-      res = res + 'new_index ';
-    }
-    if(this.get('app_state.header_size')) {
-      res = res + this.get('app_state.header_size') + ' ';
-    }
-    if(this.get('app_state.speak_mode')) {
-      res = res + 'speaking advanced_selection';
-    }
-    return res;
-  }.property('app_state.header_size', 'app_state.speak_mode', 'app_state.currentUser.preferences.new_index')
+  )
 });

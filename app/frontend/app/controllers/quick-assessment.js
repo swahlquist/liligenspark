@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -28,7 +29,7 @@ export default modal.ModalController.extend({
       incorrect: 0
     });
   },
-  goal_options: function() {
+  goal_options: computed('model.user.active_goals', function() {
     var res = [];
     if((this.get('model.user.active_goals') || []).length > 0) {
       this.get('model.user.active_goals').forEach(function(goal) {
@@ -37,7 +38,7 @@ export default modal.ModalController.extend({
       res.push({id: '', name: i18n.t('clear_assessment_type', "Clear Assessment Type")});
     }
     return res;
-  }.property('model.user.active_goals'),
+  }),
   add_tally(correct) {
     var timestamp = Date.now() / 1000;
     var tallies = this.get('tallies');

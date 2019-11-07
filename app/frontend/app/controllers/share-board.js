@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import coughDropExtras from '../utils/extras';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -13,14 +14,14 @@ export default modal.ModalController.extend({
     this.set('show_embed', false);
     this.set('error_confirming_public_board', false);
   },
-  supervisee_share: function() {
+  supervisee_share: computed('share_user_name', 'app_state.currentUser.known_supervisees', function() {
     var un = this.get('share_user_name');
     return un && (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.user_name == un; });
-  }.property('share_user_name', 'app_state.currentUser.known_supervisees'),
-  not_copyable: function() {
+  }),
+  not_copyable: computed('share_user_name', 'app_state.currentUser.known_supervisees', function() {
     var un = this.get('share_user_name');
     return !(un && (app_state.get('currentUser.known_supervisees') || []).find(function(s) { return s.user_name == un && s.edit_permission; }));
-  }.property('share_user_name', 'app_state.currentUser.known_supervisees'),
+  }),
   actions: {
     share_with_user: function() {
       var user_name = this.get('share_user_name');

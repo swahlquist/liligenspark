@@ -7,6 +7,7 @@ import persistence from '../utils/persistence';
 import modal from '../utils/modal';
 import Subscription from '../utils/subscription';
 import Utils from '../utils/misc';
+import { computed } from '@ember/object';
 
 CoughDrop.Organization = DS.Model.extend({
   didLoad: function() {
@@ -52,16 +53,16 @@ CoughDrop.Organization = DS.Model.extend({
       }
     }
   },
-  licenses_available: function() {
+  licenses_available: computed('allotted_licenses', 'total_licenses', 'used_licenses', function() {
     return (this.get('allotted_licenses') || 0) > (this.get('used_licenses') || 0);
-  }.property('allotted_licenses', 'total_licenses', 'used_licenses'),
-  eval_licenses_available: function() {
+  }),
+  eval_licenses_available: computed('allotted_eval_licenses', 'used_evals', function() {
     return (this.get('allotted_eval_licenses') || 0) > (this.get('used_evals') || 0);
-  }.property('allotted_eval_licenses', 'used_evals'),
-  extras_available: function() {
+  }),
+  extras_available: computed('allotted_extras', 'used_extras', function() {
     return (this.get('allotted_extras') || 0) > (this.get('used_extras') || 0);
-  }.property('allotted_extras', 'used_extras'),
-  processed_purchase_history: function() {
+  }),
+  processed_purchase_history: computed('purchase_history', function() {
     var res = [];
     (this.get('purchase_history') || []).forEach(function(e) {
       var evt = $.extend({}, e);
@@ -69,8 +70,8 @@ CoughDrop.Organization = DS.Model.extend({
       res.push(evt);
     });
     return res;
-  }.property('purchase_history'),
-  processed_org_subscriptions: function() {
+  }),
+  processed_org_subscriptions: computed('org_subscriptions', function() {
     var res = [];
     (this.get('org_subscriptions') || []).forEach(function(s) {
       var user = EmberObject.create(s);
@@ -78,7 +79,7 @@ CoughDrop.Organization = DS.Model.extend({
       res.push(user);
     });
     return res;
-  }.property('org_subscriptions'),
+  }),
   load_users: function() {
     var _this = this;
     Utils.all_pages('/api/v1/organizations/' + this.get('id') + '/users', {result_type: 'user', type: 'GET', data: {}}).then(function(data) {
@@ -92,7 +93,7 @@ CoughDrop.Organization = DS.Model.extend({
       _this.set('user_error', true);
     });
   },
-  supervisor_options: function() {
+  supervisor_options: computed('all_supervisors', function() {
     var res = [{
       id: null,
       name: i18n.t('select_user', "[ Select User ]")
@@ -104,8 +105,8 @@ CoughDrop.Organization = DS.Model.extend({
       });
     });
     return res;
-  }.property('all_supervisors'),
-  communicator_options: function() {
+  }),
+  communicator_options: computed('all_communicators', function() {
     var res = [{
       id: null,
       name: i18n.t('select_user', "[ Select User ]")
@@ -117,7 +118,7 @@ CoughDrop.Organization = DS.Model.extend({
       });
     });
     return res;
-  }.property('all_communicators')
+  })
 });
 CoughDrop.Organization.reopenClass({
   mimic_server_processing: function(record, hash) {

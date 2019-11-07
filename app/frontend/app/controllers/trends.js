@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   load_trends: function() {
@@ -19,7 +20,7 @@ export default Controller.extend({
       _this.set('word_cloud_id', Math.random());
     }, 2000);
   },
-  word_cloud_stats: function() {
+  word_cloud_stats: computed('trends.word_counts', function() {
     var res = EmberObject.create({
       words_by_frequency: []
     });
@@ -28,8 +29,8 @@ export default Controller.extend({
       res.get('words_by_frequency').pushObject({text: idx, count: counts[idx]});
     }
     return res;
-  }.property('trends.word_counts'),
-  home_boards: function() {
+  }),
+  home_boards: computed('trends.home_boards', function() {
     var hash = this.get('trends.home_boards');
     if(hash) {
       var res = [];
@@ -40,8 +41,8 @@ export default Controller.extend({
         return b.pct - a.pct;
       });
     }
-  }.property('trends.home_boards'),
-  board_locales: function() {
+  }),
+  board_locales: computed('trends.board_locales', 'showing_private_info', function() {
     var hash = this.get('trends.board_locales');
     var tally = this.get('trends.max_board_locales_count') || 1000;
     if(hash) {
@@ -55,7 +56,7 @@ export default Controller.extend({
       res = res.slice(0, 50);
       return res;
     }
-  }.property('trends.board_locales', 'showing_private_info'),
+  }),
   compute_breakdown(attr) {
     var res = [];
     var systems = attr || {};
@@ -82,13 +83,13 @@ export default Controller.extend({
     }
     return res.sort(function(a, b) { return b.num - a.num; });
   },
-  systems: function() {
+  systems: computed('trends.device.systems', function() {
     return this.compute_breakdown(this.get('trends.device.systems') || {});
-  }.property('trends.device.systems'),
-  access_methods: function() {
+  }),
+  access_methods: computed('trends.device.access_methods', function() {
     return this.compute_breakdown(this.get('trends.device.access_methods') || {});
-  }.property('trends.device.access_methods'),
-  word_pairs: function() {
+  }),
+  word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
     var res = [];
     var pairs = this.get('trends.word_pairs') || {};
     for(var idx in pairs) {
@@ -102,8 +103,8 @@ export default Controller.extend({
       res = res.slice(0, 10);
     }
     return res;
-  }.property('trends.word_pairs', 'showing_private_info'),
-  common_boards: function() {
+  }),
+  common_boards: computed('trends.board_usages', 'showing_private_info', function() {
     var hash = this.get('trends.board_usages');
     var tally = this.get('trends.max_board_usage_count') || 1000;
     if(hash) {
@@ -121,7 +122,7 @@ export default Controller.extend({
       }
       return res;
     }
-  }.property('trends.board_usages', 'showing_private_info'),
+  }),
   actions: {
     show_private_info: function() {
       this.set('showing_private_info', true);

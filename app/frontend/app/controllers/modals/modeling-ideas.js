@@ -5,6 +5,7 @@ import stashes from '../../utils/_stashes';
 import i18n from '../../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -69,7 +70,7 @@ export default modal.ModalController.extend({
       _this.set('activities', {error: true});
     }
   },
-  user_activities: function() {
+  user_activities: computed('activities', 'model.users', 'force_intro', function() {
     var res = [];
 
     var empty_num = 0;
@@ -169,8 +170,8 @@ export default modal.ModalController.extend({
       }
     }
     return res;
-  }.property('activities', 'model.users', 'force_intro'),
-  user_words: function() {
+  }),
+  user_words: computed('activities', 'model.users', function() {
     var res = [];
     var text_reasons = {
       fallback: i18n.t('starter_word', "Starter Word"),
@@ -197,14 +198,14 @@ export default modal.ModalController.extend({
       }
     });
     return res;
-  }.property('activities', 'model.users'),
-  show_words_list: function() {
+  }),
+  show_words_list: computed('current_activity.real', 'current_activity.target_words', function() {
     return !!(this.get('current_activity.real') || this.get('current_activity.target_words'));
-  }.property('current_activity.real', 'current_activity.target_words'),
-  words_list: function() {
+  }),
+  words_list: computed('user_words', function() {
     return (this.get('user_words') || []).mapBy('word').join(', ');
-  }.property('user_words'),
-  current_activity: function() {
+  }),
+  current_activity: computed('activity_index', 'user_activities', function() {
     var idx = this.get('activity_index') || 0;
     var res = (this.get('user_activities') || [])[idx];
     if(res && emberGet(res, 'image.image_url')) {
@@ -215,16 +216,20 @@ export default modal.ModalController.extend({
       });
     }
     return res;
-  }.property('activity_index', 'user_activities'),
-  no_next: function() {
+  }),
+  no_next: computed('activity_index', 'user_activities', function() {
     return !((this.get('activity_index') + 1) < this.get('user_activities.length'));
-  }.property('activity_index', 'user_activities'),
-  no_previous: function() {
+  }),
+  no_previous: computed('activity_index', 'user_activities', function() {
     return !!(this.get('activity_index') == 0 || this.get('user_activities.length') == 0 || !this.get('user_activities.length'));
-  }.property('activity_index', 'user_activities'),
-  feedback_given: function() {
-    return this.get('current_activity.will_attempt') || this.get('current_activity.dismissed');
-  }.property('current_activity.will_attempt', 'current_activity.dismissed'),
+  }),
+  feedback_given: computed(
+    'current_activity.will_attempt',
+    'current_activity.dismissed',
+    function() {
+      return this.get('current_activity.will_attempt') || this.get('current_activity.dismissed');
+    }
+  ),
   actions: {
     next: function() {
       var on_target_words = this.get('current_activity.target_words');

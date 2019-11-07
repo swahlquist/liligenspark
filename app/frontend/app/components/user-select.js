@@ -4,6 +4,7 @@ import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',
@@ -44,7 +45,7 @@ export default Component.extend({
       emberSet(self, 'disabled', !!this.get('skip_me'));
     }
   }),
-  for_user_image: function() {
+  for_user_image: computed('users', 'selection', function() {
     var res = null;
     var user_id = this.get('selection');
     (this.get('users') || []).forEach(function(sup) {
@@ -53,7 +54,7 @@ export default Component.extend({
       }
     });
     return res;
-  }.property('users', 'selection'),
+  }),
   actions: {
     select: function(id) {
       var found = false;

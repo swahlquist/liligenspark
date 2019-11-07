@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -10,9 +11,9 @@ export default modal.ModalController.extend({
     this.set('loading', false);
     this.set('error', false);
   },
-  no_email: function() {
+  no_email: computed('email', function() {
     return !(this.get('email') && this.get('email').match(/.+@.+/));
-  }.property('email'),
+  }),
   actions: {
     confirm: function() {
       if(this.get('no_email')) { return; }

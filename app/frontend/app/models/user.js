@@ -18,6 +18,7 @@ import ButtonSet from '../models/buttonset';
 import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.User = DS.Model.extend({
   didLoad: function() {
@@ -84,56 +85,56 @@ CoughDrop.User = DS.Model.extend({
   cell_phone: DS.attr('string'),
   next_notification_delay: DS.attr('string'),
   read_notifications: DS.attr('boolean'),
-  supervisors_or_managing_org: function() {
+  supervisors_or_managing_org: computed('supervisors', 'managing_org', function() {
     return (this.get('supervisors') || []).length > 0 || this.get('managing_org');
-  }.property('supervisors', 'managing_org'),
-  has_management_responsibility: function() {
+  }),
+  has_management_responsibility: computed('managed_orgs', function() {
     return this.get('managed_orgs').length > 0;
-  }.property('managed_orgs'),
-  is_sponsored: function() {
+  }),
+  is_sponsored: computed('organizations', function() {
     return !!(this.get('organizations') || []).find(function(o) { return o.type == 'user' && o.sponsored; });
-  }.property('organizations'),
-  is_managed: function() {
+  }),
+  is_managed: computed('organizations', function() {
     return !!(this.get('organizations') || []).find(function(o) { return o.type == 'user'; });
-  }.property('organizations'),
-  managing_org: function() {
+  }),
+  managing_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'user'; });
-  }.property('organizations'),
-  manages_multiple_orgs: function() {
+  }),
+  manages_multiple_orgs: computed('managed_orgs', function() {
     return this.get('managed_orgs').length > 1;
-  }.property('managed_orgs'),
-  managed_orgs: function() {
+  }),
+  managed_orgs: computed('organizations', function() {
     return (this.get('organizations') || []).filter(function(o) { return o.type == 'manager'; });
-  }.property('organizations'),
-  managing_supervision_orgs: function() {
+  }),
+  managing_supervision_orgs: computed('organizations', function() {
     return (this.get('organizations') || []).filter(function(o) { return o.type == 'supervisor'; });
-  }.property('organizations'),
-  pending_org: function() {
+  }),
+  pending_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'user' && o.pending; });
-  }.property('organizations'),
-  pending_supervision_org: function() {
+  }),
+  pending_supervision_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'supervisor' && o.pending; });
-  }.property('organizations'),
-  supervisor_names: function() {
+  }),
+  supervisor_names: computed('supervisors', 'is_managed', 'managing_org.name', function() {
     var names = [];
     if(this.get('is_managed') && this.get('managing_org.name')) {
       names.push(this.get('managing_org.name'));
     }
     names = names.concat((this.get('supervisors') || []).map(function(u) { return u.name; }));
     return names.join(", ");
-  }.property('supervisors', 'is_managed', 'managing_org.name'),
-  supervisee_names: function() {
+  }),
+  supervisee_names: computed('supervisees', function() {
     return (this.get('supervisees') || []).map(function(u) { return u.name; }).join(", ");
-  }.property('supervisees'),
+  }),
   notifications: DS.attr('raw'),
-  parsed_notifications: function() {
+  parsed_notifications: computed('notifications', function() {
     var notifs = this.get('notifications') || [];
     notifs.forEach(function(notif) {
       notif[notif.type] = true;
       notif.occurred_at = (Date.parse(notif.occurred_at) || new Date(notif.occurred_at));
     });
     return notifs;
-  }.property('notifications'),
+  }),
   update_voice_uri: observer(
     'preferences.device.voice.voice_uri',
     'preferences.device.voice.voice_uris',
@@ -173,128 +174,149 @@ CoughDrop.User = DS.Model.extend({
     }
   ),
   stats: DS.attr('raw'),
-  avatar_url_with_fallback: function() {
+  avatar_url_with_fallback: computed('avatar_url', 'avatar_data_uri', function() {
     var url = this.get('avatar_data_uri') || this.get('avatar_url');
     if(!url) {
       url = "http://images.sodahead.com/polls/000547669/polls_profiles_1202SHAvatarFemaleRed_4335_157245_xlarge_3722_230918_poll_xlarge.jpeg";
     }
     return url;
-  }.property('avatar_url', 'avatar_data_uri'),
-  using_for_a_while: function() {
+  }),
+  using_for_a_while: computed('joined', 'app_state.refresh_stamp', function() {
     var a_while_ago = window.moment().add(-2, 'weeks');
     var joined = window.moment(this.get('joined'));
     return (joined < a_while_ago);
-  }.property('joined', 'app_state.refresh_stamp'),
+  }),
   // full premium means fully-featured premium, as in a paid communicator or free trial period
-  currently_premium: function() {
+  currently_premium: computed('expired', 'free_premium', function() {
     return !this.get('expired') && !this.get('free_premium');
-  }.property('expired', 'free_premium'),
-  currently_premium_or_fully_purchased: function() {
+  }),
+  currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
     return !!(this.get('currently_premium') || this.get('fully_purchased'));
-  }.property('currently_premium', 'fully_purchased'),
-  currently_premium_or_supporter_role: function() {
+  }),
+  currently_premium_or_supporter_role: computed('currently_premium', 'supporter_role', function() {
     return !!(this.get('currently_premium') || this.get('supporter_role'));
-  }.property('currently_premium', 'supporter_role'),
+  }),
   // limited_supervisor means they aren't tied to an org or any non-currently-premium supervisees, so
   // they need a little bit of reminding of the purpose of supervisor accounts.
-  limited_supervisor: function() {
+  limited_supervisor: computed('subscription.limited_supervisor', 'currently_premium', function() {
     return !!(this.get('subscription.limited_supervisor') && !this.get('currently_premium'));
-  }.property('subscription.limited_supervisor', 'currently_premium'),
+  }),
   // free premium means limited functionality, as in a free supporter
-  free_premium: function() {
-    if(this.get('subscription.free_premium')) { return true; }
-    // auto-convert a free-trial supporter to free_premium when their trial expires
-    if(this.get('supporter_role')) {
-      if(this.get('expiration_passed')) { return true; }
+  free_premium: computed(
+    'subscription.free_premium',
+    'supporter_role',
+    'expiration_passed',
+    'fully_purchased',
+    function() {
+      if(this.get('subscription.free_premium')) { return true; }
+      // auto-convert a free-trial supporter to free_premium when their trial expires
+      if(this.get('supporter_role')) {
+        if(this.get('expiration_passed')) { return true; }
+      }
+      else if(!this.get('supporter_role') && this.get('fully_purchased') && this.get('expiration_passed')) { return true; }
+      return false;
     }
-    else if(!this.get('supporter_role') && this.get('fully_purchased') && this.get('expiration_passed')) { return true; }
-    return false;
-  }.property('subscription.free_premium', 'supporter_role', 'expiration_passed', 'fully_purchased'),
-  expiration_passed: function() {
+  ),
+  expiration_passed: computed('subscription.expires', 'app_state.refresh_stamp', function() {
     if(!this.get('subscription.expires')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires'));
     return expires < now;
-  }.property('subscription.expires', 'app_state.refresh_stamp'),
-  expired: function() {
+  }),
+  expired: computed('expiration_passed', 'membership_type', 'supporter_role', function() {
     if(this.get('membership_type') != 'premium') { return true; }
     var passed = this.get('expiration_passed');
     if(!passed) { return false; }
     if(this.get('supporter_role')) { return false; }
     return !!passed;
-  }.property('expiration_passed', 'membership_type', 'supporter_role'),
-  expired_or_limited_supervisor: function() {
+  }),
+  expired_or_limited_supervisor: computed('expired', 'limited_supervisor', 'supporter_role', function() {
     return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_supervisor'));
-  }.property('expired', 'limited_supervisor', 'supporter_role'),
-  joined_within_24_hours: function() {
+  }),
+  joined_within_24_hours: computed('app_state.refresh_stamp', 'joined', function() {
     var one_day_ago = window.moment().add(-1, 'day');
     if(this.get('joined') && this.get('joined') > one_day_ago) {
       return true;
     }
     return false;
-  }.property('app_state.refresh_stamp', 'joined'),
-  really_expired: function() {
+  }),
+  really_expired: computed('expired', 'subscription.expires', 'fully_purchased', function() {
     if(!this.get('expired')) { return false; }
     if(this.get('fully_purchased')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(14, 'day');
     return (expires < now);
-  }.property('expired', 'subscription.expires', 'fully_purchased'),
-  really_really_expired: function() {
+  }),
+  really_really_expired: computed('expired', 'subscription.expires', 'fully_purchased', function() {
     if(!this.get('expired')) { return false; }
     if(this.get('fully_purchased')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(6, 'month');
     return (expires < now);
-  }.property('expired', 'subscription.expires', 'fully_purchased'),
-  fully_purchased: function() {
+  }),
+  fully_purchased: computed('subscription.fully_purchased', function() {
     return !!this.get('subscription.fully_purchased');
-  }.property('subscription.fully_purchased'),
-  grace_period: function() {
-    if(this.get('supporter_role') && this.get('expiration_passed')) { return false; }
-    else if(!this.get('subscription.grace_period')) { return false; }
-    else if(this.get('expiration_passed')) { return false; }
-    else { return true; }
-  }.property('subscription.grace_period', 'supporter_role', 'expiration_passed'),
-  expired_or_grace_period: function() {
+  }),
+  grace_period: computed(
+    'subscription.grace_period',
+    'supporter_role',
+    'expiration_passed',
+    function() {
+      if(this.get('supporter_role') && this.get('expiration_passed')) { return false; }
+      else if(!this.get('subscription.grace_period')) { return false; }
+      else if(this.get('expiration_passed')) { return false; }
+      else { return true; }
+    }
+  ),
+  expired_or_grace_period: computed('expired', 'grace_period', function() {
     return !!(this.get('expired') || this.get('grace_period'));
-  }.property('expired', 'grace_period'),
-  supporter_role: function() {
+  }),
+  supporter_role: computed('preferences.role', function() {
     return this.get('preferences.role') == 'supporter';
-  }.property('preferences.role'),
-  profile_url: function() {
+  }),
+  profile_url: computed('user_name', function() {
     return location.protocol + '//' + location.host + '/' + this.get('user_name');
-  }.property('user_name'),
-  multiple_devices: function() {
+  }),
+  multiple_devices: computed('devices', function() {
     return (this.get('devices') || []).length > 1;
-  }.property('devices'),
-  device_count: function() {
+  }),
+  device_count: computed('devices', function() {
     return (this.get('devices') || []).length;
-  }.property('devices'),
-  current_device_name: function() {
+  }),
+  current_device_name: computed('devices', function() {
     var device = (this.get('devices') || []).findBy('current_device', true);
     return (device && device.name) || "Unknown device";
-  }.property('devices'),
-  access_method: function() {
-    if(this.get('preferences.device.scanning')) {
-      if(this.get('preferences.device.scan_mode') == 'axes') {
-        return 'axis_scanning';
+  }),
+  access_method: computed(
+    'preferences.device.scanning',
+    'preferences.device.scan_mode',
+    'preferences.device.dwell',
+    'preferences.device.dwell_type',
+    function() {
+      if(this.get('preferences.device.scanning')) {
+        if(this.get('preferences.device.scan_mode') == 'axes') {
+          return 'axis_scanning';
+        } else {
+          return 'scanning';
+        }
+      } else if(this.get('preferences.device.dwell')) {
+        if(this.get('preferences.device.dwell_type') == 'arrow_dwell') {
+          return 'arrow_dwell';
+        } else {
+          return 'dwell';
+        }
       } else {
-        return 'scanning';
+        return 'touch';
       }
-    } else if(this.get('preferences.device.dwell')) {
-      if(this.get('preferences.device.dwell_type') == 'arrow_dwell') {
-        return 'arrow_dwell';
-      } else {
-        return 'dwell';
-      }
-    } else {
-      return 'touch';
     }
-  }.property('preferences.device.scanning', 'preferences.device.scan_mode', 'preferences.device.dwell', 'preferences.device.dwell_type'),
-  hide_symbols: function() {
-    return this.get('preferences.device.button_text') == 'text_only' || this.get('preferences.device.button_text_position') == 'text_only';
-  }.property('preferences.device.button_text', 'preferences.device.button_text_position'),
+  ),
+  hide_symbols: computed(
+    'preferences.device.button_text',
+    'preferences.device.button_text_position',
+    function() {
+      return this.get('preferences.device.button_text') == 'text_only' || this.get('preferences.device.button_text_position') == 'text_only';
+    }
+  ),
   remove_device: function(id) {
     var url = '/api/v1/users/' + this.get('user_name') + '/devices/' + id;
     var _this = this;
@@ -325,7 +347,7 @@ CoughDrop.User = DS.Model.extend({
       _this.set('devices', new_devices);
     });
   },
-  sidebar_boards_with_fallbacks: function() {
+  sidebar_boards_with_fallbacks: computed('preferences.sidebar_boards', function() {
     var boards = this.get('preferences.sidebar_boards') || [];
     var res = [];
     boards.forEach(function(board) {
@@ -336,7 +358,7 @@ CoughDrop.User = DS.Model.extend({
       res.push(board_object);
     });
     return res;
-  }.property('preferences.sidebar_boards'),
+  }),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var url = this.get('avatar_url_with_fallback');
@@ -361,31 +383,35 @@ CoughDrop.User = DS.Model.extend({
       this.set('preferences.speak_mode_pin', new_pin);
     }
   }),
-  needs_speak_mode_intro: function() {
+  needs_speak_mode_intro: computed('joined', function() {
     var joined = window.moment(this.get('joined'));
     var cutoff = window.moment('2018-02-20');
     if(joined >= cutoff) {
       return true;
     }
     return false;
-  }.property('joined'),
-  auto_sync: function() {
-    var ever_synced = this.get('preferences.device.ever_synced');
-    var auto_sync = this.get('preferences.device.auto_sync');
-    if(auto_sync === true || auto_sync === false) {
-      return auto_sync;
-    } else {
-      if(capabilities.installed_app) {
-        return true;
-      } else if(ever_synced === true) {
-        return true;
-      } else if(ever_synced === false) {
-        return false;
-      } else if(ever_synced == null) {
-        return true;
+  }),
+  auto_sync: computed(
+    'preferences.device.auto_sync',
+    'preferences.device.ever_synced',
+    function() {
+      var ever_synced = this.get('preferences.device.ever_synced');
+      var auto_sync = this.get('preferences.device.auto_sync');
+      if(auto_sync === true || auto_sync === false) {
+        return auto_sync;
+      } else {
+        if(capabilities.installed_app) {
+          return true;
+        } else if(ever_synced === true) {
+          return true;
+        } else if(ever_synced === false) {
+          return false;
+        } else if(ever_synced == null) {
+          return true;
+        }
       }
     }
-  }.property('preferences.device.auto_sync', 'preferences.device.ever_synced'),
+  ),
   load_more_supervision: observer('load_all_connections', 'sync_stamp', function() {
     var _this = this;
     var localize_connections = function(sups) {
@@ -450,9 +476,9 @@ CoughDrop.User = DS.Model.extend({
       _this.set('all_connections_loaded', true);
     }
   }),
-  known_supervisees: function() {
+  known_supervisees: computed('all_supervisees', 'supervisees', function() {
     return this.get('all_supervisees') || this.get('supervisees') || [];
-  }.property('all_supervisees', 'supervisees'),
+  }),
   check_all_connections: observer(
     'all_connections',
     'all_connections.supervisors',

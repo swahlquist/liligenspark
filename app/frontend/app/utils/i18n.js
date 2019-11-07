@@ -4,6 +4,7 @@ import CoughDrop from '../app';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { assign as emberAssign } from '@ember/polyfills';
+import { computed } from '@ember/object';
 
 Ember.templateHelpers = Ember.templateHelpers || {};
 Ember.templateHelpers.date = function(date, precision) {
@@ -609,7 +610,7 @@ var i18n = EmberObject.extend({
     }
     return res;
   },
-  translatable_locales: function() {
+  translatable_locales: computed('locales', function() {
     var res = {};
     var locales = i18n.get('locales');
     for(var idx in locales) {
@@ -618,7 +619,7 @@ var i18n = EmberObject.extend({
       }
     }
     return res;
-  }.property('locales'),
+  }),
   text_direction: function(locale) {
     locale = locale || navigator.language || 'en-US';
     if(i18n.rtl_locales[locale.replace(/-/, '_')]) {

@@ -2,6 +2,7 @@ import modal from '../../utils/modal';
 import { later as runLater } from '@ember/runloop';
 import capabilities from '../../utils/capabilities';
 import CoughDrop from '../../app';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -46,9 +47,17 @@ export default modal.ModalController.extend({
       _this.set('status', {no_nfc: true});
     });
   },
-  not_programmable: function() {
-    return !!(this.get('status.loading') || this.get('status.error') || this.get('status.no_nfc') || this.get('status.saving') || this.get('status.programming')) || this.get('status.saved');
-  }.property('status.loading', 'status.error', 'status.no_nfc', 'status.saving', 'status.programming', 'status.saved'),
+  not_programmable: computed(
+    'status.loading',
+    'status.error',
+    'status.no_nfc',
+    'status.saving',
+    'status.programming',
+    'status.saved',
+    function() {
+      return !!(this.get('status.loading') || this.get('status.error') || this.get('status.no_nfc') || this.get('status.saving') || this.get('status.programming')) || this.get('status.saved');
+    }
+  ),
   save_tag: function(tag_id) {
     var _this = this;
     var tag_object = _this.get('tag');
@@ -64,9 +73,9 @@ export default modal.ModalController.extend({
       _this.set('status', {error_saving: true});
     });
   },
-  listening_without_tag_id: function() {
+  listening_without_tag_id: computed('model.listen', 'update_tag_id', function() {
     return this.get('model.listen') && !this.get('update_tag_id');
-  }.property('model.listen', 'update_tag_id'),
+  }),
   actions: {
     save: function() {
       var _this = this;

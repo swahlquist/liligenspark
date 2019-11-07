@@ -17,6 +17,7 @@ import boundClasses from '../utils/bound_classes';
 import Button from '../utils/button';
 import Utils from '../utils/misc';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -199,7 +200,7 @@ export default modal.ModalController.extend({
       }
     }
   ),
-  buttonActions: function() {
+  buttonActions: computed(function() {
     var res = [
       {name: i18n.t('talk', "Add button to the vocalization box"), id: "talk"},
       {name: i18n.t('folder', "Open/Link to another board"), id: "folder"},
@@ -208,35 +209,35 @@ export default modal.ModalController.extend({
     ];
     res.push({name: i18n.t('integration', "Activate a connected tool"), id: "integration"});
     return res;
-  }.property(),
-  book_link_options: function() {
+  }),
+  book_link_options: computed(function() {
     return [
       {name: i18n.t('large_links', "Large navigation links"), id: 'large'},
       {name: i18n.t('huge_links', "Huge navigation links"), id: 'huge'},
       {name: i18n.t('small_links', "Small navigation links"), id: 'small'}
     ];
-  }.property(),
-  book_background_options: function() {
+  }),
+  book_background_options: computed(function() {
     return [
       {name: i18n.t('white_background', "White background"), id: 'white'},
       {name: i18n.t('black_background', "Black background"), id: 'black'}
     ];
-  }.property(),
-  book_text_positioning_options: function() {
+  }),
+  book_text_positioning_options: computed(function() {
     return [
       {name: i18n.t('text_below', "Show text below images"), id: 'text_below'},
       {name: i18n.t('text_above', "Show text above images"), id: 'text_above'}
     ];
-  }.property(),
-  image_matches_book: function() {
+  }),
+  image_matches_book: computed('book_status.image', 'model.image.source_url', function() {
     return this.get('book_status.image') && this.get('book_status.image') == this.get('model.image.source_url');
-  }.property('book_status.image', 'model.image.source_url'),
-  image_matches_video_thumbnail: function() {
+  }),
+  image_matches_video_thumbnail: computed('model.video.thumbnail_url', 'model.image.source_url', function() {
     return this.get('model.video.thumbnail_url') && this.get('model.video.thumbnail_url') == this.get('model.image.source_url');
-  }.property('model.video.thumbnail_url', 'model.image.source_url'),
-  non_https: function() {
+  }),
+  non_https: computed('model.url', function() {
     return (this.get('model.url') || '').match(/^http:/);
-  }.property('model.url'),
+  }),
   load_book: observer('model.book.id', function() {
     var _this = this;
     var id = _this.get('model.book.id');
@@ -256,34 +257,34 @@ export default modal.ModalController.extend({
       });
     }
   }),
-  tool_action_types: function() {
+  tool_action_types: computed(function() {
     return [
       {name: i18n.t('trigger_webhook', "Trigger an external action"), id: 'webhook'},
       {name: i18n.t('render_page', "Load a tool-rendered page"), id: 'render'}
     ];
-  }.property(),
-  levelTypes: function() {
+  }),
+  levelTypes: computed(function() {
     return [
       {name: i18n.t('no_levels', "No Level Overrides"), id: 'none'},
       {name: i18n.t('basic_levels', "Basic Level Overrides"), id: 'basic'},
       {name: i18n.t('advanced_levels', "Custom Level Overrides"), id: 'advanced'}
     ];
-  }.property(),
+  }),
   board_levels: CoughDrop.board_levels,
-  basic_level_style: function() {
+  basic_level_style: computed('model.level_style', function() {
     return this.get('model.level_style') == 'basic';
-  }.property('model.level_style'),
-  advanced_level_style: function() {
+  }),
+  advanced_level_style: computed('model.level_style', function() {
     return this.get('model.level_style') == 'advanced';
-  }.property('model.level_style'),
-  tool_types: function() {
+  }),
+  tool_types: computed('user_integrations', function() {
     var res = [];
     res.push({name: i18n.t('select_tool', "[Select Tool]"), id: null});
     (this.get('user_integrations') || []).forEach(function(tool) {
       res.push({name: tool.get('name'), id: tool.get('id')});
     });
     return res;
-  }.property('user_integrations'),
+  }),
   set_inflection_hashes: function() {
     var inflections = {};
     var inflection_defaults = {};
@@ -358,7 +359,7 @@ export default modal.ModalController.extend({
       this.set('integration_id', this.get('model.integration.user_integration_id'));
     }
   }),
-  missing_library: function() {
+  missing_library: computed('image_library', function() {
     var res = false;
     if(this.get('image_library') == 'lessonpix_required') {
       res = {lessonpix: true};
@@ -366,16 +367,16 @@ export default modal.ModalController.extend({
       res = {pcs: true};
     }
     return res;
-  }.property('image_library'),
-  current_library: function() {
+  }),
+  current_library: computed('image_library', function() {
     var res = {};
     res[this.get('image_library')] = true;
     return res;
-  }.property('image_library'),
-  search_prompt: function() {
+  }),
+  search_prompt: computed('model.label', function() {
     return "\"" + this.get('model.label') + "\"" + " or URL or search term";
-  }.property('model.label'),
-  image_libraries: function() {
+  }),
+  image_libraries: computed('lessonpix_enabled', 'premium_symbols', function() {
     var res = [
       {name: i18n.t('open_symbols', "opensymbols.org (default)"), id: 'opensymbols'}
     ];
@@ -409,7 +410,7 @@ export default modal.ModalController.extend({
 
     if(res.length == 1) { return []; }
     return res;
-  }.property('lessonpix_enabled', 'premium_symbols'),
+  }),
   load_user_integrations: observer(
     'model.integrationOrWebhookAction',
     'model.integration_user_id',
@@ -431,13 +432,13 @@ export default modal.ModalController.extend({
       }
     }
   ),
-  parts_of_speech: function() {
+  parts_of_speech: computed(function() {
     return CoughDrop.parts_of_speech;
-  }.property(),
-  licenseOptions: function() {
+  }),
+  licenseOptions: computed(function() {
     return CoughDrop.licenseOptions;
-  }.property(),
-  board_search_options: function() {
+  }),
+  board_search_options: computed('board.user_name', function() {
     var res = [];
     if(this.get('board.user_name') != app_state.get('currentUser.user_name')) {
       res.push({name: i18n.t('their_boards', "This User's Boards (includes shared)"), id: 'current_user'});
@@ -453,13 +454,13 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('starred_boards', "My Liked Boards"), id: 'personal_starred'});
     }
     return res;
-  }.property('board.user_name'),
-  webcam_unavailable: function() {
+  }),
+  webcam_unavailable: computed(function() {
     return !contentGrabbers.pictureGrabber.webcam_available();
-  }.property(),
-  recorder_unavailable: function() {
+  }),
+  recorder_unavailable: computed(function() {
     return !contentGrabbers.soundGrabber.recorder_available();
-  }.property(),
+  }),
   notSetPrivateImageLicense: observer(
     'image_preview',
     'image_preview.license.type',
@@ -507,28 +508,28 @@ export default modal.ModalController.extend({
     }
   }),
   state: 'general',
-  helpState: function() {
+  helpState: computed('state', function() {
     return this.get('state') == 'help';
-  }.property('state'),
-  generalState: function() {
+  }),
+  generalState: computed('state', function() {
     return this.get('state') == 'general';
-  }.property('state'),
-  pictureState: function() {
+  }),
+  pictureState: computed('state', function() {
     return this.get('state') == 'picture';
-  }.property('state'),
-  actionState: function() {
+  }),
+  actionState: computed('state', function() {
     return this.get('state') == 'action';
-  }.property('state'),
-  soundState: function() {
+  }),
+  soundState: computed('state', function() {
     return this.get('state') == 'sound';
-  }.property('state'),
-  languageState: function() {
+  }),
+  languageState: computed('state', function() {
     return this.get('state') == 'language';
-  }.property('state'),
-  extrasState: function() {
+  }),
+  extrasState: computed('state', function() {
     return this.get('state') == 'extras';
-  }.property('state'),
-  modifiers: function() {
+  }),
+  modifiers: computed('model.vocalization', function() {
     var voc = (this.get('model.vocalization') || "");
     if(!voc || !voc.match(/^(:|\+)/)) {
       if(!voc.match(/\&\&/) && !voc.match(/:/)) {
@@ -597,16 +598,16 @@ export default modal.ModalController.extend({
       emberSet(list, 'none_basic', true);
     }
     return list;
-  }.property('model.vocalization'),
-  ios_search: function() {
+  }),
+  ios_search: computed('app_find_mode', function() {
     return this.get('app_find_mode') == 'ios' || !this.get('app_find_mode');
-  }.property('app_find_mode'),
-  android_search: function() {
+  }),
+  android_search: computed('app_find_mode', function() {
     return this.get('app_find_mode') == 'android';
-  }.property('app_find_mode'),
-  web_search: function() {
+  }),
+  web_search: computed('app_find_mode', function() {
     return this.get('app_find_mode') == 'web';
-  }.property('app_find_mode'),
+  }),
   track_video: observer('model.video.popup', 'model.video.test_url', function() {
     if(this.get('model.video.popup') && this.get('model.video.test_url') && !this.get('player')) {
       var _this = this;
@@ -615,15 +616,21 @@ export default modal.ModalController.extend({
       });
     }
   }),
-  video_test_url: function() {
-    var host = window.default_host || capabilities.fallback_host;
-    if(this.get('model.video.id') && this.get('model.video.type')) {
-      return host + "/videos/" + this.get('model.video.type') + "/" + this.get('model.video.id') + "?testing=true&start=" + (this.get('model.video.start') || '') + "&end=" + (this.get('model.video.end') || '');
-    } else {
-      return null;
+  video_test_url: computed(
+    'model.video.id',
+    'model.video.type',
+    'model.video.start',
+    'model.video.end',
+    function() {
+      var host = window.default_host || capabilities.fallback_host;
+      if(this.get('model.video.id') && this.get('model.video.type')) {
+        return host + "/videos/" + this.get('model.video.type') + "/" + this.get('model.video.id') + "?testing=true&start=" + (this.get('model.video.start') || '') + "&end=" + (this.get('model.video.end') || '');
+      } else {
+        return null;
+      }
     }
-  }.property('model.video.id', 'model.video.type', 'model.video.start', 'model.video.end'),
-  ios_status_class: function() {
+  ),
+  ios_status_class: computed('model.apps.ios', function() {
     var res = "glyphicon ";
     if(this.get('model.apps.ios')) {
       res = res + "glyphicon-check ";
@@ -631,8 +638,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-unchecked ";
     }
     return res;
-  }.property('model.apps.ios'),
-  android_status_class: function() {
+  }),
+  android_status_class: computed('model.apps.android', function() {
     var res = "glyphicon ";
     if(this.get('model.apps.android')) {
       res = res + "glyphicon-check ";
@@ -640,8 +647,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-unchecked ";
     }
     return res;
-  }.property('model.apps.android'),
-  web_status_class: function() {
+  }),
+  web_status_class: computed('model.apps.web.launch_url', function() {
     var res = "glyphicon ";
     if(this.get('model.apps.web.launch_url')) {
       res = res + "glyphicon-check ";
@@ -649,15 +656,15 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-unchecked ";
     }
     return res;
-  }.property('model.apps.web.launch_url'),
-  fake_button_class: function() {
+  }),
+  fake_button_class: computed('model.display_class', function() {
     var res = "fake_button ";
     if(this.get('model.display_class')) {
       res = res + this.get('model.display_class') + " ";
     }
     return res;
-  }.property('model.display_class'),
-  webcam_class: function() {
+  }),
+  webcam_class: computed('webcam.snapshot', function() {
     var res = "button_image ";
     if(this.get('webcam.snapshot')) {
       res = res + "hidden ";
@@ -665,12 +672,17 @@ export default modal.ModalController.extend({
       res = res + "shown ";
     }
     return res;
-  }.property('webcam.snapshot'),
-  show_libraries: function() {
-    return true;
-//     var previews = this.get('image_search.previews');
-//     return (previews && previews.length > 0) || this.get('image_search.previews_loaded') || this.get('image_search.error');
-  }.property('image_search.previews', 'image_search.previews_loaded', 'image_search.error'),
+  }),
+  show_libraries: computed(
+    'image_search.previews',
+    'image_search.previews_loaded',
+    'image_search.error',
+    function() {
+      return true;
+  //     var previews = this.get('image_search.previews');
+  //     return (previews && previews.length > 0) || this.get('image_search.previews_loaded') || this.get('image_search.error');
+    }
+  ),
   actions: {
     nothing: function() {
       // I had some forms that were being used mainly for layout and I couldn't

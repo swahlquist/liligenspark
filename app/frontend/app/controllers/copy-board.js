@@ -4,6 +4,7 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -29,10 +30,10 @@ export default modal.ModalController.extend({
     }
     this.set('model.known_supervisees', supervisees);
   },
-  linked: function() {
+  linked: computed('model.board.buttons', function() {
     return (this.get('model.board.linked_boards') || []).length > 0;
-  }.property('model.board.buttons'),
-  locales: function() {
+  }),
+  locales: computed(function() {
     var list = i18n.get('translatable_locales');
     var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
     for(var key in list) {
@@ -40,7 +41,7 @@ export default modal.ModalController.extend({
     }
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
-  }.property(),
+  }),
   user_board: observer('currently_selected_id', 'model.known_supervisees', function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');

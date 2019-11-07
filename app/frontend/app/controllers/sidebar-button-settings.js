@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import speecher from '../utils/speecher';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -79,15 +80,15 @@ export default modal.ModalController.extend({
     {name: i18n.t('place_based', "Highlight at Types of Locations"), id: 'places'},
     {name: i18n.t('custom', "Multiple Highlighting Types"), id: 'custom'}
   ],
-  location_setting: function() {
+  location_setting: computed('model.button.highlight_type', function() {
     return this.get('model.button.highlight_type') == 'locations' || this.get('model.button.highlight_type') == 'custom';
-  }.property('model.button.highlight_type'),
-  time_setting: function() {
+  }),
+  time_setting: computed('model.button.highlight_type', function() {
     return this.get('model.button.highlight_type') == 'times' || this.get('model.button.highlight_type') == 'custom';
-  }.property('model.button.highlight_type'),
-  place_setting: function() {
+  }),
+  place_setting: computed('model.button.highlight_type', function() {
     return this.get('model.button.highlight_type') == 'places' || this.get('model.button.highlight_type') == 'custom';
-  }.property('model.button.highlight_type'),
+  }),
   places_list: [
     // https://developers.google.com/places/web-service/search
     {name: i18n.t('select_place', "[Select Location Type]"), id: ''},

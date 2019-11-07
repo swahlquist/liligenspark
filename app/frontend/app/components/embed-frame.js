@@ -5,6 +5,7 @@ import frame_listener from '../utils/frame_listener';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'div',
@@ -48,14 +49,14 @@ export default Component.extend({
       }
     }, 5000);
   },
-  overlay_style: function() {
+  overlay_style: computed('board_style', function() {
     var res = this.get('board_style');
     res = res.string || res;
     if(res && res.replace) {
       res = res.replace(/position:\s*relative/, 'position: absolute');
     }
     return htmlSafe(res);
-  }.property('board_style'),
+  }),
   actions: {
   }
 });

@@ -3,6 +3,7 @@ import Controller from '@ember/controller';
 import Utils from '../../utils/misc';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   refresh_units: function() {
@@ -21,11 +22,11 @@ export default Controller.extend({
   },
   reorder_units: function(unit_ids) {
   },
-  max_session_count: function() {
+  max_session_count: computed('units.@each.max_session_count', function() {
     var counts = (this.get('units') || []).map(function(u) { return u.get('max_session_count'); });
     console.log("max session count", Math.max.apply(null, counts));
     return Math.max.apply(null, counts);
-  }.property('units.@each.max_session_count'),
+  }),
   actions: {
     add_unit: function() {
       var name = this.get('new_unit_name');

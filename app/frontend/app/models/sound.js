@@ -6,6 +6,7 @@ import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import contentGrabbers from '../utils/content_grabbers';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Sound = DS.Model.extend({
   didLoad: function() {
@@ -29,9 +30,9 @@ CoughDrop.Sound = DS.Model.extend({
   permissions: DS.attr('raw'),
   file: DS.attr('boolean'),
   untranscribable: DS.attr('boolean'),
-  search_string: function() {
+  search_string: computed('name', 'transcription', 'created', function() {
     return this.get('name') + " " + this.get('transcription') + " " + this.get('created');
-  }.property('name', 'transcription', 'created'),
+  }),
   check_transcription: function() {
     if(this.get('transcription')) {
       this.set('transcription_pending', false);
@@ -76,7 +77,7 @@ CoughDrop.Sound = DS.Model.extend({
       }
     }
   },
-  filename: function() {
+  filename: computed('url', function() {
     var url = this.get('url') || '';
     if(url.match(/^data/)) {
       return i18n.t('embedded_sound', "embedded sound");
@@ -88,8 +89,8 @@ CoughDrop.Sound = DS.Model.extend({
       }
       return decodeURIComponent(name || 'sound');
     }
-  }.property('url'),
-  extension: function() {
+  }),
+  extension: computed('url', 'content_type', function() {
     var type = this.get('content_type');
     var url = this.get('url') || '';
     if(contentGrabbers.file_type_extensions[type]) {
@@ -103,7 +104,7 @@ CoughDrop.Sound = DS.Model.extend({
       }
     }
     return 'unknown type';
-  }.property('url', 'content_type'),
+  }),
   check_for_editable_license: observer('license', 'id', function() {
     if(this.get('license') && this.get('id') && !this.get('permissions.edit')) {
       this.set('license.uneditable', true);
@@ -120,9 +121,9 @@ CoughDrop.Sound = DS.Model.extend({
       }
     });
   },
-  best_url: function() {
+  best_url: computed('url', 'data_url', function() {
     return this.get('data_url') || this.get('url');
-  }.property('url', 'data_url'),
+  }),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var _this = this;

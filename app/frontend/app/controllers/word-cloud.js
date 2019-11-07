@@ -1,13 +1,14 @@
 import modal from '../utils/modal';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.render_cloud();
   },
   zoom: 1.0,
-  stretch_ratio: function() {
+  stretch_ratio: computed('model.stats2', function() {
     return this.get('model.stats2') ? 2.0 : null;
-  }.property('model.stats2'),
+  }),
   render_cloud: function() {
     this.set('word_cloud_id', Math.random());
   },

@@ -7,6 +7,7 @@ import contentGrabbers from '../../utils/content_grabbers';
 import app_state from '../../utils/app_state';
 import EmberObject from '@ember/object';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   queryParams: ['type', 'start', 'end', 'highlighted', 'device_id', 'location_id'],
@@ -18,17 +19,17 @@ export default Controller.extend({
     });
     this.set('type', 'note');
   },
-  filtered_results: function() {
+  filtered_results: computed('start', 'end', 'device_id', 'location_id', function() {
     return !!(this.get('start') || this.get('end') || this.get('device_id') || this.get('location_id'));
-  }.property('start', 'end', 'device_id', 'location_id'),
+  }),
   type: null,
   start: null,
   end: null,
   device_id: null,
   location_id: null,
-  title: function() {
+  title: computed('model.user_name', function() {
     return "Logs for " + this.get('model.user_name');
-  }.property('model.user_name'),
+  }),
   refresh_on_params_change: observer(
     'type',
     'start',
@@ -40,13 +41,13 @@ export default Controller.extend({
       this.send('refresh');
     }
   ),
-  messages_only: function() {
+  messages_only: computed('type', function() {
     return this.get('type') == 'note';
-  }.property('type'),
-  all_logs: function() {
+  }),
+  all_logs: computed('type', 'filtered_results', 'highlighted', function() {
     return !this.get('filtered_results') && (!this.get('type') || this.get('type') == 'all') && this.get('highlighted') != '1';
-  }.property('type', 'filtered_results', 'highlighted'),
-  pending_eval: function() {
+  }),
+  pending_eval: computed(function() {
     var user_id = this.get('model.id');
     var assessment = app_state.get('last_assessment_for_' + user_id) || {};
     var saved = false;
@@ -60,7 +61,7 @@ export default Controller.extend({
     if(!saved && assessment.uid) {
       return assessment;
     }
-  }.property(),
+  }),
   actions: {
     obl_export: function() {
       modal.open('download-log', {user: this.get('model')});

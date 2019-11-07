@@ -5,6 +5,7 @@ import contentGrabbers from '../../utils/content_grabbers';
 import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
 import CoughDrop from '../../app';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   load_recordings: function() {
@@ -18,7 +19,7 @@ export default Controller.extend({
       _this.set('recordings', {error: true});
     });
   },
-  filtered_recordings: function() {
+  filtered_recordings: computed('recordings', 'search_string', function() {
     var recordings = this.get('recordings');
     var str = this.get('search_string');
     var re = new RegExp(str, 'i');
@@ -27,7 +28,7 @@ export default Controller.extend({
       res = recordings.filter(function(r) { return r.get('search_string').match(re); });
     }
     return res;
-  }.property('recordings', 'search_string'),
+  }),
   actions: {
     play_audio: function(sound) {
       contentGrabbers.soundGrabber.play_audio(sound);

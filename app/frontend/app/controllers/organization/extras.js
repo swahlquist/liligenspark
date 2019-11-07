@@ -2,6 +2,7 @@ import Controller from '@ember/controller';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   refresh_lists: function() {
@@ -33,11 +34,11 @@ export default Controller.extend({
     {name: i18n.t('gift_code_batch', "Gift Code Batch"), id: "multi_code"},
     {name: i18n.t('discount_code', "Discount Code"), id: "discount"},
   ],
-  current_gift_type: function() {
+  current_gift_type: computed('gift_type', function() {
     var res = {};
     res[this.get('gift_type')] = true;
     return res;
-  }.property('gift_type'),
+  }),
   actions: {
     block_email: function() {
       var email = this.get('blocked_email_address');

@@ -89,31 +89,31 @@ export default modal.ModalController.extend({
       modal.close();
     }
   },
-  pending: function() {
+  pending: computed('progress.status', function() {
     return this.get('progress.status') == 'pending';
-  }.property('progress.status'),
-  started: function() {
+  }),
+  started: computed('progress.status', function() {
     return this.get('progress.status') == 'started';
-  }.property('progress.status'),
-  finished: function() {
+  }),
+  finished: computed('progress.status', function() {
     return this.get('progress.status') == 'finished';
-  }.property('progress.status'),
-  errored: function() {
+  }),
+  errored: computed('progress.status', function() {
     return this.get('progress.status') == 'errored';
-  }.property('progress.status'),
-  status_message: function() {
+  }),
+  status_message: computed('progress.status', 'progress.sub_status', function() {
     return progress_tracker.status_text(this.get('progress.status'), this.get('porgress.sub_status'));
-  }.property('progress.status', 'progress.sub_status'),
-  num_percent: function() {
+  }),
+  num_percent: computed('progress.percent', function() {
     return Math.round(100 * (this.get('progress.percent') || 0));
-  }.property('progress.percent'),
-  num_style: function() {
+  }),
+  num_style: computed('num_percent', function() {
     return htmlSafe("width: " + this.get('num_percent') + "%;");
-  }.property('num_percent'),
-  multi_download_type: function() {
+  }),
+  multi_download_type: computed('model.type', 'model.has_links', function() {
     return this.get('model.type') != 'pdf' && this.get('model.has_links');
-  }.property('model.type', 'model.has_links'),
-  single_download_type: function() {
+  }),
+  single_download_type: computed('model.type', 'model.has_links', function() {
     return this.get('model.type') != 'pdf' && !this.get('model.has_links');
-  }.property('model.type', 'model.has_links')
+  })
 });

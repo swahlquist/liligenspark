@@ -16,6 +16,7 @@ import stashes from './_stashes';
 import progress_tracker from './progress_tracker';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 var clean_url = function(str) {
   str = str || "";
@@ -63,33 +64,44 @@ var Button = EmberObject.extend({
       }
     }
   ),
-  talkAction: function() {
+  talkAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'talk';
-  }.property('buttonAction'),
-  folderAction: function() {
+  }),
+  folderAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'folder';
-  }.property('buttonAction'),
-  integrationAction: function() {
+  }),
+  integrationAction: computed('buttonAction', 'integrationAction', function() {
     return this.get('buttonAction') == 'integration' && this.get('integrationAction') == 'render';
-  }.property('buttonAction', 'integrationAction'),
-  integrationOrWebhookAction: function() {
+  }),
+  integrationOrWebhookAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'integration';
-  }.property('buttonAction'),
-  webhookAction: function() {
+  }),
+  webhookAction: computed('buttonAction', 'integrationAction', function() {
     return this.get('buttonAction') == 'integration' && this.get('integrationAction') == 'webhook';
-  }.property('buttonAction', 'integrationAction'),
-  action_styling: function() {
-    return Button.action_styling(this.get('buttonAction'), this);
-  }.property('buttonAction', 'home_lock', 'book.popup', 'video.popup', 'action_status', 'action_status.pending', 'action_status.errored', 'action_status.completed', 'integration.action_type'),
-  action_class: function() {
+  }),
+  action_styling: computed(
+    'buttonAction',
+    'home_lock',
+    'book.popup',
+    'video.popup',
+    'action_status',
+    'action_status.pending',
+    'action_status.errored',
+    'action_status.completed',
+    'integration.action_type',
+    function() {
+      return Button.action_styling(this.get('buttonAction'), this);
+    }
+  ),
+  action_class: computed('action_styling', function() {
     return htmlSafe(this.get('action_styling.action_class'));
-  }.property('action_styling'),
-  action_image: function() {
+  }),
+  action_image: computed('action_styling', function() {
     return this.get('action_styling.action_image');
-  }.property('action_styling'),
-  action_alt: function() {
+  }),
+  action_alt: computed('action_styling', function() {
     return this.get('action_styling.action_alt');
-  }.property('action_styling'),
+  }),
   resource_from_url: observer('url', function() {
     var url = this.get('url');
     var resource = Button.resource_from_url(url);
@@ -178,18 +190,18 @@ var Button = EmberObject.extend({
       }
     }
   ),
-  videoAction: function() {
+  videoAction: computed('buttonAction', 'video.popup', function() {
     return this.get('buttonAction') == 'link' && this.get('video.popup');
-  }.property('buttonAction', 'video.popup'),
-  linkAction: function() {
+  }),
+  linkAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'link';
-  }.property('buttonAction'),
-  appAction: function() {
+  }),
+  appAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'app';
-  }.property('buttonAction'),
-  empty_or_hidden: function() {
+  }),
+  empty_or_hidden: computed('empty', 'hidden', 'stashes.all_buttons_enabled', function() {
     return !!(this.get('empty') || (this.get('hidden') && !this.get('stashes.all_buttons_enabled')));
-  }.property('empty', 'hidden', 'stashes.all_buttons_enabled'),
+  }),
   add_classes: observer(
     'background_color',
     'border_color',
@@ -201,33 +213,33 @@ var Button = EmberObject.extend({
       boundClasses.add_classes(this);
     }
   ),
-  link: function() {
+  link: computed('load_board.key', function() {
     if(this.get('load_board.key')) {
       return "/" + this.get('load_board.key');
     }
     return "";
-  }.property('load_board.key'),
-  icon: function() {
+  }),
+  icon: computed('load_board.key', function() {
     if(this.get('load_board.key')) {
       return "/" + this.get('load_board.key') + "/icon";
     }
     return "";
-  }.property('load_board.key'),
-  fixed_url: function() {
+  }),
+  fixed_url: computed('url', function() {
     var url = this.get('url');
     if(url && !url.match(/^http/) && !url.match(/^book:/)) {
       url = "http://" + url;
     }
     return url;
-  }.property('url'),
-  fixed_app_url: function() {
+  }),
+  fixed_app_url: computed('apps.web.launch_url', function() {
     var url = this.get('apps.web.launch_url');
     if(url && !url.match(/^http/)) {
       url = "http://" + url;
     }
     return url;
-  }.property('apps.web.launch_url'),
-  levels_list: function() {
+  }),
+  levels_list: computed('level_modifications', function() {
     var levels = [];
     var mods = this.get('level_modifications') || {};
     for(var idx in mods) {
@@ -241,7 +253,7 @@ var Button = EmberObject.extend({
     } else {
       return null;
     }
-  }.property('level_modifications'),
+  }),
   apply_level: function(level) {
     var mods = this.get('level_modifications') || {};
     var _this = this;
@@ -256,76 +268,117 @@ var Button = EmberObject.extend({
       }
     });
   },
-  fast_html: function() {
-    var res = "";
-    if(this.get('board.display_level') && this.get('level_modifications')) {
-      if(this.get('board.display_level') == this.get('board.default_level')) {
-      } else {
-        var mods = this.get('level_modifications');
-        var level = this.get('board.display_level');
-        if(mods.override) {
-          for(var key in mods.override) {
-            this.set(key, mods.override[key]);
-          }
-        }
-        if(mods.pre) {
-          for(var key in mods.pre) {
-            if(!mods.override || mods.override[key] === null || mods.override[key] === undefined) {
-              this.set(key, mods.pre[key]);
+  set_val(key, val) {
+    this.set(key, val);
+  },
+  fast_html: computed(
+    'refresh_token',
+    'positioning',
+    'computed_style',
+    'computed_class',
+    'label',
+    'action_class',
+    'action_image',
+    'action_alt',
+    'image_holder_style',
+    'text_only',
+    'local_image_url',
+    'image_style',
+    'local_sound_url',
+    'sound.url',
+    'hide_label',
+    'level_modifications',
+    'board.display_level',
+    function() {
+      var res = "";
+      if(this.get('board.display_level') && this.get('level_modifications')) {
+        if(this.get('board.display_level') == this.get('board.default_level')) {
+        } else {
+          var mods = this.get('level_modifications');
+          var level = this.get('board.display_level');
+          if(mods.override) {
+            for(var key in mods.override) {
+              this.set_val(key, mods.override[key]);
             }
           }
-        }
-        for(var idx = 1; idx <= level; idx++) {
-          if(mods[idx]) {
-            for(var key in mods[idx]) {
+          if(mods.pre) {
+            for(var key in mods.pre) {
               if(!mods.override || mods.override[key] === null || mods.override[key] === undefined) {
-                this.set(key, mods[idx][key]);
+                this.set_val(key, mods.pre[key]);
+              }
+            }
+          }
+          for(var idx = 1; idx <= level; idx++) {
+            if(mods[idx]) {
+              for(var key in mods[idx]) {
+                if(!mods.override || mods.override[key] === null || mods.override[key] === undefined) {
+                  this.set_val(key, mods[idx][key]);
+                }
               }
             }
           }
         }
       }
-    }
-    res = res + "<div style='" + this.get('computed_style') + "' class='" + this.get('computed_class') + "' data-id='" + this.get('id') + "' tabindex='0'>";
-    if(this.get('pending')) {
-      res = res + "<div class='pending'><img src='" + Ember.templateHelpers.path('images/spinner.gif') + "' draggable='false' /></div>";
-    }
-    res = res + "<div class='" + this.get('action_class') + "'>";
-    res = res + "<span class='action'>";
-    res = res + "<img src='" + this.get('action_image') + "' alt='" + this.get('action_alt') + "' draggable='false' />";
-    res = res + "</span>";
-    res = res + "</div>";
+      res = res + "<div style='" + this.get('computed_style') + "' class='" + this.get('computed_class') + "' data-id='" + this.get('id') + "' tabindex='0'>";
+      if(this.get('pending')) {
+        res = res + "<div class='pending'><img src='" + Ember.templateHelpers.path('images/spinner.gif') + "' draggable='false' /></div>";
+      }
+      res = res + "<div class='" + this.get('action_class') + "'>";
+      res = res + "<span class='action'>";
+      res = res + "<img src='" + this.get('action_image') + "' alt='" + this.get('action_alt') + "' draggable='false' />";
+      res = res + "</span>";
+      res = res + "</div>";
 
-    res = res + "<span style='" + this.get('image_holder_style') + "'>";
-    if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url') && !this.get('board.text_only') && !this.get('text_only')) {
-      res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol" + (this.get('hc_image') ? ' hc' : '') + "' />";
-    }
-    res = res + "</span>";
-    if(this.get('sound')) {
-      res = res + "<audio style='display: none;' preload='auto' src=\"" + clean_url(this.get('local_sound_url')) + "\" rel=\"" + clean_url(this.get('sound.url')) + "\"></audio>";
-    }
-    var button_class = this.get('text_only') ? app_state.get('text_only_button_symbol_class') : app_state.get('button_symbol_class');
-    res = res + "<div class='" + button_class + "'>";
-    res = res + "<span class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + clean_text(this.get('label')) + "</span>";
-    res = res + "</div>";
+      res = res + "<span style='" + this.get('image_holder_style') + "'>";
+      if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url') && !this.get('board.text_only') && !this.get('text_only')) {
+        res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol" + (this.get('hc_image') ? ' hc' : '') + "' />";
+      }
+      res = res + "</span>";
+      if(this.get('sound')) {
+        res = res + "<audio style='display: none;' preload='auto' src=\"" + clean_url(this.get('local_sound_url')) + "\" rel=\"" + clean_url(this.get('sound.url')) + "\"></audio>";
+      }
+      var button_class = this.get('text_only') ? app_state.get('text_only_button_symbol_class') : app_state.get('button_symbol_class');
+      res = res + "<div class='" + button_class + "'>";
+      res = res + "<span class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + clean_text(this.get('label')) + "</span>";
+      res = res + "</div>";
 
-    res = res + "</div>";
-    return htmlSafe(res);
-  }.property('refresh_token', 'positioning', 'computed_style', 'computed_class', 'label', 'action_class', 'action_image', 'action_alt', 'image_holder_style', 'text_only', 'local_image_url', 'image_style', 'local_sound_url', 'sound.url', 'hide_label', 'level_modifications', 'board.display_level'),
-  image_holder_style: function() {
-    var pos = this.get('positioning');
-    return htmlSafe(Button.image_holder_style(pos, this.get('text_only')));
-  }.property('positioning', 'positioning.image_height', 'positioning.image_top_margin', 'positioning.image_square', 'text_only'),
-  image_style: function() {
-    var pos = this.get('positioning');
-    return htmlSafe(Button.image_style(pos));
-  }.property('positioning', 'positioning.image_height', 'positioning.image_square'),
-  computed_style: function() {
-    var pos = this.get('positioning');
-    if(!pos) { return htmlSafe(""); }
-    return Button.computed_style(pos);
-  }.property('positioning', 'positioning.height', 'positioning.width', 'positioning.left', 'positioning.top'),
-  computed_class: function() {
+      res = res + "</div>";
+      return htmlSafe(res);
+    }
+  ),
+  image_holder_style: computed(
+    'positioning',
+    'positioning.image_height',
+    'positioning.image_top_margin',
+    'positioning.image_square',
+    'text_only',
+    function() {
+      var pos = this.get('positioning');
+      return htmlSafe(Button.image_holder_style(pos, this.get('text_only')));
+    }
+  ),
+  image_style: computed(
+    'positioning',
+    'positioning.image_height',
+    'positioning.image_square',
+    function() {
+      var pos = this.get('positioning');
+      return htmlSafe(Button.image_style(pos));
+    }
+  ),
+  computed_style: computed(
+    'positioning',
+    'positioning.height',
+    'positioning.width',
+    'positioning.left',
+    'positioning.top',
+    function() {
+      var pos = this.get('positioning');
+      if(!pos) { return htmlSafe(""); }
+      return Button.computed_style(pos);
+    }
+  ),
+  computed_class: computed('display_class', 'board.text_size', 'for_swap', function() {
     var res = this.get('display_class') + " ";
     if(this.get('board.text_size')) {
       res = res + this.get('board.text_size') + " ";
@@ -334,10 +387,10 @@ var Button = EmberObject.extend({
       res = res + "swapping ";
     }
     return res;
-  }.property('display_class', 'board.text_size', 'for_swap'),
-  pending: function() {
+  }),
+  pending: computed('pending_image', 'pending_sound', function() {
     return this.get('pending_image') || this.get('pending_sound');
-  }.property('pending_image', 'pending_sound'),
+  }),
   everything_local: function() {
     if(this.image_id && this.image_url && persistence.url_cache && persistence.url_cache[this.image_url] && (!persistence.url_uncache || !persistence.url_uncache[this.image_url])) {
     } else if(this.image_id && !this.get('image')) {

@@ -6,6 +6,7 @@ import CoughDrop from '../app';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 var extra_types = ['NW', 'N', 'NE', 'W', 'E', 'SW', 'S', 'SE'];
 export default Controller.extend({
@@ -119,15 +120,15 @@ export default Controller.extend({
       this.set('antonyms', this.get('antonyms') || (this.get('word.antonyms') || []).join(', '));
     }
   ),
-  lookup_link: function() {
+  lookup_link: computed('word', function() {
     return "https://www.google.com/search?q=define:" + encodeURIComponent(this.get('word.word'));
-  }.property('word'),
-  word_type_style: function() {
+  }),
+  word_type_style: computed('word.primary_part_of_speech', 'word_types', function() {
     var _this = this;
     var type = this.get('word_types').find(function(t) { return t.id == _this.get('word.primary_part_of_speech'); });
     return type && htmlSafe(type.extra_style + ' padding: 10px; border-radius: 5px;');
-  }.property('word.primary_part_of_speech', 'word_types'),
-  word_types: function() {
+  }),
+  word_types: computed('word.parts_of_speech', function() {
     var res = [
       {name: i18n.t('unspecified', "[ Select Type ]"), id: ''},
       {name: i18n.t('noun', "Noun (dog, window, idea)"), id: 'noun'},
@@ -164,7 +165,7 @@ export default Controller.extend({
       });
     });
     return res;
-  }.property('word.parts_of_speech'),
+  }),
   update_primary_on_single_word_type: observer(
     'word_types',
     'word_types.@each.checked',
@@ -192,7 +193,7 @@ export default Controller.extend({
       }
     }
   ),
-  word_type: function() {
+  word_type: computed('word.primary_part_of_speech', function() {
     var res = {};
     if(this.get('word.primary_part_of_speech')) {
       res[this.get('word.primary_part_of_speech')] = true;
@@ -201,17 +202,22 @@ export default Controller.extend({
       res['adjective_or_adverb'] = true;
     }
     return res;
-  }.property('word.primary_part_of_speech'),
-  parts_of_speech: function() {
-    var res = {};
-    this.get('word_types').forEach(function(type) {
-      if(type.checked) { res[type.id] = true; }
-    });
-    if(res.noun || res.verb || res.adjective || res.pronoun || res.adverb || res.preposition || res.determiner || res.negation) {
-      res.oppositable = true;
+  }),
+  parts_of_speech: computed(
+    'word.parts_of_speech',
+    'word_types',
+    'word_types.@each.checked',
+    function() {
+      var res = {};
+      this.get('word_types').forEach(function(type) {
+        if(type.checked) { res[type.id] = true; }
+      });
+      if(res.noun || res.verb || res.adjective || res.pronoun || res.adverb || res.preposition || res.determiner || res.negation) {
+        res.oppositable = true;
+      }
+      return res;
     }
-    return res;
-  }.property('word.parts_of_speech', 'word_types', 'word_types.@each.checked'),
+  ),
   actions: {
     save: function() {
       var _this = this;

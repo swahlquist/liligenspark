@@ -2,6 +2,7 @@ import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
 import editManager from '../../utils/edit_manager';
 import CoughDrop from '../../app';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -12,9 +13,9 @@ export default modal.ModalController.extend({
     {name: i18n.t('enable_link', "Enable the Link for the Button"), id: 'link_disabled'},
     {name: i18n.t('remove_settings', "Clear All Level Settings"), id: 'clear'},
   ],
-  level_select: function() {
+  level_select: computed('paint_type', function() {
     return this.get('paint_type') == 'hidden' || this.get('paint_type') == 'link_disabled';
-  }.property('paint_type'),
+  }),
   paint_levels: CoughDrop.board_levels,
   actions: {
     paint: function() {

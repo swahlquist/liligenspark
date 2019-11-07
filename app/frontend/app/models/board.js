@@ -20,6 +20,7 @@ import Utils from '../utils/misc';
 import { htmlSafe } from '@ember/string';
 import progress_tracker from '../utils/progress_tracker';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Board = DS.Model.extend({
   didLoad: function() {
@@ -51,18 +52,18 @@ CoughDrop.Board = DS.Model.extend({
   categories: DS.attr('raw'),
   home_board: DS.attr('boolean'),
   has_fallbacks: DS.attr('boolean'),
-  valid_id: function() {
+  valid_id: computed('id', function() {
     return !!(this.get('id') && this.get('id') != 'bad');
-  }.property('id'),
-  could_be_in_use: function() {
+  }),
+  could_be_in_use: computed('non_author_uses', 'public', 'brand_new', 'stars', function() {
     // no longer using (this.get('public') && this.get('brand_new'))
     return this.get('non_author_uses') > 0 || this.get('non_author_starred');
-  }.property('non_author_uses', 'public', 'brand_new', 'stars'),
-  definitely_in_use: function() {
+  }),
+  definitely_in_use: computed('non_author_uses', 'stars', function() {
     return this.get('non_author_uses') > 0 || this.get('stars') > 0;
-  }.property('non_author_uses', 'stars'),
+  }),
   fallback_image_url: "https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png",
-  key_placeholder: function() {
+  key_placeholder: computed('name', function() {
     var key = (this.get('name') || "my-board").replace(/^\s+/, '').replace(/\s+$/, '');
     var ref = key;
     while(key.length < 4) {
@@ -70,19 +71,19 @@ CoughDrop.Board = DS.Model.extend({
     }
     key = key.toLowerCase().replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+$/, '').replace(/-+/g, '-');
     return key;
-  }.property('name'),
-  icon_url_with_fallback: function() {
+  }),
+  icon_url_with_fallback: computed('image_url', function() {
     // TODO: way to fall back to something other than a broken image when disconnected
     if(persistence.get('online')) {
       return this.get('image_data_uri') || this.get('image_url') || this.fallback_image_url;
     } else {
       return this.get('image_data_uri') || this.fallback_image_url;
     }
-  }.property('image_url'),
-  shareable: function() {
+  }),
+  shareable: computed('public', 'permissions.edit', function() {
     return this.get('public') || this.get('permissions.edit');
-  }.property('public', 'permissions.edit'),
-  used_buttons: function() {
+  }),
+  used_buttons: computed('buttons', 'grid', function() {
     var result = [];
     var grid = this.get('grid');
     var buttons = this.get('buttons');
@@ -101,8 +102,8 @@ CoughDrop.Board = DS.Model.extend({
       }
     }
     return result;
-  }.property('buttons', 'grid'),
-  labels: function() {
+  }),
+  labels: computed('buttons', 'grid', function() {
     var list = [];
     this.get('used_buttons').forEach(function(button) {
       if(button && button.label) {
@@ -110,16 +111,16 @@ CoughDrop.Board = DS.Model.extend({
       }
     });
     return list.join(', ');
-  }.property('buttons', 'grid'),
-  copy_version: function() {
+  }),
+  copy_version: computed('key', function() {
     var key = this.get('key');
     if(key.match(/_\d+$/)) {
       return key.split(/_/).pop();
     } else {
       return null;
     }
-  }.property('key'),
-  nothing_visible: function() {
+  }),
+  nothing_visible: computed('buttons', 'grid', function() {
     var found_visible = false;
     this.get('used_buttons').forEach(function(button) {
       if(button && !button.hidden) {
@@ -127,7 +128,7 @@ CoughDrop.Board = DS.Model.extend({
       }
     });
     return !found_visible;
-  }.property('buttons', 'grid'),
+  }),
   map_image_urls: function(map) {
     map = map || {};
     var res = [];
@@ -151,7 +152,7 @@ CoughDrop.Board = DS.Model.extend({
     });
     return res;
   },
-  local_images_with_license: function() {
+  local_images_with_license: computed('grid', 'buttons', function() {
     var images = CoughDrop.store.peekAll('image');
     var result = [];
     var missing = false;
@@ -169,7 +170,7 @@ CoughDrop.Board = DS.Model.extend({
     result = result.uniq();
     result.some_missing = missing;
     return result;
-  }.property('grid', 'buttons'),
+  }),
   map_sound_urls: function(map) {
     map = map || {};
     var res = [];
@@ -193,7 +194,7 @@ CoughDrop.Board = DS.Model.extend({
     });
     return res;
   },
-  local_sounds_with_license: function() {
+  local_sounds_with_license: computed('grid', 'buttons', function() {
     var sounds = CoughDrop.store.peekAll('sound');
     var result = [];
     var missing = false;
@@ -211,13 +212,13 @@ CoughDrop.Board = DS.Model.extend({
     result = result.uniq();
     result.some_missing = missing;
     return result;
-  }.property('grid', 'buttons'),
-  levels: function() {
+  }),
+  levels: computed('buttons.@each.level_modifications', function() {
     return !!(this.get('buttons') || []).find(function(b) { return b.level_modifications; });
-  }.property('buttons.@each.level_modifications'),
-  has_overrides: function() {
+  }),
+  has_overrides: computed('buttons.@each.level_modifications', function() {
     return !!this.get('buttons').find(function(b) { return b.level_modifications && b.level_modifications.override; });
-  }.property('buttons.@each.level_modifications'),
+  }),
   clear_overrides: function() {
     this.get('buttons').forEach(function(button) {
       if(button && button.level_modifications && button.level_modifications.override) {
@@ -231,7 +232,7 @@ CoughDrop.Board = DS.Model.extend({
     callback();
     this.set('no_lookups', false);
   },
-  locales: function() {
+  locales: computed('translations', function() {
     var res = [];
     var button_ids = (this.get('translations') || {});
     var all_langs = [];
@@ -247,7 +248,7 @@ CoughDrop.Board = DS.Model.extend({
       }
     });
     return res;
-  }.property('translations'),
+  }),
   translations_for_button: function(button_id) {
     // necessary otherwise button that wasn't translated at first will never be translatable
     var trans = (this.get('translations') || {})[button_id] || {};
@@ -278,15 +279,15 @@ CoughDrop.Board = DS.Model.extend({
     });
     return res;
   },
-  different_locale: function() {
+  different_locale: computed('shortened_locale', function() {
     var current = (navigator.language || 'en').split(/[-_]/)[0];
     return current != this.get('shortened_locale');
-  }.property('shortened_locale'),
-  shortened_locale: function() {
+  }),
+  shortened_locale: computed('locale', 'translated_locales', function() {
     var res = (this.get('locale') || 'en').split(/[-_]/)[0];
     if((this.get('translated_locales') || []).length > 1) { res = res + "+"; }
     return res;
-  }.property('locale', 'translated_locales'),
+  }),
   find_content_locally: function() {
     var _this = this;
     var fetch_promise = this.get('fetch_promise');
@@ -362,7 +363,7 @@ CoughDrop.Board = DS.Model.extend({
       }
     });
   },
-  linked_boards: function() {
+  linked_boards: computed('buttons', function() {
     var buttons = this.get('buttons') || [];
     var result = [];
     for(var idx = 0; idx < buttons.length; idx++) {
@@ -375,8 +376,8 @@ CoughDrop.Board = DS.Model.extend({
       }
     }
     return Utils.uniq(result, function(r) { return r.id; });
-  }.property('buttons'),
-  unused_buttons: function() {
+  }),
+  unused_buttons: computed('buttons', 'grid', 'grid.order', function() {
     var unused = [];
     var grid = this.get('grid');
     var button_ids = [];
@@ -396,8 +397,8 @@ CoughDrop.Board = DS.Model.extend({
       }
     });
     return unused;
-  }.property('buttons', 'grid', 'grid.order'),
-  long_preview: function() {
+  }),
+  long_preview: computed('name', 'labels', 'user_name', 'created', function() {
     var date = Ember.templateHelpers.date(this.get('created'), 'day');
     var labels = this.get('labels');
     if(labels && labels.length > 100) {
@@ -416,10 +417,10 @@ CoughDrop.Board = DS.Model.extend({
       labels = new_labels;
     }
     return this.get('key') + " (" + date + ") - " + this.get('user_name') + " - " + labels;
-  }.property('name', 'labels', 'user_name', 'created'),
-  search_string: function() {
+  }),
+  search_string: computed('name', 'labels', 'user_name', function() {
     return this.get('name') + " " + this.get('user_name') + " " + this.get('labels');
-  }.property('name', 'labels', 'user_name'),
+  }),
   parent_board_id: DS.attr('string'),
   parent_board_key: DS.attr('string'),
   link: DS.attr('string'),
@@ -475,22 +476,22 @@ CoughDrop.Board = DS.Model.extend({
   unstar: function() {
     return this.star_or_unstar(false);
   },
-  embed_code: function() {
+  embed_code: computed('link', function() {
     return "<iframe src=\"" + this.get('link') + "?embed=1\" frameborder=\"0\" style=\"min-width: 640px; min-height: 480px;\"><\\iframe>";
 
-  }.property('link'),
+  }),
   check_for_copy: function() {
     // TODO: check local records for a user-specific copy as a fallback in case
     // offline
   },
-  multiple_copies: function() {
+  multiple_copies: computed('copies', function() {
     return this.get('copies') > 1;
-  }.property('copies'),
-  visibility_setting: function() {
+  }),
+  visibility_setting: computed('visibility', function() {
     var res = {};
     res[this.get('visibility')] = true;
     return res;
-  }.property('visibility'),  
+  }),  
   create_copy: function(user, make_public) {
     var board = CoughDrop.store.createRecord('board', {
       parent_board_id: this.get('id'),
@@ -623,15 +624,15 @@ CoughDrop.Board = DS.Model.extend({
     }
     return RSVP.reject('no board data url');
   },
-  background_image_url_with_fallback: function() {
+  background_image_url_with_fallback: computed('background.image', 'background_image_data_uri', function() {
     return this.get('background_image_data_uri') || this.get('background.image');
-  }.property('background.image', 'background_image_data_uri'),
-  background_sound_url_with_fallback: function() {
+  }),
+  background_sound_url_with_fallback: computed('background_sound_data_uri', 'background.prompt.sound', function() {
     return this.get('background_sound_data_uri') || this.get('background.prompt.sound');
-  }.property('background_sound_data_uri', 'background.prompt.sound'),
-  has_background: function() {
+  }),
+  has_background: computed('background.image', 'background.text', function() {
     return this.get('background.image') || this.get('background.text');
-  }.property('background.image', 'background.text'),
+  }),
   checkForDataURLOnChange: observer('image_url', 'background.image', function() {
     this.checkForDataURL().then(null, function() { });
   }),
@@ -668,7 +669,7 @@ CoughDrop.Board = DS.Model.extend({
       }
     }
   },
-  for_sale: function() {
+  for_sale: computed('protected', 'protected_settings', function() {
     if(this.get('protected')) {
       var settings = this.get('protected_settings') || {};
       if(settings.cost) {
@@ -678,27 +679,32 @@ CoughDrop.Board = DS.Model.extend({
       }
     }
     return false;
-  }.property('protected', 'protected_settings'),
-  protected_material: function() {
-    var protect = !!this.get('protected');
-    if(protect) { return true; }
-    (this.get('local_images_with_license') || []).forEach(function(image) {
-      if(image && image.get('protected')) {
-        protect = true;
-      }
-    });
-    if(protect) { return true; }
-    (this.get('local_sounds_with_license') || []).forEach(function(sound) {
-      if(sound && sound.get('protected')) {
-        protect = true;
-      }
-    });
-    return !!protect;
-  }.property('protected', 'local_images_with_license', 'local_sounds_with_license'),
-  no_sharing: function() {
+  }),
+  protected_material: computed(
+    'protected',
+    'local_images_with_license',
+    'local_sounds_with_license',
+    function() {
+      var protect = !!this.get('protected');
+      if(protect) { return true; }
+      (this.get('local_images_with_license') || []).forEach(function(image) {
+        if(image && image.get('protected')) {
+          protect = true;
+        }
+      });
+      if(protect) { return true; }
+      (this.get('local_sounds_with_license') || []).forEach(function(sound) {
+        if(sound && sound.get('protected')) {
+          protect = true;
+        }
+      });
+      return !!protect;
+    }
+  ),
+  no_sharing: computed('protected_sources', function() {
     return !!this.get('protected_sources.board');
-  }.property('protected_sources'),
-  protected_sources: function() {
+  }),
+  protected_sources: computed('protected_material', 'protected_settings', function() {
     var res = {};
     if(this.get('protected_material')) {
       if(this.get('protected_settings.media')) {
@@ -712,7 +718,7 @@ CoughDrop.Board = DS.Model.extend({
     }
     res.list = Object.keys(res);
     return res;
-  }.property('protected_material', 'protected_settings'),
+  }),
   load_button_set: function(force) {
     var _this = this;
     if(this.get('button_set') && !force) {

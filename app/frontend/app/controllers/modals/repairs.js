@@ -9,6 +9,7 @@ import { later as runLater } from '@ember/runloop';
 import app_state from '../../utils/app_state';
 import capabilities from '../../utils/capabilities';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -78,9 +79,9 @@ export default modal.ModalController.extend({
       });
     }
   ),
-  has_selection: function() {
+  has_selection: computed('selection_start', function() {
     return this.get('selection_start') != null;
-  }.property('selection_start'),
+  }),
   snap_scroll: function() {
     var elem = document.getElementsByClassName('cursor_area')[0];
     if(!elem) { return; }

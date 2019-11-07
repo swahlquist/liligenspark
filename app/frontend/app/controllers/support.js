@@ -2,6 +2,7 @@ import app_state from '../utils/app_state';
 import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -11,9 +12,9 @@ export default modal.ModalController.extend({
       this.set('cookies', localStorage['enable_cookies'] == 'true');
     }
   },
-  ios: function() {
+  ios: computed(function() {
     return window.navigator.userAgent.match(/ipad|ipod|iphone/i);
-  }.property(),
+  }),
   actions: {
     toggle_cookies: function() {
       var _this = this;

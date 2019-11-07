@@ -45,7 +45,7 @@ CoughDrop.Unit = DS.Model.extend({
       _this.set('weekly_stats', {error: true});
     });
   },
-  max_session_count: function() {
+  max_session_count: computed('user_weeks', function() {
     var counts = [0];
     var weeks = this.get('user_weeks') || {};
     for(var user_id in weeks) {
@@ -54,7 +54,7 @@ CoughDrop.Unit = DS.Model.extend({
       }
     }
     return Math.max.apply(null, counts);
-  }.property('user_weeks'),
+  }),
   refresh_logs: function() {
     var _this = this;
     _this.set('logs', {loading: true});

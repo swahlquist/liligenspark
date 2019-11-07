@@ -4,6 +4,7 @@ import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import modal from '../utils/modal';
 import { set as emberSet } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -27,7 +28,7 @@ export default modal.ModalController.extend({
       this.set('model.intro.unapproved', false);
     }
   },
-  board_categories: function() {
+  board_categories: computed('model.home_board', 'model.id', 'model.categories', function() {
     var res = [];
     var _this = this;
     var cats = {};
@@ -38,8 +39,8 @@ export default modal.ModalController.extend({
       res.push(cat);
     });
     return res;
-  }.property('model.home_board', 'model.id', 'model.categories'),
-  locales: function() {
+  }),
+  locales: computed(function() {
     var list = i18n.get('locales');
     var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
     for(var key in list) {
@@ -47,18 +48,21 @@ export default modal.ModalController.extend({
     }
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
-  }.property(),
+  }),
   licenseOptions: CoughDrop.licenseOptions,
   public_options: CoughDrop.publicOptions,
   iconUrls: CoughDrop.iconUrls,
-  attributable_license_type: function() {
+  attributable_license_type: computed('model.license.type', function() {
     if(!this.get('model.license')) { return; }
     if(this.get('model.license') && this.get('model.license.type') != 'private') {
-      this.set('model.license.author_name', this.get('model.license.author_name') || app_state.get('currentUser.name'));
-      this.set('model.license.author_url',this.get('model.license.author_url') || app_state.get('currentUser.profile_url'));
+      this.update_license();
     }
     return this.get('model.license.type') != 'private';
-  }.property('model.license.type'),
+  }),
+  update_license() {
+    this.set('model.license.author_name', this.get('model.license.author_name') || app_state.get('currentUser.name'));
+    this.set('model.license.author_url',this.get('model.license.author_url') || app_state.get('currentUser.profile_url'));
+  },
   actions: {
     close: function() {
       modal.close();

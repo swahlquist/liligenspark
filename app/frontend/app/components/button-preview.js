@@ -8,16 +8,17 @@ import app_state from '../utils/app_state';
 import editManager from '../utils/edit_manager';
 import capabilities from '../utils/capabilities';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {
     this.redraw();
   },
-  preview_style: function() {
+  preview_style: computed('width', 'height', function() {
     var width = this.get('width') || 200;
     var height = this.get('height') || 200;
     return htmlSafe("width: " + width + "px; height: " + height + "px;");
-  }.property('width', 'height'),
+  }),
   redraw: observer('button.id', function() {
     var button = this.get('button');
     var $canvas = $(this.element).find("canvas");

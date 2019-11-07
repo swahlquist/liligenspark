@@ -12,6 +12,7 @@ import { isEmpty } from '@ember/utils';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -62,7 +63,7 @@ export default Component.extend({
       });
     }
   },
-  box_class: function() {
+  box_class: computed('left', 'wide', function() {
     if(this.get('wide')) {
       return htmlSafe('col-md-8 col-md-offset-2 col-sm-offset-1 col-sm-10');
     } else if(this.get('left')) {
@@ -70,25 +71,25 @@ export default Component.extend({
     } else {
       return htmlSafe('col-md-offset-4 col-md-4 col-sm-offset-3 col-sm-6');
     }
-  }.property('left', 'wide'),
-  app_state: function() {
+  }),
+  app_state: computed(function() {
     return app_state;
-  }.property(),
-  persistence: function() {
+  }),
+  persistence: computed(function() {
     return persistence;
-  }.property(),
+  }),
   willDestroyElement: function() {
     persistence.removeObserver('browserToken', this.browserTokenChange);
   },
-  browserless: function() {
+  browserless: computed(function() {
     return capabilities.browserless;
-  }.property(),
-  noSubmit: function() {
+  }),
+  noSubmit: computed('logging_in', 'logged_in', 'noSecret', function() {
     return this.get('noSecret') || this.get('logging_in') || this.get('logged_in') || this.get('login_followup');
-  }.property('logging_in', 'logged_in', 'noSecret'),
-  noSecret: function() {
+  }),
+  noSecret: computed('client_secret', function() {
     return !this.get('client_secret');
-  }.property('client_secret'),
+  }),
   actions: {
     login_success: function(reload) {
       var _this = this;

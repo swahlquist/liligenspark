@@ -5,6 +5,7 @@ import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Goal = DS.Model.extend({
   didLoad: function() {
@@ -50,7 +51,7 @@ CoughDrop.Goal = DS.Model.extend({
   goal_advances_at: DS.attr('string'),
   goal_duration_unit: DS.attr('string'),
   goal_duration_number: DS.attr('string'),
-  best_time_level: function() {
+  best_time_level: computed('stats', function() {
     var stats = this.get('stats') || {};
     if(stats && stats.monthly && stats.monthly.totals && stats.monthly.totals.sessions > 0) {
       var levels = {};
@@ -94,8 +95,8 @@ CoughDrop.Goal = DS.Model.extend({
     } else {
       return 'none';
     }
-  }.property('stats'),
-  time_units: function() {
+  }),
+  time_units: computed('stats', 'best_time_level', function() {
     var level = this.get('best_time_level');
     var stats = this.get('stats');
     var units = [];
@@ -162,8 +163,8 @@ CoughDrop.Goal = DS.Model.extend({
     var max = Math.max.apply(null, units.mapBy('max_statuses'));
     reversed_units.max = max;
     return reversed_units;
-  }.property('stats', 'best_time_level'),
-  unit_description: function() {
+  }),
+  unit_description: computed('stats', 'best_time_level', function() {
     var level = this.get('best_time_level');
     if(level == 'daily') {
       return i18n.t('day', "Day");
@@ -174,11 +175,11 @@ CoughDrop.Goal = DS.Model.extend({
     } else {
       return i18n.t('no_unit', "No Data");
     }
-  }.property('stats', 'best_time_level'),
-  time_unit_measurements: function() {
+  }),
+  time_unit_measurements: computed('stats', 'best_time_level', function() {
     return this.get('stats')[this.get('best_time_level')] || {};
-  }.property('stats', 'best_time_level'),
-  any_statuses: function() {
+  }),
+  any_statuses: computed('time_unit_status_rows', function() {
     var any_found = false;
     (this.get('time_unit_status_rows') || []).forEach(function(row) {
       (row.time_blocks || []).forEach(function(block) {
@@ -186,8 +187,8 @@ CoughDrop.Goal = DS.Model.extend({
       });
     });
     return any_found;
-  }.property('time_unit_status_rows'),
-  time_unit_status_rows: function() {
+  }),
+  time_unit_status_rows: computed('stats', 'best_time_level', function() {
     if(this.get('best_time_level') == 'none') { return []; }
     var units = this.get('time_units');
     var rows = [{
@@ -233,18 +234,18 @@ CoughDrop.Goal = DS.Model.extend({
       });
     }
     return rows;
-  }.property('stats', 'best_time_level'),
-  high_level_summary: function() {
+  }),
+  high_level_summary: computed('sequence', 'summary', 'sequence_summary', function() {
     var res = this.get('sequence') ? this.get('sequence_summary') : null;
     res = res || this.get('summary');
     return res;
-  }.property('sequence', 'summary', 'sequence_summary'),
-  high_level_description: function() {
+  }),
+  high_level_description: computed('sequence', 'description', 'sequence_description', function() {
     var res = this.get('sequence') ? this.get('sequence_description') : null;
     res = res || this.get('description');
     return res;
-  }.property('sequence', 'description', 'sequence_description'),
-  advance_type: function() {
+  }),
+  advance_type: computed('advance', 'duration', function() {
     if(this.get('advance')) {
       return 'date';
     } else if(this.get('duration')) {
@@ -252,16 +253,16 @@ CoughDrop.Goal = DS.Model.extend({
     } else {
       return 'none';
     }
-  }.property('advance', 'duration'),
-  date_advance: function() {
+  }),
+  date_advance: computed('advance_type', function() {
     return this.get('advance_type') == 'date';
-  }.property('advance_type'),
-  duration_advance: function() {
+  }),
+  duration_advance: computed('advance_type', function() {
     return this.get('advance_type') == 'duration';
-  }.property('advance_type'),
-  any_advance: function() {
+  }),
+  any_advance: computed('advance_type', function() {
     return this.get('advance_type') && this.get('advance_type') != 'none';
-  }.property('advance_type'),
+  }),
   update_advancement: function() {
     if(this.get('advance_type') == 'date') {
       if(this.get('goal_advances_at')) {
@@ -286,16 +287,16 @@ CoughDrop.Goal = DS.Model.extend({
       return RSVP.resolve(null);
     }
   },
-  new_next_template_id: function() {
+  new_next_template_id: computed('next_template_id', function() {
     return this.get('next_template_id') == 'new';
-  }.property('next_template_id'),
-  current_template: function() {
+  }),
+  current_template: computed('currently_running_template', function() {
     if(this.get('currently_running_template')) {
       return CoughDrop.store.createRecord('goal', this.get('currently_running_template'));
     } else {
       return this;
     }
-  }.property('currently_running_template'),
+  }),
   remove_badge: function(badge) {
     var badges = (this.get('badges') || []).filter(function(b) { return b != badge; });
     this.set('badges', badges);

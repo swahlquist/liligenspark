@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {
@@ -111,25 +112,25 @@ export default Component.extend({
     {name: i18n.t('unique_words', "Unique Word(s)"), id: 'unique_word'},
     {name: i18n.t('unique_buttons', "Unique Button(s)"), id: 'unique_button'},
   ],
-  custom_badge: function() {
+  custom_badge: computed('badge.simple_type', function() {
     return this.get('badge.simple_type') == 'custom';
-  }.property('badge.simple_type'),
-  simple_badge: function() {
+  }),
+  simple_badge: computed('badge.simple_type', function() {
     return (this.get('badge.simple_type') && this.get('badge.simple_type') != 'custom');
-  }.property('badge.simple_type'),
-  simple_word_badge: function() {
+  }),
+  simple_word_badge: computed('badge.simple_type', function() {
     var type = this.get('badge.simple_type') || '';
     return type.match(/words/);
-  }.property('badge.simple_type'),
-  simple_button_badge: function() {
+  }),
+  simple_button_badge: computed('badge.simple_type', function() {
     var type = this.get('badge.simple_type') || '';
     return type.match(/buttons/);
-  }.property('badge.simple_type'),
-  simple_modeling_badge: function() {
+  }),
+  simple_modeling_badge: computed('badge.simple_type', function() {
     var type = this.get('badge.simple_type') || '';
     return type.match(/modeling/);
-  }.property('badge.simple_type'),
-  simple_badge_unit: function() {
+  }),
+  simple_badge_unit: computed('badge.simple_type', function() {
     var type = this.get('badge.simple_type') || '';
     if(type.match(/per_day/)) {
       return i18n.t('days', "days");
@@ -138,8 +139,8 @@ export default Component.extend({
     } else {
       return i18n.t('units', "units");
     }
-  }.property('badge.simple_type'),
-  criteria_type_list: function() {
+  }),
+  criteria_type_list: computed('badge.interval', function() {
     if(this.get('badge.interval') == 'monthyear') {
       return [
         {name: i18n.t('select_criteria_list', "[ Select Criteria ]"), id: ''},
@@ -169,7 +170,7 @@ export default Component.extend({
         {name: i18n.t('for_a_total_button_count_of', "For a Total Count of"), id: 'matching_instances'},
       ];
     }
-  }.property('badge.interval'),
+  }),
   update_watch_type_values: observer(
     'badge.enable_watch_total',
     'badge.enable_watch_type_minimum',
@@ -253,7 +254,7 @@ export default Component.extend({
       this.set('badge.' + this.get('badge.instance_metric') + '_instances', this.get('badge.instance_count'));
     }
   }),
-  unit_type: function() {
+  unit_type: computed('badge.interval', function() {
     if(this.get('badge.interval') == 'monthyear') {
       return i18n.t('month', 'month');
     } else if(this.get('badge.interval') == 'biweekyear') {
@@ -263,8 +264,8 @@ export default Component.extend({
     } else {
       return i18n.t('day', 'day');
     }
-  }.property('badge.interval'),
-  unit_type_plural: function() {
+  }),
+  unit_type_plural: computed('badge.interval', function() {
     if(this.get('badge.interval') == 'monthyear') {
       return i18n.t('months', 'months');
     } else if(this.get('badge.interval') == 'biweekyear') {
@@ -274,8 +275,8 @@ export default Component.extend({
     } else {
       return i18n.t('days', 'days');
     }
-  }.property('badge.interval'),
-  event_type_plural: function() {
+  }),
+  event_type_plural: computed('badge.instance_metric', function() {
     if(this.get('badge.instance_metric') == 'button') {
       return i18n.t('buttons', 'buttons');
     } else if(this.get('badge.instance_metric') == 'word') {
@@ -293,8 +294,8 @@ export default Component.extend({
     } else {
       return i18n.t('instances', 'instances');
     }
-  }.property('badge.instance_metric'),
-  watchlist_type_plural: function() {
+  }),
+  watchlist_type_plural: computed('badge.watchlist_type', function() {
     if(this.get('badge.watchlist_type') == 'words') {
       return i18n.t('words', 'words');
     } else if(this.get('badge.watchlist_type') == 'parts_of_speech') {
@@ -302,10 +303,10 @@ export default Component.extend({
     } else {
       return i18n.t('units', 'units');
     }
-  }.property('badge.watchlist_type'),
-  in_list: function() {
+  }),
+  in_list: computed('index', function() {
     return this.get('index') !== undefined && this.get('index') !== null;
-  }.property('index'),
+  }),
   actions: {
     change_image: function() {
       modal.open('badge-image', {badge: this.get('badge') });

@@ -12,6 +12,7 @@ import Button from '../../utils/button';
 import { set as emberSet } from '@ember/object';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   setup: function() {
@@ -67,9 +68,9 @@ export default Controller.extend({
     {name: i18n.t('highlight_all', "Highlight All Buttons on Selection"), id: "all"},
     {name: i18n.t('highlight_spoken', "Highlight Spoken Buttons on Selection"), id: "spoken"},
   ],
-  some_highlighted_buttons: function() {
+  some_highlighted_buttons: computed('pending_preferences.highlighted_buttons', function() {
     return this.get('pending_preferences.highlighted_buttons') && this.get('pending_preferences.highlighted_buttons') != 'none';
-  }.property('pending_preferences.highlighted_buttons'),
+  }),
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
     {name: i18n.t('default_font_caps', "Default Font, All Uppercase"), id: "default_caps"},
@@ -102,7 +103,7 @@ export default Controller.extend({
       this.set('pending_preferences.device.flipped_height', this.get('pending_preferences.device.flipped_height') || this.get('pending_preferences.device.vocalization_height'));
     }
   }),
-  text_sample_class: function() {
+  text_sample_class: computed('pending_preferences.device.button_style', function() {
     var res = "text_sample ";
     var style = Button.style(this.get('pending_preferences.device.button_style'));
     if(style.upper) {
@@ -114,8 +115,8 @@ export default Controller.extend({
       res = res + style.font_class + " ";
     }
     return res;
-  }.property('pending_preferences.device.button_style'),
-  activationLocationList: function() {
+  }),
+  activationLocationList: computed('model.feature_flags.inflections_overlay', function() {
     var res = [
       {name: i18n.t('pointer_release', "Where I Release My Pointer"), id: "end"},
       {name: i18n.t('pointer_start', "Where I First Press"), id: "start"},
@@ -124,7 +125,7 @@ export default Controller.extend({
       res.push({name: i18n.t('tap_and_swipe_inflections', "Tap to Select, Swipe for Inflections"), id: "swipe"});
     }
     return res;
-  }.property('model.feature_flags.inflections_overlay'),
+  }),
   buttonSpaceList: [
     {name: i18n.t('dont_stretch', "Don't Stretch Buttons"), id: "none"},
     {name: i18n.t('prefer_tall', "Stretch Buttons, Taller First"), id: "prefer_tall"},
@@ -193,12 +194,12 @@ export default Controller.extend({
     {name: i18n.t('large', "Large (150px)"), id: "large"},
     {name: i18n.t('huge', "Huge (200px)"), id: "huge"}
   ],
-  title: function() {
+  title: computed('model.user_name', function() {
     return "Preferences for " + this.get('model.user_name');
-  }.property('model.user_name'),
-  ios_app: function() {
+  }),
+  ios_app: computed(function() {
     return capabilities.system == 'iOS' && capabilities.installed_app;
-  }.property(),
+  }),
   set_auto_sync: observer('model.id', 'model.auto_sync', function() {
     if(this.get('pending_preferences.device')) {
       this.set('pending_preferences.device.auto_sync', this.get('model.auto_sync'));
@@ -220,19 +221,23 @@ export default Controller.extend({
       _this.set('core_lists', {error: true});
     });
   },
-  requested_phrases: function() {
-    var list = [].concat(this.get('core_lists.requested_phrases_for_user') || []);
-    var changes = this.get('pending_preferences.requested_phrase_changes') || [];
-    changes.forEach(function(change) {
-      var str = change.replace(/^(add:|remove:)/, '');
-      if(change.match(/^add:/)) {
-        list.push({text: str});
-      } else if(change.match(/^remove:/)) {
-        list = list.filter(function(w) { return w.text != str; });
-      }
-    });
-    return list;
-  }.property('core_lists.requested_phrases_for_user', 'pending_preferences.requested_phrase_changes'),
+  requested_phrases: computed(
+    'core_lists.requested_phrases_for_user',
+    'pending_preferences.requested_phrase_changes',
+    function() {
+      var list = [].concat(this.get('core_lists.requested_phrases_for_user') || []);
+      var changes = this.get('pending_preferences.requested_phrase_changes') || [];
+      changes.forEach(function(change) {
+        var str = change.replace(/^(add:|remove:)/, '');
+        if(change.match(/^add:/)) {
+          list.push({text: str});
+        } else if(change.match(/^remove:/)) {
+          list = list.filter(function(w) { return w.text != str; });
+        }
+      });
+      return list;
+    }
+  ),
   check_voices_available: function() {
     var _this = this;
     if(capabilities.installed_app) {
@@ -245,72 +250,76 @@ export default Controller.extend({
       _this.set('more_voices_available', false);
     }
   },
-  text_only_button_text_position: function() {
+  text_only_button_text_position: computed('pending_preferences.device.button_text_position', function() {
     return this.get('pending_preferences.device.button_text_position') == 'text_only';
-  }.property('pending_preferences.device.button_text_position'),
-  non_communicator: function() {
+  }),
+  non_communicator: computed('pending_preferences.role', function() {
     return this.get('pending_preferences.role') != 'communicator';
-  }.property('pending_preferences.role'),
-  region_scanning: function() {
+  }),
+  region_scanning: computed('pending_preferences.device.scanning_mode', function() {
     return this.get('pending_preferences.device.scanning_mode') == 'region';
-  }.property('pending_preferences.device.scanning_mode'),
-  axes_scanning: function() {
+  }),
+  axes_scanning: computed('pending_preferences.device.scanning_mode', function() {
     return this.get('pending_preferences.device.scanning_mode') == 'axes';
-  }.property('pending_preferences.device.scanning_mode'),
-  arrow_dwell: function() {
+  }),
+  arrow_dwell: computed('pending_preferences.device.dwell_type', function() {
     return this.get('pending_preferences.device.dwell_type') == 'arrow_dwell';
-  }.property('pending_preferences.device.dwell_type'),
-  button_dwell: function() {
+  }),
+  button_dwell: computed('pending_preferences.device.dwell_selection', function() {
     return this.get('pending_preferences.device.dwell_selection') == 'button';
-  }.property('pending_preferences.device.dwell_selection'),
-  native_keyboard_available: function() {
+  }),
+  native_keyboard_available: computed(function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && window.Keyboard;
-  }.property(),
+  }),
   enable_external_keyboard: observer('pending_preferences.device.prefer_native_keyboard', function() {
     if(this.get('pending_preferences.device.prefer_native_keyboard')) {
       this.set('pending_preferences.device.external_keyboard', true);
     }
   }),
-  select_keycode_string: function() {
+  select_keycode_string: computed('pending_preferences.device.scanning_select_keycode', function() {
     if(this.get('pending_preferences.device.scanning_select_keycode')) {
       return (i18n.key_string(this.get('pending_preferences.device.scanning_select_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('pending_preferences.device.scanning_select_keycode'),
-  next_keycode_string: function() {
+  }),
+  next_keycode_string: computed('pending_preferences.device.scanning_next_keycode', function() {
     if(this.get('pending_preferences.device.scanning_next_keycode')) {
       return (i18n.key_string(this.get('pending_preferences.device.scanning_next_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('pending_preferences.device.scanning_next_keycode'),
-  prev_keycode_string: function() {
+  }),
+  prev_keycode_string: computed('pending_preferences.device.scanning_prev_keycode', function() {
     if(this.get('pending_preferences.device.scanning_prev_keycode')) {
       return (i18n.key_string(this.get('pending_preferences.device.scanning_prev_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('pending_preferences.device.scanning_prev_keycode'),
-  cancel_keycode_string: function() {
+  }),
+  cancel_keycode_string: computed('pending_preferences.device.scanning_cancel_keycode', function() {
     if(this.get('pending_preferences.device.scanning_cancel_keycode')) {
       return (i18n.key_string(this.get('pending_preferences.device.scanning_cancel_keycode')) || 'unknown') + ' key';
     } else {
       return "";
     }
-  }.property('pending_preferences.device.scanning_cancel_keycode'),
-  fullscreen_capable: function() {
+  }),
+  fullscreen_capable: computed(function() {
     return capabilities.fullscreen_capable();
-  }.property(),
-  eyegaze_capable: function() {
+  }),
+  eyegaze_capable: computed(function() {
     return capabilities.eye_gaze.available;
-  }.property(),
-  eyegaze_or_dwell_capable: function() {
+  }),
+  eyegaze_or_dwell_capable: computed(function() {
     return capabilities.eye_gaze.available || buttonTracker.mouse_used;
-  }.property(),
-  eyegaze_type: function() {
-    return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
-  }.property('pending_preferences.device.dwell', 'pending_preferences.device.dwell_type'),
+  }),
+  eyegaze_type: computed(
+    'pending_preferences.device.dwell',
+    'pending_preferences.device.dwell_type',
+    function() {
+      return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
+    }
+  ),
   update_dwell_defaults: observer('pending_preferences.device.dwell', function() {
     if(this.get('pending_preferences.device.dwell')) {
       if(!this.get('pending_preferences.device.dwell_type')) {
@@ -318,71 +327,88 @@ export default Controller.extend({
       }
     }
   }),
-  wakelock_capable: function() {
+  wakelock_capable: computed(function() {
     return capabilities.wakelock_capable();
-  }.property(),
-  user_voice_list: function() {
-    var list = speecher.get('voiceList');
-    var result = [];
-    var premium_voice_ids = (this.get('model.premium_voices.claimed') || []).map(function(id) { return "extra:" + id; });
-    list.forEach(function(voice) {
-      if(voice.voiceURI && voice.voiceURI.match(/^extra/)) {
-        if(premium_voice_ids.indexOf(voice.voiceURI) >= 0) {
+  }),
+  user_voice_list: computed(
+    'speecher.voiceList',
+    'model.premium_voices.claimed',
+    'pending_preferences.device.voice.voice_uris',
+    function() {
+      var list = speecher.get('voiceList');
+      var result = [];
+      var premium_voice_ids = (this.get('model.premium_voices.claimed') || []).map(function(id) { return "extra:" + id; });
+      list.forEach(function(voice) {
+        if(voice.voiceURI && voice.voiceURI.match(/^extra/)) {
+          if(premium_voice_ids.indexOf(voice.voiceURI) >= 0) {
+            result.push(voice);
+          }
+        } else {
           result.push(voice);
         }
-      } else {
-        result.push(voice);
+      });
+      if(result.length > 1) {
+        result.push({
+          id: 'force_default',
+          name: i18n.t('system_default_voice', 'System Default Voice')
+        });
+        result.unshift({
+          id: 'default',
+          name: i18n.t('select_a_voice', '[ Select A Voice ]')
+        });
       }
-    });
-    if(result.length > 1) {
-      result.push({
-        id: 'force_default',
-        name: i18n.t('system_default_voice', 'System Default Voice')
-      });
-      result.unshift({
-        id: 'default',
-        name: i18n.t('select_a_voice', '[ Select A Voice ]')
-      });
+      // this is a weird hack because the the voice uri needs to be set *after* the
+      // voice list is generated in order to make sure the correct default is selected
+      var val = this.get('pending_preferences.device.voice.voice_uri');
+      this.set_voice_stuff(val);
+      return result;
     }
-    // this is a weird hack because the the voice uri needs to be set *after* the
-    // voice list is generated in order to make sure the correct default is selected
-    var val = this.get('pending_preferences.device.voice.voice_uri');
+  ),
+  set_voice_stuff(val) {
     this.set('pending_preferences.device.voice.voice_uri', 'tmp_needs_changing');
     var _this = this;
     runLater(function() {
       _this.set('pending_preferences.device.voice.voice_uri', val);
     });
-    return result;
-  }.property('speecher.voiceList', 'model.premium_voices.claimed', 'pending_preferences.device.voice.voice_uris'),
-  active_sidebar_options: function() {
+  },
+  active_sidebar_options: computed('pending_preferences.sidebar_boards', function() {
     var res = this.get('pending_preferences.sidebar_boards');
     if(!res || res.length === 0) {
      res = [].concat(window.user_preferences.any_user.default_sidebar_boards);
     }
     res.forEach(function(b, idx) { b.idx = idx; });
     return res;
-  }.property('pending_preferences.sidebar_boards'),
-  disabled_sidebar_options: function() {
-    var defaults = window.user_preferences.any_user.default_sidebar_boards;
-    if(this.get('include_prior_sidebar_buttons')) {
-      (this.get('pending_preferences.prior_sidebar_boards') || []).forEach(function(b) {
-        if(!defaults.find(function(o) { return (o.key && o.key == b.key) || (o.alert && b.alert); })) {
-          defaults.push(b);
+  }),
+  disabled_sidebar_options: computed(
+    'pending_preferences.sidebar_boards',
+    'include_prior_sidebar_buttons',
+    'pending_preferences.prior_sidebar_boards',
+    function() {
+      var defaults = window.user_preferences.any_user.default_sidebar_boards;
+      if(this.get('include_prior_sidebar_buttons')) {
+        (this.get('pending_preferences.prior_sidebar_boards') || []).forEach(function(b) {
+          if(!defaults.find(function(o) { return (o.key && o.key == b.key) || (o.alert && b.alert); })) {
+            defaults.push(b);
+          }
+        });
+      }
+      var active = this.get('active_sidebar_options');
+      var res = [];
+      defaults.forEach(function(d) {
+        if(!active.find(function(o) { return (o.key && o.key == d.key) || (o.alert && d.alert); })) {
+          res.push(d);
         }
       });
+      return res;
     }
-    var active = this.get('active_sidebar_options');
-    var res = [];
-    defaults.forEach(function(d) {
-      if(!active.find(function(o) { return (o.key && o.key == d.key) || (o.alert && d.alert); })) {
-        res.push(d);
-      }
-    });
-    return res;
-  }.property('pending_preferences.sidebar_boards', 'include_prior_sidebar_buttons', 'pending_preferences.prior_sidebar_boards'),
-  disabled_sidebar_options_or_prior_sidebar_boards: function() {
-    return (this.get('disabled_sidebar_options') || []).length > 0 || (this.get('pending_preferences.prior_sidebar_boards') || []).length > 0;
-  }.property('disabled_sidebar_options', 'pending_preferences.prior_sidebar_boards'),
+  ),
+  disabled_sidebar_options_or_prior_sidebar_boards: computed(
+    'disabled_sidebar_options',
+    'pending_preferences.prior_sidebar_boards',
+    function() {
+      return (this.get('disabled_sidebar_options') || []).length > 0 || (this.get('pending_preferences.prior_sidebar_boards') || []).length > 0;
+    }
+  ),
   logging_changed: observer('pending_preferences.logging', function() {
     if(this.get('pending_preferences.logging')) {
       if(this.get('logging_set') === false) {
@@ -391,9 +417,9 @@ export default Controller.extend({
     }
     this.set('logging_set', this.get('pending_preferences.logging'));
   }),
-  buttons_stretched: function() {
+  buttons_stretched: computed('pending_preferences.stretch_buttons', function() {
     return this.get('pending_preferences.stretch_buttons') && this.get('pending_preferences.stretch_buttons') != 'none';
-  }.property('pending_preferences.stretch_buttons'),
+  }),
   enable_alternate_voice: observer(
     'pending_preferences.device.alternate_voice.enabled',
     'pending_preferences.device.alternate_voice.for_scanning',
@@ -411,28 +437,32 @@ export default Controller.extend({
       this.set('pending_preferences.device.alternate_voice', alt);
     }
   ),
-  not_scanning: function() {
+  not_scanning: computed('pending_preferences.device.scanning', function() {
     return !this.get('pending_preferences.device.scanning');
-  }.property('pending_preferences.device.scanning'),
-  not_fishing: function() {
+  }),
+  not_fishing: computed('pending_preferences.device.fishing', function() {
     return !this.get('pending_preferences.device.fishing');
-  }.property('pending_preferences.device.fishing'),
-  audio_switching_delays: function() {
-    if(this.get('audio_target_available') && capabilities.system == 'Android') {
-      var res = {};
-      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.voice.target')) != -1) {
-        res.primary = true;
+  }),
+  audio_switching_delays: computed(
+    'pending_preferences.device.voice.target',
+    'pending_preferences.device.alternate_voice.target',
+    function() {
+      if(this.get('audio_target_available') && capabilities.system == 'Android') {
+        var res = {};
+        if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.voice.target')) != -1) {
+          res.primary = true;
+        }
+        if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.alternate_voice.target')) != -1) {
+          res.alternate = true;
+        }
+      } else {
+        return {};
       }
-      if(['speaker', 'earpiece', 'headset_or_earpiece'].indexOf(this.get('pending_preferences.device.alternate_voice.target')) != -1) {
-        res.alternate = true;
-      }
-    } else {
-      return {};
     }
-  }.property('pending_preferences.device.voice.target', 'pending_preferences.device.alternate_voice.target'),
-  audio_target_available: function() {
+  ),
+  audio_target_available: computed(function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android');
-  }.property(),
+  }),
   update_can_record_tags: observer('model.id', function() {
     var _this = this;
     capabilities.nfc.available().then(function(res) {

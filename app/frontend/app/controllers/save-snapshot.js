@@ -1,6 +1,7 @@
 import CoughDrop from '../app';
 import modal from '../utils/modal';
 import Utils from '../utils/misc';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -21,15 +22,15 @@ export default modal.ModalController.extend({
       if(_this.get('show_snapshots_status')) { _this.set('snapshots', {error: true}); }
     });
   },
-  starts: function() {
+  starts: computed('model.usage_stats.start_at', function() {
     return (this.get('model.usage_stats.start_at') || '').substring(0, 10);
-  }.property('model.usage_stats.start_at'),
-  default_snapshot_name: function() {
+  }),
+  default_snapshot_name: computed('starts', function() {
     return (this.get('starts') || "New") + " Snapshot";
-  }.property('starts'),
-  ends: function() {
+  }),
+  ends: computed('model.usage_stats.end_at', function() {
     return (this.get('model.usage_stats.end_at') || '').substring(0, 10);
-  }.property('model.usage_stats.end_at'),
+  }),
   actions: {
     close: function() {
       modal.close(false);

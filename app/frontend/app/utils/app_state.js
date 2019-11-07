@@ -31,6 +31,7 @@ import frame_listener from './frame_listener';
 import Button from './button';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 // tracks:
 // current mode (edit mode, speak mode, default)
@@ -265,7 +266,7 @@ var app_state = EmberObject.extend({
     if(capabilities.mobile) {
 //       app_state.set('index_view', transition.to_route == 'index');
     }
-    if(transition.to_routee == 'board.index') {
+    if(transition.to_route == 'board.index') {
       boundClasses.setup();
       var delay = app_state.get('currentUser.preferences.board_jump_delay') || window.user_preferences.any_user.board_jump_delay;
       CoughDrop.log.track('global transition handled');
@@ -292,11 +293,12 @@ var app_state = EmberObject.extend({
     if(!app_state.get('sessionUser') && session.get('isAuthenticated')) {
       app_state.refresh_session_user();
     }
+    app_state.set('current_route', transition.to_route);
   },
   finish_global_transition: function() {
     app_state.set('already_homed', true);
     runNext(function() {
-      var target = app_state.get('controller.currentRouteName');
+      var target = app_state.get('current_route');
 //       app_state.set('index_view', target == 'index');
     });
     // footer was showing up too quickly and looking weird when the rest of the page hadn't
@@ -334,20 +336,20 @@ var app_state = EmberObject.extend({
       this.set('set_as_root_board_state', false);
     }
   }),
-  current_board_level: function() {
+  current_board_level: computed('stashes.board_level', function() {
     return stashes.get('board_level') || 10;
-  }.property('stashes.board_level'),
-  board_url: function() {
+  }),
+  board_url: computed('currentBoardState.key', function() {
     if(this.get('currentBoardState.key')) {
       return htmlSafe((capabilities.api_host || (location.protocol + "//" + location.host)) + "/" + this.get('currentBoardState.key'));
     } else {
       return null;
     }
-  }.property('currentBoardState.key'),
-  domain_board_user_name: function() {
+  }),
+  domain_board_user_name: computed('domain_settings.board_user_name', function() {
     return this.get('domain_settings.board_user_name') || 'example';
-  }.property('domain_settings.board_user_name'),
-  h1_class: function() {
+  }),
+  h1_class: computed('currentBoardState.id', 'from_route', 'edit_mode', function() {
     var res = "";
     if(this.get('currentBoardState.id')) {
       res = res + "with_board " ;
@@ -356,14 +358,14 @@ var app_state = EmberObject.extend({
       }
     }
     return htmlSafe(res);
-  }.property('currentBoardState.id', 'from_route', 'edit_mode'),
-  nav_header_class: function() {
+  }),
+  nav_header_class: computed('currentBoardState.id', 'from_route', function() {
     var res = "no_beta ";
     if(this.get('currentBoardState.id') && this.get('from_route') && !this.get('edit_mode')) {
       res = res + "board_done ";
     }
     return htmlSafe(res);
-  }.property('currentBoardState.id', 'from_route'),
+  }),
   set_latest_board_id: observer('currentBoardState.id', function() {
     this.set('latest_board_id', this.get('currentBoardState.id'));
   }),
@@ -473,11 +475,11 @@ var app_state = EmberObject.extend({
       stashes.set('modeling', !!this.get('modeling'));
     }
   }),
-  modeling: function(ch) {
+  modeling: computed('manual_modeling', 'modeling_for_user', 'modeling_ts', function(ch) {
     var res = !!(this.get('manual_modeling') || this.get('modeling_for_user'));
     return res;
-  }.property('manual_modeling', 'modeling_for_user', 'modeling_ts'),
-  modeling_for_user: function() {
+  }),
+  modeling_for_user: computed('speak_mode', 'currentUser', 'referenced_speak_mode_user', function() {
     var res = this.get('speak_mode') && this.get('currentUser') && this.get('referenced_speak_mode_user') && app_state.get('currentUser.id') != this.get('referenced_speak_mode_user.id');
     var _this = this;
     // this is weird and hacky, but for some reason modeling wasn't reliably updating when modeling_for_user changed
@@ -485,7 +487,7 @@ var app_state = EmberObject.extend({
       _this.set('modeling_ts', (new Date()).getTime() + "_" + Math.random());
     });
     return !!res;
-  }.property('speak_mode', 'currentUser', 'referenced_speak_mode_user'),
+  }),
   auto_clear_modeling: observer('short_refresh_stamp', 'modeling', function() {
     if(this.get('manual_modeling')) {
       var now = (new Date()).getTime();
@@ -1094,39 +1096,44 @@ var app_state = EmberObject.extend({
       app_state.set('currentUser.load_all_connections', true);
     }
   }),
-  eye_gaze_state: function() {
-    if(!this.get('currentUser.preferences.device.dwell') || this.get('currentUser.preferences.device.dwell_type') != 'eyegaze') {
-      return null;
-    }
-    var state = {};
-    var statuses = emberGet(capabilities.eye_gaze, 'statuses') || {};
-    var active = null, pending = null, dormant = null;
-    for(var idx in statuses) {
-      if(statuses[idx]) {
-        if(statuses[idx].active) {
-          if(!statuses[idx].dormant) {
-            if(!active || active.dormant) {
-              active = statuses[idx];
+  eye_gaze_state: computed(
+    'currentUser.preferences.device.dwell',
+    'currentUser.preferences.device.dwell_type',
+    'eye_gaze.statuses',
+    function() {
+      if(!this.get('currentUser.preferences.device.dwell') || this.get('currentUser.preferences.device.dwell_type') != 'eyegaze') {
+        return null;
+      }
+      var state = {};
+      var statuses = emberGet(capabilities.eye_gaze, 'statuses') || {};
+      var active = null, pending = null, dormant = null;
+      for(var idx in statuses) {
+        if(statuses[idx]) {
+          if(statuses[idx].active) {
+            if(!statuses[idx].dormant) {
+              if(!active || active.dormant) {
+                active = statuses[idx];
+              }
+            } else {
+              dormant = dormant || statuses[idx];
             }
-          } else {
-            dormant = dormant || statuses[idx];
+          } else if(!statuses[idx].disabled) {
+            pending = pending || statuses[idx];
           }
-        } else if(!statuses[idx].disabled) {
-          pending = pending || statuses[idx];
         }
       }
-    }
 
-    if(!active && !pending && !dormant) {
-      return null;
+      if(!active && !pending && !dormant) {
+        return null;
+      }
+      return {
+        active: !!active,
+        dormant: !!(!active && dormant),
+        disabled: !!(!active && !dormant),
+        status: (active && active.status) || (dormant && dormant.status) || (pending && pending.status)
+      };
     }
-    return {
-      active: !!active,
-      dormant: !!(!active && dormant),
-      disabled: !!(!active && !dormant),
-      status: (active && active.status) || (dormant && dormant.status) || (pending && pending.status)
-    };
-  }.property('currentUser.preferences.device.dwell', 'currentUser.preferences.device.dwell_type', 'eye_gaze.statuses'),
+  ),
   dom_changes_on_board_state_change: observer('currentBoardState', function() {
     if(!this.get('currentBoardState')) {
       $('#speak_mode').popover('destroy');
@@ -1214,29 +1221,35 @@ var app_state = EmberObject.extend({
       stashes.persist('browse_history', hist);
     }
   },
-  feature_flags: function() {
+  feature_flags: computed('currentUser.feature_flags', function() {
     var res = this.get('currentUser.feature_flags') || {};
     (window.enabled_frontend_features || []).forEach(function(feature) {
       emberSet(res, feature, true);
     });
     return res;
-  }.property('currentUser.feature_flags'),
-  empty_header: function() {
+  }),
+  empty_header: computed('default_mode', 'currentBoardState', 'hide_search', function() {
     return !!(this.get('default_mode') && !this.get('currentBoardState') && !this.get('hide_search'));
-  }.property('default_mode', 'currentBoardState', 'hide_search'),
-  header_size: function() {
-    var size = this.get('currentUser.preferences.device.vocalization_height') || ((window.user_preferences || {}).device || {}).vocalization_height || 100;
-    if(this.get('currentUser.preferences.device.flipped_override') && this.get('flipped') && this.get('currentUser.preferences.device.flipped_height')) {
-      size = this.get('currentUser.preferences.device.flipped_height');
+  }),
+  header_size: computed(
+    'currentUser.preferences.device.vocalization_height',
+    'window_inner_width',
+    'flipped',
+    'currentUser.preferences.device.flipped_override',
+    function() {
+      var size = this.get('currentUser.preferences.device.vocalization_height') || ((window.user_preferences || {}).device || {}).vocalization_height || 100;
+      if(this.get('currentUser.preferences.device.flipped_override') && this.get('flipped') && this.get('currentUser.preferences.device.flipped_height')) {
+        size = this.get('currentUser.preferences.device.flipped_height');
+      }
+      if(window.innerHeight < 400) {
+        size = 'tiny';
+      } else if(window.innerHeight < 600 && size != 'tiny') {
+        size = 'small';
+      }
+      return size;
     }
-    if(window.innerHeight < 400) {
-      size = 'tiny';
-    } else if(window.innerHeight < 600 && size != 'tiny') {
-      size = 'small';
-    }
-    return size;
-  }.property('currentUser.preferences.device.vocalization_height', 'window_inner_width', 'flipped', 'currentUser.preferences.device.flipped_override'),
-  header_height: function() {
+  ),
+  header_height: computed('header_size', 'speak_mode', function() {
     if(this.get('speak_mode')) {
       var size = this.get('header_size');
       if(size == 'tiny') {
@@ -1253,7 +1266,7 @@ var app_state = EmberObject.extend({
     } else {
       return 70;
     }
-  }.property('header_size', 'speak_mode'),
+  }),
   check_for_currently_premium: function(user, action, allow_fully_purchased) {
     var allowed = user && user.get('currently_premium');
     if(allow_fully_purchased && user && user.get('fully_purchased')) {
@@ -1519,23 +1532,27 @@ var app_state = EmberObject.extend({
       text_fallback(tag.text.slice(1, tag.text.length - 2));
     }
   },
-  speak_mode: function() {
+  speak_mode: computed('stashes.current_mode', 'currentBoardState', function() {
     return !!(stashes.get('current_mode') == 'speak' && this.get('currentBoardState'));
-  }.property('stashes.current_mode', 'currentBoardState'),
-  edit_mode: function() {
+  }),
+  edit_mode: computed('stashes.current_mode', 'currentBoardState', function() {
     return !!(stashes.get('current_mode') == 'edit' && this.get('currentBoardState'));
-  }.property('stashes.current_mode', 'currentBoardState'),
-  default_mode: function() {
+  }),
+  default_mode: computed('stashes.current_mode', 'currentBoardState', function() {
     return !!(stashes.get('current_mode') == 'default' || !this.get('currentBoardState'));
-  }.property('stashes.current_mode', 'currentBoardState'),
-  limited_speak_mode_options: function() {
-    return this.get('speak_mode');
-    // TODO: decide if this should be an option at all
-    //return this.get('speak_mode') && this.get('currentUser.preferences.require_speak_mode_pin');
-  }.property('speak_mode', 'currentUser.preferences.require_speak_mode_pin'),
-  superProtectedSpeakMode: function() {
+  }),
+  limited_speak_mode_options: computed(
+    'speak_mode',
+    'currentUser.preferences.require_speak_mode_pin',
+    function() {
+      return this.get('speak_mode');
+      // TODO: decide if this should be an option at all
+      //return this.get('speak_mode') && this.get('currentUser.preferences.require_speak_mode_pin');
+    }
+  ),
+  superProtectedSpeakMode: computed('speak_mode', 'embedded', function() {
     return this.get('speak_mode') && this.get('embedded');
-  }.property('speak_mode', 'embedded'),
+  }),
   auto_exit_speak_mode: observer('speak_mode_started', 'medium_refresh_stamp', function() {
     var now = (new Date()).getTime();
     var redirect_option = false;
@@ -1601,189 +1618,234 @@ var app_state = EmberObject.extend({
       }
     }
   }),
-  current_board_name: function() {
+  current_board_name: computed('currentBoardState', function() {
     var state = this.get('currentBoardState');
     if(state && state.key) {
       return state.name || state.key.split(/\//)[1];
     }
     return null;
-  }.property('currentBoardState'),
-  current_board_user_name: function() {
+  }),
+  current_board_user_name: computed('currentBoardState', function() {
     var state = this.get('currentBoardState');
     if(state && state.key) {
       return state.key.split(/\//)[0];
     }
     return null;
-  }.property('currentBoardState'),
-  current_board_is_home: function() {
-    var board = this.get('currentBoardState');
-    var user = this.get('currentUser');
-    return !!(board && user && user.get('preferences.home_board.id') == board.id);
-  }.property('currentBoardState', 'currentUser', 'currentUser.preferences.home_board.id'),
-  current_board_is_speak_mode_home: function() {
-    var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
-    var current = this.get('currentBoardState');
-    return this.get('speak_mode') && state && current && state.key == current.key;
-  }.property('speak_mode', 'currentBoardState', 'stashes.root_board_state', 'stashes.temporary_root_board_state'),
-  root_board_is_home: function() {
-    var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
-    var user = this.get('currentUser');
-    return !!(state && user && user.get('preferences.home_board.id') == state.id);
-  }.property('stashes.root_board_state', 'stashes.temporary_root_board_state', 'currentUser.preferences.home_board.id'),
-  current_board_not_home_or_supervising: function() {
+  }),
+  current_board_is_home: computed(
+    'currentBoardState',
+    'currentUser',
+    'currentUser.preferences.home_board.id',
+    function() {
+      var board = this.get('currentBoardState');
+      var user = this.get('currentUser');
+      return !!(board && user && user.get('preferences.home_board.id') == board.id);
+    }
+  ),
+  current_board_is_speak_mode_home: computed(
+    'speak_mode',
+    'currentBoardState',
+    'stashes.root_board_state',
+    'stashes.temporary_root_board_state',
+    function() {
+      var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
+      var current = this.get('currentBoardState');
+      return this.get('speak_mode') && state && current && state.key == current.key;
+    }
+  ),
+  root_board_is_home: computed(
+    'stashes.root_board_state',
+    'stashes.temporary_root_board_state',
+    'currentUser.preferences.home_board.id',
+    function() {
+      var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
+      var user = this.get('currentUser');
+      return !!(state && user && user.get('preferences.home_board.id') == state.id);
+    }
+  ),
+  current_board_not_home_or_supervising: computed('current_board_is_home', 'currentUser.supervisees', function() {
     return !this.get('current_board_is_home') || (this.get('currentUser.supervisees') || []).length > 0;
-  }.property('current_board_is_home', 'currentUser.supervisees'),
-  current_board_in_board_set: function() {
+  }),
+  current_board_in_board_set: computed('currentUser.stats.board_set_ids', 'currentBoardState', function() {
     return (this.get('currentUser.stats.board_set_ids') || []).indexOf(this.get('currentBoardState.id')) >= 0;
-  }.property('currentUser.stats.board_set_ids', 'currentBoardState'),
-  current_board_in_extended_board_set: function() {
-    return (this.get('currentUser.stats.board_set_ids_including_supervisees') || []).indexOf(this.get('currentBoardState.id')) >= 0;
-  }.property('currentUser.stats.board_set_ids_including_supervisees', 'currentBoardState'),
-  speak_mode_possible: function() {
-    return !!(this.get('currentBoardState') || this.get('currentUser.preferences.home_board.key'));
-  }.property('currentBoardState', 'currentUser', 'currentUser.preferences.home_board.key'),
-  board_in_current_user_set: function() {
+  }),
+  current_board_in_extended_board_set: computed(
+    'currentUser.stats.board_set_ids_including_supervisees',
+    'currentBoardState',
+    function() {
+      return (this.get('currentUser.stats.board_set_ids_including_supervisees') || []).indexOf(this.get('currentBoardState.id')) >= 0;
+    }
+  ),
+  speak_mode_possible: computed(
+    'currentBoardState',
+    'currentUser',
+    'currentUser.preferences.home_board.key',
+    function() {
+      return !!(this.get('currentBoardState') || this.get('currentUser.preferences.home_board.key'));
+    }
+  ),
+  board_in_current_user_set: computed('currentUser.stats.board_set_ids', 'currentBoardState.id', function() {
     return (this.get('currentUser.stats.board_set_ids') || []).indexOf(this.get('currentBoardState.id')) >= 0;
-  }.property('currentUser.stats.board_set_ids', 'currentBoardState.id'),
-  empty_board_history: function() {
-    // TODO: this is borken
-    return this.get_history().length === 0;
-  }.property('stashes.boardHistory', 'stashes.browse_history', 'speak_mode'),
-  sidebar_visible: function() {
-    // TODO: does this need to trigger board resize event? maybe...
-    return this.get('speak_mode') && (stashes.get('sidebarEnabled') || this.get('currentUser.preferences.quick_sidebar'));
-  }.property('speak_mode', 'stashes.sidebarEnabled', 'currentUser', 'currentUser.preferences.quick_sidebar'),
-  sidebar_relegated: function() {
+  }),
+  empty_board_history: computed(
+    'stashes.boardHistory',
+    'stashes.browse_history',
+    'speak_mode',
+    function() {
+      // TODO: this is borken
+      return this.get_history().length === 0;
+    }
+  ),
+  sidebar_visible: computed(
+    'speak_mode',
+    'stashes.sidebarEnabled',
+    'currentUser',
+    'currentUser.preferences.quick_sidebar',
+    function() {
+      // TODO: does this need to trigger board resize event? maybe...
+      return this.get('speak_mode') && (stashes.get('sidebarEnabled') || this.get('currentUser.preferences.quick_sidebar'));
+    }
+  ),
+  sidebar_relegated: computed('speak_mode', 'window_inner_width', function() {
     return this.get('speak_mode') && this.get('window_inner_width') < 750;
-  }.property('speak_mode', 'window_inner_width'),
+  }),
   time_string: function(timestamp) {
     return window.moment(timestamp).format("HH:mm");
   },
-  fenced_sidebar_board: function() {
-    var _this = this;
-    var loose_tolerance = 1000; // 1000 ft
-    var boards = this.get('current_sidebar_boards') || [];
-    var all_matches = [];
-    var now_time_string = _this.time_string((new Date()).getTime());
-    var any_places = false;
-    boards.forEach(function(b) { if(b.places) { any_places = true; } });
-    var current_place_types = {};
-    if(_this.get('nearby_places') && any_places) {
-      // set current_place_types to the list of places for the closest-retrieved place
-      (_this.get('nearby_places') || []).forEach(function(place) {
-        var d = geolocation.distance(place.latitude, place.longitude, stashes.get('geo.latest.coords.latitude'), stashes.get('geo.latest.coords.longitude'));
-        // anything with 500ft could be a winner
-        if(d && d < 500) {
-          place.types.forEach(function(type) {
-            if(!current_place_types[type] || current_place_types[type].distance > d) {
-              current_place_types[type] = {
-                distance: d,
-                latitude: place.latitude,
-                longitude: place.longitude
-              };
+  fenced_sidebar_board: computed(
+    'last_fenced_board',
+    'medium_refresh_stamp',
+    'current_ssid',
+    'stashes.geo.latest',
+    'nearby_places',
+    'currentUser',
+    'current_sidebar_boards',
+    function() {
+      var _this = this;
+      var loose_tolerance = 1000; // 1000 ft
+      var boards = this.get('current_sidebar_boards') || [];
+      var all_matches = [];
+      var now_time_string = _this.time_string((new Date()).getTime());
+      var any_places = false;
+      boards.forEach(function(b) { if(b.places) { any_places = true; } });
+      var current_place_types = {};
+      if(_this.get('nearby_places') && any_places) {
+        // set current_place_types to the list of places for the closest-retrieved place
+        (_this.get('nearby_places') || []).forEach(function(place) {
+          var d = geolocation.distance(place.latitude, place.longitude, stashes.get('geo.latest.coords.latitude'), stashes.get('geo.latest.coords.longitude'));
+          // anything with 500ft could be a winner
+          if(d && d < 500) {
+            place.types.forEach(function(type) {
+              if(!current_place_types[type] || current_place_types[type].distance > d) {
+                current_place_types[type] = {
+                  distance: d,
+                  latitude: place.latitude,
+                  longitude: place.longitude
+                };
+              }
+            });
+          }
+        });
+      }
+      boards.forEach(function(brd) {
+        var do_add = false;
+        // add all sidebar boards that match any of the criteria
+        var ssids = brd.ssids || [];
+        if(ssids.split) { ssids = ssids.split(/,/); }
+        var matches = {};
+        if(ssids && ssids.indexOf(_this.get('current_ssid')) != -1) {
+          matches['ssid'] = true;
+        }
+        var geo_set = false;
+        if(brd.geos && stashes.get('geo.latest.coords')) {
+          var geos = brd.geos || [];
+          if(geos.split) { geos = geos.split(/;/).map(function(g) { return g.split(/,/).map(function(n) { return parseFloat(n); }); }); }
+          brd.geo_distance = -1;
+          geos.forEach(function(geo) {
+            var d = geolocation.distance(stashes.get('geo.latest.coords.latitude'), stashes.get('geo.latest.coords.longitude'), geo[0], geo[1]);
+            if(d && d < loose_tolerance && (brd.geo_distance == -1 || d < brd.geo_distance)) {
+              brd.geo_distance = d;
+              geo_set = true;
+              matches['geo'] = true;
             }
           });
         }
-      });
-    }
-    boards.forEach(function(brd) {
-      var do_add = false;
-      // add all sidebar boards that match any of the criteria
-      var ssids = brd.ssids || [];
-      if(ssids.split) { ssids = ssids.split(/,/); }
-      var matches = {};
-      if(ssids && ssids.indexOf(_this.get('current_ssid')) != -1) {
-        matches['ssid'] = true;
-      }
-      var geo_set = false;
-      if(brd.geos && stashes.get('geo.latest.coords')) {
-        var geos = brd.geos || [];
-        if(geos.split) { geos = geos.split(/;/).map(function(g) { return g.split(/,/).map(function(n) { return parseFloat(n); }); }); }
-        brd.geo_distance = -1;
-        geos.forEach(function(geo) {
-          var d = geolocation.distance(stashes.get('geo.latest.coords.latitude'), stashes.get('geo.latest.coords.longitude'), geo[0], geo[1]);
-          if(d && d < loose_tolerance && (brd.geo_distance == -1 || d < brd.geo_distance)) {
-            brd.geo_distance = d;
-            geo_set = true;
-            matches['geo'] = true;
-          }
-        });
-      }
-      if(brd.times) {
-        var all_times = brd.times || [];
+        if(brd.times) {
+          var all_times = brd.times || [];
 
-        all_times.forEach(function(times) {
-          if(times[0] > times[1]) {
-            if(now_time_string >= times[0] || now_time_string <= times[1]) {
-              matches['time'] = true;
-            }
-          } else {
-            if(now_time_string >= times[0] && now_time_string <= times[1]) {
-              matches['time'] = true;
-            }
-          }
-        });
-      }
-      if(brd.places && Object.keys(current_place_types).length > 0) {
-        var places = brd.places || [];
-        if(places.split) { places = places.split(/,/); }
-        var closest = null;
-        places.forEach(function(place) {
-          if(current_place_types[place]) {
-            if(!closest || current_place_types[place].distance < closest) {
-              closest = current_place_types[place].distance;
-              matches['place'] = true;
-              if(!geo_set) {
-                brd.geo_distance = closest;
+          all_times.forEach(function(times) {
+            if(times[0] > times[1]) {
+              if(now_time_string >= times[0] || now_time_string <= times[1]) {
+                matches['time'] = true;
+              }
+            } else {
+              if(now_time_string >= times[0] && now_time_string <= times[1]) {
+                matches['time'] = true;
               }
             }
-          }
-        });
-      }
+          });
+        }
+        if(brd.places && Object.keys(current_place_types).length > 0) {
+          var places = brd.places || [];
+          if(places.split) { places = places.split(/,/); }
+          var closest = null;
+          places.forEach(function(place) {
+            if(current_place_types[place]) {
+              if(!closest || current_place_types[place].distance < closest) {
+                closest = current_place_types[place].distance;
+                matches['place'] = true;
+                if(!geo_set) {
+                  brd.geo_distance = closest;
+                }
+              }
+            }
+          });
+        }
 
-      if(brd.highlight_type == 'locations' && (matches['geo'] || matches['ssid'])) {
-        all_matches.push(brd);
-      } else if(brd.highlight_type == 'places' && matches['place']) {
-        all_matches.push(brd);
-      } else if(brd.highlight_type == 'times' && matches['time']) {
-        all_matches.push(brd);
-      } else if(brd.highlight_type == 'custom') {
-        if(!brd.ssids || matches['ssid']) {
-          if(!brd.geos || matches['geo']) {
-            if(!brd.places || matches['place']) {
-              if(!brd.times || matches['time']) {
-                all_matches.push(brd);
+        if(brd.highlight_type == 'locations' && (matches['geo'] || matches['ssid'])) {
+          all_matches.push(brd);
+        } else if(brd.highlight_type == 'places' && matches['place']) {
+          all_matches.push(brd);
+        } else if(brd.highlight_type == 'times' && matches['time']) {
+          all_matches.push(brd);
+        } else if(brd.highlight_type == 'custom') {
+          if(!brd.ssids || matches['ssid']) {
+            if(!brd.geos || matches['geo']) {
+              if(!brd.places || matches['place']) {
+                if(!brd.times || matches['time']) {
+                  all_matches.push(brd);
+                }
               }
             }
           }
         }
+      });
+      var res = all_matches[0];
+      if(all_matches.length > 1) {
+        if(!all_matches.find(function(m) { return !m.geo_distance; })) {
+          // if it's location-based just return the closest one
+          res = all_matches.sort(function(a, b) { return a.geo_distance - b.geo_distance; })[0];
+        } else {
+          // otherwise craft a special button that pops up the list of matches
+        }
       }
-    });
-    var res = all_matches[0];
-    if(all_matches.length > 1) {
-      if(!all_matches.find(function(m) { return !m.geo_distance; })) {
-        // if it's location-based just return the closest one
-        res = all_matches.sort(function(a, b) { return a.geo_distance - b.geo_distance; })[0];
-      } else {
-        // otherwise craft a special button that pops up the list of matches
+      if(res) {
+        res = $.extend({}, res);
+        res.fenced = true;
+        res.shown_at = (new Date()).getTime();
+        _this.set('last_fenced_board', res);
+      } else if(_this.get('last_fenced_board') && _this.get('last_fenced_board').shown_at && _this.get('last_fenced_board').shown_at > (new Date()).getTime() - (2*60*1000)) {
+        // if there is no fenced board but there was one, go ahead and keep that one around
+        // for an extra minute or so
+        res = _this.get('last_fenced_board');
       }
+      return res;
     }
-    if(res) {
-      res = $.extend({}, res);
-      res.fenced = true;
-      res.shown_at = (new Date()).getTime();
-      _this.set('last_fenced_board', res);
-    } else if(_this.get('last_fenced_board') && _this.get('last_fenced_board').shown_at && _this.get('last_fenced_board').shown_at > (new Date()).getTime() - (2*60*1000)) {
-      // if there is no fenced board but there was one, go ahead and keep that one around
-      // for an extra minute or so
-      res = _this.get('last_fenced_board');
-    }
-    return res;
-  }.property('last_fenced_board', 'medium_refresh_stamp', 'current_ssid', 'stashes.geo.latest', 'nearby_places', 'currentUser', 'current_sidebar_boards'),
-  current_sidebar_boards: function() {
+  ),
+  current_sidebar_boards: computed('referenced_user.sidebar_boards_with_fallback', function() {
     var res = this.get('referenced_user.sidebar_boards_with_fallbacks');
     return res;
-  }.property('referenced_user.sidebar_boards_with_fallback'),
+  }),
   check_locations: observer(
     'speak_mode',
     'persistence.online',
@@ -1802,28 +1864,43 @@ var app_state = EmberObject.extend({
       return res;
     }
   ),
-  sidebar_boards: function() {
-    var res = this.get('current_sidebar_boards');
-    if(!res && window.user_preferences && window.user_preferences.any_user && window.user_preferences.any_user.default_sidebar_boards) {
-      res = window.user_preferences.any_user.default_sidebar_boards;
+  sidebar_boards: computed(
+    'fenced_sidebar_board',
+    'currentUser',
+    'current_sidebar_boards',
+    function() {
+      var res = this.get('current_sidebar_boards');
+      if(!res && window.user_preferences && window.user_preferences.any_user && window.user_preferences.any_user.default_sidebar_boards) {
+        res = window.user_preferences.any_user.default_sidebar_boards;
+      }
+      res = res || [];
+      var sb = this.get('fenced_sidebar_board');
+      if(!sb) { return res; }
+      res = res.filter(function(b) { return b.key != sb.key; });
+      res.unshift(sb);
+      return res;
     }
-    res = res || [];
-    var sb = this.get('fenced_sidebar_board');
-    if(!sb) { return res; }
-    res = res.filter(function(b) { return b.key != sb.key; });
-    res.unshift(sb);
-    return res;
-  }.property('fenced_sidebar_board', 'currentUser', 'current_sidebar_boards'),
-  sidebar_pinned: function() {
-    return this.get('speak_mode') && this.get('currentUser.preferences.quick_sidebar');
-  }.property('speak_mode', 'currentUser', 'currentUser.preferences.quick_sidebar'),
-  referenced_user: function() {
-    var user = app_state.get('currentUser');
-    if(this.get('modeling_for_user') && this.get('referenced_speak_mode_user')) {
-      user = this.get('referenced_speak_mode_user');
+  ),
+  sidebar_pinned: computed(
+    'speak_mode',
+    'currentUser',
+    'currentUser.preferences.quick_sidebar',
+    function() {
+      return this.get('speak_mode') && this.get('currentUser.preferences.quick_sidebar');
     }
-    return user;
-  }.property('modeling_for_user', 'currentUser', 'referenced_speak_mode_user'),
+  ),
+  referenced_user: computed(
+    'modeling_for_user',
+    'currentUser',
+    'referenced_speak_mode_user',
+    function() {
+      var user = app_state.get('currentUser');
+      if(this.get('modeling_for_user') && this.get('referenced_speak_mode_user')) {
+        user = this.get('referenced_speak_mode_user');
+      }
+      return user;
+    }
+  ),
   ding_on_message: observer('referenced_user.unread_alerts', function() {
     var ref_id = this.get('referenced_user.id') + ":" + this.get('referenced_user.unread_alerts');
     if(ref_id != this.get('last_ding_state') && this.get('speak_mode') && this.get('referenced_user.unread_alerts') > 0) {
@@ -1870,15 +1947,15 @@ var app_state = EmberObject.extend({
       this.set('user_badge', null);
     }
   }),
-  testing: function() {
+  testing: computed(function() {
     return Ember.testing;
-  }.property(),
-  logging_paused: function() {
+  }),
+  logging_paused: computed('stashes.logging_paused_at', function() {
     return !!stashes.get('logging_paused_at');
-  }.property('stashes.logging_paused_at'),
-  current_time: function() {
+  }),
+  current_time: computed('short_refresh_stamp', function() {
     return (this.get('short_refresh_stamp') || new Date());
-  }.property('short_refresh_stamp'),
+  }),
   check_for_user_updated: observer('short_refresh_stamp', 'sessionUser', function(obj, changes) {
     if(window.persistence) {
       app_state.set('persistence', window.persistence);
@@ -2385,9 +2462,9 @@ var app_state = EmberObject.extend({
       }
     }
   },
-  eval_mode: function() {
+  eval_mode: computed('currentBoardState.key', function() {
     return (this.get('currentBoardState.key') || '').match(/^obf\/eval/);
-  }.property('currentBoardState.key'),
+  }),
   launch_url: function(button, force, board) {
     var _this = this;
     if(!force && _this.get('currentUser.preferences.external_links') == 'confirm_all') {
@@ -2463,7 +2540,7 @@ var app_state = EmberObject.extend({
       }
     }
   }),
-  board_virtual_dom: function() {
+  board_virtual_dom: computed(function() {
     var _this = this;
     var dom = {
       sendAction: function() {
@@ -2564,7 +2641,7 @@ var app_state = EmberObject.extend({
       }
     };
     return dom;
-  }.property()
+  })
 }).create({
 });
 

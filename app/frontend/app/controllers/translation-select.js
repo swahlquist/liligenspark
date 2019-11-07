@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -14,7 +15,7 @@ export default modal.ModalController.extend({
       _this.set('hierarchy', {error: true});
     });
   },
-  locales: function() {
+  locales: computed(function() {
     var list = i18n.get('translatable_locales');
     var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
     for(var key in list) {
@@ -23,7 +24,7 @@ export default modal.ModalController.extend({
     }
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
-  }.property(),
+  }),
   actions: {
     translate: function() {
       var _this = this;

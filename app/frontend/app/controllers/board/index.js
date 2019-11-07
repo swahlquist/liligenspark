@@ -627,7 +627,7 @@ export default Controller.extend({
       app_state.align_button_list();
     }
   ),
-  long_description: function() {
+  long_description: computed('model.description', 'model.name', function() {
     var desc = "";
     if(this.get('model.name') && this.get('model.name') != 'Unnamed Board') {
       desc = this.get('model.name');
@@ -642,24 +642,29 @@ export default Controller.extend({
       desc = desc + this.get('model.description');
     }
     return desc;
-  }.property('model.description', 'model.name'),
-  cc_license: function() {
+  }),
+  cc_license: computed('model.license.type', function() {
     return (this.get('model.license.type') || "").match(/^CC\s/);
-  }.property('model.license.type'),
-  pd_license: function() {
+  }),
+  pd_license: computed('model.license.type', function() {
     return this.get('model.license.type') == 'public domain';
-  }.property('model.license.type'),
-  starImage: function() {
+  }),
+  starImage: computed('model.starred', function() {
     var prefix = capabilities.browserless ? "" : "/";
     return prefix + (this.get('model.starred') ? 'images/star.png' : 'images/star_gray.png');
-  }.property('model.starred'),
-  starAlt: function() {
+  }),
+  starAlt: computed('model.starred', function() {
     return this.get('model.starred') ? i18n.t('already_starred', "Already liked") : i18n.t('star_this_board', "Like this board");
-  }.property('model.starred'),
-  current_level: function() {
-    return this.get('preview_level') || stashes.get('board_level') || this.get('model.default_level') || 10;
-  }.property('model.default_level', 'stashes.board_level', 'preview_level'),
-  button_levels: function() {
+  }),
+  current_level: computed(
+    'model.default_level',
+    'stashes.board_level',
+    'preview_level',
+    function() {
+      return this.get('preview_level') || stashes.get('board_level') || this.get('model.default_level') || 10;
+    }
+  ),
+  button_levels: computed('ordered_buttons.@each.level_modifications', 'levels_change', function() {
     var levels = [];
     (this.get('ordered_buttons') || []).forEach(function(row) {
       row.forEach(function(button) {
@@ -672,16 +677,19 @@ export default Controller.extend({
         }
       });
     });
-    this.set('levels_change', false);
+    this.clear_levels_change();
     return levels.uniq().sort(function(a, b) { return a - b; });
-  }.property('ordered_buttons.@each.level_modifications', 'levels_change'),
-  preview_levels: function() {
+  }),
+  clear_levels_change() {
+    this.set('levels_change', false);
+  },
+  preview_levels: computed('app_state.edit_mode', 'preview_levels_mode', function() {
     return this.get('app_state.edit_mode') && this.get('preview_levels_mode');
-  }.property('app_state.edit_mode', 'preview_levels_mode'),
+  }),
   noUndo: true,
   noRedo: true,
   paint_mode: false,
-  paintColor: function() {
+  paintColor: computed('paint_mode', function() {
     var mode = this.get('paint_mode');
     if(mode) {
       if(mode.hidden === true) {
@@ -700,85 +708,104 @@ export default Controller.extend({
     } else {
       return '';
     }
-  }.property('paint_mode'),
-  current_grid: function() {
+  }),
+  current_grid: computed('ordered_buttons', function() {
     var ob = this.get('ordered_buttons');
     if(!ob) { return null; }
     return {
       rows: ob.length,
       columns: ob[0].length
     };
-  }.property('ordered_buttons'),
-  extra_pad: function() {
-    var spacing = app_state.get('currentUser.preferences.device.button_spacing') || window.user_preferences.device.button_spacing;
-    if(spacing == 'none') {
-      return 0;
-    } else if(spacing == 'minimal' || app_state.get('window_inner_width') < 600) {
-      return 1;
-    } else if(spacing == "extra-small" || app_state.get('window_inner_width') < 750) {
-      return 2;
-    } else if(spacing == "medium") {
-      return 10;
-    } else if(spacing == "large") {
-      return 20;
-    } else if(spacing == "huge") {
-      return 45;
-    } else {
-      return 5;
-    }
-  }.property('app_state.currentUser.preferences.device.button_spacing', 'app_state.window_inner_width'),
-  inner_pad: function() {
-    var spacing = app_state.get('currentUser.preferences.device.button_border') || window.user_preferences.device.button_border;
-    if(spacing == "none") {
-      return 0;
-    } else if(app_state.get('window_inner_width') < 600) {
-      return 1;
-    } else if(spacing == "medium" || app_state.get('window_inner_width') < 750) {
-      return 2;
-    } else if(spacing == "large") {
-      return 5;
-    } else if(spacing == "huge") {
-      return 10;
-    } else {
-      return 1;
-    }
-  }.property('app_state.currentUser.preferences.device.button_border', 'window_inner_width'),
-  base_text_height: function() {
-    var text = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
-    var position = app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position;
-    if(text == "small") {
-      return 14;
-    } else if(text == "none" || position == "none") {
-      return 0;
-    } else if(text == "large") {
-      return 22;
-    } else if(text == "huge") {
-      return 35;
-    } else {
-      return 18;
-    }
-  }.property('app_state.currentUser.preferences.device.button_text', 'app_state.currentUser.preferences.device.button_text'),
-  text_style: function() {
-    var size = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
-    if(app_state.get('currentUser.preferences.device.button_text_position') == 'none') {
-      size = 'none';
-    }
-    if(size != 'none') {
-      if(app_state.get('window_inner_width') < 600) {
-        size = 'small';
-      } else if(app_state.get('window_inner_width') < 750 && size != 'small') {
-        size = 'medium';
+  }),
+  extra_pad: computed(
+    'app_state.currentUser.preferences.device.button_spacing',
+    'app_state.window_inner_width',
+    function() {
+      var spacing = app_state.get('currentUser.preferences.device.button_spacing') || window.user_preferences.device.button_spacing;
+      if(spacing == 'none') {
+        return 0;
+      } else if(spacing == 'minimal' || app_state.get('window_inner_width') < 600) {
+        return 1;
+      } else if(spacing == "extra-small" || app_state.get('window_inner_width') < 750) {
+        return 2;
+      } else if(spacing == "medium") {
+        return 10;
+      } else if(spacing == "large") {
+        return 20;
+      } else if(spacing == "huge") {
+        return 45;
+      } else {
+        return 5;
       }
     }
-    return "text_" + size;
-  }.property('app_state.currentUser.preferences.device.button_text', 'app_state.currentUser.preferences.device.button_text_position'),
-  text_position: function() {
-    if(this.get('model.text_only')) {
-      return 'text_position_text_only';
+  ),
+  inner_pad: computed(
+    'app_state.currentUser.preferences.device.button_border',
+    'window_inner_width',
+    function() {
+      var spacing = app_state.get('currentUser.preferences.device.button_border') || window.user_preferences.device.button_border;
+      if(spacing == "none") {
+        return 0;
+      } else if(app_state.get('window_inner_width') < 600) {
+        return 1;
+      } else if(spacing == "medium" || app_state.get('window_inner_width') < 750) {
+        return 2;
+      } else if(spacing == "large") {
+        return 5;
+      } else if(spacing == "huge") {
+        return 10;
+      } else {
+        return 1;
+      }
     }
-    return "text_position_" + (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
-  }.property('model.text_only', 'app_state.currentUser.preferences.device.button_text_position'),
-  symbol_background: function() {
+  ),
+  base_text_height: computed(
+    'app_state.currentUser.preferences.device.button_text',
+    function() {
+      var text = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
+      var position = app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position;
+      if(text == "small") {
+        return 14;
+      } else if(text == "none" || position == "none") {
+        return 0;
+      } else if(text == "large") {
+        return 22;
+      } else if(text == "huge") {
+        return 35;
+      } else {
+        return 18;
+      }
+    }
+  ),
+  text_style: computed(
+    'app_state.currentUser.preferences.device.button_text',
+    'app_state.currentUser.preferences.device.button_text_position',
+    function() {
+      var size = app_state.get('currentUser.preferences.device.button_text') || window.user_preferences.device.button_text;
+      if(app_state.get('currentUser.preferences.device.button_text_position') == 'none') {
+        size = 'none';
+      }
+      if(size != 'none') {
+        if(app_state.get('window_inner_width') < 600) {
+          size = 'small';
+        } else if(app_state.get('window_inner_width') < 750 && size != 'small') {
+          size = 'medium';
+        }
+      }
+      return "text_" + size;
+    }
+  ),
+  text_position: computed(
+    'model.text_only',
+    'app_state.currentUser.preferences.device.button_text_position',
+    function() {
+      if(this.get('model.text_only')) {
+        return 'text_position_text_only';
+      }
+      return "text_position_" + (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
+    }
+  ),
+  symbol_background: computed('app_state.currentUser.preferences.symbol_background', function() {
     var bg = app_state.get('currentUser.preferences.symbol_background');
     if(!bg) {
       if(app_state.get('currentUser')) {
@@ -788,103 +815,124 @@ export default Controller.extend({
       }
     }
     return "symbol_background_" + bg;
-  }.property('app_state.currentUser.preferences.symbol_background'),
-  border_style: function() {
+  }),
+  border_style: computed('app_state.currentUser.preferences.device.button_border', function() {
     var spacing = app_state.get('currentUser.preferences.device.button_border') || window.user_preferences.device.button_border;
     return "border_" + spacing;
-  }.property('app_state.currentUser.preferences.device.button_border'),
-  button_style: function() {
+  }),
+  button_style: computed('app_state.currentUser.preferences.device.button_style', function() {
     return app_state.get('currentUser.preferences.device.button_style');
-  }.property('app_state.currentUser.preferences.device.button_style'),
-  editModeNormalText: function() {
+  }),
+  editModeNormalText: computed('app_state.edit_mode', 'model.text_size', function() {
     return app_state.get('edit_mode') && this.get('model.text_size') != 'really_small_text';
-  }.property('app_state.edit_mode', 'model.text_size'),
-  nothing_visible_not_edit: function() {
+  }),
+  nothing_visible_not_edit: computed('nothing_visible', 'app_state.edit_mode', function() {
     return this.get('nothing_visible') && !app_state.get('edit_mode');
-  }.property('nothing_visible', 'app_state.edit_mode'),
-  display_class: function() {
-    var res = "board advanced_selection ";
-    if(!app_state.get('currentUser.preferences.folder_icons')) {
-      res = res + "colored_icons ";
-    }
-    if(app_state.get('currentUser.preferences.high_contrast')) {
-      res = res + "high_contrast ";
-    }
-    if(this.get('model.finding_target')) {
-      res = res + "finding_target ";
-    }
-    if(this.get('stashes.current_mode')) {
-      res = res + this.get('stashes.current_mode')  + " ";
-    }
-    var stretchable = !app_state.get('edit_mode') && app_state.get('currentUser.preferences.stretch_buttons') && app_state.get('currentUser.preferences.stretch_buttons') != 'none'; // not edit mode and user-enabled
-    if(!app_state.get('eval_mode')) {
-      if(this.get('stashes.all_buttons_enabled')) {
-        res = res + 'show_all_buttons ';
-      } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint' && !this.get('model.hide_empty')) {
-        res = res + 'hint_hidden_buttons ';
-      } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid' && !this.get('model.hide_empty')) {
-        res = res + 'grid_hidden_buttons ';
+  }),
+  display_class: computed(
+    'stashes.all_buttons_enabled',
+    'stashes.current_mode',
+    'paint_mode',
+    'border_style',
+    'text_style',
+    'model.finding_target',
+    'model.hide_empty',
+    'app_state.currentUser.preferences.hidden_buttons',
+    'app_state.currentUser.hide_symbols',
+    'app_state.currentUser.preferences.folder_icons',
+    'app_state.currentUser.preferences.stretch_buttons',
+    'app_state.eval_mode',
+    'app_state.currentUser.preferences.high_contrast',
+    function() {
+      var res = "board advanced_selection ";
+      if(!app_state.get('currentUser.preferences.folder_icons')) {
+        res = res + "colored_icons ";
       }
-    }
-    if(app_state.get('currentUser.hide_symbols')) {
-      res = res + 'show_labels ';
-    }
-    if(this.get('paint_mode')) {
-      res = res + "paint ";
-    }
-    if(this.get('border_style')) {
-      res = res + this.get('border_style') + " ";
-    }
-    if(this.get('text_style')) {
-      res = res + this.get('text_style') + " ";
-    }
-    if(this.get('text_position')) {
-      res = res + this.get('text_position') + " ";
-    }
-    if(this.get('symbol_background')) {
-      res = res + this.get('symbol_background') + " ";
-    }
-    if(this.get('button_style')) {
-      var style = Button.style(this.get('button_style'));
-      if(style.upper) {
-        res = res + "upper ";
-      } else if(style.lower) {
-        res = res + "lower ";
+      if(app_state.get('currentUser.preferences.high_contrast')) {
+        res = res + "high_contrast ";
       }
-      if(style.font_class) {
-        res = res + style.font_class + " ";
+      if(this.get('model.finding_target')) {
+        res = res + "finding_target ";
       }
-    }
-    return res;
-  }.property('stashes.all_buttons_enabled', 'stashes.current_mode', 'paint_mode', 'border_style', 'text_style', 'model.finding_target', 'model.hide_empty', 'app_state.currentUser.preferences.hidden_buttons', 'app_state.currentUser.hide_symbols', 'app_state.currentUser.preferences.folder_icons', 'app_state.currentUser.preferences.stretch_buttons', 'app_state.eval_mode', 'app_state.currentUser.preferences.high_contrast'),
-  suggestion_class: function() {
-    var res = "advanced_selection ";
-    if(this.get('text_style')) {
-      res = res + this.get('text_style') + " ";
-    }
-    if(this.get('text_position')) {
-      res = res + this.get('text_position') + " ";
-    }
-    if(this.get('button_style')) {
-      var style = Button.style(this.get('button_style'));
-      if(style.upper) {
-        res = res + "upper ";
-      } else if(style.lower) {
-        res = res + "lower ";
+      if(this.get('stashes.current_mode')) {
+        res = res + this.get('stashes.current_mode')  + " ";
       }
-      if(style.font_class) {
-        res = res + style.font_class + " ";
+      var stretchable = !app_state.get('edit_mode') && app_state.get('currentUser.preferences.stretch_buttons') && app_state.get('currentUser.preferences.stretch_buttons') != 'none'; // not edit mode and user-enabled
+      if(!app_state.get('eval_mode')) {
+        if(this.get('stashes.all_buttons_enabled')) {
+          res = res + 'show_all_buttons ';
+        } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'hint' && !this.get('model.hide_empty')) {
+          res = res + 'hint_hidden_buttons ';
+        } else if(!stretchable && app_state.get('currentUser.preferences.hidden_buttons') == 'grid' && !this.get('model.hide_empty')) {
+          res = res + 'grid_hidden_buttons ';
+        }
       }
+      if(app_state.get('currentUser.hide_symbols')) {
+        res = res + 'show_labels ';
+      }
+      if(this.get('paint_mode')) {
+        res = res + "paint ";
+      }
+      if(this.get('border_style')) {
+        res = res + this.get('border_style') + " ";
+      }
+      if(this.get('text_style')) {
+        res = res + this.get('text_style') + " ";
+      }
+      if(this.get('text_position')) {
+        res = res + this.get('text_position') + " ";
+      }
+      if(this.get('symbol_background')) {
+        res = res + this.get('symbol_background') + " ";
+      }
+      if(this.get('button_style')) {
+        var style = Button.style(this.get('button_style'));
+        if(style.upper) {
+          res = res + "upper ";
+        } else if(style.lower) {
+          res = res + "lower ";
+        }
+        if(style.font_class) {
+          res = res + style.font_class + " ";
+        }
+      }
+      return res;
     }
-    if(this.get('app_state.currentUser.preferences.high_contrast')) {
-      res = res + "high_contrast ";
-    }
+  ),
+  suggestion_class: computed(
+    'button_style',
+    'text_style',
+    'app_state.currentUser.preferences.word_suggestion_images',
+    'app_state.currentUser.preference.high_contrast',
+    function() {
+      var res = "advanced_selection ";
+      if(this.get('text_style')) {
+        res = res + this.get('text_style') + " ";
+      }
+      if(this.get('text_position')) {
+        res = res + this.get('text_position') + " ";
+      }
+      if(this.get('button_style')) {
+        var style = Button.style(this.get('button_style'));
+        if(style.upper) {
+          res = res + "upper ";
+        } else if(style.lower) {
+          res = res + "lower ";
+        }
+        if(style.font_class) {
+          res = res + style.font_class + " ";
+        }
+      }
+      if(this.get('app_state.currentUser.preferences.high_contrast')) {
+        res = res + "high_contrast ";
+      }
 
-    if(this.get('app_state.currentUser.preferences.word_suggestion_images')) {
-      res = res + "with_images ";
+      if(this.get('app_state.currentUser.preferences.word_suggestion_images')) {
+        res = res + "with_images ";
+      }
+      return res;
     }
-    return res;
-  }.property('text_style', 'button_style', 'text_style', 'app_state.currentUser.preferences.word_suggestion_images', 'app_state.currentUser.preference.high_contrast'),
+  ),
   update_button_symbol_class: observer(
     'model.text_only',
     'app_state.currentUser.hide_symbols',

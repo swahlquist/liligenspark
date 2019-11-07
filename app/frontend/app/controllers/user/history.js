@@ -1,6 +1,7 @@
 import Controller from '@ember/controller';
 import CoughDrop from '../../app';
 import Utils from '../../utils/misc';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   load_results: function() {
@@ -12,7 +13,7 @@ export default Controller.extend({
       _this.set('history', {error: true});
     });
   },
-  maybe_more: function() {
+  maybe_more: computed('history', function() {
     return this.get('history.length') >= 25;
-  }.property('history')
+  })
 });

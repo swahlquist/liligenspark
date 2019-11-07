@@ -6,6 +6,7 @@ import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -35,7 +36,7 @@ export default modal.ModalController.extend({
       this.set('not_scrollable', btn.scrollHeight <= btn.clientHeight);
     }
   },
-  text_class: function() {
+  text_class: computed('model.text_only', 'model.text', function() {
     var size = 'normal';
     var text = this.get('model.text') || "";
     if(this.get('model.text_only')) {
@@ -60,7 +61,7 @@ export default modal.ModalController.extend({
       }
     }
     return htmlSafe(size);
-  }.property('model.text_only', 'model.text'),
+  }),
   actions: {
     speak: function(close) {
       if(this.get('holding')) { return; }

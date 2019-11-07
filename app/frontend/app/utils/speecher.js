@@ -10,6 +10,7 @@ import i18n from './i18n';
 import stashes from './_stashes';
 import Utils from './misc';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 var speecher = EmberObject.extend({
   beep_url: "https://opensymbols.s3.amazonaws.com/beep.mp3",
@@ -117,7 +118,7 @@ var speecher = EmberObject.extend({
       }
     }
   },
-  voiceList: function() {
+  voiceList: computed('voices', function() {
     var res = [];
     var current_locale = (window.navigator.language || "").replace(/-/g, '_').toLowerCase();
     var current_lang = current_locale.split(/_/)[0];
@@ -166,7 +167,7 @@ var speecher = EmberObject.extend({
 //         }
       }
     });
-  }.property('voices'),
+  }),
   check_readiness: function() {
     if(!this.ready) {
       capabilities.tts.init();

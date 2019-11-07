@@ -8,6 +8,7 @@ import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
 import progress_tracker from '../utils/progress_tracker';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -77,51 +78,56 @@ export default modal.ModalController.extend({
       });
     }
   },
-  destination_language: function() {
+  destination_language: computed('model.locale', function() {
     return i18n.readable_language(this.get('model.locale'));
-  }.property('model.locale'),
-  source_language: function() {
+  }),
+  source_language: computed('model.board.locale', function() {
     return i18n.readable_language(this.get('model.board.locale'));
-  }.property('model.board.locale'),
-  sorted_buttons: function() {
-    var words = this.get('model.button_set.buttons') || [];
-    if(this.get('model.board.buttons')) {
-      var _this = this;
-      var board_id = this.get('model.board.id');
-      this.get('model.board.buttons').forEach(function(button) {
-        if(!words.find(function(b) { return b.board_id == board_id && b.id == button.id; })) {
-          words.push($.extend({}, button, {
-            board_id: board_id,
-            board_key: _this.get('model.board.key'),
-            depth: 0
-          }));
-        }
-      });
-    }
-    var res = [];
-    var locale = this.get('model.locale');
-    var board_ids = this.get('model.old_board_ids_to_translate');
-    var translations = this.get('translations') || {};
-    var original_board_id = this.get('model.board.id');
-    var translating = !!(this.get('translating'));
-    words.forEach(function(b, idx) {
-      if(translating) {
-        if(locale && b.locale && b.locale == locale) { return; }
-        if(board_ids && board_ids.indexOf(b.board_id) == -1) { return; }
-        if(!board_ids && b.board_id != original_board_id) { return; }
+  }),
+  sorted_buttons: computed(
+    'model.button_set.buttons',
+    'model.locale',
+    'model.board_ids',
+    function() {
+      var words = this.get('model.button_set.buttons') || [];
+      if(this.get('model.board.buttons')) {
+        var _this = this;
+        var board_id = this.get('model.board.id');
+        this.get('model.board.buttons').forEach(function(button) {
+          if(!words.find(function(b) { return b.board_id == board_id && b.id == button.id; })) {
+            words.push($.extend({}, button, {
+              board_id: board_id,
+              board_key: _this.get('model.board.key'),
+              depth: 0
+            }));
+          }
+        });
       }
-      emberSet(b, 'label', b.vocalization || b.label);
-      words.forEach(function(b2, idx2) {
-        b2.label = b2.vocalization || b2.label;
-        if(b.label.toLowerCase() == b2.label.toLowerCase() && idx != idx2) {
-          b.repeat = true;
+      var res = [];
+      var locale = this.get('model.locale');
+      var board_ids = this.get('model.old_board_ids_to_translate');
+      var translations = this.get('translations') || {};
+      var original_board_id = this.get('model.board.id');
+      var translating = !!(this.get('translating'));
+      words.forEach(function(b, idx) {
+        if(translating) {
+          if(locale && b.locale && b.locale == locale) { return; }
+          if(board_ids && board_ids.indexOf(b.board_id) == -1) { return; }
+          if(!board_ids && b.board_id != original_board_id) { return; }
         }
+        emberSet(b, 'label', b.vocalization || b.label);
+        words.forEach(function(b2, idx2) {
+          b2.label = b2.vocalization || b2.label;
+          if(b.label.toLowerCase() == b2.label.toLowerCase() && idx != idx2) {
+            b.repeat = true;
+          }
+        });
+        res.push(b);
       });
-      res.push(b);
-    });
-    res = res.sort(function(a, b) { if(a.label.toLowerCase() < b.label.toLowerCase()) { return -1; } else if(a.label.toLowerCase() > b.label.toLowerCase()) { return 1; } else { return 0; } });
-    return res;
-  }.property('model.button_set.buttons', 'model.locale', 'model.board_ids'),
+      res = res.sort(function(a, b) { if(a.label.toLowerCase() < b.label.toLowerCase()) { return -1; } else if(a.label.toLowerCase() > b.label.toLowerCase()) { return 1; } else { return 0; } });
+      return res;
+    }
+  ),
   update_sorted_buttons: observer('sorted_buttons', 'translation_index', 'translating.done', function() {
     var _this = this;
     var translations = _this.get('translations') || {};
@@ -137,20 +143,20 @@ export default modal.ModalController.extend({
       }
     });
   }),
-  sorted_filtered_buttons: function() {
+  sorted_filtered_buttons: computed('sorted_buttons', 'filter', function() {
     var list = this.get('sorted_buttons') || [];
     var res = list;
     if(this.get('filter') == 'repeats') {
       res = list.filter(function(w) { return w.repeat; });
     }
     return res;
-  }.property('sorted_buttons', 'filter'),
-  show_all: function() {
+  }),
+  show_all: computed('filter', function() {
     return this.get('filter') != 'repeats';
-  }.property('filter'),
-  show_repeats: function() {
+  }),
+  show_repeats: computed('filter', function() {
     return this.get('filter') == 'repeats';
-  }.property('filter'),
+  }),
   actions: {
     download_list: function() {
       var element = document.createElement('a');

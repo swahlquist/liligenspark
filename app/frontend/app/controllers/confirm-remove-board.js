@@ -1,21 +1,22 @@
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.set('loading', false);
     this.set('error', false);
   },
-  delete_action: function() {
+  delete_action: computed('model.action', function() {
     return this.get('model.action') == 'delete';
-  }.property('model.action'),
-  unlink_action: function() {
+  }),
+  unlink_action: computed('model.action', function() {
     return this.get('model.action') == 'unlink';
-  }.property('model.action'),
-  unstar_action: function() {
+  }),
+  unstar_action: computed('model.action', function() {
     return this.get('model.action') == 'unstar';
-  }.property('model.action'),
+  }),
   actions: {
     remove: function() {
       var board = this.get('model.board');

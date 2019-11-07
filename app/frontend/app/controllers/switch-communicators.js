@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -13,17 +14,17 @@ export default modal.ModalController.extend({
     this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
     this.set('currently_selected_id', null);
   },
-  self_currently_selected: function() {
+  self_currently_selected: computed('app_state.currentUser.id', function() {
     return app_state.get('currentUser.id') && app_state.get('currentUser.id') == app_state.get('sessionUser.id');
-  }.property('app_state.currentUser.id'),
+  }),
   select_on_change: observer('currently_selected_id', function() {
     if(this.get('currently_selected_id')) {
       this.send('select', this.get('currently_selected_id'));
     }
   }),
-  modeling_choice: function() {
+  modeling_choice: computed('model.modeling', function() {
     return this.get('model.modeling') !== undefined && this.get('model.modeling') != 'ask';
-  }.property('model.modeling'),
+  }),
   actions: {
     select: function(board_for_user_id) {
       var jump_home = this.get('model.jump_home');

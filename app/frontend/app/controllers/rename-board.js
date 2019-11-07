@@ -3,14 +3,15 @@ import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.set('status', null);
   },
-  old_key: function() {
+  old_key: computed('model.board.key', function() {
     return (this.get('model.board.key') || "").split(/\//)[1];
-  }.property('model.board.key'),
+  }),
   actions: {
     rename: function() {
       if(this.get('old_key') == this.get('old_key_value') && this.get('new_key_value')) {

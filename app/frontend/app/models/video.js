@@ -4,6 +4,7 @@ import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Video = DS.Model.extend({
   didLoad: function() {
@@ -17,7 +18,7 @@ CoughDrop.Video = DS.Model.extend({
   license: DS.attr('raw'),
   permissions: DS.attr('raw'),
   file: DS.attr('boolean'),
-  filename: function() {
+  filename: computed('url', function() {
     var url = this.get('url') || '';
     if(url.match(/^data/)) {
       return i18n.t('embedded_video', "embedded video");
@@ -29,7 +30,7 @@ CoughDrop.Video = DS.Model.extend({
       }
       return decodeURIComponent(name || 'video');
     }
-  }.property('url'),
+  }),
   check_for_editable_license: observer('license', 'id', function() {
     if(this.get('license') && this.get('id') && !this.get('permissions.edit')) {
       this.set('license.uneditable', true);
@@ -46,9 +47,9 @@ CoughDrop.Video = DS.Model.extend({
       }
     });
   },
-  best_url: function() {
+  best_url: computed('url', 'data_url', function() {
     return this.get('data_url') || this.get('url');
-  }.property('url', 'data_url'),
+  }),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var _this = this;

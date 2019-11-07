@@ -3,19 +3,20 @@ import CoughDrop from '../../app';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  canvas_style: function() {
+  canvas_style: computed('short', function() {
     var res = 'width: 100%; height: 400px;';
     if(this.get('short')) { res = "width: 100%; height: 300px;"; }
     return htmlSafe(res);
-  }.property('short'),
-  canvas_height: function() {
+  }),
+  canvas_height: computed('short', function() {
     return htmlSafe(this.get('short') ? (768 * 2 / 3) : 768);
-  }.property('short'),
+  }),
   draw: observer('stats', 'ref_stats', 'zoom', 'word_cloud_id', function() {
     var elem = this.get('element').getElementsByClassName('word_cloud')[0];
     if(elem) {

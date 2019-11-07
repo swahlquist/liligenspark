@@ -6,6 +6,7 @@ import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
 import { set as emberSet } from '@ember/object';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -67,13 +68,19 @@ export default modal.ModalController.extend({
       }));
     }
   ),
-  category_phrases: function() {
-    var cat = this.get('current_category');
-    return (this.get('phrases') || []).filter(function(u) { return u.category == cat; });
-  }.property('phrases', 'phrases.length', 'phrases.@each.id', 'current_category'),
-  journaling: function() {
+  category_phrases: computed(
+    'phrases',
+    'phrases.length',
+    'phrases.@each.id',
+    'current_category',
+    function() {
+      var cat = this.get('current_category');
+      return (this.get('phrases') || []).filter(function(u) { return u.category == cat; });
+    }
+  ),
+  journaling: computed('current_category', function() {
     return this.get('current_category') == 'journal';
-  }.property('current_category'),
+  }),
   actions: {
     select: function(button) {
       if(button.stash) {

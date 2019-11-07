@@ -1,15 +1,16 @@
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.set('model', this.get('model.board'));
     this.load_charts();
   },
-  using_user_names: function() {
+  using_user_names: computed('model.using_user_names', function() {
     return (this.get('model.using_user_names') || []).join(', ');
-  }.property('model.using_user_names'),
+  }),
   load_charts: function() {
     var _this = this;
     _this.set('stats', null);

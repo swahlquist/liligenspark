@@ -4,6 +4,7 @@ import app_state from '../utils/app_state';
 import persistence from '../utils/persistence';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -37,7 +38,7 @@ export default modal.ModalController.extend({
       }
     });
   },
-  reachability: function() {
+  reachability: computed('model.word', 'model.user.core_lists', function() {
     var lists = this.get('model.user.core_lists');
     var res = {};
     var word = this.get('model.word').toLowerCase();
@@ -56,24 +57,24 @@ export default modal.ModalController.extend({
       }
     }
     return res;
-  }.property('model.word', 'model.user.core_lists'),
-  part_of_speech: function() {
+  }),
+  part_of_speech: computed('model.button.part_of_speech', 'parts_of_speech', function() {
     if(this.get('model.button.part_of_speech')) {
       return this.get('model.button.part_of_speech');
     } else if(this.get('parts_of_speech.types')) {
       return this.get('parts_of_speech.types')[0];
     }
     return null;
-  }.property('model.button.part_of_speech', 'parts_of_speech'),
-  part_of_speech_class: function() {
+  }),
+  part_of_speech_class: computed('part_of_speech', function() {
     var pos = this.get('part_of_speech');
     if(pos) {
       return htmlSafe('part_of_speech_box ' + pos);
     } else {
       return null;
     }
-  }.property('part_of_speech'),
-  frequency: function() {
+  }),
+  frequency: computed('model.usage_stats', function() {
     var _this = this;
     var word = (this.get('model.usage_stats.words_by_frequency') || []).find(function(w) { return w.text.toLowerCase() == _this.get('model.word').toLowerCase(); });
     var count = (word && word.count) || 0;
@@ -85,7 +86,7 @@ export default modal.ModalController.extend({
       total: count,
       percent: pct
     };
-  }.property('model.usage_stats'),
+  }),
   actions: {
     add_sentence: function() {
       var _this = this;

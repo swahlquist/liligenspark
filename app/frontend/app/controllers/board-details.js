@@ -3,6 +3,7 @@ import BoardHierarchy from '../utils/board_hierarchy';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import editManager from '../utils/edit_manager';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -15,21 +16,21 @@ export default modal.ModalController.extend({
       _this.set('hierarchy', {error: true});
     });
   },
-  images_with_license: function() {
+  images_with_license: computed('model.buttons', 'model.grid', function() {
     return this.get('model.local_images_with_license');
-  }.property('model.buttons', 'model.grid'),
-  sounds_with_license: function() {
+  }),
+  sounds_with_license: computed('model.buttons', 'model.grid', function() {
     return this.get('model.local_sounds_with_license');
-  }.property('model.buttons', 'model.grid'),
-  language: function() {
+  }),
+  language: computed('model.locale', function() {
     return i18n.readable_language(this.get('model.locale'));
-  }.property('model.locale'),
-  multiple_locales: function() {
+  }),
+  multiple_locales: computed('model.locales', function() {
     return (this.get('model.locales') || []).length > 1;
-  }.property('model.locales'),
-  languages: function() {
+  }),
+  languages: computed('model.locales', function() {
     return (this.get('model.locales') || []).map(function(l) { return i18n.readable_language(l); }).join(', ');
-  }.property('model.locales'),
+  }),
   actions: {
     close: function() {
       modal.close();

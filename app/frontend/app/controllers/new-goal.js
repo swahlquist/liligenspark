@@ -6,6 +6,7 @@ import editManager from '../utils/edit_manager';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import RSVP from 'rsvp';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -40,7 +41,7 @@ export default modal.ModalController.extend({
     {name: i18n.t('modeling_for_communication', "Work on Modeling for the Communicator"), id: 'modeling'},
     {name: i18n.t('custom_goal', "I Will Define My Own Goal"), id: 'custom'},
   ],
-  goal_type: function() {
+  goal_type: computed('goal.simple_type', function() {
     var type = this.get('goal.simple_type');
     if(!type) { return null; }
     var res = {}
@@ -52,22 +53,27 @@ export default modal.ModalController.extend({
       res.strings_list = true;
     }
     return res;
-  }.property('goal.simple_type'),
-  single_user: function() {
+  }),
+  single_user: computed('model.user', 'model.users', 'model.users.@each.add_goal', function() {
     return !!this.get('model.user') || (this.get('model.users') || []).filter(function(u) { return !!emberGet(u, 'add_goal'); }).length == 1;
-  }.property('model.user', 'model.users', 'model.users.@each.add_goal'),
-  has_simple_content: function() {
-    if(this.get('goal.simple_type') == 'words') {
-      return (this.get('goal.strings_list') || '').length > 0;
-    } else if(this.get('goal.simple_type') == 'buttons') {
-      return parseInt(this.get('instance_count'), 10) > 0;
-    } else if(this.get('goal.simple_type') == 'modeling') {
-      return (this.get('goal.strings_list') || '').length > 0 || parseInt(this.get('instance_count'), 10) > 0;
-    } else {
-      return true;
+  }),
+  has_simple_content: computed(
+    'goal.simple_type',
+    'goal.strings_list',
+    'goal.instance_count',
+    function() {
+      if(this.get('goal.simple_type') == 'words') {
+        return (this.get('goal.strings_list') || '').length > 0;
+      } else if(this.get('goal.simple_type') == 'buttons') {
+        return parseInt(this.get('instance_count'), 10) > 0;
+      } else if(this.get('goal.simple_type') == 'modeling') {
+        return (this.get('goal.strings_list') || '').length > 0 || parseInt(this.get('instance_count'), 10) > 0;
+      } else {
+        return true;
+      }
     }
-  }.property('goal.simple_type', 'goal.strings_list', 'goal.instance_count'),
-  goal_simple_action: function() {
+  ),
+  goal_simple_action: computed('goal.simple_type', function() {
     var type = this.get('goal.simple_type');
     if(type == 'buttons') {
       return i18n.t('button_hits', "button hits");
@@ -78,7 +84,7 @@ export default modal.ModalController.extend({
     } else {
       return i18n.t('events', "events");
     }
-  }.property('goal.simple_type'),
+  }),
   set_defaults_by_simple_type: observer(
     'goal.simple_type',
     'goal.strings_list',
@@ -111,12 +117,12 @@ export default modal.ModalController.extend({
       this.set('ignore_summary_change', false);
     }
   ),
-  save_disabled: function() {
+  save_disabled: computed('pending_save', 'browse_goals', 'selected_goal', 'saving', function() {
     return this.get('pending_save') || (this.get('browse_goals') && !this.get('selected_goal')) || this.get('saving');
-  }.property('pending_save', 'browse_goals', 'selected_goal', 'saving'),
-  pending_save: function() {
+  }),
+  pending_save: computed('video_pending', function() {
     return !!this.get('video_pending');
-  }.property('video_pending'),
+  }),
   load_goals: function() {
     var _this = this;
     _this.set('goals', {loading: true});

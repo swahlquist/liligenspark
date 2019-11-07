@@ -2,6 +2,7 @@ import DS from 'ember-data';
 import CoughDrop from '../app';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Gift = DS.Model.extend({
   didLoad: function() {
@@ -32,9 +33,9 @@ CoughDrop.Gift = DS.Model.extend({
   memo: DS.attr('string'),
   amount: DS.attr('number'),
   discount: DS.attr('number'),
-  discount_hundred: function() {
+  discount_hundred: computed('discount', function() {
     return (this.get('discount') || 1.0) * 100;
-  }.property('discount'),
+  }),
   update_gift_types: observer('gift_type', function() {
     var res = {};
     res[this.get('gift_type') || 'user_gift'] = true;

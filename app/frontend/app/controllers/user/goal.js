@@ -5,6 +5,7 @@ import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   load_logs: function() {
@@ -19,15 +20,15 @@ export default Controller.extend({
     }, function(err) {
     });
   },
-  messages_only: function() {
+  messages_only: computed(function() {
     return true;
-  }.property(),
-  save_disabled: function() {
+  }),
+  save_disabled: computed('pending_save', 'saving', function() {
     return this.get('pending_save') || this.get('saving');
-  }.property('pending_save', 'saving'),
-  pending_save: function() {
+  }),
+  pending_save: computed('video_pending', function() {
     return !!this.get('video_pending');
-  }.property('video_pending'),
+  }),
   load_user_badges: observer('user.id', 'model.id', 'model.badges', function() {
     var _this = this;
     this.store.query('badge', {user_id: this.get('user.id'), goal_id: this.get('model.id')}).then(function(badges) {
@@ -36,7 +37,7 @@ export default Controller.extend({
     });
 
   }),
-  mapped_badges: function() {
+  mapped_badges: computed('model.badges', 'user_badges', function() {
     var user_badges = this.get('user_badges');
     if(user_badges) {
       var res = [];
@@ -49,16 +50,16 @@ export default Controller.extend({
     } else {
       return this.get('model.badges');
     }
-  }.property('model.badges', 'user_badges'),
-  assessment_badge_description: function() {
+  }),
+  assessment_badge_description: computed('model.assessment_badge', function() {
     var ub = CoughDrop.store.createRecord('badge', {
       name: this.get('model.badge_name') || this.get('model.summary'),
       level: 0,
       completion_settings: this.get('model.assessment_badge')
     });
     return ub.get('completion_explanation');
-  }.property('model.assessment_badge'),
-  weighted_average_status_face_class: function() {
+  }),
+  weighted_average_status_face_class: computed('model.stats.weighted_average_status', function() {
     var status = this.get('model.stats.weighted_average_status') || 0;
     var res = "face";
     if(status >= 3.5) {
@@ -72,7 +73,7 @@ export default Controller.extend({
       res = res + " sad";
     }
     return htmlSafe(res);
-  }.property('model.stats.weighted_average_status'),
+  }),
   actions: {
     more_results: function() {
       var _this = this;

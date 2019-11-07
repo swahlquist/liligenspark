@@ -1,6 +1,7 @@
 import Controller from '@ember/controller';
 import CoughDrop from '../../app';
 import Utils from '../../utils/misc';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   load_results: function() {
@@ -15,7 +16,7 @@ export default Controller.extend({
       _this.set('error', true);
     });
   },
-  possible_upstream_boards: function() {
+  possible_upstream_boards: computed('versions', function() {
     var res = [];
     (this.get('versions') || []).forEach(function(v) {
       (v.get('immediately_upstream_boards') || []).forEach(function(b) {
@@ -24,8 +25,8 @@ export default Controller.extend({
     });
     res = Utils.uniq(res, function(b) { return b.id; });
     return res;
-  }.property('versions'),
-  maybe_more: function() {
+  }),
+  maybe_more: computed('versions', function() {
     return this.get('versions.length') >= 25;
-  }.property('versions')
+  })
 });

@@ -10,6 +10,7 @@ import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -110,22 +111,38 @@ export default Component.extend({
       });
     }
   }),
-  no_next: function() {
-    if(this.get('level_select')) {
-      var max = this.get('max_level') || 10;
-      return (this.get('current_level') || this.get('base_level')) >= max;
-    } else {
-      return !(this.get('current_index') < (this.get('sorted_boards.length') - 1) && this.get('sorted_boards.length') > 0);
+  no_next: computed(
+    'current_index',
+    'max_level',
+    'current_level',
+    'base_level',
+    'sorted_boards',
+    'level_select',
+    function() {
+      if(this.get('level_select')) {
+        var max = this.get('max_level') || 10;
+        return (this.get('current_level') || this.get('base_level')) >= max;
+      } else {
+        return !(this.get('current_index') < (this.get('sorted_boards.length') - 1) && this.get('sorted_boards.length') > 0);
+      }
     }
-  }.property('current_index', 'max_level', 'current_level', 'base_level', 'sorted_boards', 'level_select'),
-  no_previous: function() {
-    if(this.get('level_select')) {
-      var min = this.get('min_level') || 1;
-      return (this.get('current_level') || this.get('base_level')) <= min;
-    } else {
-      return !(this.get('current_index') > 0 && this.get('sorted_boards.length') > 0);
+  ),
+  no_previous: computed(
+    'current_index',
+    'min_level',
+    'current_level',
+    'base_level',
+    'sorted_boards',
+    'level_select',
+    function() {
+      if(this.get('level_select')) {
+        var min = this.get('min_level') || 1;
+        return (this.get('current_level') || this.get('base_level')) <= min;
+      } else {
+        return !(this.get('current_index') > 0 && this.get('sorted_boards.length') > 0);
+      }
     }
-  }.property('current_index', 'min_level', 'current_level', 'base_level', 'sorted_boards', 'level_select'),
+  ),
   actions: {
     next: function() {
       if(this.get('level_select')) {

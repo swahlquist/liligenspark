@@ -42,9 +42,15 @@ export default Controller.extend({
   location_id2: null,
   device_id2: null,
   snapshot_id2: null,
-  some_data: function() {
-    return !!((this.get('usage_stats.has_data') && !this.get('status')) || (this.get('usage_stats2.has_data') && !this.get('status2')));
-  }.property('usage_stats.has_data', 'status', 'usage_stats2.has_data', 'status2'),
+  some_data: computed(
+    'usage_stats.has_data',
+    'status',
+    'usage_stats2.has_data',
+    'status2',
+    function() {
+      return !!((this.get('usage_stats.has_data') && !this.get('status')) || (this.get('usage_stats2.has_data') && !this.get('status2')));
+    }
+  ),
   refresh_left_on_type_change: observer(
     'start',
     'end',
@@ -83,7 +89,7 @@ export default Controller.extend({
       this.draw_charts();
     }
   }),
-  different_dates: function() {
+  different_dates: computed('usage_stats', 'usage_stats2', function() {
     if(this.get('usage_stats') && this.get('usage_stats2')) {
       if(this.get('usage_stats').comes_before(this.get('usage_stats2'))) {
         return true;
@@ -92,7 +98,7 @@ export default Controller.extend({
       }
     }
     return false;
-  }.property('usage_stats', 'usage_stats2'),
+  }),
   draw_charts: function() {
     var stats = this.get('usage_stats');
     var controller = this;
@@ -108,9 +114,9 @@ export default Controller.extend({
       }
     });
   },
-  model_id: function() {
+  model_id: computed('model.id', function() {
     return this.get('model.id');
-  }.property('model.id'),
+  }),
   already_loaded: function(side, stats) {
     if(!stats) { return false; }
     var suffix = side == 'left' ? '' : '2';

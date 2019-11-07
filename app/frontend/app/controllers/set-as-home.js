@@ -6,6 +6,7 @@ import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -15,7 +16,7 @@ export default modal.ModalController.extend({
     this.set('status', null);
     this.set('board_level', stashes.get('board_level'));
   },
-  owned_by_user: function() {
+  owned_by_user: computed('currently_selected_id', 'model.board.user_name', function() {
     var board_user_name = this.get('model.board.user_name');
     var user_name = 'nobody';
     var current_id = this.get('currently_selected_id');
@@ -31,11 +32,11 @@ export default modal.ModalController.extend({
       });
     }
     return user_name == board_user_name;
-  }.property('currently_selected_id', 'model.board.user_name'),
-  multiple_users: function() {
+  }),
+  multiple_users: computed('has_supervisees', function() {
     return !!this.get('has_supervisees');
-  }.property('has_supervisees'),
-  board_levels: function() {
+  }),
+  board_levels: computed(function() {
     return [
       {name: i18n.t('unspecified', "[ Use the Default ]"), id: ''},
       {name: i18n.t('level_1', "Level 1 (most simple)"), id: '1'},
@@ -49,10 +50,10 @@ export default modal.ModalController.extend({
       {name: i18n.t('level_9', "Level 9"), id: '9'},
       {name: i18n.t('level_10', "Level 10 (all buttons and links)"), id: '10'},
     ];
-  }.property(),
-  pending: function() {
+  }),
+  pending: computed('status.updating', 'status.copying', function() {
     return this.get('status.updating') || this.get('status.copying');
-  }.property('status.updating', 'status.copying'),
+  }),
   actions: {
     copy_as_home: function() {
       var _this = this;

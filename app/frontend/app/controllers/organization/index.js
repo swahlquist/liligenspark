@@ -6,6 +6,7 @@ import Utils from '../../utils/misc';
 import i18n from '../../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   refresh_lists: function() {
@@ -52,56 +53,62 @@ export default Controller.extend({
       this.refresh_logs();
     }
   }),
-  loading_org: function() {
+  loading_org: computed('model.permissions', function() {
     return !this.get('model.permissions');
-  }.property('model.permissions'),
-  shown_view: function() {
-    if(this.get('selected_view')) {
-      return this.get('selected_view');
-    } else if(this.get('model.admin')) {
-      return 'organizations';
-    } else if(!this.get('managers.length') && this.get('model.children_orgs.length')) {
-      return 'organizations';
-    } else {
-      return 'managers';
+  }),
+  shown_view: computed(
+    'selected_view',
+    'model.admin',
+    'managers',
+    'model.children_orgs',
+    function() {
+      if(this.get('selected_view')) {
+        return this.get('selected_view');
+      } else if(this.get('model.admin')) {
+        return 'organizations';
+      } else if(!this.get('managers.length') && this.get('model.children_orgs.length')) {
+        return 'organizations';
+      } else {
+        return 'managers';
+      }
     }
-  }.property('selected_view', 'model.admin', 'managers', 'model.children_orgs'),
-  show_organizations: function() {
+  ),
+  show_organizations: computed('shown_view', function() {
     return this.get('shown_view') == 'organizations';
-  }.property('shown_view'),
-  show_managers: function() {
+  }),
+  show_managers: computed('shown_view', function() {
     return this.get('shown_view') == 'managers';
-  }.property('shown_view'),
-  show_communicators: function() {
+  }),
+  show_communicators: computed('shown_view', function() {
     return this.get('shown_view') == 'communicators';
-  }.property('shown_view'),
-  show_evals: function() {
+  }),
+  show_evals: computed('shown_view', function() {
     return this.get('shown_view') == 'evals';
-  }.property('shown_view'),
-  show_extras: function() {
+  }),
+  show_extras: computed('shown_view', function() {
     return this.get('shown_view') == 'extras';
-  }.property('shown_view'),
-  show_supervisors: function() {
+  }),
+  show_supervisors: computed('shown_view', function() {
     return this.get('shown_view') == 'supervisors';
-  }.property('shown_view'),
-  first_log: function() {
+  }),
+  first_log: computed('logs.data', function() {
     return (this.get('logs.data') || [])[0];
-  }.property('logs.data'),
-  recent_users: function() {
+  }),
+  recent_users: computed('logs.data', function() {
     return (this.get('logs.data') || []).map(function(e) { return e.user.id; }).uniq().length;
-  }.property('logs.data'),
-  recent_sessions: function() {
+  }),
+  recent_sessions: computed('logs.data', function() {
     return (this.get('logs.data') || []).length;
-  }.property('logs.data'),
-  no_licenses: function() {
+  }),
+  no_licenses: computed('model.licenses_available', function() {
     return !this.get('model.licenses_available');
-  }.property('model.licenses_available'),
-  no_eval_licenses: function() {
+  }),
+  no_eval_licenses: computed('model.eval_licenses_available', function() {
     return !this.get('model.eval_licenses_available');
-  }.property('model.eval_licenses_available'),
-  no_extras: function() {
+  }),
+  no_extras: computed('model.extras_available', function() {
     return !this.get('model.extras_available');
-  }.property('model.extras_available'),
+  }),
   refresh_stats: function() {
     var _this = this;
     _this.set('weekly_stats', null);
@@ -126,7 +133,7 @@ export default Controller.extend({
       });
     }
   },
-  sorted_orgs: function() {
+  sorted_orgs: computed('orgs.data', function() {
     return this.get('orgs.data').map(function(o) { return o; }).sort(function(a, b) {
         if(a.get('name').toLowerCase() < b.get('name').toLowerCase()) {
           return -1;
@@ -136,8 +143,8 @@ export default Controller.extend({
           return 0;
         }
     });
-  }.property('orgs.data'),
-  alphabetized_orgs: function() {
+  }),
+  alphabetized_orgs: computed('sorted_orgs', function() {
     var orgs = this.get('sorted_orgs') || [];
     var letters = [];
     orgs.forEach(function(org) {
@@ -151,8 +158,8 @@ export default Controller.extend({
       letter.expanded = (letter.orgs.length <= 5);
     });
     return letters;
-  }.property('sorted_orgs'),
-  filtered_orgs: function() {
+  }),
+  filtered_orgs: computed('sorted_orgs', 'org_filter', function() {
     var filter = this.get('org_filter');
     if(!filter || filter == '') { return null; }
     var res = [];
@@ -165,7 +172,7 @@ export default Controller.extend({
       });
     } catch(e) { }
     return res.slice(0, 10);
-  }.property('sorted_orgs', 'org_filter'),
+  }),
   refresh_users: function() {
     var _this = this;
     this.set('users.loading', true);
@@ -229,18 +236,18 @@ export default Controller.extend({
       _this.set('supervisors.data', null);
     });
   },
-  suggest_creating_manager: function() {
+  suggest_creating_manager: computed('manager_user_name', 'missing_user_name', function() {
     return this.get('missing_user_name') && this.get('missing_user_name') == this.get('manager_user_name');
-  }.property('manager_user_name', 'missing_user_name'),
-  suggest_creating_supervisor: function() {
+  }),
+  suggest_creating_supervisor: computed('supervisor_user_name', 'missing_user_name', function() {
     return this.get('missing_user_name') && this.get('missing_user_name') == this.get('supervisor_user_name');
-  }.property('supervisor_user_name', 'missing_user_name'),
-  suggest_creating_communicator: function() {
+  }),
+  suggest_creating_communicator: computed('user_user_name', 'missing_user_name', function() {
     return this.get('missing_user_name') && this.get('missing_user_name') == this.get('user_user_name');
-  }.property('user_user_name', 'missing_user_name'),
-  suggest_creating_eval: function() {
+  }),
+  suggest_creating_eval: computed('eval_user_name', 'missing_user_name', function() {
     return this.get('missing_user_name') && this.get('missing_user_name') == this.get('eval_user_name');
-  }.property('eval_user_name', 'missing_user_name'),
+  }),
   actions: {
     pick: function(view) {
       this.set('selected_view', view);

@@ -155,9 +155,9 @@ export default Component.extend({
     this.set('eye_gaze', capabilities.eye_gaze);
     _this.check_timeout();
   },
-  with_status: function() {
+  with_status: computed('eye_gaze.statuses', function() {
     return emberGet(capabilities.eye_gaze, 'statuses');
-  }.property('eye_gaze.statuses'),
+  }),
   check_timeout: function() {
     var _this = this;
     if(this.get('mouse_listener')) {

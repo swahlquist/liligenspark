@@ -26,6 +26,7 @@ module.exports = {
     'ember/avoid-leaking-state-in-ember-objects': 'off', // TODO: fix this
     'ember/no-observers': 'off',
     'ember/no-ember-testing-in-module-scope': 'off',
+    'ember/use-brace-expansion': 'off',
   },
   overrides: [
     // node files

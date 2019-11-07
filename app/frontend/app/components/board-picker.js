@@ -5,13 +5,14 @@ import app_state from '../utils/app_state';
 import word_suggestions from '../utils/word_suggestions';
 import Utils from '../utils/misc';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {
     this.send('set_category', 'robust');
     this.set('show_category_explainer', false);
   },
-  categories: function() {
+  categories: computed('current_category', function() {
     var res = [];
     var _this = this;
     CoughDrop.board_categories.forEach(function(c) {
@@ -22,7 +23,7 @@ export default Component.extend({
       res.push(cat);
     });
     return res;
-  }.property('current_category'),
+  }),
   actions: {
     set_category: function(str) {
       var res = {};

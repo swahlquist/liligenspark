@@ -3,6 +3,7 @@ import CoughDrop from '../app';
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -23,9 +24,9 @@ export default Component.extend({
       });
     }
   },
-  select_option: function() {
+  select_option: computed('option', function() {
     return this.get('option') == 'select';
-  }.property('option'),
+  }),
   actions: {
     select: function() {
       this.sendAction();

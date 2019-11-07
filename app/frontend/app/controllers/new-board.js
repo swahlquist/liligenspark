@@ -8,6 +8,7 @@ import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import editManager from '../utils/edit_manager';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   uncloseable: true,
@@ -50,7 +51,7 @@ export default modal.ModalController.extend({
 
     this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
   },
-  locales: function() {
+  locales: computed(function() {
     var list = i18n.get('locales');
     var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
     for(var key in list) {
@@ -58,34 +59,37 @@ export default modal.ModalController.extend({
     }
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
-  }.property(),
+  }),
   ahem: observer('model.for_user_id', function() {
     console.log(this.get('model.for_user_id'));
   }),
   license_options: CoughDrop.licenseOptions,
   public_options: CoughDrop.publicOptions,
-  attributable_license_type: function() {
+  attributable_license_type: computed('model.license.type', function() {
     if(this.get('model.license') && this.get('model.license.type') != 'private') {
-      this.set('model.license.author_name', app_state.get('currentUser.name'));
-      this.set('model.license.author_url',app_state.get('currentUser.profile_url'));
+      this.update_license();
     }
     return this.get('model.license.type') != 'private';
-  }.property('model.license.type'),
-  label_count: function() {
+  }),
+  update_license() {
+    this.set('model.license.author_name', app_state.get('currentUser.name'));
+    this.set('model.license.author_url',app_state.get('currentUser.profile_url'));
+  },
+  label_count: computed('model.grid', 'model.grid.labels', function() {
     var str = this.get('model.grid.labels') || "";
     var lines = str.split(/\n|,\s*/);
     return lines.filter(function(l) { return l && !l.match(/^\s+$/); }).length;
-  }.property('model.grid', 'model.grid.labels'),
-  too_many_labels: function() {
+  }),
+  too_many_labels: computed('label_count', 'model.grid.rows', 'model.grid.columns', function() {
     return (this.get('label_count') || 0) > (parseInt(this.get('model.grid.rows'), 10) * parseInt(this.get('model.grid.columns'), 10));
-  }.property('label_count', 'model.grid.rows', 'model.grid.columns'),
-  labels_class: function() {
+  }),
+  labels_class: computed('too_many_labels', function() {
     var res = "label_count ";
     if(this.get('too_many_labels')) {
       res = res + "too_many ";
     }
     return res;
-  }.property('too_many_labels'),
+  }),
   labels_order_list: [
     {name: i18n.t('columns_first', "Populate buttons in columns, left to right"), id: "columns"},
     {name: i18n.t('rows_first', "Populate buttons in rows, top to bottom"), id: "rows"}
@@ -95,9 +99,9 @@ export default modal.ModalController.extend({
       stashes.persist('new_board_labels_order', this.get('model.grid.labels_order'));
     }
   }),
-  speech_enabled: function() {
+  speech_enabled: computed('speech', function() {
     return !!this.get('speech');
-  }.property('speech'),
+  }),
   closing: function() {
     this.send('stop_recording');
   },

@@ -2,6 +2,7 @@ import Component from '@ember/component';
 import CoughDrop from '../app';
 import { reads } from '@ember/object/computed';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'div',
@@ -30,7 +31,7 @@ export default Component.extend({
       i.src = this.get('selection');
     }
   }),
-  included_icon_urls: function() {
+  included_icon_urls: computed('extra_urls', 'iconUrls', function() {
     var urls = this.get('extra_urls') || [];
     var icons = this.iconUrls;
     var res = [];
@@ -40,7 +41,7 @@ export default Component.extend({
       }
     });
     return res;
-  }.property('extra_urls', 'iconUrls'),
+  }),
   actions: {
     pick: function(url) {
       this.set('selection_picked', true);

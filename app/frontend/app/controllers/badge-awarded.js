@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import editManager from '../utils/edit_manager';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -46,13 +47,13 @@ export default modal.ModalController.extend({
     }
     this.set('confettis', list);
   },
-  user_name: function() {
+  user_name: computed('model.badge.user_name', function() {
     if(!this.get('model.badge.user_name')) {
       return i18n.t('the_user', "the user");
     } else {
       return this.get('model.badge.user_name');
     }
-  }.property('model.badge.user_name'),
+  }),
   load_user_badges: observer('user_goals_and_badges', function() {
     var _this = this;
     if(_this.get('user_goals_and_badges')) {
