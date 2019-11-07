@@ -94,6 +94,8 @@ var capabilities;
         capabilities.browser = "IE";
       } else if(navigator.userAgent.match(/edge/i)) {
         capabilities.browser = "Edge";
+      } else if(navigator.userAgent.match(/safari/i)) {
+        capabilities.browser = "Safari";
       }
     }
     capabilities.readable_device_name = capabilities.readable_device_name || (capabilities.browser + " for " + capabilities.system);

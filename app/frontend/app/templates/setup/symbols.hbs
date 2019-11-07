@@ -24,24 +24,26 @@
             {{t "happy" key='happy'}}
           </div>
         {{/if}}
-        {{#if symbols.twemoji}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f60a.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.noun_project}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Happy_213_g.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.tawasol}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Happy%20(M).png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.pcs}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00047/5fc50fd308c61df38e26e426845a6c055b9b900f2fec0936f916bf104172ab020da82c0a598c7df0d834310223644d93ffb2e802e0df75b6a6c0dcb61a6fe3f0/00047.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.lessonpix}}
-          <img src='https://lessonpix.com/drawings/13748/150x150/13748.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else}}
-          <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/happy.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{/if}}
-        {{#if text_position.text_on_bottom}}
-          <div style='font-size: 25px; text-align: center;'>
-            {{t "happy" key='happy'}}
-          </div>
-        {{/if}}
+        <span class={{image_preview_class}}>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f60a.svg' />
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Happy_213_g.svg' />
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Happy%20(M).png' />
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00047/5fc50fd308c61df38e26e426845a6c055b9b900f2fec0936f916bf104172ab020da82c0a598c7df0d834310223644d93ffb2e802e0df75b6a6c0dcb61a6fe3f0/00047.svg' />
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/13748/150x150/13748.png' />
+          {{else}}
+            <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/happy.png' />
+          {{/if}}
+          {{#if text_position.text_on_bottom}}
+            <div style='font-size: 25px; text-align: center;'>
+              {{t "happy" key='happy'}}
+            </div>
+          {{/if}}
+        </span>
       {{/if}}
     </div>
     <p style='font-size: 16px;'>{{t "If you're not sure, having text above is a good option for starting with pictures but learning to read words over time." key='text_above_suggestion'}}</p>
@@ -53,8 +55,25 @@
     <div class='setup_setting'>
       <label>{{t "How do you want pictures to display?" key='symbol_background'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">
-        <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} >{{t "With a background matching the button" key='clear_background'}}</a>
-        <a href="#" class={{if background.white 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'white'}} >{{t "Always with a white background" key='white_background'}}</a>
+        <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} style='text-align: left;'>
+          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'></span> 
+          {{t "With a background matching the button" key='clear_background'}}
+        </a>
+        <a href="#" class={{if background.white 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'white'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'></span> 
+          {{t "Always with a white background" key='white_background'}}
+        </a>
+        <a href="#" class={{if background.black 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'></span> 
+          {{t "Always with a black background" key='black_background'}}
+        </a>
+        <a href="#" class={{if background.black_with_high_contrast 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black_with_high_contrast'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144);'>
+            <span style='display: inline-block; width: 20px; height: 20px;border: 5px solid #000;  background: rgb(255, 238, 0);'></span>
+
+          </span> 
+          {{t "High contrast with a black background" key='high_contrast_black_background'}}
+        </a>
       </div>
     </div>
 
@@ -71,24 +90,26 @@
             {{t "frog" key='frog'}}
           </div>
         {{/if}}
-        {{#if symbols.twemoji}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f438.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.noun_project}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Green-frog_582_g.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.tawasol}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Frog.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.pcs}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/02086/70f88a99a243736c9f554808cbff30c26a8b74a25f06d58e31dd392a89f6586ebe03d6ff2d617e71e98c3901689c833d56e96e5e48dbb1cf51da8336d46b5728/02086.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.lessonpix}}
-          <img src='https://lessonpix.com/drawings/1283/150x150/1283.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else}}
-          <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/frog.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{/if}}
-        {{#if text_position.text_on_bottom}}
-          <div style='font-size: 25px; text-align: center;'>
-            {{t "frog" key='frog'}}
-          </div>
-        {{/if}}
+        <span class={{image_preview_class}}>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f438.svg' />
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Green-frog_582_g.svg' />
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Frog.png' />
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/02086/70f88a99a243736c9f554808cbff30c26a8b74a25f06d58e31dd392a89f6586ebe03d6ff2d617e71e98c3901689c833d56e96e5e48dbb1cf51da8336d46b5728/02086.svg' />
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/1283/150x150/1283.png' />
+          {{else}}
+            <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/frog.png' />
+          {{/if}}
+          {{#if text_position.text_on_bottom}}
+            <div style='font-size: 25px; text-align: center;'>
+              {{t "frog" key='frog'}}
+            </div>
+          {{/if}}
+        </span>
       {{/if}}
     </div>
     <p style='font-size: 16px;'>{{t "For most users, matching the button color works well, but for some communicators having a white background can help with contrast and recognition." key='background_suggestion'}}</p>
@@ -153,24 +174,26 @@
             {{t "like" key='like'}}
           </div>
         {{/if}}
-        {{#if symbols.twemoji}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f499.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.noun_project}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/like_9767_dd14ee88-7789-43b7-958d-c8d44a3e1458.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.tawasol}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/65-Play.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.pcs}}
-          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03250/1d9b330d61e2802a0ba74277fadf21c73d0454e943b1d2bed18f262066feba269e190591f375152e82a0041642988c930e06b370474aef29d375643af1c92d1b/03250.svg' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else if symbols.lessonpix}}
-          <img src='https://lessonpix.com/drawings/113947/150x150/113947.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{else}}
-          <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/to%20like.png' style={{if background.white 'width: 150px; height: 150px; background: #fff;' 'width: 150px; height: 150px;'}}/>
-        {{/if}}
-        {{#if text_position.text_on_bottom}}
-          <div style='font-size: 25px; text-align: center;'>
-            {{t "like" key='like'}}
-          </div>
-        {{/if}}
+        <span class={{image_preview_class}}>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f499.svg' />
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/like_9767_dd14ee88-7789-43b7-958d-c8d44a3e1458.svg' />
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/65-Play.png' />
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03250/1d9b330d61e2802a0ba74277fadf21c73d0454e943b1d2bed18f262066feba269e190591f375152e82a0041642988c930e06b370474aef29d375643af1c92d1b/03250.svg' />
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/113947/150x150/113947.png' />
+          {{else}}
+            <img src='https://s3.amazonaws.com/opensymbols/libraries/arasaac/to%20like.png' />
+          {{/if}}
+          {{#if text_position.text_on_bottom}}
+            <div style='font-size: 25px; text-align: center;'>
+              {{t "like" key='like'}}
+            </div>
+          {{/if}}
+        </span>
       {{/if}}
     </div>
     {{#if premium_but_not_allowed}}

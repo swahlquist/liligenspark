@@ -1995,9 +1995,34 @@ tr.accuracy_non_mastered {
 .board.high_contrast .button img.symbol:not(.hc) {
   filter: contrast(4.0) saturate(500);
 }
+.low_for_high_contrast .board.high_contrast .button img.symbol:not(.hc) {
+  filter: contrast(4.0) saturate(100);
+}
+.symbol_preview {
+  img {
+    width: 150px;
+    height: 150px;
+  }
+  &.white img {
+    background: #fff;
+  }
+  &.black img {
+    background: #000;
+  }
+  &.high_contrast img {
+    filter: contrast(4.0) saturate(500);
+  }
+}
+.low_for_high_contrast .symbol_preview.high_contrast img {
+  filter: contrast(4.0) saturate(100);
+}
 #word_suggestions.high_contrast .suggestion img:not(.hc) {
   filter: contrast(4.0) saturate(500);
 }
+.low_for_high_contrast #word_suggestions.high_contrast .suggestion img:not(.hc) {
+  filter: contrast(4.0) saturate(100);
+}
+
 .symbol_background_white .button img.symbol {
   background: #fff; 
 }

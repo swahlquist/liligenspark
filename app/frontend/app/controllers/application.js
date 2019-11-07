@@ -1279,7 +1279,10 @@ export default Controller.extend({
       } else if(app_state.get('domain_settings.full_domain')) {
         res = res + "no_user ";
       } else {
-        res = res + "blank_user";
+        res = res + "blank_user ";
+      }
+      if(app_state.get('browser') == 'Safari' || app_state.get('system') == 'iOS') {
+        res = res + "low_for_high_contrast ";
       }
       if(this.get('app_state.currentUser.preferences.new_index')) {
         res = res + "new_index ";

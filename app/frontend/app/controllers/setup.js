@@ -54,9 +54,29 @@ export default Controller.extend({
       return res;
     }
   ),
+  image_preview_class: computed(
+    'fake_user.preferences.high_contrast',
+    'app_state.currentUser.high_contrast',
+    'background',
+    function() {
+      var res = 'symbol_preview ';
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.high_contrast')) {
+        res = res + 'high_contrast ';
+      };
+      if(this.get('background.white')) {
+        res = res + 'white ';
+      } else if(this.get('background.black') || this.get('background.black_with_high_contrast')) {
+        res = res + 'black ';
+      }
+      return res;
+    }
+  ),
   background: computed(
     'fake_user.preferences.device.symbol_background',
     'app_state.currentUser.preferences.device.symbol_background',
+    'fake_user.preferences.high_contrast',
+    'app_state.currentUser.high_contrast',
     function() {
       var res = {};
       var user = app_state.get('currentUser') || this.get('fake_user');
@@ -64,6 +84,13 @@ export default Controller.extend({
         res.clear = true;
       } else if(user.get('preferences.device.symbol_background') == 'white') {
         res.white = true;
+      } else if(user.get('preferences.device.symbol_background') == 'black') {
+        if(user.get('preferences.high_contrast')) {
+          res.black_with_high_contrast = true;
+        } else {
+          res.black = true;
+        }
+
       } else {
         res.clear = true;
       }
@@ -376,6 +403,14 @@ export default Controller.extend({
         }
         user.set('preferences.' + preference, value);
         user.set('preferred_symbols_changed', user.get('preferred_symbols') != user.get('original_preferred_symbols'));
+      } else if(preference == 'device.symbol_background') {
+        if(value == 'black_with_high_contrast') {
+          user.set('preferences.device.symbol_background', 'black');
+          user.set('preferences.high_contrast', true);
+        } else {
+          user.set('preferences.device.symbol_background', value);
+          user.set('preferences.high_contrast', false);
+        }
       } else {
         user.set('preferences.' + preference, value);
       }

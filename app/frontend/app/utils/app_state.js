@@ -47,6 +47,8 @@ var app_state = EmberObject.extend({
     $.each(['model', 'controller', 'view', 'route'], function(i, component) {
       application.inject(component, 'app_state', 'cough_drop:app_state');
     });
+    this.set('browser', capabilities.browser);
+    this.set('system', capabilities.system);
     this.set('button_list', []);
     this.set('stashes', stashes);
     this.set('geolocation', geolocation);
