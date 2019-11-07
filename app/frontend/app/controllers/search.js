@@ -5,11 +5,12 @@ import app_state from '../utils/app_state';
 import session from '../utils/session';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('searchString', function() {
     return "Search results for " + this.get('searchString');
-  }).property('searchString'),
+  }),
   locales: computed(function() {
     var list = i18n.get('translatable_locales');
     var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
@@ -18,7 +19,7 @@ export default Controller.extend({
     }
     res.push({name: i18n.t('any_language', "Any Language"), id: 'any'});
     return res;
-  }).property(),
+  }),
   load_results: function(str) {
     var _this = this;
     this.set('online_results', {loading: true, results: []});

@@ -4,6 +4,7 @@ import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   queryParams: ['to'],
@@ -13,9 +14,9 @@ export default Controller.extend({
     {name: i18n.t('sales', "Sales"), id: "sales"},
     {name: i18n.t('support', "Technical Support"), id: "technical support"}
   ],
-  support_recipient: computed(function() {
+  support_recipient: computed('recipient', function() {
     return this.get('recipient') == 'technical support';
-  }).property('recipient'),
+  }),
   set_recipient_if_sales: observer('to', function() {
     this.set('recipient', this.get('to'));
   }),

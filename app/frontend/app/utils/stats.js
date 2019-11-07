@@ -3,14 +3,15 @@ import EmberObject from '@ember/object';
 import CoughDrop from '../app';
 import i18n from './i18n';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 CoughDrop.Stats = EmberObject.extend({
-  no_data: computed(function() {
+  no_data: computed('total_sessions', function() {
     return this.get('total_sessions') === undefined || this.get('total_sessions') === 0;
-  }).property('total_sessions'),
-  has_data: computed(function() {
+  }),
+  has_data: computed('no_data', function() {
     return !this.get('no_data');
-  }).property('no_data'),
+  }),
   date_strings: function() {
     var today_date = window.moment();
     var today = today_date.format('YYYY-MM-DD');

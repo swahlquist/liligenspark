@@ -3,15 +3,16 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import capabilities from '../utils/capabilities';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  display_class: computed(function() {
+  display_class: computed('alert_type', function() {
     var res = "alert alert-dismissable ";
     if(this.get('alert_type')) {
       res = res + this.get('alert_type');
     }
     return res;
-  }).property('alert_type'),
+  }),
   actions: {
     opening: function() {
       var settings = modal.settings_for['flash'];

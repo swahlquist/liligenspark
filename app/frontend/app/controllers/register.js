@@ -1,25 +1,26 @@
 import Controller from '@ember/controller';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   title: "Register",
   registration_types: CoughDrop.registrationTypes,
   triedToSave: false,
-  badEmail: computed(function() {
+  badEmail: computed('model.email', 'triedToSave', function() {
     var email = this.get('model.email');
     return (this.get('triedToSave') && !email);
-  }).property('model.email', 'triedToSave'),
-  shortPassword: computed(function() {
+  }),
+  shortPassword: computed('model.password', 'model.password2', 'triedToSave', function() {
     var password = this.get('model.password') || '';
     var password2 = this.get('model.password2');
     return (this.get('triedToSave') || password == password2) && password.length < 6;
-  }).property('model.password', 'model.password2', 'triedToSave'),
-  noName: computed(function() {
+  }),
+  noName: computed('model.name', 'model.user_name', 'triedToSave', function() {
     var name = this.get('model.name');
     var user_name = this.get('model.user_name');
     return this.get('triedToSave') && !name && !user_name;
-  }).property('model.name', 'model.user_name', 'triedToSave'),
-  noSpacesName: computed(function() {
+  }),
+  noSpacesName: computed('model.user_name', function() {
     return !!(this.get('model.user_name') || '').match(/[\s\.'"]/);
-  }).property('model.user_name'),
+  }),
 });

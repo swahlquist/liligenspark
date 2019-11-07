@@ -10,18 +10,19 @@ import i18n from '../../utils/i18n';
 import progress_tracker from '../../utils/progress_tracker';
 import Subscription from '../../utils/subscription';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('model.user_name', function() {
     return "Profile for " + this.get('model.user_name');
-  }).property('model.user_name'),
-  sync_able: computed(function() {
+  }),
+  sync_able: computed('extras.ready', function() {
     return this.get('extras.ready');
-  }).property('extras.ready'),
-  needs_sync: computed(function() {
+  }),
+  needs_sync: computed('persistence.last_sync_at', function() {
     var now = (new Date()).getTime();
     return (now - persistence.get('last_sync_at')) > (7 * 24 * 60 * 60 * 1000);
-  }).property('persistence.last_sync_at'),
+  }),
   check_daily_use: observer('model.user_name', 'model.permissions.admin_support_actions', function() {
     var current_user_name = this.get('daily_use.user_name');
     if((this.get('model.user_name') && current_user_name != this.get('model.user_name') && this.get('model.permissions.admin_support_actions')) || !this.get('daily_use')) {
@@ -43,80 +44,104 @@ export default Controller.extend({
       });
     }
   }),
-  blank_slate: computed(function() {
-    return !this.get('model.preferences.home_board.key') &&
-      (this.get('public_boards_shortened') || []).length === 0 &&
-      (this.get('private_boards_shortened') || []).length === 0 &&
-      (this.get('starred_boards_shortened') || []).length === 0 &&
-      (this.get('shared_boards_shortened') || []).length === 0;
-  }).property('model.preferences.home_board.key', 'public_boards_shortened', 'private_boards_shortened', 'starred_boards_shortened', 'shared_boards_shortened'),
-  board_list: computed(function() {
-    var list = [];
-    var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete")};
-    if(this.get('selected') == 'mine' || !this.get('selected')) {
-      list = this.get('model.my_boards');
-    } else if(this.get('selected') == 'public') {
-      list = this.get('model.public_boards');
-    } else if(this.get('selected') == 'private') {
-      list = this.get('model.private_boards');
-    } else if(this.get('selected') == 'starred') {
-      list = this.get('model.starred_boards');
-      res.remove_type = 'unstar';
-      res.remove_label = i18n.t('unstar', "unstar");
-    } else if(this.get('selected') == 'shared') {
-      list = this.get('model.shared_boards');
-      res.remove_type = 'unlink';
-      res.remove_label = i18n.t('unlink', "unlink");
-    } else if(this.get('selected') == 'prior_home') {
-      list = this.get('model.prior_home_boards');
+  blank_slate: computed(
+    'model.preferences.home_board.key',
+    'public_boards_shortened',
+    'private_boards_shortened',
+    'starred_boards_shortened',
+    'shared_boards_shortened',
+    function() {
+      return !this.get('model.preferences.home_board.key') &&
+        (this.get('public_boards_shortened') || []).length === 0 &&
+        (this.get('private_boards_shortened') || []).length === 0 &&
+        (this.get('starred_boards_shortened') || []).length === 0 &&
+        (this.get('shared_boards_shortened') || []).length === 0;
     }
-    list = list || [];
-    if(list.loading || list.error) { return list; }
-
-    if(this.get('parent_object')) {
-      list = [];
-      list.push({board: this.get('parent_object.board')});
-      (this.get('parent_object.children') || []).forEach(function(b) {
-        list.push({board: b.board});
-      });
-      list.done = true;
-      res.sub_result = true;
-    }
-
-    res.results = list;
-    var board_ids = {};
-    var new_list = [];
-    if(this.get('parent_object')) {
-      new_list = list;
-    } else {
-      list.forEach(function(b) {
-        var obj = {board: b, children: []};
-        board_ids[emberGet(b, 'id')] = obj;
-        if(emberGet(b, 'copy_id') && board_ids[b.get('copy_id')]) {
-          board_ids[b.get('copy_id')].children.push({board: b});
-        } else {
-          new_list.push(obj);
-        }
-      });
-    }
-    if(this.get('filterString')) {
-      var re = new RegExp(this.get('filterString'), 'i');
-      new_list = new_list.filter(function(i) { return i.board.get('search_string').match(re); });
-      res.filtered_results = new_list.slice(0, 18);
-    } else if(this.get('show_all_boards')) {
-      res.filtered_results = new_list.slice(0, 300);
-    } else {
-      if(list.done && new_list && new_list.length <= 18) {
-        this.set('show_all_boards', true);
+  ),
+  board_list: computed(
+    'selected',
+    'parent_object',
+    'show_all_boards',
+    'filterString',
+    'model.my_boards',
+    'model.prior_home_boards',
+    'model.public_boards',
+    'model.private_boards',
+    'model.starred_boards',
+    'model.shared_boards',
+    'model.my_boards.length',
+    'model.prior_home_boards.length',
+    'model.public_boards.length',
+    'model.private_boards.length',
+    'model.starred_boards.length',
+    'model.shared_boards.length',
+    function() {
+      var list = [];
+      var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete")};
+      if(this.get('selected') == 'mine' || !this.get('selected')) {
+        list = this.get('model.my_boards');
+      } else if(this.get('selected') == 'public') {
+        list = this.get('model.public_boards');
+      } else if(this.get('selected') == 'private') {
+        list = this.get('model.private_boards');
+      } else if(this.get('selected') == 'starred') {
+        list = this.get('model.starred_boards');
+        res.remove_type = 'unstar';
+        res.remove_label = i18n.t('unstar', "unstar");
+      } else if(this.get('selected') == 'shared') {
+        list = this.get('model.shared_boards');
+        res.remove_type = 'unlink';
+        res.remove_label = i18n.t('unlink', "unlink");
+      } else if(this.get('selected') == 'prior_home') {
+        list = this.get('model.prior_home_boards');
       }
-      res.filtered_results = new_list.slice(0, 18);
+      list = list || [];
+      if(list.loading || list.error) { return list; }
+
+      if(this.get('parent_object')) {
+        list = [];
+        list.push({board: this.get('parent_object.board')});
+        (this.get('parent_object.children') || []).forEach(function(b) {
+          list.push({board: b.board});
+        });
+        list.done = true;
+        res.sub_result = true;
+      }
+
+      res.results = list;
+      var board_ids = {};
+      var new_list = [];
+      if(this.get('parent_object')) {
+        new_list = list;
+      } else {
+        list.forEach(function(b) {
+          var obj = {board: b, children: []};
+          board_ids[emberGet(b, 'id')] = obj;
+          if(emberGet(b, 'copy_id') && board_ids[b.get('copy_id')]) {
+            board_ids[b.get('copy_id')].children.push({board: b});
+          } else {
+            new_list.push(obj);
+          }
+        });
+      }
+      if(this.get('filterString')) {
+        var re = new RegExp(this.get('filterString'), 'i');
+        new_list = new_list.filter(function(i) { return i.board.get('search_string').match(re); });
+        res.filtered_results = new_list.slice(0, 18);
+      } else if(this.get('show_all_boards')) {
+        res.filtered_results = new_list.slice(0, 300);
+      } else {
+        if(list.done && new_list && new_list.length <= 18) {
+          this.show_all_boards();
+        }
+        res.filtered_results = new_list.slice(0, 18);
+      }
+      return res;
     }
-    return res;
-  }).property('selected', 'parent_object', 'show_all_boards', 'filterString',
-      'model.my_boards', 'model.prior_home_boards', 'model.public_boards', 'model.private_boards',
-      'model.starred_boards', 'model.shared_boards',
-      'model.my_boards.length', 'model.prior_home_boards.length', 'model.public_boards.length',
-      'model.private_boards.length', 'model.starred_boards.length', 'model.shared_boards.length'),
+  ),
+  show_all_boards: function() {
+    this.set('show_all_boards', true);
+  },
   reload_logs: observer('persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
@@ -167,13 +192,17 @@ export default Controller.extend({
       });
     }
   }),
-  subscription: computed(function() {
-    if(this.get('model.permissions.admin_support_actions') && this.get('model.subscription')) {
-      var sub = Subscription.create({user: this.get('model')});
-      sub.reset();
-      return sub;
+  subscription: computed(
+    'model.permissions.admin_support_actions',
+    'model.subscription',
+    function() {
+      if(this.get('model.permissions.admin_support_actions') && this.get('model.subscription')) {
+        var sub = Subscription.create({user: this.get('model')});
+        sub.reset();
+        return sub;
+      }
     }
-  }).property('model.permissions.admin_support_actions', 'model.subscription'),
+  ),
   generate_or_append_to_list: function(args, list_name, list_id, append) {
     var _this = this;
     if(list_id != _this.get('list_id')) { return; }

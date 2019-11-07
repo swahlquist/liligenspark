@@ -11,13 +11,14 @@ import modal from '../../utils/modal';
 import Utils from '../../utils/misc';
 import Stats from '../../utils/stats';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('model.user_name', function() {
     if(this.get('model.user_name')) {
       return "Usage Reports for " + this.get('model.user_name');
     }
-  }).property('model.user_name'),
+  }),
   queryParams: ['start', 'end', 'location_id', 'device_id', 'snapshot_id', 'split', 'start2', 'end2', 'location_id2', 'device_id2', 'snapshot_id2'],
   reset_params: function() {
     var _this = this;

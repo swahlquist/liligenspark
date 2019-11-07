@@ -3,11 +3,12 @@ import i18n from '../../utils/i18n';
 import Utils from '../../utils/misc';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  first_log: computed(function() {
+  first_log: computed('model.logs.data', function() {
     return (this.get('model.logs.data') || [])[0];
-  }).property('model.logs.data'),
+  }),
   actions: {
     edit_unit: function() {
       var _this = this;

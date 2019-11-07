@@ -1,6 +1,7 @@
 import Controller from '@ember/controller';
 import persistence from '../../utils/persistence';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   title: "Reset Password",
@@ -18,10 +19,10 @@ export default Controller.extend({
       this.set('badPassword', null);
     }
   }),
-  cantSubmit: computed(function() {
+  cantSubmit: computed('badPassword', 'password_reset.succeeded', function() {
     this.checkPassword();
     return !!(this.get('badPassword') || this.get('password_reset.succeeded'));
-  }).property('badPassword', 'password_reset.succeeded'),
+  }),
   actions: {
     changePassword: function() {
       var user_name = this.get('model.user_name');

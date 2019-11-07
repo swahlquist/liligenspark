@@ -2,11 +2,12 @@ import Component from '@ember/component';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   didInsertElement: function() {
   },
-  badge_container_style: computed(function() {
+  badge_container_style: computed('big', 'inline', function() {
     var res = '';
     if(this.get('big')) {
     } else if(this.get('inline')) {
@@ -15,8 +16,8 @@ export default Component.extend({
       res = 'margin-top: -10px; margin-bottom: -70px;';
     }
     return htmlSafe(res);
-  }).property('big', 'inline'),
-  image_style: computed(function() {
+  }),
+  image_style: computed('big', function() {
     var res = '';
     if(this.get('big')) {
       res = 'height: 80px; width: 80px;';
@@ -24,8 +25,8 @@ export default Component.extend({
       res = '';
     }
     return htmlSafe(res);
-  }).property('big'),
-  text_style: computed(function() {
+  }),
+  text_style: computed('big', function() {
     var res = '';
     if(this.get('big')) {
       res = 'font-size: 30px; color: #000; vertical-align: middle; text-decoration: none;'
@@ -33,7 +34,7 @@ export default Component.extend({
       res = 'display: none;'
     }
     return htmlSafe(res);
-  }).property('big'),
+  }),
   actions: {
     badge_popup: function(user_id) {
       modal.open('badge-awarded', {badge: {id: this.get('badge.id')}});

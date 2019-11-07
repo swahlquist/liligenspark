@@ -16,19 +16,20 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { later as runLater } from '@ember/runloop';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 var cached_images = {};
 var last_redraw = (new Date()).getTime();
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('model.name', function() {
     var name = this.get('model.name');
     var title = "Board";
     if(name) {
       title = title + " - " + name;
     }
     return title;
-  }).property('model.name'),
+  }),
   ordered_buttons: null,
   processButtons: observer('app_state.board_reload_key', function(ignore_fast_html) {
     this.update_button_symbol_class();
@@ -137,14 +138,40 @@ export default Controller.extend({
     // before, but with all the local caching it's more likely to
     // happen more often.
   },
-  valid_fast_html: computed(function() {
-    var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') && this.get('model.fast_html.height') == this.get('height') && this.get('model.current_revision') == this.get('model.fast_html.revision') && this.get('model.fast_html.label_locale') == app_state.get('label_locale') && this.get('model.fast_html.display_level') == this.get('model.display_level'));
-    return res;
-  }).property('model.fast_html', 'app_state.currentBoardState.level', 'model.fast_html.width', 'width', 'model.fast_html.height', 'height', 'model.fast_html.revision', 'model.current_revision', 'model.fast_html.label_locale', 'app_state.label_locale'),
-  has_rendered_material: computed(function() {
-    var res = !!(this.get('ordered_buttons') || this.get('valid_fast_html'));
-    return res;
-  }).property('ordered_buttons', 'valid_fast_html', 'model.fast_html', 'app_state.currentBoardState.level', 'model.fast_html.width', 'width', 'model.fast_html.height', 'height', 'model.fast_html.revision', 'model.current_revision', 'model.fast_html.label_locale', 'app_state.label_locale'),
+  valid_fast_html: computed(
+    'model.fast_html',
+    'app_state.currentBoardState.level',
+    'model.fast_html.width',
+    'width',
+    'model.fast_html.height',
+    'height',
+    'model.fast_html.revision',
+    'model.current_revision',
+    'model.fast_html.label_locale',
+    'app_state.label_locale',
+    function() {
+      var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') && this.get('model.fast_html.height') == this.get('height') && this.get('model.current_revision') == this.get('model.fast_html.revision') && this.get('model.fast_html.label_locale') == app_state.get('label_locale') && this.get('model.fast_html.display_level') == this.get('model.display_level'));
+      return res;
+    }
+  ),
+  has_rendered_material: computed(
+    'ordered_buttons',
+    'valid_fast_html',
+    'model.fast_html',
+    'app_state.currentBoardState.level',
+    'model.fast_html.width',
+    'width',
+    'model.fast_html.height',
+    'height',
+    'model.fast_html.revision',
+    'model.current_revision',
+    'model.fast_html.label_locale',
+    'app_state.label_locale',
+    function() {
+      var res = !!(this.get('ordered_buttons') || this.get('valid_fast_html'));
+      return res;
+    }
+  ),
   check_for_updated_board: observer(
     'app_state.currentBoardState.reload_token',
     'has_rendered_material',
@@ -258,37 +285,49 @@ export default Controller.extend({
       }
     }
   ),
-  board_style: computed(function() {
+  board_style: computed('height', function() {
     return htmlSafe("position: relative; height: " + (this.get('height') + 5) + "px");
-  }).property('height'),
-  bg_class: computed(function() {
+  }),
+  bg_class: computed('model.background.position', function() {
     var pos = (this.get('model.background.position') || '').split(',');
     var fit = 'stretch';
     if(pos[0] == 'center') {
       fit = 'contain';
     }
     return htmlSafe(fit);
-  }).property('model.background.position'),
-  bg_style: computed(function() {
-    var rows = this.get('model.grid.rows');
-    var cols = this.get('model.grid.columns');
-    var pos = (this.get('model.background.position') || '').split(',');
-    var xmin = Math.max(parseInt(pos[1], 10) || 0, 0), xmax = Math.min(parseInt(pos[3], 10) || cols - 1, cols - 1) + 1,
-        ymin = Math.max(parseInt(pos[2], 10) || 0, 0), ymax = Math.min(parseInt(pos[4], 10) || rows - 1, rows - 1) + 1;
-    var width = 100 * (xmax - xmin) / cols;
-    var height = 100 * (ymax - ymin) / rows;
-    var left = 100 * xmin / cols;
-    var top = 100 * ymin / rows;
-    return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%; overflow: hidden;');
-  }).property('model.background.image', 'model.grid.rows', 'model.grid.columns', 'model.background.position'),
-  bg_img_style: computed(function() {
-    var pos = (this.get('model.background.position') || '').split(',');
-    var fit = 'fill';
-    if(pos[0] == 'center') {
-      fit = 'contain';
+  }),
+  bg_style: computed(
+    'model.background.image',
+    'model.grid.rows',
+    'model.grid.columns',
+    'model.background.position',
+    function() {
+      var rows = this.get('model.grid.rows');
+      var cols = this.get('model.grid.columns');
+      var pos = (this.get('model.background.position') || '').split(',');
+      var xmin = Math.max(parseInt(pos[1], 10) || 0, 0), xmax = Math.min(parseInt(pos[3], 10) || cols - 1, cols - 1) + 1,
+          ymin = Math.max(parseInt(pos[2], 10) || 0, 0), ymax = Math.min(parseInt(pos[4], 10) || rows - 1, rows - 1) + 1;
+      var width = 100 * (xmax - xmin) / cols;
+      var height = 100 * (ymax - ymin) / rows;
+      var left = 100 * xmin / cols;
+      var top = 100 * ymin / rows;
+      return htmlSafe('position: absolute; top: ' + top + '%; left: ' + left + '%; width: ' + width + '%; height: ' + height + '%; overflow: hidden;');
     }
-    return htmlSafe('object-fit: ' + fit + '; object-position: center;');
-  }).property('model.background.image', 'model.grid.rows', 'model.grid.columns', 'model.background.position'),
+  ),
+  bg_img_style: computed(
+    'model.background.image',
+    'model.grid.rows',
+    'model.grid.columns',
+    'model.background.position',
+    function() {
+      var pos = (this.get('model.background.position') || '').split(',');
+      var fit = 'fill';
+      if(pos[0] == 'center') {
+        fit = 'contain';
+      }
+      return htmlSafe('object-fit: ' + fit + '; object-position: center;');
+    }
+  ),
   redraw_if_needed: function() {
     var now = (new Date()).getTime();
     if(now - last_redraw > 100) {

@@ -1,6 +1,7 @@
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 CoughDrop.Webhook = DS.Model.extend({
   name: DS.attr('string'),
@@ -13,9 +14,9 @@ CoughDrop.Webhook = DS.Model.extend({
   content_type: DS.attr('raw'),
   advanced_configuration: DS.attr('boolean'),
   custom_configuration: DS.attr('boolean'),
-  webhooks_list: computed(function() {
+  webhooks_list: computed('webhooks', function() {
     return (this.get('webhooks') || []).join(', ');
-  }).property('webhooks')
+  })
 });
 
 export default CoughDrop.Webhook;

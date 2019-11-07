@@ -5,14 +5,15 @@ import persistence from '../utils/persistence';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
-  text_note: computed(function() {
+  text_note: computed('note_type', function() {
     return this.get('note_type') == 'text';
-  }).property('note_type'),
-  video_note: computed(function() {
+  }),
+  video_note: computed('note_type', function() {
     return this.get('note_type') == 'video';
-  }).property('note_type'),
+  }),
   opening: function() {
     var type = this.get('model.type');
     var user = this.get('model.user');

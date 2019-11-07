@@ -11,6 +11,7 @@ import persistence from '../../utils/persistence';
 import speecher from '../../utils/speecher';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { later as runLater } from '@ember/runloop';
+import { computed } from '@ember/object';
 
 export default Route.extend({
   model: function(params) {
@@ -162,7 +163,7 @@ export default Route.extend({
       });
     }
   },
-  error_message: computed(function() {
+  error_message: computed('load_state', 'load_state.has_permissions', 'model.id', function() {
     if(this.get('model.id')) {
       return i18n.t('unexpected_error', "This board should have loaded, but there was an unexpected problem");
     } else {
@@ -212,7 +213,7 @@ export default Route.extend({
       }
 //      return i18n.t('error_with_board', "There was a problem retrieving this board.");
     }
-  }).property('load_state', 'load_state.has_permissions', 'model.id'),
+  }),
   actions: {
     willTransition: function(transition) {
       if(this.get('board')) {

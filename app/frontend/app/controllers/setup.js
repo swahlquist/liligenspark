@@ -12,6 +12,7 @@ import utterance from '../utils/utterance';
 import Utils from '../utils/misc';
 import Stats from '../utils/stats';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 var order = ['intro', 'usage', 'board_category', 'core', 'symbols', 'access', 'voice', 'logging', 'supervisors', 'done'];
 var extra_order = ['extra-dashboard', 'extra-home-boards', 'extra-speak-mode', 'extra-folders', 'extra-exit-speak-mode', 'extra-modeling', 'extra-supervisors', 'extra-reports', 'extra-logs', 'extra-done'];
@@ -19,11 +20,11 @@ export default Controller.extend({
   speecher: speecher,
   title: computed(function() {
     return i18n.t('account_setup', "Account Setup");
-  }).property(),
+  }),
   queryParams: ['page', 'finish'],
   order: order,
   extra_order: extra_order,
-  partial: computed(function() {
+  partial: computed('page', function() {
     var page = this.get('page');
     var pages = order.concat(extra_order);
     if(page && page.match(/^extra/)) {
@@ -34,101 +35,139 @@ export default Controller.extend({
     } else {
       return "setup/intro";
     }
-  }).property('page'),
-  text_position: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.device.button_text_position') == 'top') {
-      res.text_on_top = true;
-    } else if(user.get('preferences.device.button_text_position') == 'bottom') {
-      res.text_on_bottom = true;
-    } else if(user.get('preferences.device.button_text_position') == 'text_only') {
-      res.text_only = true;
-    } else {
-      res.text_on_top = true;
+  }),
+  text_position: computed(
+    'fake_user.preferences.device.button_text_position',
+    'app_state.currentUser.preferences.device.button_text_position',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.device.button_text_position') == 'top') {
+        res.text_on_top = true;
+      } else if(user.get('preferences.device.button_text_position') == 'bottom') {
+        res.text_on_bottom = true;
+      } else if(user.get('preferences.device.button_text_position') == 'text_only') {
+        res.text_only = true;
+      } else {
+        res.text_on_top = true;
+      }
+      return res;
     }
-    return res;
-  }).property('fake_user.preferences.device.button_text_position', 'app_state.currentUser.preferences.device.button_text_position'),
-  background: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.device.symbol_background') == 'clear') {
-      res.clear = true;
-    } else if(user.get('preferences.device.symbol_background') == 'white') {
-      res.white = true;
-    } else {
-      res.clear = true;
+  ),
+  background: computed(
+    'fake_user.preferences.device.symbol_background',
+    'app_state.currentUser.preferences.device.symbol_background',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.device.symbol_background') == 'clear') {
+        res.clear = true;
+      } else if(user.get('preferences.device.symbol_background') == 'white') {
+        res.white = true;
+      } else {
+        res.clear = true;
+      }
+      return res;
     }
-    return res;
-  }).property('fake_user.preferences.device.symbol_background', 'app_state.currentUser.preferences.device.symbol_background'),
-  access: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.device.dwell')) {
-      res.dwell = true;
-    } else if(user.get('preferences.device.scanning')) {
-      res.scanning = true;
-    } else {
-      res.touch = true;
+  ),
+  access: computed(
+    'fake_user.preferences.device.dwell',
+    'app_state.currentUser.preferences.device.dwell',
+    'fake_user.preferences.device.scanning',
+    'app_state.currentUser.preferences.device.scanning',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.device.dwell')) {
+        res.dwell = true;
+      } else if(user.get('preferences.device.scanning')) {
+        res.scanning = true;
+      } else {
+        res.touch = true;
+      }
+      return res;
     }
-    return res;
-  }).property('fake_user.preferences.device.dwell', 'app_state.currentUser.preferences.device.dwell', 'fake_user.preferences.device.scanning', 'app_state.currentUser.preferences.device.scanning'),
-  home_return: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.auto_home_return')) {
-      res.auto_return = true;
-    } else {
-      res.stay = true;
+  ),
+  home_return: computed(
+    'fake_user.preferences.auto_home_return',
+    'app_state.currentUser.preferences.auto_home_return',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.auto_home_return')) {
+        res.auto_return = true;
+      } else {
+        res.stay = true;
+      }
+      return res;
     }
-    return res;
-  }).property('fake_user.preferences.auto_home_return', 'app_state.currentUser.preferences.auto_home_return'),
-  symbols: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.preferred_symbols')) {
-      res[user.get('preferences.preferred_symbols').replace(/-/, '_')] = true;
-    } else {
-      res.original = true;
+  ),
+  symbols: computed(
+    'fake_user.preferences.preferred_symbols',
+    'app_state.currentUser.preferences.preferred_symbols',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.preferred_symbols')) {
+        res[user.get('preferences.preferred_symbols').replace(/-/, '_')] = true;
+      } else {
+        res.original = true;
+      }
+      return res;
     }
-    return res;
-  }).property('fake_user.preferences.preferred_symbols', 'app_state.currentUser.preferences.preferred_symbols'),
-  premium_but_not_allowed: computed(function() {
-    return this.get('symbols.pcs') && !this.get('app_state.currentUser.subscription.extras_enabled');
-  }).property('app_state.currentUser.subscription.extras_enabled', 'symbols.pcs'),
-  lessonpix_but_not_allowed: computed(function() {
+  ),
+  premium_but_not_allowed: computed(
+    'app_state.currentUser.subscription.extras_enabled',
+    'symbols.pcs',
+    function() {
+      return this.get('symbols.pcs') && !this.get('app_state.currentUser.subscription.extras_enabled');
+    }
+  ),
+  lessonpix_but_not_allowed: computed('symbols.lessonpix', 'lessonpix_enabled', function() {
     return this.get('symbols.lessonpix') && !this.get('lessonpix_enabled');
-  }).property('symbols.lessonpix', 'lessonpix_enabled'),
-  no_scroll: computed(function() {
-    if(app_state.get('feature_flags.board_levels') && this.get('scroll_disableable')) {
-      return !this.get('advanced') && this.get('page') == 'board_category'; 
-    } else {
-      return false;
+  }),
+  no_scroll: computed(
+    'advanced',
+    'page',
+    'app_state.feature_flags.board_levels',
+    'scroll_disableable',
+    function() {
+      if(app_state.get('feature_flags.board_levels') && this.get('scroll_disableable')) {
+        return !this.get('advanced') && this.get('page') == 'board_category'; 
+      } else {
+        return false;
+      }
     }
-  }).property('advanced', 'page', 'app_state.feature_flags.board_levels', 'scroll_disableable'),
-  notification: computed(function() {
-    var res = {};
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    if(user.get('preferences.notification_frequency') == '1_week') {
-      res['1_week'] = true;
-    } else if(user.get('preferences.notification_frequency') == '2_weeks') {
-      res['2_weeks'] = true;
-    } else if(user.get('preferences.notification_frequency') == '1_month') {
-      res['1_month'] = true;
-    } else {
-      res['none'] = true;
+  ),
+  notification: computed(
+    'fake_user.preferences.notification_frequency',
+    'app_state.currentUser.preferences.notification_frequency',
+    'fake_user.preferences.share_notifications',
+    'app_state.currentUser.preferences.share_notifications',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.notification_frequency') == '1_week') {
+        res['1_week'] = true;
+      } else if(user.get('preferences.notification_frequency') == '2_weeks') {
+        res['2_weeks'] = true;
+      } else if(user.get('preferences.notification_frequency') == '1_month') {
+        res['1_month'] = true;
+      } else {
+        res['none'] = true;
+      }
+      if(user.get('preferences.share_notifications') == 'email') {
+        res.email = true;
+      } else if(user.get('preferences.share_notifications') == 'text') {
+        res.text = true;
+      } else if(user.get('preferences.share_notifications') == 'app') {
+        res.app = true;
+      } else {
+        res.email = true;
+      }
+      return res;
     }
-    if(user.get('preferences.share_notifications') == 'email') {
-      res.email = true;
-    } else if(user.get('preferences.share_notifications') == 'text') {
-      res.text = true;
-    } else if(user.get('preferences.share_notifications') == 'app') {
-      res.app = true;
-    } else {
-      res.email = true;
-    }
-    return res;
-  }).property('fake_user.preferences.notification_frequency', 'app_state.currentUser.preferences.notification_frequency', 'fake_user.preferences.share_notifications', 'app_state.currentUser.preferences.share_notifications'),
+  ),
   update_cell: observer(
     'cell',
     'fake_user.cell_phone',
@@ -209,34 +248,40 @@ export default Controller.extend({
       }
     }
   ),
-  user_voice_list: computed(function() {
-    var list = speecher.get('voiceList');
-    var result = [];
-    var user = app_state.get('currentUser') || this.get('fake_user');
-    var premium_voice_ids = (user.get('premium_voices.claimed') || []).map(function(id) { return "extra:" + id; });
-    var voice_uri = user.get('preferences.device.voice.voice_uri');
-    var found = false;
-    list.forEach(function(voice) {
-      voice = $.extend({}, voice);
-      voice.selected = voice.id == voice_uri;
-      if(voice.selected) { found = true; }
-      if(voice.voiceURI && voice.voiceURI.match(/^extra/)) {
-        if(premium_voice_ids.indexOf(voice.voiceURI) >= 0) {
+  user_voice_list: computed(
+    'speecher.voiceList',
+    'app_state.currentUser.premium_voices.claimed',
+    'fake_user.preferences.device.voice.voice_uri',
+    'app_state.currentUser.preferences.device.voice.voice_uris',
+    function() {
+      var list = speecher.get('voiceList');
+      var result = [];
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      var premium_voice_ids = (user.get('premium_voices.claimed') || []).map(function(id) { return "extra:" + id; });
+      var voice_uri = user.get('preferences.device.voice.voice_uri');
+      var found = false;
+      list.forEach(function(voice) {
+        voice = $.extend({}, voice);
+        voice.selected = voice.id == voice_uri;
+        if(voice.selected) { found = true; }
+        if(voice.voiceURI && voice.voiceURI.match(/^extra/)) {
+          if(premium_voice_ids.indexOf(voice.voiceURI) >= 0) {
+            result.push(voice);
+          }
+        } else {
           result.push(voice);
         }
-      } else {
-        result.push(voice);
-      }
-    });
-    if(result.length > 1) {
-      result.push({
-        id: 'force_default',
-        name: i18n.t('system_default_voice', 'System Default Voice'),
-        selected: !found
       });
+      if(result.length > 1) {
+        result.push({
+          id: 'force_default',
+          name: i18n.t('system_default_voice', 'System Default Voice'),
+          selected: !found
+        });
+      }
+      return result;
     }
-    return result;
-  }).property('speecher.voiceList', 'app_state.currentUser.premium_voices.claimed', 'fake_user.preferences.device.voice.voice_uri', 'app_state.currentUser.preferences.device.voice.voice_uris'),
+  ),
   update_on_page_change: observer('page', function() {
     if(!this.get('fake_user')) {
       this.set('fake_user', EmberObject.create({

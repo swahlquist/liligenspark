@@ -6,6 +6,7 @@ import $ from 'jquery';
 import buttonTracker from '../utils/raw_events';
 import capabilities from '../utils/capabilities';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   draw: observer(
@@ -81,7 +82,7 @@ export default Component.extend({
       hardware: null
     });
   }),
-  hardware_type: computed(function() {
+  hardware_type: computed('hardware', function() {
     var res = {};
     if(this.get('hardware')) {
       res[this.get('hardware')] = true;
@@ -89,10 +90,10 @@ export default Component.extend({
     } else {
       return null;
     }
-  }).property('hardware'),
-  eye_tracking: computed(function() {
+  }),
+  eye_tracking: computed('type', function() {
     return this.get('type') == 'eyegaze';
-  }).property('type'),
+  }),
   didInsertElement: function() {
     var _this = this;
 

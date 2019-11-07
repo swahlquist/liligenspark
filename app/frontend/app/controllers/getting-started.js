@@ -1,8 +1,9 @@
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
-  intro_status_class: computed(function() {
+  intro_status_class: computed('model.progress.intro_watched', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.intro_watched')) {
       res = res + "glyphicon-ok ";
@@ -10,8 +11,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-book ";
     }
     return res;
-  }).property('model.progress.intro_watched'),
-  home_status_class: computed(function() {
+  }),
+  home_status_class: computed('model.progress.home_board_set', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.home_board_set')) {
       res = res + "glyphicon-ok ";
@@ -19,8 +20,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-home ";
     }
     return res;
-  }).property('model.progress.home_board_set'),
-  app_status_class: computed(function() {
+  }),
+  app_status_class: computed('model.progress.app_added', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.app_added')) {
       res = res + "glyphicon-ok ";
@@ -28,8 +29,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-phone ";
     }
     return res;
-  }).property('model.progress.app_added'),
-  preferences_status_class: computed(function() {
+  }),
+  preferences_status_class: computed('model.progress.preferences_edited', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.preferences_edited')) {
       res = res + "glyphicon-ok ";
@@ -37,8 +38,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-cog ";
     }
     return res;
-  }).property('model.progress.preferences_edited'),
-  profile_status_class: computed(function() {
+  }),
+  profile_status_class: computed('model.progress.profile_edited', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.profile_edited')) {
       res = res + "glyphicon-ok ";
@@ -46,8 +47,8 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-user ";
     }
     return res;
-  }).property('model.progress.profile_edited'),
-  subscription_status_class: computed(function() {
+  }),
+  subscription_status_class: computed('model.progress.subscription_set', function() {
     var res = "glyphicon ";
     if(this.get('model.progress.subscription_set')) {
       res = res + "glyphicon-ok ";
@@ -55,7 +56,7 @@ export default modal.ModalController.extend({
       res = res + "glyphicon-usd ";
     }
     return res;
-  }).property('model.progress.subscription_set'),
+  }),
   actions: {
     intro: function() {
       if(window.ga) {

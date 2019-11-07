@@ -3,6 +3,7 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default DS.Model.extend({
   type: DS.attr('string'),
@@ -43,28 +44,28 @@ export default DS.Model.extend({
   evaluation: DS.attr('raw'),
   nonce: DS.attr('string'),
   event_note_count: DS.attr('number'),
-  minutes: computed(function() {
+  minutes: computed('duration', function() {
     return Math.round((this.get('duration') || 0) / 60);
-  }).property('duration'),
-  session_type: computed(function() {
+  }),
+  session_type: computed('type', function() {
     return this.get('type') == 'session';
-  }).property('type'),
-  note_type: computed(function() {
+  }),
+  note_type: computed('type', function() {
     return this.get('type') == 'note';
-  }).property('type'),
-  video_type: computed(function() {
+  }),
+  video_type: computed('type', 'note', function() {
     return this.get('type') == 'note' && this.get('note.video');
-  }).property('type', 'note'),
-  assessment_type: computed(function() {
+  }),
+  assessment_type: computed('type', function() {
     return this.get('type') == 'assessment';
-  }).property('type'),
-  journal_type: computed(function() {
+  }),
+  journal_type: computed('type', function() {
     return this.get('type') == 'journal';
-  }).property('type'),
-  eval_type: computed(function() {
+  }),
+  eval_type: computed('type', function() {
     return this.get('type') == 'eval';
-  }).property('type'),
-  goal_status_class: computed(function() {
+  }),
+  goal_status_class: computed('goal.status', function() {
     var status = this.get('goal.status');
     if(status == 1) {
       return 'face sad';
@@ -77,8 +78,8 @@ export default DS.Model.extend({
     } else {
       return '';
     }
-  }).property('goal.status'),
-  processed_events: computed(function() {
+  }),
+  processed_events: computed('events', 'toggled_event_ids', function() {
     var result = [];
     var last_ts = null;
     var max_id = Math.max.apply(null, (this.get('events') || []).mapBy('id').compact()) || 0;
@@ -114,8 +115,8 @@ export default DS.Model.extend({
       result.push(event);
     });
     return result;
-  }).property('events', 'toggled_event_ids'),
-  processed_tallies: computed(function() {
+  }),
+  processed_tallies: computed('assessment', function() {
     var result = [];
     var tallies = [];
     var last_ts = null;
@@ -135,8 +136,8 @@ export default DS.Model.extend({
       result.push(tally);
     });
     return result;
-  }).property('assessment'),
-  daily_use_history: computed(function() {
+  }),
+  daily_use_history: computed('daily_use', function() {
     var res = [];
     var daily = this.get('daily_use') || [];
     var first = daily[0];
@@ -171,7 +172,7 @@ export default DS.Model.extend({
       d.display_style = htmlSafe('width: ' + pct + '%;');
     });
     return res;
-  }).property('daily_use'),
+  }),
   toggle_notes: function(event_id) {
     var notes = [];
     var found = false;

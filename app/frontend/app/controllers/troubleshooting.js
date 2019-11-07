@@ -12,6 +12,7 @@ import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
 import contentGrabbers from '../utils/content_grabbers';
 import CoughDrop from '../app';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   tests: [
@@ -51,9 +52,9 @@ export default Controller.extend({
       emberSet(test, 'results', {passed: false, reason: "No speech synthesis found"});
     }
   },
-  error_count: computed(function() {
+  error_count: computed('load_stamp', 'app_state.medium_refresh_stamp', function() {
     return (CoughDrop.errors || []).length;
-  }).property('load_stamp', 'app_state.medium_refresh_stamp'),
+  }),
   run_speech_synthesis_voices_test: function(test) {
     if(speecher.scope.speechSynthesis) {
       if(speecher.scope.speechSynthesis.getVoices) {
@@ -322,7 +323,7 @@ export default Controller.extend({
   },
   has_debugging: computed(function() {
     return capabilities.debugging.available();
-  }).property(),
+  }),
   check_persistence_data: function() {
     var _this = this;
     _this.set('storage', {pending: true});

@@ -8,11 +8,12 @@ import CoughDrop from '../../app';
 import app_state from '../../utils/app_state';
 import evaluation from '../../utils/eval';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('model.user_name', function() {
     return "Log Details";
-  }).property('model.user_name'),
+  }),
   draw_charts: observer('model.geo', 'user', function() {
     if(!this.get('model.geo')) {
       return;
@@ -53,18 +54,24 @@ export default Controller.extend({
         });
     }
   }),
-  processed_assessment: computed(function() {
-    if(this.get('model.type') == 'eval') {
-      var assessment = this.get('model.evaluation');
-      if(this.get('model.eval_in_memory')) {
-        assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
+  processed_assessment: computed(
+    'model.type',
+    'model.eval_in_memory',
+    'model.evaluation',
+    'user.id',
+    function() {
+      if(this.get('model.type') == 'eval') {
+        var assessment = this.get('model.evaluation');
+        if(this.get('model.eval_in_memory')) {
+          assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
+        }
+        return evaluation.analyze(assessment);
       }
-      return evaluation.analyze(assessment);
     }
-  }).property('model.type', 'model.eval_in_memory', 'model.evaluation', 'user.id'),
-  same_author: computed(function() {
+  ),
+  same_author: computed('model.author.id', 'app_state.sessionUser.id', function() {
     return this.get('model.author.id') == app_state.get('sessionUser.id');
-  }).property('model.author.id', 'app_state.sessionUser.id'),
+  }),
   actions: {
     reply: function() {
       var _this = this;

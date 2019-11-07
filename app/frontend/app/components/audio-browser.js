@@ -4,6 +4,7 @@ import app_state from '../utils/app_state';
 import word_suggestions from '../utils/word_suggestions';
 import Utils from '../utils/misc';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',
@@ -22,9 +23,9 @@ export default Component.extend({
       controller.set('browse_audio', {error: true});
     });
   },
-  more_audio_results: computed(function() {
+  more_audio_results: computed('browse_audio.{results, filtered_results}', function() {
     return !!(this.get('browse_audio.results') && this.get('browse_audio.results').length < this.get('browse_audio.filtered_results').length);
-  }).property('browse_audio.results', 'browse_audio.filtered_results'),
+  }),
   filter_audio_string: observer('browse_audio.filter_string', function() {
     this.send('filter_browsed_audio', this.get('browse_audio.filter_string'));
   }),

@@ -5,6 +5,7 @@ import modal from '../../utils/modal';
 import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   advance_options: [
@@ -24,7 +25,7 @@ export default Controller.extend({
     }, function(err) {
     });
   }),
-  mapped_badges: computed(function() {
+  mapped_badges: computed('model.badges', 'user_badges', function() {
     var user_badges = this.get('user_badges');
     if(user_badges) {
       var res = [];
@@ -37,7 +38,7 @@ export default Controller.extend({
     } else {
       return this.get('model.badges');
     }
-  }).property('model.badges', 'user_badges'),
+  }),
   load_templates_for_header: observer('model.template_header', function() {
     if(this.get('model.template_header')) {
       this.load_templates();

@@ -15,51 +15,64 @@ import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,
-  sync_able: computed(function() {
+  sync_able: computed('extras.ready', function() {
     return this.get('extras.ready');
-  }).property('extras.ready'),
-  home_board_or_supporter: computed(function() {
-      return this.get('app_state.currentUser.preferences.home_board.key') || this.get('app_state.currentUser.supporter_role');
-  }).property('app_state.currentUser.preferences.home_board.key', 'app_state.currentUser.supporter_role'),
-  needs_sync: computed(function() {
+  }),
+  home_board_or_supporter: computed(
+    'app_state.currentUser.preferences.home_board.key',
+    'app_state.currentUser.supporter_role',
+    function() {
+        return this.get('app_state.currentUser.preferences.home_board.key') || this.get('app_state.currentUser.supporter_role');
+    }
+  ),
+  needs_sync: computed('persistence.last_sync_at', function() {
     var now = (new Date()).getTime() / 1000;
     return (now - persistence.get('last_sync_at')) > (7 * 24 * 60 * 60);
-  }).property('persistence.last_sync_at'),
+  }),
   triedToSave: false,
-  badEmail: computed(function() {
+  badEmail: computed('user.email', 'triedToSave', function() {
     var email = this.get('user.email');
     return (this.get('triedToSave') && !email);
-  }).property('user.email', 'triedToSave'),
-  shortPassword: computed(function() {
+  }),
+  shortPassword: computed('user.password', 'triedToSave', function() {
     var password = this.get('user.password') || '';
     return this.get('triedToSave') && password.length < 6;
-  }).property('user.password', 'triedToSave'),
-  noName: computed(function() {
+  }),
+  noName: computed('user.name', 'user.user_name', 'triedToSave', function() {
     var name = this.get('user.name');
     var user_name = this.get('user.user_name');
     return this.get('triedToSave') && !name && !user_name;
-  }).property('user.name', 'user.user_name', 'triedToSave'),
-  noSpacesName: computed(function() {
+  }),
+  noSpacesName: computed('user.user_name', function() {
     return !!(this.get('user.user_name') || '').match(/[\s\.'"]/);
-  }).property('user.user_name'),
-  blank_slate: computed(function() {
-    var progress = this.get('app_state.currentUser.preferences.progress');
-    // TODO: eventually this should go away, maybe after a few weeks of active use or something
-    if(progress && progress.setup_done) {
-      return null;
-    } else if(this.get('app_state.currentUser.using_for_a_while')) {
-      return null;
-    } else {
-      return progress;
+  }),
+  blank_slate: computed(
+    'app_state.currentUser.preferences.progress',
+    'app_state.currentUser.using_for_a_while',
+    function() {
+      var progress = this.get('app_state.currentUser.preferences.progress');
+      // TODO: eventually this should go away, maybe after a few weeks of active use or something
+      if(progress && progress.setup_done) {
+        return null;
+      } else if(this.get('app_state.currentUser.using_for_a_while')) {
+        return null;
+      } else {
+        return progress;
+      }
     }
-  }).property('app_state.currentUser.preferences.progress', 'app_state.currentUser.using_for_a_while'),
-  no_intro: computed(function() {
-    return this.get('blank_slate') && !this.get('app_state.currentUser.preferences.progress.intro_watched');
-  }).property('blank_slate', 'app_state.currentUser.preferences.progress.intro_watched'),
-  blank_slate_percent: computed(function() {
+  ),
+  no_intro: computed(
+    'blank_slate',
+    'app_state.currentUser.preferences.progress.intro_watched',
+    function() {
+      return this.get('blank_slate') && !this.get('app_state.currentUser.preferences.progress.intro_watched');
+    }
+  ),
+  blank_slate_percent: computed('app_state.currentUser.preferences.progress', function() {
     var options = ['intro_watched', 'profile_edited', 'preferences_edited', 'home_board_set', 'app_added'];
 
     var total = options.length;
@@ -73,10 +86,10 @@ export default Controller.extend({
       }
     });
     return Math.round(done / total * 100);
-  }).property('app_state.currentUser.preferences.progress'),
-  blank_slate_percent_style: computed(function() {
+  }),
+  blank_slate_percent_style: computed('blank_slate_percent', function() {
     return htmlSafe("width: " + this.get('blank_slate_percent') + "%;");
-  }).property('blank_slate_percent'),
+  }),
   checkForBlankSlate: observer('persistence.online', function() {
     var _this = this;
     if(Ember.testing) { return; }
@@ -111,58 +124,74 @@ export default Controller.extend({
       res.needs_install_reminder = false;
     }
     return res;
-  }).property(),
-  small_needs_sync_class: computed(function() {
+  }),
+  small_needs_sync_class: computed('needs_sync', function() {
     var res = "half_size list-group-item ";
     if(!this.get('needs_sync')) {
       res = res + "subtle ";
     }
     return res;
-  }).property('needs_sync'),
-  refreshing_class: computed(function() {
+  }),
+  refreshing_class: computed('persistence.syncing', function() {
     var res = "glyphicon glyphicon-refresh ";
     if(this.get('persistence.syncing')) {
       res = res + "spinning ";
     }
     return res;
-  }).property('persistence.syncing'),
-  needs_sync_class: computed(function() {
+  }),
+  needs_sync_class: computed('needs_sync', function() {
     var res = "list-group-item ";
     if(!this.get('needs_sync')) {
       res = res + "subtle ";
     }
     return res;
-  }).property('needs_sync'),
-  current_boards: computed(function() {
-    var res = {};
-    if(this.get('popular_selected')) {
-      res = this.get('popularBoards');
-    } else if(this.get('personal_selected')) {
-      res = this.get('personalBoards');
-    } else if(this.get('suggested_selected')) {
-      res = this.get('homeBoards');
-    } else if(this.get('recent_selected')) {
-      res = this.get('recentOfflineBoards');
+  }),
+  current_boards: computed(
+    'popular_selected',
+    'personal_selected',
+    'suggested_selected',
+    'recent_selected',
+    'popularBoards',
+    'personalBoards',
+    'homeBoards',
+    'recentOfflineBoards',
+    function() {
+      var res = {};
+      if(this.get('popular_selected')) {
+        res = this.get('popularBoards');
+      } else if(this.get('personal_selected')) {
+        res = this.get('personalBoards');
+      } else if(this.get('suggested_selected')) {
+        res = this.get('homeBoards');
+      } else if(this.get('recent_selected')) {
+        res = this.get('recentOfflineBoards');
+      }
+      return res;
     }
-    return res;
-  }).property('popular_selected', 'personal_selected', 'suggested_selected', 'recent_selected', 'popularBoards', 'personalBoards', 'homeBoards', 'recentOfflineBoards'),
-  pending_updates: computed(function() {
-    var important = this.get('app_state.currentUser.pending_org') ||
-                this.get('app_state.currentUser.pending_supervision_org') ||
-                (this.get('app_state.currentUser.pending_board_shares') || []).length > 0 ||
-                this.get('app_state.currentUser.unread_messages');
-    var normal_new = app_state.get('currentUser.unread_messages.length') || 0;
-    var unread_notifications = (app_state.get('currentUser.parsed_notifications') || []).filter(function(n) { return n.unread; }).length;
-    normal_new = normal_new + (unread_notifications || 0);
+  ),
+  pending_updates: computed(
+    'app_state.currentUser.pending_org',
+    'app_state.currentUser.pending_supervision_org',
+    'app_state.currentUser.pending_board_shares',
+    'app_state.currentUser.unread_messages',
+    function() {
+      var important = this.get('app_state.currentUser.pending_org') ||
+                  this.get('app_state.currentUser.pending_supervision_org') ||
+                  (this.get('app_state.currentUser.pending_board_shares') || []).length > 0 ||
+                  this.get('app_state.currentUser.unread_messages');
+      var normal_new = app_state.get('currentUser.unread_messages.length') || 0;
+      var unread_notifications = (app_state.get('currentUser.parsed_notifications') || []).filter(function(n) { return n.unread; }).length;
+      normal_new = normal_new + (unread_notifications || 0);
 
-    if(normal_new && !app_state.get('currentUser.read_notifications')) {
-      return {count: normal_new};
-    } else if(important) {
-      return true;
-    } else {
-      return null;
+      if(normal_new && !app_state.get('currentUser.read_notifications')) {
+        return {count: normal_new};
+      } else if(important) {
+        return true;
+      } else {
+        return null;
+      }
     }
-  }).property('app_state.currentUser.pending_org', 'app_state.currentUser.pending_supervision_org', 'app_state.currentUser.pending_board_shares', 'app_state.currentUser.unread_messages'),
+  ),
   update_selected: observer('selected', 'persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
@@ -290,28 +319,32 @@ export default Controller.extend({
       _this.set('supervisees_with_badges', sups);
     }
   ),
-  modeling_ideas_available: computed(function() {
-    if(app_state.get('sessionUser.supporter_role')) {
-      var any_premium_supervisees = false;
-      (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
-        if(emberGet(sup, 'premium')) {
-          any_premium_supervisees = true;
+  modeling_ideas_available: computed(
+    'app_state.sessionUser.supporter_role',
+    'app_state.sessionUser.currently_premium',
+    function() {
+      if(app_state.get('sessionUser.supporter_role')) {
+        var any_premium_supervisees = false;
+        (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
+          if(emberGet(sup, 'premium')) {
+            any_premium_supervisees = true;
+          }
+        });
+        if(any_premium_supervisees) {
+          return true;
         }
-      });
-      if(any_premium_supervisees) {
+      } else if(app_state.get('sessionUser.currently_premium')) {
         return true;
       }
-    } else if(app_state.get('sessionUser.currently_premium')) {
-      return true;
+      return false;
     }
-    return false;
-  }).property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.currently_premium'),
-  many_supervisees: computed(function() {
+  ),
+  many_supervisees: computed('app_state.currentUser.supervisees', function() {
     return (app_state.get('currentUser.supervisees') || []).length > 5;
-  }).property('app_state.currentUser.supervisees'),
-  some_supervisees: computed(function() {
+  }),
+  some_supervisees: computed('app_state.currentUser.supervisees', function() {
     return (app_state.get('currentUser.supervisees') || []).length > 3;
-  }).property('app_state.currentUser.supervisees'),
+  }),
   save_user_pref_change: observer('app_state.currentUser.preferences.auto_open_speak_mode', function() {
     var mode = app_state.get('currentUser.preferences.auto_open_speak_mode');
     if(mode !== undefined) {
@@ -322,22 +355,27 @@ export default Controller.extend({
       this.set('last_auto_open_speak_mode', mode);
     }
   }),
-  index_nav: computed(function() {
-    var res = {};
-    if(this.get('index_nav_state')) {
-      res[this.get('index_nav_state')] = true;
-    } else if(app_state.get('currentUser.preferences.device.last_index_nav')) {
-      res[app_state.get('currentUser.preferences.device.last_index_nav')] = true;
-    } else {
-      if(this.get('model.supporter_role')) {
-//        res.supervisees = true;
-        res.main = true;
+  index_nav: computed(
+    'index_nav_state',
+    'model.supporter_role',
+    'app_state.currentUser.preference.device.last_index_nav',
+    function() {
+      var res = {};
+      if(this.get('index_nav_state')) {
+        res[this.get('index_nav_state')] = true;
+      } else if(app_state.get('currentUser.preferences.device.last_index_nav')) {
+        res[app_state.get('currentUser.preferences.device.last_index_nav')] = true;
       } else {
-        res.main = true;
+        if(this.get('model.supporter_role')) {
+  //        res.supervisees = true;
+          res.main = true;
+        } else {
+          res.main = true;
+        }
       }
+      return res;
     }
-    return res;
-  }).property('index_nav_state', 'model.supporter_role', 'app_state.currentUser.preference.device.last_index_nav'),
+  ),
   subscription_check: observer('app_state.sessionUser', function() {
     // if the user is in the free trial or is really expired, they need the subscription
     // modal to pop up

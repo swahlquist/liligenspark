@@ -9,12 +9,13 @@ import capabilities from '../utils/capabilities';
 import i18n from '../utils/i18n';
 import $ from 'jquery';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Component.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),
   app_state: computed(function() {
     return app_state;
-  }).property(),
+  }),
   didInsertElement: function() {
     if($(this.element).width() < 850) {
       $(this.element).addClass('skinny_subscription');

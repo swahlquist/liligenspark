@@ -4,14 +4,15 @@ import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import progress_tracker from '../utils/progress_tracker';
 import { htmlSafe } from '@ember/string';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
-  pdf_download: computed(function() {
+  pdf_download: computed('model.type', function() {
     return this.get('model.type') == 'pdf';
-  }).property('model.type'),
-  obf_download: computed(function() {
+  }),
+  obf_download: computed('model.type', function() {
     return this.get('model.type') == 'obf';
-  }).property('model.type'),
+  }),
   opening: function() {
     this.set('progress', null);
     this.set('track_id', null);

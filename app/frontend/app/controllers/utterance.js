@@ -5,17 +5,18 @@ import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
-  title: computed(function() {
+  title: computed('model.sentence', 'model.show_user', 'model.user', function() {
     var sentence = this.get('model.sentence') || "something";
     if(this.get('model.show_user') && this.get('model.user')) {
       return (this.get('model.user.name') || this.get('model.user.user_name')) + " said: \"" + sentence + "\"";
     } else {
       return "Someone said: \"" + sentence + "\"";
     }
-  }).property('model.sentence', 'model.show_user', 'model.user'),
-  image_url: computed(function() {
+  }),
+  image_url: computed('model.image_url', 'model.large_image_url', 'image_index', function() {
     var index = this.get('image_index');
     if(index === undefined) {
       return this.get('model.image_url');
@@ -26,15 +27,15 @@ export default Controller.extend({
     } else {
       return this.get('model.button_list')[index].image;
     }
-  }).property('model.image_url', 'model.large_image_url', 'image_index'),
+  }),
   show_share: observer('model.sentence', function() {
     if(!this.get('model.id')) { return; }
     this.get('model').check_for_large_image_url();
     this.set('speakable', speecher.ready);
   }),
-  user_showable: computed(function() {
+  user_showable: computed('model.show_user', 'model.user.name', 'model.user.user_name', function() {
     return this.get('model.show_user') && this.get('model.user.name') && this.get('model.user.user_name');
-  }).property('model.show_user', 'model.user.name', 'model.user.user_name'),
+  }),
   actions: {
     clear_reply: function() {
       this.set('message', null);

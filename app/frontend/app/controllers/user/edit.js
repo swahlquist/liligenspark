@@ -7,6 +7,7 @@ import $ from 'jquery';
 import app_state from '../../utils/app_state';
 import persistence from '../../utils/persistence';
 import { observer } from '@ember/object';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,
@@ -25,9 +26,9 @@ export default Controller.extend({
     {name: i18n.t('email_goal_completion', "Email Me When Goals are Completed or Badges are Earned"), id: 'enabled'},
     {name: i18n.t('dont_email_goal_completion', "Don't Email Me When Goals are Completed or Badges are Earned"), id: 'disabled'}
   ],
-  title: computed(function() {
+  title: computed('model.user_name', function() {
     return "Edit " + this.get('model.user_name');
-  }).property('model.user_name'),
+  }),
   load_webhooks: function() {
     var _this = this;
     _this.set('webhooks', {loading: true});

@@ -2,6 +2,7 @@ import EmberObject from '@ember/object';
 import capabilities from './capabilities';
 import i18n from './i18n';
 import RSVP, { resolve, reject } from 'rsvp';
+import { computed } from '@ember/object';
 
 var voices = EmberObject.extend({
   find_voice: function(voice_id) {
@@ -21,7 +22,7 @@ var voices = EmberObject.extend({
     }
     return res;
   },
-  computed_voices: computed(function() {
+  computed_voices: computed('voices', function() {
     var res = this.get('voices');
     res.forEach(function(voice) {
       if(voice.voice_id.match(/^acap/)) {
@@ -54,7 +55,7 @@ var voices = EmberObject.extend({
       }
     });
     return res;
-  }).property('voices'),
+  }),
   download_voice: function(voice, user) {
     voice.set('downloading', true);
     voice.set('download_progress', 0);

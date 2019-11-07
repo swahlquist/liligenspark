@@ -13,6 +13,7 @@ import capabilities from './utils/capabilities';
 import i18n from './utils/i18n';
 import persistence from './utils/persistence';
 import coughDropExtras from './utils/extras';
+import { computed } from '@ember/object';
 
 window.onerror = function(msg, url, line, col, obj) {
   CoughDrop.track_error(msg + " (" + url + "-" + line + ":" + col + ")", false);
@@ -180,16 +181,16 @@ DS.Model.reopen({
     return this._super();
   },
   retrieved: DS.attr('number'),
-  fresh: computed(function() {
+  fresh: computed('retrieved', 'app_state.refresh_stamp', function() {
     var retrieved = this.get('retrieved');
     var now = (new Date()).getTime();
     return (now - retrieved) < (5 * 60 * 1000);
-  }).property('retrieved', 'app_state.refresh_stamp'),
-  really_fresh: computed(function() {
+  }),
+  really_fresh: computed('retrieved', 'app_state.short_refresh_stamp', function() {
     var retrieved = this.get('retrieved');
     var now = (new Date()).getTime();
     return (now - retrieved) < (30 * 1000);
-  }).property('retrieved', 'app_state.short_refresh_stamp'),
+  }),
   save: function() {
     // TODO: this causes a difficult constraint, because you need to use the result of the
     // promise instead of the original record you were saving in any results, just in case

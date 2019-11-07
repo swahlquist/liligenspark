@@ -1,6 +1,7 @@
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import persistence from '../utils/persistence';
+import { computed } from '@ember/object';
 
 CoughDrop.Integration = DS.Model.extend({
   name: DS.attr('string'),
@@ -21,27 +22,27 @@ CoughDrop.Integration = DS.Model.extend({
   button_webhook_url: DS.attr('string'),
   button_webhook_local: DS.attr('boolean'),
   board_render_url: DS.attr('string'),
-  insecure_button_webhook_url: computed(function() {
+  insecure_button_webhook_url: computed('button_webhook_url', 'button_webhook_local', function() {
     var url = this.get('button_webhook_url');
     return url && url.match(/^http:/) && !this.get('button_webhook_local');
-  }).property('button_webhook_url', 'button_webhook_local'),
-  insecure_board_render_url: computed(function() {
+  }),
+  insecure_board_render_url: computed('board_render_url', function() {
     var url = this.get('board_render_url');
     return url && url.match(/^http:/);
-  }).property('board_render_url'),
+  }),
   access_token: DS.attr('string'),
   truncated_access_token: DS.attr('string'),
-  displayable_access_token: computed(function() {
+  displayable_access_token: computed('access_token', 'truncated_access_token', function() {
     return this.get('access_token') || this.get('truncated_access_token');
-  }).property('access_token', 'truncated_access_token'),
-  has_multiple_actions: computed(function() {
+  }),
+  has_multiple_actions: computed('webhook', 'render', function() {
     return !!(this.get('webhook') && this.get('render'));
-  }).property('webhook', 'render'),
+  }),
   token: DS.attr('string'),
   truncated_token: DS.attr('string'),
-  displayable_token: computed(function() {
+  displayable_token: computed('token', 'truncated_token', function() {
     return this.get('token') || this.get('truncated_token');
-  }).property('token', 'truncated_token'),
+  }),
 });
 
 export default CoughDrop.Integration;

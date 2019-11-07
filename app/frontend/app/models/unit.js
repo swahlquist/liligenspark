@@ -3,6 +3,7 @@ import CoughDrop from '../app';
 import speecher from '../utils/speecher';
 import persistence from '../utils/persistence';
 import Utils from '../utils/misc';
+import { computed } from '@ember/object';
 
 CoughDrop.Unit = DS.Model.extend({
   settings: DS.attr('raw'),
@@ -12,12 +13,12 @@ CoughDrop.Unit = DS.Model.extend({
   supervisors: DS.attr('raw'),
   communicators: DS.attr('raw'),
   permissions: DS.attr('raw'),
-  supervisor_count: computed(function() {
+  supervisor_count: computed('supervisors', function() {
     return (this.get('supervisors') || []).length;
-  }).property('supervisors'),
-  communicator_count: computed(function() {
+  }),
+  communicator_count: computed('communicators', function() {
     return (this.get('communicators') || []).length;
-  }).property('communicators'),
+  }),
   load_data: function() {
     if(this.get('weekly_stats') && !this.get('weekly_stats.error')) {
       return;
