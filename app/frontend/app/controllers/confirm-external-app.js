@@ -2,7 +2,7 @@ import modal from '../utils/modal';
 import capabilities from '../utils/capabilities';
 
 export default modal.ModalController.extend({
-  app: function() {
+  app: computed(function() {
     var apps = this.get('model.apps') || {};
     if(capabilities.system == 'iOS' && apps.ios && apps.ios.launch_url) {
       return apps.ios.name || apps.ios.launch_url;
@@ -13,7 +13,7 @@ export default modal.ModalController.extend({
     } else {
       return "Unknown resource";
     }
-  }.property('model.apps'),
+  }).property('model.apps'),
   actions: {
     open_link: function() {
       modal.close();

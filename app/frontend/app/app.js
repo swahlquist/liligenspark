@@ -180,16 +180,16 @@ DS.Model.reopen({
     return this._super();
   },
   retrieved: DS.attr('number'),
-  fresh: function() {
+  fresh: computed(function() {
     var retrieved = this.get('retrieved');
     var now = (new Date()).getTime();
     return (now - retrieved) < (5 * 60 * 1000);
-  }.property('retrieved', 'app_state.refresh_stamp'),
-  really_fresh: function() {
+  }).property('retrieved', 'app_state.refresh_stamp'),
+  really_fresh: computed(function() {
     var retrieved = this.get('retrieved');
     var now = (new Date()).getTime();
     return (now - retrieved) < (30 * 1000);
-  }.property('retrieved', 'app_state.short_refresh_stamp'),
+  }).property('retrieved', 'app_state.short_refresh_stamp'),
   save: function() {
     // TODO: this causes a difficult constraint, because you need to use the result of the
     // promise instead of the original record you were saving in any results, just in case

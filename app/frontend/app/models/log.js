@@ -43,28 +43,28 @@ export default DS.Model.extend({
   evaluation: DS.attr('raw'),
   nonce: DS.attr('string'),
   event_note_count: DS.attr('number'),
-  minutes: function() {
+  minutes: computed(function() {
     return Math.round((this.get('duration') || 0) / 60);
-  }.property('duration'),
-  session_type: function() {
+  }).property('duration'),
+  session_type: computed(function() {
     return this.get('type') == 'session';
-  }.property('type'),
-  note_type: function() {
+  }).property('type'),
+  note_type: computed(function() {
     return this.get('type') == 'note';
-  }.property('type'),
-  video_type: function() {
+  }).property('type'),
+  video_type: computed(function() {
     return this.get('type') == 'note' && this.get('note.video');
-  }.property('type', 'note'),
-  assessment_type: function() {
+  }).property('type', 'note'),
+  assessment_type: computed(function() {
     return this.get('type') == 'assessment';
-  }.property('type'),
-  journal_type: function() {
+  }).property('type'),
+  journal_type: computed(function() {
     return this.get('type') == 'journal';
-  }.property('type'),
-  eval_type: function() {
+  }).property('type'),
+  eval_type: computed(function() {
     return this.get('type') == 'eval';
-  }.property('type'),
-  goal_status_class: function() {
+  }).property('type'),
+  goal_status_class: computed(function() {
     var status = this.get('goal.status');
     if(status == 1) {
       return 'face sad';
@@ -77,8 +77,8 @@ export default DS.Model.extend({
     } else {
       return '';
     }
-  }.property('goal.status'),
-  processed_events: function() {
+  }).property('goal.status'),
+  processed_events: computed(function() {
     var result = [];
     var last_ts = null;
     var max_id = Math.max.apply(null, (this.get('events') || []).mapBy('id').compact()) || 0;
@@ -114,8 +114,8 @@ export default DS.Model.extend({
       result.push(event);
     });
     return result;
-  }.property('events', 'toggled_event_ids'),
-  processed_tallies: function() {
+  }).property('events', 'toggled_event_ids'),
+  processed_tallies: computed(function() {
     var result = [];
     var tallies = [];
     var last_ts = null;
@@ -135,8 +135,8 @@ export default DS.Model.extend({
       result.push(tally);
     });
     return result;
-  }.property('assessment'),
-  daily_use_history: function() {
+  }).property('assessment'),
+  daily_use_history: computed(function() {
     var res = [];
     var daily = this.get('daily_use') || [];
     var first = daily[0];
@@ -171,7 +171,7 @@ export default DS.Model.extend({
       d.display_style = htmlSafe('width: ' + pct + '%;');
     });
     return res;
-  }.property('daily_use'),
+  }).property('daily_use'),
   toggle_notes: function(event_id) {
     var notes = [];
     var found = false;

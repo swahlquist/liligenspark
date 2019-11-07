@@ -2,21 +2,21 @@ import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 
 export default Component.extend({
-  elem_class: function() {
+  elem_class: computed(function() {
     if(this.get('side_by_side')) {
       return htmlSafe('col-sm-6');
     } else {
       return htmlSafe('col-sm-4');
     }
-  }.property('side_by_side'),
-  elem_style: function() {
+  }).property('side_by_side'),
+  elem_style: computed(function() {
     if(this.get('right_side')) {
       return htmlSafe('height: 400px; padding-top: 23px; border-left: 1px solid #eee;');
     } else {
       return htmlSafe('height: 400px; padding-top: 23px;');
     }
-  }.property('right_side'),
-  lost_words: function() {
+  }).property('right_side'),
+  lost_words: computed(function() {
     if(this.get('usage_stats') && this.get('ref_stats') && this.get('this_before_that')) {
       var percents = [];
       var _this = this;
@@ -44,8 +44,8 @@ export default Component.extend({
       return percents.slice(0, 10);
     }
     return null;
-  }.property('usage_stats', 'ref_stats'),
-  gained_words: function() {
+  }).property('usage_stats', 'ref_stats'),
+  gained_words: computed(function() {
     if(this.get('usage_stats') && this.get('ref_stats') && this.get('that_before_this')) {
       var percents = [];
       var _this = this;
@@ -73,19 +73,19 @@ export default Component.extend({
       return percents.slice(0, 10);
     }
     return null;
-  }.property('usage_stats', 'ref_stats'),
-  this_before_that: function() {
+  }).property('usage_stats', 'ref_stats'),
+  this_before_that: computed(function() {
     if(this.get('usage_stats') && this.get('ref_stats')) {
       return this.get('usage_stats').comes_before(this.get('ref_stats'));
     }
     return false;
-  }.property('usage_stats', 'ref_stats'),
-  that_before_this: function() {
+  }).property('usage_stats', 'ref_stats'),
+  that_before_this: computed(function() {
     if(this.get('usage_stats') && this.get('ref_stats')) {
       return this.get('ref_stats').comes_before(this.get('usage_stats'));
     }
     return false;
-  }.property('usage_stats', 'ref_stats'),
+  }).property('usage_stats', 'ref_stats'),
   actions: {
     word_cloud: function() {
       this.sendAction('word_cloud');

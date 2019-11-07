@@ -10,9 +10,9 @@ import evaluation from '../../utils/eval';
 import { observer } from '@ember/object';
 
 export default Controller.extend({
-  title: function() {
+  title: computed(function() {
     return "Log Details";
-  }.property('model.user_name'),
+  }).property('model.user_name'),
   draw_charts: observer('model.geo', 'user', function() {
     if(!this.get('model.geo')) {
       return;
@@ -53,7 +53,7 @@ export default Controller.extend({
         });
     }
   }),
-  processed_assessment: function() {
+  processed_assessment: computed(function() {
     if(this.get('model.type') == 'eval') {
       var assessment = this.get('model.evaluation');
       if(this.get('model.eval_in_memory')) {
@@ -61,10 +61,10 @@ export default Controller.extend({
       }
       return evaluation.analyze(assessment);
     }
-  }.property('model.type', 'model.eval_in_memory', 'model.evaluation', 'user.id'),
-  same_author: function() {
+  }).property('model.type', 'model.eval_in_memory', 'model.evaluation', 'user.id'),
+  same_author: computed(function() {
     return this.get('model.author.id') == app_state.get('sessionUser.id');
-  }.property('model.author.id', 'app_state.sessionUser.id'),
+  }).property('model.author.id', 'app_state.sessionUser.id'),
   actions: {
     reply: function() {
       var _this = this;

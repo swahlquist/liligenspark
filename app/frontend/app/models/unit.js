@@ -12,12 +12,12 @@ CoughDrop.Unit = DS.Model.extend({
   supervisors: DS.attr('raw'),
   communicators: DS.attr('raw'),
   permissions: DS.attr('raw'),
-  supervisor_count: function() {
+  supervisor_count: computed(function() {
     return (this.get('supervisors') || []).length;
-  }.property('supervisors'),
-  communicator_count: function() {
+  }).property('supervisors'),
+  communicator_count: computed(function() {
     return (this.get('communicators') || []).length;
-  }.property('communicators'),
+  }).property('communicators'),
   load_data: function() {
     if(this.get('weekly_stats') && !this.get('weekly_stats.error')) {
       return;

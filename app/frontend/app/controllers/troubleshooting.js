@@ -51,9 +51,9 @@ export default Controller.extend({
       emberSet(test, 'results', {passed: false, reason: "No speech synthesis found"});
     }
   },
-  error_count: function() {
+  error_count: computed(function() {
     return (CoughDrop.errors || []).length;
-  }.property('load_stamp', 'app_state.medium_refresh_stamp'),
+  }).property('load_stamp', 'app_state.medium_refresh_stamp'),
   run_speech_synthesis_voices_test: function(test) {
     if(speecher.scope.speechSynthesis) {
       if(speecher.scope.speechSynthesis.getVoices) {
@@ -320,9 +320,9 @@ export default Controller.extend({
       emberSet(test, 'results', {passed: false});
     }
   },
-  has_debugging: function() {
+  has_debugging: computed(function() {
     return capabilities.debugging.available();
-  }.property(),
+  }).property(),
   check_persistence_data: function() {
     var _this = this;
     _this.set('storage', {pending: true});

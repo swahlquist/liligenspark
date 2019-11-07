@@ -12,16 +12,16 @@ import Subscription from '../../utils/subscription';
 import { observer } from '@ember/object';
 
 export default Controller.extend({
-  title: function() {
+  title: computed(function() {
     return "Profile for " + this.get('model.user_name');
-  }.property('model.user_name'),
-  sync_able: function() {
+  }).property('model.user_name'),
+  sync_able: computed(function() {
     return this.get('extras.ready');
-  }.property('extras.ready'),
-  needs_sync: function() {
+  }).property('extras.ready'),
+  needs_sync: computed(function() {
     var now = (new Date()).getTime();
     return (now - persistence.get('last_sync_at')) > (7 * 24 * 60 * 60 * 1000);
-  }.property('persistence.last_sync_at'),
+  }).property('persistence.last_sync_at'),
   check_daily_use: observer('model.user_name', 'model.permissions.admin_support_actions', function() {
     var current_user_name = this.get('daily_use.user_name');
     if((this.get('model.user_name') && current_user_name != this.get('model.user_name') && this.get('model.permissions.admin_support_actions')) || !this.get('daily_use')) {
@@ -43,14 +43,14 @@ export default Controller.extend({
       });
     }
   }),
-  blank_slate: function() {
+  blank_slate: computed(function() {
     return !this.get('model.preferences.home_board.key') &&
       (this.get('public_boards_shortened') || []).length === 0 &&
       (this.get('private_boards_shortened') || []).length === 0 &&
       (this.get('starred_boards_shortened') || []).length === 0 &&
       (this.get('shared_boards_shortened') || []).length === 0;
-  }.property('model.preferences.home_board.key', 'public_boards_shortened', 'private_boards_shortened', 'starred_boards_shortened', 'shared_boards_shortened'),
-  board_list: function() {
+  }).property('model.preferences.home_board.key', 'public_boards_shortened', 'private_boards_shortened', 'starred_boards_shortened', 'shared_boards_shortened'),
+  board_list: computed(function() {
     var list = [];
     var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete")};
     if(this.get('selected') == 'mine' || !this.get('selected')) {
@@ -112,7 +112,7 @@ export default Controller.extend({
       res.filtered_results = new_list.slice(0, 18);
     }
     return res;
-  }.property('selected', 'parent_object', 'show_all_boards', 'filterString',
+  }).property('selected', 'parent_object', 'show_all_boards', 'filterString',
       'model.my_boards', 'model.prior_home_boards', 'model.public_boards', 'model.private_boards',
       'model.starred_boards', 'model.shared_boards',
       'model.my_boards.length', 'model.prior_home_boards.length', 'model.public_boards.length',
@@ -167,13 +167,13 @@ export default Controller.extend({
       });
     }
   }),
-  subscription: function() {
+  subscription: computed(function() {
     if(this.get('model.permissions.admin_support_actions') && this.get('model.subscription')) {
       var sub = Subscription.create({user: this.get('model')});
       sub.reset();
       return sub;
     }
-  }.property('model.permissions.admin_support_actions', 'model.subscription'),
+  }).property('model.permissions.admin_support_actions', 'model.subscription'),
   generate_or_append_to_list: function(args, list_name, list_id, append) {
     var _this = this;
     if(list_id != _this.get('list_id')) { return; }

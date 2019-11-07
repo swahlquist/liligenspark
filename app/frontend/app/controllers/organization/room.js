@@ -5,9 +5,9 @@ import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 
 export default Controller.extend({
-  first_log: function() {
+  first_log: computed(function() {
     return (this.get('model.logs.data') || [])[0];
-  }.property('model.logs.data'),
+  }).property('model.logs.data'),
   actions: {
     edit_unit: function() {
       var _this = this;

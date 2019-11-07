@@ -13,9 +13,9 @@ export default Controller.extend({
     {name: i18n.t('sales', "Sales"), id: "sales"},
     {name: i18n.t('support', "Technical Support"), id: "technical support"}
   ],
-  support_recipient: function() {
+  support_recipient: computed(function() {
     return this.get('recipient') == 'technical support';
-  }.property('recipient'),
+  }).property('recipient'),
   set_recipient_if_sales: observer('to', function() {
     this.set('recipient', this.get('to'));
   }),

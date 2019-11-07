@@ -81,7 +81,7 @@ export default Component.extend({
       hardware: null
     });
   }),
-  hardware_type: function() {
+  hardware_type: computed(function() {
     var res = {};
     if(this.get('hardware')) {
       res[this.get('hardware')] = true;
@@ -89,10 +89,10 @@ export default Component.extend({
     } else {
       return null;
     }
-  }.property('hardware'),
-  eye_tracking: function() {
+  }).property('hardware'),
+  eye_tracking: computed(function() {
     return this.get('type') == 'eyegaze';
-  }.property('type'),
+  }).property('type'),
   didInsertElement: function() {
     var _this = this;
 

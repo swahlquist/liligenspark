@@ -7,10 +7,10 @@ CoughDrop.Userversion = DS.Model.extend({
   stats: DS.attr('raw'),
   action: DS.attr('string'),
   summary: DS.attr('string'),
-  recent: function() {
+  recent: computed(function() {
     var past = window.moment().add(-7, 'day');
     return this.get('created') && this.get('created') > past;
-  }.property('app_state.refresh_stamp', 'created')
+  }).property('app_state.refresh_stamp', 'created')
 });
 
 export default CoughDrop.Userversion;

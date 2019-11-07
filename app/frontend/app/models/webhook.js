@@ -13,9 +13,9 @@ CoughDrop.Webhook = DS.Model.extend({
   content_type: DS.attr('raw'),
   advanced_configuration: DS.attr('boolean'),
   custom_configuration: DS.attr('boolean'),
-  webhooks_list: function() {
+  webhooks_list: computed(function() {
     return (this.get('webhooks') || []).join(', ');
-  }.property('webhooks')
+  }).property('webhooks')
 });
 
 export default CoughDrop.Webhook;

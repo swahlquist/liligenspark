@@ -18,10 +18,10 @@ export default Controller.extend({
       this.set('badPassword', null);
     }
   }),
-  cantSubmit: function() {
+  cantSubmit: computed(function() {
     this.checkPassword();
     return !!(this.get('badPassword') || this.get('password_reset.succeeded'));
-  }.property('badPassword', 'password_reset.succeeded'),
+  }).property('badPassword', 'password_reset.succeeded'),
   actions: {
     changePassword: function() {
       var user_name = this.get('model.user_name');

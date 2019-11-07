@@ -7,12 +7,12 @@ import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
 
 export default modal.ModalController.extend({
-  text_note: function() {
+  text_note: computed(function() {
     return this.get('note_type') == 'text';
-  }.property('note_type'),
-  video_note: function() {
+  }).property('note_type'),
+  video_note: computed(function() {
     return this.get('note_type') == 'video';
-  }.property('note_type'),
+  }).property('note_type'),
   opening: function() {
     var type = this.get('model.type');
     var user = this.get('model.user');

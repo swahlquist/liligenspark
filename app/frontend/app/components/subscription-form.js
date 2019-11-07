@@ -12,9 +12,9 @@ import { observer } from '@ember/object';
 
 export default Component.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),
-  app_state: function() {
+  app_state: computed(function() {
     return app_state;
-  }.property(),
+  }).property(),
   didInsertElement: function() {
     if($(this.element).width() < 850) {
       $(this.element).addClass('skinny_subscription');

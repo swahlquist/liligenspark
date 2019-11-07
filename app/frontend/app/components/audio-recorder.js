@@ -36,9 +36,9 @@ export default Component.extend({
       this.set('sound_preview.transcription', this.get('text'));
     }
   }),
-  show_next_phrase: function() {
+  show_next_phrase: computed(function() {
     return this.get('next_phrase') && !this.get('browse_audio') && !this.get('sound_preview');
-  }.property('next_phrase', 'browse_audio', 'sound_preview', 'sound_recording', 'sound'),
+  }).property('next_phrase', 'browse_audio', 'sound_preview', 'sound_recording', 'sound'),
   actions: {
     toggle: function() {
 

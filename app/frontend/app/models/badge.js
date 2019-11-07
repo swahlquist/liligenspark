@@ -24,15 +24,15 @@ CoughDrop.Badge = DS.Model.extend({
   ended: DS.attr('date'),
   completion_settings: DS.attr('raw'),
   permissions: DS.attr('raw'),
-  sound_url_with_fallback: function() {
+  sound_url_with_fallback: computed(function() {
     return this.get('sound_url') || speecher.chimes_url;
-  }.property('sound_url'),
-  progress_out_of_100: function() {
+  }).property('sound_url'),
+  progress_out_of_100: computed(function() {
     return Math.min(Math.max(this.get('progress') || 0, 0) * 100, 100);
-  }.property('progress'),
-  progress_style: function() {
+  }).property('progress'),
+  progress_style: computed(function() {
     return htmlSafe("width: " + Math.min(Math.max((this.get('progress') || 0) * 100, 0), 100) + "%");
-  }.property('progress'),
+  }).property('progress'),
   numbered_interval: function(interval, number) {
     var res = {multiplier: 1, unit: i18n.t('day', "day")};
     if(interval == 'monthyear') {
@@ -47,7 +47,7 @@ CoughDrop.Badge = DS.Model.extend({
     res.total = (number || 0) * res.multiplier;
     return res;
   },
-  time_left: function() {
+  time_left: computed(function() {
     if(this.get('earned')) {
       return i18n.t('done', "Done!");
     } else if(this.get('completion_settings')) {
@@ -69,8 +69,8 @@ CoughDrop.Badge = DS.Model.extend({
       var pct = Math.round(this.get('progress') * 100) || 0;
       return i18n.t('percent_of_the_way_there', "%{pct}% of the way there!", {pct: pct});
     }
-  }.property('earned', 'progress', 'completion_settings'),
-  completion_type: function() {
+  }).property('earned', 'progress', 'completion_settings'),
+  completion_type: computed(function() {
     if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     if(badge_level.instance_count) {
@@ -91,8 +91,8 @@ CoughDrop.Badge = DS.Model.extend({
       }
     }
     return i18n.t('match', "match");
-  }.property('completion_settings'),
-  completion_watch_list: function() {
+  }).property('completion_settings'),
+  completion_watch_list: computed(function() {
     if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     var res = "";
@@ -111,8 +111,8 @@ CoughDrop.Badge = DS.Model.extend({
       }
     });
     return res;
-  }.property('completion_settings'),
-  completion_interval: function() {
+  }).property('completion_settings'),
+  completion_interval: computed(function() {
     if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     var each = (badge_level.words_list || badge_level.parts_of_speech_list || []).length == 1;
@@ -137,8 +137,8 @@ CoughDrop.Badge = DS.Model.extend({
         return i18n.t('every_day', "per day");
       }
     }
-  }.property('completion_settings'),
-  completion_duration: function() {
+  }).property('completion_settings'),
+  completion_duration: computed(function() {
     if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     var res = " ";
@@ -179,8 +179,8 @@ CoughDrop.Badge = DS.Model.extend({
       return null;
     }
     return res;
-  }.property('completion_settings'),
-  completion_explanation: function() {
+  }).property('completion_settings'),
+  completion_explanation: computed(function() {
     if(!this.get('completion_settings')) { return null; }
     var badge_level = this.get('completion_settings');
     if(badge_level.watchlist) {
@@ -301,7 +301,7 @@ CoughDrop.Badge = DS.Model.extend({
     } else {
       return i18n.t('do_nothing', "do nothing!");
     }
-  }.property('completion_settings')
+  }).property('completion_settings')
 });
 
 CoughDrop.Badge.best_next_badge = function(badges, goal_id) {

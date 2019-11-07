@@ -71,15 +71,15 @@ export default Controller.extend({
     oldBoard.set('copy_name', decision.board_name);
     return modal.open('copying-board', {board: oldBoard, action: decision.action, user: decision.user, shares: decision.shares, make_public: decision.make_public, translate_locale: decision.translate_locale});
   },
-  board_levels: function() {
+  board_levels: computed(function() {
     return CoughDrop.board_levels.slice(1, 11);
-  }.property(),
-  level_description: function() {
+  }).property(),
+  level_description: computed(function() {
     var level = this.get('board.current_level');
     var desc = (this.get('board_levels').find(function(l) { return l.id.toString() == level.toString(); }) || {}).name;
     if(desc) { desc = htmlSafe(desc.replace(/-/, '<br/>')); }
     return null; //desc;
-  }.property('board_levels', 'board.current_level'),
+  }).property('board_levels', 'board.current_level'),
   update_level_buttons: observer('board.current_level', 'board.model.button_set', function() {
     var _this = this;
     if(this.get('board.model')) {
@@ -88,7 +88,7 @@ export default Controller.extend({
       }, function() { });
     }
   }),
-  show_board_intro: function() {
+  show_board_intro: computed(function() {
     // true if has_board_intro AND board intro hasn't been viewed yet
     if(this.get('has_board_intro') && app_state.get('feature_flags.find_multiple_buttons')) {
       var found = false;
@@ -100,8 +100,8 @@ export default Controller.extend({
       return !found;
     }
     return false;
-  }.property('has_board_intro', 'app_state.feature_flags.find_multiple_buttons', 'app_state.currentUser.preferences.progress.board_intros', 'board.model.id'),
-  has_board_intro: function() {
+  }).property('has_board_intro', 'app_state.feature_flags.find_multiple_buttons', 'app_state.currentUser.preferences.progress.board_intros', 'board.model.id'),
+  has_board_intro: computed(function() {
     // TODO: also show if checking out the board in the 
     // setup process (except that's really only under 
     // advanced now), or if enabled on the embed
@@ -109,13 +109,13 @@ export default Controller.extend({
     // TODO: option to set board level for board_intro prompt
     // TODO: when entering board intro, set root_board_state to the board's id
     return root_board && this.get('board.model.intro') && !this.get('board.model.intro.unapproved');
-  }.property('stashes.root_board_state.id', 'stashes.temporary_root_board_state.id', 'app_state.currentUser.preferences.home_board.id', 'board.model.intro', 'board.model.intro.unapproved'),
-  speak_mode_needing_hammer_js: function() {
+  }).property('stashes.root_board_state.id', 'stashes.temporary_root_board_state.id', 'app_state.currentUser.preferences.home_board.id', 'board.model.intro', 'board.model.intro.unapproved'),
+  speak_mode_needing_hammer_js: computed(function() {
     // iOS needs hammer.js because it's an older version of safari,
     // this causes problems when in speak mode and with dropdowns
     // since we get double-hit events
     return app_state.get('speak_mode') && capabilities.installed_app && capabilities.system == 'iOS';
-  }.property('app_state.speak_mode'),
+  }).property('app_state.speak_mode'),
   highlight_button: function(buttons, button_set, options) {
     options = options || {};
     if(buttons && buttons != 'resume') {
@@ -220,9 +220,9 @@ export default Controller.extend({
     });
     return defer.promise;
   },
-  allow_search: function() {
+  allow_search: computed(function() {
     return app_state.get('domain_settings.full_domain') || session.get('isAuthenticated');
-  }.property('app_state.domain_settings.full_domain', 'session.isAuthenticated'),
+  }).property('app_state.domain_settings.full_domain', 'session.isAuthenticated'),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);

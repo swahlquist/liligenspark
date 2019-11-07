@@ -10,7 +10,7 @@ import { observer } from '@ember/object';
 
 export default Controller.extend({
   update_classes: Subscription.obs_func.observes.apply(Subscription.obs_func, Subscription.obs_properties),
-  subscription: function() {
+  subscription: computed(function() {
     var res;
     if(app_state.get('currentUser')) {
       res = Subscription.create({user: app_state.get('currentUser')});
@@ -25,7 +25,7 @@ export default Controller.extend({
       _this.update_classes();
     });
     return res;
-  }.property('app_state.currentUser'),
+  }).property('app_state.currentUser'),
   check_valid_amount: observer('subscription.subscription_custom_amount', function(force) {
     var amount = parseInt(this.get('subscription.subscription_custom_amount'), 10);
     if(amount && (amount < 150 || (amount % 50 !== 0))) {

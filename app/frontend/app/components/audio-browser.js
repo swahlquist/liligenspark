@@ -22,9 +22,9 @@ export default Component.extend({
       controller.set('browse_audio', {error: true});
     });
   },
-  more_audio_results: function() {
+  more_audio_results: computed(function() {
     return !!(this.get('browse_audio.results') && this.get('browse_audio.results').length < this.get('browse_audio.filtered_results').length);
-  }.property('browse_audio.results', 'browse_audio.filtered_results'),
+  }).property('browse_audio.results', 'browse_audio.filtered_results'),
   filter_audio_string: observer('browse_audio.filter_string', function() {
     this.send('filter_browsed_audio', this.get('browse_audio.filter_string'));
   }),

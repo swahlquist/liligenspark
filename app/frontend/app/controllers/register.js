@@ -5,21 +5,21 @@ export default Controller.extend({
   title: "Register",
   registration_types: CoughDrop.registrationTypes,
   triedToSave: false,
-  badEmail: function() {
+  badEmail: computed(function() {
     var email = this.get('model.email');
     return (this.get('triedToSave') && !email);
-  }.property('model.email', 'triedToSave'),
-  shortPassword: function() {
+  }).property('model.email', 'triedToSave'),
+  shortPassword: computed(function() {
     var password = this.get('model.password') || '';
     var password2 = this.get('model.password2');
     return (this.get('triedToSave') || password == password2) && password.length < 6;
-  }.property('model.password', 'model.password2', 'triedToSave'),
-  noName: function() {
+  }).property('model.password', 'model.password2', 'triedToSave'),
+  noName: computed(function() {
     var name = this.get('model.name');
     var user_name = this.get('model.user_name');
     return this.get('triedToSave') && !name && !user_name;
-  }.property('model.name', 'model.user_name', 'triedToSave'),
-  noSpacesName: function() {
+  }).property('model.name', 'model.user_name', 'triedToSave'),
+  noSpacesName: computed(function() {
     return !!(this.get('model.user_name') || '').match(/[\s\.'"]/);
-  }.property('model.user_name'),
+  }).property('model.user_name'),
 });

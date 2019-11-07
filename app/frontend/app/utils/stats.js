@@ -5,12 +5,12 @@ import i18n from './i18n';
 import { observer } from '@ember/object';
 
 CoughDrop.Stats = EmberObject.extend({
-  no_data: function() {
+  no_data: computed(function() {
     return this.get('total_sessions') === undefined || this.get('total_sessions') === 0;
-  }.property('total_sessions'),
-  has_data: function() {
+  }).property('total_sessions'),
+  has_data: computed(function() {
     return !this.get('no_data');
-  }.property('no_data'),
+  }).property('no_data'),
   date_strings: function() {
     var today_date = window.moment();
     var today = today_date.format('YYYY-MM-DD');

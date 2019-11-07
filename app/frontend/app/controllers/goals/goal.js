@@ -24,7 +24,7 @@ export default Controller.extend({
     }, function(err) {
     });
   }),
-  mapped_badges: function() {
+  mapped_badges: computed(function() {
     var user_badges = this.get('user_badges');
     if(user_badges) {
       var res = [];
@@ -37,7 +37,7 @@ export default Controller.extend({
     } else {
       return this.get('model.badges');
     }
-  }.property('model.badges', 'user_badges'),
+  }).property('model.badges', 'user_badges'),
   load_templates_for_header: observer('model.template_header', function() {
     if(this.get('model.template_header')) {
       this.load_templates();

@@ -5,13 +5,13 @@ import capabilities from '../utils/capabilities';
 import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
-  display_class: function() {
+  display_class: computed(function() {
     var res = "alert alert-dismissable ";
     if(this.get('alert_type')) {
       res = res + this.get('alert_type');
     }
     return res;
-  }.property('alert_type'),
+  }).property('alert_type'),
   actions: {
     opening: function() {
       var settings = modal.settings_for['flash'];

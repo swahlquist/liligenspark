@@ -21,7 +21,7 @@ var voices = EmberObject.extend({
     }
     return res;
   },
-  computed_voices: function() {
+  computed_voices: computed(function() {
     var res = this.get('voices');
     res.forEach(function(voice) {
       if(voice.voice_id.match(/^acap/)) {
@@ -54,7 +54,7 @@ var voices = EmberObject.extend({
       }
     });
     return res;
-  }.property('voices'),
+  }).property('voices'),
   download_voice: function(voice, user) {
     voice.set('downloading', true);
     voice.set('download_progress', 0);

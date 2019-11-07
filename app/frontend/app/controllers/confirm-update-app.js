@@ -1,9 +1,9 @@
 import modal from '../utils/modal';
 
 export default modal.ModalController.extend({
-  version: function() {
+  version: computed(function() {
     return (window.CoughDrop && window.CoughDrop.update_version) || 'unknown';
-  }.property(),
+  }).property(),
   actions: {
     restart: function() {
       if(window.CoughDrop && window.CoughDrop.install_update) {

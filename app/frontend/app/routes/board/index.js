@@ -162,7 +162,7 @@ export default Route.extend({
       });
     }
   },
-  error_message: function() {
+  error_message: computed(function() {
     if(this.get('model.id')) {
       return i18n.t('unexpected_error', "This board should have loaded, but there was an unexpected problem");
     } else {
@@ -212,7 +212,7 @@ export default Route.extend({
       }
 //      return i18n.t('error_with_board', "There was a problem retrieving this board.");
     }
-  }.property('load_state', 'load_state.has_permissions', 'model.id'),
+  }).property('load_state', 'load_state.has_permissions', 'model.id'),
   actions: {
     willTransition: function(transition) {
       if(this.get('board')) {

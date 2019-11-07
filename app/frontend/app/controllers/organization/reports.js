@@ -6,7 +6,7 @@ import { observer } from '@ember/object';
 
 export default Controller.extend({
   queryParams: ['current_report'],
-  available_reports: function() {
+  available_reports: computed(function() {
     if(this.get('model.permissions.edit')) {
       var list = [{id: 'select', name: i18n.t('select_report_prompt', "[ Select a Report ]")}];
       list.push({id: 'all_users', name: i18n.t('all_users', "All organization communicators") });
@@ -43,7 +43,7 @@ export default Controller.extend({
     } else {
       return [];
     }
-  }.property('model.permissions.edit', 'model.admin'),
+  }).property('model.permissions.edit', 'model.admin'),
   get_report: observer('current_report', 'model.id', function() {
     if(this.get('current_report') && this.get('current_report') != 'select' && this.get('model.id')) {
       var _this = this;
@@ -111,12 +111,12 @@ export default Controller.extend({
       this.set('results', null);
     }
   }),
-  removable_report: function() {
+  removable_report: computed(function() {
     return ['all_users', 'all_supervisors'].indexOf(this.get('current_report')) >= 0;
-  }.property('current_report'),
-  user_report: function() {
+  }).property('current_report'),
+  user_report: computed(function() {
     return true;
-  }.property(),
+  }).property(),
   actions: {
     download_list: function() {
       var element = document.createElement('a');

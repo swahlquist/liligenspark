@@ -6,7 +6,7 @@ import { htmlSafe } from '@ember/string';
 export default Component.extend({
   didInsertElement: function() {
   },
-  badge_container_style: function() {
+  badge_container_style: computed(function() {
     var res = '';
     if(this.get('big')) {
     } else if(this.get('inline')) {
@@ -15,8 +15,8 @@ export default Component.extend({
       res = 'margin-top: -10px; margin-bottom: -70px;';
     }
     return htmlSafe(res);
-  }.property('big', 'inline'),
-  image_style: function() {
+  }).property('big', 'inline'),
+  image_style: computed(function() {
     var res = '';
     if(this.get('big')) {
       res = 'height: 80px; width: 80px;';
@@ -24,8 +24,8 @@ export default Component.extend({
       res = '';
     }
     return htmlSafe(res);
-  }.property('big'),
-  text_style: function() {
+  }).property('big'),
+  text_style: computed(function() {
     var res = '';
     if(this.get('big')) {
       res = 'font-size: 30px; color: #000; vertical-align: middle; text-decoration: none;'
@@ -33,7 +33,7 @@ export default Component.extend({
       res = 'display: none;'
     }
     return htmlSafe(res);
-  }.property('big'),
+  }).property('big'),
   actions: {
     badge_popup: function(user_id) {
       modal.open('badge-awarded', {badge: {id: this.get('badge.id')}});

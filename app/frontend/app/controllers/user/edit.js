@@ -25,9 +25,9 @@ export default Controller.extend({
     {name: i18n.t('email_goal_completion', "Email Me When Goals are Completed or Badges are Earned"), id: 'enabled'},
     {name: i18n.t('dont_email_goal_completion', "Don't Email Me When Goals are Completed or Badges are Earned"), id: 'disabled'}
   ],
-  title: function() {
+  title: computed(function() {
     return "Edit " + this.get('model.user_name');
-  }.property('model.user_name'),
+  }).property('model.user_name'),
   load_webhooks: function() {
     var _this = this;
     _this.set('webhooks', {loading: true});

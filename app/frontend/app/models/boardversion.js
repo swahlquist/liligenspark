@@ -10,17 +10,17 @@ CoughDrop.Boardversion = DS.Model.extend({
   button_labels: DS.attr('raw'),
   grid: DS.attr('raw'),
   immediately_upstream_boards: DS.attr('raw'),
-  recent: function() {
+  recent: computed(function() {
     var past = window.moment().add(-7, 'day');
     return this.get('created') && this.get('created') > past;
-  }.property('app_state.refresh_stamp', 'created'),
-  button_labels_list: function() {
+  }).property('app_state.refresh_stamp', 'created'),
+  button_labels_list: computed(function() {
     if(this.get('button_labels') && this.get('button_labels').length > 0) {
       return this.get('button_labels').join(', ');
     } else {
       return "";
     }
-  }.property('button_labels')
+  }).property('button_labels')
 });
 
 export default CoughDrop.Boardversion;

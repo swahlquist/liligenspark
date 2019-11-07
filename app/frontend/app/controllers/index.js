@@ -18,34 +18,34 @@ import { observer } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,
-  sync_able: function() {
+  sync_able: computed(function() {
     return this.get('extras.ready');
-  }.property('extras.ready'),
-  home_board_or_supporter: function() {
+  }).property('extras.ready'),
+  home_board_or_supporter: computed(function() {
       return this.get('app_state.currentUser.preferences.home_board.key') || this.get('app_state.currentUser.supporter_role');
-  }.property('app_state.currentUser.preferences.home_board.key', 'app_state.currentUser.supporter_role'),
-  needs_sync: function() {
+  }).property('app_state.currentUser.preferences.home_board.key', 'app_state.currentUser.supporter_role'),
+  needs_sync: computed(function() {
     var now = (new Date()).getTime() / 1000;
     return (now - persistence.get('last_sync_at')) > (7 * 24 * 60 * 60);
-  }.property('persistence.last_sync_at'),
+  }).property('persistence.last_sync_at'),
   triedToSave: false,
-  badEmail: function() {
+  badEmail: computed(function() {
     var email = this.get('user.email');
     return (this.get('triedToSave') && !email);
-  }.property('user.email', 'triedToSave'),
-  shortPassword: function() {
+  }).property('user.email', 'triedToSave'),
+  shortPassword: computed(function() {
     var password = this.get('user.password') || '';
     return this.get('triedToSave') && password.length < 6;
-  }.property('user.password', 'triedToSave'),
-  noName: function() {
+  }).property('user.password', 'triedToSave'),
+  noName: computed(function() {
     var name = this.get('user.name');
     var user_name = this.get('user.user_name');
     return this.get('triedToSave') && !name && !user_name;
-  }.property('user.name', 'user.user_name', 'triedToSave'),
-  noSpacesName: function() {
+  }).property('user.name', 'user.user_name', 'triedToSave'),
+  noSpacesName: computed(function() {
     return !!(this.get('user.user_name') || '').match(/[\s\.'"]/);
-  }.property('user.user_name'),
-  blank_slate: function() {
+  }).property('user.user_name'),
+  blank_slate: computed(function() {
     var progress = this.get('app_state.currentUser.preferences.progress');
     // TODO: eventually this should go away, maybe after a few weeks of active use or something
     if(progress && progress.setup_done) {
@@ -55,11 +55,11 @@ export default Controller.extend({
     } else {
       return progress;
     }
-  }.property('app_state.currentUser.preferences.progress', 'app_state.currentUser.using_for_a_while'),
-  no_intro: function() {
+  }).property('app_state.currentUser.preferences.progress', 'app_state.currentUser.using_for_a_while'),
+  no_intro: computed(function() {
     return this.get('blank_slate') && !this.get('app_state.currentUser.preferences.progress.intro_watched');
-  }.property('blank_slate', 'app_state.currentUser.preferences.progress.intro_watched'),
-  blank_slate_percent: function() {
+  }).property('blank_slate', 'app_state.currentUser.preferences.progress.intro_watched'),
+  blank_slate_percent: computed(function() {
     var options = ['intro_watched', 'profile_edited', 'preferences_edited', 'home_board_set', 'app_added'];
 
     var total = options.length;
@@ -73,10 +73,10 @@ export default Controller.extend({
       }
     });
     return Math.round(done / total * 100);
-  }.property('app_state.currentUser.preferences.progress'),
-  blank_slate_percent_style: function() {
+  }).property('app_state.currentUser.preferences.progress'),
+  blank_slate_percent_style: computed(function() {
     return htmlSafe("width: " + this.get('blank_slate_percent') + "%;");
-  }.property('blank_slate_percent'),
+  }).property('blank_slate_percent'),
   checkForBlankSlate: observer('persistence.online', function() {
     var _this = this;
     if(Ember.testing) { return; }
@@ -96,7 +96,7 @@ export default Controller.extend({
       _this.set('showOffline', false);
     });
   }),
-  device: function() {
+  device: computed(function() {
     var res = {
       added_somewhere: !!this.get('app_state.currentUser.preferences.progress.app_added'),
       standalone: capabilities.browserless,
@@ -111,29 +111,29 @@ export default Controller.extend({
       res.needs_install_reminder = false;
     }
     return res;
-  }.property(),
-  small_needs_sync_class: function() {
+  }).property(),
+  small_needs_sync_class: computed(function() {
     var res = "half_size list-group-item ";
     if(!this.get('needs_sync')) {
       res = res + "subtle ";
     }
     return res;
-  }.property('needs_sync'),
-  refreshing_class: function() {
+  }).property('needs_sync'),
+  refreshing_class: computed(function() {
     var res = "glyphicon glyphicon-refresh ";
     if(this.get('persistence.syncing')) {
       res = res + "spinning ";
     }
     return res;
-  }.property('persistence.syncing'),
-  needs_sync_class: function() {
+  }).property('persistence.syncing'),
+  needs_sync_class: computed(function() {
     var res = "list-group-item ";
     if(!this.get('needs_sync')) {
       res = res + "subtle ";
     }
     return res;
-  }.property('needs_sync'),
-  current_boards: function() {
+  }).property('needs_sync'),
+  current_boards: computed(function() {
     var res = {};
     if(this.get('popular_selected')) {
       res = this.get('popularBoards');
@@ -145,8 +145,8 @@ export default Controller.extend({
       res = this.get('recentOfflineBoards');
     }
     return res;
-  }.property('popular_selected', 'personal_selected', 'suggested_selected', 'recent_selected', 'popularBoards', 'personalBoards', 'homeBoards', 'recentOfflineBoards'),
-  pending_updates: function() {
+  }).property('popular_selected', 'personal_selected', 'suggested_selected', 'recent_selected', 'popularBoards', 'personalBoards', 'homeBoards', 'recentOfflineBoards'),
+  pending_updates: computed(function() {
     var important = this.get('app_state.currentUser.pending_org') ||
                 this.get('app_state.currentUser.pending_supervision_org') ||
                 (this.get('app_state.currentUser.pending_board_shares') || []).length > 0 ||
@@ -162,7 +162,7 @@ export default Controller.extend({
     } else {
       return null;
     }
-  }.property('app_state.currentUser.pending_org', 'app_state.currentUser.pending_supervision_org', 'app_state.currentUser.pending_board_shares', 'app_state.currentUser.unread_messages'),
+  }).property('app_state.currentUser.pending_org', 'app_state.currentUser.pending_supervision_org', 'app_state.currentUser.pending_board_shares', 'app_state.currentUser.unread_messages'),
   update_selected: observer('selected', 'persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
@@ -290,7 +290,7 @@ export default Controller.extend({
       _this.set('supervisees_with_badges', sups);
     }
   ),
-  modeling_ideas_available: function() {
+  modeling_ideas_available: computed(function() {
     if(app_state.get('sessionUser.supporter_role')) {
       var any_premium_supervisees = false;
       (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
@@ -305,13 +305,13 @@ export default Controller.extend({
       return true;
     }
     return false;
-  }.property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.currently_premium'),
-  many_supervisees: function() {
+  }).property('app_state.sessionUser.supporter_role', 'app_state.sessionUser.currently_premium'),
+  many_supervisees: computed(function() {
     return (app_state.get('currentUser.supervisees') || []).length > 5;
-  }.property('app_state.currentUser.supervisees'),
-  some_supervisees: function() {
+  }).property('app_state.currentUser.supervisees'),
+  some_supervisees: computed(function() {
     return (app_state.get('currentUser.supervisees') || []).length > 3;
-  }.property('app_state.currentUser.supervisees'),
+  }).property('app_state.currentUser.supervisees'),
   save_user_pref_change: observer('app_state.currentUser.preferences.auto_open_speak_mode', function() {
     var mode = app_state.get('currentUser.preferences.auto_open_speak_mode');
     if(mode !== undefined) {
@@ -322,7 +322,7 @@ export default Controller.extend({
       this.set('last_auto_open_speak_mode', mode);
     }
   }),
-  index_nav: function() {
+  index_nav: computed(function() {
     var res = {};
     if(this.get('index_nav_state')) {
       res[this.get('index_nav_state')] = true;
@@ -337,7 +337,7 @@ export default Controller.extend({
       }
     }
     return res;
-  }.property('index_nav_state', 'model.supporter_role', 'app_state.currentUser.preference.device.last_index_nav'),
+  }).property('index_nav_state', 'model.supporter_role', 'app_state.currentUser.preference.device.last_index_nav'),
   subscription_check: observer('app_state.sessionUser', function() {
     // if the user is in the free trial or is really expired, they need the subscription
     // modal to pop up
