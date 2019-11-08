@@ -56,21 +56,26 @@
       <label>{{t "How do you want pictures to display?" key='symbol_background'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">
         <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} style='text-align: left;'>
-          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'></span> 
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
           {{t "With a background matching the button" key='clear_background'}}
         </a>
         <a href="#" class={{if background.white 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'white'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'></span> 
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
           {{t "Always with a white background" key='white_background'}}
         </a>
         <a href="#" class={{if background.black 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'></span> 
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
           {{t "Always with a black background" key='black_background'}}
         </a>
         <a href="#" class={{if background.black_with_high_contrast 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black_with_high_contrast'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 30px; height: 30px; border-radius: 3px; border: 5px solid rgb(255, 189, 144);'>
-            <span style='display: inline-block; width: 20px; height: 20px;border: 5px solid #000;  background: rgb(255, 238, 0);'></span>
-
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #f00; background: #f8fc03;'></span>
           </span> 
           {{t "High contrast with a black background" key='high_contrast_black_background'}}
         </a>
