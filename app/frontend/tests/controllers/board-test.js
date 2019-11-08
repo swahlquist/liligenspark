@@ -252,7 +252,7 @@ describe('BoardController', 'controller:board', function() {
 //
 //         button.set('positioning', {
 //           top: top,
-//           left: left - inner_pad - inner_pad - inner_pad,
+//           left: left,
 //           width: button_width,
 //           height: button_height,
 //           image_height: image_height,

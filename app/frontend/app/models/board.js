@@ -819,7 +819,6 @@ CoughDrop.Board = DS.Model.extend({
 
     var button_html = function(button, pos) {
       var res = "";
-      // TODO: sanitize all these for safety?
 
       var local_image_url = persistence.url_cache[(_this.get('image_urls') || {})[button.image_id] || 'none'] || (_this.get('image_urls') || {})[button.image_id] || 'none';
       var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
@@ -894,8 +893,8 @@ CoughDrop.Board = DS.Model.extend({
         boundClasses.add_classes(button);
         var button_height = starting_height - (extra_pad * 2);
         var button_width = starting_width - (extra_pad * 2);
-        var top = extra_pad + (i * starting_height) + inner_pad;
-        var left = extra_pad + (j * starting_width) + inner_pad;
+        var top = extra_pad + (i * starting_height);
+        var left = extra_pad + (j * starting_width) - 2;
 
         var image_height = button_height - currentLabelHeight - CoughDrop.boxPad - (inner_pad * 2) + 8;
         var image_width = button_width - CoughDrop.boxPad - (inner_pad * 2) + 8;
@@ -924,7 +923,7 @@ CoughDrop.Board = DS.Model.extend({
 
         html = html + button_html(button, {
           top: top,
-          left: left - inner_pad - inner_pad - inner_pad,
+          left: left,
           width: button_width,
           height: button_height,
           image_height: image_height,

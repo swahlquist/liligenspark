@@ -440,8 +440,8 @@ export default Controller.extend({
           if(button_width > 30) {
   //          button_width = button_width;
           }
-          var top = extra_pad + (i * starting_height) + inner_pad;
-          var left = extra_pad + (j * starting_width) + inner_pad;
+          var top = extra_pad + (i * starting_height);
+          var left = extra_pad + (j * starting_width) - 2;
 
           if(stretchable) {
             var can_go = directions(ob, i, j);
@@ -522,7 +522,7 @@ export default Controller.extend({
           }
           button.set('positioning', {
             top: top,
-            left: left - inner_pad - inner_pad - inner_pad,
+            left: left, // - inner_pad - inner_pad,
             width: button_width,
             height: button_height,
             image_height: image_height,
