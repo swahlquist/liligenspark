@@ -2211,7 +2211,7 @@ var app_state = EmberObject.extend({
       runLater(function() {
       _this.jump_to_board({
         id: "i" + button.integration.user_integration_id,
-        key: "integrations/" + button.integration.user_integration_id + ":" + button.integration.action,
+        key: "integrations/" + button.integration.user_integration_id + ":" + (button.integration.action || ''),
         home_lock: button.home_lock
       }, obj.board);
       }, 100);
