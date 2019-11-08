@@ -363,6 +363,12 @@ describe User, :type => :model do
       expect(u.settings['location']).to eq(nil)
       expect(u.settings['public']).to eq(true)
     end
+
+    it "should remove spaces from email" do
+      u = User.new
+      u.process_params({'email' => 'bob@ example.com '})
+      expect(u.settings['email']).to eq('bob@example.com')
+    end
     
     it "should pipe device preferences to the correct settings" do
       u = User.new

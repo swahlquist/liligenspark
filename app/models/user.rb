@@ -546,17 +546,18 @@ class User < ActiveRecord::Base
       end
       self.settings['avatar_url'] = params['avatar_url']
     end
-    if params['email'] && params['email'] != self.settings['email']
+    new_email = params['email'] && params['email'].gsub(/\s/, '')
+    if new_email && new_email != self.settings['email']
       if self.settings['email']
         self.settings['old_emails'] ||= []
         self.settings['old_emails'] << self.settings['email']
         @email_changed = true
       end
-      if (!self.id || @email_changed) && Setting.blocked_email?(params['email'])
+      if (!self.id || @email_changed) && Setting.blocked_email?(new_email)
         add_processing_error("blocked email address")
         return false
       end
-      self.settings['email'] = process_string(params['email'])
+      self.settings['email'] = process_string(new_email)
     end
     self.settings['referrer'] ||= params['referrer'] if params['referrer']
     self.settings['ad_referrer'] ||= params['ad_referrer'] if params['ad_referrer']
