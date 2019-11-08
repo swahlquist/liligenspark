@@ -12,9 +12,8 @@
         <div class='col-sm-6'>
           {{#if settings.saved}}
             <b>{{settings.user_name}}</b>
-          {{else}}
-            <!-- dropdown, or finalized user name if already saved and re-loading -->
-            {{input type='text' value=settings.target class="form-control"}}
+          {{else if settings}}
+            {{user-select select_id="for_user_id" selection=settings.for_user.user_id action=(action (mut settings.for_user.user_id)) }}
           {{/if}}
         </div>
       </div>
@@ -24,20 +23,42 @@
           {{input type='text' value=settings.name class="form-control" placeholder=name_placeholder}}
         </div>
       </div>
-      <div class='form-group'>
-        <label class='control-label col-sm-3'>{{t "Search Target" key='search_target'}}</label>
-        <div class='col-sm-6'>
-          {{input type='text' value=settings.label class="form-control" placeholder="dropdown for target (single or list choices)"}}
-        </div>
-      </div>
       {{#unless save_option}}
         <div class='form-group'>
-          <label class='control-label col-sm-3'>{{t "Default Symbols" key='default_symbols'}}</label>
+          <label class='control-label col-sm-3'>{{t "Promt Symbol(s)" key='prompt_symbols'}}</label>
           <div class='col-sm-6'>
-            {{input type='text' value=settings.default_library class="form-control"}}
+            {{bound-select select_class="form-control" select_id="default_symbols" content=symbol_libraries selection=settings.default_library action=(action (mut settings.default_library)) }}
           </div>
         </div>
       {{/unless}}
+      <div class='form-group'>
+        <label class='control-label col-sm-3'>{{t "Search Target" key='search_target'}}</label>
+        <div class='col-sm-6'>
+          <span class="dropdown" style="display: inline-block; width: 100%;">
+            <button class='btn btn-default symbol_target small' data-toggle="dropdown" style='width: 100%; text-align: left; white-space: nowrap; overflow: hidden;'>
+              <span class='text'>
+                {{#each current_option.images as |url|}}
+                  <img src={{url}} />
+                {{/each}}
+                {{current_option.label}}
+              </span>
+              <span class='caret' style='position: absolute; right: 5px; top: 15px;'></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style='max-height: 225px; overflow: auto;'>
+              {{#each symbol_options as |option|}}
+                <li role="presentation">
+                  <a role="menuitem" class='symbol_target' href="#" tabindex="-1" {{action "choose" option.id}}>
+                    {{#each option.images as |url|}}
+                      <img src={{url}} />
+                    {{/each}}
+                    {{option.label}}
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </span>
+        </div>
+      </div>
       <!-- 
         attempt_minimum, attempt_maximum, mastery_cutoff, target
         -->

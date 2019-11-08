@@ -4,24 +4,129 @@ import utterance from '../../utils/utterance';
 import RSVP from 'rsvp';
 import app_state from '../../utils/app_state';
 import evaluation from '../../utils/eval';
+import { set as emberSet } from '@ember/object';
 import { computed } from '@ember/object';
+import { observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     this.set('aborting', false);
+    this.update_symbol_options();
+    // TODO: on for_user update, check for that user's preferred 
+    // library and default to that if it's an eval library
     var settings = Object.assign({}, this.get('model.assessment'));
+    if(settings.user_id) {
+      settings.for_user = {user_id: settings.user_id, user_name: settings.user_name};
+    }
+    settings.for_user = settings.for_user || {user_id: 'self', user_name: app_state.get('currentUser.user_name')};
     if(settings.name == 'Unnamed Eval') {
       settings.name = "";
     }
     this.set('settings', settings);
+    if(app_state.get('currentUser.preferences.preferred_symbols')) {
+      var pref = app_state.get('currentUser.preferences.preferred_symbols');
+      if((evaluation.libraries || []).indexOf(pref) != -1) {
+        this.set('setting.default_library', pref);
+      }
+    }
   },
+  update_user_name: observer('settings.for_user.user_id', function() {
+    var user_id = this.get('settings.for_user.user_id');
+    if(user_id) {
+      this.set('settings.for_user.user_name', 'user');
+      if(user_id == 'self') {
+        this.set('settings.for_user.user_name', app_state.get('currentUser.user_name'));
+      } else {  
+        var _this = this;
+        app_state.get('currentUser.known_supervisees').forEach(function(u) {
+          if(u.id == user_id) {
+            _this.set('settings.for_user.user_name', u.user_name);
+          }
+        });
+      }
+    }
+  }),
   name_placeholder: computed('settings.user_name', 'settings.for_user.user_name', function() {
-    return i18n.t('eval_for', "Eval for ") + (this.get('settings.for_user.user_name') || this.get('settings.user_name')) + " - " + window.moment().format('MMM Do YYYY');
+    return i18n.t('eval_for', "Eval for ") + (this.get('settings.for_user.user_name') || this.get('settings.user_name') || app_state.get('currentUser.user_name')) + " - " + window.moment().format('MMM Do YYYY');
   }),
   save_option: computed('model.action', function() {
     return this.get('model.action') == 'results';
   }),
+  symbol_libraries: computed(function() {
+    var res = [
+      {name: i18n.t('open_symbols', "OpenSymbols (default)"), id: 'default'},
+      {name: i18n.t('photos', "Photos"), id: 'photos'},
+    ];
+    var lessonpix_added = false;
+    if(app_state.get('currentUser')) {
+      app_state.get('currentUser').find_integration('lessonpix').then(function(integration) {
+        if(!lessonpix_added) {
+          lessonpix_added = true;
+          res.pushObject({
+            name: i18n.t('lessonpix', "LessonPix Symbols"),
+            id: 'lessonpix'
+          });
+        }
+      }, function(err) { });
+    }
+    if(app_state.get('currentUser.subscription.lessonpix') && !lessonpix_added) {
+      lessonpix_added = true;
+      res.push({
+        name: i18n.t('lessonpix', "LessonPix Symbols"),
+        id: 'lessonpix'
+      });
+    }
+    if(app_state.get('currentUser.subscription.extras_enabled')) {
+      res.pushObject({
+        name: i18n.t('pcs', "PCS (BoardMaker) symbols from Tobii-Dynavox"),
+        id: 'pcs'
+      });
+      res.pushObject({
+        name: i18n.t('pcs_hc', "High-Contrast PCS (BoardMaker) symbols from Tobii-Dynavox"),
+        id: 'pcs_hc'
+      });
+    }
+    return res;
+  }),
+  update_symbol_options: observer('symbol_libraries', 'symbol_libraries.length', 'settings.default_library', function() {
+    var res = [
+      {image_names: ['cat'], label: i18n.t('cat', "Cat")},
+      {image_names: ['dog'], label: i18n.t('dog', "Dog")},
+      {image_names: ['fish'], label: i18n.t('fish', "Fish")},
+      {image_names: ['bird'], label: i18n.t('bird', "Bird")},
+      {id: 'animals', image_names: ['cat', 'dog', 'fish', 'bird'], label: i18n.t('animals', "Animals (alternating)")},
+      {image_names: ['car'], label: i18n.t('car', "Car")},
+      {image_names: ['truck'], label: i18n.t('truck', "Truck")},
+      {image_names: ['airplane'], label: i18n.t('airplane', "Airplane")},
+      {image_names: ['motorcycle'], label: i18n.t('motorcycle', "Motorcycle")},
+      {image_names: ['train'], label: i18n.t('train', "Train")},
+      {id: 'vehicles', image_names: ['car', 'truck', 'airplane', 'motorcycle', 'train'], label: i18n.t('vehicles', "Vehicles (alternating)")},
+    ];
+
+    var library = this.get('settings.default_library') || 'default';
+    res.forEach(function(r) {
+      r.id = r.id || r.image_names[0];
+      var list = [];
+      (r.image_names || []).forEach(function(name) {
+        var wrd = evaluation.words.find(function(w) { return w.label == name; });
+        if(wrd && wrd.urls) {
+          list.push(wrd.urls[library] || wrd.urls['default']);//wrd.urls[library] || wrd.urls['default']);
+        }
+      });
+      r.images = list;
+    });
+    this.set('symbol_options', res);
+  }),
+  current_option: computed('settings.label', 'symbol_options', function() {
+    var option_id = this.get('settings.label');
+    var res = (this.get('symbol_options') || []).find(function(o) { return o.id == option_id});
+    res = res || (this.get('symbol_options') || [])[0] || {label: i18n.t('choose', "[Choose]")};
+    return res;
+  }),
   actions: {
+    choose: function(id) {
+      this.set('settings.label', id);
+    },
     abort: function(confirm) {
       if(confirm) {
         if(app_state.get('speak_mode')) {

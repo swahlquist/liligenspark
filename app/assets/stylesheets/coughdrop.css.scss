@@ -1998,6 +1998,22 @@ tr.accuracy_non_mastered {
 .low_for_high_contrast .board.high_contrast .button img.symbol:not(.hc) {
   filter: contrast(4.0) saturate(100);
 }
+.symbol_target {
+  img {
+    object-fit: contain;
+    object-position: center;
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+    margin: -10px 0px -10px -10px;
+  }
+  &.small img {
+    margin: -5px 0px -5px -5px;
+    margin-left: -5px;
+    width: 30px;
+    height: 30px;
+  }
+}
 .symbol_preview {
   img {
     width: 150px;

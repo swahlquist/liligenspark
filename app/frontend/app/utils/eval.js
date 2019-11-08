@@ -52,6 +52,7 @@ var evaluation = {
     assessment = assmnt;
     working = assmnt.working_stash;
     app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
+    app_state.set_history([]);
   },
   clear: function() {
     assessment = {};
@@ -66,11 +67,15 @@ var evaluation = {
     assessment.label = settings.label;
     assessment.accommodations = settings.accommodations;
     if(settings.for_user && !assessment.saved) {
+      if(settings.for_user.user_id == 'self') {
+        settings.for_user.user_id = app_state.get('currentUser.id');
+      }
       assessment.user_id = settings.for_user.id;
       assessment.user_namee = settings.for_user.user_name;
     }
     if(reload) {
       app_state.jump_to_board({key: 'obf/eval-' + (new Date()).getTime()});
+      app_state.set_history([]);
     }
   },
   persist: function() {
@@ -98,6 +103,7 @@ var evaluation = {
     }
     working.step = 0;
     app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
+    app_state.set_history([]);
   },
   analyze: function(assessment) {
     if(!assessment || !assessment.mastery_cutoff) {
@@ -922,6 +928,7 @@ function shuffle(array) {
 //obf.words = words;
 
 var libraries = ['default', 'photos', 'lessonpix', 'pcs_hc', 'pcs', 'words_only'];
+evaluation.libraries = libraries;
 var shuffled_libraries = shuffle(libraries.filter(function(w) { return w != 'words_only'; }));
 shuffled_libraries.push('words_only');
 var core_prompts = {};
@@ -957,6 +964,7 @@ evaluation.callback = function(key) {
       }
     });
     words.prefetched = true;
+    evaluation.words = words;
   }
   evaluation.checks_for = evaluation.checks_for || {};
   var user_id = app_state.get('referenced_user.id');
