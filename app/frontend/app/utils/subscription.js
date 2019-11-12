@@ -499,14 +499,14 @@ var Subscription = EmberObject.extend({
         if(this.get('subscription_type') == 'monthly') {
           res = i18n.t('monthly_sub', "%app_name% monthly subscription");
         } else {
-          res = i18n.t('long_term_sub', "%app_name% 5-year purchase");
+          res = i18n.t('long_term_sub', "%app_name% lifetime purchase");
         }
       }
     } else {
       if(this.get('subscription_type') == 'monthly') {
         res = i18n.t('slp_monthly_sub', "%app_name% supporting-role");
       } else {
-        res = i18n.t('slp_long_term_sub', "%app_name% supporting-role 5-year purchase");
+        res = i18n.t('slp_long_term_sub', "%app_name% supporting-role long-term purchase");
       }
     }
     if(this.get('extras')) {
