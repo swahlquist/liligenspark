@@ -63,7 +63,7 @@ export default Controller.extend({
       var user = app_state.get('currentUser') || this.get('fake_user');
       if(user.get('preferences.high_contrast')) {
         res = res + 'high_contrast ';
-      };
+      }
       if(this.get('background.white')) {
         res = res + 'white ';
       } else if(this.get('background.black') || this.get('background.black_with_high_contrast')) {

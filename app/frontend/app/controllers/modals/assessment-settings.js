@@ -18,7 +18,9 @@ export default modal.ModalController.extend({
     if(settings.user_id) {
       settings.for_user = {user_id: settings.user_id, user_name: settings.user_name};
     }
-    settings.for_user = settings.for_user || {user_id: 'self', user_name: app_state.get('currentUser.user_name')};
+    if(settings.for_user.user_id == app_state.get('currentUser.id')) {
+      settings.for_user.user_id = 'self';
+    }
     if(settings.name == 'Unnamed Eval') {
       settings.name = "";
     }
