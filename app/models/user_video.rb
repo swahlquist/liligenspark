@@ -9,7 +9,7 @@ class UserVideo < ActiveRecord::Base
   protect_global_id
   belongs_to :user
   before_save :generate_defaults
-  replicated_model  
+  include Replicate
 
   secure_serialize :settings
 

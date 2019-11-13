@@ -4,7 +4,7 @@ class ContactMessage < ActiveRecord::Base
   include SecureSerialize
   include Async
   secure_serialize :settings
-  replicated_model  
+  include Replicate
   
   after_create :deliver_message
   

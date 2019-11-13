@@ -1,6 +1,6 @@
 class OldKey < ActiveRecord::Base
   self.inheritance_column = nil
-  replicated_model  
+  include Replicate
   
   def record
     if self.type == 'board'

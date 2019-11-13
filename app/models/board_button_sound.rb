@@ -1,7 +1,7 @@
 class BoardButtonSound < ActiveRecord::Base
   belongs_to :board
   belongs_to :button_sound
-  replicated_model  
+  include Replicate
   
   def self.sounds_for_board(board_id)
     BoardButtonSound.includes(:button_sound).where(:board_id => board_id).map(&:button_sound)

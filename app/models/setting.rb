@@ -2,7 +2,7 @@ class Setting < ActiveRecord::Base
   include SecureSerialize
   secure_serialize :data
 
-  replicated_model  
+  include Replicate
 
   def self.set(key, value)
     setting = self.find_or_initialize_by(:key => key)

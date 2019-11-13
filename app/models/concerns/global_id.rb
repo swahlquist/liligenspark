@@ -30,11 +30,11 @@ module GlobalId
     end
     
     def find_by_global_id(id)
-      hash = id_pieces(id)
-      res = find_by(:id => hash[:id])
+      pieces = id_pieces(id)
+      res = find_by(:id => pieces[:id])
       if self.protected_global_id && res
-        res = nil if !hash[:nonce] && (!res || res.nonce != "legacy")
-        res = nil if res && res.nonce != hash[:nonce] && res.nonce != "legacy"
+        res = nil if !pieces[:nonce] && (!res || res.nonce != "legacy")
+        res = nil if res && res.nonce != pieces[:nonce] && res.nonce != "legacy"
       end
       res
     end

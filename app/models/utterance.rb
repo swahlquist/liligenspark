@@ -7,7 +7,7 @@ class Utterance < ActiveRecord::Base
   include Async
   include Notifier
   protect_global_id
-  replicated_model  
+  include Replicate
   
   belongs_to :user
   before_save :generate_defaults

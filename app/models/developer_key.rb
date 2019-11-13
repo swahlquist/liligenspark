@@ -1,6 +1,6 @@
 class DeveloperKey < ActiveRecord::Base
   before_save :generate_defaults
-  replicated_model  
+  include Replicate
   
   def generate_defaults
     self.key ||= GoSecure.nonce('developer_client_id')[0, 10]

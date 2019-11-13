@@ -2,7 +2,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
   include SecureSerialize
   include GlobalId
   include Async
-  replicated_model  
+  include Replicate
   
   secure_serialize :data  
   before_save :generate_defaults  

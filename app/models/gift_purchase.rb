@@ -5,7 +5,7 @@ class GiftPurchase < ActiveRecord::Base
   include Processable
   secure_serialize :settings
   before_save :generate_defaults
-  replicated_model
+  include Replicate
   
   add_permissions('view', ['*']) { self.active == true }
   add_permissions('manage') {|user| Organization.admin_manager?(user) }

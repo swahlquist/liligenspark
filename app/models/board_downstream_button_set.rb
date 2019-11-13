@@ -6,7 +6,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   include ExtraData
   secure_serialize :data
   belongs_to :board
-  replicated_model
+  include Replicate
 
   before_save :generate_defaults
   

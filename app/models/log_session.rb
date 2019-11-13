@@ -18,7 +18,7 @@ class LogSession < ActiveRecord::Base
   after_save :schedule_summary
   after_save :push_notification
   after_save :update_board_connections
-  replicated_model  
+  include Replicate
 
   has_paper_trail :on => [:destroy] #:only => [:data, :user_id, :author_id, :device_id]
   secure_serialize :data

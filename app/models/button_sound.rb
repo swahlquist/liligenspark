@@ -13,7 +13,7 @@ class ButtonSound < ActiveRecord::Base
   before_save :generate_defaults
   after_save :schedule_transcription
   after_destroy :remove_connections
-  replicated_model  
+  include Replicate
 
   has_paper_trail :on => [:destroy] #:only => [:settings, :board_id, :user_id, :public, :path, :url, :data]
   secure_serialize :settings

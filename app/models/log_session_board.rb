@@ -1,7 +1,7 @@
 class LogSessionBoard < ActiveRecord::Base
   belongs_to :board
   belongs_to :log_session
-  replicated_model  
+  include Replicate
 
   def self.find_sessions(board_id, options)
     Stats.sanitize_find_options!(options)

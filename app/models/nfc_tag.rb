@@ -3,7 +3,7 @@ class NfcTag < ApplicationRecord
   include GlobalId
   include Async
   include Processable
-  replicated_model
+  include Replicate
 
   protect_global_id
 

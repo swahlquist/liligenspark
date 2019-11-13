@@ -12,7 +12,7 @@ class UserGoal < ActiveRecord::Base
   after_save :expire_external_dups
   after_destroy :remove_if_primary
   after_destroy :remove_linked_templates
-  replicated_model  
+  include Replicate
 
   secure_serialize :settings
 

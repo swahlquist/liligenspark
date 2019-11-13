@@ -6,7 +6,7 @@ class OrganizationUnit < ActiveRecord::Base
   include SecureSerialize
   secure_serialize :settings
   before_save :generate_defaults
-  replicated_model  
+  include Replicate
 
   belongs_to :organization
   

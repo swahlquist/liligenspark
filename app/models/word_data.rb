@@ -10,7 +10,7 @@ class WordData < ActiveRecord::Base
   # http://frequencylists.blogspot.com/2016/05/the-500-most-frequently-used-spanish.html
 
   secure_serialize :data
-  replicated_model  
+  include Replicate
   before_save :generate_defaults
   after_save :assert_missing_priority
   

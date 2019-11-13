@@ -1,7 +1,7 @@
 class ApiCall < ActiveRecord::Base
   include SecureSerialize
+  include Replicate
   secure_serialize :data
-  replicated_model
   
   def self.log(token, user, request, response, time)
     # TODO: log all calls from external developer keys

@@ -8,7 +8,7 @@ class Organization < ActiveRecord::Base
   secure_serialize :settings
   before_save :generate_defaults
   after_save :touch_parent
-  replicated_model  
+  include Replicate
   
   # cache should be invalidated if:
   # - a manager/assistant is added or removed
