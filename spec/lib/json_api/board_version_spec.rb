@@ -121,6 +121,7 @@ describe JsonApi::BoardVersion do
       PaperTrail.request.whodunnit = "user:#{u.global_id}"
       b.process({}, {'user' => u})
       expect(b.settings['edit_description']).to eq(nil)
+      expect(b.settings['name']).to eq('ned')
       b.destroy
       
       vs = PaperTrail::Version.where(:item_type => 'Board', :item_id => b.id)

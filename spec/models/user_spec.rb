@@ -366,7 +366,7 @@ describe User, :type => :model do
 
     it "should remove spaces from email" do
       u = User.new
-      u.process_params({'email' => 'bob@ example.com '})
+      u.process({'email' => 'bob@ example.com '})
       expect(u.settings['email']).to eq('bob@example.com')
     end
     

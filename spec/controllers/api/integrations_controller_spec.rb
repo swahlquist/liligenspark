@@ -24,7 +24,7 @@ describe Api::IntegrationsController, :type => :controller do
       token_user
       ui = UserIntegration.create(:user_id => @user.id)
       get 'index', params: {'user_id' => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['integration']).to_not eq(nil)
@@ -56,7 +56,7 @@ describe Api::IntegrationsController, :type => :controller do
     it "should create the record" do
       token_user
       post 'create', params: {'integration' => {'user_id' => @user.global_id, 'name' => 'test integration'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['integration']['id']).to_not eq(nil)
@@ -68,7 +68,7 @@ describe Api::IntegrationsController, :type => :controller do
       template = UserIntegration.create(template: true, integration_key: 'something_cool', settings: {'icon_url' => 'http://www.example.com/icon.png'})
       ui = UserIntegration.create(user: @user, template_integration: template)
       post 'create', params:{'integration' => {'user_id' => @user.global_id, 'name' => 'good stuff', 'integration_key' => 'something_cool'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['integration']['id']).to eq(ui.global_id)
       expect(json['integration']['name']).to eq('good stuff')
@@ -93,7 +93,7 @@ describe Api::IntegrationsController, :type => :controller do
         {'name' => 'username', 'type' => 'text', 'value' => 'bacon'},
         {'name' => 'password', 'type' => 'password', 'value' => 'maple'}
       ]}}
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('integration creation failed')
       expect(json['errors']).to eq(['invalid user credentials'])
@@ -114,7 +114,7 @@ describe Api::IntegrationsController, :type => :controller do
         {'name' => 'username', 'type' => 'text', 'value' => 'bacon'},
         {'name' => 'password', 'type' => 'password', 'value' => 'maple'}
       ]}}
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('integration creation failed')
       expect(json['errors']).to eq(['account credentials already in use'])
@@ -138,7 +138,7 @@ describe Api::IntegrationsController, :type => :controller do
         {'name' => 'username', 'type' => 'text', 'value' => 'bacon'},
         {'name' => 'password', 'type' => 'password', 'value' => 'maple'}
       ]}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(UserIntegration.count).to eq(2)
     end
@@ -168,7 +168,7 @@ describe Api::IntegrationsController, :type => :controller do
       token_user
       ui = UserIntegration.create(:user_id => @user.id)
       put 'update', params: {'id' => ui.global_id, 'integration' => {'name' => 'new name'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['integration']['id']).to eq(ui.global_id)
@@ -200,7 +200,7 @@ describe Api::IntegrationsController, :type => :controller do
       token_user
       ui = UserIntegration.create(:user_id => @user.id)
       delete 'destroy', params: {'id' => ui.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['integration']['id']).to eq(ui.global_id)
@@ -238,7 +238,7 @@ describe Api::IntegrationsController, :type => :controller do
         }
       }, integration_key: 'asdf')
       get 'show', params: {'id' => ui.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['integration']['id']).to eq(ui.global_id)
       expect(json['integration']['name']).to eq('good integration')
@@ -265,7 +265,7 @@ describe Api::IntegrationsController, :type => :controller do
         }
       }, integration_key: 'asdf')
       get 'show', params: {'id' => ui.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['integration']['id']).to eq(ui.global_id)
       expect(json['integration']['name']).to eq('good integration')

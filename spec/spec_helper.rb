@@ -77,7 +77,7 @@ def assert_not_found(id=nil)
 end
 
 def assert_error(str, code=nil)
-  expect(response).not_to be_success
+  expect(response).not_to be_successful
   json = JSON.parse(response.body)
   expect(json['error']).to eq(str)
   if code
@@ -90,7 +90,7 @@ def assert_unauthorized
 end
 
 def assert_success_json
-  expect(response).to be_success
+  expect(response).to be_successful
   json = JSON.parse(response.body)
 end
 

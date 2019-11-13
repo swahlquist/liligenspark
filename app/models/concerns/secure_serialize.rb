@@ -10,12 +10,51 @@ module SecureSerialize
   
   def rollback_to(date)
     version = self.versions.reverse_each.detect{|v| v.created_at < date }
+    #version = prior_version.next || prior_version
     raise "no old version found for self.class.to_s:#{self.global_id}" if !version
     record = self.class.load_version(version) rescue nil
     raise "version couldn't be loaded" if !record
     record.instance_variable_set('@buttons_changed', 'rollback') if record.is_a?(Board)
     record.instance_variable_set('@do_track_boards', true) if record.is_a?(User)
     record.save
+  end
+
+  def mark_as_ss_saving
+    @ss_saving = true
+    true
+  end
+
+  def mark_as_ss_destroying
+    @ss_destroying = true
+    true
+  end
+
+  def done_ss_destroying
+    @ss_destroying = false
+    true
+  end
+
+  def done_ss_saving
+    @ss_saving = false
+    true
+  end
+
+  def attribute_before_last_save(attr)
+    if (attr == 'settings' || attr == :settings) && @ss_saving
+      load_secure_object unless @loaded_secure_object 
+      @secure_object
+    else
+      super
+    end
+  end
+
+  def attribute_in_database(attr)
+    if (attr == 'settings' || attr == :settings) && @ss_destroying
+      load_secure_object unless @loaded_secure_object 
+      @secure_object
+    else
+      super
+    end
   end
 
   module ClassMethods
@@ -64,5 +103,12 @@ module SecureSerialize
       end
       model
     end
+  end
+
+  included do
+    before_save :mark_as_ss_saving rescue nil
+    before_destroy :mark_as_ss_destroying rescue nil
+    after_save :done_ss_saving rescue nil
+    after_destroy :done_ss_destroying rescue nil
   end
 end

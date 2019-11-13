@@ -13,19 +13,19 @@ describe SessionController, :type => :controller do
     it "should not require api token" do
       k = DeveloperKey.create(:redirect_uri => DeveloperKey.oob_uri)
       post :oauth, params: {:client_id => k.key, :redirect_uri => DeveloperKey.oob_uri}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should error if the redirect_uri isn't valid" do
       k = DeveloperKey.create(:redirect_uri => DeveloperKey.oob_uri)
       post :oauth, params: {:client_id => k.key, :redirect_uri => "http://www.example.com"}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:error]).to eq("bad_redirect_uri")
     end
     
     it "should error if the developer key is invalid" do
       post :oauth, params: {:client_id => "abcdef"}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:error]).to eq("invalid_key")
     end
     
@@ -35,7 +35,7 @@ describe SessionController, :type => :controller do
       expect(assigns[:app_name]).to eq("the application")
       expect(assigns[:app_icon]).not_to eq(nil)
       expect(assigns[:code]).not_to eq(nil)
-      expect(response).to be_success
+      expect(response).to be_successful
       str = RedisInit.default.get("oauth_#{assigns[:code]}")
       expect(str).not_to eq(nil)
       json = JSON.parse(str)
@@ -50,7 +50,7 @@ describe SessionController, :type => :controller do
       expect(assigns[:app_name]).to eq("the application")
       expect(assigns[:app_icon]).not_to eq(nil)
       expect(assigns[:code]).not_to eq(nil)
-      expect(response).to be_success
+      expect(response).to be_successful
       str = RedisInit.default.get("oauth_#{assigns[:code]}")
       expect(str).not_to eq(nil)
       json = JSON.parse(str)
@@ -65,7 +65,7 @@ describe SessionController, :type => :controller do
       expect(assigns[:app_name]).to eq("the application")
       expect(assigns[:app_icon]).not_to eq(nil)
       expect(assigns[:code]).not_to eq(nil)
-      expect(response).to be_success
+      expect(response).to be_successful
       str = RedisInit.default.get("oauth_#{assigns[:code]}")
       expect(str).not_to eq(nil)
       json = JSON.parse(str)
@@ -98,14 +98,14 @@ describe SessionController, :type => :controller do
     
     it "should error when nothing found in redis" do
       post :oauth_login, params: {:code => "abc"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       expect(assigns[:error]).to eq('code_not_found')
     end
     
     it "should error when password is invalid" do
       key_with_stash
       post :oauth_login, params: {:code => @code, :username => "bob", :password => "bob"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       expect(assigns[:error]).to eq('invalid_login')
     end
     
@@ -199,7 +199,7 @@ describe SessionController, :type => :controller do
     
     it "should fail on invalid developer key" do
       post :oauth_token
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('invalid_key')
     end
@@ -208,7 +208,7 @@ describe SessionController, :type => :controller do
       u = User.create
       key_with_stash(u)
       post :oauth_token, params: {:client_id => @key.key}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('invalid_secret')
     end
@@ -216,7 +216,7 @@ describe SessionController, :type => :controller do
     it "should fail when token flow not persisted to redis" do
       @key = DeveloperKey.create(:redirect_uri => DeveloperKey.oob_uri)
       post :oauth_token, params: {:client_id => @key.key, :client_secret => @key.secret}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('code_not_found')
     end
@@ -224,7 +224,7 @@ describe SessionController, :type => :controller do
     it "should fail when user is missing from redis stash" do
       key_with_stash
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('token_not_ready')
     end
@@ -233,7 +233,7 @@ describe SessionController, :type => :controller do
       u = User.create
       key_with_stash(u)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq(u.user_name)
       d = Device.find_by_global_id(json['access_token'])
@@ -247,7 +247,7 @@ describe SessionController, :type => :controller do
       key_with_stash(u)
       expect(Device.count).to eq(0)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq(u.user_name)
       d = Device.find_by_global_id(json['access_token'])
@@ -261,7 +261,7 @@ describe SessionController, :type => :controller do
       key_with_stash(u)
       expect(Device.count).to eq(0)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(RedisInit.default.get("oauth_#{@code}")).to eq(nil)
     end
     
@@ -273,7 +273,7 @@ describe SessionController, :type => :controller do
 
       expect(Device.count).to eq(0)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(RedisInit.default.get("oauth_#{@code}")).to eq(nil)
       expect(Device.count).to eq(1)
       d = Device.last
@@ -288,7 +288,7 @@ describe SessionController, :type => :controller do
 
       expect(Device.count).to eq(0)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(RedisInit.default.get("oauth_#{@code}")).to eq(nil)
       expect(Device.count).to eq(1)
       d = Device.last
@@ -301,7 +301,7 @@ describe SessionController, :type => :controller do
 
       expect(Device.count).to eq(0)
       post :oauth_token, params: {:code => @code, :client_id => @key.key, :client_secret => @key.secret}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(RedisInit.default.get("oauth_#{@code}")).to eq(nil)
       expect(Device.count).to eq(1)
       d = Device.last
@@ -400,7 +400,7 @@ describe SessionController, :type => :controller do
     it "should log out the device" do
       token_user
       post :oauth_logout
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to eq({logout: true}.to_json)
       expect(@device.reload.settings['keys']).to eq([])
     end
@@ -409,7 +409,7 @@ describe SessionController, :type => :controller do
   describe "oauth_local" do
     it "should not require api token" do
       get :oauth_local
-      expect(response).to be_success
+      expect(response).to be_successful
     end
   end
 
@@ -420,7 +420,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should set browser token header" do
@@ -434,7 +434,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq('fred')
       expect(json['token_type']).to eq('bearer')
@@ -454,7 +454,7 @@ describe SessionController, :type => :controller do
 #       u.generate_password("seashell")
 #       u.save
 #       post :token, :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'
-#       expect(response).not_to be_success
+#       expect(response).not_to be_successful
 #       json = JSON.parse(response.body)
 #       expect(json['error']).to eq('Invalid authentication attempt')
 #     end
@@ -465,12 +465,12 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashells'}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid authentication attempt')
 
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fredx', :password => 'seashell'}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid authentication attempt')
     end
@@ -481,7 +481,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq('fred')
     end
@@ -492,7 +492,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'Fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq('fred')
     end
@@ -503,7 +503,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_name']).to eq('fred')
     end
@@ -515,7 +515,7 @@ describe SessionController, :type => :controller do
       u.save
       u2 = User.create(:user_name => "fred2", :settings => {:email => "fred@example.com"})
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashells'}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid authentication attempt')
     end
@@ -528,7 +528,7 @@ describe SessionController, :type => :controller do
       expect(Device.count).to eq(0)
       request.headers['X-INSTALLED-COUGHDROP'] = 'false'
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -547,7 +547,7 @@ describe SessionController, :type => :controller do
       u.save
       expect(Device.count).to eq(0)
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell', :mobile => 'true'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -567,7 +567,7 @@ describe SessionController, :type => :controller do
       u.save
       expect(Device.count).to eq(0)
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell', :device_id => "1.235532 Cool Browser"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -589,7 +589,7 @@ describe SessionController, :type => :controller do
       d.generate_token!
       expect(Device.count).to eq(1)
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -607,7 +607,7 @@ describe SessionController, :type => :controller do
       expect(Device.count).to eq(1)
       request.headers['X-INSTALLED-COUGHDROP'] = 'false'
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :long_token => true, :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -628,7 +628,7 @@ describe SessionController, :type => :controller do
       d.generate_token!
       expect(Device.count).to eq(1)
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -649,7 +649,7 @@ describe SessionController, :type => :controller do
       expect(Device.count).to eq(1)
       request.headers['X-INSTALLED-COUGHDROP'] = 'true'
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :long_token => true, :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -670,7 +670,7 @@ describe SessionController, :type => :controller do
       d.generate_token!
       expect(Device.count).to eq(1)
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['access_token']).not_to eq(nil)
       expect(Device.count).to eq(1)
@@ -688,7 +688,7 @@ describe SessionController, :type => :controller do
       u.rename_to('freddy')
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('User name was changed')
       expect(json['user_name']).to eq('freddy')
@@ -713,7 +713,7 @@ describe SessionController, :type => :controller do
       u.save
       10.times do 
         post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred', :password => 'seashell'}
-        expect(response).to be_success
+        expect(response).to be_successful
         json = JSON.parse(response.body)
         expect(json['user_name']).to eq('fred')
       end
@@ -725,7 +725,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.save
       post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full'])
     end
@@ -734,7 +734,7 @@ describe SessionController, :type => :controller do
   describe "token_check" do
     it "should not require api token" do
       get :token_check
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should set the browser token header" do
@@ -744,13 +744,13 @@ describe SessionController, :type => :controller do
     
     it "should check for a valid api token and respond accordingly" do
       get :token_check
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(false)
       
       token_user
       get :token_check, params: {:access_token => @device.tokens[0]}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
       expect(json['user_name']).to eq(@user.user_name)
@@ -767,7 +767,7 @@ describe SessionController, :type => :controller do
       d.settings['disabled'] = true
       d.save
       get :token_check, params: {:access_token => @device.tokens[0]}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:cached]).to eq(nil)
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(false)
@@ -776,7 +776,7 @@ describe SessionController, :type => :controller do
     it "should used cached values on repeat requests" do
       token_user
       get :token_check, params: {:access_token => @device.tokens[0]}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:cached]).to eq(nil)
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
@@ -784,7 +784,7 @@ describe SessionController, :type => :controller do
 
       get :token_check, params: {:access_token => @device.tokens[0]}
       expect(assigns[:cached]).to eq(true)
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['authenticated']).to eq(true)
       expect(json['user_name']).to eq(@user.user_name)

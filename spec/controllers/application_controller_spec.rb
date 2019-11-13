@@ -19,7 +19,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should set correct whodunnit" do
@@ -35,7 +35,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should check for the token as an http header" do
@@ -45,14 +45,14 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should return an error if a token is provided but invalid" do
       get :index, params: {:access_token => "abcdef", :check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid token')
       expect(json['token']).to eq('abcdef')
@@ -62,7 +62,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should set user from as_user_id if org admin" do
@@ -76,7 +76,7 @@ describe ApplicationController, :type => :controller do
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u2)
       expect(assigns[:true_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should set user from X-As-User-Id if org admin" do
@@ -91,7 +91,7 @@ describe ApplicationController, :type => :controller do
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u2)
       expect(assigns[:true_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should not allow disabled tokens" do
@@ -101,7 +101,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Disabled token')
     end
@@ -113,7 +113,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid token')
     end
@@ -131,7 +131,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:check_token => true}
       expect(assigns[:api_device_id]).to eq(nil)
       expect(assigns[:api_user]).to eq(nil)
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Expired token')
     end
@@ -236,7 +236,7 @@ describe ApplicationController, :type => :controller do
       get :index, params: {:access_token => d.tokens[0], :check_token => true}
       expect(assigns[:api_device_id]).to eq(d.global_id)
       expect(assigns[:api_user]).to eq(u)
-      expect(response).to be_success
+      expect(response).to be_successful
     end
   end
   
@@ -247,7 +247,7 @@ describe ApplicationController, :type => :controller do
     end
     it "should return a correct status code by default" do
       get :index, params: {:check_token => true}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       expect(response.code).to eq("400")
       json = JSON.parse(response.body)
       expect(json['status']).to eq(400)
@@ -256,7 +256,7 @@ describe ApplicationController, :type => :controller do
     it "should return a success code if X-Has-AppCache header is set" do
       request.headers['X-Has-AppCache'] = "true"
       get :index, params: {:check_token => true}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.code).to eq("200")
       json = JSON.parse(response.body)
       expect(json['status']).to eq(400)
@@ -264,7 +264,7 @@ describe ApplicationController, :type => :controller do
     
     it "should return a success code if nocache=1 is set" do
       get :index, params: {:check_token => true, :nocache => 1}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.code).to eq("200")
       json = JSON.parse(response.body)
       expect(json['status']).to eq(400)
@@ -285,7 +285,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u)
       get :index, params: {:id => u.id, :access_token => d.tokens[0], :check_token => true}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should error gracefully if permission fails" do
@@ -314,7 +314,7 @@ describe ApplicationController, :type => :controller do
       u = User.create
       d = Device.create(:user => u, :user_integration_id => 1, :settings => {'permission_scopes' => ['read_profile']})
       get :index, params: {:id => u.id, :access_token => d.tokens[0], :check_token => true}
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Not authorized')
       expect(json['scope_limited']).to eq(true)
@@ -333,7 +333,7 @@ describe ApplicationController, :type => :controller do
     it "should not intercept if permission succeeds" do
       u = User.create
       get :index, params: {:id => u.id}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should error gracefully if not found" do

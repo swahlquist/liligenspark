@@ -25,7 +25,7 @@ describe Api::SnapshotsController, :type => :controller do
       s1 = LogSnapshot.create(:user => @user)
       s2 = LogSnapshot.create(:user => @user)
       get :index, params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       res = JSON.parse(response.body)
       expect(res['snapshot']).to_not eq(nil)
       expect(res['snapshot'].length).to eq(2)
@@ -55,7 +55,7 @@ describe Api::SnapshotsController, :type => :controller do
     it "should create the unit and return the result" do
       token_user
       post :create, params: {:snapshot => {'user_id' => @user.global_id, 'name' => 'Cool Snapshot', 'device_id' => 'asdf', 'bacon' => 'none'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['snapshot']['name']).to eq('Cool Snapshot')
       expect(json['snapshot']['device_id']).to eq('asdf')
@@ -86,7 +86,7 @@ describe Api::SnapshotsController, :type => :controller do
       token_user
       s = LogSnapshot.create(:user => @user)
       get :show, params: {:id => s.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['snapshot']['id']).to eq(s.global_id)
     end
@@ -115,7 +115,7 @@ describe Api::SnapshotsController, :type => :controller do
       token_user
       s = LogSnapshot.create(:user => @user)
       put :update, params: {:id => s.global_id, :snapshot => {'name' => 'Better Snapshot'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['snapshot']['id']).to eq(s.global_id)
       expect(json['snapshot']['name']).to eq('Better Snapshot')
@@ -145,7 +145,7 @@ describe Api::SnapshotsController, :type => :controller do
       token_user
       s = LogSnapshot.create(:user => @user)
       delete :destroy, params: {:id => s.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['snapshot']['id']).to eq(s.global_id)
       expect(LogSnapshot.find_by_global_id(s.global_id)).to eq(nil)

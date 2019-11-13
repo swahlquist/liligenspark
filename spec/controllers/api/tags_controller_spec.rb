@@ -65,7 +65,7 @@ describe Api::TagsController, :type => :controller do
     it 'should create the tag' do
       token_user
       post :create, params: {tag: {'label' => 'bacon'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       tag = NfcTag.find_by_global_id(json['tag']['id'])
       expect(tag).to_not eq(nil)

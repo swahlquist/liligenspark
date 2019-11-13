@@ -9,7 +9,7 @@ describe Api::CallbacksController, :type => :controller do
       request.headers['x-amz-sns-message-type'] = 'SubscriptionConfirmation'
       request.headers['x-amz-sns-topic-arn'] = 'ham'
       post 'callback'
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'error' => 'invalid arn', 'status' => 400})
     end
@@ -26,7 +26,7 @@ describe Api::CallbacksController, :type => :controller do
       request.headers['x-amz-sns-message-type'] = 'SubscriptionConfirmation'
       request.headers['x-amz-sns-topic-arn'] = 'fried'
       post 'callback', body: {:Token => 'ahem'}.to_json
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => true})
     end
@@ -43,7 +43,7 @@ describe Api::CallbacksController, :type => :controller do
       request.headers['x-amz-sns-message-type'] = 'SubscriptionConfirmation'
       request.headers['x-amz-sns-topic-arn'] = 'fried'
       post 'callback', body: {:Token => 'ahem'}.to_json
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => true})
     end
@@ -51,7 +51,7 @@ describe Api::CallbacksController, :type => :controller do
     it "should error on notification missing arn" do
       request.headers['x-amz-sns-message-type'] = 'Notification'
       post 'callback'
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'error' => 'missing topic arn', 'status' => 400})
     end
@@ -59,7 +59,7 @@ describe Api::CallbacksController, :type => :controller do
     it "should error on unrecognized callback" do
       request.headers['x-amz-sns-message-type'] = 'SomethingDifferent'
       post 'callback'
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'error' => 'unrecognized callback', 'status' => 400})
     end
@@ -71,7 +71,7 @@ describe Api::CallbacksController, :type => :controller do
         expect(params['a']).to eq('1')
       }.and_return(false)
       post 'callback', body: {a: '1'}.to_json
-      expect(response).to_not be_success
+      expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'error' => 'event not handled', 'status' => 400})
     end
@@ -83,7 +83,7 @@ describe Api::CallbacksController, :type => :controller do
         expect(params['a']).to eq('1')
       }.and_return(true)
       post 'callback', body: {a: '1'}.to_json
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'handled' => true})
     end
@@ -130,7 +130,7 @@ describe Api::CallbacksController, :type => :controller do
         'jobId' => 'onetwo',
         'state' => 'COMPLETED'
       }.to_json }.to_json
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'handled' => true})
       bs.reload

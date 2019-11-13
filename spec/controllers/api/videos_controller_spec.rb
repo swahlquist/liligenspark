@@ -10,7 +10,7 @@ describe Api::VideosController, type: :controller do
     it "should create the record" do
       token_user
       post :create, params: {:video => {'url' => 'http://www.example.com/video.mp4', 'content_type' => 'video/mp4'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['video']['id']).not_to eq(nil)
       expect(json['video']['pending']).to eq(true)
@@ -33,7 +33,7 @@ describe Api::VideosController, type: :controller do
       token_user
       v = UserVideo.create(:url => 'http://www.example.com/video.mp4')
       get :show, params: {:id => v.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['video']['id']).to eq(v.global_id)
       expect(json['video']['url']).to eq('http://www.example.com/video.mp4')
@@ -64,7 +64,7 @@ describe Api::VideosController, type: :controller do
       v = UserVideo.create(:user => @user, :settings => {'content_type' => 'video/mp4'})
 
       put :update, params: {:id => v.global_id, :video => {:license => {'type' => 'CC-By'}}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['video']['id']).to eq(v.global_id)
       expect(json['video']['license']).to eq({'type' => 'CC-By'})
@@ -74,14 +74,14 @@ describe Api::VideosController, type: :controller do
   describe "upload_success" do
     it "should not require api token" do
       get :upload_success, params: {:video_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
     
     it "should error for bad confirmation key" do
       get :upload_success, params: {:video_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
@@ -92,7 +92,7 @@ describe Api::VideosController, type: :controller do
       res = OpenStruct.new(:success? => false)
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + v.full_filename).and_return(res)
       get :upload_success, params: {:video_id => v.global_id, :confirmation => v.confirmation_key}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'File not found'})
     end
@@ -104,7 +104,7 @@ describe Api::VideosController, type: :controller do
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + v.full_filename).and_return(res)
       get :upload_success, params: {:video_id => v.global_id, :confirmation => v.confirmation_key}
       json = JSON.parse(response.body)
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(v.reload.url).not_to eq(nil)
       expect(v.settings['pending']).to eq(false)
       expect(json).to eq({'confirmed' => true, 'url' => v.url})

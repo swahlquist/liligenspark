@@ -26,7 +26,7 @@ describe Api::BadgesController, :type => :controller do
       b = UserBadge.create(:user => u, :highlighted => true)
       b2 = UserBadge.create(:user => u)
       get 'index', params: {:user_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(1)
       expect(json['badge'][0]['id']).to eq(b.global_id)
@@ -37,7 +37,7 @@ describe Api::BadgesController, :type => :controller do
       g = UserGoal.create(:user => @user)
       b = UserBadge.create(:user => @user, :user_goal => g)
       get 'index', params: {:user_id => @user.global_id, :goal_id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(1)
       expect(json['badge'][0]['id']).to eq(b.global_id)
@@ -63,7 +63,7 @@ describe Api::BadgesController, :type => :controller do
         b = UserBadge.create(:user => @user)
       end
       get 'index', params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(10)
       expect(json['meta']['more']).to eq(true)
@@ -74,7 +74,7 @@ describe Api::BadgesController, :type => :controller do
       b = UserBadge.create(:user => @user)
       b2 = UserBadge.create(:user => @user, :superseded => true)
       get 'index', params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(1)
       expect(json['badge'][0]['id']).to eq(b.global_id)
@@ -85,7 +85,7 @@ describe Api::BadgesController, :type => :controller do
       b = UserBadge.create(:user => @user)
       b2 = UserBadge.create(:user => @user, :earned => true)
       get 'index', params: {:user_id => @user.global_id, earned: true}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(1)
       expect(json['badge'][0]['id']).to eq(b2.global_id)
@@ -101,7 +101,7 @@ describe Api::BadgesController, :type => :controller do
       b4 = UserBadge.create(:user => @user, :superseded => true)
       UserBadge.where(id: b3.id).update_all(updated_at: 6.months.ago)
       get 'index', params: {:user_id => @user.global_id, recent: true}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge'].length).to eq(2)
       expect(json['badge'].map{|b| b['id']}.sort).to eq([b.global_id, b2.global_id])
@@ -132,7 +132,7 @@ describe Api::BadgesController, :type => :controller do
       token_user
       b = UserBadge.create(:user => @user)
       get 'show', params: {:id => b.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge']).to_not eq(nil)
       expect(json['badge']['id']).to eq(b.global_id)
@@ -163,7 +163,7 @@ describe Api::BadgesController, :type => :controller do
       token_user
       b = UserBadge.create(:user => @user)
       put 'update', params: {:id => b.global_id, :badge => {'highlighted' => true}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['badge']['id']).to eq(b.global_id)
       expect(json['badge']['highlighted']).to eq(true)

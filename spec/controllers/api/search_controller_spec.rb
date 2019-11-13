@@ -16,7 +16,7 @@ describe Api::SearchController, :type => :controller do
       res = OpenStruct.new(:body => list.to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([
         {'extension' => 'png', 'content_type' => 'image/png', 'name' => 'bob', 'thumbnail_url' => nil},
@@ -37,11 +37,11 @@ describe Api::SearchController, :type => :controller do
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hats&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res2)
       get :symbols, params: {:q => 'hat'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
       get :symbols, params: {:q => 'hats'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json.length).to eq(2)
       
@@ -72,7 +72,7 @@ describe Api::SearchController, :type => :controller do
       res = OpenStruct.new(:body => list.to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat premium_repo:pcs'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([
         {'extension' => 'png', 'protected' => true, 'protected_source' => 'pcs', 'content_type' => 'image/png', 'name' => 'bob', 'thumbnail_url' => nil},
@@ -95,7 +95,7 @@ describe Api::SearchController, :type => :controller do
       res = OpenStruct.new(:body => list.to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat premium_repo:pcs', :user_name => u.user_name}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([
         {'extension' => 'png', 'protected' => true, 'protected_source' => 'pcs', 'content_type' => 'image/png', 'name' => 'bob', 'thumbnail_url' => nil},
@@ -113,7 +113,7 @@ describe Api::SearchController, :type => :controller do
       res = OpenStruct.new(:body => list.to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=hat+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
       get :symbols, params: {:q => 'hat premium_repo:pcs'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([
         {'extension' => 'png', 'protected' => true, 'protected_source' => 'pcs', 'content_type' => 'image/png', 'name' => 'bob', 'thumbnail_url' => nil},
@@ -138,7 +138,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(Uploader).to receive(:find_images).with('gerbils', 'lessonpix', @user, @user).and_return([])
       get :protected_symbols, params: {:q => 'gerbils', :library => 'lessonpix'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -165,7 +165,7 @@ describe Api::SearchController, :type => :controller do
       ].to_json}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -179,7 +179,7 @@ describe Api::SearchController, :type => :controller do
       ].to_json}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -194,7 +194,7 @@ describe Api::SearchController, :type => :controller do
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=1&username=sue&token=jkl&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: "Unknown User"}))
       User.link_supervisor_to_user(@user, u, nil, true)
       get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -233,7 +233,7 @@ describe Api::SearchController, :type => :controller do
         }
       ])
       get 'protected_symbols', params: {'q' => 'cheese', 'library' => 'some_library'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([
         {
@@ -286,7 +286,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(controller).to receive(:get_url_in_chunks).and_return(['image/png', '12345'])
       get :proxy, params: {:url => 'http://www.example.com/pic.png'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['content_type']).to eq('image/png')
       expect(json['data']).to eq('data:image/png;base64,MTIzNDU=')
@@ -296,7 +296,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(controller).to receive(:get_url_in_chunks).and_raise(Api::SearchController::BadFileError, 'something bad')
       get :proxy, params: {:url => 'http://www.example.com/pic.png'}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('something bad')
     end
@@ -308,7 +308,7 @@ describe Api::SearchController, :type => :controller do
         true
       }.and_return(['image/png', '12345'])
       get :proxy, params: {:url => 'http://www.example.com/a good pic.png'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['content_type']).to eq('image/png')
       expect(json['data']).to eq('data:image/png;base64,MTIzNDU=')
@@ -321,7 +321,7 @@ describe Api::SearchController, :type => :controller do
         true
       }.and_return(['image/png', '12345'])
       get :proxy, params: {:url => 'http://www.example.com/a%20good%20pic.png'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['content_type']).to eq('image/png')
       expect(json['data']).to eq('data:image/png;base64,MTIzNDU=')
@@ -338,12 +338,12 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(AppSearcher).to receive(:find).with('hat', 'ios').and_return({})
       get :apps, params: {:q => 'hat', :os => 'ios'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to eq("{}")
       
       expect(AppSearcher).to receive(:find).with('hat', 'android').and_return([])
       get :apps, params: {:q => 'hat', :os => 'android'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to eq("[]")
     end
   end
@@ -444,7 +444,7 @@ describe Api::SearchController, :type => :controller do
         :types => ['noun']
       })
       get :parts_of_speech, params: {:q => 'hat'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({
         'word' => 'hat',
@@ -476,7 +476,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(Uploader).to receive(:find_resources).with('a', 'b', @user).and_return([])
       get :external_resources, params: {'q' => 'a', 'source' => 'b'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -487,7 +487,7 @@ describe Api::SearchController, :type => :controller do
       User.link_supervisor_to_user(@user, u, nil, true)
       expect(Uploader).to receive(:find_resources).with('a', 'b', u).and_return([])
       get :external_resources, params: {'q' => 'a', 'source' => 'b', 'user_name' => u.user_name}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([])
     end
@@ -496,7 +496,7 @@ describe Api::SearchController, :type => :controller do
       token_user
       expect(Uploader).to receive(:find_resources).with('a', 'b', @user).and_return([{a: 1}, {b: 1}])
       get :external_resources, params: {'q' => 'a', 'source' => 'b'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq([{'a' => 1}, {'b' => 1}])
     end

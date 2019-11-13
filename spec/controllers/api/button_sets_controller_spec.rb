@@ -34,7 +34,7 @@ describe Api::ButtonSetsController, :type => :controller do
       b = Board.create(:user => @user)
       bs = BoardDownstreamButtonSet.update_for(b.global_id)
       get :show, params: {:id => b.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['buttonset']['id']).to eq(b.global_id)
       expect(json['buttonset']['key']).to eq(b.key)
@@ -67,7 +67,7 @@ describe Api::ButtonSetsController, :type => :controller do
       @user.settings['preferences']['home_board'] = {'id' => b.global_id}
       @user.save
       get :index, params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['buttonset'].length).to eq(1)
       expect(json['buttonset'][0]['id']).to eq(b.global_id)

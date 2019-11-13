@@ -11,7 +11,7 @@ class Board < ActiveRecord::Base
   include SecureSerialize
   include Sharing
   include Renaming
-  include PgSearch
+  include PgSearch::Model
   has_many :board_button_images
   has_many :button_images, :through => :board_button_images
   has_many :board_button_sounds

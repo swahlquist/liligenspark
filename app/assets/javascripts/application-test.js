@@ -11,8 +11,8 @@
 // about supported directives.
 //
 //= require application-preload.js
-//= require frontend/dist/assets/vendor.js
-//= require frontend/dist/assets/frontend.js
+//= require vendor.js
+//= require frontend.js
 
 window.load_state = window.load_state || {};
 window.load_state.state = "js_loaded";

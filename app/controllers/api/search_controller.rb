@@ -160,7 +160,7 @@ class Api::SearchController < ApplicationController
       if response.headers['Location'] && (response.code >= 300 || (response.headers['Content-Length'] && response.headers['Content-Length'].to_i <= response.headers['Location'].length))
         return ['redirect', URI.escape(response.headers['Location'])]
       end
-      if response.success? || response.code == 200
+      if response.successful? || response.code == 200
         # TODO: limit to accepted file types
         content_type = response.headers['Content-Type']
         if !content_type.match(/^image/) && !content_type.match(/^audio/)
@@ -179,7 +179,7 @@ class Api::SearchController < ApplicationController
       end
     end
     request.on_complete do |response|
-      if !response.success? && response.code != 200
+      if !response.successful? && response.code != 200
         raise BadFileError, "Bad file, #{response.code}"
       end
       done = true

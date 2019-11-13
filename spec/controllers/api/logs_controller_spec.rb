@@ -165,7 +165,7 @@ describe Api::LogsController, :type => :controller do
         ]
       }, {:user => @user, :device => @device, :author => @user})
       get :index, params: {:user_id => @user.global_id, :goal_id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log'].length).to eq(3)
     end
@@ -198,7 +198,7 @@ describe Api::LogsController, :type => :controller do
       }, {:user => u, :device => @device, :author => @user})
 
       get :index, params: {:user_id => @user.global_id, :goal_id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log'].length).to eq(0)
     end
@@ -224,7 +224,7 @@ describe Api::LogsController, :type => :controller do
       }, {:user => @user, :device => @device, :author => @user})
 
       get :index, params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log'].length).to eq(2)
       expect(json['log'].map{|l| l['id'] }.sort).to eq([a.global_id, b.global_id].sort)
@@ -252,7 +252,7 @@ describe Api::LogsController, :type => :controller do
       expect(j.id).to_not eq(nil)
 
       get :index, params: {:user_id => @user.global_id, :type => 'journal'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log'].length).to eq(1)
       expect(json['log'][0]['id']).to eq(j.global_id)
@@ -302,7 +302,7 @@ describe Api::LogsController, :type => :controller do
     it "should generate a log result and return it" do
       token_user
       post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'spoken' => true, 'board' => {'id' => '1_1'}}}]}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log']['pending']).to eq(true)
       Worker.process_queues
@@ -314,7 +314,7 @@ describe Api::LogsController, :type => :controller do
       token_user
       request.env['HTTP_X_FORWARDED_FOR'] = "8.7.6.5"
       post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'spoken' => true, 'board' => {'id' => '1_1'}}}]}}
-      expect(response).to be_success
+      expect(response).to be_successful
       Worker.process_queues
       s = LogSession.last
       json = JSON.parse(response.body)
@@ -328,7 +328,7 @@ describe Api::LogsController, :type => :controller do
       token_user
       post :create, params: {:log => {:events => [{'user_id' => @user.global_id, 'timestamp' => 5.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'cool', 'board' => {'id' => '1_1'}}}]}}
       Worker.process_queues
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['log']['pending']).to eql(true)
     end
@@ -343,7 +343,7 @@ describe Api::LogsController, :type => :controller do
         },
         'goal_id' => g.global_id
       }}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       Worker.process_queues
       log = LogSession.last
@@ -362,7 +362,7 @@ describe Api::LogsController, :type => :controller do
         },
         'goal_id' => '12345'
       }}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       Worker.process_queues
       log = LogSession.last
@@ -393,7 +393,7 @@ describe Api::LogsController, :type => :controller do
       log = LogSession.create(:user => @user, :author => @user, :device => d)
       expect_any_instance_of(LogSession).to receive(:process_params).with({}, hash_including(:update_only => true))
       put 'update', params: {:id => log.global_id, 'log' => {}}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should update notes" do
@@ -427,7 +427,7 @@ describe Api::LogsController, :type => :controller do
         ]
       }
       put 'update', params: {:id => log.global_id, 'log' => params}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       
       expect(json['log']['events'].length).to eql(3)
@@ -453,19 +453,19 @@ describe Api::LogsController, :type => :controller do
   describe "lam" do
     it "should not require api token" do
       get 'lam', params: {:log_id => '1234'}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should error gracefully on not found" do
       get 'lam', params: {:log_id => '1234'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to eql("Not found")
       
       u = User.create
       d = Device.create
       log = LogSession.create(:user => u, :device => d, :author => u)
       get 'lam', params: {:log_id => log.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to eql("Not found")
     end
     
@@ -474,7 +474,7 @@ describe Api::LogsController, :type => :controller do
       d = Device.create
       log = LogSession.create(:user => u, :device => d, :author => u)
       get 'lam', params: {:log_id => log.global_id, :nonce => log.data['nonce']}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(response.body).to match(/CAUTION/)
       expect(response.body).to match(/LAM Version 2\.00/)
     end
@@ -502,7 +502,7 @@ describe Api::LogsController, :type => :controller do
     it "should return upload parameters if no url defined" do
       token_user
       post 'import', params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['remote_upload']).to_not eq(nil)
     end
@@ -510,7 +510,7 @@ describe Api::LogsController, :type => :controller do
     it "should process the data" do
       token_user
       post 'import', params: {:user_id => @user.global_id, :type => 'lam', :url => "some content"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']).to_not eq(nil)
       progress = Progress.find_by_global_id(json['progress']['id'])
@@ -522,7 +522,7 @@ describe Api::LogsController, :type => :controller do
     it "should import obl data" do
       token_user
       post 'import', params: {:user_id => @user.global_id, :type => 'obl', :url => "some content"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']).to_not eq(nil)
       progress = Progress.find_by_global_id(json['progress']['id'])
@@ -534,7 +534,7 @@ describe Api::LogsController, :type => :controller do
     it "should return a progress object" do
       token_user
       post 'import', params: {:user_id => @user.global_id, :type => 'lam', :url => "some content"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']).to_not eq(nil)
       progress = Progress.find_by_global_id(json['progress']['id'])
@@ -547,7 +547,7 @@ describe Api::LogsController, :type => :controller do
       expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
       expect(WeeklyStatsSummary).to receive(:trends).with(false).and_return({a: 1})
       get 'trends'
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'a' => 1})
     end
@@ -556,7 +556,7 @@ describe Api::LogsController, :type => :controller do
       expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
       expect(WeeklyStatsSummary).to receive(:trends).with(false).and_return({a: 1})
       get 'trends'
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'a' => 1})
     end
@@ -569,7 +569,7 @@ describe Api::LogsController, :type => :controller do
       expect(Permissable.permissions_redis).to receive(:get).and_return(nil).at_least(1).times
       expect(WeeklyStatsSummary).to receive(:trends).with(true).and_return({a: 1})
       get 'trends'
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'a' => 1})
     end

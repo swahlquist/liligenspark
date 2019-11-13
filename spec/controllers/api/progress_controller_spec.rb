@@ -17,7 +17,7 @@ describe Api::ProgressController, :type => :controller do
       token_user
       p = Progress.create
       get :progress, params: {:id => p.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']['id']).to eq(p.global_id)
       expect(json['progress']['status']).to eq('pending')

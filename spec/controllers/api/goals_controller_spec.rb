@@ -4,7 +4,7 @@ describe Api::GoalsController, type: :controller do
   describe "index" do
     it "should not require api token" do
       get :index, params: {:template_header => 1}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']).to eq([])
     end
@@ -12,7 +12,7 @@ describe Api::GoalsController, type: :controller do
     it "should list template_header goals" do
       g = UserGoal.create(:template_header => true)
       get :index, params: {:template_header => 1}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(1)
       expect(json['goal'][0]['id']).to eq(g.global_id)
@@ -29,7 +29,7 @@ describe Api::GoalsController, type: :controller do
       token_user
       g = UserGoal.create(:user => @user)
       get :index, params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(1)
       expect(json['goal'][0]['id']).to eq(g.global_id)
@@ -41,7 +41,7 @@ describe Api::GoalsController, type: :controller do
         UserGoal.create(:user => @user)
       end
       get :index, params: {:user_id => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(30)
       expect(json['meta']['more']).to eq(true)
@@ -53,7 +53,7 @@ describe Api::GoalsController, type: :controller do
       Worker.process_queues
       expect(g.reload.settings['template_header_id']).to eq(g.global_id)
       get :index, params: {:template_header_id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(1)
     end
@@ -62,7 +62,7 @@ describe Api::GoalsController, type: :controller do
       token_user
       g = UserGoal.create(:user => @user, :template => true)
       get :index, params: {:user_id => @user.global_id, :template => true}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(1)
       expect(json['goal'][0]['id']).to eq(g.global_id)
@@ -73,7 +73,7 @@ describe Api::GoalsController, type: :controller do
       g = UserGoal.create(:user => @user, :global => true)
       g2 = UserGoal.create(:user => @user)
       get :index, params: {:global => true}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal'].length).to eq(1)
       expect(json['goal'][0]['id']).to eq(g.global_id)
@@ -104,7 +104,7 @@ describe Api::GoalsController, type: :controller do
       token_user
       g = UserGoal.create(:user => @user)
       get :show, params: {:id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to eq(g.global_id)
     end
@@ -132,7 +132,7 @@ describe Api::GoalsController, type: :controller do
     it "should create goal" do
       token_user
       post :create, params: {:goal => {'user_id' => @user.global_id, 'summary' => 'cool goal'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to_not be_nil
       expect(json['goal']['summary']).to eq('cool goal')
@@ -145,7 +145,7 @@ describe Api::GoalsController, type: :controller do
       o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
       o.add_manager(@user.user_name, true)
       post :create, params: {:goal => {'template_header' => true, 'summary' => 'template goal'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to_not be_nil
     end
@@ -153,7 +153,7 @@ describe Api::GoalsController, type: :controller do
     it "should default to the api_user when creating a goal" do
       token_user
       post :create, params: {:goal => {'summary' => 'cool goal'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to_not be_nil
       expect(json['goal']['author']['id']).to eq(@user.global_id)
@@ -168,7 +168,7 @@ describe Api::GoalsController, type: :controller do
     it "should allow a supervising token to create a goal" do
       token_user(['basic_supervision'])
       post :create, params: {:goal => {'summary' => 'cool goal'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to_not be_nil
     end
@@ -181,7 +181,7 @@ describe Api::GoalsController, type: :controller do
       goal.save!
       expect(goal.active).to eq(true)
       post :create, params: {:goal => {'user_id' => @user.global_id, 'summary' => 'cool goal', 'external_id' => eid}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to_not be_nil
       expect(json['goal']['summary']).to eq('cool goal')
@@ -215,7 +215,7 @@ describe Api::GoalsController, type: :controller do
       token_user
       g = UserGoal.create(:user => @user)
       put :update, params: {:id => g.global_id, :goal => {'summary' => 'better goal'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to eq(g.global_id)
       expect(json['goal']['summary']).to eq('better goal')
@@ -227,7 +227,7 @@ describe Api::GoalsController, type: :controller do
       User.link_supervisor_to_user(@user, u, nil, false)
       g = UserGoal.create(:user => u)
       put :update, params: {:id => g.global_id, :goal => {'summary' => 'dumb name', 'comment' => {'text' => 'hey yo'}}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['summary']).to eq('user goal')
       expect(json['goal']['comments'].length).to eq(1)
@@ -272,7 +272,7 @@ describe Api::GoalsController, type: :controller do
       User.link_supervisor_to_user(@user, u, nil, true)
       g = UserGoal.create(:user => u)
       delete :destroy, params: {:id => g.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['goal']['id']).to eq(g.global_id)
       expect(UserGoal.find_by_global_id(g.global_id)).to eq(nil)

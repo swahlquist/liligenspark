@@ -27,7 +27,7 @@ describe Api::UnitsController, :type => :controller do
       ou = OrganizationUnit.create(:organization => o)
       ou2 = OrganizationUnit.create(:organization => o)
       get :index, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       res = JSON.parse(response.body)
       expect(res['unit']).to_not eq(nil)
       expect(res['unit'].length).to eq(2)
@@ -59,7 +59,7 @@ describe Api::UnitsController, :type => :controller do
       o = Organization.create
       o.add_manager(@user.user_name)
       post :create, params: {:unit => {'organization_id' => o.global_id, 'name' => 'Cool Room'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['unit']['name']).to eq('Cool Room')
     end
@@ -90,7 +90,7 @@ describe Api::UnitsController, :type => :controller do
       o.add_manager(@user.user_name)
       ou = OrganizationUnit.create(:organization => o)
       get :show, params: {:id => ou.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['unit']['id']).to eq(ou.global_id)
     end
@@ -121,7 +121,7 @@ describe Api::UnitsController, :type => :controller do
       o.add_manager(@user.user_name)
       ou = OrganizationUnit.create(:organization => o)
       put :update, params: {:id => ou.global_id, :unit => {'name' => 'Better Room'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['unit']['id']).to eq(ou.global_id)
       expect(json['unit']['name']).to eq('Better Room')
@@ -153,7 +153,7 @@ describe Api::UnitsController, :type => :controller do
       o.add_manager(@user.user_name)
       ou = OrganizationUnit.create(:organization => o)
       delete :destroy, params: {:id => ou.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['unit']['id']).to eq(ou.global_id)
       expect(OrganizationUnit.find_by_global_id(ou.global_id)).to eq(nil)
@@ -191,7 +191,7 @@ describe Api::UnitsController, :type => :controller do
       u.add_supervisor(@user.user_name)
       expect(u.reload.all_user_ids.length).to eq(1)
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
       
@@ -209,14 +209,14 @@ describe Api::UnitsController, :type => :controller do
       }, {:user => user, :device => d, :author => user})
       Worker.process_queues
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
       
       expect(u.add_communicator(user.user_name)).to eq(true)
       expect(u.reload.all_user_ids.length).to eq(2)
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)['weeks']
       expect(json.length).to eq(2)
       expect(json[0]['sessions']).to eq(1)
@@ -241,12 +241,12 @@ describe Api::UnitsController, :type => :controller do
       u.add_supervisor(@user.user_name)
       expect(u.reload.all_user_ids.length).to eq(1)
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
       
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_counts']).to eq({
         'goal_set' => 0,
@@ -261,7 +261,7 @@ describe Api::UnitsController, :type => :controller do
       u.add_communicator(user.user_name)
       expect(u.reload.all_user_ids.length).to eq(2)
       get :stats, params: {:unit_id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_counts']).to eq({
         'goal_set' => 1,
@@ -314,7 +314,7 @@ describe Api::UnitsController, :type => :controller do
       end
       
       get :logs, params: {:unit_id => unit.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['log'].length).to eq(10)

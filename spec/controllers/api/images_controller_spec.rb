@@ -11,7 +11,7 @@ describe Api::ImagesController, :type => :controller do
       token_user
       url = "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon.png"
       post :create, params: {:image => {'url' => url, 'content_type' => 'image/png'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['image']['id']).not_to eq(nil)
       expect(json['image']['url']).to eq("#{ENV['UPLOADS_S3_CDN']}/bacon.png")
@@ -22,7 +22,7 @@ describe Api::ImagesController, :type => :controller do
       token_user
       url = "https://www.example.com/pic.png"
       post :create, params: {:image => {'url' => url, 'content_type' => 'image/png'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['image']['id']).not_to eq(nil)
       expect(json['image']['pending']).to eq(true)
@@ -44,14 +44,14 @@ describe Api::ImagesController, :type => :controller do
   describe "upload_success" do
     it "should not require api token" do
       get :upload_success, params: {:image_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
     
     it "should error for bad confirmation key" do
       get :upload_success, params: {:image_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
@@ -62,7 +62,7 @@ describe Api::ImagesController, :type => :controller do
       res = OpenStruct.new(:success? => false)
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + s.full_filename).and_return(res)
       get :upload_success, params: {:image_id => s.global_id, :confirmation => s.confirmation_key}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'File not found'})
     end
@@ -74,7 +74,7 @@ describe Api::ImagesController, :type => :controller do
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + s.full_filename).and_return(res)
       get :upload_success, params: {:image_id => s.global_id, :confirmation => s.confirmation_key}
       json = JSON.parse(response.body)
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(s.reload.url).not_to eq(nil)
       expect(s.settings['pending']).to eq(false)
       expect(json).to eq({'confirmed' => true, 'url' => s.url})
@@ -97,7 +97,7 @@ describe Api::ImagesController, :type => :controller do
       token_user
       s = ButtonImage.create(:settings => {'content_type' => 'audio/mp3'})
       get :show, params: {:id => s.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['image']['id']).to eq(s.global_id)
       expect(json['image']['content_type']).to eq('audio/mp3')
@@ -120,7 +120,7 @@ describe Api::ImagesController, :type => :controller do
       token_user
       s = ButtonImage.create(:user => @user, :settings => {'content_type' => 'audio/mp3'})
       put :update, params: {:id => s.global_id, :image => {:license => {'type' => 'CC-By'}}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['image']['id']).to eq(s.global_id)
       expect(json['image']['license']).to eq({'type' => 'CC-By'})

@@ -1287,7 +1287,7 @@ describe Purchasing do
 
     it 'should handle card error correctly' do
       u = User.create
-      err = Stripe::CardError.new('a', 'b', 'c')
+      err = Stripe::CardError.new('a', 'b')
       expect(err).to receive(:json_body).and_return(error: {code: 'asdf', decline_code: 'qwer'})
       expect(Stripe::Charge).to receive(:create).and_raise(err)
       res = Purchasing.purchase_extras('token', {'user_id' => u.global_id})
@@ -1865,7 +1865,7 @@ describe Purchasing do
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
-      'seconds_to_add' => 157788000,
+      'seconds_to_add' => 157784760,
       'purchase_amount' => 200,
       'source' => 'new purchase',
       'source_id' => 'stripe',
@@ -1897,7 +1897,7 @@ describe Purchasing do
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
-      'seconds_to_add' => 157788000,
+      'seconds_to_add' => 157784760,
       'source_id' => 'stripe',
       'source' => 'charge.succeeded',
       'user_id' => u.global_id
@@ -1986,7 +1986,7 @@ describe Purchasing do
       'purchase' => true,
       'purchase_id' => 'asdf',
       'source_id' => 'stripe',
-      'seconds_to_add' => 157788000,
+      'seconds_to_add' => 157784760,
       'purchase_amount' => 200,
       'source' => 'new purchase',
       'token_summary' => 'Unknown Card',
@@ -2263,6 +2263,7 @@ describe Purchasing do
         outputs << str
       end.at_least(1).times
       cust = Pager.new(:customers)
+      expect(Stripe::Charge).to receive(:list).with(:limit => 20).and_return(OpenStruct.new)
       expect(Stripe::Customer).to receive(:list).with(:limit => 10).and_return(cust)
       expect(Stripe::Subscription).to receive(:list).with(:limit => 20, :status => 'canceled').and_return(Pager.new(:subscriptions))
       Purchasing.reconcile

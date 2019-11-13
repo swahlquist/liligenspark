@@ -287,16 +287,42 @@ describe SecureSerialize, :type => :model do
       PaperTrail.request.whodunnit = 'bob'
       u = User.create
       u.settings['bacon'] = true
+      u.managing_organization_id = 12345
       u.save!
       expect(PaperTrail::Version.count).to eq(2)
       PaperTrail::Version.all.update_all(created_at: 6.weeks.ago)
+
+      v = PaperTrail::Version.last
+      loaded = User.load_version(v)
+      expect(loaded.settings['bacon']).to eq(true)
+      expect(loaded.settings['cheddar']).to eq(nil)
+      expect(loaded.settings['broccoli']).to eq(nil)
+
       u.settings['cheddar'] = 4
       u.save!
+
+      v = PaperTrail::Version.last
+      loaded = User.load_version(v)
+      expect(loaded.settings['bacon']).to eq(true)
+      expect(loaded.settings['cheddar']).to eq(4)
+      expect(loaded.settings['broccoli']).to eq(nil)
+
       u.settings['broccoli'] = 'cooked'
       u.save!
+
+      v = PaperTrail::Version.last
+      loaded = User.load_version(v)
+      expect(loaded.settings['bacon']).to eq(true)
+      expect(loaded.settings['broccoli']).to eq('cooked')
+      expect(loaded.settings['cheddar']).to eq(4)
+
       u.reload
       expect(PaperTrail::Version.count).to eq(4)
+      expect(PaperTrail::Version.all.map{|v| v.object_deserialized['settings']['bacon'] rescue nil }).to eq([nil, true, true, true])
+      expect(PaperTrail::Version.all.map{|v| v.object_deserialized['settings']['cheddar'] rescue nil }).to eq([nil, nil, 4, 4])
+      expect(PaperTrail::Version.all.map{|v| v.object_deserialized['settings']['broccoli'] rescue nil }).to eq([nil, nil, nil, 'cooked'])
       u.rollback_to(3.weeks.ago)
+
       u.reload
       expect(u.settings['bacon']).to eq(true)
       expect(u.settings['broccoli']).to eq(nil)

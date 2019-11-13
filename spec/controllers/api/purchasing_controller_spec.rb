@@ -11,7 +11,7 @@ describe Api::PurchasingController, :type => :controller do
         :data => {:a => 1}
       })
       post :event, params: {:a => 1, :b => 'asdf'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['a']).to eq(1)
     end
@@ -23,7 +23,7 @@ describe Api::PurchasingController, :type => :controller do
       p = Progress.create
       expect(Progress).to receive(:schedule).with(GiftPurchase, :process_subscription_token, {'id' => 'abc'}, {'type' => 'long_term_150', 'email' => nil, 'user_id' => @user.global_id, 'code' => nil, 'extras' => false, 'donate' => false}).and_return(p)
       post :purchase_gift, params: {:token => {'id' => 'abc'}, :type => 'long_term_150'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['progress']).not_to eq(nil)
     end
@@ -33,7 +33,7 @@ describe Api::PurchasingController, :type => :controller do
       p = Progress.create
       expect(Progress).to receive(:schedule).with(GiftPurchase, :process_subscription_token, {'id' => 'abc'}, {'type' => 'long_term_150', 'email' => nil, 'user_id' => @user.global_id, 'code' => 'asdfasdf', 'extras' => false, 'donate' => false}).and_return(p)
       post :purchase_gift, params: {:token => {'id' => 'abc'}, :type => 'long_term_150', :code => 'asdfasdf'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['progress']).not_to eq(nil)
     end
@@ -43,7 +43,7 @@ describe Api::PurchasingController, :type => :controller do
       p = Progress.create
       expect(Progress).to receive(:schedule).with(GiftPurchase, :process_subscription_token, {'id' => 'abc'}, {'type' => 'long_term_150', 'email' => nil, 'user_id' => @user.global_id, 'code' => 'asdfasdf', 'extras' => true, 'donate' => true}).and_return(p)
       post :purchase_gift, params: {:token => {'id' => 'abc'}, :type => 'long_term_150', :code => 'asdfasdf', 'extras' => true, 'donate' => true}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['progress']).not_to eq(nil)
     end
@@ -66,7 +66,7 @@ describe Api::PurchasingController, :type => :controller do
       expect(GiftPurchase).to receive(:find_by_code).with('bacon').and_return(g)
       expect(g).to receive(:redemption_state).with('bacon').and_return({valid: false, error: 'no no no'})
       get :code_check, params: {code: 'bacon'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['valid']).to eq(false)
       expect(json['error']).to eq('no no no')
@@ -77,7 +77,7 @@ describe Api::PurchasingController, :type => :controller do
       expect(GiftPurchase).to receive(:find_by_code).with('bacon').and_return(g)
       expect(g).to receive(:redemption_state).with('bacon').and_return({valid: true})
       get :code_check, params: {code: 'bacon'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['valid']).to eq(true)
       expect(json['type']).to eq('user_gift')

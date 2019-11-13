@@ -24,7 +24,7 @@ describe Api::WebhooksController, :type => :controller do
       token_user
       w = Webhook.create(:user_id => @user.id)
       get 'index', params: {'user_id' => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['webhook']).to_not eq(nil)
@@ -56,7 +56,7 @@ describe Api::WebhooksController, :type => :controller do
     it "should create the webhook" do
       token_user
       post 'create', params: {'webhook' => {'user_id' => @user.global_id, 'name' => 'test webhook'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['webhook']).to_not eq(nil)
@@ -89,7 +89,7 @@ describe Api::WebhooksController, :type => :controller do
       token_user
       webhook = Webhook.create(:user_id => @user.id)
       post 'test', params: {'webhook_id' => webhook.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']).to_not eq(nil)
       progress = Progress.find_by_path(json['progress']['id'])
@@ -103,7 +103,7 @@ describe Api::WebhooksController, :type => :controller do
       token_user
       webhook = Webhook.create(:user_id => @user.id)
       post 'test', params: {'webhook_id' => webhook.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['webhook']).to eq(nil)
@@ -135,7 +135,7 @@ describe Api::WebhooksController, :type => :controller do
       token_user
       w = Webhook.create(:user_id => @user.id)
       put 'update', params: {'id' => w.global_id, 'webhook' => {'name' => 'new name'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['webhook']['id']).to eq(w.global_id)
@@ -167,7 +167,7 @@ describe Api::WebhooksController, :type => :controller do
       token_user
       w = Webhook.create(:user_id => @user.id)
       delete 'destroy', params: {'id' => w.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to_not eq(nil)
       expect(json['webhook']['id']).to eq(w.global_id)

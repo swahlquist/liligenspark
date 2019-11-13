@@ -4,7 +4,7 @@ describe Api::GiftsController, :type => :controller do
   describe "show" do
     it "should not require an access token" do
       get :show, params: {:id => 'asdf'}
-      expect(response.success?).not_to eq(true)
+      expect(response.successful?).not_to eq(true)
       json = JSON.parse(response.body)
       expect(response.code).to eq("404")
       expect(json['error']).to eq("Record not found")
@@ -12,7 +12,7 @@ describe Api::GiftsController, :type => :controller do
     
     it "should error gracefully on a missing gift" do
       get :show, params: {:id => 'asdf'}
-      expect(response.success?).not_to eq(true)
+      expect(response.successful?).not_to eq(true)
       json = JSON.parse(response.body)
       expect(response.code).to eq("404")
       expect(json['error']).to eq("Record not found")
@@ -24,7 +24,7 @@ describe Api::GiftsController, :type => :controller do
       g.save
       
       get :show, params: {:id => g.code}
-      expect(response.success?).not_to eq(true)
+      expect(response.successful?).not_to eq(true)
       json = JSON.parse(response.body)
       expect(response.code).to eq("404")
       expect(json['error']).to eq("Record not found")
@@ -34,7 +34,7 @@ describe Api::GiftsController, :type => :controller do
       token_user
       g = GiftPurchase.create(code: '5710897589375081751728957215782317582713057231857239751907582')
       get :show, params: {:id => g.code}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(response.code).to eq("200")
       expect(json['gift']['id']).to eq("#{g.code}::#{g.code_verifier}")
@@ -46,7 +46,7 @@ describe Api::GiftsController, :type => :controller do
       g.code = 'abcd0002587208957238957230895782375892735729087823758723895720397238578923709827057237'
       g.save
       get :show, params: {:id => 'ABcD0Oo2587208957238957230895782375892735729087823758723895720397238578923709827057237'}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(response.code).to eq("200")
       expect(json['gift']['id']).to eq("#{g.code}::#{g.code_verifier}")
@@ -109,7 +109,7 @@ describe Api::GiftsController, :type => :controller do
       org = Organization.create(:admin => true)
       org.add_manager(@user.user_name, true)
       get :index
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['gift']).to eq([])
       expect(json['meta']['offset']).to eq(0)
@@ -140,7 +140,7 @@ describe Api::GiftsController, :type => :controller do
         'bacon' => 'is good',
         'organization' => 'cool org'
       }}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       gift = GiftPurchase.find_by_code(json['gift']['code'])
       expect(gift).to_not eq(nil)
@@ -162,7 +162,7 @@ describe Api::GiftsController, :type => :controller do
         'gift_name' => 'cool gift',
         'seconds' => 2.years.to_i.to_s
       }}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       gift = GiftPurchase.find_by_code(json['gift']['code'])
       expect(gift).to_not eq(nil)
@@ -201,7 +201,7 @@ describe Api::GiftsController, :type => :controller do
       g = GiftPurchase.create(active: true)
       expect(g.reload.active).to eq(true)
       delete :destroy, params: {id: g.code}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['gift']['code']).to eq(g.code)
       expect(GiftPurchase.count).to eq(1)

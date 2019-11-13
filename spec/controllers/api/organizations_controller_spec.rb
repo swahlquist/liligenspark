@@ -28,7 +28,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(@user.user_name, true)
       
       get :index
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization'].length).to eq(1)
       expect(json['organization'][0]['id']).to eq(o.global_id)
@@ -42,7 +42,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(@user.user_name, false)
       
       get :index
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization'].length).to eq(2)
       expect(json['organization'][0]['id']).to eq(o2.global_id)
@@ -58,7 +58,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(@user.user_name, true)
       
       get :index
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization'].length).to eq(15)
       expect(json['meta']['offset']).to eq(0)
@@ -90,7 +90,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create
       o.add_manager(@user.user_name)
       put :update, params: {:id => o.global_id, :organization => {:name => "my cool org"}}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
       expect(json['organization']['name']).to eq('my cool org')
@@ -101,7 +101,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create
       o.add_manager(@user.user_name)
       put :update, params: {:id => o.global_id, :organization => {:allotted_licenses => "7"}}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
       expect(json['organization']['allotted_licenses']).to eq(0)
@@ -112,7 +112,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create
       o.add_manager(@user.user_name)
       put :update, params: {:id => o.global_id, :organization => {:licenses_expire => '2020-01-01'}}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
       expect(json['organization']['licenses_expire']).to eq(nil)
@@ -123,7 +123,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       Organization.admin.add_manager(@user.user_name, true)
       put :update, params: {:id => o.global_id, :organization => {:allotted_licenses => "7"}}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
       expect(json['organization']['allotted_licenses']).to eq(7)
@@ -134,7 +134,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       Organization.admin.add_manager(@user.user_name, true)
       put :update, params: {:id => o.global_id, :organization => {:licenses_expire => "2020-01-01"}}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
       expect(json['organization']['licenses_expire']).to eq(Time.parse("2020-01-01").iso8601)
@@ -147,7 +147,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_manager(@user.user_name)
         u = User.create
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_manager-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.manager?(u.reload)).to eq(true)
         expect(o.assistant?(u.reload)).to eq(true)
@@ -159,7 +159,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_manager(@user.user_name)
         u = User.create
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_assistant-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.assistant?(u.reload)).to eq(true)
         expect(o.manager?(u.reload)).to eq(false)
@@ -170,7 +170,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_manager-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -183,7 +183,7 @@ describe Api::OrganizationsController, :type => :controller do
         u = User.create
         o.add_manager(u.user_name, true)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_manager-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.assistant?(u.reload)).to eq(false)
         expect(o.manager?(u.reload)).to eq(false)
@@ -196,7 +196,7 @@ describe Api::OrganizationsController, :type => :controller do
         u = User.create
         o.add_manager(u.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_assistant-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.assistant?(u.reload)).to eq(false)
         expect(o.manager?(u.reload)).to eq(false)
@@ -207,7 +207,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_manager-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -221,7 +221,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_manager(@user.user_name)
         u = User.create
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_supervisor-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.supervisor?(u.reload)).to eq(true)
       end
@@ -231,7 +231,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_supervisor-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -245,7 +245,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_supervisor(u.user_name, true)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_supervisor-#{u.user_name}"}}
         o.reload
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.manager?(u.reload)).to eq(false)
         expect(o.supervisor?(u.reload)).to eq(false)
@@ -256,7 +256,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_supervisor-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -270,7 +270,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_manager(@user.user_name)
         u = User.create
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_user-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         json = JSON.parse(response.body)
         expect(o.managed_user?(u.reload)).to eq(true)
         expect(o.sponsored_user?(u.reload)).to eq(true)
@@ -285,7 +285,7 @@ describe Api::OrganizationsController, :type => :controller do
         o.add_manager(@user.user_name)
         u = User.create
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_unsponsored_user-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         json = JSON.parse(response.body)
         expect(o.managed_user?(u.reload)).to eq(true)
         expect(o.sponsored_user?(u.reload)).to eq(false)
@@ -298,7 +298,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create(:settings => {'total_licenses' => 1})
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_user-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -310,7 +310,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create(:settings => {'total_licenses' => 0})
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "add_user-#{u.user_name}"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: no licenses available'])
@@ -323,7 +323,7 @@ describe Api::OrganizationsController, :type => :controller do
         u = User.create
         o.add_user(u.user_name, false)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_user-#{u.user_name}"}}
-        expect(response.success?).to eq(true)
+        expect(response.successful?).to eq(true)
         json = JSON.parse(response.body)
         expect(o.managed_user?(u.reload)).to eq(false)
         expect(o.assistant?(u.reload)).to eq(false)
@@ -335,7 +335,7 @@ describe Api::OrganizationsController, :type => :controller do
         o = Organization.create(:settings => {'total_licenses' => 1})
         o.add_manager(@user.user_name)
         put :update, params: {:id => o.global_id, :organization => {:management_action => "remove_user-bob"}}
-        expect(response.success?).to eq(false)
+        expect(response.successful?).to eq(false)
         json = JSON.parse(response.body)
         expect(json['error']).to eq('organization update failed')
         expect(json['errors']).to eq(['user management action failed: invalid user, bob'])
@@ -360,7 +360,7 @@ describe Api::OrganizationsController, :type => :controller do
       token_user
       o.add_manager(@user.user_name, true)
       post :create, params: {:organization => {:name => "bob"}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['organization']).not_to eq(nil)
       expect(json['organization']['name']).to eq("bob")
@@ -397,7 +397,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(@user.user_name, true)
       
       delete :destroy, params: {:id => o2.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
 
     it "should not let anyone delete the admin org" do
@@ -434,7 +434,7 @@ describe Api::OrganizationsController, :type => :controller do
       token_user
       o.add_manager(@user.user_name, false)
       get :show, params: {:id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['organization']['id']).to eq(o.global_id)
     end
@@ -469,7 +469,7 @@ describe Api::OrganizationsController, :type => :controller do
       end
       
       get :users, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(25)
@@ -504,7 +504,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(u.user_name, false)
       
       get :managers, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(2)
@@ -546,7 +546,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_supervisor(u2.user_name, true)
       
       get :supervisors, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(2)
@@ -608,7 +608,7 @@ describe Api::OrganizationsController, :type => :controller do
       end
       
       get :logs, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['log'].length).to eq(10)
@@ -644,7 +644,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_user(user.user_name, true, false)
       expect(o.reload.approved_users.length).to eq(0)
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
       
@@ -662,14 +662,14 @@ describe Api::OrganizationsController, :type => :controller do
       }, {:user => user, :device => d, :author => user})
       Worker.process_queues
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
       
       o.add_user(user.user_name, false, false)
       expect(o.reload.approved_users.length).to eq(1)
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)['weeks']
       expect(json.length).to eq(2)
       expect(json[0]['sessions']).to eq(1)
@@ -692,12 +692,12 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_user(user.user_name, true, false)
       expect(o.reload.approved_users.length).to eq(0)
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0, 'total_users' => 0}})
       
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_counts']).to eq({
         'goal_set' => 0,
@@ -712,7 +712,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_user(user.user_name, false, false)
       expect(o.reload.approved_users.length).to eq(1)
       get :stats, params: {:organization_id => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user_counts']).to eq({
         'goal_set' => 1,
@@ -750,7 +750,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('report parameter required')
     end
@@ -760,7 +760,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "good bacon"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('unrecognized report: good bacon')
     end
@@ -774,7 +774,7 @@ describe Api::OrganizationsController, :type => :controller do
       ae3 = AuditEvent.create(:event_type => 'voice_added', :data => {'voice_id' => 'asd'})
       ae4 = AuditEvent.create(:event_type => 'voice_added', :data => {'voice_id' => 'asdf'})
       get :admin_reports, params: {:organization_id => o.global_id, :report => "premium_voices"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       ts = Time.now.strftime('%m-%Y')
       expect(json['stats']).to eq({
@@ -799,7 +799,7 @@ describe Api::OrganizationsController, :type => :controller do
       o.add_manager(@user.user_name, false)
       
       get :admin_reports, params: {:organization_id => o.global_id, :report => 'logged_2'}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should generate unused_ report" do
@@ -807,7 +807,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "unused_3"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -817,7 +817,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "setup_but_expired"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -827,7 +827,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "current_but_expired"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -837,7 +837,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "free_supervisor_without_supervisees"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -847,7 +847,7 @@ describe Api::OrganizationsController, :type => :controller do
     #   o = Organization.create(:admin => true)
     #   o.add_manager(@user.user_name, false)
     #   get :admin_reports, params: {:organization_id => o.global_id, :report => "free_supervisor_with_supervisors"}
-    #   expect(response).to be_success
+    #   expect(response).to be_successful
     #   json = JSON.parse(response.body)
     #   expect(json).to eq({'user' => []})
     # end
@@ -857,7 +857,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "active_free_supervisor_without_supervisees_or_org"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -867,7 +867,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "eval_accounts"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -877,7 +877,7 @@ describe Api::OrganizationsController, :type => :controller do
     #   o = Organization.create(:admin => true)
     #   o.add_manager(@user.user_name, false)
     #   get :admin_reports, params: {:organization_id => o.global_id, :report => "recent_"}
-    #   expect(response).to be_success
+    #   expect(response).to be_successful
     #   json = JSON.parse(response.body)
     #   expect(json).to eq({'user' => []})
     # end
@@ -891,7 +891,7 @@ describe Api::OrganizationsController, :type => :controller do
       ae3 = AuditEvent.create(:event_type => 'extras_added', :data => {'source' => 'asd'})
       ae4 = AuditEvent.create(:event_type => 'extras_added', :data => {'source' => 'asdf'})
       get :admin_reports, params: {:organization_id => o.global_id, :report => "extras"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       ts = Time.now.strftime('%m-%Y')
       expect(json['stats']).to eq({
@@ -905,7 +905,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "new_users"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['user'][0]['id']).to eq(@user.global_id)
     end
@@ -915,7 +915,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "logged_3"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -925,7 +925,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "not_logged_3"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'user' => []})
     end
@@ -935,7 +935,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "missing_words"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -945,7 +945,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "missing_symbols"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -958,7 +958,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "home_boards"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -971,7 +971,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "recent_home_boards"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -985,7 +985,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "subscriptions"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -995,7 +995,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "overridden_parts_of_speech"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -1005,7 +1005,7 @@ describe Api::OrganizationsController, :type => :controller do
     #   o = Organization.create(:admin => true)
     #   o.add_manager(@user.user_name, false)
     #   get :admin_reports, params: {:organization_id => o.global_id, :report => "multiple_emails"}
-    #   expect(response).to be_success
+    #   expect(response).to be_successful
     #   json = JSON.parse(response.body)
     #   expect(json).to eq({'user' => [], 'stats' => {}})
     # end
@@ -1015,7 +1015,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "premium_voices"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'stats' => {}})
     end
@@ -1025,7 +1025,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "feature_flags"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -1035,7 +1035,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, false)
       get :admin_reports, params: {:organization_id => o.global_id, :report => "totals"}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['stats']).to_not eq(nil)
     end
@@ -1076,7 +1076,7 @@ describe Api::OrganizationsController, :type => :controller do
       Setting.block_email!('fred@example.com')
       Setting.block_email!('alice@example.com')
       get 'blocked_emails', :params => {'organization_id' => o.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'emails' => ['alice@example.com', 'fred@example.com']})
     end
@@ -1114,7 +1114,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'block_email', 'email' => 'susan@example.com'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(true)
     end
@@ -1124,7 +1124,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'block_email', 'email' => 'susan@example.com'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(true)
       expect(Setting.blocked_email?('SUSAN@example.com')).to eq(true)
@@ -1135,7 +1135,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'something_else', 'email' => 'susan@example.com'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(false)
     end
@@ -1145,7 +1145,7 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'add_sentence_suggestion', 'word' => 'bacon', 'sentence' => 'I like me some bacon'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(true)
       w = WordData.find_word('bacon')
@@ -1158,12 +1158,12 @@ describe Api::OrganizationsController, :type => :controller do
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'add_sentence_suggestion', 'word' => 'bacon'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(false)
       
       post 'extra_action', :params => {'organization_id' => o.global_id, 'extra_action' => 'add_sentence_suggestion', 'sentence' => 'bacon'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['success']).to eq(false)
     end
@@ -1198,7 +1198,7 @@ describe Api::OrganizationsController, :type => :controller do
       end
       
       get :evals, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(25)
@@ -1237,7 +1237,7 @@ describe Api::OrganizationsController, :type => :controller do
       end
       
       get :extras, params: {:organization_id => o.global_id}
-      expect(response.success?).to eq(true)
+      expect(response.successful?).to eq(true)
       json = JSON.parse(response.body)
       expect(json['meta']).not_to eq(nil)
       expect(json['user'].length).to eq(100)

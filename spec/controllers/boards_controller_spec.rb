@@ -4,21 +4,21 @@ describe BoardsController, :type => :controller do
   describe "index" do
     it "should render" do
       get "index"
-      expect(response).to be_success
+      expect(response).to be_successful
     end
   end
   
   describe "cache" do
     it "should render" do
       get "cache"
-      expect(response).to be_success
+      expect(response).to be_successful
     end
   end
   
   describe "about" do
     it "should render" do
       get "about"
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:meta_record]).not_to eq(nil)
     end
   end
@@ -28,7 +28,7 @@ describe BoardsController, :type => :controller do
       ls = LogSession.new
       expect(LogSession).to receive(:find_by_global_id).with('oho').and_return(ls)
       get "log_goal_status", params: {:goal_id => 'asdf', :goal_code => 'asdf', :log_id => 'oho'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:log]).to eq(ls)
     end
     
@@ -38,7 +38,7 @@ describe BoardsController, :type => :controller do
       expect(UserGoal).to receive(:find_by_global_id).with(g.global_id).and_return(g)
       expect(g).to receive(:process_status_from_code).with('4', 'asdf').and_return(nil)
       get "log_goal_status", params: {:goal_id => g.global_id, :goal_code => 'asdf', :status => '4'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:error]).to eq(true)
     end
     
@@ -61,7 +61,7 @@ describe BoardsController, :type => :controller do
       expect(UserGoal).to receive(:find_by_global_id).with(g.global_id).and_return(g)
       expect(g).to receive(:process_status_from_code).with('4', 'asdf').and_return(nil)
       get "log_goal_status", params: {:goal_id => g.global_id, :goal_code => 'asdf', :status => '4'}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:error]).to eq(true)
     end
   end
@@ -73,7 +73,7 @@ describe BoardsController, :type => :controller do
       meta = b.meta_record
       expect_any_instance_of(Board).to receive(:meta_record).and_return(meta)
       get :board, params: {:id => b.key}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
 
     it "should not set a meta attribute if private" do
@@ -82,7 +82,7 @@ describe BoardsController, :type => :controller do
       meta = b.meta_record
       expect_any_instance_of(Board).to_not receive(:meta_record)
       get :board, params: {:id => b.key}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
     
     it "should redirect when old key found" do
@@ -101,7 +101,7 @@ describe BoardsController, :type => :controller do
       meta = u.meta_record
       expect_any_instance_of(User).to receive(:meta_record).and_return(meta)
       get :user, params: {:id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
     end
 
     it "should redirect when old key found" do
@@ -137,7 +137,7 @@ describe BoardsController, :type => :controller do
       meta = u.meta_record
       expect_any_instance_of(Utterance).to receive(:meta_record).and_return(meta)
       get :utterance, params: {:id => u.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(assigns[:meta_record]).not_to eq(nil)
 #      response.body.should match(/meta name="twitter:description" content="ok guys"/)
     end

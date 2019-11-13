@@ -11,7 +11,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       url = "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon.mp3"
       post :create, params: {:sound => {'url' => url, 'content_type' => 'audio/mp3'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).not_to eq(nil)
       expect(json['sound']['url']).to eq("#{ENV['UPLOADS_S3_CDN']}/bacon.mp3")
@@ -22,7 +22,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       url = "https://www.example.com/pic.mp3"
       post :create, params: {:sound => {'url' => url, 'content_type' => 'audio/mp3'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).not_to eq(nil)
       expect(json['sound']['pending']).to eq(true)
@@ -35,7 +35,7 @@ describe Api::SoundsController, :type => :controller do
       url = "https://www.example.com/pic.mp3"
       expect_any_instance_of(ButtonSound).to receive(:process_params){|u| u.add_processing_error("bacon") }.and_return(false)
       post :create, params: {:sound => {'url' => url, 'content_type' => 'audio/mp3'}}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq("sound creation failed")
       expect(json['errors']).to eq(["bacon"])
@@ -47,7 +47,7 @@ describe Api::SoundsController, :type => :controller do
       User.link_supervisor_to_user(@user, u)
       url = "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/bacon.mp3"
       post :create, params: {:sound => {'user_id' => u.global_id, 'url' => url, 'content_type' => 'audio/mp3'}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).not_to eq(nil)
       expect(json['sound']['url']).to eq("#{ENV['UPLOADS_S3_CDN']}/bacon.mp3")
@@ -69,14 +69,14 @@ describe Api::SoundsController, :type => :controller do
   describe "upload_success" do
     it "should not require api token" do
       get :upload_success, params: {:sound_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
     
     it "should error for bad confirmation key" do
       get :upload_success, params: {:sound_id => "1234"}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'Invalid confirmation key'})
     end
@@ -87,7 +87,7 @@ describe Api::SoundsController, :type => :controller do
       res = OpenStruct.new(:success? => false)
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + s.full_filename).and_return(res)
       get :upload_success, params: {:sound_id => s.global_id, :confirmation => s.confirmation_key}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'confirmed' => false, 'message' => 'File not found'})
     end
@@ -99,7 +99,7 @@ describe Api::SoundsController, :type => :controller do
       expect(Typhoeus).to receive(:head).with(config[:upload_url] + s.full_filename).and_return(res)
       get :upload_success, params: {:sound_id => s.global_id, :confirmation => s.confirmation_key}
       json = JSON.parse(response.body)
-      expect(response).to be_success
+      expect(response).to be_successful
       expect(s.reload.url).not_to eq(nil)
       expect(s.settings['pending']).to eq(false)
       expect(json).to eq({'confirmed' => true, 'url' => s.url})
@@ -122,7 +122,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       s = ButtonSound.create(:settings => {'content_type' => 'audio/mp3'})
       get :show, params: {:id => s.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).to eq(s.global_id)
       expect(json['sound']['content_type']).to eq('audio/mp3')
@@ -145,7 +145,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       s = ButtonSound.create(:user => @user, :settings => {'content_type' => 'audio/mp3'})
       put :update, params: {:id => s.global_id, :sound => {:license => {'type' => 'CC-By'}}}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).to eq(s.global_id)
       expect(json['sound']['license']).to eq({'type' => 'CC-By'})
@@ -156,7 +156,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       s = ButtonSound.create(:user => @user, :settings => {'content_type' => 'audio/mp3'})
       put :update, params: {:id => s.global_id, :sound => {:license => {'type' => 'CC-By'}}}
-      expect(response).not_to be_success
+      expect(response).not_to be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq("sound update failed")
       expect(json['errors']).to eq(["bacon"])
@@ -186,7 +186,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       bs = ButtonSound.create(:user => @user)
       get 'index', params: {'user_id' => @user.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound'].length).to eq(1)
       expect(json['sound'][0]['id']).to eq(bs.global_id)
@@ -209,7 +209,7 @@ describe Api::SoundsController, :type => :controller do
       token_user
       s = ButtonSound.create(user: @user)
       delete :destroy, params: {id: s.global_id}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['sound']['id']).to eq(s.global_id)
     end
@@ -226,7 +226,7 @@ describe Api::SoundsController, :type => :controller do
       p = Progress.create
       expect(Progress).to receive(:schedule).with(ButtonSound, :import_for, @user.global_id, 'http://www.example.com/sound.zip').and_return(p)
       post :import, params: {:url => 'http://www.example.com/sound.zip'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['progress']['id']).to eq(p.global_id)
     end
@@ -234,7 +234,7 @@ describe Api::SoundsController, :type => :controller do
     it "should return import upload parameters for no url" do
       token_user
       post :import, params: {:type => 'zip'}
-      expect(response).to be_success
+      expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['remote_upload']).to_not eq(nil)
       expect(json['remote_upload']['upload_url']).to_not eq(nil)
