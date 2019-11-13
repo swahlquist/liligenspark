@@ -6,7 +6,10 @@ require 'rails/all'
 # you've limited to :test, :development, or :production.
 Bundler.require(:default, Rails.env)
 
-Dotenv.load unless Rails.env.production?
+if !ENV['SECURE_ENCRYPTION_KEY'] || !Rails.env.production?
+  require 'dotenv'
+  Dotenv.load if defined?(Dotenv)
+end
 
 module Coughdrop
   class Application < Rails::Application
