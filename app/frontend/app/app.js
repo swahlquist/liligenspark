@@ -492,6 +492,7 @@ CoughDrop.Videos = {
       if(player) {
         if(event.data && event.data.time !== undefined) {
           player.set('time', event.data.time);
+          player.set('started', true);
         }
         if(event.data && event.data.duration !== undefined) {
           player.set('duration', event.data.duration);
@@ -506,6 +507,7 @@ CoughDrop.Videos = {
     }
   }
 };
+
 window.addEventListener('message', function(event) {
   if(event.data && event.data.video_status) {
     var frame = event.source.frameElement;
