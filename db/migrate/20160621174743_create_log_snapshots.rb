@@ -1,4 +1,4 @@
-class CreateLogSnapshots < ActiveRecord::Migration
+class CreateLogSnapshots < ActiveRecord::Migration[5.0]
   def change
     create_table :log_snapshots do |t|
       t.integer :user_id

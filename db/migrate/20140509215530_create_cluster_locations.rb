@@ -1,4 +1,4 @@
-class CreateClusterLocations < ActiveRecord::Migration
+class CreateClusterLocations < ActiveRecord::Migration[5.0]
   def change
     create_table :cluster_locations do |t|
       t.integer :user_id

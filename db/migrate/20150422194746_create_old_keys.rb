@@ -1,4 +1,4 @@
-class CreateOldKeys < ActiveRecord::Migration
+class CreateOldKeys < ActiveRecord::Migration[5.0]
   def change
     create_table :old_keys do |t|
       t.string :record_id

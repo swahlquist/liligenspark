@@ -1,4 +1,4 @@
-class CreateDeveloperKeys < ActiveRecord::Migration
+class CreateDeveloperKeys < ActiveRecord::Migration[5.0]
   def change
     create_table :developer_keys do |t|
       t.string :key

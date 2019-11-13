@@ -1,4 +1,4 @@
-class CreateGiftPurchases < ActiveRecord::Migration
+class CreateGiftPurchases < ActiveRecord::Migration[5.0]
   def change
     create_table :gift_purchases do |t|
       t.text :settings

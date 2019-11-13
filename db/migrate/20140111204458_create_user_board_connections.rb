@@ -1,4 +1,4 @@
-class CreateUserBoardConnections < ActiveRecord::Migration
+class CreateUserBoardConnections < ActiveRecord::Migration[5.0]
   def change
     create_table :user_board_connections do |t|
       t.integer :user_id

@@ -1,4 +1,4 @@
-class CreateUserIntegrations < ActiveRecord::Migration
+class CreateUserIntegrations < ActiveRecord::Migration[5.0]
   def change
     create_table :user_integrations do |t|
       t.integer :user_id

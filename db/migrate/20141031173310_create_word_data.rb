@@ -1,4 +1,4 @@
-class CreateWordData < ActiveRecord::Migration
+class CreateWordData < ActiveRecord::Migration[5.0]
   def change
     create_table :word_data do |t|
       t.string :word

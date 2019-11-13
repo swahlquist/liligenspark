@@ -1,4 +1,4 @@
-class CreateButtonImages < ActiveRecord::Migration
+class CreateButtonImages < ActiveRecord::Migration[5.0]
   def change
     create_table :button_images do |t|
       t.integer :board_id

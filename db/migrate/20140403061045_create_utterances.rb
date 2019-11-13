@@ -1,4 +1,4 @@
-class CreateUtterances < ActiveRecord::Migration
+class CreateUtterances < ActiveRecord::Migration[5.0]
   def change
     create_table :utterances do |t|
       t.text :data

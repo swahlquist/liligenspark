@@ -1,4 +1,4 @@
-class CreateDeletedBoards < ActiveRecord::Migration
+class CreateDeletedBoards < ActiveRecord::Migration[5.0]
   def change
     create_table :deleted_boards do |t|
       t.string :key

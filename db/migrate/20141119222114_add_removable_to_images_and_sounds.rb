@@ -1,4 +1,4 @@
-class AddRemovableToImagesAndSounds < ActiveRecord::Migration
+class AddRemovableToImagesAndSounds < ActiveRecord::Migration[5.0]
   def change
     add_column :button_images, :removable, :boolean
     add_column :button_sounds, :removable, :boolean

@@ -1,4 +1,4 @@
-class CreateAuditEvents < ActiveRecord::Migration
+class CreateAuditEvents < ActiveRecord::Migration[5.0]
   def change
     create_table :audit_events do |t|
       t.string :user_key

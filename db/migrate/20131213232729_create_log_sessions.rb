@@ -1,4 +1,4 @@
-class CreateLogSessions < ActiveRecord::Migration
+class CreateLogSessions < ActiveRecord::Migration[5.0]
   def change
     create_table :log_sessions do |t|
       t.integer :user_id

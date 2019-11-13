@@ -1,4 +1,4 @@
-class CreateBoardDownstreamButtonSets < ActiveRecord::Migration
+class CreateBoardDownstreamButtonSets < ActiveRecord::Migration[5.0]
   def change
     create_table :board_downstream_button_sets do |t|
       t.text :data

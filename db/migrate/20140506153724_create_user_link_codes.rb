@@ -1,4 +1,4 @@
-class CreateUserLinkCodes < ActiveRecord::Migration
+class CreateUserLinkCodes < ActiveRecord::Migration[5.0]
   def change
     create_table :user_link_codes do |t|
       t.integer :user_id

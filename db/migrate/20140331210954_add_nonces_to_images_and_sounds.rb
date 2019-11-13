@@ -1,4 +1,4 @@
-class AddNoncesToImagesAndSounds < ActiveRecord::Migration
+class AddNoncesToImagesAndSounds < ActiveRecord::Migration[5.0]
   def change
     add_column :button_images, :nonce, :string
     add_column :button_sounds, :nonce, :string

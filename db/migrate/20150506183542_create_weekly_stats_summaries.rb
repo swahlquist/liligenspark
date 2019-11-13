@@ -1,4 +1,4 @@
-class CreateWeeklyStatsSummaries < ActiveRecord::Migration
+class CreateWeeklyStatsSummaries < ActiveRecord::Migration[5.0]
   def change
     create_table :weekly_stats_summaries do |t|
       t.integer :user_id

@@ -1,4 +1,4 @@
-class CreateButtonSounds < ActiveRecord::Migration
+class CreateButtonSounds < ActiveRecord::Migration[5.0]
   def change
     create_table :button_sounds do |t|
       t.integer :board_id
