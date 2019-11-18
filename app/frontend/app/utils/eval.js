@@ -70,8 +70,8 @@ var evaluation = {
       if(settings.for_user.user_id == 'self') {
         settings.for_user.user_id = app_state.get('currentUser.id');
       }
-      assessment.user_id = settings.for_user.id;
-      assessment.user_namee = settings.for_user.user_name;
+      assessment.user_id = settings.for_user.user_id;
+      assessment.user_name = settings.for_user.user_name;
     }
     if(reload) {
       app_state.jump_to_board({key: 'obf/eval-' + (new Date()).getTime()});
