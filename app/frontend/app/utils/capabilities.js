@@ -166,7 +166,7 @@ var capabilities;
       apps: {
         all: function() {
           var promise = capabilities.mini_promise();
-          if(window.cordova && window.cordova.exe && capabilities.system == 'Android' && capabilities.installed_app) {
+          if(window.cordova && window.cordova.exec && capabilities.system == 'Android' && capabilities.installed_app) {
             window.cordova.exec(function(list) {
               promise.resolve(list);
             }, function(err) {
@@ -634,7 +634,7 @@ var capabilities;
               if(!promise.resolved) {
                 promise.resolve([]);
               }
-            }, 500);
+            }, 5000);
             var dones = 0;
             var valids = ['generic'];
             if(window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard && window.cordova.plugins.clipboard.copy) {
@@ -656,7 +656,7 @@ var capabilities;
                 all_done();
               });
             };
-            var checks = ['facebook', 'twitter', 'instagram', 'google_plus'];
+            var checks = ['facebook', 'twitter', 'instagram'];
             checks.forEach(function(type) {
               check_one(type);
             });
