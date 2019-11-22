@@ -35,8 +35,8 @@ export default modal.ModalController.extend({
   update_user_name: observer('settings.for_user.user_id', function() {
     var user_id = this.get('settings.for_user.user_id');
     if(user_id) {
-      this.set('settings.for_user.user_name', 'user');
-      if(user_id == 'self') {
+      // this.set('settings.for_user.user_name', 'user');
+      if(user_id == 'self' || user_id == app_state.get('currentUser.id')) {
         this.set('settings.for_user.user_name', app_state.get('currentUser.user_name'));
       } else {  
         var _this = this;
