@@ -240,7 +240,9 @@ CoughDrop.Buttonset = DS.Model.extend({
       };
       // probably skip the sidebar for now, highlighting the scrollable sidebar
       // is kind of a can of worms
-      add_buttons(home_board_id, false);
+      if(home_board_id != from_board_id) {
+        add_buttons(home_board_id, false);
+      }
     }
 
     var partial_matches = [];
@@ -250,7 +252,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     var buttons = [];
     var board_map = null;
 
-    var build_map = RSVP.all_wait(lookups).then(function() {
+    var build_board_map = RSVP.all_wait(lookups).then(function() {
       var res = _this.board_map(button_sets);
       buttons = res.buttons;
       buttons.forEach(function(b) {
@@ -263,7 +265,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     });
 
     // check each button individually
-    var button_sweep = build_map.then(function() {
+    var button_sweep = build_board_map.then(function() {
 //      console.log("all buttons", buttons, board_map);
       buttons.forEach(function(button, idx) {
         var lookups = button.lookup_parts;
@@ -329,6 +331,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           });
         });
       });
+      console.log("SRCH: partial", partial_matches);
     });
 
     var sort_results = button_sweep.then(function() {
@@ -338,7 +341,9 @@ CoughDrop.Buttonset = DS.Model.extend({
         }
         return a.total_edit_distance - b.total_edit_distance; 
       });  
+      console.log("SRCH: sorted partial", partial_matches);
     });
+
 
     var combos = [{
       sequence: true, 
@@ -432,6 +437,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           return 0;
         }).slice(0, 25 * (part_idx + 1));
       });
+      console.log("SRCH: combos", combos);
     });
 
     // when searching for "I want to sleep" sort as follows:
@@ -463,6 +469,7 @@ CoughDrop.Buttonset = DS.Model.extend({
         }
         return 0;
       });
+      console.log("SRCH: sorted combos", combos);
       combos = combos.slice(0, 10);
       return combos;
     });
