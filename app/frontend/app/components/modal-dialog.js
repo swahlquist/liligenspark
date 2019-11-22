@@ -49,7 +49,9 @@ export default Component.extend({
   willDestroy: function() {
     if(!this.get('already_closed')) {
       this.set('already_closed', true);
-      this.sendAction('closing');
+      try {
+        this.sendAction('closing');
+      } catch(e) { }
     }
   },
   touchStart: function(event) {
