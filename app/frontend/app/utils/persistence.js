@@ -610,10 +610,21 @@ var persistence = EmberObject.extend({
       });
     }
     url = this.normalize_url(url);
+    // Looks like we changed all our images to the CDN without updating
+    // the button sets. We should fix that on the backend, but this
+    // should also help mitigate
+    var alt_url = null;
+    if(url && url.match(/^https\:\/\/s3\.amazonaws\.com\/opensymbols\//)) {
+      alt_url = url.replace(/^https\:\/\/s3\.amazonaws\.com\/opensymbols\//, "https://d18vdu4p71yql0.cloudfront.net/");
+    } else if(url && url.match(/^https\:\/\/opensymbols\.s3\.amazonaws\.com\//)) {
+      alt_url = url.replace(/^https\:\/\/opensymbols\.s3\.amazonaws\.com\//, "https://d18vdu4p71yql0.cloudfront.net/");
+    }
     // url_cache is a cache of all images that already have a data-uri loaded
     // url_uncache is all images that are known to not have a data-uri loaded
     if(this.url_cache && this.url_cache[url]) {
       return RSVP.resolve(this.url_cache[url]);
+    } else if(this.url_cache && alt_url && this.url_cache[alt_url]) {
+      return RSVP.resolve(this.url_cache[alt_url]);
     } else if(this.url_uncache && this.url_uncache[url]) {
       var _this = this;
       var find = this.find('dataCache', url);
