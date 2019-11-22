@@ -11,7 +11,7 @@ var obf = EmberObject.extend({
     var hash = JSON.parse(json);
     var buttons = [];
     board.set('grid', hash['grid']);
-    board.set('id', hash['id'] || 'b123');
+    board.set('id', hash['id'] || ('b123' + (new Date()).getTime() + "x" + Math.round(Math.random() * 9999)));
     board.set('permissions', {view: true});
     hash['background'] = hash['background'] || {};
     board.set('background', {

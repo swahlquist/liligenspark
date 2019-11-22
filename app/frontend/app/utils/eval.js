@@ -68,7 +68,7 @@ var evaluation = {
     assessment.accommodations = settings.accommodations;
     if(settings.for_user && !assessment.saved) {
       if(settings.for_user.user_id == 'self') {
-        settings.for_user.user_id = app_state.get('currentUser.id');
+        emberSet(settings.for_user, 'user_id', app_state.get('currentUser.id'));
       }
       assessment.user_id = settings.for_user.user_id;
       assessment.user_name = settings.for_user.user_name;
@@ -210,7 +210,7 @@ var evaluation = {
             open_prompts[prompt_key].push(event);
           }
           if(event.win != null && event.hin != null && (key == 'find_target' || key == 'diff_target' || key == 'symbols')) {
-            var btn_dim = event.win + "x" + event.hin;
+            var btn_dim = (Math.round(event.win * 10) / 10) + "x" + (Math.round(event.hin * 10) / 10);
             button_sizes[btn_dim] = button_sizes[btn_dim] || {win: event.win, hin: event.hin, rows: event.rows, cols: event.cols, cnt: 0, correct: 0, possibly_correct: 0};
             button_sizes[btn_dim].cnt++;
             if(event.approxin) { button_sizes[btn_dim].approximate = true; }
@@ -334,7 +334,7 @@ var evaluation = {
     res.avg_accuracy = Math.round(res.total_correct / Math.max(res.total_possibly_correct, 1) * 100);
     res.duration = res.total_time / 1000;
     if(assessment.ended) {
-      res.duration = assessment.started - assessment.ended;
+      res.duration = assessment.ended - assessment.started;
       (res.gaps || []).forEach(function(arr) {
         res.duration = res.duration - (arr[1] - arr[0]);
       });
@@ -500,8 +500,8 @@ var evaluation = {
     }
 
     res.field = (maxes['field_sizes'] || {}).size || 0;
-    res.button_width = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).win || 0;
-    res.button_height = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).hin || 0;
+    res.button_width = Math.round(((maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).win || 0) * 10) / 10;
+    res.button_height = Math.round(((maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).hin || 0) * 10) / 10;
     res.grid_width = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).rows || 0;
     res.grid_height = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).cols || 0; 
     return res;
@@ -1681,6 +1681,9 @@ evaluation.callback = function(key) {
         board.prompt_name = word.label;
         board.correct_answer = list[0];
       }
+      working.ref.prompt = prompt_text;
+      working.ref.filttered_corrects = filtered;
+      working.ref.distractors = distractor_words;
   
       prompt = filtered[Math.floor(Math.random() * filtered.length)];
       prompt_text = prompt_text || "Find " + prompt.label;
