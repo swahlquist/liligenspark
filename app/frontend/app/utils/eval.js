@@ -10,7 +10,7 @@ import i18n from './i18n';
 import $ from 'jquery';
 import { htmlSafe } from '@ember/string';
 import stashes from './_stashes';
-import { observer } from '@ember/object';
+import { set as emberSet, observer } from '@ember/object';
 // allow user-defined prompt image/label
 // select language when starting assessment
 // way to go back to a previous section

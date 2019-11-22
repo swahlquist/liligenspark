@@ -2057,10 +2057,12 @@ var buttonTracker = EmberObject.extend({
 
     if(ls.selection_type == 'touch' && ls.total_events > 0 && ls.multi_touch_events > 0 && (ls.multi_touch_events / (ls.total_events - 1)) >= 0.4) {
       ls.multi_touch = true;
-    }
+    } 
     if(ls.multi_touch && buttonTracker.check('multi_touch_modeling')) {
       ls.modeling = true;
     } else if(ls.selection_type != 'dwell' && buttonTracker.check('dwell_modeling')) {
+      ls.modeling = true;
+    } else if((ls.selection_type == 'touch' || ls.selection_type == 'mouse') && buttonTracker.check('scan_modeling')) {
       ls.modeling = true;
     }
     stashes.last_selection = ls;

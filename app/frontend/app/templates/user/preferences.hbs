@@ -1043,6 +1043,17 @@
             </div>
           </div>
         {{/unless}}
+        <div class="form-group">
+          <label for="scan_modeling" class="col-sm-3 control-label">{{t "Scanning Modeling" key='scan_modeling'}}</label>
+          <div class="col-sm-5">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=pending_preferences.device.scan_modeling id="scan_modeling"}}
+                {{t "Mark clicks/touches as modeling events, not user selections" key='touch_as_modeling'}}
+              </label>
+            </div>
+          </div>
+        </div>
       {{/if}}
     {{/preference-box}}
     {{#preference-box title="Dwell/Eye-Tracking" glyph='glyphicon glyphicon-eye-open' title_key='dwell_eye_tracking'}}

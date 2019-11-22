@@ -830,11 +830,13 @@ var app_state = EmberObject.extend({
   check_scanning: function() {
     var _this = this;
     runLater(function() {
+      buttonTracker.scan_modeling = false;
       if(app_state.get('speak_mode') && _this.get('currentUser.preferences.device.scanning')) { // scanning mode
         buttonTracker.scanning_enabled = true;
         buttonTracker.any_select = _this.get('currentUser.preferences.device.scanning_select_on_any_event');
         buttonTracker.select_keycode = _this.get('currentUser.preferences.device.scanning_select_keycode');
         buttonTracker.skip_header = _this.get('currentUser.preferences.device.scanning_skip_header');
+        buttonTracker.scan_modeling = _this.get('currentUser.preferences.device.scan_modeling');
         buttonTracker.next_keycode = _this.get('currentUser.preferences.device.scanning_next_keycode');
         buttonTracker.prev_keycode = _this.get('currentUser.preferences.device.scanning_prev_keycode');
         buttonTracker.cancel_keycode = _this.get('currentUser.preferences.device.scanning_cancel_keycode');
