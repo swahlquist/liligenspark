@@ -43,7 +43,7 @@ module Stats
             filtered_day_stats = [Stats.stats_counts([])]
           end
           all_stats += filtered_day_stats
-          days[date.to_s] = Stats.usage_stats(filtered_day_stats)
+          days[date.to_s] = Stats.usage_stats(filtered_day_stats, true)
         end
         Stats.track_word_development(word_development, summary, options[:start_at], date_distance)
         weekyear_dates.delete(summary.weekyear)
@@ -53,7 +53,7 @@ module Stats
       dates.each do |date|
         filtered_day_stats = [Stats.stats_counts([])]
         all_stats += filtered_day_stats
-        days[date.to_s] = usage_stats(filtered_day_stats)
+        days[date.to_s] = usage_stats(filtered_day_stats, true)
       end
     end
     
@@ -91,7 +91,7 @@ module Stats
       day_stats.merge!(time_block_use_for_sessions(day_sessions))
       
       # TODO: cache this day object, maybe in advance
-      days[date.to_s] = usage_stats(day_stats)
+      days[date.to_s] = usage_stats(day_stats, true)
     end
     res = usage_stats(total_stats)
     
@@ -135,7 +135,7 @@ module Stats
     24.times do |hour_number|
       hour_sessions = sessions.select{|s| s.started_at.hour == hour_number }
       hour_stats = stats_counts(hour_sessions, total_stats)
-      hour = usage_stats(hour_stats)
+      hour = usage_stats(hour_stats, true)
       hour[:hour] = hour_number
       hour[:locations] = location_use_for_sessions(hour_sessions)
       hours << hour
@@ -295,33 +295,37 @@ module Stats
     {:touch_locations => counts, :max_touches => max}
   end
 
-  def self.usage_stats(stats_list)
+  def self.usage_stats(stats_list, brief=false)
     return unless stats_list
     stats_list = [stats_list] if !stats_list.is_a?(Array)
     
     res = {
       :total_sessions => 0,
-      :modeled_session_events => {},
       :total_utterances => 0,
-      :words_per_utterance => 0.0,
-      :buttons_per_utterance => 0.0,
       :total_buttons => 0,
       :unique_buttons => 0,
       :modeled_buttons => 0,
       :total_words => 0,
       :unique_words => 0,
       :modeled_words => 0,
-      :modeling_user_names => {},
-      :words_by_frequency => [],
-      :buttons_by_frequency => [],
-      :modeled_words_by_frequency => [],
-      :modeled_buttons_by_frequency => [],
-#      :word_sequences => [],
       :words_per_minute => 0.0,
       :buttons_per_minute => 0.0,
       :utterances_per_minute => 0.0,
-      :goals => []
-    }
+      :words_per_utterance => 0.0,
+      :buttons_per_utterance => 0.0,
+  }
+    if !brief
+      res = res.merge({
+        :modeled_session_events => {},
+        :modeling_user_names => {},
+        :words_by_frequency => [],
+        :buttons_by_frequency => [],
+        :modeled_words_by_frequency => [],
+        :modeled_buttons_by_frequency => [],
+#      :word_sequences => [],
+        :goals => []
+      })
+    end
     
     total_utterance_words = 0
     total_utterance_buttons = 0
@@ -358,8 +362,10 @@ module Stats
       total_session_seconds += stats[:total_session_seconds] if stats[:total_session_seconds]
       
       res[:total_sessions] += stats[:total_sessions]
-      (stats[:modeled_session_events] || {}).each do |total, cnt|
-        res[:modeled_session_events][total] = (res[:modeled_session_events][total] || 0) + cnt
+      if !brief
+        (stats[:modeled_session_events] || {}).each do |total, cnt|
+          res[:modeled_session_events][total] = (res[:modeled_session_events][total] || 0) + cnt
+        end
       end
       res[:total_utterances] += stats[:total_utterances]
       res[:total_buttons] += buttons
@@ -370,189 +376,195 @@ module Stats
       res[:unique_words] += stats[:all_word_counts].keys.map(&:downcase).length
       res[:started_at] = [res[:started_at], stats[:started_at]].compact.min
       res[:ended_at] = [res[:ended_at], stats[:ended_at]].compact.max
-      stats[:all_button_counts].each do |ref, button|
-        if all_button_counts[ref]
-          all_button_counts[ref]['count'] += button['count']
-          if button['depth_sum']
-            all_button_counts[ref]['depth_sum'] ||= 0
-            all_button_counts[ref]['depth_sum'] += button['depth_sum']
-          end
-          if button['full_travel_sum']
-            all_button_counts[ref]['full_travel_sum'] ||= 0
-            all_button_counts[ref]['full_travel_sum'] += button['full_travel_sum']
-          end
-        else
-          all_button_counts[ref] = button.merge({})
-        end
-      end
-      stats[:all_word_counts].each do |word, cnt|
-        all_word_counts[word.downcase] ||= 0
-        all_word_counts[word.downcase] += cnt
-      end
-      (stats[:modeled_button_counts] || {}).each do |ref, button|
-        if modeled_button_counts[ref]
-          modeled_button_counts[ref]['count'] += button['count']
-        else
-          modeled_button_counts[ref] = button.merge({})
-        end
-      end
-      (stats[:modeled_word_counts] || {}).each do |word, cnt|
-        modeled_word_counts[word.downcase] ||= 0
-        modeled_word_counts[word.downcase] += cnt
-      end
-      if stats[:modeling_user_ids]
-        stats[:modeling_user_ids].each do |user_id, count|
-          user_name = user_id_map[user_id] || 'unknown'
-          res[:modeling_user_names][user_name] ||= 0
-          res[:modeling_user_names][user_name] += count
-        end
-      elsif stats[:modeled_button_counts]
-        res[:modeling_user_names]['unknown'] ||= 0
-        res[:modeling_user_names]['unknown'] += stats[:modeled_button_counts].to_a.map{|ref, button| button['count'] || 0 }.sum
-      end
-      if stats[:all_word_sequence]
-#        all_word_sequences << stats[:all_word_sequence].join(' ')
-      end
-      
-      if stats[:buttons_used]
-        stats[:buttons_used]['button_chains'].each do |chain, count|
-          button_chains[chain] = (button_chains[chain] || 0) + count
-        end
-      end
-      
-      merge_sensor_stats!(res, stats)
-
-      [:touch_locations, :parts_of_speech, :core_words, :modeled_parts_of_speech, :modeled_core_words, :parts_of_speech_combinations].each do |metric|
-        if stats[metric]
-          res[metric] ||= {}
-          stats[metric].each do |key, cnt|
-            res[metric][key] ||= 0
-            res[metric][key] += cnt
-          end
-        end
-      end
-      
-      if stats[:timed_blocks]
-        offset_blocks = time_offset_blocks(stats[:timed_blocks])
-        res[:time_offset_blocks] ||= {}
-        offset_blocks.each do |block, cnt|
-          res[:time_offset_blocks][block] ||= 0
-          res[:time_offset_blocks][block] += cnt
-        end
-      end
-      if stats[:modeled_timed_blocks]
-        offset_blocks = time_offset_blocks(stats[:modeled_timed_blocks])
-        res[:modeled_time_offset_blocks] ||= {}
-        offset_blocks.each do |block, cnt|
-          res[:modeled_time_offset_blocks][block] ||= 0
-          res[:modeled_time_offset_blocks][block] += cnt
-        end
-      end
-
-      if stats[:devices]
-        all_devices ||= {}
-        stats[:devices].each do |device|
-          if all_devices[device['id']]
-            all_devices[device['id']]['total_sessions'] += device['total_sessions']
-            all_devices[device['id']]['started_at'] = [all_devices[device['id']]['started_at'], device['started_at']].compact.min
-            all_devices[device['id']]['ended_at'] = [all_devices[device['id']]['ended_at'], device['ended_at']].compact.max
+      if !brief
+        stats[:all_button_counts].each do |ref, button|
+          if all_button_counts[ref]
+            all_button_counts[ref]['count'] += button['count']
+            if button['depth_sum']
+              all_button_counts[ref]['depth_sum'] ||= 0
+              all_button_counts[ref]['depth_sum'] += button['depth_sum']
+            end
+            if button['full_travel_sum']
+              all_button_counts[ref]['full_travel_sum'] ||= 0
+              all_button_counts[ref]['full_travel_sum'] += button['full_travel_sum']
+            end
           else
-            all_devices[device['id']] = device.merge({})
+            all_button_counts[ref] = button.merge({})
           end
         end
-      end
-      if stats[:locations]
-        all_locations ||= {}
-        stats[:locations].each do |location|
-          if all_locations[location['id']]
-            all_locations[location['id']]['total_sessions'] += location['total_sessions']
-            all_locations[location['id']]['started_at'] = [all_locations[location['id']]['started_at'], location['started_at']].compact.min
-            all_locations[location['id']]['ended_at'] = [all_locations[location['id']]['ended_at'], location['ended_at']].compact.max
+        stats[:all_word_counts].each do |word, cnt|
+          all_word_counts[word.downcase] ||= 0
+          all_word_counts[word.downcase] += cnt
+        end
+        (stats[:modeled_button_counts] || {}).each do |ref, button|
+          if modeled_button_counts[ref]
+            modeled_button_counts[ref]['count'] += button['count']
           else
-            all_locations[location['id']] = location.merge({})
+            modeled_button_counts[ref] = button.merge({})
+          end
+        end
+        (stats[:modeled_word_counts] || {}).each do |word, cnt|
+          modeled_word_counts[word.downcase] ||= 0
+          modeled_word_counts[word.downcase] += cnt
+        end
+        if stats[:modeling_user_ids]
+          stats[:modeling_user_ids].each do |user_id, count|
+            user_name = user_id_map[user_id] || 'unknown'
+            res[:modeling_user_names][user_name] ||= 0
+            res[:modeling_user_names][user_name] += count
+          end
+        elsif stats[:modeled_button_counts]
+          res[:modeling_user_names]['unknown'] ||= 0
+          res[:modeling_user_names]['unknown'] += stats[:modeled_button_counts].to_a.map{|ref, button| button['count'] || 0 }.sum
+        end
+        if stats[:all_word_sequence]
+  #        all_word_sequences << stats[:all_word_sequence].join(' ')
+        end
+      
+        if stats[:buttons_used]
+          stats[:buttons_used]['button_chains'].each do |chain, count|
+            button_chains[chain] = (button_chains[chain] || 0) + count
+          end
+        end
+      
+        merge_sensor_stats!(res, stats)
+
+        [:touch_locations, :parts_of_speech, :core_words, :modeled_parts_of_speech, :modeled_core_words, :parts_of_speech_combinations].each do |metric|
+          if stats[metric]
+            res[metric] ||= {}
+            stats[metric].each do |key, cnt|
+              res[metric][key] ||= 0
+              res[metric][key] += cnt
+            end
+          end
+        end
+      
+        if stats[:timed_blocks]
+          offset_blocks = time_offset_blocks(stats[:timed_blocks])
+          res[:time_offset_blocks] ||= {}
+          offset_blocks.each do |block, cnt|
+            res[:time_offset_blocks][block] ||= 0
+            res[:time_offset_blocks][block] += cnt
+          end
+        end
+        if stats[:modeled_timed_blocks]
+          offset_blocks = time_offset_blocks(stats[:modeled_timed_blocks])
+          res[:modeled_time_offset_blocks] ||= {}
+          offset_blocks.each do |block, cnt|
+            res[:modeled_time_offset_blocks][block] ||= 0
+            res[:modeled_time_offset_blocks][block] += cnt
+          end
+        end
+
+        if stats[:devices]
+          all_devices ||= {}
+          stats[:devices].each do |device|
+            if all_devices[device['id']]
+              all_devices[device['id']]['total_sessions'] += device['total_sessions']
+              all_devices[device['id']]['started_at'] = [all_devices[device['id']]['started_at'], device['started_at']].compact.min
+              all_devices[device['id']]['ended_at'] = [all_devices[device['id']]['ended_at'], device['ended_at']].compact.max
+            else
+              all_devices[device['id']] = device.merge({})
+            end
+          end
+        end
+        if stats[:locations]
+          all_locations ||= {}
+          stats[:locations].each do |location|
+            if all_locations[location['id']]
+              all_locations[location['id']]['total_sessions'] += location['total_sessions']
+              all_locations[location['id']]['started_at'] = [all_locations[location['id']]['started_at'], location['started_at']].compact.min
+              all_locations[location['id']]['ended_at'] = [all_locations[location['id']]['ended_at'], location['ended_at']].compact.max
+            else
+              all_locations[location['id']] = location.merge({})
+            end
+          end
+        end
+        if stats[:goals]
+          stats[:goals].each do |id, goal|
+            goals[id] ||= {
+              'id' => goal['id'],
+              'summary' => goal['summary'],
+              'positives' => 0,
+              'negatives' => 0,
+              'statuses' => []
+            }
+            goals[id]['positives'] += goal['positives']
+            goals[id]['negatives'] += goal['negatives']
+            goals[id]['statuses'] += goal['statuses']
           end
         end
       end
-      if stats[:goals]
-        stats[:goals].each do |id, goal|
-          goals[id] ||= {
-            'id' => goal['id'],
-            'summary' => goal['summary'],
-            'positives' => 0,
-            'negatives' => 0,
-            'statuses' => []
-          }
-          goals[id]['positives'] += goal['positives']
-          goals[id]['negatives'] += goal['negatives']
-          goals[id]['statuses'] += goal['statuses']
+    end
+    if !brief
+      goals.each do |id, goal|
+        res[:goals] << goal
+      end
+      if all_devices
+        res[:devices] = all_devices.map(&:last)
+      end
+      if all_locations
+        res[:locations] = all_locations.map(&:last)
+      end
+      if res[:touch_locations]
+        res[:max_touches] = res[:touch_locations].map(&:last).max
+      end
+      res[:button_chains] = {}
+      button_chains.each do |chain, count|
+        res[:button_chains][chain] = count if count > (res[:total_sessions] / 25)
+      end
+      if res[:time_offset_blocks]
+        max = 0
+        combined_max = 0
+        res[:time_offset_blocks].each do |idx, val|
+          sum = val + [res[:time_offset_blocks][idx - 1] || 0, res[:time_offset_blocks][idx + 1] || 0].max
+          max = val if val > max
+          combined_max = sum if sum > combined_max
         end
+        res[:max_time_block] = max
+        res[:max_combined_time_block] = combined_max
       end
-    end
-    goals.each do |id, goal|
-      res[:goals] << goal
-    end
-    if all_devices
-      res[:devices] = all_devices.map(&:last)
-    end
-    if all_locations
-      res[:locations] = all_locations.map(&:last)
-    end
-    if res[:touch_locations]
-      res[:max_touches] = res[:touch_locations].map(&:last).max
-    end
-    res[:button_chains] = {}
-    button_chains.each do |chain, count|
-      res[:button_chains][chain] = count if count > (res[:total_sessions] / 25)
-    end
-    if res[:time_offset_blocks]
-      max = 0
-      combined_max = 0
-      res[:time_offset_blocks].each do |idx, val|
-        sum = val + [res[:time_offset_blocks][idx - 1] || 0, res[:time_offset_blocks][idx + 1] || 0].max
-        max = val if val > max
-        combined_max = sum if sum > combined_max
+      if res[:modeled_time_offset_blocks]
+        max = 0
+        combined_max = 0
+        res[:modeled_time_offset_blocks].each do |idx, val|
+          sum = val + [res[:modeled_time_offset_blocks][idx - 1] || 0, res[:modeled_time_offset_blocks][idx + 1] || 0].max
+          max = val if val > max
+          combined_max = sum if sum > combined_max
+        end
+        res[:max_modeled_time_block] = max
+        res[:max_combined_modeled_time_block] = combined_max
       end
-      res[:max_time_block] = max
-      res[:max_combined_time_block] = combined_max
-    end
-    if res[:modeled_time_offset_blocks]
-      max = 0
-      combined_max = 0
-      res[:modeled_time_offset_blocks].each do |idx, val|
-        sum = val + [res[:modeled_time_offset_blocks][idx - 1] || 0, res[:modeled_time_offset_blocks][idx + 1] || 0].max
-        max = val if val > max
-        combined_max = sum if sum > combined_max
-      end
-      res[:max_modeled_time_block] = max
-      res[:max_combined_modeled_time_block] = combined_max
     end
     res[:words_per_utterance] += total_utterances > 0 ? (total_utterance_words / total_utterances) : 0.0
     res[:buttons_per_utterance] += total_utterances > 0 ? (total_utterance_buttons / total_utterances) : 0.0
     res[:words_per_minute] += total_session_seconds > 0 ? (total_words / total_session_seconds * 60) : 0.0
     res[:buttons_per_minute] += total_session_seconds > 0 ? (total_buttons / total_session_seconds * 60) : 0.0
     res[:utterances_per_minute] +=  total_session_seconds > 0 ? (total_utterances / total_session_seconds * 60) : 0.0
-    res[:buttons_by_frequency] = all_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text'] || 'zzz'] }.reverse.map(&:last)[0, 100]
-    res[:depth_counts] = {}
-    word_travels = {}
-    all_button_counts.each do |button_id, button|
-      word_travels[button['text']] ||= {:count => 0, :full_travel_sum => 0.0}
-      word_travels[button['text']][:count] += button['count']
-      word_travels[button['text']][:full_travel_sum] += (button['full_travel_sum'] || 0)
-      if button['depth_sum']
-        avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
-        res[:depth_counts][avg_depth] ||= 0
-        res[:depth_counts][avg_depth] += button['count']
+    if !brief
+      res[:buttons_by_frequency] = all_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text'] || 'zzz'] }.reverse.map(&:last)[0, 100]
+      res[:depth_counts] = {}
+      word_travels = {}
+      all_button_counts.each do |button_id, button|
+        word_travels[button['text']] ||= {:count => 0, :full_travel_sum => 0.0}
+        word_travels[button['text']][:count] += button['count']
+        word_travels[button['text']][:full_travel_sum] += (button['full_travel_sum'] || 0)
+        if button['depth_sum']
+          avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
+          res[:depth_counts][avg_depth] ||= 0
+          res[:depth_counts][avg_depth] += button['count']
+        end
       end
-    end
 
-    res[:word_travels] = {}
-    word_travels.to_a.sort_by{|w| w[1][:count] }.reverse[0, 250].each do |word, data|
-      res[:word_travels][word] = (data[:full_travel_sum].to_f / data[:count].to_f).round(2)
+      res[:word_travels] = {}
+      word_travels.to_a.sort_by{|w| w[1][:count] }.reverse[0, 250].each do |word, data|
+        res[:word_travels][word] = (data[:full_travel_sum].to_f / data[:count].to_f).round(2)
+      end
+      res[:words_by_frequency] = all_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
+      res[:modeled_buttons_by_frequency] = modeled_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text']] }.reverse.map(&:last)[0, 50]
+      res[:modeled_words_by_frequency] = modeled_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
+      # res[:word_sequences] = all_word_sequences
     end
-    res[:words_by_frequency] = all_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
-    res[:modeled_buttons_by_frequency] = modeled_button_counts.to_a.sort_by{|ref, button| [button['count'], button['text']] }.reverse.map(&:last)[0, 50]
-    res[:modeled_words_by_frequency] = modeled_word_counts.to_a.sort_by{|word, cnt| [cnt, word.downcase] }.reverse.map{|word, cnt| {'text' => word.downcase, 'count' => cnt} }[0, 100]
-    # res[:word_sequences] = all_word_sequences
     res
   end
   
