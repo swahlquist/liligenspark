@@ -64,7 +64,7 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.clear_dwell();
     event.target = document.elementFromPoint(event.clientX, event.clientY);
   }
-  buttonTracker.touch_start(event)  ;
+  buttonTracker.touch_start(event);
   if(capabilities.mobile && event.type == 'touchstart' && app_state.get('speak_mode') && scanner.scanning) {
     scanner.listen_for_input();
   }
@@ -343,21 +343,10 @@ var buttonTracker = EmberObject.extend({
   },
   // used for handling dragging, scanning selection
   touch_continue: function(event) {
-    if(buttonTracker.transitioning) {
-      event.preventDefault();
-      var token = Math.random();
-      // Don't let it get stuck in some weird transitioning state forever
-      buttonTracker.transitioning = token;
-      runLater(function() {
-        if(buttonTracker.transitioning == token) {
-          buttonTracker.transitioning = false;
-        }
-      }, 2000);
-      return;
-    }
-    if((event.type == 'touchstart' || event.type == 'mousedown') && $(event.target).closest('.hover_button').length) {
-      var text_popup = $(event.target).closest('.hover_button').hasClass('text_popup');
-      $(event.target).closest('.hover_button').remove();
+    var $hover_button = $(event.target).closest('.hover_button');
+    if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
+      var text_popup = $hover_button.hasClass('text_popup');
+      $hover_button.remove();
       if(buttonTracker.initialEvent) {
         var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
         if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
@@ -369,6 +358,18 @@ var buttonTracker = EmberObject.extend({
         buttonTracker.ignoreUp = true; 
         return false; 
       }
+    }
+    if(buttonTracker.transitioning) {
+      event.preventDefault();
+      var token = Math.random();
+      // Don't let it get stuck in some weird transitioning state forever
+      buttonTracker.transitioning = token;
+      runLater(function() {
+        if(buttonTracker.transitioning == token) {
+          buttonTracker.transitioning = false;
+        }
+      }, 2000);
+      return;
     }
 
     // not the best approach, but I was getting tired of all the selected text blue things when
@@ -632,6 +633,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_release: function(event) {
+    $(event.target).closest('.hover_button').remove();
     event = buttonTracker.normalize_event(event);
     // don't remember why this is important...
     buttonTracker.buttonDown = false;
