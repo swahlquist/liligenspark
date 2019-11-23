@@ -19,6 +19,12 @@ export default modal.ModalController.extend({
         _this.set('button_set', bs);
       }, function() {
         _this.set('button_set', null);
+        // try one more time, seems like it fails temporarily sometimes
+        runLater(function() {
+          _this.get('model.board').load_button_set().then(function(bs) {
+            _this.set('button_set', bs);
+          }, function() { });
+        }, 1000);
       });
     }
     runLater(function() {
