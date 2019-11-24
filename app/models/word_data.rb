@@ -590,7 +590,7 @@ class WordData < ActiveRecord::Base
             set_location.call('sw', 'past_participle')
             set_location.call('ne', 'plural_present')
             set_location.call('n', 'simple_present')
-            set_location.call('e', 'infinitive')              
+            set_location.call('e', 'infinitive')
           end
           # if also an adverb... (88: bright, low, loud, long)
           if types.include?('adverb')
@@ -636,6 +636,16 @@ class WordData < ActiveRecord::Base
           set_location.call('c', 'present')
           set_location.call('c', 'base')
           locations['c'] = (overrides['present'] || overrides['base']) if locations.keys.length == 0
+          # TODO: "is", "be", "am", "are" need to be smart & use all inflection spaces (ditch "to be")
+          if locations['n'] == locations['c']
+            if overrides['personal_present']
+              locations['n'] = nil
+              known_locations['n'] = nil
+              set_location.call('n', 'personal_present')
+            end
+          if locations['c'] == 'am' && overrides['base'] != 'am' && locations['e'] == 'to be'
+            locations['e'] = 'am'
+          end         
           # if also a noun... (340: bark, invite, kill, shop, worry)
           if types.include?('noun')
             set_location.call('n', 'plural')
