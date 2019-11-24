@@ -96,12 +96,25 @@ var evaluation = {
     modal.open('modals/assessment-settings', {assessment: assessment});
   },
   move: function(direction) {
+    if(direction == 'harder') {
+      var level = levels[working.level];
+      var next_step = level.find(function(step, idx) { return step > working.step && step.difficulty_stop; });
+      if(next_step) {
+        working.step = level.indexOf(next_step);
+      } else {
+        direction = 'forward';
+      }
+    }
     if(direction == 'forward') {
       working.level = Math.min(working.level + 1, levels.length - 1);
-    } else {
+      working.step = 0;
+    } else if(direction == 'back') {
       working.level = Math.max(working.level - 1, 0);
+      working.step = 0;
     }
-    working.step = 0;
+    working.attempts = 0;
+    working.correct = 0;
+    working.fails = 0;
     app_state.jump_to_board({key: 'obf/eval-' + working.level + '-' + working.step});
     app_state.set_history([]);
   },
@@ -279,14 +292,17 @@ var evaluation = {
         else if(level_step.id == 'diff-15') { long_name = i18n.t('diff-15-name', "Discriminate in a field of 15"); }
         else if(level_step.id == 'diff-6-24') { long_name = i18n.t('diff-6-24-name', "Discriminate in a 24-button grid with a visible field of 6"); }
         else if(level_step.id == 'diff-24') { long_name = i18n.t('diff-24-name', "Discriminate in a field of 24"); }
+        else if(level_step.id == 'diff-24-shuffle') { long_name = i18n.t('diff-24-shuffle-name', "Discriminate in a field of 24 (shuffled targets)"); }
         else if(level_step.id == 'diff-6-60') { long_name = i18n.t('diff-6-60-name', "Discriminate in a 60-button grid with a visible field of 6"); }
         else if(level_step.id == 'diff-15-60') { long_name = i18n.t('diff-15-60-name', "Discriminate in a 60-button grid with a visible field of 15"); }
         else if(level_step.id == 'diff-30-60') { long_name = i18n.t('diff-30-60-name', "Discriminate in a 60-button grid with a visible field of 30"); }
         else if(level_step.id == 'diff-60') { long_name = i18n.t('diff-60-name', "Discriminate in a field of 60"); }
+        else if(level_step.id == 'diff-60-shuffle') { long_name = i18n.t('diff-60-shuffle-name', "Discriminate in a field of 60 (shuffled targets)"); }
         else if(level_step.id == 'diff-6-112') { long_name = i18n.t('diff-6-112-name', "Discriminate in a 112-button grid with a visible field of 6"); }
         else if(level_step.id == 'diff-28-112') { long_name = i18n.t('diff-28-112-name', "Discriminate in a 112-button grid with a visible field of 28"); }
         else if(level_step.id == 'diff-56-112') { long_name = i18n.t('diff-56-112-name', "Discriminate in a 112-button grid with a visible field of 56"); }
         else if(level_step.id == 'diff-112') { long_name = i18n.t('diff-112-name', "Discriminate in a field of 112"); }
+        else if(level_step.id == 'diff-112-shuffle') { long_name = i18n.t('diff-112-shuffle-name', "Discriminate in a field of 112 (shuffled targets)"); }
         else if(level_step.id == 'symbols-below') { long_name = '(' + library.key + ') ' + i18n.t('symbols-below-name', "Find symbol at a simpler-than-mastered grid size"); }
         else if(level_step.id == 'symbols-at') { long_name = '(' + library.key + ') ' + i18n.t('symbols-at-name', "Find symbol at a mastered grid size"); }
         else if(level_step.id == 'symbols-above') { long_name = '(' + library.key + ') ' + i18n.t('symbols-above-name', "Find symbol at a more difficult mastered grid size"); }
@@ -547,20 +563,23 @@ var levels = [
     {id: 'diff-2', rows: 1, cols: 2, distractors: true, min_attempts: 1},
     {id: 'diff-3', rows: 1, cols: 3, distractors: true, min_attempts: 1},
     {id: 'diff-4', rows: 1, cols: 4, distractors: true},
-    {id: 'diff-8', rows: 2, cols: 4, distractors: true},
+    {id: 'diff-8', rows: 2, cols: 4, distractors: true, difficulty_stop: true},
     {id: 'diff-15', rows: 3, cols: 5, distractors: true},
     // lower_level means didn't really succeed above this point
-    {id: 'diff-6-24', cluster: '24', rows: 4, cols: 6, distractors: true, spacing: 2},
+    {id: 'diff-6-24', cluster: '24', rows: 4, cols: 6, distractors: true, spacing: 2, difficulty_stop: true},
     {id: 'diff-24', cluster: '24', rows: 4, cols: 6, distractors: true},
-    {id: 'diff-6-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 3},
+    {id: 'diff-24-shuffle', cluster: '24', rows: 4, cols: 6, distractors: true, shuffle: true, min_attempts: 1},
+    {id: 'diff-6-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 3, difficulty_stop: true},
     {id: 'diff-15-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 2},
     {id: 'diff-30-60', cluster: '60', rows: 6, cols: 10, distractors: true, alternating: true},
     {id: 'diff-60', cluster: '60', rows: 6, cols: 10, distractors: true},
-    {id: 'diff-6-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 4},
+    {id: 'diff-60-shuffle', cluster: '60', rows: 6, cols: 10, distractors: true, shuffle: true, min_attempts: 1},
+    {id: 'diff-6-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 4, difficulty_stop: true},
     {id: 'diff-28-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 2},
     {id: 'diff-56-112', cluster: '112', rows: 8, cols: 14, distractors: true, alternating: true},
     // higher_level means < 10x increase in time on next step vs. previous
-    {id: 'diff-112-112', cluster: '112', rows: 8, cols: 14, distractors: true},
+    {id: 'diff-112', cluster: '112', rows: 8, cols: 14, distractors: true},
+    {id: 'diff-112-shuffle', cluster: '112', rows: 8, cols: 14, distractors: true, shuffle: true, min_attempts: 1},
   ], 
   // at this point, settle on a grid size that the user was 
   // really good with, maybe try occasionally bumping a little,
@@ -569,8 +588,8 @@ var levels = [
   [
     {intro: 'symbols'},
     {id: 'symbols-below', difficulty: -1, symbols: 'auto', distractors: true, min_attempts: 2},
-    {id: 'symbols-at', difficulty: 0, symbols: 'auto', distractors: true, min_attempts: 3},
-    {id: 'symbols-above', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 3},
+    {id: 'symbols-at', difficulty: 0, symbols: 'auto', distractors: true, min_attempts: 3, difficulty_stop: true},
+    {id: 'symbols-above', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 3, difficulty_stop: true},
     // TODO: include text-only as a possible option
   ],
   // TODO: at this point if there is an obviously-better symbol library, start using it (unless explicitly told not to in the settings)
@@ -603,13 +622,13 @@ var levels = [
   ], [
     {intro: 'inclusion_exclusion_association', continue_on_non_mastery: true, min_attempts: testing_min_attempts || 3}, // was 3
     {id: 'inclusion', find: 'inclusion', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3}, // find the one that is/is not a _______
-    {id: 'exclusion', find: 'exclusion', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3},
-    {id: 'association', find: 'association', always_visual: true, difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3} // find the one that goes with _________
+    {id: 'exclusion', find: 'exclusion', difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3, difficulty_stop: true},
+    {id: 'association', find: 'association', always_visual: true, difficulty: -1, distractors: true, min_attempts: testing_min_attempts || 3, difficulty_stop: true} // find the one that goes with _________
   ], [
     {intro: 'literacy', continue_on_non_mastery: true},
     {id: 'word-description', find: 'spelling', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // was 4 // find the word for this picture
-    {id: 'word-category', find: 'spelling_category', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // find the category for this picture
-    {id: 'word-descriptor', find: 'spelling_descriptor', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4}, // find the word for this picture
+    {id: 'word-category', find: 'spelling_category', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4, difficulty_stop: true}, // find the category for this picture
+    {id: 'word-descriptor', find: 'spelling_descriptor', literacy: true, difficulty: 0, always_visual: true, distractors: true, min_attempts: testing_min_attempts || 4, difficulty_stop: true}, // find the word for this picture
     // multiple difficulty levels, from basic labeling to categoric labeling to concrete adjectives (red, wet, soft, fast, etc.) to abstract adjectives (dangerous, young, heavy)
   ], [
     {intro: 'done'}
@@ -1389,7 +1408,29 @@ evaluation.callback = function(key) {
     }
     board = obf.shell(step_rows, step_cols);
     board.key = 'obf/eval';
-    var prompt = words.find(function(w) { return w.label == (assessment.label || 'cat'); });
+    // TODO: if it's a list, support alternating through items in the list
+    // TODO: make sure you exclude all items in the list from being distractors
+    // TODO: option to have a consistent mapping of distractors to row, col locations
+    // TODO: record for each answer what the prompt was
+    assessment.label = assessment.label || 'cat';
+    var prompts = [assessment.label];
+    if(assessment.label == 'animals') {
+      prompts = ['cat', 'dog', 'fish', 'bird'];
+    } else if(assessment.label == 'vehicles') {
+      prompts = ['car', 'truck', 'airplane', 'motorcycle', 'train'];
+    } else if(assessment.label == 'food') {
+      prompts = ['sandwich', 'burrito', 'spaghetti', 'hamburger', 'taco'];
+    } else if(assessment.label == 'fruit') {
+      prompts = ['apple', 'banana', 'strawberry', 'blueberry'];
+    } else if(assessment.label == 'space') {
+      prompts = ['planet', 'sun', 'comet', 'asteroid'];
+    }
+
+    working.ref = working.ref || {};
+    working.ref.find_prompt_index = working.ref.find_prompt_index == null ? 0 : working.ref.find_prompt_index + 1;
+
+    working.ref.prompt_label = prompts[working.ref.find_prompt_index % prompts.length];
+    var prompt = words.find(function(w) { return w.label == working.ref.prompt_label; });
     var distractor_words = words.filter(function(w) { return w.label && w.type && w.type != 'filler'; });
 
     if(level.current_library == 'words_only') {
@@ -1682,17 +1723,18 @@ evaluation.callback = function(key) {
         board.correct_answer = list[0];
       }
       working.ref.prompt = prompt_text;
-      working.ref.filttered_corrects = filtered;
+      working.ref.filtered_corrects = filtered;
       working.ref.distractors = distractor_words;
   
       prompt = filtered[Math.floor(Math.random() * filtered.length)];
+      working.ref.prompt_label = prompt.label;
       prompt_text = prompt_text || "Find " + prompt.label;
       core_list[prompt.label] = true;
       var not_nailed_yet = (working.attempts || 0) < 2 || (working.correct / working.attempts) < 0.65;
       var none_yet = (working.correct || 0) == 0;
       if(step.always_visual || not_nailed_yet || working.attempts < 15) {
         board.background.image = board.background.image || prompt.urls['photos'] || prompt.urls['default'];
-        if(none_yet) {
+        if(none_yet || true) {
           board.background.text = prompt_text;
         }
       } else {
@@ -1805,11 +1847,11 @@ evaluation.callback = function(key) {
         var col = Math.floor(jitter_x / (1.0 / step_cols));
         var spaced_row = (row - offset) / spacing;
         if(spaced_row > 0 && spaced_row == Math.round(spaced_row)) {
-          sample.row = spaced_row;
+          sample.row = Math.min(Math.max(spaced_row, 0), rows);
         }
         var spaced_col = (col - offset) / spacing;
         if(spaced_col > 0 && spaced_col == Math.round(spaced_col)) {
-          sample.col = spaced_col;
+          sample.col = Math.min(Math.max(spaced_col, 0), cols);
         }
         if(alternating) {
           if(sample.col % 2 != sample.row % 2) {
@@ -1822,6 +1864,7 @@ evaluation.callback = function(key) {
     if(sample && sample.in) {
       // try to render near the target(s)
       loc = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
+
       if(alternating) {
         if(sample.type == 'xy' && sample.row && sample.col) {
           loc[0] = sample.row;
@@ -1911,11 +1954,22 @@ evaluation.callback = function(key) {
         id: 'button_correct',
         label: prompt.label, 
         skip_vocalization: true,
-        image: {url: prompt.urls[library] || prompt.urls['default']}, 
+        image: {url: prompt.urls[library] || prompt.urls['default']},
+        rc: [loc[0] * spacing + offset + skip_rows, loc[1] * spacing + offset, loc[0] * spacing + offset, loc[0] * spacing, loc[0]]
   //      sound: {}
       }, loc[0] * spacing + offset + skip_rows, loc[1] * spacing + offset);
     }
     var used_words = {};
+    if(working.level_id == 'diff_target' && !working.ref['diff_map_for_' + assessment.label]) {
+      working.ref['diff_map_for_' + assessment.label] = {};
+      var distractors = shuffle(distractor_words).filter(function(w) { return prompts.indexOf(w.label) == -1; });
+      for(var idx = 0; idx < 8; idx++) {
+        working.ref['diff_map_for_' + assessment.label][idx] = {};
+        for(var jdx = 0; jdx < 14; jdx++) {
+          working.ref['diff_map_for_' + assessment.label][idx][jdx] = distractors[idx * 8 + jdx];
+        }
+      }
+    }
     for(var idx = 0; idx < rows; idx++) {
       for(var jdx = 0; jdx < cols; jdx++) {
         if(alternating && jdx % 2 != idx % 2) {
@@ -1924,6 +1978,8 @@ evaluation.callback = function(key) {
           var word = null, letter = null;
           if(step.keyboard) {
             letter = core[idx][jdx];
+          } else if(working.level_id == 'diff_target' && !step.shuffle) {
+            word = working.ref['diff_map_for_' + assessment.label][idx * spacing + offset + skip_rows][jdx * spacing + offset];
           } else if(step.distractors) {
             if(core.length > 0) {
               var word = core[idx][jdx];
@@ -2072,6 +2128,7 @@ evaluation.callback = function(key) {
           e.voc = button.vocalization;
         } else { // if has_correct_answer
           e.correct = button.id == 'button_correct';
+          e.prompt = working.ref.prompt_label;
           e.crow = cr;
           e.ccol = cc;
         }

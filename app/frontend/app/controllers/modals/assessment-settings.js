@@ -103,6 +103,22 @@ export default modal.ModalController.extend({
       {image_names: ['motorcycle'], label: i18n.t('motorcycle', "Motorcycle")},
       {image_names: ['train'], label: i18n.t('train', "Train")},
       {id: 'vehicles', image_names: ['car', 'truck', 'airplane', 'motorcycle', 'train'], label: i18n.t('vehicles', "Vehicles (alternating)")},
+      {image_names: ['sandwich'], label: i18n.t('sandwich', "Sandwich")},
+      {image_names: ['burrito'], label: i18n.t('burrito', "Burrito")},
+      {image_names: ['spaghetti'], label: i18n.t('spaghetti', "Spaghetti")},
+      {image_names: ['hamburger'], label: i18n.t('hamburger', "Hamburger")},
+      {image_names: ['taco'], label: i18n.t('taco', "Taco")},
+      {id: 'food', image_names: ['sandwich', 'burrito', 'spaghetti', 'hamburger', 'taco'], label: i18n.t('food', "Food (alternating)")},
+      {image_names: ['apple'], label: i18n.t('apple', "Apple")},
+      {image_names: ['banana'], label: i18n.t('banana', "Banana")},
+      {image_names: ['strawberry'], label: i18n.t('strawberry', "Strawberry")},
+      {image_names: ['blueberry'], label: i18n.t('blueberry', "Blueberry")},
+      {id: 'fruit', image_names: ['apple', 'banana', 'strawberry', 'blueberry'], label: i18n.t('fruit', "Fruit (alternating)")},
+      {image_names: ['planet'], label: i18n.t('planet', "Planet")},
+      {image_names: ['sun'], label: i18n.t('sun', "Sun")},
+      {image_names: ['comet'], label: i18n.t('comet', "Comet")},
+      {image_names: ['asteroid'], label: i18n.t('asteroid', "Asteroid")},
+      {id: 'space', image_names: ['planet', 'sun', 'comet', 'asteroid'], label: i18n.t('space', "Space (alternating)")},
     ];
 
     var library = this.get('settings.default_library') || 'default';
