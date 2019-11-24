@@ -1986,6 +1986,9 @@ var app_state = EmberObject.extend({
         return false;
       }
     }
+    if(app_state.get('speak_mode') && !modal.is_open()) {
+      $(":focus").blur();
+    }
 
     // track modeling events correctly
     var now = (new Date()).getTime();

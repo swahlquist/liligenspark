@@ -634,6 +634,7 @@ var buttonTracker = EmberObject.extend({
   },
   touch_release: function(event) {
     $(event.target).closest('.hover_button').remove();
+    $("#identity_button:focus").blur();
     event = buttonTracker.normalize_event(event);
     // don't remember why this is important...
     buttonTracker.buttonDown = false;
