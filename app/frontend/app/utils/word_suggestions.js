@@ -288,10 +288,10 @@ var word_suggestions = EmberObject.extend({
       return RSVP.resolve(this.fallback_url_result);
     } else {
       var _this = this;
-      return persistence.find_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg').then(function(url) {
+      return persistence.find_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg').then(function(url) {
         _this.fallback_url_result = url;
         return url;
-      }, function() { return RSVP.resolve('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg'); });
+      }, function() { return RSVP.resolve('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg'); });
     }
   },
   edit_distance: function(a, b) {

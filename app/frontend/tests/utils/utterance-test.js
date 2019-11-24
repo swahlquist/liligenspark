@@ -174,7 +174,7 @@ describe('utterance', function() {
       expect(result.label).toEqual("cow");
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(1);
-      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+      expect(result.image).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg');
     });
 
     it("should use the completion image for a word completion", function() {
@@ -183,12 +183,12 @@ describe('utterance', function() {
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(1);
       result = utterance.modify_button(result, {label: "+zoo"});
-      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg');
+      expect(result.image).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg');
       expect(result.label).toEqual("cowszoo");
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(2);
       result = utterance.modify_button(result, {label: ":complete", completion: "cowszoofill"});
-      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+      expect(result.image).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg');
       expect(result.label).toEqual("cowszoofill");
     });
 
@@ -198,7 +198,7 @@ describe('utterance', function() {
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(1);
       result = utterance.modify_button(result, {label: "+zoo"});
-      expect(result.image).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg');
+      expect(result.image).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg');
       expect(result.label).toEqual("cowszoo");
       expect(result.modified).toEqual(true);
       expect(result.modifications.length).toEqual(2);

@@ -406,7 +406,8 @@ var editManager = EmberObject.extend({
         text_position = 'bottom';
       }
       var formatted_button = function(label, image_url, opposite) {
-        image_url = image_url || (img || {}).src || "https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg";
+        // TODO: this needs to call persistence.find_url for local versions
+        image_url = image_url || (img || {}).src || "https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg";
         var btn = document.createElement('div');
         btn.setAttribute('class', elem.getAttribute('class').replace(/b_[\w\d_]+_/, ''));
         btn.classList.add('overlay_button');
@@ -1569,7 +1570,7 @@ $(window).bind('message', function(event) {
   } else if(event.data == 'imageURLRequest' && editManager.stashedBadge) {
     editManager.badgeEditorSource = event.source;
     if(editManager.stashedBadge && editManager.stashedBadge.image_url) {
-      event.source.postMessage('https://s3.amazonaws.com/opensymbols/libraries/mulberry/bright.svg', '*');
+      event.source.postMessage('https://opensymbols.s3.amazonaws.com/libraries/mulberry/bright.svg', '*');
     }
   } else if(event.data == 'imageStateRequest' && editManager.stashedBadge) {
     editManager.badgeEditorSource = event.source;

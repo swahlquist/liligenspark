@@ -291,10 +291,10 @@ var utterance = EmberObject.extend({
       }
     });
 
-    var filler = 'https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg';
+    var filler = 'https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg';
     altered.image = altered.image || filler;
     if(!altered.in_progress && altered.image == filler) {
-      altered.image = 'https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg';
+      altered.image = 'https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg';
     }
     return altered;
   },

@@ -160,7 +160,7 @@ describe('word_suggestions', function() {
       var done = false;
       var url = null;
       stub(persistence, 'find_url', function(url) {
-        expect(url).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+        expect(url).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg');
         return RSVP.resolve('file://fallback.png');
       });
       word_suggestions.fallback_url().then(function(res) {
@@ -181,7 +181,7 @@ describe('word_suggestions', function() {
       var looked_up = false;
       stub(persistence, 'find_url', function(url) {
         looked_up = true;
-        expect(url).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+        expect(url).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg');
         return RSVP.reject();
       });
       word_suggestions.fallback_url().then(function(res) {
@@ -190,7 +190,7 @@ describe('word_suggestions', function() {
       });
       waitsFor(function() { return done; });
       runs(function() {
-        expect(url).toEqual('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg');
+        expect(url).toEqual('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg');
         expect(looked_up).toEqual(true);
         expect(word_suggestions.fallback_url_result).toEqual(null);
       });

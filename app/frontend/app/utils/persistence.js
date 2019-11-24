@@ -1149,9 +1149,9 @@ var persistence = EmberObject.extend({
 
       // cache images used for keyboard spelling to work offline
       if(!CoughDrop.testing || CoughDrop.sync_testing) {
-        persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/pencil%20and%20paper%202.svg', 'image', false, false).then(null, function() { });
-        persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
-        persistence.store_url('https://s3.amazonaws.com/opensymbols/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
+        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg', 'image', false, false).then(null, function() { });
+        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
+        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
         persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
       }
 

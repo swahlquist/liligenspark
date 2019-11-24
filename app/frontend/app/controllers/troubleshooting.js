@@ -123,7 +123,7 @@ export default Controller.extend({
   run_xhr_cors_test: function(test) {
     // xhr/cors
     var _this = this;
-    var url = "https://s3.amazonaws.com/opensymbols/libraries/arasaac/parrot.png?xhcr=1";
+    var url = "https://opensymbols.s3.amazonaws.com/libraries/arasaac/parrot.png?xhcr=1";
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(r) {
       if(xhr.status == 200) {
