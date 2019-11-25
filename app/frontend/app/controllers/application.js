@@ -1281,7 +1281,7 @@ export default Controller.extend({
       } else {
         res = res + "blank_user ";
       }
-      if(app_state.get('browser') == 'Safari' || app_state.get('system') == 'iOS') {
+      if(app_state.get('browser') == 'Safari' || app_state.get('system') == 'iOS' || capabilities.system == 'iOS') {
         res = res + "low_for_high_contrast ";
       }
       if(this.get('app_state.currentUser.preferences.new_index')) {
