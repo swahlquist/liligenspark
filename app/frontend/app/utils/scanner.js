@@ -531,7 +531,7 @@ var scanner = EmberObject.extend({
       }
     }
   },
-  listen_for_input: function() {
+  listen_for_input: function(reset) {
     // Listens for bluetooth/external keyboard events. On iOS we only get those when
     // focused on a form element like a text box, which is actually lame and makes
     // things really complicated.
@@ -548,6 +548,12 @@ var scanner = EmberObject.extend({
 
       $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
+      if(reset) {
+        $elem.val("");
+        runLatere(function() {
+          $elem.val("");
+        }, 500);
+      }
       $elem[0].addEventListener('textInput', function(event) {
         // check the text box (are single key strokes getting added?)
         // and send :complete if it's replacing keystrokes,
@@ -615,7 +621,7 @@ var scanner = EmberObject.extend({
       buttonTracker.native_keyboard = false;
     };
     window.addEventListener('keyboardDidHide', listener)
-    scanner.listen_for_input();
+    scanner.listen_for_input(true);
     runLater(function() {
       if(window.Keyboard && window.Keyboard.hide) {
         window.Keyboard.hideFormAccessoryBar(false, function() { });
@@ -930,6 +936,10 @@ window.addEventListener('keyboardWillShow', function() {
   if(!buttonTracker.native_keyboard) {
     scanner.hide_input();
   }
+});
+window.addEventListener('keyboardDidShow', function() {
+  var $elem = scanner.find_elem("#hidden_input");
+  $elem.val("");
 });
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {
