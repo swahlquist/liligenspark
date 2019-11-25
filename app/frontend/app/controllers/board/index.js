@@ -523,8 +523,11 @@ export default Controller.extend({
           button.set('positioning', {
             top: top,
             left: left, // - inner_pad - inner_pad,
-            width: button_width,
-            height: button_height,
+            width: Math.floor(button_width), 
+            // decimal widths cause layout quirks in safari, 
+            // i.e. the folder corner can't line up against the edge, 
+            // you get a thin line between the corner and border
+            height: Math.floor(button_height),
             image_height: image_height,
             image_width: image_width,
             image_square: Math.min(image_height, image_width),

@@ -924,8 +924,8 @@ CoughDrop.Board = DS.Model.extend({
         html = html + button_html(button, {
           top: top,
           left: left,
-          width: button_width,
-          height: button_height,
+          width: Math.floor(button_width),
+          height: Math.floor(button_height),
           image_height: image_height,
           image_width: image_width,
           image_square: Math.min(image_height, image_width),

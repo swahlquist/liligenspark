@@ -417,8 +417,8 @@ var editManager = EmberObject.extend({
         btn.classList.add('b__');
         btn.classList.remove('touched');
         btn.style.margin = button_margin + 'px';
-        btn.style.width = (button_width - (button_margin * 2)) + 'px';
-        btn.style.height = (button_height - (button_margin * 2)) + 'px';
+        btn.style.width = Math.floor(button_width - (button_margin * 2)) + 'px';
+        btn.style.height = Math.floor(button_height - (button_margin * 2)) + 'px';
         var html = "";
         if(text_position != 'no_image' && img && img.parentNode) {
           html = html + "<span class='img_holder' style=\"" + img.parentNode.getAttribute('style') + "\"><img src=\"" + image_url + "\" style=\"width: 100%; vertical-align: middle; height: 100%; object-fit: contain; object-position: center;\"/></span>";
