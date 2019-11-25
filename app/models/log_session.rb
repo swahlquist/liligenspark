@@ -249,6 +249,10 @@ class LogSession < ActiveRecord::Base
       str += self.data['eval']['name'] || "Evaluation"
       self.started_at = DateTime.strptime(self.data['eval']['started'].to_s, '%s') if self.data['eval']['started']
       self.ended_at = DateTime.strptime(self.data['eval']['ended'].to_s, '%s') if self.data['eval']['ended']
+      if !self.data['prior_evals']
+        existing_evals = LogSession.where(user_id: self.user_id, log_type: 'eval').count
+        self.data['prior_evals'] = existing_evals
+      end
       # TODO: ...
     elsif self.data['journal']
       self.log_type = 'journal'
