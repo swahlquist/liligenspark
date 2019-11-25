@@ -121,6 +121,8 @@ var app_state = EmberObject.extend({
       this.set('login_index', true);
     }
     modal.setup(route);
+    this.set('browser', capabilities.browser);
+    this.set('system', capabilities.system);
     contentGrabbers.boardGrabber.transitioner = route;
     CoughDrop.controller = controller;
     stashes.controller = controller;
