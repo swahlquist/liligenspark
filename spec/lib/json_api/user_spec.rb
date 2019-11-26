@@ -157,6 +157,23 @@ describe JsonApi::User do
       expect(hash['preferences']).not_to eq(nil)
       expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
     end
+
+    it "should not error on prefer_native_keyboard" do
+      u = User.create
+      u.settings['preferences']['devices']['default'] = {'a' => 1, 'prefer_native_keyboard' => true}
+      hash = JsonApi::User.build_json(u, permissions: u)
+      expect(hash['preferences']).not_to eq(nil)
+      expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
+      expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'prefer_native_keyboard' => true})
+
+      u = User.create
+      u.settings['preferences']['devices']['default'] = {'a' => 1}
+      u.settings['preferences']['prefer_native_keyboard'] = true
+      hash = JsonApi::User.build_json(u, permissions: u)
+      expect(hash['preferences']).not_to eq(nil)
+      expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
+      expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
+    end
     
     it "should merge device settings with the default settings" do
       u = User.create

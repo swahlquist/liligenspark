@@ -40,7 +40,6 @@ module JsonApi::User
         json['preferences'][attr] = user.settings['preferences'][attr]
       end
       json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
-      json['preferences']['prefer_native_keyboard'] = user.settings['preferences']['device']['prefer_native_keyboard'] == nil ? user.settings['preferences']['prefer_native_keyboard'] : user.settings['preferences']['device']['prefer_native_keyboard']
       json['preferences']['home_board'] = user.settings['preferences']['home_board']
       json['preferences']['progress'] = user.settings['preferences']['progress']
       json['preferences']['protected_usage'] = !user.external_email_allowed?
@@ -93,6 +92,9 @@ module JsonApi::User
       else
         json['preferences']['device']['ever_synced'] = true if json['preferences']['device']['ever_synced'] == nil
       end
+      # TODO: remove this (prefer_native_keyboard not on device preference) after June 2020
+      json['preferences']['prefer_native_keyboard'] = json['preferences']['device']['prefer_native_keyboard'] == nil ? user.settings['preferences']['prefer_native_keyboard'] : json['preferences']['device']['prefer_native_keyboard']
+
       if FeatureFlags.user_created_after?(user, 'folder_icons')
         json['preferences']['folder_icons'] ||= false
       else
