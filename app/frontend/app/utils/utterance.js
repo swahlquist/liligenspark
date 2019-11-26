@@ -194,7 +194,7 @@ var utterance = EmberObject.extend({
       var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
       var last_spoken_button = visualButtonList[idx];
       var last_spoken_text = last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "");
-      if(last_spoken_text.match(/\s/) && !last_append) {
+      if(last_spoken_text && last_spoken_text.match(/\s/) && !last_append) {
         // if it wasn't appending, then don't assume it was intended to speak the whole last sentence
       } else {
         // If the last event was a punctuation mark, speak the whole last sentence
