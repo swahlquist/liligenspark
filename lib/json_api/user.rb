@@ -40,6 +40,7 @@ module JsonApi::User
         json['preferences'][attr] = user.settings['preferences'][attr]
       end
       json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
+      json['preferences']['prefer_native_keyboard'] = user.settings['preferences']['device']['prefer_native_keyboard'] == nil ? user.settings['preferences']['prefer_native_keyboard'] : user.settings['preferences']['device']['prefer_native_keyboard']
       json['preferences']['home_board'] = user.settings['preferences']['home_board']
       json['preferences']['progress'] = user.settings['preferences']['progress']
       json['preferences']['protected_usage'] = !user.external_email_allowed?
