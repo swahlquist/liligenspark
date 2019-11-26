@@ -241,6 +241,7 @@ var word_suggestions = EmberObject.extend({
         _this.last_result = result;
         _this.fallback_url().then(function(url) {
           result.forEach(function(word) {
+            emberSet(word, 'fallback_image', url);
             if(!emberGet(word, 'image')) {
               emberSet(word, 'image', url);
             }

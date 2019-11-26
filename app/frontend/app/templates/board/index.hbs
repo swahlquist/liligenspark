@@ -56,7 +56,7 @@
             {{#if show_word_suggestion_images}}
               <span class='image_holder'>
                 {{#if suggestion.image}}
-                  <img src={{suggestion.image}} class={{if suggestion.hc_image 'hc'}} onerror='button_broken_image(this);' />
+                  <img src={{suggestion.image}} class={{if suggestion.hc_image 'hc'}} data-fallback={{suggestion.fallback_image}} onerror='button_broken_image(this);' />
                 {{/if}}
               </span>
             {{/if}}

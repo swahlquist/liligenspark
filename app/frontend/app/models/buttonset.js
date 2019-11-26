@@ -493,6 +493,9 @@ CoughDrop.Buttonset = DS.Model.extend({
   
             if(button.image && button.image.match(/^http/)) {
               emberSet(button, 'original_image', button.image);
+              word_suggestions.fallback_url().then(function(url) {
+                emberSet(button, 'fallback_image', url);
+              });
               var promise = persistence.find_url(button.image, 'image').then(function(data_uri) {
                 emberSet(button, 'image', data_uri);
               }, function() { });
@@ -712,6 +715,9 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
 
   emberSet(button, 'current_depth', (button.pre_buttons || []).length);
   if(button.image && button.image.match(/^http/)) {
+    word_suggestions.fallback_url().then(function(url) {
+      emberSet(button, 'fallback_image', url);
+    });
     emberSet(button, 'original_image', button.image);
     var promise = persistence.find_url(button.image, 'image').then(function(data_uri) {
       emberSet(button, 'image', data_uri);
