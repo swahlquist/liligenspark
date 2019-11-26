@@ -550,7 +550,7 @@ var scanner = EmberObject.extend({
       $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
       if(reset) {
         $elem.val("");
-        runLatere(function() {
+        runLater(function() {
           $elem.val("");
         }, 500);
       }
