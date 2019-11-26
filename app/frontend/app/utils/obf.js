@@ -6,12 +6,17 @@ import { later as runLater } from '@ember/runloop';
 var handlers = {};
 var obf = EmberObject.extend({
   parse: function(json) {
-    var board = CoughDrop.store.createRecord('board');
-    board.set('local_only', true);
     var hash = JSON.parse(json);
-    var buttons = [];
+    var id = (hash['id'] || 'b123') + 'b' + (new Date()).getTime() + "x" + Math.round(Math.random() * 9999);
+    var board = CoughDrop.store.push({data: {
+      id: id,
+      type: 'board',
+      attributes: {}
+    }});
+    board.set('local_only', true);
     board.set('grid', hash['grid']);
-    board.set('id', hash['id'] || ('b123' + (new Date()).getTime() + "x" + Math.round(Math.random() * 9999)));
+    
+    board.set('id', );
     board.set('permissions', {view: true});
     hash['background'] = hash['background'] || {};
     board.set('background', {

@@ -643,6 +643,7 @@ class WordData < ActiveRecord::Base
               known_locations['n'] = nil
               set_location.call('n', 'personal_present')
             end
+          end
           if locations['c'] == 'am' && overrides['base'] != 'am' && locations['e'] == 'to be'
             locations['e'] = 'am'
           end         
