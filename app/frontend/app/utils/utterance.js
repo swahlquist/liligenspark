@@ -58,9 +58,11 @@ var utterance = EmberObject.extend({
       var _this = this;
       var rawList = _this.get('rawButtonList');
       if(!rawList) { app_state.set('button_list', []); return; }
+      var last_append = null;
       for(var idx = 0; idx < rawList.length; idx++) {
         var button = rawList[idx];
         button.raw_index = idx;
+        last_append = null;
         var last = rawList[idx - 1] || {};
         var last_computed = buttonList[buttonList.length - 1];
         var text = (button && (button.vocalization || button.label)) || '';
@@ -97,6 +99,7 @@ var utterance = EmberObject.extend({
           // append to previous
           var altered = _this.modify_button(last, button);
           added = true;
+          last_append = plusses[plusses.length - 1];
           buttonList.push(altered);
         }
         var inline_actions = false;
@@ -190,15 +193,20 @@ var utterance = EmberObject.extend({
       });
       var idx = Math.min(Math.max(app_state.get('insertion.index') || visualButtonList.length - 1, 0), visualButtonList.length - 1);
       var last_spoken_button = visualButtonList[idx];
-      // If the last event was a punctuation mark, speak the whole last sentence
-      if(last_spoken_button && !last_spoken_button.blocking_speech && (last_spoken_button.vocalization || last_spoken_button.label || "").match(punctuation_at_end)) {
-        var prior = utterance.sentence(visualButtonList.slice(0, -1));
-        var parts = prior.split(punctuation_ending_sentence);
-        var last_part = parts[parts.length - 1];
-        var str = last_part + " " + (last_spoken_button.vocalization || last_spoken_button.label);
-        last_spoken_button = {
-          label: str
-        };
+      var last_spoken_text = last_spoken_button && (last_spoken_button.vocalization || last_spoken_button.label || "");
+      if(last_spoken_text.match(/\s/) && !last_append) {
+        // if it wasn't appending, then don't assume it was intended to speak the whole last sentence
+      } else {
+        // If the last event was a punctuation mark, speak the whole last sentence
+        if(last_spoken_button && !last_spoken_button.blocking_speech && last_spoken_text.match(punctuation_at_end)) {
+          var prior = utterance.sentence(visualButtonList.slice(0, -1));
+          var parts = prior.split(punctuation_ending_sentence);
+          var last_part = parts[parts.length - 1];
+          var str = last_part + " " + (last_spoken_button.vocalization || last_spoken_button.label);
+          last_spoken_button = {
+            label: str
+          };
+        }
       }
       if(hint) {
         visualButtonList.push(hint);
