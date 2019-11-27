@@ -830,7 +830,7 @@ var persistence = EmberObject.extend({
   store_url_now: function(url, type, keep_big, force_reload) {
     if(!type) { return RSVP.reject('type required for storing'); }
     if(!url) { console.error('url not provided'); return RSVP.reject('url required for storing'); }
-    if(!window.coughDropExtras || !window.coughDropExtras.ready || url.match(/^data:/) || url.match(/^file:/)) {
+    if(!window.coughDropExtras || !window.coughDropExtras.ready || url.match(/^data:/) || url.match(/^file:/) || url.match(/localhost:/)) {
       return RSVP.resolve({
         url: url,
         type: type
