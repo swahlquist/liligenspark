@@ -270,13 +270,12 @@ var stashes = EmberObject.extend({
         var defer = RSVP.defer();
         var done = false;
         var lookup = cap.storage.get_file_url('json', 'db_stats.json').then(function(local_url) {
-          return cap.storage.fix_url(local_url).then(function(local_url) {
-            if(typeof(capabilities) == 'string' && window.persistence) {
-              return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
-            } else {
-              return {};
-            }
-          });
+          var local_url = cap.storage.fix_url(local_url);
+          if(typeof(capabilities) == 'string' && window.persistence) {
+            return window.persistence.ajax(local_url, {type: 'GET', dataType: 'json'});
+          } else {
+            return {};
+          }
         });
         lookup.then(function(json) {
           stashes.fs_user_name = json.db_id;

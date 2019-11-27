@@ -422,9 +422,7 @@ CoughDrop.User = DS.Model.extend({
             emberSet(sup, 'avatar_url', uri);
           }, function() { });
         } else if(sup.avatar_url) {
-          capabilities.storage.fix_url(sup.avatar_url).then(function(url) {
-            emberSet(sup, 'avatar_url', url);
-          })
+          emberSet(sup, 'avatar_url', capabilities.storage.fix_url(sup.avatar_url));
         }
       });
     };
