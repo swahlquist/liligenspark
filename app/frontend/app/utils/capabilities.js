@@ -939,10 +939,12 @@ var capabilities;
           });
           return promise;
         },
-        fix_url: function(url) {
+        fix_url: function(url, allow_base64) {
+          var promise = capabilities.mini_promise();
           // uses native calls
           if(!window.resolveLocalFileSystemURL) {
-            return url;
+            promise.resolve(url);
+            return;
           }
           var prefix = window.cordova.file.dataDirectory;
           if(url.match(/^cdvfile/)) {
@@ -963,7 +965,7 @@ var capabilities;
             // support for local filesystem solution for images and sounds
             fixed_url = fixed_url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
           }
-          return fixed_url;
+          promise.resolve(fixed_url);
         },
         get_file_url: function(dirname, filename) {
           // uses native calls
