@@ -959,9 +959,9 @@ var capabilities;
             }
             fixed_url = url;
           }
-          if(capabilities.system == 'iOS' && capabilities.installed_app && url.match(/^file/) && location.host.match(/^localhost/)) {
+          if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
             // support for local filesystem solution for images and sounds
-            url = url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
+            fixed_url = fixed_url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
           }
           return fixed_url;
         },
