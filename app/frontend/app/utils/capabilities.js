@@ -945,15 +945,25 @@ var capabilities;
             return url;
           }
           var prefix = window.cordova.file.dataDirectory;
+          if(fixed_url.match(/^cdvfile/)) {
+            url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
+          }
+          var fixed_url = url;
           if(url.match("^" + prefix)) {
-            return url;
+            fixed_url = url;
+          } else {
+            var re = /Application\/[^\/]+/;
+            var prefix_sub = prefix.match(re);
+            if(url.match(re) && prefix_sub) {
+              url = url.replace(re, prefix_sub[0]);
+            }
+            fixed_url = url;
           }
-          var re = /Application\/[^\/]+/;
-          var prefix_sub = prefix.match(re);
-          if(url.match(re) && prefix_sub) {
-            url = url.replace(re, prefix_sub[0]);
+          if(capabilities.system == 'iOS' && capabilities.installed_app && url.match(/^file/) && location.host.match(/^localhost/)) {
+            // support for local filesystem solution for images and sounds
+            url = url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
           }
-          return url;
+          return fixed_url;
         },
         get_file_url: function(dirname, filename) {
           // uses native calls
