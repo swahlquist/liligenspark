@@ -777,7 +777,11 @@ var persistence = EmberObject.extend({
 //       }
 //     }
     res.then(function() { 
-      if(!_this.primed && capabilities.mobile && capabilities.installed_app) {
+      if(!_this.primed && capabilities.mobile && capabilities.installed_app && location.host.match(/^localhost/)) {
+        _this.primed = true; 
+        // When being served by a local file server, when you open a board
+        // the images cascade into visibility unless you prefetch them,
+        // so we try to do this while still letting other requests slip in.
         runLater(function() {
           var urls = [];
           for(var key in _this.url_cache) {
@@ -792,10 +796,12 @@ var persistence = EmberObject.extend({
               img.src = url;
             }
           };
-          next();
+          var img_cache_threads = 2;
+          for(var idx = 0; idx < img_cache_threads; idx++) {
+            next();
+          }
         });
       }
-      _this.primed = true; 
     }, function() { _this.primed = true; });
     return res;
   },
