@@ -945,7 +945,7 @@ var capabilities;
             return url;
           }
           var prefix = window.cordova.file.dataDirectory;
-          if(fixed_url.match(/^cdvfile/)) {
+          if(url.match(/^cdvfile/)) {
             url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
           }
           var fixed_url = url;
