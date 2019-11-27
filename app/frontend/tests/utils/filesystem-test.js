@@ -474,6 +474,10 @@ describe("filesystem", function() {
         expect(capabilities.storage.fix_url("http://www.example.com/Application/abcdefg/pic.png")).toEqual("http://www.example.com/Application/qwerty/pic.png");
         expect(capabilities.storage.fix_url("http://www.example.com/Application/qwerty/pic.png")).toEqual("http://www.example.com/Application/qwerty/pic.png");
       });
+
+      it("should correctly convert to localhost or current path structure", function() {
+        expect('test').toEqual('todo');
+      })
     });
 
     describe("get_file_url", function() {

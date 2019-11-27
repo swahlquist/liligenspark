@@ -793,7 +793,28 @@ var persistence = EmberObject.extend({
 //         head.appendChild(style);
 //       }
 //     }
-    res.then(function() { _this.primed = true; }, function() { _this.primed = true; });
+    res.then(function() { 
+      if(!_this.primed && capabilities.mobile && capabilities.installed_app) {
+        // TODO: 
+        runLater(function() {
+          var urls = [];
+          for(var key in _this.url_cache) {
+            urls.push(_this.url_cache[key]);
+          }
+          var next = function() {
+            var url = urls.shift();
+            if(url) {
+              var img = new Image();
+              img.onerror = function() { runLater(next); }
+              img.onload = function() { runLater(next); }
+              img.src = url;
+            }
+          };
+          next();
+        });
+      }
+      _this.primed = true; 
+    }, function() { _this.primed = true; });
     return res;
   },
   url_cache: {},
