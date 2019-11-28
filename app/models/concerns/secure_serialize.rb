@@ -2,6 +2,8 @@ module SecureSerialize
   extend ActiveSupport::Concern
   
   include GoSecure::SerializeInstanceMethods
+  # TODO: remove load_secure_object once you have deserialized all secure object attributes,
+  # since the table itself is secure serialized
 
   def paper_trail_for_secure_column?
     @for_secure ||= !!(self.class.respond_to?(:paper_trail_options) && self.class.paper_trail_options && 
