@@ -523,6 +523,7 @@ var app_state = EmberObject.extend({
     opts = opts || {};
     var history = this.get_history();
     var state = history.pop();
+    if(!state) { return; }
     buttonTracker.transitioning = true;
     if(state && state.id && state.id == this.get('currentBoardState.id')) {
       buttonTracker.transitioning = false;
