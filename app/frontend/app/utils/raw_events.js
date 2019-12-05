@@ -287,6 +287,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_start: function(event) {
+    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
     buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
 
     var $overlay = $("#overlay_container");
@@ -343,6 +344,7 @@ var buttonTracker = EmberObject.extend({
   },
   // used for handling dragging, scanning selection
   touch_continue: function(event) {
+    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TCONT", event); }
     var $hover_button = $(event.target).closest('.hover_button');
     if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
       var text_popup = $hover_button.hasClass('text_popup');
@@ -633,6 +635,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_release: function(event) {
+    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TREL", event); }
     $(event.target).closest('.hover_button').remove();
     $("#identity_button:focus").blur();
     event = buttonTracker.normalize_event(event);
