@@ -139,30 +139,39 @@ CoughDrop.Buttonset = DS.Model.extend({
     while(updated) {
       var new_sequences = [];
       updated = false;
+      var shortest_sequence = null;
       sequences.forEach(function(seq) {
         var ups = map[(seq.buttons[0] || {board_id: seq.final_board_id}).board_id];
         if(seq.done) {
-          new_sequences.push(seq);
+          shortest_sequence = Math.min(shortest_sequence || seq.steps, seq.steps);
+          if(seq.steps <= shortest_sequence) {
+            new_sequences.push(seq);
+          }
         } else if(ups && ups.length > 0) {
           ups.forEach(function(btn) {
             var been_to_board = seq.buttons.find(function(b) { return b.board_id == btn.board_id; });
             if(!been_to_board && btn.board_id != btn.linked_board_id) {
               var new_seq = $.extend({}, seq);
-              updated = true;
               new_seq.buttons = [].concat(new_seq.buttons);
               new_seq.buttons.unshift(btn);
-              new_seq.steps = (new_seq.steps || 0) + 1;
-              if(btn.home_lock) {
-                new_seq.sticky_board_id = new_seq.sticky_board_id || btn.linked_board_id;
+              if(!shortest_sequence || new_seq <= shortest_sequence) {
+                updated = true;
+                new_seq.steps = (new_seq.steps || 0) + 1;
+                if(btn.home_lock) {
+                  new_seq.sticky_board_id = new_seq.sticky_board_id || btn.linked_board_id;
+                }
+                if(btn.board_id == start_board_id) {
+                  new_seq.done = true;
+                } else if(btn.board_id == home_board_id && start_board_id != home_board_id) {
+                  new_seq.pre = 'true_home';
+                  new_seq.steps++;
+                  new_seq.done = true;
+                }
+                shortest_sequence = Math.min(shortest_sequence || new_seq.steps, new_seq.steps);
+                if(new_seq.steps <= shortest_sequence) {
+                  new_sequences.push(new_seq);
+                }
               }
-              if(btn.board_id == start_board_id) {
-                new_seq.done = true;
-              } else if(btn.board_id == home_board_id && start_board_id != home_board_id) {
-                new_seq.pre = 'true_home';
-                new_seq.steps++;
-                new_seq.done = true;
-              }
-              new_sequences.push(new_seq);
             }
           });
         }
