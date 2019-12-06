@@ -563,7 +563,7 @@ var buttonTracker = EmberObject.extend({
               if(buttonTracker.check('short_press_delay')) {
                 buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
               }  
-            });
+            }, 30);
           }
         }
       } else {
