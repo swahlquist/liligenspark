@@ -527,16 +527,18 @@ var buttonTracker = EmberObject.extend({
     } else if(buttonTracker.buttonDown) {
       var elem_wrap = buttonTracker.track_drag(event);
       if(event.type == 'touchstart' || event.type == 'mousedown') {
-        // event.long_press_target = event.target;
-        // buttonTracker.longPressEvent = event;
-        // runCancel(buttonTracker.track_long_press.later);
-        // runCancel(buttonTracker.track_short_press.later);
-        // if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
-        //   buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
-        // }
-        // if(buttonTracker.check('short_press_delay')) {
-        //   buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
-        // }
+        if(app_state.get('speak_mode')) {
+          event.long_press_target = event.target;
+          buttonTracker.longPressEvent = event;
+          runCancel(buttonTracker.track_long_press.later);
+          runCancel(buttonTracker.track_short_press.later);
+          if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
+            buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+          }
+          if(buttonTracker.check('short_press_delay')) {
+            buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+          }
+        }
       } else {
         if(event.type == 'touchend' || event.type == 'mouseup' || !buttonTracker.longPressEvent || event.target != buttonTracker.longPressEvent.long_press_target) {
           buttonTracker.longPressEvent = null;
