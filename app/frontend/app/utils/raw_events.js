@@ -2034,10 +2034,8 @@ var buttonTracker = EmberObject.extend({
   },
   long_press_delay: 1500,
   track_long_press: function(event) {
-//    this.track_long_press.later = null;
-//    this.longPressEvent = event || this.longPressEvent;
+    this.track_long_press.later = null;
     if(this.longPressEvent) {
-      console.log("LONG PRESS", this.longPressEvent);
       var button_wrap = this.find_button_under_event(this.longPressEvent);
       var $radial = $(this.longPressEvent.target).closest(".radial");
       if(button_wrap || $radial[0]) {
@@ -2056,11 +2054,8 @@ var buttonTracker = EmberObject.extend({
     }
   },
   track_short_press: function(event) {
-    console.log("PRESS EVENT", event);
-    // this.track_short_press.later = null;
-//    this.shortPressEvent = event || this.shortPressEvent;
+    this.track_short_press.later = null;
     if(this.shortPressEvent) {
-      console.log("SHORT PRESS", this.shortPressEvent);
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
         var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target;

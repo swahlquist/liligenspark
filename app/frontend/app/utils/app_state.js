@@ -799,7 +799,9 @@ var app_state = EmberObject.extend({
           scanner.listen_for_input();
         }
       }
-      stashes.persist('current_mode', mode);
+      runLater(function() {
+        stashes.persist('current_mode', mode);
+      }, 100);
     }
     stashes.persist('temporary_root_board_state', temporary_root_state);
     stashes.persist('sticky_board', false);
