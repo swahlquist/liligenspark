@@ -539,14 +539,12 @@ var buttonTracker = EmberObject.extend({
             buttonTracker.track_short_press.later;
           }
           // runLater(function() {
-          try {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
             }
             if(buttonTracker.check('short_press_delay')) {
               buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
-          } catch(e) { console.log("ERROR", e); }
           // });
         }
       } else {
@@ -2009,6 +2007,7 @@ var buttonTracker = EmberObject.extend({
   track_long_press: function() {
     this.track_long_press.later = null;
     if(this.longPressEvent) {
+      console.log("LONG PRESS", this.longPressEvent);
       var button_wrap = this.find_button_under_event(this.longPressEvent);
       var $radial = $(this.longPressEvent.target).closest(".radial");
       if(button_wrap || $radial[0]) {
@@ -2029,6 +2028,7 @@ var buttonTracker = EmberObject.extend({
   track_short_press: function() {
     this.track_long_press.later = null;
     if(this.shortPressEvent) {
+      console.log("SHORT PRESS", this.shortPressEvent);
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
         var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target;
