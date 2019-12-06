@@ -525,7 +525,6 @@ var buttonTracker = EmberObject.extend({
         elem_wrap.trigger('buttonpaint');
       }
     } else if(buttonTracker.buttonDown) {
-      return;
       var elem_wrap = buttonTracker.track_drag(event);
       if(event.type == 'touchstart' || event.type == 'mousedown') {
         event.long_press_target = event.target;
@@ -559,6 +558,7 @@ var buttonTracker = EmberObject.extend({
           }
         }
       }
+      return;
 
       buttonTracker.multi_touch = buttonTracker.multi_touch || {total: 0, multis: 0};
       buttonTracker.multi_touch.total++;
