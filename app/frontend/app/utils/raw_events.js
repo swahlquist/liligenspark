@@ -1657,7 +1657,7 @@ var buttonTracker = EmberObject.extend({
       // you're close to anything selectable
     }
     if(region) {
-      buttonTracker.shortPressEvent = event;
+      buttonTracker.shortPressEvent = buttonTracker.longPressEvent;
       // buttonTracker.longPressEvent = null;
       if(allow_dwell === false && $target.closest('.undwellable').length > 0) {
         return null;
