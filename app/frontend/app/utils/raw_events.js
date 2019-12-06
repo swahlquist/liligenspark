@@ -536,9 +536,8 @@ var buttonTracker = EmberObject.extend({
           }
           if(buttonTracker.track_short_press.later) {
             runCancel(buttonTracker.track_short_press.later);
-            buttonTracker.track_short_press.later;
+            buttonTracker.track_short_press.later = null;
           }
-          console.log("PRESS EVENT", event);
           // runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(function() {
@@ -2034,6 +2033,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   track_short_press: function(event) {
+    console.log("PRESS EVENT", event);
     this.track_long_press.later = null;
 //    this.shortPressEvent = event || this.shortPressEvent;
     if(this.shortPressEvent) {
