@@ -538,6 +538,7 @@ var buttonTracker = EmberObject.extend({
             runCancel(buttonTracker.track_short_press.later);
             buttonTracker.track_short_press.later;
           }
+          console.log("PRESS EVENT", event);
           // runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(function() {
@@ -554,8 +555,10 @@ var buttonTracker = EmberObject.extend({
       } else {
         if(event.type == 'touchend' || event.type == 'mouseup' || !buttonTracker.longPressEvent || event.target != buttonTracker.longPressEvent.long_press_target) {
           buttonTracker.longPressEvent = null;
+          buttonTracker.shortPressEvent = null;
         } else if(!app_state.get('currentBoardState.id') || $(event.target).closest('.board .button').length == 0) {
           buttonTracker.longPressEvent = null;
+          buttonTracker.shortPressEvent = null;
         }
       }
       $('.drag_button.btn-danger').removeClass('btn-danger');
@@ -2010,7 +2013,7 @@ var buttonTracker = EmberObject.extend({
   long_press_delay: 1500,
   track_long_press: function(event) {
     this.track_long_press.later = null;
-    this.longPressEvent = event || this.longPressEvent;
+//    this.longPressEvent = event || this.longPressEvent;
     if(this.longPressEvent) {
       console.log("LONG PRESS", this.longPressEvent);
       var button_wrap = this.find_button_under_event(this.longPressEvent);
@@ -2032,7 +2035,7 @@ var buttonTracker = EmberObject.extend({
   },
   track_short_press: function(event) {
     this.track_long_press.later = null;
-    this.shortPressEvent = event || this.shortPressEvent;
+//    this.shortPressEvent = event || this.shortPressEvent;
     if(this.shortPressEvent) {
       console.log("SHORT PRESS", this.shortPressEvent);
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
