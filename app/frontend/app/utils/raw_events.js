@@ -540,16 +540,8 @@ var buttonTracker = EmberObject.extend({
             buttonTracker.lastLastPressEvent = buttonTracker.lastPressEvent;
             buttonTracker.lastPressEvent = event;
             buttonTracker.longPressEvent = event;
-            if(buttonTracker.track_long_press.later) {
-              runCancel(buttonTracker.track_long_press.later);
-              buttonTracker.track_long_press.later = null;
-            }
-            if(buttonTracker.track_short_press.later) {
-              runCancel(buttonTracker.track_short_press.later);
-              buttonTracker.track_short_press.later = null;
-            }
             if(buttonTracker.check('short_press_delay')) {
-  //            buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
+              buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
             }
             // TODO: no idea why, but this runLater makes it so things
             // work on iOS UIWebView with new Ember. If you have short
@@ -557,13 +549,21 @@ var buttonTracker = EmberObject.extend({
             // phantom button hits based on where the user first hit
             // when they entered Speak Mode.
             runLater(function() {
+              if(buttonTracker.track_long_press.later) {
+                runCancel(buttonTracker.track_long_press.later);
+                buttonTracker.track_long_press.later = null;
+              }
+              if(buttonTracker.track_short_press.later) {
+                runCancel(buttonTracker.track_short_press.later);
+                buttonTracker.track_short_press.later = null;
+              }
               if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
                 buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
               }
               if(buttonTracker.check('short_press_delay')) {
                 buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
               }  
-            }, 30);
+            });
           }
         }
       } else {
