@@ -288,7 +288,7 @@ var buttonTracker = EmberObject.extend({
   },
   touch_start: function(event) {
     // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
-    buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    // buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
 
     var $overlay = $("#overlay_container");
     // clear overlays when user interacts outside of them
@@ -374,35 +374,35 @@ var buttonTracker = EmberObject.extend({
       return;
     }
 
-    // // not the best approach, but I was getting tired of all the selected text blue things when
-    // // testing dragging so I threw this in.
-    // if(buttonTracker.buttonDown && app_state.get('edit_mode') && (buttonTracker.drag || !buttonTracker.ignored_region(event))) {
-    //   // TODO: this lookup should be a method instead of being hard-coded, like ignored_region
-    //   if($(event.target).closest("#sidebar,.modal").length === 0) {
-    //     event.preventDefault();
-    //   }
-    // }
-    // if(buttonTracker.sidebarScrollStart == null) {
-    //   buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
-    // }
+    // not the best approach, but I was getting tired of all the selected text blue things when
+    // testing dragging so I threw this in.
+    if(buttonTracker.buttonDown && app_state.get('edit_mode') && (buttonTracker.drag || !buttonTracker.ignored_region(event))) {
+      // TODO: this lookup should be a method instead of being hard-coded, like ignored_region
+      if($(event.target).closest("#sidebar,.modal").length === 0) {
+        event.preventDefault();
+      }
+    }
+    if(buttonTracker.sidebarScrollStart == null) {
+      // buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    }
 
-    // event = buttonTracker.normalize_event(event);
-    // // We disable ignoreUp on continued movement because some of our
-    // // movement event triggers are touchstart and mousedown
-    // if(event.type == 'touchstart' || event.type == 'mousedown') {
-    //   // don't reset it if we had a touchstart event in the
-    //   // last 500ms and now we're getting a mousedown event
-    //   if(event.type != 'touchstart' && buttonTracker.lastTouchStart && buttonTracker.lastTouchStart > (now - 2500)) {
-    //   } else {
-    //     buttonTracker.ignoreUp = false;
-    //   }
-    // }
-    // if(event.screenX && event.clientX) {
-    //   window.screenInnerOffsetY = event.screenY - event.clientY;
-    //   window.screenInnerOffsetX = event.screenX - event.clientX;
-    //   stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
-    //   stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
-    // }
+    event = buttonTracker.normalize_event(event);
+    // We disable ignoreUp on continued movement because some of our
+    // movement event triggers are touchstart and mousedown
+    if(event.type == 'touchstart' || event.type == 'mousedown') {
+      // don't reset it if we had a touchstart event in the
+      // last 500ms and now we're getting a mousedown event
+      if(event.type != 'touchstart' && buttonTracker.lastTouchStart && buttonTracker.lastTouchStart > (now - 2500)) {
+      } else {
+        buttonTracker.ignoreUp = false;
+      }
+    }
+    if(event.screenX && event.clientX) {
+      window.screenInnerOffsetY = event.screenY - event.clientY;
+      window.screenInnerOffsetX = event.screenX - event.clientX;
+      stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
+      stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
+    }
     if(event.type == 'touchstart' || event.type == 'mousedown' || event.type == 'touchmove') {
       buttonTracker.buttonDown = true;
       if(app_state.get('sidebar_toggled')) {
@@ -512,7 +512,7 @@ var buttonTracker = EmberObject.extend({
     }
     if(buttonTracker.buttonDown && !$(event.target).hasClass('highlight')) {
       if($(event.target).closest('#dwell_icon,#linger').length === 0) {
-        modal.close_highlight();
+        // modal.close_highlight();
       }
     }
     if(buttonTracker.buttonDown && editManager.paint_mode) {
@@ -642,15 +642,15 @@ var buttonTracker = EmberObject.extend({
     // don't remember why this is important...
     buttonTracker.buttonDown = false;
     buttonTracker.triggerEvent = null;
-    if(buttonTracker.sidebarScrollStart != null) {
-      var scroll_start = buttonTracker.sidebarScrollStart;
-      var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
-      buttonTracker.sidebarScrollStart = null;
-      if(Math.abs(current_scroll - scroll_start) > 10) {
-        if(event.cancelable) { event.preventDefault(); }
-        return;
-      }
-    }
+    // if(buttonTracker.sidebarScrollStart != null) {
+    //   var scroll_start = buttonTracker.sidebarScrollStart;
+    //   var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    //   buttonTracker.sidebarScrollStart = null;
+    //   if(Math.abs(current_scroll - scroll_start) > 10) {
+    //     if(event.cancelable) { event.preventDefault(); }
+    //     return;
+    //   }
+    // }
 
     var swipe_page = false;    
     if(buttonTracker.swipe_pages) {
