@@ -345,64 +345,64 @@ var buttonTracker = EmberObject.extend({
   // used for handling dragging, scanning selection
   touch_continue: function(event) {
     // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TCONT", event); }
-    // var $hover_button = $(event.target).closest('.hover_button');
-    // if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
-    //   var text_popup = $hover_button.hasClass('text_popup');
-    //   $hover_button.remove();
-    //   if(buttonTracker.initialEvent) {
-    //     var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
-    //     if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
-    //       buttonTracker.initialTarget = button_wrap;
-    //     }
-    //   }
-    //   if(text_popup) { 
-    //     event.preventDefault(); 
-    //     buttonTracker.ignoreUp = true; 
-    //     return false; 
-    //   }
-    // }
-    // if(buttonTracker.transitioning) {
-    //   event.preventDefault();
-    //   var token = Math.random();
-    //   // Don't let it get stuck in some weird transitioning state forever
-    //   buttonTracker.transitioning = token;
-    //   runLater(function() {
-    //     if(buttonTracker.transitioning == token) {
-    //       buttonTracker.transitioning = false;
-    //     }
-    //   }, 2000);
-    //   return;
-    // }
-
-    // not the best approach, but I was getting tired of all the selected text blue things when
-    // testing dragging so I threw this in.
-    if(buttonTracker.buttonDown && app_state.get('edit_mode') && (buttonTracker.drag || !buttonTracker.ignored_region(event))) {
-      // TODO: this lookup should be a method instead of being hard-coded, like ignored_region
-      if($(event.target).closest("#sidebar,.modal").length === 0) {
-        event.preventDefault();
+    var $hover_button = $(event.target).closest('.hover_button');
+    if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
+      var text_popup = $hover_button.hasClass('text_popup');
+      $hover_button.remove();
+      if(buttonTracker.initialEvent) {
+        var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
+        if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
+          buttonTracker.initialTarget = button_wrap;
+        }
+      }
+      if(text_popup) { 
+        event.preventDefault(); 
+        buttonTracker.ignoreUp = true; 
+        return false; 
       }
     }
-    if(buttonTracker.sidebarScrollStart == null) {
-      buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    if(buttonTracker.transitioning) {
+      event.preventDefault();
+      var token = Math.random();
+      // Don't let it get stuck in some weird transitioning state forever
+      buttonTracker.transitioning = token;
+      runLater(function() {
+        if(buttonTracker.transitioning == token) {
+          buttonTracker.transitioning = false;
+        }
+      }, 2000);
+      return;
     }
 
-    event = buttonTracker.normalize_event(event);
-    // We disable ignoreUp on continued movement because some of our
-    // movement event triggers are touchstart and mousedown
-    if(event.type == 'touchstart' || event.type == 'mousedown') {
-      // don't reset it if we had a touchstart event in the
-      // last 500ms and now we're getting a mousedown event
-      if(event.type != 'touchstart' && buttonTracker.lastTouchStart && buttonTracker.lastTouchStart > (now - 2500)) {
-      } else {
-        buttonTracker.ignoreUp = false;
-      }
-    }
-    if(event.screenX && event.clientX) {
-      window.screenInnerOffsetY = event.screenY - event.clientY;
-      window.screenInnerOffsetX = event.screenX - event.clientX;
-      stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
-      stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
-    }
+    // // not the best approach, but I was getting tired of all the selected text blue things when
+    // // testing dragging so I threw this in.
+    // if(buttonTracker.buttonDown && app_state.get('edit_mode') && (buttonTracker.drag || !buttonTracker.ignored_region(event))) {
+    //   // TODO: this lookup should be a method instead of being hard-coded, like ignored_region
+    //   if($(event.target).closest("#sidebar,.modal").length === 0) {
+    //     event.preventDefault();
+    //   }
+    // }
+    // if(buttonTracker.sidebarScrollStart == null) {
+    //   buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    // }
+
+    // event = buttonTracker.normalize_event(event);
+    // // We disable ignoreUp on continued movement because some of our
+    // // movement event triggers are touchstart and mousedown
+    // if(event.type == 'touchstart' || event.type == 'mousedown') {
+    //   // don't reset it if we had a touchstart event in the
+    //   // last 500ms and now we're getting a mousedown event
+    //   if(event.type != 'touchstart' && buttonTracker.lastTouchStart && buttonTracker.lastTouchStart > (now - 2500)) {
+    //   } else {
+    //     buttonTracker.ignoreUp = false;
+    //   }
+    // }
+    // if(event.screenX && event.clientX) {
+    //   window.screenInnerOffsetY = event.screenY - event.clientY;
+    //   window.screenInnerOffsetX = event.screenX - event.clientX;
+    //   stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
+    //   stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
+    // }
     if(event.type == 'touchstart' || event.type == 'mousedown' || event.type == 'touchmove') {
       buttonTracker.buttonDown = true;
       if(app_state.get('sidebar_toggled')) {
