@@ -538,7 +538,7 @@ var buttonTracker = EmberObject.extend({
             runCancel(buttonTracker.track_short_press.later);
             buttonTracker.track_short_press.later = null;
           }
-          buttonTracker.short_presss_delay = Math.max(buttonTracker.short_presss_delay || 100, buttonTracker.short_presss_delay);
+          buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
           // TODO: no idea why, but this runLater makes it so things
           // work on iOS UIWebView with new Ember. If you have short
           // press delay set but don't enable this, then you'll get
@@ -553,7 +553,7 @@ var buttonTracker = EmberObject.extend({
             if(buttonTracker.check('short_press_delay')) {
               buttonTracker.track_short_press.later = runLater(function() {
                 buttonTracker.track_short_press(event);
-              }, buttonTracker.short_presss_delay); //buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+              }, buttonTracker.short_press_delay); //buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
           });
         }
