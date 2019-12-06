@@ -530,14 +530,22 @@ var buttonTracker = EmberObject.extend({
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
           buttonTracker.longPressEvent = event;
-          runCancel(buttonTracker.track_long_press.later);
-          runCancel(buttonTracker.track_short_press.later);
-          if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
-            buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+          if(buttonTracker.track_long_press.later) {
+            runCancel(buttonTracker.track_long_press.later);
+            buttonTracker.track_long_press.later = null;
           }
-          if(buttonTracker.check('short_press_delay')) {
-            buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+          if(buttonTracker.track_short_press.later) {
+            runCancel(buttonTracker.track_short_press.later);
+            buttonTracker.track_short_press.later;
           }
+          runLater(function() {
+            if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
+              buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+            }
+            if(buttonTracker.check('short_press_delay')) {
+              buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+            }  
+          });
         }
       } else {
         if(event.type == 'touchend' || event.type == 'mouseup' || !buttonTracker.longPressEvent || event.target != buttonTracker.longPressEvent.long_press_target) {
@@ -1997,6 +2005,7 @@ var buttonTracker = EmberObject.extend({
   },
   long_press_delay: 1500,
   track_long_press: function() {
+    this.track_long_press.later = null;
     if(this.longPressEvent) {
       var button_wrap = this.find_button_under_event(this.longPressEvent);
       var $radial = $(this.longPressEvent.target).closest(".radial");
@@ -2016,7 +2025,8 @@ var buttonTracker = EmberObject.extend({
     }
   },
   track_short_press: function() {
-    if(this.shortPressEvents) {
+    this.track_long_press.later = null;
+    if(this.shortPressEvent) {
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
         var target = this.shortPressEvent.originalTarget || (this.shortPressEvent.originalEvent || this.shortPressEvent).target;
