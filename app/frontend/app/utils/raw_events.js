@@ -539,12 +539,14 @@ var buttonTracker = EmberObject.extend({
             buttonTracker.track_short_press.later;
           }
           // runLater(function() {
+          try {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
             }
             if(buttonTracker.check('short_press_delay')) {
               buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
+          } catch(e) { console.log("ERROR", e); }
           // });
         }
       } else {
