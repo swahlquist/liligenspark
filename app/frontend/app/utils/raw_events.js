@@ -538,7 +538,9 @@ var buttonTracker = EmberObject.extend({
             runCancel(buttonTracker.track_short_press.later);
             buttonTracker.track_short_press.later = null;
           }
-          buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
+          if(buttonTracker.check('short_press_delay')) {
+//            buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
+          }
           // TODO: no idea why, but this runLater makes it so things
           // work on iOS UIWebView with new Ember. If you have short
           // press delay set but don't enable this, then you'll get
@@ -546,14 +548,10 @@ var buttonTracker = EmberObject.extend({
           // when they entered Speak Mode.
           runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
-              buttonTracker.track_long_press.later = runLater(function() {
-                buttonTracker.track_long_press(event);
-              }, buttonTracker.long_press_delay); //buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+              buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
             }
             if(buttonTracker.check('short_press_delay')) {
-              buttonTracker.track_short_press.later = runLater(function() {
-                buttonTracker.track_short_press(event);
-              }, buttonTracker.short_press_delay); //buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+              buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
           });
         }
@@ -2017,9 +2015,9 @@ var buttonTracker = EmberObject.extend({
   },
   long_press_delay: 1500,
   track_long_press: function(event) {
-    this.track_long_press.later = null;
+//    this.track_long_press.later = null;
 //    this.longPressEvent = event || this.longPressEvent;
-    if(this.longPressEvent == event) {
+    if(this.longPressEvent) {
       console.log("LONG PRESS", this.longPressEvent);
       var button_wrap = this.find_button_under_event(this.longPressEvent);
       var $radial = $(this.longPressEvent.target).closest(".radial");
@@ -2040,9 +2038,9 @@ var buttonTracker = EmberObject.extend({
   },
   track_short_press: function(event) {
     console.log("PRESS EVENT", event);
-    this.track_short_press.later = null;
+    // this.track_short_press.later = null;
 //    this.shortPressEvent = event || this.shortPressEvent;
-    if(this.shortPressEvent == event) {
+    if(this.shortPressEvent) {
       console.log("SHORT PRESS", this.shortPressEvent);
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
       if(selectable_wrap && this.shortPressEvent) {
