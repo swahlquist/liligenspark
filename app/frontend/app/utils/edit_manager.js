@@ -279,7 +279,7 @@ var editManager = EmberObject.extend({
         res = res.concat([
   //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
           {location: 'c', label: button.label},
-          {location: 'nw', label: i18n.negation(base_label)},
+          {location: 'se', label: i18n.negation(base_label)},
   //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
         ]);
       }
