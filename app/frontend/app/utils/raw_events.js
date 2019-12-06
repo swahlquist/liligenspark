@@ -540,10 +540,14 @@ var buttonTracker = EmberObject.extend({
           }
           // runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
-              buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+              buttonTracker.track_long_press.later = runLater(function() {
+                buttonTracker.track_long_press(event);
+              }, buttonTracker.long_press_delay); //buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
             }
             if(buttonTracker.check('short_press_delay')) {
-              buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+              buttonTracker.track_short_press.later = runLater(function() {
+                buttonTracker.track_short_press(event);
+              }, buttonTracker.short_presss_delay); //buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
           // });
         }
@@ -1640,7 +1644,7 @@ var buttonTracker = EmberObject.extend({
       // you're close to anything selectable
     }
     if(region) {
-      buttonTracker.shortPressEvent = buttonTracker.longPressEvent;
+      buttonTracker.shortPressEvent = event;
       // buttonTracker.longPressEvent = null;
       if(allow_dwell === false && $target.closest('.undwellable').length > 0) {
         return null;
@@ -2004,8 +2008,9 @@ var buttonTracker = EmberObject.extend({
     return result;
   },
   long_press_delay: 1500,
-  track_long_press: function() {
+  track_long_press: function(event) {
     this.track_long_press.later = null;
+    this.longPressEvent = event || this.longPressEvent;
     if(this.longPressEvent) {
       console.log("LONG PRESS", this.longPressEvent);
       var button_wrap = this.find_button_under_event(this.longPressEvent);
@@ -2025,8 +2030,9 @@ var buttonTracker = EmberObject.extend({
       }
     }
   },
-  track_short_press: function() {
+  track_short_press: function(event) {
     this.track_long_press.later = null;
+    this.shortPressEvent = event || this.shortPressEvent;
     if(this.shortPressEvent) {
       console.log("SHORT PRESS", this.shortPressEvent);
       var selectable_wrap = this.find_selectable_under_event(this.shortPressEvent, true);
