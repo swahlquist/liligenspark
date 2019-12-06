@@ -530,7 +530,9 @@ var buttonTracker = EmberObject.extend({
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
           if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+            buttonTracker.ignoredPressEvent = event;
           } else {
+            buttonTracker.lastLastPressEvent = event;
             buttonTracker.lastPressEvent = event;
             buttonTracker.longPressEvent = event;
             if(buttonTracker.track_long_press.later) {
