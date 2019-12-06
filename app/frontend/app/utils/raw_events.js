@@ -538,9 +538,8 @@ var buttonTracker = EmberObject.extend({
             runCancel(buttonTracker.track_short_press.later);
             buttonTracker.track_short_press.later = null;
           }
-          buttonTracker.bobs = buttonTracker.bobs || [];
-          buttonTracker.bobs.push(event);
-          // runLater(function() {
+          buttonTracker.short_presss_delay = 10;
+          runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(function() {
                 buttonTracker.track_long_press(event);
@@ -551,7 +550,7 @@ var buttonTracker = EmberObject.extend({
                 buttonTracker.track_short_press(event);
               }, buttonTracker.short_presss_delay); //buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
             }  
-          // });
+          });
         }
       } else {
         if(event.type == 'touchend' || event.type == 'mouseup' || !buttonTracker.longPressEvent || event.target != buttonTracker.longPressEvent.long_press_target) {
