@@ -529,9 +529,11 @@ var buttonTracker = EmberObject.extend({
       if(event.type == 'touchstart' || event.type == 'mousedown') {
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
-          if(buttonTracker.longPressEvent && buttonTracker.longPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.longPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+          if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
             console.log("IGNORY");
           } else {
+            console.log("OVERLAP", buttonTracker.lastPressEvent, event);
+            buttonTracker.lastPressEvent = event;
             buttonTracker.longPressEvent = event;
             if(buttonTracker.track_long_press.later) {
               runCancel(buttonTracker.track_long_press.later);
