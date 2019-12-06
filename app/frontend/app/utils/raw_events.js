@@ -295,6 +295,11 @@ var buttonTracker = EmberObject.extend({
     if($overlay.length > 0 && $(event.target).closest("#overlay_container").length == 0) {
       $overlay.remove();
     }
+    if(buttonTracker.lastStartEvent && buttonTracker.lastStartEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastStartEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+      event.preventDefault();
+      return;
+    }
+    buttonTracker.lastStartEvent = event;
     // advanced_selection regions should be eating all click events and
     // instead manually interpreting touch and mouse events. that way we
     // can do magical things like "click" on starting/ending point
@@ -318,6 +323,7 @@ var buttonTracker = EmberObject.extend({
       var button_wrap = buttonTracker.find_selectable_under_event(event);
       buttonTracker.initialTarget = button_wrap;
       buttonTracker.initialEvent = event;
+      bounds.getBoundingClientRect();
       if(buttonTracker.initialTarget) {
         buttonTracker.initialTarget.timestamp = (new Date()).getTime();
         buttonTracker.initialTarget.event = event;
@@ -594,7 +600,11 @@ var buttonTracker = EmberObject.extend({
       }
       if(buttonTracker.initialEvent) {
         buttonTracker.initialEvent.drag_locations = buttonTracker.initialEvent.drag_locations || [];
-        buttonTracker.initialEvent.drag_locations.push([event.clientX, event.clientY]);
+        if(event.clientX >= buttonTracker.initialEvent.bounds.left && event.clientX <= buttonTracker.initialEvent.bounds.right && event.clientY >= buttonTracker.initialEvent.bounds.top && event.clientY <= buttonTracker.initialEvent.bounds.bottom) {
+          // on some devices, we have to add padding to address the notch
+          // issue, and unexpected things can happen 
+          buttonTracker.initialEvent.drag_locations.push([event.clientX, event.clientY]);
+        }
         if(buttonTracker.initialEvent.drag_locations.length > 30) {
           // If too many, thin them out. Note, the longer the drag
           // happens, the more lossy the data at the beginning will be
