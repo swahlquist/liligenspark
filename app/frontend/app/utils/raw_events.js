@@ -296,7 +296,6 @@ var buttonTracker = EmberObject.extend({
       $overlay.remove();
     }
     if(buttonTracker.lastStartEvent && buttonTracker.lastStartEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastStartEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
-      event.preventDefault();
       return;
     }
     buttonTracker.lastStartEvent = event;
@@ -537,7 +536,6 @@ var buttonTracker = EmberObject.extend({
           event.long_press_target = event.target;
           if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
             buttonTracker.ignoredPressEvent = event;
-            console.log("NOPE", event);
             event.preventDefault();
           } else {
             buttonTracker.lastLastPressEvent = buttonTracker.lastPressEvent;
@@ -683,7 +681,6 @@ var buttonTracker = EmberObject.extend({
     // iOS is doing a weird double-trigger on an erroneous target even
     // so I'm trying to ignore it without messing anything else up
     if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mouseup' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300 && (!buttonTracker.lastReleaseEvent || buttonTracker.lastReleaseEvent != 'touchend' || Math.abs((buttonTracker.lastReleaseEvent || 0) - (event.timeStamp || 0)) > 300)) {
-      event.preventDefault();
       return;
     }
     buttonTracker.lastReleaseEvent = event;
