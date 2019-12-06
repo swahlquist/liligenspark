@@ -287,7 +287,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_start: function(event) {
-    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
+    // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
     buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
 
     var $overlay = $("#overlay_container");
@@ -344,35 +344,35 @@ var buttonTracker = EmberObject.extend({
   },
   // used for handling dragging, scanning selection
   touch_continue: function(event) {
-    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TCONT", event); }
-    var $hover_button = $(event.target).closest('.hover_button');
-    if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
-      var text_popup = $hover_button.hasClass('text_popup');
-      $hover_button.remove();
-      if(buttonTracker.initialEvent) {
-        var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
-        if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
-          buttonTracker.initialTarget = button_wrap;
-        }
-      }
-      if(text_popup) { 
-        event.preventDefault(); 
-        buttonTracker.ignoreUp = true; 
-        return false; 
-      }
-    }
-    if(buttonTracker.transitioning) {
-      event.preventDefault();
-      var token = Math.random();
-      // Don't let it get stuck in some weird transitioning state forever
-      buttonTracker.transitioning = token;
-      runLater(function() {
-        if(buttonTracker.transitioning == token) {
-          buttonTracker.transitioning = false;
-        }
-      }, 2000);
-      return;
-    }
+    // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TCONT", event); }
+    // var $hover_button = $(event.target).closest('.hover_button');
+    // if((event.type == 'touchstart' || event.type == 'mousedown') && $hover_button.length) {
+    //   var text_popup = $hover_button.hasClass('text_popup');
+    //   $hover_button.remove();
+    //   if(buttonTracker.initialEvent) {
+    //     var button_wrap = buttonTracker.find_selectable_under_event(buttonTracker.initialEvent);
+    //     if(buttonTracker.initialTarget && buttonTracker.initialTarget.dom != button_wrap.dom) {
+    //       buttonTracker.initialTarget = button_wrap;
+    //     }
+    //   }
+    //   if(text_popup) { 
+    //     event.preventDefault(); 
+    //     buttonTracker.ignoreUp = true; 
+    //     return false; 
+    //   }
+    // }
+    // if(buttonTracker.transitioning) {
+    //   event.preventDefault();
+    //   var token = Math.random();
+    //   // Don't let it get stuck in some weird transitioning state forever
+    //   buttonTracker.transitioning = token;
+    //   runLater(function() {
+    //     if(buttonTracker.transitioning == token) {
+    //       buttonTracker.transitioning = false;
+    //     }
+    //   }, 2000);
+    //   return;
+    // }
 
     // not the best approach, but I was getting tired of all the selected text blue things when
     // testing dragging so I threw this in.
@@ -635,7 +635,7 @@ var buttonTracker = EmberObject.extend({
     }
   },
   touch_release: function(event) {
-    if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TREL", event); }
+    // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TREL", event); }
     $(event.target).closest('.hover_button').remove();
     $("#identity_button:focus").blur();
     event = buttonTracker.normalize_event(event);
