@@ -597,11 +597,7 @@ var buttonTracker = EmberObject.extend({
       }
       if(buttonTracker.initialEvent) {
         buttonTracker.initialEvent.drag_locations = buttonTracker.initialEvent.drag_locations || [];
-        if(event.clientX >= buttonTracker.initialEvent.bounds.left && event.clientX <= buttonTracker.initialEvent.bounds.right && event.clientY >= buttonTracker.initialEvent.bounds.top && event.clientY <= buttonTracker.initialEvent.bounds.bottom) {
-          // on some devices, we have to add padding to address the notch
-          // issue, and unexpected things can happen 
-          buttonTracker.initialEvent.drag_locations.push([event.clientX, event.clientY]);
-        }
+        buttonTracker.initialEvent.drag_locations.push([event.clientX, event.clientY]);
         if(buttonTracker.initialEvent.drag_locations.length > 30) {
           // If too many, thin them out. Note, the longer the drag
           // happens, the more lossy the data at the beginning will be
