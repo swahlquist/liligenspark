@@ -322,7 +322,6 @@ var buttonTracker = EmberObject.extend({
       var button_wrap = buttonTracker.find_selectable_under_event(event);
       buttonTracker.initialTarget = button_wrap;
       buttonTracker.initialEvent = event;
-      bounds.getBoundingClientRect();
       if(buttonTracker.initialTarget) {
         buttonTracker.initialTarget.timestamp = (new Date()).getTime();
         buttonTracker.initialTarget.event = event;
