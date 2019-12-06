@@ -531,8 +531,9 @@ var buttonTracker = EmberObject.extend({
           event.long_press_target = event.target;
           if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
             buttonTracker.ignoredPressEvent = event;
+            event.preventDefault();
           } else {
-            buttonTracker.lastLastPressEvent = event;
+            buttonTracker.lastLastPressEvent = buttonTracker.lastPressEvent;
             buttonTracker.lastPressEvent = event;
             buttonTracker.longPressEvent = event;
             if(buttonTracker.track_long_press.later) {
