@@ -288,7 +288,7 @@ var buttonTracker = EmberObject.extend({
   },
   touch_start: function(event) {
     // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
-    // buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
 
     var $overlay = $("#overlay_container");
     // clear overlays when user interacts outside of them
@@ -383,7 +383,7 @@ var buttonTracker = EmberObject.extend({
       }
     }
     if(buttonTracker.sidebarScrollStart == null) {
-      // buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+      buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
     }
 
     event = buttonTracker.normalize_event(event);
@@ -512,7 +512,7 @@ var buttonTracker = EmberObject.extend({
     }
     if(buttonTracker.buttonDown && !$(event.target).hasClass('highlight')) {
       if($(event.target).closest('#dwell_icon,#linger').length === 0) {
-        // modal.close_highlight();
+        modal.close_highlight();
       }
     }
     if(buttonTracker.buttonDown && editManager.paint_mode) {
@@ -525,6 +525,7 @@ var buttonTracker = EmberObject.extend({
         elem_wrap.trigger('buttonpaint');
       }
     } else if(buttonTracker.buttonDown) {
+      return;
       var elem_wrap = buttonTracker.track_drag(event);
       if(event.type == 'touchstart' || event.type == 'mousedown') {
         event.long_press_target = event.target;
@@ -642,15 +643,15 @@ var buttonTracker = EmberObject.extend({
     // don't remember why this is important...
     buttonTracker.buttonDown = false;
     buttonTracker.triggerEvent = null;
-    // if(buttonTracker.sidebarScrollStart != null) {
-    //   var scroll_start = buttonTracker.sidebarScrollStart;
-    //   var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
-    //   buttonTracker.sidebarScrollStart = null;
-    //   if(Math.abs(current_scroll - scroll_start) > 10) {
-    //     if(event.cancelable) { event.preventDefault(); }
-    //     return;
-    //   }
-    // }
+    if(buttonTracker.sidebarScrollStart != null) {
+      var scroll_start = buttonTracker.sidebarScrollStart;
+      var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
+      buttonTracker.sidebarScrollStart = null;
+      if(Math.abs(current_scroll - scroll_start) > 10) {
+        if(event.cancelable) { event.preventDefault(); }
+        return;
+      }
+    }
 
     var swipe_page = false;    
     if(buttonTracker.swipe_pages) {
