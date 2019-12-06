@@ -529,8 +529,9 @@ var buttonTracker = EmberObject.extend({
       if(event.type == 'touchstart' || event.type == 'mousedown') {
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
-          if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+          if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
             buttonTracker.ignoredPressEvent = event;
+            console.log("NOPE", event);
             event.preventDefault();
           } else {
             buttonTracker.lastLastPressEvent = buttonTracker.lastPressEvent;
@@ -669,6 +670,13 @@ var buttonTracker = EmberObject.extend({
     // don't remember why this is important...
     buttonTracker.buttonDown = false;
     buttonTracker.triggerEvent = null;
+    // iOS is doing a weird double-trigger on an erroneous target even
+    // so I'm trying to ignore it without messing anything else up
+    if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mouseup' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300 && (!buttonTracker.lastReleaseEvent || buttonTracker.lastReleaseEvent != 'touchend' || Math.abs((buttonTracker.lastReleaseEvent || 0) - (event.timeStamp || 0)) > 300)) {
+      event.preventDefault();
+      return;
+    }
+    buttonTracker.lastReleaseEvent = event;
     if(buttonTracker.sidebarScrollStart != null) {
       var scroll_start = buttonTracker.sidebarScrollStart;
       var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
