@@ -529,31 +529,35 @@ var buttonTracker = EmberObject.extend({
       if(event.type == 'touchstart' || event.type == 'mousedown') {
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
-          buttonTracker.longPressEvent = event;
-          if(buttonTracker.track_long_press.later) {
-            runCancel(buttonTracker.track_long_press.later);
-            buttonTracker.track_long_press.later = null;
-          }
-          if(buttonTracker.track_short_press.later) {
-            runCancel(buttonTracker.track_short_press.later);
-            buttonTracker.track_short_press.later = null;
-          }
-          if(buttonTracker.check('short_press_delay')) {
-//            buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
-          }
-          // TODO: no idea why, but this runLater makes it so things
-          // work on iOS UIWebView with new Ember. If you have short
-          // press delay set but don't enable this, then you'll get
-          // phantom button hits based on where the user first hit
-          // when they entered Speak Mode.
-          runLater(function() {
-            if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
-              buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+          if(buttonTracker.longPressEvent && buttonTracker.longPressEvent.type == 'touchstart' && event.type == 'mousedown' && ((buttonTracker.longPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+            console.log("IGNORY");
+          } else {
+            buttonTracker.longPressEvent = event;
+            if(buttonTracker.track_long_press.later) {
+              runCancel(buttonTracker.track_long_press.later);
+              buttonTracker.track_long_press.later = null;
+            }
+            if(buttonTracker.track_short_press.later) {
+              runCancel(buttonTracker.track_short_press.later);
+              buttonTracker.track_short_press.later = null;
             }
             if(buttonTracker.check('short_press_delay')) {
-              buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
-            }  
-          });
+  //            buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
+            }
+            // TODO: no idea why, but this runLater makes it so things
+            // work on iOS UIWebView with new Ember. If you have short
+            // press delay set but don't enable this, then you'll get
+            // phantom button hits based on where the user first hit
+            // when they entered Speak Mode.
+            runLater(function() {
+              if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
+                buttonTracker.track_long_press.later = runLater(buttonTracker, buttonTracker.track_long_press, buttonTracker.long_press_delay);
+              }
+              if(buttonTracker.check('short_press_delay')) {
+                buttonTracker.track_short_press.later = runLater(buttonTracker, buttonTracker.track_short_press, buttonTracker.short_press_delay);
+              }  
+            });
+          }
         }
       } else {
         if(event.type == 'touchend' || event.type == 'mouseup' || !buttonTracker.longPressEvent || event.target != buttonTracker.longPressEvent.long_press_target) {
