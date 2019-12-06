@@ -538,6 +538,8 @@ var buttonTracker = EmberObject.extend({
             runCancel(buttonTracker.track_short_press.later);
             buttonTracker.track_short_press.later = null;
           }
+          buttonTracker.bobs = buttonTracker.bobs || [];
+          buttonTracker.bobs.push(event);
           // runLater(function() {
             if(buttonTracker.check('long_press_delay') || app_state.get('default_mode')) {
               buttonTracker.track_long_press.later = runLater(function() {
