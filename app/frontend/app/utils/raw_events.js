@@ -296,6 +296,10 @@ var buttonTracker = EmberObject.extend({
       $overlay.remove();
     }
     if(buttonTracker.lastStartEvent && buttonTracker.lastStartEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastStartEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+      // TODO: I think this is only required as long as we use UIWekView
+      // instead of WKWebView. Once we switch, if you set touches to
+      // select after 100ms and you can hit blank spaces without it
+      // hitting somewhere else then you should be good
       return;
     }
     buttonTracker.lastStartEvent = event;
@@ -534,6 +538,10 @@ var buttonTracker = EmberObject.extend({
         if(app_state.get('speak_mode')) {
           event.long_press_target = event.target;
           if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mousedown' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300) {
+            // TODO: I think this is only required as long as we use UIWekView
+            // instead of WKWebView. Once we switch, if you set touches to
+            // select after 100ms and you can hit blank spaces without it
+            // hitting somewhere else then you should be good
             buttonTracker.ignoredPressEvent = event;
             event.preventDefault();
           } else {
@@ -543,11 +551,6 @@ var buttonTracker = EmberObject.extend({
             if(buttonTracker.check('short_press_delay')) {
               buttonTracker.short_press_delay = Math.max(buttonTracker.short_press_delay || 100, buttonTracker.short_press_delay);
             }
-            // TODO: no idea why, but this runLater makes it so things
-            // work on iOS UIWebView with new Ember. If you have short
-            // press delay set but don't enable this, then you'll get
-            // phantom button hits based on where the user first hit
-            // when they entered Speak Mode.
             runLater(function() {
               if(buttonTracker.track_long_press.later) {
                 runCancel(buttonTracker.track_long_press.later);
@@ -676,6 +679,10 @@ var buttonTracker = EmberObject.extend({
     // iOS is doing a weird double-trigger on an erroneous target even
     // so I'm trying to ignore it without messing anything else up
     if(buttonTracker.lastPressEvent && buttonTracker.lastPressEvent.type == 'touchstart' && event.type == 'mouseup' && Math.abs((buttonTracker.lastPressEvent.timeStamp || 0) - (event.timeStamp || 0)) < 300 && (!buttonTracker.lastReleaseEvent || buttonTracker.lastReleaseEvent != 'touchend' || Math.abs((buttonTracker.lastReleaseEvent || 0) - (event.timeStamp || 0)) > 300)) {
+      // TODO: I think this is only required as long as we use UIWekView
+      // instead of WKWebView. Once we switch, if you set touches to
+      // select after 100ms and you can hit blank spaces without it
+      // hitting somewhere else then you should be good
       return;
     }
     buttonTracker.lastReleaseEvent = event;
