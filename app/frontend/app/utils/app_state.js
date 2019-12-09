@@ -234,7 +234,7 @@ var app_state = EmberObject.extend({
   global_transition: function(transition) {
     if(transition.aborted) { return; }
     app_state.set('from_url', app_state.get('route._router.url') || app_state.get('route.router.url'));
-    var from = [transition.from_name].concat(transition.from_params);
+    var from = [transition.from_route].concat(transition.from_params);
     // if(!from[0]) {
     //   // TODO: this should go away
     //   var rec = this.get('route._router._routerMicrolib.recognizer') || this.get('route.router._routerMicrolib.recognizer');
