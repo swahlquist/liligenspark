@@ -72,7 +72,11 @@ class Api::BoardsController < ApplicationController
       if params['q'] && params['q'].length > 0 && params['public']
         q = CGI.unescape(params['q']).downcase
         # TODO: real search via https://github.com/casecommons/pg_search or elasticsearch with facets
-        boards = boards.search_by_text(q) #where(['search_string ILIKE ?', "%#{q}%"])
+        if params['sort'] == 'home_popularity'
+          boards = boards.search_by_text_for_home_popularity(q)
+        else
+          boards = boards.search_by_text(q) #where(['search_string ILIKE ?', "%#{q}%"])
+        end
         # TODO: is it possible to just de-prioritize copies instead of excluding them?
         # boards = boards.where('parent_board_id IS NULL')
       end

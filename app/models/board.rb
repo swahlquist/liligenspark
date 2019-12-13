@@ -20,7 +20,8 @@ class Board < ActiveRecord::Base
   belongs_to :user
   belongs_to :parent_board, :class_name => 'Board'
   has_many :child_boards, :class_name => 'Board', :foreign_key => 'parent_board_id'
-  pg_search_scope :search_by_text, :against => :search_string
+  pg_search_scope :search_by_text, :against => :search_string, :ranked_by => "log(boards.popularity + boards.home_popularity + 3) * :tsearch"
+  pg_search_scope :search_by_text_for_home_popularity, :against => :search_string, :ranked_by => "log(boards.home_popularity + 2) * :tsearch"
   before_save :generate_defaults
   before_save :generate_stats
   before_save :require_key
