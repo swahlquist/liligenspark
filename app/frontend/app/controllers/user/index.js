@@ -132,16 +132,13 @@ export default Controller.extend({
         res.filtered_results = new_list.slice(0, 300);
       } else {
         if(list.done && new_list && new_list.length <= 18) {
-          this.show_all_boards();
+          this.set('show_all_boards', true);
         }
         res.filtered_results = new_list.slice(0, 18);
       }
       return res;
     }
   ),
-  show_all_boards: function() {
-    this.set('show_all_boards', true);
-  },
   reload_logs: observer('persistence.online', function() {
     var _this = this;
     if(!persistence.get('online')) { return; }
