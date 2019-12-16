@@ -238,9 +238,9 @@ Route.reopen({
 
 CoughDrop.licenseOptions = [
   {name: i18n.t('private_license', "Private (no reuse allowed)"), id: 'private'},
-  {name: i18n.t('cc_by_license', "CC By (attribution only)"), id: 'CC By', url: 'http://creativecommons.org/licenses/by/4.0/'},
-  {name: i18n.t('cc_by_sa_license', "CC By-SA (attribution + share-alike)"), id: 'CC By-SA', url: 'http://creativecommons.org/licenses/by-sa/4.0/'},
-  {name: i18n.t('public_domain_license', "Public Domain"), id: 'public domain', url: 'http://creativecommons.org/publicdomain/zero/1.0/'}
+  {name: i18n.t('cc_by_license', "CC By (attribution only)"), id: 'CC By', url: 'https://creativecommons.org/licenses/by/4.0/'},
+  {name: i18n.t('cc_by_sa_license', "CC By-SA (attribution + share-alike)"), id: 'CC By-SA', url: 'https://creativecommons.org/licenses/by-sa/4.0/'},
+  {name: i18n.t('public_domain_license', "Public Domain"), id: 'public domain', url: 'https://creativecommons.org/publicdomain/zero/1.0/'}
 ];
 CoughDrop.publicOptions = [
   {name: i18n.t('private', "Private"), id: 'private'},

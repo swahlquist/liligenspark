@@ -228,14 +228,14 @@ var Button = EmberObject.extend({
   fixed_url: computed('url', function() {
     var url = this.get('url');
     if(url && !url.match(/^http/) && !url.match(/^book:/)) {
-      url = "http://" + url;
+      url = "https://" + url;
     }
     return url;
   }),
   fixed_app_url: computed('apps.web.launch_url', function() {
     var url = this.get('apps.web.launch_url');
     if(url && !url.match(/^http/)) {
-      url = "http://" + url;
+      url = "https://" + url;
     }
     return url;
   }),

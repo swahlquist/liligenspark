@@ -1,6 +1,7 @@
 import EmberObject from '@ember/object';
 import RSVP from 'rsvp';
 import DS from 'ember-data';
+import Ember from 'ember';
 import CoughDrop from '../app';
 import speecher from '../utils/speecher';
 import persistence from '../utils/persistence';
@@ -177,7 +178,7 @@ CoughDrop.User = DS.Model.extend({
   avatar_url_with_fallback: computed('avatar_url', 'avatar_data_uri', function() {
     var url = this.get('avatar_data_uri') || this.get('avatar_url');
     if(!url) {
-      url = "http://images.sodahead.com/polls/000547669/polls_profiles_1202SHAvatarFemaleRed_4335_157245_xlarge_3722_230918_poll_xlarge.jpeg";
+      url = Ember.templateHelpers.path('images/action.png');
     }
     return url;
   }),

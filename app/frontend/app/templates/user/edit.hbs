@@ -159,7 +159,7 @@
   <div class="form-group">
     <label for="url" class="col-sm-3 control-label">{{t "URL" key='url'}}</label>
     <div class="col-sm-5">
-      {{input value=model.details_url class="form-control" id="url" placeholder="http://"}}
+      {{input value=model.details_url class="form-control" id="url" placeholder="https://"}}
     </div>
   </div>
   <div class="form-group">
@@ -173,7 +173,7 @@
     <div class="col-sm-5">
       <img src={{model.avatar_url_with_fallback}} style="max-height: 30px;"/>
       <a href="#" {{action 'pick_avatar'}}>{{t "Choose a different profile pic" key='choose_a_different_profile_pic'}}</a>
-      <a href="http://www.gravatar.com" target="_blank" style="display: none;">{{t "Change your avatar at Gravatar.com" key='change_at_gravatar'}}</a>
+      <a href="https://www.gravatar.com" target="_blank" style="display: none;">{{t "Change your avatar at Gravatar.com" key='change_at_gravatar'}}</a>
     </div>
   </div>
   {{#if tools}}

@@ -733,12 +733,12 @@ var pictureGrabber = EmberObject.extend({
       var res = [];
 
       var licenses = {
-        '1': {name: 'CC By_NC-SA', url: 'http://creativecommons.org/licenses/by-nc-sa/2.0/'},
-        '2': {name: 'CC By_NC', url: 'http://creativecommons.org/licenses/by-nc/2.0/'},
-        '3': {name: 'CC By_NC-ND', url: 'http://creativecommons.org/licenses/by-nc-nd/2.0/'},
-        '4': {name: 'CC By', url: 'http://creativecommons.org/licenses/by/2.0/'},
-        '5': {name: 'CC By-SA', url: 'http://creativecommons.org/licenses/by-sa/2.0/'},
-        '6': {name: 'CC By-ND', url: 'http://creativecommons.org/licenses/by-nd/2.0/'},
+        '1': {name: 'CC By_NC-SA', url: 'https://creativecommons.org/licenses/by-nc-sa/2.0/'},
+        '2': {name: 'CC By_NC', url: 'https://creativecommons.org/licenses/by-nc/2.0/'},
+        '3': {name: 'CC By_NC-ND', url: 'https://creativecommons.org/licenses/by-nc-nd/2.0/'},
+        '4': {name: 'CC By', url: 'https://creativecommons.org/licenses/by/2.0/'},
+        '5': {name: 'CC By-SA', url: 'https://creativecommons.org/licenses/by-sa/2.0/'},
+        '6': {name: 'CC By-ND', url: 'https://creativecommons.org/licenses/by-nd/2.0/'},
         '7': {name: 'public domain', url: 'https://www.flickr.com/commons/usage/'}
       };
 
