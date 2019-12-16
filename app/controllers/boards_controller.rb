@@ -39,7 +39,7 @@ class BoardsController < ApplicationController
     reply_code = match && match[1]
     utterance = Utterance.find_by(reply_nonce: reply_code)
     return redirect_to "/utterances/not_found" if !utterance
-    return redirect_to "/utterances/expired" if utterance.created_at < 7.days.ago
+    return redirect_to "/utterances/expired" if utterance.created_at < 7.days.ago && !utterance.data['private_only']
     share_index = match[2]
     idx = Utterance.from_alpha_code(share_index) rescue nil
     return redirect_to "/utterances/not_found" if !idx || !(utterance.data['share_user_ids'] || [])[idx]
