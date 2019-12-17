@@ -183,7 +183,16 @@ describe Converters::CoughDrop do
     it "should include images and sounds inline" do
       res = OpenStruct.new(:success? => true, :body => "abc", :headers => {'Content-Type' => 'text/plaintext'})
       expect(OBF::Utils).to receive(:image_attrs).and_return({})
-      expect(Typhoeus).to receive(:get).with("http://example.com/pic.png", {:followlocation=>true}).and_return(res)
+      h = {reqs: []}
+      expect(Typhoeus::Hydra).to receive(:hydra).and_return(h)
+      expect(h).to receive(:queue) do |req| 
+        expect(req.url).to eq("http://example.com/pic.png")
+        req.instance_variable_get('@on_complete').each do |block|
+          block.call(res)
+        end
+        h[:reqs] << req
+      end
+      expect(h).to receive(:run).and_return(true)
       expect(Typhoeus).to receive(:get).with("http://example.com/sound.mp3", {:followlocation=>true}).and_return(res)
       i = ButtonImage.create(:url => "http://example.com/pic.png", :settings => {'content_type' => 'text/plaintext'})
       s = ButtonSound.create(:url => "http://example.com/sound.mp3", :settings => {'content_type' => 'text/plaintext'})
@@ -993,7 +1002,17 @@ describe Converters::CoughDrop do
     it "should include images" do
       res = OpenStruct.new(:success? => true, :body => "abc", :headers => {'Content-Type' => 'text/plaintext'})
       expect(OBF::Utils).to receive(:image_attrs).and_return({})
-      expect(Typhoeus).to receive(:get).with("http://example.com/pic.png", {:followlocation=>true}).and_return(res)
+
+      h = {reqs: []}
+      expect(Typhoeus::Hydra).to receive(:hydra).and_return(h)
+      expect(h).to receive(:queue) do |req| 
+        expect(req.url).to eq("http://example.com/pic.png")
+        req.instance_variable_get('@on_complete').each do |block|
+          block.call(res)
+        end
+        h[:reqs] << req
+      end
+      expect(h).to receive(:run).and_return(true)
       expect(Typhoeus).to receive(:get).with("http://example.com/sound.mp3", {:followlocation=>true}).and_return(res)
       i = ButtonImage.create(:url => "http://example.com/pic.png", :settings => {'content_type' => 'text/plaintext'})
       s = ButtonSound.create(:url => "http://example.com/sound.mp3", :settings => {'content_type' => 'text/plaintext'})
