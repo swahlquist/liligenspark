@@ -1053,8 +1053,14 @@ describe Purchasing do
       expect(b).to receive(:delete)
       expect(c).to receive(:save)
       expect(c).to receive(:delete)
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+        block.call(b)
+        block.call(c)
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: all})
+        subscriptions: subs1
       }))
       res = Purchasing.unsubscribe(u)
       expect(res).to eq(true)
@@ -1115,8 +1121,11 @@ describe Purchasing do
     it "should retrieve the customer record" do
       u = User.create
       u.settings['subscription'] = {'customer_id' => '1234'}
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: []})
+        subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '2345')
       expect(res).to eq(true)
@@ -1128,14 +1137,19 @@ describe Purchasing do
       a = {'id' => '3456'}
       b = {'id' => '6789'}
       c = {'id' => '4567', 'status' => 'active'}
-      all = [a, b, c]
       expect(a).to receive(:save)
       expect(a).to receive(:delete)
       expect(b).to receive(:save)
       expect(b).to receive(:delete)
       expect(c).not_to receive(:delete)
+      subs = {}
+      expect(subs).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+        block.call(b)
+        block.call(c)
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: all})
+        subscriptions: subs
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
       expect(res).to eq(true)
@@ -1153,14 +1167,26 @@ describe Purchasing do
       expect(b).to receive(:delete)
       expect(c).to receive(:save)
       expect(c).to receive(:delete)
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+      end
+      subs2 = {}
+      expect(subs2).to receive(:auto_paging_each) do |&block|
+        block.call(b)
+        block.call(c)
+      end
+      subs3 = {}
+      expect(subs3).to receive(:auto_paging_each) do |&block|
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: [a]})
+        subscriptions: subs1
       }))
       expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: [b, c]})
+        subscriptions: subs2
       }))
       expect(Stripe::Customer).to receive(:retrieve).with('4567').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: []})
+        subscriptions: subs3
       }))
       res = Purchasing.cancel_other_subscriptions(u, 'all')
       expect(res).to eq(true)
@@ -1177,14 +1203,26 @@ describe Purchasing do
       expect(b).to receive(:save)
       expect(b).to receive(:delete)
       expect(c).not_to receive(:delete)
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+      end
+      subs2 = {}
+      expect(subs2).to receive(:auto_paging_each) do |&block|
+        block.call(b)
+      end
+      subs3 = {}
+      expect(subs3).to receive(:auto_paging_each) do |&block|
+        block.call(c)
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: [a]})
+        subscriptions: subs1
       }))
       expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: [b]})
+        subscriptions: subs2
       }))
       expect(Stripe::Customer).to receive(:retrieve).with('4567').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: [c]})
+        subscriptions: subs3
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
       expect(res).to eq(true)
@@ -1202,8 +1240,14 @@ describe Purchasing do
       expect(b).to receive(:save)
       expect(b).to receive(:delete)
       expect(c).not_to receive(:delete)
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+        block.call(b)
+        block.call(c)
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: all})
+        subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
       expect(res).to eq(true)
@@ -1234,7 +1278,7 @@ describe Purchasing do
 
       u = User.create({'settings' => {'subscription' => {'customer_id' => '2345'}}})
       subscr = OpenStruct.new
-      expect(subscr).to receive(:all).and_raise('naughty')
+      expect(subscr).to receive(:auto_paging_each).and_raise('naughty')
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
         subscriptions: subscr
       }))
@@ -1248,11 +1292,15 @@ describe Purchasing do
       a = {'id' => '3456'}
       b = {'id' => '4567'}
       all = [a, b]
-      subscr = OpenStruct.new
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+        block.call(b)
+      end
       expect(b).to receive(:save)
       expect(b).to receive(:delete).and_raise('yipe')
       expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: all})
+        subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '3456')
       expect(res).to eq(false)
@@ -1272,8 +1320,14 @@ describe Purchasing do
       expect(a).to_not receive(:delete)
       expect(b).to_not receive(:delete)
       expect(c).not_to receive(:delete)
+      subs1 = {}
+      expect(subs1).to receive(:auto_paging_each) do |&block|
+        block.call(a)
+        block.call(b)
+        block.call(c)
+      end
       expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
-        subscriptions: OpenStruct.new({all: all})
+        subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
       expect(res).to eq(true)
@@ -2053,8 +2107,9 @@ describe Purchasing do
     
       it "should retrieve the customer record" do
         u = User.create
+        subs1 = {}
         expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
-          subscriptions: OpenStruct.new({all: []})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
         expect(res).to eq(false)
@@ -2062,8 +2117,9 @@ describe Purchasing do
       
       it "should not do anything if the customer metadata doesn't match the user" do
         u = User.create
+        subs1 = {}
         expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
-          subscriptions: OpenStruct.new({all: []})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
         expect(res).to eq(false)
@@ -2078,9 +2134,15 @@ describe Purchasing do
         expect(a).not_to receive(:delete)
         expect(b).to receive(:delete)
         expect(c).not_to receive(:delete)
-        expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+        subs1 = {}
+        expect(subs1).to receive(:auto_paging_each) do |&block|
+          block.call(a)
+          block.call(b)
+          block.call(c)
+        end
+          expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
-          subscriptions: OpenStruct.new({all: all})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '2345', '6789')
         expect(res).to eq(true)
@@ -2093,9 +2155,14 @@ describe Purchasing do
         all = [a, b]
         expect(a).not_to receive(:delete)
         expect(b).not_to receive(:delete)
-        expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+        subs1 = {}
+        expect(subs1).to receive(:auto_paging_each) do |&block|
+          block.call(a)
+          block.call(b)
+        end
+          expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
-          subscriptions: OpenStruct.new({all: all})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '2345', '6789')
         expect(res).to eq(false)
@@ -2110,9 +2177,15 @@ describe Purchasing do
         expect(a).not_to receive(:delete)
         expect(b).not_to receive(:delete)
         expect(c).to receive(:delete)
+        subs1 = {}
+        expect(subs1).to receive(:auto_paging_each) do |&block|
+          block.call(a)
+          block.call(b)
+          block.call(c)
+        end  
         expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
-          subscriptions: OpenStruct.new({all: all})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '2345', '4567')
         expect(res).to eq(true)
@@ -2139,7 +2212,7 @@ describe Purchasing do
 
         u = User.create({'settings' => {'subscription' => {'customer_id' => '2345'}}})
         subscr = OpenStruct.new
-        expect(subscr).to receive(:all).and_raise('naughty')
+        expect(subscr).to receive(:auto_paging_each).and_raise('naughty')
         expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subscr
@@ -2156,9 +2229,15 @@ describe Purchasing do
         all = [a, b]
         subscr = OpenStruct.new
         expect(a).to receive(:delete).and_raise('yipe')
+        subs1 = {}
+        expect(subs1).to receive(:auto_paging_each) do |&block|
+          block.call(a)
+          block.call(b)
+        end
+  
         expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
-          subscriptions: OpenStruct.new({all: all})
+          subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '3456', '3456')
         expect(res).to eq(false)

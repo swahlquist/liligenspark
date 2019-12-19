@@ -822,7 +822,7 @@ module Purchasing
         end
       end
       list = list.next_page
-      puts "..." # TODO: output instead of puts
+      output "..."
     end
     tally_months = {}
     big_charges.each do |charge|
@@ -862,7 +862,7 @@ module Purchasing
       if customer_subs.length > 1
         output "\ttoo many subscriptions"
         problems << "#{user.global_id} #{user.user_name} too many subscriptions"
-      elsif user.long_term_purchase?
+      elsif user && user.long_term_purchase?
         subs = cancels[cus_id] || []
         sub = subs[0]
         str = "\tconverted to a long-term purchase"
@@ -887,7 +887,7 @@ module Purchasing
         # if no active subscription, this is an old customer record
         check_cancels = false
         # if customer id matches, then we are properly aligned
-        if user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
+        if user && user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
           check_cancels = true
           if user_active
             output "\tno subscription found, but expected (FREELOADER)" 
@@ -954,7 +954,7 @@ module Purchasing
             years[yr] = (years[yr] || 0) + 1
           end
         end
-        if user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
+        if user && user.settings['subscription'] && user.settings['subscription']['customer_id'] == cus_id
           customer_active = sub['status'] == 'active'
           customer_active_ids << user.global_id if customer_active
           if user_active != customer_active
@@ -1010,8 +1010,10 @@ module Purchasing
       end
       
       begin
-        customer_subs = customer.subscriptions.all.to_a
-        sub = customer_subs.detect{|s| s['id'] == subscription_id}
+        sub = nil
+        customer.subscriptions.auto_paging_each do |s|
+          sub = s if s['id'] == subscription_id
+        end
       rescue => e
         user.log_subscription_event({:log => 'subscription canceling error', :detail => 'error retrieving subscriptions', :error => e.to_s, :trace => e.backtrace})
       end
@@ -1048,8 +1050,9 @@ module Purchasing
       end
       if customer
         begin
-          customer_subs = customer.subscriptions.all.to_a
-          subs += customer_subs
+          customer.subscriptions.auto_paging_each do |sub|
+            subs << sub
+          end
         rescue => e
           user.log_subscription_event({:log => 'subscription cancel error', :detail => 'error retrieving subscriptions', :error => e.to_s, :trace => e.backtrace}) if user
           return false
