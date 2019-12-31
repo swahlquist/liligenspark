@@ -8,7 +8,7 @@ export default modal.ModalController.extend({
     if(this.get('model.board')) {
       this.get('model.board').reload();
       var _this = this;
-      _this.set('hierarchy', null);
+      _this.set('hierarchy', {loading: true});
       BoardHierarchy.load_with_button_set(this.get('model.board'), {deselect_on_different: true, prevent_keyboard: true, prevent_different: true}).then(function(hierarchy) {
         _this.set('hierarchy', hierarchy);
       }, function(err) {
