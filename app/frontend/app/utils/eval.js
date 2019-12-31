@@ -66,6 +66,7 @@ var evaluation = {
     assessment.notes = settings.notes;
     assessment.label = settings.label;
     assessment.accommodations = settings.accommodations;
+    assessment.prompts = settings.prompts;
     if(settings.for_user && !assessment.saved) {
       if(settings.for_user.user_id == 'self') {
         emberSet(settings.for_user, 'user_id', app_state.get('currentUser.id'));
@@ -590,6 +591,7 @@ var levels = [
     {id: 'symbols-below', difficulty: -1, symbols: 'auto', distractors: true, min_attempts: 2},
     {id: 'symbols-at', difficulty: 0, symbols: 'auto', distractors: true, min_attempts: 3, difficulty_stop: true},
     {id: 'symbols-above', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 3, difficulty_stop: true},
+    {id: 'symbols-above-shuffle', difficulty: 1, symbols: 'auto', distractors: true, min_attempts: 1, shuffle: true},
     // TODO: include text-only as a possible option
   ],
   // TODO: at this point if there is an obviously-better symbol library, start using it (unless explicitly told not to in the settings)
@@ -672,7 +674,7 @@ var functional_associations = {
   button: {prompt: "a button", answer: "push"},
 //  window: {prompt: "a window", answer: "open"},
   apple: {prompt: "an apple", answer: "eat"},
-  motorcycle: {prompt: "a motorcycle", answer: "race"},
+  motorcycle: {prompt: "a motorcycle", answer: "race", exclude: {drive: true}},
   airplane: {prompt: "an airplane", answer: "fly"},
   bubble: {prompt: "a bubble", answer: "pop"},
   soap: {prompt: "soap", answer: "wash"},
@@ -1043,6 +1045,7 @@ evaluation.callback = function(key) {
       attempt_minimum: attempt_minimum,
       attempt_maximum: attempt_maximum,
       ppi: window.ppi,
+      prompts: true,
       default_library: 'default',
       name: 'Unnamed Eval',
     };
@@ -1562,7 +1565,7 @@ evaluation.callback = function(key) {
         var cat_word = words.find(function(w) { return w.group == cat.category});
         if(!cat_word) { debugger }
         board.background.image = cat_word.urls['photos'] || cat_word.urls['default'];
-        distractor_words = shuffle(working.ref.all_functional_words.filter(function(w) { return w.category != cat.category && !(cat.exclude || {})[w.category]; }));
+        distractor_words = shuffle(working.ref.all_functional_words.filter(function(w) { return w.category != cat.category && !(cat.exclude || {})[w.category] && !(cat.exclude || {})[w.label]; }));
       } else if(step.find == 'functional_association') {
         assert('functional_association');
         working.ref.functional_association_index = working.ref.functional_association_index || 0;
@@ -1572,7 +1575,7 @@ evaluation.callback = function(key) {
         if(!cat.prompt) { debugger }
         prompt_text = "What do you do with " + cat.prompt + "?";
         filtered = [cat.action];
-        distractor_words = working.ref.all_functional_association_words.filter(function(w) { return w != cat.action; });
+        distractor_words = working.ref.all_functional_association_words.filter(function(w) { return w != cat.action && !(cat.exclude || {})[w.category]; } && !(cat.exclude || {})[w.label]);
         board.background.image = cat.word.urls['photos'] || cat.word.urls['default'];
       } else if(step.find == 'category') {
         assert('groups');
@@ -1593,7 +1596,8 @@ evaluation.callback = function(key) {
         if(working.ref.category_group_index >= working.ref.groups.length) { working.ref.category_group_index = 0; }
         var word = category.words[Math.floor(Math.random() * category.words.length)];
         filtered = [word];
-        distractor_words = working.ref.all_group_words.concat(category.words);
+        var extras = shuffle(working.ref.all_group_words).slice(0, 9 - category.words.length);
+        distractor_words = category.words.concat(extras);
         prompt_text = "What kind of " + category.category + " is this?";
         if(category.category == 'color') {
           prompt_text = "What color is this?";
@@ -1750,9 +1754,11 @@ evaluation.callback = function(key) {
       if(board.background.image) {
         board.background.position = board.background.position || "center,0,0,6,1";
       }
-      board.background.prompt = {
-        text: prompt_text
-      };
+      if(assessment.prompts) {
+        board.background.prompt = {
+          text: prompt_text
+        };
+      }
     } else if(step.core) {
       board.background.position = 'center,0,0,10,2';
       board.background.prompt = null;
@@ -1864,24 +1870,27 @@ evaluation.callback = function(key) {
     if(sample && sample.in) {
       // try to render near the target(s)
       loc = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
+      working.ref.loc_from = 'sample.in';
 
       if(alternating) {
         if(sample.type == 'xy' && sample.row && sample.col) {
-          loc[0] = sample.row;
-          loc[1] = sample.col;
+          loc[0] = Math.max(Math.min(sample.row, rows - 1), 0);
+          loc[1] = Math.max(Math.min(sample.col, cols - 1), 0);
         }
       } else {
         if(sample.col && (sample.type == 'x' || sample.type == 'xy')) {
-          loc[1] = sample.col;
+          loc[1] = Math.max(Math.min(sample.col, cols - 1), 0);
         }
         if(sample.row && (sample.type == 'y' || sample.type == 'xy')) {
-          loc[0] = sample.row;
+          loc[0] = Math.max(Math.min(sample.row, rows - 1), 0);
         }
       }
     }
     while(!loc || (prior && loc[0] == prior.crow && loc[1] == prior.ccol)) {
       loc = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
+      working.ref.loc_from = 'random.sample';
       if(alternating && loc[1] % 2 != loc[0] % 2) {
+        working.ref.loc_from = 'shift.col';
         // force onto alternating spot if possible
         if(loc[1] < step_cols - 2) {
           loc[1]++;
@@ -1943,8 +1952,8 @@ evaluation.callback = function(key) {
       for(var idx = 0; idx < core.length; idx++) {
         for(var jdx = 0; jdx < core[idx].length; jdx++) {
           if(prompt.label == core[idx][jdx]) {
-            loc[0] = idx;
-            loc[1] = jdx;
+            loc[0] = Math.max(Math.min(idx, rows - 1), 0);
+            loc[1] = Math.max(Math.min(jdx, cols - 1), 0);
           }
         }
       }
@@ -1958,9 +1967,11 @@ evaluation.callback = function(key) {
         rc: [loc[0] * spacing + offset + skip_rows, loc[1] * spacing + offset, loc[0] * spacing + offset, loc[0] * spacing, loc[0]]
   //      sound: {}
       }, loc[0] * spacing + offset + skip_rows, loc[1] * spacing + offset);
+      working.ref.last_correct = loc;
+      console.log("adding correct button at". loc);
     }
     var used_words = {};
-    if(working.level_id == 'diff_target' && !working.ref['diff_map_for_' + assessment.label]) {
+    if(['diff_target', 'symbols'].indexOf(working.level_id) != -1 && !working.ref['diff_map_for_' + assessment.label]) {
       working.ref['diff_map_for_' + assessment.label] = {};
       var distractors = shuffle(distractor_words).filter(function(w) { return prompts.indexOf(w.label) == -1; });
       for(var idx = 0; idx < 8; idx++) {
@@ -1978,7 +1989,7 @@ evaluation.callback = function(key) {
           var word = null, letter = null;
           if(step.keyboard) {
             letter = core[idx][jdx];
-          } else if(working.level_id == 'diff_target' && !step.shuffle) {
+          } else if(['diff_target', 'symbols'].indexOf(working.level_id) != -1 && !step.shuffle) {
             word = working.ref['diff_map_for_' + assessment.label][idx * spacing + offset + skip_rows][jdx * spacing + offset];
           } else if(step.distractors) {
             if(core.length > 0) {
