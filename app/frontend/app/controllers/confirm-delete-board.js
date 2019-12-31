@@ -61,7 +61,7 @@ export default modal.ModalController.extend({
         if(_this.get('model.redirect')) {
           _this.transitionToRoute('index');
         }
-        modal.close();
+        modal.close({update: true});
       }, function() {
         _this.set('model.deleting', false);
         _this.set('model.error', true);

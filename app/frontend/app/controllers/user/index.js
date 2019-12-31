@@ -348,12 +348,16 @@ export default Controller.extend({
     remove_board: function(action, board) {
       var _this = this;
       if(action == 'delete') {
-        modal.open('confirm-delete-board', {board: board, redirect: false}).then(function() {
-          _this.update_selected();
+        modal.open('confirm-delete-board', {board: board, redirect: false}).then(function(res) {
+          if(res && res.update) {
+            _this.update_selected();
+          }
         });
       } else {
-        modal.open('confirm-remove-board', {action: action, board: board, user: this.get('model')}).then(function() {
-          _this.update_selected();
+        modal.open('confirm-remove-board', {action: action, board: board, user: this.get('model')}).then(function(res) {
+          if(res && res.update) {
+            _this.update_selected();
+          }
         });
       }
     },

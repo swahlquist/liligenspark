@@ -29,7 +29,7 @@ export default modal.ModalController.extend({
         _this.set('error', false);
         board.set('removed', true);
 
-        modal.close();
+        modal.close({update: true});
       }, function() {
         _this.set('loading', false);
         _this.set('error', true);
