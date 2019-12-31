@@ -88,6 +88,7 @@ var stashes = EmberObject.extend({
       'recent_boards': [],
       'logging_paused_at': null,
       'last_stream_id': null,
+      'last_sync_status': null,
       'protected_user': false,
       'label_locale': null,
       'last_root': null,

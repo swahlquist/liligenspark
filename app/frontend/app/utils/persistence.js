@@ -1350,10 +1350,12 @@ var persistence = EmberObject.extend({
           var sync_message = null;
           if(errors.length > 0) {
             persistence.set('sync_status', 'finished');
+            stashes.persist('last_sync_status', 'finished');
             persistence.set('sync_errors', errors.length);
             sync_message = i18n.t('finished_with_errors', "Finished syncing %{user_id} with %{n} error(s)", {user_id: user_name, n: errors.length});
           } else {
             persistence.set('sync_status', 'succeeded');
+            stashes.persist('last_sync_status', 'succeeded');
             sync_message = i18n.t('finised_without_errors', "Finished syncing %{user_id} without errors", {user_id: user_name});
           }
           console.log('synced!');
@@ -1383,6 +1385,15 @@ var persistence = EmberObject.extend({
         var statuses = persistence.get('sync_progress.board_statuses') || [];
         persistence.set('sync_progress', null);
         persistence.set('sync_status', 'failed');
+        // if last sync attempt ended in failure and this attempt also 
+        // failed, then set last_sync_at to prevent repeated attempts to sync
+        if(stashes.get('last_sync_status') == 'failed') {
+          var last_sync = (new Date()).getTime() / 1000;
+          persistence.store('settings', {last_sync: last_sync}, 'lastSync').then(function(res) {
+            persistence.set('last_sync_at', res.last_sync);
+          }, function() { });
+        }
+        stashes.persist('last_sync_status', 'failed');
         persistence.set('sync_status_error', null);
         if(err.board_unauthorized) {
           persistence.set('sync_status_error', i18n.t('board_unauthorized', "One or more boards are private"));
@@ -2349,8 +2360,10 @@ var persistence = EmberObject.extend({
     var _this = this;
 
     if(stashes.get('auth_settings') && window.coughDropExtras && window.coughDropExtras.ready) {
+      // if last 2 sync attempts failed, last_sync_at should be set to prevent repeated attempts
       var synced = _this.get('last_sync_at') || 0;
       var syncable = persistence.get('online') && !Ember.testing && !persistence.get('syncing');
+      // default to checking every 5 minutes
       var interval = persistence.get('last_sync_stamp_interval') || (5 * 60 * 1000);
       interval = interval + (0.2 * interval * Math.random()); // jitter
       if(_this.get('last_sync_event_at')) {
