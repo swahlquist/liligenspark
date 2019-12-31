@@ -29,9 +29,19 @@
         </label>
         {{#if delete_downstream}}
           <p class='text-danger'>
-            {{t "Please double-check that this is what you want to do, this action could delete up to" key='confirm_downstream_delete'}}
-            {{t "additional board" key='n_boards' count=model.board.downstream_boards}}{{t "." key='period'}}
+            {{t "Please double-check that you want to delete the following boards" key='confirm_downstream_delete'}}
           </p>
+          {{#if hierarchy.loading}}
+            {{t "Loading linked boards..." key='loading_linked_boards'}}
+          {{else if hierarchy.error}}
+            {{t "There was an error trying to retrieve linked boards" key='error_getting_linked_boards'}}
+          {{else if hierarchy}}
+            <div style='margin-top: 5px;'>
+              {{board-hierarchy hierarchy=hierarchy selectable=true}}
+            </div>
+          {{else}}
+            {{t "No linked boards" key='no_linked_boards'}}
+          {{/if}}
         {{/if}}
       </div>
     {{/if}}
