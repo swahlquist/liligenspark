@@ -6,7 +6,7 @@ import RSVP from 'rsvp';
 import persistence from './persistence';
 import capabilities from './capabilities';
 import Utils from './misc';
-import app_state from './app_state';
+import i18n from './i18n';
 import CoughDrop from '../app';
 
 var word_suggestions = EmberObject.extend({
@@ -237,6 +237,13 @@ var word_suggestions = EmberObject.extend({
           });
         }
         //if(result.length < max_results) { find_lookups(Ember.keys(_this.ngrams)); }
+        var word_to_check = word_in_progress || last_finished_word;
+
+        if(word_to_check.match(/^[\d\,\.]+$/)) {
+          result.unshift({
+            word: i18n.ordinal(word_to_check)
+          });
+        }
         result = Utils.uniq(result, 'word');
         _this.last_result = result;
         _this.fallback_url().then(function(url) {

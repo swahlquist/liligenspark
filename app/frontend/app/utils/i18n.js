@@ -453,6 +453,20 @@ var i18n = EmberObject.extend({
   negation: function(str) {
     return "not " + str;
   },
+  ordinal: function(num) {
+    var str = num.replace(/,/, '').replace(/[^0-9\.]/g, '');
+    var last = str[str.length - 1];
+    if(last == '1') {
+      str = str + "st";
+    } else if(last == '2') {
+      str = str + "nd";
+    } else if(last == '3') {
+      str = str + "rd";
+    } else {
+      str = str + "th";
+    }
+    return str;
+  },
   negatable_verbs: ['is', 'am', 'was', 'were', 'be', 'been', 'being', 'do', 'does', 'did', 'have', 'has',
     'had', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should', 'are'],
   verb_negation: function(str) {

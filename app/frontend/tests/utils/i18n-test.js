@@ -108,6 +108,31 @@ describe("i18n", function() {
     });
   });
 
+  describe("ordinal", function() {
+    it("should format numbers", function() {
+      expect(i18n.ordinal("1")).toEqual("1st");
+      expect(i18n.ordinal("2")).toEqual("2nd");
+      expect(i18n.ordinal("3")).toEqual("3rd");
+      expect(i18n.ordinal("4")).toEqual("4th");
+      expect(i18n.ordinal("5")).toEqual("5th");
+      expect(i18n.ordinal("6")).toEqual("6th");
+      expect(i18n.ordinal("7")).toEqual("7th");
+      expect(i18n.ordinal("8")).toEqual("8th");
+      expect(i18n.ordinal("9")).toEqual("9th");
+      expect(i18n.ordinal("10")).toEqual("10th");
+      expect(i18n.ordinal("24")).toEqual("24th");
+      expect(i18n.ordinal("23")).toEqual("23rd");
+      expect(i18n.ordinal("235322")).toEqual("235322nd");
+      expect(i18n.ordinal("q398q")).toEqual("398th");
+      expect(i18n.ordinal("4qn5783n1")).toEqual("457831st");
+      expect(i18n.ordinal("4q893yo8")).toEqual("48938th");
+      expect(i18n.ordinal("000004")).toEqual("000004th");
+      expect(i18n.ordinal("345234")).toEqual("345234th");
+      expect(i18n.ordinal("2345wert")).toEqual("2345th");
+      expect(i18n.ordinal("235.1")).toEqual("235.1st");
+    });
+  });
+
   describe("handlebars_helpers", function() {
     it("should format dates", function() {
       var str = Ember.templateHelpers.date();
