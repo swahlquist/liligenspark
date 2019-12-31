@@ -276,6 +276,11 @@ var editManager = EmberObject.extend({
         ]);
       } else {
         console.log("unrecognized en button type", button.part_of_speech, button);
+        if(button.part_of_speech == 'numeral' || (button.label || '').match(/^[0-9\.\,]+$/)) {
+          res = res.concat([
+            {location: 'n', label: i18n.ordinal(button.label)}
+          ]);
+        }
         res = res.concat([
   //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
           {location: 'c', label: button.label},
