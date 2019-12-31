@@ -136,6 +136,10 @@ class Api::BoardsController < ApplicationController
     # TODO: assumptions containing the word "probably" tend to break sooner than you think
     Rails.logger.warn('private query')
     self.class.trace_execution_scoped(['boards/private_query']) do
+      if params['root']
+        boards = boards.select{|b| !b.settings['copy_id'] }
+      end
+
       if params['q'] && params['q'].length > 0 && !params['public']
         boards = boards.select{|b| (b.settings['search_string'] || "").match(/#{CGI.unescape(params['q']).downcase}/i) }
       end

@@ -48,12 +48,14 @@ export default Controller.extend({
     'model.preferences.home_board.key',
     'public_boards_shortened',
     'private_boards_shortened',
+    'root_boards_shortened',
     'starred_boards_shortened',
     'shared_boards_shortened',
     function() {
       return !this.get('model.preferences.home_board.key') &&
         (this.get('public_boards_shortened') || []).length === 0 &&
         (this.get('private_boards_shortened') || []).length === 0 &&
+        (this.get('root_boards_shortened') || []).length === 0 &&
         (this.get('starred_boards_shortened') || []).length === 0 &&
         (this.get('shared_boards_shortened') || []).length === 0;
     }
@@ -67,12 +69,14 @@ export default Controller.extend({
     'model.prior_home_boards',
     'model.public_boards',
     'model.private_boards',
+    'model.root_boards',
     'model.starred_boards',
     'model.shared_boards',
     'model.my_boards.length',
     'model.prior_home_boards.length',
     'model.public_boards.length',
     'model.private_boards.length',
+    'model.root_boards.length',
     'model.starred_boards.length',
     'model.shared_boards.length',
     function() {
@@ -84,6 +88,8 @@ export default Controller.extend({
         list = this.get('model.public_boards');
       } else if(this.get('selected') == 'private') {
         list = this.get('model.private_boards');
+      } else if(this.get('selected') == 'root') {
+        list = this.get('model.root_boards');
       } else if(this.get('selected') == 'starred') {
         list = this.get('model.starred_boards');
         res.remove_type = 'unstar';
@@ -244,7 +250,7 @@ export default Controller.extend({
     if(!_this.get('selected') && model) {
       default_key = model.get('permissions.supervise') ? 'mine' : 'public';
     }
-    ['mine', 'public', 'private', 'starred', 'shared', 'prior_home'].forEach(function(key, idx) {
+    ['mine', 'public', 'private', 'starred', 'shared', 'prior_home', 'root'].forEach(function(key, idx) {
       if(_this.get('selected') == key || key == default_key) {
         _this.set(key + '_selected', true);
         if(key == 'mine') {
@@ -253,6 +259,8 @@ export default Controller.extend({
           _this.generate_or_append_to_list({user_id: model.get('id'), public: true}, 'model.public_boards', list_id);
         } else if(key == 'private') {
           _this.generate_or_append_to_list({user_id: model.get('id'), private: true}, 'model.private_boards', list_id);
+        } else if(key == 'root') {
+          _this.generate_or_append_to_list({user_id: model.get('id'), root: true, sort: 'home_popularity'}, 'model.root_boards', list_id);
         } else if(key == 'starred') {
           if(model.get('permissions.supervise')) {
             _this.generate_or_append_to_list({user_id: model.get('id'), starred: true}, 'model.starred_boards', list_id);
