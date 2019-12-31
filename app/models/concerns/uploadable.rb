@@ -116,20 +116,48 @@ module Uploadable
     if self.url && Uploader.protected_remote_url?(self.url)
       self.schedule(:assert_cached_copy)
     end
+    if self.url && self.settings && self.settings['content_type'] && self.settings['content_type'].match(/image\/svg/) && !self.settings['rasterized']
+      self.schedule(:assert_raster)
+    end
     true
+  end
+
+  def assert_raster
+    if self.url && self.settings && self.settings['content_type'] && self.settings['content_type'].match(/image\/svg/) && !self.settings['rasterized']
+      self.settings['rasterized'] = 'pending'
+      res = Typhoeus.head(Uploader.sanitize_url(URI.escape("#{self.url}.raster.png")), followlocation: true)
+      # check if there's already a .raster.png for the image (i.e. on opensymbols)
+      if res.success?
+        self.settings['rasterized'] = 'from_url'
+        self.save
+      else
+        self.schedule(:upload_to_remote, self.url, true)
+      end
+    end
+  end
+
+  def raster_url
+    if self.settings['rasterized'] == 'from_url'
+      "#{self.url}.raster.png"
+    elsif self.settings['rasterized'] == 'from_filename'
+      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}#{self.full_filename}.raster.png"
+    else
+      nil
+    end
   end
   
   def assert_cached_copy
     self.class.assert_cached_copy(self.url)
   end
   
-  def remote_upload_params
-    res = Uploader.remote_upload_params(self.full_filename, self.content_type)
+  def remote_upload_params(rasterize=false)
+    fn = rasterize ? "#{self.full_filename}.raster.png" : self.full_filename
+    res = Uploader.remote_upload_params(fn, rasterize ? 'image/png' : self.content_type)
     res[:success_url] = "#{JsonApi::Json.current_host}/api/v1/#{self.file_type}/#{self.global_id}/upload_success?confirmation=#{self.confirmation_key}"
     res  
   end
   
-  def upload_to_remote(url)
+  def upload_to_remote(url, rasterize=false)
     raise "must have id first" unless self.id
     self.settings['pending_url'] = nil
     url = self.settings['data_uri'] if url == 'data_uri'
@@ -140,8 +168,8 @@ module Uploadable
       data = url.split(/,/)[1]
       file.write(Base64.strict_decode64(data))
     else
-      self.settings['source_url'] = url
-      res = Typhoeus.get(Uploader.sanitize_url(URI.escape(url)))
+      self.settings['source_url'] = url if !rasterize
+      res = Typhoeus.get(Uploader.sanitize_url(URI.escape(url)), followlocation: true)
       if res.headers['Location']
         redirect_url = res.headers['Location']
         redirect_url = redirect_url.sub(/\?/, "%3F") if redirect_url.match(/lessonpix\.com/) && redirect_url.match(/\?.*\.png/)
@@ -175,21 +203,36 @@ module Uploadable
       end
     end
     file.rewind
-    params = self.remote_upload_params
+    if rasterize
+      `convert -background none -density 300 -resize 400x400 -gravity center -extent 400x400 #{file.path} #{file.path}.raster.png`
+      file.close
+      file = File.open("#{file.path}.raster.png", 'rb')
+    end
+    params = self.remote_upload_params(rasterize)
     post_params = params[:upload_params]
     post_params[:file] = file
 
     # upload to s3 from tempfile
     res = Typhoeus.post(params[:upload_url], body: post_params)
-    if res.success?
-      self.url = params[:upload_url] + self.full_filename
-      self.settings['pending'] = false
-      self.settings['data_uri'] = nil
-      self.settings['pending_url'] = nil
-      self.save
+    if rasterize
+      if res.success?
+        self.settings['rasterized'] = 'from_filename'
+        self.save
+      else
+        self.settings['rasterized'] = false if self.settings['rasterized'] == 'pending'
+        self.save
+      end
     else
-      self.settings['errored_pending_url'] = url
-      self.save
+      if res.success?
+        self.url = params[:upload_url] + self.full_filename
+        self.settings['pending'] = false
+        self.settings['data_uri'] = nil
+        self.settings['pending_url'] = nil
+        self.save
+      else
+        self.settings['errored_pending_url'] = url
+        self.save
+      end
     end
   end
 

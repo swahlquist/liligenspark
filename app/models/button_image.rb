@@ -11,6 +11,7 @@ class ButtonImage < ActiveRecord::Base
   belongs_to :user
   before_save :generate_defaults
   after_create :track_image_use_later
+  after_create :assert_raster
   after_destroy :remove_connections
   include Replicate
 

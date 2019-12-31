@@ -134,6 +134,10 @@ module Converters::CoughDrop
       if original_button['image_id']
         image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
         if image
+          image_url = image.url_for(opts['user']),
+          if opts['for_pdf']
+            image_url = image.raster_url || image_url
+          end
           image = {
             'id' => image.global_id,
             'width' => image.settings['width'],
@@ -141,7 +145,7 @@ module Converters::CoughDrop
             'protected' => image.settings['protected'],
             'protected_source' => image.settings['protected_source'],
             'license' => OBF::Utils.parse_license(image.settings['license']),
-            'url' => image.url_for(opts['user']),
+            'url' => image_url,
             'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
             'content_type' => image.settings['content_type']
           }
@@ -449,6 +453,7 @@ module Converters::CoughDrop
     Progress.as_percent(0, 0.5) do
       # TODO: break 
       if opts['packet']
+        opts['for_pdf'] = true
         json = to_external_nested(board, opts)
       else
         json = to_external(board, opts)
