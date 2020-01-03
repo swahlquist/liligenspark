@@ -50,5 +50,8 @@
     "lodash": ">=4.17.11",
     "merge": ">=1.2.1",
     "qunit-dom": "^0.8.4"
+  },
+  "dependencies": {
+    "ember-cli-update": "^0.48.2"
   }
 }
