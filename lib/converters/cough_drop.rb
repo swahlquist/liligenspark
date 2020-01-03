@@ -134,7 +134,7 @@ module Converters::CoughDrop
       if original_button['image_id']
         image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
         if image
-          image_url = image.url_for(opts['user']),
+          image_url = image.url_for(opts['user'])
           if opts['for_pdf']
             image_url = image.raster_url || image_url
           end
@@ -452,8 +452,8 @@ module Converters::CoughDrop
     json = nil
     Progress.as_percent(0, 0.5) do
       # TODO: break 
+      opts['for_pdf'] = true
       if opts['packet']
-        opts['for_pdf'] = true
         json = to_external_nested(board, opts)
       else
         json = to_external(board, opts)
