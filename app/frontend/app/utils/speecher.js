@@ -467,12 +467,17 @@ var speecher = EmberObject.extend({
 
       var speak_utterance = function() {
         speecher.last_utterance = utterance;
-        if(opts.voiceURI != 'force_default') {
-          try {
-            utterance.voice = voice;
-          } catch(e) { }
-          if(voice) {
-            utterance.lang = voice.lang;
+        if(opts && opts.voiceURI != 'force_default') {
+          if(capabilities.system == 'iOS' && capabilities.ios_version && capabilities.ios_version < 9) {
+          } else {
+            try {
+              utterance.voice = voice;
+            } catch(e) { }  
+            if(voice) {
+              try {
+                utterance.lang = voice.lang;
+              } catch(e) { }
+            }
           }
         }
         var handle_callback = function() {

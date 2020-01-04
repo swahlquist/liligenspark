@@ -51,6 +51,17 @@ var capabilities;
     if(navigator.userAgent.match(/ipod|ipad|iphone/i)) {
       capabilities.mobile = true;
       capabilities.system = "iOS";
+      var match = (navigator.appVersion || '').match(/OS (\d+)_(\d+)_?(\d+)?/), version, primary_version;
+            
+      if (match !== undefined && match !== null) {
+          version = [
+              parseInt(match[1], 10),
+              parseInt(match[2], 10),
+              parseInt(match[3] || 0, 10)
+          ];
+          capabilities.ios_version = version[0];
+      }
+
       if(capabilities.installed_app) {
         capabilities.browser = "App";
       } else if(navigator.userAgent.match(/crios/i)) {
