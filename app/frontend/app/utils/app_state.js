@@ -1708,9 +1708,10 @@ var app_state = EmberObject.extend({
     'stashes.sidebarEnabled',
     'currentUser',
     'currentUser.preferences.quick_sidebar',
+    'eval_mode',
     function() {
       // TODO: does this need to trigger board resize event? maybe...
-      return this.get('speak_mode') && (stashes.get('sidebarEnabled') || this.get('currentUser.preferences.quick_sidebar'));
+      return this.get('speak_mode') && !this.get('eval_mode') && (stashes.get('sidebarEnabled') || this.get('currentUser.preferences.quick_sidebar'));
     }
   ),
   sidebar_relegated: computed('speak_mode', 'window_inner_width', function() {

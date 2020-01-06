@@ -833,53 +833,51 @@
   {{ outlet }}
 </div>
 {{#if app_state.sidebar_visible}}
-  {{#unless app_state.eval_mode}}
-    <div id="sidebar" class='noselect advanced_selection' style={{sidebar_style}}>
-      {{#unless app_state.currentUser.preferences.quick_sidebar}}
-        <span style="margin: 5px; text-align: right; white-space: nowrap;">
-          {{#if app_state.currentUser}}
-            <button class='btn btn-default' style="width: 50%;" {{action "stickSidebar"}}><span class="glyphicon glyphicon-pushpin"></span></button>
-            <button class='btn btn-default' id='sidebar_close' style="width: calc(50% - 14px); padding-left: 0; padding-right: 0;">&times;</button>
-          {{else}}
-            <button id='sidebar_close' class='btn btn-default' style="width: 90%;">&times; {{t "Hide" key='hide'}}</button>
+  <div id="sidebar" class='noselect advanced_selection' style={{sidebar_style}}>
+    {{#unless app_state.currentUser.preferences.quick_sidebar}}
+      <span style="margin: 5px; text-align: right; white-space: nowrap;">
+        {{#if app_state.currentUser}}
+          <button class='btn btn-default' style="width: 50%;" {{action "stickSidebar"}}><span class="glyphicon glyphicon-pushpin"></span></button>
+          <button class='btn btn-default' id='sidebar_close' style="width: calc(50% - 14px); padding-left: 0; padding-right: 0;">&times;</button>
+        {{else}}
+          <button id='sidebar_close' class='btn btn-default' style="width: 90%;">&times; {{t "Hide" key='hide'}}</button>
+        {{/if}}
+      </span>
+    {{/unless}}
+    {{#each app_state.sidebar_boards as |board|}}
+      {{#if board.alert}}
+        <a href="#" {{action 'alert' 'sidebar'}} class='sidebar_item'>
+          <span class="glyphicon glyphicon-bullhorn"></span>
+          <img src={{board.image}} class='pic' alt=""/>
+          {{board.name}}
+        </a>
+      {{else if board.special}}
+        <a href="#" {{action 'special' board}} class='sidebar_item'>
+          <span class="glyphicon glyphicon-flash"></span>
+          <img src={{board.image}} class='pic' alt=""/>
+          {{board.name}}
+        </a>
+      {{else}}
+        <a href={{board.key}} class='sidebar_item' {{action 'jump' board.key 'sidebar' board}} data-key={{board.key}}>
+          {{#if board.home_lock}}
+            <span class="glyphicon glyphicon-home"></span>
           {{/if}}
+          {{#if board.fenced}}
+            <span class="glyphicon glyphicon-map-marker"></span>
+          {{/if}}
+          <img src={{board.image}} class='pic' alt=""/>
+          {{board.name}}
+        </a>
+      {{/if}}
+    {{/each}}
+    {{#if app_state.currentUser.preferences.quick_sidebar}}
+      {{#unless app_state.currentUser.preferences.lock_quick_sidebar}}
+        <span style="margin: 5px; text-align: right;">
+          <button class='btn btn-default' style="width: 90px; margin-bottom: 5px; " {{action "stickSidebar"}}>Hide</button>
         </span>
       {{/unless}}
-      {{#each app_state.sidebar_boards as |board|}}
-        {{#if board.alert}}
-          <a href="#" {{action 'alert' 'sidebar'}} class='sidebar_item'>
-            <span class="glyphicon glyphicon-bullhorn"></span>
-            <img src={{board.image}} class='pic' alt=""/>
-            {{board.name}}
-          </a>
-        {{else if board.special}}
-          <a href="#" {{action 'special' board}} class='sidebar_item'>
-            <span class="glyphicon glyphicon-flash"></span>
-            <img src={{board.image}} class='pic' alt=""/>
-            {{board.name}}
-          </a>
-        {{else}}
-          <a href={{board.key}} class='sidebar_item' {{action 'jump' board.key 'sidebar' board}} data-key={{board.key}}>
-            {{#if board.home_lock}}
-              <span class="glyphicon glyphicon-home"></span>
-            {{/if}}
-            {{#if board.fenced}}
-              <span class="glyphicon glyphicon-map-marker"></span>
-            {{/if}}
-            <img src={{board.image}} class='pic' alt=""/>
-            {{board.name}}
-          </a>
-        {{/if}}
-      {{/each}}
-      {{#if app_state.currentUser.preferences.quick_sidebar}}
-        {{#unless app_state.currentUser.preferences.lock_quick_sidebar}}
-          <span style="margin: 5px; text-align: right;">
-            <button class='btn btn-default' style="width: 90px; margin-bottom: 5px; " {{action "stickSidebar"}}>Hide</button>
-          </span>
-        {{/unless}}
-      {{/if}}
-    </div>
-  {{/unless}}
+    {{/if}}
+  </div>
 {{else}}
   {{#if app_state.speak_mode}}
     {{#unless app_state.currentUser.preferences.disable_quick_sidebar}}
