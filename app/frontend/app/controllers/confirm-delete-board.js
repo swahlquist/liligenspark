@@ -5,6 +5,7 @@ import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
+    this.set('hierarchy', null);
     if(this.get('model.board')) {
       this.get('model.board').reload();
       var _this = this;
@@ -24,7 +25,6 @@ export default modal.ModalController.extend({
     deleteBoard: function(decision) {
       var _this = this;
       var board = this.get('model.board');
-      board.deleteRecord();
       _this.set('model.deleting', true);
       var load_promises = [];
       var other_boards = [];
@@ -35,11 +35,14 @@ export default modal.ModalController.extend({
         }
   
         other_board_ids.forEach(function(id) {
-          load_promises.push(_this.store.findRecord('board', id).then(function(board) {
-            other_boards.push(board);
-          }));
+          if(id != board.get('id')) {
+            load_promises.push(_this.store.findRecord('board', id).then(function(board) {
+              other_boards.push(board);
+            }));
+          }
         });
       }
+      board.deleteRecord();
       var save = board.save();
 
       var wait_for_loads = save.then(function() {
