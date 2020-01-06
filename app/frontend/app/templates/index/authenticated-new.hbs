@@ -284,7 +284,7 @@
         <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}}><a href="#" {{action 'set_index_nav' 'updates'}}>
           {{t "Updates" key='updates'}}
           {{#if pending_updates}}
-            <span class="label label-danger unread">
+            <span class="label label-danger unread hidden-xs">
               {{#if pending_updates.count}}
                 {{pending_updates.count}}
               {{else}}
