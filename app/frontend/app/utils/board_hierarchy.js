@@ -50,7 +50,7 @@ var BoardHierarchy = EmberObject.extend({
           this.get('children').forEach(function(c) { c.set('disabled', true); });
         }
       });
-      hierarchy_board.set('visible', !!button_set.get('buttons').find(function(b) { return b.board_id == board_id; }));
+      hierarchy_board.set('visible', !!(button_set.get('buttons') || []).find(function(b) { return b.board_id == board_id; }));
       var linked_buttons = button_set.get('buttons').filter(function(b) { return b.board_id == board_id && b.linked_board_id; });
       linked_buttons.forEach(function(btn) {
         var linked_board = traversed_boards[btn.linked_board_id];

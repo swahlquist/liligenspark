@@ -29,7 +29,11 @@
         </label>
         {{#if delete_downstream}}
           <p class='text-danger'>
-            {{t "Please double-check that you want to delete the following boards" key='confirm_downstream_delete'}}
+            {{#if deleting_boards_count}}
+              {{t "Please double-check that you want to delete the following %{n} boards" n=deleting_boards_count key='confirm_downstream_delete'}}
+            {{else}}
+              {{t "Please double-check that you want to delete the following boards" key='confirm_downstream_delete'}}
+            {{/if}}
           </p>
           {{#if hierarchy.loading}}
             {{t "Loading linked boards..." key='loading_linked_boards'}}
