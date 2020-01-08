@@ -149,7 +149,7 @@ module Converters::CoughDrop
             'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
             'content_type' => image.settings['content_type']
           }
-          if image['protected_source'] == 'pcs'
+          if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
             image['url'] += '.png'
             image['content_type'] = 'image/png'
             image['width'] = 400
