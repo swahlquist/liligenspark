@@ -140,7 +140,7 @@ module Uploadable
     if self.settings['rasterized'] == 'from_url'
       "#{self.url}.raster.png"
     elsif self.settings['rasterized'] == 'from_filename'
-      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}#{self.full_filename}.raster.png"
+      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}/#{self.full_filename}.raster.png"
     else
       nil
     end
