@@ -136,7 +136,7 @@ module Converters::CoughDrop
         if image
           image_url = image.url_for(opts['user'])
           if opts['for_pdf']
-            image_url = image.raster_url || image_url
+            image_url = image_url
           end
           image = {
             'id' => image.global_id,
