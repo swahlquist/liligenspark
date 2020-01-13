@@ -720,7 +720,7 @@ module Subscription
           end
           if attempts > 2
             user.schedule_deletion_at = 36.hours.from_now
-            user.save
+            user.save(touch: false)
             SubscriptionMailer.deliver_message(:account_deleted, user.global_id)
           else
             SubscriptionMailer.deliver_message(:deletion_warning, user.global_id, attempts)

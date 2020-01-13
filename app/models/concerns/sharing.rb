@@ -253,7 +253,7 @@ module Sharing
         'timestamp' => user.boards_updated_at.to_f.round(2),
         'list' => all_board_ids
       }
-      user.save
+      user.save(touch: false)
 
       all_board_ids
     end

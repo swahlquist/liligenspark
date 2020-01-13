@@ -373,14 +373,15 @@ class WordData < ActiveRecord::Base
     end
     
     # add the activities to the user object for quick retrieval
-    # TODO: store these sometwhere other than on the user record and
+    # TODO: store these somewhere other than on the user record and
     # bump the result list to 50, that's way too much data for that model
+    # TODO: don't force a re-sync when this changes
     user.settings['target_words']['activities'] = {
       'generated' => Time.now.iso8601,
       'words' => found_words,
       'list' => activities.sort_by{|a| [a['score'] || 0, WordData.rand] }.reverse[0, 25]
     }
-    user.save
+    user.save(touch: false)
     
     activities_for(user, include_supervisees)
   end

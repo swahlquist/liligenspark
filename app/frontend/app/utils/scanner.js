@@ -931,7 +931,7 @@ var scanner = EmberObject.extend({
 }).create();
 window.addEventListener('keyboardWillShow', function() {
   if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
-    // this seems to be getting called with every focus now
+    // this seems to be getting called with every focus now, so it's not helpful anymore
     // scanner.keyboard_tried_to_show = true;
   }
   if(!buttonTracker.native_keyboard) {

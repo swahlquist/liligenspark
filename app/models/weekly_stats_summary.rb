@@ -123,7 +123,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
             'list' => target_words[:watchwords][:suggestions]
           }
         end
-        user.save
+        user.save(touch: false)
 
         WordData.schedule_once(:update_activities_for, user.global_id, true)
       end
