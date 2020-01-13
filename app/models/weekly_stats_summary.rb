@@ -680,7 +680,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         res[:max_board_locales_count] = max_locale_count if include_admin
         stash[:board_locales].each do |key, cnt|
           res[:board_locales] ||= {}
-          res[:board_locales][key] = (cnt.to_f / max_locale_count.to_f).round(2) if cnt > 5
+          res[:board_locales][key] = (cnt.to_f / max_locale_count.to_f).round(3) if cnt > 5
         end
       end
     end
