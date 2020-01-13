@@ -1291,6 +1291,18 @@
             {{/if}}
           </div>
         </div>
+      {{else if kindle_without_voice}}
+        <div class="form-group">
+          <label for="voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Voice" key='voiceURI'}}</label>
+          <div class="col-sm-3 col-xs-7">
+            <p class='form-control-static text-info'>
+              {{t "NOTE: Some Kindle Fire tablets don't come with text-to-speech pre-installed. To download a voice to go the home screen, hit Settings, Keyboard & Language, Text-To-Speech and Download one or more system voices" key='kindle_voices_missing' }}
+            </p>
+          </div>
+          <div class="col-sm-2 col-xs-5">
+            <button class='btn btn-default' {{action "premium_voices"}}>{{t "Premium Voices" key='premium_voices'}}</button>
+          </div>
+        </div>
       {{/if}}
       <div class="form-group">
         <label for="voice_rate" class="col-sm-3 col-xs-12 control-label">{{t "Voice Rate" key='voice_rate'}}</label>
