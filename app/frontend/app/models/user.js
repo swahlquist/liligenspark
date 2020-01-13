@@ -606,7 +606,7 @@ CoughDrop.User = DS.Model.extend({
           if(persistence.get('online') && persistence.get('auto_sync')) {
             runLater(function() {
               console.debug('syncing because home board changes');
-              persistence.sync('self').then(null, function() { });
+              persistence.sync('self', null, null, 'home_board_copied').then(null, function() { });
             }, 1000);
           }
           user.set('home_board_copy', {id: user.get('preferences.home_board.id'), at: (new Date()).getTime()});
@@ -702,7 +702,7 @@ CoughDrop.User = DS.Model.extend({
                 runLater(function() {
                   board.reload(true).then(function() {
                     console.debug('syncing because home board symbol changes');
-                    persistence.sync('self').then(null, function() { });
+                    persistence.sync('self', null, null, 'home_board_symbols_changed').then(null, function() { });
                   }, function() { });
                   defer.resolve();
                 });

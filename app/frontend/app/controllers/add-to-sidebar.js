@@ -71,7 +71,7 @@ export default modal.ModalController.extend({
         if(persistence.get('online')) {
           runLater(function() {
             console.debug('syncing because sidebar updated');
-            persistence.sync('self').then(null, function() { });
+            persistence.sync('self', null, null, 'sidebar_update').then(null, function() { });
           }, 1000);
         }
         modal.close('add-to-sidebar');

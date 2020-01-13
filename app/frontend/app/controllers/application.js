@@ -397,7 +397,7 @@ export default Controller.extend({
           _this.set('simple_board_header', false);
           runLater(function() {
           console.debug('syncing because home board changes');
-            persistence.sync('self').then(null, function() { });
+            persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
           }, 1000);
           if(_this.get('setup_footer')) {
             _this.send('setup_go', 'forward');

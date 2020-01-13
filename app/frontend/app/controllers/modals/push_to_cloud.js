@@ -23,7 +23,7 @@ export default modal.ModalController.extend({
         modal.close();
         modal.success(i18n.t('records_pushed', "Local records have been successfully pushed to the cloud!"));
         runLater(function() {
-          persistence.sync('self');
+          persistence.sync('self', null, null, 'push_to_cloud');
         }, 5000);
       }, function(err) {
         if(err.save_failed) {

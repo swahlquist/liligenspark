@@ -1117,14 +1117,15 @@ var persistence = EmberObject.extend({
       persistence.set('sync_progress.canceled', true);
     }
   },
-  sync: function(user_id, force, ignore_supervisees) {
+  sync: function(user_id, force, ignore_supervisees, sync_reason) {
     if(!window.coughDropExtras || !window.coughDropExtras.ready) {
       return new RSVP.Promise(function(wait_resolve, wait_reject) {
         coughDropExtras.advance.watch('all', function() {
-          wait_resolve(persistence.sync(user_id, force, ignore_supervisees));
+          wait_resolve(persistence.sync(user_id, force, ignore_supervisees, sync_reason));
         });
       });
     }
+    sync_reason = sync_reason || 'manual_sync';
 
     console.log('syncing for ' + user_id);
     var user_name = user_id;
@@ -1368,6 +1369,7 @@ var persistence = EmberObject.extend({
           var log = [].concat(persistence.get('sync_log') || []);
           log.push({
             user_id: user_name,
+            reason: sync_reason,
             manual: force,
             issues: errors.length > 0,
             finished: new Date(),
@@ -1544,7 +1546,7 @@ var persistence = EmberObject.extend({
         var sync_supervisee = reload_supervisee.then(function(supervisee_user) {
           if(supervisee_user.get('permissions.supervise')) {
             console.log('syncing supervisee: ' + supervisee.user_name + " " + supervisee.id);
-            return persistence.sync(supervisee.id, force, true);
+            return persistence.sync(supervisee.id, force, true, 'supervisee');
           } else {
             return RSVP.reject({error: "supervise permission missing"});
           }
@@ -2381,7 +2383,7 @@ var persistence = EmberObject.extend({
       } else if(synced > 0 && (now - synced) > (48 * 60 * 60) && syncable) {
         // if we haven't synced in 48 hours and we're online, do a background sync
         console.debug('syncing because it has been more than 48 hours');
-        persistence.sync('self').then(null, function() { });
+        persistence.sync('self', null, null, 'long_time_since_sync:' + synced + ":" + now).then(null, function() { });
         return true;
       } else if(force || (syncable && _this.get('last_sync_stamp'))) {
         // don't check sync_stamp more than once every interval
@@ -2392,7 +2394,7 @@ var persistence = EmberObject.extend({
             persistence.set('last_sync_stamp_check', (new Date()).getTime());
             if(!_this.get('last_sync_stamp') || res.sync_stamp != _this.get('last_sync_stamp')) {
               console.debug('syncing because sync_stamp has changed');
-              persistence.sync('self').then(null, function() { });
+              persistence.sync('self', null, null, 'sync_stamp_changed:' + res.sync_stamp + ":" + _this.get('last_sync_stamp')).then(null, function() { });
             }
             if(window.app_state && window.app_state.get('currentUser')) {
               window.app_state.set('currentUser.last_sync_stamp_check', (new Date()).getTime());

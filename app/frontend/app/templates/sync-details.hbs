@@ -82,6 +82,9 @@
           {{t "%{num} cached" num=sync.cached key='n_cached'}}
           <a href='#'{{action 'toggle_statuses' sync}}>{{t "see details" key='see_details'}}</a>
           {{#if sync.toggled}}
+            {{#if sync.reason}}
+              <p>{{t "sync trigger:" key='sync_trigger'}} {{sync.reason}}</p>
+            {{/if}}
             <div style='max-height: 60vh; overflow: auto;'>
               <table class='table table-striped table-hover'>
                 <tbody>
