@@ -330,7 +330,7 @@ export default Controller.extend({
   wakelock_capable: computed(function() {
     return capabilities.wakelock_capable();
   }),
-  kindle_without_voice: computer('user_voice_list', function() {
+  kindle_without_voice: computed('user_voice_list', function() {
     return (this.get('user_voice_list') || []).length == 0 && capabilities.system == 'Android' && capabilities.subsystem == 'Kindle';
   }),
   user_voice_list: computed(

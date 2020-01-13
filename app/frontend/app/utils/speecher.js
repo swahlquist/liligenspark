@@ -436,7 +436,6 @@ var speecher = EmberObject.extend({
     }
     opts.voiceURI = opts.voiceURI || this.voiceURI;
     opts.rate = opts.rate || this.rate || 1.0;
-    opts.rate = opts.rate;
     var _this = this;
     if(speecher.scope.speechSynthesis) {
       if(opts.interrupt !== false) {

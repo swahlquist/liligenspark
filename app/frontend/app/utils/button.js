@@ -1207,7 +1207,7 @@ Button.load_actions = function() {
         return {auto_return_possible: true};
       },
       alter: function(text, prior_text, prior_label, altered, addition) {
-        if(altered.vocalization) { altered.vocalization = altered.vocalization + " " };
+        if(altered.vocalization) { altered.vocalization = altered.vocalization + " " }
         altered.label = (altered.label || '') + " ";
         altered.in_progress = false;
       }
