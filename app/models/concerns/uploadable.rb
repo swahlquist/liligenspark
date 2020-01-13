@@ -140,7 +140,7 @@ module Uploadable
     if self.settings['rasterized'] == 'from_url'
       "#{self.url}.raster.png"
     elsif self.settings['rasterized'] == 'from_filename'
-      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}/#{self.full_filename}.raster.png"
+      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}.s3.amazonaws.com/#{self.full_filename}.raster.png"
     else
       nil
     end
@@ -204,7 +204,7 @@ module Uploadable
     end
     file.rewind
     if rasterize
-      `convert -background none -density 300 -resize 400x400 -gravity center -extent 400x400 #{file.path} #{file.path}.raster.png`
+      convert_image(file.path)
       file.close
       file = File.open("#{file.path}.raster.png", 'rb')
     end
@@ -234,6 +234,10 @@ module Uploadable
         self.save
       end
     end
+  end
+
+  def convert_image(path)
+    `convert -background none -density 300 -resize 400x400 -gravity center -extent 400x400 #{path} #{path}.raster.png`
   end
 
   module ClassMethods
