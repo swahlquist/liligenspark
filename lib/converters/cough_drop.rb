@@ -135,6 +135,7 @@ module Converters::CoughDrop
         image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
         if image
           image_url = image.url_for(opts['user'])
+          image_record = image
           image = {
             'id' => image.global_id,
             'width' => image.settings['width'],
@@ -151,8 +152,8 @@ module Converters::CoughDrop
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
-          elsif opts['for_pdf'] && image.raster_url
-            image['url'] = image.raster_url
+          elsif opts['for_pdf'] && image_record.raster_url
+            image['url'] = image_record.raster_url
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
