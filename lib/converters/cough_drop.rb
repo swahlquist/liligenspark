@@ -143,7 +143,7 @@ module Converters::CoughDrop
             'protected' => image.settings['protected'],
             'protected_source' => image.settings['protected_source'],
             'license' => OBF::Utils.parse_license(image.settings['license']),
-            'url' => image_url,
+            'url' => Uploader.fronted_url(image_url),
             'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
             'content_type' => image.settings['content_type']
           }
@@ -153,7 +153,7 @@ module Converters::CoughDrop
             image['width'] = 400
             image['height'] = 400
           elsif opts['for_pdf'] && image_record.raster_url
-            image['url'] = image_record.raster_url
+            image['url'] = Uploader.fronted_url(image_record.raster_url)
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
