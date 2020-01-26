@@ -900,7 +900,8 @@ var scanner = EmberObject.extend({
       }
     }
     scanner.listen_for_input();
-    if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && scanner.find_elem("#hidden_input:focus").length === 0 && !scanner.keyboard_tried_to_show) {
+    if(capabilities.mobile && capabilities.installed_app && app_state.get('speak_mode') && scanner.find_elem("#hidden_input:focus").length === 0 && !scanner.keyboard_tried_to_show && !app_state.get('warned_about_switch')) {
+      app_state.set('warned_about_switch', true);
       modal.warning(i18n.t('tap_first', "Your switch may not be completely enabled. Tap somewhere on the screen to finish enabling it."), true);
     }
     if(elem.dom.hasClass('integration_target')) {
