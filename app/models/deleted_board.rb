@@ -57,7 +57,7 @@ class DeletedBoard < ActiveRecord::Base
     count = 0
     DeletedBoard.where(['cleared = ? AND created_at < ?', false, 300.days.ago]).each do |db|
       # TODO: Flusher assumes the board object still exists, which is a bad assumption here
-      Flusher.flush_board_by_db_id(db.board_id, db.key)
+      Flusher.flush_board_by_db_id(db.board_id, db.key) rescue nil
       db.cleared = true
       db.save
       count += 1

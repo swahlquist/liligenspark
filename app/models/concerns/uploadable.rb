@@ -206,6 +206,9 @@ module Uploadable
     if rasterize
       convert_image(file.path)
       file.close
+      if !File.exists?("#{file.path}.raster.png")
+        return
+      end
       file = File.open("#{file.path}.raster.png", 'rb')
     end
     params = self.remote_upload_params(rasterize)
