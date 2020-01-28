@@ -203,7 +203,7 @@ class Board < ActiveRecord::Base
         if !url
           raise Progress::ProgressError, "No URL generated"
         end
-        res = {:download_url => url}
+        res = {:download_url => Uploader.fronted_url(url)}
       else
         raise Progress::ProgressError, "Unexpected download type, #{type}"
       end
