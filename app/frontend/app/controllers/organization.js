@@ -2,6 +2,7 @@ import Controller from '@ember/controller';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import session from '../utils/session';
+import persistence from '../utils/persistence';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
 
@@ -13,6 +14,13 @@ export default Controller.extend({
         console.log(err);
         modal.error(i18n.t('org_update_failed', 'Organization update failed unexpectedly'));
       });
+    },
+    jobs: function() {
+      persistence.ajax('/api/v1/auth/admin', {type: 'POST', data: {}}).then(function(res) {
+        location.href = '/jobby';
+      }, function(err) {
+        alert('Not authorized');
+      })
     },
     masquerade: function() {
       if(this.get('model.admin') && this.get('model.permissions.manage')) {

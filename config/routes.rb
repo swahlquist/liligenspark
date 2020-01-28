@@ -15,6 +15,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'mycoughdrop', 'inflection', 'inflections'
 ]
 require 'resque/server'
+require 'admin_constraint'
 
 Coughdrop::Application.routes.draw do
   # The priority is based upon order of creation: first created -> highest priority.
@@ -24,11 +25,13 @@ Coughdrop::Application.routes.draw do
   board_id_regex = /[a-zA-Z0-9_-]+\/[a-zA-Z0-9_:%-]+|\d+_\d+/
   user_id_regex = /[a-zA-Z0-9_-]+/
 
-  protected_resque = Rack::Auth::Basic.new(Resque::Server.new) do |username, password|
-    u = User.find_by(:user_name => username)
-    u && u.settings['admin'] && u.valid_password?(password)
-  end
-  mount protected_resque, :at => "/resque"
+  # protected_resque = Rack::Auth::Basic.new(Resque::Server) do |username, password|
+  #   u = User.find_by(:user_name => username)
+  #   u && u.settings['admin'] && u.valid_password?(password)
+  # end
+  # mount protected_resque, :at => "/resque"
+  
+  mount Resque::Server, at: "/jobby", :constraints => AdminConstraint.new
 
   root ember_handler
   get '/goal_status/:goal_id/:goal_code' => 'boards#log_goal_status'
@@ -44,6 +47,7 @@ Coughdrop::Application.routes.draw do
   get 'oauth2/token' => 'session#oauth'
   post 'oauth2/token/login' => 'session#oauth_login'
   post 'oauth2/token' => 'session#oauth_token'
+  post 'api/v1/auth/admin' => 'session#auth_admin'
   delete 'oauth2/token' => 'session#oauth_logout'
   get 'oauth2/token/status' => 'session#oauth_local', :as => 'oauth_local'
   post 'api/v1/token/refresh' => 'session#oauth_token_refresh'

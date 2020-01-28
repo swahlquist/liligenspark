@@ -49,6 +49,9 @@
         {{/if}}
         {{#if model.admin}}
           {{#if model.permissions.manage}}
+            <a class="btn btn-default" {{action 'jobs'}}>
+              {{t "Background Jobs" key='background_jobs'}}
+            </a>
             <span class="btn btn-default">
               {{input value=masquerade_user_name enter=(action 'masquerade') placeholder="user name" class="form-control inline inline-masquerade"}}
               <button class="btn btn-default" {{action "masquerade"}} style='width: 110px;'>{{t "masquerade" key='masquerade'}}</button>

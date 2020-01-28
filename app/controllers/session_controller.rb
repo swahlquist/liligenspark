@@ -154,6 +154,17 @@ class SessionController < ApplicationController
     end
   end
 
+  def auth_admin
+    success = false
+    if @api_user && @api_user.admin?
+      admin_token = GoSecure.nonce('admin_token')
+      cookies[:admin_token] = admin_token
+      Permissable.permissions_redis.setex('/admin/auth/' + admin_token, 2.hours.from_now.to_i, @api_user.global_id)
+      success = true
+    end
+    render json: {success: success}
+  end
+
 
   def token
     set_browser_token_header
