@@ -170,7 +170,7 @@ GEM
     notiffany (0.1.3)
       nenv (~> 0.1)
       shellany (~> 0.0)
-    obf (0.9.8.21)
+    obf (0.9.8.22)
       CFPropertyList
       json
       mime-types
@@ -277,7 +277,7 @@ GEM
       rspec-mocks (~> 3.9.0)
       rspec-support (~> 3.9.0)
     rspec-support (3.9.0)
-    rubyzip (2.0.0)
+    rubyzip (2.1.0)
     s3 (0.3.28)
       addressable
       proxies
