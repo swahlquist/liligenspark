@@ -163,7 +163,7 @@ class Api::SearchController < ApplicationController
       if response.success? || response.code == 200
         # TODO: limit to accepted file types
         content_type = response.headers['Content-Type']
-        if !content_type.match(/^image/) && !content_type.match(/^audio/)
+        if !content_type.match(/^image/) && !content_type.match(/^audio/) && !content_type.match(/text\/json/)
           raise BadFileError, "Invalid file type, #{content_type}"
         end
       else
