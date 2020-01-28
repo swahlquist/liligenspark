@@ -23,6 +23,14 @@ module Worker
     JsonApi::Json.current_host || 'default'
   end
 
+  def note_job(hash)
+    # no-op
+  end
+
+  def clear_job(hash)
+    # no-op
+  end
+
   def self.set_domain_id(val)
     @@domain_id = val
     JsonApi::Json.set_host(val)
