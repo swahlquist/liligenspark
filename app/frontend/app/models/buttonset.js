@@ -69,14 +69,17 @@ CoughDrop.Buttonset = DS.Model.extend({
     }
     return count;
   },
-  load_buttons: function() {
+  load_buttons: function(force) {
     var bs = this;
     var board_id = bs.get('id');
     return new RSVP.Promise(function(resolve, reject) {
-      if(bs.get('root_url') && !bs.get('buttons_loaded')) {
+      var hash_mismatch = bs.get('buttons_loaded_hash') && bs.get('full_set_revision') != bs.get('buttons_loaded_hash');
+      if(hash_mismatch) { force = true; }
+      if(bs.get('root_url') && (!bs.get('buttons_loaded') || hash_mismatch)) {
         var process_buttons = function(buttons) {
           if(buttons) {
             bs.set('buttons_loaded', true);
+            bs.set('buttons_loaded_hash', bs.get('full_set_revision'));
             bs.set('buttons', buttons);
             if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
               bs.set('buttons', bs.redepth(board_id));
@@ -84,15 +87,22 @@ CoughDrop.Buttonset = DS.Model.extend({
           }
           resolve(bs);
         };
-        persistence.find_json(bs.get('root_url')).then(function(buttons) {
-          process_buttons(buttons);
-        }, function() {
+        var store_anyway = function() {
           persistence.store_json(bs.get('root_url')).then(function(res) {
             process_buttons(res);
           }, function(err) {
             reject(err);
           });
-        });
+        };
+        if(force) {
+          store_anyway();          
+        } else {
+          persistence.find_json(bs.get('root_url')).then(function(buttons) {
+            process_buttons(buttons);
+          }, function() {
+            store_anyway();
+          });
+        }
       } else if(bs.get('buttons')) {
         resolve(bs);
       } else {
@@ -736,7 +746,7 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
   }
   return RSVP.resolve();
 };
-CoughDrop.Buttonset.load_button_set = function(id) {
+CoughDrop.Buttonset.load_button_set = function(id, force) {
   // use promises to make this call idempotent
   CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
   var promise = CoughDrop.Buttonset.pending_promises[id];
@@ -757,7 +767,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
       }
     });
   }
-  if(found) { found.load_buttons(); return RSVP.resolve(found); }
+  if(found) { found.load_buttons(force); return RSVP.resolve(found); }
   var generate = function(id) {
     return new RSVP.Promise(function(resolve, reject) {
       persistence.ajax('/api/v1/buttonsets/' + id + '/generate', {
@@ -772,7 +782,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
               button_set.set('root_url', url);
             }
             reload.then(function() {
-              button_set.load_buttons().then(function() {
+              button_set.load_buttons(force).then(function() {
                 resolve(button_set);
               }, function(err) {
                 reject(err); 
@@ -805,7 +815,7 @@ CoughDrop.Buttonset.load_button_set = function(id) {
       return generate(id);
     } else {
       // otherwise you should be good to go
-      return button_set.load_buttons();
+      return button_set.load_buttons(force);
     }
   }, function(err) {
     // if not found error, it may need to be regenerated

@@ -881,6 +881,9 @@ var persistence = EmberObject.extend({
       var trusted_not_to_change = url.match(/opensymbols\.s3\.amazonaws\.com/) || url.match(/s3\.amazonaws\.com\/opensymbols/) ||
                   url.match(/coughdrop-usercontent\.s3\.amazonaws\.com/) || url.match(/s3\.amazonaws\.com\/coughdrop-usercontent/) ||
                   url.match(/d18vdu4p71yql0.cloudfront.net/) || url.match(/dc5pvf6xvgi7y.cloudfront.net/);
+      if(trusted_not_to_change && url.match(/usercontent/) && url.match(/\/extras\//)) {
+        trusted_not_to_change = false;
+      }
       var cors_match = trusted_not_to_change || url.match(/api\/v\d+\/users\/.+\/protected_image/);
       var check_for_local = !!trusted_not_to_change;
 
@@ -1685,10 +1688,12 @@ var persistence = EmberObject.extend({
             return record;
           } else {
             board_statuses.push({id: id, key: record.get('key'), status: 're-downloaded'});
+            record.set('button_set_needs_reload', true);
             return record.reload();
           }
         } else {
           board_statuses.push({id: id, key: record.get('key'), status: 'downloaded'});
+          record.set('button_set_needs_reload', true);
           return record;
         }
       });

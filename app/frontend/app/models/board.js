@@ -721,6 +721,10 @@ CoughDrop.Board = DS.Model.extend({
   }),
   load_button_set: function(force) {
     var _this = this;
+    if(this.get('button_set_needs_reload')) {
+      force = true;
+      this.set('button_set_needs_reload', null);
+    }
     if(this.get('button_set') && !force) {
       return this.get('button_set').load_buttons();
     }
@@ -751,10 +755,10 @@ CoughDrop.Board = DS.Model.extend({
         }
       }
       // first check if there's a satisfactory higher-level buttonset that can be used instead
-      var res = CoughDrop.Buttonset.load_button_set(this.get('id')).then(function(button_set) {
+      var res = CoughDrop.Buttonset.load_button_set(this.get('id'), force).then(function(button_set) {
         _this.set('button_set', button_set);
         if((_this.get('fresh') || force) && !button_set.get('fresh')) {
-          return button_set.reload().then(function(bs) { return bs.load_buttons(); });
+          return button_set.reload().then(function(bs) { return bs.load_buttons(force); });
         } else {
           return button_set;
         }
