@@ -39,16 +39,28 @@ var speecher = EmberObject.extend({
     }
     var _this = this;
     if(capabilities.system == 'iOS' && window.TTS && window.TTS.checkLanguage) {
+      var browser_voices = speecher.scope.speechSynthesis.getVoices();
       window.TTS.checkLanguage().then(function(list) {
         if(list && list.split) {
           var voices = _this.get('voices');
           var more_voices = [];
           var langs = list.split(',');
-          langs.forEach(function(lang) {
+          langs.forEach(function(str) {
+            var pieces = str.split(/:/);
+            var lang = pieces[0];
+            var id = pieces[1];
+            var name = "System Voice for " + lang;
+            if(id) {
+              var browser_voice = browser_voices.find(function(v) { return v.voiceURI == id; });
+              if(browser_voice) {
+                name = browser_voice.name + " " + lang;
+              }
+            }
             more_voices.push({
               lang: lang,
-              name: "System Voice for " + lang,
-              voiceURI: 'tts:' + lang
+              ident: id,
+              name: name,
+              voiceURI: 'tts:' + lang + ":" + id
             });
           });
           voices = more_voices.concat(voices);
@@ -554,7 +566,8 @@ var speecher = EmberObject.extend({
         window.TTS.speak({
           text: utterance.text,
           rate: utterance.rate,
-          locale: (voice && voice.lang)
+          locale: (voice && voice.lang),
+          id: (voice && voice.ident)
         }).then(function() {
           callback();
         }, function(err) {
