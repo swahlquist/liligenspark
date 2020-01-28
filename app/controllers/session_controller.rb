@@ -31,7 +31,7 @@ class SessionController < ApplicationController
       @scope_descriptors = "no permissions requested" if @scope_descriptors.blank?
       
       @code = GoSecure.nonce('oauth_code')
-      RedisInit.default.setex("oauth_#{@code}", 1.hour.from_now.to_i, config.to_json)
+      RedisInit.default.setex("oauth_#{@code}", 1.hour.to_i, config.to_json)
       # render login page
       render
     end
@@ -73,7 +73,7 @@ class SessionController < ApplicationController
       render :oauth, :status => 400
     else
       config['user_id'] = user.id.to_s
-      RedisInit.default.setex("oauth_#{params['code']}", 1.hour.from_now.to_i, config.to_json)
+      RedisInit.default.setex("oauth_#{params['code']}", 1.hour.to_i, config.to_json)
       if config['redirect_uri'] == DeveloperKey.oob_uri
         redirect_to oauth_local_url(:code => params['code'])
       else
@@ -159,7 +159,7 @@ class SessionController < ApplicationController
     if @api_user && @api_user.admin?
       admin_token = GoSecure.nonce('admin_token')
       cookies[:admin_token] = admin_token
-      Permissable.permissions_redis.setex('/admin/auth/' + admin_token, 2.hours.from_now.to_i, @api_user.global_id)
+      Permissable.permissions_redis.setex('/admin/auth/' + admin_token, 2.hours.to_i, @api_user.global_id)
       success = true
     end
     render json: {success: success}

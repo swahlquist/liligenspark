@@ -268,7 +268,7 @@ class Device < ActiveRecord::Base
         user.permission_scopes = scopes
 
         store = [user_id, device_id, scopes.join(',')].join("::")
-        RedisInit.permissions.setex("user_token/#{token}", 12.hours.from_now.to_i, store) if !res[:error]
+        RedisInit.permissions.setex("user_token/#{token}", 12.hours.to_i, store) if !res[:error]
         res[:user] = user
         res[:device_id] = device_id
       elsif user_id
