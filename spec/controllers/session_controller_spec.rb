@@ -815,4 +815,31 @@ describe SessionController, :type => :controller do
       expect(json['can_refresh']).to eq(true)
     end
   end
+
+  describe "auth_admin" do
+    it "should require an api tokne" do
+      post :auth_admin
+      json = assert_success_json
+      expect(json['success']).to eq(false)
+    end
+
+    it "should require admin role" do
+      token_user
+      post :auth_admin
+      json = assert_success_json
+      expect(json['success']).to eq(false)
+    end
+
+    it "should set a cookie and return success" do
+      token_user
+      @user.settings['admin'] = true
+      @user.save
+      post :auth_admin
+      json = assert_success_json
+      expect(json['success']).to eq(true)
+      expect(response.cookies['admin_token']).to_not eq(nil)
+      user_id = Permissable.permissions_redis.get("/admin/auth/#{response.cookies['admin_token']}")
+      expect(user_id).to eq(@user.global_id)
+    end
+  end
 end
