@@ -240,7 +240,8 @@ module Uploadable
   end
 
   def convert_image(path)
-    
+    # TODO: PCS images aren't getting sized correctly with 
+    # server-side convert, other SVGs probably have problems too
     `convert -background none -density 300 -resize 400x400 -gravity center -extent 400x400 #{path} #{path}.raster.png`
   end
 
