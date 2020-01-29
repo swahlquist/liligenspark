@@ -229,6 +229,29 @@ describe Uploadable, :type => :model do
       expect(s.settings['content_type']).to eq('audio/mp3')
     end
     
+    it "should convert for rasterization if specified" do
+      s = ButtonSound.create(:settings => {})
+      res = OpenStruct.new(:success? => true, :headers => {'Content-Type' => 'audio/mp3'}, :body => "abcdefg")
+      expect(Typhoeus).to receive(:get).and_return(res)
+      res = OpenStruct.new(:success? => true)
+      expect(Typhoeus).to receive(:post) { |url, args|
+        expect(url).to eq(Uploader.remote_upload_config[:upload_url])
+      }.and_return(res)
+
+
+      expect(s).to receive(:convert_image) do |path|
+        file = File.open("#{path}.raster.png", 'wb')
+        file.puts("asdf")
+      end
+      expect(File).to receive(:exists?).and_return(true)
+  
+      expect(s.settings['content_type']).to eq(nil)
+      s.upload_to_remote("http://pic.com/cow.png", true)
+      expect(s.url).to eq(nil)
+      expect(s.settings['rasterized']).to eq('from_filename')
+      expect(s.settings['content_type']).to eq('audio/mp3')
+    end
+
     it "should measure image height if not already set" do
       s = ButtonImage.create(:settings => {})
       res = OpenStruct.new(:success? => true, :headers => {'Content-Type' => 'image/png'}, :body => "abcdefg")
@@ -836,6 +859,77 @@ describe Uploadable, :type => :model do
       expect(Uploader).to receive(:fronted_url).with('asdf').and_return('jkl')
       bi = ButtonImage.new(:url => 'asdf', :settings => {})
       expect(bi.best_url).to eq('jkl')
+    end
+  end
+
+  describe "raster_url" do
+    it "should return nil by default" do
+      bi = ButtonImage.new
+      expect(bi.raster_url).to eq(nil)
+    end
+
+    it "should return url-based options" do
+      bi = ButtonImage.new
+      bi.settings = {'rasterized' => 'from_url'}
+      expect(bi.raster_url).to eq(nil)
+      bi.url = "http://www.example.com/pic.svg"
+      expect(bi.raster_url).to eq("http://www.example.com/pic.svg.raster.png")
+    end
+
+    it "should return filename-based rasters" do
+      bi = ButtonImage.new
+      bi.settings = {'rasterized' => 'from_filename'}
+      expect(bi).to receive(:full_filename).and_return(nil)
+      expect(bi.raster_url).to eq(nil)
+      expect(bi).to receive(:full_filename).and_return("a/b/c/d.svg").at_least(1).times
+      expect(bi.raster_url).to eq("#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}/a/b/c/d.svg.raster.png")
+    end
+  end
+
+  describe "assert_raster" do
+    it "should do nothing by default" do
+      bi = ButtonImage.new
+      expect(Typhoeus).to_not receive(:head)
+      expect(bi.assert_raster).to eq(nil)
+    end
+
+    it "should do nothing if already rasterized" do
+      bi = ButtonImage.new
+      bi.settings = {'content_type' => 'image/svg', 'rasterized' => true}
+      expect(Typhoeus).to_not receive(:head)
+      expect(bi.assert_raster).to eq(nil)
+    end
+
+    it "should do a HEAD request for svg images" do
+      bi = ButtonImage.new
+      bi.url = "http://www.example.com/pic.svg"
+      bi.settings = {'content_type' => 'image/svg'}
+      res = OpenStruct.new
+      expect(res).to receive(:success?).and_return(false)
+      expect(Typhoeus).to receive(:head).with("http://www.example.com/pic.svg.raster.png", followlocation: true).and_return(res)
+      bi.assert_raster
+    end
+
+    it "should use the existing raster if there" do
+      bi = ButtonImage.new
+      bi.url = "http://www.example.com/pic.svg"
+      bi.settings = {'content_type' => 'image/svg'}
+      res = OpenStruct.new
+      expect(res).to receive(:success?).and_return(true)
+      expect(Typhoeus).to receive(:head).with("http://www.example.com/pic.svg.raster.png", followlocation: true).and_return(res)
+      bi.assert_raster
+      expect(bi.settings['rasterized']).to eq('from_url')
+    end
+
+    it "should schedule remote upload if no existing raster" do
+      bi = ButtonImage.new
+      bi.url = "http://www.example.com/pic.svg"
+      bi.settings = {'content_type' => 'image/svg'}
+      res = OpenStruct.new
+      expect(res).to receive(:success?).and_return(false)
+      expect(bi).to receive(:schedule).with(:upload_to_remote, bi.url, true)
+      expect(Typhoeus).to receive(:head).with("http://www.example.com/pic.svg.raster.png", followlocation: true).and_return(res)
+      bi.assert_raster
     end
   end
 end
