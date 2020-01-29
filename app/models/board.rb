@@ -180,6 +180,10 @@ class Board < ActiveRecord::Base
     Progress.as_percent(0.05, 0.9) do
       boards = Converters::Utils.remote_to_boards(user, url)
     end
+    boards.each do |board|
+      board.settings['copy_id'] = boards[0].global_id
+      board.save
+    end
     return boards.map{|b| JsonApi::Board.as_json(b, :permissions => user) }
   end
   

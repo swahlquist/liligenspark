@@ -116,7 +116,8 @@ class Api::BoardsController < ApplicationController
       if user && user.settings['public']
         exclude_board_ids = user.settings['starred_board_ids'] || []
       end
-      boards = boards.limit(100)[0, 100].select{|b| !exclude_board_ids.include?(b.global_id) }
+      boards = boards.limit(100) if boards.respond_to?(:limit)
+      boards = boards[0, 100].select{|b| !exclude_board_ids.include?(b.global_id) }
     end
     
     Rails.logger.warn('category filter')
@@ -126,7 +127,7 @@ class Api::BoardsController < ApplicationController
         boards = boards[0, 100].select{|b| b.categories.include?(params['category']) }
       elsif params['copies'] == false || params['copies'] == 'false'
         boards = boards.limit(500) if boards.respond_to?(:limit)
-        boards = boards.limit(500)[0, 500].select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }[0, 100]
+        boards = boards[0, 500].select{|b| !b.parent_board_id }[0, 100]
       end
     end
     
@@ -137,7 +138,7 @@ class Api::BoardsController < ApplicationController
     Rails.logger.warn('private query')
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['root']
-        boards = boards.select{|b| !b.settings['copy_id'] }
+        boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
       end
 
       if params['q'] && params['q'].length > 0 && !params['public']

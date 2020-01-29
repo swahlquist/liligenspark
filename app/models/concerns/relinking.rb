@@ -47,6 +47,9 @@ module Relinking
     board
   end
   
+  # If copy_id = nil, this is an original, root board
+  # If copy_id == self.global_id, this is a root board
+  # If copy_id != self.global_id, this is a sub-board of Board.find_by_global_id(copy_id)
   def assert_copy_id
     return true if self.settings['copy_id']
     return false if !self.parent_board_id

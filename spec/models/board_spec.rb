@@ -1941,6 +1941,20 @@ describe Board, :type => :model do
       expect(res[0]['id']).to eq(b.global_id)
       expect(res[1]['id']).to eq(b2.global_id)
     end
+
+    it "should assert imported set as part of the same bundle" do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      boards = [b, b2]
+      expect(Converters::Utils).to receive(:remote_to_boards).with(u, 'http://www.example.com/board.obf').and_return(boards)
+      res = Board.import(u.global_id, 'http://www.example.com/board.obf')
+      expect(res.length).to eq(2)
+      expect(res[0]['id']).to eq(b.global_id)
+      expect(b.reload.settings['copy_id']).to eq(b.global_id)
+      expect(res[1]['id']).to eq(b2.global_id)
+      expect(b2.reload.settings['copy_id']).to eq(b.global_id)
+    end
   end
   
   describe "additional_webhook_codes" do
