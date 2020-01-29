@@ -399,6 +399,10 @@ module Purchasing
     rescue => err
       type = (err.respond_to?('[]') && err[:type])
       code = (err.respond_to?('[]') && err[:code]) || 'unknown'
+      if err.to_s.match(/Invalid email address/)
+        user && user.log_subscription_event({:error => 'invalid_email', :err => err.to_s + err.backtrace[0].to_s })
+        return {success: false, :trace => err.backtrace, error: 'invalid_email', error_message: err.to_s, error_type: type, error_code: code}
+      end
       user && user.log_subscription_event({:error => 'other_exception', :err => err.to_s + err.backtrace[0].to_s })
       return {success: false, :trace => err.backtrace, error: 'unexpected_error', error_message: err.to_s, error_type: type, error_code: code}
     end
@@ -1088,6 +1092,11 @@ module Purchasing
       end
     end
     true
+  end
+
+  def self.errored_subscription_events_since(cutoff_date)
+    # issue started November 15th, apparently
+    AuditEvent.where(event_type: 'subscription_event').where(['created_at > ?', cutoff_date]).order('id ASC').map{|e| res = {}.merge(e.data); res['record_id'] = e.record_id; res }.select{|d| d['error'] && d['error'] != "stripe card_exception" }
   end
   
   def self.pause_subscription(user)
