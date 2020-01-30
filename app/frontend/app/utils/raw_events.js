@@ -260,6 +260,16 @@ $(document).on('click', "a[target='_blank']", function(event) {
     capabilities.window_open(event.target.href, '_system');
   }
 });
+$(document).on('click', function(event) {
+  if(buttonTracker.lastTouchStart) {
+    var now = (new Date()).getTime();
+    console.log("ERRANT TOUCH", event, now - buttonTracker.lastTouchStart);
+    if(now - buttonTracker.lastTouchStart < 400) {
+      console.log("would have prevented");
+      // event.preventDefault();
+    }
+  }
+});
 $(window).on('blur', function(event) {
   runCancel(buttonTracker.linger_clear_later);
   runCancel(buttonTracker.linger_close_enough_later);
