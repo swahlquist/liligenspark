@@ -229,6 +229,7 @@ $(document).on('mousedown touchstart', function(event) {
   if(element_wrap && element_wrap.button) {
     buttonTracker.button_select(element_wrap);
   } else {
+    debugger
     $(this).trigger('click');
   }
 }).on('keypress', '#button_list', function(event) {
@@ -781,6 +782,7 @@ var buttonTracker = EmberObject.extend({
       if($modal.length > 0 && app_state.get('speak_mode') && event.type == 'touchend' && buttonTracker.dwell_enabled) {
         event.preventDefault();
         event.stopPropagation();
+        debugger
         $(event.target).trigger('click');
         if(event.target.tagName == 'INPUT') {
           runLater(function() {
@@ -940,6 +942,7 @@ var buttonTracker = EmberObject.extend({
             event.preventDefault();
             // click events are eaten by our listener above, unless you
             // explicitly tell it to pass them through
+            debugger
             var e = $.Event( "click" );
             e.clientX = event.clientX;
             e.clientY = event.clientY;
@@ -982,6 +985,7 @@ var buttonTracker = EmberObject.extend({
             event.preventDefault();
             // click events are eaten by our listener above, unless you
             // explicitly tell it to pass them through
+            debugger
             var e = $.Event( "click" );
             e.clientX = event.clientX;
             e.clientY = event.clientY;

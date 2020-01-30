@@ -458,6 +458,7 @@ var scanner = EmberObject.extend({
         scanner.level_up(elem);
       } else if(elem.children) {
         if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
+          debugger
           var e = $.Event( "click" );
           e.pass_through = true;
           e.switch_activated = true;
@@ -509,6 +510,7 @@ var scanner = EmberObject.extend({
     } else if(dom.hasClass('button_list')) {
       dom.select();
     } else {
+      debugger
       var e = $.Event( "click" );
       e.pass_through = true;
       scanner.find_elem(dom).trigger(e);
