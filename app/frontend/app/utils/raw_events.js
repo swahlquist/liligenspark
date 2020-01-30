@@ -2242,7 +2242,12 @@ document.addEventListener('selectionchange', function(event) {
       } else if(sel.anchorNode && sel.anchorNode.tagName == 'TEXTAREA') {
       } else if(sel.anchorNode && sel.anchorNode.childNodes && sel.anchorNode.childNodes[sel.anchorOffset] && sel.anchorNode.childNodes[sel.anchorOffset].tagName == 'INPUT') {
       } else if(sel.anchorNode && sel.anchorNode.childNodes && sel.anchorNode.childNodes[sel.anchorOffset] && sel.anchorNode.childNodes[sel.anchorOffset].tagName == 'TEXTAREA') {
-        sel.empty();
+        if(sel.empty) {
+          sel.empty();
+        }
+        if(sel.removeAllRanges) {
+          sel.removeAllRanges();
+        }
       }
     }
   }
