@@ -268,6 +268,11 @@ var buttonTracker = EmberObject.extend({
   setup: function() {
     // cheap trick to get us ahead of the line in front of ember
     $("#within_ember").on('click', function(event) {
+      // on iOS (probably just UIWebView) this phantom
+      // click event get triggered. If you tap & release 
+      // really fast then tap somewhere else, right after
+      // touchstart a click gets triggered at the location
+      // you hit and released before.
       if(buttonTracker.lastTouchStart) {
         var now = (new Date()).getTime();
         console.log("ERRANT CLICK", event, now - buttonTracker.lastTouchStart);
