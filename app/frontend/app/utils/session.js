@@ -106,7 +106,7 @@ var session = EmberObject.extend({
         session.set('invalid_token', true);
         if(allow_invalidate && store_data.access_token) {
           session.force_logout(i18n.t('session_token_invalid', "This session has expired, please log back in"));
-          return;
+          return {success: true};
         }
       } else {
         session.set('invalid_token', false);
@@ -136,22 +136,22 @@ var session = EmberObject.extend({
       if(data.meta && data.meta.fakeXHR && data.meta.fakeXHR.browserToken) {
         persistence.set('browserToken', data.meta.fakeXHR.browserToken);
       }
-      return RSVP.resolve({browserToken: persistence.get('browserToken')});
+      return RSVP.resolve({success: true, browserToken: persistence.get('browserToken')});
     }, function(data) {
       if(!persistence.get('online')) {
-        return;
+        return {success: false};
       }
       if(data && data.fakeXHR && data.fakeXHR.browserToken) {
         persistence.set('browserToken', data.fakeXHR.browserToken);
       }
       if(data && data.result && data.result.error == "not online") {
-        return;
+        return {success: false};
       }
       if(!data && !persistence.get('online')) {
-        return;
+        return {success: false};
       }
       persistence.tokens[key] = false;
-      return RSVP.resolve({browserToken: persistence.get('browserToken')});
+      return RSVP.resolve({success: false, browserToken: persistence.get('browserToken')});
     });
   },
   restore: function(force_check_for_token) {

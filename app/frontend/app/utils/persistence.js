@@ -2470,7 +2470,8 @@ setInterval(function() {
     persistence.set('online', false);
   } else if(persistence.get('online') === false) {
     // making an AJAX call when offline should have very little overhead
-    CoughDrop.session.check_token(false).then(function() {
+    CoughDrop.session.check_token(false).then(function(res) {
+      console.log("token check", res);
       persistence.set('online', true);
     }, function() { });
   }
