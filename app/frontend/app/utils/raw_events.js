@@ -65,10 +65,12 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.clear_dwell();
     event.target = document.elementFromPoint(event.clientX, event.clientY);
   }
-  buttonTracker.touch_start(event);
-  if(capabilities.mobile && event.type == 'touchstart' && app_state.get('speak_mode') && scanner.scanning) {
-    scanner.listen_for_input();
-  }
+  runLater(function() {
+    buttonTracker.touch_start(event);
+    if(capabilities.mobile && event.type == 'touchstart' && app_state.get('speak_mode') && scanner.scanning) {
+      scanner.listen_for_input();
+    }
+  });
 }).on('gazelinger mousemove touchmove mousedown touchstart', function(event) {
   if(capabilities.system == 'iOS' && !buttonTracker.ios_start_initialized) {
     // Safari requires a user-interaction-initiated utterance before
@@ -101,7 +103,9 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.clear_dwell();
   }
   if(!event.fake_event) {
-    buttonTracker.touch_release(event);
+    runLater(function() {
+      buttonTracker.touch_release(event);
+    });
   }
 }).on('keypress', '.button', function(event) {
   // basic keyboard navigation
