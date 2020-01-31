@@ -7,7 +7,17 @@ import capabilities from '../utils/capabilities';
 export default Component.extend({
   tagName: 'span',
   mouseDown: function() {
-    this.sendAction('select');
+    // on iOS (probably just UIWebView) this phantom
+    // click event get triggered. If you tap & release 
+    // really fast then tap somewhere else, right after
+    // touchstart a click gets triggered at the location
+    // you hit and released before.
+    if(buttonTracker.lastTouchStart) {
+      var now = (new Date()).getTime();
+      if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
+        this.sendAction('select');
+      }
+    }
     return true;
   },
   touchStart: function() {

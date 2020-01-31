@@ -1,6 +1,7 @@
 import Component from '@ember/component';
 import $ from 'jquery';
 import capabilities from '../utils/capabilities';
+import buttonTracker from '../utils/capabilities';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
 
@@ -58,7 +59,17 @@ export default Component.extend({
     this.send('close', event);
   },
   mouseDown: function(event) {
-    this.send('close', event);
+    // on iOS (probably just UIWebView) this phantom
+    // click event get triggered. If you tap & release 
+    // really fast then tap somewhere else, right after
+    // touchstart a click gets triggered at the location
+    // you hit and released before.
+    if(buttonTracker.lastTouchStart) {
+      var now = (new Date()).getTime();
+      if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
+        this.send('close', event);
+      }
+    }
   },
   actions: {
     close: function(event) {

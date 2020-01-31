@@ -276,7 +276,7 @@ var buttonTracker = EmberObject.extend({
       if(buttonTracker.lastTouchStart) {
         var now = (new Date()).getTime();
         console.log("ERRANT CLICK", event, now - buttonTracker.lastTouchStart);
-        if(now - buttonTracker.lastTouchStart < 300) {
+        if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
           event.preventDefault();
         }
       }
