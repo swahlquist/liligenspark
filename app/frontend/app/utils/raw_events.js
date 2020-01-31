@@ -57,7 +57,6 @@ document.addEventListener('mousedown', eat_events, {passive: false});
 $(document).on('mousedown touchstart', function(event) {
   var now = (new Date()).getTime();
   if(event.type == 'touchstart') {
-    console.log("touchstart at", (new Date()).getTime());
     buttonTracker.lastTouchStart = now;
     buttonTracker.lastTouchStartAny = now;
   }
@@ -95,7 +94,6 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.ios_initialized = true;
   }
   if(event.type == 'touchend') {
-    console.log("touchend at", (new Date()).getTime());
     buttonTracker.lastTouchStart = null;
   }
   if((event.type == 'mouseup' || event.type == 'touchend' || event.type == 'touchcancel') && buttonTracker.dwell_elem) {

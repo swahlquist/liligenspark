@@ -86,6 +86,7 @@ export default Component.extend({
           event.preventDefault();
         } catch(e) { }
         console.log("close from event");
+        buttonTracker.ignoreUp = true;
         return this.sendAction();
       }
     },
