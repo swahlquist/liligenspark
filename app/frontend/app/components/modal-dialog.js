@@ -64,11 +64,15 @@ export default Component.extend({
     // really fast then tap somewhere else, right after
     // touchstart a click gets triggered at the location
     // you hit and released before.
+    var ignore = false;
     if(buttonTracker.lastTouchStart) {
       var now = (new Date()).getTime();
       if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
-        this.send('close', event);
+        ignore = true;
       }
+    }
+    if(!ignore) {
+      this.send('close', event);
     }
   },
   actions: {
