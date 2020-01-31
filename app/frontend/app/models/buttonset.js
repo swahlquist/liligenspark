@@ -87,20 +87,30 @@ CoughDrop.Buttonset = DS.Model.extend({
           }
           resolve(bs);
         };
-        var store_anyway = function() {
+        var store_anyway = function(already_tried_local) {
           persistence.store_json(bs.get('root_url')).then(function(res) {
             process_buttons(res);
           }, function(err) {
-            reject(err);
+            if(already_tried_local) {
+              reject(err);
+            } else {
+              // Something local is better than nothing,
+              // even if we suspect it is out of date
+              persistence.find_json(bs.get('root_url')).then(function(buttons) {
+                process_buttons(buttons);
+              }, function() {
+                reject(err);
+              });
+            }
           });
         };
         if(force) {
-          store_anyway();          
+          store_anyway(false);          
         } else {
           persistence.find_json(bs.get('root_url')).then(function(buttons) {
             process_buttons(buttons);
           }, function() {
-            store_anyway();
+            store_anyway(true);
           });
         }
       } else if(bs.get('buttons')) {

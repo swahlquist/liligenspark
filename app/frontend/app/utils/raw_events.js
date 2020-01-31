@@ -101,7 +101,9 @@ $(document).on('mousedown touchstart', function(event) {
     console.log("linger cleared because touch release event");
     buttonTracker.clear_dwell();
   }
-  buttonTracker.touch_release(event);
+  if(!event.fake_event) {
+    buttonTracker.touch_release(event);
+  }
 }).on('keypress', '.button', function(event) {
   // basic keyboard navigation
   // if(app_state.get('edit_mode')) { return; }
@@ -269,7 +271,7 @@ $(window).on('blur', function(event) {
 var buttonTracker = EmberObject.extend({
   setup: function() {
     // cheap trick to get us ahead of the line in front of ember
-    $("#within_ember").on('click mousedown', function(event) {
+    $("#within_ember").on('click mousedown mouseup', function(event) {
       // on iOS (probably just UIWebView) this phantom
       // click event get triggered. If you tap & release 
       // really fast then tap somewhere else, right after
@@ -279,6 +281,7 @@ var buttonTracker = EmberObject.extend({
         var now = (new Date()).getTime();
         console.log("ERRANT CLICK", event, now - buttonTracker.lastTouchStart);
         if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
+          event.fake_event = true;
           event.preventDefault();
         }
       }
