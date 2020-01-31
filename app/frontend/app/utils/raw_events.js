@@ -287,6 +287,10 @@ var buttonTracker = EmberObject.extend({
       }
     });
     $("#within_ember").on('click', '.advanced_selection', function(event) {
+      // TODO: this will probably break mouse selection on 
+      // iPad, and probably other alternative access methods
+      // as well.
+
       // we're basically replacing all click events by tracking up and down explicitly,
       // so we don't want any unintentional double-triggers
       if(event.pass_through) { return; }

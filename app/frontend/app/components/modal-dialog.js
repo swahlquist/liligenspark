@@ -55,7 +55,7 @@ export default Component.extend({
       } catch(e) { }
     }
   },
-  touchStart: function(event) {
+  touchEnd: function(event) {
     this.send('close', event);
   },
   mouseUp: function(event) {
