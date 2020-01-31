@@ -59,6 +59,7 @@ $(document).on('mousedown touchstart', function(event) {
   if(event.type == 'touchstart') {
     console.log("touchstart at", (new Date()).getTime());
     buttonTracker.lastTouchStart = now;
+    buttonTracker.lastTouchStartAny = now;
   }
   if(buttonTracker.dwell_elem) {
     console.log("linger cleared because touch event");

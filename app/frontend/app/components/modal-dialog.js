@@ -65,14 +65,15 @@ export default Component.extend({
     // touchstart a click gets triggered at the location
     // you hit and released before.
     var ignore = false;
+    var now = (new Date()).getTime();
     if(buttonTracker.lastTouchStart) {
-      var now = (new Date()).getTime();
       if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
         ignore = true;
       }
+    } else {
+      ignore = false;
     }
     if(!ignore) {
-      debugger
       this.send('close', event);
     }
   },
