@@ -1991,7 +1991,9 @@ var app_state = EmberObject.extend({
       }
     }
     if(app_state.get('speak_mode') && !modal.is_open()) {
-      $(":focus").blur();
+      if(!buttonTracker.check('native_keyboard')) {
+        $(":focus").blur();
+      }
     }
 
     // track modeling events correctly
