@@ -58,7 +58,7 @@ export default Component.extend({
   touchStart: function(event) {
     this.send('close', event);
   },
-  mouseDown: function(event) {
+  mouseUp: function(event) {
     // on iOS (probably just UIWebView) this phantom
     // click event get triggered. If you tap & release 
     // really fast then tap somewhere else, right after
