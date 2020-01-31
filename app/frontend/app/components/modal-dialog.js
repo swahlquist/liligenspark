@@ -72,6 +72,7 @@ export default Component.extend({
       }
     }
     if(!ignore) {
+      debugger
       this.send('close', event);
     }
   },
