@@ -267,7 +267,7 @@ $(window).on('blur', function(event) {
 var buttonTracker = EmberObject.extend({
   setup: function() {
     // cheap trick to get us ahead of the line in front of ember
-    $("#within_ember").on('click', function(event) {
+    $("#within_ember").on('click mousedown', function(event) {
       // on iOS (probably just UIWebView) this phantom
       // click event get triggered. If you tap & release 
       // really fast then tap somewhere else, right after
