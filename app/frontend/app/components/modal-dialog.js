@@ -1,7 +1,7 @@
 import Component from '@ember/component';
 import $ from 'jquery';
 import capabilities from '../utils/capabilities';
-import buttonTracker from '../utils/capabilities';
+import buttonTracker from '../utils/raw_events';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
 
