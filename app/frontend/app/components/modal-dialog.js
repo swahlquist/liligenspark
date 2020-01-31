@@ -66,12 +66,12 @@ export default Component.extend({
     // you hit and released before.
     var ignore = false;
     var now = (new Date()).getTime();
+    event.handled_at = now;
     if(buttonTracker.lastTouchStart) {
       if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
         ignore = true;
+        event.fake_event = true;
       }
-    } else {
-      ignore = false;
     }
     if(!ignore) {
       this.send('close', event);
@@ -85,6 +85,7 @@ export default Component.extend({
         try {
           event.preventDefault();
         } catch(e) { }
+        console.log("close from event");
         return this.sendAction();
       }
     },

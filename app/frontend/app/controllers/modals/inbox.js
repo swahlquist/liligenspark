@@ -95,7 +95,7 @@ export default modal.ModalController.extend({
           CoughDrop.Buttonset.load_button_set(board_id).then(function(button_set) {
             var search = button_set.find_sequence(text, board_id, app_state.get('referenced_user'), false);
             search.then(function(results) {
-              var list = (results || [])[0].steps;
+              var list = (results[0] || {}).steps || [];
               var found_any = false;
               list.forEach(function(step) {
                 if(step.button && step.button.label) {
