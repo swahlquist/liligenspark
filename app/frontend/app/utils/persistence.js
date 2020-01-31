@@ -2314,8 +2314,9 @@ var persistence = EmberObject.extend({
     return null;
   },
   ajax: function() {
-    if(this.get('online')) {
-      var ajax_args = arguments;
+    var ajax_args = arguments;
+    var local_request = ajax_args && ajax_args[0] && ajax_args[0].match && ajax_args[0].match(/^file:\/\//);
+    if(this.get('online') || local_request) {
       // TODO: is this wrapper necessary? what's it for? maybe can just listen on
       // global ajax for errors instead...
       return new RSVP.Promise(function(resolve, reject) {
@@ -2343,7 +2344,7 @@ var persistence = EmberObject.extend({
         });
       });
     } else {
-      return RSVP.reject({offline: true, error: "not online"});
+      return RSVP.reject({offline: true, error: "not online", short_circuit: true});
     }
   },
   on_connect: observer('online', function() {
