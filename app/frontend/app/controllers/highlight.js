@@ -5,6 +5,7 @@ import {
 import $ from 'jquery';
 import modal from '../utils/modal';
 import scanner from '../utils/scanner';
+import buttonTracker from '../utils/raw_events';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 
@@ -89,7 +90,16 @@ export default modal.ModalController.extend({
         modal.close(null, 'highlight');
       }
     },
+    select_release: function(e) {
+      var $target = $(e.target);
+      if($target.hasClass('highlight') && !$target.hasClass('inner')) {
+        buttonTracker.ignoreUp = true;
+        this.send('close');
+      }
+    },
     close: function() {
+      if(this.get('close_handled')) { return; }
+      this.set('close_handled', true);
       if(this.get('model.select_anywhere')) { // whole-screen is giant switch
         this.send('select');
       } else {
@@ -102,6 +112,7 @@ export default modal.ModalController.extend({
       }
     },
     opening: function() {
+      this.set('close_handled', false);
       var settings = modal.settings_for['highlight'] || {};
       var controller = this;
       modal.last_controller = controller;

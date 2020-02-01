@@ -1,14 +1,16 @@
 {{#opening-observer opening=(action 'opening') closing=(action 'closing')}}
-<div class="highlight" style={{model.top_style}} {{action "close"}}>
-</div>
-<div class="highlight" style={{model.left_style}} {{action "close"}}>
-</div>
-<div class="highlight" style={{model.right_style}} {{action "close"}}>
-</div>
-<div class="highlight" style={{model.bottom_style}} {{action "close"}}>
-</div>
-<div class="highlight box" style={{model.highlight_style}} {{action "select"}}>
-</div>
-<div class="highlight box inner advanced_selection" id='highlight_box' style={{model.inner_highlight_style}} {{action "select"}}>
-</div>
+{{#touch-listener release='select_release'}}
+  <div class="highlight" style={{model.top_style}} {{action "close"}}>
+  </div>
+  <div class="highlight" style={{model.left_style}} {{action "close"}}>
+  </div>
+  <div class="highlight" style={{model.right_style}} {{action "close"}}>
+  </div>
+  <div class="highlight" style={{model.bottom_style}} {{action "close"}}>
+  </div>
+  <div class="highlight box" style={{model.highlight_style}} {{action "select"}}>
+  </div>
+  <div class="highlight box inner advanced_selection" id='highlight_box' style={{model.inner_highlight_style}} {{action "select"}}>
+  </div>
+{{/touch-listener}}
 {{/opening-observer}}

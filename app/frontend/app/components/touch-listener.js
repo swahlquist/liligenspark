@@ -27,5 +27,29 @@ export default Component.extend({
   touchStart: function() {
     this.sendAction('select');
     return true;
+  },
+  touchEnd: function(e) {
+    this.sendAction('release', e);
+    return true;
+  },
+  mouseUp: function(event) {
+    // on iOS (probably just UIWebView) this phantom
+    // click event get triggered. If you tap & release 
+    // really fast then tap somewhere else, right after
+    // touchstart a click gets triggered at the location
+    // you hit and released before.
+    var ignore = false;
+    var now = (new Date()).getTime();
+    event.handled_at = now;
+    if(buttonTracker.lastTouchStart) {
+      if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
+        ignore = true;
+        event.fake_event = true;
+      }
+    }
+    if(!ignore) {
+      this.sendAction('release', event);
+    }
+    return true;
   }
 });
