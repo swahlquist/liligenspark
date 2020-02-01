@@ -79,48 +79,53 @@ var modal = EmberObject.extend({
     }
   },
   highlight: function($elems, options) {
-    var rect = scanner.measure($elems);
-    var minX = rect.left, minY = rect.top, maxX = rect.left + rect.width, maxY = rect.top + rect.height;
-    var do_stretch = true;
-    if(do_stretch) {
-      minX = minX - 10;
-      minY = minY - 10;
-      maxX = maxX + 10;
-      maxY = maxY + 10;
-    }
-    var settings = modal.highlight_settings || EmberObject.create();
-    settings.setProperties({
-      left: Math.floor(minX),
-      top: Math.floor(minY),
-      width: Math.ceil(maxX - minX),
-      height: Math.ceil(maxY - minY),
-      bottom: Math.floor(maxY),
-    });
-
-    options = options || {};
-    settings.set('overlay', options.overlay);
-    if(settings.get('overlay') !== false) { settings.set('overlay', true); }
-    settings.set('clear_overlay', options.clear_overlay);
-    settings.set('prevent_close', options.prevent_close);
-    settings.set('select_anywhere', options.select_anywhere);
-    settings.set('highlight_type', options.highlight_type);
-    settings.set('defer', RSVP.defer());
-    var promise = settings.get('defer').promise;
-
-    if(modal.highlight_controller) {
-      if(modal.highlight_promise) {
-        modal.highlight_promise.reject({reason: 'closing due to new highlight', highlight_close: true});
+    var defer = RSVP.defer();
+    // This may just be necessary for UIWebKit, but
+    // iOS is still struggling sometimes with find-a-button
+    runLater(function() {
+      var rect = scanner.measure($elems);
+      var minX = rect.left, minY = rect.top, maxX = rect.left + rect.width, maxY = rect.top + rect.height;
+      var do_stretch = true;
+      if(do_stretch) {
+        minX = minX - 10;
+        minY = minY - 10;
+        maxX = maxX + 10;
+        maxY = maxY + 10;
       }
-      modal.highlight_controller.set('model', settings);
-    } else {
-      modal.close(null, 'highlight');
-      runLater(function() {
-        modal.open('highlight', settings);
+      var settings = modal.highlight_settings || EmberObject.create();
+      settings.setProperties({
+        left: Math.floor(minX),
+        top: Math.floor(minY),
+        width: Math.ceil(maxX - minX),
+        height: Math.ceil(maxY - minY),
+        bottom: Math.floor(maxY),
       });
-    }
-    modal.highlight_promise = settings.get('defer');
-    modal.highlight_settings = settings;
-    return promise;
+
+      options = options || {};
+      settings.set('overlay', options.overlay);
+      if(settings.get('overlay') !== false) { settings.set('overlay', true); }
+      settings.set('clear_overlay', options.clear_overlay);
+      settings.set('prevent_close', options.prevent_close);
+      settings.set('select_anywhere', options.select_anywhere);
+      settings.set('highlight_type', options.highlight_type);
+      settings.set('defer', defer);
+      var promise = settings.get('defer').promise;
+
+      if(modal.highlight_controller) {
+        if(modal.highlight_promise) {
+          modal.highlight_promise.reject({reason: 'closing due to new highlight', highlight_close: true});
+        }
+        modal.highlight_controller.set('model', settings);
+      } else {
+        modal.close(null, 'highlight');
+        runLater(function() {
+          modal.open('highlight', settings);
+        });
+      }
+      modal.highlight_promise = settings.get('defer');
+      modal.highlight_settings = settings;
+    }, 100);
+    return defer.promise;
   },
   close_highlight: function() {
     if(this.highlight_controller) {
