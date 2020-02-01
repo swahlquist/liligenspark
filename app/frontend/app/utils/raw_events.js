@@ -89,13 +89,14 @@ $(document).on('mousedown touchstart', function(event) {
     // it will allow unsanctioned utterances (such as on touch timeouts,
     // scanning events, etc.)
     var u = new window.SpeechSynthesisUtterance();
-    u.text = "";
+    u.text = " ";
     window.speechSynthesis.speak(u);
     buttonTracker.ios_initialized = true;
   }
   if(event.type == 'touchend') {
     buttonTracker.lastTouchStart = null;
   }
+  buttonTracker.lastTouchRelease = (new Date()).getTime();
   if((event.type == 'mouseup' || event.type == 'touchend' || event.type == 'touchcancel') && buttonTracker.dwell_elem) {
     console.log("linger cleared because touch release event");
     buttonTracker.clear_dwell();
@@ -287,18 +288,22 @@ var buttonTracker = EmberObject.extend({
       }
     });
     $("#within_ember").on('click', '.advanced_selection', function(event) {
-      // TODO: this will probably break mouse selection on 
-      // iPad, and probably other alternative access methods
-      // as well.
-
       // we're basically replacing all click events by tracking up and down explicitly,
       // so we don't want any unintentional double-triggers
       if(event.pass_through) { return; }
+
       event.preventDefault();
       event.stopPropagation();
       // skip the ember listeners, but pass along for bootstrap dropdowns
       if($(event.target).closest('.dropdown').length === 0) {
         $(document).trigger($.Event(event));
+      } else {
+        // if no recent mouseup or touchend, then we can asusme
+        // this is an artificial click event, and can be accepted
+        var now = (new Date()).getTime();
+        if(!buttonTracker.lastTouchRelease || now - buttonTracker.lastTouchRelease > 300) {
+          buttonTracker.touch_release(event);
+        }
       }
     });
   },
