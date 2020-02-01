@@ -273,9 +273,13 @@ var word_suggestions = EmberObject.extend({
                         emberSet(word, 'original_image', button.original_image);
                         emberSet(word, 'safe_image', emberGet(word, 'image'));
                         emberSet(word, 'image', button.image);
+                        emberSet(word, 'image_license', button.image_license);
                         emberSet(word, 'hc_image', !!button.image);
                         if(button.image.match(/^data/) || !button.image.match(/^http/)) {
                           emberSet(word, 'safe_image', button.image);
+                        }
+                        if(word.image_update) {
+                          word.image_update(button.image);
                         }
                       }
                     });

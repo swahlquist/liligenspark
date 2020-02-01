@@ -1208,6 +1208,10 @@ Button.load_actions = function() {
       },
       alter: function(text, prior_text, prior_label, altered, addition) {
         if(altered.vocalization) { altered.vocalization = altered.vocalization + " " }
+        if(addition.suggestion_image) {
+          altered.image = addition.suggestion_image;
+          altered.image_license = addition.suggestion_image_license;
+        }
         altered.label = (altered.label || '') + " ";
         altered.in_progress = false;
       }

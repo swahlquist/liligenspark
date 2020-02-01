@@ -738,6 +738,7 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
   var image = images.findBy('id', button.image_id);
   if(image) {
     button.image = image.get('best_url');
+    button.image_license = image.get('license');
     button.hc = image.get('hc');
   }
   emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('blank.png'));

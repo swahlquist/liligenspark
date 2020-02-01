@@ -12,6 +12,7 @@ import persistence from './persistence';
 import $ from 'jquery';
 import CoughDrop from '../app';
 import { observer } from '@ember/object';
+import word_suggestions from './word_suggestions';
 
 var punctuation_at_start = /^\+[\.\?\,\!]/;
 var punctuation_with_space = /^\s*[\.\?\,\!]\s*$/;
@@ -345,6 +346,33 @@ var utterance = EmberObject.extend({
     }
     // append button attributes as needed
     var b = $.extend({}, button);
+    if(button.vocalization && button.vocalization.match(/:space|:complete/)) {
+      var parts = (button.vocalization || button.label || '').split(/\s*&&\s*/);
+      if(parts.find(function(p) { return p == ':space' || p == ':complete'; })) {
+        // Search buttonset for a matching image and use that
+        // if one is found
+        var last_word = app_state.get('button_list')[app_state.get('button_list').length - 1];
+        if(last_word && last_word.label) {
+          word_suggestions.lookup({
+            word_in_progress: last_word.label,
+            board_ids: [app_state.get('currentUser.preferences.home_board.id'), stashes.get('temporary_root_board_state.id')]
+          }).then(function(result) {
+            var word = result.find(function(w) { return w.word == last_word.label; });
+            if(word && word.image) { 
+              emberSet(b, 'suggestion_image', word.image); 
+              emberSet(b, 'suggestion_image_license', word.image_license);
+            }
+            word.image_update = function(url) {
+              emberSet(b, 'suggestion_image', url);
+              emberSet(b, 'suggestion_image_license', word.image_license);
+              runLater(function() {
+                utterance.set_button_list();
+              })
+            };
+          });
+        }
+      }
+    }
     if(original_button && original_button.load_image) {
       original_button.load_image('local').then(function(image) {
         image = image || original_button.get('image');
