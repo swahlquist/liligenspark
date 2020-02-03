@@ -74,32 +74,39 @@ export default Component.extend({
       } else if(medium == 'email') {
         modal.open('share-email', {url: this.get('url'), text: this.get('text'), utterance_id: this.get('utterance.id') });
       } else if(medium == 'clipboard' && this.get('clipboard_enabled')) {
-        var $elem = $("#" + this.get('element_id'));
-        window.getSelection().removeAllRanges();
-        var text = $elem[0].innerText;
-        if($elem[0].tagName == 'INPUT') {
-          $elem.focus().select();
-          text = $elem.val();
-        } else {
-          var range = document.createRange();
-          range.selectNode($elem[0]);
-          window.getSelection().addRange(range);
-        }
-        var res = document.execCommand('copy');
+        var res = false
+        if(this.get('native.clipboard')) {
+          capabilities.sharing.share('clipboard', this.get('text'));
+          res = true;
+        } 
         if(!res) {
-          var textArea = document.createElement('textArea');
-          textArea.value = text;
-          document.body.appendChild(textArea);
-          var range = document.createRange();
-          range.selectNodeContents(textArea);
-          var selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-          textArea.setSelectionRange(0, 999999);        
+          var $elem = $("#" + this.get('element_id'));
+          window.getSelection().removeAllRanges();
+          var text = $elem[0].innerText;
+          if($elem[0].tagName == 'INPUT') {
+            $elem.focus().select();
+            text = $elem.val();
+          } else {
+            var range = document.createRange();
+            range.selectNode($elem[0]);
+            window.getSelection().addRange(range);
+          }
           res = document.execCommand('copy');
-          document.body.removeChild(textArea);
+          if(!res) {
+            var textArea = document.createElement('textArea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            var range = document.createRange();
+            range.selectNodeContents(textArea);
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textArea.setSelectionRange(0, 999999);        
+            res = document.execCommand('copy');
+            document.body.removeChild(textArea);
+          }
+          window.getSelection().removeAllRanges();
         }
-        window.getSelection().removeAllRanges();
         this.sendAction('copy_event', !!res);
       }
     }
