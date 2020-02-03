@@ -54,6 +54,20 @@
           </label>
         </div>
       </div>
+      <div class="form-group">
+        <label for="hide_pin_hint" class="col-sm-3 control-label">{{t "Exiting" key='editing'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=pending_preferences.hide_pin_hint id="hide_pin_hint"}}
+              {{t "Don't show hint for discovering forgotten PIN" key='hide_pin_hint'}}
+            </label>
+          </div>
+          {{#if pending_preferences.hide_pin_hint}}
+            <p class='text-danger' style='margin-top: 10px;'>{{t "NOTE: If the PIN hint is hidden, you won't be able to exit Speak Mode unless you remember the PIN, or can look it up on a different device." key='hidden_pin_warning'}}</p>
+          {{/if}}
+        </div>
+      </div>
     {{/if}}
   {{/preference-box}}
   {{#preference-box title="Styling" glyph='glyphicon glyphicon-picture' title_key='styling'}}
