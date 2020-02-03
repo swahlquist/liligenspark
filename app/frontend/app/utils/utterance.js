@@ -514,7 +514,7 @@ var utterance = EmberObject.extend({
     if(!opts.auto_cleared) {
       speecher.stop('all');
     }
-    app_state.app_state.refresh_suggestions();
+    app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
   backspace: function(opts) {
@@ -549,7 +549,7 @@ var utterance = EmberObject.extend({
       action: 'backspace',
       button_triggered: opts.button_triggered
     });
-    app_state.app_state.refresh_suggestions();
+    pp_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
   set_and_say_buttons: function(buttons) {
