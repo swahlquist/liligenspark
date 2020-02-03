@@ -31,6 +31,10 @@ var scanner = EmberObject.extend({
       console.debug("scanning currently only works in speak mode...");
       scanner.stop();
       return;
+    } else if(!_this.get('currentUser.preferences.device.scanning')) {
+      console.debug("scanning not enabled for the current user");
+      scanner.stop();
+      return;
     }
     var rows = [];
     options = options || this.last_options;
