@@ -1243,6 +1243,13 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':suggestion',
+      description: i18n.t('suggestion', "Show a suggestion word in this button spacee"),
+      trigger: function() {
+        return {auto_return_possible: true};
+      }
+    },
+    {
       action: ':plural',
       modifier: true,
       description: i18n.t('pluralize', "Make the word plural"),

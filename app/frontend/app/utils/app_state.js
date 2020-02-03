@@ -1450,6 +1450,8 @@ var app_state = EmberObject.extend({
           }
         }
       }
+      app_state.refresh_suggestions();
+      
       if(!session.get('isAuthenticated') || app_state.get('currentUser')) {
         this.set('last_speak_mode', !!this.get('speak_mode'));
       }
@@ -1500,6 +1502,11 @@ var app_state = EmberObject.extend({
       }
     }
   ),
+  refresh_suggestions: function() {
+    if(app_state.controller && app_state.controller.get('board.model')) {
+      app_state.controller.get('board.model').load_word_suggestions([app_state.get('currentUser.preferences.home_board.id'), stashes.get('temporary_root_board_state.id')]);
+    }
+  },
   handle_tag: function(tag) {
     if(!app_state.get('speak_mode')) { return; }
     var text_fallback = function(text) {
@@ -2003,6 +2010,19 @@ var app_state = EmberObject.extend({
       obj.modeling = true;
     } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > (now - 500)) {
       obj.modeling = true;
+    }
+
+    if(button.vocalization == ':suggestion') {
+      obj.vocalization = ':predict';
+      if(button.board && button.board.get('suggestion_lookups')) {
+        var suggestion = button.board.get('suggestion_lookups')[button.id.toString()];
+        if(suggestion) {
+          obj.label = suggestion.word;
+          obj.completion = suggestion.word;
+          obj.image = suggestion.image;
+          obj.image_license = suggestion.image_license;
+        }
+      }
     }
 
     // update button attributes preemptively

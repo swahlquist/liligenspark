@@ -14,7 +14,9 @@ import app_state from '../utils/app_state';
 import Button from '../utils/button';
 import editManager from '../utils/edit_manager';
 import speecher from '../utils/speecher';
+import stashes from '../utils/_stashes';
 import boundClasses from '../utils/bound_classes';
+import word_suggestions from '../utils/word_suggestions';
 import ButtonSet from '../models/buttonset';
 import Utils from '../utils/misc';
 import { htmlSafe } from '@ember/string';
@@ -766,6 +768,92 @@ CoughDrop.Board = DS.Model.extend({
       res.then(null, function() { });
       return res;
     }
+  },
+  load_word_suggestions: function(board_ids) {
+    var working = stashes.get('working_vocalization') || {};
+    var last_word = ((working[working.length - 1]) || {}).label;
+    var second_to_last_word = ((working[working.length - 2]) || {}).label;
+
+    var _this = this;
+    var has_suggested_buttons = false;
+    var buttons = {};
+    (this.get('buttons') || []).forEach(function(button) {
+      if(button.vocalization == ':suggestion') {
+        buttons[button.id.toString()] = button;
+        has_suggested_buttons = true;
+      }
+    });
+    if(!has_suggested_buttons) {
+      return null;
+    }
+    var suggested_buttons = [];
+    var order = this.get('grid.order') || [];
+    for(var idx = 0; idx < order.length; idx++) {
+      for(var jdx = 0; jdx < (order[idx] || []).length; jdx++) {
+        if(order[idx][jdx]) {
+          var button = buttons[order[idx][jdx].toString()];
+          if(button && button.vocalization == ':suggestion') {
+            suggested_buttons.push(button);
+          }
+        }
+      }
+    }
+    if(suggested_buttons.length == 0) { return null; }
+    word_suggestions.lookup({
+      last_finished_word: last_word || "",
+      second_to_last_word: second_to_last_word,
+      board_ids: board_ids
+    }).then(function(result) {
+      (result||[]).forEach(function(sugg, idx) {
+        if(suggested_buttons[idx]) {
+          var suggestion_button = suggested_buttons[idx];
+          _this.update_suggestion_button(suggestion_button, sugg);
+          sugg.image_update = function() {
+            persistence.find_url(sugg.image, 'image').then(function(data_uri) {
+              sugg.data_image = data_uri;
+              _this.update_suggestion_button(suggestion_button, sugg);
+            }, function() {
+              _this.update_suggestion_button(suggestion_button, sugg);
+            });
+          };
+        }
+      });
+    }, function() { });
+  },
+  update_suggestion_button: function(button, suggestion) {
+    var _this = this;
+    var lookups = _this.get('suggestions_lookups') || {};
+    var brds = document.getElementsByClassName('board');
+    for(var idx = 0; idx < brds.length; idx++) {
+      var brd = brds[idx];
+      if(brd && brd.getAttribute('data-id') == _this.get('id')) {
+        var btns = brd.getElementsByClassName('button');
+        for(var jdx = 0; jdx < btns.length; jdx++) {
+          var btn = btns[jdx];
+          if(btn && btn.getAttribute('data-id') == button.id.toString() && !btn.classList.contains('clone')) {
+            // set the values in the DOM, and save them in a lookup
+            lookups[button.id.toString()] = suggestion;
+            var url = suggestion.data_image || suggestion.image;
+            if(persistence.url_cache[url]) {
+              url = persistence.url_cache[url];
+            }
+            var lbl = btn.getElementsByClassName('button-label')[0];
+            var img = btn.getElementsByClassName('symbol')[0]
+            if(lbl) {
+              lbl.innerText = app_state.get('speak_mode') ? suggestion.word : button.label;
+            }
+            if(img && url) {
+              if(!img.getAttribute('original-src')) {
+                img.setAttribute('original-src', img.src);
+              }
+              img.src = app_state.get('speak_mode') ? url : (img.getAttribute('original-src') || url);
+            }
+          }
+        }
+      }
+    }
+    _this.set('suggestion_lookups', lookups);
+
   },
   add_classes: function() {
     if(this.get('classes_added')) { return; }

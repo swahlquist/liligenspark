@@ -1059,6 +1059,8 @@ var editManager = EmberObject.extend({
         if(app_state.controller) {
           app_state.controller.send('check_scanning');
         }
+        // also check for word suggestions
+        app_state.refresh_suggestions();
       } else if(resume_scanning.attempts < 10) {
         runLater(resume_scanning, resume_scanning.attempts * 100);
       } else {

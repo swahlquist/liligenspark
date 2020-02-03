@@ -48,7 +48,8 @@ var word_suggestions = EmberObject.extend({
         promises.push(defer.promise);
         previous.then(function() {
           var store_key = "arpa-." + idx + "." + _this.pieces + ".json";
-          var remote_url = "https://s3.amazonaws.com/coughdrop/language/ngrams.arpa." + idx + "." + _this.pieces + ".json";
+          // TODO: CDN
+          var remote_url = "https://coughdrop.s3.amazonaws.com/language/ngrams.arpa." + idx + "." + _this.pieces + ".json";
           var find_or_store = persistence.find('settings', store_key).then(null, function() {
             return $.ajax({
               url: remote_url,
@@ -181,11 +182,14 @@ var word_suggestions = EmberObject.extend({
     var _this = this;
     return this.load().then(function() {
       var last_finished_word = options.last_finished_word;
+      var second_to_last_word = options.second_to_last_word;
       var word_in_progress = options.word_in_progress;
       var max_results = options.max_results || _this.max_results;
       var result = [];
-      if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress) {
+      if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress || _this.second_to_last_word != second_to_last_word) {
         _this.last_finished_word = last_finished_word;
+        _this.second_to_last_word = second_to_last_word;
+        // TODO: is there an easy way to include two prior words?
         _this.word_in_progress = word_in_progress;
         // searches the next-words list, looking for best matches based
         // on the current partial spelling if there is one

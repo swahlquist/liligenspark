@@ -215,6 +215,9 @@ var utterance = EmberObject.extend({
       app_state.set('button_list', visualButtonList);
       utterance.set('last_spoken_button', last_spoken_button);
       stashes.persist('working_vocalization', buttonList);
+      runLater(function() {
+        app_state.refresh_suggestions();
+      }, 100);
     }
   ),
   process_inline_content: function(text, inline_actions) {
