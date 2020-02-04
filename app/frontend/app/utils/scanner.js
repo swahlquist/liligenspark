@@ -31,7 +31,7 @@ var scanner = EmberObject.extend({
       console.debug("scanning currently only works in speak mode...");
       scanner.stop();
       return;
-    } else if(!_this.get('currentUser.preferences.device.scanning')) {
+    } else if(!app_state.get('currentUser.preferences.device.scanning')) {
       console.debug("scanning not enabled for the current user");
       scanner.stop();
       return;
@@ -462,7 +462,6 @@ var scanner = EmberObject.extend({
         scanner.level_up(elem);
       } else if(elem.children) {
         if(elem.dom && elem.dom.hasClass('btn') && elem.dom.closest("#identity").length > 0) {
-          debugger
           var e = $.Event( "click" );
           e.pass_through = true;
           e.switch_activated = true;
