@@ -11,6 +11,7 @@ import modal from './modal';
 import speecher from './speecher';
 import utterance from './utterance';
 import persistence from './persistence';
+import capabilities from './capabilities';
 import i18n from './i18n';
 import stashes from './_stashes';
 import progress_tracker from './progress_tracker';
@@ -1534,6 +1535,35 @@ Button.load_actions = function() {
       description: i18n.t('battery_level', "Speak the current battery level"),
       content: function() {
         return (app_state.get('battery') || i18n.t('unknown', "Unknown")) + " " + i18n.t('percent_battery', "percent battery left");
+      }
+    },
+    {
+      action: ':volume',
+      match: /^:volume\((\d+|up|down)\)/,
+      description: i18n.t('set_volume', "Set the device volume (up, down, or ##)"),
+      trigger: function(match) { 
+        var action = null;
+        if(match[1] == 'up' || match[1] == 'down') {
+          var act = match[1] == 'up' ? '+' : '-';
+          action = match[1];
+          capabilities.set_volume(act).then(function(res) {
+            runLater(function() {
+              speecher.beep();
+            }, 500);
+          }, function(err) {
+            modal.error(i18n.t('volume_change_failed', "Device volume change failed"));
+          });
+        } else {
+          var num = parseInt(match[1], 10);
+          action = num;
+          capabilities.set_volume(num / 100).then(function(res) {
+            runLater(function() {
+              speecher.beep();
+            }, 500);
+          }, function(err) {
+            modal.error(i18n.t('volume_change_failed', "Device volume change failed"));
+          });
+        }
       }
     },
     {

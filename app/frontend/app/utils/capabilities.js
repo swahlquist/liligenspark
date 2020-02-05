@@ -1323,8 +1323,43 @@ var capabilities;
             stashes.volume = capabilities.last_volume;
             res.resolve(vol);
           });
+        } else if(window.node_extras && window.node_extras.audio) {
+          var num = window.node_extras.audio.speaker.get();
+          res.resolve(num / 100);
         } else {
           res.reject({error: 'volume not available'});
+        }
+        return res;
+      },
+      set_volume: function(vol) {
+        var res = capabilities.mini_promise();
+        var set_now = function(vol) {
+          if(window.cordova) {
+            window.cordova.exec(function(res) {
+              res.resolve(res);
+            }, function(err) {
+              res.reject(err);
+            }, 'CoughDropMisc', 'setSystemVolume', [{volume: vol}]);
+          } else if(window.node_extras && window.node_extras.audio) {
+            window.node_extras.audio.speaker.set(Math.round(vol * 100));
+            res.resolve({volume: Math.round(vol * 100) });
+          } else {
+            res.reject({error: 'volume control not available'});
+          }
+        };
+        if(vol == "+" || vol == "-") {
+          capabilities.volume_check().then(function(r) {
+            if(vol == "+") {
+              vol = Math.min(1.0, r + 0.1);
+            } else {
+              vol = Math.max(0.0, r - 0.1);
+            }
+            set_now(vol);
+          }, function(err) {
+            res.reject({error: 'volume not available'});
+          })
+        } else if(!isNaN(parseFloat(vol))) {
+          set_now(parseFloat(vol));
         }
         return res;
       },

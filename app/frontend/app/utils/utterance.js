@@ -549,7 +549,7 @@ var utterance = EmberObject.extend({
       action: 'backspace',
       button_triggered: opts.button_triggered
     });
-    pp_state.refresh_suggestions();
+    app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
   set_and_say_buttons: function(buttons) {
