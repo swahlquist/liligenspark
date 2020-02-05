@@ -25,6 +25,9 @@ var scanner = EmberObject.extend({
     return $(tag, opts);
   },
   start: function(options) {
+    if(scanner.actively_scanning()) {
+      return;
+    }
     scanner.current_element = null;
     scanner.ref = Math.random();
     if(scanner.find_elem("header #speak").length === 0) {
@@ -40,6 +43,7 @@ var scanner = EmberObject.extend({
     options = options || this.last_options;
     if(!options) { return; }
 
+    scanner.started = (new Date()).getTime();
     this.last_options = options;
     options.scan_mode = options.scan_mode || "row";
     options.interval = options.interval || 1000;
@@ -380,6 +384,9 @@ var scanner = EmberObject.extend({
     modal.close_highlight();
     scanner.scan_axes('clear');
     scanner.scanning_distances = {x: 0, y: 0};
+  },
+  actively_scanning: function() {
+    return scanner.interval && scanner.current_element && document.body.contains(scanner.current_element.dom[0])
   },
   same_elements: function(a, b) {
     if(!a || !b || a.length != b.length) {
@@ -776,12 +783,18 @@ var scanner = EmberObject.extend({
     var now = (new Date()).getTime();
     if(scanner.ignore_until && now < scanner.ignore_until) { console.log("ignoring because too soon"); return; }
     if(scanner.reset_until && now < scanner.reset_until) { 
-      scanner.reset_until = null;
-      scanner.reset();
-      if(scanner.options && !scanner.options.auto_start) {
-        runLater(function() { scanner.next(reverse); });
+      var cutoff = Math.min(scanner.options.interval / 2, 1000);
+      if(scanner.actively_scanning() && scanner.started && now - scanner.started > cutoff) {
+        // If scanning already started, and more than a moment ago,
+        // then assume this advance call was intentional
+      } else {
+        // Otherwise treat it as a brand new initiation
+        scanner.reset();
+        if(scanner.options && !scanner.options.auto_start) {
+          runLater(function() { scanner.next(reverse); });
+        }
+        return; 
       }
-      return; 
     }
     if(!auto && modal.is_open()) {
       modal.cancel_auto_close();

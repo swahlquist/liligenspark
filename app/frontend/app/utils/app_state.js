@@ -1997,8 +1997,9 @@ var app_state = EmberObject.extend({
         return false;
       }
     }
+
     if(app_state.get('speak_mode') && !modal.is_open()) {
-      if(!buttonTracker.check('native_keyboard')) {
+      if(!buttonTracker.check('native_keyboard') && !buttonTracker.check('scanning_enabled')) {
         $(":focus").blur();
       }
     }
@@ -2238,6 +2239,7 @@ var app_state = EmberObject.extend({
     } else if(button.integration && button.integration.action_type == 'webhook') {
       app_state.track_depth('clear');
       Button.extra_actions(button);
+      app_state.check_scanning();
     } else if(button.integration && button.integration.action_type == 'render') {
       app_state.track_depth('clear');
       runLater(function() {
@@ -2481,6 +2483,7 @@ var app_state = EmberObject.extend({
     app_state.track_depth('clear');
     if(obj.prevent_return) {
       // integrations and configured buttons can explicitly prevent navigating away when activated
+      app_state.check_scanning();
     } else if(app_state.get('speak_mode') && ((!app_state.get('currentUser') && window.user_preferences.any_user.auto_home_return) || app_state.get('currentUser.preferences.auto_home_return'))) {
       if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
         var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
@@ -2489,8 +2492,10 @@ var app_state = EmberObject.extend({
         } else {
           modal.warning(i18n.t('sticky_board_notice', "Board lock is enabled, disable to leave this board."), true);
         }
+        app_state.check_scanning();
       } else if(obj && obj.vocalization && obj.vocalization.match(/^\+/)) {
         // don't home-return when spelling out words
+        app_state.check_scanning();
       } else {
         app_state.jump_to_root_board({auto_home: true});
       }
