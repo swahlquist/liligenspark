@@ -18,6 +18,16 @@ export default modal.ModalController.extend({
         emberSet(sync, 'cached', sync.statuses.filter(function(s) { return s.status == 'cached'; }).length);
         emberSet(sync, 'downloaded', sync.statuses.filter(function(s) { return s.status == 'downloaded'; }).length);
         emberSet(sync, 're_downloaded', sync.statuses.filter(function(s) { return s.status == 're-downloaded'; }).length);
+        sync.statuses.forEach(function(s, idx) { s.idx = idx; });
+        emberSet(sync, 'sorted_statuses', sync.statuses.sort(function(a, b) {
+          if(a.error && !b.error) {
+            return -1;
+          } else if(!a.error && b.error) {
+            return 1;
+          } else {
+            return a.idx - b.idx;
+          }        
+        }));
         sync.statuses.forEach(function(s) {
           emberSet(s, (s.status || '').replace(/-/, '_'), true);
         });
