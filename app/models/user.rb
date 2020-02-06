@@ -336,10 +336,10 @@ class User < ActiveRecord::Base
     self.settings['edit_key']
   end
 
-  def save(*args)
-    raise 'nope' if self.user_name == 'becca'
-    super
-  end
+  # def save(*args)
+  #   raise 'nope' if self.user_name == 'becca'
+  #   super
+  # end
 
   def save_with_sync(reason)
     self.sync_stamp = Time.now

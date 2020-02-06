@@ -413,7 +413,7 @@ class Board < ActiveRecord::Base
     if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])
       self.schedule(:restore_urls)
     end
-    schedule(:update_affected_users, @brand_new) if @button_links_changed || @brand_new
+    schedule(:update_affected_users, @brand_new) if @button_links_changed || @brand_new || @buttons_changed
 
     schedule_downstream_checks
   end
