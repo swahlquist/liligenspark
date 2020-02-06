@@ -541,6 +541,7 @@ var scanner = EmberObject.extend({
       if(this.find_elem("#hidden_input:focus").length > 0) {
         window.Keyboard.hide();
         window.Keyboard.hideFormAccessoryBar(true, function() { });
+        capabilities.toggle_keyboard_accessory(false);
       }
     }
   },
@@ -598,6 +599,7 @@ var scanner = EmberObject.extend({
       if(buttonTracker.native_keyboard) {
         if(window.Keyboard && window.Keyboard.hide) {
           window.Keyboard.hideFormAccessoryBar(false, function() { });
+          capabilities.toggle_keyboard_accessory(true);
         }
         $elem.attr({
           // TODO: set these to 'on' to enable keyboard suggestions,
@@ -610,6 +612,7 @@ var scanner = EmberObject.extend({
       } else {
         if(window.Keyboard && window.Keyboard.hide) {
           window.Keyboard.hideFormAccessoryBar(true, function() { });
+          capabilities.toggle_keyboard_accessory(false);
         }
         $elem.attr({
           autocomplete: 'off',
@@ -638,6 +641,7 @@ var scanner = EmberObject.extend({
     runLater(function() {
       if(window.Keyboard && window.Keyboard.hide) {
         window.Keyboard.hideFormAccessoryBar(false, function() { });
+        capabilities.toggle_keyboard_accessory(true);
         window.Keyboard.show();
       }
     });
@@ -965,6 +969,7 @@ window.addEventListener('keyboardDidShow', function() {
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {
     window.Keyboard.hideFormAccessoryBar(false, function() { });
+    capabilities.toggle_keyboard_accessory(true);
   }
 });
 window.scanner = scanner;

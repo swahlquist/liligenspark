@@ -1363,6 +1363,11 @@ var capabilities;
         }
         return res;
       },
+      toggle_keyboard_accessory: function(show) {
+        if(capabilities.system == 'iOS') {
+          cordova.exec(function(res) { console.log('keyboard accessory toggled', res); }, function(err) { console.error('keyboard accessory error', err); }, 'CoughDropMisc', 'toggleKeyboardAccessoryBar', [show])          
+        }
+      },
       fullscreen_capable: function() {
         return (window.AndroidFullScreen && window.AndroidFullScreen.isSupported()) ||
                 document.body.requestFullscreen || document.body.msRequestFullscreen ||
