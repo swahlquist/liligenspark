@@ -917,7 +917,7 @@ CoughDrop.Board = DS.Model.extend({
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
       var opts = Button.button_styling(button, _this, pos);
 
-      res = res + "<div style='" + opts.button_style + "' class='" + opts.button_class + "' data-id='" + button.id + "' tabindex='0'>";
+      res = res + "<a style='" + opts.button_style + "' class='" + opts.button_class + "' data-id='" + button.id + "' tabindex='0'>";
       res = res + "<div class='" + opts.action_class + "'>";
       res = res + "<span class='action'>";
       res = res + "<img src='" + opts.action_image + "' draggable='false' alt='" + opts.action_alt + "' />";
@@ -939,7 +939,7 @@ CoughDrop.Board = DS.Model.extend({
       res = res + "<span class='button-label " + (button.hide_label ? "hide-label" : "") + "'>" + opts.label + "</span>";
       res = res + "</div>";
 
-      res = res + "</div>";
+      res = res + "</a>";
       return res;
     };
     var html = "";

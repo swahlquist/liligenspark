@@ -320,7 +320,7 @@ var Button = EmberObject.extend({
           }
         }
       }
-      res = res + "<div style='" + this.get('computed_style') + "' class='" + this.get('computed_class') + "' data-id='" + this.get('id') + "' tabindex='0'>";
+      res = res + "<a style='" + this.get('computed_style') + "' class='" + this.get('computed_class') + "' data-id='" + this.get('id') + "' tabindex='0'>";
       if(this.get('pending')) {
         res = res + "<div class='pending'><img src='" + Ember.templateHelpers.path('images/spinner.gif') + "' draggable='false' /></div>";
       }
@@ -343,7 +343,7 @@ var Button = EmberObject.extend({
       res = res + "<span class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + clean_text(this.get('label')) + "</span>";
       res = res + "</div>";
 
-      res = res + "</div>";
+      res = res + "</a>";
       return htmlSafe(res);
     }
   ),

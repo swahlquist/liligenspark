@@ -1,5 +1,5 @@
 <!-- TODO: I think this is never used anymore -->
-<div style={{button.computed_style}} class={{button.computed_class}} data-id={{button.id}} tabindex="0">
+<a style={{button.computed_style}} class={{button.computed_class}} data-id={{button.id}} tabindex="0">
   {{#if button.pending}}
     <div class="pending">
       <img src={{path 'images/spinner.gif'}} draggable='false' />
@@ -23,4 +23,4 @@
   <div class={{if button.text_only text_only_button_symbol_class button_symbol_class}}>
     <span class={{if button.hide_label "button-label hide-label" "button-label"}}>!{{button.label}}</span>
   </div>
-</div>
+</a>
