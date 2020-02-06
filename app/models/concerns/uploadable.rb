@@ -123,8 +123,12 @@ module Uploadable
   end
 
   def assert_raster
+    if self.settings && self.settings['rasterized'] == 'pending' && (!self.settings['rasterized_at'] || self.settings['rasterized_at'] < 1.week.ago.iso8601)
+      self.settings['rasterized'] = nil
+    end
     if self.url && self.settings && self.settings['content_type'] && self.settings['content_type'].match(/image\/svg/) && !self.settings['rasterized']
       self.settings['rasterized'] = 'pending'
+      self.settings['rasterized_at'] = Time.now.iso8601
       res = Typhoeus.head(Uploader.sanitize_url(URI.escape("#{self.url}.raster.png")), followlocation: true)
       # check if there's already a .raster.png for the image (i.e. on opensymbols)
       if res.success?
@@ -161,7 +165,7 @@ module Uploadable
     raise "must have id first" unless self.id
     self.settings['pending_url'] = nil
     url = self.settings['data_uri'] if url == 'data_uri'
-    file = Tempfile.new("stash")
+    file = Tempfile.new(["stash", rasterize ? ".svg" : ""])
     file.binmode
     if url.match(/^data:/)
       self.settings['content_type'] = url.split(/;/)[0].split(/:/)[1]
@@ -207,6 +211,10 @@ module Uploadable
       convert_image(file.path)
       file.close
       if !File.exists?("#{file.path}.raster.png")
+        if self.settings['rasterized'] == 'pending' && rasterize
+          self.settings['rasterized'] = nil 
+          self.save
+        end
         return
       end
       file = File.open("#{file.path}.raster.png", 'rb')
