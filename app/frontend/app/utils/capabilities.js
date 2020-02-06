@@ -1180,6 +1180,13 @@ var capabilities;
               });
             }
           };
+          capabilities.fake_battery = function(level, charging) {
+            capabilities.battery_callbacks.last_result = {
+              level: level,
+              charging: charging
+            };
+            notify();
+          };
           if(start_listening) {
             if(navigator.getBattery) {
               navigator.getBattery().then(function(battery) {

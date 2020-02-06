@@ -72,13 +72,34 @@ var app_state = EmberObject.extend({
         _this.set('battery.progress_style', htmlSafe("width: " + parseInt(battery.level) + "%;"));
         _this.set('battery.low', battery.level < 30);
         _this.set('battery.really_low', battery.level < 15);
+        var warns = _this.get('battery_warns') || {};
+        if(battery.charging || battery.level >= 30) {
+          warns = {};
+        }
         if(battery.level <= 15 && !battery.charging) {
+          if(battery.level <= 4) {
+            if(!warns.critical) {
+              warns.critical = true; warns.dangerous = true; warns.low = true;
+              speecher.click('battery');
+            }
+          } else if(battery.level <= 7) {
+            if(!warns.dangerous) {
+              warns.dangerous = true; warns.low = true;
+              speecher.click('battery');
+            }
+          } else {
+            if(!warns.low) {
+              warns.low = true;
+              speecher.click('battery');
+            }
+          }
           _this.set('battery.progress_class', "progress-bar progress-bar-danger");
         } else if(battery.level <= 30 && !battery.charging) {
           _this.set('battery.progress_class', "progress-bar progress-bar-warning");
         } else {
           _this.set('battery.progress_class', "progress-bar progress-bar-success");
         }
+        _this.set('battery_warns', warns);
       }
     });
     capabilities.ssid.listen(function(ssid) {
