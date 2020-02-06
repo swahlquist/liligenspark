@@ -482,7 +482,7 @@ class Board < ActiveRecord::Base
   end
   
   def update_affected_users(is_new_board)
-    # update user.content_changed_at based on UserBoardConnection 
+    # update user.sync_stamp based on UserBoardConnection 
     # (including supervisors of connected users)
     # TODO: sharding
     board_ids = [self.global_id]
@@ -497,8 +497,10 @@ class Board < ActiveRecord::Base
     
     # TODO: sharding
     users = User.where(:id => User.local_ids(user_ids))
-    # TODO: finer-grained control, user.content_changed_at instead of just user.updated_at
-    users.update_all(:updated_at => Time.now)
+    # TODO: finer-grained control, user.sync_stamp instead of just user.updated_at
+    users.find_in_batches(batch_sizee: 20) do |batch|
+      batch.each{|user| user.save_with_sync('boards_changed') }
+    end
     # when a new board is created, call user.track_boards on all affected users 
     # (i.e. users with a connection to an upstream board)
     if is_new_board
