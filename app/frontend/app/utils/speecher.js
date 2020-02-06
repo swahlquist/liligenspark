@@ -19,6 +19,7 @@ var speecher = EmberObject.extend({
   ding_url: "https://opensymbols.s3.amazonaws.com/ding.mp3",
   bleep_url: "https://opensymbols.s3.amazonaws.com/bleep.mp3",
   spinner_url: "https://opensymbols.s3.amazonaws.com/spinner.mp3",
+  battery_url: "https://opensymbols.s3.amazonaws.com/battery.mp3",
   dice_url: "https://opensymbols.s3.amazonaws.com/dice.mp3",
   voices: [],
   text_direction: function() {
