@@ -18,7 +18,7 @@ class UserLink < ApplicationRecord
   
   def touch_connections
     simple_hash = {updated_at: Time.now}
-    board_hash = {updated_at: Time.now, boards_updated_at:  Time.now}
+    board_hash = {updated_at: Time.now, boards_updated_at:  Time.now, sync_stamp: Time.now}
     board_share = self.data['type'] == 'board_share'
     # TODO: sharding
     User.where(id: [self.user_id, self.secondary_user_id].compact).update_all(board_share ? board_hash : simple_hash)

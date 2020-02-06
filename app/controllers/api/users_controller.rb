@@ -300,7 +300,7 @@ class Api::UsersController < ApplicationController
     return unless allowed?(user, 'edit')
     user.settings['subscription'] ||= {}
     user.settings['subscription']['unsubscribe_reason'] = params['reason'] if params['reason']
-    user.save
+    user.save_with_sync('unsubscribe')
     progress = Progress.schedule(user, :process_subscription_token, 'token', 'unsubscribe')
     render json: JsonApi::Progress.as_json(progress, :wrapper => true)
   end

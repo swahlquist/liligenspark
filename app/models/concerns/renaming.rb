@@ -108,7 +108,7 @@ module Renaming
             changed = true
           end
         end
-        user.save if changed
+        user.save_with_sync('deep_links') if changed
       end
       UserLink.where(record_code: Webhook.get_record_code(record)).each do |link|
         if link.data && link.data['type'] == 'board_share' && link.data['state']
@@ -122,7 +122,7 @@ module Renaming
         user = ubc.user
         if user.settings && user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['id'] == global_id && user.settings['preferences']['home_board']['key'] != to_key
           user.settings['preferences']['home_board']['key'] = to_key
-          user.save
+          user.save_with_sync('deep_links_connect')
         end
       end
       LogSessionBoard.where(:board_id => record.id).each do |lsb|
@@ -214,7 +214,7 @@ module Renaming
           user.settings['supervisors'].each do |ss|
             ss['user_name'] = to_key if ss['user_name'] == from_key
           end
-          user.save
+          user.save_with_sync('deep_links_supervisee')
         end
       end
       (record.settings['supervisors'] || []).each do |sup|
@@ -223,7 +223,7 @@ module Renaming
           user.settings['supervisees'].each do |ss|
             ss['user_name'] = to_key if ss['user_name'] == from_key
           end
-          user.save
+          user.save_with_sync('deep_links_supervisor')
         end
       end
       klasses.each do |klass|

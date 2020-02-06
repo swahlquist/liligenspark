@@ -54,7 +54,7 @@ class Organization < ActiveRecord::Base
     user.settings['preferences']['role'] = 'supporter'
     user.settings['possible_admin'] = true
     user.assert_current_record!
-    user.save
+    user.save_with_sync('add_manager')
 #     self.attach_user(user, 'manager')
     # TODO: trigger notification
     if user.grace_period? && !Organization.managed?(user)
@@ -115,7 +115,7 @@ class Organization < ActiveRecord::Base
     self.detach_user(user, 'manager')
     # TODO: trigger notification
 #     user.assert_current_record!
-#     user.save
+#     user.save_with_sync('remove_manager')
     self.touch
     true
   rescue ActiveRecord::StaleObjectError
@@ -134,7 +134,7 @@ class Organization < ActiveRecord::Base
     user.settings['preferences']['role'] = 'supporter'
     user.settings['pending'] = false
     user.assert_current_record!
-    user.save
+    user.save_with_sync('add_supervisor')
 #     self.attach_user(user, 'supervisor')
     if user.grace_period? && !Organization.managed?(user)
       user.update_subscription({
@@ -187,7 +187,7 @@ class Organization < ActiveRecord::Base
 #     pending = user.settings['supervisor_for'][self.global_id] && user.settings['supervisor_for'][self.global_id]['pending']
 #     user.settings['supervisor_for'].delete(self.global_id)
 #     user.assert_current_record!
-#     user.save
+#     user.save_with_sync('remove_supervisor')
     self.detach_user(user, 'supervisor')
 #     self.touch
     notify('org_removed', {
@@ -318,7 +318,7 @@ class Organization < ActiveRecord::Base
 #       end
 #       user.settings.delete('full_manager')
 #       user.managed_organization_id = nil
-#       user.save
+#       user.save_with_sync('upgrade')
 #     end
 #     User.where('managing_organization_id IS NOT NULL').each do |user|
 #       org = user.managing_organization
@@ -331,7 +331,7 @@ class Organization < ActiveRecord::Base
 #       end
 #       user.settings['subscription'].delete('org_pending') if user.settings['subscription']
 #       user.managing_organization_id = nil
-#       user.save
+#       user.save_with_sync('upgrade2')
 #     end
 #     Organization.all.each do |org|
 #       org.sponsored_users.each do |user|

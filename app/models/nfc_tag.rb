@@ -25,11 +25,11 @@ class NfcTag < ApplicationRecord
       schedule(:attach_to_user, true)
       return true
     end
-    u = self.user
+    user = self.user
     if self.has_content
-      u.settings['preferences']['tag_ids'] ||= []
-      u.settings['preferences']['tag_ids'].push(self.global_id)
-      u.save
+      user.settings['preferences']['tag_ids'] ||= []
+      user.settings['preferences']['tag_ids'].push(self.global_id)
+      user.save_with_sync('nfc_tag')
     end
   end
 

@@ -115,7 +115,7 @@ module Flusher
       if bc.home && bc.user
         user = bc.user
         user.settings['preferences']['home_board'] = nil
-        user.save
+        user.save_with_sync('flushed_home_board')
       end
       flush_record(bc)
     end

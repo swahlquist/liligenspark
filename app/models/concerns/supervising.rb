@@ -229,8 +229,8 @@ module Supervising
         })
       end
       supervisor.schedule_once(:update_available_boards)
-      user.save
-      supervisor.save
+      user.save_with_sync('supervisee')
+      supervisor.save_with_sync('supervisor')
     end
   end
 end

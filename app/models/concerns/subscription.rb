@@ -121,7 +121,7 @@ module Subscription
         UserMailer.schedule_delivery(:organization_assigned, self.global_id, new_org && new_org.global_id)
       end
       self.assert_current_record!
-      res = self.save
+      res = self.save_with_sync('org_sub')
       link.save if link
       return res
     else
@@ -136,7 +136,7 @@ module Subscription
       self.using(:master).reload
       self.settings['subscription'] ||= {}
       self.clear_existing_subscription(:allow_grace_period => true) if was_sponsored && !self.org_sponsored?
-      self.save
+      self.save_with_sync('org_sub_cancel')
       # self.schedule(:update_subscription, {'resume' => true})
     end
   rescue ActiveRecord::StaleObjectError
@@ -214,7 +214,7 @@ module Subscription
           self.settings['preferences']['progress']['subscription_set'] = true
           self.expires_at = nil
           self.assert_current_record!
-          self.save
+          self.save_with_sync('subscribe')
           self.schedule(:remove_supervisors!) if self.free_premium?
         end
       end
@@ -227,7 +227,7 @@ module Subscription
         end
         self.settings['pending'] = false
         self.assert_current_record!
-        self.save
+        self.save_with_sync('unsubscribe')
         if self.settings['subscription']['unsubscribe_reason'] && !self.long_term_purchase?
           SubscriptionMailer.schedule_delivery(:unsubscribe_reason, self.global_id)
         end
@@ -288,7 +288,7 @@ module Subscription
         end
       
         self.assert_current_record!
-        self.save
+        self.save_with_sync('purchase')
       end
     else
       res = false
@@ -345,7 +345,7 @@ module Subscription
       if type == 'communicator_trial'
         self.settings['preferences']['role'] = 'communicator'
         self.settings['pending'] = false
-        self.save
+        self.save_with_sync('trial')
         self.update_subscription({
           'subscribe' => true,
           'subscription_id' => 'free_trial',
@@ -360,7 +360,7 @@ module Subscription
         self.settings['subscription_adders'] ||= []
         self.settings['subscription_adders'] << [user_id, Time.now.to_i]
         self.settings['pending'] = false
-        self.save
+        self.save_with_sync('expires')
       end
     elsif type == 'manual_supporter'
       self.update_subscription({
@@ -461,7 +461,7 @@ module Subscription
     self.settings['preferences']['logging'] = true
     # flush all old logs
     progress = Progress.schedule(Flusher, :flush_user_logs, self.global_id, self.user_name)
-    self.save
+    self.save_with_sync('reset_eval')
   end
   
   def transfer_eval_to(destination_user, current_device)
@@ -470,7 +470,7 @@ module Subscription
     devices[device_key] = self.settings['preferences']['devices'][device_key] if self.settings['preferences']['devices'][device_key]
     destination_user.settings['preferences'] = destination_user.settings['preferences'].merge(self.settings['preferences'])
     destination_user.settings['preferences']['devices'] = devices
-    destination_user.save
+    destination_user.save_with_sync('transfer_eval')
     # transfer usage logs to the new user
     eval_start = Time.parse((self.settings['subscription'] || {})['eval_started'] || 60.days.ago.iso8601)
     WeeklyStatsSummary.where(user_id: self.id).where(['created_at > ?', eval_start]).each do |summary|
@@ -768,7 +768,7 @@ module Subscription
         'customer_id' => opts['customer_id'],
         'source' => opts['source']
       }
-      user.save!
+      user.save_with_sync('purchase_extras')
       if first_enabling
         AuditEvent.create!(:event_type => 'extras_added', :summary => "#{user.user_name} activated extras", :data => {source: opts['source']})
       end
@@ -789,7 +789,7 @@ module Subscription
               'timestamp' => Time.now.to_i,
               'source' => 'deactivated'
             }
-            user.save
+            user.save_with_sync('deactivate_extras')
           else
             raise "deactivating from the wrong org" unless opts['ignore_errors']
           end

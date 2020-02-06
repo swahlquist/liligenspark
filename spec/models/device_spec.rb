@@ -595,8 +595,8 @@ describe Device, :type => :model do
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
       expect(RedisInit.permissions).to receive(:setex) do |key, ts, val|
         expect(key).to eq("user_token/#{d.tokens[0]}")
-        expect(ts).to be > (12.hours.from_now.to_i - 100)
-        expect(ts).to be < (12.hours.from_now.to_i + 100)
+        expect(ts).to be > (12.hours.to_i - 100)
+        expect(ts).to be < (12.hours.to_i + 100)
         expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b")
       end
       res = Device.check_token(d.tokens[0], '1.2.3')

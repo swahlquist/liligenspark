@@ -336,6 +336,13 @@ class User < ActiveRecord::Base
     self.settings['edit_key']
   end
 
+  def save_with_sync(reason)
+    self.sync_stamp = Time.now
+    self.settings ||= {}
+    self.settings['sync_stamp_reason'] = reason
+    self.save
+  end
+
   
   def self.find_by_email(email)
     hash = User.generate_email_hash(email)
@@ -448,7 +455,7 @@ class User < ActiveRecord::Base
     
     if board_added || orphan_board_ids.length > 0
       # TODO: sharding
-      User.where(:id => self.id).update_all(:updated_at => Time.now, :boards_updated_at => Time.now)
+      User.where(:id => self.id).update_all(:updated_at => Time.now, :sync_stamp => Time.now, :boards_updated_at => Time.now)
     end
     
     UserBoardConnection.where(:user_id => self.id, :board_id => orphan_board_ids).delete_all

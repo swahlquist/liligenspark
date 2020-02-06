@@ -133,7 +133,7 @@ module Sharing
   #         }
   #       end
         user.settings['boards_shared_with_me'] = list
-        user.save
+        user.save_with_sync('share')
       end
     end
     self.schedule_update_available_boards('all')
