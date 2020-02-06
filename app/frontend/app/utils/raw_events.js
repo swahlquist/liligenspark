@@ -294,16 +294,17 @@ var buttonTracker = EmberObject.extend({
 
       event.preventDefault();
       event.stopPropagation();
-      // skip the ember listeners, but pass along for bootstrap dropdowns
-      if($(event.target).closest('.dropdown').length === 0) {
+      // if no recent mouseup or touchend, then we can asusme
+      // this is an artificial click event, and can be accepted
+      var now = (new Date()).getTime();
+      if(!buttonTracker.lastTouchRelease || now - buttonTracker.lastTouchRelease > 500) {
+        event.artificial = true;
+        event.clientX = 0;
+        event.clientY = 0;
+        buttonTracker.touch_release(event);
+      } else if($(event.target).closest('.dropdown').length === 0) {
+        // skip the ember listeners, but pass along for bootstrap dropdowns
         $(document).trigger($.Event(event));
-      } else {
-        // if no recent mouseup or touchend, then we can asusme
-        // this is an artificial click event, and can be accepted
-        var now = (new Date()).getTime();
-        if(!buttonTracker.lastTouchRelease || now - buttonTracker.lastTouchRelease > 300) {
-          buttonTracker.touch_release(event);
-        }
       }
     });
   },

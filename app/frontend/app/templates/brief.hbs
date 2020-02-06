@@ -13,11 +13,11 @@
           <span class="glyphicon glyphicon-arrow-left button_icon"></span>
         </button>
       {{/unless}}
-      <div tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">
+      <a href='#' tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">
         {{#with app_state.button_list as |button_list|}}
           {{partial "button-list"}}
         {{/with}}
-      </div>
+      </a>
       <button class="btn btn-default" {{action "speakOptions"}} id="speak_options"><span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span></button>
       <button class="btn btn-default access skinnier" {{action "backspace"}}>
         <span class="sr-only">{{t "backspace" key='backspace'}}</span>

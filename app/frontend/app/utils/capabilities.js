@@ -1371,8 +1371,8 @@ var capabilities;
         return res;
       },
       toggle_keyboard_accessory: function(show) {
-        if(capabilities.system == 'iOS') {
-          cordova.exec(function(res) { console.log('keyboard accessory toggled', res); }, function(err) { console.error('keyboard accessory error', err); }, 'CoughDropMisc', 'toggleKeyboardAccessoryBar', [show])          
+        if(capabilities.system == 'iOS' && window.cordova) {
+          window.cordova.exec(function(res) { console.log('keyboard accessory toggled', res); }, function(err) { console.error('keyboard accessory error', err); }, 'CoughDropMisc', 'toggleKeyboardAccessoryBar', [show])          
         }
       },
       fullscreen_capable: function() {
