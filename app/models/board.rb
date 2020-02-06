@@ -498,7 +498,7 @@ class Board < ActiveRecord::Base
     # TODO: sharding
     users = User.where(:id => User.local_ids(user_ids))
     # TODO: finer-grained control, user.sync_stamp instead of just user.updated_at
-    users.find_in_batches(batch_sizee: 20) do |batch|
+    users.find_in_batches(batch_size: 20) do |batch|
       batch.each{|user| user.save_with_sync('boards_changed') }
     end
     # when a new board is created, call user.track_boards on all affected users 
