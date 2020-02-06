@@ -60,13 +60,15 @@ module BoardCaching
     @do_track_boards = false
     self.boards_updated_at = Time.now
     self.assert_current_record!
-    self.save
     # if the lists changed, schedule this same update for all users
     # who would have been affected by a change (supervisors)
     if ab_json != self.settings['available_private_board_ids'].to_json
+      self.save_with_sync('board_list_changed')
       self.supervisors.each do |sup|
         sup.schedule_once(:update_available_boards)
       end
+    else
+      self.save
     end
   rescue ActiveRecord::StaleObjectError
     self.schedule_once(:update_available_boards)

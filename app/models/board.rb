@@ -393,8 +393,9 @@ class Board < ActiveRecord::Base
     
     rev = (((self.settings || {})['revision_hashes'] || [])[-2] || [])[0]
     notify('board_buttons_changed', {'revision' => rev, 'reason' => @buttons_changed}) if @buttons_changed && !@brand_new
+    content_changed = @button_links_changed || @brand_new || @buttons_changed
     # Can't be backgrounded because board rendering depends on this
-    self.map_images
+    self.map_images # NOTE: this clears @buttons_changed
     
     if self.settings && self.settings['image_url'] == DEFAULT_ICON && self.settings['default_image_url'] == self.settings['image_url'] && self.settings['name'] && self.settings['name'] != 'Unnamed Board'
       self.schedule(:check_image_url)
@@ -413,7 +414,7 @@ class Board < ActiveRecord::Base
     if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])
       self.schedule(:restore_urls)
     end
-    schedule(:update_affected_users, @brand_new) if @button_links_changed || @brand_new || @buttons_changed
+    schedule(:update_affected_users, @brand_new) if content_changed
 
     schedule_downstream_checks
   end
