@@ -2498,6 +2498,8 @@ var app_state = EmberObject.extend({
         runLater(function() { app_state.check_scanning(); }, 200);
       } else {
         app_state.jump_to_root_board({auto_home: true});
+        // check for scanning because if already on home, nothing will change
+        runLater(function() { app_state.check_scanning(); }, 200);
       }
     }
   },

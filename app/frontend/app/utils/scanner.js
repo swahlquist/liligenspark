@@ -367,6 +367,7 @@ var scanner = EmberObject.extend({
   reset: function(partial) {
     runCancel(scanner.interval);
     scanner.interval = null;
+    scanner.reset_until = null;
     modal.close_highlight();
     scanner.scan_axes('clear');
     scanner.scanning_distances = {x: 0, y: 0};
@@ -783,7 +784,7 @@ var scanner = EmberObject.extend({
     var now = (new Date()).getTime();
     if(scanner.ignore_until && now < scanner.ignore_until) { console.log("ignoring because too soon"); return; }
     if(scanner.reset_until && now < scanner.reset_until) { 
-      var cutoff = Math.min(scanner.options.interval / 2, 1000);
+      var cutoff = Math.min(scanner.options.interval / 2, 500);
       if(scanner.actively_scanning() && scanner.started && now - scanner.started > cutoff) {
         // If scanning already started, and more than a moment ago,
         // then assume this advance call was intentional
