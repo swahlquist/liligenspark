@@ -210,7 +210,8 @@ include Replicate
       if (!found_ip && session.data['ip_address']) || (!found_geo && session.data['geo'])
         user = session.user
         if user && (user.settings['last_clusterize'] || 0) < 14.days.ago.to_i
-          self.clusterize(session.user.global_id)
+          new_logs = LogSession.where(user: user, log_type: 'session').where(['started_at > ?', Time.at(user.settings['last_clusterize'] || 0)]).count
+          self.clusterize(session.user.global_id) if new_logs > 20
         end
     
         return false
