@@ -419,7 +419,7 @@ var speecher = EmberObject.extend({
   speak_raw_text: function(text, collection_id, opts, callback) {
     var _this = this;
     var current_locale = app_state.get('vocalization_locale');
-    if(opts.default_prompt) { current_locale = 'any'; }
+    if(opts.default_prompt && opts.voiceURI) { current_locale = 'any'; }
     if(opts.alternate_voice) {
       opts.volume = this.alternate_volume || ((opts.volume || 1.0) * 0.75);
       opts.pitch = this.alternate_pitch;

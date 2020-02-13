@@ -299,8 +299,8 @@ var buttonTracker = EmberObject.extend({
       var now = (new Date()).getTime();
       if(!buttonTracker.lastTouchRelease || now - buttonTracker.lastTouchRelease > 500) {
         event.artificial = true;
-        event.clientX = 0;
-        event.clientY = 0;
+        event.clientX = event.clientX || 0;
+        event.clientY = event.clientY || 0;
         buttonTracker.touch_release(event);
       } else if($(event.target).closest('.dropdown').length === 0) {
         // skip the ember listeners, but pass along for bootstrap dropdowns
