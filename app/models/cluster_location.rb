@@ -204,11 +204,15 @@ include Replicate
       Rails.logger.info("checking clusters for #{session.user_id}")
       clusters = ClusterLocation.where(:user_id => session.user_id)
       Rails.logger.info('adding to geo cluster')
-      found_ip = add_to_geo_cluster(session, clusters)
+      found_ip = add_to_geo_cluster(session, clusters) if session.data['geo']
       Rails.logger.info('adding to ip cluster')
-      found_geo = add_to_ip_cluster(session, clusters)
-      if !found_ip || !found_geo
-        self.clusterize(session.user.global_id)
+      found_geo = add_to_ip_cluster(session, clusters) if session.data['ip_address']
+      if (!found_ip && session.data['ip_address']) || (!found_geo && session.data['geo'])
+        user = session.user
+        if user && (user.settings['last_clusterize'] || 0) < 14.days.ago.to_i
+          self.clusterize(session.user.global_id)
+        end
+    
         return false
       else
         return true
@@ -230,8 +234,13 @@ include Replicate
   end
   
   def self.clusterize(user_id)
-    self.schedule(:clusterize_geos, user_id)
-    self.schedule(:clusterize_ips, user_id)
+    user = User.find_by_global_id(user_id)
+    if user
+      self.schedule(:clusterize_geos, user_id)
+      self.schedule(:clusterize_ips, user_id)
+      user.settings['last_clusterize'] = Time.now.to_i
+      user.save
+    end
   end
   
   def self.clusterize_geos(user_id)

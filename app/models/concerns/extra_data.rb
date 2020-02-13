@@ -3,8 +3,9 @@ module ExtraData
 
   def detach_extra_data(frd=false)
     if !frd
-      if !skip_extra_data_processing? && extra_data_too_big?
-        schedule :detach_extra_data, true
+      if !skip_extra_data_processing? && extra_data_too_big? && !@already_scheduled_detach_extra_data
+        @already_scheduled_detach_extra_data = true
+        Worker.schedule_for(:slow, self.class, :perform_action, {'id' => self.id, 'method' => 'detach_extra_data', 'arguments' => [true]})
       end
       return true
     end
