@@ -115,10 +115,10 @@ export default modal.ModalController.extend({
           if(board_ids && board_ids.indexOf(b.board_id) == -1) { return; }
           if(!board_ids && b.board_id != original_board_id) { return; }
         }
-        emberSet(b, 'label', b.vocalization || b.label);
+        emberSet(b, 'voc_or_label', b.vocalization || b.label);
         words.forEach(function(b2, idx2) {
-          b2.label = b2.vocalization || b2.label;
-          if(b.label.toLowerCase() == b2.label.toLowerCase() && idx != idx2) {
+          b2.voc_or_label = b2.vocalization || b2.label;
+          if(b.voc_or_label.toLowerCase() == b2.voc_or_label.toLowerCase() && idx != idx2) {
             b.repeat = true;
           }
         });
