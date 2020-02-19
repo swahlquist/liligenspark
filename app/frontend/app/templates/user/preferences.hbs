@@ -1110,7 +1110,7 @@
           {{/if}}
           {{#if testing_dwell}}
             <div class="col-sm-5 col-sm-offset-3">
-              {{dwell-tracker user=model type=pending_preferences.device.dwell_type}}
+              {{dwell-tracker user=model preferences=pending_preferences type=pending_preferences.device.dwell_type}}
             </div>
           {{/if}}
         </div>
@@ -1121,18 +1121,54 @@
               {{#unless eyegaze_capable}}
                 <p class='form-control-static text-danger'>
                   {{t "Integrated eye trackers will only work in the" key='eyegaze_windows_only_1'}}
-                  {{#link-to 'download'}}Windows app{{/link-to}}.
+                  {{#link-to 'download'}}{{t "Windows app" key='windows_app'}}{{/link-to}}.
                   {{t "If your eye tracker can control the mouse cursor, you can try dwell tracking instead." key='eyegaze_windows_only_2'}}
                 </p>
               {{/unless}}
             </div>
           </div>
         {{/if}}
-        {{#if arrow_dwell}}
+        {{#if arrow_or_head_dwell}}
+          {{#if head_dwell}}
+            <div class="form-group">
+              <label for="dwell_head_pointer" class="col-sm-3 control-label">{{t "Dwell Head Pointer" key='dwell_head_pointer'}}</label>
+              <div class="col-sm-5">
+                <div class="checkbox big_checkbox">
+                  <label>
+                    {{input type="checkbox" checked=pending_preferences.device.dwell_head_pointer id="dwell_head_pointer"}}
+                    {{t "Use head position as a direct pointer" key='dwell_head_pointer'}}
+                  </label>
+                </div>
+              </div>
+            </div>          
+          {{/if}}
           <div class="form-group">
             <label for="dwell_arrow_speed" class="col-sm-3 control-label">{{t "Dwell Cursor Speed" key='dwell_arrow_speed'}}</label>
             <div class="col-sm-3">
               {{bound-select select_class="form-control" select_id="dwell_arrow_speed" content=arrowSpeedList selection=pending_preferences.device.dwell_arrow_speed action=(action (mut pending_preferences.device.dwell_arrow_speed)) }}
+            </div>
+          </div>
+        {{else}}
+          <div class="form-group">
+            <label for="dwell_cursor" class="col-sm-3 control-label">{{t "Dwell Cursor" key='dwell_cursor'}}</label>
+            <div class="col-sm-5">
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" checked=pending_preferences.device.dwell_cursor id="dwell_cursor"}}
+                  {{t "Show icon at current dwell location" key='dwell_cursor'}}
+                </label>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+        {{#if pending_preferences.device.dwell_cursor}}
+          <div class="form-group">
+            <label for="dwell_icon_option" class="col-sm-3 control-label">{{t "Dwell Cursor Icon" key='dwell_icon'}}</label>
+            <div class="col-sm-3">
+              {{bound-select select_class="form-control" select_id="dwell_icon_option" content=dwellIconList selection=pending_preferences.device.dwell_icon action=(action (mut pending_preferences.device.dwell_icon)) }}
+            </div>
+            <div class='col-sm-1'>
+              <div id='dwell_icon' style='z-index: 1;' class={{dwell_icon_class}}></div>
             </div>
           </div>
         {{/if}}
@@ -1152,18 +1188,14 @@
               &nbsp;{{select_keycode_string}}
             </div>
           </div>
-        {{else}}
+        {{else if expression_selection}}
           <div class="form-group">
-            <label for="dwell_cursor" class="col-sm-3 control-label">{{t "Dwell Cursor" key='dwell_cursor'}}</label>
-            <div class="col-sm-5">
-              <div class="checkbox big_checkbox">
-                <label>
-                  {{input type="checkbox" checked=pending_preferences.device.dwell_cursor id="dwell_cursor"}}
-                  {{t "Show small icon at current dwell location" key='dwell_cursor'}}
-                </label>
-              </div>
+            <label for="select_expression" class="col-sm-3 control-label">{{t "Dwell Expression" key='select_expression'}}</label>
+            <div class="col-sm-3">
+              {{bound-select select_class="form-control" select_id="select_expression" content=expressionList selection=pending_preferences.device.select_expression action=(action (mut pending_preferences.device.select_expression)) }}
             </div>
           </div>
+        {{else}}
           <div class="form-group">
             <label for="dwell_no_cutoff" class="col-sm-3 control-label">{{t "Dwell Cutoff" key='dwell_no_cutoff'}}</label>
             <div class="col-sm-5">

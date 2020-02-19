@@ -42,6 +42,52 @@ var capabilities;
   capabilities.installed_app = !!capabilities.installed_app;
   capabilities.browserless = !!(capabilities.installed_app || navigator.standalone);
   capabilities.queued_db_actions = [];
+  // https://github.com/marchv/UIScreenExtension/blob/master/UIScreenExtension/UIScreenExtension.swift
+  var known_ppis = [
+    [["iPad2,1", "iPad2,2", "iPad2,3", "iPad2,4"], 132],    // iPad 2
+    [["iPad2,5", "iPad2,6", "iPad2,7"], 163],               // iPad Mini
+    [["iPad3,1", "iPad3,2", "iPad3,3"], 264],               // iPad 3rd generation
+    [["iPad3,4", "iPad3,5", "iPad3,6"], 264],               // iPad 4th generation
+    [["iPad4,1", "iPad4,2", "iPad4,3"], 264],               // iPad Air
+    [["iPad5,3", "iPad5,4"], 264],                          // iPad Air 2
+    [["iPad6,7", "iPad6,8"], 264],                          // iPad Pro (12.9 inch)
+    [["iPad6,3", "iPad6,4"], 264],                          // iPad Pro (9.7 inch)
+    [["iPad6,11", "iPad6,12"], 264],                        // iPad 5th generation
+    [["iPad7,1", "iPad7,2"], 264],                          // iPad Pro (12.9 inch, 2nd generation)
+    [["iPad7,3", "iPad7,4"], 264],                          // iPad Pro (10.5 inch)
+    [["iPad7,5", "iPad7,6"], 264],                          // iPad 6th generation
+    [["iPad7,11", "iPad7,12"], 264],                        // iPad 7th generation
+    [["iPad8,1", "iPad8,2", "iPad8,3", "iPad8,4"], 264],    // iPad Pro (11 inch)
+    [["iPad8,5", "iPad8,6", "iPad8,7", "iPad8,8"], 264],    // iPad Pro (12.9 inch, 3rd generation)
+    [["iPad11,3", "iPad11,4"], 264],                        // iPad Air (3rd generation)
+    [["iPhone4,1"], 326],                                   // iPhone 4S
+    [["iPhone5,1", "iPhone5,2"], 326],                      // iPhone 5
+    [["iPhone5,3", "iPhone5,4"], 326],                      // iPhone 5C
+    [["iPhone6,1", "iPhone6,2"], 326],                      // iPhone 5S
+    [["iPhone8,4"], 326],                                   // iPhone SE
+    [["iPhone7,2"], 326],                                   // iPhone 6
+    [["iPhone8,1"], 326],                                   // iPhone 6S
+    [["iPhone9,1", "iPhone9,3"], 326],                      // iPhone 7
+    [["iPhone10,1", "iPhone10,4"], 326],                    // iPhone 8
+    [["iPhone11,8"], 326],                                  // iPhone XR
+    [["iPhone12,1"], 326],                                  // iPhone 11
+    [["iPod5,1"], 326],                                     // iPod Touch 5th generation
+    [["iPod7,1"], 326],                                     // iPod Touch 6th generation
+    [["iPod9,1"], 326],                                     // iPod Touch 7th generation
+    [["iPad4,4", "iPad4,5", "iPad4,6"], 326],               // iPad Mini 2
+    [["iPad4,7", "iPad4,8", "iPad4,9"], 326],               // iPad Mini 3
+    [["iPad5,1", "iPad5,2"], 326],                          // iPad Mini 4
+    [["iPad11,1", "iPad11,2"], 326],                        // iPad Mini 5
+    [["iPhone7,1"], 401],                                   // iPhone 6 Plus
+    [["iPhone8,2"], 401],                                   // iPhone 6S Plus
+    [["iPhone9,2", "iPhone9,4"], 401],                      // iPhone 7 Plus
+    [["iPhone10,2", "iPhone10,5"], 401],                    // iPhone 8 Plus
+    [["iPhone10,3", "iPhone10,6"], 458],                    // iPhone X
+    [["iPhone11,2"], 458],                                  // iPhone XS
+    [["iPhone12,3"], 458],                                  // iPhone 11 Pro
+    [["iPhone11,4", "iPhone11,6"], 458],                    // iPhone XS Max
+    [["iPhone12,5"], 458],                                  // iPhone 11 Pro Max
+  ];
   // TODO: maybe https://github.com/VJAI/simple-crypto
   capabilities.encryption_enabled = !!window.CryptoJS;
   if(!capabilities.system) {
@@ -126,6 +172,14 @@ var capabilities;
         if(capabilities.api_host) {
           console_debug("COUGHDROP: extension connected, pointing requests to " + capabilities.api_host);
         }
+        known_ppis.forEach(function(config) {
+          if(window.device && config[0].indexOf(window.device.model) != -1) {
+            window.ppi = config[1];
+            window.ppix = config[2] || config[1];
+            window.ppiy = config[3] || config[1];
+            window.ppi_accurate = true;
+          }
+        })
         var res = true;
         if(indexedDBSafe) {
           res = capabilities.setup_database();
@@ -158,6 +212,17 @@ var capabilities;
       
       },
       eye_gaze: {
+        listen: function() {
+        },
+        stop_listening: function() {
+        },
+        calibrate: function() {
+        },
+        calibratable: function(cb) {
+          cb(false);
+        }
+      },
+      head_tracking: {
         listen: function() {
         },
         stop_listening: function() {

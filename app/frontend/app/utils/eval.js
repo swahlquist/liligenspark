@@ -20,27 +20,29 @@ import { set as emberSet, observer } from '@ember/object';
 // "find the group that train belongs to" had no correct answers
 
 var pixels_per_inch = 96;
-window.ppi = 96;
+window.ppi = window.ppi || 96;
 var evaluation = {
   register: function() {
     obf.register("eval", evaluation.callback);
     obf.eval = evaluation;
-    var msr = document.createElement('div');
-    msr.style.width = '1in';
-    msr.style.height = '30px';
-    msr.style.position = 'absolute';
-    msr.style.left = '-1000px';
-    document.body.appendChild(msr);
-    pixels_per_inch = msr.getBoundingClientRect().width;
-    window.ppi = pixels_per_inch;
-    runLater(function() {
-      document.body.removeChild(msr);
-    });
-    if(window.plugins && window.plugins.aboutScreen) {
-      window.plugins.aboutScreen.getInfo(function (e) {
-        window.ppix = window.screen.width / e.width;
-        window.ppiy = window.screen.height / e.height;
+    if(!window.ppi_accurate) {
+      var msr = document.createElement('div');
+      msr.style.width = '1in';
+      msr.style.height = '30px';
+      msr.style.position = 'absolute';
+      msr.style.left = '-1000px';
+      document.body.appendChild(msr);
+      pixels_per_inch = msr.getBoundingClientRect().width;
+      window.ppi = pixels_per_inch;
+      runLater(function() {
+        document.body.removeChild(msr);
       });
+      if(window.plugins && window.plugins.aboutScreen) {
+        window.plugins.aboutScreen.getInfo(function (e) {
+          window.ppix = window.screen.width / e.width;
+          window.ppiy = window.screen.height / e.height;
+        });
+      }
     }
   },
   resume: function(assmnt) {
@@ -466,6 +468,8 @@ var evaluation = {
       res.access_method = i18n.t('dwell', "Dwell/Eye Gaze");
     } else if(assessment.access_meethod == 'arrow_dwell') {
       res.access_method = i18n.t('arrow_dwell', "Cursor-Guided Dwell");
+    } else if(assessment.access_meethod == 'head') {
+      res.access_method = i18n.t('head_tracking', "Head Tracking");
     }
     res.access_settings = []; //assessment;
     res.access_settings.push({key: i18n.t('mastery', "mastery"), val: assessment.mastery_cutoff * 100, percent: true});
@@ -499,7 +503,7 @@ var evaluation = {
       res.access_settings.push({key: i18n.t('scan-prompt', "scan-prompt"), val: assessment.scanning.prompts});
       res.access_settings.push({key: i18n.t('scan-auto-select', "scan-auto-select"), val: assessment.scanning_auto_select});
       res.access_settings.push({key: i18n.t('scan-keys', "scan-keys"), val: assessment.scanning_keys.join(',').replace(/,+$/, '')});
-    } else if(assessment.access_method == 'dwell' || assessment.access_method == 'arrow_dwell') {
+    } else if(assessment.access_method == 'dwell' || assessment.access_method == 'arrow_dwell' || assessment.access_method == 'head') {
       res.access_settings.push({key: i18n.t('dwell-type', "dwell-type"), val: assessment.dwell_type});
       if(assessment.access_method == 'arrow-dwell') {
         res.access_settings.push({key: i18n.t('dwell-speed', "dwell-speed"), val: assessment.dwell_arrow_speed});
@@ -2128,8 +2132,10 @@ evaluation.callback = function(key) {
         var btn = $(".button:visible")[0];
         if(btn && window.ppi) {
           var rect = btn.getBoundingClientRect();
-          e.win = Math.round(rect.width / (window.ppix || window.ppi) * 100) / 100;
-          e.hin = Math.round(rect.height / (window.ppiy || window.ppi) * 100) / 100;
+          var ppix = ((window.ppix && window.ppix / window.devicePixelRatio) || window.ppi);
+          var ppiy = ((window.ppiy && window.ppiy / window.devicePixelRatio) || window.ppi);
+          e.win = Math.round(rect.width / ppix * 100) / 100;
+          e.hin = Math.round(rect.height / ppiy * 100) / 100;
           if(!window.ppix || !window.ppiy) {
             e.approxin = true;
           }

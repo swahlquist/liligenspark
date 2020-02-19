@@ -903,7 +903,9 @@ var app_state = EmberObject.extend({
         buttonTracker.dwell_timeout = _this.get('currentUser.preferences.device.dwell_duration');
         buttonTracker.dwell_delay = _this.get('currentUser.preferences.device.dwell_delay');
         buttonTracker.dwell_type = _this.get('currentUser.preferences.device.dwell_type');
+        buttonTracker.dwell_icon = _this.get('currentUser.preferences.device.dwell_icon');
         buttonTracker.dwell_selection = _this.get('currentUser.preferences.device.dwell_selection') || 'dwell';
+        buttonTracker.select_expression = _this.get('currentUser.preferences.device.select_expression');
         buttonTracker.select_keycode = _this.get('currentUser.preferences.device.scanning_select_keycode');
         buttonTracker.dwell_arrow_speed = _this.get('currentUser.preferences.device.dwell_arrow_speed');
         buttonTracker.dwell_animation = _this.get('currentUser.preferences.device.dwell_targeting');
@@ -914,10 +916,13 @@ var app_state = EmberObject.extend({
         buttonTracker.dwell_gravity = _this.get('currentUser.preferences.device.dwell_gravity');
         if(buttonTracker.dwell_type == 'eyegaze') {
           capabilities.eye_gaze.listen('noisy');
+        } else if(buttonTracker.dwell_type == 'head' || buttonTracker.dwell_selection == 'expression') {
+          capabilities.head_tracking.listen();
         }
       } else {
         buttonTracker.dwell_enabled = false;
         capabilities.eye_gaze.stop_listening();
+        capabilities.head_tracking.stop_listening();
       }
     }, 1000);
   },

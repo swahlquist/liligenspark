@@ -13,6 +13,7 @@ import { set as emberSet } from '@ember/object';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
   setup: function() {
@@ -158,11 +159,23 @@ export default Controller.extend({
     {name: i18n.t('slow', "Slow (5-second sweep)"), id: 'slow'},
     {name: i18n.t('really_slow', "Really Slow (8-second sweep)"), id: 'really_slow'},
   ],
-  dwellList: [
-    {name: i18n.t('eye_gaze', "Eye Gaze Tracking"), id: 'eyegaze'},
-    {name: i18n.t('mouse_dwell', "Cursor-Based Dwell Tracking"), id: 'mouse_dwell'},
-    {name: i18n.t('arrow_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
-  ],
+  dwellList: computed('head_tracking_capable', 'model.feature_flags.ios_head_tracking', function() {
+    var res = [
+      {name: i18n.t('eye_gaze', "Eye Gaze Tracking"), id: 'eyegaze'},
+      {name: i18n.t('mouse_dwell', "Cursor-Based Dwell Tracking"), id: 'mouse_dwell'},
+      {name: i18n.t('arrow_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
+    ];
+    if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
+      if(this.get('model.feature_flags.ios_head_tracking')) {
+        var eyes = res.find(function(i) { return i.id == 'eyegaze'; })
+        if(eyes) {
+          eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
+        }
+        res.push({name: i18n.t('head_dwell', "Head Tracking"), id: 'head'});
+      }
+    }
+    return res;
+  }),
   arrowSpeedList: [
     {name: i18n.t('slow', "Slow"), id: 'slow'},
     {name: i18n.t('moderate', "Moderate"), id: 'moderate'},
@@ -170,10 +183,36 @@ export default Controller.extend({
     {name: i18n.t('Speedy', "Speedy"), id: 'speedy'},
     {name: i18n.t('really_slow', "Really Slow"), id: 'really_slow'},
   ],
-  dwellSelectList: [
-    {name: i18n.t('time_on_target', "Select by Looking at a Target"), id: 'dwell'},
-    {name: i18n.t('button_select', "Select by Hitting a Switch or Button"), id: 'button'}
+  dwellIconList: [
+    {name: i18n.t('dot', "A Small Dot"), id: 'dot'},
+    {name: i18n.t('arrow', "An Arrow Cursor"), id: 'arrow'},
+    {name: i18n.t('circle', "A Medium Circle"), id: 'circle'},
+    {name: i18n.t('circle', "A Large Circle"), id: 'ball'}
   ],
+  dwellSelectList: computed('head_tracking_capable', function() {
+    var res = [
+      {name: i18n.t('time_on_target', "Select by Looking at a Target"), id: 'dwell'},
+      {name: i18n.t('button_select', "Select by Hitting a Switch or Button"), id: 'button'}
+    ];
+    if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
+      res.push({name: i18n.t('expression', "Select by Facial Expression"), id: 'expression'});
+    }
+    return res;
+  }),
+  expressionList: computed('head_tracking_capable', function() {
+    var res = [];
+    if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
+      res.push({name: i18n.t('smile', "Smiling"), id: 'smile'});
+      res.push({name: i18n.t('mouth_open', "Opening your Mouth"), id: 'mouth_open'});
+      res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
+      res.push({name: i18n.t('tongue', "Sticking out your Tongue"), id: 'tongue'});
+      res.push({name: i18n.t('puff', "Puffing up your Cheeks"), id: 'puff'});
+      res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
+      res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
+      res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});
+    }
+    return res;
+  }),
   dwellReleaseDistanceList: [
     {name: i18n.t('small', "Small (10px)"), id: 10},
     {name: i18n.t('medium', "Medium (30px)"), id: 30},
@@ -262,11 +301,34 @@ export default Controller.extend({
   axes_scanning: computed('pending_preferences.device.scanning_mode', function() {
     return this.get('pending_preferences.device.scanning_mode') == 'axes';
   }),
-  arrow_dwell: computed('pending_preferences.device.dwell_type', function() {
-    return this.get('pending_preferences.device.dwell_type') == 'arrow_dwell';
+  arrow_or_head_dwell: computed('pending_preferences.device.dwell_type', function() {
+    return this.get('pending_preferences.device.dwell_type') == 'arrow_dwell' || this.get('pending_preferences.device.dwell_type') == 'head';
+  }),
+  head_dwell: computed('pending_preferences.device.dwell_type', function() {
+    return this.get('pending_preferences.device.dwell_type') == 'head';
+  }),
+  dwell_icon_class: computed('pending_preferences.device.dwell_icon', function() {
+    if(this.get('pending_preferences.device.dwell_icon') == 'arrow') {
+      return 'big';
+    } else if(this.get('pending_preferences.device.dwell_icon') == 'circle') {
+      return 'circle';
+    } else if(this.get('pending_preferences.device.dwell_icon') == 'ball') {
+      return 'ball';
+    } else {
+      return '';
+    }
+  }),
+  set_dwell_cursor_on_arrow_dwell: observer('arrow_or_head_dwell', function() {
+    if(this.get('arrow_or_head_dwell')) {
+      this.set('pending_preferences.device.dwell_cursor', true);
+      this.set('pending_preferences.device.dwell_icon', 'arrow');
+    } 
   }),
   button_dwell: computed('pending_preferences.device.dwell_selection', function() {
     return this.get('pending_preferences.device.dwell_selection') == 'button';
+  }),
+  expression_select: computed('pending_preferences.device.dwell_selection', function() {
+    return this.get('pending_preferences.device.dwell_selection') == 'expression';
   }),
   native_keyboard_available: computed(function() {
     return capabilities.installed_app && (capabilities.system == 'iOS' || capabilities.system == 'Android') && window.Keyboard;
@@ -310,8 +372,11 @@ export default Controller.extend({
   eyegaze_capable: computed(function() {
     return capabilities.eye_gaze.available;
   }),
+  head_tracking_capable: computed(function() {
+    return capabilities.head_tracking.available;
+  }),
   eyegaze_or_dwell_capable: computed(function() {
-    return capabilities.eye_gaze.available || buttonTracker.mouse_used;
+    return capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available;
   }),
   eyegaze_type: computed(
     'pending_preferences.device.dwell',

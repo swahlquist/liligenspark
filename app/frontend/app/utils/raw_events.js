@@ -190,10 +190,17 @@ $(document).on('mousedown touchstart', function(event) {
       });
     }
   } else if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
+    if(buttonTracker.gamepadupdate) {
+      event.preventDefault();
+    }
     buttonTracker.direction_event(event);
   }
 }).on('keyup', function(event) {
   if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
+    buttonTracker.direction_event(event);
+  }
+}).on('headtilt', function(event) {
+  if(buttonTracker.check('dwell_type') == 'head') {
     buttonTracker.direction_event(event);
   }
 }).on('keydown', function(event) {
@@ -226,6 +233,16 @@ $(document).on('mousedown touchstart', function(event) {
   } else if(event.keyCode && event.keyCode == buttonTracker.check('cancel_keycode')) { // esc key
     scanner.stop();
     event.preventDefault();
+  }
+}).on('facechange', function(event) {
+  if(buttonTracker.check('dwell_enabled') && buttonTracker.check('select_expression') && buttonTracker.check('dwell_selection') == 'expression') {
+    if(event.expression && event.expression == buttonTracker.check('select_expression')) {
+      if(buttonTracker.last_dwell_linger) {
+        var events = buttonTracker.last_dwell_linger.events;
+        var e = events[events.length - 1];
+        buttonTracker.element_release(buttonTracker.last_dwell_linger, e);
+      }
+    }
   }
 }).on('gazedwell', function(event) {
   var element_wrap = buttonTracker.find_selectable_under_event(event);
@@ -1252,7 +1269,16 @@ var buttonTracker = EmberObject.extend({
     } else if(event.type == 'keyup' && event.keyCode) {
       buttonTracker.direction_keys[event.keyCode] = false;
     }
-    if(buttonTracker.check('dwell_type') != 'arrow_dwell') {
+    if(event.type == 'headtilt' && buttonTracker.check('head_tracking')) {
+      buttonTracker.head_tilt = {
+        up: event.vertical <= 0 ? (event.vertical * -1 / 2) : 0,
+        down: event.vertical >= 0 ? (event.vertical / 2) : 0,
+        left: event.horizontal <= 0 ? (event.horizontal * 1 / 2) : 0,
+        right: event.horizontal >= 0 ? (event.horizontal / 2) : 0,
+        uses: 0
+      }
+    }
+    if(buttonTracker.check('dwell_type') != 'arrow_dwell' && buttonTracker.check('dwell_type') != 'head' && !buttonTracker.gamepadupdate) {
       return;
     }
     if(!buttonTracker.handle_direction) {
@@ -1278,6 +1304,7 @@ var buttonTracker = EmberObject.extend({
           buttonTracker.update_gamepads();
         }
         var gamepads = buttonTracker.gamepads || {};
+        var type = 'unknown';
         var codes = [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11];
         for(var id in gamepads) {
           var pad = gamepads[id];
@@ -1325,17 +1352,29 @@ var buttonTracker = EmberObject.extend({
 
             }
           }
+          type = 'gamepad';
+        }
+        if(buttonTracker.head_tilt && buttonTracker.head_tilt.uses < 10) {
+          pad_actions.left = buttonTracker.head_tilt.left;
+          pad_actions.right = buttonTracker.head_tilt.right;
+          pad_actions.up = buttonTracker.head_tilt.up;
+          pad_actions.down = buttonTracker.head_tilt.down;
+          type = 'head';
         }
         var rate = 1.0;
-        if(buttonTracker.dwell_arrow_speed == 'moderate') {
+        var arrow_speed = (buttonTracker.gamepadupdate || {}).speed || buttonTracker.dwell_arrow_speed;
+        if(arrow_speed == 'moderate') {
           rate = 2.5;
-        } else if(buttonTracker.dwell_arrow_speed == 'quick') {
+        } else if(arrow_speed == 'quick') {
           rate = 4.0;
-        } else if(buttonTracker.dwell_arrow_speed == 'speedy') {
+        } else if(arrow_speed == 'speedy') {
           rate = 6.0;
-        } else if(buttonTracker.dwell_arrow_speed == 'really_slow') {
+        } else if(arrow_speed == 'really_slow') {
           rate = 0.5;
         }
+
+        // update the coordinates, and check if oppossing 
+        // arrows are both being held down
         if(buttonTracker.direction_keys[37] || pad_actions.left) {
           if(buttonTracker.direction_keys[39] && buttonTracker.direction_keys[39] > buttonTracker.direction_keys[37]) {
             // if right was pressed more recently than left, ignore left
@@ -1343,6 +1382,7 @@ var buttonTracker = EmberObject.extend({
             x = x - ((pad_actions.left || 2.0) * rate);
             update = true;
           }
+          type = 'keyboard';
         }
         if(buttonTracker.direction_keys[39] || pad_actions.right) {
           if(buttonTracker.direction_keys[37] && buttonTracker.direction_keys[37] > buttonTracker.direction_keys[39]) {
@@ -1351,6 +1391,7 @@ var buttonTracker = EmberObject.extend({
             x = x + ((pad_actions.right || 2.0) * rate);
             update = true;
           }
+          type = 'keyboard';
         }
         if(buttonTracker.direction_keys[38] || pad_actions.up) {
           if(buttonTracker.direction_keys[40] && buttonTracker.direction_keys[40] > buttonTracker.direction_keys[38]) {
@@ -1359,6 +1400,7 @@ var buttonTracker = EmberObject.extend({
             y = y - ((pad_actions.up || 2.0) * rate);
             update = true;
           }
+          type = 'keyboard';
         }
         if(buttonTracker.direction_keys[40] || pad_actions.down) {
           if(buttonTracker.direction_keys[38] && buttonTracker.direction_keys[38] > buttonTracker.direction_keys[40]) {
@@ -1367,6 +1409,7 @@ var buttonTracker = EmberObject.extend({
             y = y + ((pad_actions.down || 2.0) * rate);
             update = true;
           }
+          type = 'keyboard';
         }
         if(pad_actions.select) {
           // Only if this is a new button pressed (and one that happened after
@@ -1377,6 +1420,9 @@ var buttonTracker = EmberObject.extend({
               var events = buttonTracker.last_dwell_linger.events;
               var e = events[events.length - 1];
               buttonTracker.element_release(buttonTracker.last_dwell_linger, e);
+              if(buttonTracker.gamepadupdate) {
+                buttonTracker.gamepadupdate('select', e);
+              }
             }
           }
         }
@@ -1384,11 +1430,15 @@ var buttonTracker = EmberObject.extend({
           buttonTracker.direction_x = x;
           buttonTracker.direction_y = y;
           var e = $.Event( 'gazelinger' );
+          e.activation = type;
           e.clientX = x;
           e.clientY = y;
           $(document).trigger(e);
+          if(buttonTracker.gamepadupdate) {
+            buttonTracker.gamepadupdate('move', e);
+          }
         }
-        if(Object.keys(gamepads).length > 0 || Object.keys(buttonTracker.direction_keys).length > 0) {
+        if(Object.keys(gamepads).length > 0 || Object.keys(buttonTracker.direction_keys).length > 0 || buttonTracker.check('head_tracking')) {
           window.requestAnimationFrame(buttonTracker.handle_direction);
         } else {
           buttonTracker.handle_direction = null;
@@ -1462,20 +1512,29 @@ var buttonTracker = EmberObject.extend({
         buttonTracker.dwell_elem.classList.add('cursor');
       }
     }
+    var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
     if(!buttonTracker.dwell_icon_elem) {
       var icon = document.createElement('div');
       icon.id = 'dwell_icon';
       icon.className = 'dwell_icon';
-      if(buttonTracker.check('dwell_type') == 'arrow_dwell') {
+      if(arrow_or_head_cursor && !buttonTracker.check('dwell_icon')) {
         icon.classList.add('big');
+      } else if(buttonTracker.check('dwell_icon')) {
+        if(buttonTracker.check('dwell_icon') == 'arrow') {
+          icon.classList.add('big');
+        } else if(buttonTracker.check('dwell_icon') == 'circle') {
+          icon.classList.add('circle');          
+        } else if(buttonTracker.check('dwell_icon') == 'ball') {
+          icon.classList.add('ball');          
+        }
       }
-  
       document.body.appendChild(icon);
       buttonTracker.dwell_icon_elem = icon;
     }
-    var arrow_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell';
 
-    if(buttonTracker.check('dwell_cursor') || arrow_cursor || !dwell_selection) {
+    // TODO: update these coords more often, free of the overhead
+    // of all the other linger calculations (maybe in gazelinger/electron-listener.js)
+    if(buttonTracker.check('dwell_cursor') || arrow_or_head_cursor || !dwell_selection) {
       buttonTracker.dwell_icon_elem.style.left = (event.clientX - 5) + "px";
       buttonTracker.dwell_icon_elem.style.top = (event.clientY - 5) + "px";
     }

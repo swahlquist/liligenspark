@@ -3659,6 +3659,28 @@ video.button_image {
       opacity: 1.0;
     }
   }
+
+  &.circle {
+    opacity: 1.0;
+    border: 0;
+    background: radial-gradient(closest-side, rgba(55, 55, 55, 0.8), rgba(55, 55, 55, 0.0));
+    margin-left: -15px;
+    margin-top: -15px;
+    border-radius: 30px;
+    width: 30px;
+    height: 30px;
+  }
+
+  &.ball {
+    opacity: 1.0;
+    border: 0;
+    background: radial-gradient(closest-side, rgba(55, 55, 55, 0.8), rgba(55, 55, 55, 0.0));
+    margin-left: -30px;
+    margin-top: -30px;
+    border-radius: 30px;
+    width: 60px;
+    height: 60px;
+  }
 }
 
 .label_count.too_many {
