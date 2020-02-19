@@ -808,7 +808,7 @@ class LogSession < ActiveRecord::Base
       @clustering_scheduled = false
     end
     if @goal_clustering_scheduled
-      UserGoal.schedule(:add_log_session, self.global_id)
+      UserGoal.schedule_for('slow', :add_log_session, self.global_id)
       @goal_clustering_scheduled = false
     end
     true
@@ -821,10 +821,10 @@ class LogSession < ActiveRecord::Base
   def schedule_summary
     return true if @skip_extra_data_update
     if self.processed && (self.log_type == 'session' || self.goal)
-      WeeklyStatsSummary.schedule_once(:update_for, self.global_id)
+      WeeklyStatsSummary.schedule_once_for('slow', :update_for, self.global_id)
     end
     if self.goal && self.goal.primary && self.ended_at
-      self.goal.schedule(:update_usage, self.ended_at.iso8601)
+      self.goal.schedule_for('slow', :update_usage, self.ended_at.iso8601)
     end
     true
   end
@@ -850,7 +850,7 @@ class LogSession < ActiveRecord::Base
         LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
       end
     else
-      schedule_once(:update_board_connections, true)
+      schedule_once_for('slow', :update_board_connections, true)
       return true
     end
   end

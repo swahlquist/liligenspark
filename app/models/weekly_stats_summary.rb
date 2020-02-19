@@ -10,7 +10,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
   after_save :track_for_trends
   
   def schedule_badge_check
-    UserBadge.schedule_once(:check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
+    UserBadge.schedule_once_for('slow', :check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
     true
   end
   
@@ -125,7 +125,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         end
         user.save(touch: false)
 
-        WordData.schedule_once(:update_activities_for, user.global_id, true)
+        WordData.schedule_once_for('slow', :update_activities_for, user.global_id, true)
       end
     end
     
