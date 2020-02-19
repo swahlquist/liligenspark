@@ -244,6 +244,7 @@ include Replicate
     end
   end
   
+  
   def self.clusterize_geos(user_id)
     user = User.find_by_global_id(user_id)
     return unless user
