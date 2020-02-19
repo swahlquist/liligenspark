@@ -789,11 +789,12 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
           CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
             var reload = RSVP.resolve();
             if(!button_set.get('root_url')) {
+              force = true;
               reload = button_set.reload().then(null, function() { return RSVP.resolve(); });
               button_set.set('root_url', url);
             }
             reload.then(function() {
-              button_set.load_buttons(force).then(function() {
+              button_set.load_buttons(true).then(function() {
                 resolve(button_set);
               }, function(err) {
                 reject(err); 
