@@ -8,7 +8,7 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(true)
       s.id = 14
       s.detach_extra_data
-      expect(Worker.scheduled?(LogSession, "perform_action", {'id' => 14, 'method' => 'detach_extra_data', 'arguments' => [true]})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, LogSession, "perform_action", {'id' => 14, 'method' => 'detach_extra_data', 'arguments' => [true]})).to eq(true)
     end
 
     it 'should do nothing if extra_data_too_big? is false' do

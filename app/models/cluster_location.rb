@@ -237,8 +237,8 @@ include Replicate
   def self.clusterize(user_id)
     user = User.find_by_global_id(user_id)
     if user
-      self.schedule(:clusterize_geos, user_id)
-      self.schedule(:clusterize_ips, user_id)
+      self.schedule_for(:slow, :clusterize_geos, user_id)
+      self.schedule_for(:slow, :clusterize_ips, user_id)
       user.settings['last_clusterize'] = Time.now.to_i
       user.save
     end

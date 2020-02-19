@@ -2433,7 +2433,7 @@ describe LogSession, :type => :model do
       {'type' => 'button', 'button' => {'label' => 'ok go', 'board' => {'id' => '1_1'}}, 'timestamp' => now}
     ]
     l.save    
-    expect(Worker.scheduled?(WeeklyStatsSummary, :perform_action, {'method' => 'update_for', 'arguments' => [l.global_id]})).to eq(true)
+    expect(Worker.scheduled_for?(:slow, WeeklyStatsSummary, :perform_action, {'method' => 'update_for', 'arguments' => [l.global_id]})).to eq(true)
   end
   
   describe "push_logs_remotely" do
