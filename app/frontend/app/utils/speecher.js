@@ -564,12 +564,15 @@ var speecher = EmberObject.extend({
         });
       } else if(capabilities.system == 'iOS' && window.TTS && (!opts.voiceURI || opts.voiceURI == 'force_default' || opts.voiceURI == 'default' || opts.voiceURI.match(/tts:/))) {
         console.log("using native iOS tts");
-        window.TTS.speak({
+        var opts = {
           text: utterance.text,
           rate: utterance.rate,
-          locale: (voice && voice.lang),
-          id: (voice && voice.ident)
-        }).then(function() {
+        };
+        if(voice) {
+          opts.locale = (voice && voice.lang);
+          opts.id = (voice && voice.ident);
+        }
+        window.TTS.speak(opts).then(function() {
           callback();
         }, function(err) {
           speak_utterance();
