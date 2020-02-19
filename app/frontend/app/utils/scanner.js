@@ -536,9 +536,9 @@ var scanner = EmberObject.extend({
       }
     }, cutoff);
   },
-  hide_input: function() {
+  hide_input: function(force) {
     if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
-      if(this.find_elem("#hidden_input:focus").length > 0 || window.Keyboard.isVisible) {
+      if(this.find_elem("#hidden_input:focus").length > 0 || (window.Keyboard && window.Keyboard.isVisible) || force) {
         window.Keyboard.hide();
         window.Keyboard.hideFormAccessoryBar(true, function() { });
         capabilities.toggle_keyboard_accessory(false);
@@ -595,7 +595,7 @@ var scanner = EmberObject.extend({
       });
       document.body.appendChild($elem[0]);
     }
-    if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show) {
+    if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show && !(window.Keyboard && window.Keyboard.isVisible)) {
       if(buttonTracker.native_keyboard) {
         if(window.Keyboard && window.Keyboard.hide) {
           window.Keyboard.hideFormAccessoryBar(false, function() { });
@@ -959,7 +959,7 @@ window.addEventListener('keyboardWillShow', function() {
     // scanner.keyboard_tried_to_show = true;
   }
   if(!buttonTracker.native_keyboard || scanner.scanning) {
-    scanner.hide_input();
+    scanner.hide_input(true);
   }
 });
 window.addEventListener('keyboardDidShow', function() {
