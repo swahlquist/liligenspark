@@ -502,7 +502,7 @@
       {{#if native_keyboard_available}}
         {{#if app_state.feature_flags.native_keyboard}}
           <div class='col-sm-5 col-sm-offset-3'>
-            <div class='checkbox'>
+            <div class='checkbox big_checkbox'>
               <label>
                 {{input type="checkbox" checked=pending_preferences.device.prefer_native_keyboard id='native_keyboard'}}
                 {{t "Try to use the native on-screen keyboard when available" key='prefer_native_keyboard'}}

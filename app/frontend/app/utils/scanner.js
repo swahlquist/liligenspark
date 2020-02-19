@@ -538,7 +538,7 @@ var scanner = EmberObject.extend({
   },
   hide_input: function() {
     if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
-      if(this.find_elem("#hidden_input:focus").length > 0) {
+      if(this.find_elem("#hidden_input:focus").length > 0 || window.Keyboard.isVisible) {
         window.Keyboard.hide();
         window.Keyboard.hideFormAccessoryBar(true, function() { });
         capabilities.toggle_keyboard_accessory(false);
@@ -958,7 +958,7 @@ window.addEventListener('keyboardWillShow', function() {
     // this seems to be getting called with every focus now, so it's not helpful anymore
     // scanner.keyboard_tried_to_show = true;
   }
-  if(!buttonTracker.native_keyboard) {
+  if(!buttonTracker.native_keyboard || scanner.scanning) {
     scanner.hide_input();
   }
 });
