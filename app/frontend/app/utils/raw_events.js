@@ -235,13 +235,6 @@ $(document).on('mousedown touchstart', function(event) {
     event.preventDefault();
   }
 }).on('facechange', function(event) {
-  if(event.expression && buttonTracker.gamepadupdate && buttonTracker.gamepadupdate.expression == event.expression) {
-    if(buttonTracker.last_dwell_linger) {
-      var events = buttonTracker.last_dwell_linger.events;
-      var e = events[events.length - 1];
-      buttonTracker.gamepadupdate('select', e);
-    }
-  }
   if(buttonTracker.check('dwell_enabled') && buttonTracker.check('select_expression') && buttonTracker.check('dwell_selection') == 'expression') {
     if(event.expression && event.expression == buttonTracker.check('select_expression')) {
       if(buttonTracker.last_dwell_linger) {

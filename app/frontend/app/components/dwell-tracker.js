@@ -278,6 +278,7 @@ export default Component.extend({
           }, 1500);
         }
       };
+      buttonTracker.gamepadupdate = buttonTracker.gamepadupdate || function() { };
       buttonTracker.gamepadupdate.expression = _this.get('preferences.device.select_expression');
       $(document).on('facechange', expression_listener);
       this.set('expression_listener', expression_listener)
