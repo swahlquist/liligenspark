@@ -51,7 +51,6 @@ export default Component.extend({
         context.fill();
         context.stroke();
 
-
         var ctx_window_width = width * (coords.window_width / coords.screen_width);
         var ctx_window_height = height * (coords.window_height / coords.screen_height);
         var ctx_window_x = width * (coords.window_x / coords.screen_width);
@@ -158,7 +157,11 @@ export default Component.extend({
           source: {eyegaze: true}
         });
       };
-      capabilities.eye_gaze.listen('noisy');
+      if(head_pointer) {
+        capabilities.head_tracking.listen({head_pointing: true});
+      } else {
+        capabilities.eye_gaze.listen('noisy');
+      }
       this.set('eye_listener', eye_listener);
       $(document).on('gazelinger', eye_listener);
       this.set('eye_gaze', capabilities.eye_gaze);
@@ -186,87 +189,59 @@ export default Component.extend({
     }
 
     if(_this.get('preferences.device.dwell_type') == 'arrow_dwell' || (_this.get('preferences.device.dwell_type') == 'head' && !head_pointer)) {
-      if(false) { //_this.get('preferences.device.dwell_type') == 'head') {
-        var head_listener = function(e) {
-          var event_x = _this.get('event_x') == null ? _this.get('event_x') : (capabilities.screen.width / 2);
-          var event_y = _this.get('event_y') == null ? _this.get('event_y') : (capabilities.screen.height / 2);
+      var key_listener = function(e) {
+        if(_this.get('preferences.device.dwell_selection') == 'button') {
+          if(e.keyCode && e.keyCode == _this.get('preferences.device.scanning_select_keycode')) {
+            buttonTracker.gamepadupdate('select', e);
+          }
+        }
+      };
+      $(document).on('keydown', key_listener);
+      _this.set('key_listener', key_listener);
+      buttonTracker.gamepadupdate = function(action, e) {
+        if(action == 'select') {
+          var now = (new Date()).getTime()
+          _this.setProperties({
+            selected: now
+          })
+          runLater(function() {
+            if(_this.get('selected') == now) {
+              _this.set('selected', null);
+            }
+          }, 800);
+        } else if(action == 'move') {
           var window_x = window.screenInnerOffsetX || window.screenX;
           var window_y = window.screenInnerOffsetY || window.screenY;
           var window_width = $(window).width();
           var window_height = $(window).height();
+          var source = {};
+          source[e.activation] = true;
           _this.setProperties({
             screen_width: capabilities.screen.width,
             screen_height: capabilities.screen.height,
-            event_x: Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
-            event_y: Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
+            event_x: e.clientX, //Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
+            event_y: e.clientY , //Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
             pending: false,
             window_x: window_x,
             window_y: window_y,
             ts: (new Date()).getTime(),
             window_width: window_width,
             window_height: window_height,          
-            source: {head: true}
+            source: source
           });
-        };
-        capabilities.head_tracking.listen();
-        this.set('head_listener', head_listener);
-        $(document).on('headtilt', head_listener);
-        this.set('head_tracking', capabilities.head_tracking);
-      } else {//} if(_this.get('preferences.device.dwell_type') == 'arrow_dwell') {
-        var key_listener = function(e) {
-          if(_this.get('preferences.device.dwell_selection') == 'button') {
-            if(e.keyCode && e.keyCode == _this.get('preferences.device.scanning_select_keycode')) {
-              buttonTracker.gamepadupdate('select', e);
-            }
-          }
-        };
-        $(document).on('keydown', key_listener);
-        _this.set('key_listener', key_listener);
-        buttonTracker.gamepadupdate = function(action, e) {
-          if(action == 'select') {
-            var now = (new Date()).getTime()
-            _this.setProperties({
-              selected: now
-            })
-            runLater(function() {
-              if(_this.get('selected') == now) {
-                _this.set('selected', null);
-              }
-            }, 800);
-          } else if(action == 'move') {
-            var window_x = window.screenInnerOffsetX || window.screenX;
-            var window_y = window.screenInnerOffsetY || window.screenY;
-            var window_width = $(window).width();
-            var window_height = $(window).height();
-            var source = {};
-            source[e.activation] = true;
-            _this.setProperties({
-              screen_width: capabilities.screen.width,
-              screen_height: capabilities.screen.height,
-              event_x: e.clientX, //Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
-              event_y: e.clientY , //Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
-              pending: false,
-              window_x: window_x,
-              window_y: window_y,
-              ts: (new Date()).getTime(),
-              window_width: window_width,
-              window_height: window_height,          
-              source: source
-            });
-          }
-        };
-        if(capabilities.head_tracking.available) {
-          capabilities.head_tracking.listen();
         }
-
-        buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
-        _this.set('gampead_listener', buttonTracker.gamepadupdate);
+      };
+      if(capabilities.head_tracking.available) {
+        capabilities.head_tracking.listen();
       }
+
+      buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
+      _this.set('gampead_listener', buttonTracker.gamepadupdate);
     }
     
     if(_this.get('preferences.device.dwell_selection') == 'expression') {
       var expression_listener = function(e) {
-        if(e.expression && e.expression == _this.get('preferences.device.select_expression') == e.expression) {
+        if(e.expression && e.expression == _this.get('preferences.device.select_expression')) {
           var now = (new Date()).getTime()
           _this.setProperties({
             selected: now
@@ -305,6 +280,7 @@ export default Component.extend({
   },
   willDestroyElement: function() {
     capabilities.eye_gaze.stop_listening();
+    capabilities.head_tracking.stop_listening();
     if(this.get('mouse_listener')) {
       $(document).off('mousemove', this.get('mouse_listener'));
       this.set('mouse_listener', null);

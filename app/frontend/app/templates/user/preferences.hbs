@@ -1117,14 +1117,18 @@
         {{#if eyegaze_type}}
           <div class="form-group">
             <div class="col-sm-5 col-sm-offset-3">
-              <p class="form-control-static"><em>{{t "Many eye trackers will work in %app_name% using cursor control mode. We have built-in integrations for some, including EyeX and Eyegaze Edge trackers, and hope to add more devices soon." key='supported_eye_trackers'}}</em></p>
-              {{#unless eyegaze_capable}}
-                <p class='form-control-static text-danger'>
-                  {{t "Integrated eye trackers will only work in the" key='eyegaze_windows_only_1'}}
-                  {{#link-to 'download'}}{{t "Windows app" key='windows_app'}}{{/link-to}}.
-                  {{t "If your eye tracker can control the mouse cursor, you can try dwell tracking instead." key='eyegaze_windows_only_2'}}
-                </p>
-              {{/unless}}
+              {{#if ios_app}}
+                <p class="form-control-static"><em>{{t "The built-in features of Apple Face ID support limited eye gaze control. This eye gaze is not as accurate as dedicated eye-tracking hardware, but combined with limited head movement it may be sufficient for some communicators." key='ios_eye_tracking'}}</em></p>
+              {{else}}
+                <p class="form-control-static"><em>{{t "Many eye trackers will work in %app_name% using cursor control mode. We have built-in integrations for some, including EyeX and Eyegaze Edge trackers, and hope to add more devices soon." key='supported_eye_trackers'}}</em></p>
+                {{#unless eyegaze_capable}}
+                  <p class='form-control-static text-danger'>
+                    {{t "Integrated eye trackers will only work in the" key='eyegaze_windows_only_1'}}
+                    {{#link-to 'download'}}{{t "Windows app" key='windows_app'}}{{/link-to}}.
+                    {{t "If your eye tracker can control the mouse cursor, you can try dwell tracking instead." key='eyegaze_windows_only_2'}}
+                  </p>
+                {{/unless}}
+              {{/if}}
             </div>
           </div>
         {{/if}}
@@ -1142,12 +1146,14 @@
               </div>
             </div>          
           {{/if}}
-          <div class="form-group">
-            <label for="dwell_arrow_speed" class="col-sm-3 control-label">{{t "Dwell Cursor Speed" key='dwell_arrow_speed'}}</label>
-            <div class="col-sm-3">
-              {{bound-select select_class="form-control" select_id="dwell_arrow_speed" content=arrowSpeedList selection=pending_preferences.device.dwell_arrow_speed action=(action (mut pending_preferences.device.dwell_arrow_speed)) }}
+          {{#unless pending_preferences.device.dwell_head_pointer}}
+            <div class="form-group">
+              <label for="dwell_arrow_speed" class="col-sm-3 control-label">{{t "Dwell Cursor Speed" key='dwell_arrow_speed'}}</label>
+              <div class="col-sm-3">
+                {{bound-select select_class="form-control" select_id="dwell_arrow_speed" content=arrowSpeedList selection=pending_preferences.device.dwell_arrow_speed action=(action (mut pending_preferences.device.dwell_arrow_speed)) }}
+              </div>
             </div>
-          </div>
+          {{/unless}}
         {{else}}
           <div class="form-group">
             <label for="dwell_cursor" class="col-sm-3 control-label">{{t "Dwell Cursor" key='dwell_cursor'}}</label>
