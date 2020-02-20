@@ -97,9 +97,9 @@ export default Component.extend({
       hardware: null
     });
   }),
-  hardware_type: computed('hardware', function() {
+  hardware_type: computed('hardware', 'source', function() {
     var res = {};
-    if(this.get('hardware')) {
+    if(this.get('hardware') && this.get('source') == 'eyegaze') {
       res[this.get('hardware')] = true;
       return res;
     } else {
@@ -181,7 +181,7 @@ export default Component.extend({
     }
 
     if(_this.get('preferences.device.dwell_type') == 'arrow_dwell' || (_this.get('preferences.device.dwell_type') == 'head' && !head_pointer)) {
-      if(_this.get('preferences.device.dwell_type') == 'head') {
+      if(_this.get('preferences.device.dwell_type') == 'headx') {
         var head_listener = function(e) {
           var event_x = _this.get('event_x') == null ? _this.get('event_x') : (window.screen.width / 2);
           var event_y = _this.get('event_y') == null ? _this.get('event_y') : (window.screen.height / 2);
@@ -252,6 +252,10 @@ export default Component.extend({
             });
           }
         };
+        if(capabilities.head_tracking.available) {
+          capabilities.head_tracking.listen();s
+        }
+
         buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
         _this.set('gampead_listener', buttonTracker.gamepadupdate);
       }
