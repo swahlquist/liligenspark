@@ -181,7 +181,7 @@ export default Component.extend({
     }
 
     if(_this.get('preferences.device.dwell_type') == 'arrow_dwell' || (_this.get('preferences.device.dwell_type') == 'head' && !head_pointer)) {
-      if(_this.get('preferences.device.dwell_type') == 'headx') {
+      if(false) { //_this.get('preferences.device.dwell_type') == 'head') {
         var head_listener = function(e) {
           var event_x = _this.get('event_x') == null ? _this.get('event_x') : (window.screen.width / 2);
           var event_y = _this.get('event_y') == null ? _this.get('event_y') : (window.screen.height / 2);
@@ -207,7 +207,7 @@ export default Component.extend({
         this.set('head_listener', head_listener);
         $(document).on('headtilt', head_listener);
         this.set('head_tracking', capabilities.head_tracking);
-      } else {//if(_this.get('preferences.device.dwell_type') == 'arrow_dwell') {
+      } else {//} if(_this.get('preferences.device.dwell_type') == 'arrow_dwell') {
         var key_listener = function(e) {
           if(_this.get('preferences.device.dwell_selection') == 'button') {
             if(e.keyCode && e.keyCode == _this.get('preferences.device.scanning_select_keycode')) {
@@ -229,8 +229,6 @@ export default Component.extend({
               }
             }, 800);
           } else if(action == 'move') {
-            var event_x = _this.get('event_x') != null ? _this.get('event_x') : (window.screen.width / 2);
-            var event_y = _this.get('event_y') != null ? _this.get('event_y') : (window.screen.height / 2);
             var window_x = window.screenInnerOffsetX || window.screenX;
             var window_y = window.screenInnerOffsetY || window.screenY;
             var window_width = $(window).width();
