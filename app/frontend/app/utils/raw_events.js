@@ -200,7 +200,7 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.direction_event(event);
   }
 }).on('headtilt', function(event) {
-  if(buttonTracker.check('dwell_type') == 'head') {
+  if(buttonTracker.check('dwell_type') == 'head' || buttonTracker.gamepadupdate) {
     buttonTracker.direction_event(event);
   }
 }).on('keydown', function(event) {

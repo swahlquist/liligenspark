@@ -207,7 +207,7 @@ export default Component.extend({
         this.set('head_listener', head_listener);
         $(document).on('headtilt', head_listener);
         this.set('head_tracking', capabilities.head_tracking);
-      } else if(_this.get('preferences.device.dwell_type') == 'arrow_dwell') {
+      } else {//if(_this.get('preferences.device.dwell_type') == 'arrow_dwell') {
         var key_listener = function(e) {
           if(_this.get('preferences.device.dwell_selection') == 'button') {
             if(e.keyCode && e.keyCode == _this.get('preferences.device.scanning_select_keycode')) {
