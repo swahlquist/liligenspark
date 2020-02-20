@@ -68,7 +68,7 @@ export default Component.extend({
         context.fill();
         context.stroke();
 
-        if(coords.event_x) {
+        if(coords.event_x != null && coords,event_y != null) {
           var ctx_point_x = width * (coords.event_x / coords.screen_width);
           var ctx_point_y = height * (coords.event_y / coords.screen_height);
           context.fillStyle = '#f00';
@@ -154,7 +154,7 @@ export default Component.extend({
           ts: (new Date()).getTime(),
           window_width: $(window).width(),
           window_height: $(window).height(),
-          source: {eyegaze: true}
+          source: e.pointer ? {head: true} : {eyegaze: true}
         });
       };
       if(head_pointer) {
