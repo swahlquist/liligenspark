@@ -68,7 +68,7 @@ export default Component.extend({
         context.fill();
         context.stroke();
 
-        if(coords.event_x != null && coords,event_y != null) {
+        if(coords.event_x >= 0 && coords.event_y >= 0) {
           var ctx_point_x = width * (coords.event_x / coords.screen_width);
           var ctx_point_y = height * (coords.event_y / coords.screen_height);
           context.fillStyle = '#f00';
@@ -104,6 +104,9 @@ export default Component.extend({
     } else {
       return null;
     }
+  }),
+  has_coords: computed('event_x', 'event_y', function() {
+    return this.get('event_x') >= 0 && this.get('event_y') >= 0;
   }),
   eye_tracking: computed('type', function() {
     return this.get('type') == 'eyegaze';

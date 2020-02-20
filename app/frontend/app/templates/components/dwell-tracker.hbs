@@ -9,12 +9,12 @@
       {{else}}
         {{t "receiving data" key='receiving_data'}}
       {{/if}}
-    {{else if event_x}}
+    {{else if has_coords}}
       {{t "not receiving data" key='no_recent_data'}}
     {{else}}
       {{t "no events detected" key='no_hardware_detected'}}
     {{/if}}
-    {{#if event_x}}
+    {{#if has_coords}}
       <br/><br/>
       <strong>{{t "Source" key='source'}}</strong><br/>
       {{#if hardware_type}}

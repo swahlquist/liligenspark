@@ -898,6 +898,7 @@ var app_state = EmberObject.extend({
       buttonTracker.dwell_modeling = false;
       buttonTracker.dwell_enabled = false;
 
+      var head_pointer = _this.get('preferences.device.dwell_type') == 'head' && _this.get('preferences.device.dwell_head_pointer');
       if(app_state.get('speak_mode') && _this.get('currentUser.preferences.device.dwell')) {
         buttonTracker.dwell_enabled = true;
         buttonTracker.dwell_timeout = _this.get('currentUser.preferences.device.dwell_duration');
@@ -917,7 +918,10 @@ var app_state = EmberObject.extend({
         if(buttonTracker.dwell_type == 'eyegaze') {
           capabilities.eye_gaze.listen('noisy');
         } else if(buttonTracker.dwell_type == 'head' || buttonTracker.dwell_selection == 'expression') {
-          capabilities.head_tracking.listen();
+          if(head_pointer) {
+            buttonTracker.dwell_type = 'eyegaze';
+          }
+          capabilities.head_tracking.listen({head_pointing: head_pointer});
         }
       } else {
         buttonTracker.dwell_enabled = false;
