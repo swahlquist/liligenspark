@@ -253,7 +253,7 @@ export default Component.extend({
           }
         };
         if(capabilities.head_tracking.available) {
-          capabilities.head_tracking.listen();s
+          capabilities.head_tracking.listen();
         }
 
         buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
