@@ -141,8 +141,8 @@ export default Component.extend({
     if(!_this.get('preferences.device.dwell_type') || _this.get('preferences.device.dwell_type') == 'eyegaze' || head_pointer) {
       var eye_listener = function(e) {
         var ratio = window.devicePixelRatio || 1.0;
-        e.screenX = ratio * (e.clientX + (window.screenInnerOffsetX || window.screenX));
-        e.screenY = ratio * (e.clientY + (window.screenInnerOffsetY || window.screenY));
+        e.screenX = (e.clientX + (window.screenInnerOffsetX || window.screenX));
+        e.screenY = (e.clientY + (window.screenInnerOffsetY || window.screenY));
         _this.setProperties({
           screen_width: capabilities.screen.width,
           screen_height: capabilities.screen.height,
@@ -278,6 +278,7 @@ export default Component.extend({
           }, 1500);
         }
       };
+      buttonTracker.gamepadupdate.expression = _this.get('preferences.device.select_expression');
       $(document).on('facechange', expression_listener);
       this.set('expression_listener', expression_listener)
       if(!this.get('head_tracking')) {

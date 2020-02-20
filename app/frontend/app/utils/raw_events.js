@@ -235,7 +235,7 @@ $(document).on('mousedown touchstart', function(event) {
     event.preventDefault();
   }
 }).on('facechange', function(event) {
-  if(event.expresion && buttonTracker.gamepadupdate && buttonTracker.gamepadupdate.expression == event.expresssion) {
+  if(event.expression && buttonTracker.gamepadupdate && buttonTracker.gamepadupdate.expression == event.expression) {
     if(buttonTracker.last_dwell_linger) {
       var events = buttonTracker.last_dwell_linger.events;
       var e = events[events.length - 1];
