@@ -114,6 +114,11 @@ export default Component.extend({
       buttonTracker.gamepadupdate.speed = this.get('preferences.device.dwell_arrow_speed');
     }
   }),
+  update_expression: observer('preferences.device.dwell_selection', 'preferences.device.select_expression', function() {
+    if(buttonTracker.gamepadupdate && this.get('preferences.device.dwell_selection') == 'expression') {
+      buttonTracker.gamepadupdate.expression = this.get('preferences.device.select_expression');
+    }
+  }),
   didInsertElement: function() {
     var _this = this;
 
