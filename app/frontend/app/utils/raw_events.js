@@ -451,11 +451,18 @@ var buttonTracker = EmberObject.extend({
         buttonTracker.ignoreUp = false;
       }
     }
-    if(event.screenX && event.clientX) {
+    if(event.screenX != null && event.clientX != null) {
+      var priors = [window.screenInnerOffsetX, window.screenInnerOffsetY];
       window.screenInnerOffsetY = event.screenY - event.clientY;
       window.screenInnerOffsetX = event.screenX - event.clientX;
-      stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
-      stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
+      if(capabilities.mobile) {
+        window.screenInnerOffsetY = 0;
+        window.screenInnerOffsetX = 0;
+      }
+      if(priors[0] != window.screenInnerOffsetX || priors[1] != window.screenInnerOffsetY) {
+        stashes.persist('screenInnerOffsetX', window.screenInnerOffsetX);
+        stashes.persist('screenInnerOffsetY', window.screenInnerOffsetY);
+      }
     }
     if(event.type == 'touchstart' || event.type == 'mousedown' || event.type == 'touchmove') {
       buttonTracker.buttonDown = true;
@@ -1269,7 +1276,7 @@ var buttonTracker = EmberObject.extend({
     } else if(event.type == 'keyup' && event.keyCode) {
       buttonTracker.direction_keys[event.keyCode] = false;
     }
-    if(event.type == 'headtilt' && buttonTracker.check('head_tracking')) {
+    if(event.type == 'headtilt' && (buttonTracker.check('head_tracking') || buttonTracker.gamepadupdate)) {
       buttonTracker.head_tilt = {
         up: event.vertical <= 0 ? (event.vertical * -1 / 2) : 0,
         down: event.vertical >= 0 ? (event.vertical / 2) : 0,
@@ -1382,7 +1389,7 @@ var buttonTracker = EmberObject.extend({
             x = x - ((pad_actions.left || 2.0) * rate);
             update = true;
           }
-          type = 'keyboard';
+          type = type || 'keyboard';
         }
         if(buttonTracker.direction_keys[39] || pad_actions.right) {
           if(buttonTracker.direction_keys[37] && buttonTracker.direction_keys[37] > buttonTracker.direction_keys[39]) {
@@ -1391,7 +1398,7 @@ var buttonTracker = EmberObject.extend({
             x = x + ((pad_actions.right || 2.0) * rate);
             update = true;
           }
-          type = 'keyboard';
+          type = type || 'keyboard';
         }
         if(buttonTracker.direction_keys[38] || pad_actions.up) {
           if(buttonTracker.direction_keys[40] && buttonTracker.direction_keys[40] > buttonTracker.direction_keys[38]) {
@@ -1400,7 +1407,7 @@ var buttonTracker = EmberObject.extend({
             y = y - ((pad_actions.up || 2.0) * rate);
             update = true;
           }
-          type = 'keyboard';
+          type = type || 'keyboard';
         }
         if(buttonTracker.direction_keys[40] || pad_actions.down) {
           if(buttonTracker.direction_keys[38] && buttonTracker.direction_keys[38] > buttonTracker.direction_keys[40]) {
@@ -1409,7 +1416,7 @@ var buttonTracker = EmberObject.extend({
             y = y + ((pad_actions.down || 2.0) * rate);
             update = true;
           }
-          type = 'keyboard';
+          type = type || 'keyboard';
         }
         if(pad_actions.select) {
           // Only if this is a new button pressed (and one that happened after
@@ -1426,6 +1433,8 @@ var buttonTracker = EmberObject.extend({
             }
           }
         }
+        x = Math.min(Math.max(0, x), window.innerWidth);
+        y = Math.min(Math.max(0, y), window.innerHeight);
         if(update) {
           buttonTracker.direction_x = x;
           buttonTracker.direction_y = y;

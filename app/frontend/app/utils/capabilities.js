@@ -42,6 +42,10 @@ var capabilities;
   capabilities.installed_app = !!capabilities.installed_app;
   capabilities.browserless = !!(capabilities.installed_app || navigator.standalone);
   capabilities.queued_db_actions = [];
+  capabilities.screen = {
+    width: window.screen.width,
+    height: window.screen.height
+  }
   // https://github.com/marchv/UIScreenExtension/blob/master/UIScreenExtension/UIScreenExtension.swift
   var known_ppis = [
     [["iPad2,1", "iPad2,2", "iPad2,3", "iPad2,4"], 132],    // iPad 2
@@ -1725,6 +1729,15 @@ var capabilities;
               layout = landscape ? 'landscape-primary' : 'portrait-primary';
             } else if(window.orientation === 180 || window.orientation === -90) {
               layout = landscape ? 'landscape-secondary' : 'portrait-secondary';
+            }
+          }
+          if(capabilities.system == 'iOS') {
+            if(layout.match(/landscape/)) {
+              capabilities.screen.width = window.screen.height;
+              capabilities.screen.height = window.screen.width;
+            } else if(layout.match(/portrait/)) {
+              capabilities.screen.width = window.screen.width;
+              capabilities.screen.height = window.screen.height;
             }
           }
           capabilities.last_orientation = {

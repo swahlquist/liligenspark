@@ -118,8 +118,8 @@ export default Component.extend({
     var _this = this;
 
     _this.setProperties({
-      screen_width: window.screen.width,
-      screen_height: window.screen.height,
+      screen_width: capabilities.screen.width,
+      screen_height: capabilities.screen.height,
       pending: true,
       window_x: window.screenInnerOffsetX || window.screenX,
       window_y: window.screenInnerOffsetY || window.screenY,
@@ -139,8 +139,8 @@ export default Component.extend({
         e.screenX = ratio * (e.clientX + (window.screenInnerOffsetX || window.screenX));
         e.screenY = ratio * (e.clientY + (window.screenInnerOffsetY || window.screenY));
         _this.setProperties({
-          screen_width: window.screen.width,
-          screen_height: window.screen.height,
+          screen_width: capabilities.screen.width,
+          screen_height: capabilities.screen.height,
           event_x: e.screenX,
           event_y: e.screenY,
           pending: false,
@@ -162,8 +162,8 @@ export default Component.extend({
     if(_this.get('preferences.device.dwell_type') == 'mouse_dwell') {
       var mouse_listener = function(e) {
         _this.setProperties({
-          screen_width: window.screen.width,
-          screen_height: window.screen.height,
+          screen_width: capabilities.screen.width,
+          screen_height: capabilities.screen.height,
           event_x: e.screenX,
           event_y: e.screenY,
           pending: false,
@@ -183,15 +183,15 @@ export default Component.extend({
     if(_this.get('preferences.device.dwell_type') == 'arrow_dwell' || (_this.get('preferences.device.dwell_type') == 'head' && !head_pointer)) {
       if(false) { //_this.get('preferences.device.dwell_type') == 'head') {
         var head_listener = function(e) {
-          var event_x = _this.get('event_x') == null ? _this.get('event_x') : (window.screen.width / 2);
-          var event_y = _this.get('event_y') == null ? _this.get('event_y') : (window.screen.height / 2);
+          var event_x = _this.get('event_x') == null ? _this.get('event_x') : (capabilities.screen.width / 2);
+          var event_y = _this.get('event_y') == null ? _this.get('event_y') : (capabilities.screen.height / 2);
           var window_x = window.screenInnerOffsetX || window.screenX;
           var window_y = window.screenInnerOffsetY || window.screenY;
           var window_width = $(window).width();
           var window_height = $(window).height();
           _this.setProperties({
-            screen_width: window.screen.width,
-            screen_height: window.screen.height,
+            screen_width: capabilities.screen.width,
+            screen_height: capabilities.screen.height,
             event_x: Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
             event_y: Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
             pending: false,
@@ -236,8 +236,8 @@ export default Component.extend({
             var source = {};
             source[e.activation] = true;
             _this.setProperties({
-              screen_width: window.screen.width,
-              screen_height: window.screen.height,
+              screen_width: capabilities.screen.width,
+              screen_height: capabilities.screen.height,
               event_x: e.clientX, //Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
               event_y: e.clientY , //Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
               pending: false,
