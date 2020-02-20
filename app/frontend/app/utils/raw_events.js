@@ -1278,12 +1278,13 @@ var buttonTracker = EmberObject.extend({
     }
     if(event.type == 'headtilt' && (buttonTracker.check('head_tracking') || buttonTracker.gamepadupdate)) {
       buttonTracker.head_tilt = {
-        up: event.vertical <= 0 ? (event.vertical * -1 / 2) : 0,
-        down: event.vertical >= 0 ? (event.vertical / 2) : 0,
-        left: event.horizontal <= 0 ? (event.horizontal * 1 / 2) : 0,
-        right: event.horizontal >= 0 ? (event.horizontal / 2) : 0,
+        up: event.vertical <= 0 ? (event.vertical * -1 / 1) : 0,
+        down: event.vertical >= 0 ? (event.vertical / 1) : 0,
+        left: event.horizontal <= 0 ? (event.horizontal * -1 / 1) : 0,
+        right: event.horizontal >= 0 ? (event.horizontal / 1) : 0,
         uses: 0
-      }
+      };
+      console.log("u" + buttonTracker.head_tilt.up + " d" + buttonTracker.head_tilt.down + " l" + buttonTracker.head_tilt.left + " r" + buttonTracker.head_tilt.right);
     }
     if(buttonTracker.check('dwell_type') != 'arrow_dwell' && buttonTracker.check('dwell_type') != 'head' && !buttonTracker.gamepadupdate) {
       return;
@@ -1303,8 +1304,8 @@ var buttonTracker = EmberObject.extend({
         // left:  key 37, buttons[14], axes[0] == -1, axes[2] == -1
         // right: key 39, buttons[15], axes[0] == 1, axes[2] == 1
         // select: buttons[0-3] (abxy), buttons[4,6] (L), buttons[5,7] (R), buttons[9] (start), buttons[10,11] (joysticks)
-        var x = buttonTracker.direction_x || (window.innerWidth / 2);
-        var y = buttonTracker.direction_y || (window.innerHeight / 2);
+        var x = buttonTracker.direction_x >= 0 ? buttonTracker.direction_x : (window.innerWidth / 2);
+        var y = buttonTracker.direction_y >= 0 ? buttonTracker.direction_y : (window.innerHeight / 2);
         var update = false;
         var pad_actions = {};
         if (!('ongamepadconnected' in window)) {
@@ -1366,6 +1367,7 @@ var buttonTracker = EmberObject.extend({
           pad_actions.right = buttonTracker.head_tilt.right;
           pad_actions.up = buttonTracker.head_tilt.up;
           pad_actions.down = buttonTracker.head_tilt.down;
+          buttonTracker.head_tilt.uses++;
           type = 'head';
         }
         var rate = 1.0;

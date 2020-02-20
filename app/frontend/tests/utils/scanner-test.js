@@ -924,7 +924,7 @@ describe('scanner', function() {
   });
 
   describe("pick", function() {
-    it("should call buttonTrack.track_selection", function() {
+    it("should call buttonTracker.track_selection", function() {
       scanner.current_element = {};
       scanner.current_element.dom = document.createElement('div');
 
