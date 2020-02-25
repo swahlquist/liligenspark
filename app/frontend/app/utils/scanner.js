@@ -966,11 +966,6 @@ window.addEventListener('keyboardWillShow', function() {
 window.addEventListener('keyboardDidShow', function() {
   var $elem = scanner.find_elem("#hidden_input");
   $elem.val("");
-  runLater(function() {
-    if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning && window.Keyboard.isVisible) {
-      scanner.keyboard_tried_to_show = false;
-    }
-  }, 1000);
 });
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {
