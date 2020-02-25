@@ -1169,6 +1169,7 @@ export default Controller.extend({
     'show_back',
     'app_state.currentUser.preferences.device.button_text_position',
     'app_state.currentUser.preferences.device.utterance_text_only',
+    'app_state.currentUsser.preferences.high_contrast',
     'board.text_style',
     'board.button_style',
     'app_state.header_size',
@@ -1197,6 +1198,9 @@ export default Controller.extend({
       var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
       if(text_position == 'text_only' || show_always || flipped) {
         res = res + "text_only ";
+      }
+      if(app_state.get('curentUser.preferences.high_contrast')) {
+        res = res + 'high_contrast ';
       }
 
       if(app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {

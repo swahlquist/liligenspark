@@ -678,6 +678,14 @@ footer .wide_links {
       }
     }
   }
+  &.high_contrast {
+    .history_button img:not(.hc) {
+      filter: contrast(4.0) saturate(500);      
+    }
+  }
+}
+.low_for_high_contrast #button_list.high_contrast .history_button img:not(.hc) {
+  filter: contrast(4.0) saturate(100);      
 }
 .button_list.with_back {
   width: -webkit-calc(100% - 202px);
