@@ -24,7 +24,7 @@ class Api::UsersController < ApplicationController
   end
   
   def sync_stamp
-    user = User.select('id', 'updated_at', 'badges_updated_at', 'created_at').find_by_path(params['user_id'])
+    user = User.select('id', 'sync_stamp', 'updated_at', 'badges_updated_at', 'created_at').find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     if user.global_id != @api_user.global_id
       return unless allowed?(user, 'never_allow')
