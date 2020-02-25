@@ -805,7 +805,7 @@ class User < ActiveRecord::Base
     end
     ((self.settings['preferences'] || {})['sidebar_boards'] || []).each do |brd|
       board = Board.find_by_path(brd['key'])
-      board.schedule(:check_for_parts_of_speech_and_inflections, true)
+      board.schedule(:check_for_parts_of_speech_and_inflections, true) if board
     end
   end
 

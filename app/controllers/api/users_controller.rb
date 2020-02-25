@@ -29,7 +29,7 @@ class Api::UsersController < ApplicationController
     if user.global_id != @api_user.global_id
       return unless allowed?(user, 'never_allow')
     end
-    render json: {sync_stamp: user.updated_at.utc.iso8601, badges_updated_at: (user.badges_updated_at || user.created_at).utc.iso8601}
+    render json: {sync_stamp: (user.sync_stamp || user.updated_at).utc.iso8601, badges_updated_at: (user.badges_updated_at || user.created_at).utc.iso8601}
   end
   
   def places
