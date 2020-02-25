@@ -379,7 +379,7 @@ var scanner = EmberObject.extend({
   stop: function()  {
     runCancel(scanner.interval);
     scanner.interval = null;
-    this.scanning = false;
+    scanner.scanning = false;
     this.keyboard_tried_to_show = false;
     this.last_options = null;
     modal.close_highlight();
@@ -545,56 +545,62 @@ var scanner = EmberObject.extend({
       }
     }
   },
+  generate_input: function(reset) {
+    var type = capabilities.system == 'iOS' ? 'text' : 'checkbox';
+
+    // when in whole-screen-as-switch mode, don't bother listening for key events
+    if(buttonTracker.left_screen_action || buttonTracker.right_screen_action) {
+      type = 'checkbox';
+    }
+
+    $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
+    $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
+    if(reset) {
+      $elem.val("");
+      runLater(function() {
+        $elem.val("");
+      }, 500);
+    }
+    $elem[0].addEventListener('textInput', function(event) {
+      // check the text box (are single key strokes getting added?)
+      // and send :complete if it's replacing keystrokes,
+      // or :predict if it's auto-suggest not autocomplete
+      var action = null;
+      if(event.data && event.data != ' ' && buttonTracker.last_key != event.data) {
+        var existing = $elem.val();
+        var action = (existing == '' || existing.match(/\s$/)) ? ':predict' : ':complete';
+        if(buttonTracker.check('keyboard_listen')) {
+          console.log("autocomplete", event.data);
+          // add autocomplete to the sentence box
+          app_state.activate_button({}, {
+            label: event.data,
+            vocalization: action,
+            completion: event.data,
+            prevent_return: true,
+            button_id: null,
+            board: {id: 'external_keyboard', key: 'core/external_keyboard'},
+            type: 'speak'
+          });
+        }
+      } else if(event.data && event.data.length > 1) {
+        console.log('NO COMPLETE', event.data, $elem.val(), buttonTracker.last_key);
+      }
+    });
+    document.body.appendChild($elem[0]);
+  },
   listen_for_input: function(reset) {
     // Listens for bluetooth/external keyboard events. On iOS we only get those when
     // focused on a form element like a text box, which is actually lame and makes
-    // things really complicated.
+    // things extra complicated.
 
     var $elem = this.find_elem("#hidden_input");
 
+    // Initialize the hidden element, including 
     if($elem.length === 0) {
-      var type = capabilities.system == 'iOS' ? 'text' : 'checkbox';
-
-      // when in whole-screen-as-switch mode, don't bother listening for key events
-      if(buttonTracker.left_screen_action || buttonTracker.right_screen_action) {
-        type = 'checkbox';
-      }
-
-      $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
-      $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
-      if(reset) {
-        $elem.val("");
-        runLater(function() {
-          $elem.val("");
-        }, 500);
-      }
-      $elem[0].addEventListener('textInput', function(event) {
-        // check the text box (are single key strokes getting added?)
-        // and send :complete if it's replacing keystrokes,
-        // or :predict if it's auto-suggest not autocomplete
-        var action = null;
-        if(event.data && event.data != ' ' && buttonTracker.last_key != event.data) {
-          var existing = $elem.val();
-          var action = (existing == '' || existing.match(/\s$/)) ? ':predict' : ':complete';
-          if(buttonTracker.check('keyboard_listen')) {
-            console.log("autocomplete", event.data);
-            // add autocomplete to the sentence box
-            app_state.activate_button({}, {
-              label: event.data,
-              vocalization: action,
-              completion: event.data,
-              prevent_return: true,
-              button_id: null,
-              board: {id: 'external_keyboard', key: 'core/external_keyboard'},
-              type: 'speak'
-            });
-          }
-        } else if(event.data && event.data.length > 1) {
-          console.log('NO COMPLETE', event.data, $elem.val(), buttonTracker.last_key);
-        }
-      });
-      document.body.appendChild($elem[0]);
+      scanner.generate_input(reset);
     }
+    // Draw focus to the correct element (iOS is really stingy w/ key events)
+    // unless we already tried and it popped up the virtual keyboard
     if(this.find_elem("#hidden_input:focus").length === 0 && !this.keyboard_tried_to_show && !(window.Keyboard && window.Keyboard.isVisible)) {
       if(buttonTracker.native_keyboard) {
         if(window.Keyboard && window.Keyboard.hide) {
@@ -602,10 +608,6 @@ var scanner = EmberObject.extend({
           capabilities.toggle_keyboard_accessory(true);
         }
         $elem.attr({
-          // TODO: set these to 'on' to enable keyboard suggestions,
-          // but note that for reason if you hit more than one character
-          // and then autocomplete, it doesn't appear to be triggering 
-          // any events like you would think
           autocomplete: 'on',
           autocorrect: 'on',
         });
@@ -954,17 +956,21 @@ var scanner = EmberObject.extend({
   }
 }).create();
 window.addEventListener('keyboardWillShow', function() {
-  if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
-    // this seems to be getting called with every focus now, so it's not helpful anymore
-    // scanner.keyboard_tried_to_show = true;
-  }
   if(!buttonTracker.native_keyboard || scanner.scanning) {
+    if(scanner.scanning) {
+      scanner.keyboard_tried_to_show = true;
+    }
     scanner.hide_input(true);
   }
 });
 window.addEventListener('keyboardDidShow', function() {
   var $elem = scanner.find_elem("#hidden_input");
   $elem.val("");
+  runLater(function() {
+    if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning && window.Keyboard.isVisible) {
+      scanner.keyboard_tried_to_show = false;
+    }
+  }, 1000);
 });
 window.addEventListener('keyboardDidHide', function() {
   if(window.Keyboard && window.Keyboard.hide) {

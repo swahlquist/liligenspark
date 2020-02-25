@@ -889,7 +889,7 @@ var app_state = EmberObject.extend({
       } else {
         buttonTracker.scanning_enabled = false;
         // this was breaking the "find button" interface when you get to the second board
-        if(scanner.interval || (scanner.options || {}).scan_mode == 'axes') {
+        if(scanner.interval || (scanner.options || {}).scan_mode == 'axes' || scanner.scanning) {
           scanner.stop();
         }
       }
@@ -1462,6 +1462,7 @@ var app_state = EmberObject.extend({
       } else if(!this.get('speak_mode') && this.get('last_speak_mode') !== undefined) {
         capabilities.wakelock('speak!', false);
         capabilities.fullscreen(false);
+        app_state.check_scanning();
         buttonTracker.hit_spots = [];
         if(this.get('last_speak_mode') !== false) {
           stashes.persist('temporary_root_board_state', null);
