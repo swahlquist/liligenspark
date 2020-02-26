@@ -2431,9 +2431,25 @@ var persistence = EmberObject.extend({
           persistence.set('last_sync_stamp_check', (new Date()).getTime());
           persistence.ajax('/api/v1/users/self/sync_stamp', {type: 'GET'}).then(function(res) {
             persistence.set('last_sync_stamp_check', (new Date()).getTime());
-            if(!_this.get('last_sync_stamp') || res.sync_stamp != _this.get('last_sync_stamp')) {
-              console.debug('syncing because sync_stamp has changed');
-              persistence.sync('self', null, null, 'sync_stamp_changed:' + res.sync_stamp + ":" + _this.get('last_sync_stamp')).then(null, function() { });
+            if(!persistence.get('last_sync_stamp') || res.sync_stamp != persistence.get('last_sync_stamp')) {
+              var not_still_changing = false;
+              var cutoff = window.moment && window.moment(res.sync_stamp).add(5, 'minutes');
+              var now = window.moment && window.moment();
+              if(now && now.toISOString().substring(0, 10) != res.sync_stamp.substring(0, 10)) {
+                // if the sync_stamp is more than a day off, it
+                // should run even if changes have been happening receently
+                not_still_changing = true;
+              } else if(cutoff) {
+                // updated sync_stamp was more than 5 minutes ago,
+                // (prevents repeat syncs while mid-edit)
+                not_still_changing = cutoff < window.moment();
+              } else {
+                not_still_changing = true;
+              }
+              if(not_still_changing) {
+                console.debug('syncing because sync_stamp has changed');
+                persistence.sync('self', null, null, 'sync_stamp_changed:' + res.sync_stamp + ":" + _this.get('last_sync_stamp')).then(null, function() { });
+              }
             }
             if(window.app_state && window.app_state.get('currentUser')) {
               window.app_state.set('currentUser.last_sync_stamp_check', (new Date()).getTime());
