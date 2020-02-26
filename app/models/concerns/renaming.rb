@@ -98,7 +98,7 @@ module Renaming
         board_ids = board_ids.uniq.sort
       end
       Board.find_all_by_global_id(all_up_ids).each do |board|
-        BoardDownstreamButtonSet.schedule_once_for(:update_for, board.global_id)
+        BoardDownstreamButtonSet.schedule_once(:update_for, board.global_id)
       end
       User.find_all_by_global_id(record.shared_user_ids).each do |user|
         changed = false
@@ -129,6 +129,7 @@ module Renaming
         Octopus.using(:master) do
           session = lsb.log_session
 #          session.with_lock do
+          if session
             session.assert_extra_data
             changed = false
             (session.data['events'] || []).each do |event|
@@ -142,7 +143,7 @@ module Renaming
               end
             end
             session.save if changed
-#          end
+          end
         end
       end
     elsif record_type == 'user'

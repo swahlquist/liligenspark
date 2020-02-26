@@ -235,6 +235,7 @@ class User < ActiveRecord::Base
         'clear_on_vocalize' => true,
         'sharing' => true,
         'board_jump_delay' => 500,
+        'battery_sounds' => true,
         'default_sidebar_boards' => default_sidebar_boards,
         'blank_status' => false,
         'preferred_symbols' => 'original',
@@ -295,6 +296,9 @@ class User < ActiveRecord::Base
     end
     if !FeatureFlags.user_created_after?(self, 'symbol_background')
       self.settings['preferences']['symbol_background'] = 'white' if self.settings['preferences']['symbol_background'] == nil
+    end
+    if !FeatureFlags.user_created_after?(self, 'battery_sounds')
+      self.settings['preferences']['battery_sounds'] = true if self.settings['preferences']['battery_sounds'] == nil
     end
     if FeatureFlags.user_created_after?(self, 'new_index')
       self.settings['preferences']['new_index'] = true if self.settings['preferences']['new_index'] == nil
