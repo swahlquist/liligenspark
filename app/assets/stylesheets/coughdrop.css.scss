@@ -1171,6 +1171,10 @@ tr.accuracy_non_mastered {
   outline: none;
   overflow: hidden;
   opacity: 1.0;
+  &:hover {
+    text-decoration: none;
+    color: #000;
+  }
   &.hover_button {
     box-shadow: 6px 6px 20px rgba(60, 60, 60, 0.7), -2px -2px 20px rgba(60, 60, 60, 0.7), 6px 6px 30px rgba(255, 255, 0, 0.8), -2px -2px 30px rgba(255, 0, 0, 0.8);
   }

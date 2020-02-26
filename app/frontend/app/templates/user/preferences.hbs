@@ -431,6 +431,25 @@
         </div>
       </div>
     </div>
+    <div class="form-group">
+      <label for="battery_sounds" class="col-sm-3 control-label">{{t "Battery Alerts" key='battery_alerts'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.battery_sounds id="battery_sounds"}}
+            {{t "Play sounds for low/fully-charged battery" key='play_battery_sounds'}}
+          </label>
+        </div>
+      </div>
+      <div class="col-sm-5 col-sm-offset-3">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.repair_on_vocalize id="repair_on_vocalize"}}
+            {{t "Always open the \"Repairs\" window when hitting the sentence box" key='repair_on_vocalize'}}
+          </label>
+        </div>
+      </div>
+    </div>
     {{#if wakelock_capable}}
       <div class="form-group">
         <label for="wakelock" class="col-sm-3 control-label">{{t "Screen Wake" key='screen_wake'}}</label>
