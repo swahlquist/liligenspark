@@ -681,10 +681,12 @@ export default modal.ModalController.extend({
   locales: computed('board.locale', function() {
     var list = i18n.get('locales');
     var res = [{name: i18n.t('english_default', "English"), id: 'en'}];
-    var short_locale = this.get('board.locale').split(/-|_/).toLowerCase();
-    for(var key in list) {
-      if(key == short_locale && key != 'en') {
-        res.push({name: list[key], id: key});
+    var short_locale = (this.get('board.locale') || []).split(/-|_/).toLowerCase();
+    if(short_locale) {
+      for(var key in list) {
+        if(key == short_locale && key != 'en') {
+          res.push({name: list[key], id: key});
+        }
       }
     }
     return res;
