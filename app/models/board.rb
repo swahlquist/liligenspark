@@ -513,7 +513,9 @@ class Board < ActiveRecord::Base
   
   def check_image_url
     if self.settings && self.settings['image_url'] == DEFAULT_ICON && self.settings['default_image_url'] == self.settings['image_url'] && self.settings['name'] && self.settings['name'] != 'Unnamed Board'
-      res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(self.settings['name'])}", :timeout => 5, :ssl_verifypeer => false)
+      # TODO: include locale in search
+      locale = (self.settings['locale'] || 'en').split(/-|_/)[0].downcase
+      res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(self.settings['name'])}&locale=#{locale}", :timeout => 5, :ssl_verifypeer => false)
       results = JSON.parse(res.body) rescue nil
       results ||= []
       icon = results.detect do |result|
@@ -995,6 +997,25 @@ class Board < ActiveRecord::Base
       PaperTrail.request.whodunnit = user_for_paper_trail.to_s || 'user:unknown'
       self.save
       PaperTrail.request.whodunnit = whodunnit
+      if self.public
+        # When a board is translated, pass the new strings
+        # along to opensymbols
+        images_to_track = []
+        images_hash = {}
+        self.button_images.each{|i| images_hash[i.global_id] = i.settings['external_id'] }
+        self.settings['buttons'].each do |button|
+          if button['label'] && translations[button['label']] && button['image_id'] && images_hash[button['image_id']]
+            images_to_track << {
+              :id => button['image_id'], 
+              :label => translations[button['label']], 
+              :user_id => self.user.global_id,
+              :external_id => images_hash[button['image_id']],
+              :locale => dest_lang
+            }
+          end
+        end
+        ButtonImage.track_images(images_to_track)
+      end
     else
       return {done: true, translated: false, reason: 'board not in list'}
     end
@@ -1013,6 +1034,7 @@ class Board < ActiveRecord::Base
     return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
+    return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'author required'} unless author
 
     if (board_ids.blank? || board_ids.include?(self.global_id))

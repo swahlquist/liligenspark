@@ -264,12 +264,15 @@ module Uploader
   end
 
   def self.default_images(library, words, locale, user)
-    if ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs'].include?(library)
+    if ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
       token = ENV['OPENSYMBOLS_TOKEN']
       protected_source = nil
       if library == 'pcs' && user && user.subscription_hash['extras_enabled']
         token += ":pcs"
         protected_source = 'pcs'
+      elsif library == 'symbolstix' && user && user.subscription_hash['extras_enabled']
+        token += ":symbolstix"
+        protected_source = 'symbolstix'
       end
       url = "https://www.opensymbols.org/api/v2/repositories/#{library}/defaults"
       res = Typhoeus.post(url, body: {
@@ -424,7 +427,7 @@ module Uploader
         end
       end
       return list
-    elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs'].include?(library)
+    elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
       str = keyword.to_s
       str += " repo:#{library}" unless library == 'opensymbols'
       token = ENV['OPENSYMBOLS_TOKEN']
@@ -432,6 +435,9 @@ module Uploader
       if library == 'pcs' && user && user.subscription_hash['extras_enabled']
         token += ":pcs"
         protected_source = 'pcs'
+      elsif library == 'symbolstix' && user && user.subscription_hash['extras_enabled']
+        token += ":symbolstix"
+        protected_source = 'symbolstix'
       end
       res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}&search_token=#{token}", :ssl_verifypeer => false, timeout: 5)
       results = JSON.parse(res.body)

@@ -146,8 +146,9 @@ export default Controller.extend({
   premium_but_not_allowed: computed(
     'app_state.currentUser.subscription.extras_enabled',
     'symbols.pcs',
+    'symbols.symbolstix',
     function() {
-      return this.get('symbols.pcs') && !this.get('app_state.currentUser.subscription.extras_enabled');
+      return (this.get('symbols.pcs') || this.get('symbols.symbolstix')) && !this.get('app_state.currentUser.subscription.extras_enabled');
     }
   ),
   lessonpix_but_not_allowed: computed('symbols.lessonpix', 'lessonpix_enabled', function() {

@@ -1049,6 +1049,7 @@ class User < ActiveRecord::Base
     res = []
     res << 'lessonpix' if self && Uploader.lessonpix_credentials(self)
     res << 'pcs' if self && self.subscription_hash['extras_enabled']
+    res << 'symbolstix' if self && self.subscription_hash['extras_enabled']
     if include_supervisees
       self.supervisees.each do |u| 
         res += u.enabled_protected_sources 

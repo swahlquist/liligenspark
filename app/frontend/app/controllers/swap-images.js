@@ -45,6 +45,7 @@ export default modal.ModalController.extend({
     }
     if(this.get('premium_symbols_enabled')) {
       res.push({id: 'pcs', name: i18n.t('pcs', "PCS (BoardMaker) Symbols by Tobii Dynavox")});
+      res.push({id: 'symbolstix', name: i18n.t('symbolstix', "SymbolStix Symbols")});
     }
     return res;
   }),

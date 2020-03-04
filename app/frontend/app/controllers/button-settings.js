@@ -25,6 +25,7 @@ export default modal.ModalController.extend({
     button.load_image('remote');
     button.load_sound('remote');
     this.set('board', this.get('model.board'));
+    this.set('search_locale', this.get('board.locale') || 'en');
     this.set('last_values', null);
     this.set('model', button);
     button.set('translations_hash', this.get('board').translations_for_button(button.id));
@@ -365,6 +366,8 @@ export default modal.ModalController.extend({
       res = {lessonpix: true};
     } else if(this.get('image_library') == 'pcs_required') {
       res = {pcs: true};
+    } else if(this.get('image_library') == 'symbolstix_required') {
+      res = {symbolstix: true};
     }
     return res;
   }),
@@ -385,6 +388,7 @@ export default modal.ModalController.extend({
     }
     if(this.get('premium_symbols')) {
       res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox"), id: 'pcs'});
+      res.push({name: i18n.t('symbolstix_images', "SymbolStix Symbols"), id: 'symbolstix'});
     }
     if(window.flickr_key) {
       res.push({name: i18n.t('flickr', "Flickr Creative Commons"), id: 'flickr'});
@@ -404,6 +408,7 @@ export default modal.ModalController.extend({
     }
     if(!this.get('premium_symbols')) {
       res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox"), id: 'pcs_required'});
+      res.push({name: i18n.t('symbolstix_images', "SymbolStix Symbols"), id: 'symbolstix_required'});
     }
 
 //    res.push({name: i18n.t('openclipart', "OpenClipart"), id: 'openclipart'});
@@ -673,6 +678,19 @@ export default modal.ModalController.extend({
     }
     return res;
   }),
+  locales: computed('board.locale', function() {
+    var list = i18n.get('locales');
+    var res = [{name: i18n.t('english_default', "English"), id: 'en'}];
+    for(var key in list) {
+      if(key == this.get('board.locale')) {
+        res.push({name: list[key], id: key});
+      }
+    }
+    return res;
+  }),
+  multi_locales: computed('locales', function() {
+    return (this.get('locales') || []).length > 1;
+  }),
   show_libraries: computed(
     'image_search.previews',
     'image_search.previews_loaded',
@@ -809,6 +827,9 @@ export default modal.ModalController.extend({
     pick_preview: function(preview) {
       contentGrabbers.pictureGrabber.pick_preview(preview);
     },
+    set_locale: function(loc) {
+      this.set('search_locale', loc);
+    },
     find_picture: function() {
       var text = this.get('model.image_field');
       if(!text) {
@@ -816,7 +837,8 @@ export default modal.ModalController.extend({
         text = this.get('model.label');
       }
       stashes.persist('last_image_library', this.get('image_library'));
-      contentGrabbers.pictureGrabber.find_picture(text, this.get('board.user_name'));
+      var locale = this.get('search_locale') || this.get('board.locale') || 'en';
+      contentGrabbers.pictureGrabber.find_picture(text, this.get('board.user_name'), locale);
     },
     set_as_button_image: function(url, content_type) {
       var _this = this;

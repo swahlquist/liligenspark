@@ -394,7 +394,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         end
       end
       # TODO: clear out existing caches for a button set (and maybe lost boards and source_id board on update
-      BoardDownstreamButtonSet.schedule_once(:flush_caches, board_ids_to_flush, Time.now.to_i)
+      BoardDownstreamButtonSet.schedule_once_for('slow', :flush_caches, board_ids_to_flush, Time.now.to_i)
 
       if board.settings['board_downstream_button_set_id'] != set.global_id
         # TODO: race condition?

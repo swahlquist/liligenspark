@@ -1345,7 +1345,8 @@ var editManager = EmberObject.extend({
         if(button && button.label && !button.image) {
           button.check_for_parts_of_speech();
         }
-        contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), true).then(function(data) {
+        var locale = _this.controller.get('model.locale') || 'en';
+        contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), locale, true).then(function(data) {
           button = _this.find_button(id);
           var image = data[0];
           if(image && button && button.label && !button.image) {

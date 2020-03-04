@@ -33,7 +33,10 @@ class BoardButtonImage < ActiveRecord::Base
         end
       end
     end
-    ButtonImage.schedule(:track_images, images_to_track)
+    # We stopped tracking image uses for board copies, 
+    # and only add points when users add a new image
+    # the interface
+#    ButtonImage.schedule(:track_images, images_to_track)
     true
   end
 end

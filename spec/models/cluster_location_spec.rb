@@ -174,8 +174,8 @@ describe ClusterLocation, :type => :model do
       d = Device.create
       s1 = LogSession.process_new({'events' => [{'timestamp' => Time.now.to_i, 'geo' => ['13', '12']}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(ClusterLocation.add_to_cluster(s1.global_id)).to eq(false)
-      expect(Worker.scheduled?(ClusterLocation, :perform_action, {'method' => 'clusterize_ips', 'arguments' => [u.global_id]})).to eq(true)
-      expect(Worker.scheduled?(ClusterLocation, :perform_action, {'method' => 'clusterize_geos', 'arguments' => [u.global_id]})).to eq(true)
+      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_ips', 'arguments' => [u.global_id]})).to eq(true)
+      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_geos', 'arguments' => [u.global_id]})).to eq(true)
     end
   end
 

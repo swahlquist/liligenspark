@@ -281,7 +281,7 @@ module Uploadable
           user = User.find_by_path(ref[:user_id])
           remote_url = Uploader.found_image_url(ref[:image_id], ref[:library], user)
           if remote_url
-            bi ||= ButtonImage.create(url: ref[:url], public: false)
+            bi ||= ButtonImage.create(url: ref[:url], public: false, settings: {'skip_tracking' => true})
             bi.upload_to_remote(remote_url)
             if bi.settings['errored_pending_url']
               bi.settings['copy_attempts'] ||= []

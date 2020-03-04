@@ -87,6 +87,11 @@ export default modal.ModalController.extend({
         name: i18n.t('pcs_hc', "High-Contrast PCS (BoardMaker) symbols from Tobii-Dynavox"),
         id: 'pcs_hc'
       });
+      // TODO: add symbolstix to evals
+      res.pushObject({
+        name: i18n.t('symbolstix', "SymbolStix Symbols"),
+        id: 'symbolstix'
+      });
     }
     return res;
   }),

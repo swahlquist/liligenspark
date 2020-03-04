@@ -807,8 +807,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
@@ -832,8 +832,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -859,8 +859,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -887,9 +887,9 @@ describe Board, :type => :model do
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bi3 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'cheese'}, url: 'http://www.example.com')
       expect(b).to receive(:button_images).and_return([bi1, bi2, bi3])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs']).and_return({'bi2' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['pcs']).and_return({'bi3' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi3' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
@@ -1537,7 +1537,7 @@ describe Board, :type => :model do
       expect(b.settings['image_url']).to eq(Board::DEFAULT_ICON)
       expect(b.settings['default_image_url']).to eq(Board::DEFAULT_ICON)
       res = OpenStruct.new(:body => [{}, {'license' => 'CC By', 'image_url' => 'http://example.com/pic.png'}].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=chicken+and+fries", timeout: 5, :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=chicken+and+fries&locale=en", timeout: 5, :ssl_verifypeer => false).and_return(res)
       b.save
       Worker.process_queues
       b.reload
@@ -1553,7 +1553,7 @@ describe Board, :type => :model do
       expect(b.settings['image_url']).to eq(Board::DEFAULT_ICON)
       expect(b.settings['default_image_url']).to eq(Board::DEFAULT_ICON)
       res = OpenStruct.new(:body => [{}, {'license' => 'CC By', 'image_url' => 'http://example.com/pic.png'}].to_json)
-      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=chicken+and+fries", timeout: 5, :ssl_verifypeer => false).and_return(res)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=chicken+and+fries&locale=en", timeout: 5, :ssl_verifypeer => false).and_return(res)
       b.save
       Worker.process_queues
       b.reload

@@ -19,8 +19,25 @@ class Api::SearchController < ApplicationController
       else
         return api_error 400, {error: 'premium search not allowed'}
       end
+    elsif params['q'].match(/premium_repo:symbolstix$/) 
+      user_allowed = @api_user && @api_user.subscription_hash['extras_enabled']
+      if !user_allowed && @api_user && params['user_name']
+        ref_user = User.find_by_path(params['user_name'])
+        user_allowed = ref_user && ref_user.allows?(@api_user, 'edit') && ref_user.subscription_hash['extras_enabled']
+      end
+      if user_allowed
+        params['q'].sub!(/premium_repo:symbolstix$/, 'repo:symbolstix')
+        # TODO: for now, don't combine them in non-protected searches even though it's coming
+        # from the same source, otherwise things can get confusing
+        token += ":symbolstix"
+        protected_source = 'symbolstix'
+      else
+        return api_error 400, {error: 'premium search not allowed'}
+      end
     end
-    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}", :timeout => 5, :ssl_verifypeer => false)
+    locale = (params['locale'] || 'en').split(/-|_/)[0]
+    res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}&locale=#{locale}", :timeout => 5, :ssl_verifypeer => false)
+    # TODO: include locale in search
     results = JSON.parse(res.body) rescue nil
     results ||= []
     results.each do |result|

@@ -61,36 +61,20 @@ describe Stats do
       expect(days.keys.length).to eq(3)
       expect(days[days.keys[0]]).to eq({
         :total_sessions => 0,
-        :buttons_by_frequency => [],
         :buttons_per_minute => 0.0,
         :buttons_per_utterance => 0.0,
-        :button_chains => {},
-        :depth_counts => {},
-        :word_travels => {},
         :total_buttons => 0,
         :total_utterances => 0.0,
         :total_words => 0,
         :modeled_words => 0,
         :modeled_buttons => 0,
-        :modeled_session_events => {},
         :unique_buttons => 0,
         :unique_words => 0,
         :utterances_per_minute => 0.0,
-        :words_by_frequency => [],
         :words_per_minute => 0.0,
         :words_per_utterance => 0.0,
         :started_at => nil,
-        :ended_at => nil,
-        :max_time_block => 0,
-        :max_combined_time_block => 0,
-        :max_combined_modeled_time_block => 0,
-        :max_modeled_time_block => 0,
-        :modeled_buttons_by_frequency => [],
-        :modeled_time_offset_blocks => {},
-        :modeled_words_by_frequency => [],
-        :modeling_user_names => {},
-        :time_offset_blocks => {},
-        :goals => []
+        :ended_at => nil
       })
     end
     

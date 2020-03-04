@@ -43,7 +43,8 @@ class ButtonImage < ActiveRecord::Base
   def track_image_use_later
     self.settings ||= {}
     # Only public boards call back to opensymbols, to prevent private user information leakage
-    if !self.settings['suggestion'] && (self.settings['label'] || self.settings['search_term'])
+    if !self.settings['suggestion'] && (self.settings['label'] || self.settings['search_term']) && !self.settings['skip_tracking']
+      # TODO: don't track image uses for board copies, only for user edits
       Worker.schedule_for(:slow, ButtonImage, :perform_action, {
         'id' => self.id,
         'method' => 'track_image_use',
@@ -85,7 +86,7 @@ class ButtonImage < ActiveRecord::Base
   def track_image_use
     self.settings ||= {}
     # Only public boards call back to opensymbols, to prevent private user information leakage
-    if !self.settings['suggestion'] && (self.settings['label'] || self.settings['search_term'])  && self.board && self.board.public
+    if !self.settings['suggestion'] && (self.settings['label'] || self.settings['search_term']) && self.board && self.board.public
       ButtonImage.track_image_use({
         :search_term => self.settings['search_term'],
         :locale => (self.board && self.board.settings['locale']) || 'en',

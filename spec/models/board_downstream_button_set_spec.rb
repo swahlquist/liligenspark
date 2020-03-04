@@ -686,7 +686,8 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs1.save
       bs2.data['source_id'] = bs1.global_id
       bs2.save
-      expect(BoardDownstreamButtonSet).to receive(:schedule_once) do |method, list, ts|
+      expect(BoardDownstreamButtonSet).to receive(:schedule_once_for) do |queue, method, list, ts|
+        expect(queue).to eq('slow')
         expect(method).to eq(:flush_caches)
         expect(list).to eq([b2.global_id])
         expect(ts).to be > 5.seconds.ago.to_i

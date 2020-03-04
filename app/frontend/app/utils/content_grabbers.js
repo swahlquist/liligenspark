@@ -624,7 +624,7 @@ var pictureGrabber = EmberObject.extend({
       license: license
     });
   },
-  find_picture: function(text, user_name) {
+  find_picture: function(text, user_name, locale) {
     if(text && (text.match(/^http/))) {
       var _this = this;
       _this.controller.set('image_search', null);
@@ -657,8 +657,7 @@ var pictureGrabber = EmberObject.extend({
         _this.controller.set('image_search.error', i18n.t('not_online_image_search', "Cannot search, please connect to the Internet first."));
         return;
       }
-
-      _this.picture_search(this.controller.get('image_library'), text, user_name).then(function(data) {
+      _this.picture_search(this.controller.get('image_library'), text, user_name, locale).then(function(data) {
         _this.controller.set('image_search.previews', data);
         _this.controller.set('image_search.previews_loaded', true);
       }, function(err) {
@@ -666,7 +665,7 @@ var pictureGrabber = EmberObject.extend({
       });
     }
   },
-  picture_search: function(library, text, user_name, fallback) {
+  picture_search: function(library, text, user_name, locale, fallback) {
     var _this = this;
     var search = _this.open_symbols_search;
     if(library == 'flickr') {
@@ -678,18 +677,20 @@ var pictureGrabber = EmberObject.extend({
     } else if(library == 'pixabay_vectors') {
       search = function(str) { return _this.pixabay_search(str, 'vector'); };
     } else if(library == 'giphy_asl') {
-      search = function(str) { return _this.protected_search(str, 'giphy_asl', user_name, fallback); };
+      search = function(str) { return _this.protected_search(str, 'giphy_asl', user_name, locale, fallback); };
     } else if(library == 'lessonpix') {
-      search = function(str) { return _this.protected_search(str, library, user_name, fallback); };
+      search = function(str) { return _this.protected_search(str, library, user_name, locale, fallback); };
     } else if(library == 'openclipart') {
       search = _this.openclipart_search;
     } else if(library == 'pcs') {
       text = text + " premium_repo:pcs"
 //      search = function(str) { return _this.open_symbols_search(str, 'pcs'); }
+    } else if(library == 'symbolstix') {
+      text = text + " premium_repo:symbolstix"
     }
-    return search(text, user_name);
+    return search(text, user_name, locale);
   },
-  protected_search: function(text, library, user_name, fallback) {
+  protected_search: function(text, library, user_name, locale, fallback) {
     user_name = user_name || (this.controller && this.controller.get('board.user_name')) || '';
     var _this = this;
     return persistence.ajax('/api/v1/search/protected_symbols?library=' + encodeURIComponent(library) + '&q=' + encodeURIComponent(text) + '&user_name=' + encodeURIComponent(user_name), { type: 'GET'
@@ -707,11 +708,12 @@ var pictureGrabber = EmberObject.extend({
       }
     });
   },
-  open_symbols_search: function(text, user_name) {
+  open_symbols_search: function(text, user_name, locale) {
     var path = '/api/v1/search/symbols?q=' + encodeURIComponent(text);
     if(user_name) {
       path = path + '&user_name=' + encodeURIComponent(user_name);
     }
+    path = path + "&locale=" + (locale || 'en');
     return persistence.ajax(path, { type: 'GET'
     }).then(function(data) {
       return data;
@@ -2033,7 +2035,7 @@ var soundGrabber = EmberObject.extend({
     if(this.controller.get('sound_preview')) {
       this.select_sound_preview();
     } else if(this.controller.get('model.sound')) {
-      var license = this.controller.get('model.sound.license');
+      var license = this.controller.get('model.sound.license') || {};
       var original = this.controller.get('original_sound_license') || {};
       if(license.type != original.type || license.author_name != original.author_name || license.author_url != original.author_url) {
         this.controller.set('model.pending_sound', true);

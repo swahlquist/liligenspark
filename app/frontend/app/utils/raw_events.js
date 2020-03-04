@@ -1543,8 +1543,9 @@ var buttonTracker = EmberObject.extend({
       buttonTracker.dwell_icon_elem = icon;
     }
 
-    // TODO: update these coords more often, free of the overhead
+    // TODO: consider updating these coords more often, free of the overhead
     // of all the other linger calculations (maybe in gazelinger/electron-listener.js)
+    // Or, use a CSS animation to smooth them out more
     if(buttonTracker.check('dwell_cursor') || arrow_or_head_cursor || !dwell_selection) {
       buttonTracker.dwell_icon_elem.style.left = (event.clientX - 5) + "px";
       buttonTracker.dwell_icon_elem.style.top = (event.clientY - 5) + "px";

@@ -553,7 +553,7 @@ var scanner = EmberObject.extend({
       type = 'checkbox';
     }
 
-    $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
+    var $elem = this.make_elem("<input/>", {type: type, id: 'hidden_input', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'off'});
     $elem.css({position: 'absolute', left: '-1000px', top: '0px'});
     if(reset) {
       $elem.val("");
