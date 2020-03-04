@@ -79,7 +79,7 @@ class Board < ActiveRecord::Base
       user.schedule(:remember_starred_board!, self.global_id)
     end
   end
-  
+
   def star!(user, star)
     pre_whodunnit = PaperTrail.request.whodunnit
     PaperTrail.request.whodunnit = "job:star_user"
