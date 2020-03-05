@@ -644,8 +644,9 @@ var levels = [
     {id: 'diff-28-112', cluster: '112', rows: 8, cols: 14, distractors: true, spacing: 2, fail_id: 'diff-15-60'},
     {id: 'diff-56-112', cluster: '112', rows: 8, cols: 14, distractors: true, alternating: true, fail_id: 'diff-30-60'},
     // higher_level means < 10x increase in time on next step vs. previous
-    {id: 'diff-112', cluster: '112', rows: 8, cols: 14, distractors: true, fail_id: 'diff-60'},
-    {id: 'diff-112-shuffle', cluster: '112', rows: 8, cols: 14, distractors: true, shuffle: true, min_attempts: 1},
+    // This level is probably too high to be useful
+    // {id: 'diff-112', cluster: '112', rows: 8, cols: 14, distractors: true, fail_id: 'diff-60'},
+    // {id: 'diff-112-shuffle', cluster: '112', rows: 8, cols: 14, distractors: true, shuffle: true, min_attempts: 1},
   ], 
   // at this point, settle on a grid size that the user was 
   // really good with, maybe try occasionally bumping a little,
@@ -918,74 +919,9 @@ evaluation.callback = function(key) {
     var core_list = [];
     // ADD "THE", INFLECTIONS 
     if(step.core) {
-      core = evaluation.core_list(step, step_rows, step_cols);
-      // go, want, more, stop, like, help, turn, I, play, you,
-      // not, eat, in, look, do, no, get, that, it, put, open, on
-      if(step.keyboard) {
-        core = [
-          ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-          ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', null],
-          ['_', 'z', 'x', 'c', 'v', 'b', 'n', 'm', null, '_']
-        ];  
-      } else if(step_rows >= 6) {
-        if(step_cols == 5 || true) {
-          core = [
-            ['he',   'is', 'eat', 'happy', 'sad'],
-            ['she',  'want', 'play', 'ball', 'dog'],
-            ['they', 'are', 'read', 'book', 'treat'],
-            ['it',   'not', 'the', 'good', 'bad'],
-          ];
-        }
-      } else if(step_rows == 5) {
-        if(step_cols == 4 || true) {
-          step_cols = 5;
-          core = [
-            ['he',  'is', 'eat', 'good', 'bad'],
-            ['she', 'want', 'play', 'ball', 'dog'],
-            ['they',  'not', 'read', 'treat', 'book'],
-          ];
-        }
-      } else if(step_rows == 4) {
-        if(step_cols == 4) {
-          core = [
-            ['they', 'want', 'eat', 'treat'],
-            ['it',   'not', 'play', 'ball']
-          ];
-        } else if(step_cols == 3 || true) {
-          core = [
-            ['they', 'eat', 'treat'],
-            ['not',   'play', 'ball']
-          ];
-        }
-      } else {
-        if(step_cols == 2) {
-          core = [
-            ['eat', 'play']
-          ];
-        } else if(step_cols == 3) {
-          core = [
-            ['eat', 'play', 'not']
-          ];
-        } else if(step_cols == 4) {
-          core = [
-            ['they', 'eat', 'play', 'not']
-          ];
-        }
-      }
-      if(!step.keyboard) {
-        for(var idx = 0; idx < core.length; idx++) {
-          for(var jdx = 0; jdx < core[idx].length; jdx++) {
-            core_list.push(core[idx][jdx]);
-          }
-        } 
-        core_list = shuffle(core_list);
-        var filtered_core_list = core_list.filter(function(w) { return !core_prompts[w.label]; });
-        if(filtered_core_list.length == 0) {
-          core_prompts = {};
-        } else {
-          core_list = filtered_core_list;
-        }
-      }
+      opts = evaluation.core_list(step, step_rows, step_cols);
+      core = opts.core;
+      core_list = opts.core_list;
     }
     board = obf.shell(step_rows, step_cols);
     board.key = 'obf/eval';
@@ -1862,6 +1798,79 @@ evaluation.callback = function(key) {
   }
   return res;
 };
+
+evaluation.core_list = function(step, step_rows, step_cols) {
+  var core = [];
+  // go, want, more, stop, like, help, turn, I, play, you,
+  // not, eat, in, look, do, no, get, that, it, put, open, on
+  if(step.keyboard) {
+    core = [
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', null],
+      ['_', 'z', 'x', 'c', 'v', 'b', 'n', 'm', null, '_']
+    ];  
+  } else if(step_rows >= 6) {
+    if(step_cols == 5 || true) {
+      core = [
+        ['he',   'is', 'eat', 'happy', 'sad'],
+        ['she',  'want', 'play', 'ball', 'dog'],
+        ['they', 'are', 'read', 'book', 'treat'],
+        ['it',   'not', 'the', 'good', 'bad'],
+      ];
+    }
+  } else if(step_rows == 5) {
+    if(step_cols == 4 || true) {
+      step_cols = 5;
+      core = [
+        ['he',  'is', 'eat', 'good', 'bad'],
+        ['she', 'want', 'play', 'ball', 'dog'],
+        ['they',  'not', 'read', 'treat', 'book'],
+      ];
+    }
+  } else if(step_rows == 4) {
+    if(step_cols == 4) {
+      core = [
+        ['they', 'want', 'eat', 'treat'],
+        ['it',   'not', 'play', 'ball']
+      ];
+    } else if(step_cols == 3 || true) {
+      core = [
+        ['they', 'eat', 'treat'],
+        ['not',   'play', 'ball']
+      ];
+    }
+  } else {
+    if(step_cols == 2) {
+      core = [
+        ['eat', 'play']
+      ];
+    } else if(step_cols == 3) {
+      core = [
+        ['eat', 'play', 'not']
+      ];
+    } else if(step_cols == 4) {
+      core = [
+        ['they', 'eat', 'play', 'not']
+      ];
+    }
+  }
+  var core_list = [];
+  if(!step.keyboard) {
+    for(var idx = 0; idx < core.length; idx++) {
+      for(var jdx = 0; jdx < core[idx].length; jdx++) {
+        core_list.push(core[idx][jdx]);
+      }
+    } 
+    core_list = shuffle(core_list);
+    var filtered_core_list = core_list.filter(function(w) { return !core_prompts[w.label]; });
+    if(filtered_core_list.length == 0) {
+      core_prompts = {};
+    } else {
+      core_list = filtered_core_list;
+    }
+  }
+  return {core: core, core_list: core_list};
+}
 
 evaluation.populate_assessment = function(assessment) {
   var prefs = app_state.get('currentUser.preferences');
