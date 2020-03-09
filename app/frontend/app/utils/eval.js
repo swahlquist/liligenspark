@@ -632,7 +632,7 @@ var levels = [
     {id: 'diff-8', rows: 2, cols: 4, distractors: true, difficulty_stop: true},
     {id: 'diff-15', rows: 3, cols: 5, distractors: true, perfect_id: 'diff-6-60'},
     // lower_level means didn't really succeed above this point
-    {id: 'diff-6-24', cluster: '24', rows: 4, cols: 6, distractors: true, spacing: 2, difficulty_stop: true, fail_id: 'diff-8'},
+    {id: 'diff-6-24', cluster: '24', rows: 4, cols: 6, distractors: true, spacing: 2, difficulty_stop: true, perfect_id: 'diff-6-60', fail_id: 'diff-8'},
     {id: 'diff-24', cluster: '24', rows: 4, cols: 6, distractors: true, fail_id: 'diff-15'},
     {id: 'diff-24-shuffle', cluster: '24', rows: 4, cols: 6, distractors: true, shuffle: true, min_attempts: 1},
     {id: 'diff-6-60', cluster: '60', rows: 6, cols: 10, distractors: true, spacing: 3, difficulty_stop: true, perfect_id: 'diff-6-112', fail_id: 'diff-6-24'},
