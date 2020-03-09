@@ -345,6 +345,7 @@ export default Controller.extend({
     'border_style',
     'height',
     'width',
+    'button_style',
     'app_state.edit_mode',
     'nothing_visible',
     'app_state.currentUser.preferences.stretch_buttons',
@@ -366,6 +367,7 @@ export default Controller.extend({
       var double_pad = inner_pad * 2;
       var radius = 4;
       var context = null;
+      var style = Button.style(this.get('button_style'));
 
       var currentLabelHeight = this.get('base_text_height') - 3;
       this.set('model.text_size', 'normal');
@@ -530,6 +532,7 @@ export default Controller.extend({
             height: Math.floor(button_height),
             image_height: image_height,
             image_width: image_width,
+            font_family: style.font_family,
             image_square: Math.min(image_height, image_width),
             image_top_margin: top_margin,
             border: inner_pad

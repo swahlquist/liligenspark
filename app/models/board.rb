@@ -838,7 +838,7 @@ class Board < ActiveRecord::Base
     self.settings['buttons'] = buttons.map do |button|
       trans = button['translations']
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
-            'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 
+            'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
             'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 'level_modifications', 'inflections');
       if button['load_board']

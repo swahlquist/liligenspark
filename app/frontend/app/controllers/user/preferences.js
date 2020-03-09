@@ -177,8 +177,8 @@ export default Controller.extend({
     return res;
   }),
   arrowSpeedList: [
-    {name: i18n.t('slow', "Slow"), id: 'slow'},
     {name: i18n.t('moderate', "Moderate"), id: 'moderate'},
+    {name: i18n.t('slow', "Slow"), id: 'slow'},
     {name: i18n.t('quick', "Quick"), id: 'quick'},
     {name: i18n.t('Speedy', "Speedy"), id: 'speedy'},
     {name: i18n.t('really_slow', "Really Slow"), id: 'really_slow'},

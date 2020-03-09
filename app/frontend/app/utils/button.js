@@ -339,8 +339,19 @@ var Button = EmberObject.extend({
         res = res + "<audio style='display: none;' preload='auto' src=\"" + clean_url(this.get('local_sound_url')) + "\" rel=\"" + clean_url(this.get('sound.url')) + "\"></audio>";
       }
       var button_class = this.get('text_only') ? app_state.get('text_only_button_symbol_class') : app_state.get('button_symbol_class');
-      res = res + "<div class='" + button_class + "'>";
-      res = res + "<span class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + clean_text(this.get('label')) + "</span>";
+      var txt = clean_text(this.get('label'));
+      var text_style = '';
+      var holder_style = '';
+      if(this.get('text_only')) {
+        // TODO: use correct font family
+        var fit = capabilities.fit_text(txt, this.get('positioning.font_family') || 'Arial', this.get('positioning.width'), this.get('positioning.height'), 10);
+        if(fit.any_fit) {
+          text_style = "style='font-size: " + fit.size + "px;'";
+          holder_style = "style='position: absolute;'";
+        }
+      }
+      res = res + "<div class='" + button_class + "' " + holder_style + ">";
+      res = res + "<span " + text_style + " class='" + (this.get('hide_label') ? "button-label hide-label" : "button-label") + "'>" + txt + "</span>";
       res = res + "</div>";
 
       res = res + "</a>";
@@ -1661,6 +1672,7 @@ Button.load_actions = function() {
     },
   ];
 };
+Button.clean_text = clean_text;
 
 window.button_broken_image = Button.broken_image;
 

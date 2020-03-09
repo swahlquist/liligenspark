@@ -885,8 +885,15 @@ var pictureGrabber = EmberObject.extend({
     });
   },
   clear_image: function() {
-    this.clear();
     this.controller.set('model.image', null);
+    this.controller.set('model.image_id', null);
+    this.clear();
+    var button_id = this.controller.get('model.id');
+    editManager.change_button(button_id, {
+      'image': null,
+      'image_id': null
+    });
+    this.controller.set('model.pending_image', false);
   },
   edit_image: function() {
     var image = this.controller.get('model.image');

@@ -728,6 +728,8 @@ var editManager = EmberObject.extend({
       if(options.image) {
         emberSet(button, 'local_image_url', null);
         button.load_image();
+      } else if(options.image === null) {
+        emberSet(button, 'local_image_url', null);
       }
       if(options.sound) {
         emberSet(button, 'local_sound_url', null);
@@ -1220,6 +1222,11 @@ var editManager = EmberObject.extend({
           }
           newButton.hidden = !!currentButton.hidden;
           newButton.link_disabled = !!currentButton.link_disabled;
+          if(currentButton.text_only) {
+            newButton.text_only = true;
+          } else {
+            delete newButton['text_only'];
+          }
           newButton.add_to_vocalization = !!currentButton.add_to_vocalization;
           if(currentButton.level_style) {
             if(currentButton.level_style == 'none') {
@@ -1339,7 +1346,7 @@ var editManager = EmberObject.extend({
     ids.forEach(function(id) {
       var board_id = _this.controller.get('model.id');
       var button = _this.find_button(id);
-      if(button && button.label && !button.image && !button.local_image_url) {
+      if(button && button.label && !button.image && !button.local_image_url && !button.text_only) {
         button.set('pending_image', true);
         button.set('pending', true);
         if(button && button.label && !button.image) {

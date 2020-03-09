@@ -183,6 +183,12 @@
               <div style="text-align: center;">
                 {{t "No pic" key="no_pic"}}
               </div>
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input checked=model.text_only type="checkbox"}}
+                  {{t "Show only text (as large as fits) for this button" key='text_only'}}
+                </label>
+              </div>
             {{/if}}
           {{/unless}}
         {{/if}}

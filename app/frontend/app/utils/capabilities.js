@@ -1301,6 +1301,41 @@ var capabilities;
           }
         }
       },
+      fit_text: function(str, font, width, height, min_size) {
+        if(!capabilities.fit_text.context) {
+          var canvas = document.createElement('canvas');
+          var context = canvas.getContext('2d');
+          capabilities.fit_text.context = context;
+        }
+        var ctx = capabilities.fit_text.context;
+        var fit_max = height - (height % 5) + 10;
+        var fit_increment = fit_max;
+        var res = {any_fit: true};
+        while(!res.size && fit_increment >= min_size) {
+          ctx.font = fit_increment + "px " + font;
+          var measure = ctx.measureText(str);
+          if(measure.width < (width * 0.9)) {
+            if(fit_increment < (height * 0.8)) {
+              res.size = fit_increment;
+              res.full_fit = true;
+            } else if(measure.actualBoundingBoxAscent && (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) < (height * 0.7)) {
+              res.size = fit_increment;
+              res.ascent_fit = true;
+            }
+          }
+          if(fit_increment > 20) {
+            fit_increment = fit_increment - 5;
+          } else if(fit_increment > 14) {
+            fit_increment = fit_increment - 2;
+          } else {
+            fit_increment = fit_increment - 1;
+          }
+        }
+        if(!res.size) {
+          res = {size: min_size, any_fit: false};
+        }
+        return res;
+      },
       wakelock_capable: function() {
         capabilities.permissions.assert('wakelock');
         return !!((window.chrome && window.chrome.power && window.chrome.power.requestKeepAwake) || (window.powerManagement && window.powerManagement.acquire));

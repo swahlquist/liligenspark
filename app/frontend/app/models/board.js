@@ -15,6 +15,7 @@ import Button from '../utils/button';
 import editManager from '../utils/edit_manager';
 import speecher from '../utils/speecher';
 import stashes from '../utils/_stashes';
+import capabilities from '../utils/capabilities';
 import boundClasses from '../utils/bound_classes';
 import word_suggestions from '../utils/word_suggestions';
 import ButtonSet from '../models/buttonset';
@@ -925,7 +926,7 @@ CoughDrop.Board = DS.Model.extend({
       res = res + "</div>";
 
       res = res + "<span style='" + opts.image_holder_style + "'>";
-      if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only')) {
+      if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only') && !button.text_only) {
         res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
       }
       res = res + "</span>";
@@ -935,8 +936,19 @@ CoughDrop.Board = DS.Model.extend({
         res = res + "<audio style='display: none;' preload='auto' src=\"" + url + "\" rel=\"" + rel_url + "\"></audio>";
       }
       var button_class = button.text_only ? size.text_only_button_symbol_class : size.button_symbol_class;
-      res = res + "<div class='" + button_class + "'>";
-      res = res + "<span class='button-label " + (button.hide_label ? "hide-label" : "") + "'>" + opts.label + "</span>";
+      var txt = Button.clean_text(opts.label);
+      var text_style = '';
+      var holder_style = '';
+      if(button.text_only) {
+        var fit = capabilities.fit_text(txt, pos.font_family || 'Arial', pos.width, pos.height, 10);
+        if(fit.any_fit) {
+          text_style = "style='font-size: " + fit.size + "px;'";
+          holder_style = "style='position: absolute;'";
+        }
+      }
+
+      res = res + "<div class='" + button_class + "' " + holder_style + ">";
+      res = res + "<span " + text_style + "class='button-label " + (button.hide_label ? "hide-label" : "") + "'>" + txt + "</span>";
       res = res + "</div>";
 
       res = res + "</a>";
