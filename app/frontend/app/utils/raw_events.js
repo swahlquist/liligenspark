@@ -1370,7 +1370,7 @@ var buttonTracker = EmberObject.extend({
           buttonTracker.head_tilt.uses++;
           type = 'head';
         }
-        var rate = 1.0;
+        var rate = 2.5;
         var arrow_speed = (buttonTracker.gamepadupdate || {}).speed || buttonTracker.dwell_arrow_speed;
         if(arrow_speed == 'moderate') {
           rate = 2.5;
@@ -1380,6 +1380,8 @@ var buttonTracker = EmberObject.extend({
           rate = 6.0;
         } else if(arrow_speed == 'really_slow') {
           rate = 0.5;
+        } else if(arrow_speed == 'slow') {
+          rate = 1.0;
         }
 
         // update the coordinates, and check if oppossing 

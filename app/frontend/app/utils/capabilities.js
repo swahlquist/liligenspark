@@ -1164,7 +1164,7 @@ var capabilities;
                   }
                 } else {
                   window.cd_persistent_storage.requestQuota(req_size, function(allotted_size) {
-                    if(allotted_size < req_size) {
+                    if(allotted_size < req_size || allotted_size == requested) {
                       capabilities.storage.already_limited_size = true;
                     }
                     if(allotted_size && allotted_size > 0) {

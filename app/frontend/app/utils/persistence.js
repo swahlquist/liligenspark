@@ -65,6 +65,9 @@ var persistence = EmberObject.extend({
         });
       }
     });
+    if(stashes.get('allow_local_filesystem_request') == false) {
+      capabilities.storage.already_limited_size = true;      
+    }
     if(stashes.get_object('just_logged_in', false) && stashes.get('auth_settings') && !Ember.testing) {
       stashes.persist_object('just_logged_in', null, false);
       runLater(function() {
@@ -1072,7 +1075,19 @@ var persistence = EmberObject.extend({
         persistence.url_uncache[url_id] = true;
         var error = {error: "saving to data cache failed"};
         if(err && err.name == "QuotaExceededError") {
+          capabilities.storage.already_limited_size = true;
+          stashes.persist('allow_local_filesystem_request', false);
+          persistence.url_cache = persistence.url_cache || {};
+          persistence.url_cache[url_id] = null;
           error.quota_maxed = true;
+          persistence.set('local_system.allowed', false);
+        } else if(err.error == 'rejected' || err.error == 'already_rejected') {
+          capabilities.storage.already_limited_size = true;
+          stashes.persist('allow_local_filesystem_request', false);
+          persistence.url_cache = persistence.url_cache || {};
+          persistence.url_cache[url_id] = null;
+          error.quota_maxed = true;
+          persistence.set('local_system.allowed', false);
         }
         reject(error);
       });
@@ -1129,6 +1144,12 @@ var persistence = EmberObject.extend({
       });
     }
     sync_reason = sync_reason || 'manual_sync';
+    if(sync_reason == 'manual_sync') {
+      // When manual sync is triggered, assume a file storage
+      // permission check is allowed
+      capabilities.storage.already_limited_size = false;
+      stashes.persist('allow_local_filesystem_request', true);
+    }
 
     console.log('syncing for ' + user_id);
     var user_name = user_id;
