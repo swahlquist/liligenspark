@@ -1215,10 +1215,12 @@ var persistence = EmberObject.extend({
 
       // cache images used for keyboard spelling to work offline
       if(!ignore_supervisees && (!CoughDrop.testing || CoughDrop.sync_testing)) {
-        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg', 'image', false, false).then(null, function() { });
-        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
-        persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
-        persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
+        eventuallies.push(function() {
+          persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/pencil%20and%20paper%202.svg', 'image', false, false).then(null, function() { });
+          persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
+          persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
+          persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
+        });
       }
 
       if(window.app_state && !ignore_supervisees) {
@@ -1303,26 +1305,45 @@ var persistence = EmberObject.extend({
           }
         }
 
+        var spread_out = function(callback) {
+          spread_out.delay = (spread_out.delay || 0) + 1500;
+          var delay = spread_out.delay;
+          sync_promises.push(new RSVP.Promise(function(resolve, reject) {
+            runLater(function() {
+              callback().then(function(res) {
+                resolve(res);
+              }, function(err) {
+                reject(err);
+              })
+            }, delay);
+          }));
+        };
+
         // Step 1: If online
         // if there are any pending transactions, save them one by one
         // (needs to also support s3 uploading for locally-saved images/sounds)
         // (needs to be smart about handling conflicts)
         // http://www.cs.tufts.edu/~nr/pubs/sync.pdf
         if(persistence.get('sync_progress.root_user') == user_id) {
-          sync_promises.push(persistence.sync_changed());
+          spread_out(function() {
+            return persistence.sync_changed();
+          });
         }
 
         var importantIds = [];
 
         // Step 2: If online
         // get the latest user profile information and settings
-        sync_promises.push(persistence.sync_user(user, importantIds));
+        spread_out(function() {
+          return persistence.sync_user(user, importantIds);
+        });
 
         // Step 3: If online
         // check if the board set has changed at all, and if so
         // (or force == true) pull it all down locally
         // (add to settings.importantIds list)
         // (also download through proxy any image data URIs needed for board set)
+        // (this takes the longest, so start it right away - no spread_out)
         var get_local_revisions = persistence.find('settings', 'synced_full_set_revisions').then(function(res) {
           if(persistence.get('sync_progress') && !persistence.get('sync_progress.full_set_revisions')) {
             persistence.set('sync_progress.full_set_revisions', res);
@@ -1336,20 +1357,30 @@ var persistence = EmberObject.extend({
 
         // Step 4: If user has any supervisees, sync them as well
         if(user && user.get('supervisees') && !ignore_supervisees) {
-          sync_promises.push(persistence.sync_supervisees(user, force));
+          spread_out(function() {
+            return persistence.sync_supervisees(user, force);
+          });
         }
 
         // Step 5: Cache needed sound files
-        sync_promises.push(speecher.load_beep());
+        spread_out(function() {
+          return speecher.load_beep();
+        });
 
         // Step 6: Push stored logs
-        sync_promises.push(persistence.sync_logs(user));
+        spread_out(function() {
+          return persistence.sync_logs(user);
+        });
 
         // Step 7: Sync user tags
-        sync_promises.push(persistence.sync_tags(user));
+        spread_out(function() {
+          return persistence.sync_tags(user);
+        });
 
         // Step 8: Sync contacts
-        sync_promises.push(persistence.sync_contacts(user));
+        spread_out(function() {
+          return persistence.sync_contacts(user);
+        });
 
         // reject on any errors
         RSVP.all_wait(sync_promises).then(function() {
