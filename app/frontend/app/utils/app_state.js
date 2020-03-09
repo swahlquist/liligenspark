@@ -113,14 +113,14 @@ var app_state = EmberObject.extend({
                 fulls.complete = true; fulls.mostly = true; fulls.ready = true;
                 var remind = function() {
                   // taper off reminders that the device is fully charged
-                  if(_this.get('battery_fulls.complete') && battery.charging && battery.level == 100 && _this.get('battery_fulls.reminds') <= 5) {
+                  if(_this.get('battery_fulls.complete') && battery.charging && battery.level == 100 && _this.get('battery_fulls.reminds') <= 3) {
                     maybe_sound('glug');
                     var reminds = (_this.get('battery_fulls.reminds') || 1) + 1;
-                    runLater(remind, reminds * 15 * 60 * 60)
+                    runLater(remind, reminds * 15 * 60 * 1000)
                     _this.set('battery_fulls.reminds', reminds);
                   }
                 };
-                runLater(remind, 15 * 60 * 60);
+                runLater(remind, 15 * 60 * 1000);
                 fulls.reminds = (fulls.reminds || 0) + 1;
                 maybe_sound('glug');
               }
