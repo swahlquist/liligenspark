@@ -492,8 +492,8 @@ class Board < ActiveRecord::Base
     end
     # TODO: sharding
     ubcs = UserBoardConnection.where(:board_id => Board.local_ids(board_ids))
-    root_users = ubcs.map(&:user).uniq
-    more_user_ids = root_users.compact.map(&:supervisor_user_ids).flatten.uniq
+    root_users = ubcs.map(&:user).uniq.compact
+    more_user_ids = root_users.map(&:supervisor_user_ids).flatten.uniq
     user_ids = root_users.map(&:global_id) + more_user_ids
     
     # TODO: sharding
