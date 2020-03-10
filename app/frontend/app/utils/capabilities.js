@@ -17,7 +17,25 @@ if(navigator.standalone) {
 }
 
 window.cd_request_file_system = window.webkitRequestFileSystem || window.requestFileSystem;
+if(window.cd_request_file_system) {
+  var native = window.cd_request_file_system;
+  // to enable debugging
+  window.cd_request_file_system = function(type, size, success, error) {
+    return native(type, size, success, error);
+  }
+}
 window.cd_persistent_storage = window.navigator.webkitPersistentStorage || window.navigator.persistentStorage;
+if(window.cd_persistent_storage) {
+  var native = window.cd_persistent_storage;
+  window.cd_persistent_storage = {};
+  // to enable debugging
+  window.cd_persistent_storage.queryUsageAndQuota = function(success, error) {
+    return native.queryUsageAndQuota(success, error);
+  };
+  window.cd_persistent_storage.requestQuota = function(size, success, error) {
+    return native.requestQuota(size, success, error);
+  };
+}
 
 var capabilities;
 (function() {
@@ -1073,7 +1091,7 @@ var capabilities;
                 writer.onerror = function(err) {
                   promise.reject(err);
                 };
-                if(capabilities.system == 'Android') {
+                if(capabilities.system == 'Android' && capabilities.system.installed_app) {
                   var reader = new FileReader();
                   reader.onload = function() {
                     writer.write(this.result);
