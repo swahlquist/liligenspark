@@ -18,22 +18,22 @@ if(navigator.standalone) {
 
 window.cd_request_file_system = window.webkitRequestFileSystem || window.requestFileSystem;
 if(window.cd_request_file_system) {
-  var native = window.cd_request_file_system;
+  window.native_cd_request_file_system = window.cd_request_file_system;
   // to enable debugging
   window.cd_request_file_system = function(type, size, success, error) {
-    return native(type, size, success, error);
+    return window.native_cd_request_file_system(type, size, success, error);
   }
 }
 window.cd_persistent_storage = window.navigator.webkitPersistentStorage || window.navigator.persistentStorage;
 if(window.cd_persistent_storage) {
-  var native = window.cd_persistent_storage;
+  window.native_cd_persistent_storage = window.cd_persistent_storage;
   window.cd_persistent_storage = {};
   // to enable debugging
   window.cd_persistent_storage.queryUsageAndQuota = function(success, error) {
-    return native.queryUsageAndQuota(success, error);
+    return window.native_cd_persistent_storage.queryUsageAndQuota(success, error);
   };
   window.cd_persistent_storage.requestQuota = function(size, success, error) {
-    return native.requestQuota(size, success, error);
+    return window.native_cd_persistent_storage.requestQuota(size, success, error);
   };
 }
 
