@@ -1650,18 +1650,19 @@ evaluation.callback = function(key) {
         }
         var next_step = false;
         var step_reason = null;
-        if(working.attempts >= (step.min_attempts || assessment.attempt_minimum) && working.correct / working.attempts >= assessment.mastery_cutoff) {
+        var pct_correct = working.correct / working.attempts;
+        if(working.attempts >= (step.min_attempts || assessment.attempt_minimum) && pct_correct >= assessment.mastery_cutoff) {
           next_step = true;
           step_reason = "mastered";
           working.fails = 0;
-        } else if(working.attempts > 1 && working.attempts >= (step.min_attempts || assessment.attempt_minimum) && working.correct / working.attempts <= assessment.non_mastery_cutoff) {
+        } else if(working.attempts > 1 && working.attempts >= (step.min_attempts || assessment.attempt_minimum) && pct_correct <= assessment.non_mastery_cutoff) {
           step_reason = "not_mastered";
           working.fails = (working.fails || 0) + 1;
           e.fail = true;  
           next_step = true;
         } else if(working.attempts >= assessment.attempt_maximum && working.attempts >= (step.min_attempts || assessment.attempt_minimum)) {
           step_reason = "max_reached_without_mastery";
-          working.fails = (working.fails || 0) + 1;
+          working.fails = (working.fails || 0) + 0.7;
           next_step = true;
         } else if(button.id == 'button_done') {
           step_reason = "manually_concluded";
@@ -1674,9 +1675,9 @@ evaluation.callback = function(key) {
           working.ref.literacy_describe1 = true;
         }
         var short_circuit = false;
-        if(working.fails >= Math.max(2, (step.min_attempts || 0) * 0.75)) {
+        if(working.attempts > 0 && pct_correct <= assessment.mastery_cutoff && working.fails >= Math.max(2, (step.min_attempts || 0) * 0.75)) {
           // Don't require hitting min_attempts number of
-          // tries if too many of them are fails
+          // tries once too many past steps have not reached mastery
           step_reason = step_reason || "too_many_fails";
           next_step = true;
           if(!level.continue_on_non_mastery) {
