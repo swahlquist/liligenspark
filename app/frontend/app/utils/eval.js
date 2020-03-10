@@ -1700,18 +1700,18 @@ evaluation.callback = function(key) {
             if(working.correct == working.attempts && step_reason == 'mastered') {
               // if they get 100% then try for larger minimal buttons.
               next_step_id = step.perfect_id || (level[working.step + 1] || {}).id || step.id;
-              working.ref.passsable_increments = Math.max(0, working.ref.passsable_increments - 1);
+              working.ref.passable_increments = Math.max(0, (working.ref.passable_increments || 0) - 1);
             } else if(step_reason == 'mastered') {
               // If they do ok then try more buttons in that size or continue.
               var next_step_ref = level[working.step + 1] || step;
               next_step_id = next_step_ref.id;
               if(next_step_ref.difficulty_stop) {
-                working.ref.passable_increments = working.ref.passable_increments + 2;
+                working.ref.passable_increments = (working.ref.passable_increments || 0) + 2;
               }
             } else if(step_reason == 'max_reached_without_mastery') {
               // If they barely don't fail, try the next one
               next_step_id = step.id;
-              working.ref.passable_increments++;
+              working.ref.passable_increments = (working.ref.passable_increments || 0) + 1;
             } else if(step_reason == 'not_mastered' || step_reason == 'too_many_fails') {
               // If they fail go back to the previous grid size and try more buttons.
               if(step.fail_id) {
