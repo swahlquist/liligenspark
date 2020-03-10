@@ -1184,6 +1184,7 @@ var capabilities;
                   window.cd_persistent_storage.requestQuota(req_size, function(allotted_size) {
                     if(allotted_size < req_size || allotted_size == requested) {
                       capabilities.storage.already_limited_size = true;
+                      stashes.persist('allow_local_filesystem_request', false);
                     }
                     if(allotted_size && allotted_size > 0) {
                       get_file_system();
