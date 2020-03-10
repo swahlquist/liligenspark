@@ -393,7 +393,7 @@ var speecher = EmberObject.extend({
     var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
     var language = locale && locale.split(/-/)[0];
     var mapped_lang = i18n.lang_map[language] || language;
-    if(locale && voice && locale != 'any') {
+    if(locale && voice && voice.lang && locale != 'any') {
       // If locale is set but the voice doesn't match clear it.
       // This is used when we're on a board for a different language
       // than the user's default, but we need to check 

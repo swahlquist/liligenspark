@@ -1407,6 +1407,14 @@ var app_state = EmberObject.extend({
         stashes.set('speaking_user_id', this.get('currentUser.id'));
         stashes.set('session_user_id', this.get('sessionUser.id'));
 
+        var voices = speecher.get('voices');
+        // Android Chrome seems to have a short delay before voices get loaded
+        if(voices.length == 1 && (voices[0] || {}).voiceURI == "") {
+          runLater(function() {
+            speecher.refresh_voices();
+          }, 500);
+        }
+
         var geo_enabled = app_state.get('currentUser.preferences.geo_logging') || app_state.get('sidebar_boards').find(function(b) { return b.highlight_type == 'locations' || b.highlight_type == 'custom'; });
         if(geo_enabled) {
           stashes.geo.poll();
