@@ -80,59 +80,76 @@ var app_state = EmberObject.extend({
         if(!battery.charging || battery.level <= 70) {
           fulls = {};
         }
+        if(!_this.get('battery_after_speak_mode')) {
+          // If already topped-off when entering speak
+          // mode, don't make any full audio alerts,
+          // and wait at least a moment before doing low
+          // battery alerts
+          _this.set('battery_after_speak_mode', true);
+          if(battery.charging && battery.level == 100) {
+            fulls.complete = true;
+            fulls.reminds = 10;
+          } else if(battery.level <= 15) {
+            return;
+          }
+        }
         var maybe_sound = function(type) {
-          if(app_state.get('currentUser.preferences.battery_sounds')) {
+          if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.battery_sounds')) {
             speecher.click(type);
           }
         };
         if(battery.level <= 15 && !battery.charging) {
-          if(battery.level <= 4) {
-            if(!warns.critical) {
-              warns.critical = true; warns.dangerous = true; warns.low = true;
-              maybe_sound('battery');
-            }
-          } else if(battery.level <= 7) {
-            if(!warns.dangerous) {
-              warns.dangerous = true; warns.low = true;
-              maybe_sound('battery');
-            }
-          } else {
-            if(!warns.low) {
-              warns.low = true;
-              maybe_sound('battery');
-            }
+          if(app_state.get('speak_mode')) {
+            if(battery.level <= 4) {
+              if(!warns.critical) {
+                warns.critical = true; warns.dangerous = true; warns.low = true;
+                maybe_sound('battery');
+              }
+            } else if(battery.level <= 7) {
+              if(!warns.dangerous) {
+                warns.dangerous = true; warns.low = true;
+                maybe_sound('battery');
+              }
+            } else {
+              if(!warns.low) {
+                warns.low = true;
+                maybe_sound('battery');
+              }
+            }  
           }
           _this.set('battery.progress_class', "progress-bar progress-bar-danger");
         } else if(battery.level <= 30 && !battery.charging) {
           _this.set('battery.progress_class', "progress-bar progress-bar-warning");
         } else {
           _this.set('battery.progress_class', "progress-bar progress-bar-success");
-          if(battery.charging && battery.level >= 85) {
-            if(battery.level == 100) {
-              if(!fulls.complete) {
-                fulls.complete = true; fulls.mostly = true; fulls.ready = true;
-                var remind = function() {
-                  // taper off reminders that the device is fully charged
-                  if(_this.get('battery_fulls.complete') && battery.charging && battery.level == 100 && _this.get('battery_fulls.reminds') <= 3) {
-                    maybe_sound('glug');
-                    var reminds = (_this.get('battery_fulls.reminds') || 1) + 1;
-                    runLater(remind, reminds * 15 * 60 * 1000)
-                    _this.set('battery_fulls.reminds', reminds);
-                  }
-                };
-                runLater(remind, 15 * 60 * 1000);
-                fulls.reminds = (fulls.reminds || 0) + 1;
-                maybe_sound('glug');
-              }
-            } else if(battery.level >= 95) {
-              if(!fulls.mostly) {
-                fulls.mostly = true; fulls.ready = true;
-                maybe_sound('glug');
-              }
-            } else {
-              if(!fulls.ready) {
-                fulls.ready = true;
-                maybe_sound('glug');
+          if(app_state.get('speak_mode')) {
+            if(battery.charging && battery.level >= 85) {
+              if(battery.level == 100) {
+                if(!fulls.complete) {
+                  fulls.complete = true; fulls.mostly = true; fulls.ready = true;
+                  var remind = function() {
+                    // taper off reminders that the device is fully charged
+                    if(_this.get('battery_fulls.complete') && battery.charging && battery.level == 100 && _this.get('battery_fulls.reminds') <= 3) {
+                      maybe_sound('glug');
+                      var reminds = (_this.get('battery_fulls.reminds') || 1) + 1;
+                      runLater(remind, reminds * 15 * 60 * 1000)
+                      _this.set('battery_fulls.reminds', reminds);
+                    }
+                  };
+                  runLater(remind, 15 * 60 * 1000);
+                  fulls.reminds = (fulls.reminds || 0) + 1;
+                  maybe_sound('glug');
+                }
+              } else if(battery.level >= 95) {
+                if(!fulls.mostly) {
+                  fulls.mostly = true; fulls.ready = true;
+                  maybe_sound('glug');
+                }
+              } else {
+                if(!fulls.ready) {
+                  fulls.ready = true;
+                  maybe_sound('glug');
+                }
               }
             }
           }
@@ -1395,6 +1412,7 @@ var app_state = EmberObject.extend({
           stashes.geo.poll();
         }
         this.set('speak_mode_started', (new Date()).getTime());
+        this.set('battery_after_speak_mode', false);
 
         // this method is getting called again on every board load, even if already in speak mode. This check
         // limits the following block to once per speak-mode-activation.
