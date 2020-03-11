@@ -831,6 +831,7 @@ CoughDrop.Board = DS.Model.extend({
     var _this = this;
     var lookups = _this.get('suggestion_lookups') || {};
     var brds = document.getElementsByClassName('board');
+    var font_family = Button.style(app_state.get('currentUser.preferences.device.button_style')).font_family;
     for(var idx = 0; idx < brds.length; idx++) {
       var brd = brds[idx];
       if(brd && brd.getAttribute('data-id') == _this.get('id')) {
@@ -848,6 +849,14 @@ CoughDrop.Board = DS.Model.extend({
             var img = btn.getElementsByClassName('symbol')[0]
             if(lbl) {
               lbl.innerText = app_state.get('speak_mode') ? suggestion.word : button.label;
+              if(button.text_only) {
+                var width = parseInt(btn.style.width, 10);
+                var height = parseInt(btn.style.height, 10);
+                var fit = capabilities.fit_text(lbl.innerText, font_family || 'Arial', width, height, 10);
+                if(fit.any_fit) {
+                  lbl.style.fontSize = fit.size + "px";
+                }
+              }
             }
             if(img && url) {
               if(!img.getAttribute('original-src')) {
@@ -946,7 +955,7 @@ CoughDrop.Board = DS.Model.extend({
       var text_style = '';
       var holder_style = '';
       if(button.text_only) {
-        var fit = capabilities.fit_text(txt, pos.font_family || 'Arial', pos.width, pos.height, 10);
+        var fit = capabilities.fit_text(txt, (pos.font_family || opts.font_family || 'Arial'), pos.width, pos.height, 10);
         if(fit.any_fit) {
           text_style = "style='font-size: " + fit.size + "px;'";
           holder_style = "style='position: absolute;'";
@@ -1031,6 +1040,7 @@ CoughDrop.Board = DS.Model.extend({
           top_margin = 0;
         }
 
+        
         html = html + button_html(button, {
           top: top,
           left: left,

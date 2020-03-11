@@ -370,7 +370,7 @@ var utterance = EmberObject.extend({
                 runLater(function() {
                   utterance.set_button_list();
                 })
-              s};
+              };
             }
           });
         }
