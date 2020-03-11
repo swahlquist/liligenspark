@@ -1330,14 +1330,15 @@ var capabilities;
         var fit_max = height - (height % 5) + 10;
         var fit_increment = fit_max;
         var res = {any_fit: true};
+        var box_max = str.length == 1 ? 0.8 : 0.65;
         while(!res.size && fit_increment >= min_size) {
           ctx.font = fit_increment + "px " + font;
           var measure = ctx.measureText(str);
           if(measure.width < (width * 0.9)) {
-            if(fit_increment < (height * 0.8)) {
+            if(fit_increment < (height * box_max)) {
               res.size = fit_increment;
               res.full_fit = true;
-            } else if(str.length > 1 && measure.actualBoundingBoxAscent && (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) < (height * 0.7)) {
+            } else if(str.length > 1 && measure.actualBoundingBoxAscent && (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) < (height * (box_max - 0.1))) {
               res.size = fit_increment;
               res.ascent_fit = true;
             }
