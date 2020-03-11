@@ -174,7 +174,7 @@ var utterance = EmberObject.extend({
             visualButton.set('sound', data_uri);
           }, function() { });
         }
-        visualButton.set('label', visualButton.get('label').replace(/\s$/g, ''));
+        visualButton.set('label', (visualButton.get('label') || '').replace(/\s$/g, ''));
         if(visualButton.get('vocalization')) {
           visualButton.set('vocalization', visualButton.get('vocalization').replace(/\s$/g, ''));
         }
@@ -364,19 +364,19 @@ var utterance = EmberObject.extend({
             if(word && word.image) { 
               emberSet(b, 'suggestion_image', word.image); 
               emberSet(b, 'suggestion_image_license', word.image_license);
+              word.image_update = function(url) {
+                emberSet(b, 'suggestion_image', url);
+                emberSet(b, 'suggestion_image_license', word.image_license);
+                runLater(function() {
+                  utterance.set_button_list();
+                })
+              s};
             }
-            word.image_update = function(url) {
-              emberSet(b, 'suggestion_image', url);
-              emberSet(b, 'suggestion_image_license', word.image_license);
-              runLater(function() {
-                utterance.set_button_list();
-              })
-            };
           });
         }
       }
     }
-    if(original_button && original_button.load_image) {
+    if(original_button && original_button.load_image && !button.suggestion_override) {
       original_button.load_image('local').then(function(image) {
         image = image || original_button.get('image');
         if(image) {

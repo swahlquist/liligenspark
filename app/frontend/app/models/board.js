@@ -771,7 +771,11 @@ CoughDrop.Board = DS.Model.extend({
     }
   },
   load_word_suggestions: function(board_ids) {
-    var working = stashes.get('working_vocalization') || {};
+    var working = [].concat(stashes.get('working_vocalization') || []);
+    var in_progress = null;
+    if(working.length > 0 && working[working.length - 1].in_progress) {
+      in_progress = working.pop().label;
+    }
     var last_word = ((working[working.length - 1]) || {}).label;
     var second_to_last_word = ((working[working.length - 2]) || {}).label;
 
@@ -803,7 +807,9 @@ CoughDrop.Board = DS.Model.extend({
     word_suggestions.lookup({
       last_finished_word: last_word || "",
       second_to_last_word: second_to_last_word,
-      board_ids: board_ids
+      word_in_progress: in_progress,
+      board_ids: board_ids,
+      max_results: suggested_buttons.length
     }).then(function(result) {
       (result||[]).forEach(function(sugg, idx) {
         if(suggested_buttons[idx]) {
@@ -823,7 +829,7 @@ CoughDrop.Board = DS.Model.extend({
   },
   update_suggestion_button: function(button, suggestion) {
     var _this = this;
-    var lookups = _this.get('suggestions_lookups') || {};
+    var lookups = _this.get('suggestion_lookups') || {};
     var brds = document.getElementsByClassName('board');
     for(var idx = 0; idx < brds.length; idx++) {
       var brd = brds[idx];

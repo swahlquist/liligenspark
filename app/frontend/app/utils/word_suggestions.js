@@ -106,7 +106,7 @@ var word_suggestions = EmberObject.extend({
     "4r5e":1, "5h1t":1, "5hit":1, a55:1, anal:1, anus:1, ar5e:1,
     arrse:1, arse:1, ass:1,"ass-fucker":1,asses:1,assfucker:1,assfukka:1,
     asshole:1,assholes:1,asswhole:1,a_s_s:1,"b!tch":1,b00bs:1,b17ch:1,
-    b1tch:1,ballbag:1,balls:1,ballsack:1,bastard:1,beastial:1,beastiality:1,
+    b1tch:1,badass:1,ballbag:1,balls:1,ballsack:1,bastard:1,beastial:1,beastiality:1,
     bellend:1,bestial:1,bestiality:1,"bi+ch":1,biatch:1,bitch:1,bitcher:1,
     bitchers:1,bitches:1,bitchin:1,bitching:1,bloody:1,"blow job":1,
     bitchy:1,bitched:1,"bitchin'":1,bitchiness:1,asshat:1,
@@ -182,8 +182,11 @@ var word_suggestions = EmberObject.extend({
     var _this = this;
     return this.load().then(function() {
       var last_finished_word = options.last_finished_word;
+      if(last_finished_word) { last_finished_word = last_finished_word.replace(/\s+$/, ''); }
       var second_to_last_word = options.second_to_last_word;
+      if(second_to_last_word) { second_to_last_word = second_to_last_word.replace(/\s+$/, ''); }
       var word_in_progress = options.word_in_progress;
+      if(word_in_progress) { word_in_progress = word_in_progress.replace(/\s+$/, ''); }
       var max_results = options.max_results || _this.max_results;
       var result = [];
       if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress || _this.second_to_last_word != second_to_last_word) {

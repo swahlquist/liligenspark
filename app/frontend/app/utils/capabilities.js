@@ -1337,7 +1337,7 @@ var capabilities;
             if(fit_increment < (height * 0.8)) {
               res.size = fit_increment;
               res.full_fit = true;
-            } else if(measure.actualBoundingBoxAscent && (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) < (height * 0.7)) {
+            } else if(str.length > 1 && measure.actualBoundingBoxAscent && (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) < (height * 0.7)) {
               res.size = fit_increment;
               res.ascent_fit = true;
             }

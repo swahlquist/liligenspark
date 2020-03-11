@@ -2116,6 +2116,7 @@ var app_state = EmberObject.extend({
         if(suggestion) {
           obj.label = suggestion.word;
           obj.completion = suggestion.word;
+          obj.suggestion_override = true;
           obj.image = suggestion.image;
           obj.image_license = suggestion.image_license;
         }
