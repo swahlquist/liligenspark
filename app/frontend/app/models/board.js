@@ -847,7 +847,7 @@ CoughDrop.Board = DS.Model.extend({
             }
             var lbl = btn.getElementsByClassName('button-label')[0];
             var img = btn.getElementsByClassName('symbol')[0]
-            if(lbl) {
+            if(lbl && lbl.tagName != 'INPUT') {
               lbl.innerText = app_state.get('speak_mode') ? suggestion.word : button.label;
               if(button.text_only) {
                 var width = parseInt(btn.style.width, 10);
@@ -1040,7 +1040,6 @@ CoughDrop.Board = DS.Model.extend({
           top_margin = 0;
         }
 
-        
         html = html + button_html(button, {
           top: top,
           left: left,
