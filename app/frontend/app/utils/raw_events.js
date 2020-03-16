@@ -236,7 +236,12 @@ $(document).on('mousedown touchstart', function(event) {
   }
 }).on('facechange', function(event) {
   if(buttonTracker.check('dwell_enabled') && buttonTracker.check('select_expression') && buttonTracker.check('dwell_selection') == 'expression') {
-    if(event.expression && event.expression == buttonTracker.check('select_expression')) {
+    var matching_expression = event.expression && event.expression == buttonTracker.check('select_expression');
+    // smiles count as smirks
+    if(buttonTracker.check('select_expresison') == 'smirk' && event.expresssion == 'smile') {
+      matching_expression = true;
+    }
+    if(matching_expression) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
