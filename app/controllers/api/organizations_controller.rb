@@ -182,7 +182,7 @@ class Api::OrganizationsController < ApplicationController
       users = User.where(:id => user_ids)
     elsif params['report'] == 'subscriptions'
       stats = {}
-      User.where(:possibly_full_premium => true).where(['created_at > ? OR expires_at > ?', 4.months.ago, Time.now]).each do |user|
+      User.where(:possibly_full_premium => true).where(['created_at > ? OR expires_at > ?', 4.months.ago, 3.years.from_now]).each do |user|
         if user.full_premium?
           amount = nil
           ts = nil
@@ -241,6 +241,14 @@ class Api::OrganizationsController < ApplicationController
       end
     elsif params['report'] == 'extras'
       extras = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'extras_added'])
+      stats = {}
+      extras.each do |event|
+        str = "#{event.created_at.strftime('%m-%Y')} #{event.data['source']}"
+        stats[str] ||= 0
+        stats[str] += 1
+      end
+    elsif params['report'] == 'protected_sources'
+      extras = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'source_activated'])
       stats = {}
       extras.each do |event|
         str = "#{event.created_at.strftime('%m-%Y')} #{event.data['source']}"

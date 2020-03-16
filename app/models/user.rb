@@ -159,6 +159,15 @@ class User < ActiveRecord::Base
     self.settings['premium_voices']['allowed'] += 1
     self.save
   end
+
+  def track_protected_source(source_id)
+    self.settings['activated_sources'] ||= []
+    if !self.settings['activated_sources'].include?(source_id)
+      self.settings['activated_sources'] << source_id
+      self.save
+      AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
+    end
+  end
   
   def add_premium_voice(voice_id, system_name)
     # Limit the number of premium_voices users can download

@@ -30,7 +30,8 @@ export default Controller.extend({
         list.push({id: 'overridden_parts_of_speech', name: i18n.t('overridden_parts_of_speech', "Manually-set parts of speech")});
         list.push({id: 'missing_symbols', name: i18n.t('missing_symbols', "Search terms that don't return any matching symbols")});
         list.push({id: 'premium_voices', name: i18n.t('premium_voice_downloads', "Premium Voice Downloads")});
-        list.push({id: 'extras', name: i18n.t('extras_enabled', "Premium Symbol Activations")});
+        list.push({id: 'extras', name: i18n.t('extras_enabled', "Premium Symbol Purchases")});
+        list.push({id: 'protected_sources', name: i18n.t('protected_sources', "Premium Symbol Activations")});
         list.push({id: 'feature_flags', name: i18n.t('feature_flags', "Beta/Feature Flags")});
         list.push({id: 'org_sizes', name: i18n.t('org_sizes', "Organizations by Size")});
         list.push({id: 'totals', name: i18n.t('record_totals', "Total counts")});

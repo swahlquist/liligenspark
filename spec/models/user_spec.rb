@@ -2218,6 +2218,40 @@ describe User, :type => :model do
     end
   end
 
+  describe "track_protected_source" do
+    it "should track novel usage" do
+      u = User.create
+      expect(u.settings['activated_sources']).to eq(nil)
+      u.track_protected_source('bacon')
+      expect(u.reload.settings['activated_sources']).to eq(['bacon'])
+      expect(AuditEvent.count).to eq(1)
+      ae = AuditEvent.last
+      expect(ae.event_type).to eq('source_activated')
+      expect(ae.data['source']).to eq('bacon')
+    end
+
+    it "should not re-track tracked usage" do
+      u = User.create
+      expect(u.settings['activated_sources']).to eq(nil)
+      u.settings['activated_sources'] = ['bacon']
+      u.save
+      u.track_protected_source('bacon')
+      expect(u.reload.settings['activated_sources']).to eq(['bacon'])
+      expect(AuditEvent.count).to eq(0)
+
+      u.track_protected_source('cheddar')
+      expect(u.reload.settings['activated_sources']).to eq(['bacon', 'cheddar'])
+      expect(AuditEvent.count).to eq(1)
+      ae = AuditEvent.last
+      expect(ae.event_type).to eq('source_activated')
+      expect(ae.data['source']).to eq('cheddar')
+
+      u.track_protected_source('cheddar')
+      expect(u.reload.settings['activated_sources']).to eq(['bacon', 'cheddar'])
+      expect(AuditEvent.count).to eq(1)
+    end
+  end
+
   describe "lookup_contact" do
     it "should return correct values" do
       u = User.create
