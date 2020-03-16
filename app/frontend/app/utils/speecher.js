@@ -402,6 +402,10 @@ var speecher = EmberObject.extend({
       if(voice_lang != language && i18n.lang_map[voice_lang] != mapped_lang && voice_lang != mapped_lang) { voice = null; }
     }
     if(allow_fallbacks) {
+      if(locale == 'any') {
+        locale = window.navigator.language.toLowerCase().replace(/_/, '-');
+        language = locale && locale.split(/-/)[0];    
+      }
       // Can't find an exact match? Look for a best match by locale
       // First prioritize Google voices because they sound better
       voice = voice || voices.find(function(v) { return language && v.name && v.name.match(/^Google/) && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });

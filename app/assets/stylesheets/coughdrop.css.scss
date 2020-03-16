@@ -2393,7 +2393,7 @@ body.pretty_loader #loading_box {
   top: -2px;
 }
 .board:not(.show_labels) {
-  .button .button_label_holder:not(.no_image) span.button-label.hide-label {
+  .button .button-label-holder:not(.no_image) span.button-label.hide-label {
     display: none;
   }
 }
