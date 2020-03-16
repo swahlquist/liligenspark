@@ -660,7 +660,7 @@ class Board < ActiveRecord::Base
     self.settings['hide_empty'] = params['hide_empty'] if params['hide_empty'] != nil
     self.settings['text_only'] = params['text_only'] if params['text_only'] != nil
     self.settings['never_edited'] = false if self.id
-    process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author]) if params['buttons']
+    process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author], params['translations']) if params['buttons']
     prior_license = self.settings['license'].to_json
     process_license(params['license']) if params['license']
     @edit_notes << "changed the license" if self.settings['license'].to_json != prior_license
@@ -822,7 +822,8 @@ class Board < ActiveRecord::Base
     end
   end
   
-  def process_buttons(buttons, editor, secondary_editor=nil)
+  def process_buttons(buttons, editor, secondary_editor=nil, translations=nil)
+    translations ||= {}
     clear_cached("images_and_sounds_with_fallbacks")
     @edit_notes ||= []
     @check_for_parts_of_speech = true
@@ -836,7 +837,7 @@ class Board < ActiveRecord::Base
       end
     end
     self.settings['buttons'] = buttons.map do |button|
-      trans = button['translations']
+      trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s]
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
