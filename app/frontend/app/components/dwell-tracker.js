@@ -165,6 +165,7 @@ export default Component.extend({
       } else {
         capabilities.eye_gaze.listen('noisy');
       }
+      capabilities.eye_gaze.calibrating_or_testing = true;
       this.set('eye_listener', eye_listener);
       $(document).on('gazelinger', eye_listener);
       this.set('eye_gaze', capabilities.eye_gaze);
@@ -282,6 +283,7 @@ export default Component.extend({
     }
   },
   willDestroyElement: function() {
+    capabilities.eye_gaze.calibrating_or_testing = false;
     capabilities.eye_gaze.stop_listening();
     capabilities.head_tracking.stop_listening();
     if(this.get('mouse_listener')) {

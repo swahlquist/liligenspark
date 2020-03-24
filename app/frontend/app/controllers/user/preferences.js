@@ -159,17 +159,19 @@ export default Controller.extend({
     {name: i18n.t('slow', "Slow (5-second sweep)"), id: 'slow'},
     {name: i18n.t('really_slow', "Really Slow (8-second sweep)"), id: 'really_slow'},
   ],
-  dwellList: computed('head_tracking_capable', 'model.feature_flags.ios_head_tracking', function() {
+  dwellList: computed('head_tracking_capable', 'eyegaze_capable', 'model.feature_flags.ios_head_tracking', function() {
     var res = [
       {name: i18n.t('eye_gaze', "Eye Gaze Tracking"), id: 'eyegaze'},
       {name: i18n.t('mouse_dwell', "Cursor-Based Dwell Tracking"), id: 'mouse_dwell'},
       {name: i18n.t('arrow_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
     ];
-    if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
+    if(this.get('head_tracking_capable')) {
       if(this.get('model.feature_flags.ios_head_tracking')) {
-        var eyes = res.find(function(i) { return i.id == 'eyegaze'; })
-        if(eyes) {
-          eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
+        if(capabilities.system == 'iOS' && this.get('eyegaze_capable')) {
+          var eyes = res.find(function(i) { return i.id == 'eyegaze'; })
+          if(eyes) {
+            eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
+          }  
         }
         res.push({name: i18n.t('head_dwell', "Head Tracking"), id: 'head'});
       }
@@ -191,10 +193,10 @@ export default Controller.extend({
   ],
   dwellSelectList: computed('head_tracking_capable', function() {
     var res = [
-      {name: i18n.t('time_on_target', "Select by Looking at a Target"), id: 'dwell'},
+      {name: i18n.t('time_on_target', "Select by Looking/Dwelling on a Target"), id: 'dwell'},
       {name: i18n.t('button_select', "Select by Hitting a Switch or Button"), id: 'button'}
     ];
-    if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
+    if(this.get('head_tracking_capable')) {
       res.push({name: i18n.t('expression', "Select by Facial Expression"), id: 'expression'});
     }
     return res;
@@ -207,6 +209,13 @@ export default Controller.extend({
       res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
       res.push({name: i18n.t('tongue', "Sticking out your Tongue"), id: 'tongue'});
       res.push({name: i18n.t('puff', "Puffing up your Cheeks"), id: 'puff'});
+      res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
+      res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
+      res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});
+    } else if(capabilities.system == 'Android' && this.get('head_tracking_capable')) {
+      res.push({name: i18n.t('smile', "Smiling"), id: 'smile'});
+      res.push({name: i18n.t('mouth_open', "Opening your Mouth"), id: 'mouth_open'});
+      res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
       res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
       res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
       res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});

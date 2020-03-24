@@ -1754,7 +1754,7 @@ var capabilities;
       }
     };
     var function_maker = function(obj, key, fn) {
-      obj[key] = function() {
+      obj[key] = obj[key] || function() {
         return fn.apply(capabilities, arguments);
       };
     };
@@ -1762,7 +1762,7 @@ var capabilities;
       if(typeof functions[idx] == 'function') {
         function_maker(capabilities, idx, functions[idx]);
       } else {
-        capabilities[idx] = {};
+        capabilities[idx] = capabilities[idx] || {};
         for(var jdx in functions[idx]) {
           function_maker(capabilities[idx], jdx, functions[idx][jdx]);
         }
