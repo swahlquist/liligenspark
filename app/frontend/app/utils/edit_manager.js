@@ -103,6 +103,65 @@ var editManager = EmberObject.extend({
       part_of_speech: button.get('part_of_speech')
     });
   },
+  inflection_for_types: function(history, locale) {
+    if(!locale.match(/^en/)) {
+      return {};
+    }
+    // Verbs:
+    //   pronoun (I, you, they, we): present (c)
+    //   verb (is, are, were, be, etc.): present_participle (s)
+    //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
+    //   verb (being, have, has, had): past (w)
+    //   verb (have, has, had) pronoun (I, you, he): past (w)
+    //   verb (have, has, had) been: present_participle (s)
+    //   verb (is, are, were, etc.) pronoun (he, she, it, etc.): present_participle (s)
+    //   verb (do, does, did, etc.) pronoun (he, she, it, etc.): present (c)
+    //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (going): infinitive (e)
+    //   (the, those, his, her) verb (going): base (c)
+    //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
+    //   verb (do, does, did, etc.) [determiner] noun: present (c)
+    //   will: present (c)
+    //   noun: simple_present (n)
+    //   else: present (c)
+    // Nouns: 
+    //   plural determiners (those, these, some, many): plural (n)
+    //   else: base (c)
+    // Pronouns:
+    //   (at, for, with): objective (n)
+    //   (is, was): objective(n) or possesive_adjective (w)
+    return {};
+    // return {
+    //   "verb": {type: 'present_participle', default_location: 's'},
+    //   "want": {type: 'override', label: "wantsky"}
+    // };
+  },
+  update_inflections: function(buttons, inflections_for_types) {
+    var arr = [];
+    for(var key in inflections_for_type) {
+      var ref = inflections_for_types[key];
+      ref.key = key;
+      arr.push(ref);
+    }
+    buttons.forEach(function(button) {
+      // For now, drop everything if there are manual inflections
+      if(!button.inflections && !button.vocalization) {
+        arr.forEach(function(infl) {
+          if(infl.type == 'override') {
+            button.label = infl.label;
+          } else if(button.part_of_speech == key) {
+            var new_label = button.inflection_defaults && button.inflection_defaults[infl.default_location];
+            if(!new_label) {
+              var grid = editManager.grid_for(button.id);
+              new_label = (grid.find(function(i) { return i.location == infl.default_location; }) || {}).label;
+            }
+            if(new_label) {
+              button.label = new_label;
+            }
+          }
+        });
+      }
+    });
+  },
   grid_for: function(button_id) {
     var button = editManager.find_button(button_id);
     var expected_inflections_version = 1;
@@ -688,7 +747,7 @@ var editManager = EmberObject.extend({
       }
     }
     var board = this.controller.get('model');
-    var buttons = board.translated_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'));
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
     if(res) {
       var trans_button = buttons.find(function(b) { return b.id == id; });
       if(trans_button && !emberGet(res, 'user_modified')) {
@@ -1021,7 +1080,7 @@ var editManager = EmberObject.extend({
     var board = controller.get('model');
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
     board.set('display_level', board_level);
-    var buttons = board.translated_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'));
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
     var grid = board.get('grid');
     if(!grid) { return; }
     var allButtonsReady = true;

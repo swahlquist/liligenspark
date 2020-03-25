@@ -282,6 +282,17 @@ CoughDrop.Board = DS.Model.extend({
     });
     return res;
   },
+  contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
+    var res = this.translated_buttons(label_locale, vocalization_locale);
+    if(label_locale == vocalization_locale) {
+      var inflection_types = editManager.inflection_for_types(history, label_locale);
+      editManager.update_inflections(res, inflection_types);
+    }
+    if(capitalize) {
+      // TODO: support capitalization
+    }
+    return res;
+  },
   different_locale: computed('shortened_locale', function() {
     var current = (navigator.language || 'en').split(/[-_]/)[0];
     return current != this.get('shortened_locale');
@@ -882,7 +893,7 @@ CoughDrop.Board = DS.Model.extend({
   render_fast_html: function(size) {
     CoughDrop.log.track('redrawing');
 
-    var buttons = this.translated_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'));
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
     var grid = this.get('grid');
     var ob = [];
     for(var idx = 0; idx < grid.rows; idx++) {
