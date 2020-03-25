@@ -166,7 +166,7 @@ export default Controller.extend({
       {name: i18n.t('arrow_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
     ];
     if(this.get('head_tracking_capable')) {
-      if(this.get('model.feature_flags.ios_head_tracking')) {
+      if(this.get('model.feature_flags.ios_head_tracking') && (capabilities.default_orientation == 'horizontal' || this.get('model.feature_flags.vertical_ios_head_tracking'))) {
         if(capabilities.system == 'iOS' && this.get('eyegaze_capable')) {
           var eyes = res.find(function(i) { return i.id == 'eyegaze'; })
           if(eyes) {
