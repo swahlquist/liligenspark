@@ -1067,8 +1067,23 @@ var capabilities;
             }
             fixed_url = url;
           }
+          // TODO: when iOS 11 is our lowest supported version,
+          // we can implement https://github.com/apache/cordova-ios/issues/415
+          // [configuration setURLSchemeHandler:self forURLScheme:@"coughfile"];
+
+          // - (void)webView:(WKWebView *)webView startURLSchemeTask:(id <WKURLSchemeTask>)task {
+          //   NSURL* url = task.request.URL;
+          //   NSString* path = /* get requested file path here */;
+          //   NSData* data = [NSData dataWithContentsOfFile: path];
+          //   NSURLResponse* response = [[NSURLResponse alloc] initWithURL:url MIMEType:MIMEType expectedContentLength:[data length] textEncodingName:nil];
+          
+          //   [task didReceiveResponse:response];
+          //   [task didReceiveData:data];
+          //   [task didFinish];
+          // }          
           if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
-            // support for local filesystem solution for images and sounds
+            // support for local filesystem solution (WKWebView) for images and sounds
+            // https://www.npmjs.com/package/cordova-labs-local-webserver-ka
             fixed_url = fixed_url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
           }
           return fixed_url;
