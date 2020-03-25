@@ -135,10 +135,10 @@ var editManager = EmberObject.extend({
     //   "want": {type: 'override', label: "wantsky"}
     // };
   },
-  update_inflections: function(buttons, inflections_for_types) {
+  update_inflections: function(buttons, inflections_for_type) {
     var arr = [];
     for(var key in inflections_for_type) {
-      var ref = inflections_for_types[key];
+      var ref = inflections_for_type[key];
       ref.key = key;
       arr.push(ref);
     }
