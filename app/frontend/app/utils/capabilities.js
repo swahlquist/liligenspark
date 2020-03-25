@@ -194,14 +194,23 @@ var capabilities;
         if(capabilities.api_host) {
           console_debug("COUGHDROP: extension connected, pointing requests to " + capabilities.api_host);
         }
-        known_ppis.forEach(function(config) {
-          if(window.device && config[0].indexOf(window.device.model) != -1) {
-            window.ppi = config[1];
-            window.ppix = config[2] || config[1];
-            window.ppiy = config[3] || config[1];
-            window.ppi_accurate = true;
+        if(window.device && window.device.model) {
+          if(capabilities.installed_app && capabilities.system == 'iOS') {
+            if(window.device.model.match(/iPhone/)) {
+              capabilities.default_orientation = 'vertical';
+            } else if(window.device.mode.match(/iPad/)) {
+              capabilities.default_orientation = 'horizontal';
+            }
           }
-        })
+          known_ppis.forEach(function(config) {
+            if(config[0].indexOf(window.device.model) != -1) {
+              window.ppi = config[1];
+              window.ppix = config[2] || config[1];
+              window.ppiy = config[3] || config[1];
+              window.ppi_accurate = true;
+            }
+          });  
+        }
         var res = true;
         if(indexedDBSafe) {
           res = capabilities.setup_database();
