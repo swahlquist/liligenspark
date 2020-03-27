@@ -303,67 +303,69 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       while boards_to_visit.length > 0
         bv = boards_to_visit.shift
         board_to_visit = Board.find_by_global_id(bv[:board_id])
-        images = board_to_visit.button_images
-        visited_board_ids << board_to_visit.global_id
-        # add all buttons
-        board_to_visit.settings['buttons'].each_with_index do |button, idx|
-          image = images.detect{|i| button['image_id'] == i.global_id }
-          visible_level = 1
-          linked_level = 1
-          if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['hidden']
-            visible_level = button['level_modifications'].select{|l, mod| mod['hidden'] == false }.map(&:first).sort.first.to_i || 10
-            if button['level_modifications']['override'] && button['level_modifications']['override']['hidden'] == false
-              visible_level = 1
+        if board_to_visit
+          images = board_to_visit.button_images
+          visited_board_ids << board_to_visit.global_id
+          # add all buttons
+          board_to_visit.settings['buttons'].each_with_index do |button, idx|
+            image = images.detect{|i| button['image_id'] == i.global_id }
+            visible_level = 1
+            linked_level = 1
+            if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['hidden']
+              visible_level = button['level_modifications'].select{|l, mod| mod['hidden'] == false }.map(&:first).sort.first.to_i || 10
+              if button['level_modifications']['override'] && button['level_modifications']['override']['hidden'] == false
+                visible_level = 1
+              end
             end
+            if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['link_disabled']
+              linked_level = button['level_modifications'].select{|l, mod| mod['link_disabled'] == false }.map(&:first).sort.first.to_i || 1
+              if button['level_modifications']['override'] && button['level_modifications']['override']['link_disabled'] == false
+                linked_level = 1
+              end
+            end
+            button_data = {
+              'id' => button['id'],
+              'locale' => board_to_visit.settings['locale'] || 'en',
+              'board_id' => board_to_visit.global_id,
+              'board_key' => board_to_visit.key,
+              'hidden' => !!button['hidden'],
+              'hidden_link' => !!bv[:hidden],
+              'visible_level' => visible_level,
+              'linked_level' => linked_level,
+              'image' => image && image.url,
+              'hc' => image && image.settings['hc'],
+              'image_id' => button['image_id'],
+              'sound_id' => button['sound_id'],
+              'label' => button['label'],
+              'force_vocalize' => button['add_to_vocalization'],
+              'vocalization' => button['vocalization'],
+              'link_disabled' => !!button['link_disabled'],
+              'border_color' => button['border_color'],
+              'background_color' => button['background_color'],
+              'depth' => bv[:depth] || 0
+            }
+            button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
+            # check for any linked buttons
+            if button['load_board'] && button['load_board']['id']
+              linked_board = boards_hash[button['load_board']['id']]
+              linked_board ||= Board.find_by_global_id(button['load_board']['id'])
+              # hidden or disabled links shouldn't be tracked (why not???)
+              if linked_board # && !button['hidden'] && !button['link_disabled']
+                button_data['linked_board_id'] = linked_board.global_id
+                button_data['linked_board_key'] = linked_board.key
+                button_data['home_lock'] = true if button['home_lock']
+              end
+              # mark the first link to each board as "preferred"
+              # TODO: is this a good idea? is there a better strategy? It honestly
+              # shouldn't happen that much, having multiple links to the same board
+              if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
+                button_data['preferred_link'] = true
+                linked_board_ids << button['load_board']['id']
+                boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
+              end
+            end
+            all_buttons << button_data
           end
-          if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['link_disabled']
-            linked_level = button['level_modifications'].select{|l, mod| mod['link_disabled'] == false }.map(&:first).sort.first.to_i || 1
-            if button['level_modifications']['override'] && button['level_modifications']['override']['link_disabled'] == false
-              linked_level = 1
-            end
-          end
-          button_data = {
-            'id' => button['id'],
-            'locale' => board_to_visit.settings['locale'] || 'en',
-            'board_id' => board_to_visit.global_id,
-            'board_key' => board_to_visit.key,
-            'hidden' => !!button['hidden'],
-            'hidden_link' => !!bv[:hidden],
-            'visible_level' => visible_level,
-            'linked_level' => linked_level,
-            'image' => image && image.url,
-            'hc' => image && image.settings['hc'],
-            'image_id' => button['image_id'],
-            'sound_id' => button['sound_id'],
-            'label' => button['label'],
-            'force_vocalize' => button['add_to_vocalization'],
-            'vocalization' => button['vocalization'],
-            'link_disabled' => !!button['link_disabled'],
-            'border_color' => button['border_color'],
-            'background_color' => button['background_color'],
-            'depth' => bv[:depth] || 0
-          }
-          button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
-          # check for any linked buttons
-          if button['load_board'] && button['load_board']['id']
-            linked_board = boards_hash[button['load_board']['id']]
-            linked_board ||= Board.find_by_global_id(button['load_board']['id'])
-            # hidden or disabled links shouldn't be tracked (why not???)
-            if linked_board # && !button['hidden'] && !button['link_disabled']
-              button_data['linked_board_id'] = linked_board.global_id
-              button_data['linked_board_key'] = linked_board.key
-              button_data['home_lock'] = true if button['home_lock']
-            end
-            # mark the first link to each board as "preferred"
-            # TODO: is this a good idea? is there a better strategy? It honestly
-            # shouldn't happen that much, having multiple links to the same board
-            if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
-              button_data['preferred_link'] = true
-              linked_board_ids << button['load_board']['id']
-              boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
-            end
-          end
-          all_buttons << button_data
         end
         boards_to_visit.sort_by!{|bv| [bv[:depth], bv[:index]] }
       end
