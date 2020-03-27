@@ -216,7 +216,7 @@ export default Controller.extend({
       res.push({name: i18n.t('smile', "Smiling"), id: 'smile'});
       res.push({name: i18n.t('mouth_open', "Opening your Mouth"), id: 'mouth_open'});
       res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
-      res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
+      // res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
       res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
       res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});
     }
