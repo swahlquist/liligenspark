@@ -285,7 +285,7 @@ CoughDrop.Board = DS.Model.extend({
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
     if(label_locale == vocalization_locale) {
-      var inflection_types = editManager.inflection_for_types(history, label_locale);
+      var inflection_types = editManager.inflection_for_types(history || [], label_locale);
       editManager.update_inflections(res, inflection_types);
     }
     if(capitalize) {
@@ -781,6 +781,28 @@ CoughDrop.Board = DS.Model.extend({
       return res;
     }
   },
+  load_real_time_inflections: function() {
+    var history = stashes.get('working_vocalization') || [];
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
+    var lbls = document.getElementsByClassName('tweaked_label');
+    for(var idx = 0; idx < lbls.length; idx++) {
+      var lbl = lbls[idx];
+      if(lbl.classList.contains('button-label')) {
+        lbl.innerText = lbl.getAttribute('original-text');
+        lbl.classList.remove('tweaked_label');
+      }
+    }
+    var _this = this;
+    buttons.forEach(function(button) {
+      if(button.tweaked) {
+        console.log("CHANGE BUTTON", button);
+        _this.update_suggestion_button(button, {
+          temporary: true,
+          word: (history.length == 0 ? button.original_label : button.label)
+        });
+      }
+    });
+  },
   load_word_suggestions: function(board_ids) {
     var working = [].concat(stashes.get('working_vocalization') || []);
     var in_progress = null;
@@ -793,10 +815,14 @@ CoughDrop.Board = DS.Model.extend({
     var _this = this;
     var has_suggested_buttons = false;
     var buttons = {};
-    (this.get('buttons') || []).forEach(function(button) {
+    var skip_labels = {};
+    var known_buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false) || [];
+    known_buttons.forEach(function(button) {
       if(button.vocalization == ':suggestion') {
         buttons[button.id.toString()] = button;
         has_suggested_buttons = true;
+      } else if(button.label && !button.vocalization && !button.load_board) {
+        skip_labels[button.label.toLowerCase()] = true;
       }
     });
     if(!has_suggested_buttons) {
@@ -820,8 +846,10 @@ CoughDrop.Board = DS.Model.extend({
       second_to_last_word: second_to_last_word,
       word_in_progress: in_progress,
       board_ids: board_ids,
-      max_results: suggested_buttons.length
+      max_results: suggested_buttons.length * 2
     }).then(function(result) {
+      var unique_result = result.filter(function(sugg) { return sugg.word && !skip_labels[sugg.word.toLowerCase()]; });
+      result = unique_result.concat(result).uniq();
       (result||[]).forEach(function(sugg, idx) {
         if(suggested_buttons[idx]) {
           var suggestion_button = suggested_buttons[idx];
@@ -851,14 +879,21 @@ CoughDrop.Board = DS.Model.extend({
           var btn = btns[jdx];
           if(btn && btn.getAttribute('data-id') == button.id.toString() && !btn.classList.contains('clone')) {
             // set the values in the DOM, and save them in a lookup
-            lookups[button.id.toString()] = suggestion;
-            var url = suggestion.data_image || suggestion.image;
-            if(persistence.url_cache[url]) {
-              url = persistence.url_cache[url];
+            var url = null;
+            if(!suggestion.temporary) {
+              lookups[button.id.toString()] = suggestion;
+              url = suggestion.data_image || suggestion.image;
+              if(persistence.url_cache[url]) {
+                url = persistence.url_cache[url];
+              }
             }
             var lbl = btn.getElementsByClassName('button-label')[0];
             var img = btn.getElementsByClassName('symbol')[0]
             if(lbl && lbl.tagName != 'INPUT') {
+              if(!lbl.getAttribute('original-text')) {
+                lbl.setAttribute('original-text', button.original_label || lbl.innerText);
+              }
+              lbl.classList.add('tweaked_label');
               lbl.innerText = app_state.get('speak_mode') ? suggestion.word : button.label;
               if(button.text_only) {
                 var width = parseInt(btn.style.width, 10);
@@ -893,7 +928,7 @@ CoughDrop.Board = DS.Model.extend({
   render_fast_html: function(size) {
     CoughDrop.log.track('redrawing');
 
-    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
     var grid = this.get('grid');
     var ob = [];
     for(var idx = 0; idx < grid.rows; idx++) {

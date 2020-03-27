@@ -1004,6 +1004,7 @@ export default Controller.extend({
         vocalization: button.vocalization,
         image: image_url,
         button_id: button.id,
+        part_of_speech: button.part_of_speech,
         sound: (sound && sound.get('url')) || button.get('original_sound_url'),
         board: oldState,
         completion: button.completion,

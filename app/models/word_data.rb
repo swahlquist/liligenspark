@@ -825,7 +825,7 @@ class WordData < ActiveRecord::Base
     button_sets ||= BoardDownstreamButtonSet.for_user(user)
     reachable_hash = {}
     button_sets.each{|bs| 
-      bs.buttons.each{|b| 
+      (bs.buttons || []).each{|b| 
         if b['hidden']
           nil
         elsif b['linked_board_id'] && !b['link_disabled']

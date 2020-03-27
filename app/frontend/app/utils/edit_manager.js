@@ -104,36 +104,126 @@ var editManager = EmberObject.extend({
     });
   },
   inflection_for_types: function(history, locale) {
-    if(!locale.match(/^en/)) {
+    if(!locale || !locale.match(/^en/) || history.length == 0) {
       return {};
     }
-    // Verbs:
-    //   pronoun (I, you, they, we): present (c)
-    //   verb (is, are, were, be, etc.): present_participle (s)
-    //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
-    //   verb (being, have, has, had): past (w)
-    //   verb (have, has, had) pronoun (I, you, he): past (w)
-    //   verb (have, has, had) been: present_participle (s)
-    //   verb (is, are, were, etc.) pronoun (he, she, it, etc.): present_participle (s)
-    //   verb (do, does, did, etc.) pronoun (he, she, it, etc.): present (c)
-    //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (going): infinitive (e)
-    //   (the, those, his, her) verb (going): base (c)
-    //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
-    //   verb (do, does, did, etc.) [determiner] noun: present (c)
-    //   will: present (c)
-    //   noun: simple_present (n)
-    //   else: present (c)
-    // Nouns: 
-    //   plural determiners (those, these, some, many): plural (n)
-    //   else: base (c)
-    // Pronouns:
-    //   (at, for, with): objective (n)
-    //   (is, was): objective(n) or possesive_adjective (w)
-    return {};
-    // return {
-    //   "verb": {type: 'present_participle', default_location: 's'},
-    //   "want": {type: 'override', label: "wantsky"}
-    // };
+    // TODO: support :pre(:past-tense) lookups to apply
+    // tenses when available as a pre-application
+    var inflections = {};
+    // Greedy algorithm stops at the first match
+    var rules = [
+      // Verbs:
+      //   pronoun (I, you, they, we): present (c)
+      {type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
+      //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
+      {type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
+      //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (-ing, going): infinitive (e)
+      {type: 'verb', lookback: [{type: 'pronoun'}, {words: ["is", "am", "are", "was", "were"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}, {type: 'verb', match: /ing$/}], inflection: 'infinitive', location: 'e'},
+      //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
+      {type: 'verb', lookback: [], inflection: 'present_participle', location: 's'},
+      //   verb (being, have, has, had) [adverb] [not]: past (w)
+      {type: 'verb', lookback: [{words: ["being", "doing", "has", "have", "had"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
+      //   verb (have, has, had) pronoun (I, you, he) [adverb] [not]: past (w)
+      {type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
+      //   verb (have, has, had) [not] been: present_participle (s)
+      {type: 'verb', lookback: [{words: ["have", "has", "had"]}, {words: ["not"], optional: true}, {words: ["been"]}], inflection: 'present_participle', location: 's'},
+      {type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {words: ["not"], optional: true}, {words: ["be"]}], inflection: 'present_participle', location: 's'},
+      //   verb (is, am, was, be, are, were, etc.) [pronoun (he, she, it, etc.)] [not]: present_participle (s)
+      {type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
+      //   verb (do, does, did, etc.) pronoun (he, she, it, etc.) [not]: present (c)
+      //   verb (do, does, did, etc.) [determiner] noun: present (c)
+      //   noun (singular): simple_present (n)
+      {type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
+      //   will: present (c)
+      // Nouns: 
+      //   plural determiners (those, these, some, many): plural (n)
+      {type: 'noun', lookback: [{words: ["those", "these", "some", "many"]}], inflection: 'plural', location: 'n'},
+      //   else: base (c)
+      // Pronouns:
+      //   (at, for, with): objective (n)
+      {type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
+      //   pronoun (that, it, this) verb (is, was): objective (n)
+      {type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
+      {type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
+      //   (is, was): objective(n) or possesive_adjective (w)
+    ];
+    var matches = function(rule, history) {
+      if(history.length == 0) { return false; }
+      var history_idx = history.length - 1;
+      var valid = true;
+      for(var idx = rule.lookback.length - 1; idx >= 0 && valid; idx--) {
+        var item = history[history_idx]
+        var check = rule.lookback[idx];
+        if(!item) { 
+          if(!check.optional) {
+            valid = false;
+          }
+        } else {
+          var label = item.label.toLowerCase();
+          var matching = false;
+          if(check.words) {
+            if(check.words.indexOf(label) != -1) {
+              matching = true;
+            }
+          } else if(check.type) {
+            if(item.part_of_speech == check.type) {
+              matching = true;
+            }
+          }
+          if(matching) {
+            if(check.match) {
+              if(!label.match(check.match)) {
+                matching = false;
+              }
+            }
+            if(check.non_match) {
+              if(label.match(check.non_match)) {
+                matching = false;
+              }
+            }  
+          }
+          if(matching) {
+            history_idx--;
+          } else if(!check.optional) {
+            valid = false;
+          }
+        }
+      }
+      return valid;
+    };
+    if(history.length > 0) {
+      rules.forEach(function(rule) {
+        if(inflections[rule.type]) { return; }
+        if(matches(rule, history)) {
+          inflections[rule.type] = rule;
+        }
+      });  
+      // TO BE verb overrides
+      if(matches({lookback: [{words: ["i"]}]}, history)) {
+        inflections["is"] = {type:'override', label: "am"};
+        inflections["are"] = {type:'override', label: "am"};
+        inflections["does"] = {type:'override', label: "do"};
+        inflections["has"] = {type:'override', label: "have"};
+        inflections["were"] = {type:'override', label: "was"};
+      }
+      if(matches({lookback: [{words: ["you"]}]}, history)) {
+        inflections["is"] = {type:'override', label: "are"};
+        inflections["am"] = {type:'override', label: "are"};
+        inflections["was"] = {type:'override', label: "were"};
+        inflections["does"] = {type:'override', label: "do"};
+        inflections["has"] = {type:'override', label: "have"};
+      }
+      if(matches({lookback: [{words: ["he", "she"]}]}, history)) {
+        inflections["am"] = {type:'override', label: "is"};
+        inflections["were"] = {type:'override', label: "was"};
+      }
+      if(matches({lookback: [{words: ["it", "that", "this"]}]}, history)) {
+        inflections["am"] = {type:'override', label: "is"};
+        inflections["were"] = {type:'override', label: "was"};
+      }
+    }
+
+    return inflections;
   },
   update_inflections: function(buttons, inflections_for_type) {
     var arr = [];
@@ -143,19 +233,23 @@ var editManager = EmberObject.extend({
       arr.push(ref);
     }
     buttons.forEach(function(button) {
-      // For now, drop everything if there are manual inflections
-      if(!button.inflections && !button.vocalization) {
+      // For now, skip if there are manual inflections
+      if(!button.inflections && !button.vocalization && !button.load_board) {
         arr.forEach(function(infl) {
-          if(infl.type == 'override') {
+          if(infl.key == button.label && infl.type == 'override') {
+            button.original_label = button.original_label || button.label;
             button.label = infl.label;
-          } else if(button.part_of_speech == key) {
-            var new_label = button.inflection_defaults && button.inflection_defaults[infl.default_location];
+            button.tweaked = true;
+          } else if(button.part_of_speech == infl.key && infl.type != 'override') {
+            var new_label = button.inflection_defaults && button.inflection_defaults[infl.location];
             if(!new_label) {
-              var grid = editManager.grid_for(button.id);
-              new_label = (grid.find(function(i) { return i.location == infl.default_location; }) || {}).label;
+              var grid = editManager.grid_for(button) || [];
+              new_label = (grid.find(function(i) { return i.location == infl.location; }) || {}).label;
             }
             if(new_label) {
+              button.original_label = button.original_label || button.label;
               button.label = new_label;
+              button.tweaked = true;
             }
           }
         });
@@ -163,7 +257,11 @@ var editManager = EmberObject.extend({
     });
   },
   grid_for: function(button_id) {
-    var button = editManager.find_button(button_id);
+    var button = button_id;
+    if(!button || !button.id) {
+      button = editManager.find_button(button_id);
+    }
+    if(!this.controller || !app_state.controller) { return; }
     var expected_inflections_version = 1;
     var board = this.controller.get('model');
     var res = [];
@@ -747,7 +845,7 @@ var editManager = EmberObject.extend({
       }
     }
     var board = this.controller.get('model');
-    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
     if(res) {
       var trans_button = buttons.find(function(b) { return b.id == id; });
       if(trans_button && !emberGet(res, 'user_modified')) {
@@ -1080,7 +1178,7 @@ var editManager = EmberObject.extend({
     var board = controller.get('model');
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
     board.set('display_level', board_level);
-    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), [], false);
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
     var grid = board.get('grid');
     if(!grid) { return; }
     var allButtonsReady = true;
