@@ -198,7 +198,7 @@ var capabilities;
           if(capabilities.installed_app && capabilities.system == 'iOS') {
             if(window.device.model.match(/iPhone/)) {
               capabilities.default_orientation = 'vertical';
-            } else if(window.device.mode.match(/iPad/)) {
+            } else if(window.device.model.match(/iPad/)) {
               capabilities.default_orientation = 'horizontal';
             }
           }
