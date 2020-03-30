@@ -285,8 +285,10 @@ CoughDrop.Board = DS.Model.extend({
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
     if(label_locale == vocalization_locale) {
-      var inflection_types = editManager.inflection_for_types(history || [], label_locale);
-      editManager.update_inflections(res, inflection_types);
+      if(app_state.get('referenced_user.preferences.auto_inflections')) {
+        var inflection_types = editManager.inflection_for_types(history || [], label_locale);
+        editManager.update_inflections(res, inflection_types);
+      }
     }
     if(capitalize) {
       // TODO: support capitalization
