@@ -337,6 +337,7 @@ class User < ActiveRecord::Base
     if (!self.expires_at && !self.id) || (self.grace_period?)
       self.expires_at = [self.expires_at || Date.today + 60, Date.parse('2020-07-31')].max
     end
+    return false if self.user_name == ""
     self.user_name = nil if self.user_name.blank?
     self.user_name ||= self.generate_user_name(self.settings['name'])
     self.email_hash = User.generate_email_hash(self.settings['email'])
