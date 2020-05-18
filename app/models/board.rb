@@ -1034,9 +1034,10 @@ class Board < ActiveRecord::Base
     user_local_id ||= self.user_id
     return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
+    return {done: true, swapped: false, reason: 'author required'} unless author
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
-    return {done: true, swapped: false, reason: 'author required'} unless author
+    return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
 
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id

@@ -1,6 +1,6 @@
 class Api::BoardsController < ApplicationController
   extend ::NewRelic::Agent::MethodTracer
-  before_action :require_api_token, :except => [:index, :user_index, :show, :download]
+  before_action :require_api_token, :except => [:index, :user_index, :show, :simple_obf, :download]
 
   def index
     boards = Board
@@ -335,8 +335,21 @@ class Api::BoardsController < ApplicationController
   
   def stats
     board = Board.find_by_path(params['board_id'])
+    return unless exists?(board, params['board_id'])
     return unless allowed?(board, 'view')
     render json: Stats.board_use(board.global_id, {}).to_json
+  end
+
+  def simple_obf
+    board = Board.find_by_path(params['board_id'])
+    return unless exists?(board, params['board_id'])
+    return unless allowed?(board, 'view')
+    file = Tempfile.new(["board-#{board.global_id}", '.obf'])
+    path = file.path
+    file.close
+    json = Converters::CoughDrop.to_external(board, {'simple' => true})
+    OBF::External.to_obf(json, path, nil, {image_urls: true, sound_urls: true})
+    send_data File.read(path), :type => 'application/obf', :disposition => 'attachment', :filename => "board-#{board.global_id}.obf"
   end
   
   def destroy

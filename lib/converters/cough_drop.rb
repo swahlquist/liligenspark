@@ -7,48 +7,56 @@ module Converters::CoughDrop
     json = to_external(board, {})
     OBF::External.to_obf(json, dest_path, path_hash)
   end
-  
+
   def self.to_external(board, opts)
     res = OBF::Utils.obf_shell
     res['id'] = board.global_id
     res['name'] = board.settings['name']
     res['locale'] = board.settings['locale'] || 'en'
     res['default_layout'] = 'landscape'
+    res['image_url'] = board.settings['image_url']
+    res['ext_coughdrop_image_url'] = board.settings['image_url']
     res['url'] = "#{JsonApi::Json.current_host}/#{board.key}"
-    res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}"
+    if opts['simple']
+      res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}/simple.obf"
+    else
+      res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}"
+    end
     res['description_html'] = board.settings['description'] || "built with CoughDrop"
     res['license'] = OBF::Utils.parse_license(board.settings['license'])
-    if board.settings['translations']
-      res['default_locale'] = board.settings['translations']['default']
-      res['label_locale'] = board.settings['translations']['current_label']
-      res['vocalization_locale'] = board.settings['translations']['current_vocalization']
-    end
-    if board.settings['background']
-      res['background'] = {
-        'image_url' => board.settings['background']['image'] || board.settings['background']['image_url'],
-        'ext_coughdrop_image_exclusion' => board.settings['background']['ext_coughdrop_image_exclusion'],
-        'color' => board.settings['background']['color'],
-        'position' => board.settings['background']['position'],
-        'text' => board.settings['background']['text'],
-        'prompt_text' => board.settings['background']['prompt'] || board.settings['background']['prompt_text'],
-        'delayed_prompts' => board.settings['background']['delay_prompts'] || board.settings['background']['delayed_prompts'],
-        'delay_prompt_timeout' => board.settings['background']['delay_prompt_timeout']
-      }
-      res['background'].keys.each{|key| res['background'].delete(key) unless res['background'][key] }
-    end
+    if !opts['simple']
+      if board.settings['translations']
+        res['default_locale'] = board.settings['translations']['default']
+        res['label_locale'] = board.settings['translations']['current_label']
+        res['vocalization_locale'] = board.settings['translations']['current_vocalization']
+      end
+      if board.settings['background']
+        res['background'] = {
+          'image_url' => board.settings['background']['image'] || board.settings['background']['image_url'],
+          'ext_coughdrop_image_exclusion' => board.settings['background']['ext_coughdrop_image_exclusion'],
+          'color' => board.settings['background']['color'],
+          'position' => board.settings['background']['position'],
+          'text' => board.settings['background']['text'],
+          'prompt_text' => board.settings['background']['prompt'] || board.settings['background']['prompt_text'],
+          'delayed_prompts' => board.settings['background']['delay_prompts'] || board.settings['background']['delayed_prompts'],
+          'delay_prompt_timeout' => board.settings['background']['delay_prompt_timeout']
+        }
+        res['background'].keys.each{|key| res['background'].delete(key) unless res['background'][key] }
+      end
 
-    res['ext_coughdrop_settings'] = {
-      'private' => !board.public,
-      'key' => board.key,
-      'word_suggestions' => !!board.settings['word_suggestions'],
-      'protected' => board.protected_material?,
-      'home_board' => board.settings['home_board'],
-      'categories' => board.settings['categories'],
-      'text_only' => board.settings['text_only'],
-      'hide_empty' => board.settings['hide_empty']
-    }
-    if board.protected_material? && board.user
-      res['protected_content_user_identifier'] = board.user.settings['email']
+      res['ext_coughdrop_settings'] = {
+        'private' => !board.public,
+        'key' => board.key,
+        'word_suggestions' => !!board.settings['word_suggestions'],
+        'protected' => board.protected_material?,
+        'home_board' => board.settings['home_board'],
+        'categories' => board.settings['categories'],
+        'text_only' => board.settings['text_only'],
+        'hide_empty' => board.settings['hide_empty']
+      }
+      if board.protected_material? && board.user
+        res['protected_content_user_identifier'] = board.user.settings['email']
+      end
     end
     grid = []
     res['buttons'] = []
@@ -66,69 +74,78 @@ module Converters::CoughDrop
         'background_color' => original_button['background_color'] || "#fff",
         'hidden' => original_button['hidden'],
       }
-      inflection_defaults = nil
-      trans = {}
-      (board.settings['translations'] || {}).each do |loc, hash|
-        if hash[original_button['id']]
-          trans[loc] = hash[original_button['id']]
-        end
-      end
-      trans[board.settings['locale']] ||= original_button if original_button['inflections']
-      trans.each do |loc, hash|
-        button['translations'] ||= {}
-        button['translations'][loc] ||= {}
-        button['translations'][loc] ||= {}
-        button['translations'][loc]['label'] = hash['label']
-        button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
-        (hash['inflections'] || []).each_with_index do |str, idx| 
-          next unless str
-          button['translations'][loc]['inflections'] ||= {}
-          button['translations'][loc]['inflections'][locs[idx]] = str
-        end
-        (hash['inflection_defaults'] || []).each do |key, str|
-          if button['translations'][loc]['inflections'][key]
-          elsif locs.include?(key)
-            button['translations'][loc]['inflections'][key] = str
-            button['translations'][loc]['inflections']['ext_coughdrop_defaults'] ||= []
-            button['translations'][loc]['inflections']['ext_coughdrop_defaults'].push(key)
+      if !opts['simple']
+        inflection_defaults = nil
+        trans = {}
+        (board.settings['translations'] || {}).each do |loc, hash|
+          if hash[original_button['id']]
+            trans[loc] = hash[original_button['id']]
           end
         end
-      end
-      if original_button['vocalization']
-        if original_button['vocalization'].match(/^(\:|\+)/) || original_button['vocalization'].match(/&&/)
-          if original_button['vocalization'].match(/&&/)
-            button['actions'] = original_button['vocalization'].split(/&&/).map{|v| v.strip }
-            vocs = button['actions'].select{|a| !a.match(/^(\+|:)/)}
-            button['actions'] -= vocs
-            button['vocalization'] = vocs.join(' ') if vocs.length > 0
-            button['action'] = button['actions'][0]
+        trans[board.settings['locale']] ||= original_button if original_button['inflections']
+        trans.each do |loc, hash|
+          button['translations'] ||= {}
+          button['translations'][loc] ||= {}
+          button['translations'][loc] ||= {}
+          button['translations'][loc]['label'] = hash['label']
+          button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
+          (hash['inflections'] || []).each_with_index do |str, idx| 
+            next unless str
+            button['translations'][loc]['inflections'] ||= {}
+            button['translations'][loc]['inflections'][locs[idx]] = str
+          end
+          (hash['inflection_defaults'] || []).each do |key, str|
+            if button['translations'][loc]['inflections'][key]
+            elsif locs.include?(key)
+              button['translations'][loc]['inflections'][key] = str
+              button['translations'][loc]['inflections']['ext_coughdrop_defaults'] ||= []
+              button['translations'][loc]['inflections']['ext_coughdrop_defaults'].push(key)
+            end
+          end
+        end
+        if original_button['vocalization']
+          if original_button['vocalization'].match(/^(\:|\+)/) || original_button['vocalization'].match(/&&/)
+            if original_button['vocalization'].match(/&&/)
+              button['actions'] = original_button['vocalization'].split(/&&/).map{|v| v.strip }
+              vocs = button['actions'].select{|a| !a.match(/^(\+|:)/)}
+              button['actions'] -= vocs
+              button['vocalization'] = vocs.join(' ') if vocs.length > 0
+              button['action'] = button['actions'][0]
+            else
+              button['action'] = original_button['vocalization']
+            end
           else
-            button['action'] = original_button['vocalization']
+            button['vocalization'] = original_button['vocalization']
           end
-        else
-          button['vocalization'] = original_button['vocalization']
         end
       end
+        
       if original_button['load_board']
         button['load_board'] = {
           'id' => original_button['load_board']['id'],
           'url' => "#{JsonApi::Json.current_host}/#{original_button['load_board']['key']}",
           'data_url' => "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}"
         }
-      end
-      if original_button['url']
-        button['url'] = original_button['url']
-      end
-      EXT_PARAMS.each do |param|
-        if original_button[param]
-          button["ext_coughdrop_#{param}"] = original_button[param]
+        if opts['simple']
+          button['load_board']['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}/simple.obf"
         end
       end
 
-      if original_button['apps']
-        button['ext_coughdrop_apps'] = original_button['apps']
-        if original_button['apps']['web'] && original_button['apps']['web']['launch_url']
-          button['url'] = original_button['apps']['web']['launch_url']
+      if !opts['simple']
+        if original_button['url']
+          button['url'] = original_button['url']
+        end
+        EXT_PARAMS.each do |param|
+          if original_button[param]
+            button["ext_coughdrop_#{param}"] = original_button[param]
+          end
+        end
+
+        if original_button['apps']
+          button['ext_coughdrop_apps'] = original_button['apps']
+          if original_button['apps']['web'] && original_button['apps']['web']['launch_url']
+            button['url'] = original_button['apps']['web']['launch_url']
+          end
         end
       end
       if original_button['image_id']
@@ -163,22 +180,24 @@ module Converters::CoughDrop
           button['image_id'] = image['id']
         end
       end
-      if original_button['sound_id']
-        sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
-        if sound
-          sound = {
-            'id' => sound.global_id,
-            'duration' => sound.settings['duration'],
-            'protected' => sound.settings['protected'],
-            'protected_source' => sound.settings['protected_source'],
-            'license' => OBF::Utils.parse_license(sound.settings['license']),
-            'url' => sound.url_for(opts['user']),
-            'data_url' => "#{JsonApi::Json.current_host}/api/v1/sounds/#{sound.global_id}",
-            'content_type' => sound.settings['content_type']
-          }
-        
-          res['sounds'] << sound
-          button['sound_id'] = original_button['sound_id']
+      if !opts['simple']
+        if original_button['sound_id']
+          sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
+          if sound
+            sound = {
+              'id' => sound.global_id,
+              'duration' => sound.settings['duration'],
+              'protected' => sound.settings['protected'],
+              'protected_source' => sound.settings['protected_source'],
+              'license' => OBF::Utils.parse_license(sound.settings['license']),
+              'url' => sound.url_for(opts['user']),
+              'data_url' => "#{JsonApi::Json.current_host}/api/v1/sounds/#{sound.global_id}",
+              'content_type' => sound.settings['content_type']
+            }
+          
+            res['sounds'] << sound
+            button['sound_id'] = original_button['sound_id']
+          end
         end
       end
       res['buttons'] << button

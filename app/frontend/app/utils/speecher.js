@@ -13,15 +13,15 @@ import CoughDrop from '../app';
 import { computed } from '@ember/object';
 
 var speecher = EmberObject.extend({
-  beep_url: "https://opensymbols.s3.amazonaws.com/beep.mp3",
-  chimes_url: "https://opensymbols.s3.amazonaws.com/chimes.mp3",
-  click_url: "https://opensymbols.s3.amazonaws.com/click.mp3",
-  ding_url: "https://opensymbols.s3.amazonaws.com/ding.mp3",
-  bleep_url: "https://opensymbols.s3.amazonaws.com/bleep.mp3",
-  spinner_url: "https://opensymbols.s3.amazonaws.com/spinner.mp3",
-  battery_url: "https://opensymbols.s3.amazonaws.com/battery.mp3",
-  glug_url: "https://opensymbols.s3.amazonaws.com/glug.mp3",
-  dice_url: "https://opensymbols.s3.amazonaws.com/dice.mp3",
+  beep_url: "https://d18vdu4p71yql0.cloudfront.netm/beep.mp3",
+  chimes_url: "https://d18vdu4p71yql0.cloudfront.net/chimes.mp3",
+  click_url: "https://d18vdu4p71yql0.cloudfront.net/click.mp3",
+  ding_url: "https://d18vdu4p71yql0.cloudfront.net/ding.mp3",
+  bleep_url: "https://d18vdu4p71yql0.cloudfront.net/bleep.mp3",
+  spinner_url: "https://d18vdu4p71yql0.cloudfront.net/spinner.mp3",
+  battery_url: "https://d18vdu4p71yql0.cloudfront.net/battery.mp3",
+  glug_url: "https://d18vdu4p71yql0.cloudfront.net/glug.mp3",
+  dice_url: "https://d18vdu4p71yql0.cloudfront.net/dice.mp3",
   voices: [],
   text_direction: function() {
     var voice = speecher.get('voices').find(function(v) { return v.voiceURI == speecher.voiceURI; });

@@ -161,13 +161,11 @@ class User < ActiveRecord::Base
   end
 
   def track_protected_source(source_id)
-    Octopus.using(:master) do
-      self.reload.settings['activated_sources'] ||= []
-      if !self.settings['activated_sources'].include?(source_id)
-        self.settings['activated_sources'] << source_id
-        self.save
-        AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
-      end
+    self.reload.settings['activated_sources'] ||= []
+    if !self.settings['activated_sources'].include?(source_id)
+      self.settings['activated_sources'] << source_id
+      self.save
+      AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
     end
   end
   
@@ -1064,6 +1062,7 @@ class User < ActiveRecord::Base
     res = []
     res << 'lessonpix' if self && Uploader.lessonpix_credentials(self)
     res << 'pcs' if self && self.subscription_hash['extras_enabled']
+    res << 'lessonpix' if self && self.subscription_hash['extras_enabled']
     res << 'symbolstix' if self && self.subscription_hash['extras_enabled']
     if include_supervisees
       self.supervisees.each do |u| 

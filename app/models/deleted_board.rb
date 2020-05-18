@@ -20,6 +20,7 @@ class DeletedBoard < ActiveRecord::Base
     version = PaperTrail::Version.where(item_type: 'Board', item_id: self.board_id).order('created_at DESC')[0]
     if version
       board = Board.load_version(version)
+      board.key = self.key
       board.load_secure_object if !board.settings || board.settings.is_a?(String)
       board.instance_variable_set('@buttons_changed', true)
       board.save!

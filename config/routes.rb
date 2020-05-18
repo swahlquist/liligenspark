@@ -142,6 +142,7 @@ Coughdrop::Application.routes.draw do
     
     resources :boards, :constraints => {:id => board_id_regex} do
       get 'stats' => 'boards#stats'
+      get 'simple.obf' => 'boards#simple_obf'
       post 'imports' => 'boards#import', on: :collection
       post 'unlink' => 'boards#unlink', on: :collection
       post 'stars' => 'boards#star'
