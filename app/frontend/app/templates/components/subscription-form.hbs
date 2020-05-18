@@ -37,9 +37,9 @@
                 {{t "sale! 50% off" key='save_50_percent'}}
               </div>
               <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$6&nbsp;</span>
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>3</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>3</span>
             {{else}}
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>6</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>6</span>
             {{/if}}
             <div class='middle'>{{t "- or -" key='dash_or_dash'}}</div>
             <div style='margin-top: -5px; line-height: 17px;'>{{t "per month" key='per_month'}}</div>
@@ -54,15 +54,15 @@
                 {{t "sale! 50% off" key='save_50_percent'}}
               </div>
               <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$200&nbsp;</span>
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>100</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>100</span>
             {{else if subscription.cheaper_offer}}
               <div class='sale'>
                 {{t "save 25%" key='save_25_percent'}}
               </div>
               <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$200&nbsp;</span>
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>150</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>150</span>
             {{else}}
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>200</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>200</span>
             {{/if}}
             <div style='margin-top: -5px; line-height: 17px;'>{{t "lifetime purchase" key='one_time_purchase'}}</div>
           </td>
@@ -75,7 +75,7 @@
           </td>
           {{#unless subscription.app_pricing_override}}
             <td class='' style='width: 25%; vertical-align: top; padding-top: 40px; color: #888;'>
-              $<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>50</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>50</span>
               <div style='margin-top: -5px; line-height: 17px;'>{{t "donate a license<br/> to those in need" key='donate_a_license'}}</div>
             </td>
           {{/unless}}
@@ -103,11 +103,11 @@
             {{else}}
               <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>
                 <img src="https://coughdrop.s3.amazonaws.com/icons/pcs_symbolstix.png" style="float: left; width: 70px; margin-top: 15px; margin-left: 20px;" alt='' />
-                {{t "add PCS (BoardMaker) Tobii Dynavox & SymbolStix for $25" key='add_premium_symbols'}}
+                {{t "add PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
               </td>
               <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'>
                 <img src="https://coughdrop.s3.amazonaws.com/icons/pcs_symbolstix.png" style="float: left; width: 70px; margin-top: 15px; margin-left: 20px;" alt='' />
-                {{t "add PCS (BoardMaker) Tobii Dynavox & SymbolStix for $25" key='add_premium_symbols'}}
+                {{t "add PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
               </td>
             {{/if}}
           </tr>
@@ -141,9 +141,9 @@
                     {{subscription.monthly_app_price}} {{subscription.app_currency}} {{t "per month" key='per_month'}}
                   {{else}}
                     {{#if subscription.subscription_discount}}
-                      {{t "$3 per month" key='3_per_month'}}
+                      {{t "US$3 per month" key='3_per_month'}}
                     {{else}}
-                      {{t "$6 per month" key='6_per_month'}}
+                      {{t "US$6 per month" key='6_per_month'}}
                     {{/if}}
                   {{/if}}
                 </button>
@@ -155,7 +155,7 @@
                 {{#if subscription.app_pricing_override}}
                   {{subscription.long_term_app_price}} {{subscription.app_currency}} {{t "purchase" key='purchase'}}
                 {{else}}
-                  ${{subscription.long_term_amount}} {{t "purchase" key='purchase'}}
+                  US${{subscription.long_term_amount}} {{t "purchase" key='purchase'}}
                 {{/if}}
               </button>
             </td>
@@ -169,7 +169,7 @@
               <td class='semi_dim' style='width: 25%;'>
                 <button type="button" rel='slp_paid' class={{slp_long_term_50_class}} {{action "set_subscription" 'slp_long_term_50'}}>
                   <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                  {{t "$50 donation" key='50_donation'}}
+                  {{t "US$50 donation" key='50_donation'}}
                 </button>
               </td>
             {{/unless}}
@@ -188,7 +188,7 @@
                     <label>
                       <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
                       {{input type='checkbox' checked=subscription.extras}}
-                      {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for $25" key='add_premium_symbols'}}
+                      {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
                     </label>
                   {{/if}}
                 </td>
@@ -197,7 +197,7 @@
                     <label>
                       <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
                       {{input type='checkbox' checked=subscription.extras}}
-                      {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for $25" key='add_premium_symbols'}}
+                      {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
                     </label>
                   {{/if}}
                 </td>
@@ -322,7 +322,7 @@
                   {{subscription.long_term_app_price}}
                   {{subscription.app_currency}}
                 {{else}}
-                  ${{subscription.amount_in_dollars}}
+                  US${{subscription.amount_in_dollars}}
                 {{/if}}
               {{else}}
                 {{t "paying" key='paying'}}
@@ -331,16 +331,16 @@
                   {{subscription.app_currency}}
                   {{t "monthly" key='monthly'}}
                 {{else}}
-                  ${{subscription.amount_in_dollars}}
+                  US${{subscription.amount_in_dollars}}
                   {{t "monthly" key='monthly'}}
                   {{#if subscription.extras}}
-                    {{t "+ $25 one-time fee" key='plus_one_time_extras'}}
+                    {{t "+ US$25 one-time fee" key='plus_one_time_extras'}}
                   {{/if}}
                 {{/if}}
               {{/if}})
             {{else if subscription.extras}}
               {{#unless subscription.free_extras}}
-                {{t "(process one-time $25 fee)" key='process_one_time_extras'}}
+                {{t "(process one-time US$25 fee)" key='process_one_time_extras'}}
               {{/unless}}
             {{/if}}
             {{#if subscription.user.grace_period}}
