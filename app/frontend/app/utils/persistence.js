@@ -1364,7 +1364,11 @@ var persistence = EmberObject.extend({
 
         // Step 5: Cache needed sound files
         spread_out(function() {
-          return speecher.load_beep();
+          return speecher.load_beep().then(null, function(err) {
+            modal.warning(i18n.t('sound_sync_failed', "Sound effects failed to sync"));
+            console.error("sound sync error", err);
+            return Ember.RSVP.resolve();
+          });
         });
 
         // Step 6: Push stored logs

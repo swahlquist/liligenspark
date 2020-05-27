@@ -13,7 +13,7 @@ import CoughDrop from '../app';
 import { computed } from '@ember/object';
 
 var speecher = EmberObject.extend({
-  beep_url: "https://d18vdu4p71yql0.cloudfront.netm/beep.mp3",
+  beep_url: "https://d18vdu4p71yql0.cloudfront.net/beep.mp3",
   chimes_url: "https://d18vdu4p71yql0.cloudfront.net/chimes.mp3",
   click_url: "https://d18vdu4p71yql0.cloudfront.net/click.mp3",
   ding_url: "https://d18vdu4p71yql0.cloudfront.net/ding.mp3",
@@ -654,14 +654,15 @@ var speecher = EmberObject.extend({
     this.speak_audio(url, 'background');
   },
   load_beep: function() {
-    var p1 = this.load_sound('beep_url');
-    var p2 = this.load_sound('chimes_url');
-    var p3 = this.load_sound('click_url');
-    var p4 = this.load_sound('ding_url');
-    var p5 = this.load_sound('bleep_url');
-    var p6 = this.load_sound('spinner_url');
-    var p7 = this.load_sound('dice_url');
-    return RSVP.all_wait([p1, p2, p3, p4]);
+    var promises = []
+    promises.push(this.load_sound('beep_url'));
+    promises.push(this.load_sound('chimes_url'));
+    promises.push(this.load_sound('click_url'));
+    promises.push(this.load_sound('ding_url'));
+    promises.push(this.load_sound('bleep_url'));
+    promises.push(this.load_sound('spinner_url'));
+    promises.push(this.load_sound('dice_url'));
+    return RSVP.all_wait(promises);
   },
   load_sound: function(attr) {
     if(speecher[attr]) {
