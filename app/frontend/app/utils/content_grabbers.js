@@ -1626,7 +1626,7 @@ var videoGrabber = EmberObject.extend({
           license_url = licenses[idx].url;
         }
       }
-      preview_license.copyright_notice_url = license_url;
+      emberSet(preview_license, 'copyright_notice_url', license_url);
       emberSet(preview, 'license', preview_license);
     }
 
@@ -1973,7 +1973,7 @@ var soundGrabber = EmberObject.extend({
           license_url = licenses[idx].url;
         }
       }
-      preview_license.copyright_notice_url = license_url;
+      emberSet(preview_license, 'copyright_notice_url', license_url);
       emberSet(preview, 'license', preview_license);
     }
 

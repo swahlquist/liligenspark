@@ -284,14 +284,16 @@ CoughDrop.Board = DS.Model.extend({
   },
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
-    if(label_locale == vocalization_locale) {
-      if(app_state.get('referenced_user.preferences.auto_inflections')) {
-        var inflection_types = editManager.inflection_for_types(history || [], label_locale);
-        editManager.update_inflections(res, inflection_types);
+    if(app_state.get('speak_mode')) {
+      if(label_locale == vocalization_locale) {
+        if(app_state.get('referenced_user.preferences.auto_inflections')) {
+          var inflection_types = editManager.inflection_for_types(history || [], label_locale);
+          res = editManager.update_inflections(res, inflection_types);
+        }
+      }         
+      if(capitalize) {
+        // TODO: support capitalization
       }
-    }
-    if(capitalize) {
-      // TODO: support capitalization
     }
     return res;
   },
@@ -786,14 +788,17 @@ CoughDrop.Board = DS.Model.extend({
   load_real_time_inflections: function() {
     var history = stashes.get('working_vocalization') || [];
     var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
-    var lbls = document.getElementsByClassName('tweaked_label');
-    for(var idx = 0; idx < lbls.length; idx++) {
-      var lbl = lbls[idx];
+    var lbls_tmp = document.getElementsByClassName('tweaked_label');
+    var lbls = [];
+    for(var idx = 0; idx < lbls_tmp.length; idx++) {
+      lbls.push(lbls_tmp[idx]);
+    }
+    lbls.forEach(function(lbl) {
       if(lbl.classList.contains('button-label')) {
         lbl.innerText = lbl.getAttribute('original-text');
         lbl.classList.remove('tweaked_label');
       }
-    }
+    });
     var _this = this;
     buttons.forEach(function(button) {
       if(button.tweaked) {

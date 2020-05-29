@@ -2277,10 +2277,9 @@ var app_state = EmberObject.extend({
         app_state.highlight_selected_button(button, overlay, obj.label);
       }
     }
-    if(button.board) {
+    if(button.board && button.board.prompt) {
       button.board.prompt('clear');
     }
-
 
     // additional actions (besides just speaking) will be necessary for some buttons
     if((button.load_board && button.load_board.key) || (button.vocalization || '').match(/:native-keyboard/)) {
