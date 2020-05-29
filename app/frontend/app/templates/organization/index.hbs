@@ -212,6 +212,9 @@
                   <img src={{user.avatar_url}} style="height: 30px;"/>
                   {{user.user_name}}
                 {{/link-to}}
+                {{#if model.permissions.manage}}
+                  <em>{{user.name}}</em>
+                {{/if}}
                 {{#if user.org_pending}}
                   <span style="vertical-align: middle;" class="text-muted">{{t "(pending)" key='pending'}}</span>
                 {{/if}}

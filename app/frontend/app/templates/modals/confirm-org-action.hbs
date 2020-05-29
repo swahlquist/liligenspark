@@ -32,7 +32,17 @@
     </div>
   </div>
   <div class="modal-header">
-    <button class='btn btn-default btn-lg' {{action 'confirm'}}>{{t "Delete Account" key='delete_account'}}</button>
+    <button class='btn btn-default btn-lg' {{action 'confirm'}}>
+      {{#if model.user_name}}
+        {{t "Remove User" key='remove_user'}}
+      {{else if model.unit_user_name}}
+        {{t "Remove User" key='remove_user'}}
+      {{else if model.org_name}}
+        {{t "Delete Account" key='delete_account'}}
+      {{else}}
+        {{t "Delete" key='delete'}}
+      {{/if}}
+    </button>
     <button class='btn btn-primary btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
     {{#if error}}
       <p class='text-danger'>{{error}}</p>
