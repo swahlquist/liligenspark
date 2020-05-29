@@ -143,6 +143,14 @@
             {{input value=amount placeholder="dollars" class="form-control inline inline-masquerade input-sm"}}
             {{input value=licenses placeholder="# of licenses" class="form-control inline inline-masquerade input-sm"}}
           </div>
+          <div style='margin-top: -15px;'>
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input checked=include_extras type="checkbox"}}
+                {{t "include premium symbols" key='include_premium_symbols'}}
+              </label>
+            </div>
+          </div>
           <span style='display: inline-block; width: 304px;'>
             {{input value=memo placeholder="memo" class="form-control inline input-sm"}}
           </span>
