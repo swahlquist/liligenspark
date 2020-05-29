@@ -43,6 +43,9 @@
     <button class='btn btn-default' {{action 'clear_sound_work'}}>{{t "Clear Sound" key='clear_sound'}}</button>
     </div>
   {{else if sound_preview}}
+    {{#if vocalization_sound_conflict}}
+      <p class='text_danger'>{{t "WARNING: Sound attachments will be removed if there is a value in the 'Speak' field" key='vocalization_sound_conflict'}}</p>
+    {{/if}}
     <div style="text-align: center;">
       Selected sound{{#if sound_preview.name}} ({{sound_preview.name}}){{/if}}:<br/>
       <audio controls src={{sound_preview.url}}></audio>
@@ -72,6 +75,9 @@
     {{#if sound_record.error}}
       <p>{{t "There was an error while trying to record audio" key='error_recording_audio'}}</p>
     {{else if sound_recording.ready}}
+      {{#if vocalization_sound_conflict}}
+        <p class='text_danger'>{{t "WARNING: Sound attachments will be removed if there is a value in the 'Speak' field" key='vocalization_sound_conflict'}}</p>
+      {{/if}}
       <button id="recording_status" {{action "toggle_recording_sound"}} class={{if sound_recording.recording 'recording'}} style='outline: none;'>
         <span class="sub_status">
           <span>Start</span>
@@ -91,6 +97,9 @@
       <button class='btn btn-default' {{action "clear_sound_work"}}>{{t "Cancel" key='cancel'}}</button>
     {{else}}
       {{#if model.sound.url}}
+        {{#if vocalization_sound_conflict}}
+          <p class='text_danger'>{{t "WARNING: Sound attachments will be removed if there is a value in the 'Speak' field" key='vocalization_sound_conflict'}}</p>
+        {{/if}}
         <div style="margin-bottom: 10px; text-align: center;">
           {{t "Played sound:" key='played_sound_colon'}} ({{model.sound.extension}})<div style='width: 100%; overflow: hidden;'>{{model.sound.name}}</div><br/>
           <audio controls src={{model.sound.url}}></audio>

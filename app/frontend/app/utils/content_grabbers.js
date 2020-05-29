@@ -2013,6 +2013,7 @@ var soundGrabber = EmberObject.extend({
       var button_sound = {url: sound.get('url'), id: sound.id};
       if(_this.controller) {
         _this.controller.set('model.sound', sound);
+        _this.controller.set('model.sound_id', sound.id);
         sound.check_transcription();
         _this.clear_sound_work();
         if(_this.button) {

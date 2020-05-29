@@ -232,14 +232,16 @@ var editManager = EmberObject.extend({
       ref.key = key;
       arr.push(ref);
     }
+    var res = [];
     buttons.forEach(function(button) {
+      var updated_button = Object.assign({}, button);
       // For now, skip if there are manual inflections
       if(!button.inflections && !button.vocalization && !button.load_board) {
         arr.forEach(function(infl) {
           if(infl.key == button.label && infl.type == 'override') {
-            button.original_label = button.original_label || button.label;
-            button.label = infl.label;
-            button.tweaked = true;
+            updated_button.original_label = button.original_label || button.label;
+            updated_button.label = infl.label;
+            updated_button.tweaked = true;
           } else if(button.part_of_speech == infl.key && infl.type != 'override') {
             var new_label = button.inflection_defaults && button.inflection_defaults[infl.location];
             if(!new_label) {
@@ -247,14 +249,16 @@ var editManager = EmberObject.extend({
               new_label = (grid.find(function(i) { return i.location == infl.location; }) || {}).label;
             }
             if(new_label) {
-              button.original_label = button.original_label || button.label;
-              button.label = new_label;
-              button.tweaked = true;
+              updated_button.original_label = button.original_label || button.label;
+              updated_button.label = new_label;
+              updated_button.tweaked = true;
             }
           }
         });
       }
+      res.push(updated_button);
     });
+    return res;
   },
   grid_for: function(button_id) {
     var button = button_id;

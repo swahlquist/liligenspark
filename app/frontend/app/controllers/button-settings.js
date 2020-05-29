@@ -239,6 +239,9 @@ export default modal.ModalController.extend({
   non_https: computed('model.url', function() {
     return (this.get('model.url') || '').match(/^http:/);
   }),
+  vocalization_sound_conflict: computed('model.vocalization', 'model.sound_id', function() {
+    return this.get('model.vocalization') && this.get('model.sound_id');
+  }),
   load_book: observer('model.book.id', function() {
     var _this = this;
     var id = _this.get('model.book.id');
@@ -826,6 +829,7 @@ export default modal.ModalController.extend({
     },
     clear_sound: function() {
       this.set('model.sound', null);
+      this.set('model.sound_id', null);
     },
     pick_preview: function(preview) {
       contentGrabbers.pictureGrabber.pick_preview(preview);
@@ -983,6 +987,7 @@ export default modal.ModalController.extend({
     },
     audio_selected: function(sound) {
       this.set('model.sound', sound);
+      this.set('model.sound_id', sound.id);
       contentGrabbers.soundGrabber.clear_sound_work();
     },
     quick_action: function(action) {

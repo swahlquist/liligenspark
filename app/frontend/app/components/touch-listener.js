@@ -20,16 +20,22 @@ export default Component.extend({
       }
     }
     if(!ignore) {
-      this.sendAction('select');
+      if(this.select) {
+        this.select();
+      }
     }
     return true;
   },
   touchStart: function() {
-    this.sendAction('select');
+    if(this.select) {
+      this.select();
+    }
     return true;
   },
   touchEnd: function(e) {
-    this.sendAction('release', e);
+    if(this.release) {
+      this.release(e);
+    }
     return true;
   },
   mouseUp: function(event) {
@@ -48,7 +54,9 @@ export default Component.extend({
       }
     }
     if(!ignore) {
-      this.sendAction('release', event);
+      if(this.release) {
+        this.release(e);
+      }
     }
     return true;
   }
