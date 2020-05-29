@@ -226,8 +226,9 @@ export default Controller.extend({
         inner_width = $("header").width() || window.innerWidth;
       }
       var width = inner_width;
+      var sidebar_width = window.innerWidth <= 767 ? 75 : 100;
       if(app_state.get('sidebar_pinned')) {
-        width = inner_width - 100; // TODO: make sidebar size configurable, or have it match top bar
+        width = inner_width - sidebar_width; // TODO: make sidebar size configurable, or have it match top bar
       }
       this.set('window_inner_width', inner_width);
       app_state.set('window_inner_width', inner_width);
