@@ -889,7 +889,9 @@ var app_state = EmberObject.extend({
     opts = opts || {};
     var speak_mode_user = opts.user || app_state.get('currentUser');
     // TODO: if preferred matches user's home board, pass the user's level instead of the board's default level
-    stashes.persist('board_level', null);
+    if(!opts.remember_level) {
+      stashes.persist('board_level', null);
+    }
     var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
     // TODO: same as above, in .toggle_mode
     if(speak_mode_user && !opts.reminded && speak_mode_user.get('expired')) {
@@ -1064,6 +1066,7 @@ var app_state = EmberObject.extend({
             _this.home_in_speak_mode({
               user: u,
               reminded: !jump_home,
+              remember_level: !jump_home,
               fallback_board_state: user_state || app_state.get('sessionUser.preferences.home_board')
             });
           } else {
