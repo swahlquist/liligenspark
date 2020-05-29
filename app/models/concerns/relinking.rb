@@ -107,6 +107,11 @@ module Relinking
   end
 
   module ClassMethods
+    # take the previous board set in its entirety,
+    # and, depending on the preference, make new copies
+    # of sub-boards, or use existing copies of sub-boards
+    # for specified boards (all if none specified)
+    # on behalf of the specified used
     def replace_board_for(user, opts)
       auth_user = opts[:authorized_user]
       starting_old_board = opts[:starting_old_board] || raise("starting_old_board required")
@@ -125,6 +130,7 @@ module Relinking
         end
         board_ids += downstream_ids
       end
+      # include sidebar boards in the list of all user boards
       sidebar_ids = {}
       sidebar = user.sidebar_boards
       user.sidebar_boards.each do |brd|
@@ -144,6 +150,8 @@ module Relinking
       boards = Board.find_all_by_path(board_ids)
       pending_replacements = [[starting_old_board, starting_new_board]]
 
+      # we will need to update user preferences 
+      # if the home board or sidebar changed
       user_home_changed = relink_board_for(user, {:boards => boards, :copy_id => starting_new_board.global_id, :pending_replacements => pending_replacements, :update_preference => (update_inline ? 'update_inline' : nil), :make_public => make_public, :authorized_user => auth_user})
       sidebar_changed = false
       sidebar_ids.each do |key, id|
@@ -177,6 +185,10 @@ module Relinking
       true
     end
 
+    # Creates copies of specified boards 
+    # (all if none specified) for the user, 
+    # then wires up all the new copies to link to
+    # each other instead of the originals
     def copy_board_links_for(user, opts)
       auth_user = opts[:authorized_user]
       starting_old_board = opts[:starting_old_board] || raise("starting_old_board required")
