@@ -72,6 +72,7 @@ export default Controller.extend({
         gift.set('amount', parseFloat(this.get('amount')));
         gift.set('licenses', parseInt(this.get('licenses'), 10));
         gift.set('organization', this.get('org'));
+        gift.set('include_extras', this.get('include_extras'));
         gift.set('email', this.get('email'));
         gift.set('memo', this.get('memo'));
       } else if(type == 'multi_code') {

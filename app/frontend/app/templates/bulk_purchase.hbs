@@ -36,6 +36,9 @@
         {{/if}}
         {{t "has been set up with multiple gifts code for use within %app_name%. You can distribute these gift codes to users who can enter them when they sign up to get free access to %app_name%'s communication features." key='multi_code_intro2'}}
         {{t "Each gift code includes <b>%{dur}</b> of free access to %app_name%'s cloud extras features." dur=gift.duration key='cloud_extras_duration'}}
+        {{#if gift.include_extras}}
+          {{t "Each gift code also includes access to premium symbols." key='extras_included'}}
+        {{/if}}
       </p>
     {{else if gift.gift_types.discount}}
       <span class="glyphicon glyphicon-scissors" style="font-size: 50px; float: left; margin: 5px 15px 5px 0;"></span>
@@ -51,6 +54,9 @@
       <p style='margin-bottom: 20px;'>
         {{t "The code you entered is tied to a one-time gift code," key='user_gift_intro'}}
         {{t "and code includes <b>%{dur}</b> of free access to %app_name%'s cloud extras features." dur=gift.duration key='cloud_extras_gift_duration'}}
+        {{#if gift.include_extras}}
+          {{t "The gift code also includes access to premium symbols." key='single_extras_included'}}
+        {{/if}}
         {{#if gift.active}}
           {{t "This gift code has not yet been redeemed." key='gift_still_active'}}
         {{else if gift.recipient}}

@@ -29,7 +29,7 @@ class Api::GiftsController < ApplicationController
     gift = GiftPurchase.process_new(
     params['gift'].slice('licenses', 'total_codes', 'amount', 
           'expires', 'limit', 'code', 'memo', 'email', 'organization', 
-          'org_id', 'gift_type', 'gift_name', 'discount'), 
+          'org_id', 'gift_type', 'gift_name', 'discount', 'include_extras'), 
     {
       'giver' => @api_user,
       'email' => @api_user.settings['email'],

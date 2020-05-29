@@ -1781,6 +1781,14 @@ describe Purchasing do
       expect(u.subscription_hash['extras_enabled']).to eq(true)
     end
 
+    it "should add extras for the user on a redeem code if specified" do
+      write_this_test
+    end
+
+    it "should add extras for the user on a bulk redeem code if specified" do
+      write_this_test
+    end
+
     it "should not add extras for the user if not specified on the gift" do
       g = GiftPurchase.create(:settings => {'seconds_to_add' => 3.years.to_i})
       u = User.create

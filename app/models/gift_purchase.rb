@@ -130,6 +130,8 @@ class GiftPurchase < ActiveRecord::Base
             'memo', 'email', 'organization', 'gift_name'].each do |arg|
       self.settings[arg] = params[arg] if params[arg] && !params[arg].blank?
     end
+    # For now, only allow including extras on bulk purchases
+    self.settings['include_extras'] = params['include_extras'] if !params['include_extras'].blank? && self.settings['licenses']
     ['include_extras', 'extra_donation'].each do |arg|
       self.settings[arg] = non_user_params[arg] if non_user_params[arg] && !non_user_params[arg].blank?
     end
