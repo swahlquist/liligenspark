@@ -133,11 +133,13 @@ export default Component.extend({
         }, function(err) {
           _this.set('login_followup', false);
           _this.set('logging_in', false);
+          _this.set('logged_in', false);
           _this.set('login_error', i18n.t('user_update_failed', "Updating login preferences failed"));
         });
       }, function(err) {
         _this.set('login_followup', false);
         _this.set('logging_in', false);
+        _this.set('logged_in', false);
         _this.set('login_error', i18n.t('user_update_failed', "Retrieving login preferences failed"));
       });
     },
