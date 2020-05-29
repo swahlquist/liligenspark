@@ -29,6 +29,8 @@
       {{else if in_board_set}}
         {{t "This board is part of the user's communication set. Do you want to use the new copy in the communication set instead of the original?" key='copy_upstream_board_links'}}
         {{t "This action could make copies of other boards in the communication set as well." key='more_copies_warning'}}
+      {{else if sidebar_board}}
+        {{t "This board is currently on the user's sidebar. Do you want to update the sidebar with the new copy?" key='copy_home_board'}}
       {{else if in_sidebar_set}}
         {{t "This board is part of the user's sidebar set. Do you want to use the new copy in the sidebar instead of the original?" key='copy_upstream_sidebar_links'}}
         {{t "This action could make copies of other boards in the sidebar set as well." key='more_sidebar_copies_warning'}}
@@ -90,6 +92,17 @@
         <ul class="dropdown-menu" role="menu">
           <li><a href="#" {{action 'tweakBoard' "links_copy_as_home"}}><strong>{{t "Copy the Full Board Set" key='copy_linked_boards'}}</strong></a></li>
           <li><a href="#" {{action 'tweakBoard' "keep_links_as_home"}}>{{t "Copy Just This Board" key='copy_just_this_board'}}</a></li>
+        </ul>
+      </div>
+      {{partial 'copy-just-this-board'}}
+    {{else if sidebar_board}}
+      <div class="btn-group dropup">
+        <button class='btn btn-primary dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
+          {{t "Copy To The Sidebar" key='use_new_copy'}} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a href="#" {{action 'tweakBoard' "links_copy_as_sidebar"}}><strong>{{t "Copy the Full Board Set" key='copy_linked_boards'}}</strong></a></li>
+          <li><a href="#" {{action 'tweakBoard' "keep_links_as_sidebar"}}>{{t "Copy Just This Board" key='copy_just_this_board'}}</a></li>
         </ul>
       </div>
       {{partial 'copy-just-this-board'}}

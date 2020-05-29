@@ -83,7 +83,7 @@ export default modal.ModalController.extend({
             CoughDrop.store.findRecord('board', key).then(function(board) {
               if(_this.get('current_user') == user) {
                 if(board.get('key') == _this.get('model.board.key')) {
-                  _this.set('in_sidebar_set', true);
+                  _this.set('sidebar_board', true);
                   var sidebar_ids = user.get('stats.sidebar_board_ids') || [];
                   user.set('stats.sidebar_board_ids', sidebar_ids.concat([board.get('id')]).uniq());
                 }

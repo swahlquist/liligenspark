@@ -1635,6 +1635,22 @@ var editManager = EmberObject.extend({
             }, function() {
               reject(i18n.t('user_home_failed', "Failed to update user's home board"));
             });
+          } else if(decision && decision.match(/as_sidebar$/)) {
+            var list = user.get('preferences.sidebar_boards');
+            if(list) {
+              list.forEach(function(side) {
+                if(side.key == old_board.get('key') || side.id == old_board.get('id')) {
+                  side.key = board.get('key');
+                  side.id = board.get('id');
+                }
+              });
+            }
+            user.set('preferences.sidebar_boards', list);
+            user.save().then(function() {
+              resolve(board);
+            }, function() {
+              reject(i18n.t('user_sidebar_failed', "Failed to update user's sidebar"));
+            });
           } else {
             resolve(board);
           }
@@ -1648,7 +1664,7 @@ var editManager = EmberObject.extend({
           } else if((user.get('stats.sidebar_board_ids') || []).indexOf(old_board.get('id')) >= 0) {
             endpoint = '/api/v1/users/' + user.get('id') + '/replace_board';
           }
-        } else if(decision == 'links_copy' || decision == 'links_copy_as_home') {
+        } else if(decision == 'links_copy' || decision == 'links_copy_as_home' || decision == 'links_copy_as_sidebar') {
           endpoint = '/api/v1/users/' + user.get('id') + '/copy_board_links';
         }
         if(endpoint) {
