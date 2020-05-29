@@ -4,6 +4,9 @@
     <a href="#" {{action 'toggle_board_hierarchy' 'all' true}}>{{t "Expand All" key='expand_all'}}</a> |
     <a href="#" {{action 'toggle_board_hierarchy' 'all' false}}>{{t "Collapse All" key='collapse_all'}}</a>
   {{/if}}
+  {{#if hierarchy.boards_missing}}
+    <p class='text-danger'>{{t "NOTE: One or more sub-boards may be missing from this list" key='missing_boards'}}</p>
+  {{/if}}
   {{#with hierarchy.root as |board|}}
     <div class="board_hierarchy" style='margin-top: 10px;'>
       <ul>

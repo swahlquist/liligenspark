@@ -4,13 +4,21 @@ import i18n from './i18n';
 import { computed } from '@ember/object';
 
 var BoardHierarchy = EmberObject.extend({
-  init: function() {
+  init: function() {  
+    this.load_boards();
+  },
+  load_boards: function() {
     var _this = this;
     var board = this.get('board');
+    var downstreams = {};
+    (board.get('downstream_board_ids') || []).forEach(function(id) {
+      downstreams[id] = false;
+    });
     var button_set = this.get('button_set');
     var traversed_boards = {};
     var all_boards = [];
     var traverse_board = function(board_id, board_key) {
+      downstreams[board_id] = true;
       var hierarchy_board = EmberObject.create({
         id: board_id,
         key: board_key,
@@ -86,6 +94,20 @@ var BoardHierarchy = EmberObject.extend({
       return hierarchy_board;
     };
     var root_board = traverse_board(board.get('id'), board.get('key'));
+    var any_missing = false;
+    for(var id in downstreams) {
+      if(downstreams[id] === false) {
+        any_missing = true;
+      }
+    }
+    this.set('boards_missing', !!any_missing);
+    if(any_missing && !this.get('tried_button_set_reload')) {
+      this.set('tried_button_set_reload', true);
+      var _this = this;
+      board.load_button_set(true).then(function() {
+        _this.load_boards();
+      });
+    }
     this.set('all_boards', all_boards);
     this.set('root', root_board);
   },
