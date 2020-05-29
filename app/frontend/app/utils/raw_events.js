@@ -347,7 +347,10 @@ var buttonTracker = EmberObject.extend({
   },
   touch_start: function(event) {
     // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
-    buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+    if(event.target.closest('#sidebar')) {
+      buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
+      buttonTracker.scrollStart = event.clientY;
+    }
 
     var $overlay = $("#overlay_container");
     // clear overlays when user interacts outside of them
@@ -429,7 +432,7 @@ var buttonTracker = EmberObject.extend({
       }
     }
     if(buttonTracker.transitioning) {
-      event.preventDefault();
+      if(event.cancelable) { event.preventDefault(); }
       var token = Math.random();
       // Don't let it get stuck in some weird transitioning state forever
       buttonTracker.transitioning = token;
@@ -449,11 +452,19 @@ var buttonTracker = EmberObject.extend({
         event.preventDefault();
       }
     }
-    if(buttonTracker.sidebarScrollStart == null) {
+    if(buttonTracker.sidebarScrollStart == null && event.target.closest('#sidebar')) {
       buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
     }
-
     event = buttonTracker.normalize_event(event);
+    if(buttonTracker.sidebarScrollStart != null && event.type && event.type.match(/touch/)) {
+      // TODO: option to disable sidebar scrolling
+      buttonTracker.scrollStart = buttonTracker.scrollStart || event.clientY;
+      var diff = buttonTracker.scrollStart - event.clientY;
+      if(document.getElementById('sidebar')) {
+        document.getElementById('sidebar').scrollTop = buttonTracker.sidebarScrollStart + diff;
+      }
+    }
+
     // We disable ignoreUp on continued movement because some of our
     // movement event triggers are touchstart and mousedown
     if(event.type == 'touchstart' || event.type == 'mousedown') {
@@ -755,6 +766,7 @@ var buttonTracker = EmberObject.extend({
     if(buttonTracker.sidebarScrollStart != null) {
       var scroll_start = buttonTracker.sidebarScrollStart;
       var current_scroll = (document.getElementById('sidebar') || {}).scrollTop || 0;
+
       buttonTracker.sidebarScrollStart = null;
       if(Math.abs(current_scroll - scroll_start) > 10) {
         if(event.cancelable) { event.preventDefault(); }
