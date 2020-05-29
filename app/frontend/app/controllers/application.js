@@ -396,8 +396,10 @@ export default Controller.extend({
         if(sync && persistence.get('online') && persistence.get('auto_sync')) {
           _this.set('simple_board_header', false);
           runLater(function() {
-          console.debug('syncing because home board changes');
-            persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+            if(persistence.get('auto_sync')) {
+              console.debug('syncing because home board changes');
+              persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+            }
           }, 1000);
           if(_this.get('setup_footer')) {
             _this.send('setup_go', 'forward');

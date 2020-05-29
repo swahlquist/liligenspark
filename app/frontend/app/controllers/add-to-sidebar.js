@@ -70,8 +70,10 @@ export default modal.ModalController.extend({
         _this.set('loading', false);
         if(persistence.get('online')) {
           runLater(function() {
-            console.debug('syncing because sidebar updated');
-            persistence.sync('self', null, null, 'sidebar_update').then(null, function() { });
+            if(persistence.get('auto_sync')) {
+              console.debug('syncing because sidebar updated');
+              persistence.sync('self', null, null, 'sidebar_update').then(null, function() { });  
+            }
           }, 1000);
         }
         modal.close('add-to-sidebar');
