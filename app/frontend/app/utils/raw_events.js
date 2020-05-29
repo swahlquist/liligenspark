@@ -194,6 +194,14 @@ $(document).on('mousedown touchstart', function(event) {
       event.preventDefault();
     }
     buttonTracker.direction_event(event);
+  } else if(event.keyCode == 77 && (event.altKey || event.ctrlKey)) {
+    console.log("Keyboard shortcut for toggle modeling");
+    if(app_state.get('modeling_for_user')) {
+      modal.warning(i18n.t('cant_clear_session_modeling', "You are in a modeling session. To leave modeling mode, Exit Speak Mode and then Speak As the communicator"), true);
+    } else {
+      app_state.toggle_modeling();
+    }
+    event.preventDefault();
   }
 }).on('keyup', function(event) {
   if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
@@ -873,7 +881,11 @@ var buttonTracker = EmberObject.extend({
       modeling_sequence = true;
     }
     if(modeling_sequence) {
-      app_state.toggle_modeling();
+      if(app_state.get('modeling_for_user')) {
+        modal.warning(i18n.t('cant_clear_session_modeling', "You are in a modeling session. To leave modeling mode, Exit Speak Mode and then Speak As the communicator"), true);
+      } else {
+        app_state.toggle_modeling(true);
+      }
       event.preventDefault();
       buttonTracker.ignoreUp = true;
       return;
