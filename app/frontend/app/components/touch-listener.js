@@ -55,7 +55,7 @@ export default Component.extend({
     }
     if(!ignore) {
       if(this.release) {
-        this.release(e);
+        this.release(event);
       }
     }
     return true;
