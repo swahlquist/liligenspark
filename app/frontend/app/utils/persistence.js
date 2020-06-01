@@ -1956,9 +1956,10 @@ var persistence = EmberObject.extend({
             find_board.then(function(board) {
               local_full_set_revision = board.get('local_full_set_revision');
               importantIds.push('board_' + id);
-              board.load_button_set();
               var visited_board_promises = [];
               var safely_cached = !!safely_cached_boards[board.id];
+              // force a reload of the buttonset if the board changed
+              board.load_button_set(!safely_cached);
               // If the retrieved board's revision matches the synced cache's revision,
               // then this board and all its children should be already in the db.
               var cache_mismatch = fresh_revisions && fresh_revisions[board.get('id')] && fresh_revisions[board.get('id')] != board.get('current_revision');

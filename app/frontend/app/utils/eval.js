@@ -38,12 +38,6 @@ var evaluation = {
       runLater(function() {
         document.body.removeChild(msr);
       });
-      if(window.plugins && window.plugins.aboutScreen) {
-        window.plugins.aboutScreen.getInfo(function (e) {
-          window.ppix = window.screen.width / e.width;
-          window.ppiy = window.screen.height / e.height;
-        });
-      }
     }
   },
   resume: function(assmnt) {

@@ -2293,6 +2293,7 @@ var boardGrabber = EmberObject.extend({
     var progressor = EmberObject.create();
     var error = modal.error;
 
+    // TODO: add a confirmation step, including option for privacy level
     modal.open('importing-boards', progressor);
 
     var type = 'obf';
