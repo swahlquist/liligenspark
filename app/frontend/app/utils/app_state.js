@@ -541,6 +541,13 @@ var app_state = EmberObject.extend({
       }
     }
   },
+  toggle_modeling_if_possible: function(enable) {
+    if(app_state.get('modeling_for_user')) {
+      modal.warning(i18n.t('cant_clear_session_modeling', "You are in a modeling session. To leave modeling mode, Exit Speak Mode and then Speak As the communicator"), true);
+    } else {
+      app_state.toggle_modeling(enable);
+    }
+  },
   toggle_modeling: function(enable) {
     if(enable === undefined || enable === null) {
       enable = !app_state.get('manual_modeling');

@@ -909,11 +909,7 @@ export default Controller.extend({
       modal.open('confirm-update-app');
     },
     toggle_modeling: function() {
-      if(app_state.get('modeling_for_user')) {
-        modal.warning(i18n.t('cant_clear_session_modeling', "You are in a modeling session. To leave modeling mode, Exit Speak Mode and then Speak As the communicator"), true);
-      } else {
-        app_state.toggle_modeling(true);
-      }
+      app_state.toggle_modeling_if_possible(true);
     },
     switch_languages: function() {
       modal.open('switch-languages', {board: this.get('board.model')}).then(function(res) {
