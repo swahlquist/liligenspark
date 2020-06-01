@@ -386,7 +386,7 @@ export default modal.ModalController.extend({
     var res = [
       {name: i18n.t('open_symbols', "opensymbols.org (default)"), id: 'opensymbols'}
     ];
-    if(this.get('lessonpix_enabled')) {
+    if(this.get('lessonpix_enabled') || this.get('premium_symbols')) {
       res.push({name: i18n.t('lessonpix_images', "LessonPix Images"), id: 'lessonpix'});
     }
     if(this.get('premium_symbols')) {
@@ -406,7 +406,7 @@ export default modal.ModalController.extend({
     if(window.giphy_key) {
       res.push({name: i18n.t('giphy_asl', "GIPHY ASL Signs"), id: 'giphy_asl'});
     }
-    if(!this.get('lessonpix_enabled')) {
+    if(!this.get('lessonpix_enabled') && !this.get('premium_symbols')) {
       res.push({name: i18n.t('lessonpix_images', "LessonPix Images"), id: 'lessonpix_required'});
     }
     if(!this.get('premium_symbols')) {
