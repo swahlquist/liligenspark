@@ -281,7 +281,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           # If pointing to a source, go ahead and update that source
           # as part of the update process for this button set
           if do_update && !traversed_ids.include?(source_board_id)
-            if immediate_update
+            # If we're already in a slow background job, just do everything immediately
+            if immediate_update || Worker.current_speed == :slow
               BoardDownstreamButtonSet.update_for(source_board_id, true, traversed_ids)
             else
               BoardDownstreamButtonSet.schedule_update(source_board_id, traversed_ids)
@@ -410,6 +411,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     # This appears to be here to prevent multiple updates happening
     # independently from updating button sets when they don't have to.
     key = "traversed/button_set/#{board_id}"
+    # TODO: if the Redis value gets removed unexpectedly, we
+    # won't have a list of traversed ids which could result
+    # in a recursive loop. This check is an emergency measure
+    # to prevent that from happening and stuffing the queue.
+    return if Worker.job_chain.split(/##/).select{|c| c.match(/BoardDownstreamButtonSet/) }.length > 5
     traversed = JSON.parse(RedisInit.default.get(key)) rescue nil
     traversed ||= []
     traversed += (traversed_ids - [board_id])
