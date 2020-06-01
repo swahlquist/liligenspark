@@ -31,6 +31,36 @@ module Worker
     # no-op
   end
 
+  def self.check_for_big_entries
+    lists = [[RedisInit.default, "RedisInit.default"], [RedisInit.permissions, "RedisInit.permissions"], [Resque.redis, "Resque.redis"]]
+    bigs = []
+    lists.each do |queue, name|
+      name ||= queue.inspect
+      puts name
+      queue.keys.each do |key|
+        type = queue.type(key)
+        str = ""
+        if type == 'set'
+          str = queue.smembers(key).to_json
+        elsif type == 'list'
+          str = queue.lrange(key, 0, -1).to_json
+        elsif type == 'hash'
+          str = queue.hgetall(key).to_json
+        elsif type == 'string'
+          str = queue.get(key)
+        elsif type == 'none'
+        else
+          puts "  UNKNOWN TYPE #{type}"
+        end
+        if str.length > 1000
+          puts "  #{str.length} #{key} #{name}\n"
+          bigs << "#{key}-#{name}"
+        end
+      end
+    end
+    bigs
+  end
+
   def self.set_domain_id(val)
     @@domain_id = val
     JsonApi::Json.set_host(val)
