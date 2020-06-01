@@ -17,14 +17,14 @@ module Converters::CoughDrop
     res['image_url'] = board.settings['image_url']
     res['ext_coughdrop_image_url'] = board.settings['image_url']
     res['url'] = "#{JsonApi::Json.current_host}/#{board.key}"
-    if opts['simple']
+    if opts && opts['simple']
       res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}/simple.obf"
     else
       res['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{board.key}"
     end
     res['description_html'] = board.settings['description'] || "built with CoughDrop"
     res['license'] = OBF::Utils.parse_license(board.settings['license'])
-    if !opts['simple']
+    if !opts || !opts['simple']
       if board.settings['translations']
         res['default_locale'] = board.settings['translations']['default']
         res['label_locale'] = board.settings['translations']['current_label']
@@ -74,7 +74,7 @@ module Converters::CoughDrop
         'background_color' => original_button['background_color'] || "#fff",
         'hidden' => original_button['hidden'],
       }
-      if !opts['simple']
+      if !opts || !opts['simple']
         inflection_defaults = nil
         trans = {}
         (board.settings['translations'] || {}).each do |loc, hash|
@@ -126,12 +126,12 @@ module Converters::CoughDrop
           'url' => "#{JsonApi::Json.current_host}/#{original_button['load_board']['key']}",
           'data_url' => "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}"
         }
-        if opts['simple']
+        if opts && opts['simple']
           button['load_board']['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}/simple.obf"
         end
       end
 
-      if !opts['simple']
+      if !opts || !opts['simple']
         if original_button['url']
           button['url'] = original_button['url']
         end
@@ -180,7 +180,7 @@ module Converters::CoughDrop
           button['image_id'] = image['id']
         end
       end
-      if !opts['simple']
+      if !opts || !opts['simple']
         if original_button['sound_id']
           sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
           if sound

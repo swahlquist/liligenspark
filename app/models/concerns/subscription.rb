@@ -87,6 +87,16 @@ module Subscription
       end
       if sponsored
         self.clear_existing_subscription(:track_seconds_left => true)
+      elsif org_sponsored?
+        # If we are being re-added to the sponsored org as
+        # unsponsored, then we need to remove the sponsorship
+        links = UserLink.links_for(self)
+        sponsor = links.detect{|l| l['type'] == 'org_user' && l['user_id'] == self.global_id && l['state']['sponsored'] }
+        sponsor_id = sponsor && sponsor['record_code'].split(/:/)[1]
+        if sponsor_id == new_org.global_id
+          UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
+          self.clear_existing_subscription(:allow_grace_period => true)
+        end
       end
       self.settings['subscription']['added_to_organization'] = Time.now.iso8601
       self.settings['subscription']['eval_account'] = true if eval_account
