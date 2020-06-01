@@ -217,7 +217,10 @@ module Uploader
     return nil unless ENV['LESSONPIX_PID'] && ENV['LESSONPIX_SECRET']
     username = nil
     password_md5 = nil
-    if opts.is_a?(User)
+    if opts.is_a?(User) && opts.subscription_hash['extras_enabled'] && ENV['LESSONPIX_USER'] && ENV['LESSONPIX_MD5']
+      username = ENV['LESSONPIX_USER']
+      password_md5 = ENV['LESSONPIX_MD5']
+    elsif opts.is_a?(User)
       template = UserIntegration.find_by(template: true, integration_key: 'lessonpix')
       ui = template && UserIntegration.find_by(user: opts, template_integration: template)
       return nil unless ui && ui.settings && ui.settings['user_settings'] && ui.settings['user_settings']['username']

@@ -199,6 +199,26 @@ describe Api::SearchController, :type => :controller do
       expect(json).to eq([])
     end
 
+    it "should allow searching LessonPix without an integration if premium symbols are enabled" do
+      uid = ENV['LESSONPIX_USER']
+      md5 = ENV['LESSONPIX_MD5']
+      ENV['LESSONPIX_USER'] = 'bacon'
+      ENV['LESSONPIX_MD5'] = '24tq3tq24t23r1'
+      token_user
+      u = User.create
+      User.purchase_extras({'user_id' => u.global_id})
+      token = Digest::MD5.hexdigest('24tq3tq24t23r1' + ENV['LESSONPIX_SECRET'])
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=#{ENV['LESSONPIX_PID']}&username=bacon&token=#{token}&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: [
+      ].to_json}))
+      User.link_supervisor_to_user(@user, u.reload, nil, true)
+      get :protected_symbols, params: {:q => 'snowman', :library => 'lessonpix', :user_name => u.user_name}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json).to eq([])
+      ENV['LESSONPIX_USER'] = uid
+      ENV['LESSONPIX_MD5'] = md5
+    end
+
     it "should fall back to api user if authorized user isn't authorized" do
       token_user
       u = User.create

@@ -163,9 +163,21 @@ class User < ActiveRecord::Base
   def track_protected_source(source_id)
     self.reload.settings['activated_sources'] ||= []
     if !self.settings['activated_sources'].include?(source_id)
+      log_activation = true
+      if source_id == 'lessonpix'
+        template = UserIntegration.find_by(template: true, integration_key: 'lessonpix')
+        ui = template && UserIntegration.find_by(user: self, template_integration: template)
+        if ui && ui.settings && ui.settings['user_settings'] && ui.settings['user_settings']['username']
+          log_activation = false
+        end
+      elsif source_id == 'giphy_asl'
+        log_activation = false
+      end
       self.settings['activated_sources'] << source_id
       self.save
-      AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
+      if log_activation
+        AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
+      end
     end
   end
   
