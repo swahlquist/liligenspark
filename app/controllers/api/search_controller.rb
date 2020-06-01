@@ -59,9 +59,11 @@ class Api::SearchController < ApplicationController
     res = false
     ref_user = @api_user
     if params['library'] != 'giphy_asl' && params['user_name'] && params['user_name'] != ''
-      ref_user = User.find_by_path(params['user_name'])
-      return unless exists?(ref_user, params['user_name'])
-      return unless allowed?(ref_user, 'edit')
+      maybe_ref_user = User.find_by_path(params['user_name'])
+      return unless exists?(maybe_ref_user, params['user_name'])
+      if maybe_ref_user.allows?(@api_user, 'edit')
+        ref_user = maybe_ref_user
+      end
     end
     if params['library']
       res = Uploader.find_images(params['q'], params['library'], ref_user, @api_user)
