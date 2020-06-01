@@ -418,6 +418,23 @@ describe Organization, :type => :model do
       expect(u.expires_at).to be <= Time.now + (3.weeks.to_i + 10)
     end
     
+    it "should update a user's expires_at when they are re-added as unsponsored" do
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      u = User.create(:expires_at => Time.now + 100, :settings => {'subscription' => {'org_sponsored' => true, 'seconds_left' => 3.weeks.to_i}})
+      puts u.expires_at.to_json
+      User.where(id: u.id).update_all(expires_at: Time.now + 100)
+      puts u.reload.expires_at.to_json
+      o.add_user(u.user_name, false, true)
+      u.reload
+
+      expect(u.expires_at).to eq(nil)
+      o.add_user(u.user_name, false, false)
+      u.reload
+      expect(u.settings['subscription_left']) == nil
+      expect(u.expires_at).to be >= Time.now + (3.weeks.to_i - 10)
+      expect(u.expires_at).to be <= Time.now + (3.weeks.to_i + 10)
+    end
+
     it "should not update a user's non-sponsored expires_at when they are removed" do
       o = Organization.create(:settings => {'total_licenses' => 1})
       u = User.create(:expires_at => Time.now + 100, :settings => {'subscription' => {'org_sponsored' => false, 'seconds_left' => 3.weeks.to_i}})

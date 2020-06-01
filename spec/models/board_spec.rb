@@ -807,8 +807,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
@@ -832,8 +832,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -859,8 +859,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -887,9 +887,9 @@ describe Board, :type => :model do
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bi3 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'cheese'}, url: 'http://www.example.com')
       expect(b).to receive(:button_images).and_return([bi1, bi2, bi3])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi2' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['pcs', 'symbolstix']).and_return({'bi3' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi3' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
@@ -3055,6 +3055,49 @@ describe Board, :type => :model do
       expect(json['board']['sound_urls'][bi1.global_id]).to eq('http://www.example.com/sound1.mp3')
       expect(json['board']['sound_urls'].keys.length).to eq(2)
       expect(json['board']['sound_urls']["1_#{bi1.id - 1}_298g4hag3g"]).to eq('https://www.example.com/sound2.mp3')
+    end
+  end
+
+  describe "sync_stamp" do
+    it "should update sync_stamp when a user changes their home board" do
+      u = User.create
+      expect(u.sync_stamp).to eq(nil)
+      b = Board.create(:user => u)
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key }
+      u.save
+      Worker.process_queues
+      expect(u.reload.sync_stamp).to_not eq(nil)
+    end
+
+    it "should update sync_stamp when a board in the user's board set is changed" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      u1.settings['preferences']['home_board'] = {'id' => b1.global_id, 'key' => b1.key }
+      u1.save
+
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      ts = u1.reload.sync_stamp
+      expect(ts).to_not eq(nil)
+      ts2 = u1.reload.sync_stamp
+      expect(ts2).to_not eq(nil)
+      b2.process({'buttons' => [{'id' => 1, 'label' => 'frogs'}]}, {user: u2})
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      Worker.process_queues
+      expect(u1.reload.sync_stamp).to be > ts
+      expect(u2.reload.sync_stamp).to be >= ts2
+
     end
   end
 end

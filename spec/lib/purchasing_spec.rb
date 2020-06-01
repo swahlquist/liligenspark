@@ -1782,11 +1782,34 @@ describe Purchasing do
     end
 
     it "should add extras for the user on a redeem code if specified" do
-      write_this_test
+      g = GiftPurchase.create(:settings => {'seconds_to_add' => 3.years.to_i, 'include_extras' => true})
+      u = User.create
+      exp = u.expires_at
+      
+      res = Purchasing.redeem_gift(g.code, u)
+      expect(res[:success]).to eq(true)
+      u.reload
+      expect(u.expires_at).to eq(exp + 3.years.to_i)
+      expect(u.subscription_hash['extras_enabled']).to eq(true)
     end
 
     it "should add extras for the user on a bulk redeem code if specified" do
-      write_this_test
+      g = GiftPurchase.create(:settings => {'total_codes' => 50, 'seconds_to_add' => 4.years.to_i, 'include_extras' => true})
+      expect(g.settings['codes']).to_not eq(nil)
+      expect(g.settings['codes'].keys.length).to eq(50)
+      expect(g.reload.settings['codes'].to_a[0][1]).to eq(nil)
+      code = g.settings['codes'].to_a[0][0]
+      u = User.create
+      exp = u.expires_at
+      res = Purchasing.redeem_gift(code, u)
+      expect(res[:success]).to eq(true)
+      expect(res[:code]).to eq(code)
+      u.reload
+      expect(u.subscription_hash['extras_enabled']).to eq(true)
+      expect(u.expires_at).to eq(exp + 4.years.to_i)
+      expect(g.reload.settings['codes'].to_a[0][1]).to_not eq(nil)
+      expect(g.reload.settings['codes'].to_a[0][1]['receiver_id']).to eq(u.global_id)
+      expect(g.reload.settings['codes'].to_a[0][1]['redeemed_at']).to_not eq(nil)
     end
 
     it "should not add extras for the user if not specified on the gift" do

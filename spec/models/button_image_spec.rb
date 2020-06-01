@@ -144,6 +144,38 @@ describe ButtonImage, :type => :model do
       i.track_image_use
     end
 
+    it 'should auto-track when the image is created' do
+      u = User.create
+      b = Board.create(:user => u, :public => true)
+      i = ButtonImage.new(settings: {
+        'search_term' => 'bacon',
+        'label' => 'pig',
+        'external_id' => '12356'
+      }, user: u, board: b)
+      i.save
+      expect(Typhoeus).to receive(:post) do |url, args|
+        expect(url).to eq("https://www.opensymbols.org/api/v1/symbols/12356/use")
+        expect(args[:body][:user_id]).not_to eq(nil)
+        expect(args[:body][:user_id]).not_to eq(u.id)
+        expect(args[:body][:user_id]).not_to eq(u.global_id)
+        expect(args[:body][:user_id].length).to eq(10)
+      end
+      Worker.process_queues
+    end
+
+    it 'should track protected_source usage' do
+      u = User.create
+      b = Board.create(:user => u, :public => true)
+      i = ButtonImage.new(settings: {
+        'search_term' => 'bacon',
+        'label' => 'pig',
+        'external_id' => '12356',
+        'protected_source' => 'bacon'
+      }, user: u, board: b)
+      i.save
+      expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
+    end
+
     it 'should schedule generate_fallback if image is protected' do
       u = User.create
       b = Board.create(user: u, :public => true)

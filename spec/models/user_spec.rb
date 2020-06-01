@@ -2143,7 +2143,7 @@ describe User, :type => :model do
       u = User.new
       expect(u).to receive(:get_cached).with('protected_sources/false').and_return(nil)
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return(true)
-      expect(u).to receive(:subscription_hash).and_return({'extras_enabled' => true})
+      expect(u).to receive(:subscription_hash).and_return({'extras_enabled' => true}).at_least(1).times
       expect(u.enabled_protected_sources).to eq(['lessonpix', 'pcs', 'symbolstix'])
     end
 
@@ -2151,7 +2151,7 @@ describe User, :type => :model do
       u = User.new
       expect(u).to receive(:get_cached).with('protected_sources/false').and_return(nil)
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return(true)
-      expect(u).to receive(:subscription_hash).and_return({'extras_enabled' => true})
+      expect(u).to receive(:subscription_hash).and_return({'extras_enabled' => true}).at_least(1).times
       expect(u).to receive(:set_cached).with('protected_sources/false', ['lessonpix', 'pcs', 'symbolstix']).and_return(nil)
       expect(u.enabled_protected_sources).to eq(['lessonpix', 'pcs', 'symbolstix'])
     end
@@ -2164,7 +2164,7 @@ describe User, :type => :model do
       expect(u).to receive(:supervisees).and_return([u2])
       expect(Uploader).to receive(:lessonpix_credentials).with(u2).and_return(true)
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return(false)
-      expect(u2).to receive(:subscription_hash).and_return({'extras_enabled' => true})
+      expect(u2).to receive(:subscription_hash).and_return({'extras_enabled' => true}).at_least(1).times
       expect(u).to receive(:set_cached).with('protected_sources/true', ['lessonpix', 'pcs', 'symbolstix']).and_return(nil)
       expect(u2).to receive(:set_cached).with('protected_sources/false', ['lessonpix', 'pcs', 'symbolstix']).and_return(nil)
       expect(u.enabled_protected_sources(true)).to eq(['lessonpix', 'pcs', 'symbolstix'])
