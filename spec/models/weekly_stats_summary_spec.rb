@@ -56,7 +56,7 @@ describe WeeklyStatsSummary, :type => :model do
     expect(data['modeled_button_counts']).to eq({'1::1_1' => {'button_id' => 1, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 2}})
   end
 
-  it "should schedule board stats generation" do
+  it "should schedule board stats generation (only for popular boards?)" do
     write_this_test
   end
 

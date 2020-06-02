@@ -1117,7 +1117,8 @@ describe Board, :type => :model do
         'added_at' => Time.now.utc.iso8601
       })
       expect(u2.reload.settings['user_notifications']).to eq(nil)
-      expect(u3.reload.settings['user_notifications']).to eq([{
+      expect(u3.reload.settings['user_notifications'].length).to eq(1)
+      expect(u3.reload.settings['user_notifications'][0].except('occurred_at')).to eq({
         'id' => b.global_id,
         'type' => 'board_buttons_changed',
         'for_user' => false,
@@ -1125,9 +1126,8 @@ describe Board, :type => :model do
         'previous_revision' => b.settings['revision_hashes'][-2][0],
         'name' => b.settings['name'],
         'key' => b.key,
-        'occurred_at' => b.reload.updated_at.iso8601,
         'added_at' => Time.now.utc.iso8601
-      }])
+      })
     end
     
     it "should not schedule track_boards when notifying users of board changes" do
@@ -1326,6 +1326,32 @@ describe Board, :type => :model do
           {'locale' => 'es', 'label' => 'hatzy', 'vocalization' => 'hatz'}
         ]}
       ], nil)
+      expect(b.settings['buttons']).not_to eq(nil)
+      expect(b.settings['buttons'].length).to eq(1)
+      expect(b.settings['translations']).to eq({
+        '1_2' => {
+          'en' => {
+            'label' => 'hat'
+          },
+          'es' => {
+            'label' => 'hatzy',
+            'vocalization' => 'hatz'
+          }
+        }
+      })
+    end
+
+    it "should process translations from the translations hash" do
+      b = Board.new
+      b.settings ||= {}
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234'}
+      ], nil, nil, {
+        '1_2' => [
+          {'locale' => 'en', 'label' => 'hat'},
+          {'locale' => 'es', 'label' => 'hatzy', 'vocalization' => 'hatz'}
+        ]
+      })
       expect(b.settings['buttons']).not_to eq(nil)
       expect(b.settings['buttons'].length).to eq(1)
       expect(b.settings['translations']).to eq({
@@ -2056,8 +2082,12 @@ describe Board, :type => :model do
       UserBoardConnection.create(:board_id => b.id, :user_id => u.id)
       list = [u]
       expect(User).to receive(:where).with(:id => [u.id.to_s]).and_return(list)
-      expect(list).to receive(:update_all).and_return(true)
-      expect(u).to receive(:track_boards)
+      expect(list).to receive(:find_in_batches) do |opts, &block|
+        expect(opts[:batch_size]).to eq(20)
+        block.call(list);
+      end
+      expect(u).to receive(:track_boards).with('schedule')
+      expect(u).to receive(:track_boards).with(no_args)
       b.update_affected_users(true)
     end
     
@@ -2067,8 +2097,13 @@ describe Board, :type => :model do
       UserBoardConnection.create(:board_id => b.id, :user_id => u.id)
       list = [u]
       expect(User).to receive(:where).with(:id => [u.id.to_s]).and_return(list)
-      expect(list).to receive(:update_all).and_return(true)
-      expect(u).to_not receive(:track_boards)
+      expect(list).to receive(:find_in_batches) do |opts, &block|
+        expect(u.instance_variable_get('@do_track_boards')).to eq(false)
+        expect(opts[:batch_size]).to eq(20)
+        block.call(list);
+      end
+      expect(u)
+      expect(u).to receive(:track_boards).with(no_args)
       b.update_affected_users(false)
     end
     
@@ -2517,6 +2552,42 @@ describe Board, :type => :model do
       Worker.process_queues
       versions = b.reload.versions.count
 
+      b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      Worker.process_queues
+      expect(b.reload.versions.count).to eq(versions + 1)
+    end
+
+    it 'should track image uses with new strings on the correct locale' do
+      u = User.create
+      b = Board.create(:user => u)
+      bi1 = ButtonImage.create(user: u, board: b, settings: {external_id: 'adf'}, url: 'http://www.example.com/pic1.png')
+      bi2 = ButtonImage.create(user: u, board: b, settings: {external_id: 'qwe'}, url: 'http://www.example.com/pic1.png')
+
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'hat', 'image_id' => bi1.global_id},
+        {'id' => 2, 'label' => 'cat', 'image_id' => bi2.global_id}
+      ], 'public' => true, 'visibility' => 'public'}, {'user' => u})
+      expect(b.button_images.count).to eq(2)
+      Worker.process_queues
+      Worker.process_queues
+      versions = b.reload.versions.count
+
+      expect(ButtonImage).to receive(:track_images) do |list|
+        expect(list).to eq([
+          {
+            "id":bi1.global_id,
+            "label":"sat",
+            "user_id":u.global_id,
+            "external_id":"adf",
+            "locale":"es"},
+          {
+            "id":bi2.global_id,
+            "label":"rat",
+            "user_id":u.global_id,
+            "external_id":"qwe",
+            "locale":"es"}
+        ])
+      end
       b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
       Worker.process_queues
       expect(b.reload.versions.count).to eq(versions + 1)

@@ -169,13 +169,27 @@ describe ClusterLocation, :type => :model do
       expect(Worker.scheduled?(ClusterLocation, :perform_action, {'method' => 'add_to_cluster', 'arguments' => [s1.global_id]})).to eq(true)
     end
     
-    it "should schedule a call to clusterize if geo or ip cluster not found but data present on session" do
+    it "should not schedule a call to clusterize if geo or ip cluster not found but data present on session, but not enough new sessions" do
       u = User.create
       d = Device.create
       s1 = LogSession.process_new({'events' => [{'timestamp' => Time.now.to_i, 'geo' => ['13', '12']}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(ClusterLocation.add_to_cluster(s1.global_id)).to eq(false)
-      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_ips', 'arguments' => [u.global_id]})).to eq(true)
-      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_geos', 'arguments' => [u.global_id]})).to eq(true)
+      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_ips', 'arguments' => [u.global_id]})).to eq(false)
+      expect(Worker.scheduled_for?('slow', ClusterLocation, :perform_action, {'method' => 'clusterize_geos', 'arguments' => [u.global_id]})).to eq(false)
+    end
+
+    it "should schedule a call to clusterize if geo or ip cluster not found but data present on session" do
+      u = User.create
+      d = Device.create
+      s1 = LogSession.process_new({'events' => [{'timestamp' => Time.now.to_i, 'geo' => ['13', '12']}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      20.times do |i|
+        dd = Device.create
+        LogSession.process_new({'events' => [{'timestamp' => Time.now.to_i, 'geo' => ['13', '12']}]}, {:user => u, :author => u, :device => dd, :ip_address => "1.2.3.1#{i}"})
+      end
+      obj = OpenStruct.new
+      expect(ClusterLocation.add_to_cluster(s1.global_id)).to eq(false)
+      expect(Worker.scheduled_for?(:slow, ClusterLocation, :perform_action, {'method' => 'clusterize_ips', 'arguments' => [u.global_id]})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, ClusterLocation, :perform_action, {'method' => 'clusterize_geos', 'arguments' => [u.global_id]})).to eq(true)
     end
   end
 

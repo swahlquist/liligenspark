@@ -21,11 +21,11 @@ describe BoardButtonImage, :type => :model do
       expect(bi.button_image).to eq(i)
     end
     
-    it "should track use for images when user_id is provided" do
+    it "should not track use for images even if user_id is provided" do
       u = User.create
       b = Board.create(:user => u)
       i = ButtonImage.create
-      expect(ButtonImage).to receive(:track_image_use).with({
+      expect(ButtonImage).to_not receive(:track_image_use).with({
         'label' => "hat",
         'external_id' => nil,
         'locale' => 'en',

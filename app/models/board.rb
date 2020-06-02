@@ -1004,11 +1004,14 @@ class Board < ActiveRecord::Base
         images_to_track = []
         images_hash = {}
         self.button_images.each{|i| images_hash[i.global_id] = i.settings['external_id'] }
+        inverted_translations = translations.invert
         self.settings['buttons'].each do |button|
-          if button['label'] && translations[button['label']] && button['image_id'] && images_hash[button['image_id']]
+          string_to_track = button['label'] && translations[button['label']]
+          string_to_track ||= inverted_translations[button['label']] && button['label']
+          if string_to_track && button['image_id'] && images_hash[button['image_id']]
             images_to_track << {
               :id => button['image_id'], 
-              :label => translations[button['label']], 
+              :label => string_to_track, 
               :user_id => self.user.global_id,
               :external_id => images_hash[button['image_id']],
               :locale => dest_lang

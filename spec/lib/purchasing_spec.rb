@@ -1944,19 +1944,21 @@ describe Purchasing do
     expect(u.reload.subscription_events[4]['log']).to eq('long-term - creating charge')
     expect(u.reload.subscription_events[5]['log']).to eq('persisting long-term purchase update')
     expect(u.reload.subscription_events[6]['log']).to eq('subscription event triggered remotely')
-    expect(u.reload.subscription_events[6]['args']).to eq({
+    expect(u.reload.subscription_events[6]['args'].except('seconds_to_add')).to eq({
       'customer_id' => nil,
       'discount_code' => nil,
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
-      'seconds_to_add' => 157784760,
       'purchase_amount' => 200,
       'source' => 'new purchase',
       'source_id' => 'stripe',
       'token_summary' => 'Unknown Card',
       'user_id' => u.global_id
     })
+    expect(u.reload.subscription_events[6]['args']['seconds_to_add']).to be >= 157784760
+    expect(u.reload.subscription_events[6]['args']['seconds_to_add']).to be <= 157788000
+
     expect(u.reload.subscription_events[7]['log']).to eq('purchase notification triggered')
     expect(u.reload.subscription_events[8]['log']).to eq('subscription canceling')
     expect(u.reload.subscription_events[8]['reason']).to eq('all')
@@ -1977,12 +1979,11 @@ describe Purchasing do
     Purchasing.subscription_event(req)
     expect(u.reload.subscription_events.length).to eq(10)
     expect(u.reload.subscription_events[9]['log']).to eq('subscription event triggered remotely')
-    expect(u.reload.subscription_events[9]['args']).to eq({
+    expect(u.reload.subscription_events[9]['args'].except('seconds_to_add')).to eq({
       'customer_id' => nil,
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
-      'seconds_to_add' => 157784760,
       'source_id' => 'stripe',
       'source' => 'charge.succeeded',
       'user_id' => u.global_id
@@ -2064,19 +2065,21 @@ describe Purchasing do
     expect(u.reload.subscription_events[4]['log']).to eq('long-term - creating charge')
     expect(u.reload.subscription_events[5]['log']).to eq('persisting long-term purchase update')
     expect(u.reload.subscription_events[6]['log']).to eq('subscription event triggered remotely')
-    expect(u.reload.subscription_events[6]['args']).to eq({
+    expect(u.reload.subscription_events[6]['args'].except('seconds_to_add')).to eq({
       'customer_id' => 'asdf',
       'discount_code' => nil,
       'plan_id' => 'long_term_200',
       'purchase' => true,
       'purchase_id' => 'asdf',
       'source_id' => 'stripe',
-      'seconds_to_add' => 157784760,
       'purchase_amount' => 200,
       'source' => 'new purchase',
       'token_summary' => 'Unknown Card',
       'user_id' => u.global_id
     })
+    expect(u.reload.subscription_events[6]['args']['seconds_to_add']).to be >= 157784760
+    expect(u.reload.subscription_events[6]['args']['seconds_to_add']).to be <= 157788000
+   
     expect(u.reload.subscription_events[7]['log']).to eq('purchase notification triggered')
     expect(u.reload.subscription_events[8]['log']).to eq('subscription canceling')
     expect(u.reload.subscription_events[8]['reason']).to eq('all')

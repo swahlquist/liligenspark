@@ -11,14 +11,6 @@ class Api::ButtonSetsController < ApplicationController
   end
   
   def show
-    # TODO: don't stream through the app as these can get big
-    # (up to 4 Mb), upload them to a remote server keyed off of
-    # the allowed board_ids for the user that intersect with the
-    # button set's board_ids and an updated_at stamp on the
-    # button_set, using a secured url.
-    # The uploaded files should auto-delete.
-    # TODO: sharding
-
     Rails.logger.warn('looking up board')
     board = nil
     button_set = nil

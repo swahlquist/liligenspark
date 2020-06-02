@@ -11,9 +11,10 @@ describe BoardDownstreamButtonSet, :type => :model do
   
   describe "update_for" do
     it "should do nothing if a matching board does not exist" do
+      cnt = BoardDownstreamButtonSet.count
       res = BoardDownstreamButtonSet.update_for('asdf')
       expect(res).to eq(nil)
-      expect(BoardDownstreamButtonSet.count).to eq(0)
+      expect(BoardDownstreamButtonSet.count).to eq(cnt)
     end
     
     it "should generate a button set for the specified board id" do
@@ -922,9 +923,11 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to_not receive(:schedule_once).with(:touch_remote, hash)
       bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 6.months.from_now.to_i}
 
+      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return("https://www.example.com/zxcv")
+
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
-      expect(bs.url_for(u)).to eq("#{ENV['UPLOADS_S3_CDN']}/zxcv")
+      expect(bs.url_for(u)).to eq("https://www.example.com/zxcv")
     end
 
     it "should schedule a remote touch if expiring soon" do
@@ -937,10 +940,11 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['remote_paths'] = {}
       expect(bs).to receive(:schedule_once).with(:touch_remote, hash)
       bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 1.hour.from_now.to_i}
+      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return("https://www.example.com/zxcv")
 
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
-      expect(bs.url_for(u)).to eq("#{ENV['UPLOADS_S3_CDN']}/zxcv")
+      expect(bs.url_for(u)).to eq("https://www.example.com/zxcv")
     end
 
     it "should use the source button set if one is defined" do

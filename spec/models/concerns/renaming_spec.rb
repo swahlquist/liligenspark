@@ -128,7 +128,7 @@ describe Renaming, :type => :model do
         expect(res).to eq(true)
         Worker.process_queues
         expect(Worker.scheduled?(BoardDownstreamButtonSet, 'perform_action', {'method' => 'update_for', 'arguments' => [b1.global_id]})).to eq(true)
-        expect(Worker.scheduled_for?(:slow, BoardDownstreamButtonSet, 'perform_action', {'method' => 'update_for', 'arguments' => [b2.global_id]})).to eq(true)
+        expect(Worker.scheduled?(BoardDownstreamButtonSet, 'perform_action', {'method' => 'update_for', 'arguments' => [b2.global_id]})).to eq(true)
       end
     
       it "should update keys for any users this board was shared with" do

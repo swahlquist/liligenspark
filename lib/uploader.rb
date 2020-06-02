@@ -31,9 +31,19 @@ module Uploader
   end
   
   def self.check_existing_upload(remote_path)
+    config = remote_upload_config
+    service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret])    
+    bucket = service.buckets.find(config[:bucket_name])
+    object = bucket.objects.find(path) rescue nil
+    if object
+      if object.expiration
+        time = Time.parse(object.expiration) rescue nil
+        if time && time > 48.hours.from_now
+          return "#{ENV['UPLOADS_S3_CDN']}#{remote_path.match(/\//) ? '' : '/'}#{remote_path}"
+        end
+      end
+    end
     return nil
-    # TODO: if the path exists and won't expire for at least 48 hours
-    # then return the existing record URL
   end
 
   def self.remote_touch(path)

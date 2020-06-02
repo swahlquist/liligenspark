@@ -421,9 +421,7 @@ describe Organization, :type => :model do
     it "should update a user's expires_at when they are re-added as unsponsored" do
       o = Organization.create(:settings => {'total_licenses' => 1})
       u = User.create(:expires_at => Time.now + 100, :settings => {'subscription' => {'org_sponsored' => true, 'seconds_left' => 3.weeks.to_i}})
-      puts u.expires_at.to_json
       User.where(id: u.id).update_all(expires_at: Time.now + 100)
-      puts u.reload.expires_at.to_json
       o.add_user(u.user_name, false, true)
       u.reload
 
@@ -451,6 +449,7 @@ describe Organization, :type => :model do
     it "should give the user a window of time when they are removed if they have no expires_at time left" do
       o = Organization.create(:settings => {'total_licenses' => 1})
       u = User.create(:expires_at => Time.now + 100, :settings => {'subscription' => {'org_sponsored' => true, 'seconds_left' => 5}})
+      expect(u.expires_at).to be < 1.day.from_now
       u.settings['managed_by'] = {}
       u.settings['managed_by'][o.global_id] = {'sponsored' => true, 'pending' => false}
       u.save

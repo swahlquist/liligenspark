@@ -134,8 +134,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       if button_set.data['remote_paths'][@remote_hash]['expires'] < 2.weeks.from_now.to_i
         button_set.schedule_once(:touch_remote, @remote_hash)
       end
-      # remote check to see if the path exists
-      return "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][@remote_hash]['path']}"
+      url = Uploader.check_existing_upload(button_set.data['remote_paths'][@remote_hash]['path'])
+      return url if url
     end
     @remote_path = "extras/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
     return nil
@@ -143,6 +143,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
   def touch_remote(hash)
     if self.data['remote_paths'] && self.data['remote_paths'][hash]
+      # Touch the remote file so it hangs around longer now that
+      # we know it's actually being used
       res = Uploader.remote_touch(self.data['remote_paths'][hash]['path'])
       if res
         self.data['remote_paths'][hash]['expires'] = 5.months.from_now.to_i
@@ -151,7 +153,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         self.data['remote_paths'].delete(hash)
         self.save
       end
-      # TODO: remote call to update 
     end
   end
 
@@ -181,7 +182,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     button_set.data['remote_paths'] ||= {}
     if button_set.data['remote_paths'][remote_hash] && !button_set.data['remote_paths'][remote_hash]['path'] && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
       # Don't allow repeated regeneration attempts to bog things down
-      return {success: false, error: 'button set failed to generate, waiting for cool-down period'}
+      if button_set.data['remote_paths'][remote_hash]['path']
+        return {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
+      else
+        return {success: false, error: 'button set failed to generate, waiting for cool-down period'}
+      end
     end
 
     button_set.generate_defaults
@@ -282,7 +287,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           # as part of the update process for this button set
           if do_update && !traversed_ids.include?(source_board_id)
             # If we're already in a slow background job, just do everything immediately
-            if immediate_update || Worker.current_speed == :slow
+            if immediate_update || Worker.current_speed.to_s == 'slow'
               BoardDownstreamButtonSet.update_for(source_board_id, true, traversed_ids)
             else
               BoardDownstreamButtonSet.schedule_update(source_board_id, traversed_ids)

@@ -141,12 +141,6 @@ describe Stats do
       expect(day[:total_words]).to eq(3)
       expect(day[:unique_words]).to eq(2)
       expect(day[:unique_buttons]).to eq(1)
-      expect(day[:words_by_frequency]).to eq([
-        {'text' => 'ok', 'count' => 2}, {'text' => 'go', 'count' => 1}
-      ])
-      expect(day[:buttons_by_frequency]).to eq([
-        {'button_id' => 1, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 1}
-      ])
       
       day = res[:days][2.days.ago.to_date.to_s]
       expect(day).not_to eq(nil)
@@ -154,8 +148,6 @@ describe Stats do
       expect(day[:total_utterances]).to eq(1)
       expect(day[:total_buttons]).to eq(0)
       expect(day[:total_words]).to eq(0)
-      expect(day[:words_by_frequency]).to eq([])
-      expect(day[:buttons_by_frequency]).to eq([])
     end
 
     it "should generate per-day stats when weekly summary is generated" do
@@ -207,12 +199,6 @@ describe Stats do
       expect(day[:total_words]).to eq(3)
       expect(day[:unique_words]).to eq(2)
       expect(day[:unique_buttons]).to eq(1)
-      expect(day[:words_by_frequency]).to eq([
-        {'text' => 'ok', 'count' => 2}, {'text' => 'go', 'count' => 1}
-      ])
-      expect(day[:buttons_by_frequency]).to eq([
-        {'button_id' => 1, 'board_id' => '1_1', 'text' => 'ok go ok', 'count' => 1}
-      ])
       
       day = res[:days][2.days.ago.to_date.to_s]
       expect(day).not_to eq(nil)
@@ -220,8 +206,6 @@ describe Stats do
       expect(day[:total_utterances]).to eq(1)
       expect(day[:total_buttons]).to eq(0)
       expect(day[:total_words]).to eq(0)
-      expect(day[:words_by_frequency]).to eq([])
-      expect(day[:buttons_by_frequency]).to eq([])
     end
 
     it "should include sensor data in generated stats" do
@@ -277,52 +261,52 @@ describe Stats do
       day = res[:days][Date.today.to_s]
       expect(day).not_to eq(nil)
       expect(day[:total_sessions]).to eq(1)
-      expect(day['volume']['average']).to eq(64.5)
-      expect(day['volume']['total']).to eq(2)
-      expect(day['volume']['histogram']['50-60']).to eq(1)
-      expect(day['volume']['histogram']['70-80']).to eq(1)
-      expect(day['screen_brightness']['average']).to eq(50)
-      expect(day['screen_brightness']['total']).to eq(2)
-      expect(day['screen_brightness']['histogram']['50-60']).to eq(2)
-      expect(day['ambient_light']['average']).to eq(600)
-      expect(day['ambient_light']['total']).to eq(2)
-      expect(day['ambient_light']['histogram']['100-250']).to eq(1)
-      expect(day['ambient_light']['histogram']['1000-15000']).to eq(1)
-      expect(day['orientation']['total']).to eq(2)
-      expect(day['orientation']['alpha']['total']).to eq(2)
-      expect(day['orientation']['alpha']['average']).to eq(222.5)
-      expect(day['orientation']['alpha']['histogram']['N']).to eq(1)
-      expect(day['orientation']['alpha']['histogram']['E']).to eq(1)
-      expect(day['orientation']['beta']['total']).to eq(2)
-      expect(day['orientation']['beta']['average']).to eq(7.5)
-      expect(day['orientation']['beta']['histogram']['-20-20']).to eq(2)
-      expect(day['orientation']['gamma']['total']).to eq(2)
-      expect(day['orientation']['gamma']['average']).to eq(22.5)
-      expect(day['orientation']['gamma']['histogram']['-18-18']).to eq(1)
-      expect(day['orientation']['gamma']['histogram']['18-54']).to eq(1)
+      # expect(day['volume']['average']).to eq(64.5)
+      # expect(day['volume']['total']).to eq(2)
+      # expect(day['volume']['histogram']['50-60']).to eq(1)
+      # expect(day['volume']['histogram']['70-80']).to eq(1)
+      # expect(day['screen_brightness']['average']).to eq(50)
+      # expect(day['screen_brightness']['total']).to eq(2)
+      # expect(day['screen_brightness']['histogram']['50-60']).to eq(2)
+      # expect(day['ambient_light']['average']).to eq(600)
+      # expect(day['ambient_light']['total']).to eq(2)
+      # expect(day['ambient_light']['histogram']['100-250']).to eq(1)
+      # expect(day['ambient_light']['histogram']['1000-15000']).to eq(1)
+      # expect(day['orientation']['total']).to eq(2)
+      # expect(day['orientation']['alpha']['total']).to eq(2)
+      # expect(day['orientation']['alpha']['average']).to eq(222.5)
+      # expect(day['orientation']['alpha']['histogram']['N']).to eq(1)
+      # expect(day['orientation']['alpha']['histogram']['E']).to eq(1)
+      # expect(day['orientation']['beta']['total']).to eq(2)
+      # expect(day['orientation']['beta']['average']).to eq(7.5)
+      # expect(day['orientation']['beta']['histogram']['-20-20']).to eq(2)
+      # expect(day['orientation']['gamma']['total']).to eq(2)
+      # expect(day['orientation']['gamma']['average']).to eq(22.5)
+      # expect(day['orientation']['gamma']['histogram']['-18-18']).to eq(1)
+      # expect(day['orientation']['gamma']['histogram']['18-54']).to eq(1)
       
       day = res[:days][2.days.ago.to_date.to_s]
       expect(day).not_to eq(nil)
       expect(day[:total_sessions]).to eq(1)
-      expect(day['volume']['average']).to eq(55)
-      expect(day['volume']['total']).to eq(1)
-      expect(day['volume']['histogram']['50-60']).to eq(1)
-      expect(day['screen_brightness']['average']).to eq(80)
-      expect(day['screen_brightness']['total']).to eq(1)
-      expect(day['screen_brightness']['histogram']['80-90']).to eq(1)
-      expect(day['ambient_light']['average']).to eq(1100)
-      expect(day['ambient_light']['total']).to eq(1)
-      expect(day['ambient_light']['histogram']['1000-15000']).to eq(1)
-      expect(day['orientation']['total']).to eq(1)
-      expect(day['orientation']['alpha']['total']).to eq(1)
-      expect(day['orientation']['alpha']['average']).to eq(95)
-      expect(day['orientation']['alpha']['histogram']['E']).to eq(1)
-      expect(day['orientation']['beta']['total']).to eq(1)
-      expect(day['orientation']['beta']['average']).to eq(8)
-      expect(day['orientation']['beta']['histogram']['-20-20']).to eq(1)
-      expect(day['orientation']['gamma']['total']).to eq(1)
-      expect(day['orientation']['gamma']['average']).to eq(50)
-      expect(day['orientation']['gamma']['histogram']['18-54']).to eq(1)
+      # expect(day['volume']['average']).to eq(55)
+      # expect(day['volume']['total']).to eq(1)
+      # expect(day['volume']['histogram']['50-60']).to eq(1)
+      # expect(day['screen_brightness']['average']).to eq(80)
+      # expect(day['screen_brightness']['total']).to eq(1)
+      # expect(day['screen_brightness']['histogram']['80-90']).to eq(1)
+      # expect(day['ambient_light']['average']).to eq(1100)
+      # expect(day['ambient_light']['total']).to eq(1)
+      # expect(day['ambient_light']['histogram']['1000-15000']).to eq(1)
+      # expect(day['orientation']['total']).to eq(1)
+      # expect(day['orientation']['alpha']['total']).to eq(1)
+      # expect(day['orientation']['alpha']['average']).to eq(95)
+      # expect(day['orientation']['alpha']['histogram']['E']).to eq(1)
+      # expect(day['orientation']['beta']['total']).to eq(1)
+      # expect(day['orientation']['beta']['average']).to eq(8)
+      # expect(day['orientation']['beta']['histogram']['-20-20']).to eq(1)
+      # expect(day['orientation']['gamma']['total']).to eq(1)
+      # expect(day['orientation']['gamma']['average']).to eq(50)
+      # expect(day['orientation']['gamma']['histogram']['18-54']).to eq(1)
     end   
     
     it "should include modeling data when available" do
@@ -505,7 +489,6 @@ describe Stats do
       u = User.create
       d = Device.create
       s1 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'a', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0, 'label' => 'boy', 'spoken' => true}, 'timestamp' => 1445037743}, {'type' => 'button', 'button_id' => 'e', 'board' => {'id' => 'aa'}, 'depth' => 1, 'percent_travel' => 0.5, 'button' => {'label' => 'girl', 'button_id' => 'f', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.82, 'spoken' => true}, 'timestamp' => 1445037743}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
-      puts s1.data['stats'].to_json
       s2 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'b', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.1, 'label' => 'hand', 'spoken' => true}, 'timestamp' => 1445044954}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       s3 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'c', 'board' => {'id' => 'aa'}, 'depth' => 3, 'percent_travel' => 0.3, 'label' => 'dog', 'spoken' => true}, 'timestamp' => 1444994571}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       s4 = LogSession.process_new({'events' => [{'type' => 'button', 'button' => {'button_id' => 'd', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.2, 'label' => 'run', 'spoken' => true}, 'timestamp' => 1444994886}, {'type' => 'button', 'button' => {'button_id' => 'g', 'board' => {'id' => 'aa'}, 'depth' => 1, 'percent_travel' => 0.5, 'label' => 'dog', 'spoken' => true}, 'timestamp' => 1444994886}, {'type' => 'button', 'button' => {'button_id' => 'h', 'board' => {'id' => 'aa'}, 'depth' => 0, 'percent_travel' => 0.3, 'label' => 'funny', 'spoken' => true}, 'timestamp' => 1444994886}]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
@@ -600,7 +583,6 @@ describe Stats do
       expect(res[:hours].map{|h| h[:locations].length }).to eq([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0])
       hour = res[:hours][14]
       expect(hour[:locations].length).to eq(3)
-      expect(hour[:words_by_frequency].length).to eq(14)
 
       start_at = Time.at(ts - 10813).utc
       end_at = Time.at(ts + 13).utc
@@ -613,17 +595,11 @@ describe Stats do
       expect(res[:hours].length).to eq(24)
       
       expect(res[:hours].map{|h| h[:total_buttons] }).to eq([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-      expect(res[:hours].map{|h| h[:buttons_by_frequency].map{|b| b['count'] }.sum }).to eq([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-      expect(res[:hours].map{|h| h[:words_by_frequency].map{|b| b['count'] }.sum }).to eq([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0])
       expect(res[:hours].map{|h| h[:locations].length }).to eq([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0])
       hour = res[:hours][14]
       expect(hour[:locations].length).to eq(3)
-      expect(hour[:words_by_frequency].length).to eq(14)
       hour = res[:hours][11]
       expect(hour[:locations].length).to eq(3)
-      expect(hour[:words_by_frequency].length).to eq(11)
-      expect(hour[:words_by_frequency].map{|w| w['text'] }).to eq(["never", "again", "watch", "on", "ok", "my", "ice", "go", "cream", "candy", "bar"])
-      expect(hour[:buttons_by_frequency].map{|w| w['text'] }).to eq(["ok go again", "never again on my watch", "never", "ice cream", "candy bar"])
     end
     
     it "should include most-common words per geo/ip location per time-of-day"
