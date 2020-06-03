@@ -1108,8 +1108,8 @@ var capabilities;
           capabilities.storage.assert_directory(dirname, filename).then(function(dir) {
             dir.getFile(filename, {create: false}, function(file) {
               var url = file.toURL();
-              if(dirname == 'image' && capabilities.system == 'iOS' && capabilities.installed_app) {
-                console.log("TRY DATA URI");
+              if(false && dirname == 'image' && capabilities.system == 'iOS' && capabilities.installed_app) {
+                // I think this is too slow to be useful
                 file.file(function(file) {
                   var reader = new FileReader();
                   reader.onloadend = function() {
@@ -1823,6 +1823,45 @@ var capabilities;
 
   })();
   capabilities.sensor_listen = function() {
+    if((window.screen && window.screen.orientation) || window.orientation !== null) {
+      // iOS 
+      setInterval(function() {
+        var layout = 'unknown';
+        // layout - portrait-primary, portrait-secondary, landscape-primary, landscape-secondary
+        if(window.screen && window.screen.orientation && window.screen.orientation.type) {
+          layout = window.screen.orientation.type;
+        } else if(window.orientation !== null && window.orientation !== undefined) {
+          var landscape = window.innerWidth > window.innerHeight;
+          if(window.orientation === 0 || window.orientation === 90) {
+            layout = landscape ? 'landscape-primary' : 'portrait-primary';
+          } else if(window.orientation === 180 || window.orientation === -90) {
+            layout = landscape ? 'landscape-secondary' : 'portrait-secondary';
+          }
+        }
+        if(capabilities.system == 'iOS') {
+          if(layout.match(/landscape/)) {
+            capabilities.screen.width = window.screen.height;
+            capabilities.screen.height = window.screen.width;
+          } else if(layout.match(/portrait/)) {
+            capabilities.screen.width = window.screen.width;
+            capabilities.screen.height = window.screen.height;
+          }
+        }
+        var new_orientation = {
+          alpha: Math.round(event.alpha * 100) / 100,
+          beta: Math.round(event.beta * 100) / 100,
+          gamma: Math.round(event.gamma * 100) / 100,
+          layout: layout,
+          timestamp: Math.round((new Date()).getTime() / 1000)
+        }
+        if(capabilities.last_orientation) {
+          new_orientation.alpha = capabilities.last_orientation.alpha;
+          new_orientation.beta = capabilities.last_orientation.beta;
+          new_orientation.gamma = capabilities.last_orientation.gamma;
+        }
+        capabilities.last_orientation = new_orientation;        
+      }, 5000);
+    }
     if(window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', function(event) {
         if(event.alpha !== null && event.alpha !== undefined) {

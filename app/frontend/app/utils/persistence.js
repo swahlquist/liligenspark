@@ -795,8 +795,8 @@ var persistence = EmberObject.extend({
             var url = urls.shift();
             if(url) {
               var img = new Image();
-              img.onerror = function() { runLater(next); }
-              img.onload = function() { runLater(next); }
+              img.onerror = function() { runLater(next, 117); }
+              img.onload = function() { runLater(next, 115.34); }
               img.src = url;
             }
           };
