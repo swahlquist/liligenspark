@@ -738,9 +738,8 @@ var persistence = EmberObject.extend({
           if(item.data && item.data.raw && item.data.raw.url && item.data.raw.type && item.data.raw.local_filename) {
             _this.url_cache[item.data.raw.url] = null;
             _this.url_uncache[item.data.raw.url] = null;
-            var try_image_data_uris = !!(check_file_system && capabilities.system == 'iOS' && item.data.raw.type == 'image');
             // if the image is found in the local directory listing, it's good
-            if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename] && !try_image_data_uris) {
+            if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename]) {
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url, true);
             // if the sound is found in the local directory listing, it's good
             } else if(item.data.raw.type == 'sound' && item.data.raw.local_url && _this.sound_filename_cache && _this.sound_filename_cache[item.data.raw.local_filename]) {
@@ -804,8 +803,8 @@ var persistence = EmberObject.extend({
             var url = urls.shift();
             if(url) {
               var img = new Image();
-              img.onerror = function() { runLater(next, 117); }
-              img.onload = function() { runLater(next, 115.34); }
+              img.onerror = function() { runLater(next, 10); }
+              img.onload = function() { runLater(next, 10); }
               img.src = url;
             }
           };
