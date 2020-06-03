@@ -1046,8 +1046,7 @@ var capabilities;
           });
           return promise;
         },
-        fix_url: function(url) {
-          var promise = capabilities.mini_promise();
+        fix_url: function(url, allow_data_uri) {
           // uses native calls
           if(!window.resolveLocalFileSystemURL) {
             return url;
@@ -1069,6 +1068,7 @@ var capabilities;
           }
           // TODO: when iOS 11 is our lowest supported version,
           // we can implement https://github.com/apache/cordova-ios/issues/415
+          // https://github.com/miloproductionsinc/cordova-plugin-file/commit/901f22a81116a290e7930c09357302763c486a1d
           // [configuration setURLSchemeHandler:self forURLScheme:@"coughfile"];
 
           // - (void)webView:(WKWebView *)webView startURLSchemeTask:(id <WKURLSchemeTask>)task {
@@ -1083,8 +1083,22 @@ var capabilities;
           // }          
           if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
             // support for local filesystem solution (WKWebView) for images and sounds
+            // https://github.com/apache/cordova-plugins.git#wkwebview-engine-localhost
             // https://www.npmjs.com/package/cordova-labs-local-webserver-ka
             fixed_url = fixed_url.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
+
+            if(allow_data_uri) {
+              // file.file(function(file) {
+              //   var reader = new FileReader();
+              //   reader.onloadend = function() {
+              //     promise.resolve(this.result);
+              //   };
+              //   reader.readAsDataURL(file);                  
+              // }, function(err) {
+              //   promise.resolve(url);
+              // });
+            }
+
           }
           return fixed_url;
         },
@@ -1093,7 +1107,21 @@ var capabilities;
           var promise = capabilities.mini_promise();
           capabilities.storage.assert_directory(dirname, filename).then(function(dir) {
             dir.getFile(filename, {create: false}, function(file) {
-              promise.resolve(file.toURL());
+              var url = file.toURL();
+              if(dirname == 'image' && capabilities.system == 'iOS' && capabilities.installed_app) {
+                console.log("TRY DATA URI");
+                file.file(function(file) {
+                  var reader = new FileReader();
+                  reader.onloadend = function() {
+                    promise.resolve(this.result);
+                  };
+                  reader.readAsDataURL(file);                  
+                }, function(err) {
+                  promise.resolve(url);
+                });
+              } else {
+                promise.resolve(url);
+              }
             }, function(err) {
               promise.reject(err);
             });

@@ -637,7 +637,7 @@ var persistence = EmberObject.extend({
         if(data.local_url) {
           if(data.local_filename) {
             if(type == 'image' && _this.image_filename_cache && _this.image_filename_cache[data.local_filename]) {
-              _this.url_cache[url] = capabilities.storage.fix_url(data.local_url);
+              _this.url_cache[url] = capabilities.storage.fix_url(data.local_url, true);
               return _this.url_cache[url];
             } else if(type == 'sound' && _this.sound_filename_cache && _this.sound_filename_cache[data.local_filename]) {
               _this.url_cache[url] = capabilities.storage.fix_url(data.local_url);
@@ -647,13 +647,13 @@ var persistence = EmberObject.extend({
               return new RSVP.Promise(function(file_url_resolve, file_url_reject) {
                 // apparently file system calls are really slow on ios
                 if(data.local_url) {
-                  var local_url = capabilities.storage.fix_url(data.local_url);
+                  var local_url = capabilities.storage.fix_url(data.local_url, type == 'image');
                   _this.url_cache[url] = local_url;
                   file_url_resolve(local_url);
                 } else {
                   if(file_missing) {
                     capabilities.storage.get_file_url(type, data.local_filename).then(function(local_url) {
-                      var local_url = capabilities.storage.fix_url(local_url);
+                      var local_url = capabilities.storage.fix_url(local_url, type == 'image');
                       _this.url_cache[url] = local_url;
                       file_url_resolve(local_url);
                     }, function() {
@@ -664,7 +664,7 @@ var persistence = EmberObject.extend({
                       }
                     });
                   } else {
-                    var local_url = capabilities.storage.fix_url(data.local_filename);
+                    var local_url = capabilities.storage.fix_url(data.local_filename, type == 'image');
                     _this.url_cache[url] = local_url;
                     file_url_resolve(local_url);
                   }
@@ -672,7 +672,7 @@ var persistence = EmberObject.extend({
               });
             }
           }
-          data.local_url = capabilities.storage.fix_url(data.local_url);
+          data.local_url = capabilities.storage.fix_url(data.local_url, type == 'image');
           _this.url_cache[url] = data.local_url;
           return data.local_url || data.data_uri;
         } else if(data.data_uri) {
@@ -730,9 +730,10 @@ var persistence = EmberObject.extend({
           if(item.data && item.data.raw && item.data.raw.url && item.data.raw.type && item.data.raw.local_filename) {
             _this.url_cache[item.data.raw.url] = null;
             _this.url_uncache[item.data.raw.url] = null;
+            var try_image_data_uris = !!(check_file_system && capabilities.system == 'iOS' && item.data.raw.type == 'image');
             // if the image is found in the local directory listing, it's good
-            if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename]) {
-              _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url);
+            if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename] && !try_image_data_uris) {
+              _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url, true);
             // if the sound is found in the local directory listing, it's good
             } else if(item.data.raw.type == 'sound' && item.data.raw.local_url && _this.sound_filename_cache && _this.sound_filename_cache[item.data.raw.local_filename]) {
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url);
@@ -745,7 +746,7 @@ var persistence = EmberObject.extend({
                 promises.push(new RSVP.Promise(function(res, rej) {
                   // see if it's available as a file_url since it wasn't in the directory listing
                   capabilities.storage.get_file_url(item.data.raw.type, item.data.raw.local_filename).then(function(local_url) {
-                    local_url = capabilities.storage.fix_url(local_url);
+                    local_url = capabilities.storage.fix_url(local_url, item.data.raw.type == 'image');
                     _this.url_cache[item.data.raw.url] = local_url;
                     res(local_url);
                   }, function(err) {
@@ -1062,7 +1063,7 @@ var persistence = EmberObject.extend({
         persistence.url_cache = persistence.url_cache || {};
         persistence.url_uncache = persistence.url_uncache || {};
         if(object.local_url) {
-          var local_url = capabilities.storage.fix_url(object.local_url);
+          var local_url = capabilities.storage.fix_url(object.local_url, type == 'image');
           persistence.url_cache[url_id] = local_url;
           persistence.url_uncache[url_id] = false;
           resolve(object);
