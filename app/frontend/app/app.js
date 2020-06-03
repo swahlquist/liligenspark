@@ -56,24 +56,29 @@ var CoughDrop = EmberApplication.extend({
   Resolver: Resolver,
   customEvents: customEvents,
   ready: function() {
-    // remove the splash screen if showing
-    if(capabilities.installed_app || (navigator && navigator.splashscreen && navigator.splashscreen.hide)) {
-      var checkForFooter = function() {
-        if($("footer").length > 0) {
-          if(navigator && navigator.splashscreen && navigator.splashscreen.hide) {
-            window.splash_hidden = true;
-            RunLater(navigator.splashscreen.hide, 700);
-          } else {
-            console.log("splash screen expected but not found");
-          }
-        } else {
-          RunLater(checkForFooter, 200);
-        }
-      };
-      RunLater(checkForFooter, 200);
-    }
+    CoughDrop.ready();
   }
 });
+CoughDrop.ready = function() {
+  if(CoughDrop.readying) { return; }
+  CoughDrop.readying = true;
+  // remove the splash screen if showing
+  if(capabilities.installed_app || (navigator && navigator.splashscreen && navigator.splashscreen.hide)) {
+    var checkForFooter = function() {
+      if($("footer").length > 0) {
+        if(navigator && navigator.splashscreen && navigator.splashscreen.hide) {
+          window.splash_hidden = true;
+          RunLater(navigator.splashscreen.hide, 700);
+        } else {
+          console.log("splash screen expected but not found");
+        }
+      } else {
+        RunLater(checkForFooter, 200);
+      }
+    };
+    RunLater(checkForFooter, 200);
+  }
+}
 
 CoughDrop.grabRecord = persistence.DSExtend.grabRecord;
 CoughDrop.embedded = !!location.href.match(/embed=1/);

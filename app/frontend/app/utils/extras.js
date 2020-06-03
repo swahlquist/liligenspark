@@ -37,6 +37,7 @@ import app_state from './app_state';
         $('html,body').scrollTop(0);
         console.log("COUGHDROP: ready to start");
         CoughDrop.app.advanceReadiness();
+        CoughDrop.ready();
       });
     }
   };
