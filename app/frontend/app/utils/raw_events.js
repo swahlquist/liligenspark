@@ -342,7 +342,7 @@ var buttonTracker = EmberObject.extend({
   },
   touch_start: function(event) {
     // if(capabilities.system == 'iOS' && capabilities.installed_app) { console.log("TSTART", event); }
-    if(event.target.closest('#sidebar')) {
+    if(event.target && event.target.closest('#sidebar')) {
       buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
       buttonTracker.scrollStart = event.clientY;
     }
@@ -447,7 +447,7 @@ var buttonTracker = EmberObject.extend({
         event.preventDefault();
       }
     }
-    if(buttonTracker.sidebarScrollStart == null && event.target.closest('#sidebar')) {
+    if(buttonTracker.sidebarScrollStart == null && event.target && event.target.closest('#sidebar')) {
       buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
     }
     event = buttonTracker.normalize_event(event);
@@ -1302,8 +1302,8 @@ var buttonTracker = EmberObject.extend({
         down: event.vertical >= 0 ? (event.vertical / 1) : 0,
         left: event.horizontal <= 0 ? (event.horizontal * -1 / 1) : 0,
         right: event.horizontal >= 0 ? (event.horizontal / 1) : 0,
-        uses: 0
       };
+      buttonTracker.head_tilt = buttonTracker.head_tilt || 0;
       console.log("u" + buttonTracker.head_tilt.up + " d" + buttonTracker.head_tilt.down + " l" + buttonTracker.head_tilt.left + " r" + buttonTracker.head_tilt.right);
     }
     if(buttonTracker.check('dwell_type') != 'arrow_dwell' && buttonTracker.check('dwell_type') != 'head' && !buttonTracker.gamepadupdate) {
