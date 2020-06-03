@@ -1848,9 +1848,6 @@ var capabilities;
           }
         }
         var new_orientation = {
-          alpha: Math.round(event.alpha * 100) / 100,
-          beta: Math.round(event.beta * 100) / 100,
-          gamma: Math.round(event.gamma * 100) / 100,
           layout: layout,
           timestamp: Math.round((new Date()).getTime() / 1000)
         }

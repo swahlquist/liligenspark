@@ -687,6 +687,8 @@ var persistence = EmberObject.extend({
     }
   },
   prime_caches: function(check_file_system) {
+    var now = (new Date()).getTime();
+    console.log("COUGHDROP: priming caches", check_file_system);
     var _this = this;
     _this.url_cache = _this.url_cache || {};
     _this.url_uncache = _this.url_uncache || {};
@@ -706,25 +708,31 @@ var persistence = EmberObject.extend({
     prime_promises.push(new RSVP.Promise(function(res, rej) {
       // apparently file system calls are really slow on ios
       if(!check_file_system) { return res([]); }
+      console.log("COUGHDROP PRIMING: listing images", (new Date()).getTime() - now);
       capabilities.storage.list_files('image').then(function(images) {
         images.forEach(function(image) {
           _this.image_filename_cache[image] = true;
         });
+        console.log("COUGHDROP PRIMING: done listing images", (new Date()).getTime() - now);
         res(images);
       }, function(err) { rej(err); });
     }));
     prime_promises.push(new RSVP.Promise(function(res, rej) {
       // apparently file system calls are really slow on ios
       if(!check_file_system) { return res([]); }
+      console.log("COUGHDROP PRIMING: listing sounds", (new Date()).getTime() - now);
       capabilities.storage.list_files('sound').then(function(sounds) {
         sounds.forEach(function(sound) {
           _this.sound_filename_cache[sound] = true;
         });
+        console.log("COUGHDROP PRIMING: done listing sounds", (new Date()).getTime() - now);
         res(sounds);
       }, function(err) { rej(err); });
     }));
     var res = RSVP.all_wait(prime_promises).then(function() {
+      console.log("COUGHDROP PRIMING: retrieving full dataCache", (new Date()).getTime() - now);
       return coughDropExtras.storage.find_all('dataCache').then(function(list) {
+        console.log("COUGHDROP PRIMING: done retrieving full dataCache", (new Date()).getTime() - now);
         var promises = [];
         list.forEach(function(item) {
           if(item.data && item.data.raw && item.data.raw.url && item.data.raw.type && item.data.raw.local_filename) {
@@ -745,6 +753,7 @@ var persistence = EmberObject.extend({
               } else {
                 promises.push(new RSVP.Promise(function(res, rej) {
                   // see if it's available as a file_url since it wasn't in the directory listing
+                  console.log("COUGHDROP PRIMING: hard-loading file " + item.data.raw.local_filename, (new Date()).getTime() - now);
                   capabilities.storage.get_file_url(item.data.raw.type, item.data.raw.local_filename).then(function(local_url) {
                     local_url = capabilities.storage.fix_url(local_url, item.data.raw.type == 'image');
                     _this.url_cache[item.data.raw.url] = local_url;
@@ -806,7 +815,11 @@ var persistence = EmberObject.extend({
           }
         });
       }
-    }, function() { _this.primed = true; });
+      console.log("COUGHDROP: done priming caches", check_file_system);
+    }, function() { 
+      console.log("COUGHDROP: done priming caches", check_file_system);
+      _this.primed = true; 
+    });
     return res;
   },
   url_cache: {},
