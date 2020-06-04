@@ -187,6 +187,7 @@ export default Controller.extend({
   ],
   dwellIconList: [
     {name: i18n.t('dot', "A Small Dot"), id: 'dot'},
+    {name: i18n.t('arrow', "A Red Circle"), id: 'red_circle'},
     {name: i18n.t('arrow', "An Arrow Cursor"), id: 'arrow'},
     {name: i18n.t('circle', "A Medium Circle"), id: 'circle'},
     {name: i18n.t('circle', "A Large Circle"), id: 'ball'}
@@ -321,6 +322,8 @@ export default Controller.extend({
       return 'big';
     } else if(this.get('pending_preferences.device.dwell_icon') == 'circle') {
       return 'circle';
+    } else if(this.get('pending_preferences.device.dwell_icon') == 'red_circle') {
+      return 'red_circle';
     } else if(this.get('pending_preferences.device.dwell_icon') == 'ball') {
       return 'ball';
     } else {

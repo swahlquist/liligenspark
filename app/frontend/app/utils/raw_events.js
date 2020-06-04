@@ -447,7 +447,7 @@ var buttonTracker = EmberObject.extend({
         event.preventDefault();
       }
     }
-    if(buttonTracker.sidebarScrollStart == null && event.target && event.target.closest('#sidebar')) {
+    if(buttonTracker.sidebarScrollStart == null && event.target && event.target.closest && event.target.closest('#sidebar')) {
       buttonTracker.sidebarScrollStart = (document.getElementById('sidebar') || {}).scrollTop || 0;
     }
     event = buttonTracker.normalize_event(event);
@@ -1739,7 +1739,7 @@ var buttonTracker = EmberObject.extend({
   find_selectable_under_event: function(event, loose, allow_dwell) {
     event = buttonTracker.normalize_event(event);
     if(event.clientX === undefined || event.clientY === undefined) { return null; }
-    if(event.clientX === 0 && event.clientY === 0) {
+    if(event.clientX === 0 && event.clientY === 0 && event.target && event.target.getBoundingClientRect) {
       // edge case where simulated click events don't send correct coords
       var bounds = event.target.getBoundingClientRect();
       if(bounds.x > 0 && bounds.y > 0 && bounds.height > 0 && bounds.width > 0) {

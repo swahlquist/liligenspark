@@ -69,6 +69,15 @@ export default Component.extend({
         context.stroke();
 
         if(coords.event_x >= 0 && coords.event_y >= 0) {
+          var cursor = this.get('cursor');
+          cursor.style.display = (this.get('current_dwell') && this.get('preferences.device.dwell_cursor')) ? 'block' : 'none';
+          var offset = 0;
+          if(!this.get('source.head') && !this.get('source.eyes') && !this.get('source.gamepad')) {
+            offset = 30;
+          }
+          cursor.style.left = (coords.event_x - (window.screenInnerOffsetX || window.screenX) + offset) + 'px';//(coords.event_x / coords.screen_width * coords.window_width) + 'px';
+          cursor.style.top = (coords.event_y - (window.screenInnerOffsetY || window.screenY) - offset) + 'px';//(coords.event_y / coords.screen_height * coords.window_height) + 'px';  
+
           var ctx_point_x = width * (coords.event_x / coords.screen_width);
           var ctx_point_y = height * (coords.event_y / coords.screen_height);
           context.fillStyle = '#f00';
@@ -121,8 +130,20 @@ export default Component.extend({
       buttonTracker.gamepadupdate.expression = this.get('preferences.device.select_expression');
     }
   }),
+  dwell_icon_class: observer('preferences.device.dwell_icon', function() {
+    this.get('cursor').setAttribute('class', this.get('preferences.device.dwell_icon'));
+  }),
   didInsertElement: function() {
     var _this = this;
+
+    var cursor = document.createElement('div'); 
+    cursor.id = "dwell_icon";
+    cursor.classList.add(this.get('preferences.device.dwell_icon'));
+    cursor.style.zIndex = 9999; 
+    cursor.style.display = 'none';
+    cursor.style.position = 'fixed';
+    this.get('element').appendChild(cursor);
+    this.set('cursor', cursor);
 
     _this.setProperties({
       screen_width: capabilities.screen.width,
@@ -218,13 +239,16 @@ export default Component.extend({
           var window_y = window.screenInnerOffsetY || window.screenY;
           var window_width = $(window).width();
           var window_height = $(window).height();
-          var source = {};
+          e.screenX = (e.clientX + (window.screenInnerOffsetX || window.screenX));
+          e.screenY = (e.clientY + (window.screenInnerOffsetY || window.screenY));
+          console.log(e.screenX, e.screenY, e.clientX, e.clientY);
+          var source = {gamepad: true};
           source[e.activation] = true;
           _this.setProperties({
             screen_width: capabilities.screen.width,
             screen_height: capabilities.screen.height,
-            event_x: e.clientX, //Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
-            event_y: e.clientY , //Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
+            event_x: e.screenX, //Math.min(Math.max(window_x, event_x + e.horizontal), window_x + window_width),
+            event_y: e.screenY , //Math.min(Math.max(window_y, event_y + e.vertical), window_y + window_height),
             pending: false,
             window_x: window_x,
             window_y: window_y,
@@ -272,9 +296,14 @@ export default Component.extend({
   with_status: computed('eye_gaze.statuses', function() {
     return emberGet(capabilities.eye_gaze, 'statuses');
   }),
+  toggle_cursor: observer('current_dwell', function() {
+    if(!this.get('current_dwell')) {
+      this.get('cursor').style.display = 'none';
+    }  
+  }),
   check_timeout: function() {
     var _this = this;
-    if(this.get('mouse_listener') || this.get('eye_listener') || this.get('head_listener') || this.get('gamepad_listener') || this.get('expression_listener')) {
+    if(this.get('mouse_listener') || this.get('eye_listener') || this.get('head_listener') || this.get('gamepad_listener') || this.get('expression_listener') || this.get('key_listener')) {
       var now = (new Date()).getTime();
       var ts = this.get('ts');
       this.set('current_dwell', (ts && now - ts <= 2000));

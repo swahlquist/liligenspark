@@ -3649,7 +3649,13 @@ video.button_image {
   opacity: 0.5;
   width: 10px;
   height: 10px;
-  &.big {
+  margin-left: -5px;
+  margin-top: -5px;
+  &.with_transition {
+    transition: left 0.1s, top 0.1s;
+    transition-timing-function: ease-in-out;
+  }
+  &.big,&.arrow {
     opacity: 1.0;
     background: radial-gradient(rgba(255, 255, 0, 0.2), rgba(255, 255, 0, 0.8));
     border: 2px solid rgb(17, 112, 255);
@@ -3671,6 +3677,18 @@ video.button_image {
       border-radius: 0;
       opacity: 1.0;
     }
+  }
+
+  &.red_circle {
+    border-radius: 30px;
+    width: 20px; 
+    height: 20px; 
+    margin-left: -10px;
+    margin-top: -10px;
+    background: rgba(255, 0, 0, 0.5);
+    border: 2px solid #fff;
+    box-shadow: 0px 0px 20px #000;
+    opacity: 1.0;
   }
 
   &.circle {
