@@ -246,6 +246,9 @@ export default Controller.extend({
       }
     });
   }),
+  allow_logs: computed('app_state.currentUser.preferences.logging', 'app_state.currentUser.modeling_only', 'app_state.currentUser.supporter_role', function() {
+    return app_state.get('currentUser.preferences.logging') && (!app_state.get('currentUser.supported_role') || !app_state.get('currentUser.modeling_only'));
+  }),
   reload_logs: observer('model.id', 'persistence.online', function() {
     var model = this.get('model');
     var _this = this;
@@ -326,7 +329,7 @@ export default Controller.extend({
       if(app_state.get('sessionUser.supporter_role')) {
         var any_premium_supervisees = false;
         (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
-          if(emberGet(sup, 'premium')) {
+          if(emberGet(sup, 'premium') || emberGet(sup, 'currently_premium')) {
             any_premium_supervisees = true;
           }
         });
@@ -409,7 +412,7 @@ export default Controller.extend({
       location.reload();
     },
     quick_assessment: function(user) {
-      if(user.premium) {
+      if(user.premium || emberGet(user, 'currently_premium')) {
         var _this = this;
         modal.open('quick-assessment', {user: user});
       } else {
@@ -423,10 +426,12 @@ export default Controller.extend({
     record_note: function(user) {
       user = user || app_state.get('currentUser');
       emberSet(user, 'avatar_url_with_fallback', emberGet(user, 'avatar_url'));
-      modal.open('record-note', {note_type: 'text', user: user}).then(function() {
-        runLater(function() {
-          app_state.get('currentUser').reload().then(null, function() { });
-        }, 5000);
+      app_state.check_for_needing_purchase().then(function() {
+        modal.open('record-note', {note_type: 'text', user: user}).then(function() {
+          runLater(function() {
+            app_state.get('currentUser').reload().then(null, function() { });
+          }, 5000);
+        });  
       });
     },
     sync: function() {

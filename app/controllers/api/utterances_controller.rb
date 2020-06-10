@@ -26,7 +26,7 @@ class Api::UtterancesController < ApplicationController
     if params['utterance'] && params['utterance']['user_id']
       user = User.find_by_path(params['utterance']['user_id'])
       return unless exists?(user, params['utterance']['user_id'])
-      return unless allowed?(user, 'supervise')
+      return unless allowed?(user, 'model')
     end
     utterance = Utterance.process_new(params['utterance'], {:user => user})
     if !utterance || utterance.errored?
@@ -44,10 +44,10 @@ class Api::UtterancesController < ApplicationController
     if params['sharer_id'] && @api_user && params['sharer_id'] != @api_user.global_id
       user = User.find_by_path(params['sharer_id'])
       return unless exists?(user, params['sharer_id'])
-      return unless allowed?(user, 'supervise')
+      return unless allowed?(user, 'model')
       sharer = user
     end
-    if params['user_id'] && !sharer.premium?
+    if params['user_id'] && !sharer.any_premium_or_grace_period?
       return allowed?(user, 'premium_access_required')      
     end
     res = utterance.share_with(params, sharer, @api_user.global_id)

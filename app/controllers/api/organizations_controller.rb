@@ -113,19 +113,16 @@ class Api::OrganizationsController < ApplicationController
       users = users.select{|u| active_user_ids.include?(u.id) }
     elsif params['report'] == 'free_supervisor_without_supervisees'
       # logins that have changed to a free subscription after their trial but don't have any supervisees
-      users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? }
+      users = User.where({:expires_at => nil}).select{|u| u.modeling_only? && u.supervised_user_ids.blank? }
       users = users.select{|u| !Organization.supervisor?(u) && !Organization.manager?(u) }
-    # elsif params['report'] == 'free_supervisor_with_supervisors'
-    #   log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 6.weeks.ago]).select('id, user_id').map(&:user_id)
-    #   users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && !u.supervisor_user_ids.blank? }
     elsif params['report'] == 'active_free_supervisor_without_supervisees_or_org'
       log_user_ids = LogSession.where(log_type: 'daily_use').where(['updated_at > ?', 2.weeks.ago]).select('id, user_id').map(&:user_id)
-      users = User.where(id: log_user_ids).where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['free_premium'] && u.supervised_user_ids.blank? && !Organization.supervisor?(u) }
+      users = User.where(id: log_user_ids).where({:expires_at => nil}).select{|u| u.modeling_only? && u.supervised_user_ids.blank? && !Organization.supervisor?(u) }
       # TODO: sharding
       active_user_ids = Device.where(:user_id => users.map(&:id)).where(['updated_at > ?', 2.weeks.ago]).map(&:user_id).uniq
       users = users.select{|u| active_user_ids.include?(u.id) && !Organization.supervisor?(u) && !Organization.manager?(u) }
     elsif params['report'] == 'eval_accounts'
-      users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && u.settings['subscription']['plan_id'] == 'eval_monthly_free' }
+      users = User.where({:expires_at => nil}).select{|u| u.settings['subscription'] && (u.settings['subscription']['plan_id'] || '').match(/^eval/)}
     elsif params['report'] == 'org_sizes'
       stats = {}
       Organization.all.each do |org|

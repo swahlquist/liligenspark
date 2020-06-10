@@ -210,7 +210,7 @@ module Purchasing
         Purchasing.cancel_other_subscriptions(user, 'all')
         return {success: true, type: type}
       end
-    elsif type == 'long_term_ios' || type == 'monthly_ios'
+    elsif type == 'long_term_ios' || type == 'monthly_ios' || type == 'eval_long_term_ios' || type == 'slp_long_term_ios'
       valid = false
       hash = user.subscription_hash
       if hash['plan_id'] == type
@@ -226,22 +226,31 @@ module Purchasing
     valid_amount = true
     description = type
     if type.match(/^slp_monthly/)
-      valid_amount = false # unless [3, 4, 5].include?(amount)
+      valid_amount = false
       description = "CoughDrop supporter account"
     elsif type.match(/^slp_long_term/)
-      valid_amount = false unless amount >= 50 #[50, 100, 150].include?(amount)
+      valid_amount = false unless amount >= 25
       if type.match(/free/)
         amount = 0
         valid_amount = true
       end
       description = "CoughDrop supporter account"
+    elsif type.match(/^eval_long_term/)
+      valid_amount = false unless amount >= 25
+      description = "CoughDrop evaluator account"
     elsif type.match(/^monthly/)
-      valid_amount = false unless amount >= 6 #[3, 4, 5, 6, 7, 8, 9, 10].include?(amount)
+      valid_amount = false unless amount >= 6
       description = "CoughDrop communicator monthly subscription"
     elsif type.match(/^long_term/)
-      valid_amount = false unless amount >= 150 #[150, 200, 250, 300].include?(amount)
-      valid_amount = true if amount == 100 && self.active_sale?
-      description = "CoughDrop communicator license purchase"
+      if user.fully_purchased?
+        valid_amount = false unless amount >= 50
+        description = "CoughDrop cloud extras re-purchase"
+        type = 'refresh_' + type
+      else
+        valid_amount = false unless amount >= 200
+        valid_amount = true if amount == 100 && self.active_sale?
+        description = "CoughDrop communicator license purchase"
+      end
     else
       return {success: false, error: "unrecognized purchase type, #{type}"}
     end
@@ -287,7 +296,7 @@ module Purchasing
             'subscribe' => true,
             'subscription_id' => 'free',
             'customer_id' => 'free',
-            'plan_id' => 'slp_monthly_free'
+            'plan_id' => 'slp_long_term_free'
           })
         else
           User.subscription_event({
@@ -745,7 +754,13 @@ module Purchasing
             end
           elsif res['one_time_purchase']
             transaction_ids = (user.settings['subscription']['prior_purchase_ids'] || []) + [user.settings['subscription']['last_purchase_id'] || 'xx']
-            if !existing_user && (hash['plan_id'] != 'long_term_ios' || !transaction_ids.include?(res['transaction_id']))
+            ios_plan_hash = {
+              'CoughDropiOSPlusExtras' => 'long_term_ios',
+              'CoughDropiOSEval' => 'eval_long_term_ios',
+              'CoughDropiOSSLP' => 'slp_long_term_ios'
+            }
+            expected_plan = ios_plan_hash[res['bundle_id']]
+            if !existing_user && (hash['plan_id'] != expected_plan || !transaction_ids.include?(res['transaction_id']))
               User.subscription_event({
                 'purchase' => true,
                 'user_id' => user.global_id,
@@ -753,15 +768,19 @@ module Purchasing
                 'purchase_id' => res['transaction_id'],
                 'customer_id' => res['customer_id'],
                 'token_summary' => res['product_id'],
-                'plan_id' => 'long_term_ios',
+                'plan_id' => expected_plan,
                 'seconds_to_add' => 5.years.to_i,
                 'source' => 'new iOS purchase'
               })
               if res['extras']
                 user.reload
                 user.settings['premium_voices'] ||= User.default_premium_voices
-                user.allow_additional_premium_voice!                
-                user.allow_additional_premium_voice!                
+                if expected_plan == 'long_term_ios'
+                  user.allow_additional_premium_voice!
+                end
+                if expected_plan != 'slp_long_term_ios'
+                  user.allow_additional_premium_voice!
+                end
                 User.schedule(:purchase_extras, {
                   'user_id' => user.global_id,
                   'customer_id' => res['customer_id'],

@@ -37,14 +37,16 @@ class User < ActiveRecord::Base
   # super-fast lookups, already have the data
   add_permissions('view_existence', ['*']) { true } # anyone can get basic information
   add_permissions('view_existence', 'view_detailed', 'view_deleted_boards', 'view_word_map', ['*']) {|user| user.id == self.id }
-  add_permissions('view_existence', 'view_detailed', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards') {|user| user.id == self.id }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards') {|user| user.id == self.id }
   add_permissions('view_existence', 'view_detailed', ['*']) { self.settings && self.settings['public'] == true }
   add_permissions('set_goals', ['basic_supervision']) {|user| user.id == self.id }
 
   add_permissions('edit', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, true) }
   add_permissions('edit', 'edit_boards', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, false) }
-  add_permissions('view_existence', 'view_detailed', 'supervise', 'view_deleted_boards') {|user| user.supervisor_for?(self) }
-  add_permissions('view_detailed', 'view_deleted_boards', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) }
+  add_permissions('view_existence', 'view_detailed', 'model') {|user| user.supervisor_for?(self) }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| user.supervisor_for?(self) && !user.modeling_only? }
+  add_permissions('view_detailed', 'model', ['basic_supervision']) {|user| user.supervisor_for?(self) }
+  add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only? }
   add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
   add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) }
   add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
@@ -346,16 +348,20 @@ class User < ActiveRecord::Base
     # Extend all trials until July 31, 2020
     if (!self.expires_at && !self.id) || (self.grace_period? && self.id)
       extension = Rails.env.test? ? Date.today : Date.parse('2020-07-31')
+      old_exp = self.expires_at
       self.expires_at = [self.expires_at || Date.today + 60, extension].max
+      self.settings['subscription'] ||= {}
+      self.settings['subscription']['expiration_source'] = (self.id ? 'free_trial' : 'grace_period') if self.expires_at != old_exp
     end
     return false if self.user_name == ""
     self.user_name = nil if self.user_name.blank?
     self.user_name ||= self.generate_user_name(self.settings['name'])
     self.email_hash = User.generate_email_hash(self.settings['email'])
     
+    self.assert_eval_settings
     if self.full_premium? || self.possibly_full_premium == nil
       self.possibly_full_premium = true if self.full_premium?
-      self.possibly_full_premium ||= rand(10) == 1
+      self.possibly_full_premium ||= rand(20) == 1
     end
     @do_track_boards = true if !self.id
     UserLink.invalidate_cache_for(self)
@@ -774,9 +780,6 @@ class User < ActiveRecord::Base
       if non_user_params['premium_until'] == 'forever'
         self.settings['subscription']['never_expires'] = true
         self.expires_at = nil
-      else
-        raise "there are better channels for this now"
-        self.expires_at = non_user_params['premium_until']
       end
     end
     

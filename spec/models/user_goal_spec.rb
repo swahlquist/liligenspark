@@ -663,7 +663,7 @@ describe UserGoal, type: :model do
     
     it "should schedule only advancing goals" do
       u = User.create
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
       
       g = UserGoal.create(:advance_at => 2.weeks.ago, :user => u)
       g2 = UserGoal.create(:advance_at => 1.hour.from_now)

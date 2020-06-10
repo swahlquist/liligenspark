@@ -1,5 +1,7 @@
 {{#opening-observer done_opening=(action 'draw_charts')}}
-{{#if model.currently_premium}}
+{{#if app_state.currentUser.modeling_only}}
+  {{modeling-only-notice}}
+{{else if model.currently_premium}}
   {{#if model.preferences.logging}}
     <h2>
       {{t "Usage Reports for %{un}" key='usage_reports' un=model.user_name}}

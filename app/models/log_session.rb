@@ -253,7 +253,7 @@ class LogSession < ActiveRecord::Base
         existing_evals = LogSession.where(user_id: self.user_id, log_type: 'eval').count
         self.data['prior_evals'] = existing_evals
       end
-      # TODO: ...
+      self.data['duration'] = (self.ended_at - self.started_at).to_i rescue nil
     elsif self.data['journal']
       self.log_type = 'journal'
       self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
@@ -912,7 +912,7 @@ class LogSession < ActiveRecord::Base
               user_id = session.map{|e| e['user_id'] }.compact.first || (self.user && self.user.global_id)
               user = User.find_by_global_id(user_id)
               # TODO: right now this silently throws away any unauthorized log attempts. Is this a good idea?
-              if user && user.allows?(self.author, 'supervise')
+              if user && user.allows?(self.author, 'model')
                 params = {:events => session}
                 event = session[0] if session.length == 1
                 if event && event['note']
@@ -1144,7 +1144,7 @@ class LogSession < ActiveRecord::Base
     user_ids = (params['events'] || []).map{|e| e['user_id'] }.compact.uniq
     users = User.find_all_by_global_id(user_ids)
     valid_users = {}
-    users.each{|u| valid_users[u.global_id] = u if u.allows?(non_user_params[:author], 'supervise') }
+    users.each{|u| valid_users[u.global_id] = u if u.allows?(non_user_params[:author], 'model') }
     valid_events = (params['events'] || []).select{|e| valid_users[e['user_id']] }
     modeling_events = valid_events.select{|e| e['type'] == 'modeling_activity'}
     valid_events -= modeling_events
@@ -1473,7 +1473,7 @@ class LogSession < ActiveRecord::Base
         ref_user_ids = params['events'].map{|e| e['referenced_user_id'] }.compact.uniq
         valid_ref_user_ids = {}
         User.find_all_by_global_id(ref_user_ids).each do |u|
-          valid_ref_user_ids[u.global_id] = true if u.allows?(self.author, 'supervise')
+          valid_ref_user_ids[u.global_id] = true if u.allows?(self.author, 'model')
         end
         @just_added_events = []
         params['events'].each do |e|
@@ -1615,7 +1615,7 @@ class LogSession < ActiveRecord::Base
   
   def self.needs_log_summary?(user)
     user_ids = []
-    user_ids << user.global_id if user.premium? && user.settings && user.settings['preferences'] && user.settings['preferences']['role'] == 'communicator'
+    user_ids << user.global_id if user.any_premium_or_grace_period? && user.settings && user.settings['preferences'] && user.settings['preferences']['role'] == 'communicator'
     user_ids += user.supervised_user_ids
     # short-circuit in the case where the communicator is expired and has no supervisees
     return false if user_ids.length == 0
@@ -1632,7 +1632,7 @@ class LogSession < ActiveRecord::Base
     ids = counts.to_a.select{|key, cnt| cnt > 0 }.map(&:first)
     # TODO: sharding
     User.where(:id => ids).each do |u|
-      return true if u.premium? && u.settings && u.settings['preferences'] && u.settings['preferences']['role'] == 'communicator'
+      return true if u.any_premium_or_grace_period? && u.settings && u.settings['preferences'] && u.settings['preferences']['role'] == 'communicator'
     end
     false
   end

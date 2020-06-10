@@ -35,7 +35,7 @@ class Api::UsersController < ApplicationController
   def places
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
-    return unless allowed?(user, 'supervise')
+    return unless allowed?(user, 'model')
     render json: Geolocation.find_places(params['latitude'], params['longitude'])
   end
   
@@ -135,7 +135,7 @@ class Api::UsersController < ApplicationController
   def activate_button
     user = User.find_by_path(params['user_id'])
     return if params['user_id'] != 'nobody' && !exists?(user, params['user_id'])
-    return if user && !allowed?(user, 'supervise')
+    return if user && !allowed?(user, 'model')
     board = Board.find_by_path(params['board_id'])
     return unless exists?(board, params['board_id'])
     return unless allowed?(board, 'view')
@@ -148,7 +148,7 @@ class Api::UsersController < ApplicationController
     associated_user = nil
     if params['associated_user_id']
       supervisee = User.find_by_path(params['associated_user_id'])
-      if supervisee && supervisee.allows?(user, 'supervise')
+      if supervisee && supervisee.allows?(user, 'model')
         associated_user = supervisee
       end
     end
@@ -221,7 +221,7 @@ class Api::UsersController < ApplicationController
   def word_activities
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
-    return unless allowed?(user, 'supervise')
+    return unless allowed?(user, 'model')
     
     # skip if recently-retrieved
     existing = WordData.activities_for(user, true)
@@ -436,7 +436,7 @@ class Api::UsersController < ApplicationController
     if params['user_id'] != 'none'
       user = User.find_by_path(params['user_id'])
       return unless exists?(user, params['user_id'])
-      return unless allowed?(user, 'supervise')
+      return unless allowed?(user, 'model')
       # TODO: move this to a progress call and return 
       # an auto-deleting download link
       res.merge!(WordData.core_and_fringe_for(user))

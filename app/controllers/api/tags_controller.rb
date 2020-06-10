@@ -6,7 +6,7 @@ class Api::TagsController < ApplicationController
     if params['user_id']
       user = User.find_by_path(params['user_id'])
       return unless exists?(user, params['user_id'])
-      return unless allowed?(user, 'supervise')
+      return unless allowed?(user, 'model')
     end
     @tags = NfcTag.where(user_id: user.id, has_content: true)
     
@@ -37,7 +37,7 @@ class Api::TagsController < ApplicationController
     end
     return unless exists?(@tag, params['id'])
     if !@tag.public
-      return unless allowed?(@tag.user, 'supervise')
+      return unless allowed?(@tag.user, 'model')
     end
     @tag.touch if @tag.updated_at < 2.weeks.ago
     render json: JsonApi::Tag.as_json(@tag, :wrapper => true, :permissions => @api_user).to_json

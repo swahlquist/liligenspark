@@ -4297,9 +4297,11 @@ table tr.long_delay td {
     td:first-child {
       border-top-left-radius: 10px;
     }
+    td.separator {
+      box-shadow: inset 10px 1px 15px -10px #222;
+    }
     td:last-child {
       border-top-right-radius: 10px;
-      box-shadow: inset 10px 1px 15px -10px #222;
     }
   }
   tbody tr:last-child {

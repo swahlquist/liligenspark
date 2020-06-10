@@ -502,13 +502,11 @@ var app_state = EmberObject.extend({
       old_state.level = stashes.get('board_level');
     }
     history.push(old_state);
-    if(!this.get('eval_mode')) {
-      stashes.log({
-        action: 'open_board',
-        previous_key: old_state,
-        new_id: new_state
-      });
-    }
+    stashes.log({
+      action: 'open_board',
+      previous_key: old_state,
+      new_id: new_state
+    });
     if(new_state && new_state.home_lock) {
       this.set('temporary_root_board_key', new_state.key);
     }
@@ -865,11 +863,14 @@ var app_state = EmberObject.extend({
       } else if(mode == 'speak') {
         var already_speaking_as_someone_else = app_state.get('speakModeUser.id') && app_state.get('speakModeUser.id') != app_state.get('sessionUser.id');
         if(app_state.get('currentBoardState')) { delete app_state.get('currentBoardState').reload_token }
-        // when entering speak mode, if the user is expired or the 
-        // supervisor doesn't have any premium supervisees,
+        // when entering speak mode, if the user is expired,
+        // or the supervisor doesn't have any premium supervisees,
         // pop up a closeable notice about purchasing the app
-        if(app_state.get('currentUser') && !opts.reminded && !app_state.get('currentUser.currently_premium') && (!app_state.get('currentUser.supporter_role') || app_state.get('currentUser.limited_supervisor')) && !already_speaking_as_someone_else) {
-          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), limited_supervisor: app_state.get('currentUser.limited_supervisor'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
+        // (the speak mode session will time out on its own)
+        var communicator_limited = app_state.get('currentUser.expired');
+        var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.any_limited_supervisor');
+        if(app_state.get('currentUser') && !opts.reminded && (communicator_limited || supervisor_limited) && !already_speaking_as_someone_else) {
+          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
             opts.reminded = true;
             app_state.toggle_mode(mode, opts);
           });
@@ -902,7 +903,7 @@ var app_state = EmberObject.extend({
     var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
     // TODO: same as above, in .toggle_mode
     if(speak_mode_user && !opts.reminded && speak_mode_user.get('expired')) {
-      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
+      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
         opts.reminded = true;
         app_state.home_in_speak_mode(opts);
       });
@@ -1380,19 +1381,29 @@ var app_state = EmberObject.extend({
     if(allowed) {
       return RSVP.resolve({dialog: false});
     } else {
-      return modal.open('premium-required', {user_name: user.get('user_name'), action: action}).then(function() {
+      // prevent action if not currently_premium
+      return modal.open('premium-required', {user_name: user.get('user_name'), user: user, action: action}).then(function() {
         return RSVP.reject({dialog: true});
       });
     }
   },
-  check_for_edit_mode_needing_purchase: function(user) {
-    // If the user is very expired, or they are a supervisor with no
-    // supervisees, remind them when they to go edit that they really
-    // should purchase or connect with a purchased account, but don't
-    // prevent them from editing, just remind them regularly?
-    if(user && (user.get('really_expired') || user.get('limited_supervisor'))) {
-      return modal.open('premium-required', {user_name: user.get('user_name'), cancel_on_close: false, remind_to_upgrade: true}).then(function() {
-        return RSVP.resolve({dialog: true});
+  check_for_needing_purchase: function(prevent_unless_purchased) {
+    var user = app_state.get('sessionUser');
+    // Modeling-only and expired communicator accounts have 
+    // a number of features that they are prevented from using.
+    // If the user is very expired, or they are modeling-only
+    // then remind them about purchasing,
+    // and possibly prevent the action.
+    if(!user || (user.get('really_expired') || user.get('modeling_only'))) {
+      var user_name = user && user.get('user_name');
+      return modal.open('premium-required', {user_name: user_name, cancel_on_close: false, remind_to_upgrade: true}).then(function() {
+        if(user.get('modeling_only') || prevent_unless_purchased) {
+          // modeling-only are prevented from the actions
+          // not just reminded about them.
+          return RSVP.reject({dialog: true});
+        } else {
+          return RSVP.resolve({dialog: true});
+        }
       });
     } else {
       return RSVP.resolve({dialog: false});
@@ -1694,7 +1705,7 @@ var app_state = EmberObject.extend({
       var started = this.get('speak_mode_started');
       var done = false;
       // If running speak mode for themselves, supervisors need to be paid or working with someone
-      if(this.get('currentUser.id') == this.get('sessionUser.id') && !this.get('referenced_speak_mode_user') && this.get('currentUser.limited_supervisor')) {
+      if(this.get('currentUser.id') == this.get('sessionUser.id') && !this.get('referenced_speak_mode_user') && this.get('currentUser.any_limited_supervisor')) {
         if(started < now - (15 * 60 * 1000)) {
           redirect_option = 'contact';
           done = i18n.t('limited_supervisor_timeout', "Speak mode sessions are limited to 15 minutes for supervisors not working with paid communicators. Please contact us if you need a full-featured evaluation account.");

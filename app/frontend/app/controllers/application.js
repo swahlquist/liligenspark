@@ -384,74 +384,79 @@ export default Controller.extend({
       }
     },
     setAsHome: function(option) {
-      var board = this.get('board').get('model');
-      if(option == 'starting') {
-        board = stashes.get('root_board_state') || this.get('board').get('model');
-      }
       var _this = this;
-      var board_user_name = emberGet(board, 'key').split(/\//)[1];
-      var preferred_symbols = app_state.get('currentUser.preferences.preferred_symbols') || 'original';
-      var needs_confirmation = app_state.get('currentUser.supervisees') || preferred_symbols != 'original' || board_user_name != app_state.get('currentUser.user_name');
-      var done = function(sync) {
-        if(sync && persistence.get('online') && persistence.get('auto_sync')) {
-          _this.set('simple_board_header', false);
-          runLater(function() {
-            if(persistence.get('auto_sync')) {
-              console.debug('syncing because home board changes');
-              persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+      app_state.check_for_needing_purchase().then(function() {
+        var board = _this.get('board').get('model');
+        if(option == 'starting') {
+          board = stashes.get('root_board_state') || _this.get('board').get('model');
+        }
+        var board_user_name = emberGet(board, 'key').split(/\//)[1];
+        var preferred_symbols = app_state.get('currentUser.preferences.preferred_symbols') || 'original';
+        var needs_confirmation = app_state.get('currentUser.supervisees') || preferred_symbols != 'original' || board_user_name != app_state.get('currentUser.user_name');
+        var done = function(sync) {
+          if(sync && persistence.get('online') && persistence.get('auto_sync')) {
+            _this.set('simple_board_header', false);
+            runLater(function() {
+              if(persistence.get('auto_sync')) {
+                console.debug('syncing because home board changes');
+                persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+              }
+            }, 1000);
+            if(_this.get('setup_footer')) {
+              _this.send('setup_go', 'forward');
+            } else {
+              modal.success(i18n.t('board_set_as_home', "Great! This is now the user's home board!"), true);
             }
-          }, 1000);
-          if(_this.get('setup_footer')) {
-            _this.send('setup_go', 'forward');
           } else {
-            modal.success(i18n.t('board_set_as_home', "Great! This is now the user's home board!"), true);
+            if(_this.get('setup_footer')) {
+              _this.send('setup_go', 'forward');
+            }          
           }
-        } else {
-          if(_this.get('setup_footer')) {
-            _this.send('setup_go', 'forward');
-          }          
         }
-      }
-      if(needs_confirmation && !option) {
-        modal.open('set-as-home', {board: board}).then(function(res) {
-          if(res && res.updated) {
-            done(true);
-          }
-        }, function() { });
-      } else {
-        var user = app_state.get('currentUser');
-        var _this = this;
-        if(user) {
-          if(option == 'starting') {
-            user.copy_home_board(board, true).then(function() { }, function() {
-              modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
-            });
-            done();
-          } else {
-            user.set('preferences.home_board', {
-              id: emberGet(board, 'id'),
-              level: stashes.get('board_level'),
-              key: emberGet(board, 'key')
-            });
-            var _this = this;
-            user.save().then(function() {
+        if(needs_confirmation && !option) {
+          modal.open('set-as-home', {board: board}).then(function(res) {
+            if(res && res.updated) {
               done(true);
-            }, function() {
-              modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
-            });
+            }
+          }, function() { });
+        } else {
+          var user = app_state.get('currentUser');
+          var _this = this;
+          if(user) {
+            if(option == 'starting') {
+              user.copy_home_board(board, true).then(function() { }, function() {
+                modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
+              });
+              done();
+            } else {
+              user.set('preferences.home_board', {
+                id: emberGet(board, 'id'),
+                level: stashes.get('board_level'),
+                key: emberGet(board, 'key')
+              });
+              var _this = this;
+              user.save().then(function() {
+                done(true);
+              }, function() {
+                modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
+              });
+            }
           }
-        }
-      }
+        }  
+      });
     },
     add_to_sidebar: function() {
-      var board = this.get('board').get('model');
-      modal.open('add-to-sidebar', {board: {
-        name: board.get('name'),
-        key: board.get('key'),
-        levels: board.get('levels'),
-        home_lock: false,
-        image: board.get('image_url')
-      }});
+      var _this = this;
+      app_state.check_for_needing_purchase().then(function() {
+        var board = _this.get('board').get('model');
+        modal.open('add-to-sidebar', {board: {
+          name: board.get('name'),
+          key: board.get('key'),
+          levels: board.get('levels'),
+          home_lock: false,
+          image: board.get('image_url')
+        }});  
+      });
     },
     adjust_level: function(direction) {
       var prior_level = parseInt(this.get('board.current_level'), 10);
@@ -571,7 +576,7 @@ export default Controller.extend({
       }, function() { });
     },
     toggleEditMode: function(decision) {
-      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_needing_purchase().then(function() {
         app_state.toggle_edit_mode(decision);
       }, function() { });
     },
@@ -613,7 +618,7 @@ export default Controller.extend({
     },
     copy_and_edit_board: function() {
       var _this = this;
-      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_needing_purchase().then(function() {
         _this.copy_board(null, true).then(function(board) {
           if(board) {
             app_state.jump_to_board({
@@ -629,7 +634,7 @@ export default Controller.extend({
     },
     tweakBoard: function(decision) {
       var _this = this;
-      app_state.check_for_edit_mode_needing_purchase(app_state.get('sessionUser')).then(function() {
+      app_state.check_for_needing_purchase().then(function() {
         if(app_state.get('edit_mode')) {
           app_state.toggle_mode('edit');
         }

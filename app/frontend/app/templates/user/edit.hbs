@@ -83,7 +83,7 @@
             {{/each}}
           </ul>
         {{/if}}
-        {{#if model.expired_or_limited_supervisor}}
+        {{#if model.expired_or_limited_supervisor_or_modeling_only}}
           <p class='text-danger'>{{t "NOTE: contacts will not show up in Speak Mode for users who do not have a currently-active premium account" key='premium_required_for_contacts'}}</p>
         {{/if}}
       </div>
@@ -186,7 +186,7 @@
           </div>
         {{/each}}
         <div style='clear: left;'></div>
-        {{#unless model.currently_premium_or_supporter_role}}
+        {{#unless model.currently_premium_or_premium_supporter}}
           <p class='text-danger'>{{t "Installed tools will only work correctly for currently-active premium accounts" key='premium_required_for_tools'}}</p>
         {{/unless}}
       </div>

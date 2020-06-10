@@ -17,7 +17,7 @@ class UserBadge < ActiveRecord::Base
   after_save :update_highlighted_list
 
   add_permissions('view') { self.highlighted && self.user && self.user.settings['public'] }
-  add_permissions('view') {|user| self.user && self.user.allows?(user, 'supervise') }
+  add_permissions('view') {|user| self.user && self.user.allows?(user, 'model') }
   add_permissions('view', 'edit', 'delete') {|user| self.user && self.user.allows?(user, 'edit') }
 
 #  has_paper_trail :only => [:data, :earned]

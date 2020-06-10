@@ -66,6 +66,7 @@ module JsonApi::Log
       json['journal'] = log.data['journal'].slice('vocalization', 'sentence', 'timestamp', 'id')
     elsif log.data['eval']
       json['evaluation'] = log.data['eval']
+      json['duration'] = log.data['duration']
       json['always_available'] = (log.data['prior_evals'] || 0) < 2
     else
       json['duration'] = log.data['duration']

@@ -105,6 +105,9 @@ export default Route.extend({
         app_state.home_in_speak_mode();
       }
     },
+    home_board: function(key) {
+      this.transitionTo('board', key);
+    },
     saveProfile: function() {
       var controller = this.get('controller');
       var user = controller.get('user');

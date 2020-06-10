@@ -971,7 +971,7 @@ describe Board, :type => :model do
 #     it "should not allow changing a board to private without a premium user account" do
 #       u = User.create(:expires_at => 3.days.ago)
 #       b = Board.create(:user => u, :public => true)
-#       expect(u.premium?).to eql(false)
+#       expect(u.any_premium_or_grace_period?).to eql(false)
 #       res = b.process({:public => false}, {:user => u})
 #       expect(res).to eql(false)
 #       expect(b.processing_errors).to eq(["only premium users can make boards private"])
@@ -997,7 +997,7 @@ describe Board, :type => :model do
     
     it "should allow premium users to create and update private boards" do
       u = User.create
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
       expect { Board.process_new({:public => false}, {:user => u}) }.to_not raise_error
       b = Board.create(:user => u, :public => true)
       expect { b.process({:public => false}, {:user => u}) }.to_not raise_error

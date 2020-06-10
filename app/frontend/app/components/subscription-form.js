@@ -81,16 +81,31 @@ export default Component.extend({
         this.set('subscription.user_type', 'communicator');
         type = type.replace(/_communicator/, '');
       }
-      this.set('subscription.subscription_type', type);
+      this.get('subscription').setProperties({
+        eval: false,
+        subscription_type: type,
+        subscription_amount: 'reset'
+      })
     },
     set_special_subscription: function() {
       this.set('subscription.special_type', !this.get('subscription.special_type'));
     },
     set_subscription: function(amount) {
       if(amount && amount.match(/slp/)) {
-        this.set('subscription.user_type', 'supporter');
+        this.get('subscription').setProperties({
+          subscription_type: 'long_term',
+          user_type: 'supporter',
+          subscription_amount: amount
+        })
+      } else if(amount && amount.match(/eval/)) {
+        this.get('subscription').setProperties({
+          subscription_type: 'long_term',
+          user_type: 'communicator',
+          subscription_amount: amount
+        })
+      } else {
+        this.set('subscription.subscription_amount', amount);
       }
-      this.set('subscription.subscription_amount', amount);
     },
     bulk_purchase: function() {
       this.set('show_bulk_purchase', !this.get('show_bulk_purchase'));

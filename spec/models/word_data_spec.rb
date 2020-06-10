@@ -416,8 +416,8 @@ RSpec.describe WordData, :type => :model do
       u = User.create
       User.where(id: u.id).update_all(created_at: 6.months.ago, expires_at: 4.months.ago)
       u.reload
-      expect(u.free_premium?).to eq(false)
-      expect(u.premium?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       u.settings['target_words'] = {
         'generated' => Time.now.iso8601,
         'activities' => {

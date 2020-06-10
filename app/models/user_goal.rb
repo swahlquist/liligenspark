@@ -18,8 +18,8 @@ class UserGoal < ActiveRecord::Base
 
   add_permissions('view', ['read_profile']) {|user| self.user && self.user == user }
   add_permissions('view', 'comment', 'edit') {|user| self.user && self.user == user }
-  add_permissions('view', ['read_profile']) {|user| self.user && self.user.allows?(user, 'supervise') }
-  add_permissions('view', 'comment') {|user| self.user && self.user.allows?(user, 'supervise') }
+  add_permissions('view', ['read_profile']) {|user| self.user && self.user.allows?(user, 'model') }
+  add_permissions('view', 'comment') {|user| self.user && self.user.allows?(user, 'model') }
   add_permissions('view', ['read_profile']) {|user| self.user && self.user.allows?(user, 'edit') }
   add_permissions('view', 'comment', 'edit') {|user| self.user && self.user.allows?(user, 'edit') }
   cache_permissions
@@ -569,7 +569,7 @@ class UserGoal < ActiveRecord::Base
   
   def self.advance_goals
     UserGoal.where(['advance_at < ?', Time.now]).each do |goal|
-      goal.schedule(:advance!) if goal.user && goal.user.premium?
+      goal.schedule(:advance!) if goal.user && goal.user.any_premium_or_grace_period?
     end
   end
 end

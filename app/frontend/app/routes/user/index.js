@@ -1,6 +1,7 @@
 import Route from '@ember/routing/route';
 import modal from '../../utils/modal';
 import coughDropExtras from '../../utils/extras';
+import app_state from '../../utils/app_state';
 import i18n from '../../utils/i18n';
 
 export default Route.extend({
@@ -24,8 +25,10 @@ export default Route.extend({
     recordNote: function(type) {
       var _this = this;
       var user = this.modelFor('user');
-      modal.open('record-note', {note_type: type, user: user}).then(function() {
-        _this.get('controller').reload_logs();
+      app_state.check_for_needing_purchase().then(function() {
+        modal.open('record-note', {note_type: type, user: user}).then(function() {
+          _this.get('controller').reload_logs();
+        });
       });
     }
   }

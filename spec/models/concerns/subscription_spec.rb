@@ -103,51 +103,55 @@ describe Subscription, :type => :model do
     it "should default to a 30-day free trial" do
       u = User.create
       expect(u.expires_at).to be > 29.days.from_now
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
     end
     
     it "should always return premium if set to never expire" do
       u = User.create(:settings => {'subscription' => {'never_expires' => true}})
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
       u.expires_at = 3.days.ago
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
     end
     
     it "should return premium? correctly based on date" do
       u = User.create(:expires_at => 3.days.ago)
-      expect(u.premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       u.expires_at = Time.now + 5
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
     end
     
-    it "should return premium? with a free supporter-role subscription" do
+    it "should not return premium? with a free supporter-role subscription" do
       u = User.create(:expires_at => 3.days.ago)
-      expect(u.premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.supporter_role?).to eq(false)
       res = u.update_subscription({
         'subscribe' => true,
         'subscription_id' => '12345',
         'plan_id' => 'slp_monthly_free'
       })
       expect(res).to eq(true)
-      expect(u.settings['subscription']['free_premium']).to eq(true)
-      expect(u.premium?).to eq(true)
+      expect(u.modeling_only?).to eq(true)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
     end
     
     it "should return premium if assigned to an organization" do
       u = User.create(:expires_at => 3.days.ago)
-      expect(u.premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       u.settings['managed_by'] = {'1' => {'pending' => false, 'sponsored' => true}}
       u.settings['subscription'] = {'org_sponsored' => true}
       u.save
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
     end
   end
   
   describe "auto-expire" do
     it "should correctly auto-expire a supporter role into a free_premium role" do
       u = User.create(:settings => {'preferences' => {'role' => 'supporter'}})
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -159,8 +163,9 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
       
       u.expires_at = 2.days.ago
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.modeling_only?).to eq(true)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -172,11 +177,14 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
     end
 
-    it "should correctly auto-expire a communicator signed up as a supporter role into a free_premium role" do
+    it "should no longer auto-expire a communicator signed up as a supporter role into a free_premium role" do
       u = User.create(:settings => {'preferences' => {'registration_type' => 'therapist'}})
       expect(u.communicator_role?).to eq(true)
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -189,31 +197,38 @@ describe Subscription, :type => :model do
       
       u.expires_at = 2.days.ago
       u.save!
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.communicator_role?).to eq(true)
       Worker.process_queues
       u.reload
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(true)
-      expect(u.communicator_role?).to eq(false)
-      expect(u.supporter_role?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
       expect(u.grace_period?).to eq(false)
       expect(u.long_term_purchase?).to eq(false)
       expect(u.recurring_subscription?).to eq(false)
-      expect(u.communicator_role?).to eq(false)
-      expect(u.supporter_role?).to eq(true)
       expect(u.fully_purchased?).to eq(false)
     end
 
     it "should not auto-expire a communicator signed up as a communicator role" do
       u = User.create(:settings => {'preferences' => {'registration_type' => 'communicator'}})
       expect(u.communicator_role?).to eq(true)
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -227,12 +242,18 @@ describe Subscription, :type => :model do
       u.expires_at = 2.days.ago
       u.save!
       expect(u.communicator_role?).to eq(true)
-      expect(u.premium?).to eq(false)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       Worker.process_queues
       u.reload
-      expect(u.premium?).to eq(false)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -246,8 +267,11 @@ describe Subscription, :type => :model do
   
     it "should correctly auto-expire a communicator role into needing a subscription" do
       u = User.create
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -259,8 +283,11 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
       
       u.expires_at = 2.days.ago
-      expect(u.premium?).to eq(false)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -281,8 +308,11 @@ describe Subscription, :type => :model do
         'purchase_id' => '23456',
         'seconds_to_add' => 8.weeks.to_i
       })
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -294,8 +324,13 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
       
       u.expires_at = 2.days.ago
-      expect(u.premium?).to eq(false)
-      expect(u.free_premium?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      expect(u.fully_purchased?(true)).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -304,7 +339,23 @@ describe Subscription, :type => :model do
       expect(u.recurring_subscription?).to eq(false)
       expect(u.communicator_role?).to eq(true)
       expect(u.supporter_role?).to eq(false)
-      expect(u.fully_purchased?).to eq(false)
+
+      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.fully_purchased?(true)).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(true)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
 
       res = u.update_subscription({
         'purchase' => true,
@@ -317,8 +368,11 @@ describe Subscription, :type => :model do
       expect(u.reload.expires_at).to be >= 2.years.from_now - 1.week
       expect(Time).to receive(:now).and_return(3.years.from_now).at_least(1).times
       expect(u.fully_purchased?).to eq(true)
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(true)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -336,8 +390,11 @@ describe Subscription, :type => :model do
         'subscription_id' => '12345',
         'plan_id' => 'monthly_6'
       })
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -349,8 +406,11 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
       
       u.settings['subscription']['started'] = 23.months.ago.iso8601
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -362,8 +422,11 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
       
       u.settings['subscription']['started'] = 2.years.ago.iso8601
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -378,17 +441,37 @@ describe Subscription, :type => :model do
         'unsubscribe' => true,
         'subscription_id' => '12345'
       })
-      expect(u.premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
       expect(u.fully_purchased?).to eq(true)
-      expect(u.free_premium?).to eq(true)
+      expect(u.grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+
+      u.expires_at = 2.days.ago
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.grace_period?).to eq(false)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(true)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
       expect(u.grace_period?).to eq(false)
       expect(u.long_term_purchase?).to eq(false)
       expect(u.recurring_subscription?).to eq(false)
-      expect(u.communicator_role?).to eq(true)
-      expect(u.supporter_role?).to eq(false)
     end
     
     it "should give a communicator that hasn't expired correct cloud extra permissions" do
@@ -400,8 +483,11 @@ describe Subscription, :type => :model do
         'purchase_id' => '23456',
         'seconds_to_add' => 8.weeks.to_i
       })
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -420,8 +506,11 @@ describe Subscription, :type => :model do
         'subscription_id' => '12345',
         'plan_id' => 'monthly_6'
       })
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(true)
       expect(u.never_expires?).to eq(false)
@@ -433,7 +522,7 @@ describe Subscription, :type => :model do
       expect(u.fully_purchased?).to eq(false)
     end
     
-    it "should give a supporter that paid cloud extra permissions" do
+    it "should give a supporter that paid limited extra permissions, even after expiration" do
       u = User.create
       res = u.update_subscription({
         'purchase' => true,
@@ -442,21 +531,11 @@ describe Subscription, :type => :model do
         'seconds_to_add' => 8.weeks.to_i
       })
       expect(u.expires_at).to_not eq(nil)
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(false)
-      expect(u.org_sponsored?).to eq(false)
-      expect(u.full_premium?).to eq(true)
-      expect(u.never_expires?).to eq(false)
-      expect(u.grace_period?).to eq(false)
-      expect(u.long_term_purchase?).to eq(true)
-      expect(u.recurring_subscription?).to eq(false)
-      expect(u.communicator_role?).to eq(false)
-      expect(u.supporter_role?).to eq(true)
-      expect(u.fully_purchased?).to eq(false)
-      
-      u.expires_at = 2.days.ago
-      expect(u.premium?).to eq(true)
-      expect(u.free_premium?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
       expect(u.org_sponsored?).to eq(false)
       expect(u.full_premium?).to eq(false)
       expect(u.never_expires?).to eq(false)
@@ -466,6 +545,109 @@ describe Subscription, :type => :model do
       expect(u.communicator_role?).to eq(false)
       expect(u.supporter_role?).to eq(true)
       expect(u.fully_purchased?).to eq(false)
+      
+      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.expires_at = 2.days.ago
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should do nothing when a paid supporter expires" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'slp_long_term_50',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.expires_at).to_not eq(nil)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.expires_at = 2.days.ago
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(false)
+      expect(u.supporter_role?).to eq(true)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should do nothing when a paid eval account expires" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.expires_at).to_not eq(nil)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.eval_account?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(false)
+      
+      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.expires_at = 2.days.ago
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.premium_supporter?).to eq(false)
+      expect(u.eval_account?).to eq(true)
+      expect(u.lapsed_communicator?).to eq(false)
+      expect(u.expired_communicator?).to eq(false)
+      expect(u.modeling_only?).to eq(false)
+      expect(u.org_sponsored?).to eq(false)
+      expect(u.full_premium?).to eq(true)
+      expect(u.never_expires?).to eq(false)
+      expect(u.grace_period?).to eq(false)
+      expect(u.long_term_purchase?).to eq(false)
+      expect(u.recurring_subscription?).to eq(false)
+      expect(u.communicator_role?).to eq(true)
+      expect(u.supporter_role?).to eq(false)
+      expect(u.fully_purchased?).to eq(true)
     end
   end
 
@@ -1196,6 +1378,37 @@ describe Subscription, :type => :model do
         expect(u.settings['subscription']['prior_purchase_ids']).to eq(['23456'])
         expect(u.expires_at).to eq(nil)
       end
+
+      it "should allow re-purchasing for fully_purchased users" do
+        res = u.update_subscription({
+          'purchase' => true,
+          'customer_id' => '12345',
+          'plan_id' => 'long_term_150',
+          'purchase_id' => '23456',
+          'seconds_to_add' => 8.weeks.to_i
+        })
+        expect(res).to eq(true)
+
+        res = u.update_subscription({
+          'subscribe' => true,
+          'subscription_id' => '12345',
+          'plan_id' => 'monthly_6'
+        })
+        expect(res).to eq(true)
+
+        res = u.update_subscription({
+          'purchase' => true,
+          'customer_id' => '12345',
+          'plan_id' => 'long_term_50',
+          'purchase_id' => '23456',
+          'seconds_to_add' => 8.weeks.to_i
+        })
+        expect(res).to eq(true)
+      end
+
+      it "should not allow re-purchasing for non-fully-purchased users" do
+        write_this_test
+      end
     end
   end
   
@@ -1223,8 +1436,10 @@ describe Subscription, :type => :model do
       u = User.create
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
-      t = u.expires_at + 8.weeks
-      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_150', 'seconds_to_add' => 8.weeks.to_i})
+      t = u.expires_at + 15.weeks
+      # TODO: the update is ignoring time left on expires_at and just using now instead
+      expect(u.expires_at).to be > 2.weeks.from_now
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_150', 'seconds_to_add' => 15.weeks.to_i})
       u.reload
       expect(u.settings['subscription']).not_to eq(nil)
       expect(u.settings['subscription']['started']).to eq(nil)
@@ -1671,8 +1886,9 @@ describe Subscription, :type => :model do
     it "should update for eval type" do
       u = User.create
       expect(u.subscription_override('eval')).to eq(true)
-      expect(u.settings['subscription']['free_premium']).to eq(false);
-      expect(u.settings['subscription']['plan_id']).to eq('eval_monthly_free');
+      expect(u.settings['subscription']['eval_account']).to eq(true)
+      expect(u.settings['subscription']['limited_premium_purchase']).to eq(false)
+      expect(u.settings['subscription']['plan_id']).to eq('eval_monthly_granted')
     end
     
     it "should return false for unrecognized type" do
@@ -1735,27 +1951,45 @@ describe Subscription, :type => :model do
 
     it "should restore purchase duration after accidentally setting to free supervisor" do
       u = User.create
+      u.expires_at = Time.now
       res = u.update_subscription({
         'purchase' => true,
         'customer_id' => '12345',
         'plan_id' => 'long_term_150',
         'purchase_id' => '23456',
-        'seconds_to_add' => 8.weeks.to_i
+        'seconds_to_add' => 13.weeks.to_i
       })
       expect(u.full_premium?).to eq(true)
-      expect(u.premium?).to eq(true)
-
+      expect(u.fully_purchased?).to eq(false)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.expires_at).to be > 12.weeks.from_now
+      expect(u.expires_at).to be < 14.weeks.from_now
       res = u.update_subscription({
         'purchase' => true,
         'plan_id' => 'slp_long_term_free'
       })
+      expect(u.reload.modeling_only?).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
+      expect(u.full_premium?).to eq(false)
+      expect(u.settings['subscription']['seconds_left']).to be > 12.weeks.to_i
+      expect(u.settings['subscription']['seconds_left']).to be < 14.weeks.to_i
+      expect(u.expires_at).to be < 12.weeks.from_now
       expect(u.reload.full_premium?).to eq(false)
-      expect(u.reload.premium?).to eq(true)
+      expect(u.reload.premium_supporter?).to eq(false)
+      expect(u.reload.any_premium_or_grace_period?).to eq(false)
 
       expect(u.subscription_override('restore')).to eq(true)
       
-      expect(u.premium?).to eq(true)
+      expect(u.reload.any_premium_or_grace_period?).to eq(true)
       expect(u.full_premium?).to eq(true)
+      expect(u.reload.modeling_only?).to eq(false)
+      expect(u.expires_at).to be > 12.weeks.from_now
+      expect(u.expires_at).to be < 14.weeks.from_now
+      expect(u.reload.premium_supporter?).to eq(false)
+    end
+
+    it "should restore fully_purchased status if a lapsed communicator switches to supervisor and then back to communicator" do
+      write_this_test
     end
     
     it "should cancel existing subscription when setting to communicator trial" do
@@ -1802,12 +2036,14 @@ describe Subscription, :type => :model do
       }
       u1.transfer_subscription_to(u2)
       expect(u1.settings['subscription']).to eq({
+        'expiration_source' => 'grace_period',
         'transferred_to' => [u2.global_id],
         'bacon' => '1234'
       })
       expect(u2.settings['subscription']).to eq({
         'started' => 1234,
         'token_summary' => 'asdfjkl',
+        'expiration_source' => nil,
         'never_expires' => true, 
         'transferred_from' => [u1.global_id],
         'last_purchase_plan_id' => 'asdf'
@@ -1827,10 +2063,12 @@ describe Subscription, :type => :model do
       expect(Purchasing).to receive(:change_user_id).with('222222', u1.global_id, u2.global_id)
       u1.transfer_subscription_to(u2)
       expect(u1.settings['subscription']).to eq({
+        'expiration_source' => 'grace_period',
         'transferred_to' => [u2.global_id],
         'bacon' => '1234'
       })
       expect(u2.settings['subscription']).to eq({
+        'expiration_source' => nil,
         'started' => 1234,
         'customer_id' => '222222',
         'token_summary' => 'asdfjkl',

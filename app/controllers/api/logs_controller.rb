@@ -4,10 +4,15 @@ class Api::LogsController < ApplicationController
   def index
     user = User.find_by_path(params['user_id'])
     return unless allowed?(user, 'supervise')
+    if user.modeling_only?
+      return unless allowed?(user, 'never_allow')
+    end
     user_ids = [user.id]
+    for_self = true
     user_ids = [] if params['supervisees']
     if params['supervisees']
       user_ids += user.supervisees.map(&:id)
+      for_self = false
     end
     user_ids = user_ids.uniq
     
@@ -22,6 +27,9 @@ class Api::LogsController < ApplicationController
       logs = logs.where(:log_type => params['type'])
     else
       logs = logs.where(:log_type => ['session', 'note', 'assessment', 'eval'])
+    end
+    if for_self && user.supporter_role?
+      logs = logs.where(:log_type => ['note', 'eval'])
     end
     if params['highlighted']
       logs = logs.where(:highlighted => true)

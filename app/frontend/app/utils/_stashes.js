@@ -572,6 +572,7 @@ var stashes = EmberObject.extend({
     stashes.track_daily_use();
     if(!stashes.get('history_enabled')) { return null; }
     if(!stashes.get('logging_enabled')) { return null; }
+    if(app_state.get('eval_mode')) { return null; }
     if(stashes.get('logging_paused_at')) {
       var last_event = stashes.get('last_event');
       var pause = stashes.get('logging_paused_at');

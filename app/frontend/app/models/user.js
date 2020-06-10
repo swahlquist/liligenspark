@@ -187,34 +187,42 @@ CoughDrop.User = DS.Model.extend({
     var joined = window.moment(this.get('joined'));
     return (joined < a_while_ago);
   }),
-  // full premium means fully-featured premium, as in a paid communicator or free trial period
-  currently_premium: computed('expired', 'free_premium', function() {
-    return !this.get('expired') && !this.get('free_premium');
+  // currently_premium means fully-featured premium, 
+  // as in a paid or sponsored communicator 
+  // * or a free trial *
+  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'grace_period', function() {
+    return (this.get('subscription.active') || this.get('grace_period')) && !this.get('expired') && !this.get('subscription.premium_supporter');
   }),
   currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
     return !!(this.get('currently_premium') || this.get('fully_purchased'));
   }),
-  currently_premium_or_supporter_role: computed('currently_premium', 'supporter_role', function() {
-    return !!(this.get('currently_premium') || this.get('supporter_role'));
+  currently_premium_or_premium_supporter: computed('currently_premium', 'supporter_role', 'subscription.premium_supporter', function() {
+    return !!(this.get('currently_premium') || (this.get('supporter_role') && this.get('subscription.premium_supporter')));
   }),
-  // limited_supervisor means they aren't tied to an org or any non-currently-premium supervisees, so
-  // they need a little bit of reminding of the purpose of supervisor accounts.
-  limited_supervisor: computed('subscription.limited_supervisor', 'currently_premium', function() {
-    return !!(this.get('subscription.limited_supervisor') && !this.get('currently_premium'));
+  // limited_paid_supervisor is a PAID supervisor who doesn't have
+  // any communicators they're working with, and so are 
+  // slightly limited to prevent people just using as 
+  // a communicator account.
+  limited_paid_supervisor: computed('subscription.limited_supervisor', 'currently_premium', 'subscription.premium_supporter', function() {
+    return !!(this.get('subscription.premium_supporter') && this.get('subscription.limited_supervisor') && !this.get('currently_premium'));
   }),
-  // free premium means limited functionality, as in a free supporter
-  free_premium: computed(
-    'subscription.free_premium',
+  any_limited_supervisor: computed('limited_paid_supervisor', 'modeling_only', function() {
+    return !!(this.get('limited_paid_supervisor') || this.get('modeling_only'));
+  }),
+  // modeling_only has no cloud extras, no editing, no reports
+  // no personal home board
+  // yes modeling ideas for supervisees
+  modeling_only: computed(
+    'subscription.modeling_only', 
     'supporter_role',
     'expiration_passed',
-    'fully_purchased',
+    'subscription.premium_supporter',
     function() {
-      if(this.get('subscription.free_premium')) { return true; }
-      // auto-convert a free-trial supporter to free_premium when their trial expires
-      if(this.get('supporter_role')) {
+      if(this.get('subscription.modeling_only')) { return true; }
+      // auto-convert a free-trial supporter to modeling_only when their trial expires
+      if(this.get('supporter_role') && !this.get('subscription.premium_supporter')) {
         if(this.get('expiration_passed')) { return true; }
       }
-      else if(!this.get('supporter_role') && this.get('fully_purchased') && this.get('expiration_passed')) { return true; }
       return false;
     }
   ),
@@ -224,15 +232,39 @@ CoughDrop.User = DS.Model.extend({
     var expires = window.moment(this.get('subscription.expires'));
     return expires < now;
   }),
-  expired: computed('expiration_passed', 'membership_type', 'supporter_role', function() {
+  expired: computed('expiration_passed', 'membership_type', 'supporter_role', 'fully_purchased', function() {
+    // expired is only true for communicators who have
+    // never purchased the app in any form
     if(this.get('membership_type') != 'premium') { return true; }
     var passed = this.get('expiration_passed');
     if(!passed) { return false; }
     if(this.get('supporter_role')) { return false; }
+    if(this.get('fully_purchased')) { return false; }
     return !!passed;
   }),
-  expired_or_limited_supervisor: computed('expired', 'limited_supervisor', 'supporter_role', function() {
-    return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_supervisor'));
+  lapsed: computed('subscription.lapsed_communicator', 'expiration_passed', 'supporter_role', 'fully_purchased', function() {
+    // lapsed is a communicator who paid money, but
+    // their cloud extras have now expired
+    if(this.get('supporter_role')) { return false; }
+    if(!this.get('fully_purchased')) { return false; }
+    return !!(this.get('subscription.lapsed_communicator') || this.get('expiration_passed'));
+  }),
+  expired_or_limited_paid_supervisor_or_modeling_only: computed('expired', 'limited_paid_supervisor', 'supporter_role', 'modeling_only', function() {
+    return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_paid_supervisor')) || this.get('modeling_only');
+  }),
+  eval_ending: function(days_to_go) {
+    if(this.get('subscription.eval_account') && this.get('subscription.eval_expires')) {
+      var expires = window.moment(this.get('subscription.eval_expires'));
+      var cutoff = window.moment().add(days_to_go, 'day');
+      return expires < cutoff;
+    }
+    return false;
+  },
+  eval_ended: computed('subscription.eval_account', 'subscription.eval_expires', 'app_state.refresh_stamp', function() {
+    return this.eval_ending(0);
+  }),
+  eval_ending_soon: computed('subscription.eval_account', 'subscription.eval_expires', 'app_state.refresh_stamp', function() {
+    return this.eval_ending(14);
   }),
   joined_within_24_hours: computed('app_state.refresh_stamp', 'joined', function() {
     var one_day_ago = window.moment().add(-1, 'day');
@@ -241,16 +273,18 @@ CoughDrop.User = DS.Model.extend({
     }
     return false;
   }),
-  really_expired: computed('expired', 'subscription.expires', 'fully_purchased', function() {
+  really_expired: computed('expired', 'subscription.expires', 'fully_purchased', 'subscription.premium_supporter', function() {
     if(!this.get('expired')) { return false; }
     if(this.get('fully_purchased')) { return false; }
+    if(this.get('subscription.premium_supporter')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(14, 'day');
     return (expires < now);
   }),
-  really_really_expired: computed('expired', 'subscription.expires', 'fully_purchased', function() {
+  really_really_expired: computed('expired', 'subscription.expires', 'fully_purchased', 'subscription.premium_supporter', function() {
     if(!this.get('expired')) { return false; }
     if(this.get('fully_purchased')) { return false; }
+    if(this.get('subscription.premium_supporter')) { return false; }
     var now = window.moment();
     var expires = window.moment(this.get('subscription.expires')).add(6, 'month');
     return (expires < now);
@@ -260,11 +294,9 @@ CoughDrop.User = DS.Model.extend({
   }),
   grace_period: computed(
     'subscription.grace_period',
-    'supporter_role',
     'expiration_passed',
     function() {
-      if(this.get('supporter_role') && this.get('expiration_passed')) { return false; }
-      else if(!this.get('subscription.grace_period')) { return false; }
+      if(!this.get('subscription.grace_period')) { return false; }
       else if(this.get('expiration_passed')) { return false; }
       else { return true; }
     }

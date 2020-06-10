@@ -100,7 +100,7 @@ class UserMailer < ActionMailer::Base
     end
     @users = []
     users_to_check = []
-    users_to_check << @user if @user.premium? && @user.settings['preferences'] && @user.settings['preferences']['role'] == 'communicator'
+    users_to_check << @user if @user.any_premium_or_grace_period? && @user.settings['preferences'] && @user.settings['preferences']['role'] == 'communicator'
     users_to_check += @supervisees
     
     users_to_check.uniq.each do |user|
@@ -118,14 +118,14 @@ class UserMailer < ActionMailer::Base
       user_report = OpenStruct.new({
         :label => user.user_name,
         :user_name => user.user_name,
-        :premium => user.premium?,
+        :premium => user.any_premium_or_grace_period?,
         :pre_start => pre_start.iso8601[0, 10],
         :pre_end => pre_end.iso8601[0, 10],
         :start => pre_end.iso8601[0, 10],
         :end => Time.now.iso8601[0, 10]
       })
       begin
-        if user.premium? && user.settings['preferences'] && user.settings['preferences']['role'] == 'communicator'
+        if user.any_premium_or_grace_period? && user.settings['preferences'] && user.settings['preferences']['role'] == 'communicator'
           user_report.pre_stats = Stats.cached_daily_use(user.global_id, {:start_at => pre_start, :end_at => pre_end})
           user_report.current_stats = Stats.cached_daily_use(user.global_id, {:start_at => pre_end, :end_at => Time.now})
           broad_state = Stats.cached_daily_use(user.global_id, {:start_at => [pre_start, 4.weeks.ago].min, :end_at => Time.now})

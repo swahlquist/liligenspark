@@ -1,6 +1,6 @@
 {{#button-listener compute_height='compute_height' button_event='button_event'}}
 {{#if model.integration}}
-  {{#unless app_state.sessionUser.currently_premium_or_supporter_role}}
+  {{#unless app_state.sessionUser.currently_premium_or_premium_supporter}}
     <!-- only show integrations for currently-premium users, or supervisors with at least one premium user? -->
     <p class='text-danger'>{{t "Installed tools will only work correctly for currently-active premium accounts" key='premium_required_for_tools'}}</p>
   {{else}}

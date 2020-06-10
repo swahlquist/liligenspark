@@ -84,7 +84,7 @@ export default modal.ModalController.extend({
   update_user: observer('for_user_id', 'user', function() {
     var _this = this;
     _this.set('premium_ideas', false);
-    if(app_state.get('currentUser.premium')) {
+    if(app_state.get('currentUser.currently_premium')) {
       _this.set('premium_ideas', true);
     }
     if(app_state.get('currentUser.known_supervisees')) {

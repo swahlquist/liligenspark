@@ -152,7 +152,7 @@
             {{t "current home board:" key='current_home_board'}}<br/>
             <strong>{{app_state.currentUser.preferences.home_board.key}}</strong>
           {{/link-to}}
-          {{#unless app_state.currentUser.subscription.limited_supervisor}}
+          {{#unless app_state.currentUser.subscription.any_limited_supervisor}}
             <a class="list-group-item" style={{if app_state.currentUser.currently_premium "height: 85px;" "height: 60px;"}}>
               <span class="glyphicon glyphicon-volume-up"></span>
               <span class="btn btn-primary" {{action "homeInSpeakMode"}} style="padding-top: 13px; padding-bottom: 13px; margin-top: -5px;">

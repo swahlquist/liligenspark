@@ -31,6 +31,11 @@
             <div style='font-size: 12px; line-height: 13px;'>{{t "your free preview ends" key='preview_expires'}}<br/>{{date app_state.currentUser.subscription.expires 'day'}}</div>
           {{/if}}
         {{/link-to}}
+      {{else if app_state.currentUser.modeling_only}}
+        {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item half_size"}}
+          <span class="glyphicon glyphicon-info-sign"></span>
+          <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
+        {{/link-to}}
       {{/if}}
     {{/if}}
     {{#if app_state.currentUser.home_board_pending}}
@@ -41,7 +46,8 @@
       </a>
     {{else if home_board_or_supporter}}
       {{#if app_state.currentUser.supporter_role}}
-        {{#if app_state.currentUser.preferences.home_board.key}}
+        {{#if app_state.currentUser.modeling_only}}
+        {{else if app_state.currentUser.preferences.home_board.key}}
           {{#link-to 'board' app_state.currentUser.preferences.home_board.key class="list-group-item half_size collapsible"}}
             <span class="glyphicon glyphicon-home"></span>
             {{t "home:" key='home_board'}}
@@ -101,7 +107,7 @@
           {{t "current home board:" key='current_home_board'}}<br/>
           <strong>{{app_state.currentUser.preferences.home_board.key}}</strong>
         {{/link-to}}
-        {{#unless app_state.currentUser.subscription.limited_supervisor}}
+        {{#unless app_state.currentUser.any_limited_supervisor}}
           {{#if app_state.currentUser.currently_premium}}
             <a class="list-group-item" style={{if app_state.currentUser.currently_premium "height: 85px;" "height: 60px;"}}>
               <span class="glyphicon glyphicon-volume-up"></span>
@@ -156,11 +162,13 @@
         {{/if}}
       {{/if}}
     {{else}}
-      {{#link-to 'home-boards' class="list-group-item collapsible"}}
-        <span class="glyphicon glyphicon-home"></span>
-        <strong>{{t "You haven't set a home board yet" key='choose_home_board'}}</strong><br/>
-        {{t "Let us help you choose one." key='let_us_help_choose_home'}}
-      {{/link-to}}
+      {{#unless app_state.currentUser.modeling_only}}
+        {{#link-to 'home-boards' class="list-group-item collapsible"}}
+          <span class="glyphicon glyphicon-home"></span>
+          <strong>{{t "You haven't set a home board yet" key='choose_home_board'}}</strong><br/>
+          {{t "Let us help you choose one." key='let_us_help_choose_home'}}
+        {{/link-to}}
+      {{/unless}}
     {{/if}}
 
     {{#unless app_state.currentUser.supporter_role}}
@@ -214,7 +222,8 @@
       {{/if}}
     {{/if}}
 
-    {{#if app_state.currentUser}}
+    {{#if app_state.currentUser.modeling_only}}
+    {{else if app_state.currentUser}}
       <a href="#" class={{if app_state.currentUser.supporter_role "list-group-item collapsible half_size" "list-group-item collapsible"}} {{action "session_select"}} style='height: auto;'>
         <span>
         <span class="glyphicon glyphicon-list-alt"></span>
@@ -231,7 +240,7 @@
           {{/if}}<br/>
         {{/unless}}
 
-        {{#if app_state.currentUser.preferences.logging}}
+        {{#if allow_logs}}
           <span class='text-muted' style='font-size: 12px; margin-top: 10px;'>
             {{t "Last Log" key='latest_session'}}
             {{#if logs.[0]}}
@@ -335,27 +344,36 @@
                 {{t "Speak as" key='speak_as'}}<br/>{{supervisee.user_name}}
               </div>
             </button>
-            <button class='btn btn-default button_row_mini_wrap secondary_button less_important' style='margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'stats' supervisee.user_name}}>
-              <span class='glyphicon glyphicon-stats' style='font-size: 30px;'></span><br/>
-              <div style='line-height: 14px;'>
-                {{t "Usage" key='usage'}}<br/>{{t "Reports" key='reports'}}
+            {{#if app_state.currentUser.modeling_only}}
+              <button class='btn btn-default button_row_mini_wrap secondary_button less_important' style='margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'home_board' supervisee.home_board_key}}>
+                <span class='glyphicon glyphicon-th' style='font-size: 30px;'></span><br/>
+                <div style='line-height: 14px;'>
+                  {{t "Home" key='home'}}<br/>{{t "Board" key='board'}}
+                </div>
+              </button>
+            {{else}}
+              <button class='btn btn-default button_row_mini_wrap secondary_button less_important' style='margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'stats' supervisee.user_name}}>
+                <span class='glyphicon glyphicon-stats' style='font-size: 30px;'></span><br/>
+                <div style='line-height: 14px;'>
+                  {{t "Usage" key='usage'}}<br/>{{t "Reports" key='reports'}}
+                </div>
+              </button>
+              <button class='btn btn-default button_row_wrap alternate_button less_important' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444;' {{action 'modeling_ideas' supervisee.user_name}}>
+                <img src={{path 'images/modeling_ideas.svg'}}/>
+                <div style='line-height: 14px;'>
+                  {{t "Modeling" key='modeling'}}<br/>{{t "Ideas" key='ideas'}}
+                </div>
+              </button>
+              <div class="btn-group">
+                <button class='btn btn-default dropdown-toggle button_row_extras' style='margin-bottom: 5px; border-width: 2px; border-color: #ddd; color: #888;'data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class='text'>{{t "Extras " key='extras'}}</span><span class="caret"></span></button>
+                <ul class="dropdown-menu" style='left: auto; right: 0;'>
+                  <li>{{#link-to 'board' supervisee.home_board_key}}{{t "Home Board" key='home_board'}}{{/link-to}}</li>
+                  <li>{{#link-to 'user' supervisee.user_name}}{{t "Account" key='account'}}{{/link-to}}</li>
+                  <li><a href="#" {{action 'record_note' supervisee}}>{{t "New Note" key='new_note'}}</a></li>
+                  <li><a href="#" {{action 'quick_assessment' supervisee}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
+                </ul>
               </div>
-            </button>
-            <button class='btn btn-default button_row_wrap alternate_button less_important' style='opacity: 0.8; margin-bottom: 5px; border-width: 2px; color: #444;' {{action 'modeling_ideas' supervisee.user_name}}>
-              <img src={{path 'images/modeling_ideas.svg'}}/>
-              <div style='line-height: 14px;'>
-                {{t "Modeling" key='modeling'}}<br/>{{t "Ideas" key='ideas'}}
-              </div>
-            </button>
-            <div class="btn-group">
-              <button class='btn btn-default dropdown-toggle button_row_extras' style='margin-bottom: 5px; border-width: 2px; border-color: #ddd; color: #888;'data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class='text'>{{t "Extras " key='extras'}}</span><span class="caret"></span></button>
-              <ul class="dropdown-menu" style='left: auto; right: 0;'>
-                <li>{{#link-to 'board' supervisee.home_board_key}}{{t "Home Board" key='home_board'}}{{/link-to}}</li>
-                <li>{{#link-to 'user' supervisee.user_name}}{{t "Account" key='account'}}{{/link-to}}</li>
-                <li><a href="#" {{action 'record_note' supervisee}}>{{t "New Note" key='new_note'}}</a></li>
-                <li><a href="#" {{action 'quick_assessment' supervisee}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
-              </ul>
-            </div>
+            {{/if}}
             <div style='clear: left;'></div>
             {{#if supervisee.current_badge}}
               {{#if supervisee.premium}}
@@ -395,12 +413,21 @@
             {{t "Speak Mode" key='speak_mode'}}
           </button>
         </div>
-        <div class='col-md-3 col-xs-4 big_button_holder'>
-          <button id='nav_secondary' class='btn big_button btn-default' {{action 'stats'}}>
-            <img src={{path 'images/bar_chart.svg'}} style='opacity: 0.9; filter: grayscale(60%);'/>
-            {{t "Reports" key='reports'}}
-          </button>
-        </div>
+        {{#if app_state.currentUser.modeling_only}}
+          <div class='col-md-3 col-xs-4 big_button_holder'>
+            {{#link-to 'user' app_state.currentUser.user_name id='nav_secondary' class='btn big_button btn-default'}}
+              <img src={{app_state.currentUser.avatar_url_with_fallback}} onerror='button_broken_image(this);' />
+              {{t "My Account" key='my_account'}}
+            {{/link-to}}
+          </div>
+        {{else}}
+          <div class='col-md-3 col-xs-4 big_button_holder'>
+            <button id='nav_secondary' class='btn big_button btn-default' {{action 'stats'}}>
+              <img src={{path 'images/bar_chart.svg'}} style='opacity: 0.9; filter: grayscale(60%);'/>
+              {{t "Reports" key='reports'}}
+            </button>
+          </div>
+        {{/if}}
         {{#if app_state.currentUser.preferences.progress.intro_watched}}
           {{#if modeling_ideas_available}}
             <div class='col-md-3 col-xs-4 big_button_holder'>

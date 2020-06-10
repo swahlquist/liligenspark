@@ -2,8 +2,10 @@
   <p class='prompt'>{{t "Now let's pick a voice. This is what people will hear when the communicator hits buttons." key='select_voice'}}
   {{#if app_state.currentUser.grace_period}}
     {{t "<strong>Keep in mind</strong>: you're still in the free trial, so currently you only have access to the device's built-in voices. After you purchase %app_name%, you can download one of over 90 premium voices." key='free_trial'}}
-  {{else if app_state.currentUser.free_premium}}
-    {{t "You are using a free %app_name% account, so currently you only have access to the device's built-in voices. Paid accounts can also download premium voices for use in Speak Mode." key='free_supporter'}}
+  {{else if app_state.currentUser.subscription.premium_supporter}}
+    {{t "You are using a limited %app_name% account, so currently you only have access to the device's built-in voices. Paid communicator accounts can also download premium voices for use in Speak Mode." key='supporter_limited_voices'}}
+  {{else if app_state.currentUser.subscription.modeling_only}}
+    {{t "You are using a modeling-only %app_name% account, so currently you only have access to the device's built-in voices. Consider purchasing a paid communicator account if you need access to premium voices." key='supporter_limited_voices'}}
   {{else}}
     {{t "Remember, you can also browse the premium voices that can be downloaded to mobile and Windows apps for paid accounts." key='paid_voices'}}
   {{/if}}

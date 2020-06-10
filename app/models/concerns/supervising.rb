@@ -2,7 +2,7 @@ module Supervising
   extend ActiveSupport::Concern
   
   def generate_link_code
-    return nil unless self.premium?
+    return nil unless self.any_premium_or_grace_period?
     code = GoSecure.nonce('link_code')[0, 5]
     self.settings['link_codes'] ||= []
     self.settings['link_codes'].select!{|c| id, nonce, ts = c.split(/-/, 3); Time.at(ts.to_i) > 6.hours.ago }
@@ -16,12 +16,12 @@ module Supervising
     return false unless code
     id, nonce, ts = code.split(/-/, 3)
     user = User.find_by_global_id(id)
-    user = nil unless user && user.premium? &&
+    user = nil unless user && user.any_premium_or_grace_period? &&
         (user.settings['link_codes'] || []).include?(code) && 
         Time.at(ts.to_i) > 6.hours.ago
     return false unless user && user != self
     supervisors = User.find_all_by_global_id(user.supervisor_user_ids)
-    non_premium_supervisors = supervisors.select{|u| !u.premium? }
+    non_premium_supervisors = supervisors.select{|u| !u.any_premium_or_grace_period? }
     return false if non_premium_supervisors.length >= 5
     self.save unless self.id
     self.class.link_supervisor_to_user(self, user, code)
@@ -99,7 +99,7 @@ module Supervising
   def process_supervisor_key(key)
     action, key = key.split(/-/, 2)
     if action == 'add' || action == 'add_edit'
-      return false unless self.premium? && self.id
+      return false unless self.any_premium_or_grace_period? && self.id
       supervisor = User.find_by_path(key)
       if key.match(/@/)
         users = User.find_by_email(key)
@@ -199,7 +199,6 @@ module Supervising
     end
     
     def link_supervisor_to_user(supervisor, user, code=nil, editor=true, organization_unit_id=nil)
-      # raise "free_premium users can't add supervisors" if user.free_premium?
       supervisor = user if supervisor.global_id == user.global_id
       
       org_unit_ids = ((user.settings['supervisors'] || []).detect{|s| s['user_id'] == supervisor.global_id } || {})['organization_unit_ids'] || []
@@ -221,12 +220,12 @@ module Supervising
       end
       # If a user is on a free trial and they're added as a supervisor, set them to a free supporter subscription
       if supervisor.grace_period?
-        supervisor.update_subscription({
-          'subscribe' => true,
-          'subscription_id' => 'free_auto_adjusted',
-          'token_summary' => "Automatically-set Supporter Account",
-          'plan_id' => 'slp_monthly_free'
-        })
+        # supervisor.update_subscription({
+        #   'subscribe' => true,
+        #   'subscription_id' => 'free_auto_adjusted',
+        #   'token_summary' => "Automatically-set Supporter Account",
+        #   'plan_id' => 'slp_monthly_free'
+        # })
       end
       supervisor.schedule_once(:update_available_boards)
       user.save_with_sync('supervisee')

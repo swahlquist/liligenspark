@@ -35,14 +35,12 @@
     {{else if subscription.user.subscription.grace_period}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
       {{t "You haven't purchased %app_name% yet. Currently you're running a free trial, hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
-    {{else if subscription.user.subscription.free_premium}}
-      {{#if subscription.user.supporter_role}}
-        <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
-        {{t "You are signed up for a free supervisor account. Thank you for supporting communicators using %app_name%! This account is limited to being used as a support account, so some features will only work if you are connected to a paid communicator. If you plan to use this as a communication account you should purchase a paid account instead." key='free_premium_consider_purchasing'}}
-      {{else}}
-        <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
-        {{t "Thank you for purchasing %app_name%! You do not currently have an active subscription. Don't worry, you can still use %app_name% as a robust, cloud-based communication system, but the cloud extras are currently disabled for your account. If you need those features please consider purchasing an ongoing subscription." key='free_premium_consider_subscribing'}}
-      {{/if}}
+    {{else if subscription.user.subscription.lapsed}}
+      <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
+      {{t "Thank you for purchasing %app_name%! You do not currently have an active subscription. Don't worry, you can still use %app_name% as a robust, cloud-based communication system, but the cloud extras are currently disabled for your account. If you need those features please consider purchasing an ongoing subscription." key='lapsed_consider_subscribing'}}
+    {{else if subscription.user.subscription.premium_supporter}}
+      <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
+      {{t "You are signed up for a supervisor account. Thank you for supporting communicators using %app_name%! This account is limited to being used as a support account, so some features will only work if you are connected to a paid communicator. If you plan to use this as a communication account you should purchase a full communicator account instead." key='premium_supporter_consider_purchasing'}}
     {{else if subscription.user_expired}}
       <span class='glyphicon glyphicon-exclamation-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
       {{t "Your premium account has expired. Please select a new billing option." key='subscription_expired'}}

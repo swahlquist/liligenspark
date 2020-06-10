@@ -1045,7 +1045,7 @@ describe Api::UsersController, :type => :controller do
       Worker.process_queues
       expect(@user.reload.settings['subscription']['plan_id']).to eq('slp_monthly_free')
       expect(@user.full_premium?).to eq(false)
-      expect(@user.free_premium?).to eq(true)
+      expect(@user.grace_period?).to eq(true)
     end
    
     it "should let admins add a premium voice" do

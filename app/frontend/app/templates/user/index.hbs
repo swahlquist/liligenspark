@@ -108,22 +108,24 @@
         </button>
       </div>
       {{#if model.permissions.supervise}}
-        <div class='col-xs-12' style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
-          <div class="btn-group">
-            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='border-width: 3px; background: #eee;'>
-              <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/extra_455_g.svg' style='height: 30px;'/>
-              {{t "Extras" key='extras'}} <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" style='right: 0; left: auto;'>
-              <li><a href="#" {{action "recordNote" "text"}}>New Note</a></li>
-              <li><a href="#" {{action "quick_assessment"}}>Quick Assessment</a></li>
-              <li><a href="#" {{action 'view_devices'}}>My Devices</a></li>
-              {{#if model.permissions.delete}}
-                <li>{{#link-to 'setup'}}{{t "Getting Started Wizard" key='getting_started_wizard'}}{{/link-to}}</li>
-              {{/if}}
-            </ul>
+        {{#unless app_state.currentUser.modeling_only}}
+          <div class='col-xs-12' style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
+            <div class="btn-group">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='border-width: 3px; background: #eee;'>
+                <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/extra_455_g.svg' style='height: 30px;'/>
+                {{t "Extras" key='extras'}} <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" style='right: 0; left: auto;'>
+                <li><a href="#" {{action "recordNote" "text"}}>New Note</a></li>
+                <li><a href="#" {{action "quick_assessment"}}>Quick Assessment</a></li>
+                <li><a href="#" {{action 'view_devices'}}>My Devices</a></li>
+                {{#if model.permissions.delete}}
+                  <li>{{#link-to 'setup'}}{{t "Getting Started Wizard" key='getting_started_wizard'}}{{/link-to}}</li>
+                {{/if}}
+              </ul>
+            </div>
           </div>
-        </div>
+        {{/unless}}
       {{/if}}
     {{else}}
       <div class="col-sm-3 col-xs-6">
@@ -349,18 +351,28 @@
         <ul class="nav nav-pills" style="margin-top: -5px; margin-bottom: 5px; margin-right: -20px;">
           {{#if model.permissions.edit}}
             <li role="presentation" class={{if mine_selected 'active'}}><a href="#" {{action 'set_selected' 'mine'}}>{{t "Mine" key='mine'}}</a></li>
+          {{else if model.permissions.model}}
+            <li role="presentation" class={{if mine_selected 'active'}}><a href="#" {{action 'set_selected' 'mine'}}>{{t "Mine" key='mine'}}</a></li>
           {{/if}}
-          <li role="presentation" class={{if public_selected 'active'}}><a href="#" {{action 'set_selected' 'public'}}>{{t "Public" key='public'}}</a></li>
-          {{#if model.permissions.edit}}
-            <li role="presentation" class={{if private_selected 'active'}}><a href="#" {{action 'set_selected' 'private'}}>{{t "Private" key='private'}}</a></li>
+          {{#unless app_state.currentUser.modeling_only}}
+            <li role="presentation" class={{if public_selected 'active'}}><a href="#" {{action 'set_selected' 'public'}}>{{t "Public" key='public'}}</a></li>
+            {{#if model.permissions.edit}}
+              <li role="presentation" class={{if private_selected 'active'}}><a href="#" {{action 'set_selected' 'private'}}>{{t "Private" key='private'}}</a></li>
+            {{/if}}
+          {{/unless}}
+          {{#if model.permissions.model}}
+            <li role="presentation" class={{if root_selected 'root'}}><a href="#" {{action 'set_selected' 'root'}}>{{t "Root" key='root'}}</a></li>
           {{/if}}
-          <li role="presentation" class={{if root_selected 'root'}}><a href="#" {{action 'set_selected' 'root'}}>{{t "Root" key='root'}}</a></li>
-          <li role="presentation" class={{if starred_selected 'active'}}><a href="#" {{action 'set_selected' 'starred'}}>{{t "Liked" key='starred'}}</a></li>
-          {{#if model.permissions.edit}}
-            <li role="presentation" class={{if shared_selected 'active'}}><a href="#" {{action 'set_selected' 'shared'}}>{{t "Shared with Me" key='shared_with_me'}}</a></li>
-          {{/if}}
-          {{#if model.prior_home_boards}}
-            <li role="presentation" class={{if prior_home_selected 'active'}}><a href="#" {{action 'set_selected' 'prior_home'}}>{{t "Prior Home Boards" key='prior_home'}}</a></li>
+          {{#unless app_state.currentUser.modeling_only}}
+            <li role="presentation" class={{if starred_selected 'active'}}><a href="#" {{action 'set_selected' 'starred'}}>{{t "Liked" key='starred'}}</a></li>
+            {{#if model.permissions.edit}}
+              <li role="presentation" class={{if shared_selected 'active'}}><a href="#" {{action 'set_selected' 'shared'}}>{{t "Shared with Me" key='shared_with_me'}}</a></li>
+            {{/if}}
+          {{/unless}}
+          {{#if model.permissions.model}}
+            {{#if model.prior_home_boards}}
+              <li role="presentation" class={{if prior_home_selected 'active'}}><a href="#" {{action 'set_selected' 'prior_home'}}>{{t "Prior Home Boards" key='prior_home'}}</a></li>
+            {{/if}}
           {{/if}}
         </ul>
         {{#if board_list}}
@@ -524,6 +536,7 @@
                 <ul class="dropdown-menu">
                   <li><a href="#" {{action 'set_subscription' 'eval'}}>{{t "Set as Eval Account" key='set_as_eval'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'never_expires'}}>{{t "Set as Free Forever" key='set_as_free_forever'}}</a></li>
+                  <li><a href="#" {{action 'set_subscription' 'manual_modeler'}}>{{t "Set as Free Modeler" key='set_as_free_modeler'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'manual_supporter'}}>{{t "Set as Free Supporter" key='set_as_free_supporter'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'communicator_trial'}}>{{t "Set as Free Trial Communicator" key='set_as_free_trial_communicator'}}</a></li>
                   <li><a href="#" {{action 'set_subscription' 'add_1'}}>{{t "Add 1 Month" key='add_one_month'}}</a></li>

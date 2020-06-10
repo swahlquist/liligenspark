@@ -1,4 +1,18 @@
-{{#if app_state.feature_flags.board_levels}}
+{{#if app_state.currentUser.modeling_only}}
+  <div class='col-sm-10 col-sm-offset-1'>
+    <h4>{{t "Modeling on Boards" key='modeling_on_boards'}}</h4>
+  </div>
+  <div class='col-sm-5 col-sm-offset-1'>
+    <img src={{path 'walkthrough/board_examples.gif'}} style='width: 100%;' />
+  </div>
+  <div class='col-sm-5'>
+    <p class='prompt'>{{t "%app_name% comes with many different styles of boards. As you work with different communicators you may come across different board styles and layouts. Every communicator can benefit from having the supporters around them model how to use %app_name%" key='boards_1'}}</p>
+
+    <p class='prompt'>{{t "Modeling is a great tool to language learning. Research has shown that AAC users who have people modeling for them have better success adopting and communicating using AAC." key='board_2'}}</p>
+
+    <p class='prompt'>{{t "Modeling is easy! All you do is hit buttons on the screen as you talk to the communicator. Show them how they can use the buttons they have available to express themselves. Don't just model requests, model all kinds of different thoughts, ideas, observations, and questions! The more you model, the more examples you'ree giving the communicator for what you consider valid ways of using their device." key='usage_3'}}</p>
+  </div>
+{{else if app_state.feature_flags.board_levels}}
   {{#if advanced}}
     <div class='col-sm-10 col-sm-offset-1'>
       <p>{{t "In %app_name% vocabulary sets are made up of a collection of \"boards\". There are a number of different types of boards you can choose from, depending on the functional level and needs of your communicator. When you find one you like, hit \"Make This My Home Board\" to make it the communicator's \"home board\", which is what the communicator will see every time they first load the app." key='boards_explainer'}}</p>

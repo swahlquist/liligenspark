@@ -98,7 +98,9 @@ export default Route.extend({
       modal.open('speak-menu', {inactivity_timeout: true, scannable: true});
     },
     newBoard: function() {
-      modal.open('new-board');
+      app_state.check_for_needing_purchase().then(function() {
+        modal.open('new-board');
+      });
     },
     pickWhichHome: function() {
       modal.open('which-home');

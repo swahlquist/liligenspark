@@ -50,7 +50,7 @@ class Board < ActiveRecord::Base
   # the user (and co-authors) should have edit and sharing access
 #  add_permissions('view', ['read_boards']) {|user| self.author?(user) } # should be redundant due to board_caching
 #  add_permissions('view', 'edit', 'delete', 'share') {|user| self.author?(user) } # should be redundant due to board_caching
-  add_permissions('view', ['read_boards']) {|user| self.user && self.user.allows?(user, 'supervise') }
+  add_permissions('view', ['read_boards']) {|user| self.user && self.user.allows?(user, 'model') }
   # the user and any of their editing supervisors/org admins should have edit access
   add_permissions('view', ['read_boards']) {|user| self.user && self.user.allows?(user, 'edit') }
   add_permissions('view', 'edit', 'delete', 'share') {|user| self.user && self.user.allows?(user, 'edit_boards') }
@@ -276,7 +276,7 @@ class Board < ActiveRecord::Base
     if self.unshareable?
       self.public = false unless self.settings['protected'] && self.settings['protected']['demo'] && !self.parent_board_id
     elsif self.public == nil
-      if self.user && self.user.premium?
+      if self.user && self.user.any_premium_or_grace_period?
         self.public = false
       else
         self.public = true
@@ -698,7 +698,7 @@ class Board < ActiveRecord::Base
         self.settings['unlisted'] = false
       end
     elsif params['public'] != nil
-#       if self.public != false && params['public'] == false && (!self.user || !self.user.premium?)
+#       if self.public != false && params['public'] == false && (!self.user || !self.user.any_premium_or_grace_period?)
 #         add_processing_error("only premium users can make boards private")
 #         return false
 #       end
@@ -1113,7 +1113,7 @@ class Board < ActiveRecord::Base
       if button && button['integration'] && button['integration']['user_integration_id'] && self.allows?(user, 'view')
         ui = UserIntegration.find_by_path(button['integration']['user_integration_id'])
         associated_user = additional_args && User.find_by_path(additional_args['associated_user_id'])
-        associated_user = nil if associated_user && !associated_user.allows?(user, 'supervise')
+        associated_user = nil if associated_user && !associated_user.allows?(user, 'model')
         if ui && ui.settings['button_webhook_url']
           placement_code = ui.placement_code(self.global_id, button['id'].to_s)
           ref_user = associated_user || user

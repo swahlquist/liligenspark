@@ -22,7 +22,7 @@ module JsonApi::User
       json['admin'] = true if ::Organization.admin_manager?(user)
     end
     
-    if json['permissions'] && json['permissions']['supervise']
+    if json['permissions'] && json['permissions']['model']
       json['needs_billing_update'] = !!user.settings['purchase_bounced']
       json['sync_stamp'] = (user.sync_stamp || user.updated_at).utc.iso8601
       json['unread_messages'] = user.settings['unread_messages'] || 0
@@ -116,7 +116,7 @@ module JsonApi::User
         json['prior_home_boards'] = json['prior_home_boards'].select{|b| b['key'] != user.settings['preferences']['home_board']['key'] }
       end
       
-      json['premium'] = user.premium?
+      json['premium'] = user.any_premium_or_grace_period?
       json['terms_agree'] = !!user.settings['terms_agreed']
       json['subscription'] = user.subscription_hash
       json['organizations'] = user.organization_hash
@@ -150,14 +150,14 @@ module JsonApi::User
       elsif user.supporter_role?
         json['supervisees'] = []
       end
-      # paid supported accounts will not be marked as free_premium
-      if json['subscription'] && json['subscription']['free_premium']
+
+      if json['subscription'] && json['subscription']['premium_supporter']
         json['subscription']['limited_supervisor'] = true
         # in case you get stuck on the comparator again, this is saying for anybody who signed up
         # less than 2 months ago
         json['subscription']['limited_supervisor'] = false if user.created_at > 2.months.ago 
         json['subscription']['limited_supervisor'] = false if json['subscription']['limited_supervisor'] && Organization.supervisor?(user)
-        json['subscription']['limited_supervisor'] = false if json['subscription']['limited_supervisor'] && supervisees.any?{|u| u.premium? }
+        json['subscription']['limited_supervisor'] = false if json['subscription']['limited_supervisor'] && supervisees.any?{|u| u.any_premium_or_grace_period? }
       end
       
       if user.settings['user_notifications'] && user.settings['user_notifications'].length > 0
@@ -183,7 +183,7 @@ module JsonApi::User
       json['email'] = user.settings['email'] if args[:include_email]
       if args[:supervisor]
         json['edit_permission'] = args[:supervisor].edit_permission_for?(user)
-        json['premium'] = user.premium?
+        json['premium'] = user.any_premium_or_grace_period?
         json['goal'] = user.settings['primary_goal']
         json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
         json['home_board_key'] = user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['key']
@@ -234,7 +234,7 @@ module JsonApi::User
       json.merge! user.settings.slice('name', 'public', 'description', 'details_url', 'location')
       json['pending'] = true if user.settings['pending']
 
-      json['membership_type'] = user.premium? ? 'premium' : 'free'
+      json['membership_type'] = user.any_premium_or_grace_period? ? 'premium' : 'free'
 
       json['stats'] = {}
       json['stats']['starred_boards'] = user.settings['starred_boards'] || 0

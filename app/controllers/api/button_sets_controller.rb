@@ -5,7 +5,7 @@ class Api::ButtonSetsController < ApplicationController
   def index
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
-    return unless allowed?(user, 'supervise')
+    return unless allowed?(user, 'model')
     button_sets = BoardDownstreamButtonSet.for_user(user)
     render json: JsonApi::ButtonSet.paginate(params, button_sets, :remote_support => !!request.headers['X-SUPPORTS-REMOTE-BUTTONSET'])
   end

@@ -1,4 +1,6 @@
-{{#if model.permissions.supervise}}
+{{#if app_state.currentUser.modeling_only}}
+  {{modeling-only-notice}}
+{{else if model.permissions.supervise}}
   <h2>{{t "User Recordings" key='user_recordings'}}</h2>
   {{#if recordings.loading}}
     <p>{{t "Loading Recordings..." key='loading_recordings'}}</p>

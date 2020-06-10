@@ -47,7 +47,7 @@ class Api::BoardsController < ApplicationController
         end
         if !params['public']
           Rails.logger.warn('checking for supervision permission')
-          return unless allowed?(user, 'supervise')
+          return unless allowed?(user, 'model')
         end
         if params['private']
           Rails.logger.warn('checking for publicness')

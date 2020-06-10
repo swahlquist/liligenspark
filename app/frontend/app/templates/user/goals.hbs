@@ -1,4 +1,6 @@
-{{#if model.currently_premium}}
+{{#if app_state.currentUser.modeling_only}}
+  {{modeling-only-notice}}
+{{else if model.currently_premium}}
   <h2>{{t "Communication Goals" key='communication_goals'}}</h2>
 
   {{#if goals.loading}}

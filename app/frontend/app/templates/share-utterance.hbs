@@ -7,20 +7,29 @@
     <p>"<span style='font-size: 20px; display: inline-block; max-width: 90%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap;'>{{sentence}}</span>"</p>
     <div style='position: absolute; left: -1000px;'>{{input type='text' value=sentence id='utterance_sentence'}}</div>
     <div class="row share_buttons modal_targets advanced_selection" style="margin: 10px 0;">
-      {{#unless app_state.sessionUser.expired_or_limited_supervisor}}
-        {{#each contacts as |sup|}}
-          <div class='col-sm-2 col-xs-4'>
-            <button class='btn btn-default' {{action 'message' sup}}>
-              {{#if sup.reply}}
-                <span id='reply_icon' class='label-info' style='position: absolute; top: 3px; left: 18px;'><span class='glyphicon glyphicon-envelope' style='font-size: 14px;'></span></span>
-              {{/if}}
-              <img src={{sup.avatar_url}} />
-              {{sup.user_name}}
-            </button>
-          </div>
-        {{/each}}
+      {{#unless app_state.sessionUser.expired_or_limited_paid_supervisor_or_modeling_only}}
+        {{#if contacts}}
+          {{#each contacts as |sup|}}
+            <div class='col-sm-2 col-xs-4'>
+              <button class='btn btn-default' {{action 'message' sup}}>
+                {{#if sup.reply}}
+                  <span id='reply_icon' class='label-info' style='position: absolute; top: 3px; left: 18px;'><span class='glyphicon glyphicon-envelope' style='font-size: 14px;'></span></span>
+                {{/if}}
+                <img src={{sup.avatar_url}} />
+                {{sup.user_name}}
+              </button>
+            </div>
+          {{/each}}
+        {{else}}
+          {{t "In addition to sharing using the device's built-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors. You can add contacts on a user's profile under My Account!" key='two_way_communication_on_profile'}}
+        {{/if}}
       {{else}}
-        <p class='text-muted'>{{t "In addition to sharing using the device's build-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors. Please consider purchasing %app_name% to gain access to this feature." key='consider_buying_for_contacts'}}</p>
+        <p class='text-muted'>
+          {{t "In addition to sharing using the device's built-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors." key='two_way_communication'}}
+          {{#if app_state.sessionUser.expired}}
+            {{t "Please consider purchasing %app_name% to gain access to this feature." key='consider_buying_for_contacts'}}
+          {{/if}}
+        </p>
       {{/unless}}
       <div style='clear: both; border-top: 2px solid #ccc; margin: 10px 0;'></div>
       {{#if shares.clipboard}}

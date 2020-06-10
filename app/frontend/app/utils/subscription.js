@@ -14,11 +14,11 @@ import { computed } from '@ember/object';
 
 var types = ['communicator_type', 'supporter_type', 'monthly_subscription', 'long_term_subscription',
   'communicator_monthly_subscription', 'communicator_long_term_subscription',
-  'monthly_3', 'monthly_4', 'monthly_5', 'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10',
+  'monthly_6',
   'monthly_ios', 'long_term_ios',
-  'long_term_150', 'long_term_200', 'long_term_250', 'long_term_300', 'long_term_custom',
-  'slp_monthly_free', 'slp_monthly_3', 'slp_monthly_4', 'slp_monthly_5',
-  'slp_long_term_free', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150',
+  'long_term_150', 'long_term_200', 'long_term_custom',
+  'eval_long_term', 
+  'slp_long_term',
   'subscription_amount'];
 var obs_properties = [];
 types.forEach(function(type) {
@@ -26,6 +26,8 @@ types.forEach(function(type) {
 });
 var one_time_id = 'CoughDropiOSBundle';
 var long_term_id = 'CoughDropiOSPlusExtras';
+var eval_id = 'CoughDropiOSEval';
+var slp_id = 'CoughDropiOSSLP';
 var subscription_id = 'CoughDropiOSMonthly';
 
 var obs_func = function() {
@@ -146,8 +148,8 @@ var Subscription = EmberObject.extend({
   valid: computed(
     'user_type',
     'subscription_type',
-    'subscription_amount',
     'gift_code',
+    'user.lapsed',
     'email',
     'subscription_custom_amount',
     function() {
@@ -168,24 +170,32 @@ var Subscription = EmberObject.extend({
         }
         return false;
       } else if(this.get('user_type') == 'communicator') {
-        if(this.get('subscription_type') == 'monthly') {
-          return ['monthly_3', 'monthly_4', 'monthly_5', 'monthly_6', 'monthly_7', 'monthly_8', 'monthly_9', 'monthly_10', 'monthly_ios'].indexOf(this.get('subscription_amount')) != -1;
+        if(this.get('eval')) {
+          return ['eval_long_term_25', 'eval_long_term_ios'].indexOf(this.get('subscription_amount')) != -1;
         } else {
-          return ['long_term_100', 'long_term_150', 'long_term_200', 'long_term_250', 'long_term_300', 'long_term_ios'].indexOf(this.get('subscription_amount')) != -1;
+          if(this.get('subscription_type') == 'monthly') {
+            return ['monthly_6', 'monthly_ios'].indexOf(this.get('subscription_amount')) != -1;
+          } else {
+            var valids = ['long_term_100', 'long_term_150', 'long_term_200', 'long_term_ios'];
+            if(this.get('user.lapsed')) {
+              valids.push('long_term_50');
+            }
+            return valids.indexOf(this.get('subscription_amount')) != -1;
+          }  
         }
       } else {
         if(this.get('subscription_type') == 'monthly') {
-          return ['slp_monthly_free', 'slp_monthly_3', 'slp_monthly_4', 'slp_monthly_5'].indexOf(this.get('subscription_amount')) != -1;
+          return this.get('subscription_amount') == 'slp_monthly_free';
         } else {
-          return ['slp_long_term_free', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150'].indexOf(this.get('subscription_amount')) != -1;
+          return ['slp_long_term_free', 'slp_long_term_25', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150'].indexOf(this.get('subscription_amount')) != -1;
         }
       }
     }
   ),
   subscription_amount_plus_trial: computed('subscription_amount', 'discount_period', function() {
-    if(this.get('discount_period') && ['monthly_4', 'long_term_150'].indexOf(this.get('subscription_amount')) != -1) {
+    if(this.get('discount_period') && ['long_term_100'].indexOf(this.get('subscription_amount')) != -1) {
       return this.get('subscription_amount') + '_plus_trial';
-    } else if(this.get('sale') && ['monthly_4', 'monthly_3', 'long_term_150', 'long_term_100'].indexOf(this.get('subscription_amount')) != -1) {
+    } else if(this.get('sale') && ['long_term_100'].indexOf(this.get('subscription_amount')) != -1) {
       return this.get('subscription_amount') + '_plus_trial';
     }
     return this.get('subscription_amount');
@@ -215,9 +225,12 @@ var Subscription = EmberObject.extend({
   update_on_much_cheaper_offer: observer(
     'subscription_amount',
     'discount_percent',
+    'user.lapsed',
     'much_cheaper_offer',
     function() {
-      if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
+      if(this.get('user.lapsed') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
+        this.set('subscription_amount', 'long_term_50');
+      } else if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
         this.set('subscription_amount', 'long_term_100');
       }
     }
@@ -273,6 +286,16 @@ var Subscription = EmberObject.extend({
     if(!prod || !prod.price) { return "249" }
     return prod.price;
   }),
+  supporter_app_price: computed('app_state.app_store_purchase_types', function() {
+    var prod = Subscription.product_types[slp_id];
+    if(!prod || !prod.price) { return "29" }
+    return prod.price;
+  }),
+  eval_app_price: computed('app_state.app_store_purchase_types', function() {
+    var prod = Subscription.product_types[eval_id];
+    if(!prod || !prod.price) { return "29" }
+    return prod.price;
+  }),
   app_currency: computed('app_state.app_store_purchase_types', function() {
     var prod = Subscription.product_types[subscription_id] || Subscription.product_types[long_term_id] || Subscription.product_types[one_time_id];
     return prod.currency || "USD";
@@ -283,11 +306,13 @@ var Subscription = EmberObject.extend({
     'subscription_amount',
     'app_state.app_store_purchase_types',
     function(obj, changes) {
+      window.subscr = this;
       if(this.get('user_type') == 'communicator') {
-        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(monthly_|long_term_)/)) {
+        if(this.get('subscription_amount') != 'reset' && (!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(eval_|monthly_|long_term_)/))) {
           this.set('subscription_type', 'monthly');
         }
         if(this.get('subscription_type') == 'monthly') {
+          this.set('eval', false);
           if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^monthly_/)) {
             if(Subscription.product_types) {
               // TODO: switch this for monthly_ios once it's an option
@@ -303,7 +328,15 @@ var Subscription = EmberObject.extend({
             }
           }
         } else if(this.get('subscription_type') == 'long_term') {
-          if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^long_term_/)) {
+          if(this.get('subscription_amount').match(/^long_term_eval/)) {
+            this.set('eval', true);
+            if(Subscription.product_types) {
+              this.set('subscription_amount', 'eval_long_term_ios');
+            } else {
+              this.set('subscription_amount', 'eval_long_term_25');
+            }  
+          } else if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^(eval_)?long_term_/)) {
+            this.set('eval', false);
             if(Subscription.product_types) {
               this.set('subscription_amount', 'long_term_ios');
             } else if(this.get('much_cheaper_offer')) {
@@ -312,21 +345,27 @@ var Subscription = EmberObject.extend({
               this.set('subscription_amount', 'long_term_150');
             } else {
               this.set('subscription_amount', 'long_term_200');
-            }
+            }  
           }
         }
       } else {
+        this.set('eval', false);
         if(changes == 'user_type') {
           this.set('subscription_type', 'long_term');
         }
-        if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^slp_/)) {
-          this.set('subscription_type', 'monthly');
+        if(this.get('subscription_amount') == 'slp_long_term_free' || this.get('subscription_amount') == 'slp_monthly_free') {
           this.set('subscription_amount', 'slp_monthly_free');
+          this.set('subscription_type', 'monthly');
+        } else if(!this.get('subscription_amount') || !this.get('subscription_amount').match(/^slp_long_term/)) {
+          this.set('subscription_type', 'long_term');
+          if(Subscription.product_types) {
+            this.set('subscription_amount', 'slp_long_term_ios');
+          } else {
+            this.set('subscription_amount', 'slp_long_term_25');
+          }
         }
         if(this.get('subscription_amount') && this.get('subscription_amount').match(/^slp_long_term/)) {
           this.set('subscription_type', 'long_term');
-        } else if(this.get('subscription_amount') && this.get('subscription_amount') == 'slp_monthly_free') {
-          this.set('subscription_type', 'monthly');
         }
       }
     }
@@ -343,8 +382,11 @@ var Subscription = EmberObject.extend({
   communicator_monthly_subscription: computed('user_type', 'subscription_type', function() {
     return this.get('user_type') == 'communicator' && this.get('subscription_type') == 'monthly';
   }),
-  communicator_long_term_subscription: computed('user_type', 'subscription_type', function() {
-    return this.get('user_type') == 'communicator' && this.get('subscription_type') == 'long_term';
+  communicator_long_term_subscription: computed('eval', 'user_type', 'subscription_type', function() {
+    return !this.get('eval') && this.get('user_type') == 'communicator' && this.get('subscription_type') == 'long_term';
+  }),
+  eval_long_term: computed('eval', 'user_type', 'subscription_type', function() {
+    return this.get('eval') && this.get('user_type') == 'communicator' && this.get('subscription_type') == 'long_term';
   }),
   monthly_subscription: computed('subscription_type', function() {
     return this.get('subscription_type') == 'monthly';
@@ -358,8 +400,11 @@ var Subscription = EmberObject.extend({
   monthly_ios: computed('subscription_amount', function() {
     return this.get('subscriptionn_amount') == 'monthly_ios';
   }),
-  slp_monthly_free: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'slp_monthly_free';
+  slp_long_term: computed('subscription_amount', function() {
+    return this.get('subscription_amount').match(/^slp_long_term/) && !this.get('subscription_amount').match(/free/);
+  }),
+  modeling_long_term: computed('subscription_amount', function() {
+    return this.get('subscription_amount') == 'slp_monthly_free' || this.get('subscription_amount') == 'slp_long_term_free';
   }),
   long_term_ios: computed('subscription_amount', function() {
     return this.get('subscriptionn_amount') == 'long_term_ios';
@@ -373,30 +418,17 @@ var Subscription = EmberObject.extend({
   long_term_200: computed('subscription_amount', function() {
     return this.get('subscription_amount') == 'long_term_200';
   }),
-  long_term_250: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'long_term_250';
-  }),
-  long_term_300: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'long_term_300';
-  }),
   long_term_custom: computed('subscription_amount', function() {
     return this.get('subscription_amount') == 'long_term_custom';
   }),
-  slp_long_term_free: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'slp_long_term_free';
+  slp_long_term_25: computed('subscription_amount', function() {
+    return this.get('subscription_amount') == 'slp_long_term_25';
   }),
-  slp_long_term_50: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'slp_long_term_50';
-  }),
-  slp_long_term_100: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'slp_long_term_100';
-  }),
-  slp_long_term_150: computed('subscription_amount', function() {
-    return this.get('subscription_amount') == 'slp_long_term_150';
-  }),
-  long_term_amount: computed('much_cheaper_offer', 'cheaper_offer', 'discount_percent', function() {
+  long_term_amount: computed('user.lapsed', 'much_cheaper_offer', 'cheaper_offer', 'discount_percent', function() {
     var num = 200;
-    if(this.get('much_cheaper_offer')) {
+    if(this.get('user.lapsed')) {
+      num = 50;
+    } else if(this.get('much_cheaper_offer')) {
       num = 100;
     } else if(this.get('cheaper_offer')) {
       num = 150;
@@ -427,10 +459,14 @@ var Subscription = EmberObject.extend({
             num = this.get('monthly_app_price');
           } else if(this.get('subscription_amount') == 'long_term_ios') {
             num = this.get('long_term_app_price');
+          } else if(this.get('subscription_amount') == 'slp_long_term_ios') {
+            num = this.get('supporter_app_price');
+          } else if(this.get('subscription_amount') == 'eval_long_term_ios') {
+            num = this.get('eval_app_price');
           }
           var num = parseInt(num, 10) * 100;
           if(!this.get('app_pricing_override')) {
-            if(this.get('discount_percent') && this.get('communicator_type') && this.get('long_term_subscription')) {
+            if(this.get('discount_percent') && this.get('communicator_type') && !this.get('eval') && this.get('long_term_subscription')) {
               num = Math.max(0, num * (1 - this.get('discount_percent')));
             }
             if(this.get('extras') && !this.get('free_extras') && this.get('long_term_subscription')) {
@@ -469,6 +505,8 @@ var Subscription = EmberObject.extend({
       if(res.valid && (res.discount_percent >= 1.0 || _this.get('partial_gift_allowed'))) {
         _this.set('discount_percent', res.discount_percent);
         _this.set('subscription_type', 'long_term');
+        _this.set('user_type', 'communicator');
+        _this.set('eval', false);
         if(res.extras) {
           _this.set('extras', true);
           _this.set('free_extras', true);
@@ -488,11 +526,7 @@ var Subscription = EmberObject.extend({
     var res = i18n.t('coughdrop_license', "%app_name% license");
     if(this.get('user_type') == 'communicator') {
       if(this.get('eval')) {
-        if(this.get('subscription_type') == 'monthly') {
-          res = i18n.t('monthly_sub', "%app_name% monthly evaluation account");
-        } else {
-          res = i18n.t('long_term_sub', "%app_name% evaluation account");
-        }
+        res = i18n.t('long_term_sub', "%app_name% evaluation account");
       } else if(this.get('subscription_type') == 'extras') {
         res = i18n.t('extras_purchase', "%app_name% premium symbols")
       } else {
@@ -503,11 +537,7 @@ var Subscription = EmberObject.extend({
         }
       }
     } else {
-      if(this.get('subscription_type') == 'monthly') {
-        res = i18n.t('slp_monthly_sub', "%app_name% supporting-role");
-      } else {
-        res = i18n.t('slp_long_term_sub', "%app_name% supporting-role long-term purchase");
-      }
+      res = i18n.t('slp_long_term_sub', "%app_name% supporting-role long-term purchase");
     }
     if(this.get('extras')) {
       res = res + " " + i18n.t('plus_extras', "Plus Premium Symbols");
@@ -578,14 +608,11 @@ Subscription.reopenClass({
           key: window.stripe_public_key,
           image: '/images/logo-big.png',
           opened: function() {
-            console.error('purchase_modal_opened');
           },
           closed: function() {
-            console.error('purchase_modal_closed');
             var d = Subscription.handler.defer;
             runLater(function() {
               if(d && Subscription.handler.defer == d) {
-                console.error('purchase_modal_not_resolved');
                 if(Subscription.handler.defer) {
                   Subscription.handler.defer.reject();
                   Subscription.handler.defer = null;
@@ -594,7 +621,6 @@ Subscription.reopenClass({
             }, 1000);
           },
           token: function(result) {
-            console.error('purchase_result');
             Subscription.handler.defer.resolve(result);
             Subscription.handler.defer = null;
           }
@@ -652,7 +678,6 @@ Subscription.reopenClass({
       }
       var defer = RSVP.defer();
       if(Subscription.handler.defer) {
-        console.error('purchase_resetting_defer');
       }
       Subscription.handler.open({
         name: subscription.get('name') || subscription.get('user.name') || CoughDrop.app_name,

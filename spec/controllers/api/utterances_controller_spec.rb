@@ -377,7 +377,7 @@ describe Api::UtterancesController, :type => :controller do
       token_user
       @user.expires_at = 6.months.ago
       @user.save
-      expect(@user.premium?).to eq(false)
+      expect(@user.any_premium_or_grace_period?).to eq(false)
       utterance = Utterance.create(:user => @user)
       post :share, params: {:utterance_id => utterance.global_id, :email => 'bob@example.com'}
       expect(response).to be_successful
