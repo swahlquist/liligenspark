@@ -75,6 +75,11 @@ export default Component.extend({
           if(!this.get('source.head') && !this.get('source.eyes') && !this.get('source.gamepad')) {
             offset = 30;
           }
+          if(this.get('source.head') || this.get('source.gamepad')) {
+            cursor.classList.add('with_transition');
+          } else {
+            cursor.classList.remove('with_transition');
+          }
           cursor.style.left = (coords.event_x - (window.screenInnerOffsetX || window.screenX) + offset) + 'px';//(coords.event_x / coords.screen_width * coords.window_width) + 'px';
           cursor.style.top = (coords.event_y - (window.screenInnerOffsetY || window.screenY) - offset) + 'px';//(coords.event_y / coords.screen_height * coords.window_height) + 'px';  
 
