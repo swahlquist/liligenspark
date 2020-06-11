@@ -52,6 +52,41 @@ describe User, :type => :model do
       o.add_manager(u3.user_name, true)
       expect(u.allows?(u3.reload, 'view_deleted_boards')).to eq(true)
     end
+
+    it "should not allow modeling-only supervisors to do as much" do
+      u = User.create
+      u2 = User.create
+      u2.settings['preferences']['role'] = 'supporter'
+      u2.save
+      u2.reload
+      expect(u2.billing_state).to eq(:trialing_supporter)
+      expect(u2.premium_supporter?).to eq(true)
+      User.link_supervisor_to_user(u2, u)
+      perms = u.permissions_for(u2)
+      expect(perms['edit']).to eq(true)
+      expect(perms['edit_boards']).to eq(true)
+      expect(perms['manage_supervision']).to eq(true)
+      expect(perms['model']).to eq(true)
+      expect(perms['set_goals']).to eq(true)
+      expect(perms['view_deleted_boards']).to eq(true)
+      expect(perms['view_word_map']).to eq(true)
+      expect(perms['view_detailed']).to eq(true)
+
+      u2.expires_at = 2.days.ago
+      u2.save
+      expect(u2.billing_state).to eq(:modeling_only)
+      expect(u2.premium_supporter?).to eq(false)
+      expect(u2.modeling_only?).to eq(true)
+      perms = u.reload.permissions_for(u2.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['edit_boards']).to eq(nil)
+      expect(perms['manage_supervision']).to eq(nil)
+      expect(perms['model']).to eq(true)
+      expect(perms['set_goals']).to eq(nil)
+      expect(perms['view_deleted_boards']).to eq(nil)
+      expect(perms['view_word_map']).to eq(true)
+      expect(perms['view_detailed']).to eq(true)
+    end
   end
   
   describe "permissions cache" do
@@ -1049,8 +1084,7 @@ describe User, :type => :model do
     
     it "should allow eval accounts only a single voice" do
       u = User.create
-      u.subscription_override('never_expires')
-      u.settings['subscription']['eval_account'] = true
+      u.subscription_override('eval')
       u.save
       res = u.add_premium_voice('abcd', 'Android')
       expect(res).to eq(true)

@@ -77,7 +77,7 @@ describe GiftPurchase, :type => :model do
       'email' => 'bob@example.com',
       'customer_id' => '12345',
       'token_summary' => 'no card',
-      'plan_id' => 'long_term_150',
+      'plan_id' => 'long_term_200',
       'purchase_id' => '23456',
       'bacon' => '1234'
     })
@@ -85,7 +85,7 @@ describe GiftPurchase, :type => :model do
     expect(g.settings['giver_email']).to eq('bob@example.com')
     expect(g.settings['customer_id']).to eq('12345')
     expect(g.settings['token_summary']).to eq('no card')
-    expect(g.settings['plan_id']).to eq('long_term_150')
+    expect(g.settings['plan_id']).to eq('long_term_200')
     expect(g.settings['purchase_id']).to eq('23456')
     expect(g.settings['bacon']).to eq(nil)
     
@@ -93,7 +93,7 @@ describe GiftPurchase, :type => :model do
       'email' => 'fred@example.com'
     }, {
       'token_summary' => 'no card',
-      'plan_id' => 'long_term_150',
+      'plan_id' => 'long_term_200',
       'purchase_id' => '23456',
       'bacon' => '1234'
     })
@@ -101,7 +101,7 @@ describe GiftPurchase, :type => :model do
     expect(g.settings['giver_email']).to eq('fred@example.com')
     expect(g.settings['customer_id']).to eq(nil)
     expect(g.settings['token_summary']).to eq('no card')
-    expect(g.settings['plan_id']).to eq('long_term_150')
+    expect(g.settings['plan_id']).to eq('long_term_200')
     expect(g.settings['purchase_id']).to eq('23456')
     expect(g.settings['bacon']).to eq(nil)
   end

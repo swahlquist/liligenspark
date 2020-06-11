@@ -15,6 +15,7 @@ module Subscription
         self.expires_at = [self.expires_at, Time.now + self.settings['subscription']['seconds_left']].compact.max
         self.settings['subscription'].delete('seconds_left')
         self.settings['subscription']['expiration_source'] = self.settings['subscription']['seconds_left_source'] if self.settings['subscription']['seconds_left_source']
+        self.settings['subscription']['expiration_source'] = 'grace_period' if self.settings['subscription']['expiration_source'] == 'free_trial'
         self.settings['subscription'].delete('seconds_left_source')
       end
     end
@@ -23,7 +24,7 @@ module Subscription
       started = Time.parse(self.settings['subscription']['started']) rescue nil
       if started
         self.settings['past_purchase_durations'] ||= []
-        self.settings['past_purchase_durations'] << {type: 'recurring', started: self.settings['subscription']['started'], duration: (Time.now.to_i - started.to_i)}
+        self.settings['past_purchase_durations'] << {role: 'communicator', type: 'recurring', started: self.settings['subscription']['started'], duration: (Time.now.to_i - started.to_i)}
       end
       if self.settings['subscription']['subscription_id'] && self.settings['subscription']['customer_id']
         # If there is an existing subscription, schedule the API call to cancel it
@@ -42,13 +43,12 @@ module Subscription
     self.settings['subscription'].delete('started')
     self.settings['subscription'].delete('never_expires')
     self.settings['subscription'].delete('added_to_organization')
-    if Organization.managed?(self)
+    if opts[:removed_org_links]
       self.settings['past_purchase_durations'] ||= []
-      links = UserLink.links_for(self)
-      links.select{|l| l['type'] == 'org_user' && l['state']['added'] }.each do |link|
+      (opts[:removed_org_links] || []).each do |link|
         added = (link['state']['added'] && Time.parse(link['state']['added'])) rescue nil
         if added
-          self.settings['past_purchase_durations'] << {type: 'org', started: link['state']['added'], duration: (Time.now.to_i - added.to_i)}
+          self.settings['past_purchase_durations'] << {role: 'communicator', type: 'org', started: link['state']['added'], duration: (Time.now.to_i - added.to_i)}
         end
       end
     end
@@ -69,7 +69,11 @@ module Subscription
       purchased = Time.parse(self.settings['subscription']['last_purchased']) rescue nil
       if purchased
         self.settings['past_purchase_durations'] ||= []
-        self.settings['past_purchase_durations'] << {type: 'long_term', started: self.settings['subscription']['last_purchased'], duration: (Time.now.to_i - purchased.to_i)}
+        dur = {role: 'communicator', type: 'long_term', started: self.settings['subscription']['last_purchased'], duration: (Time.now.to_i - purchased.to_i)}
+        if self.settings['subscription']['last_purchase_plan_id'].match(/^(slp|eval)/)
+          dur[:role] = 'supporter'
+        end
+        self.settings['past_purchase_durations'] << dur
       end
       self.settings['subscription']['prior_purchase_ids'] << self.settings['subscription']['last_purchase_id']
       self.settings['subscription'].delete('last_purchase_id')
@@ -142,16 +146,19 @@ module Subscription
       return res
     else
       was_sponsored = self.org_sponsored?
+      removed_links = []
       if org_id
         org_to_remove = Organization.find_by_global_id(org_id.sub(/^r/, ''))
         if org_to_remove
+          org_code = Webhook.get_record_code(org_to_remove)
+          removed_links = UserLink.links_for(self).select{|l| l['record_code'] == org_code && l['type'] == 'org_user' && l['state']['sponsored'] && l['state']['added'] }
           org_to_remove.detach_user(self, 'user')
           UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
         end
       end
       self.using(:master).reload
       self.settings['subscription'] ||= {}
-      self.clear_existing_subscription(:allow_grace_period => true) if was_sponsored && !self.org_sponsored?
+      self.clear_existing_subscription(:allow_grace_period => true, removed_org_links: removed_links) if was_sponsored && !self.org_sponsored?
       self.save_with_sync('org_sub_cancel')
       # self.schedule(:update_subscription, {'resume' => true})
     end
@@ -227,6 +234,7 @@ module Subscription
           self.settings['subscription']['eval_account'] = !!args['plan_id'].match(/^eval/)
           self.settings['subscription']['limited_premium_purchase'] = !!(args['plan_id'].match(/^slp/) && !args['plan_id'].match(/free/))
           self.settings['subscription']['modeling_only'] = ['slp_long_term_free', 'slp_monthly_free'].include?(args['plan_id'])
+          self.settings['subscription']['expiration_source'] = 'subscribe' if self.settings['subscription']['started']
           self.settings['preferences']['role'] = role
           self.settings['pending'] = false unless self.settings['subscription']['modeling_only']
           self.settings['preferences']['progress'] ||= {}
@@ -271,7 +279,13 @@ module Subscription
         if args['purchase_id'] && self.settings['subscription']['prior_purchase_ids'].include?(args['purchase_id'])
           res = false
         else
-          self.clear_existing_subscription(:track_seconds_left => args['plan_id'].match(/free|granted/) || args['source_id'] == 'restore')
+          if args['plan_id'] && args['plan_id'].match(/^long_term/) && self.settings['subscription']['last_purchase_plan_id'] && self.settings['subscription']['last_purchase_plan_id'].match(/^slp/)
+            # If the last purchase was for a supporter 
+            # and now you're buying for a communicator,
+            # don't count both for expires_at
+            self.expires_at = nil
+          end
+          self.clear_existing_subscription(:track_seconds_left => (args['plan_id'] || '').match(/free|granted/) || args['source_id'] == 'restore')
           if args['customer_id'] || args['customer_id'] == nil
             if self.settings['subscription']['customer_id'] && self.settings['subscription']['customer_id'] != args['customer_id']
               self.settings['subscription']['prior_customer_ids'] ||= []
@@ -285,8 +299,8 @@ module Subscription
           end
           self.settings['purchase_bounced'] = false
           self.settings['subscription']['modeling_only'] = ['slp_long_term_free', 'slp_monthly_free'].include?(args['plan_id'])
-          self.settings['subscription']['limited_premium_purchase'] = !!(args['plan_id'].match(/^slp_long_term/) && !args['plan_id'].match(/free/))
-          self.settings['subscription']['eval_account'] = !!args['plan_id'].match(/^eval/)
+          self.settings['subscription']['limited_premium_purchase'] = !!(args['plan_id'] && args['plan_id'].match(/^slp_long_term/) && !args['plan_id'].match(/free/))
+          self.settings['subscription']['eval_account'] = !!(args['plan_id'] || '').match(/^eval/)
 
           self.settings['pending'] = false unless self.settings['subscription']['modeling_only']
 
@@ -426,7 +440,13 @@ module Subscription
           SubscriptionMailer.schedule_delivery(:gift_seconds_added, args['gift_id'])
           SubscriptionMailer.schedule_delivery(:gift_updated, args['gift_id'], 'redeem')
         else
-          SubscriptionMailer.schedule_delivery(:purchase_confirmed, self.global_id)
+          if self.premium_supporter?
+            SubscriptionMailer.schedule_delivery(:supporter_purchase_confirmed, self.global_id)
+          elsif self.eval_account?
+            SubscriptionMailer.schedule_delivery(:eval_purchase_confirmed, self.global_id)
+          else
+            SubscriptionMailer.schedule_delivery(:purchase_confirmed, self.global_id)
+          end
           self.log_subscription_event(:log => 'purchase notification triggered')
           SubscriptionMailer.schedule_delivery(:new_subscription, self.global_id)
         end
@@ -485,7 +505,7 @@ module Subscription
     self.save_with_sync('reset_eval')
   end
   
-  def transfer_eval_to(destination_user, current_device)
+  def transfer_eval_to(destination_user, current_device, end_eval=true)
     device_key = current_device.unique_device_key
     devices = destination_user.settings['preferences']['devices'] || {}
     devices[device_key] = self.settings['preferences']['devices'][device_key] if self.settings['preferences']['devices'][device_key]
@@ -519,12 +539,16 @@ module Subscription
   
   def purchase_credit_duration
     # long-term purchase, org-sponsored, or subscription duration for the current user
-    past_tally = (self.settings['past_purchase_durations'] || []).map{|d| d['duration'] || 0}.sum
+    supporter_ok = self.supporter_role?
+    past_tally = ((self.settings || {})['past_purchase_durations'] || []).map{|d| (supporter_ok || (d['role'] || 'communicator') == 'communicator') ? (d['duration'] || 0) : 0 }.sum
     return past_tally if past_tally > 2.years
     started = nil
     # for a long-term purchase, track from when the purchase happened
     if self.settings['subscription'] && self.settings['subscription']['last_purchased'] && self.expires_at
-      started = Time.parse(self.settings['subscription']['last_purchased']) rescue nil
+      # don't use an active supporter purchase as credit for communicator
+      if self.supporter_role? || !((self.settings['subscription'] || {})['last_purchase_plan_id'] || '').match(/^slp/)
+        started = Time.parse(self.settings['subscription']['last_purchased']) rescue nil
+      end
     end
     if self.settings['subscription'] && self.settings['subscription']['started']
       # for a recurring subscription, track from when the subscription started
@@ -533,12 +557,18 @@ module Subscription
       # for an org sponsorship, track the duration of the sponsorship
       sponsor_dates = UserLink.links_for(self).select{|l| l['type'] == 'org_user' && l['state']['sponsored'] == true}.map{|l| l['state']['added'] }
       started = Time.parse(sponsor_dates.sort.first) rescue nil
+    elsif self.org_supporter? && self.supporter_role?
+      sponsor_dates = UserLink.links_for(self).select{|l| l['type'] == 'org_supervisor'}.map{|l| l['state']['added'] }
+      started = Time.parse(sponsor_dates.sort.first) rescue nil
     end
     tally = past_tally
 
     from_purchase = self.settings['subscription']['expiration_source'] == 'purchase' || (self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/))
     if from_purchase || !self.expires_at
-      tally += [self.expires_at, Time.now].compact.min.to_i - [started, Time.now].compact.min.to_i
+      end_time = (self.expires_at || Time.now)
+      # don't use an active supporter purchase as credit for communicator
+      end_time = Time.now if self.communicator_role? && (self.settings['subscription']['last_purchase_plan_id'] || '').match(/^slp/)
+      tally += end_time.to_i - [started, Time.now].compact.min.to_i
     end
     return tally
   end
@@ -546,7 +576,8 @@ module Subscription
   def fully_purchased?(shallow=false)
     return true if self.settings && self.settings['subscription'] && self.settings['subscription']['never_expires']
     # long-term purchase, org-sponsored, or subscription for at least 2 years
-    past_tally = ((self.settings || {})['past_purchase_durations'] || []).map{|d| d['duration'] || 0}.sum
+    supporter_ok = self.supporter_role?
+    past_tally = ((self.settings || {})['past_purchase_durations'] || []).map{|d| (supporter_ok || (d['role'] || 'communicator') == 'communicator') ? (d['duration'] || 0) : 0 }.sum
     return true if past_tally > (2.years - 1.week)
     return false if shallow
     duration = self.purchase_credit_duration
@@ -577,7 +608,7 @@ module Subscription
       return :eval_communicator if self.settings['subscription']['eval_account']
       return :subscribed_communicator if self.settings['subscription']['started']
       return :org_sponsored_communicator if self.org_sponsored?
-      if self.expires_at && self.expires_at > Time.now
+      if self.expires_at && self.expires_at > Time.now && !(self.settings['subscription']['last_purchase_plan_id'] || '').match(/^slp/)
         if self.settings['subscription']['expiration_source']
           return :trialing_communicator if self.settings['subscription']['expiration_source'] == 'free_trial'
           return :long_term_active_communicator if self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/)
@@ -755,11 +786,11 @@ module Subscription
     self.settings['subscription'] ||= {}
     self.settings['subscription']['limited_premium_purchase'] ||= self.settings['subscription']['free_premium'] if self.settings['subscription']['free_premium']
     billing_state = self.billing_state
-    self.settings['subscription']['billing_state'] = billing_state
+    json['billing_state'] = billing_state
     # active means a non-expired, active purchase of some kind,
     # an active subscription, unexpired long-term-purchase,
     # premium supporter, paid eval, org sponsorship
-    if billing_state == :never_expires
+    if billing_state == :never_expires_communicator
       # manually-set to never expire as a full communicator
       json['never_expires'] = true
       json['active'] = true
@@ -780,7 +811,7 @@ module Subscription
       json['free_premium'] = json['premium_supporter']
       json['grace_period'] = true if self.grace_period?
     else
-      if [:long_term_active_communicator, :trialing_communicator, :grace_period_communicator, :trialing_supporter, :grace_period_supporter].include?(:billing_state) #!self.eval_account? && !self.premium_supporter?
+      if [:long_term_active_communicator, :trialing_communicator, :grace_period_communicator, :trialing_supporter, :grace_period_supporter].include?(billing_state) #!self.eval_account? && !self.premium_supporter?
         json['expires'] = self.expires_at && self.expires_at.iso8601
       end
       json['grace_period'] = true if self.grace_period?
@@ -846,7 +877,7 @@ module Subscription
       # send out a warning notification 1 week before, and another one the day before,
       # to all the ones that haven't been warned yet for this cycle
       upcoming_expires.each do |user|
-        next if !user.communicator_role? || user.settings['preferences']['allow_log_reports'] || user.settings['preferences']['never_delete']
+        next if !user.communicator_role? || user.settings['preferences']['allow_log_reports'] || user.settings['preferences']['never_delete'] || user.eval_account?
         alerts[:upcoming] += 1
         user.settings['subscription'] ||= {}
         last_day = Time.parse(user.settings['subscription']['last_expiring_day_notification']) rescue Time.at(0)
@@ -869,7 +900,7 @@ module Subscription
       now_expired = User.where(['expires_at > ? AND expires_at < ?', 3.days.ago, Time.now])
       # send out an expiration notification to all the ones that haven't been notified yet
       now_expired.each do |user|
-        next unless user.communicator_role?
+        next unless user.communicator_role? && !user.eval_account?
         alerts[:expired] += 1
         user.settings['subscription'] ||= {}
         last_expired = Time.parse(user.settings['subscription']['last_expired_notification']) rescue Time.at(0)

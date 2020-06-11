@@ -20,6 +20,7 @@ describe Supervising, :type => :model do
         'view_deleted_boards' => true,
         'view_word_map' => true,
         'set_goals' => true,
+        'model' => true,
         'supervise' => true
       })
       u.settings['supervisors'] = [{'user_id' => u2.global_id, 'edit_permission' => true}]
@@ -38,10 +39,49 @@ describe Supervising, :type => :model do
         'supervise' => true,
         'set_goals' => true,
         'edit_boards' => true,
+        'model' => true,
         'edit' => true
       })
     end
-    
+
+    it "should limit permissions to modeling-only supervisors" do
+      u = User.create
+      u2 = User.create
+      u2.expires_at = 2.days.ago
+      u2.save
+      expect(u.permissions_for(u2)).to eq({
+        'user_id' => u2.global_id,
+        'view_existence' => true
+      })
+      u.settings['supervisors'] = [{'user_id' => u2.global_id}]
+      u.updated_at = Time.now
+      u2.settings['preferences']['role'] = 'supporter'
+      u2.settings['supervisees'] = [{'user_id' => u.global_id}]
+      u2.updated_at = Time.now
+      expect(u2.modeling_only?).to eq(true)
+      expect(u.permissions_for(u2)).to eq({
+        'user_id' => u2.global_id,
+        'view_existence' => true,
+        'view_detailed' => true,
+        'view_word_map' => true,
+        'model' => true,
+      })
+      u.settings['supervisors'] = [{'user_id' => u2.global_id, 'edit_permission' => true}]
+      u.updated_at = Time.now
+      u2.settings['supervisees'] = [{'user_id' => u.global_id, 'edit_permission' => true}]
+      u2.updated_at = Time.now
+
+      expect(u2.edit_permission_for?(u)).to eq(false)
+      expect(u.permissions_for(u2)).to eq({
+        'user_id' => u2.global_id,
+        'view_existence' => true,
+        'view_detailed' => true,
+        'view_word_map' => true,
+        'model' => true
+      })
+      expect(u2).to receive(:modeling_only?).and_return(false)
+      expect(u2.edit_permission_for?(u)).to eq(true)
+    end
     it "should error on supervisee failure when editing" do
       res = User.process_new({:supervisee_code => "1_1"})
       expect(res.errored?).to eq(true)
@@ -468,26 +508,23 @@ describe Supervising, :type => :model do
     it "should update a user's subscription if they're on a free trial and get added as a supervisor" do
       u = User.create
       u2 = User.create
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       User.link_supervisor_to_user(u, u2)
-      expect(u.reload.settings['subscription']['plan_id']).to eq('slp_monthly_free')
-      expect(u.settings['subscription']['subscription_id']).to eq('free_auto_adjusted')
-      expect(u.grace_period?).to eq(false)
+      expect(u.reload.billing_state).to eq(:trialing_supporter)
+      expect(u.grace_period?).to eq(true)
     end
     
     it "should unsubscribe an auto-subscribed user if they were on a free trial, got added as a supervisor, and then removed" do
       u = User.create
       exp = u.expires_at.to_i
       u2 = User.create
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       User.link_supervisor_to_user(u, u2)
-      expect(u.reload.settings['subscription']['plan_id']).to eq('slp_monthly_free')
-      expect(u.settings['subscription']['subscription_id']).to eq('free_auto_adjusted')
-      expect(u.settings['subscription']['seconds_left']).to be > 2.weeks.to_i
-      expect(u.grace_period?).to eq(false)
+      expect(u.reload.billing_state).to eq(:trialing_supporter)
+      expect(u.grace_period?).to eq(true)
 
       User.unlink_supervisor_from_user(u, u2)
-      expect(u.reload.settings['subscription']['plan_id']).to eq(nil)
-      expect(u.settings['subscription']['subscription_id']).to eq(nil)
-      expect(u.settings['subscription']['seconds_left']).to eq(nil)
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       expect(u.expires_at.to_i).to be > (exp - 5)
       expect(u.expires_at.to_i).to be < (exp + 5)
       expect(u.grace_period?).to eq(true)
@@ -500,12 +537,12 @@ describe Supervising, :type => :model do
       User.link_supervisor_to_user(u3, u)
       expect(UserLink.count).to eq(1)
       u.reload
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       User.link_supervisor_to_user(u.reload, u2.reload)
       expect(UserLink.count).to eq(2)
       u.reload
-      expect(u.reload.settings['subscription']['plan_id']).to eq('slp_monthly_free')
-      expect(u.settings['subscription']['subscription_id']).to eq('free_auto_adjusted')
-      expect(u.grace_period?).to eq(false)
+      expect(u.reload.billing_state).to eq(:trialing_supporter)
+      expect(u.grace_period?).to eq(true)
       expect(u.supervisors).to eq([u3])
       Worker.process_queues
       expect(UserLink.count).to eq(1)

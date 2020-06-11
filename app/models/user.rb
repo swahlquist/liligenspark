@@ -49,6 +49,7 @@ class User < ActiveRecord::Base
   add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only? }
   add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
   add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| Organization.manager_for?(user, self, true) }
   add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
   cache_permissions
   
@@ -351,7 +352,7 @@ class User < ActiveRecord::Base
       old_exp = self.expires_at
       self.expires_at = [self.expires_at || Date.today + 60, extension].max
       self.settings['subscription'] ||= {}
-      self.settings['subscription']['expiration_source'] = (self.id ? 'free_trial' : 'grace_period') if self.expires_at != old_exp
+      self.settings['subscription']['expiration_source'] = (self.id ? 'grace_period' : 'free_trial') if self.expires_at != old_exp
     end
     return false if self.user_name == ""
     self.user_name = nil if self.user_name.blank?

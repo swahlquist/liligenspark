@@ -69,7 +69,19 @@ class SubscriptionMailer < ActionMailer::Base
     @user = User.find_by_global_id(user_id)
     mail_message(@user, "Purchase Confirmed")
   end
-  
+
+  def eval_purchase_confirmed(user_id)
+    return unless full_domain_enabled
+    @user = User.find_by_global_id(user_id)
+    mail_message(@user, "Purchase Confirmed")
+  end
+
+  def supporter_purchase_confirmed(user_id)
+    return unless full_domain_enabled
+    @user = User.find_by_global_id(user_id)
+    mail_message(@user, "Purchase Confirmed")
+  end
+
   def expiration_approaching(user_id)
     return unless full_domain_enabled
     @user = User.find_by_global_id(user_id)

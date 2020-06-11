@@ -87,7 +87,7 @@ module Supervising
   end
   
   def edit_permission_for?(supervisee, include_admin_managers=true)
-    sup = supervisee.supervisor_links.any?{|l| l['record_code'] == Webhook.get_record_code(self) && l['user_id'] == supervisee.global_id && l['state']['edit_permission'] } 
+    sup = !self.modeling_only? && supervisee.supervisor_links.any?{|l| l['record_code'] == Webhook.get_record_code(self) && l['user_id'] == supervisee.global_id && l['state']['edit_permission'] } 
     sup || Organization.manager_for?(self, supervisee, include_admin_managers)
   end
 
@@ -184,12 +184,10 @@ module Supervising
         supervisor.using(:master).reload
         supervisor.settings['supervisees'] = (supervisor.settings['supervisees'] || []).select{|s| s['user_id'] != user.global_id }
         # If a user was auto-subscribed for being added as a supervisor, un-subscribe them when removed
-        if supervisor.settings['supervisees'].empty? && supervisor.settings && supervisor.settings['subscription'] && supervisor.settings['subscription']['subscription_id'] == 'free_auto_adjusted'
-          supervisor.update_subscription({
-            'unsubscribe' => true,
-            'subscription_id' => 'free_auto_adjusted',
-            'plan_id' => 'slp_monthly_free'
-          })
+        if supervisor.settings['supervisees'].empty? && supervisor.settings['supporter_role_auto_set']
+          supervisor.settings.delete('supporter_role_auto_set')
+          supervisor.settings['preferences']['role'] = 'communicator'
+          supervisor.save_with_sync('un-supervisor')
         end
         supervisor.schedule_once(:update_available_boards)
         supervisor.update_setting({
@@ -220,12 +218,7 @@ module Supervising
       end
       # If a user is on a free trial and they're added as a supervisor, set them to a free supporter subscription
       if supervisor.grace_period?
-        # supervisor.update_subscription({
-        #   'subscribe' => true,
-        #   'subscription_id' => 'free_auto_adjusted',
-        #   'token_summary' => "Automatically-set Supporter Account",
-        #   'plan_id' => 'slp_monthly_free'
-        # })
+        supervisor.schedule(:remove_supervisors!)
       end
       supervisor.schedule_once(:update_available_boards)
       user.save_with_sync('supervisee')

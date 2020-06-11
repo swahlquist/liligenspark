@@ -304,7 +304,7 @@ describe Subscription, :type => :model do
       res = u.update_subscription({
         'purchase' => true,
         'customer_id' => '12345',
-        'plan_id' => 'long_term_150',
+        'plan_id' => 'long_term_200',
         'purchase_id' => '23456',
         'seconds_to_add' => 8.weeks.to_i
       })
@@ -340,7 +340,7 @@ describe Subscription, :type => :model do
       expect(u.communicator_role?).to eq(true)
       expect(u.supporter_role?).to eq(false)
 
-      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 3.years.to_i}]
       expect(u.fully_purchased?).to eq(true)
       expect(u.fully_purchased?(true)).to eq(true)
       expect(u.any_premium_or_grace_period?).to eq(true)
@@ -360,7 +360,7 @@ describe Subscription, :type => :model do
       res = u.update_subscription({
         'purchase' => true,
         'customer_id' => '12345',
-        'plan_id' => 'long_term_150',
+        'plan_id' => 'long_term_200',
         'purchase_id' => '234567',
         'seconds_to_add' => 2.years.to_i
       })
@@ -479,7 +479,7 @@ describe Subscription, :type => :model do
       res = u.update_subscription({
         'purchase' => true,
         'customer_id' => '12345',
-        'plan_id' => 'long_term_150',
+        'plan_id' => 'long_term_200',
         'purchase_id' => '23456',
         'seconds_to_add' => 8.weeks.to_i
       })
@@ -546,7 +546,7 @@ describe Subscription, :type => :model do
       expect(u.supporter_role?).to eq(true)
       expect(u.fully_purchased?).to eq(false)
       
-      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 3.years.to_i}]
       u.expires_at = 2.days.ago
       expect(u.any_premium_or_grace_period?).to eq(true)
       expect(u.premium_supporter?).to eq(true)
@@ -588,7 +588,7 @@ describe Subscription, :type => :model do
       expect(u.supporter_role?).to eq(true)
       expect(u.fully_purchased?).to eq(false)
       
-      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 3.years.to_i}]
       u.expires_at = 2.days.ago
       expect(u.any_premium_or_grace_period?).to eq(true)
       expect(u.premium_supporter?).to eq(true)
@@ -631,8 +631,9 @@ describe Subscription, :type => :model do
       expect(u.supporter_role?).to eq(false)
       expect(u.fully_purchased?).to eq(false)
       
-      u.settings['past_purchase_durations'] = [{'duration' => 3.years.to_i}]
+      u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 3.years.to_i}]
       u.expires_at = 2.days.ago
+      expect(u.billing_state).to eq(:eval_communicator)
       expect(u.any_premium_or_grace_period?).to eq(true)
       expect(u.premium_supporter?).to eq(false)
       expect(u.eval_account?).to eq(true)
@@ -1054,7 +1055,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1192,7 +1193,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1201,7 +1202,7 @@ describe Subscription, :type => :model do
         expect(u.settings['subscription']).not_to eq(nil)
         expect(u.settings['subscription']['started']).to eq(nil)
         expect(u.settings['subscription']['customer_id']).to eq('12345')
-        expect(u.settings['subscription']['last_purchase_plan_id']).to eq('long_term_150')
+        expect(u.settings['subscription']['last_purchase_plan_id']).to eq('long_term_200')
         expect(u.settings['subscription']['last_purchase_id']).to eq('23456')
         expect(u.settings['subscription']['prior_purchase_ids']).to eq([])
         expect(u.expires_at.to_i).to eq(8.weeks.from_now.to_i)
@@ -1215,7 +1216,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1231,7 +1232,7 @@ describe Subscription, :type => :model do
         u.settings['subscription'] = {'started' => 3.weeks.ago.iso8601}
         res = u.update_subscription({
           'purchase' => true,
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1257,7 +1258,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1271,7 +1272,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1284,7 +1285,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1297,7 +1298,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1310,7 +1311,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '234567',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1323,7 +1324,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1340,7 +1341,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1367,7 +1368,7 @@ describe Subscription, :type => :model do
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1380,10 +1381,11 @@ describe Subscription, :type => :model do
       end
 
       it "should allow re-purchasing for fully_purchased users" do
+        u = User.create
         res = u.update_subscription({
           'purchase' => true,
           'customer_id' => '12345',
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'purchase_id' => '23456',
           'seconds_to_add' => 8.weeks.to_i
         })
@@ -1400,14 +1402,10 @@ describe Subscription, :type => :model do
           'purchase' => true,
           'customer_id' => '12345',
           'plan_id' => 'long_term_50',
-          'purchase_id' => '23456',
+          'purchase_id' => '234567',
           'seconds_to_add' => 8.weeks.to_i
         })
         expect(res).to eq(true)
-      end
-
-      it "should not allow re-purchasing for non-fully-purchased users" do
-        write_this_test
       end
     end
   end
@@ -1429,7 +1427,21 @@ describe Subscription, :type => :model do
       u = User.create
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
-      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_150', 'seconds_to_add' => 3.weeks.to_i})
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_200', 'seconds_to_add' => 3.weeks.to_i})
+    end
+
+    it "should send a notification for successful supporter purchases" do
+      u = User.create
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:supporter_purchase_confirmed, u.global_id)
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'slp_long_term_25', 'seconds_to_add' => 3.weeks.to_i})
+    end
+
+    it "should send a notification for successful eval account purchases" do
+      u = User.create
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:eval_purchase_confirmed, u.global_id)
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'eval_long_term_25', 'seconds_to_add' => 3.weeks.to_i})
     end
     
     it "should properly update the user settings depending on the purchase type" do
@@ -1439,7 +1451,7 @@ describe Subscription, :type => :model do
       t = u.expires_at + 15.weeks
       # TODO: the update is ignoring time left on expires_at and just using now instead
       expect(u.expires_at).to be > 2.weeks.from_now
-      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_150', 'seconds_to_add' => 15.weeks.to_i})
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_200', 'seconds_to_add' => 15.weeks.to_i})
       u.reload
       expect(u.settings['subscription']).not_to eq(nil)
       expect(u.settings['subscription']['started']).to eq(nil)
@@ -1462,7 +1474,7 @@ describe Subscription, :type => :model do
       expect(SubscriptionMailer).not_to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
       expect(SubscriptionMailer).not_to receive(:schedule_delivery).with(:new_subscription, u.global_id)
       t = u.expires_at + 8.weeks
-      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_150', 'seconds_to_add' => 8.weeks.to_i})
+      User.subscription_event({'user_id' => u.global_id, 'purchase' => true, 'purchase_id' => '1234', 'customer_id' => '2345', 'plan_id' => 'long_term_200', 'seconds_to_add' => 8.weeks.to_i})
     end
     
     it "should not send multiple unsubscribe notifications" do
@@ -1667,7 +1679,130 @@ describe Subscription, :type => :model do
       expect(u.subscription_hash['active']).to eq(true)
       expect(u.subscription_hash['plan_id']).to eq('long_term_300')
       expect(u.subscription_hash['purchased']).to eq(true)
-      expect(u.subscription_hash['grace_period']).to eq(false)
+      expect(u.subscription_hash['grace_period']).to eq(nil)
+    end
+
+    it "should not change when a premium_supporter expires" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+
+      u.expires_at = 2.days.ago
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      hash2 = u.subscription_hash
+
+      expect(hash).to eq(hash2)
+    end
+
+    it "should change when a paid communicator expires" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:long_term_active_communicator)
+      expect(hash['active']).to eq(true)
+      expect(hash['plan_id']).to eq('long_term_200')
+      expect(hash['expires']).to_not eq(nil)
+
+      u.expires_at = 2.days.ago
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      hash2 = u.subscription_hash
+      expect(hash2['billing_state']).to eq(:lapsed_communicator)
+      expect(hash2['active']).to eq(nil)
+      expect(hash2['plan_id']).to eq(nil)
+      expect(hash2['expires']).to eq(nil)
+    end
+
+    it "should change when a free trial ends without purchase" do
+      u = User.create
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:trialing_communicator)
+      expect(hash['grace_period']).to eq(true)
+      expect(hash['active']).to eq(nil)
+      expect(hash['expires']).to_not eq(nil)
+
+      u.expires_at = 2.days.ago
+      hash2 = u.subscription_hash
+      expect(hash2['billing_state']).to eq(:expired_communicator)
+      expect(hash2['active']).to eq(nil)
+      expect(hash2['grace_period']).to eq(nil)
+      expect(hash2['expires']).to eq(nil)
+    end
+
+    it "should not change then an eval account expires" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'eval_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+
+      u.expires_at = 2.days.ago
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      hash2 = u.subscription_hash
+
+      expect(hash).to eq(hash2)
+    end
+
+    it "should change when an active subscription is canceled" do
+      u = User.create
+      res = u.update_subscription({
+        'subscribe' => true,
+        'customer_id' => '1234',
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(res).to eq(true)
+      expect(u.recurring_subscription?).to eq(true)
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:subscribed_communicator)
+      expect(hash['grace_period']).to eq(nil)
+      expect(hash['active']).to eq(true)
+      expect(hash['plan_id']).to eq('monthly_6')
+      expect(u.settings['subscription']['expiration_source']).to eq('subscribe')
+
+      res = u.update_subscription({
+        'unsubscribe' => true,
+        'subscription_id' => '12345'
+      })
+      expect(res).to eq(true)
+      hash2 = u.reload.subscription_hash
+      expect(hash2['billing_state']).to eq(:grace_period_communicator)
+      expect(hash2['grace_period']).to eq(true)
+      expect(hash2['active']).to eq(nil)
+      expect(hash2['plan_id']).to eq(nil)
+    end
+
+    it "should change when a modeling_only account finishes its free trial" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_free',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+
+      u.expires_at = 2.days.ago
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      hash2 = u.subscription_hash
+
+      expect(hash).to eq(hash2)
     end
   end
   
@@ -1712,7 +1847,51 @@ describe Subscription, :type => :model do
       expect(res[:upcoming]).to eq(3)
       expect(res[:upcoming_emailed]).to eq(2)
     end
-    
+
+    it "should not notify nearly-expiring users of a paid supported account" do
+      u1 = User.create(:expires_at => 6.days.from_now, settings: {preferences: {role: 'supporter'}})
+      u2 = User.create(:expires_at => 25.hours.from_now, settings: {preferences: {role: 'supporter'}})
+      u3 = User.create(:expires_at => 2.days.from_now, settings: {preferences: {role: 'supporter'}})
+      u1.settings['preferences']['role'] = 'supporter'
+      u1.save
+      u2.settings['preferences']['role'] = 'supporter'
+      u2.save
+      u3.settings['preferences']['role'] = 'supporter'
+      u3.save
+      expect(u1.communicator_role?).to eq(false)
+      expect(u2.communicator_role?).to eq(false)
+      expect(u3.communicator_role?).to eq(false)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_week_until_expiration, u1.global_id)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_day_until_expiration, u2.global_id)
+      res = User.check_for_subscription_updates
+      
+      expect(res).not_to eq(nil)
+      expect(res[:upcoming]).to eq(0)
+      expect(res[:upcoming_emailed]).to eq(0)
+    end
+
+    it "should not notify nearly-expiring users of a paid eval account" do
+      u1 = User.create(:expires_at => 6.days.from_now, settings: {preferences: {role: 'supporter'}})
+      u2 = User.create(:expires_at => 25.hours.from_now, settings: {preferences: {role: 'supporter'}})
+      u3 = User.create(:expires_at => 2.days.from_now, settings: {preferences: {role: 'supporter'}})
+      u1.settings['subscription']['eval_account'] = true
+      u1.save
+      u2.settings['subscription']['eval_account'] = true
+      u2.save
+      u3.settings['subscription']['eval_account'] = true
+      u3.save
+      expect(u1.communicator_role?).to eq(true)
+      expect(u2.communicator_role?).to eq(true)
+      expect(u3.communicator_role?).to eq(true)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_week_until_expiration, u1.global_id)
+      expect(SubscriptionMailer).to_not receive(:deliver_message).with(:one_day_until_expiration, u2.global_id)
+      res = User.check_for_subscription_updates
+      
+      expect(res).not_to eq(nil)
+      expect(res[:upcoming]).to eq(0)
+      expect(res[:upcoming_emailed]).to eq(0)
+    end
+
     it "should not notify nearly-expiring users more than once" do
       u1 = User.create(:expires_at => 6.days.from_now)
       u2 = User.create(:expires_at => 25.hours.from_now)
@@ -1955,7 +2134,7 @@ describe Subscription, :type => :model do
       res = u.update_subscription({
         'purchase' => true,
         'customer_id' => '12345',
-        'plan_id' => 'long_term_150',
+        'plan_id' => 'long_term_200',
         'purchase_id' => '23456',
         'seconds_to_add' => 13.weeks.to_i
       })
@@ -1989,7 +2168,49 @@ describe Subscription, :type => :model do
     end
 
     it "should restore fully_purchased status if a lapsed communicator switches to supervisor and then back to communicator" do
-      write_this_test
+      u = User.create
+      u.expires_at = Time.now
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(u.full_premium?).to eq(true)
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+
+      u.expires_at = 2.days.ago
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      u.save
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.billing_state).to eq(:lapsed_communicator)
+
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'slp_long_term_free'
+      })
+
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.reload.modeling_only?).to eq(false)
+      expect(u.fully_purchased?).to eq(true)
+      expect(u.full_premium?).to eq(false)
+      expect(u.settings['subscription']['seconds_left']).to eq(nil)
+      expect(u.expires_at).to be < 12.weeks.from_now
+      expect(u.reload.full_premium?).to eq(false)
+      expect(u.reload.premium_supporter?).to eq(true)
+      expect(u.reload.any_premium_or_grace_period?).to eq(true)
+
+      expect(u.subscription_override('restore')).to eq(true)
+      
+      expect(u.reload.any_premium_or_grace_period?).to eq(true)
+      expect(u.reload.billing_state).to eq(:lapsed_communicator)
+      expect(u.full_premium?).to eq(false)
+      expect(u.reload.modeling_only?).to eq(false)
+      expect(u.reload.premium_supporter?).to eq(false)
+      expect(u.expires_at).to be < 12.weeks.from_now
     end
     
     it "should cancel existing subscription when setting to communicator trial" do
@@ -2022,7 +2243,382 @@ describe Subscription, :type => :model do
       expect(Worker.scheduled?(Purchasing, :cancel_subscription, u.global_id, '1234', '12345')).to eq(true)
     end
   end
-  
+
+  describe "fully_purchased?" do
+    it "should return true for a purchased communicator" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should not return true for a free trial user" do
+      u = User.create
+      expect(u.billing_state).to eq(:trialing_communicator)
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should return true for a never-expires user" do
+      u = User.create
+      u.settings['subscription'] = {'never_expires' => true}
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a purchased eval account" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'eval_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:eval_communicator)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for an eval account changed to a supervisor" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'eval_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:eval_communicator)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'supporter'
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a purchase communicator who has passed the threshold with their current purchase" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 3.years.to_i
+      })
+      u.settings['subscription']['last_purchased'] = 3.years.ago.to_i
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a purchase communicator with a future expires_at" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+
+    it "should not return true for a gift code communicator who doesn't pass the threshold" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'gift_code',
+        'gift_id' => '12345',
+        'code' => 'asdf',
+        'source_id' => 'gift',
+        'seconds_to_add' => 6.months.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should return true for a gift code communicator who does pass the threshold" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'gift_code',
+        'gift_id' => '12345',
+        'code' => 'asdf',
+        'source_id' => 'gift',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.expires_at).to be > 2.years.from_now
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a subscription that has passed the threshold" do
+      u = User.create
+      res = u.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:subscribed_communicator)
+      expect(u.fully_purchased?).to eq(false)
+      u.settings['subscription']['started'] = 3.years.ago.iso8601
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a long-enough past subscription" do
+      u = User.create
+      res = u.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:subscribed_communicator)
+      expect(u.fully_purchased?).to eq(false)
+      u.settings['subscription']['started'] = 3.years.ago.iso8601
+      expect(u.fully_purchased?).to eq(true)
+      res = u.update_subscription({
+        'unsubscribe' => true,
+        'subscription_id' => '12345'
+      })
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a long-enough org sponsorship" do
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      u.update_subscription_organization(o.global_id, false, true)
+      links = UserLink.links_for(u)
+      expect(links).to eq([{
+        'user_id' => u.global_id,
+        'record_code' => Webhook.get_record_code(o),
+        'type' => 'org_user',
+        'state' => {
+          'pending' => false,
+          'sponsored' => true,
+          'eval' => false,
+          'added' => links[0]['state']['added']
+        }
+      }])
+      link = UserLink.last
+      
+      added = Time.now - 3.years
+      link.data['state']['added'] = added.iso8601
+      link.save
+      expect(u.reload.org_sponsored?).to eq(true)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+      expect(Organization.managed?(u)).to eq(true)
+      o.reload.remove_user(u.user_name)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for a long-enough org supporter" do
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      expect(u.supporter_role?).to eq(false)
+      o.add_supervisor(u.user_name, false)
+      expect(u.reload.supporter_role?).to eq(true)
+      expect(u.billing_state).to eq(:org_supporter)
+      links = UserLink.links_for(u)
+      expect(links).to eq([{
+        'user_id' => u.global_id,
+        'record_code' => Webhook.get_record_code(o),
+        'type' => 'org_supervisor',
+        'state' => {
+          'pending' => false,
+          'added' => links[0]['state']['added']
+        }
+      }])
+      link = UserLink.last
+      
+      added = Time.now - 3.years
+      link.data['state']['added'] = added.iso8601
+      link.save
+      expect(u.supporter_role?).to eq(true)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.org_supporter?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+      o.reload.remove_supervisor(u.user_name)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should not return true for a long-enough org supporter changed to a communicator" do
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      expect(u.supporter_role?).to eq(false)
+      o.add_supervisor(u.user_name, false)
+      expect(u.reload.supporter_role?).to eq(true)
+      expect(u.billing_state).to eq(:org_supporter)
+      links = UserLink.links_for(u)
+      expect(links).to eq([{
+        'user_id' => u.global_id,
+        'record_code' => Webhook.get_record_code(o),
+        'type' => 'org_supervisor',
+        'state' => {
+          'pending' => false,
+          'added' => links[0]['state']['added']
+        }
+      }])
+      link = UserLink.last
+      
+      added = Time.now - 3.years
+      link.data['state']['added'] = added.iso8601
+      link.save
+      expect(u.supporter_role?).to eq(true)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.org_supporter?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+      o.reload.remove_supervisor(u.user_name)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should return true for a long-enough removed org sponsorship" do
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 2})
+      expect(u.supporter_role?).to eq(false)
+      o.add_supervisor(u.user_name, false)
+      expect(u.reload.supporter_role?).to eq(true)
+      expect(u.billing_state).to eq(:org_supporter)
+      links = UserLink.links_for(u)
+      expect(links).to eq([{
+        'user_id' => u.global_id,
+        'record_code' => Webhook.get_record_code(o),
+        'type' => 'org_supervisor',
+        'state' => {
+          'pending' => false,
+          'added' => links[0]['state']['added']
+        }
+      }])
+      link = UserLink.last
+      
+      added = Time.now - 3.years
+      link.data['state']['added'] = added.iso8601
+      link.save
+      expect(u.supporter_role?).to eq(true)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.org_supporter?).to eq(true)
+      expect(u.premium_supporter?).to eq(true)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 100)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 100)
+      expect(u.fully_purchased?).to eq(true)
+      o.reload.remove_supervisor(u.user_name)
+      expect(u.reload.org_sponsored?).to eq(false)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 100)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 100)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should return true for a purchased supervisor" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should not return true for a purchased supervisor who changed their role to communicator" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+      expect(u.billing_state).to eq(:expired_communicator)
+    end
+
+    it "should return true for a purchased communicator who changed their role to supervisor" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'supporter'
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+    end
+
+    it "should return true for an expired purchased supervisor" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['subscription']['last_purchased'] = 3.years.ago.iso8601
+      u.expires_at = 2.days.ago
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['preferences']['role'] = 'communicator'
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should not return true for an expired purchased supervisor that didn't pass the threshold" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 3.years.to_i
+      })
+      expect(res).to eq(true)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u.fully_purchased?).to eq(true)
+      u.settings['subscription']['last_purchased'] = 1.years.ago.iso8601
+      u.expires_at = 2.days.ago
+      expect(u.fully_purchased?).to eq(false)
+    end
+
+    it "should not return true for a modeling_only account" do
+      u = User.create
+      u.settings['preferences']['role'] = 'supporter'
+      u.expires_at = 2.days.ago
+      expect(u.billing_state).to eq(:modeling_only)
+      expect(u.fully_purchased?).to eq(false)
+    end
+  end
   describe "transfer_subscription_to" do
     it "should move attributes from one user to another" do
       u1 = User.create
@@ -2230,8 +2826,14 @@ describe Subscription, :type => :model do
     
     it "should include past durations" do
       u = User.create
-      u.settings['past_purchase_durations'] = [{'duration' => 100}, {'duration' => 50}]
+      u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 100}, {'role' => 'communicator', 'duration' => 50}]
       expect(u.purchase_credit_duration).to eq(150)
+    end
+
+    it "should not include supervisor durations if checking for a communicator role" do
+      u = User.create
+      u.settings['past_purchase_durations'] = [{'role' => 'supporter', 'duration' => 100}, {'role' => 'communicator', 'duration' => 50}]
+      expect(u.purchase_credit_duration).to eq(50)
     end
     
     it "should include the current subscription if active" do
@@ -2251,12 +2853,12 @@ describe Subscription, :type => :model do
       u.settings = {}
       u.settings['subscription'] = {}
       u.expires_at = 2.weeks.from_now
-      u.settings['subscription']['last_purchase_plan_id'] = 'asdf'
+      u.settings['subscription']['last_purchase_plan_id'] = 'long_term_asssdf'
       cutoff = 3.weeks
       u.settings['subscription']['last_purchased'] = (Time.now - cutoff).iso8601
       expect(u.long_term_purchase?).to eq(true)
-      expect(u.purchase_credit_duration).to be <= (cutoff.to_i + 3600)
-      expect(u.purchase_credit_duration).to be >= (cutoff.to_i - 3600)
+      expect(u.purchase_credit_duration).to be <= (5.weeks.to_i + 3600)
+      expect(u.purchase_credit_duration).to be >= (5.weeks.to_i - 3600)
     end
     
     it "should include org sponsorship" do

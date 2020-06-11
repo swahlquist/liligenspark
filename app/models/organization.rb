@@ -182,14 +182,20 @@ class Organization < ActiveRecord::Base
     user = User.find_by_path(user_key)
     raise "invalid user, #{user_key}" unless user
     pending = !!UserLink.links_for(user).detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == Webhook.get_record_code(self) && l['state']['pending'] }
-#     user.settings ||= {}
-#     user.settings['supervisor_for'] ||= {}
-#     pending = user.settings['supervisor_for'][self.global_id] && user.settings['supervisor_for'][self.global_id]['pending']
-#     user.settings['supervisor_for'].delete(self.global_id)
-#     user.assert_current_record!
-#     user.save_with_sync('remove_supervisor')
+    if !pending
+      user.settings['past_purchase_durations'] ||= []
+      org_code = Webhook.get_record_code(self)
+      links = UserLink.links_for(user)
+      links.select{|l| l['type'] == 'org_supervisor' && l['state']['added'] }.each do |link|
+        added = (link['state']['added'] && Time.parse(link['state']['added'])) rescue nil
+        if added
+          user.settings['past_purchase_durations'] << {role: 'supporter', type: 'org', started: link['state']['added'], duration: (Time.now.to_i - added.to_i)}
+        end
+      end
+      user.save
+    end
     self.detach_user(user, 'supervisor')
-#     self.touch
+
     notify('org_removed', {
       'user_id' => user.global_id,
       'user_type' => 'supervisor',

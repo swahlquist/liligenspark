@@ -101,7 +101,8 @@ describe Purchasing do
         }
       })
     end
-            
+
+
     describe "charge.succeeded" do
       it "should trigger a purchase event" do
         u = User.create
@@ -326,7 +327,7 @@ describe Purchasing do
       expect(u.settings['subscription']['started']).to eq(nil)
       expect(res).to eq({:success => true, :type => 'slp_monthly_free'})
       expect(u.reload.settings['subscription']['plan_id']).to eq('slp_monthly_free')
-      expect(u.reload.settings['subscription']['free_premium']).to eq(true)
+      expect(u.reload.settings['subscription']['modeling_only']).to eq(true)
     end
     
     it "should error gracefully on invalid purchase amounts" do
@@ -335,8 +336,8 @@ describe Purchasing do
       res = Purchasing.purchase(u, {'id' => 'token'}, 'monthly_2')
       expect(res).to eq({:success => false, :error => "2 not valid for type monthly_2"});
 
-      res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_25')
-      expect(res).to eq({:success => false, :error => "25 not valid for type slp_long_term_25"});
+      res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_15')
+      expect(res).to eq({:success => false, :error => "15 not valid for type slp_long_term_15"});
 
       # res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_200')
       # expect(res).to eq({:success => false, :error => "200 not valid for type slp_long_term_200"});
@@ -389,7 +390,7 @@ describe Purchasing do
       u = User.create
       
       expect(Stripe::Charge).to receive(:create) { raise "no" }
-      res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+      res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq('unexpected_error')
       expect(res[:error_message]).to eq('no')
@@ -405,7 +406,7 @@ describe Purchasing do
       u = User.create
       
       expect(Stripe::Charge).to receive(:create).and_raise(FakeCardError.new({error: {code: 'no', decline_code: 'no way'}}))
-      res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+      res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       expect(res).to eq({
         success: false,
         error: 'no',
@@ -877,14 +878,14 @@ describe Purchasing do
       it "should create a charge record" do
         u = User.create
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 15000,
+          :amount => 20000,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -892,20 +893,20 @@ describe Purchasing do
           'customer' => '45678'
         })
         expect(User).to receive(:subscription_event)
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       end
       
       it "should add extras fee if specified" do
         u = User.create
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 17500,
+          :amount => 22500,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase (plus premium symbols)',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -913,7 +914,7 @@ describe Purchasing do
           'customer' => '45678'
         })
         expect(User).to receive(:subscription_event)
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150_plus_extras')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_extras')
         Worker.process_queues
         expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
       end
@@ -923,14 +924,14 @@ describe Purchasing do
         u.settings['email'] = 'testing@example.com'
         u.save
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 15000,
+          :amount => 20000,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase',
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -938,23 +939,23 @@ describe Purchasing do
           'customer' => '45678'
         })
         expect(User).to receive(:subscription_event)
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       end
 
-      it "should should not specify the email if protected" do
+      it "should not specify the email if protected" do
         u = User.create
         u.settings['email'] = 'testing@example.com'
         u.settings['authored_organization_id'] = 'asdf'
         u.save
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 15000,
+          :amount => 20000,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -962,20 +963,20 @@ describe Purchasing do
           'customer' => '45678'
         })
         expect(User).to receive(:subscription_event)
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       end
       
       it "should trigger a purchase event" do
         u = User.create
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 15000,
+          :amount => 20000,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -988,27 +989,27 @@ describe Purchasing do
           'purchase_id' => '23456',
           'customer_id' => '45678',
           'discount_code' => nil,
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'source_id' => 'stripe',
-          'purchase_amount' => 150,
+          'purchase_amount' => 200,
           'token_summary' => 'Unknown Card',
           'seconds_to_add' => 5.years.to_i,
           'source' => 'new purchase'
         })
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       end
       
       it "should cancel any running subscriptions" do
         u = User.create
         expect(Stripe::Charge).to receive(:create).with({
-          :amount => 15000,
+          :amount => 20000,
           :currency => 'usd',
           :source => 'token',
           :description => 'CoughDrop communicator license purchase',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
-            'plan_id' => 'long_term_150',
+            'plan_id' => 'long_term_200',
             'type' => 'license'
           }
         }).and_return({
@@ -1021,15 +1022,346 @@ describe Purchasing do
           'purchase_id' => '23456',
           'customer_id' => '45678',
           'discount_code' => nil,
-          'plan_id' => 'long_term_150',
-          'purchase_amount' => 150,
+          'plan_id' => 'long_term_200',
+          'purchase_amount' => 200,
           'source_id' => 'stripe',
           'token_summary' => 'Unknown Card',
           'seconds_to_add' => 5.years.to_i,
           'source' => 'new purchase'
         })
         expect(Purchasing).to receive(:cancel_other_subscriptions).with(u, 'all')
-        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
+      end
+
+      it "should allow premium supporter purchase" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop supporter account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'slp_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event).with({
+          'purchase' => true,
+          'user_id' => u.global_id,
+          'purchase_id' => '23456',
+          'customer_id' => '45678',
+          'discount_code' => nil,
+          'plan_id' => 'slp_long_term_25',
+          'source_id' => 'stripe',
+          'purchase_amount' => 25,
+          'token_summary' => 'Unknown Card',
+          'seconds_to_add' => 5.years.to_i,
+          'source' => 'new purchase'
+        })
+        Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_25')
+      end
+
+      it "should allow eval account purchase" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop evaluator account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'eval_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event).with({
+          'purchase' => true,
+          'user_id' => u.global_id,
+          'purchase_id' => '23456',
+          'customer_id' => '45678',
+          'discount_code' => nil,
+          'plan_id' => 'eval_long_term_25',
+          'source_id' => 'stripe',
+          'purchase_amount' => 25,
+          'token_summary' => 'Unknown Card',
+          'seconds_to_add' => 5.years.to_i,
+          'source' => 'new purchase'
+        })
+        Purchasing.purchase(u, {'id' => 'token'}, 'eval_long_term_25')
+      end
+
+      it "should allow re-upping a long_term subscription" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+        expect(u.reload.fully_purchased?).to eq(true)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 5000,
+          :currency => 'usd',
+          :source => 'token2',
+          :description => 'CoughDrop cloud extras re-purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'refresh_long_term_50',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '234567',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token2'}, 'long_term_50')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.expires_at).to be > 9.years.from_now
+        expect(u.reload.expires_at).to be < 11.years.from_now
+      end
+
+      it "should not allow re-upping a long-term subscription unless fully_purchased" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to_not receive(:create)
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_50')
+        expect(res[:success]).to eq(false)
+
+        expect(u.reload.long_term_purchase?).to eq(false)
+        expect(u.reload.expires_at).to be < 1.years.from_now
+        expect(u.reload.fully_purchased?).to eq(false)
+      end
+
+      it "should convert from slp_long_term_25 to long_term_200 correctly" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop supporter account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'slp_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_25')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(false)
+        expect(u.reload.premium_supporter?).to eq(true)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+        expect(u.reload.fully_purchased?).to eq(true)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token2',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '234567',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token2'}, 'long_term_200')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.premium_supporter?).to eq(false)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+      end
+
+      it "should convert from eval_long_term_25 to long_term_200 correctly" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop evaluator account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'eval_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'eval_long_term_25')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(false)
+        expect(u.reload.eval_account?).to eq(true)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+        expect(u.reload.fully_purchased?).to eq(true)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token2',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '234567',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token2'}, 'long_term_200')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.eval_account?).to eq(false)
+        expect(u.reload.expires_at).to be > 9.years.from_now
+        expect(u.reload.expires_at).to be < 11.years.from_now
+      end
+
+      it "should correctly convert from long_term_200 to slp_long_term_25" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.premium_supporter?).to eq(false)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+        expect(u.reload.fully_purchased?).to eq(true)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token2',
+          :description => 'CoughDrop supporter account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'slp_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '234567',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token2'}, 'slp_long_term_25')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(false)
+        expect(u.reload.premium_supporter?).to eq(true)
+        expect(u.reload.expires_at).to be > 9.years.from_now
+        expect(u.reload.expires_at).to be < 11.years.from_now
+      end
+
+      it "should correctly convert from long_term_200 to eval_long_term_25" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(true)
+        expect(u.reload.eval_account?).to eq(false)
+        expect(u.reload.expires_at).to be > 4.years.from_now
+        expect(u.reload.expires_at).to be < 6.years.from_now
+        expect(u.reload.fully_purchased?).to eq(true)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token2',
+          :description => 'CoughDrop evaluator account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'plan_id' => 'eval_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '234567',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token2'}, 'eval_long_term_25')
+        expect(res[:success]).to eq(true)
+        expect(u.reload.long_term_purchase?).to eq(false)
+        expect(u.reload.eval_account?).to eq(true)
+        expect(u.reload.expires_at).to be > 9.years.from_now
+        expect(u.reload.expires_at).to be < 11.years.from_now
       end
     end
   end
@@ -1466,7 +1798,7 @@ describe Purchasing do
     it "should error on purchase amount that is too low based on additional options" do
       ENV['CURRENT_SALE'] = nil
 
-      res = Purchasing.purchase_gift({}, {'type' => 'long_term_150'})
+      res = Purchasing.purchase_gift({}, {'type' => 'long_term_200'})
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("unexpected_error")
 
@@ -1513,7 +1845,7 @@ describe Purchasing do
     
     it "should gracefully handle API errors" do
       expect(Stripe::Charge).to receive(:create) { raise "no" }
-      res = Purchasing.purchase_gift({}, {'type' => 'long_term_150'})
+      res = Purchasing.purchase_gift({}, {'type' => 'long_term_200'})
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq('unexpected_error')
       expect(res[:error_message]).to eq('no')
@@ -1522,7 +1854,7 @@ describe Purchasing do
     it "should generate a purchase object on success" do
       u = User.create
       expect(Stripe::Charge).to receive(:create).with({
-        :amount => 15000,
+        :amount => 20000,
         :currency => 'usd',
         :receipt_email=>"bob@example.com",
         :source => 'token',
@@ -1530,7 +1862,7 @@ describe Purchasing do
         :metadata => {
           'giver_id' => u.global_id,
           'giver_email' => 'bob@example.com',
-          'plan_id' => 'long_term_150'
+          'plan_id' => 'long_term_200'
         }
       }).and_return({
         'customer' => '12345',
@@ -1542,12 +1874,12 @@ describe Purchasing do
         'email' => 'bob@example.com',
         'seconds' => 5.years.to_i
       }).and_return(g)
-      res = Purchasing.purchase_gift({'id' => 'token'}, {'type' => 'long_term_150', 'user_id' => u.global_id, 'email' => 'bob@example.com'})
+      res = Purchasing.purchase_gift({'id' => 'token'}, {'type' => 'long_term_200', 'user_id' => u.global_id, 'email' => 'bob@example.com'})
       expect(g.reload.settings).to eq({
         'customer_id' => '12345',
         'token_summary' => 'Unknown Card',
         'source_id' => 'stripe',
-        'plan_id' => 'long_term_150',
+        'plan_id' => 'long_term_200',
         'purchase_id' => '23456',
       })
     end
@@ -1637,7 +1969,7 @@ describe Purchasing do
         end
       }.exactly(2).times
       expect(Stripe::Charge).to receive(:create).with({
-        :amount => 15000,
+        :amount => 20000,
         :currency => 'usd',
         :receipt_email=>"bob@example.com",
         :source => 'token',
@@ -1645,19 +1977,19 @@ describe Purchasing do
         :metadata => {
           'giver_id' => u.global_id,
           'giver_email' => 'bob@example.com',
-          'plan_id' => 'long_term_150'
+          'plan_id' => 'long_term_200'
         }
       }).and_return({
         'customer' => '12345',
         'id' => '23456'
       })
-      res = Purchasing.purchase_gift({'id' => 'token'}, {'type' => 'long_term_150', 'user_id' => u.global_id, 'email' => 'bob@example.com'})
+      res = Purchasing.purchase_gift({'id' => 'token'}, {'type' => 'long_term_200', 'user_id' => u.global_id, 'email' => 'bob@example.com'})
       expect(res[:success]).to eq(true)
       g = GiftPurchase.last
       expect(g.settings['giver_id']).to eq(u.global_id)
       expect(g.settings['customer_id']).to eq('12345')
       expect(g.settings['purchase_id']).to eq('23456')
-      expect(g.settings['plan_id']).to eq('long_term_150')
+      expect(g.settings['plan_id']).to eq('long_term_200')
       expect(g.settings['token_summary']).to eq('Unknown Card')
       expect(g.settings['giver_email']).to eq('bob@example.com')
       expect(g.settings['seconds_to_add']).to eq(5.years.to_i)
@@ -1883,14 +2215,14 @@ describe Purchasing do
     it "should log user events without erroring" do
       u = User.create(:settings => {'subscription' => {}})
       expect(Stripe::Charge).to receive(:create).with({
-        :amount => 15000,
+        :amount => 20000,
         :currency => 'usd',
         :source => 'token',
         :receipt_email => nil,
         :description => 'CoughDrop communicator license purchase',
         :metadata => {
           'user_id' => u.global_id,
-          'plan_id' => 'long_term_150',
+          'plan_id' => 'long_term_200',
           'type' => 'license'
         }
       }).and_return({
@@ -1898,11 +2230,11 @@ describe Purchasing do
         'customer' => '45678'
       })
       expect(User).to receive(:subscription_event)
-      Purchasing.purchase(u, {'id' => 'token'}, 'long_term_150')
+      Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200')
       Worker.process_queues
       u.reload
-      expect(u.subscription_events.length).to eq(5)
-      expect(u.subscription_events.map{|e| e['log'] }).to eq(['purchase initiated', 'paid subscription', 'long-term - creating charge', 'persisting long-term purchase update', 'subscription canceling'])
+      expect(u.subscription_events.length).to eq(4)
+      expect(u.subscription_events.map{|e| e['log'] }).to eq(['purchase initiated', 'paid subscription', 'long-term - creating charge', 'persisting long-term purchase update'])
     end
   end
   
@@ -1914,11 +2246,13 @@ describe Purchasing do
     expect(u.subscription_events[0]['token']).to eq('fre..ree')
     expect(u.subscription_events[1]['log']).to eq('subscription canceling')
     expect(u.subscription_events[1]['reason']).to eq('all')
-    expect(u.subscription_hash['active']).to eq(true)
+    expect(u.billing_state).to eq(:modeling_only)
+    expect(u.subscription_hash['active']).to eq(nil)
     expect(u.subscription_hash['expires']).to eq(nil)
-    expect(u.subscription_hash['free_premium']).to eq(true)
-    expect(u.subscription_hash['grace_period']).to eq(false)
-    expect(u.subscription_hash['plan_id']).to eq('slp_monthly_free')
+    expect(u.subscription_hash['free_premium']).to eq(nil)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
+    expect(u.subscription_hash['modeling_only']).to eq(true)
+    expect(u.subscription_hash['plan_id']).to eq(nil)
     expect(u.subscription_hash['started']).to eq(nil)
 
     expect(Stripe::Charge).to receive(:create).with({
@@ -1962,12 +2296,14 @@ describe Purchasing do
     expect(u.reload.subscription_events[7]['log']).to eq('purchase notification triggered')
     expect(u.reload.subscription_events[8]['log']).to eq('subscription canceling')
     expect(u.reload.subscription_events[8]['reason']).to eq('all')
-    expect(u.subscription_hash['grace_period']).to eq(false)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
     expect(u.subscription_hash['active']).to eq(true)
     expect(u.subscription_hash['purchased']).to eq(true)
     expect(u.subscription_hash['plan_id']).to eq('long_term_200')
+    expect(u.billing_state).to eq(:long_term_active_communicator)
+    expect(u.expires_at).to_not eq(nil)
     expect(u.subscription_hash['expires']).to_not eq(nil)
-    
+
     req = stripe_event_request 'charge.succeeded', {
       'id' => 'asdf',
       'customer' => nil,
@@ -1988,7 +2324,7 @@ describe Purchasing do
       'source' => 'charge.succeeded',
       'user_id' => u.global_id
     })
-    expect(u.subscription_hash['grace_period']).to eq(false)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
     expect(u.subscription_hash['active']).to eq(true)
     expect(u.subscription_hash['purchased']).to eq(true)
     expect(u.subscription_hash['plan_id']).to eq('long_term_200')
@@ -2020,7 +2356,7 @@ describe Purchasing do
     expect(u.reload.subscription_events[14]['log']).to eq('new subscription for existing customer')
     expect(u.reload.subscription_events[15]['error']).to eq('other_exception')
     expect(u.reload.subscription_events[15]['err']).to match('You cannot use a Stripe token more than once')
-    expect(u.subscription_hash['grace_period']).to eq(false)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
     expect(u.subscription_hash['active']).to eq(true)
     expect(u.subscription_hash['purchased']).to eq(true)
     expect(u.subscription_hash['plan_id']).to eq('long_term_200')
@@ -2035,11 +2371,11 @@ describe Purchasing do
     expect(u.subscription_events[0]['token']).to eq('fre..ree')
     expect(u.subscription_events[1]['log']).to eq('subscription canceling')
     expect(u.subscription_events[1]['reason']).to eq('all')
-    expect(u.subscription_hash['active']).to eq(true)
+    expect(u.subscription_hash['active']).to eq(nil)
     expect(u.subscription_hash['expires']).to eq(nil)
-    expect(u.subscription_hash['free_premium']).to eq(true)
-    expect(u.subscription_hash['grace_period']).to eq(false)
-    expect(u.subscription_hash['plan_id']).to eq('slp_monthly_free')
+    expect(u.subscription_hash['free_premium']).to eq(nil)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
+    expect(u.subscription_hash['modeling_only']).to eq(true)
     expect(u.subscription_hash['started']).to eq(nil)
 
     expect(Stripe::Charge).to receive(:create).with({
@@ -2083,23 +2419,21 @@ describe Purchasing do
     expect(u.reload.subscription_events[7]['log']).to eq('purchase notification triggered')
     expect(u.reload.subscription_events[8]['log']).to eq('subscription canceling')
     expect(u.reload.subscription_events[8]['reason']).to eq('all')
-    expect(u.subscription_hash['grace_period']).to eq(false)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
     expect(u.subscription_hash['active']).to eq(true)
     expect(u.subscription_hash['purchased']).to eq(true)
     expect(u.subscription_hash['plan_id']).to eq('long_term_200')
     expect(u.subscription_hash['expires']).to_not eq(nil)
     
-    # TODO: trigger remote callback event charge.succeeded
-
     expect(Stripe::Charge).to receive(:create).with({
       :amount => 20000,
       :currency => 'usd',
       :source => 'tokenasdfasdfjkl',
-      :description => 'CoughDrop communicator license purchase',
+      :description => 'CoughDrop cloud extras re-purchase',
       :receipt_email => nil,
       :metadata => {
         'user_id' => u.global_id,
-        'plan_id' => 'long_term_200',
+        'plan_id' => 'refresh_long_term_200',
         'type' => 'license'
       }
     }).and_raise("You cannot use a Stripe token more than once")
@@ -2114,7 +2448,7 @@ describe Purchasing do
     # expect(u.reload.subscription_events[14]['log']).to eq('subscription canceling')
     expect(u.reload.subscription_events[12]['error']).to eq('other_exception')
     
-    expect(u.subscription_hash['grace_period']).to eq(false)
+    expect(u.subscription_hash['grace_period']).to eq(nil)
     expect(u.subscription_hash['active']).to eq(true)
     expect(u.subscription_hash['purchased']).to eq(true)
     expect(u.subscription_hash['plan_id']).to eq('long_term_200')
@@ -2907,6 +3241,7 @@ describe Purchasing do
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(nil)
         hash = u.reload.subscription_hash
+        expect(u.billing_state).to eq(:long_term_active_communicator)
         expect(hash['active']).to eq(true)
         expect(hash['expires']).to be > 4.years.from_now.iso8601
         expect(hash['expires']).to be < 6.years.from_now.iso8601
@@ -2947,6 +3282,7 @@ describe Purchasing do
         expect(res['free_trial']).to eq(nil)
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(nil)
+        expect(u.billing_state).to eq(:long_term_active_communicator)
         hash = u.reload.subscription_hash
         expect(hash['active']).to eq(true)
         expect(hash['expires']).to be > 4.years.from_now.iso8601

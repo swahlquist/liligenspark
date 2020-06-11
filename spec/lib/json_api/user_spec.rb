@@ -33,7 +33,7 @@ describe JsonApi::User do
     it "should include permissions if requested" do
       u = User.create(settings: {'email' => 'bob@example.com'})
       hash = JsonApi::User.build_json(u, permissions: u)
-      expect(hash['permissions']).to eq({'user_id' => u.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'manage_supervision' => true, 'edit' => true, 'edit_boards' => true, 'delete' => true, 'view_deleted_boards' => true, 'set_goals' => true})
+      expect(hash['permissions']).to eq({'user_id' => u.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'edit' => true, 'edit_boards' => true, 'delete' => true, 'view_deleted_boards' => true, 'set_goals' => true})
       
       hash = expect(JsonApi::User.build_json(u, permissions: nil)['permissions']).to eq({'user_id' => nil, 'view_existence' => true})
     end
@@ -254,7 +254,9 @@ describe JsonApi::User do
         
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
+          'billing_state' => :never_expires_communicator,
           'never_expires' => true,
+          'fully_purchased' => true,
           'active' => true
         })
         expect(u.expires_at).to_not eq(nil)
@@ -265,7 +267,8 @@ describe JsonApi::User do
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
           'active' => true,
-          'eval_account' => false
+          'billing_state' => :org_sponsored_communicator,
+          'org_sponsored' => true
         })
         
         o.remove_user(u.user_name)
@@ -274,10 +277,8 @@ describe JsonApi::User do
         u.settings['subscription']['plan_id'] = 'monthly_6'
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
-          'grace_period' => false,
-          'eval_account' => false,
+          'billing_state' => :subscribed_communicator,
           'active' => true,
-          'expires' => u.expires_at.iso8601,
           'started' => u.settings['subscription']['started'],
           'plan_id' => 'monthly_6'
         })
@@ -285,6 +286,7 @@ describe JsonApi::User do
         u.settings['subscription']['started'] = nil
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
+          'billing_state' => :grace_period_communicator,
           'grace_period' => true,
           'expires' => u.expires_at.iso8601
         })
@@ -293,7 +295,7 @@ describe JsonApi::User do
         u.settings['subscription']['last_purchase_plan_id'] = 'long_term_100'
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
-          'grace_period' => false,
+          'billing_state' => :long_term_active_communicator,
           'active' => true,
           'expires' => u.expires_at.iso8601,
           'purchased' => true,
@@ -303,6 +305,8 @@ describe JsonApi::User do
         u.settings['subscription']['never_expires'] = true
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription']).to eq({
+          'billing_state' => :never_expires_communicator,
+          'fully_purchased' => true,
           'active' => true,
           'never_expires' => true
         })
@@ -669,7 +673,7 @@ describe JsonApi::User do
       res = u.update_subscription({
         'subscribe' => true,
         'subscription_id' => '12345',
-        'plan_id' => 'slp_monthly_free'
+        'plan_id' => 'slp_long_term_25'
       })
       expect(res).to eq(true)
 

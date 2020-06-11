@@ -175,6 +175,7 @@ describe Organization, :type => :model do
       o.add_supervisor(u2.user_name, false)
       o.reload
       expect(Organization.manager_for?(u.reload, u2.reload)).to eq(true)
+      expect(u.edit_permission_for?(u2)).to eq(true)
       expect(u2.allows?(u, 'supervise')).to eq(true)
       expect(u2.allows?(u, 'manage_supervision')).to eq(true)
       expect(u2.allows?(u, 'view_detailed')).to eq(true)
@@ -200,7 +201,7 @@ describe Organization, :type => :model do
       u.reload
       expect(u.grace_period?).to eq(false)
       expect(u.settings['subscription']['plan_id']).to eq('slp_monthly_free')
-      expect(u.settings['subscription']['free_premium']).to eq(true)
+      expect(u.settings['subscription']['modeling_only']).to eq(true)
       expect(u.settings['subscription']['subscription_id']).to eq('free_auto_adjusted')
     end
     
@@ -212,7 +213,7 @@ describe Organization, :type => :model do
       o.add_supervisor(u.user_name)
       u.reload
       expect(u.grace_period?).to eq(false)
-      expect(u.settings['subscription']).to eq({'never_expires' => true})
+      expect(u.settings['subscription']).to eq({'expiration_source' => 'free_trial', 'never_expires' => true})
     end
     
     it "should remove from any units when removing" do
@@ -566,7 +567,7 @@ describe Organization, :type => :model do
       o.add_user(u.user_name, false)
       u.reload
       m.reload
-      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'manage_supervision' => true, 'support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
+      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
       expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true})
       expect(m.permissions_for(u)).to eq({'user_id' => u.global_id, 'view_existence' => true})
     end
@@ -628,8 +629,8 @@ describe Organization, :type => :model do
       o.add_user(u2.user_name, false)
       u2.reload
       
-      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'set_goals' => true})
-      expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
+      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'set_goals' => true})
+      expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
     end
     
     it "should not allow an admin assistant to supervise users" do

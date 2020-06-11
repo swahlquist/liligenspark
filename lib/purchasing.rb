@@ -242,7 +242,7 @@ module Purchasing
       valid_amount = false unless amount >= 6
       description = "CoughDrop communicator monthly subscription"
     elsif type.match(/^long_term/)
-      if user.fully_purchased?
+      if user.communicator_role? && user.fully_purchased? && !user.eval_account?
         valid_amount = false unless amount >= 50
         description = "CoughDrop cloud extras re-purchase"
         type = 'refresh_' + type
@@ -755,6 +755,8 @@ module Purchasing
           elsif res['one_time_purchase']
             transaction_ids = (user.settings['subscription']['prior_purchase_ids'] || []) + [user.settings['subscription']['last_purchase_id'] || 'xx']
             ios_plan_hash = {
+              'com.mycoughdrop.coughdrop' => 'long_term_ios',
+              'com.mycoughdrop.paidcoughdrop' => 'long_term_ios',
               'CoughDropiOSPlusExtras' => 'long_term_ios',
               'CoughDropiOSEval' => 'eval_long_term_ios',
               'CoughDropiOSSLP' => 'slp_long_term_ios'
@@ -1055,7 +1057,7 @@ module Purchasing
   end
   
   def self.cancel_other_subscriptions(user, except_subscription_id)
-    return false unless user && user.settings && user.settings['subscription']
+    return false unless user && user.settings && user.settings['subscription'] && user.settings['subscription']['customer_id']
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
     user.log_subscription_event({:log => 'subscription canceling', reason: except_subscription_id}) if user
     customer_ids = []
