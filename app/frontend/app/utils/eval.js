@@ -443,7 +443,7 @@ var evaluation = {
       if(assessment.scanning_wait) {
         res.access_settings.push({key: i18n.t('scan-wait', "scan-wait"), val: assessment.scanning_wait});
       }
-      res.access_settings.push({key: i18n.t('scan-prompt', "scan-prompt"), val: assessment.scanning.prompts});
+      res.access_settings.push({key: i18n.t('scan-prompt', "scan-prompt"), val: assessment.scanning_prompts});
       res.access_settings.push({key: i18n.t('scan-auto-select', "scan-auto-select"), val: assessment.scanning_auto_select});
       res.access_settings.push({key: i18n.t('scan-keys', "scan-keys"), val: assessment.scanning_keys.join(',').replace(/,+$/, '')});
     } else if(assessment.access_method == 'dwell' || assessment.access_method == 'arrow_dwell' || assessment.access_method == 'head') {
