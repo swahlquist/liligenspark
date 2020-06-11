@@ -1303,7 +1303,7 @@ var buttonTracker = EmberObject.extend({
         left: event.horizontal <= 0 ? (event.horizontal * -1 / 1) : 0,
         right: event.horizontal >= 0 ? (event.horizontal / 1) : 0,
       };
-      buttonTracker.head_tilt = buttonTracker.head_tilt || 0;
+      buttonTracker.head_tilt.uses = buttonTracker.head_tilt.uses || 0;
       console.log("u" + buttonTracker.head_tilt.up + " d" + buttonTracker.head_tilt.down + " l" + buttonTracker.head_tilt.left + " r" + buttonTracker.head_tilt.right);
     }
     if(buttonTracker.check('dwell_type') != 'arrow_dwell' && buttonTracker.check('dwell_type') != 'head' && !buttonTracker.gamepadupdate) {
