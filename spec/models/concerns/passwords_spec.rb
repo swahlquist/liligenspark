@@ -97,7 +97,7 @@ describe Passwords, :type => :model do
       expect(u.settings['password']['hashed_password']).not_to eq(nil)
       expect(u.settings['password']['salt']).not_to eq(nil)
       
-      expect(GoSecure).to receive(:generate_password).with("bacon")
+      expect(GoSecure).to receive(:generate_password).with("hashed?:#sha512?:#7f7284ac92b0151c6ab58adc9e6673f63d420cf7bc5f829cb03e17b73daef49dccfdc2b29142f2bfd609ebdcc9abf7f3a63c2fe02f8b5e62b9a664c9f6152848").and_return({})
       User.new.generate_password("bacon")
     end
   end
@@ -113,7 +113,7 @@ describe Passwords, :type => :model do
       expect(u.valid_password?("I love to eat apples and bananas ")).to eq(false)
       expect(u.valid_password?("I love to eat apples and bananas!")).to eq(false)
       expect(u.valid_password?("I love to eat apples and banana")).to eq(false)
-      expect(GoSecure).to receive(:matches_password?).with("hippopotamus", pw)
+      expect(GoSecure).to receive(:matches_password?).with("hashed?:#sha512?:#5a2fdf084e7cb417f21ac5ef38cfd73dee369f36decc40020cbab75c0b5776457dd0c7944069269afc52dcf4f334758e90baf54e616c7217e768f44a9ec489ff", pw)
       u.valid_password?("hippopotamus")
     end
     
@@ -129,6 +129,21 @@ describe Passwords, :type => :model do
       }
       expect(GoSecure.outdated_password?(u.settings['password'])).to eq(true)
       expect(u.valid_password?('bracken')).to eq(false)
+      expect(u.valid_password?('bacon')).to eq(true)
+      expect(u.valid_password?(u.pre_hash('bacon'))).to eq(true)
+    end
+    
+    it "should re-generate a non-pre-hashed password" do
+      u = User.new
+      u.settings = {}
+      salt = Digest::MD5.hexdigest("pw" + Time.now.to_i.to_s)
+      hash = Digest::SHA512.hexdigest(GoSecure.encryption_key + salt + "bacon")
+      u.settings['password'] = GoSecure.generate_password('bacon')
+      expect(u.settings['password']['pre_hash_algorithm']).to eq(nil)
+      expect(u.valid_password?(u.pre_hash('bacon'))).to eq(false)
+      expect(u.valid_password?('bacon')).to eq(true)
+      expect(u.settings['password']['pre_hash_algorithm']).to eq('sha512')
+      expect(u.valid_password?(u.pre_hash('bacon'))).to eq(true)
       expect(u.valid_password?('bacon')).to eq(true)
     end
     

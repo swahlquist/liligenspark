@@ -60,6 +60,20 @@ var session = EmberObject.extend({
     stashes.persist_object('just_logged_in', true, false);
     return RSVP.all_wait(promises).then(null, function() { return RSVP.resolve(); });
   },
+  hashed_password: function(password) {
+    if(!window.crypto || !window.crypto.subtle || !window.crypto.subtle.digest) { return RSVP.resolve(password); }
+    return new RSVP.Promise(function(resolve, reject) {
+      var str = "cdpassword:" + password + ":digested"
+      window.crypto.subtle.digest('SHA-512', new TextEncoder().encode(str)).then(function(buffer) { 
+        var hashArray = Array.from(new Uint8Array(buffer));
+        var hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        var hashed_password = ['hashed', 'sha512', hex].join("?:#")
+        resolve(hashed_password);
+      }, function(err) {
+        resolve(password);
+      });
+    });
+  },
   authenticate: function(credentials) {
     var _this = this;
     var res = new RSVP.Promise(function(resolve, reject) {

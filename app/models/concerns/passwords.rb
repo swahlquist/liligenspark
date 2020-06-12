@@ -50,20 +50,34 @@ module Passwords
 
   def valid_password?(guess)
     self.settings ||= {}
+    if self.settings['password'] && self.settings['password']['pre_hash_algorithm'] && !guess.match(/^hashed\?:#/)
+      guess = pre_hash(guess)
+    end
     res = GoSecure.matches_password?(guess, self.settings['password'])
     if res && self.schedule_deletion_at
+      # prevent auto-deletion whenever a user logs in
       self.schedule_deletion_at = nil
       self.save
     end
-    if res && GoSecure.outdated_password?(self.settings['password'])
+    if res && !guess.match(/^hashed\?:#/)
+      hashed = pre_hash(guess)
+      self.generate_password(hashed)
+      self.save
+    elsif res && GoSecure.outdated_password?(self.settings['password'])
       self.generate_password(guess)
       self.save
     end
     res
   end
+
+  def pre_hash(str)
+    ['hashed', 'sha512', Digest::SHA512.hexdigest(str)].join("?:#")
+  end
   
   def generate_password(password)
+    password = pre_hash(password) if !password.match(/^hashed\?:#/)
     self.settings ||= {}
     self.settings['password'] = GoSecure.generate_password(password)
+    self.settings['password']['pre_hash_algorithm'] = 'sha512'
   end
 end
