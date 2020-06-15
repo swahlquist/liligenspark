@@ -658,6 +658,7 @@ module Subscription
       return :premium_supporter if self.settings['subscription']['never_expires']
       return :premium_supporter if self.fully_purchased?
       return :premium_supporter if self.settings['subscription']['started']
+      return :premium_supporter if self.legacy_free_premium?
       if self.expires_at && self.expires_at > Time.now
         if self.settings['subscription']['expiration_source']
           return :trialing_supporter if self.settings['subscription']['expiration_source'] == 'free_trial'
