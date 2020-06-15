@@ -651,6 +651,14 @@ class User < ActiveRecord::Base
       if params['preferences']['extend_eval']
         self.extend_eval(params['preferences']['extend_eval'], non_user_params[:author])
       end
+      if params['preferences']['eval']
+        self.settings['eval_reset'] ||= {}
+        self.settings['eval_reset']['email'] = params['preferences']['eval']['email']
+        self.settings['eval_reset']['home_board']  = params['preferences']['eval']['home_board']
+        self.settings['eval_reset']['password'] = params['preferences']['eval']['password']
+        self.settings['eval_reset']['duration'] = params['preferences']['eval']['duration'].to_i
+        self.settings['eval_reset']['duration'] = nil if self.settings['eval_reset']['duration'] == 0
+      end
     end
     inflections_were_set = self.settings['preferences']['activation_location'] == 'swipe' || self.settings['preferences']['inflections_overlay']
     PREFERENCE_PARAMS.each do |attr|

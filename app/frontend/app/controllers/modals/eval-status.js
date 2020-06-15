@@ -11,15 +11,17 @@ export default modal.ModalController.extend({
     var choice = {};
     choice[this.get('modal.action')] = true;
     this.set('choice', choice);
-    this.set('status', null);
+    this.set('extend_date', window.moment(this.get('user.subscription.eval_expires')).add(7, 'day').toISOString().substring(0, 10));
+    var days = this.get('user.preferences.eval.duration') || 90;
+    this.set('eval_expires', window.moment().add(days, 'day').toISOString().substring(0, 10));
     if(this.get('user')) {
       this.get('user').reload();
     }
   },
   actions: {
-    choose: function(choice) {
+    choose: function(action) {
       var choice = {};
-      choice[choice] = true;
+      choice[action] = true;
       this.set('choice', choice);
     },
     transfer: function() {
@@ -57,7 +59,7 @@ export default modal.ModalController.extend({
        });
       }
     },
-    reset: function(confirm) {
+    reset: function() {
       var _this = this;
       if(_this.get('user.can_reset_eval')) {
         if(_this.get('user.email') == _this.get('reset_email')) {
@@ -98,7 +100,7 @@ export default modal.ModalController.extend({
     },
     extend: function() {
       var _this = this;
-      if(this.get('user.subscription.eval_extendable')) {
+      if(this.get('user.subscription.eval_extendable') || this.get('user.can_reset_eval')) {
         _this.set('status', {extending: true});
         var user = this.get('user');
         var date = this.get('extend_date');

@@ -9,21 +9,21 @@
     {{#if choice.reset}}
       {{#if user.can_reset_eval}}
         <p>
-          {{t "Are you sure you want to reset the evaluation period for the account, <b>%{user_name}</b>? This will erase any personalizations and logs created on the account before now." key='confirm_reset'}}
+          {{t "Are you sure you want to reset the evaluation period for the account, <b>%{user_name}</b>? This will erase any personalizations and logs created on the account before now." user_name=user.user_name key='confirm_reset'}}
         </p>
         <p>
-          {{t "To confirm the reset, please enter the user name for this evaluation account, as well as a new email address to be used during the next eval." key='parameters_for_reset'}}
+          {{t "To confirm the reset, please enter the user name for this evaluation account (%{user_name}), as well as a new email address to be used during the next eval." key='parameters_for_reset' user_name=user.user_name}}
           {{t "NOTE: You should also change the password on the account for each new eval, otherwise previous trial users would be able to log in and see content and logs for the current trial user." key='password_should_be_reset'}}
         </p>
         <form class="form-horizontal">
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "Current User Name" key='current_user_name'}}</label>
+            <label class='control-label col-sm-5'>{{t "Current User Name" key='current_user_name'}}</label>
             <div class='col-sm-6'>
               {{input type='text' value=reset_user_name class='form-control'}}
             </div>
           </div>
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New Email Address" key='new_email'}}</label>
+            <label class='control-label col-sm-5'>{{t "New Email Address" key='new_email'}}</label>
             <div class='col-sm-6'>
               {{input type='text' value=reset_email class='form-control'}}
               {{#if status.reset_email_used}}
@@ -32,13 +32,13 @@
             </div>
           </div>
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New Expiration" key='new_expiration'}}</label>
+            <label class='control-label col-sm-5'>{{t "New Expiration" key='new_expiration'}}</label>
             <div class='col-sm-6'>
               {{input type='date' value=eval_expires class='form-control'}}
             </div>
           </div>
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New Password" key='new_password'}}</label>
+            <label class='control-label col-sm-5'>{{t "New Password" key='new_password'}}</label>
             <div class='col-sm-6'>
               {{input type='password' placeholder='(optional)' value=reset_password class='form-control'}}
             </div>
@@ -54,7 +54,7 @@
       </p>
         <form class="form-horizontal">
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New User Name" key='new_user_name'}}</label>
+            <label class='control-label col-sm-5'>{{t "New User Name" key='new_user_name'}}</label>
             <div class='col-sm-6'>
               {{input type='text' value=transfer_user_name class='form-control'}}
               {{#if status.transfer_bad_credentials}}
@@ -63,7 +63,7 @@
             </div>
           </div>
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New Password" key='new_password'}}</label>
+            <label class='control-label col-sm-5'>{{t "New Password" key='new_password'}}</label>
             <div class='col-sm-6'>
               {{input type='password' value=transfer_password class='form-control'}}
             </div>
@@ -80,7 +80,13 @@
       {{#if user.can_reset_eval}}
         <form class="form-horizontal">
           <div class='form-group'>
-            <label class='control-label col-sm-3'>{{t "New Expiration" key='new_expiration'}}</label>
+            <label class='control-label col-sm-5'>{{t "Current Expiration" key='current_expiration'}}</label>
+            <div class='col-sm-6'>
+              <p class='form-control-static'>{{date user.subscription.eval_expires 'day'}}</p>
+            </div>
+          </div>
+          <div class='form-group'>
+            <label class='control-label col-sm-5'>{{t "Updated Expiration" key='updated_expiration'}}</label>
             <div class='col-sm-6'>
               {{input type='date' value=extend_date class='form-control'}}
             </div>
@@ -106,15 +112,15 @@
             {{t "If there are boards and logs you would like to preserve from this evaluation, you can also transfer all evaluation content to a different %app_name% account." key='can_transfer_content'}}
           {{/if}}
         </p>
-        <div>
+        <div style='text-align: center; margin-top: 20px;'>
           {{#if user.can_reset_eval}}
-            <button>{{t "Reset Account" key='reset_account'}}</button>
-            <button>{{t "Extend Evaluation" key='extend_evaluation'}}</button>
+            <button class='btn btn-default' {{action 'choose' 'reset'}}>{{t "Reset Account" key='reset_account'}}</button>
+            <button class='btn btn-default' {{action 'choose' 'extend'}}>{{t "Extend Evaluation" key='extend_evaluation'}}</button>
           {{else if user.subscription.eval_extendable}}
-            <button>{{t "Extend Evaluation" key='extend_evaluation'}}</button>
+            <button class='btn btn-default' {{action 'choose' 'extend'}}>{{t "Extend Evaluation" key='extend_evaluation'}}</button>
           {{/if}}
           {{#if user.permissions.supervise}}
-            <button>{{t "Transfer Account" key='transfer_account'}}</button>
+            <button class='btn btn-default' {{action 'choose' 'transfer'}}>{{t "Transfer Account" key='transfer_account'}}</button>
           {{/if}}
         </div>
       {{else}}
@@ -124,7 +130,7 @@
   </div>
   <div class="modal-footer">
     {{#if choice.reset}}
-      <button class='btn btn-primary'>
+      <button {{action 'reset'}} class='btn btn-primary'>
         {{#if status.reset_error}}
           {{t "Reset Failed" key='reset_failed'}}
         {{else if status.resetting}}
@@ -135,8 +141,9 @@
           {{t "Confirm Reset" key='confirm_reset'}}
         {{/if}}
       </button>
+      <button class='btn btn-default' {{action 'choose'}}>{{t "Back" key='back'}}</button>
     {{else if choice.transfer}}
-      <button class='btn btn-primary'>
+      <button {{action 'transfer'}} class='btn btn-primary'>
         {{#if status.transfer_error}}
           {{t "Transfer Failed" key='transfer_failed'}}
         {{else if status.transferring}}
@@ -147,8 +154,9 @@
           {{t "Confirm Transfer" key='confirm_transfer'}}
         {{/if}}
       </button>
+      <button class='btn btn-default' {{action 'choose'}}>{{t "Back" key='back'}}</button>
     {{else if choice.extend}}
-      <button class='btn btn-primary'>
+      <button {{action 'extend'}} class='btn btn-primary'>
         {{#if status.extend_error}}
           {{t "Extension Failed" key='extension_failed'}}
         {{else if status.extending}}
@@ -159,6 +167,7 @@
           {{t "Confirm Extension" key='confirm_extension'}}
         {{/if}}
       </button>
+      <button class='btn btn-default' {{action 'choose'}}>{{t "Back" key='back'}}</button>
     {{/if}}
     <a href="#" class="btn" {{action 'close'}}>{{t "Close" key='close'}}</a>
   </div>

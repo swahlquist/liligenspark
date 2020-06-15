@@ -327,6 +327,9 @@ export default Controller.extend({
     view_devices: function() {
       modal.open('device-settings', this.get('model'));
     },
+    eval_settings: function() {
+      modal.open('modals/eval-status', {user: this.get('model')});
+    },
     supervision_settings: function() {
       modal.open('supervision-settings', {user: this.get('model')});
     },
@@ -410,6 +413,8 @@ export default Controller.extend({
         this.set('subscription_settings', {action: action, type: i18n.t('never_expires', "Never Expiring Subscription")});
       } else if(action == 'manual_supporter') {
         this.set('subscription_settings', {action: action, type: i18n.t('manual_supporter', "Manually Set as Supporter")});
+      } else if(action == 'manual_modeler') {
+        this.set('subscription_settings', {action: action, type: i18n.t('manual_modeler', "Manually Set as Modeler")});
       } else if(action == 'add_1') {
         this.set('subscription_settings', {action: action, type: i18n.t('add_one_month', "Add 1 Month to Expiration")});
       } else if(action == 'communicator_trial') {

@@ -94,6 +94,9 @@ module JsonApi::User
       end
       # TODO: remove this (prefer_native_keyboard not on device preference) after June 2020
       json['preferences']['prefer_native_keyboard'] = json['preferences']['device']['prefer_native_keyboard'] == nil ? user.settings['preferences']['prefer_native_keyboard'] : json['preferences']['device']['prefer_native_keyboard']
+      if user.eval_account?
+        json['preferences']['eval'] = user.settings['eval_reset']
+      end
 
       if FeatureFlags.user_created_after?(user, 'folder_icons')
         json['preferences']['folder_icons'] ||= false

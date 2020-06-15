@@ -399,7 +399,7 @@
             {{t "Your evaluation has ended" key='eval_ended'}}
             {{#if app_state.currentUser.can_reset_eval}}
               <br/>
-              <button {{action 'update_evaluation' 'reset'}} class='purchase_link'}}>
+              <button {{action 'update_evaluation' 'reset'}} class='purchase_link' style='font-size: 20px;'>
                 <span style='color: #fff;'>
                   <span class="glyphicon glyphicon-info-sign"></span>
                   {{t "Reset Evaluation" key='reset_evaluation'}}
@@ -407,7 +407,7 @@
               </button>
             {{else if app_state.currentUser.subscription.eval_extendable}}
               <br/>
-              <button {{action 'update_evaluation' 'extend'}} class='purchase_link'}}>
+              <button {{action 'update_evaluation' 'extend'}} class='purchase_link' style='font-size: 20px;'>
                 <span style='color: #fff;'>
                   <span class="glyphicon glyphicon-info-sign"></span>
                   {{t "Request an Extension" key='request_extension'}}
@@ -421,7 +421,7 @@
             {{date app_state.currentUser.subscription.eval_expires 'day'}}.
             {{#if app_state.currentUser.can_reset_eval}}
               <br/>
-              <button {{action 'update_evaluation'}} class='purchase_link'}}>
+              <button {{action 'update_evaluation'}} class='purchase_link' style='font-size: 20px;'>
                 <span style='color: #fff;'>
                   <span class="glyphicon glyphicon-info-sign"></span>
                   {{t "Review Evaluation Status" key='review_evaluation'}}
@@ -448,7 +448,7 @@
           </div>
         {{else if app_state.currentUser.subscription.eval_expires}}
           <div class='alert alert-info'>
-            {{t "This evaluation period will end" key='eval_ending_date'}}
+            {{t "This is an evaluation account, and will run through " key='eval_ending_date'}}
             {{date app_state.currentUser.subscription.eval_expires 'day'}}.
           </div>
         {{/if}}

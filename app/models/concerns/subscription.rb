@@ -553,10 +553,10 @@ module Subscription
   
   def extend_eval(extension, extending_user)
     return unless self.eval_account?
-    if self.supervisors.length > 0 && extending_user != self
+    if (self.supervisors.length > 0 && extending_user != self) || self.supervisors.length == 0
       self.settings['subscription'].delete('eval_extended')
       extend_date = (Date.parse(extension).to_time + 12.hours) rescue nil
-      self.settings['subscription']['eval_expires'] = [date, 1.week.from_now].compact.max.iso8601
+      self.settings['subscription']['eval_expires'] = [extend_date, 1.week.from_now].compact.max.iso8601
     elsif !self.settings['subscription']['eval_extended']
       self.settings['subscription']['eval_expires'] = 1.week.from_now.iso8601
       self.settings['subscription']['eval_extended'] = true
@@ -564,7 +564,7 @@ module Subscription
   end
 
   def eval_duration
-    self.settings['eval_duration'] || self.class.default_eval_duration
+    (self.settings['eval_reset'] || {})['duration'] || self.class.default_eval_duration
   end
   
   def purchase_credit_duration
