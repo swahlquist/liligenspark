@@ -239,7 +239,7 @@ module Subscription
           self.settings['pending'] = false unless self.settings['subscription']['modeling_only']
           self.settings['preferences']['progress'] ||= {}
           self.settings['preferences']['progress']['subscription_set'] = true
-          self.expires_at = nil
+          self.expires_at = nil if self.settings['subscription']['started']
           self.assert_current_record!
           self.save_with_sync('subscribe')
           self.schedule(:remove_supervisors!) if self.premium_supporter? || self.modeling_only?
@@ -473,6 +473,8 @@ module Subscription
 
   def assert_eval_settings
     if self.eval_account?
+      self.settings['eval_reset'] ||= {}
+      self.settings['eval_reset']['email'] ||= self.settings['email']
       self.settings['subscription'] ||= {}
       if !self.settings['subscription']['eval_expires']
         duration = self.eval_duration
@@ -483,7 +485,9 @@ module Subscription
     end
   end
 
-  def reset_eval(current_device)
+  def reset_eval(current_device_id, opts={})
+    current_device = Device.find_by_global_id(current_device_id)
+    return false unless current_device && self.eval_account?
     duration = self.eval_duration
     self.settings['subscription'] ||= {}
     self.settings['subscription']['eval_account'] = true
@@ -493,19 +497,38 @@ module Subscription
     # clear/reset preferences (remember them so they can be transferred
     self.settings['last_preferences'] = self.settings['preferences'] || {}
     self.settings['preferences'] = nil
+    self.settings = self.settings.slice('subscription', 'eval_reset', 'boards_shared_with_me', 'confirmation_log', 'feature_flags', 'password', 'premium_voices', 'public')
+    self.settings['all_home_boards'] = nil
     self.generate_defaults
-    # keep the last home board, in case it's a default (can be changed easily)
-    self.settings['preferences']['home_board'] = self.settings['last_preferences']['home_board']
+
+    Flusher.flush_user_content(self.user_id, self.user_name)
+    # restore the last home board, in case it's a default (can be changed easily)
+    if self.settings['last_preferences']['home_board'] && self.settings['last_preferences']['home_board']['key'] && !self.settings['last_preferences']['home_board']['key'].match(/^#{self.user_name}\/}/)
+      self.settings['preferences']['home_board'] = self.settings['last_preferences']['home_board']
+    end
+    if self.settings['eval_reset']
+      self.settings['email'] = self.settings['eval_reset']['email'] if self.settings['eval_reset']['email']
+      self.settings['preferences']['home_board'] = self.settings['eval_reset']['home_board'] if self.settings['eval_reset']['home_board']
+      self.settings['preferences']['password'] = self.settings['eval_reset']['password'] if self.settings['eval_reset']['pasword']
+    end
+    if opts
+      self.settings['email'] = opts['email'] if opts['email']
+      if opts['expires']
+        self.settings['subscription']['eval_expires'] = Date.parse(opts['expires']).iso8601 rescue nil
+      end
+    end
     # log out of all other devices (and remove them for privacy)
     self.devices.select{|d| d != current_device}.each{|d| d.destroy }
     # enable logging by default
     self.settings['preferences']['logging'] = true
-    # flush all old logs
-    progress = Progress.schedule(Flusher, :flush_user_logs, self.global_id, self.user_name)
     self.save_with_sync('reset_eval')
+    true
   end
   
-  def transfer_eval_to(destination_user, current_device, end_eval=true)
+  def transfer_eval_to(destination_user_id, current_device_id, end_eval=true)
+    destination_user = User.find_by_global_id(destination_user_id)
+    current_device = Device.find_by_global_id(current_device_id)
+    return false unless destination_user && current_device && self.eval_account?
     device_key = current_device.unique_device_key
     devices = destination_user.settings['preferences']['devices'] || {}
     devices[device_key] = self.settings['preferences']['devices'][device_key] if self.settings['preferences']['devices'][device_key]
@@ -513,26 +536,33 @@ module Subscription
     destination_user.settings['preferences']['devices'] = devices
     destination_user.save_with_sync('transfer_eval')
     # transfer usage logs to the new user
-    # TODO: transfer user integrations? goals? videos? badges? nfc tags?
+    Flusher.transfer_user_content(self.user_id, self.user_name, destination_user.global_id, destination_user.user_name)
+    # TODO: transfer daily_use data across as well
     eval_start = Time.parse((self.settings['subscription'] || {})['eval_started'] || 60.days.ago.iso8601)
-    LogSession.where(user_id: self.id, log_type: ['session', 'note', 'assessment', 'eval']).where(['started_at >= ?', eval_start]).each do |session|
-      LogSession.where(id: session.id).update_all(user_id: destination_user.id)
-      # session.user_id = destination_user.id
-      # session.save
-    end
     WeeklyStatsSummary.where(user_id: self.id).where(['created_at > ?', eval_start]).each do |summary|
       summary.schedule(:update!)
     end
     WeeklyStatsSummary.where(user_id: destination_user.id).where(['created_at > ?', eval_start]).each do |summary|
       summary.schedule(:update!)
     end
-    # TODO: transfer user-created boards as well
-    # TODO: transfer daily_use data across as well
     if end_eval
-      self.reset_eval(current_device)
+      return self.reset_eval(current_device)
     end
+    true
   end
   
+  def extend_eval(extension, extending_user)
+    return unless self.eval_account?
+    if self.supervisors.length > 0 && extending_user != self
+      self.settings['subscription'].delete('eval_extended')
+      extend_date = (Date.parse(extension).to_time + 12.hours) rescue nil
+      self.settings['subscription']['eval_expires'] = [date, 1.week.from_now].compact.max.iso8601
+    elsif !self.settings['subscription']['eval_extended']
+      self.settings['subscription']['eval_expires'] = 1.week.from_now.iso8601
+      self.settings['subscription']['eval_extended'] = true
+    end
+  end
+
   def eval_duration
     self.settings['eval_duration'] || self.class.default_eval_duration
   end
@@ -803,6 +833,7 @@ module Subscription
       json['eval_account'] = true
       json['eval_started'] = self.settings['subscription']['eval_started']
       json['eval_expires'] = self.settings['subscription']['eval_expires']
+      json['eval_extendable'] = !self.settings['subscription']['eval_extended']
     elsif self.premium_supporter?
       # currently-added as an org supervisor
       json['active'] = true

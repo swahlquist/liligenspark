@@ -21,7 +21,7 @@ export default Component.extend({
       $(this.element).addClass('skinny_subscription');
     }
     this.set('session', session);
-    this.set('see_pricing', false);
+    this.set('see_pricing', true);
     session.check_token();
 
     if((this.get('session.invalid_token') || !capabilities.access_token) && !this.get('pricing_only')) {
@@ -176,8 +176,8 @@ export default Component.extend({
                 user.reload().then(function() {
                   user.set('preferences.progress.subscription_set', true);
                   user.save();
-                  _this.send('reset');
                   _this.sendAction('subscription_success', i18n.t('user_subscribed', "Your purchase succeeded! Thank you for supporting %app_name%!"));
+                  try { _this.send('reset'); } catch(e) {  }
                 }, function() {
                   _this.sendAction('subscription_error', i18n.t('user_subscription_reload_failed', "Purchase succeeded, but there was a problem reloading your user account. Please try loading this page again."));
                 });

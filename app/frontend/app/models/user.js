@@ -215,10 +215,11 @@ CoughDrop.User = DS.Model.extend({
   modeling_only: computed(
     'subscription.modeling_only', 
     'supporter_role',
+    'grace_period',
     'expiration_passed',
     'subscription.premium_supporter',
     function() {
-      if(this.get('subscription.modeling_only')) { return true; }
+      if(this.get('subscription.modeling_only') && !this.get('grace_period')) { return true; }
       // auto-convert a free-trial supporter to modeling_only when their trial expires
       if(this.get('supporter_role') && !this.get('subscription.premium_supporter')) {
         if(this.get('expiration_passed')) { return true; }
@@ -252,9 +253,15 @@ CoughDrop.User = DS.Model.extend({
   expired_or_limited_paid_supervisor_or_modeling_only: computed('expired', 'limited_paid_supervisor', 'supporter_role', 'modeling_only', function() {
     return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_paid_supervisor')) || this.get('modeling_only');
   }),
-  eval_ending: function(days_to_go) {
+  eval_end_date: computed('subscription.eval_account', 'subscription.eval_expires', function() {
     if(this.get('subscription.eval_account') && this.get('subscription.eval_expires')) {
       var expires = window.moment(this.get('subscription.eval_expires'));
+      return expires;
+    }
+  }),
+  eval_ending: function(days_to_go) {
+    var expires = this.get('eval_end_date');
+    if(expires) {
       var cutoff = window.moment().add(days_to_go, 'day');
       return expires < cutoff;
     }
@@ -264,7 +271,10 @@ CoughDrop.User = DS.Model.extend({
     return this.eval_ending(0);
   }),
   eval_ending_soon: computed('subscription.eval_account', 'subscription.eval_expires', 'app_state.refresh_stamp', function() {
-    return this.eval_ending(14);
+    return this.eval_ending(14) && !this.eval_ending(0);
+  }),
+  can_reset_eval: computed('subscription.eval_account', 'supervisors', 'supervisors.length', 'permissions.supervise', 'permissions.user_id', function() {
+    return !!(this.get('subscription.eval_account') && ((this.get('supervisors') || []).length == 0) || (this.get('permissions.supervise') && this.get('permissions.user_id') != this.get('id')));
   }),
   joined_within_24_hours: computed('app_state.refresh_stamp', 'joined', function() {
     var one_day_ago = window.moment().add(-1, 'day');

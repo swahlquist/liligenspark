@@ -579,6 +579,41 @@ class Api::UsersController < ApplicationController
     res = BoardDownstreamButtonSet.word_map_for(user)
     render json: res.to_json
   end
+
+  def transfer_eval
+    # TODO: throttling
+    # supervisor or user may transfer the eval
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'edit')
+    return allowed?(user, 'never_allow') unless user.eval_account?
+    target = User.find_by_path(params['user_name'])
+    if !target || !target.valid_password?(params['password'])
+      return api_error(400, {error: 'invalid credentials'})
+    end
+    progress = Progress.schedule(user, :transfer_eval_to, target.global_id, @api_device_id, true)
+    render json: JsonApi::Progress.as_json(progress, :wrapper => true)
+  end
+
+  def reset_eval
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'edit')
+    return allowed?(user, 'never_allow') unless user.eval_account?
+    # if user has supervisors, then only the supervisor can reset the eval
+    return allowed?(user, 'never_allow') if user == @api_user && !user.supervisors.blank?
+    if !params['email'] || params['email'] == user.settings['email']
+      return api_error(400, {error: 'new email cannot match previous email'})
+    end
+
+    opts = {'email' => params['email']}
+    if params['expires']
+      opts['expires'] = params['expires']
+    end
+
+    progress = Progress.schedule(user, :reset_eval, @api_device_id, opts)
+    render json: JsonApi::Progress.as_json(progress, :wrapper => true)
+  end
   
   protected
   def grab_url(url)

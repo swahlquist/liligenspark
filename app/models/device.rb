@@ -24,7 +24,9 @@ class Device < ActiveRecord::Base
   def token_timeout
     long_token = self.settings['long_token'] == nil ? true : self.settings['long_token']
     # force a logout for tokens that have been used for an extended period of time
-    if self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
+    if self.settings['temporary_device']
+      30.minutes.to_i
+    elsif self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
       if long_token
         5.years.to_i
       else
@@ -131,6 +133,7 @@ class Device < ActiveRecord::Base
     # display most-relevant ones in the UI under "user devices".
     self.settings['token_history'] ||= []
     self.settings['token_history'] << Time.now.to_i
+    self.settings['token_history'] = self.settings['token_history'].last(10)
     self.settings['keys'] << {
       'value' => key,
       'timestamp' => Time.now.to_i,

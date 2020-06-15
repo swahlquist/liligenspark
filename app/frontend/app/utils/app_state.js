@@ -765,6 +765,10 @@ var app_state = EmberObject.extend({
         var speak_mode_user = app_state.get('speakModeUser') || app_state.get('currentUser');
         var level = {};
         var state = board_state || opts.override_state;
+        if(app_state.get('sessionUser.eval_ended')) {
+          modal.open('modals/eval-status', {user: app_state.get('sessionUser')});
+          return;
+        }
         // If already on a board, and board level is manually set,
         // check if it's the user's home or sidebar board, and override
         // the user's preferred level

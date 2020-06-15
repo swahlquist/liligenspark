@@ -181,6 +181,15 @@ class SessionController < ApplicationController
         # TODO: should also have some kind of developer key for tracking
         device_key = request.headers['X-Device-Id'] || params['device_id'] || 'default'
         
+        if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
+          app_devices = Device.where(user_id: u.id, developer_key_id: 0).select{|d| d.token_type == :app && !d.settings['temporary_device'] }
+          if app_devices.length > 0 && u.eval_account?
+            # Eval accounts are only allowed to log in on one device at a time.
+            # If they log into a new device. prompt them to see if they want to
+            # auto-log-out on the other device, or cancel this login.
+            temporary_device = true
+          end
+        end
         d = Device.find_or_create_by(:user_id => u.id, :developer_key_id => 0, :device_key => device_key)
 
         store_user_data = (u.settings['preferences'] || {})['cookies'] != false
@@ -188,6 +197,8 @@ class SessionController < ApplicationController
         d.settings['user_agent'] = store_user_data ? request.headers['User-Agent'] : nil
         d.settings['mobile'] = params['mobile'] == 'true'
         d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'
+        d.settings['temporary_device'] = true if temporary_device
+        d.settings.delete('temporary_device') unless u.eval_account?
         d.settings['app'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
         d.generate_token!(!!(params['long_token'] && params['long_token'] != 'false'))
         # find or create a device based on the request information

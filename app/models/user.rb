@@ -648,6 +648,9 @@ class User < ActiveRecord::Base
           end
         end
       end
+      if params['preferences']['extend_eval']
+        self.extend_eval(params['preferences']['extend_eval'], non_user_params[:author])
+      end
     end
     inflections_were_set = self.settings['preferences']['activation_location'] == 'swipe' || self.settings['preferences']['inflections_overlay']
     PREFERENCE_PARAMS.each do |attr|
@@ -874,6 +877,11 @@ class User < ActiveRecord::Base
       if non_user_params['device'] && device['long_token'] != nil
         non_user_params['device'].settings['long_token'] = !!device['long_token']
         non_user_params['device'].settings['long_token_set'] = true
+        if device['asserted']
+          non_user_params['device'].settings.delete('temporary_device')
+          other_devices = Device.where(user_id: self.id, developer_key_id: 0).select{|d| d.token_type == :app && d != non_user_params['device'] }
+          other_devices.each{|d| d.invalidate_keys! }
+        end
         non_user_params['device'].save
       end
       device['voice']['voice_uris'].uniq! if device['voice'] && device['voice']['voice_uris']

@@ -13,6 +13,9 @@ module JsonApi::Token
     dev_key = device.developer_key_id == 0 ? device.id : device.developer_key_id
     json['anonymized_user_id'] = user.anonymized_identifier("external_for_#{dev_key}")
 
+    if device.settings['temporary_device']
+      json['temporary_device'] = true
+    end
     json['long_token'] = device.settings['long_token']
     json['long_token_set'] = !!device.settings['long_token_set']
     if device.created_at < Date.parse(FeatureFlags::FEATURE_DATES['token_refresh'])

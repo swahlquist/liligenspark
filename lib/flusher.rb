@@ -147,8 +147,44 @@ module Flusher
     end
     users.count
   end
-  
-  def self.flush_user_completely(user_id, user_name)
+
+  def self.transfer_user_content(source_user_id, source_user_name, target_user_id, target_user_name)
+    source = find_user(source_user_id, source_user_name)
+    target = find_user(target_user_id, target_user_name)
+    return false unless source && target && source != target
+    
+    # we exclude logs because those are done elsewhere, to timebox the content that gets transferred
+
+    # transfer boards
+    boards = Board.where(:user_id => source.id)
+    boards.each do |board|
+      board.user_id = target.id
+      board.save
+      postfix = board.key.split(/\//)[1]
+      # TODO: would it be easier to copy all the boards instead of transferring them?
+      board.rename_to("#{target.user_name}/#{postfix}")
+    end
+
+    # transfer the rest
+
+    # possible collision on uniqueness constraint
+    NfcTag.where(:user_id => source.id).update_all(user_id: target.id) rescue nil
+    UserIntegration.where(user_id: source.id).update_all(user_id: target.id)
+    UserGoal.where(user_id: source.id).update_all(user_id: target.id)
+    UserBadge.where(user_id: source.id).update_all(user_id: target.id)
+    Webhook.where(user_id: source.id).update_all(user_id: target.id)
+    UserBoardConnection.where(user_id: source.id).update_all(user_id: target.id)
+    UserLink.where(user_id: source.id).update_all(user_id: target.id)
+    ButtonSound.where(user_id: source.id).update_all(user_id: target.id)
+    ButtonImage.where(user_id: source.id).update_all(user_id: target.id)
+    UserVideo.where(user_id: source.id).update_all(user_id: target.id)
+
+    #invalidate any caches
+    source.touch
+    target.touch
+  end
+
+  def self.flush_user_content(user_id, user_name)
     user = find_user(user_id, user_name)
     flush_user_logs(user_id, user_name)
     flush_user_boards(user_id, user_name)
@@ -162,6 +198,29 @@ module Flusher
     NfcTag.where(:user_id => user.id).each do |tag|
       flush_record(tag)
     end
+    UserIntegration.where(user_id: user.id).each do |int|
+      flush_record(int)
+    end
+    UserGoal.where(user_id: user.id).each do |goal|
+      flush_record(goal)
+    end
+    UserBadge.where(user_id: user.id).each do |badge|
+      flush_record(badge)
+    end
+    Webhook.where(user_id: user.id).each do |hook|
+      flush_record(hook)
+    end
+    UserBoardConnection.where(user_id: user.id).each do |conn|
+      flush_record(conn)
+    end
+    UserLink.where(user_id: user.id).each do |link|
+      flush_record(link)
+    end
+  end
+  
+  def self.flush_user_completely(user_id, user_name)
+    user = find_user(user_id, user_name)
+    flush_user_content(user_id, user_name)
     # TODO: remove any public comments by the user
     LogSession.where(:author_id => user.id).each do |note|
       note.author_id = 0

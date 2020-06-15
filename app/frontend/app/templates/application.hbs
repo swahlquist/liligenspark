@@ -217,11 +217,13 @@
           {{#unless app_state.currentBoardState}}
             {{#unless app_state.no_linky}}
               {{#if app_state.domain_settings.full_domain}}
-                <div class='signup_links'>
-                  {{#link-to 'register'}}<span style='color: #444;'>{{t "2-Month Trial" key='two_month_trial'}}</span>{{/link-to}}
-                  <span style='color: #aaa; padding: 0 5px;'> | </span>
-                  {{#link-to 'gift_purchase'}}<span style='color: #444;'>{{t "Gift Purchase" key='gift_purchase'}}</span>{{/link-to}}
-                </div>
+                {{#unless app_state.currentUser}}
+                  <div class='signup_links'>
+                    {{#link-to 'register'}}<span style='color: #444;'>{{t "2-Month Trial" key='two_month_trial'}}</span>{{/link-to}}
+                    <span style='color: #aaa; padding: 0 5px;'> | </span>
+                    {{#link-to 'gift_purchase'}}<span style='color: #444;'>{{t "Gift Purchase" key='gift_purchase'}}</span>{{/link-to}}
+                  </div>
+                {{/unless}}
               {{/if}}
             {{/unless}}
           {{/unless}}

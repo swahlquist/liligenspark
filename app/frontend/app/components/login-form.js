@@ -20,6 +20,7 @@ export default Component.extend({
     this.set('stashes', stashes);
     this.set('checking_for_secret', false);
     this.set('login_followup', null);
+    this.set('login_single_assertion', null);
     this.browserTokenChange = function() {
       _this.set('client_id', 'browser');
       _this.set('client_secret', persistence.get('browserToken'));
@@ -105,8 +106,12 @@ export default Component.extend({
       capabilities.access_token = auth_settings.access_token;
       _this.set('logging_in', false);
       _this.set('login_followup', false);
+      _this.set('login_single_assertion', false);
       _this.set('logged_in', true);
       if(reload) {
+        runLater(function() {
+          app_state.set('logging_in', true);
+        }, 1000);
         if(Ember.testing) {
           console.error("would have redirected to home");
         } else {
@@ -124,20 +129,32 @@ export default Component.extend({
         }
       }
     },
+    login_force_logut: function(choice) {
+      if(choice) {
+        this.send('login_followup', true);
+      } else {
+        session.invalidate(true);        
+      }
+    },
     login_followup: function(choice) {
       var _this = this;
       CoughDrop.store.findRecord('user', 'self').then(function(u) {
         u.set('preferences.device.long_token', !!choice);
+        u.set('preferences.device.asserted', true);
         u.save().then(function() {
           _this.send('login_success', true);
         }, function(err) {
           _this.set('login_followup', false);
+          _this.set('login_single_assertion', false);
+          app_state.set('logging_in', false);
           _this.set('logging_in', false);
           _this.set('logged_in', false);
           _this.set('login_error', i18n.t('user_update_failed', "Updating login preferences failed"));
         });
       }, function(err) {
         _this.set('login_followup', false);
+        _this.set('login_single_assertion', false);
+        app_state.set('logging_in', false);
         _this.set('logging_in', false);
         _this.set('logged_in', false);
         _this.set('login_error', i18n.t('user_update_failed', "Retrieving login preferences failed"));
@@ -148,6 +165,7 @@ export default Component.extend({
     },
     authenticate: function() {
       this.set('logging_in', true);
+      app_state.set('logging_in', true);
       this.set('login_error', null);
       var data = this.getProperties('identification', 'password', 'client_secret', 'long_token', 'browserless');
       if(capabilities.browserless || capabilities.installed_app) {
@@ -159,10 +177,15 @@ export default Component.extend({
         var _this = this;
         _this.set('login_followup_already_long_token', false);
         session.authenticate(data).then(function(data) {
-          if(!data.long_token) {
+          if(data.temporary_device) {
+            _this.send('login_success', false);
+            _this.set('login_single_assertion', true);
+            _this.set('login_followup', false);
+          } else if(!data.long_token) {
             // follow-up question, is this a shared device?
             _this.send('login_success', false);
             _this.set('login_followup', true);
+            _this.set('login_single_assertion', false)
             _this.set('login_followup_already_long_token', data.long_token_set);
           } else {
             _this.send('login_success', true);
@@ -170,6 +193,7 @@ export default Component.extend({
         }, function(err) {
           err = err || {};
           _this.set('logging_in', false);
+          app_state.set('logging_in', false);
           if(err.error == "Invalid authentication attempt") {
             _this.set('login_error', i18n.t('invalid_login', "Invalid user name or password"));
           } else if(err.error == "Invalid client secret") {

@@ -379,7 +379,7 @@ export default Controller.extend({
       return res;
     }
   ),
-  subscription_check: observer('app_state.sessionUser', function() {
+  subscription_check: observer('app_state.sessionUser', 'app_state.logging_in', function() {
     // if the user is in the free trial or is really expired, they need the subscription
     // modal to pop up
     if(this.get('app_state.sessionUser') && !this.get('app_state.installed_app')) {
@@ -395,7 +395,7 @@ export default Controller.extend({
       } else if(this.get('app_state.sessionUser.really_expired')) {
         needs_subscribe_modal = true;
       }
-      if(needs_subscribe_modal) {
+      if(needs_subscribe_modal && !app_state.get('logging_in')) {
         if(!this.get('app_state.installed_app')) {
           modal.open('subscribe');
         } else {
@@ -558,6 +558,9 @@ export default Controller.extend({
       }, function(err) {
         modal.error(i18n.t('error_loading_user', "There was an unexpected error trying to load the user"));
       });
+    },
+    update_evaluation: function(action) {
+      modal.open('modals/eval-status', {action: action, user: app_state.get('sessionUser')});
     },
     modeling_ideas: function(user_name) {
       var users = [];

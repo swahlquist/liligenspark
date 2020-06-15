@@ -276,9 +276,9 @@
             </td>
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim' style='text-align: right;'>
               {{#if subscription.modeling_long_term}}
-                <button class='btn btn-primary' style='width: auto;'>{{t "this account is a free<br/> modeling-only account" key='set_as_free_modeling_only'}}</button>
+                <button class='btn btn-primary' style='width: auto;'>{{t "set as a free<br/> modeling-only account" key='set_as_free_modeling_only'}}</button>
               {{else}}
-                <a href="#" {{action "set_subscription" 'slp_monthly_free'}}>{{t "this account is a free modeling-only account" key='set_as_free_modeling_only'}}</a>
+                <a href="#" {{action "set_subscription" 'slp_monthly_free'}}>{{t "set as a free modeling-only account" key='set_as_free_modeling_only'}}</a>
               {{/if}}
             </td>
           </tr>

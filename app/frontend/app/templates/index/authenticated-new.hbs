@@ -20,7 +20,12 @@
         {{t "Finish setting up your account" key='on_your_way'}}
       </a>
     {{else if app_state.feature_flags.subscriptions}}
-      {{#if app_state.currentUser.expired_or_grace_period}}
+      {{#if app_state.currentUser.modeling_only}}
+        {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item half_size"}}
+          <span class="glyphicon glyphicon-info-sign"></span>
+          <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
+        {{/link-to}}
+      {{else if app_state.currentUser.expired_or_grace_period}}
         {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item"}}
           <span class={{if app_state.currentUser.expired "glyphicon glyphicon-info-sign expired" "glyphicon glyphicon-info-sign"}}></span>
           {{#if app_state.currentUser.expired}}
@@ -30,11 +35,6 @@
             <strong>{{t "Please update your license" key='subscribe'}}</strong>
             <div style='font-size: 12px; line-height: 13px;'>{{t "your free preview ends" key='preview_expires'}}<br/>{{date app_state.currentUser.subscription.expires 'day'}}</div>
           {{/if}}
-        {{/link-to}}
-      {{else if app_state.currentUser.modeling_only}}
-        {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item half_size"}}
-          <span class="glyphicon glyphicon-info-sign"></span>
-          <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
         {{/link-to}}
       {{/if}}
     {{/if}}
@@ -308,6 +308,9 @@
       <div class='col-xs-12'>
         <h4>{{t "People I Supervise" key='people_i_supervise'}}</h4>
       </div><div style='clear: left;'></div>
+      {{#unless supervisees_with_badges}}
+        <div style='margin: 0 20px; max-width: 600px;'>{{t "You have not been added as a supervisor for any communicators. For privacy reasons, supervisors must be added from the communicators account. Once you have helped your communicators add you to their account as a supervisor, you will see them appear here." key='no_supervisors'}}</div>
+      {{/unless}}
       {{#each supervisees_with_badges as |supervisee|}}
         <div class='col-lg-6 col-md-12' style='padding: 0 5px;'>
           <div style='border: 5px solid #ccc; border-radius: 10px; margin-bottom: 10px; padding: 10px 15px;'>
@@ -327,7 +330,9 @@
                 {{else}}
                   <span style='color: #ccc;'>{{t "no goal set" key='no_goal_set'}}</span>
                   {{#if persistence.online}}
-                    - <a {{action 'set_goal' supervisee}} href="#">{{t "set a goal" key='set_a_goal'}}</a>
+                    {{#unless app_state.currentUser.modeling_only}}
+                      - <a {{action 'set_goal' supervisee}} href="#">{{t "set a goal" key='set_a_goal'}}</a>
+                    {{/unless}}
                   {{/if}}
                 {{/if}}
               </div>
@@ -389,7 +394,42 @@
       {{/each}}
     {{else if index_nav.main}}
       <div class={{if show_main_extras 'main' 'main short_list'}}>
-        {{#if app_state.currentUser.expired_or_grace_period}}
+        {{#if app_state.currentUser.eval_ended}}
+          <div class='alert alert-danger'>
+            {{t "Your evaluation has ended" key='eval_ended'}}
+            {{#if app_state.currentUser.can_reset_eval}}
+              <br/>
+              <button {{action 'update_evaluation' 'reset'}} class='purchase_link'}}>
+                <span style='color: #fff;'>
+                  <span class="glyphicon glyphicon-info-sign"></span>
+                  {{t "Reset Evaluation" key='reset_evaluation'}}
+                </span>
+              </button>
+            {{else if app_state.currentUser.subscription.eval_extendable}}
+              <br/>
+              <button {{action 'update_evaluation' 'extend'}} class='purchase_link'}}>
+                <span style='color: #fff;'>
+                  <span class="glyphicon glyphicon-info-sign"></span>
+                  {{t "Request an Extension" key='request_extension'}}
+                </span>
+              </button>
+            {{/if}}
+          </div>
+        {{else if app_state.currentUser.eval_ending_soon}}
+          <div class='alert alert-danger'>
+            {{t "Your evaluation is set to finish soon. This evaluation period will end" key='eval_ending_soon'}}
+            {{date app_state.currentUser.subscription.eval_expires 'day'}}.
+            {{#if app_state.currentUser.can_reset_eval}}
+              <br/>
+              <button {{action 'update_evaluation'}} class='purchase_link'}}>
+                <span style='color: #fff;'>
+                  <span class="glyphicon glyphicon-info-sign"></span>
+                  {{t "Review Evaluation Status" key='review_evaluation'}}
+                </span>
+              </button>
+            {{/if}}
+          </div>
+        {{else if app_state.currentUser.expired_or_grace_period}}
           <div>
             {{#link-to 'user.subscription' app_state.currentUser.user_name class='purchase_link'}}
               <span style='color: #fff;'>
@@ -405,6 +445,11 @@
         {{else if model.earned_badge}}
           <div>
             {{badge-earned badge=model.earned_badge big=true}}
+          </div>
+        {{else if app_state.currentUser.subscription.eval_expires}}
+          <div class='alert alert-info'>
+            {{t "This evaluation period will end" key='eval_ending_date'}}
+            {{date app_state.currentUser.subscription.eval_expires 'day'}}.
           </div>
         {{/if}}
         <div class='col-md-3 col-xs-4 big_button_holder'>
