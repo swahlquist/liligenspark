@@ -636,6 +636,7 @@ module Subscription
     if self.communicator_role?
       return :never_expires_communicator if self.settings['subscription']['never_expires']
       return :eval_communicator if self.settings['subscription']['eval_account']
+#      return :eval_communicator if self.settings['subscription']['plan_id'] == 'eval_monthly_free'
       return :subscribed_communicator if self.settings['subscription']['started']
       return :org_sponsored_communicator if self.org_sponsored?
       if self.expires_at && self.expires_at > Time.now && !(self.settings['subscription']['last_purchase_plan_id'] || '').match(/^slp/)
@@ -659,6 +660,7 @@ module Subscription
       return :premium_supporter if self.fully_purchased?
       return :premium_supporter if self.settings['subscription']['started']
       return :premium_supporter if self.legacy_free_premium?
+      return :premium_supporter if (self.settings['subscription']['plan_id'] || '').match(/_granted$/)
       if self.expires_at && self.expires_at > Time.now
         if self.settings['subscription']['expiration_source']
           return :trialing_supporter if self.settings['subscription']['expiration_source'] == 'free_trial'

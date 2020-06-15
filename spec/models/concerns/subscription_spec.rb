@@ -2068,8 +2068,15 @@ describe Subscription, :type => :model do
       expect(u.settings['subscription']['eval_account']).to eq(true)
       expect(u.settings['subscription']['limited_premium_purchase']).to eq(false)
       expect(u.settings['subscription']['plan_id']).to eq('eval_monthly_granted')
+      expect(u.billing_state).to eq(:eval_communicator)
     end
     
+    it "should update for modeler type" do
+      u = User.create
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.billing_state).to eq(:modeling_only)
+    end
+
     it "should return false for unrecognized type" do
       u = User.new
       expect(u.subscription_override('bacon')).to eq(false)
@@ -2080,16 +2087,19 @@ describe Subscription, :type => :model do
       u = User.create
       expect(u.subscription_override('communicator_trial')).to eq(true)
       expect(u.grace_period?).to eq(true)
+      expect(u.billing_state).to eq(:trialing_communicator)
       
       u = User.create
       u.subscription_override('eval')
       expect(u.subscription_override('communicator_trial')).to eq(true)
       expect(u.grace_period?).to eq(true)
+      expect(u.billing_state).to eq(:trialing_communicator)
       
       u = User.create
       u.subscription_override('manual_supporter')
       expect(u.subscription_override('communicator_trial')).to eq(true)
       expect(u.grace_period?).to eq(true)
+      expect(u.billing_state).to eq(:trialing_communicator)
     end
     
     it "should allow adding a voice" do
@@ -2236,9 +2246,12 @@ describe Subscription, :type => :model do
         'subscription_id' => '12345',
         'plan_id' => 'monthly_6'
       })
+      expect(u.billing_state).to eq(:subscribed_communicator)
       expect(u.recurring_subscription?).to eq(true)
       
       expect(u.subscription_override('manual_supporter')).to eq(true)
+      puts JSON.pretty_generate(u.settings['subscription'])
+      expect(u.billing_state).to eq(:premium_supporter)
 
       expect(Worker.scheduled?(Purchasing, :cancel_subscription, u.global_id, '1234', '12345')).to eq(true)
     end
