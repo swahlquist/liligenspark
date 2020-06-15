@@ -37,7 +37,7 @@ export default Route.extend({
     // TODO: this seems messy. got to be a cleaner way...
     controller.set('extras', coughDropExtras);
     var jump_to_speak = !!((stashes.get('current_mode') == 'speak' && !document.referrer) || (model && model.get('currently_premium') && model.get('preferences.auto_open_speak_mode')));
-    if(model.get('eval_ended')) { jump_to_speak = false; }
+    if(model && model.get('eval_ended')) { jump_to_speak = false; }
     if(model && model.get('id') && !model.get('terms_agree')) {
       modal.open('terms-agree');
     } else {

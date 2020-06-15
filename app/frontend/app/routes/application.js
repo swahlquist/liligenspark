@@ -54,7 +54,7 @@ export default Route.extend({
         source: transition,
         from_route: (transition.from || {}).name,
         from_params: params_list(transition.from),
-        to_route: transition.to.name,
+        to_route: (transition.to || {}).name,
         to_params: params_list(transition.to),
       });
       // let { to: toRouteInfo, from: fromRouteInfo } = transition;
