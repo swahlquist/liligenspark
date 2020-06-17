@@ -386,7 +386,7 @@ export default Controller.extend({
     setAsHome: function(option) {
       var _this = this;
       app_state.check_for_needing_purchase().then(function() {
-        var board = _this.get('board').get('model');
+        var board = _this.get('board.model');
         if(option == 'starting') {
           board = stashes.get('root_board_state') || _this.get('board').get('model');
         }
@@ -421,7 +421,6 @@ export default Controller.extend({
           }, function() { });
         } else {
           var user = app_state.get('currentUser');
-          var _this = this;
           if(user) {
             if(option == 'starting') {
               user.copy_home_board(board, true).then(function() { }, function() {
@@ -434,7 +433,6 @@ export default Controller.extend({
                 level: stashes.get('board_level'),
                 key: emberGet(board, 'key')
               });
-              var _this = this;
               user.save().then(function() {
                 done(true);
               }, function() {
