@@ -145,7 +145,7 @@ describe Purchasing do
           'customer' => '23456',
           'metadata' => {
             'user_id' => u.global_id,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }
@@ -167,7 +167,7 @@ describe Purchasing do
           'metadata' => {
             'user_id' => u.global_id,
             'purchased_supporters' => 3,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }
@@ -183,7 +183,7 @@ describe Purchasing do
         u = User.create
         exp = u.expires_at
         u.settings['subscription'] = {}
-        u.settings['subscription']['prior_purchase_ids'] = ['12345']
+        u.settings['subscription']['prior_purchase_ids'] = ['extras:12345']
         u.save!
         
         res = stripe_event_request 'charge.succeeded', {
@@ -192,7 +192,7 @@ describe Purchasing do
           'metadata' => {
             'user_id' => u.global_id,
             'purchased_supporters' => 3,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }
@@ -213,7 +213,7 @@ describe Purchasing do
           'metadata' => {
             'user_id' => u.global_id,
             'purchased_supporters' => 3,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }
@@ -230,7 +230,7 @@ describe Purchasing do
           'metadata' => {
             'user_id' => u.global_id,
             'purchased_supporters' => 3,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }
@@ -262,7 +262,7 @@ describe Purchasing do
             'user_id' => u.global_id,
             'plan_id' => 'long_term_200',
             'purchased_supporters' => 4,
-            'purchased_symbols' => true
+            'purchased_symbols' => 'true'
           }
         }
         u.reload
@@ -548,6 +548,7 @@ describe Purchasing do
         :metadata => {
           'user_id' => u.global_id,
           'plan_id' => 'slp_long_term_free',
+          'purchased_symbols' => 'true',
           'type' => 'license'
         }
       }).and_return({
@@ -662,10 +663,11 @@ describe Purchasing do
           :currency => 'usd',
           :source => 'deftoken',
           :customer => '12345',
-          :description => 'CoughDrop premium symbols access',
+          :description => 'CoughDrop premium symbols one-time charge',
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         }).and_return({
@@ -676,6 +678,124 @@ describe Purchasing do
         Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6_plus_extras')
         Worker.process_queues
         expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.premium_supporter_grants).to eq(0)
+      end
+
+      it "should charge supporter fee independent of extra symbols fee" do
+        u = User.create
+        subs = OpenStruct.new({
+          'data' => [
+            OpenStruct.new({'status' => 'broken', 'id' => 'sub1'}),
+            OpenStruct.new({'status' => 'busted', 'id' => 'sub2'})
+          ],
+          'count' => 2,
+          'id' => '12345'
+        })
+        new_sub = OpenStruct.new({
+          'id' => '3456',
+          'customer' => '12345',
+          'status' => 'active'
+        })
+        cus = OpenStruct.new({
+          id: '12345',
+          subscriptions: subs,
+          default_source: 'deftoken'
+        })
+        expect(cus).to receive(:id).and_return('12345')
+        expect(Stripe::Customer).to receive(:create).with({
+          :metadata => {'user_id' => u.global_id},
+          :email => nil
+        }).and_return(cus)
+        expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
+        expect(cus.subscriptions).to receive(:create){|opts|
+          expect(opts).to eq({
+            :plan => 'monthly_6',
+            :source => 'token',
+            trial_end: (u.created_at + 60.days).to_i
+          })
+          subs.data.push(new_sub)
+        }.and_return(new_sub)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 7500,
+          :currency => 'usd',
+          :source => 'deftoken',
+          :customer => '12345',
+          :description => 'CoughDrop premium 3 supporter accounts one-time charge',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'type' => 'extras'
+          }
+        }).and_return({
+          'id' => '87654',
+          'customer' => '12345'
+        })
+          
+        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6_plus_3_supporters')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(nil)
+        expect(u.premium_supporter_grants).to eq(3)
+      end
+
+      it "should charge combined supporter and symbols fee immediately" do
+        u = User.create
+        subs = OpenStruct.new({
+          'data' => [
+            OpenStruct.new({'status' => 'broken', 'id' => 'sub1'}),
+            OpenStruct.new({'status' => 'busted', 'id' => 'sub2'})
+          ],
+          'count' => 2,
+          'id' => '12345'
+        })
+        new_sub = OpenStruct.new({
+          'id' => '3456',
+          'customer' => '12345',
+          'status' => 'active'
+        })
+        cus = OpenStruct.new({
+          id: '12345',
+          subscriptions: subs,
+          default_source: 'deftoken'
+        })
+        expect(cus).to receive(:id).and_return('12345')
+        expect(Stripe::Customer).to receive(:create).with({
+          :metadata => {'user_id' => u.global_id},
+          :email => nil
+        }).and_return(cus)
+        expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
+        expect(cus.subscriptions).to receive(:create){|opts|
+          expect(opts).to eq({
+            :plan => 'monthly_6',
+            :source => 'token',
+            trial_end: (u.created_at + 60.days).to_i
+          })
+          subs.data.push(new_sub)
+        }.and_return(new_sub)
+
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 7500,
+          :currency => 'usd',
+          :source => 'deftoken',
+          :customer => '12345',
+          :description => 'CoughDrop premium symbols and 2 supporter accounts one-time charge',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'purchased_symbols' => 'true',
+            'purchased_supporters' => 2,
+            'type' => 'extras'
+          }
+        }).and_return({
+          'id' => '87654',
+          'customer' => '12345'
+        })
+          
+        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6_plus_2_supporters_plus_extras')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.premium_supporter_grants).to eq(2)
       end
       
       it "should trigger a subscription event for an existing customer record" do
@@ -1030,6 +1150,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'plan_id' => 'long_term_200',
+            'purchased_symbols' => 'true',
             'type' => 'license'
           }
         }).and_return({
@@ -1040,6 +1161,65 @@ describe Purchasing do
         Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_extras')
         Worker.process_queues
         expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+      end
+
+      it "should add supporters fee if specified" do
+        u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 32500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase (plus 5 premium supporters)',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 5,
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_5_supporters')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(nil)
+        expect(u.premium_supporter_grants).to eq(5)
+      end
+
+      it "should add both supporters and extras fee if specified" do
+        u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 30000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase (plus premium symbols) (plus 3 premium supporters)',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'purchased_symbols' => 'true',
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_3_supporters_plus_extras')
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.premium_supporter_grants).to eq(3)
+      end
+
+      it "should not apply discount codes to the supporter fees" do
+        write_this_test
+      end
+
+      it "should not apply discount codes to the symbols fee" do
+        write_this_test
       end
 
       it "should create specify the email" do
@@ -1267,6 +1447,9 @@ describe Purchasing do
           'id' => '234567',
           'customer' => '45678'
         })
+        expect(u.communicator_role?).to eq(true)
+        expect(u.fully_purchased?).to eq(true) 
+        expect(u.eval_account?).to eq(false)
         res = Purchasing.purchase(u, {'id' => 'token2'}, 'long_term_50')
         expect(res[:success]).to eq(true)
         expect(u.reload.long_term_purchase?).to eq(true)
@@ -1821,6 +2004,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'purchased_symbols' => 'true',
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
@@ -1839,6 +2023,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'purchased_symbols' => 'true',
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
@@ -1866,6 +2051,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'purchased_symbols' => 'true',
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
@@ -1894,6 +2080,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'purchased_symbols' => 'true',
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
@@ -2262,6 +2449,26 @@ describe Purchasing do
       expect(res[:code]).to eq(code)
       u.reload
       expect(u.subscription_hash['extras_enabled']).to eq(true)
+      expect(u.expires_at).to eq(exp + 4.years.to_i)
+      expect(g.reload.settings['codes'].to_a[0][1]).to_not eq(nil)
+      expect(g.reload.settings['codes'].to_a[0][1]['receiver_id']).to eq(u.global_id)
+      expect(g.reload.settings['codes'].to_a[0][1]['redeemed_at']).to_not eq(nil)
+    end
+
+    it "should add supporter credits on a bulk redeem code if specified" do
+      g = GiftPurchase.create(:settings => {'total_codes' => 50, 'seconds_to_add' => 4.years.to_i, 'include_supporters' => 2})
+      expect(g.settings['codes']).to_not eq(nil)
+      expect(g.settings['codes'].keys.length).to eq(50)
+      expect(g.reload.settings['codes'].to_a[0][1]).to eq(nil)
+      code = g.settings['codes'].to_a[0][0]
+      u = User.create
+      exp = u.expires_at
+      res = Purchasing.redeem_gift(code, u)
+      expect(res[:success]).to eq(true)
+      expect(res[:code]).to eq(code)
+      u.reload
+      expect(u.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(2)
       expect(u.expires_at).to eq(exp + 4.years.to_i)
       expect(g.reload.settings['codes'].to_a[0][1]).to_not eq(nil)
       expect(g.reload.settings['codes'].to_a[0][1]['receiver_id']).to eq(u.global_id)

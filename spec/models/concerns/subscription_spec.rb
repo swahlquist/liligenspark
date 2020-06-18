@@ -1624,15 +1624,51 @@ describe Subscription, :type => :model do
     it "should mark as first_enabling if true" do
       u = User.create
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true, 'new_activation' => true})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true, 'new_activation' => true})
       expect(u.reload.settings['subscription']['extras']['enabled']).to eq(true)
       expect(u.reload.settings['subscription']['extras']['org_id']).to eq('asdf')
     end
 
     it "should error when trying to add extras from an org but the user has already purchased" do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'coolness'})
-      expect { User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf'}) }.to raise_error("extras already activated for user")
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect { User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf'}) }.to raise_error("extras already activated for user")
+    end
+
+    it "should allow adding supporters" do
+      u = User.create
+      User.purchase_extras({'premium_supporters' => 5, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect(u.reload.settings['subscription']['extras']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(5)
+    end
+
+    it "should not add supporters unless specified" do
+      u = User.create
+      expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true, 'new_activation' => true})
+      expect(u.reload.settings['subscription']['extras']['enabled']).to eq(true)
+      expect(u.reload.settings['subscription']['extras']['org_id']).to eq('asdf')
+      expect(u.premium_supporter_grants).to eq(0)
+    end
+
+    it "should add supporters multiple times if called multiple times with different purchase_ids" do
+      u = User.create
+      User.purchase_extras({'purchase_id' => 'part1', 'premium_supporters' => 5, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect(u.reload.settings['subscription']['extras']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(5)
+      User.purchase_extras({'purchase_id' => 'part2', 'premium_supporters' => 5, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect(u.reload.settings['subscription']['extras']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(10)
+    end
+
+    it "should not add supporters multiple times if called multiple times with the same purchase_id" do
+      u = User.create
+      User.purchase_extras({'purchase_id' => 'part1', 'premium_supporters' => 5, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect(u.reload.settings['subscription']['extras']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(5)
+      User.purchase_extras({'purchase_id' => 'part1', 'premium_supporters' => 5, 'user_id' => u.global_id, 'source' => 'coolness'})
+      expect(u.reload.settings['subscription']['extras']).to eq(nil)
+      expect(u.premium_supporter_grants).to eq(5)
     end
   end
 

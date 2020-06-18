@@ -17,11 +17,11 @@ module Purchasing
       if object && object['metadata'] && object['metadata']['type'] == 'extras'
         data = {:extras => true, :purchase_id => object['id'], :valid => true}
         if event['type'] == 'charge.succeeded'
-          if object['metadata'] && (object['metadata']['purchased_symbols'] || object['metadata']['purchased_supporters'].to_i > 0)
+          if object['metadata'] && (object['metadata']['purchased_symbols'] == 'true' || object['metadata']['purchased_supporters'].to_i > 0)
             User.schedule(:purchase_extras, {
               'user_id' => object['metadata'] && object['metadata']['user_id'],
               'purchase_id' => object['id'],
-              'premium_symbols' => object['metadata'] && object['metadata']['purchased_symbols'],
+              'premium_symbols' => object['metadata'] && object['metadata']['purchased_symbols'] == 'true',
               'premium_supporters' => object['metadata'] && object['metadata']['purchased_supporters'].to_i,
               'customer_id' => object['customer'],
               'source' => 'charge.succeeded',
@@ -46,12 +46,12 @@ module Purchasing
               'source_id' => 'stripe',
               'source' => 'charge.succeeded'
             })
-            if object['metadata'] && (object['metadata']['purchased_symbols'] || object['metadata']['purchased_supporters'].to_i > 0)
+            if object['metadata'] && (object['metadata']['purchased_symbols'] == 'true' || object['metadata']['purchased_supporters'].to_i > 0)
               User.schedule(:purchase_extras, {
                 'user_id' =>  object['metadata'] && object['metadata']['user_id'],
                 'customer_id' => object['customer'],
                 'purchase_id' => object['id'],
-                'premium_symbols' => object['metadata']['purchased_symbols'],
+                'premium_symbols' => object['metadata']['purchased_symbols'] == 'true',
                 'premium_supporters' => object['metadata']['purchased_supporters'].to_i,
                 'source' => 'charge.succeeded',
                 'notify' => false
@@ -223,7 +223,7 @@ module Purchasing
   end
 
   def self.communicator_repurchase_cost
-    ENV['COMMUNICATOR_REPURCHASE_COST'] || 100
+    ENV['COMMUNICATOR_REPURCHASE_COST'] || 50
   end
 
   def self.purchase(user, token, type, discount_code=nil)
@@ -253,9 +253,9 @@ module Purchasing
       end
     end
     user && user.log_subscription_event({:log => 'paid subscription'})
-    amount = type.sub(/_plus_trial/, '').sub(/_plus_extras/, '').sub(/_plus_\d+_supporters/).split(/_/)[-1].to_i
+    amount = type.sub(/_plus_trial/, '').sub(/_plus_extras/, '').sub(/_plus_\d+_supporters/, '').split(/_/)[-1].to_i
     include_extras = type.match(/plus_extras/)
-    include_n_supporters = type.match(/plus_(\d+)_supporters/)[1].to_i
+    include_n_supporters = (type.match(/plus_(\d+)_supporters/) || [])[1].to_i
     extras_added = false
     valid_amount = true
     description = type
@@ -292,7 +292,7 @@ module Purchasing
       user && user.log_subscription_event({:error => true, :log => 'invalid_amount'})
       return {success: false, error: "#{amount} not valid for type #{type}"}
     end
-    plan_id = type.sub(/_plus_trial/, '').sub(/_plus_extras/, '').sub(/_plus_\d+_supporters/)
+    plan_id = type.sub(/_plus_trial/, '').sub(/_plus_extras/, '').sub(/_plus_\d+_supporters/, '')
     add_token_summary(token)
     begin
       if type.match(/long_term/)
@@ -306,7 +306,7 @@ module Purchasing
           amount += self.extras_symbols_cost 
           description += " (plus premium symbols)"
         end
-        if include_n_supporters
+        if include_n_supporters > 0
           amount += (include_n_supporters * self.extras_supporter_cost)
           description += " (plus #{include_n_supporters} premium supporters)"
         end 
@@ -317,8 +317,8 @@ module Purchasing
           'plan_id' => plan_id,
           'type' => 'license'
         }
-        meta['purchased_symbols'] = true if include_extras
-        meta['purchased_supporters'] = include_n_supporters if (include_n_supporters && include_n_supporters > 0)
+        meta['purchased_symbols'] = 'true' if include_extras
+        meta['purchased_supporters'] = include_n_supporters if include_n_supporters > 0
         charge = Stripe::Charge.create({
           :amount => (amount * 100).to_i,
           :currency => 'usd',
@@ -327,8 +327,8 @@ module Purchasing
           :receipt_email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil,
           :metadata => meta
         })
-        if include_extras || include_n_supporters.to_i > 0
-          extras_added = {:customer_id => charge['customer'], :purchase_id => charge['id'], :symbols => include_extras, :supporters => include_n_supporters.to_i}
+        if include_extras || include_n_supporters > 0
+          extras_added = {:customer_id => charge['customer'], :purchase_id => charge['id'], :symbols => !!include_extras, :supporters => include_n_supporters}
         end
         time = 5.years.to_i
         user && user.log_subscription_event({:log => 'persisting long-term purchase update'})
@@ -381,7 +381,7 @@ module Purchasing
             sub.plan = plan_id
             sub.prorate = true
             sub.metadata ||= {}
-            sub.metadata['purchased_supporters'] = include_n_supporters if (include_n_supporters && include_n_supporters > 0)
+            sub.metadata['purchased_supporters'] = include_n_supporters if include_n_supporters > 0
             sub.save
           else
             trial_end = 'now'
@@ -397,16 +397,20 @@ module Purchasing
           end
           customer = Stripe::Customer.retrieve(customer['id'])
           any_sub = customer.subscriptions.data.detect{|s| s.status == 'active' || s.status == 'trialing' }
-          if include_extras || (include_n_supporters && include_n_supporters > 0)
+          if include_extras || include_n_supporters > 0
             one_time_amount += self.extras_symbols_cost if include_extras
             one_time_amount += (include_n_supporters * self.extras_supporter_cost)
             desc = ""
-            if include_extras && include_n_supporters.to_i > 0
+            cosst = 0
+            if include_extras && include_n_supporters > 0
               desc = "CoughDrop premium symbols and #{include_n_supporters} supporter accounts one-time charge"
+              cost = (self.extras_symbols_cost * 100) + (include_n_supporters * self.extras_supporter_cost * 100)
             elsif include_extras
               desc = "CoughDrop premium symbols one-time charge"
+              cost = (self.extras_symbols_cost * 100)
             else
               desc = "CoughDrop premium #{include_n_supporters} supporter accounts one-time charge"
+              cost = (include_n_supporters * self.extras_supporter_cost * 100)
             end
             charge_id = nil
             if customer['default_source']
@@ -414,10 +418,10 @@ module Purchasing
                 'user_id' => user.global_id,
                 'type' => 'extras'
               }
-              meta['purchased_supporters'] = include_n_supporters.to_i
-              meta['purchased_symbols'] = include_extras
+              meta['purchased_supporters'] = include_n_supporters if include_n_supporters > 0
+              meta['purchased_symbols'] = 'true' if include_extras
               charge = Stripe::Charge.create({
-                :amount => (self.extras_symbols_cost * 100),
+                :amount => cost,
                 :currency => 'usd',
                 :customer => customer['id'],
                 :source => customer['default_source'],
@@ -434,7 +438,7 @@ module Purchasing
                 description: desc
               })
             end
-            extras_added = {:customer_id => customer.id, :purchase_id => charge_id, :symbols => include_extras, :supporters => include_n_supporters.to_i}
+            extras_added = {:customer_id => customer.id, :purchase_id => charge_id, :symbols => !!include_extras, :supporters => include_n_supporters}
           end
           raise "no valid subscription found" unless any_sub
           user && user.log_subscription_event({:log => 'persisting subscription update'})
@@ -519,7 +523,7 @@ module Purchasing
           :description => "CoughDrop premium symbols access",
           :metadata => {
             'user_id' => user.global_id,
-            'purchased_symbols' => true,
+            'purchased_symbols' => 'true',
             'type' => 'extras'
           }
         })
