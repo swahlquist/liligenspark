@@ -72,10 +72,10 @@ export default Component.extend({
           var cursor = this.get('cursor');
           cursor.style.display = (this.get('current_dwell') && this.get('preferences.device.dwell_cursor')) ? 'block' : 'none';
           var offset = 0;
-          if(!this.get('source.head') && !this.get('source.eyes') && !this.get('source.gamepad')) {
+          if(!this.get('source.head') && !this.get('source.eyegaze') && !this.get('source.gamepad')) {
             offset = 30;
           }
-          if(this.get('source.head') || this.get('source.gamepad')) {
+          if(this.get('source.head') || this.get('source.eyegaze') || this.get('source.gamepad')) {
             cursor.classList.add('with_transition');
           } else {
             cursor.classList.remove('with_transition');
