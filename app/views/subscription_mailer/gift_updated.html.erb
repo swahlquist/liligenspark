@@ -32,6 +32,9 @@ Giver: <%= @gift.settings['giver_email'] %><br/>
 <% if @gift.settings['include_extras'] %>
   Extras: Premium Symbols Included
 <% end %>
+<% if @gift.settings['include_supporters'].to_i > 0 %>
+  Extras: <%= @gift.settings['include_supporters'] %> Premium Supporter Grant(s)
+<% end %>
 <% if @gift.settings['extra_donation'] %>
   Extras: Donated Additional License
 <% end %>

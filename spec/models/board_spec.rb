@@ -797,7 +797,7 @@ describe Board, :type => :model do
 
     it "should map images and sounds to json and return the result" do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
       b.settings['buttons'] = [{'sound_id' => 'asdf'}]
@@ -822,7 +822,7 @@ describe Board, :type => :model do
 
     it "should cache the result" do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
       b.settings['buttons'] = [{'sound_id' => 'asdf'}]
@@ -848,7 +848,7 @@ describe Board, :type => :model do
 
     it "should only return allowed protected sources" do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       b = Board.create(user: u)
       b.settings['buttons'] = [{'sound_id' => 'asdf'}]
@@ -877,7 +877,7 @@ describe Board, :type => :model do
       u = User.create
       u2 = User.create
       User.link_supervisor_to_user(u, u2)
-      User.purchase_extras({'user_id' => u2.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u2.global_id})
       u.reload
       u2.reload
 

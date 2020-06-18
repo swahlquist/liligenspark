@@ -60,6 +60,7 @@ var Subscription = EmberObject.extend({
     this.set('show_options', false);
     this.set('show_cancel', false);
     this.set('extras', false);
+    this.set('included_supporters', 0);
     this.set('finalizing_purchase', false);
     this.set('purchase_complete', false);
     this.set('canceling', false);
@@ -228,9 +229,9 @@ var Subscription = EmberObject.extend({
     'user.lapsed',
     'much_cheaper_offer',
     function() {
-      if(this.get('user.lapsed') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
+      if(this.get('user.lapsed') && !this.get('discount_percent') && ['long_term_200', 'long_term_150'].indexOf(this.get('subscription_amount')) != -1) {
         this.set('subscription_amount', 'long_term_50');
-      } else if(this.get('much_cheaper_offer') && !this.get('discount_percent') && this.get('subscription_amount') == 'long_term_200') {
+      } else if(this.get('much_cheaper_offer') && !this.get('discount_percent') && ['long_term_200', 'long_term_150'].indexOf(this.get('subscription_amount')) != -1) {
         this.set('subscription_amount', 'long_term_100');
       }
     }
@@ -348,6 +349,11 @@ var Subscription = EmberObject.extend({
             }  
           }
         }
+        if(this.get('subscription_amount').match(/^long_term/)) {
+          this.set('included_supporters', this.get('included_supporters') || 0);
+        } else {
+          this.set('included_supporters', 0);
+        }
       } else {
         this.set('eval', false);
         if(changes == 'user_type') {
@@ -438,10 +444,24 @@ var Subscription = EmberObject.extend({
     }
     return num;
   }),
+  extras_in_dollars: computed(
+    'extras',
+    'communicator_type',
+    'long_term_subscription',
+    'included_supporters',
+    function() {
+      if(this.get('long_term_subcription') || !this.get('communicator_type')) { return 0; }
+      var amt = 0;
+      if(this.get('extras')) { amt = amt + 25; }
+      if(this.get('included_supporters') > 0) { amt = amt + (25 * this.get('included_supporters')); }
+      return amt;
+    }
+  ),
   amount_in_cents: computed(
     'subscription_amount',
     'valid',
     'extras',
+    'included_supporters',
     'donate',
     'communicator_type',
     'long_term_subscription',
@@ -472,10 +492,16 @@ var Subscription = EmberObject.extend({
             if(this.get('extras') && !this.get('free_extras') && this.get('long_term_subscription')) {
               num = num + (25 * 100);
             }
+            if(this.get('communicator_type') && this.get('included_supporters') && !this.get('free_supporters') && this.get('long_term_subscription')) {
+              num = num + (25 * 100 * this.get('included_supporters'));
+            }
           }
           if(this.get('subscription_type') == 'long_term_gift') {
             if(this.get('extras') && !this.get('free_extras')) {
               num = num + (25 * 100);
+            }
+            if(this.get('communicator_type') && this.get('included_supporters') && !this.get('free_supporters')) {
+              num = num + (25 * 100 * this.get('included_supporters'));
             }
             if(this.get('donate')) {
               num = num + (50 * 100);
@@ -513,6 +539,13 @@ var Subscription = EmberObject.extend({
         } else {
           _this.set('free_extras', false);
         }
+        if(res.supporters) {
+          _this.set('included_supporters', res.supporters);
+          // TODO: free supporters means dropdown should be disabled
+          _this.set('free_supporters', true);
+        } else {
+          _this.set('free_supporters', false);
+        }
         _this.set('subscription_amount', 'long_term_200');
         _this.set('gift_status', null);
       } else {
@@ -522,7 +555,7 @@ var Subscription = EmberObject.extend({
       _this.set('gift_status', {error: true});
     })
   },
-  description: computed('user_type', 'subscription_type', 'extras', function() {
+  description: computed('user_type', 'subscription_type', 'extras', 'included_supporters', 'communicator_type', function() {
     var res = i18n.t('coughdrop_license', "%app_name% license");
     if(this.get('user_type') == 'communicator') {
       if(this.get('eval')) {
@@ -541,6 +574,9 @@ var Subscription = EmberObject.extend({
     }
     if(this.get('extras')) {
       res = res + " " + i18n.t('plus_extras', "Plus Premium Symbols");
+    }
+    if(this.get('communicator_type') && this.get('included_supporters')) {
+      res = res + " " + i18n.t('plus_supporters', "Plus %{n} Premium Supporters", {n: this.get('included_supporters')});
     }
     return res;
   }),

@@ -1536,7 +1536,7 @@ describe Subscription, :type => :model do
 
     it 'should update user extras information' do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
       expect(u.reload.settings['subscription']['extras'].except('sources')).to eq({
         'enabled' => true,
         'purchase_id' => '123',
@@ -1548,7 +1548,7 @@ describe Subscription, :type => :model do
 
     it 'should save previous extras information events' do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
       extras = u.reload.settings['subscription']['extras']
       expect(extras['sources'].length).to eq(1)
       extras.delete('sources')
@@ -1559,7 +1559,7 @@ describe Subscription, :type => :model do
         'source' => 'something'
       })
 
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something.else', 'purchase_id' => '234'})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something.else', 'purchase_id' => '234'})
       expect(u.reload.settings['subscription']['extras'].except('sources')).to eq({
         'enabled' => true,
         'purchase_id' => '234',
@@ -1571,7 +1571,7 @@ describe Subscription, :type => :model do
 
     it 'should create an audit event' do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
       expect(u.reload.settings['subscription']['extras'].except('sources')).to eq({
         'enabled' => true,
         'purchase_id' => '123',
@@ -1586,7 +1586,7 @@ describe Subscription, :type => :model do
     it 'should notify if specified and has changed' do
       u = User.create
       expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
       ae = AuditEvent.last
       expect(ae).to_not eq(nil)
       expect(ae.event_type).to eq('extras_added')
@@ -1598,7 +1598,7 @@ describe Subscription, :type => :model do
       u.settings['subscription'] = {'extras' => {'enabled' => true}}
       u.save
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234', 'notify' => true})
       ae = AuditEvent.last
       expect(ae).to eq(nil)
     end
@@ -1606,7 +1606,7 @@ describe Subscription, :type => :model do
     it 'should not notify if not specified but changed' do
       u = User.create
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'something', 'purchase_id' => '123', 'customer_id' => '234'})
       ae = AuditEvent.last
       expect(ae).to_not eq(nil)
       expect(ae.event_type).to eq('extras_added')
@@ -1616,7 +1616,7 @@ describe Subscription, :type => :model do
     it "should mark org_id if specified" do
       u = User.create
       expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:extras_purchased, u.global_id)
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id, 'source' => 'org_added', 'org_id' => 'asdf', 'notify' => true})
       expect(u.reload.settings['subscription']['extras']['enabled']).to eq(true)
       expect(u.reload.settings['subscription']['extras']['org_id']).to eq('asdf')
     end
@@ -2770,6 +2770,8 @@ describe Subscription, :type => :model do
   describe "transfer_eval_to" do
     it "should transfer logs to the new user" do
       u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
       d = Device.create(user: u, developer_key_id: 999)
       u2 = User.create
       s1 = LogSession.create(user: u, author: u, device: d, log_type: 'session')
@@ -2779,7 +2781,7 @@ describe Subscription, :type => :model do
       s5 = LogSession.create(user: u, author: u, device: d, log_type: 'session')
       LogSession.where(id: [s1.id, s2.id, s3.id, s4.id]).update_all(started_at: 12.hours.ago)
       LogSession.where(id: [s5.id]).update_all(started_at: 6.months.ago)
-      u.transfer_eval_to(u2, d)
+      u.transfer_eval_to(u2.global_id, d.global_id)
       expect(s1.reload.user_id).to eq(u2.id)
       expect(s2.reload.user_id).to eq(u2.id)
       expect(s3.reload.user_id).to eq(u2.id)
@@ -2789,19 +2791,23 @@ describe Subscription, :type => :model do
     
     it "should transfer preferences to the new user" do
       u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
       d = Device.create(user: u, developer_key_id: 999)
       u2 = User.create
       u.settings['preferences'] = {a: 1}
       u.save
       u2.settings['preferences'] = {b: 1}
       u2.save
-      u.transfer_eval_to(u2, d)
+      expect(u.transfer_eval_to(u2.global_id, d.global_id)).to eq(true)
       expect(u2.reload.settings['preferences']['a']).to eq(1)
       expect(u2.reload.settings['preferences']['b']).to eq(1)
     end
     
     it "should keep any device preferences already set for the new user" do
       u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
       u2 = User.create
       d = Device.create(user: u, developer_key_id: 999, device_key: 'asdf1234')
       key = d.unique_device_key
@@ -2809,26 +2815,68 @@ describe Subscription, :type => :model do
       u.save!
       u2.settings['preferences']['devices'][key] = {'b': 1}
       u2.save
-      u.transfer_eval_to(u2, d)
+      u.transfer_eval_to(u2.global_id, d.global_id)
       expect(u2.reload.settings['preferences']['devices'][key]['a']).to eq(1)
       expect(u2.reload.settings['preferences']['devices'][key]['b']).to eq(nil)
     end
     
     it "should call reset_eval" do
       u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
       u2 = User.create
       d = Device.create(user: u, developer_key_id: 999)
-      expect(u).to receive(:reset_eval).with(d)
-      u.transfer_eval_to(u2, d)
+      expect(u).to receive(:reset_eval).with(d.global_id).and_return(true)
+      expect(u.transfer_eval_to(u2.global_id, d.global_id, true)).to eq(true)
     end
 
-    it "should transfer copied boards to the new user"
-    it "should transfer earned badges"
-    it "should transfer user goals"
-    it "should transfer user integrations"
-    it "should transfer user recordings"
-    it "should transfer user videos"
-    it "should transfer user utterances"    
+    it "should call transfer_user_content" do
+      u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
+      u2 = User.create
+      d = Device.create(user: u, developer_key_id: 999)
+      expect(Flusher).to receive(:transfer_user_content).with(u.global_id, u.user_name, u2.global_id, u2.user_name)
+      u.transfer_eval_to(u2.global_id, d.global_id)
+    end
+
+    it "should call reset_eval if specified" do
+      write_this_test
+    end
+
+    it "should transfer copied boards to the new user" do
+      write_this_test
+    end
+
+    it "should transfer earned badges" do
+      write_this_test
+    end
+
+    it "should transfer user goals" do
+      write_this_test
+    end
+
+    it "should transfer user integrations" do
+      write_this_test
+    end
+
+    it "should transfer user recordings" do
+      write_this_test
+    end
+
+    it "should transfer user videos" do
+      write_this_test
+    end
+
+    it "should transfer user utterances" do
+      write_this_test
+    end
+  end
+
+  describe "extend_eval" do
+    it "should have specs" do
+      write_this_test
+    end
   end
   
   describe "purchase_credit_duration" do

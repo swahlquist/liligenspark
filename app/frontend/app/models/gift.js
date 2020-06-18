@@ -21,6 +21,7 @@ CoughDrop.Gift = DS.Model.extend({
   limit: DS.attr('number'),
   expires: DS.attr('date'),
   include_extras: DS.attr('boolean'),
+  include_supporters: DS.attr('number'),
   org_connected: DS.attr('boolean'),
   codes: DS.attr('raw'),
   active: DS.attr('boolean'),

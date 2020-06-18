@@ -30,6 +30,22 @@ export default Component.extend({
     }
     this.update_classes();
   },
+  supervisor_options: computed('subscription.subscription_amount', function() {
+    var list = [
+      {name: i18n.t('0', '0'), id: 0},
+      {name: i18n.t('1', '1'), id: 1},
+      {name: i18n.t('2', '2'), id: 2},
+      {name: i18n.t('3', '3'), id: 3},
+      {name: i18n.t('4', '4'), id: 4},
+      {name: i18n.t('5', '5'), id: 5},
+    ];
+    if(this.get('subscription.subscription_amount').match(/^long_term/)) {
+//      list.shift();
+//      list.shift();
+    }
+    return list;
+
+  }),
   trial_choice: computed(
     'trial_option',
     'see_pricing',
@@ -134,6 +150,9 @@ export default Component.extend({
         subscription.set('finalizing_purchase', true);
         if(subscription.get('extras') && type != 'gift_code') {
           type = type + "_plus_extras";
+        }
+        if(subscription.get('communicator_type') && subscription.get('included_supporters') > 0 && type != 'gift_code') {
+          type = type + "_plus_" + subscription.get('included_supporters') + "_supporters";
         }
         persistence.ajax('/api/v1/users/' + user.get('user_name') + '/subscription', {
           type: 'POST',

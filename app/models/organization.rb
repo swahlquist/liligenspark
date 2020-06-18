@@ -620,7 +620,7 @@ class Organization < ActiveRecord::Base
       self.settings['activated_extras'] = activated + 1
       self.save
     end
-    User.purchase_extras({'user_id' => user.global_id, 'source' => 'org_added', 'org_id' => self.global_id, 'new_activation' => new_activation})
+    User.purchase_extras({'premium_symbols' => true, 'user_id' => user.global_id, 'source' => 'org_added', 'org_id' => self.global_id, 'new_activation' => new_activation})
   end
 
   def extras_users

@@ -1713,6 +1713,7 @@ describe Organization, :type => :model do
       expect(User).to receive(:purchase_extras).with({
         'user_id' => u.global_id,
         'source' => 'org_added',
+        'premium_symbols' => true,
         'org_id' => o.global_id,
         'new_activation' => true
       })
@@ -1728,6 +1729,7 @@ describe Organization, :type => :model do
       o.add_user(u.user_name, false)
       expect(User).to receive(:purchase_extras).with({
         'user_id' => u.global_id,
+        'premium_symbols' => true, 
         'source' => 'org_added',
         'org_id' => o.global_id,
         'new_activation' => false
@@ -1744,6 +1746,7 @@ describe Organization, :type => :model do
       expect(User).to receive(:purchase_extras).with({
         'user_id' => u.global_id,
         'source' => 'org_added',
+        'premium_symbols' => true, 
         'org_id' => o.global_id,
         'new_activation' => true
       })

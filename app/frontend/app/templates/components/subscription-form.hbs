@@ -125,6 +125,20 @@
               </td>
             {{/if}}
           </tr>
+          <tr>
+            {{#if subscription.app_pricing_override}}
+              <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>{{t "2 premium supervisor credits included" key='premium_supporters_included'}}</td>
+              <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'></td>
+            {{else}}
+              <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>
+                {{t "add premium supervisor<br/>credits for US$25 each" key='add_supervisor_credits_25_usd'}}
+              </td>
+              <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'>
+                {{t "user management tools available for organizations," key='org_tools_available'}}
+                {{#link-to 'contact'}}{{t "contact us!" key='contact_us'}}{{/link-to}}
+              </td>
+            {{/if}}
+          </tr>
         {{/if}}
         <tr>
           {{#unless subscription.app_pricing_override_no_monthly}}
@@ -145,8 +159,6 @@
             <td colspan={{if subscription.app_pricing_override_no_monthly "1" "2"}}>
               {{#unless subscription.app_pricing_override}}
                 <a href="#" {{action 'bulk_purchase'}}>{{t "interested in a bulk purchase or PO/PCard purchase?" key='interested_in_bulk_purchase'}}</a>
-                {{t "user management tools available for organizations," key='org_tools_available'}}
-                {{#link-to 'contact'}}{{t "contact us!" key='contact_us'}}{{/link-to}}
               {{/unless}}
             </td>
             <td colspan={{if subscription.app_pricing_override "1" "2"}} class='separator semi_dim'>
@@ -231,8 +243,46 @@
             </tr>
           {{else if subscription.free_extras}}
             {{#if subscription.extras}}
-              <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>{{t "premium symbols included" key='premium_symbols_included'}}</td>
-              <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'></td>
+              <tr>
+                <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>{{t "premium symbols included" key='premium_symbols_included'}}</td>
+                <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'></td>
+              </tr>
+            {{/if}}
+          {{/unless}}
+          {{#unless subscription.gift_type}}
+            <tr>
+              {{#if subscription.app_pricing_override}}
+                <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>{{t "2 premium supervisor credits included" key='premium_supporters_included'}}</td>
+                <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'></td>
+              {{else}}
+                <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>
+                  {{#if subscription.communicator_type}}
+                    {{t "include" key='include'}}
+                    <span style='display: inline-block; width: 75px;'>
+                      {{bound-select select_class="form-control" select_id="supervisors" content=supervisor_options selection=subscription.included_supporters action=(action (mut subscription.included_supporters)) }}
+                    </span>
+                    {{t "supervisor credits" key='supervisor_credits'}}
+                  {{else}}
+                    <span class='text-muted'>
+                      {{t "optionally add supervisor credits" key='add_supervisor_credits'}}
+                    </span>
+                  {{/if}}
+                </td>
+                <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'>
+                  {{#unless subscription.app_pricing_override}}
+                    <a href="#" {{action 'bulk_purchase'}} style='display: inline-block; margin-top: 10px;'>
+                      {{t "Bulk Purchase, PO or PCard?" key='bulk_purchase_or_po'}}
+                    </a>
+                  {{/unless}}
+                </td>
+              {{/if}}              
+            </tr>
+          {{else if subscription.free_supporters}}
+            {{#if subscription.included_supporters}}
+              <tr>
+                <td colspan={{if subscription.app_pricing_override_no_monthly '1' '2'}}>{{t "%{n} premium supervisor credits included" key='premium_supervisors_included'}}</td>
+                <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'></td>
+              </tr>
             {{/if}}
           {{/unless}}
           <tr>
@@ -266,11 +316,6 @@
                   <a href="#" {{action 'set_subscription_type' 'gift_code'}}>
                     {{t "I have a gift/discount code" key='have_a_gift_code'}}
                   </a>
-                  {{#unless subscription.app_pricing_override}}
-                    <a href="#" {{action 'bulk_purchase'}} style='display: inline-block; margin-top: 10px;'>
-                      {{t "Bulk Purchase, PO or PCard?" key='bulk_purchase_or_po'}}
-                    </a>
-                  {{/unless}}
                 {{/if}}
               {{/if}}
             </td>
@@ -364,8 +409,8 @@
                 {{else}}
                   US${{subscription.amount_in_dollars}}
                   {{t "monthly" key='monthly'}}
-                  {{#if subscription.extras}}
-                    {{t "+ US$25 one-time fee" key='plus_one_time_extras'}}
+                  {{#if subscription.extras_in_dollars}}
+                    {{t "+ US$%{n} one-time fee" n=subscription.extras_in_dollars key='plus_one_time_extras'}}
                   {{/if}}
                 {{/if}}
               {{/if}})

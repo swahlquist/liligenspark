@@ -323,7 +323,7 @@ describe Uploader do
         }
       ].to_json)
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', u)
@@ -353,7 +353,7 @@ describe Uploader do
       ].to_json)
       u = User.create
       u2 = User.create
-      User.purchase_extras({'user_id' => u2.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u2.global_id})
       u.reload
       u2.reload
 
@@ -771,6 +771,7 @@ describe Uploader do
     it 'should search premium libraries if enabled' do
       u = User.create
       User.purchase_extras({
+        'premium_symbols' => true, 
         'user_id' => u.global_id,
         'source' => 'admin_override'
       })

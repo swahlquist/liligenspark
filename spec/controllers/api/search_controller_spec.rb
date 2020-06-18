@@ -64,7 +64,7 @@ describe Api::SearchController, :type => :controller do
 
     it "should search for pcs symbols if allowed" do
       token_user
-      User.purchase_extras({'user_id' => @user.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => @user.global_id})
       list = [
         {'extension' => 'png', 'name' => 'bob'},
         {'extension' => 'gif', 'name' => 'fred'}
@@ -93,7 +93,7 @@ describe Api::SearchController, :type => :controller do
 
     it "should search for symbolstix symbols if allowed" do
       token_user
-      User.purchase_extras({'user_id' => @user.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => @user.global_id})
       list = [
         {'extension' => 'png', 'name' => 'bob'},
         {'extension' => 'gif', 'name' => 'fred'}
@@ -112,7 +112,7 @@ describe Api::SearchController, :type => :controller do
     it "should search for pcs symbols if not allowed for the user but for the referenced supervisee" do
       token_user
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       expect(u.subscription_hash['extras_enabled']).to eq(true)
       User.link_supervisor_to_user(@user, u, nil, true)
@@ -134,7 +134,7 @@ describe Api::SearchController, :type => :controller do
 
     it "should mark protected symbols as such when found via search" do
       token_user
-      User.purchase_extras({'user_id' => @user.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => @user.global_id})
       list = [
         {'extension' => 'png', 'name' => 'bob'},
         {'extension' => 'gif', 'name' => 'fred'}
@@ -206,7 +206,7 @@ describe Api::SearchController, :type => :controller do
       ENV['LESSONPIX_MD5'] = '24tq3tq24t23r1'
       token_user
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       token = Digest::MD5.hexdigest('24tq3tq24t23r1' + ENV['LESSONPIX_SECRET'])
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=#{ENV['LESSONPIX_PID']}&username=bacon&token=#{token}&word=snowman&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new({body: [
       ].to_json}))

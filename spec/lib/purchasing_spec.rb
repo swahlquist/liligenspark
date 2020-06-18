@@ -145,6 +145,7 @@ describe Purchasing do
           'customer' => '23456',
           'metadata' => {
             'user_id' => u.global_id,
+            'purchased_symbols' => true,
             'type' => 'extras'
           }
         }
@@ -153,6 +154,128 @@ describe Purchasing do
         expect(u.settings['subscription']['extras']['customer_id']).to eq('23456')
         expect(u.settings['subscription']['extras']['purchase_id']).to eq('12345')
         expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+      end
+
+      it 'should handle adding supporters on extras charge' do
+        u = User.create
+        exp = u.expires_at
+        expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
+        
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => '23456',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'purchased_symbols' => true,
+            'type' => 'extras'
+          }
+        }
+        u.reload
+        expect(u.premium_supporter_grants).to eq(3)
+        expect(u.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.settings['subscription']['extras']['customer_id']).to eq('23456')
+        expect(u.settings['subscription']['extras']['purchase_id']).to eq('12345')
+        expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+      end
+
+      it 'should not re-execute already-run extras purchase' do
+        u = User.create
+        exp = u.expires_at
+        u.settings['subscription'] = {}
+        u.settings['subscription']['prior_purchase_ids'] = ['12345']
+        u.save!
+        
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => '23456',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'purchased_symbols' => true,
+            'type' => 'extras'
+          }
+        }
+        u.reload
+        expect(u.premium_supporter_grants).to eq(0)
+        expect(u.subscription_hash['extras_enabled']).to eq(nil)
+        expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+      end
+
+      it 'should ignore second charge.succeeded event for purchasing extras' do
+        u = User.create
+        exp = u.expires_at
+        expect(SubscriptionMailer).to receive(:schedule_delivery).with(:extras_purchased, u.global_id)
+        
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => '23456',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'purchased_symbols' => true,
+            'type' => 'extras'
+          }
+        }
+        u.reload
+        expect(u.premium_supporter_grants).to eq(3)
+        expect(u.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.settings['subscription']['extras']['customer_id']).to eq('23456')
+        expect(u.settings['subscription']['extras']['purchase_id']).to eq('12345')
+        expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => '23456',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'purchased_symbols' => true,
+            'type' => 'extras'
+          }
+        }
+        u.reload
+        expect(u.premium_supporter_grants).to eq(3)
+        expect(u.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.settings['subscription']['extras']['customer_id']).to eq('23456')
+        expect(u.settings['subscription']['extras']['purchase_id']).to eq('12345')
+        expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+      end
+
+      it 'should handle an extras addendum purchase on a one-time purchase' do
+        u = User.create
+        u.settings['purchase_bounced'] = true
+        u.save
+        exp = u.expires_at
+        expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
+        expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
+        
+        expect(Stripe::Customer).to receive(:retrieve).with('qwer').and_return({
+          'metadata' => {
+            'user_id' => u.global_id
+          }
+        })
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => 'qwer',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_200',
+            'purchased_supporters' => 4,
+            'purchased_symbols' => true
+          }
+        }
+        u.reload
+        expect(u.settings['subscription']['last_purchase_plan_id']).to eq('long_term_200')
+        expect(u.settings['subscription']['customer_id']).to eq('qwer')
+        expect(u.settings['subscription']['last_purchase_id']).to eq('12345')
+        expect(u.settings['subscription']['prior_purchase_ids']).to eq(["extras:12345"])
+        expect(u.settings['purchase_bounced']).to eq(false)
+        expect(u.expires_at).to eq(exp + 5.years.to_i)
+        expect(res[:data]).to eq({:purchase => true, :purchase_id => '12345', :valid => true})
+        Worker.process_queues
+        expect(u.reload.premium_supporter_grants).to eq(4)
+        expect(u.subscription_hash['extras_enabled']).to eq(true)
       end
     end
     
@@ -1666,9 +1789,9 @@ describe Purchasing do
     end
   end
 
-  describe "purchase_extras" do
+  describe "purchase_symbol_extras" do
     it 'should error on missing user' do
-      expect(Purchasing.purchase_extras('asdf', {})).to eq({success: false, error: 'user required'})
+      expect(Purchasing.purchase_symbol_extras('asdf', {})).to eq({success: false, error: 'user required'})
     end
 
     it 'should handle card error correctly' do
@@ -1676,14 +1799,14 @@ describe Purchasing do
       err = Stripe::CardError.new('a', 'b')
       expect(err).to receive(:json_body).and_return(error: {code: 'asdf', decline_code: 'qwer'})
       expect(Stripe::Charge).to receive(:create).and_raise(err)
-      res = Purchasing.purchase_extras('token', {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras('token', {'user_id' => u.global_id})
       expect(res).to eq({success: false, error: 'asdf', decline_code: 'qwer'})
     end
 
     it 'should handle unexpected error correctly' do
       u = User.create
       expect(Stripe::Charge).to receive(:create).and_raise('asdf')
-      res = Purchasing.purchase_extras('token', {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras('token', {'user_id' => u.global_id})
       expect(res).to eq({:success=>false, :error=>"unexpected_error", :error_message=>"asdf", :error_type=>false, :error_code=>"unknown"})
     end
 
@@ -1701,7 +1824,7 @@ describe Purchasing do
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
-      res = Purchasing.purchase_extras({'id' => 'token'}, {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras({'id' => 'token'}, {'user_id' => u.global_id})
       expect(res).to eq({success: true, charge: 'immediate_purchase'})
     end
 
@@ -1719,12 +1842,13 @@ describe Purchasing do
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
-      res = Purchasing.purchase_extras({'id' => 'token'}, {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras({'id' => 'token'}, {'user_id' => u.global_id})
       expect(res).to eq({success: true, charge: 'immediate_purchase'})
       expect(User).to receive(:purchase_extras).with({
         'user_id' => u.global_id,
         'purchase_id' => '1234',
         'customer_id' => '4567',
+        'premium_symbols' => true, 
         'source' => 'purchase.standalone',
         'notify' => true
       })
@@ -1745,13 +1869,13 @@ describe Purchasing do
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
-      res = Purchasing.purchase_extras({'id' => 'token'}, {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras({'id' => 'token'}, {'user_id' => u.global_id})
       expect(res).to eq({success: true, charge: 'immediate_purchase'})
     end
 
     it 'should fail gracefully on invalid token' do
       u = User.create
-      res = Purchasing.purchase_extras('none', {'user_id' => u.global_id})
+      res = Purchasing.purchase_symbol_extras('none', {'user_id' => u.global_id})
       expect(res).to eq({success: false, error: 'token required without active subscription'})
     end
 
@@ -1773,7 +1897,7 @@ describe Purchasing do
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
-      Purchasing.purchase_extras('none', {'user_id' => u.global_id})
+      Purchasing.purchase_symbol_extras('none', {'user_id' => u.global_id})
     end
   end
   

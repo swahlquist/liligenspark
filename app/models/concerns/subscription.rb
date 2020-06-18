@@ -169,7 +169,7 @@ module Subscription
   
   def transfer_subscription_to(user, skip_remote_update=false)
     transfer_keys = ['started', 'plan_id', 'subscription_id', 'token_summary', 'limited_premium_purchase', 'eval_account', 'modeling_only',
-      'never_expires', 'seconds_left', 'customer_id', 'last_purchase_plan_id', 'extras', 'expiration_source', 'seconds_left_source']
+      'never_expires', 'seconds_left', 'customer_id', 'last_purchase_plan_id', 'extras', 'expiration_source', 'seconds_left_source', 'purchased_supporters', 'allotted_supporter_ids']
     did_change = false
     self.settings['subscription'] ||= {}
     self.settings['subscription']['limited_premium_purchase'] ||= self.settings['subscription']['free_premium'] if self.settings['subscription']['free_premium']
@@ -346,7 +346,7 @@ module Subscription
     if type == 'unsubscribe'
       Purchasing.unsubscribe(self)
     elsif type == 'extras'
-      Purchasing.purchase_extras(token, {'user_id' => self.global_id})
+      Purchasing.purchase_symbol_extras(token, {'user_id' => self.global_id})
     else
       Purchasing.purchase(self, token, type, code)
     end
@@ -374,6 +374,13 @@ module Subscription
     elsif type == 'enable_extras'
       User.purchase_extras({
         'user_id' => self.global_id,
+        'premium_symbols' => true,
+        'source' => 'admin_override'
+      })
+    elsif type == 'supporter_credit'
+      User.purchase_extras({
+        'user_id' => self.global_id,
+        'premium_supporters' => 1,
         'source' => 'admin_override'
       })
     elsif type == 'restore'
@@ -409,11 +416,11 @@ module Subscription
         'token_summary' => "Manually-set Modeling Account",
         'plan_id' => 'slp_monthly_free'
       })
-    elsif type == 'manual_supporter'
+    elsif type == 'manual_supporter' || type == 'granted_supporter'
       self.update_subscription({
         'subscribe' => true,
         'subscription_id' => 'free',
-        'token_summary' => "Manually-set Supporter Account",
+        'token_summary' => (type == 'manual_supporter') ? "Manually-set Supporter Account" : "Communicator-Granted Supporter Account",
         'plan_id' => 'slp_monthly_granted'
       })
     else
@@ -471,6 +478,27 @@ module Subscription
     true
   end
 
+  def premium_supporter_grants
+    total = (self.settings['subscription'] || {})['purchased_supporters'] || 0
+    used = ((self.settings['subscription'] || {})['allotted_supporter_ids'] || []).length
+    return total - used
+  end
+
+  def grant_premium_supporter(user)
+    return false unless self.premium_supporter_grants > 0
+    user.settings['preferences']['role'] = 'supporter'
+    if !user.premium_supporter?
+      user.subscription_override('granted_supporter')
+      self.settings['subscription']['allotted_supporter_ids'] ||= []
+      self.settings['subscription']['allotted_supporter_ids'] << user.global_id
+      self.settings['subscription']['allotted_supporter_ids'].uniq~
+      self.save!
+      return true
+    else
+      return false
+    end
+  end
+
   def assert_eval_settings
     if self.eval_account?
       self.settings['eval_reset'] ||= {}
@@ -497,11 +525,11 @@ module Subscription
     # clear/reset preferences (remember them so they can be transferred
     self.settings['last_preferences'] = self.settings['preferences'] || {}
     self.settings['preferences'] = nil
-    self.settings = self.settings.slice('subscription', 'eval_reset', 'boards_shared_with_me', 'confirmation_log', 'feature_flags', 'password', 'premium_voices', 'public')
+    self.settings = self.settings.slice('last_preferences', 'subscription', 'eval_reset', 'boards_shared_with_me', 'confirmation_log', 'feature_flags', 'password', 'premium_voices', 'public')
     self.settings['all_home_boards'] = nil
     self.generate_defaults
 
-    Flusher.flush_user_content(self.user_id, self.user_name)
+    Flusher.flush_user_content(self.global_id, self.user_name)
     # restore the last home board, in case it's a default (can be changed easily)
     if self.settings['last_preferences']['home_board'] && self.settings['last_preferences']['home_board']['key'] && !self.settings['last_preferences']['home_board']['key'].match(/^#{self.user_name}\/}/)
       self.settings['preferences']['home_board'] = self.settings['last_preferences']['home_board']
@@ -536,7 +564,7 @@ module Subscription
     destination_user.settings['preferences']['devices'] = devices
     destination_user.save_with_sync('transfer_eval')
     # transfer usage logs to the new user
-    Flusher.transfer_user_content(self.user_id, self.user_name, destination_user.global_id, destination_user.user_name)
+    Flusher.transfer_user_content(self.global_id, self.user_name, destination_user.global_id, destination_user.user_name)
     # TODO: transfer daily_use data across as well
     eval_start = Time.parse((self.settings['subscription'] || {})['eval_started'] || 60.days.ago.iso8601)
     WeeklyStatsSummary.where(user_id: self.id).where(['created_at > ?', eval_start]).each do |summary|
@@ -546,7 +574,7 @@ module Subscription
       summary.schedule(:update!)
     end
     if end_eval
-      return self.reset_eval(current_device)
+      return self.reset_eval(current_device.global_id)
     end
     true
   end
@@ -843,6 +871,7 @@ module Subscription
       json['premium_supporter'] = true
       json['org_sponsored'] = true if billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']
+      json['expires'] = self.expires_at && self.expires_at.iso8601 if self.billing_state == :trialing_supporter
       json['grace_period'] = true if self.grace_period?
     else
       if [:long_term_active_communicator, :trialing_communicator, :grace_period_communicator, :trialing_supporter, :grace_period_supporter].include?(billing_state) #!self.eval_account? && !self.premium_supporter?
@@ -864,6 +893,10 @@ module Subscription
         json['lapsed_communicator'] = self.lapsed_communicator?
         json['free_premium'] = true
       end
+    end
+    if self.settings['subscription']['purchased_supporters'].to_i > 0
+      json['purchased_supporters'] = self.settings['subscription']['purchased_supporters'].to_i
+      json['available_supporters'] = self.premium_supporter_grants
     end
     json['fully_purchased'] = true if self.fully_purchased?
     json['free_premium'] = true if self.legacy_free_premium?
@@ -1022,35 +1055,47 @@ module Subscription
       user = User.find_by_global_id(opts['user_id'])
       raise "user not found" unless user
       user.settings['subscription'] ||= {}
-      first_enabling = !(user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled'])
-      if opts['source'] == 'org_added' && user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled']
-        raise "extras already activated for user"
+      extras_purchase_id = "extras:#{opts['purchase_id']}"
+      return false if opts['purchase_id'] && (user.settings['subscription']['prior_purchase_ids'] || []).include?(extras_purchase_id)
+      if opts['premium_supporters'].to_i > 0
+        user.settings['subscription']['purchased_supporters'] ||= 0
+        user.settings['subscription']['purchased_supporters'] += opts['premium_supporters']
       end
-      user.settings['subscription']['extras'] = (user.settings['subscription']['extras'] || {}).merge({
-        'enabled' => true,
-        'purchase_id' => opts['purchase_id'],
-        'customer_id' => opts['customer_id'],
-        'source' => opts['source']
-      })
-      if opts['source'] == 'org_added' && opts['org_id']
-        user.settings['subscription']['extras']['org_id'] = opts['org_id']
+      if opts['premium_symbols']
+        first_enabling = !(user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled'])
+        if opts['source'] == 'org_added' && user.settings['subscription']['extras'] && user.settings['subscription']['extras']['enabled']
+          raise "extras already activated for user"
+        end
+        user.settings['subscription']['extras'] = (user.settings['subscription']['extras'] || {}).merge({
+          'enabled' => true,
+          'purchase_id' => opts['purchase_id'],
+          'customer_id' => opts['customer_id'],
+          'source' => opts['source']
+        })
+        if opts['source'] == 'org_added' && opts['org_id']
+          user.settings['subscription']['extras']['org_id'] = opts['org_id']
+        end
+        if opts['source'] == 'org_added' && !opts['new_activation']
+          first_enabling = false
+        end
+        user.settings['subscription']['extras']['sources'] ||= []
+        user.settings['subscription']['extras']['sources'] << {
+          'timestamp' => Time.now.to_i,
+          'customer_id' => opts['customer_id'],
+          'source' => opts['source']
+        }
+        if first_enabling
+          AuditEvent.create!(:event_type => 'extras_added', :summary => "#{user.user_name} activated extras", :data => {source: opts['source']})
+        end
+        if first_enabling && opts['notify']
+          SubscriptionMailer.schedule_delivery(:extras_purchased, user.global_id)
+        end
       end
-      if opts['source'] == 'org_added' && !opts['new_activation']
-        first_enabling = false
+      if opts['purchase_id']
+        user.settings['subscription']['prior_purchase_ids'] ||= []
+        user.settings['subscription']['prior_purchase_ids'] << extras_purchase_id
       end
-      user.settings['subscription']['extras']['sources'] ||= []
-      user.settings['subscription']['extras']['sources'] << {
-        'timestamp' => Time.now.to_i,
-        'customer_id' => opts['customer_id'],
-        'source' => opts['source']
-      }
       user.save_with_sync('purchase_extras')
-      if first_enabling
-        AuditEvent.create!(:event_type => 'extras_added', :summary => "#{user.user_name} activated extras", :data => {source: opts['source']})
-      end
-      if first_enabling && opts['notify']
-        SubscriptionMailer.schedule_delivery(:extras_purchased, user.global_id)
-      end
       true
     end
 

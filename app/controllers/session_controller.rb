@@ -181,7 +181,8 @@ class SessionController < ApplicationController
         # TODO: should also have some kind of developer key for tracking
         device_key = request.headers['X-Device-Id'] || params['device_id'] || 'default'
         
-        if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
+        installed_app = request.headers['X-INSTALLED-COUGHDROP'] == 'true' || params['installed_app'] == 'true'
+        if installed_app
           app_devices = Device.where(user_id: u.id, developer_key_id: 0).select{|d| d.token_type == :app && !d.settings['temporary_device'] }
           if app_devices.length > 0 && u.eval_account?
             # Eval accounts are only allowed to log in on one device at a time.
@@ -199,7 +200,7 @@ class SessionController < ApplicationController
         d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'
         d.settings['temporary_device'] = true if temporary_device
         d.settings.delete('temporary_device') unless u.eval_account?
-        d.settings['app'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'true'
+        d.settings['app'] = true if installed_app
         d.generate_token!(!!(params['long_token'] && params['long_token'] != 'false'))
         # find or create a device based on the request information
         # some devices (i.e. generic browser) are allowed multiple

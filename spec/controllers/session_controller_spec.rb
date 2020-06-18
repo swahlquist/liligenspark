@@ -729,6 +729,65 @@ describe SessionController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full'])
     end
+
+    it "should make a valid token for an eval login" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.subscription_override('eval')
+      u.generate_password("seashell")
+      u.save
+      expect(u.billing_state).to eq(:eval_communicator)
+      post :token, params: {:device_id => 'asdf1', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['token_type']).to eq('bearer')
+    end
+
+    it "should make a temporary token for a second eval login" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.subscription_override('eval')
+      u.generate_password("seashell")
+      u.save
+      expect(u.billing_state).to eq(:eval_communicator)
+      post :token, params: {:device_id => 'asdf1', 'installed_app' => 'true', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['token_type']).to eq('bearer')
+      d = Device.last
+      expect(d.token_type).to eq(:app)
+
+      post :token, params: {:device_id => 'asdf2', 'installed_app' => 'true', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['temporary_device']).to eq(true)
+    end
+
+    it "should not count temporary tokens when checking if already logged-in for an eval login" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.subscription_override('eval')
+      u.generate_password("seashell")
+      u.save
+      expect(u.billing_state).to eq(:eval_communicator)
+      post :token, params: {:device_id => 'asdf1', 'installed_app' => 'true', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['token_type']).to eq('bearer')
+      d = Device.last
+      expect(d.token_type).to eq(:app)
+
+      post :token, params: {:device_id => 'asdf2', 'installed_app' => 'true', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['temporary_device']).to eq(true)
+
+      d.destroy
+      post :token, params: {:device_id => 'asdf3', 'installed_app' => 'true', :grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => 'fred@example.com', :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['temporary_device']).to_not eq(true)
+    end
   end
 
   describe "token_check" do

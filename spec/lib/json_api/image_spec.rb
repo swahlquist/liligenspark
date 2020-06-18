@@ -48,7 +48,7 @@ describe JsonApi::Image do
 
     it 'should revert to a fallback image if no list provided and the user does not have access to the protected_source' do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {'protected' => true, 'protected_source' => 'asdf'})
       hash = JsonApi::Image.build_json(i, :permissions => u)
@@ -62,7 +62,7 @@ describe JsonApi::Image do
       u = User.create
       u2 = User.create
       User.link_supervisor_to_user(u, u2)
-      User.purchase_extras({'user_id' => u2.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u2.global_id})
       u2.reload
       u.reload
       i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {'protected' => true, 'protected_source' => 'pcs'})
@@ -75,7 +75,7 @@ describe JsonApi::Image do
 
     it 'should return the actual image if allowed for the user' do
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id})
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {'protected' => true, 'protected_source' => 'pcs'})
       hash = JsonApi::Image.build_json(i, :permissions => u)

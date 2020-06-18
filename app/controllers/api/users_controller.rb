@@ -279,7 +279,7 @@ class Api::UsersController < ApplicationController
       return require_api_token unless @api_user
       return unless allowed?(user, 'edit')
       progress = Progress.schedule(user, :redeem_gift_token, token['code'])
-    elsif['never_expires', 'eval', 'add_1', 'manual_supporter', 'add_voice', 'communicator_trial', 'force_logout', 'enable_extras'].include?(params['type'])
+    elsif['never_expires', 'eval', 'add_1', 'manual_supporter', 'add_voice', 'communicator_trial', 'force_logout', 'enable_extras', 'supporter_credit', 'restore', 'manual_modeler'].include?(params['type'])
       return require_api_token unless @api_user
       return unless allowed?(user, 'admin_support_actions')
       progress = Progress.schedule(user, :subscription_override, params['type'], @api_user && @api_user.global_id)
@@ -589,7 +589,7 @@ class Api::UsersController < ApplicationController
     return allowed?(user, 'never_allow') unless user.eval_account?
     target = User.find_by_path(params['user_name'])
     if !target || !target.valid_password?(params['password'])
-      return api_error(400, {error: 'invalid credentials'})
+      return api_error(400, {error: 'invalid_credentials'})
     end
     progress = Progress.schedule(user, :transfer_eval_to, target.global_id, @api_device_id, true)
     render json: JsonApi::Progress.as_json(progress, :wrapper => true)

@@ -3,6 +3,7 @@ import CoughDrop from '../app';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -18,6 +19,13 @@ export default modal.ModalController.extend({
     sup.set('watch_user_name_and_cookies', true);
     this.set('model.supervisor', sup);
   },
+  supervisor_sponsorhips: computed(
+    'model.user.subscription.purchased_supporters',
+    'model.user.subscription.available_supporters',
+    function() {
+      return this.get('model.user.subscription.available_supporters') || 0;
+    }
+  ),
   actions: {
     close: function() {
       modal.close();
@@ -47,6 +55,9 @@ export default modal.ModalController.extend({
       get_user_name.then(function(user_name) {
         var user = controller.get('model.user');
         var type = controller.get('edit_permission') ? 'add_edit' : 'add';
+        if(controller.get('premium_supporter') && controller.get('supervisor_sponsorhips')) {
+          type = type + "_premium";          
+        }
         user.set('supervisor_key', type + "-" + user_name);
         return user.save().then(function(user) {
           controller.set('linking', false);

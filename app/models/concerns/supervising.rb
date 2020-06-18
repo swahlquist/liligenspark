@@ -98,7 +98,8 @@ module Supervising
   
   def process_supervisor_key(key)
     action, key = key.split(/-/, 2)
-    if action == 'add' || action == 'add_edit'
+    var action_parts = action.split(/_/)
+    if action_parts[0] == 'add'
       return false unless self.any_premium_or_grace_period? && self.id
       supervisor = User.find_by_path(key)
       if key.match(/@/)
@@ -108,7 +109,7 @@ module Supervising
         end
       end
       return false if !supervisor || self == supervisor
-      self.class.link_supervisor_to_user(supervisor, self, nil, action == 'add_edit')
+      self.class.link_supervisor_to_user(supervisor, self, nil, action_parts.include?('edit'), action_parts.include?('premium') ? 'granted' : nil)
       return true
     elsif action == 'approve' && key == 'org'
       self.settings['pending'] = false
@@ -199,6 +200,11 @@ module Supervising
     def link_supervisor_to_user(supervisor, user, code=nil, editor=true, organization_unit_id=nil)
       supervisor = user if supervisor.global_id == user.global_id
       
+      grant_premium = false
+      if organization_unit_id == 'granted'
+        grant_premium = true
+        organization_unit_id = nil
+      end
       org_unit_ids = ((user.settings['supervisors'] || []).detect{|s| s['user_id'] == supervisor.global_id } || {})['organization_unit_ids'] || []
       org_unit_ids += UserLink.links_for(user).select{|l| l['type'] == 'supervisor' && l['record_code'] == Webhook.get_record_code(supervisor) }.map{|l| l['state'] && l['state']['organization_unit_ids'] }.compact.flatten
 
@@ -216,9 +222,13 @@ module Supervising
         supervisor.settings['supporter_role_auto_set'] = true
         supervisor.settings['preferences']['role'] = 'supporter'
       end
+      if grant_premium && user.premium_supporter_grants > 0 && supervisor.supporter_role? && !supervisor.premium_supporter?
+        user.grant_premium_supporter(supervisor)
+      end
       # If a user is on a free trial and they're added as a supervisor, set them to a free supporter subscription
       if supervisor.grace_period?
         supervisor.schedule(:remove_supervisors!)
+        supervisor.settings['preferences']['role'] = 'supporter'
       end
       supervisor.schedule_once(:update_available_boards)
       user.save_with_sync('supervisee')
