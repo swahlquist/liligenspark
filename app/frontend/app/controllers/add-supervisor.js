@@ -56,7 +56,7 @@ export default modal.ModalController.extend({
         var user = controller.get('model.user');
         var type = controller.get('edit_permission') ? 'add_edit' : 'add';
         if(controller.get('premium_supporter') && controller.get('supervisor_sponsorhips')) {
-          type = type + "_premium";          
+          type = type.replace(/^add/, 'add_premium');
         }
         user.set('supervisor_key', type + "-" + user_name);
         return user.save().then(function(user) {

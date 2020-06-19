@@ -487,11 +487,11 @@ module Subscription
   def grant_premium_supporter(user)
     return false unless self.premium_supporter_grants > 0
     user.settings['preferences']['role'] = 'supporter'
-    if !user.premium_supporter?
+    if user.billing_state != :premium_supporter
       user.subscription_override('granted_supporter')
       self.settings['subscription']['allotted_supporter_ids'] ||= []
       self.settings['subscription']['allotted_supporter_ids'] << user.global_id
-      self.settings['subscription']['allotted_supporter_ids'].uniq~
+      self.settings['subscription']['allotted_supporter_ids'].uniq!
       self.save!
       return true
     else

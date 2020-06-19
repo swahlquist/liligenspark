@@ -338,6 +338,71 @@ describe Supervising, :type => :model do
       expect(u.reload.settings['supervisees']).to eq(nil)
     end
 
+    it "should allow adding a supervisor while granting a premium credit" do
+      u = User.create
+      u2 = User.create
+      u2.settings['subscription']['purchased_supporters'] = 3
+      u2.save!
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u2.reload.premium_supporter_grants).to eq(2)
+    end
+
+    it "should not allow adding a supervisor with premium credit if none available" do
+      u = User.create
+      u2 = User.create
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}_granted"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:trialing_supporter)
+    end
+
     it "should raise an error when supervisor adding fails" do
       res = User.process_new({'supervisor_key' => "add-bacon"})
       expect(res.errored?).to eql(true)
