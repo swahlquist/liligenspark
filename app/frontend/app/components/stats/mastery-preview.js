@@ -60,7 +60,7 @@ export default Component.extend({
 
       context.fillStyle = '#000';
       context.textAlign = 'center';
-      var line_height = Math.max(20, (button_height / 4) * size_factor);
+      var line_height = Math.min(20 * size_factor, (button_height / 4) * size_factor);
       context.font = line_height + "px Arial";
       context.fillText("mastered", (10 * size_factor) + (button_width / 2 * size_factor), (20 * size_factor) + line_height);
       context.fillText("button", (10 * size_factor) + (button_width / 2 * size_factor), (20 * size_factor) + line_height + line_height);
@@ -91,14 +91,14 @@ export default Component.extend({
         }
         rows.push(row);
       }
-      "sample field";
       var left = ((10 + button_width) * size_factor) + 300;
       context.textAlign = 'right';
+      context.font = (20 * size_factor) + "px Arial";
       context.fillText("sample", left - 20, 30 * size_factor);
       context.fillText("field:", left - 20, 50 * size_factor);
       var top = 10 * size_factor
-      var height = elem.height - (20 * size_factor);
-      var width = Math.min(rect.width - left, height * (window.screen.width / window.screen.height));
+      var height = Math.min(200 * size_factor, elem.height - (20 * size_factor));
+      var width = Math.min((rect.width * size_factor) - left - (10 * size_factor), height * (window.screen.width / window.screen.height));
       var sample_pad = 2;
       var sample_height = (height / assessment.grid_height) - (sample_pad * 2 * size_factor);
       var sample_width = (width / assessment.grid_width) - (sample_pad * 2 * size_factor);
