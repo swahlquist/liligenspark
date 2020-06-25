@@ -75,7 +75,10 @@ export default Component.extend({
           if(!this.get('source.head') && !this.get('source.eyegaze') && !this.get('source.gamepad')) {
             offset = 30;
           }
-          if(this.get('source.head') || this.get('source.eyegaze') || this.get('source.gamepad')) {
+          if(this.get('source.head') || this.get('source.eyegaze')) {
+            // head pointing and eye gaze can have huge jumps in
+            // position, so we enable css transitions to make
+            // it less jarring
             cursor.classList.add('with_transition');
           } else {
             cursor.classList.remove('with_transition');
