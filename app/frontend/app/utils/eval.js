@@ -12,13 +12,13 @@ import { htmlSafe } from '@ember/string';
 import stashes from './_stashes';
 import capabilities from './capabilities';
 import { set as emberSet, observer } from '@ember/object';
-// allow user-defined prompt image/label
+// TODO: one session kept putting the right answer on the right side
+// after a while
+
+
 // select language when starting assessment
-// way to go back to a previous section
 
 
-// "find the on ethat people use for eating" had no correct answers
-// "find the group that train belongs to" had no correct answers
 
 var pixels_per_inch = 96;
 window.ppi = window.ppi || 96;
@@ -162,12 +162,16 @@ var evaluation = {
     }
     var already_done = {};
     var maxes = {};
+    console.log(event_types);
     event_types.forEach(function(type) {
       var key = type.type;
       var list = type.list;
       var level = levels.find(function(l) { return l[0].intro == key; });
       list.forEach(function(step, idx) {
-        if(!step || idx == 0) { 
+        step.forEach(function(event) {
+          console.log("EVENT");
+        });
+        if(!step || (idx == 0 && !(step[0] || {}).time)) { 
           var level_name = key || 'no-key';
           if(key == 'find_target') { level_name = i18n.t('find_target_level', "Find a target in a grid of empty buttons"); }
           else if(key == 'diff_target') { level_name = i18n.t('diff_target_level', "Find a target in a grid of populated buttons"); }
@@ -271,7 +275,7 @@ var evaluation = {
         var long_name = evaluation.step_description(level_step.id, library) || name;
 
         var fail = step.find(function(e) { return e && e.fail; });
-        if(key == 'find_target' || key == 'diff_target') {
+        if(key == 'find_target' || key == 'diff_target' || key == 'symbols') {
           var size = step[0].rows * step[0].cols;
           maxes[key] = maxes[key] || {size: 0};
           if(maxes[key].size <= size && pct > assessment.mastery_cutoff && !fail) {
@@ -463,11 +467,18 @@ var evaluation = {
           
     }
 
-    res.field = (maxes['field_sizes'] || {}).size || 0;
-    res.button_width = Math.round(((maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).win || 0) * 10) / 10;
-    res.button_height = Math.round(((maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).hin || 0) * 10) / 10;
-    res.grid_width = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).rows || 0;
-    res.grid_height = (maxes['diff_target'] || maxes['find_target'] || maxes['symbols'] || {}).cols || 0; 
+    var best_max = maxes['diff_target'] || {};
+    ['win', 'hin', 'rows', 'cols'].forEach(function(measurement) {
+      if(!best_max[measurement] || (maxes['symbols'] && maxes['symbols'][measurement] > best_max[measurement])) {
+        best_max[measurement] = maxes['symbols'][measurement];
+      }
+      best_max[measurement] = best_max[measurement] || maxes['find_target'][measurement];
+    });
+    res.button_width = Math.round((best_max.win || 0) * 10) / 10;
+    res.button_height = Math.round((best_max.hin || 0) * 10) / 10;
+    res.grid_height = best_max.rows || 0;
+    res.grid_width = best_max.cols || 0; 
+    res.field = Math.min((maxes['field_sizes'] || {}).size || 0, (res.grid_width * res.grid_height) || (maxes['field_sizes'] || {}).size);
     return res;
   }, 
   intro_board: function(level, step, user_id) {
@@ -857,6 +868,7 @@ evaluation.callback = function(key) {
       // don't make communicators do more than 4 libraries
       level.more_libraries = false;
     }
+    // Figure out rows based on current known skill level
     if(step.keyboard) {
       step_rows = 3;
       step_cols = 10;
@@ -1681,8 +1693,8 @@ evaluation.callback = function(key) {
           }
         }
         if(next_step) {
-          // If in find_target, step progression is adaptive
           var next_step_override = null;
+          // If in find_target, step progression is adaptive
           if(level[0].intro == 'find_target' || level[0].intro == 'diff_target') {
             // mark all steps they've already tried so we don't get stuck in a loop
             var next_step_id = null;
@@ -1708,17 +1720,23 @@ evaluation.callback = function(key) {
               working.ref.passable_increments = (working.ref.passable_increments || 0) + 1;
             } else if(step_reason == 'not_mastered' || step_reason == 'too_many_fails') {
               // If they fail go back to the previous grid size and try more buttons.
-              if(step.fail_id) {
-                next_step_id = step.fail_id;
+              working.backsteps = (working.backsteps || 0) + 1;
+              if(working.backsteps > 2) {
+                // Only allow walking backwards twice, or it gets too long
+                short_circuit = true;
               } else {
-                // If no fail_id is defined, walk backwards
-                // until you find a step they haven't done
-                var ref_step = step;
-                while(ref_step && attempted_steps[ref_step.id]) {
-                  var idx = level.indexOf(ref_step);
-                  ref_step = level[idx - 1];
-                }
-                next_step_id = (ref_step || {}).id || 1;
+                if(step.fail_id && !attempted_steps[step.fail_id]) {
+                  next_step_id = step.fail_id;
+                } else {
+                  // If no fail_id is defined, walk backwards
+                  // until you find a step they haven't done
+                  var ref_step = step;
+                  while(ref_step && attempted_steps[ref_step.id]) {
+                    var idx = level.indexOf(ref_step);
+                    ref_step = level[idx - 1];
+                  }
+                  next_step_id = (ref_step || {}).id || 1;
+                }  
               }
             }
             if(next_step_id) {
@@ -1744,6 +1762,14 @@ evaluation.callback = function(key) {
                 }
               }               
             }
+          } else {
+            if(step_reason == 'not_mastered') {
+              if(working.fails > 1) {
+                if(!level.continue_on_non_mastery) {
+                  short_circuit = true;
+                }
+              }  
+            }
           }
           // next step
           working.step = next_step_override || (working.step + 1);
@@ -1762,6 +1788,7 @@ evaluation.callback = function(key) {
             working.step = 0;
             working.level++;
             working.fails = 0;
+            working.backsteps = 0;
             if(level.more_libraries) {
               if(true) { // TODO: don't hang out in symbol-testing level for more than 5 minutes total
                 working.level--;

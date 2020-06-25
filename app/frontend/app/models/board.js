@@ -260,6 +260,20 @@ CoughDrop.Board = DS.Model.extend({
     });
     return trans;
   },
+  apply_button_level: function(button, level) {
+    var mods = button.level_modifications || {};
+    var keys = ['pre'];
+    for(var idx = 0; idx <= level; idx++) { keys.push(idx); }
+    keys.push('override');
+    keys.forEach(function(key) {
+      if(mods[key]) {
+        for(var attr in mods[key]) {
+          button[attr] = mods[key][attr];
+        }
+      }
+    });
+    return button;
+  },
   translated_buttons: function(label_locale, vocalization_locale) {
     var res = [];
     var trans = this.get('translations') || {};

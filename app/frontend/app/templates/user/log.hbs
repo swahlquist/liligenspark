@@ -39,6 +39,7 @@
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">{{t "Accuracy" key='accuracy'}}</div>
           <div class="panel-body">
+            {{t "hit" count=processed_assessment.hits key='n_hits'}},
             {{processed_assessment.avg_accuracy}}%
           </div>
         </div>
@@ -65,7 +66,7 @@
           <div class="panel-heading">{{t "Mastered Grid" key='mastered_grid'}}</div>
           <div class="panel-body">
             {{#if processed_assessment.grid_width}}
-              {{processed_assessment.grid_width}} x {{processed_assessment.grid_height}}
+              {{processed_assessment.grid_height}} x {{processed_assessment.grid_width}}
             {{else}}
               {{t "N/A" key='n/a'}}
             {{/if}}
@@ -77,7 +78,9 @@
           <div class="panel-heading">{{t "Mastered Buttons" key='mastered_buttons'}}</div>
           <div class="panel-body">
             {{#if processed_assessment.button_width}}
-              {{#if processed_assessment.approximate}}~{{/if}}{{processed_assessment.button_width}}" x {{processed_assessment.button_height}}"
+              <a href="#" {{action 'mastery_preview'}}>
+                {{#if processed_assessment.approximate}}~{{/if}}{{processed_assessment.button_width}}" x {{processed_assessment.button_height}}"
+              </a>
             {{else}}
               {{t "N/A" key='n/a'}}
             {{/if}}
@@ -98,6 +101,9 @@
         </div>
       </div>
     </div>
+    {{#if mastery_preview}}
+      {{stats/mastery-preview assessment=processed_assessment}}
+    {{/if}}
     <div style='page-break-inside: avoid;'>
       {{#if processed_assessment.accommodations}}
         <div style='margin-bottom: 10px;'>

@@ -215,6 +215,7 @@ export default Controller.extend({
     'model.word_suggestions',
     'model.description',
     'app_state.sidebar_pinned',
+    'app_state.sidebar_visible',
     'app_state.currentUser.preferences.word_suggestion_images',
     'text_position',
     'stashes.board_level',
@@ -227,7 +228,7 @@ export default Controller.extend({
       }
       var width = inner_width;
       var sidebar_width = window.innerWidth <= 767 ? 75 : 100;
-      if(app_state.get('sidebar_pinned')) {
+      if(app_state.get('sidebar_pinned') && app_state.get('sidebar_visible')) {
         width = inner_width - sidebar_width; // TODO: make sidebar size configurable, or have it match top bar
       }
       this.set('window_inner_width', inner_width);

@@ -65,6 +65,7 @@ export default Controller.extend({
         if(this.get('model.eval_in_memory')) {
           assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
         }
+        window.current_assesment = assessment;
         return evaluation.analyze(assessment);
       }
     }
@@ -116,6 +117,9 @@ export default Controller.extend({
     },
     draw_charts: function() {
       this.draw_charts();
+    },
+    mastery_preview: function() {
+      this.set('mastery_preview', !this.get('mastery_preview'));
     }
   }
 });
