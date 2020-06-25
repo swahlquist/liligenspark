@@ -845,6 +845,11 @@ var app_state = EmberObject.extend({
         stashes.persist('board_level', board_level);
         console.log("toggling to level", stashes.get('board_level'));
       }
+      if(app_state.get('currentBoardState') && stashes.get('board_level')) {
+        // set the level for currentBoardState
+        // possibly affecting root_board_state/temporary_root_board_state
+        app_state.set('currentBoardState.level', stashes.get('board_level'));
+      }
       stashes.persist('root_board_state', board_state);
     }
     if(current_mode == mode) {

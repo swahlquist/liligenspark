@@ -399,8 +399,8 @@ module Subscription
           'token_summary' => "Manually-set Communicator Account",
           'plan_id' => 'monthly_granted'
         })
-        self.expires_at ||= Time.now
       end
+      self.expires_at ||= Time.now
       if self.expires_at
         self.expires_at = [self.expires_at, Time.now].max + 1.month
         self.settings ||= {}

@@ -1857,7 +1857,7 @@ var capabilities;
           new_orientation.gamma = capabilities.last_orientation.gamma;
         }
         capabilities.last_orientation = new_orientation;        
-      }, 5000);
+      }, 200);
     }
     if(window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', function(event) {

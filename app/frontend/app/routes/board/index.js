@@ -51,6 +51,9 @@ export default Route.extend({
         stashes.set('root_board_state.text_direction', app_state.get('currentBoardState.text_direction'));
       }
     }
+    if(app_state.get('speak_mode') && stashes.get('board_level')) {
+      app_state.set('currentBoardState.level', stashes.get('board_level'));
+    }
     // By default use whatever locale is set for the board, but
     // if the user has explicitly set a preferred locale then try
     // to use that
