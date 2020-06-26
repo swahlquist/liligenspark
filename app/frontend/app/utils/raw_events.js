@@ -60,7 +60,7 @@ $(document).on('mousedown touchstart', function(event) {
     buttonTracker.lastTouchStart = now;
     buttonTracker.lastTouchStartAny = now;
   }
-  if(buttonTracker.dwell_elem) {
+  if(buttonTracker.dwell_elem && isFinite(event.clientX) && isFinite(event.clientY)) {
     console.log("linger cleared because touch event");
     buttonTracker.clear_dwell();
     event.target = document.elementFromPoint(event.clientX, event.clientY);
@@ -1488,7 +1488,8 @@ var buttonTracker = EmberObject.extend({
     // finger taps and would create a dwell element directly under 
     // the finger, essentially eating all touches
     if(buttonTracker.triggerEvent && buttonTracker.triggerEvent.type == 'touchstart') { console.log("linger ignored for touch event"); return; }
-    var dwell_selection = buttonTracker.dwell_selection != 'button';
+
+    var dwell_selection = buttonTracker.dwell_selection != 'button' && buttonTracker.dwell_selection != 'expression';
     // cursor-based trackers can throw the cursor up against the edges of the screen causing
     // inaccurate lingers for the buttons along the edges
     if(event.type == 'mousemove' && (event.clientX === 0 || event.clientY === 0 || event.clientX >= (window.innerWidth - 1) || event.clientY >= (window.innerHeight - 1))) {
