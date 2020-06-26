@@ -1559,10 +1559,12 @@ var buttonTracker = EmberObject.extend({
       }
     }
 
-    if(source == 'head' || source == 'eyegaze') {
-      buttonTracker.dwell_elem.add('with_transition');
-    } else {
-      buttonTracker.dwell_elem.remove('with_transition');
+    if(buttonTracker.dwell_elem) {
+      if(source == 'head' || source == 'eyegaze') {
+        buttonTracker.dwell_elem.classList.add('with_transition');
+      } else {
+        buttonTracker.dwell_elem.classList.remove('with_transition');
+      }  
     }
 
     var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
