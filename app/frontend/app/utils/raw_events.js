@@ -1304,7 +1304,7 @@ var buttonTracker = EmberObject.extend({
         right: event.horizontal >= 0 ? (event.horizontal / 1) : 0,
       };
       buttonTracker.head_tilt.uses = buttonTracker.head_tilt.uses || 0;
-      console.log("u" + buttonTracker.head_tilt.up + " d" + buttonTracker.head_tilt.down + " l" + buttonTracker.head_tilt.left + " r" + buttonTracker.head_tilt.right);
+      // console.log("u" + buttonTracker.head_tilt.up + " d" + buttonTracker.head_tilt.down + " l" + buttonTracker.head_tilt.left + " r" + buttonTracker.head_tilt.right);
     }
     if(buttonTracker.check('dwell_type') != 'arrow_dwell' && buttonTracker.check('dwell_type') != 'head' && !buttonTracker.gamepadupdate) {
       return;
@@ -1472,7 +1472,7 @@ var buttonTracker = EmberObject.extend({
             buttonTracker.gamepadupdate('move', e);
           }
         }
-        if(Object.keys(gamepads).length > 0 || Object.keys(buttonTracker.direction_keys).length > 0 || buttonTracker.check('head_tracking')) {
+        if(Object.keys(gamepads).length > 0 || Object.keys(buttonTracker.direction_keys).length > 0 || buttonTracker.check('head_tracking') || buttonTracker.gamepadupdate) {
           window.requestAnimationFrame(buttonTracker.handle_direction);
         } else {
           buttonTracker.handle_direction = null;
@@ -1529,6 +1529,8 @@ var buttonTracker = EmberObject.extend({
       console.log("linger waiting because on an ignore elem");
       return;
     }
+    var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
+    var cursor_expected = arrow_or_head_cursor || buttonTracker.check('dwell_icon');
     if(!buttonTracker.dwell_elem) {
       var elem = document.createElement('div');
       elem.id = 'linger';
@@ -1543,13 +1545,15 @@ var buttonTracker = EmberObject.extend({
       mask.className = 'mask';
       elem.appendChild(mask);
       buttonTracker.dwell_elem = elem;
-      if(!dwell_selection) {
+      if(!dwell_selection && cursor_expected) {
+        // Don't show the dwell animation elem 
+        // when not planning to use it
         buttonTracker.dwell_elem.classList.add('cursor');
+        buttonTracker.dwell_elem.style.visibility = 'hidden';
       }
     }
 
 
-    var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
     if(!buttonTracker.dwell_icon_elem) {
       var icon = document.createElement('div');
       icon.id = 'dwell_icon';
@@ -1617,7 +1621,7 @@ var buttonTracker = EmberObject.extend({
     }
     buttonTracker.linger_clear_later = runLater(function() {
       // clear the dwell icon if not dwell activity for a period of time
-      if(!buttonTracker.dwell_no_cutoff) {
+      if(!buttonTracker.dwell_no_cutoff && dwell_selection) {
         console.log("linger cleared because linger timed out");
         buttonTracker.clear_dwell(elem_wrap && elem_wrap.dom);  
       }
