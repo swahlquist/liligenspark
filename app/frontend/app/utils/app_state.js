@@ -973,10 +973,10 @@ var app_state = EmberObject.extend({
       buttonTracker.dwell_modeling = false;
       buttonTracker.dwell_enabled = false;
 
-      var head_pointer = _this.get('preferences.device.dwell_type') == 'head' && _this.get('preferences.device.dwell_head_pointer');
+      var head_pointer = _this.get('currentUser.preferences.device.dwell_type') == 'head' && _this.get('currentUser.preferences.device.dwell_head_pointer');
       if(app_state.get('speak_mode') && _this.get('currentUser.preferences.device.dwell')) {
         buttonTracker.dwell_enabled = true;
-        buttonTracker.dwell_timeout = _this.get('currentUser.preferences.device.dwell_duration');
+        buttonTracker.dwell_timeout = parseInt(_this.get('currentUser.preferences.device.dwell_duration'), 10);
         buttonTracker.dwell_delay = _this.get('currentUser.preferences.device.dwell_delay');
         buttonTracker.dwell_type = _this.get('currentUser.preferences.device.dwell_type');
         buttonTracker.dwell_icon = _this.get('currentUser.preferences.device.dwell_icon');

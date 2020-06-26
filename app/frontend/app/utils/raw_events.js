@@ -1388,7 +1388,7 @@ var buttonTracker = EmberObject.extend({
           pad_actions.up = buttonTracker.head_tilt.up;
           pad_actions.down = buttonTracker.head_tilt.down;
           buttonTracker.head_tilt.uses++;
-          type = 'head';
+          type = 'headtilt';
         }
         var rate = 2.5;
         var arrow_speed = (buttonTracker.gamepadupdate || {}).speed || buttonTracker.dwell_arrow_speed;
@@ -1464,6 +1464,7 @@ var buttonTracker = EmberObject.extend({
           buttonTracker.direction_y = y;
           var e = $.Event( 'gazelinger' );
           e.activation = type;
+          e.cursor_move = true;
           e.clientX = x;
           e.clientY = y;
           $(document).trigger(e);
@@ -1545,6 +1546,25 @@ var buttonTracker = EmberObject.extend({
         buttonTracker.dwell_elem.classList.add('cursor');
       }
     }
+    var source = 'cursor';
+    if(e.type == 'gazelinger') {
+      if(e.cursor_move) {
+        source = e.activation;
+      } else {
+        if(e.pointer) {
+          source = 'head';
+        } else {
+          source = 'eyegaze';
+        }
+      }
+    }
+
+    if(source == 'head' || source == 'eyegaze') {
+      buttonTracker.dwell_elem.add('with_transition');
+    } else {
+      buttonTracker.dwell_elem.remove('with_transition');
+    }
+
     var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
     if(!buttonTracker.dwell_icon_elem) {
       var icon = document.createElement('div');
@@ -1554,13 +1574,18 @@ var buttonTracker = EmberObject.extend({
         icon.classList.add('big');
       } else if(buttonTracker.check('dwell_icon')) {
         if(buttonTracker.check('dwell_icon') == 'arrow') {
-          icon.classList.add('big');
+          icon.classList.add('arrow');
         } else if(buttonTracker.check('dwell_icon') == 'circle') {
           icon.classList.add('circle');          
         } else if(buttonTracker.check('dwell_icon') == 'ball') {
           icon.classList.add('ball');          
+        } else if(buttonTracker.check('dwell_icon') == 'red_circle') {
+          icon.classList.add('red_circle');          
+        } else if(buttonTracker.check('dwell_icon') == 'dot') {
+          icon.classList.add('dot');          
         }
-      }
+      }  
+
       document.body.appendChild(icon);
       buttonTracker.dwell_icon_elem = icon;
     }
@@ -1588,8 +1613,10 @@ var buttonTracker = EmberObject.extend({
     }
     buttonTracker.linger_clear_later = runLater(function() {
       // clear the dwell icon if not dwell activity for a period of time
-      console.log("linger cleared because linger timed out");
-      buttonTracker.clear_dwell(elem_wrap && elem_wrap.dom);
+      if(!buttonTracker.dwell_no_cutoff) {
+        console.log("linger cleared because linger timed out");
+        buttonTracker.clear_dwell(elem_wrap && elem_wrap.dom);  
+      }
     }, allowed_delay_between_events);
 
     var now = (new Date()).getTime();
@@ -1614,7 +1641,7 @@ var buttonTracker = EmberObject.extend({
         // if it's been too long since starting to track the dwell, start over
         console.log("linger cleared because linger took too long");
         buttonTracker.last_dwell_linger = null;
-      } else if(now - buttonTracker.last_dwell_linger.updated > allowed_delay_between_events - duration) {
+      } else if(!buttonTracker.dwell_no_cutoff && now - buttonTracker.last_dwell_linger.updated > allowed_delay_between_events - duration) {
         // if it's been too long since the last dwell event, start over
         console.log("linger cleared because too long a gap");
         buttonTracker.last_dwell_linger = null;
@@ -1720,6 +1747,11 @@ var buttonTracker = EmberObject.extend({
           var ms_until_trigger = will_trigger_at - now;
           if((event.type == 'mousemove' && buttonTracker.dwell_no_cutoff && ms_since_start > minimum_interaction_window) || (ms_until_trigger < allowed_delay_between_events * 3 / 4)) {
             buttonTracker.linger_close_enough_later = runLater(function() {
+              buttonTracker.dwell_linger(event);
+            }, ms_until_trigger - 50);
+          } else if(event.type == 'gazelinger' && buttonTracker.dwell_no_cutoff) {
+            buttonTracker.linger_close_enough_later = runLater(function() {
+              console.log("FORCE SELECT");
               buttonTracker.dwell_linger(event);
             }, ms_until_trigger - 50);
           }

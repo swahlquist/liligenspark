@@ -332,8 +332,13 @@ export default Controller.extend({
   }),
   set_dwell_cursor_on_arrow_dwell: observer('arrow_or_head_dwell', function() {
     if(this.get('arrow_or_head_dwell')) {
-      this.set('pending_preferences.device.dwell_cursor', true);
-      this.set('pending_preferences.device.dwell_icon', 'arrow');
+      if(this.get('pending_preferences.device.dwell_type') == 'arrow_dwell') {
+        this.set('pending_preferences.device.dwell_no_cutoff', true);
+      }
+      if(!this.get('pending_preferences.device.dwell_cursor')) {
+        this.set('pending_preferences.device.dwell_cursor', true);
+        this.set('pending_preferences.device.dwell_icon', 'arrow');  
+      }
     } 
   }),
   button_dwell: computed('pending_preferences.device.dwell_selection', function() {
