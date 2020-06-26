@@ -1546,26 +1546,7 @@ var buttonTracker = EmberObject.extend({
         buttonTracker.dwell_elem.classList.add('cursor');
       }
     }
-    var source = 'cursor';
-    if(event.type == 'gazelinger') {
-      if(event.cursor_move) {
-        source = event.activation;
-      } else {
-        if(event.pointer) {
-          source = 'head';
-        } else {
-          source = 'eyegaze';
-        }
-      }
-    }
 
-    if(buttonTracker.dwell_elem) {
-      if(source == 'head' || source == 'eyegaze') {
-        buttonTracker.dwell_elem.classList.add('with_transition');
-      } else {
-        buttonTracker.dwell_elem.classList.remove('with_transition');
-      }  
-    }
 
     var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
     if(!buttonTracker.dwell_icon_elem) {
@@ -1590,6 +1571,26 @@ var buttonTracker = EmberObject.extend({
 
       document.body.appendChild(icon);
       buttonTracker.dwell_icon_elem = icon;
+    }
+    var source = 'cursor';
+    if(event.type == 'gazelinger') {
+      if(event.cursor_move) {
+        source = event.activation;
+      } else {
+        if(event.pointer) {
+          source = 'head';
+        } else {
+          source = 'eyegaze';
+        }
+      }
+    }
+
+    if(buttonTracker.dwell_icon_elem) {
+      if(source == 'head' || source == 'eyegaze') {
+        buttonTracker.dwell_icon_elem.classList.add('with_transition');
+      } else {
+        buttonTracker.dwell_icon_elem.classList.remove('with_transition');
+      }  
     }
 
     // TODO: consider updating these coords more often, free of the overhead
