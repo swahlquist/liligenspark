@@ -1547,11 +1547,11 @@ var buttonTracker = EmberObject.extend({
       }
     }
     var source = 'cursor';
-    if(even.type == 'gazelinger') {
-      if(even.cursor_move) {
-        source = even.activation;
+    if(event.type == 'gazelinger') {
+      if(event.cursor_move) {
+        source = event.activation;
       } else {
-        if(even.pointer) {
+        if(event.pointer) {
           source = 'head';
         } else {
           source = 'eyegaze';
