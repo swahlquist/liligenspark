@@ -318,8 +318,8 @@ var Subscription = EmberObject.extend({
             if(Subscription.product_types) {
               // TODO: switch this for monthly_ios once it's an option
               this.set('subscription_amount', 'monthly_ios');
-              this.set('subscription_type', 'long_term');
-              this.set('subscription_amount', 'long_term_ios');
+              // this.set('subscription_type', 'long_term');
+              // this.set('subscription_amount', 'long_term_ios');
             } else if(this.get('subscription_discount')) {
               this.set('subscription_amount', 'monthly_3');
             } else if(this.get('cheaper_offer')) {

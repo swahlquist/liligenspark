@@ -93,6 +93,7 @@ export default Component.extend({
       this.set('subscription.user_type', type);
     },
     set_subscription_type: function(type) {
+      window.subby = this.get('subscription');
       if(type && (type.match(/communicator/) || type.match(/gift_code/))) {
         this.set('subscription.user_type', 'communicator');
         type = type.replace(/_communicator/, '');
