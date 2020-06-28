@@ -676,6 +676,14 @@ Subscription.reopenClass({
       if(Subscription.product_types && Subscription.product_types[long_term_id]) {
         purchase_id = long_term_id;
       }
+      var plan = this.get('subscription_plan');
+
+      if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^eval/)) {
+        purchase_id = eval_id;
+      }
+      if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^slp/)) {
+        purchase_id = slp_id;
+      }
       if(subscription.get('subscription_type') == 'monthly') {
         purchase_id = subscription_id;
       }
@@ -737,6 +745,16 @@ document.addEventListener("deviceready", function() {
     store.register({
       id: one_time_id,
       alias: 'Long-Term Purchase',
+      type: store.NON_CONSUMABLE
+    });
+    store.register({
+      id: eval_id,
+      alias: 'Eval Account Purchase',
+      type: store.NON_CONSUMABLE
+    });
+    store.register({
+      id: slp_id,
+      alias: 'Premium Supporter Purchase',
       type: store.NON_CONSUMABLE
     });
     store.register({
