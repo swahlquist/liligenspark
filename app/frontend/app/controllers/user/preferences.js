@@ -192,6 +192,12 @@ export default Controller.extend({
     {name: i18n.t('circle', "A Medium Circle"), id: 'circle'},
     {name: i18n.t('circle', "A Large Circle"), id: 'ball'}
   ],
+  dwellTiltList: [
+    {name: i18n.t('normal', "Normal"), id: 'normal'},
+    {name: i18n.t('more_sensitive', "More Sensitive (Less Movement Required)"), id: 'sensitive'},
+    {name: i18n.t('even_more_sensitive', "Even More Sensitive (Minimal Movement Required)"), id: 'extra_sensitive'},
+    {name: i18n.t('less_sensitive', "Less Sensitive (Extra Movement Required)"), id: 'less_sensitive'}
+  ],
   dwellSelectList: computed('head_tracking_capable', function() {
     var res = [
       {name: i18n.t('time_on_target', "Select by Looking/Dwelling on a Target"), id: 'dwell'},

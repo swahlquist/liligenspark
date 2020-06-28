@@ -990,14 +990,17 @@ var app_state = EmberObject.extend({
         buttonTracker.dwell_cursor = _this.get('currentUser.preferences.device.dwell_cursor');
         buttonTracker.dwell_modeling = _this.get('currentUser.preferences.device.dwell_modeling');
         buttonTracker.dwell_gravity = _this.get('currentUser.preferences.device.dwell_gravity');
-        buttonTracker.head_tracking = !!(buttonTracker.dwell_type == 'head' && !head_pointer);
+        buttonTracker.head_tracking = !!  (buttonTracker.dwell_type == 'head' && !head_pointer);
         if(buttonTracker.dwell_type == 'eyegaze') {
           capabilities.eye_gaze.listen('noisy');
         } else if(buttonTracker.dwell_type == 'head' || buttonTracker.dwell_selection == 'expression') {
           if(head_pointer) {
             buttonTracker.dwell_type = 'eyegaze';
           }
-          capabilities.head_tracking.listen({head_pointing: head_pointer});
+          var head_opts = {head_pointing: head_pointer};
+          head_opts.tilt = capabilitis.head_tracking.tilt_factor(_this.get('currentUser.preferences.device.dwell_tilt_sensitivity'));
+  
+          capabilities.head_tracking.listen(head_opts);
         }
       } else {
         buttonTracker.dwell_enabled = false;

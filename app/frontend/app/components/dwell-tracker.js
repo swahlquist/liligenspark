@@ -190,7 +190,7 @@ export default Component.extend({
         });
       };
       if(head_pointer) {
-        capabilities.head_tracking.listen({head_pointing: true});
+        capabilities.head_tracking.listen({head_pointing: true, tilt: capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'))});
       } else {
         capabilities.eye_gaze.listen('noisy');
       }
@@ -268,7 +268,8 @@ export default Component.extend({
         }
       };
       if(capabilities.head_tracking.available) {
-        capabilities.head_tracking.listen();
+        var tilt_factor = capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
+        capabilities.head_tracking.listen({tilt: tilt_factor});
       }
 
       buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
@@ -277,7 +278,12 @@ export default Component.extend({
     
     if(_this.get('preferences.device.dwell_selection') == 'expression') {
       var expression_listener = function(e) {
-        if(e.expression && e.expression == _this.get('preferences.device.select_expression')) {
+        var matching_expression = e.expression && e.expression == _this.get('preferences.device.select_expression');
+        if(_this.get('preferences.device.select_expression') == 'smirk' && e.expresssion == 'smile') {
+          matching_expression = true;
+        }
+
+        if(matching_expression) {
           var now = (new Date()).getTime()
           _this.setProperties({
             selected: now

@@ -258,6 +258,17 @@ var capabilities;
         },
         stop_listening: function() {
         },
+        tilt_factor: function(level) {
+          var res = 1.0;
+          if(level == 'sensitive') {
+            res = 2.0;
+          } else if(level == 'extra_sensitive') {
+            res = 3.0;
+          } else if(level == 'less_sensitive') {
+            res = 0.5;
+          }
+          return res;
+        },
         calibrate: function() {
         },
         calibratable: function(cb) {
