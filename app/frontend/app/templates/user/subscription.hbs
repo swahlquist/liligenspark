@@ -135,7 +135,13 @@
         {{#unless subscription.user.is_sponsored}}
           <div style="margin-top: 20px;">
             {{# if app_state.domain_settings.full_domain}}
-              <a class='btn btn-default' href="#" {{action 'show_options'}}>{{t "Update my Billing Settings" key='change_my_subscription'}}</a>
+              <a class='btn btn-default' href="#" {{action 'show_options'}}>
+                {{#if subscription.app_pricing_override}}
+                  {{t "Add Premium Features" key='add_premium_features'}}
+                {{else}}
+                  {{t "Update my Billing Settings" key='change_my_subscription'}}
+                {{/if}}
+              </a>
               {{#unless subscription.user.subscription.extras_enabled}}
                 {{#unless subscription.app_pricing_override}}
                   <a class='btn btn-default' href="#" {{action 'premium_symbols' true}}>{{t "Purchase Premium Symbols" key='purchase_premium_symbols'}}</a>

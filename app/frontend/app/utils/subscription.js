@@ -284,17 +284,17 @@ var Subscription = EmberObject.extend({
   }),
   long_term_app_price: computed('app_state.app_store_purchase_types', function() {
     var prod = Subscription.product_types[long_term_id] || Subscription.product_types[one_time_id];
-    if(!prod || !prod.price) { return "249" }
+    if(!prod || !prod.price) { return "249.99" }
     return prod.price;
   }),
   supporter_app_price: computed('app_state.app_store_purchase_types', function() {
     var prod = Subscription.product_types[slp_id];
-    if(!prod || !prod.price) { return "29" }
+    if(!prod || !prod.price) { return "29.99" }
     return prod.price;
   }),
   eval_app_price: computed('app_state.app_store_purchase_types', function() {
     var prod = Subscription.product_types[eval_id];
-    if(!prod || !prod.price) { return "29" }
+    if(!prod || !prod.price) { return "29.99" }
     return prod.price;
   }),
   app_currency: computed('app_state.app_store_purchase_types', function() {
@@ -678,14 +678,12 @@ Subscription.reopenClass({
       }
       var plan = this.get('subscription_plan');
 
-      if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^eval/)) {
-        purchase_id = eval_id;
-      }
-      if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^slp/)) {
-        purchase_id = slp_id;
-      }
       if(subscription.get('subscription_type') == 'monthly') {
         purchase_id = subscription_id;
+      } else if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^eval/)) {
+        purchase_id = eval_id;
+      } else if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^slp/)) {
+        purchase_id = slp_id;
       }
       Subscription.in_app_store.defer = defer;
       Subscription.in_app_store.user_id = subscription.get('user.id');

@@ -24,9 +24,24 @@
           <td colspan='1' style='font-size: 16px; font-weight: bold; color: #fff; background-color: #666;' class=''>{{t "Eval" key='eval'}}</td>
         </tr>
         <tr>
-          <td colspan={{if subscription.app_pricing_override_no_monthly "1" "2"}} style='vertical-align: top;'>{{t "Works as a general communication app for one user on multiple devices, and can be linked to many free supporters" key='general_communication'}}</td>
-          <td colspan='1' style='vertical-align: top; font-size: ' class='separator semi_dim'>{{t "Used for supporting communicators." key='supporting_communicators'}}</td>
-          <td colspan='1' style='vertical-align: top; font-size: ' class='semi_dim'>{{t "Used for loaner/ evaluation devices." key='eval_descriptor'}}</td>
+          <td colspan={{if subscription.app_pricing_override_no_monthly "1" "2"}} style='vertical-align: top;'>
+            {{#if subscription.app_pricing_override}}
+              {{t "Add premium communicator access using this login across all devices" key='premium_communicator_across_devices'}}
+            {{/if}}
+            {{t "Works as a general communication app for one user on multiple devices, and can be linked to many free supporters" key='general_communication'}}
+          </td>
+          <td colspan='1' style='vertical-align: top; font-size: ' class='separator semi_dim'>
+            {{#if subscription.app_pricing_override}}
+              {{t "Add premium supporter access using this login across all devices" key='premium_supporter_across_devices'}}
+            {{/if}}
+            {{t "Used for supporting communicators." key='supporting_communicators'}}
+          </td>
+          <td colspan='1' style='vertical-align: top; font-size: ' class='semi_dim'>
+            {{#if subscription.app_pricing_override}}
+              {{t "Add premium evaluator access using this login across all devices" key='premium_eval_across_devices'}}
+            {{/if}}
+            {{t "Used for loaner/ evaluation devices." key='eval_descriptor'}}
+          </td>
         </tr>
         <tr>
           {{#unless subscription.app_pricing_override_no_monthly}}
@@ -180,7 +195,11 @@
             {{#unless subscription.app_pricing_override_no_monthly}}
               <td style='width: 25%;'>
                 <button style='width: 100%;' rel='monthly' class={{communicator_monthly_subscription_class}} type="button" {{action "set_subscription_type" 'monthly_communicator'}}>
-                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                  {{#if subscription.app_pricing_override}}
+                    <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                  {{else}}
+                    <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                  {{/if}}
                   {{#if subscription.app_pricing_override}}
                     {{subscription.monthly_app_price}} {{subscription.app_currency}}<br/>{{t "per month" key='per_month'}}
                   {{else}}
@@ -191,7 +210,11 @@
             {{/unless}}
             <td style='width: 25%;'>
               <button style='width: 100%;' rel='long_term' class={{communicator_long_term_subscription_class}} type="button" {{action "set_subscription_type" 'long_term_communicator'}}>
-                <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{#if subscription.app_pricing_override}}
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                {{else}}
+                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{/if}}
                 {{#if subscription.app_pricing_override}}
                   {{subscription.long_term_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
                 {{else}}
@@ -201,7 +224,11 @@
             </td>
             <td class='separator semi_dim' style='width: 25%;'>
               <button type="button" rel='slp_paid' class={{slp_long_term_class}} {{action "set_subscription" 'long_term_slp'}}>
-                <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{#if subscription.app_pricing_override}}
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                {{else}}
+                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{/if}}
                 {{#if subscription.app_pricing_override}}
                   {{subscription.supporter_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
                 {{else}}
@@ -211,7 +238,11 @@
             </td>
             <td class='semi_dim' style='width: 25%;'>
               <button type="button" rel='eval_paid' class={{eval_long_term_class}} {{action "set_subscription" 'long_term_eval'}}>
-                <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{#if subscription.app_pricing_override}}
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                {{else}}
+                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                {{/if}}
                 {{#if subscription.app_pricing_override}}
                   {{subscription.eval_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
                 {{else}}
