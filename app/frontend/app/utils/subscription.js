@@ -683,13 +683,13 @@ Subscription.reopenClass({
       if(Subscription.product_types && Subscription.product_types[long_term_id]) {
         purchase_id = long_term_id;
       }
-      var plan = subscription.get('subscription_plan');
+      var amt = subscription.get('subscription_amount');
 
       if(subscription.get('subscription_type') == 'monthly') {
         purchase_id = subscription_id;
-      } else if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^eval/)) {
+      } else if(Subscription.product_types && Subscription.product_types[eval_id] && amt && amt.match(/^eval/)) {
         purchase_id = eval_id;
-      } else if(Subscription.product_types && Subscription.product_types[eval_id] && plan.match(/^slp/)) {
+      } else if(Subscription.product_types && Subscription.product_types[eval_id] && amt && amt.match(/^slp/)) {
         purchase_id = slp_id;
       }
       Subscription.in_app_store.defer = defer;
