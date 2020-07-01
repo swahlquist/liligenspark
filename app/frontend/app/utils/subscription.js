@@ -329,7 +329,7 @@ var Subscription = EmberObject.extend({
             }
           }
         } else if(this.get('subscription_type') == 'long_term') {
-          if(this.get('subscription_amount').match(/^long_term_eval/)) {
+          if(this.get('subscription_amount') && this.get('subscription_amount').match(/^long_term_eval/)) {
             this.set('eval', true);
             if(Subscription.product_types) {
               this.set('subscription_amount', 'eval_long_term_ios');
@@ -349,7 +349,7 @@ var Subscription = EmberObject.extend({
             }  
           }
         }
-        if(this.get('subscription_amount').match(/^long_term/)) {
+        if(this.get('subscription_amount') && this.get('subscription_amount').match(/^long_term/)) {
           this.set('included_supporters', this.get('included_supporters') || 0);
         } else {
           this.set('included_supporters', 0);
@@ -407,7 +407,7 @@ var Subscription = EmberObject.extend({
     return this.get('subscriptionn_amount') == 'monthly_ios';
   }),
   slp_long_term: computed('subscription_amount', function() {
-    return this.get('subscription_amount').match(/^slp_long_term/) && !this.get('subscription_amount').match(/free/);
+    return (this.get('subscription_amount') || '').match(/^slp_long_term/) && !(this.get('subscription_amount') || '').match)(/free/);
   }),
   modeling_long_term: computed('subscription_amount', function() {
     return this.get('subscription_amount') == 'slp_monthly_free' || this.get('subscription_amount') == 'slp_long_term_free';
@@ -614,7 +614,7 @@ var Subscription = EmberObject.extend({
   purchase_description: computed('subscription_type', 'extras', function() {
     var res = i18n.t('activate', "Activate");
     if(this.get('subscription_type') == 'monthly') {
-      if(this.get('subscription_amount').match(/free/)) {
+      if(this.get('subscription_amount') && this.get('subscription_amount').match(/free/)) {
         res = i18n.t('purchase', "Purchase");
       } else {
         res = i18n.t('subscribe', "Subscribe");
@@ -711,7 +711,7 @@ Subscription.reopenClass({
         return RSVP.reject({error: "not ready"});
       }
       var amount = subscription.get('amount_in_cents');
-      if(subscription.get('subscription_amount').match(/free/)) {
+      if(subscription.get('subscription_amount') && subscription.get('subscription_amount').match(/free/)) {
         if (subscription.get('extras')) {
           amount = (25 * 100);
         } else {
