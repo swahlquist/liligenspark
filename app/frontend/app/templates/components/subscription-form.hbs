@@ -223,32 +223,40 @@
               </button>
             </td>
             <td class='separator semi_dim' style='width: 25%;'>
-              <button type="button" rel='slp_paid' class={{slp_long_term_class}} {{action "set_subscription" 'long_term_slp'}}>
-                {{#if subscription.app_pricing_override}}
-                  <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
-                {{else}}
-                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                {{/if}}
-                {{#if subscription.app_pricing_override}}
-                  {{subscription.supporter_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
-                {{else}}
-                  {{t "US$25 purchase" key='25_purchase'}}
-                {{/if}}
-              </button>
+              {{#if subscription.minimal_premium}}
+                {{t "already available for this account" key='already_available_for_this_account'}}
+              {{else}}
+                <button type="button" rel='slp_paid' class={{slp_long_term_class}} {{action "set_subscription" 'long_term_slp'}}>
+                  {{#if subscription.app_pricing_override}}
+                    <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
+                  {{else}}
+                    <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                  {{/if}}
+                  {{#if subscription.app_pricing_override}}
+                    {{subscription.supporter_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
+                  {{else}}
+                    {{t "US$25 purchase" key='25_purchase'}}
+                  {{/if}}
+                </button>
+              {{/if}}
             </td>
             <td class='semi_dim' style='width: 25%;'>
-              <button type="button" rel='eval_paid' class={{eval_long_term_class}} {{action "set_subscription" 'long_term_eval'}}>
-                {{#if subscription.app_pricing_override}}
-                  <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
-                {{else}}
-                  <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
-                {{/if}}
-                {{#if subscription.app_pricing_override}}
-                  {{subscription.eval_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
-                {{else}}
-                  {{t "US$25 purchase" key='25_purchase'}}
-                {{/if}}
-              </button>
+              {{#if subscription.minimal_premium}}
+                {{t "already available for this account" key='already_available_for_this_account'}}
+              {{else}}
+                <button type="button" rel='eval_paid' class={{eval_long_term_class}} {{action "set_subscription" 'long_term_eval'}}>
+                  {{#if subscription.app_pricing_override}}
+                    <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
+                  {{else}}
+                    <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
+                  {{/if}}
+                  {{#if subscription.app_pricing_override}}
+                    {{subscription.eval_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
+                  {{else}}
+                    {{t "US$25 purchase" key='25_purchase'}}
+                  {{/if}}
+                </button>
+              {{/if}}
             </td>
           </tr>
           {{#unless subscription.gift_type}}

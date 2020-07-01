@@ -580,6 +580,13 @@ var Subscription = EmberObject.extend({
     }
     return res;
   }),
+  minimal_premium: computed(
+    'user.subscription.never_expires',
+    'user.subscription.premium_supporter',
+    function() {
+      return this.get('user.subscription.never_expires') || this.get('user.subscription.premium_supporter');
+    }
+  ),
   subscription_plan_description: computed(
     'subscription_plan',
     'user.subscription.never_expires',
