@@ -676,7 +676,7 @@ Subscription.reopenClass({
       if(Subscription.product_types && Subscription.product_types[long_term_id]) {
         purchase_id = long_term_id;
       }
-      var plan = this.get('subscription_plan');
+      var plan = subscription.get('subscription_plan');
 
       if(subscription.get('subscription_type') == 'monthly') {
         purchase_id = subscription_id;

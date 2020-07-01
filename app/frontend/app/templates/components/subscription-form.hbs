@@ -196,7 +196,7 @@
               <td style='width: 25%;'>
                 <button style='width: 100%;' rel='monthly' class={{communicator_monthly_subscription_class}} type="button" {{action "set_subscription_type" 'monthly_communicator'}}>
                   {{#if subscription.app_pricing_override}}
-                    <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                    <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
                   {{else}}
                     <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                   {{/if}}
@@ -211,7 +211,7 @@
             <td style='width: 25%;'>
               <button style='width: 100%;' rel='long_term' class={{communicator_long_term_subscription_class}} type="button" {{action "set_subscription_type" 'long_term_communicator'}}>
                 {{#if subscription.app_pricing_override}}
-                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
                 {{else}}
                   <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                 {{/if}}
@@ -225,7 +225,7 @@
             <td class='separator semi_dim' style='width: 25%;'>
               <button type="button" rel='slp_paid' class={{slp_long_term_class}} {{action "set_subscription" 'long_term_slp'}}>
                 {{#if subscription.app_pricing_override}}
-                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
                 {{else}}
                   <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                 {{/if}}
@@ -239,7 +239,7 @@
             <td class='semi_dim' style='width: 25%;'>
               <button type="button" rel='eval_paid' class={{eval_long_term_class}} {{action "set_subscription" 'long_term_eval'}}>
                 {{#if subscription.app_pricing_override}}
-                  <b>{{t "add to my account" key='add_to_my_account'}}</b>
+                  <b>{{t "add to my account" key='add_to_my_account'}}</b><br/>
                 {{else}}
                   <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                 {{/if}}
