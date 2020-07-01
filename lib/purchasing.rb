@@ -697,6 +697,11 @@ module Purchasing
   def self.verify_receipt(user, data)
     res = {}
     prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
+    if user.user_name == 'ios_testing'
+      user.settings['receipts'] ||= []
+      user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
+      user.save!
+    end
     if data['ios']
       if data['device_id'] && (!data['receipt'] || !data['receipt']['appStoreReceipt'])
         token = PurchaseToken.for_device(data['device_id'])
