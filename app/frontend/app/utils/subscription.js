@@ -407,7 +407,7 @@ var Subscription = EmberObject.extend({
     return this.get('subscriptionn_amount') == 'monthly_ios';
   }),
   slp_long_term: computed('subscription_amount', function() {
-    return (this.get('subscription_amount') || '').match(/^slp_long_term/) && !(this.get('subscription_amount') || '').match)(/free/);
+    return (this.get('subscription_amount') || '').match(/^slp_long_term/) && !(this.get('subscription_amount') || '').match(/free/);
   }),
   modeling_long_term: computed('subscription_amount', function() {
     return this.get('subscription_amount') == 'slp_monthly_free' || this.get('subscription_amount') == 'slp_long_term_free';
