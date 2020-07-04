@@ -749,9 +749,9 @@ module Purchasing
             return {'error' => true, 'error_message' => 'Not a pre-purchase and no in-app receipts to validate'}
           end
           res['customer_id'] = "ios.#{user.global_id}"
-          res['one_time_purchase'] = true if ['CoughDropiOSBundle'].include?(res['product_id']) || res['pre_purchase']
+          res['one_time_purchase'] = true if ['CoughDropiOSBundle', 'CoughDropiOSEval', 'CoughDropiOSSLP'].include?(res['product_id']) || res['pre_purchase']
           res['subscription'] = true if ['CoughDropiOSMonthly'].include?(res['product_id'])
-          res['extras'] = true
+          res['extras'] = true if ['CoughDropiOSMonthly', 'CoughDropiOSBundle'].include?(res['product_id'])
 
           # Make sure if the token has already been used, we're applying it to the right user
           existing_user = nil

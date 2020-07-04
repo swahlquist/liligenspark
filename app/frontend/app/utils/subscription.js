@@ -184,11 +184,11 @@ var Subscription = EmberObject.extend({
             return valids.indexOf(this.get('subscription_amount')) != -1;
           }  
         }
-      } else {
+        } else {
         if(this.get('subscription_type') == 'monthly') {
           return this.get('subscription_amount') == 'slp_monthly_free';
         } else {
-          return ['slp_long_term_free', 'slp_long_term_25', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150'].indexOf(this.get('subscription_amount')) != -1;
+          return ['slp_long_term_free', 'slp_long_term_25', 'slp_long_term_50', 'slp_long_term_100', 'slp_long_term_150', 'slp_long_term_ios'].indexOf(this.get('subscription_amount')) != -1;
         }
       }
     }

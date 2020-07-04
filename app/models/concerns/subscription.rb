@@ -869,6 +869,7 @@ module Subscription
       # currently-added as an org supervisor
       json['active'] = true
       json['premium_supporter'] = true
+      json['never_expires'] = true if self.settings['subscription']['never_expires']
       json['org_sponsored'] = true if billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']
       json['expires'] = self.expires_at && self.expires_at.iso8601 if self.billing_state == :trialing_supporter
