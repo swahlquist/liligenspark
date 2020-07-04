@@ -3579,6 +3579,98 @@ describe Purchasing do
         expect(hash['plan_id']).to eq('long_term_ios')
       end
 
+      it "should process one-time eval purchase if specified" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3ag834g',
+                original_transaction_id: 'x984h3ag834g',
+                product_id: 'CoughDropiOSEval',
+                purchase_date_ms: '9',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,  
+              }]
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSEval')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(u.billing_state).to eq(:eval_communicator)
+        expect(hash['active']).to eq(true)
+      end      
+
+      it "should process one-time supporter purchase if specified" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3ag834g',
+                original_transaction_id: 'x984h3ag834g',
+                product_id: 'CoughDropiOSSLP',
+                purchase_date_ms: '9',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,  
+              }]
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSSLP')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(u.billing_state).to eq(:premium_supporter)
+        expect(hash['active']).to eq(true)
+      end      
+
       it "should process pre-purchase if specified" do
         u = User.create
         hash = u.reload.subscription_hash
@@ -3613,6 +3705,7 @@ describe Purchasing do
         expect(res['free_trial']).to eq(nil)
         expect(res['purchased']).to eq(true)
         expect(res['already_purchased']).to eq(nil)
+        u.reload
         expect(u.billing_state).to eq(:long_term_active_communicator)
         hash = u.reload.subscription_hash
         expect(hash['active']).to eq(true)

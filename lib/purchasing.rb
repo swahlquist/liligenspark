@@ -697,8 +697,8 @@ module Purchasing
   def self.verify_receipt(user, data)
     res = {}
     prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
-    if user && user.user_name && user.user_name.match(/^(ios|iap)/)
-      user.settings['receipts'] ||= []
+    if user && data && data['receipt'] && data['receipt']['appStoreReceipt']
+      user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt']}
       user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
       user.save!
     end
@@ -834,6 +834,7 @@ module Purchasing
               'AppPrePurchase' => 'long_term_ios',
               'com.mycoughdrop.paidcoughdrop' => 'long_term_ios',
               'CoughDropiOSPlusExtras' => 'long_term_ios',
+              'CoughDropiOSBundle' => 'long_term_ios',
               'CoughDropiOSEval' => 'eval_long_term_ios',
               'CoughDropiOSSLP' => 'slp_long_term_ios'
             }
@@ -880,9 +881,9 @@ module Purchasing
         else
           res['error'] = true
           res['error_message'] = "Error retrieving receipt, status #{json && json['status']}"
-          if user
-            user.settings['receipts'] ||= []
-            user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data, 'json' => json}
+          if user && data && data['receipt'] && data['receipt']['appStoreReceipt']
+            user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt']}
+            user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
             user.save!
           end
         end
