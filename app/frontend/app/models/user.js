@@ -190,7 +190,8 @@ CoughDrop.User = DS.Model.extend({
   // currently_premium means fully-featured premium, 
   // as in a paid or sponsored communicator 
   // * or a free trial *
-  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'grace_period', function() {
+  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'grace_period', 'subscription.never_expires', function() {
+    if(this.get('subscription.never_expires')) { return true; }
     return (this.get('subscription.active') || this.get('grace_period')) && !this.get('expired') && !this.get('subscription.premium_supporter');
   }),
   currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
