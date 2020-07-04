@@ -697,10 +697,11 @@ Subscription.reopenClass({
       // TODO: long-term purchase is a one-time offering right now,
       // meaning you can't re-buy it. We
       // will need a subscription/credit purchase fallback to
-      // offer 5 in the future.
+      // offer 5 years in the future.
       if(Subscription.product_types && Subscription.product_types[purchase_id] && Subscription.product_types[purchase_id].valid && Subscription.product_types[purchase_id].owned) {
-        // If already owned, don't try to re-purchase, skip straight to
-        // the verification phase
+        // If already owned, we won't have a receipt to verify
+        // but re-purchase won't really be possible. This manual
+        // call to validator will fail without a receipt (product.transaction).
         Subscription.in_app_store.validator(Subscription.product_types[purchase_id], function(success, data) {
           if(success) {
             defer.resolve({id: 'ios_iap'});
@@ -897,12 +898,15 @@ document.addEventListener("deviceready", function() {
       }
     });
     capabilities.bundle_id().then(function(res) {
-      var app_bundle_id = res.bundle_id;
-      store.register({
-        id: app_bundle_id,
-        alias: 'App Pre-Purchase',
-        type: store.NON_CONSUMABLE
-      });
+      // Don't register known-free bundles`
+      if(app_bundle_id != "com.mycoughdrop.coughdrop") {
+        var app_bundle_id = res.bundle_id;
+        store.register({
+          id: app_bundle_id,
+          alias: 'App Pre-Purchase',
+          type: store.NON_CONSUMABLE
+        });  
+      }
       if(!store.last_refresh) {
         store.last_refresh = (new Date()).getTime();
         console.log("app store refresh due to init");

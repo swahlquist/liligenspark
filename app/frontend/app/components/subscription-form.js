@@ -22,6 +22,7 @@ export default Component.extend({
     }
     this.set('session', session);
     this.set('see_pricing', true);
+    this.set('purchase_state', null);
     session.check_token();
 
     if((this.get('session.invalid_token') || !capabilities.access_token) && !this.get('pricing_only')) {
@@ -147,6 +148,7 @@ export default Component.extend({
         return;
       }
       var _this = this;
+      _this.set('purchase_state', {pending: true});
       var subscribe = function(token, type, code) {
         subscription.set('finalizing_purchase', true);
         if(subscription.get('extras') && type != 'gift_code') {
@@ -167,6 +169,7 @@ export default Component.extend({
           progress_tracker.track(data.progress, function(event) {
             if(event.status == 'errored') {
               _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed', "Purchase failed. Please try again or contact support for help."));
+              _this.set('purchase_state', null);
               _this.send('reset');
               console.log(event);
               if(event.sub_status == 'server_unresponsive') {
@@ -175,6 +178,7 @@ export default Component.extend({
                 console.error('purchase_progress_failed');
               }
             } else if(event.status == 'finished' && event.result && event.result.success === false && event.result.error == 'card_declined') {
+              _this.set('purchase_state', null);
               var str = i18n.t('card_declined', "Purchase failed, your card was declined. Please try a different card or contact support for help.");
               if(event.result.decline_code && event.result.decline_code == 'fraudulent') {
                 str = i18n.t('card_declined_by_billing', "Purchase failed, our billing system has flagged your card as high-risk. Please try a different card or contact support for help.");
@@ -186,11 +190,13 @@ export default Component.extend({
               _this.send('reset');
               console.log(event);
             } else if (event.result && event.result.success === false) {
+              _this.set('purchase_state', null);
               _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed', "Purchase failed. Please try again or contact support for help."));
               _this.send('reset');
               console.log(event);
               console.error('purchase_other_error');
             } else if(event.status == 'finished') {
+              _this.set('purchase_state', null);
               user.set('needs_billing_update', false);
               if(user.get('preferences')) {
                 user.reload().then(function() {
@@ -207,6 +213,7 @@ export default Component.extend({
             }
           });
         }, function(err) {
+          _this.set('purchase_state', null);
           console.log(err);
           console.error('purchase_subscription_start_failed');
           _this.send('reset');
@@ -227,6 +234,7 @@ export default Component.extend({
           console.error('purchase_promise_resolved');
           subscribe(result, subscription.get('subscription_amount_plus_trial'), subscription.get('gift_code'));
         }, function(err) {
+          _this.set('purchase_state', null);
           if(err && err.wrong_user) {
             modal.error(i18n.t('purchasing_wrong_user', "This device has already been used to purchase the app, but for a different user"));
           } else {

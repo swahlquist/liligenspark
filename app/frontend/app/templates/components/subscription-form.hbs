@@ -432,7 +432,9 @@
                 {{t "Discount Applied!" key='discount_applied'}}
               </div>
             {{/if}}
-            {{#if subscription.user.grace_period}}
+            {{#if purchase_state.pending}}
+              {{t "Checking..." key='checking'}}
+            {{else if subscription.user.grace_period}}
               {{t "Activate Account" key='activate_account'}}
             {{else}}
               {{t "Update Account" key='update_account'}}

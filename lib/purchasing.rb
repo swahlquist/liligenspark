@@ -697,13 +697,13 @@ module Purchasing
   def self.verify_receipt(user, data)
     res = {}
     prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
-    if user.user_name == 'ios_testing'
+    if user && user.user_name && user.user_name.match(/^(ios|iap)/)
       user.settings['receipts'] ||= []
       user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
       user.save!
     end
     if data['ios']
-      if data['device_id'] && (!data['receipt'] || !data['receipt']['appStoreReceipt'])
+      if data['device_id'] && data['pre_purchase'] && (!data['receipt'] || !data['receipt']['appStoreReceipt'])
         token = PurchaseToken.for_device(data['device_id'])
         if token && token.user != user
           return {'error' => true, 'wrong_user' => true, 'error_message' => 'The app has already been purchased for a different user on this device'}
@@ -830,13 +830,14 @@ module Purchasing
           elsif res['one_time_purchase']
             transaction_ids = (user.settings['subscription']['prior_purchase_ids'] || []) + [user.settings['subscription']['last_purchase_id'] || 'xx']
             ios_plan_hash = {
-              'com.mycoughdrop.coughdrop' => 'long_term_ios',
+#              'com.mycoughdrop.coughdrop' => 'long_term_ios',
+              'AppPrePurchase' => 'long_term_ios',
               'com.mycoughdrop.paidcoughdrop' => 'long_term_ios',
               'CoughDropiOSPlusExtras' => 'long_term_ios',
               'CoughDropiOSEval' => 'eval_long_term_ios',
               'CoughDropiOSSLP' => 'slp_long_term_ios'
             }
-            expected_plan = ios_plan_hash[res['bundle_id']]
+            expected_plan = ios_plan_hash[res['product_id']] || ios_plan_hash[res['bundle_id']]
             if !existing_user && (hash['plan_id'] != expected_plan || !transaction_ids.include?(res['transaction_id']))
               User.subscription_event({
                 'purchase' => true,
@@ -879,6 +880,11 @@ module Purchasing
         else
           res['error'] = true
           res['error_message'] = "Error retrieving receipt, status #{json && json['status']}"
+          if user
+            user.settings['receipts'] ||= []
+            user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data, 'json' => json}
+            user.save!
+          end
         end
       else
         res['error'] = true
