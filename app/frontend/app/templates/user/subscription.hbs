@@ -61,17 +61,23 @@
       <p style='margin-top: 20px;'>{{t "Your account also has access to premium symbols, so you can search through and include additional symbols from SymbolStix, or PCS (BoardMaker) by Tobii Dynavox in your boards." key='premium_symbols_enabled'}}</p>
     {{/if}}
     <div style="clear: left;"></div>
-    <p style="margin-top: 10px;">
-      <a href="#" {{action 'show_expiration_notes'}}>{{t "what happens if my \"cloud extras\" access expires?" key='what_happens_expires'}}</a>
-    </p>
-    {{#if show_expiration_notes}}
-      <p class="explanation" style="margin-top: 10px;">
-        {{t "We don't want to shut off anyone's voice, even if funding unexpectedly becomes an issue down the line. If a user's subscription expires %app_name% will still work as a communication system but premium features like reporting and video notes will be disabled." key='expiration_notes_pre'}}
-        {{#if app_state.domain_settings.support_url}}
-          {{t "If you need help with funding please" key='expiration_notes_support'}}
-          <a href={{app_state.domain_settings.support_url}}>{{t "contact our support team" key='contact_support_team'}}</a> {{t "for more information." key='expiration_notes'}}
+    {{#if subscription.user.currently_premium}}
+      {{#unless subscription.user.subscription.eval_account}}
+      {{#unless subscription.user.subscription.never_expires}}
+        <p style="margin-top: 10px;">
+          <a href="#" {{action 'show_expiration_notes'}}>{{t "what happens if my \"cloud extras\" access expires?" key='what_happens_expires'}}</a>
+        </p>
+        {{#if show_expiration_notes}}
+          <p class="explanation" style="margin-top: 10px;">
+            {{t "We don't want to shut off anyone's voice, even if funding unexpectedly becomes an issue down the line. If a user's subscription expires %app_name% will still work as a communication system but premium features like reporting and video notes will be disabled." key='expiration_notes_pre'}}
+            {{#if app_state.domain_settings.support_url}}
+              {{t "If you need help with funding please" key='expiration_notes_support'}}
+              <a href={{app_state.domain_settings.support_url}}>{{t "contact our support team" key='contact_support_team'}}</a> {{t "for more information." key='expiration_notes'}}
+            {{/if}}
+          </p>
         {{/if}}
-      </p>
+      {{/unless}}
+      {{/unless}}
     {{/if}}
   </div>
   </div>

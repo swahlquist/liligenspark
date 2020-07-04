@@ -769,6 +769,9 @@ document.addEventListener("deviceready", function() {
       type: store.PAID_SUBSCRIPTION
     });
     store.validator = function(product, callback) {
+      if(product.type == 'application') {
+        return callback(true, {});
+      }
       var user_id = store.user_id || Subscription.in_app_store.user_id || app_state.get('currentUser.id');
       var pre_purchase = product.alias == 'App Pre-Purchase';
       var device_id = (window.device && window.device.uuid) || stashes.get_raw('coughDropDeviceId');
@@ -879,7 +882,13 @@ document.addEventListener("deviceready", function() {
       }
     });
     store.when("product").approved(function(product) {
-      product.verify();
+      var promise = product.verify();
+      promise.success(function(product, purchaseData) {
+
+      });
+      promise.error(function(err) {
+        console.error("verification error", err);
+      })
     });
     store.when("product").cancelled(function(product) {
       if(store.defer) {

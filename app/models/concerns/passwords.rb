@@ -50,6 +50,7 @@ module Passwords
 
   def valid_password?(guess)
     self.settings ||= {}
+    guess ||= ''
     if self.settings['password'] && self.settings['password']['pre_hash_algorithm'] && !guess.match(/^hashed\?:#/)
       guess = pre_hashed_password(guess)
     end
