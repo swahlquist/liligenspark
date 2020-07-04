@@ -246,10 +246,10 @@ module Purchasing
     elsif type == 'long_term_ios' || type == 'monthly_ios' || type == 'eval_long_term_ios' || type == 'slp_long_term_ios'
       valid = false
       hash = user.subscription_hash
-      if hash['plan_id'] == type
+      if user.settings['subscription']['plan_id'] == type || user.settings['subscription']['last_purchase_plan_id'] == type
         return {success: true, type: type}
       else
-        return {success: false, error: true, type: type, error_message: "subscription type did not match expected value, #{hash['plan_id'] || 'none'} but expecting #{type}"}
+        return {success: false, error: true, type: type, error_message: "subscription type did not match expected value, #{hash['plan_id'] || user.settings['subscription']['plan_id'] || user.settings['subscription']['last_purchase_plan_id'] || 'none'} but expecting #{type}"}
       end
     end
     user && user.log_subscription_event({:log => 'paid subscription'})
