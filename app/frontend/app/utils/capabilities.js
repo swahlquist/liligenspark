@@ -980,23 +980,23 @@ var capabilities;
         list_files: function(dirname, include_size) {
           // uses native calls
           var promise = capabilities.mini_promise();
-            if(window.cordova && window.cordova.exec) {
-              var dir = window.cordova.file.dataDirectory.replace(/file:\/\//, '') + dirname + '/';
-              window.cordova.exec(function(list) {
-                var res = [];
-                list.files.forEach(function(file) {
-                  var fn = file.split(/\//).pop();
-                  if(!file.match(/\/$/) && fn.match(/\./)) {
-                    res.push(fn);
-                  }
-                });
-                res.size = list.size;
-                promise.resolve(res);
-              }, function(err) {
-                promise.reject(err);
-              }, 'CoughDropMisc', 'listFiles', [{dir: dir}]);
-              return promise;
-            }
+          if(window.cordova && window.cordova.exec) {
+            var dir = window.cordova.file.dataDirectory.replace(/file:\/\//, '') + dirname + '/';
+            window.cordova.exec(function(list) {
+              var res = [];
+              list.files.forEach(function(file) {
+                var fn = file.split(/\//).pop();
+                if(!file.match(/\/$/) && fn.match(/\./)) {
+                  res.push(fn);
+                }
+              });
+              res.size = list.size;
+              promise.resolve(res);
+            }, function(err) {
+              promise.reject(err);
+            }, 'CoughDropMisc', 'listFiles', [{dir: dir}]);
+            return promise;
+          }
           capabilities.storage.assert_directory(dirname).then(function(dir) {
             var res = [];
             res.size = 0;
