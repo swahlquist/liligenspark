@@ -188,17 +188,28 @@ CoughDrop.User = DS.Model.extend({
     return (joined < a_while_ago);
   }),
   // currently_premium means fully-featured premium, 
-  // as in a paid or sponsored communicator 
+  // as in a paid or sponsored communicator
+  // (even a paid communicator who sets their role to supporter)
   // * or a free trial *
-  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'grace_period', 'subscription.never_expires', function() {
+  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'subscription.premium_supporter_plus_communicator', 'grace_period', 'subscription.never_expires', 'subscription.timestamp', function() {
     if(this.get('subscription.never_expires')) { return true; }
-    return (this.get('subscription.active') || this.get('grace_period')) && !this.get('expired') && !this.get('subscription.premium_supporter');
+    // NOTE: Long-term purchases that have expired and have
+    // remained unsynced for a while could be
+    // marked as not-currently-premium, but if you're 
+    // offline they're not going to be adding any load anyway
+    return (this.get('subscription.active') || this.get('grace_period')) && !this.get('expired') && (!this.get('subscription.premium_supporter') || this.get('subscription.premium_supporter_plus_communicator'));
   }),
   currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
     return !!(this.get('currently_premium') || this.get('fully_purchased'));
   }),
   currently_premium_or_premium_supporter: computed('currently_premium', 'supporter_role', 'subscription.premium_supporter', function() {
     return !!(this.get('currently_premium') || (this.get('supporter_role') && this.get('subscription.premium_supporter')));
+  }),
+  unclear_if_subscription_active: computed('subscription.timestamp', function() {
+    // TODO: If the user's subscription_hash is outdated
+    // by more than 2 months and says it's active
+    // but they are monthly or 
+    // long-term-whose-expiration-has-passed, encourage a sync
   }),
   // limited_paid_supervisor is a PAID supervisor who doesn't have
   // any communicators they're working with, and so are 
@@ -235,12 +246,12 @@ CoughDrop.User = DS.Model.extend({
     return expires < now;
   }),
   expired: computed('expiration_passed', 'membership_type', 'supporter_role', 'fully_purchased', function() {
-    // expired is only true for communicators who have
+    // expired is only true for users who have
     // never purchased the app in any form
     if(this.get('membership_type') != 'premium') { return true; }
     var passed = this.get('expiration_passed');
     if(!passed) { return false; }
-    if(this.get('supporter_role')) { return false; }
+    // if(this.get('supporter_role')) { return false; }
     if(this.get('fully_purchased')) { return false; }
     return !!passed;
   }),
