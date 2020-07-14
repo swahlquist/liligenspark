@@ -17,7 +17,7 @@ export default Component.extend({
   },
   select_style: computed('short', function() {
     if(this.get('short')) {
-      return htmlSafe('height: 25px;');
+      return htmlSafe('height: 25px; padding-top: 0; padding-bottom: 0;');
     } else {
       return htmlSafe('');
     }
