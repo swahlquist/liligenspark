@@ -82,7 +82,13 @@ export default Controller.extend({
               }
               list.push(obj);
             }
-            list.sort(function(a, b) { return b.value - a.value; });
+            var sort_by_key = _this.get('sort_by_key');
+            list.sort(function(a, b) { 
+              if(sort_by_key && a.key != b.key) {
+                return a.key.localeCompare(b.key);
+              }
+              return b.value - a.value; 
+            });
             _this.set('results.count', list.length);
             _this.set('results.stats', list);
           } else {
@@ -100,6 +106,7 @@ export default Controller.extend({
           _this.set('results.error', {error: err.error || i18n.t('unexpected_error', "Unexpected error")});
         });
       };
+      _this.set('sort_by_key', false);
       if(this.get('current_report') == 'recent_sessions') {
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/logs', 100);
       } else if(this.get('current_report') == 'all_users') {
@@ -107,6 +114,7 @@ export default Controller.extend({
       } else if(this.get('current_report') == 'all_supervisors') {
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/supervisors');
       } else {
+        _this.set('sort_by_key', ['premium_voices', 'extras', 'protected_sources', 'subscriptions'].indexOf(_this.get('current_report')) != -1);
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/admin_reports?report=' + _this.get('current_report'));
       }
     } else {
