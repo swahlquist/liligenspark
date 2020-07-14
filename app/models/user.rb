@@ -392,7 +392,7 @@ class User < ActiveRecord::Base
   end
   
   def self.generate_email_hash(email)
-    Digest::MD5.hexdigest((email || "none").to_s.downcase)
+    Digest::MD5.hexdigest((email || "none").to_s.strip.downcase)
   end
   
   def generated_avatar_url(override_url=nil)
