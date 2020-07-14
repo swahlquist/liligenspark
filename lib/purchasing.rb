@@ -14,7 +14,7 @@ module Purchasing
     previous = event['data'] && event['data']['previous_attributes']
     event_result = nil
     if object
-      if object && object['metadata'] && object['metadata']['type'] == 'extras'
+      if object && object['metadata'] && object['metadata']['type'] == 'extras' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
         data = {:extras => true, :purchase_id => object['id'], :valid => true}
         if event['type'] == 'charge.succeeded'
           if object['metadata'] && (object['metadata']['purchased_symbols'] == 'true' || object['metadata']['purchased_supporters'].to_i > 0)
@@ -32,7 +32,7 @@ module Purchasing
           data[:valid] = false
         end
       else
-        if event['type'] == 'charge.succeeded'
+        if event['type'] == 'charge.succeeded' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
           valid = object['metadata'] && object['metadata']['user_id'] && object['metadata']['plan_id']
           if valid
             time = 5.years.to_i
@@ -71,7 +71,7 @@ module Purchasing
             end
           end
           data = {:purchase => true, :purchase_id => object['id'], :valid => !!valid}
-        elsif event['type'] == 'charge.failed'
+        elsif event['type'] == 'charge.failed' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
           valid = false
           if object['customer'] && object['customer'] != 'free'
             customer = Stripe::Customer.retrieve(object['customer'])
@@ -113,7 +113,7 @@ module Purchasing
               prior_user.transfer_subscription_to(new_user, true)
             end
           end
-        elsif event['type'] == 'customer.subscription.created'
+        elsif event['type'] == 'customer.subscription.created' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id'] && object['plan'] && object['plan']['id']
           if valid
@@ -130,7 +130,7 @@ module Purchasing
             })
           end
           data = {:subscribe => true, :valid => !!valid}
-        elsif event['type'] == 'customer.subscription.updated'
+        elsif event['type'] == 'customer.subscription.updated' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if object['status'] == 'unpaid' || object['status'] == 'canceled'
@@ -167,7 +167,7 @@ module Purchasing
             end
             data = {:subscribe => true, :valid => !!valid}
           end
-        elsif event['type'] == 'customer.subscription.deleted'
+        elsif event['type'] == 'customer.subscription.deleted' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if valid
@@ -315,6 +315,7 @@ module Purchasing
         meta = {
           'user_id' => user.global_id,
           'plan_id' => plan_id,
+          'platform_source' => 'coughdrop',
           'type' => 'license'
         }
         meta['purchased_symbols'] = 'true' if include_extras
@@ -366,7 +367,7 @@ module Purchasing
         if !customer
           user && user.log_subscription_event({:log => 'creating new customer'})
           customer = Stripe::Customer.create({
-            :metadata => { 'user_id' => user.global_id },
+            :metadata => { 'user_id' => user.global_id, 'platform_source' => 'coughdrop' },
             :email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil
           })
         end
@@ -374,7 +375,7 @@ module Purchasing
           user && user.log_subscription_event({:log => 'new subscription for existing customer'})
           sub = nil
           if customer.subscriptions.count > 0
-            sub = customer.subscriptions.data.detect{|s| s.status == 'active' || s.status == 'past_due' || s.status == 'unpaid' }
+            sub = customer.subscriptions.data.detect{|s| (s.metadata['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }
           end
           if sub
             sub.source = token['id']
@@ -392,11 +393,12 @@ module Purchasing
             sub = customer.subscriptions.create({
               :plan => plan_id,
               :source => token['id'],
+              :platform_source => 'coughdrop',
               :trial_end => trial_end
             })
           end
           customer = Stripe::Customer.retrieve(customer['id'])
-          any_sub = customer.subscriptions.data.detect{|s| s.status == 'active' || s.status == 'trialing' }
+          any_sub = customer.subscriptions.data.detect{|s| (s.metadata['platform_source'] || 'coughdrop') == 'coughdrop' && (s.status == 'active' || s.status == 'trialing') }
           if include_extras || include_n_supporters > 0
             one_time_amount += self.extras_symbols_cost if include_extras
             one_time_amount += (include_n_supporters * self.extras_supporter_cost)
@@ -416,7 +418,8 @@ module Purchasing
             if customer['default_source']
               meta = {
                 'user_id' => user.global_id,
-                'type' => 'extras'
+                'type' => 'extras',
+                'platform_source' => 'coughdrop'
               }
               meta['purchased_supporters'] = include_n_supporters if include_n_supporters > 0
               meta['purchased_symbols'] = 'true' if include_extras
@@ -436,6 +439,7 @@ module Purchasing
                 currency: 'usd',
                 customer: customer['id'],
                 description: desc
+                metadata: {'platform_source' => 'coughdrop'}
               })
             end
             extras_added = {:customer_id => customer.id, :purchase_id => charge_id, :symbols => !!include_extras, :supporters => include_n_supporters}
@@ -524,6 +528,7 @@ module Purchasing
           :metadata => {
             'user_id' => user.global_id,
             'purchased_symbols' => 'true',
+            'platform_source' => 'coughdrop',
             'type' => 'extras'
           }
         })
@@ -599,6 +604,7 @@ module Purchasing
         :metadata => {
           'giver_id' => user && user.global_id,
           'giver_email' => opts['email'] || (user && user.settings['email']),
+          'platform_source' => 'coughdrop',
           'plan_id' => type
         }
       })
