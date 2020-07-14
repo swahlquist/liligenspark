@@ -78,6 +78,7 @@ module JsonApi::User
       nearest_device_key = (nearest_device && nearest_device.unique_device_key) || 'default'
       
       json['premium_voices'] = user.settings['premium_voices'] if user.settings['premium_voices']
+      json['premium_voices']['always_allowed'] = true if json['premium_voices']
       json['premium_voices'] ||= user.default_premium_voices
       json['preferences']['device'] = {}.merge(user.settings['preferences']['devices'][nearest_device_key] || {})
       json['preferences']['device'].delete('ever_synced')
