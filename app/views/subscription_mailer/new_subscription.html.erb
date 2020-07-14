@@ -13,6 +13,25 @@ Organization: <%= (Organization.attached_orgs(@user).detect{|o| o['sponsored'] }
 <% elsif @subscription['started'] %>
 Subscription: Recurring<br/>
 Plan: <%= @subscription['plan_id'] %>
+<% if @user.subscription_hash['extras_enabled'] %>
+Extras: Purchased Premium Symbols
+<% end %>
+<% elsif @subscription['eval_account'] %>
+Plan: Evaluator Account
+<% if @user.settings['subscription'] && @user.settings['subscription']['purchase_amount'] %>
+Purchase Amount: $<%= @user.settings['subscription']['purchase_amount'] %><br/>
+<% end %>
+<% if @user.subscription_hash['extras_enabled'] %>
+Extras: Purchased Premium Symbols
+<% end %>
+<% elsif @subscription['premium_supporter'] %>
+Plan: Premium Supporter Account
+<% if @user.settings['subscription'] && @user.settings['subscription']['purchase_amount'] %>
+Purchase Amount: $<%= @user.settings['subscription']['purchase_amount'] %><br/>
+<% end %>
+<% if @user.subscription_hash['extras_enabled'] %>
+Extras: Purchased Premium Symbols
+<% end %>
 <% elsif @subscription['purchased'] %>
 Subscription: Purchase<br/>
 Plan: <%= @subscription['plan_id'] %><br/>
@@ -26,7 +45,7 @@ Extras: Purchased Premium Symbols
 Discount Code: <%= @user.settings['subscription']['discount_code'] %>
 <% end %>
 <% else %>
-Subscription: No subscription information provided (what the?)
+Subscription: No subscription information provided (what the?) (<%= @user.billing_state %>)
 <% end %>
 <br/><br/>
 

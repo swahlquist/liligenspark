@@ -658,10 +658,10 @@ module Subscription
     Organization.supervisor?(self)
   end
 
-  def billing_state
+  def billing_state(force_to_consider_as_communicator=false)
     self.settings ||= {}
     self.settings['subscription'] ||= {}
-    if self.communicator_role?
+    if self.communicator_role? || force_to_consider_as_communicator
       return :never_expires_communicator if self.settings['subscription']['never_expires']
       return :eval_communicator if self.settings['subscription']['eval_account']
 #      return :eval_communicator if self.settings['subscription']['plan_id'] == 'eval_monthly_free'
@@ -701,6 +701,7 @@ module Subscription
           return :grace_period_supporter
         end
       end
+      return :premium_supporter if self.org_sponsored?
       return :org_supporter if self.org_supporter?
       return :modeling_only
     end
@@ -848,6 +849,7 @@ module Subscription
     self.settings['subscription']['limited_premium_purchase'] ||= self.settings['subscription']['free_premium'] if self.settings['subscription']['free_premium']
     billing_state = self.billing_state
     json['billing_state'] = billing_state
+    json['timestamp'] = Time.now.to_i
     # active means a non-expired, active purchase of some kind,
     # an active subscription, unexpired long-term-purchase,
     # premium supporter, paid eval, org sponsorship
@@ -869,6 +871,11 @@ module Subscription
       # currently-added as an org supervisor
       json['active'] = true
       json['premium_supporter'] = true
+      # TODO: communicator who paid $200 or are paying $6/mo should still 
+      # have access to reports and logs, even if they set their role as supporter
+      # to enable this, set json['premium_supporter_plus_communicator']
+      # long-term communicator, subscribed communicator, org_sponsored
+      json['premium_supporter_plus_communicator'] = true if [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(self.billing_state(true))
       json['never_expires'] = true if self.settings['subscription']['never_expires']
       json['org_sponsored'] = true if billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']
