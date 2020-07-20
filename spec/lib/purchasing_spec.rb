@@ -135,6 +135,30 @@ describe Purchasing do
         expect(res[:data]).to eq({:purchase => true, :purchase_id => '12345', :valid => true})
       end
 
+      it "should not trigger a purchase event from the wrong source" do
+        u = User.create
+        u.settings['purchase_bounced'] = true
+        u.save
+        exp = u.expires_at
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery)
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery)
+        
+        expect(Stripe::Customer).to_not receive(:retrieve).with('qwer')
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => 'qwer',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'plan_id' => 'long_term_100',
+            'platform_source' => 'not_coughdrop'
+          }
+        }
+        u.reload
+        expect(u.settings['subscription']['last_purchase_plan_id']).to eq(nil)
+        expect(u.settings['subscription']['customer_id']).to eq(nil)
+        expect(res[:data][:valid]).to eq(false)
+      end
+
       it 'should handle extras purchases' do
         u = User.create
         exp = u.expires_at
@@ -154,6 +178,26 @@ describe Purchasing do
         expect(u.settings['subscription']['extras']['customer_id']).to eq('23456')
         expect(u.settings['subscription']['extras']['purchase_id']).to eq('12345')
         expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
+      end
+
+      it 'should ignore extras purchases from a different source' do
+        u = User.create
+        exp = u.expires_at
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery)
+        
+        res = stripe_event_request 'charge.succeeded', {
+          'id' => '12345',
+          'customer' => '23456',
+          'metadata' => {
+            'user_id' => u.global_id,
+            'purchased_symbols' => 'true',
+            'platform_source' => 'not_coughdrop',
+            'type' => 'extras'
+          }
+        }
+        u.reload
+        expect(u.subscription_hash['extras_enabled']).to eq(nil)
+        expect(res[:data][:valid]).to eq(false)
       end
 
       it 'should handle adding supporters on extras charge' do
