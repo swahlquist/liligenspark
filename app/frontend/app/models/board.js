@@ -235,8 +235,8 @@ CoughDrop.Board = DS.Model.extend({
     callback();
     this.set('no_lookups', false);
   },
-  locales: computed('translations', function() {
-    var res = [];
+  locales: computed('translations', 'translated_locales', function() {
+    var res = this.get('translated_locales');
     var button_ids = (this.get('translations') || {});
     var all_langs = [];
     for(var button_id in button_ids) {
