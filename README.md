@@ -1,4 +1,5 @@
 ## CoughDrop - Every Voice Should Be Heard
+[![OpenAAC](https://www.openaac.org/images//OpenAAC-advocate-blue.svg)](https://www.openaac.org/advocates.html)
 
 CoughDrop is an open, web-based AAC (Augmentative and Alternative Communication) app. Basically
 if people struggle getting their words out for whatever reason, they can use
@@ -177,4 +178,4 @@ rake transcode_errored_records (run daily)
 
 Copyright (C) 2014-2019 CoughDrop, Inc.
 
-Licensed under the AGPLv3 license.
+Released under the AGPLv3 license or later.

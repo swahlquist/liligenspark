@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    CFPropertyList (3.0.2)
+    CFPropertyList (2.3.6)
     accessible-books (0.1.1)
       json
       nokogiri
