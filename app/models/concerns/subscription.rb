@@ -536,7 +536,7 @@ module Subscription
     self.settings['all_home_boards'] = nil
     self.generate_defaults
 
-    Flusher.flush_user_content(self.global_id, self.user_name)
+    Flusher.flush_user_content(self.global_id, self.user_name, current_device)
     # restore the last home board, in case it's a default (can be changed easily)
     if self.settings['last_preferences']['home_board'] && self.settings['last_preferences']['home_board']['key'] && !self.settings['last_preferences']['home_board']['key'].match(/^#{self.user_name}\/}/)
       self.settings['preferences']['home_board'] = self.settings['last_preferences']['home_board']

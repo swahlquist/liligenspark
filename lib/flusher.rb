@@ -184,13 +184,13 @@ module Flusher
     target.touch
   end
 
-  def self.flush_user_content(user_id, user_name)
+  def self.flush_user_content(user_id, user_name, except_device=nil)
     user = find_user(user_id, user_name)
     flush_user_logs(user_id, user_name)
     flush_user_boards(user_id, user_name)
     # remove the user's devices and utterances
     Device.where(:user_id => user.id).each do |device|
-      flush_record(device)
+      flush_record(device) unless device == except_device
     end
     Utterance.where(:user_id => user.id).each do |utterance|
       flush_record(utterance)

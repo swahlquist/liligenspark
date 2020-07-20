@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import BoardHierarchy from '../utils/board_hierarchy';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
+import editManager from '../utils/edit_manager';
 import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
@@ -46,6 +47,11 @@ export default modal.ModalController.extend({
       return modal.open('button-set', translate_opts).then(function(res) {
         if(res && res.translated) {
           return _this.get('model.board').reload(true).then(function() {
+            if(translate_opts.default_language && app_state.get('currentBoardState.id') == _this.get('model.board.id')) {
+              app_state.set('currentBoardState.default_locale', _this.get('model.board.locale'));
+              app_state.set('label_locale', _this.get('model.board.locale'));
+              app_state.set('vocalization_locale', _this.get('model.board.locale'));
+            }
             app_state.set('board_reload_key', Math.random() + "-" + (new Date()).getTime());
           });
         }

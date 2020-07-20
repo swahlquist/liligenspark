@@ -375,7 +375,7 @@ module Purchasing
           user && user.log_subscription_event({:log => 'new subscription for existing customer'})
           sub = nil
           if customer.subscriptions.count > 0
-            sub = customer.subscriptions.data.detect{|s| (s.metadata['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }
+            sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }
           end
           if sub
             sub.source = token['id']
@@ -389,16 +389,19 @@ module Purchasing
             if user.created_at > 60.days.ago
               trial_end = (user.created_at + 60.days).to_i
             end
-            meta = {}
+            meta = {
+              :platform_source => 'coughdrop'
+            }
+            meta['purchased_supporters'] = include_n_supporters if include_n_supporters > 0
             sub = customer.subscriptions.create({
               :plan => plan_id,
               :source => token['id'],
-              :platform_source => 'coughdrop',
+              :metadata => meta,
               :trial_end => trial_end
             })
           end
           customer = Stripe::Customer.retrieve(customer['id'])
-          any_sub = customer.subscriptions.data.detect{|s| (s.metadata['platform_source'] || 'coughdrop') == 'coughdrop' && (s.status == 'active' || s.status == 'trialing') }
+          any_sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && (s.status == 'active' || s.status == 'trialing') }
           if include_extras || include_n_supporters > 0
             one_time_amount += self.extras_symbols_cost if include_extras
             one_time_amount += (include_n_supporters * self.extras_supporter_cost)
