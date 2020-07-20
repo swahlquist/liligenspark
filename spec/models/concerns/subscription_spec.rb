@@ -1516,7 +1516,7 @@ describe Subscription, :type => :model do
 
     it 'should support extras purchases' do
       u = User.create
-      expect(Purchasing).to receive(:purchase_extras).with('token', {'user_id' => u.global_id})
+      expect(Purchasing).to receive(:purchase_symbol_extras).with('token', {'user_id' => u.global_id})
       u.process_subscription_token('token', 'extras')
     end
   end
@@ -2728,8 +2728,10 @@ describe Subscription, :type => :model do
       u = User.create
       u.settings['preferences'] = {'a' => 1, 'b' => 2}
       u.save
+      d = Device.create(user: u)
+      u.settings['subscription'] = {'eval_account' => true}
       expect(u.settings['last_preferences']).to eq(nil)
-      u.reset_eval(nil)
+      expect(u.reset_eval(d.global_id)).to eq(true)
       u.reload
       expect(u.settings['preferences']['a']).to eq(nil)
       expect(u.settings['preferences']['b']).to eq(nil)
@@ -2738,18 +2740,21 @@ describe Subscription, :type => :model do
       expect(u.settings['last_preferences']['b']).to eq(2)
     end
     
-    it "should set as an eval account" do
+    it "should do nothing if not an eval account" do
       u = User.create
+      d = Device.create(user: u)
       expect(u.eval_account?).to eq(false)
-      u.reset_eval(nil)
-      expect(u.eval_account?).to eq(true)
+      expect(u.reset_eval(d.global_id)).to eq(false)
+      expect(u.eval_account?).to eq(false)
     end
     
     it "should restart the eval clock" do
       u = User.create
       u.settings['subscription'] = {'eval_started' => 2.weeks.ago.iso8601, 'eval_expires' => 1.week.ago.iso8601}
       u.save
-      u.reset_eval(nil)
+      d = Device.create(user: u)
+      u.settings['subscription'] = {'eval_account' => true}
+      u.reset_eval(d.global_id)
       expect(u.settings['subscription']['eval_started']).to be > 1.day.ago.iso8601
       expect(u.settings['subscription']['eval_expires']).to be > 1.week.from_now.iso8601
     end
@@ -2757,12 +2762,14 @@ describe Subscription, :type => :model do
     it "should revert to the org default home board if set" do
       o = Organization.create(settings: {'total_eval_licenses' => 5})
       u = User.create
+      d = Device.create(user: u)
       b = Board.create(user: u, public: true)
       o.settings['default_home_board'] = {'key' => b.key, 'id' => b.global_id}
       o.save
       o.add_user(u.user_name, false, true, true)
       u.reload
-      u.reset_eval(nil)
+      u.settings['subscription'] = {'eval_account' => true}
+      u.reset_eval(d.global_id)
       expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id})
     end
 
@@ -2771,15 +2778,20 @@ describe Subscription, :type => :model do
       d = Device.create(user: u)
       10.times{|i| Device.create(user: u) }
       expect(u.devices.count).to eq(11)
-      u.reset_eval(d)
+      u.settings['subscription'] = {'eval_account' => true}
+      u.reset_eval(d.global_id)
       expect(u.reload.devices.count).to eq(1)
       expect(u.devices[0]).to eq(d)
     end
     
     it "should enable logging" do
       u = User.create
+      d = Device.create(user: u)
+      u.settings['subscription'] = {'eval_account' => true}
+      expect(u.billing_state).to eq(:eval_communicator)
+      expect(u.eval_account?).to eq(true)
       expect(u.settings['preferences']['logging']).to eq(false)
-      u.reset_eval(nil)
+      expect(u.reset_eval(d.global_id)).to eq(true)
       expect(u.settings['preferences']['logging']).to eq(true)
     end
     

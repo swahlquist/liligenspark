@@ -663,6 +663,7 @@ describe Purchasing do
         :receipt_email => nil,
         :metadata => {
           'user_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'plan_id' => 'slp_long_term_free',
           'purchased_symbols' => 'true',
           'type' => 'license'
@@ -699,6 +700,7 @@ describe Purchasing do
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
             :plan => 'monthly_6',
+            :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
           })
@@ -730,6 +732,7 @@ describe Purchasing do
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
             :plan => 'monthly_6',
+            :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
           })
@@ -761,7 +764,7 @@ describe Purchasing do
         })
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -769,6 +772,7 @@ describe Purchasing do
           expect(opts).to eq({
             :plan => 'monthly_6',
             :source => 'token',
+            :metadata => {:platform_source => 'coughdrop'},
             trial_end: (u.created_at + 60.days).to_i
           })
           subs.data.push(new_sub)
@@ -783,6 +787,7 @@ describe Purchasing do
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'purchased_symbols' => 'true',
             'type' => 'extras'
           }
@@ -819,7 +824,7 @@ describe Purchasing do
         })
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -827,6 +832,7 @@ describe Purchasing do
           expect(opts).to eq({
             :plan => 'monthly_6',
             :source => 'token',
+            :metadata => {:platform_source => 'coughdrop', 'purchased_supporters' => 3},
             trial_end: (u.created_at + 60.days).to_i
           })
           subs.data.push(new_sub)
@@ -841,6 +847,7 @@ describe Purchasing do
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'purchased_supporters' => 3,
             'type' => 'extras'
           }
@@ -877,7 +884,7 @@ describe Purchasing do
         })
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -885,6 +892,7 @@ describe Purchasing do
           expect(opts).to eq({
             :plan => 'monthly_6',
             :source => 'token',
+            :metadata => {:platform_source => 'coughdrop', 'purchased_supporters' => 2},
             trial_end: (u.created_at + 60.days).to_i
           })
           subs.data.push(new_sub)
@@ -900,6 +908,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'purchased_symbols' => 'true',
+            'platform_source' => 'coughdrop',
             'purchased_supporters' => 2,
             'type' => 'extras'
           }
@@ -933,6 +942,7 @@ describe Purchasing do
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
             :plan => 'monthly_6',
+            metadata: {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
           })
@@ -972,13 +982,14 @@ describe Purchasing do
           subscriptions: subs
         })
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
         expect(cus.subscriptions).to receive(:create){|opts|
           expect(opts).to eq({
             :plan => 'monthly_6',
+            :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
           })
@@ -1003,7 +1014,7 @@ describe Purchasing do
           id: '12345'
         })
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
           :email => 'testing@example.com'
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(cus)
@@ -1028,7 +1039,7 @@ describe Purchasing do
           id: '12345'
         })
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(s2).to receive(:save) do
@@ -1038,7 +1049,8 @@ describe Purchasing do
         end
         expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(cus)
         expect(subs).to_not receive(:create)
-        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
+        expect(res[:success]).to eq(true)
       end
 
       it "should trigger a subscription event for a new customer" do
@@ -1057,13 +1069,14 @@ describe Purchasing do
           customer: '9876'
         })
         expect(Stripe::Customer).to receive(:create).with({
-          :metadata => {'user_id' => u.global_id},
+          :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).with('9876').and_return(cus)
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
             plan: 'monthly_6',
+            metadata: {:platform_source => 'coughdrop'},
             source: 'token',
             trial_end: (u.created_at + 60.days).to_i
           })
@@ -1244,6 +1257,7 @@ describe Purchasing do
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1266,6 +1280,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'plan_id' => 'long_term_200',
+            'platform_source' => 'coughdrop',
             'purchased_symbols' => 'true',
             'type' => 'license'
           }
@@ -1290,6 +1305,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'purchased_supporters' => 5,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1315,6 +1331,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'purchased_supporters' => 3,
+            'platform_source' => 'coughdrop',
             'purchased_symbols' => 'true',
             'plan_id' => 'long_term_200',
             'type' => 'license'
@@ -1350,6 +1367,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1375,6 +1393,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'plan_id' => 'long_term_200',
+            'platform_source' => 'coughdrop',
             'type' => 'license'
           }
         }).and_return({
@@ -1396,6 +1415,7 @@ describe Purchasing do
           :metadata => {
             'user_id' => u.global_id,
             'plan_id' => 'long_term_200',
+            'platform_source' => 'coughdrop',
             'type' => 'license'
           }
         }).and_return({
@@ -1428,6 +1448,7 @@ describe Purchasing do
           :receipt_email => nil,
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1464,6 +1485,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'slp_long_term_25',
             'type' => 'license'
           }
@@ -1499,6 +1521,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'eval_long_term_25',
             'type' => 'license'
           }
@@ -1534,6 +1557,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1556,6 +1580,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'refresh_long_term_50',
             'type' => 'license'
           }
@@ -1598,6 +1623,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'slp_long_term_25',
             'type' => 'license'
           }
@@ -1621,6 +1647,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1648,6 +1675,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'eval_long_term_25',
             'type' => 'license'
           }
@@ -1671,6 +1699,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1698,6 +1727,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1721,6 +1751,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'slp_long_term_25',
             'type' => 'license'
           }
@@ -1748,6 +1779,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'long_term_200',
             'type' => 'license'
           }
@@ -1771,6 +1803,7 @@ describe Purchasing do
           :receipt_email => 'testing@example.com',
           :metadata => {
             'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
             'plan_id' => 'eval_long_term_25',
             'type' => 'license'
           }
@@ -2120,6 +2153,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'purchased_symbols' => 'true',
           'type' => 'extras'
         }
@@ -2140,6 +2174,7 @@ describe Purchasing do
         :metadata => {
           'user_id' => u.global_id,
           'purchased_symbols' => 'true',
+          'platform_source' => 'coughdrop',
           'type' => 'extras'
         }
       }).and_return({'id' => '1234', 'customer' => '4567'})
@@ -2167,6 +2202,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'purchased_symbols' => 'true',
           'type' => 'extras'
         }
@@ -2196,6 +2232,7 @@ describe Purchasing do
         :description => "CoughDrop premium symbols access",
         :metadata => {
           'user_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'purchased_symbols' => 'true',
           'type' => 'extras'
         }
@@ -2288,6 +2325,7 @@ describe Purchasing do
         :description => 'sponsored CoughDrop license',
         :metadata => {
           'giver_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'giver_email' => 'bob@example.com',
           'plan_id' => 'long_term_200'
         }
@@ -2322,6 +2360,7 @@ describe Purchasing do
         :metadata => {
           'giver_id' => u.global_id,
           'giver_email' => 'bob@example.com',
+          'platform_source' => 'coughdrop',
           'plan_id' => 'long_term_custom_500'
         }
       }).and_return({
@@ -2355,6 +2394,7 @@ describe Purchasing do
         :description => 'sponsored CoughDrop license',
         :metadata => {
           'giver_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'giver_email' => 'bob@example.com',
           'plan_id' => 'long_term_custom_500'
         }
@@ -2403,6 +2443,7 @@ describe Purchasing do
         :description => 'sponsored CoughDrop license',
         :metadata => {
           'giver_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'giver_email' => 'bob@example.com',
           'plan_id' => 'long_term_200'
         }
@@ -2433,6 +2474,7 @@ describe Purchasing do
         :description => '4 sponsored CoughDrop license(s), PO #12345',
         :metadata => {
           'giver_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'giver_email' => 'bob@example.com',
           'plan_id' => 'long_term_custom_500'
         }
@@ -2474,6 +2516,7 @@ describe Purchasing do
         :description => 'sponsored CoughDrop license',
         :metadata => {
           'giver_id' => u.global_id,
+          'platform_source' => 'coughdrop',
           'giver_email' => 'bob@example.com',
           'plan_id' => 'long_term_custom_500'
         }
@@ -2670,6 +2713,7 @@ describe Purchasing do
         :metadata => {
           'user_id' => u.global_id,
           'plan_id' => 'long_term_200',
+          'platform_source' => 'coughdrop',
           'type' => 'license'
         }
       }).and_return({
@@ -2710,6 +2754,7 @@ describe Purchasing do
       :receipt_email => nil,
       :metadata => {
         'user_id' => u.global_id,
+        'platform_source' => 'coughdrop',
         'plan_id' => 'long_term_200',
         'type' => 'license'
       }
@@ -2784,13 +2829,15 @@ describe Purchasing do
     })
     expect(Stripe::Customer).to receive(:create).with({
       :metadata => {
-        'user_id' => u.global_id
+        'user_id' => u.global_id,
+        'platform_source' => 'coughdrop'
       },
       :email => nil
     }).and_return(customer)
     expect(customer.subscriptions).to receive(:create).with({
       :plan => 'monthly_6',
       :source => 'tokenasdfasdf',
+      :metadata => {:platform_source => 'coughdrop'},
       trial_end: (u.created_at + 60.days).to_i
     }).and_raise("You cannot use a Stripe token more than once")
     Purchasing.purchase(u, {'id' => 'tokenasdfasdf'}, 'monthly_6')
@@ -2833,6 +2880,7 @@ describe Purchasing do
       :receipt_email => nil,
       :metadata => {
         'user_id' => u.global_id,
+        'platform_source' => 'coughdrop',
         'plan_id' => 'long_term_200',
         'type' => 'license'
       }
@@ -2880,6 +2928,7 @@ describe Purchasing do
       :receipt_email => nil,
       :metadata => {
         'user_id' => u.global_id,
+        'platform_source' => 'coughdrop',
         'plan_id' => 'refresh_long_term_200',
         'type' => 'license'
       }

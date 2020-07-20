@@ -25,6 +25,7 @@ describe JsonApi::Gift do
         'discount' => 1.0,
         'expires' => nil,
         'include_extras' => nil,
+        'include_supporters' => nil,
         'limit' => nil,
         'redeemed_codes' => 0,
         'org_connected' => false,
