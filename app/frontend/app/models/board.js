@@ -544,7 +544,7 @@ CoughDrop.Board = DS.Model.extend({
       categories: this.get('categories'),
       intro: this.get('intro'),
       locale: this.get('locale'),
-      locales: this.get('locales'),
+      translated_locales: this.get('locales'),
       for_user_id: (user && user.get('id')),
       translations: this.get('translations')
     });
