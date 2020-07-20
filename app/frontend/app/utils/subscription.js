@@ -783,17 +783,18 @@ document.addEventListener("deviceready", function() {
           error: "User not initialized"
         });
       }
+      var promise = null;
       if(user && (user.get('subscription.iap_purchases') || []).indexOf(product.id) != -1) {
         // If it's a long-term purchase and it's already
         // recorded on the user, we don't need to validate
-        // the receipt with an API call every time wee load
+        // the receipt with an API call every time we load
         // the app.
-        defer.resolve({
+        promise = RSVP.resolve({
           success: true,
           event: {result: {}}
         });
+        store.validator.promise = promise;
       }
-      var promise = null;
       if(store.validator.promise) {
         promise = store.validator.promise;
       } else {
