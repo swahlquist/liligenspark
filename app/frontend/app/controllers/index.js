@@ -225,7 +225,7 @@ export default Controller.extend({
           var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 12};
           if(key == 'personal') {
             list = 'personalBoards';
-            opts = {user_id: 'self', copies: false, per_page: 12};
+            opts = {user_id: 'self', root: true, per_page: 12};
           } else if(key == 'popular') {
             list = 'popularBoards';
             opts = {sort: 'home_popularity', per_page: 12, exclude_starred: app_state.get('domain_board_user_name')};
