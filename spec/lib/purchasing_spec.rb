@@ -293,6 +293,17 @@ describe Purchasing do
         }
         expect(res[:data]).to eq({:notified => true, :purchase => false, :valid => true})
       end
+
+      it "should not trigger a purchase_failed event from a different source" do
+        u = User.create
+        expect(Stripe::Customer).to_not receive(:retrieve).with('qwer')
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_bounced, u.global_id)
+        res = stripe_event_request 'charge.failed', {
+          'customer' => 'qwer',
+          'metadata' => {'platform_source' => 'not_coughdrop'}
+        }
+        expect(res[:data][:valid]).to eq(false)
+      end   
       
       it "should not error if no customer provided" do
         u = User.create
@@ -347,6 +358,28 @@ describe Purchasing do
         expect(u.settings['subscription']['plan_id']).to eq('monthly_6')
         expect(u.expires_at).to eq(nil)
         expect(res[:data]).to eq({:subscribe => true, :valid => true})
+      end
+
+      it "should not trigger a subscribe event from the wrong source" do
+        u = User.create
+        expect(Stripe::Customer).to_not receive(:retrieve).with('tyuio')
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:new_subscription, u.global_id)
+        expect(Purchasing).to_not receive(:cancel_other_subscriptions).with(u, '12345')
+        res = stripe_event_request 'customer.subscription.created', {
+          'customer' => 'tyuio',
+          'id' => '12345',
+          'plan' => {
+            'id' => 'monthly_6'
+          },
+          'metadata' => {
+            'platform_source' => 'not_coughdrop'
+          }
+        }
+        u.reload
+        expect(u.settings['subscription']).not_to eq(nil)
+        expect(u.settings['subscription']['started']).to eq(nil)
+        expect(res[:data][:valid]).to eq(false)
       end
     end
     
@@ -404,6 +437,27 @@ describe Purchasing do
         expect(u.expires_at).to eq(nil)
         expect(res[:data]).to eq({:subscribe => true, :valid => true})
       end
+
+      it "should not trigger a subscribe event when from the wrong source" do
+        u = User.create
+        expect(Stripe::Customer).to_not receive(:retrieve).with('tyuio')
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:new_subscription, u.global_id)
+        expect(Purchasing).to_not receive(:cancel_other_subscriptions).with(u, '12345')
+        res = stripe_event_request 'customer.subscription.updated', {
+          'customer' => 'tyuio',
+          'status' => 'active',
+          'id' => '12345',
+          'plan' => {
+            'id' => 'monthly_6'
+          },
+          'metadata' => {'platform_source' => 'not_coughdrop'}
+        }
+        u.reload
+        expect(u.settings['subscription']).not_to eq(nil)
+        expect(u.settings['subscription']['started']).to eq(nil)
+        expect(res[:data][:valid]).to eq(false)
+      end
     end
     
     describe "customer.subscription.deleted" do
@@ -429,6 +483,24 @@ describe Purchasing do
         expect(u.expires_at).to be > Time.now
         expect(res[:data]).to eq({:unsubscribe => true, :valid => true})
       end
+
+      it "should not trigger an unsubscribe event when from the wrong source" do
+        u = User.create
+        u.settings['subscription'] = {'customer_id' => '12345', 'subscription_id' => '23456'}
+        u.save
+        expect(Stripe::Customer).to_not receive(:retrieve).with('12345')
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:unsubscribe_reason, u.global_id)
+        expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:subscription_expiring, u.global_id)
+        res = stripe_event_request 'customer.subscription.deleted', {
+          'customer' => '12345',
+          'id' => '23456',
+          'metadata' => {'platform_source' => 'not_coughdrop'}
+        }
+        
+        u.reload
+        expect(u.settings['subscription']['subscription_id']).to_not eq(nil)
+        expect(res[:data][:valid]).to eq(false)
+      end      
     end
     
     describe "ping" do

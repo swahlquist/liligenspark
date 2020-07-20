@@ -694,6 +694,7 @@ Subscription.reopenClass({
       }
       Subscription.in_app_store.defer = defer;
       Subscription.in_app_store.user_id = subscription.get('user.id');
+      Subscription.in_app_store.user = subscription.get('user');
       // TODO: long-term purchase is a one-time offering right now,
       // meaning you can't re-buy it. We
       // will need a subscription/credit purchase fallback to
@@ -773,6 +774,7 @@ document.addEventListener("deviceready", function() {
         return callback(true, {});
       }
       var user_id = store.user_id || Subscription.in_app_store.user_id || app_state.get('currentUser.id');
+      var user = store.user || Subscription.in_app_store.user || app_state.get('currentUser');
       var pre_purchase = product.alias == 'App Pre-Purchase';
       var device_id = (window.device && window.device.uuid) || stashes.get_raw('coughDropDeviceId');
       if(!user_id) {
@@ -781,13 +783,23 @@ document.addEventListener("deviceready", function() {
           error: "User not initialized"
         });
       }
+      if(user && (user.get('subscription.iap_purchases') || []).indexOf(product.id) != -1) {
+        // If it's a long-term purchase and it's already
+        // recorded on the user, we don't need to validate
+        // the receipt with an API call every time wee load
+        // the app.
+        defer.resolve({
+          success: true,
+          event: {result: {}}
+        });
+      }
       var promise = null;
       if(store.validator.promise) {
         promise = store.validator.promise;
       } else {
         promise = persistence.ajax('/api/v1/users/' + user_id + '/verify_receipt', {
           type: 'POST',
-          data: {receipt_data: {ios: true, receipt: product.transaction, pre_purchase: pre_purchase, device_id: device_id}}
+          data: {receipt_data: {ios: true, product_id: product.id, receipt: product.transaction, pre_purchase: pre_purchase, device_id: device_id}}
         }).then(function(res) {
           var defer = RSVP.defer();
           progress_tracker.track(res.progress, function(event) {

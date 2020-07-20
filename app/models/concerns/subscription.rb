@@ -306,6 +306,13 @@ module Subscription
 
           role = (args['plan_id'] && args['plan_id'].match(/^slp/)) ? 'supporter' : 'communicator'
           self.settings['subscription']['token_summary'] = args['token_summary']
+
+          if ['AppPrePurchase', 'com.mycoughdrop.paidcoughdrop', 'CoughDropiOSPlusExtras', 'CoughDropiOSBundle', 'CoughDropiOSEval', 'CoughDropiOSSLP'].include?(args['token_summary'])
+            # remember long-term in-app purchases for the user so we don't have to re-validate them every time
+            self.settings['subscription']['iap_purchases'] ||= []
+            self.settings['subscription']['iap_purchases'] << args['token_summary'] 
+            self.settings['subscription']['iap_purchases'].uniq!
+          end
           self.settings['subscription']['last_purchased'] = Time.now.iso8601
           self.settings['subscription']['last_purchase_plan_id'] = args['plan_id']
           self.settings['subscription']['last_purchase_id'] = args['purchase_id']
@@ -906,6 +913,7 @@ module Subscription
       json['purchased_supporters'] = self.settings['subscription']['purchased_supporters'].to_i
       json['available_supporters'] = self.premium_supporter_grants
     end
+    json['iap_purchases'] = self.settings['subscription']['iap_purchases'] if !self.settings['subscription']['iap_purchases'].blank?
     json['fully_purchased'] = true if self.fully_purchased?
     json['free_premium'] = true if self.legacy_free_premium?
     json['extras_enabled'] = true if self.settings['subscription']['extras'] && self.settings['subscription']['extras']['enabled']

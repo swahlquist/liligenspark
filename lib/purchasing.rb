@@ -14,7 +14,7 @@ module Purchasing
     previous = event['data'] && event['data']['previous_attributes']
     event_result = nil
     if object
-      if object && object['metadata'] && object['metadata']['type'] == 'extras' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+      if object && object['metadata'] && object['metadata']['type'] == 'extras' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
         data = {:extras => true, :purchase_id => object['id'], :valid => true}
         if event['type'] == 'charge.succeeded'
           if object['metadata'] && (object['metadata']['purchased_symbols'] == 'true' || object['metadata']['purchased_supporters'].to_i > 0)
@@ -32,7 +32,7 @@ module Purchasing
           data[:valid] = false
         end
       else
-        if event['type'] == 'charge.succeeded' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+        if event['type'] == 'charge.succeeded' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           valid = object['metadata'] && object['metadata']['user_id'] && object['metadata']['plan_id']
           if valid
             time = 5.years.to_i
@@ -71,7 +71,7 @@ module Purchasing
             end
           end
           data = {:purchase => true, :purchase_id => object['id'], :valid => !!valid}
-        elsif event['type'] == 'charge.failed' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+        elsif event['type'] == 'charge.failed' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           valid = false
           if object['customer'] && object['customer'] != 'free'
             customer = Stripe::Customer.retrieve(object['customer'])
@@ -113,7 +113,7 @@ module Purchasing
               prior_user.transfer_subscription_to(new_user, true)
             end
           end
-        elsif event['type'] == 'customer.subscription.created' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+        elsif event['type'] == 'customer.subscription.created' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id'] && object['plan'] && object['plan']['id']
           if valid
@@ -130,7 +130,7 @@ module Purchasing
             })
           end
           data = {:subscribe => true, :valid => !!valid}
-        elsif event['type'] == 'customer.subscription.updated' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+        elsif event['type'] == 'customer.subscription.updated' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if object['status'] == 'unpaid' || object['status'] == 'canceled'
@@ -167,7 +167,7 @@ module Purchasing
             end
             data = {:subscribe => true, :valid => !!valid}
           end
-        elsif event['type'] == 'customer.subscription.deleted' && ((object['metadata'] || {})['platform_source'] || 'coughdrop' == 'coughdrop')
+        elsif event['type'] == 'customer.subscription.deleted' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           customer = Stripe::Customer.retrieve(object['customer'])
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if valid
@@ -438,7 +438,7 @@ module Purchasing
                 amount: (self.extras_symbols_cost * 100),
                 currency: 'usd',
                 customer: customer['id'],
-                description: desc
+                description: desc,
                 metadata: {'platform_source' => 'coughdrop'}
               })
             end
@@ -700,11 +700,15 @@ module Purchasing
     cancel_other_subscriptions(user, 'all')
   end
 
+  # TODO: on frontend init, if not iOS but subscription.plan_id == 'CoughDropiOSMonthly'
+  # then make an API call to verify the latest receipt for the user matching that criteria
   def self.verify_receipt(user, data)
     res = {}
     prepaid_bundle_ids = ['com.mycoughdrop.paidcoughdrop']
     if user && data && data['receipt'] && data['receipt']['appStoreReceipt']
-      user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt']}
+      product_id = data['product_id']
+      user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| (product_id && r['product_id'] != product_id) || (r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt'])}
+      user.settings['receipts'].each{|r| r['data']['receipt'].delete('appStoreReceipt') if r['data'] && r['data']['receipt'] && (!r['product_id'] || r['product_id'] == product_id) }
       user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
       user.save!
     end
@@ -735,7 +739,10 @@ module Purchasing
           json = JSON.parse(req.body) rescue nil
         end
         if json && json['status'] == 0
-          in_app = (json['receipt']['in_app'] || []).sort_by{|a| a['purchase_date_ms'].to_i }[-1]
+          recent_iaps = (json['receipt']['in_app'] || []).sort_by{|a| a['purchase_date_ms'].to_i }
+          in_app = recent_iaps.reverse.detect{|iap| iap['product_id'] == data['product_id']}
+          in_app = recent_iaps.reverse.detect{|iap| data['pre_purchase'] && prepaid_bundle_ids.include?(iap['product_id'])}
+          in_app ||= recent_iaps[-1]
           res['success'] = true
           res['bundle_id'] = json['receipt']['bundle_id']
           if data['pre_purchase'] && prepaid_bundle_ids.include?(res['bundle_id'])
@@ -888,7 +895,9 @@ module Purchasing
           res['error'] = true
           res['error_message'] = "Error retrieving receipt, status #{json && json['status']}"
           if user && data && data['receipt'] && data['receipt']['appStoreReceipt']
-            user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt']}
+            product_id = data['product_id']
+            user.settings['receipts'] = (user.settings['receipts'] || []).select{|r| (product_id && r['product_id'] != product_id) || (r['data'] && r['data']['receipt'] && r['data']['receipt']['appStoreReceipt'] != data['receipt']['appStoreReceipt'])}
+            user.settings['receipts'].each{|r| r['data']['receipt'].delete('appStoreReceipt') if r['data'] && r['data']['receipt'] && (!r['product_id'] || r['product_id'] == product_id) }
             user.settings['receipts'] << {'ts' => Time.now.to_i, 'data' => data}
             user.save!
           end
