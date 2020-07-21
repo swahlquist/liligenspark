@@ -73,11 +73,9 @@ module Flusher
     # remove any button_image records
     # remove any board_button_images
     BoardButtonImage.where(:board_id => board_db_id).each do |bbi|
-      full_flush = aggressive_flush
       bi = bbi.button_image
-      if !full_flush && bi && bi.board_button_images.count <= 1
-        full_flush = true
-      end
+      full_flush = aggressive_flush && bi && bi.user_id == board.user_id
+      full_flush ||= bi && bi.user_id == board.user_id && bi.board_button_images.count <= 1
       
       if bi && full_flush
         # TODO: reach into affected boards and remove the dead links
@@ -90,11 +88,9 @@ module Flusher
     # remove any button_sound records
     # remove any board_button_sounds
     BoardButtonSound.where(:board_id => board_db_id).each do |bbs|
-      full_flush = aggressive_flush
       bs = bbs.button_sound
-      if !full_flush && bs && bs.board_button_sounds.count <= 1
-        full_flush = true
-      end
+      full_flush = aggressive_flush && bs && bs.user_id == board.user_id
+      full_flush ||= bs && bs.user_id == board.user_id && bs.board_button_sounds.count <= 1
       
       if bs && full_flush
         # TODO: reach into affected boards and remove the dead links
