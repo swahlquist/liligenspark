@@ -78,6 +78,7 @@ module Converters::CoughDrop
         inflection_defaults = nil
         trans = {}
         (board.settings['translations'] || {}).each do |loc, hash|
+          next unless hash && hash.is_a?(Hash)
           if hash[original_button['id']]
             trans[loc] = hash[original_button['id']]
           end
