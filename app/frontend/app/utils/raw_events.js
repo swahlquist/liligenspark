@@ -38,6 +38,7 @@ import frame_listener from './frame_listener';
 // - touch events on modal targets needs to work in speak mode
 // - touch events for buttons inside modals need to work in speak mode
 // - find a button needs to work for touch and eye gaze
+// - select text in a button's text box when editing a button
 
 var $board_canvas = null;
 
@@ -267,6 +268,10 @@ $(document).on('mousedown touchstart', function(event) {
 }).on('drop', '.button,.board_drop', function(event) {
   event.preventDefault();
   $('.button.drop_target,.board_drop.drop_target').removeClass('drop_target');
+}).on('dragstart', '.button', function(event) {
+  if(event.target.closest('input')) {
+    event.preventDefault();
+  }
 }).on('dragover', '.button', function(event) {
   event.preventDefault();
   if(app_state.get('edit_mode')) {
