@@ -31,6 +31,7 @@ export default modal.ModalController.extend({
     button.set('translations_hash', this.get('board').translations_for_button(button.id));
     this.set('handle_updates', true);
     contentGrabbers.setup(button, this);
+    var _this = this;
 
     contentGrabbers.check_for_dropped_file();
     var state = button.state || 'general';
@@ -78,7 +79,7 @@ export default modal.ModalController.extend({
         }
         if(advanced) {
           button.set('level_style', 'advanced');
-          button.set('level_json', JSON.stringify(json, null, 2));
+          _this.update_level_json();
         } else if(hidden_level || link_disabled_level) {
           button.set('level_style', 'basic');
           button.set('hidden_level', hidden_level);
@@ -280,6 +281,28 @@ export default modal.ModalController.extend({
   }),
   advanced_level_style: computed('model.level_style', function() {
     return this.get('model.level_style') == 'advanced';
+  }),
+  update_level_json: observer('model.level_style', function() {
+    var button = this.get('model.button') || this.get('model');
+    var mods = button.get('level_modifications');
+    var json = {};
+    for(var idx in mods) {
+      if(idx == 'pre' || idx == 'override') {
+        json[idx] = mods[idx];
+      } else if(parseInt(idx, 10) > 0) {
+        json[idx] = mods[idx];
+      }
+    }
+    button.set('level_json', JSON.stringify(json, null, 2));
+  }),
+  level_overrides: computed('model.level_modifications.override', function() {
+    var overrides = this.get('model.level_modifications.override') || {};
+    var res = {};
+    for(var key in overrides) {
+      res[key] = {};
+      res[key]["set_" + overrides[key].toString()] = true;
+    }
+    return res;
   }),
   tool_types: computed('user_integrations', function() {
     var res = [];
@@ -769,6 +792,18 @@ export default modal.ModalController.extend({
     clear_button: function() {
       editManager.clear_button(this.get('model.id'));
       modal.close(true);
+    },
+    clear_override: function(attr) {
+      var button = this.get('model');
+      var mods = button.get('level_modifications');
+      if(!mods) { return; }
+      if(mods.override && mods.override[attr] != undefined) {
+        delete mods.override[attr];
+      }
+      if(Object.keys(mods.override).length == 0) {
+        delete mods.override;
+      }
+      button.set('level_modifications', Object.assign({}, mods));
     },
     swapButton: function() {
       editManager.prep_for_swap(this.get('model.id'));

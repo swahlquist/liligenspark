@@ -7,20 +7,58 @@
       </div>
     </div>
     {{#if basic_level_style}}
+      {{#if level_overrides.hidden}}
+        <div class='form-group'>
+          <label class='col-sm-offset-2 col-sm-4'>
+            {{t "Visibility" key='visibility'}}
+          </label>
+          <div class='col-sm-6'>
+            {{#if level_overrides.hidden.set_true}}
+              {{t "Never Show Button" key='never_show_button'}}
+            {{else}}
+              {{t "Always Show Button" key='always_show_button'}}
+            {{/if}}
+            <button class='btn btn-default' {{action 'clear_override' 'hidden'}}>{{t "Clear" key='clear_override'}}</button>
+          </div>
+        </div>
+      {{/if}}
+      {{#if level_overrides.link_disabled}}
+        <div class='form-group'>
+          <label class='col-sm-offset-2 col-sm-4'>
+            {{t "Links" key='links'}}
+          </label>
+          <div class='col-sm-6'>
+            {{#if level_overrides.hidden.set_true}}
+              {{t "Never Disable Link" key='never_disable_link'}}
+            {{else}}
+              {{t "Always Disable Link" key='always_disable_link'}}
+            {{/if}}
+            <button class='btn btn-default' {{action 'clear_override' 'link_disabled'}}>{{t "Clear" key='clear_override'}}</button>
+          </div>
+        </div>
+      {{/if}}
       <div class='form-group'>
         <label for='hidden_level' class='col-sm-offset-2 col-sm-4'>
-          {{t "Hide Until Level" key='hide_until_level'}}
+          {{#if level_overrides.hidden}}
+            <s>{{t "Hide Until Level" key='hide_until_level'}}</s>
+          {{else}}
+            {{t "Hide Until Level" key='hide_until_level'}}
+          {{/if}}
         </label>
-        <div class='col-sm-2'>
+        <div class='col-sm-6'>
           {{bound-select select_class="form-control" select_id="hidden_level" content=board_levels selection=model.hidden_level action=(action (mut model.hidden_level)) }}
         </div>
       </div>
       {{#unless model.talkAction}}
         <div class='form-group'>
           <label for='link_disabled_level' class='col-sm-offset-2 col-sm-4'>
-            {{t "Disable Link Until Level" key='disable_link_until_level'}}
+            {{#if level_overrides.link_disabled}}
+              <s>{{t "Disable Link Until Level" key='disable_link_until_level'}}</s>
+            {{else}}
+              {{t "Disable Link Until Level" key='disable_link_until_level'}}
+            {{/if}}
           </label>
-          <div class='col-sm-2'>
+          <div class='col-sm-6'>
             {{bound-select select_class="form-control" select_id="link_disabled_level" content=board_levels selection=model.link_disabled_level action=(action (mut model.link_disabled_level)) }}
           </div>
         </div>

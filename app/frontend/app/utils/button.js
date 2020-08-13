@@ -249,10 +249,14 @@ var Button = EmberObject.extend({
       }
     }
     levels = levels.sort();
+    var str = "";
+    if(mods.override) {
+      str = "*";
+    }
     if(levels.length > 0) {
-      return "L" + levels.join(' ');
+      return str + "L" + levels.join(' ');
     } else {
-      return null;
+      return str || null;
     }
   }),
   apply_level: function(level) {
@@ -531,25 +535,27 @@ var Button = EmberObject.extend({
     var hash = _this.get('translations_hash') || {};
     var idx = 0;
     for(var code in hash) {
-      var label = hash[code].label;
-      if(label_locale == code) { label = _this.get('label'); }
-      var vocalization = hash[code].vocalization;
-      if(vocalization_locale == code) { vocalization = _this.get('vocalization'); }
-      var inflections = hash[code].inflections;
-      if(res[idx]) {
-        emberSet(res[idx], 'label', label);
-        emberSet(res[idx], 'vocalization', vocalization);
-        emberSet(res[idx], 'inflections', inflections);
-      } else {
-        res.push({
-          code: code,
-          locale: code,
-          label: label,
-          inflections: inflections,
-          vocalization: vocalization
-        });
+      if(Object.keys(hash[code]).length > 0) {
+        var label = hash[code].label;
+        if(label_locale == code) { label = _this.get('label'); }
+        var vocalization = hash[code].vocalization;
+        if(vocalization_locale == code) { vocalization = _this.get('vocalization'); }
+        var inflections = hash[code].inflections;
+        if(res[idx]) {
+          emberSet(res[idx], 'label', label);
+          emberSet(res[idx], 'vocalization', vocalization);
+          emberSet(res[idx], 'inflections', inflections);
+        } else {
+          res.push({
+            code: code,
+            locale: code,
+            label: label,
+            inflections: inflections,
+            vocalization: vocalization
+          });
+        }
+        idx++;
       }
-      idx++;
     }
     this.set('translations', res);
   }),

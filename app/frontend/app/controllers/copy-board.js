@@ -11,6 +11,11 @@ export default modal.ModalController.extend({
     this.set('model.jump_home', true);
     this.set('model.keep_as_self', false);
     this.set('board_name', this.get('model.board.name'));
+    this.set('current_user', null);
+    this.set('sidebar_board', null);
+    this.set('in_board_set', null);
+    this.set('in_sidebar_set', null);
+    this.set('home_board', null);
     var user_name = this.get('model.selected_user_name');
     var supervisees = [];
     if(app_state.get('sessionUser.supervisees.length')) {

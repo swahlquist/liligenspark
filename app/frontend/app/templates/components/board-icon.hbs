@@ -1,4 +1,4 @@
-<a href={{board_record.key}} {{action 'pick_board' board_record}} class={{display_class}}>
+<a href="/{{board_record.key}}" {{action 'pick_board' board_record}} class={{display_class}}>
   {{#unless noinfo}}
     <a {{action 'board_preview' board_record bubbles=false}} class='info'><span class='glyphicon glyphicon-info-sign'></span></a>
   {{/unless}}

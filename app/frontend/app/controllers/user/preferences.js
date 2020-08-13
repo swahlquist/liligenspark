@@ -398,8 +398,8 @@ export default Controller.extend({
   head_tracking_capable: computed(function() {
     return capabilities.head_tracking.available;
   }),
-  eyegaze_or_dwell_capable: computed(function() {
-    return capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available;
+  eyegaze_or_dwell_capable: computed('pending_preferences.device.dwell', function() {
+    return this.get('pending_preferences.device.dwell') || capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available;
   }),
   eyegaze_type: computed(
     'pending_preferences.device.dwell',
