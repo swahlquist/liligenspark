@@ -269,7 +269,7 @@ $(document).on('mousedown touchstart', function(event) {
   event.preventDefault();
   $('.button.drop_target,.board_drop.drop_target').removeClass('drop_target');
 }).on('dragstart', '.button', function(event) {
-  if(event.target.closest('input')) {
+  if(app_state.get('edit_mode')) {
     event.preventDefault();
   }
 }).on('dragover', '.button', function(event) {
