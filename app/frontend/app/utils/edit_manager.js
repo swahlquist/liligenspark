@@ -1507,7 +1507,9 @@ var editManager = EmberObject.extend({
     ids.forEach(function(id) {
       var board_id = _this.controller.get('model.id');
       var button = _this.find_button(id);
-      if(button && button.label && !button.image && !button.local_image_url && !button.text_only) {
+      var force_refresh = button && button.label && button.image && (button.image.url || '').match(/empty_22_g/i) && !button.text_only;
+      var needs_check = force_refresh || (button && button.label && !button.image && !button.local_image_url && !button.text_only);
+      if(needs_check) {
         button.set('pending_image', true);
         button.set('pending', true);
         if(button && button.label && !button.image) {
@@ -1517,7 +1519,7 @@ var editManager = EmberObject.extend({
         contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), locale, true).then(function(data) {
           button = _this.find_button(id);
           var image = data[0];
-          if(image && button && button.label && !button.image) {
+          if(image && button && button.label && (!button.image || force_refresh)) {
             var license = {
               type: image.license,
               copyright_notice_url: image.license_url,
@@ -1540,7 +1542,7 @@ var editManager = EmberObject.extend({
 
             save.then(function(image) {
               button = _this.find_button(id);
-              if(_this.controller.get('model.id') == board_id && button && button.label && !button.image) {
+              if(_this.controller.get('model.id') == board_id && button && button.label && (!button.image || force_refresh)) {
                 button.set('pending', false);
                 button.set('pending_image', false);
                 emberSet(button, 'image_id', image.id);
