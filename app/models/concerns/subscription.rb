@@ -126,6 +126,7 @@ module Subscription
         if link.id && !link.data['state']['pending']
           pending = false
         end
+        self.log_subscription_event(:log => 'org added user', :args => {org_id: new_org.global_id, pending: pending, sponsored: sponsored, eval_account: eval_account})
         link.data['state']['added'] ||= Time.now.iso8601
         link.data['state']['pending'] = !!pending unless pending == nil
         link.data['state']['sponsored'] = !!sponsored unless sponsored == nil
@@ -153,6 +154,7 @@ module Subscription
           org_code = Webhook.get_record_code(org_to_remove)
           removed_links = UserLink.links_for(self).select{|l| l['record_code'] == org_code && l['type'] == 'org_user' && l['state']['sponsored'] && l['state']['added'] }
           org_to_remove.detach_user(self, 'user')
+          self.log_subscription_event(:log => 'org removed user', :args => {was_sponsored: was_sponsored})
           UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
         end
       end
@@ -367,6 +369,7 @@ module Subscription
     if type == 'never_expires'
       self.process({}, {'pending' => false, 'premium_until' => 'forever'})
     elsif type == 'eval'
+      self.settings['preferences']['role'] = 'communicator'
       self.update_subscription({
         'subscribe' => true,
         'subscription_id' => 'free_eval',
@@ -417,6 +420,7 @@ module Subscription
         self.save_with_sync('expires')
       end
     elsif type == 'manual_modeler'
+      self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
         'subscribe' => true,
         'subscription_id' => 'free',
@@ -424,6 +428,7 @@ module Subscription
         'plan_id' => 'slp_monthly_free'
       })
     elsif type == 'manual_supporter' || type == 'granted_supporter'
+      self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
         'subscribe' => true,
         'subscription_id' => 'free',
@@ -674,7 +679,8 @@ module Subscription
 #      return :eval_communicator if self.settings['subscription']['plan_id'] == 'eval_monthly_free'
       return :subscribed_communicator if self.settings['subscription']['started']
       return :org_sponsored_communicator if self.org_sponsored?
-      if self.expires_at && self.expires_at > Time.now && !(self.settings['subscription']['last_purchase_plan_id'] || '').match(/^slp/)
+      last_plan_id = self.settings['subscription']['last_purchase_plan_id'] || ''
+      if self.expires_at && self.expires_at > Time.now && !last_plan_id.match(/^slp/)
         if self.settings['subscription']['expiration_source']
           return :trialing_communicator if self.settings['subscription']['expiration_source'] == 'free_trial'
           return :long_term_active_communicator if self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/)
@@ -871,6 +877,7 @@ module Subscription
     elsif billing_state == :eval_communicator
       json['active'] = true
       json['eval_account'] = true
+      json['plan_id'] = self.settings['subscription']['last_purchase_plan_id']
       json['eval_started'] = self.settings['subscription']['eval_started']
       json['eval_expires'] = self.settings['subscription']['eval_expires']
       json['eval_extendable'] = !self.settings['subscription']['eval_extended']
@@ -960,7 +967,8 @@ module Subscription
       # send out a warning notification 1 week before, and another one the day before,
       # to all the ones that haven't been warned yet for this cycle
       upcoming_expires.each do |user|
-        next if !user.communicator_role? || user.settings['preferences']['allow_log_reports'] || user.settings['preferences']['never_delete'] || user.eval_account?
+        # only notify expired communicators
+        next if !user.communicator_role? || user.eval_account?
         alerts[:upcoming] += 1
         user.settings['subscription'] ||= {}
         last_day = Time.parse(user.settings['subscription']['last_expiring_day_notification']) rescue Time.at(0)
@@ -983,6 +991,7 @@ module Subscription
       now_expired = User.where(['expires_at > ? AND expires_at < ?', 3.days.ago, Time.now])
       # send out an expiration notification to all the ones that haven't been notified yet
       now_expired.each do |user|
+        # only notify expired communicators
         next unless user.communicator_role? && !user.eval_account?
         alerts[:expired] += 1
         user.settings['subscription'] ||= {}
@@ -1036,6 +1045,10 @@ module Subscription
           user.touch
           next
         end
+        # Don't delete communicators marked as never-delete or who allow
+        # anonymized reports for tracking
+        next if user.settings['preferences']['allow_log_reports'] && user.updated_at > 36.months.ago
+        next if user.settings['preferences']['never_delete']
         user.settings['subscription'] ||= {}
         last_warning = Time.parse(user.settings['subscription']['last_deletion_warning']) rescue Time.at(0)
         if last_warning < 3.weeks.ago

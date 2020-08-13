@@ -42,7 +42,9 @@ class ContactMessage < ActiveRecord::Base
   end
   
   def deliver_remotely
-    body = (self.settings['message'] || 'no message') + "<br/><br/><span style='font-style: italic;'>"
+    body = "<i>Source App: #{(JsonApi::Json.current_domain['settings'] || {})['app_name'] || "CoughDroop"}</i><br/>"
+    body += "Name: #{self.settings['name']}<br/><br/>" if self.settings['name']
+    body += (self.settings['message'] || 'no message') + "<br/><br/><span style='font-style: italic;'>"
     user = User.find_by_path(self.settings['user_id']) if self.settings['user_id']
     if user
       body += (user.user_name) + '<br/>'

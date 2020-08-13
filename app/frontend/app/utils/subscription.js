@@ -583,8 +583,9 @@ var Subscription = EmberObject.extend({
   minimal_premium: computed(
     'user.subscription.never_expires',
     'user.subscription.premium_supporter',
+    'user.subscription.grace_period',
     function() {
-      return this.get('user.subscription.never_expires') || this.get('user.subscription.premium_supporter');
+      return !this.get('user.subscription.grace_period') && (this.get('user.subscription.never_expires') || this.get('user.subscription.premium_supporter'));
     }
   ),
   subscription_plan_description: computed(
@@ -598,6 +599,12 @@ var Subscription = EmberObject.extend({
           return "free forever";
         } else if(this.get('user.is_sponsored')) {
           return "sponsored by " + this.get('user.managing_org.name');
+        } else if(this.get('user.subscription.eval_account')) {
+          return "eval";
+        } else if(this.get('user.subscription.premium_supporter_plus_communicator')) {
+          return "paid communicator-turned-supporter";
+        } else if(this.get('user.subscription.premium_supporter')) {
+          return "premium supporter";
         } else {
           return "no plan";
         }

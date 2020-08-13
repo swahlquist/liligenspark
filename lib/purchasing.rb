@@ -151,6 +151,13 @@ module Purchasing
               end
               data = {:unsubscribe => true, :valid => !!valid}
             end
+          elsif object['status'] == 'past_due'
+            # Subscription needs attention
+            if previous && previous['status'] && previous['status'] != 'past_due'
+              if valid
+                SubscriptionMailer.schedule_delivery(:purchase_bounced, customer['metadata'] && customer['metadata']['user_id'])
+              end
+            end
           elsif object['status'] == 'active' || object['status'] == 'trialing'
             if valid
               User.schedule(:subscription_event, {
