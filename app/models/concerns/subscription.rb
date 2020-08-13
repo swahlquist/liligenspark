@@ -369,6 +369,7 @@ module Subscription
     if type == 'never_expires'
       self.process({}, {'pending' => false, 'premium_until' => 'forever'})
     elsif type == 'eval'
+      self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'communicator'
       self.update_subscription({
         'subscribe' => true,
@@ -400,6 +401,7 @@ module Subscription
       })
     elsif type == 'add_1' || type == 'communicator_trial'
       if type == 'communicator_trial'
+        self.settings['preferences'] ||= {}
         self.settings['preferences']['role'] = 'communicator'
         self.settings['pending'] = false
         self.save_with_sync('trial')
@@ -420,6 +422,7 @@ module Subscription
         self.save_with_sync('expires')
       end
     elsif type == 'manual_modeler'
+      self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
         'subscribe' => true,
@@ -428,6 +431,7 @@ module Subscription
         'plan_id' => 'slp_monthly_free'
       })
     elsif type == 'manual_supporter' || type == 'granted_supporter'
+      self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
         'subscribe' => true,
