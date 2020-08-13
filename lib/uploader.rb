@@ -442,7 +442,11 @@ module Uploader
       return list
     elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
       str = keyword.to_s
-      str += " repo:#{library}" unless library == 'opensymbols'
+      if library == 'tawasol'
+        str += " favor:#{library}"
+      elsif library != 'opensymbols'
+        str += " repo:#{library}"
+      end
       token = ENV['OPENSYMBOLS_TOKEN']
       protected_source = nil
       if library == 'pcs' && user && user.subscription_hash['extras_enabled']
