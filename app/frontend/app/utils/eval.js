@@ -469,7 +469,7 @@ var evaluation = {
 
     var best_max = maxes['diff_target'] || {};
     ['win', 'hin', 'rows', 'cols'].forEach(function(measurement) {
-      if(!best_max[measurement] || (maxes['symbols'] && maxes['symbols'][measurement] > best_max[measurement])) {
+      if(maxes['symbols'] && (!best_max[measurement] || maxes['symbols'][measurement] > best_max[measurement])) {
         best_max[measurement] = maxes['symbols'][measurement];
       }
       best_max[measurement] = best_max[measurement] || maxes['find_target'][measurement];
@@ -2477,7 +2477,7 @@ var words = [
 evaluation.level_prompt = function(step) {
   var res = "blank";
   if(step.intro == 'intro') {
-    res = i18n.t('eval_intro', "Welcome to the Eval Tool! This tool helps evaluate a communicator's ability to access and understand buttons and symbols.");
+    res = i18n.t('eval_intro', "Welcome to the Eval Tool! This tool helps evaluate a communicator's ability to access and understand buttons, symbols and concepts.");
   } else if(step.intro == 'intro2') {
     res = i18n.t('eval_intro_2', "You can use the top right menu to end or configure the evaluation any time. You can also add notes once the evaluation has completed.");
   } else if(step.intro == 'find_target') {
