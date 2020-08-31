@@ -887,8 +887,13 @@ class User < ActiveRecord::Base
         non_user_params['device'].settings['long_token_set'] = true
         if device['asserted']
           non_user_params['device'].settings.delete('temporary_device')
-          other_devices = Device.where(user_id: self.id, developer_key_id: 0).select{|d| d.token_type == :app && d != non_user_params['device'] }
-          other_devices.each{|d| d.invalidate_keys! }
+          # Eval accounts are only allowed to be logged into one device at a time
+          # so invalidate all other app logins when one is asserted
+          # (not when logging in on a browser, just in an app)
+          if self.eval_account? && non_user_params['device'].token_type == :app
+            other_devices = Device.where(user_id: self.id, developer_key_id: 0).select{|d| d.token_type == :app && d != non_user_params['device'] }
+            other_devices.each{|d| d.invalidate_keys! }
+          end
         end
         non_user_params['device'].save
       end
