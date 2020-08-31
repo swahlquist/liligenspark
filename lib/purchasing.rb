@@ -261,6 +261,14 @@ module Purchasing
     end
     user && user.log_subscription_event({:log => 'paid subscription'})
     amount = type.sub(/_plus_trial/, '').sub(/_plus_extras/, '').sub(/_plus_\d+_supporters/, '').split(/_/)[-1].to_i
+    
+    
+    return :premium_supporter if self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/)
+
+    if type.match(/slp_long_term|eval_long_term/) && amount > 0 && [:premium_supporter, :eval_account].include?(user.billing_state) && !((user.settings['subscription'] || {})['last_purchase_plan_id'] || 'free').match(/free/)
+      # If already purchased the little account, don't re-charge
+      amount = 0
+    end
     include_extras = type.match(/plus_extras/)
     include_n_supporters = (type.match(/plus_(\d+)_supporters/) || [])[1].to_i
     extras_added = false
@@ -309,8 +317,8 @@ module Purchasing
           return {success: false, error: "Invalid gift/discount code", code: discount_code} unless gift
           amount *= (1.0 - gift.discount_percent)
         end
-        if include_extras
-          amount += self.extras_symbols_cost 
+        if include_extras && ((user.settings['subscription'] || {})['extras'] || {})['enabled']
+          amount += self.extras_symbols_cost
           description += " (plus premium symbols)"
         end
         if include_n_supporters > 0

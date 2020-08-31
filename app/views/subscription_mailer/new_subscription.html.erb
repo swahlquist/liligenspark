@@ -12,25 +12,25 @@ Subscription: Org-Sponsored<br/>
 Organization: <%= (Organization.attached_orgs(@user).detect{|o| o['sponsored'] } || {})['name'] %>
 <% elsif @subscription['started'] %>
 Subscription: Recurring<br/>
-Plan: <%= @subscription['plan_id'] %>
+Plan: <%= @subscription['plan_id'] %><br/>
 <% if @user.subscription_hash['extras_enabled'] %>
-Extras: Purchased Premium Symbols
+Extras: Purchased Premium Symbols<br/>
 <% end %>
 <% elsif @subscription['eval_account'] %>
-Plan: Evaluator Account
+Plan: Evaluator Account<br/>
 <% if @user.settings['subscription'] && @user.settings['subscription']['purchase_amount'] %>
 Purchase Amount: $<%= @user.settings['subscription']['purchase_amount'] %><br/>
 <% end %>
 <% if @user.subscription_hash['extras_enabled'] %>
-Extras: Purchased Premium Symbols
+Extras: Purchased Premium Symbols<br/>
 <% end %>
 <% elsif @subscription['premium_supporter'] %>
-Plan: Premium Supporter Account
+Plan: Premium Supporter Account<br/>
 <% if @user.settings['subscription'] && @user.settings['subscription']['purchase_amount'] %>
 Purchase Amount: $<%= @user.settings['subscription']['purchase_amount'] %><br/>
 <% end %>
 <% if @user.subscription_hash['extras_enabled'] %>
-Extras: Purchased Premium Symbols
+Extras: Purchased Premium Symbols<br/>
 <% end %>
 <% elsif @subscription['purchased'] %>
 Subscription: Purchase<br/>
@@ -39,13 +39,13 @@ Plan: <%= @subscription['plan_id'] %><br/>
 Purchase Amount: $<%= @user.settings['subscription']['purchase_amount'] %><br/>
 <% end %>
 <% if @user.subscription_hash['extras_enabled'] %>
-Extras: Purchased Premium Symbols
+Extras: Purchased Premium Symbols<br/>
 <% end %>
 <% if @user.settings['subscription'] && @user.settings['subscription']['discount_code'] %>
-Discount Code: <%= @user.settings['subscription']['discount_code'] %>
+Discount Code: <%= @user.settings['subscription']['discount_code'] %><br/>
 <% end %>
 <% else %>
-Subscription: No subscription information provided (what the?) (<%= @user.billing_state %>)
+Subscription: No subscription information provided (what the?) (<%= @user.billing_state %>)<br/>
 <% end %>
 <br/><br/>
 

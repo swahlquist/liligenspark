@@ -1398,9 +1398,12 @@ var app_state = EmberObject.extend({
       return 70;
     }
   }),
-  check_for_currently_premium: function(user, action, allow_fully_purchased) {
+  check_for_currently_premium: function(user, action, allow_fully_purchased, allow_premium_supporter) {
     var allowed = user && user.get('currently_premium');
     if(allow_fully_purchased && user && user.get('fully_purchased')) {
+      allowed = true;
+    }
+    if(allow_premium_supporter && user && user.get('currently_premium_or_premium_supporter')) {
       allowed = true;
     }
     if(allowed) {

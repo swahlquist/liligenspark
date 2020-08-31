@@ -96,6 +96,11 @@ var Subscription = EmberObject.extend({
       } else if(['therapist', 'other'].indexOf(u.get('preferences.registration_type')) >= 0) {
         this.set('user_type', 'supporter');
       }
+      if(this.get('minimal_premium')) {
+        // If premium already purchased, then 
+        // there's nothing left to do but upgrade
+        this.set('user_type', 'communicator');
+      }
 
       if(u.get('subscription.expires')) {
         var expires = window.moment(u.get('subscription.expires'));

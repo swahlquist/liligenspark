@@ -893,9 +893,10 @@ module Subscription
       # have access to reports and logs, even if they set their role as supporter
       # to enable this, set json['premium_supporter_plus_communicator']
       # long-term communicator, subscribed communicator, org_sponsored
-      json['premium_supporter_plus_communicator'] = true if [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(self.billing_state(true))
+      com_billing_state = self.billing_state(true)
+      json['premium_supporter_plus_communicator'] = true if [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
       json['never_expires'] = true if self.settings['subscription']['never_expires']
-      json['org_sponsored'] = true if billing_state == :org_sponsored_communicator
+      json['org_sponsored'] = true if com_billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']
       json['expires'] = self.expires_at && self.expires_at.iso8601 if self.billing_state == :trialing_supporter
       json['grace_period'] = true if self.grace_period?

@@ -1,11 +1,7 @@
 {{#opening-observer opening=(action 'opening_index') closing=(action 'closing_index')}}{{/opening-observer}}
 <div id="index_view" class={{if app_state.currentUser "row main_columns" "row"}}  style='touch-action: manipulation;'>
   {{#if app_state.currentUser}}
-    {{#if app_state.currentUser.preferences.new_index}}
-      {{partial 'index/authenticated-new'}}
-    {{else}}
-      {{partial 'index/authenticated'}}
-    {{/if}}
+    {{partial 'index/authenticated-new'}}
   {{else if app_state.domain_settings.full_domain}}
     {{partial 'index/unauthenticated'}}
   {{else if app_state.login_index}}
