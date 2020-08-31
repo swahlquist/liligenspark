@@ -17,7 +17,6 @@ class ClusterLocation < ActiveRecord::Base
 include Replicate
   
   add_permissions('view', 'edit') {|user| user.id == self.user_id || (self.user && self.user.allows?(user, 'edit')) }
-  # has_paper_trail :only => [:data, :user_id, :cluster_type]
   secure_serialize :data
 
   def distance_tolerance
