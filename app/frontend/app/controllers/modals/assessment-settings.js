@@ -15,10 +15,14 @@ export default modal.ModalController.extend({
     // TODO: on for_user update, check for that user's preferred 
     // library and default to that if it's an eval library
     var settings = Object.assign({}, this.get('model.assessment'));
-    if(settings.user_id) {
+    if(!settings.user_id) {
+      settings.user_id = app_state.get('currentUser.id') || settings.initiator_user_id;
+      settings.user_name = app_state.get('currentUser.name') || settings.initiator_user_name;
+    }
+    if(settings.user_id && !settings.for_user) {
       settings.for_user = {user_id: settings.user_id, user_name: settings.user_name};
     }
-    if(settings.for_user.user_id == app_state.get('currentUser.id')) {
+    if(settings.for_user.user_id == app_state.get('sessionUser.id')) {
       settings.for_user.user_id = 'self';
     }
     if(settings.name == 'Unnamed Eval') {

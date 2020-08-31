@@ -327,6 +327,12 @@ export default Controller.extend({
     view_devices: function() {
       modal.open('device-settings', this.get('model'));
     },
+    run_eval: function() {
+      var _this = this;
+      app_state.check_for_currently_premium(_this.get('model'), 'eval', false, true).then(function() {
+        app_state.set_speak_mode_user(_this.get('model.id'), false, false, 'obf/eval');
+      });
+    },
     eval_settings: function() {
       modal.open('modals/eval-status', {user: this.get('model')});
     },

@@ -1042,17 +1042,21 @@ var app_state = EmberObject.extend({
       return res;
     }, function(err) { });
   },
-  set_speak_mode_user: function(board_user_id, jump_home, keep_as_self) {
+  set_speak_mode_user: function(board_user_id, jump_home, keep_as_self, board_key) {
     var session_user_id = this.get('sessionUser.id');
     if(board_user_id == 'self' || (session_user_id && board_user_id == session_user_id)) {
       app_state.set('speakModeUser', null);
       app_state.set('referenced_speak_mode_user', null);
       stashes.persist('speak_mode_user_id', null);
       stashes.persist('referenced_speak_mode_user_id', null);
-      if(!app_state.get('speak_mode') && jump_home !== true) {
+      if(!board_key && !app_state.get('speak_mode') && jump_home !== true) {
         this.toggle_speak_mode();
       } else {
-        this.home_in_speak_mode();
+        var opts = {};
+        if(board_key) {
+          opts.force_board_state = {key: board_key};
+        }
+        this.home_in_speak_mode(opts);
       }
     } else {
       // TODO: this won't get the device-specific settings correctly unless
@@ -1083,7 +1087,15 @@ var app_state = EmberObject.extend({
           stashes.persist('referenced_speak_mode_user_id', (u && u.get('id')));
           var user_state = u.get('preferences.home_board');
           var current = app_state.get('currentBoardState') || user_state;
-          if(jump_home || (user_state && current && user_state.id == current.id)) {
+          if(board_key) {
+            _this.home_in_speak_mode({
+              user: u,
+              reminded: !jump_home,
+              remember_level: !jump_home,
+              fallback_board_state: user_state || app_state.get('sessionUser.preferences.home_board'),
+              force_board_state: {key: board_key}
+            });
+          } else if(jump_home || (user_state && current && user_state.id == current.id)) {
             _this.home_in_speak_mode({
               user: u,
               reminded: !jump_home,

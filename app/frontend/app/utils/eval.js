@@ -53,6 +53,7 @@ var evaluation = {
   },
   clear: function() {
     assessment = {};
+    working = {};
   },
   conclude: function() {
     modal.open('modals/assessment-settings', {assessment: assessment, action: 'results'});
@@ -89,6 +90,7 @@ var evaluation = {
     // navigate to the results page (should work even if offline and haven't been able to push yet)
     app_state.controller.transitionToRoute('user.log', assessment.user_name, 'last-eval');
     assessment = {};
+    working = {};
   },
   settings: function() {
     modal.open('modals/assessment-settings', {assessment: assessment});
@@ -590,6 +592,8 @@ var evaluation = {
         } else if(button.id == 'button_save') {
           evaluation.conclude();
         }
+      } else {
+        modal.notice(i18n.t('speak_mode_required_for_buttons', "Please enter speak mode before trying to run an evaluation"), true);
       }
       return {ignore: true, highlight: false};
     };
@@ -723,41 +727,56 @@ var shuffled_libraries = shuffle(libraries.filter(function(w) { return w != 'wor
 shuffled_libraries.push('words_only');
 var core_prompts = {};
 evaluation.callback = function(key) {
-  if(!app_state.get('currentUser')) { 
-    // TODO: or if they don't have any evals left then
-    // tell how they can purchase the app to get unlimited evals
+  if(!app_state.get('currentUser.currently_premium_or_premium_supporter')) { 
     board = obf.shell(1, 1);
     var bg_word = words.find(function(w) { return w.label == 'backgrounds'; });
+    currently_premium_or_premium_supporter
+    var msg = i18n.t('login_required', "Evaluations require you to be logged in first");
+    if(app_state.get('currentUser')) {
+      msg = i18n.t('login_required', "Evaluations require an active paid account");
+    }
     board.background = {
       image: (bg_word && bg_word.urls['intro2']) || "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f49b.svg",
-      text: i18n.t('login_required', "Evaluations require you to be logged in first"),
+      text: msg,
       position: 'center'
     }
     return {json: board.to_json()};
   }
   obf.offline_urls = obf.offline_urls || [];
   if(!words.prefetched) {
-    words.forEach(function(w) {
-      for(var key in w.urls) {
-        (function(key) {
-          if(w.urls[key] && w.urls[key].match(/^http/)) {
-            // TODO: sync should store obf.offline_urls as another step
-            obf.offline_urls.push(w.urls[key]);
-            persistence.find_url(w.urls[key], 'image').then(function(data_uri) {
-              w.urls[key] = data_uri;
-            }, function(err) {
-              var img = new Image();
-              img.src = w.urls[key];
-            });
-          }
-        })(key);
+    var all_words = [];
+    var next_word = function() {
+      var w = all_words.shift();
+      if(w) {
+        for(var key in w.urls) {
+          (function(key) {
+            if(w.urls[key] && w.urls[key].match(/^http/)) {
+              // TODO: sync should store obf.offline_urls as another step
+              obf.offline_urls.push(w.urls[key]);
+              persistence.find_url(w.urls[key], 'image').then(function(data_uri) {
+                w.urls[key] = data_uri;
+              }, function(err) {
+                var img = new Image();
+                img.src = w.urls[key];
+              });
+            }
+          })(key);
+        }  
+        setTimeout(next_word, 100);
       }
+    };
+    words.forEach(function(w) {
+      all_words.push(w);
     });
+    var threads = 3;
+    for(var idx = 0; idx < threads; idx++) {
+      next_word();
+    }
     words.prefetched = true;
     evaluation.words = words;
   }
   evaluation.checks_for = evaluation.checks_for || {};
-  var user_id = app_state.get('referenced_user.id');
+  var user_id = app_state.get('sessionUser.id');
   assessment.uid = assessment.uid || (user_id + "x" + Math.random() + (new Date()).getTime());
   if(!evaluation.checks_for[user_id]) {
     evaluation.checks_for[user_id] = {};
@@ -1806,6 +1825,8 @@ evaluation.callback = function(key) {
           }, button.id == 'button_done' ? 200 : 1000);
           return {ignore: true, highlight: false, sound: false};
         }
+      } else {
+        modal.notice(i18n.t('speak_mode_required_for_buttons', "Please enter speak mode before trying to run an evaluation"), true);
       }
       handling = false;
       return null;
@@ -1899,8 +1920,8 @@ evaluation.populate_assessment = function(assessment) {
   if(prefs) {
     assessment.populated = true;
     Object.assign(assessment, {
-      user_id: app_state.get('currentUser.id'),
-      user_name: app_state.get('currentUser.user_name'),
+      initiator_user_id: app_state.get('sessionUser.id'),
+      initiator_user_name: app_state.get('sessionUser.user_name'),
       board_background: prefs.board_background,
       button_spacing: prefs.device.button_spacing,
       button_border: prefs.device.button_border,

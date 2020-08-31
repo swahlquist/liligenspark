@@ -419,6 +419,13 @@ export default Controller.extend({
         modal.open('premium-required', {user_name: user.user_name, action: 'quick_assessment'});
       }
     },
+    run_eval: function(user) {
+      if(user.premium || emberGet(user, 'currently_premium')) {
+        app_state.set_speak_mode_user(emberGet(user, 'id'), false, false, 'obf/eval');
+      } else {
+        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation'});
+      }
+    },
     getting_started: function() {
 //      this.transitionToRoute('setup');
        modal.open('getting-started', {progress: app_state.get('currentUser.preferences.progress')});
