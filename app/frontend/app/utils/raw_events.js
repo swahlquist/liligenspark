@@ -307,13 +307,13 @@ var buttonTracker = EmberObject.extend({
       // really fast then tap somewhere else, right after
       // touchstart a click gets triggered at the location
       // you hit and released before. It's terrible.
-      if(buttonTracker.lastTouchStart) {
+      if(buttonTracker.lastTouchStart && !event.pass_through) {
         var now = (new Date()).getTime();
         if(capabilities.mobile && now - buttonTracker.lastTouchStart < 300) {
-          console.log("ERRANT CLICK", event, now - buttonTracker.lastTouchStart);
-          event.fake_event = true;
-          event.preventDefault();
-          event.stopPropagation();
+          // console.log("ERRANT CLICK", event, now - buttonTracker.lastTouchStart);
+          // event.fake_event = true;
+          // event.preventDefault();
+          // event.stopPropagation();
         }
       }
     });
