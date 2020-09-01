@@ -907,6 +907,8 @@ var app_state = EmberObject.extend({
     editManager.clear_preview_levels();
   },
   home_in_speak_mode: function(opts) {
+    // This is only entered for the current
+    // user, not for supervisees
     opts = opts || {};
     var speak_mode_user = opts.user || app_state.get('currentUser');
     // TODO: if preferred matches user's home board, pass the user's level instead of the board's default level

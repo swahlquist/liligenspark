@@ -1871,6 +1871,10 @@ var capabilities;
       }, 200);
     }
     if(window.DeviceOrientationEvent) {
+      // iOS WKWebView requires user permission
+      // (on each app load) before allowing access to this
+      // event. The alternative is to add native support,
+      // https://github.com/apache/cordova-plugin-device-motion/blob/master/src/ios/CDVAccelerometer.m
       window.addEventListener('deviceorientation', function(event) {
         if(event.alpha !== null && event.alpha !== undefined) {
           var layout = 'unknown';
