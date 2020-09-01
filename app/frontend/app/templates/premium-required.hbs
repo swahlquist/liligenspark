@@ -16,7 +16,7 @@
             {{t "This account is not currently tied to any premium communicator accounts, and as a result will currently have limited access to this feature." key='limited_supervisor_limited_accesss'}}
           {{/if}}
           {{t "If you need personal access to this feature, please" key='please_subscribe_a1'}}
-          {{#if if app_state.sessionUser.modeling_only}}
+          {{#if app_state.sessionUser.modeling_only}}
             {{#link-to 'user.subscription' model.user_name}}{{t "purchase a premium supporter account" key='please_subscribe_a2'}}{{/link-to}}
           {{else}}
             {{#link-to 'user.subscription' model.user_name}}{{t "purchase a premium communicator account" key='please_subscribe_2'}}{{/link-to}}
