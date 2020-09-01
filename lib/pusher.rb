@@ -16,6 +16,7 @@ module Pusher
     phone = phone.gsub(/[^\+\d]/, '')
     res = client.publish({
       phone_number: phone,
+      # TODO: support app_name
       message: "CoughDrop: #{message}",
       message_attributes: {
         "AWS.SNS.SMS.MaxPrice" => {

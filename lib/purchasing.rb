@@ -1219,8 +1219,12 @@ module Purchasing
             sub.delete
             user.log_subscription_event({:log => 'subscription canceled', id: sub['id'], reason: except_subscription_id}) if user
           rescue => e
-            user.log_subscription_event({:log => 'subscription cancel error', :detail => 'error deleting subscription', :subscription_id => sub['id'], :error => e.to_s, :trace => e.backtrace}) if user
-            return false
+            if e.to_s.match(/Status 404/)
+              user.log_subscription_event({:log => 'subscription already canceled', id: sub['id'], reason: except_subscription_id}) if user
+            else
+              user.log_subscription_event({:log => 'subscription cancel error', :detail => 'error deleting subscription', :subscription_id => sub['id'], :error => e.to_s, :trace => e.backtrace}) if user
+              return false
+            end
           end
         end
       end

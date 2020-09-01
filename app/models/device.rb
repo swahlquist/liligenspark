@@ -156,6 +156,8 @@ class Device < ActiveRecord::Base
   end
   
   def inactivity_timeout
+    # TODO: when invalidated for this, mark it as such and show it to 
+    # admins when troubleshooting forced logouts
     if self.token_type == :integration
       # integration tokens must be refreshed every 24 hours
       24.hours.to_i
