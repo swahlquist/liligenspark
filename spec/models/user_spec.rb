@@ -833,10 +833,38 @@ describe User, :type => :model do
       expect(d.settings['long_token_set']).to eq(true)
     end
 
+    it "should invalidate nothing when not an eval account" do
+      u = User.create
+      recent = 2.seconds.ago.to_i
+      old = 1.year.ago.to_i
+      u.save
+      expect(u.eval_account?).to eq(false)
+      d = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Other One', :settings => {'temporary_device' => true, 'app' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
+      d2 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Second One', :settings => {'app' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
+      d3 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Non-App One', :settings => {'keys' => [{'last_timestamp' => recent}]})
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
+      u.process_params({
+        'preferences' => {'device' => {
+          'long_token' => true,
+          'asserted' => true
+        }}
+      }, {'device' => d})
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['temporary_device']).to eq(nil)
+      expect(d.settings['keys']).to eq([{'last_timestamp' => recent}, {'last_timestamp' => old}])
+      expect(d2.reload.settings['keys']).to eq([{'last_timestamp' => recent}, {'last_timestamp' => old}])
+      expect(d3.reload.settings['keys']).to eq([{'last_timestamp' => recent}])
+    end
+
     it "should invalidate only app devices other than the current device if asserted by the user" do
       u = User.create
       recent = 2.seconds.ago.to_i
       old = 1.year.ago.to_i
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      expect(u.eval_account?).to eq(true)
       d = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Other One', :settings => {'temporary_device' => true, 'app' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
       d2 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Second One', :settings => {'app' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
       d3 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Non-App One', :settings => {'keys' => [{'last_timestamp' => recent}]})
@@ -855,7 +883,34 @@ describe User, :type => :model do
       expect(d2.reload.settings['keys']).to eq([])
       expect(d3.reload.settings['keys']).to eq([{'last_timestamp' => recent}])
     end
-    
+
+    it "should not invalidate app devices when logging in on a browser" do
+      u = User.create
+      recent = 2.seconds.ago.to_i
+      old = 1.year.ago.to_i
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      expect(u.eval_account?).to eq(true)
+      d = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Other One', :settings => {'temporary_device' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
+      expect(d.token_type).to_not eq(:app)
+      d2 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Second One', :settings => {'app' => true, 'keys' => [{'last_timestamp' => recent}, {'last_timestamp' => old}]})
+      d3 = Device.create(:user => u, :developer_key_id => 0, :device_key => '1.234 Non-App One', :settings => {'keys' => [{'last_timestamp' => recent}]})
+      expect(d.settings['long_token']).to eq(nil)
+      expect(d.settings['long_token_set']).to eq(nil)
+      u.process_params({
+        'preferences' => {'device' => {
+          'long_token' => true,
+          'asserted' => true
+        }}
+      }, {'device' => d})
+      expect(d.settings['long_token']).to eq(true)
+      expect(d.settings['long_token_set']).to eq(true)
+      expect(d.settings['temporary_device']).to eq(nil)
+      expect(d.settings['keys']).to eq([{'last_timestamp' => recent}, {'last_timestamp' => old}])
+      expect(d2.reload.settings['keys']).to eq([{'last_timestamp' => recent}, {'last_timestamp' => old}])
+      expect(d3.reload.settings['keys']).to eq([{'last_timestamp' => recent}])
+    end
+
     it "should schedule inflection updates for a user's board set and sidebar board set when they enable inflections" do
       u = User.create
       u.process({'preferences' => {'inflections_overlay' => true}})

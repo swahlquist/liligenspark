@@ -886,6 +886,7 @@ class LogSession < ActiveRecord::Base
     sessions << current_session if current_session.length > 0
     sessions << [] if sessions.length == 0
     sessions += more_sessions
+    sessions
   end
   
   def split_out_later_sessions(frd=false)

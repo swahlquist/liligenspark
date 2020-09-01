@@ -1347,12 +1347,58 @@ describe Purchasing do
         expect(u.premium_supporter_grants).to eq(3)
       end
 
-      it "should not apply discount codes to the supporter fees" do
-        write_this_test
+      it "should allow percent discount" do
+        g = GiftPurchase.create(settings: {'discount' => 0.5})
+        expect(g.discount_percent).to eq(0.5)
+
+        u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 10000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200', g.code)
       end
 
-      it "should not apply discount codes to the symbols fee" do
-        write_this_test
+      it "should not apply discount codes to the supporter or symbols fees" do
+        g = GiftPurchase.create(settings: {'discount' => 0.5})
+        expect(g.discount_percent).to eq(0.5)
+        u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 20000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase (plus premium symbols) (plus 3 premium supporters)',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'purchased_supporters' => 3,
+            'platform_source' => 'coughdrop',
+            'purchased_symbols' => 'true',
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_3_supporters_plus_extras', g.code)
+        Worker.process_queues
+        expect(u.reload.subscription_hash['extras_enabled']).to eq(true)
+        expect(u.premium_supporter_grants).to eq(3)
       end
 
       it "should create specify the email" do
@@ -1543,6 +1589,84 @@ describe Purchasing do
           'source' => 'new purchase'
         })
         Purchasing.purchase(u, {'id' => 'token'}, 'eval_long_term_25')
+      end
+
+      it "should not re-charge for a second eval account purchase" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop evaluator account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
+            'plan_id' => 'eval_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        }).exactly(1).times
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'eval_long_term_25')
+        expect(res).to eq({:success=>true, :type=>"eval_long_term_25"})
+        res = Purchasing.purchase(u.reload, {'id' => 'token'}, 'eval_long_term_25')
+        expect(res).to eq({:error=>"0 not valid for type eval_long_term_25", :success=>false})
+      end
+
+      it "should not re-charge for a second premium supporter purchase" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop supporter account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
+            'plan_id' => 'slp_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        }).exactly(1).times
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_25')
+        expect(res).to eq({:success=>true, :type=>"slp_long_term_25"})
+        res = Purchasing.purchase(u.reload, {'id' => 'token'}, 'slp_long_term_25')
+        expect(res).to eq({:error=>"0 not valid for type slp_long_term_25", :success=>false})
+      end
+
+      it "should not allow charging for extras on an already-purchased type" do
+        u = User.create
+        u.settings['email'] = 'testing@example.com'
+        u.save
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 2500,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop supporter account',
+          :receipt_email => 'testing@example.com',
+          :metadata => {
+            'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
+            'plan_id' => 'slp_long_term_25',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        res = Purchasing.purchase(u, {'id' => 'token'}, 'slp_long_term_25')
+        expect(res).to eq({:success=>true, :type=>"slp_long_term_25"})
+        res = Purchasing.purchase(u.reload, {'id' => 'token'}, 'slp_long_term_25_plus_extras')
+        expect(res).to eq({:error=>"0 not valid for type slp_long_term_25_plus_extras", :success=>false})
       end
 
       it "should allow re-upping a long_term subscription" do
@@ -3877,6 +4001,114 @@ describe Purchasing do
         expect(hash['expires']).to be > 4.years.from_now.iso8601
         expect(hash['expires']).to be < 6.years.from_now.iso8601
         expect(hash['plan_id']).to eq('long_term_ios')
+      end
+
+      it "should add extras for one-time purchase" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3ag834g',
+                original_transaction_id: 'x984h3ag834g',
+                product_id: 'CoughDropiOSBundle',
+                purchase_date_ms: '9',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,  
+              }]
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        expect(res['extras']).to eq(true)
+        Worker.process_queues
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSBundle')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(true)
+        expect(res['subscription']).to eq(nil)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(nil)
+        expect(res['purchased']).to eq(true)
+        expect(res['already_purchased']).to eq(nil)
+        hash = u.reload.subscription_hash
+        expect(u.billing_state).to eq(:long_term_active_communicator)
+        expect(hash['active']).to eq(true)
+        expect(hash['expires']).to be > 4.years.from_now.iso8601
+        expect(hash['expires']).to be < 6.years.from_now.iso8601
+        expect(hash['plan_id']).to eq('long_term_ios')
+        expect(hash['extras_enabled']).to eq(true)
+        expect(u.settings['premium_voices']).to eq({"allowed"=>4, "claimed"=>[]})
+      end
+
+      it "should add extras for subscription purchase" do
+        u = User.create
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(nil)
+
+        expect(Typhoeus).to receive(:post).with("https://buy.itunes.apple.com/verifyReceipt", body: {
+          'receipt-data' => 'asdf',
+          'password' => ENV['IOS_RECEIPT_SECRET']
+        }.to_json, timeout: 10, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json'}).and_return(OpenStruct.new({
+          body: {
+            status: 0,
+            receipt: {
+              bundle_id: 'com.mycoughdrop.coughdrop',
+              in_app: [{
+                quantity: 1,
+                transaction_id: '984h3834g',
+                original_transaction_id: 'x884h3ag834g',
+                purchase_date_ms: '9',
+                product_id: 'BadBacon',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,
+              }, {
+                quantity: 1,
+                transaction_id: '984h3ag834g',
+                original_transaction_id: 'x984h3ag834g',
+                purchase_date_ms: '10',
+                product_id: 'CoughDropiOSMonthly',
+                expiration_date: Date.parse('Jan 2, 2020').iso8601,
+              }]
+            }
+          }.to_json
+        }))
+        res = Purchasing.verify_receipt(u, {'ios' => true, 'receipt' => {'appStoreReceipt' => 'asdf'}})
+        Worker.process_queues
+        expect(res['success']).to eq(true)
+        expect(res['quantity']).to eq(1)
+        expect(res['product_id']).to eq('CoughDropiOSMonthly')
+        expect(res['transaction_id']).to eq('984h3ag834g')
+        expect(res['subscription_id']).to eq('x984h3ag834g')
+        expect(res['bundle_id']).to eq('com.mycoughdrop.coughdrop')
+        expect(res['customer_id']).to eq("ios.#{u.global_id}")
+        expect(res['expires']).to eq('2020-01-02')
+        expect(res['one_time_purchase']).to eq(nil)
+        expect(res['subscription']).to eq(true)
+        expect(res['expired']).to eq(nil)
+        expect(res['billing_issue']).to eq(nil)
+        expect(res['reason']).to eq(nil)
+        expect(res['free_trial']).to eq(false)
+        expect(res['subscribed']).to eq(true)
+        hash = u.reload.subscription_hash
+        expect(hash['active']).to eq(true)
+        expect(hash['plan_id']).to eq('monthly_ios')
+        expect(hash['extras_enabled']).to eq(true)
+        expect(u.settings['premium_voices']).to eq(nil)
       end
 
       it "should not process pre-purchase for free app versions" do

@@ -58,7 +58,7 @@ describe JsonApi::User do
       expect(json['premium_voices']).to eq(nil)
 
       json = JsonApi::User.build_json(u, permissions: u)
-      expect(json['premium_voices']).to eq({'claimed' => ['abc', 'bcd']})
+      expect(json['premium_voices']).to eq({'always_allowed' => true, 'claimed' => ['abc', 'bcd']})
       
       u.settings['premium_voices'] = nil
       json = JsonApi::User.build_json(u, permissions: u)
@@ -253,7 +253,7 @@ describe JsonApi::User do
         u.settings['subscription']['plan_id'] = 'monthly_6'
         
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :never_expires_communicator,
           'never_expires' => true,
           'fully_purchased' => true,
@@ -265,7 +265,7 @@ describe JsonApi::User do
         expect(u.expires_at).to eq(nil)
         u.settings['subscription']['never_expires'] = false
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'active' => true,
           'billing_state' => :org_sponsored_communicator,
           'org_sponsored' => true
@@ -276,7 +276,7 @@ describe JsonApi::User do
         u.settings['subscription']['started'] = 6.months.ago.iso8601
         u.settings['subscription']['plan_id'] = 'monthly_6'
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :subscribed_communicator,
           'active' => true,
           'started' => u.settings['subscription']['started'],
@@ -294,7 +294,7 @@ describe JsonApi::User do
         u.settings['subscription']['customer_id'] = 'bob'
         u.settings['subscription']['last_purchase_plan_id'] = 'long_term_100'
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :long_term_active_communicator,
           'active' => true,
           'expires' => u.expires_at.iso8601,
@@ -304,7 +304,7 @@ describe JsonApi::User do
         
         u.settings['subscription']['never_expires'] = true
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :never_expires_communicator,
           'fully_purchased' => true,
           'active' => true,

@@ -848,7 +848,39 @@ describe LogSession, :type => :model do
     end
 
     it "should store evals to the correct user" do
-      write_this_test
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log = LogSession.find_by(log_type: 'eval')
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
     end
   end
 

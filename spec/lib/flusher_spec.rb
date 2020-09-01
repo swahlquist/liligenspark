@@ -125,10 +125,10 @@ describe Flusher do
       PaperTrail.request.whodunnit = 'user:todd'
       u = User.create
       b = Board.create(:user => u)
-      i = ButtonImage.create
-      i2 = ButtonImage.create
+      i = ButtonImage.create(user: u)
+      i2 = ButtonImage.create(user: u)
       BoardButtonImage.connect(b.id, [{:id => i.global_id}, {:id => i2.global_id}])
-      s = ButtonSound.create
+      s = ButtonSound.create(user: u)
       BoardButtonSound.create(:board_id => b.id, :button_sound_id => s.id)
       expect(ButtonImage.count).to eq(2)
       expect(ButtonSound.count).to eq(1)
@@ -185,12 +185,12 @@ describe Flusher do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      i = ButtonImage.create(:removable => true, :url => "http://www.example.com/pic.png")
-      i2 = ButtonImage.create(:removable => false, :url => "http://www.example.com/pic2.png")
-      i3 = ButtonImage.create(:removable => true, :url => "http://www.example.com/pic3.png")
+      i = ButtonImage.create(:user => u, :removable => true, :url => "http://www.example.com/pic.png")
+      i2 = ButtonImage.create(:user => u, :removable => false, :url => "http://www.example.com/pic2.png")
+      i3 = ButtonImage.create(:user => u, :removable => true, :url => "http://www.example.com/pic3.png")
       BoardButtonImage.connect(b.id, [{:id => i.global_id}, {:id => i2.global_id}, {:id => i3.global_id}])
       BoardButtonImage.connect(b2.id, [{:id => i3.global_id}])
-      s = ButtonSound.create(:removable => true, :url => "http://www.example.com/sound.mp3")
+      s = ButtonSound.create(:user => u, :removable => true, :url => "http://www.example.com/sound.mp3")
       BoardButtonSound.create(:board_id => b.id, :button_sound_id => s.id)
       expect(i.removable).to eq(true)
       expect(i2.removable).to eq(false)
@@ -215,12 +215,12 @@ describe Flusher do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      i = ButtonImage.create(:removable => true, :url => "http://www.example.com/pic.png")
-      i2 = ButtonImage.create(:removable => false, :url => "http://www.example.com/pic2.png")
-      i3 = ButtonImage.create(:removable => true, :url => "http://www.example.com/pic3.png")
+      i = ButtonImage.create(:user => u, :removable => true, :url => "http://www.example.com/pic.png")
+      i2 = ButtonImage.create(:user => u, :removable => false, :url => "http://www.example.com/pic2.png")
+      i3 = ButtonImage.create(:user => u, :removable => true, :url => "http://www.example.com/pic3.png")
       BoardButtonImage.connect(b.id, [{:id => i.global_id}, {:id => i2.global_id}, {:id => i3.global_id}])
       BoardButtonImage.connect(b2.id, [{:id => i3.global_id}])
-      s = ButtonSound.create(:removable => true, :url => "http://www.example.com/sound.mp3")
+      s = ButtonSound.create(:user => u, :removable => true, :url => "http://www.example.com/sound.mp3")
       BoardButtonSound.create(:board_id => b.id, :button_sound_id => s.id)
       expect(i.removable).to eq(true)
       expect(i2.removable).to eq(false)
@@ -232,6 +232,8 @@ describe Flusher do
       expect(Uploader).not_to receive(:remote_remove).with("http://www.example.com/pic2.png")
       expect(Uploader).to receive(:remote_remove).with("http://www.example.com/pic3.png")
       
+      expect(ButtonImage.count).to eq(3)
+
       Flusher.flush_board(b.global_id, b.key, true)
       Worker.process_queues
       expect(ButtonImage.count).to eq(0)
@@ -260,11 +262,64 @@ describe Flusher do
       Flusher.flush_user_boards(u.global_id, u.user_name)
     end
   end
+
+  describe "flush_user_content" do
+    it "should flush all user-related content" do
+      u = User.create
+      d = Device.create(user: u)
+      o = []
+      14.times do |i|
+        obj = {}
+        o << obj
+        expect(Flusher).to receive(:flush_record).with(obj).and_return(true)
+      end
+      expect(Device).to receive(:where).with(:user_id => u.id).and_return([d, o[0], o[1]])
+      expect(Utterance).to receive(:where).with(:user_id => u.id).and_return([o[2]])
+      expect(NfcTag).to receive(:where).with(:user_id => u.id).and_return([o[3], o[4]])
+      expect(UserIntegration).to receive(:where).with(:user_id => u.id).and_return([o[5]])
+      expect(UserGoal).to receive(:where).with(:user_id => u.id).and_return([o[6], o[7], o[8]])
+      expect(UserBadge).to receive(:where).with(:user_id => u.id).and_return([o[9]])
+      expect(Webhook).to receive(:where).with(:user_id => u.id).and_return([o[10], o[11]])
+      expect(UserBoardConnection).to receive(:where).with(:user_id => u.id).and_return([o[12]])
+      expect(UserLink).to receive(:where).with(:user_id => u.id).and_return([o[13]])
+      Flusher.flush_user_content(u.global_id, u.user_name, d)
+    end
+  end
+
+  describe "transfer_user_content" do
+    it "should rename boards" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u1)
+      expect(Board).to receive(:where).with(:user_id => u1.id).and_return([b])
+      expect(b).to receive(:rename_to).with("#{u2.user_name}/unnamed-board")
+      Flusher.transfer_user_content(u1.global_id, u1.user_name, u2.global_id, u2.user_name)
+      expect(b.reload.user).to eq(u2)
+    end
+
+    it "should update user_id on other records" do
+      u1 = User.create
+      u2 = User.create
+      ref = {}
+      expect(ref).to receive(:update_all).with(user_id: u2.id).and_return(1).exactly(10).times
+      expect(NfcTag).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserIntegration).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserGoal).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserBadge).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(Webhook).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserBoardConnection).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserLink).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(ButtonSound).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(ButtonImage).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      expect(UserVideo).to receive(:where).with(:user_id => u1.id).and_return(ref)
+      Flusher.transfer_user_content(u1.global_id, u1.user_name, u2.global_id, u2.user_name)
+    end
+  end
   
   describe "flush_user_completely" do
     it "should call find_user" do
       u = User.create
-      expect(Flusher).to receive(:find_user).with(u.global_id, u.user_name).exactly(3).times.and_return(u)
+      expect(Flusher).to receive(:find_user).with(u.global_id, u.user_name).at_least(3).times.and_return(u)
       Flusher.flush_user_completely(u.global_id, u.user_name)
     end
     

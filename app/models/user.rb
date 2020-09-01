@@ -291,11 +291,6 @@ class User < ActiveRecord::Base
       self.settings['all_home_boards'] ||= []
       self.settings['all_home_boards'] << self.settings['preferences']['home_board'].slice('key', 'id')
       self.settings['all_home_boards'] = self.settings['all_home_boards'].uniq
-      # once a home board is set, start the timer
-      if self.eval_account? && !self.settings['subscription']['eval_expires']
-        self.settings['subscription']['eval_expires'] = self.eval_duration.days.from_now
-        self.settings['subscription']['eval_started'] = Time.now.iso8601
-      end
     end
     self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
     self.settings['preferences']['devices'] ||= {}

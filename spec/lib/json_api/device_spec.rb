@@ -24,6 +24,9 @@ describe JsonApi::Device do
         'ip_address' => nil,
         'last_used' => d.created_at.iso8601,
         'app_version' => 'asdf',
+        "inactivity_timeout" => "12.0 hours",
+        "token_timeout" => "5.0 years",
+        "token_type" => :unknown,
         'user_agent' => nil
       })
     end

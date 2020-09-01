@@ -836,6 +836,34 @@ describe Subscription, :type => :model do
       o.add_user(u.user_name, false, true, true)
       expect(u.reload.eval_account?).to eq(true)
     end
+
+    it "for a paid supporter who switches and purchases a communicator account, not double-extend expiration" do
+      u = User.create
+      u.expires_at = Time.now
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(u.settings['preferences']['role']).to eq('supporter')
+      expect(u.billing_state).to eq(:premium_supporter)      
+      expect(u.expires_at).to be < 6.years.from_now
+      expect(u.expires_at).to be > 4.years.from_now
+
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'purchase_id' => '234567',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(u.settings['preferences']['role']).to eq('communicator')
+      expect(u.billing_state).to eq(:long_term_active_communicator)      
+      expect(u.expires_at).to be < 6.years.from_now
+      expect(u.expires_at).to be > 4.years.from_now
+    end
   end
   
   describe "update_subscription" do
@@ -1705,6 +1733,26 @@ describe Subscription, :type => :model do
     end
   end
 
+  describe "billing_state" do
+    it "for a paid supporter who switches to a communicator, set as expired" do
+      u = User.create
+      u.expires_at = Time.now
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(u.settings['preferences']['role']).to eq('supporter')
+      expect(u.billing_state).to eq(:premium_supporter)      
+
+      u.settings['preferences']['role'] = 'communicator'
+      u.save
+      expect(u.billing_state).to eq(:expired_communicator)
+    end
+  end
+
   describe "subscription_hash" do
     it "should correctly identify long-term subscription entries" do
       u = User.new
@@ -1839,6 +1887,65 @@ describe Subscription, :type => :model do
       hash2 = u.subscription_hash
 
       expect(hash).to eq(hash2)
+    end
+
+    it "should change when a paid communicator switches to supporter" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:long_term_active_communicator)
+      expect(hash['premium_supporter_plus_communicator']).to eq(nil)
+
+      u.settings['preferences']['role'] = 'supporter'
+      hash2 = u.subscription_hash
+
+      expect(hash).to_not eq(hash2)
+      expect(hash2['billing_state']).to eq(:premium_supporter)
+      expect(hash2['premium_supporter_plus_communicator']).to eq(true)
+    end
+
+    it "should not allow a paid supporter to switch to an eval communicator??" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:premium_supporter)
+
+      u.settings['preferences']['role'] = 'communicator'
+      hash2 = u.subscription_hash
+
+      expect(hash).to_not eq(hash2)
+      expect(hash2['billing_state']).to eq(:expired_communicator)
+    end
+
+    it "should allow an eval account to switch to a paid supporter??" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'purchase_id' => '12345',
+        'plan_id' => 'eval_long_term_25',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(res).to eq(true)
+      hash = u.subscription_hash
+      expect(hash['billing_state']).to eq(:eval_communicator)
+
+      u.settings['preferences']['role'] = 'supporter'
+      hash2 = u.subscription_hash
+
+      expect(hash).to_not eq(hash2)
+      expect(hash2['billing_state']).to eq(:premium_supporter)
     end
   end
   
@@ -2286,7 +2393,6 @@ describe Subscription, :type => :model do
       expect(u.recurring_subscription?).to eq(true)
       
       expect(u.subscription_override('manual_supporter')).to eq(true)
-      puts JSON.pretty_generate(u.settings['subscription'])
       expect(u.billing_state).to eq(:premium_supporter)
 
       expect(Worker.scheduled?(Purchasing, :cancel_subscription, u.global_id, '1234', '12345')).to eq(true)
@@ -2800,19 +2906,22 @@ describe Subscription, :type => :model do
       d = Device.create(user: u)
       5.times{|i| LogSession.create!(user: u, device: d, author: u) }
       expect(u.reload.log_sessions.count).to eq(5)
-      u.reset_eval(nil)
-      expect(u.reload.log_sessions.count).to eq(5)
+      u.settings['subscription'] = {'eval_account' => true}
+      expect(u.reset_eval(d.global_id)).to eq(true)
       Worker.process_queues
       expect(u.reload.log_sessions.count).to eq(0)
     end
     
-    it "should clear user-generated boards"
-    it "should clear earned badges"
-    it "should clear user goals"
-    it "should clear user integrations"
-    it "should clear user recordings"
-    it "should clear user videos"
-    it "should clear user utterances"
+    it "should call flush_user_content" do
+      u = User.create
+      d = Device.create(user: u)
+      5.times{|i| LogSession.create!(user: u, device: d, author: u) }
+      expect(u.reload.log_sessions.count).to eq(5)
+      u.settings['subscription'] = {'eval_account' => true}
+      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d)
+      expect(u.reset_eval(d.global_id)).to eq(true)
+      Worker.process_queues
+    end
   end  
 
   describe "transfer_eval_to" do
@@ -2827,14 +2936,20 @@ describe Subscription, :type => :model do
       s3 = LogSession.create(user: u, author: u, device: d, log_type: 'note')
       s4 = LogSession.create(user: u, author: u, device: d, log_type: 'assessment')
       s5 = LogSession.create(user: u, author: u, device: d, log_type: 'session')
-      LogSession.where(id: [s1.id, s2.id, s3.id, s4.id]).update_all(started_at: 12.hours.ago)
+      LogSession.where(id: [s1.id, s2.id, s3.id, s4.id]).update_all(started_at: 12.hours.from_now)
       LogSession.where(id: [s5.id]).update_all(started_at: 6.months.ago)
+      expect(s1.reload.user_id).to eq(u.id)
+      expect(s2.reload.user_id).to eq(u.id)
+      expect(s3.reload.user_id).to eq(u.id)
+      expect(s4.reload.user_id).to eq(u.id)
+      expect(s5.reload.user_id).to eq(u.id)
+
       u.transfer_eval_to(u2.global_id, d.global_id)
       expect(s1.reload.user_id).to eq(u2.id)
       expect(s2.reload.user_id).to eq(u2.id)
       expect(s3.reload.user_id).to eq(u2.id)
       expect(s4.reload.user_id).to eq(u2.id)
-      expect(s5.reload.user_id).to eq(u.id)
+      expect{ s5.reload }.to raise_error(ActiveRecord::RecordNotFound)
     end
     
     it "should transfer preferences to the new user" do
@@ -2889,41 +3004,143 @@ describe Subscription, :type => :model do
     end
 
     it "should call reset_eval if specified" do
-      write_this_test
-    end
-
-    it "should transfer copied boards to the new user" do
-      write_this_test
-    end
-
-    it "should transfer earned badges" do
-      write_this_test
-    end
-
-    it "should transfer user goals" do
-      write_this_test
-    end
-
-    it "should transfer user integrations" do
-      write_this_test
-    end
-
-    it "should transfer user recordings" do
-      write_this_test
-    end
-
-    it "should transfer user videos" do
-      write_this_test
-    end
-
-    it "should transfer user utterances" do
-      write_this_test
+      u = User.create
+      u.subscription_override('eval')
+      expect(u.eval_account?).to eq(true)
+      u2 = User.create
+      d = Device.create(user: u, developer_key_id: 999)
+      expect(Flusher).to receive(:transfer_user_content).with(u.global_id, u.user_name, u2.global_id, u2.user_name)
+      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d)
+      u.transfer_eval_to(u2.global_id, d.global_id, true)
     end
   end
 
   describe "extend_eval" do
-    it "should have specs" do
-      write_this_test
+    it "should do nothing if not an eval account" do
+      u = User.create
+      expect(u.extend_eval('asdf', u)).to eq(false)
+    end
+
+    it "should allow self-extending if not managed" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 20.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 40.days.from_now.iso8601
+    end
+
+    it "should limit self-extending to 1 week if managed" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.settings['subscription']['eval_extended']).to eq(nil)
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 12.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 14.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_extended']).to eq(true)
+
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 12.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 14.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_extended']).to eq(true)
+    end
+
+    it "should only allow self-extending once if managed" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.settings['subscription']['eval_extended']).to eq(nil)
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 12.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 14.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_extended']).to eq(true)
+
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 12.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 14.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_extended']).to eq(true)
+    end
+
+    it "should allow supervisors to extend indefinitely" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u2)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 20.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 40.days.from_now.iso8601
+    end
+
+    it "should allow org managers to extend indefinitely" do
+      u = User.create
+      o = Organization.create(:settings => {'total_eval_licenses' => 2})
+      u2 = User.create
+      o.add_user(u.user_name, false, true, true)
+      o.add_manager(u2.user_name, true)
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.extend_eval(30.days.from_now.to_date.iso8601, u2)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 20.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 40.days.from_now.iso8601
+    end
+
+    it "should not allow extending beyong the extend limit" do
+      u = User.create
+      res = u.update_subscription({
+        'purchase' => true,
+        'plan_id' => 'eval_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      expect(u.reload.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.reload.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
+      u.settings['subscription']['eval_expires'] = 6.days.from_now.to_date.iso8601
+      u.save
+      expect(u.extend_eval(200.days.from_now.to_date.iso8601, u2)).to_not eq(false)
+      expect(u.settings['subscription']['eval_expires']).to be > 80.days.from_now.iso8601
+      expect(u.settings['subscription']['eval_expires']).to be < 100.days.from_now.iso8601
     end
   end
   

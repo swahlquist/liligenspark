@@ -118,7 +118,7 @@ describe Supervising, :type => :model do
       expect(u2.settings['preferences']['role']).to eq('supporter')
     end
     
-    it "should not auto-set a supervisor as a supporter role if already set" do
+    it "should auto-set a supervisor as a supporter role if already set" do
       u = User.create
       u2 = User.create
       expect(u2.settings['preferences']['role']).to eq('communicator')
@@ -128,7 +128,7 @@ describe Supervising, :type => :model do
       u2.save
       u3 = User.create
       User.link_supervisor_to_user(u2, u3)
-      expect(u2.settings['preferences']['role']).to eq('communicator')
+      expect(u2.settings['preferences']['role']).to eq('supporter')
     end
     
     it "should set the org unit id if defined" do

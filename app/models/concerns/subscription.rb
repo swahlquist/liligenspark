@@ -20,7 +20,7 @@ module Subscription
       end
     end
     
-    if self.recurring_subscription?
+    if self.billing_state(true) == :subscribed_communicator
       started = Time.parse(self.settings['subscription']['started']) rescue nil
       if started
         self.settings['past_purchase_durations'] ||= []
@@ -580,9 +580,10 @@ module Subscription
     destination_user.settings['preferences']['devices'] = devices
     destination_user.save_with_sync('transfer_eval')
     # transfer usage logs to the new user
+    eval_start = Time.parse((self.settings['subscription'] || {})['eval_started'] || 60.days.ago.iso8601)
+    LogSession.where(user_id: self.id).where(log_type: ['session', 'daily_use', 'note', 'assessment', 'eval', 'modeling_activities', 'activities', 'journal']).where(['started_at > ?', eval_start]).update_all(user_id: destination_user.id)
     Flusher.transfer_user_content(self.global_id, self.user_name, destination_user.global_id, destination_user.user_name)
     # TODO: transfer daily_use data across as well
-    eval_start = Time.parse((self.settings['subscription'] || {})['eval_started'] || 60.days.ago.iso8601)
     WeeklyStatsSummary.where(user_id: self.id).where(['created_at > ?', eval_start]).each do |summary|
       summary.schedule(:update!)
     end
@@ -596,15 +597,17 @@ module Subscription
   end
   
   def extend_eval(extension, extending_user)
-    return unless self.eval_account?
-    if (self.supervisors.length > 0 && extending_user != self) || self.supervisors.length == 0
+    return false unless self.eval_account?
+    if (extending_user != self && self.allows?(extending_user, 'supervise')) || (self.supervisors.length == 0 && !Organization.managed?(self))
       self.settings['subscription'].delete('eval_extended')
       extend_date = (Date.parse(extension).to_time + 12.hours) rescue nil
-      self.settings['subscription']['eval_expires'] = [extend_date, 1.week.from_now].compact.max.iso8601
+      self.settings['subscription']['eval_expires'] = [[extend_date, 1.week.from_now].compact.max, 90.days.from_now].min.iso8601
     elsif !self.settings['subscription']['eval_extended']
-      self.settings['subscription']['eval_expires'] = 1.week.from_now.iso8601
+      current = (self.settings['subscription'] && Date.parse(self.settings['subscription']['eval_expires'])) rescue nil
+      self.settings['subscription']['eval_expires'] = ((current || Time.now) + 1.week).iso8601
       self.settings['subscription']['eval_extended'] = true
     end
+    self.settings['subscription']['eval_expires']
   end
 
   def eval_duration
