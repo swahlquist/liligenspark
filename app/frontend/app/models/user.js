@@ -262,9 +262,6 @@ CoughDrop.User = DS.Model.extend({
     if(!this.get('fully_purchased')) { return false; }
     return !!(this.get('subscription.lapsed_communicator') || this.get('expiration_passed'));
   }),
-  expired_or_limited_paid_supervisor_or_modeling_only: computed('expired', 'limited_paid_supervisor', 'supporter_role', 'modeling_only', function() {
-    return !!((this.get('expired') && !this.get('supporter_role')) || this.get('limited_paid_supervisor')) || this.get('modeling_only');
-  }),
   eval_end_date: computed('subscription.eval_account', 'subscription.eval_expires', function() {
     if(this.get('subscription.eval_account') && this.get('subscription.eval_expires')) {
       var expires = window.moment(this.get('subscription.eval_expires'));

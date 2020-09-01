@@ -7,7 +7,16 @@
     <p>"<span style='font-size: 20px; display: inline-block; max-width: 90%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap;'>{{sentence}}</span>"</p>
     <div style='position: absolute; left: -1000px;'>{{input type='text' value=sentence id='utterance_sentence'}}</div>
     <div class="row share_buttons modal_targets advanced_selection" style="margin: 10px 0;">
-      {{#unless app_state.sessionUser.expired_or_limited_paid_supervisor_or_modeling_only}}
+      {{#if app_state.sessionUser.any_limited_supervisor}}
+        <p class='text-muted'>
+          {{t "In addition to sharing using the device's built-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors. You can add contacts on a user's profile under My Account!" key='two_way_communication_on_profile'}}
+          {{#if app_state.sessionUser.modeling_only}}
+              {{t "Please consider purchasing %app_name% to gain access to this feature when working with paid communicators." key='consider_buying_for_contacts'}}
+          {{else}}
+              {{t "This feature is limited to those working with paid communicator accounts." key='consider_communicator_buying_for_contacts'}}
+          {{/if}}
+        </p>
+      {{else if app_state.referenced_user.currently_premium}}
         {{#if contacts}}
           {{#each contacts as |sup|}}
             <div class='col-sm-2 col-xs-4'>
@@ -25,12 +34,10 @@
         {{/if}}
       {{else}}
         <p class='text-muted'>
-          {{t "In addition to sharing using the device's built-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors." key='two_way_communication'}}
-          {{#if app_state.sessionUser.expired}}
-            {{t "Please consider purchasing %app_name% to gain access to this feature." key='consider_buying_for_contacts'}}
-          {{/if}}
+          {{t "In addition to sharing using the device's built-in tools, %app_name% can be set up for two-way text or email to custom contacts and supervisors. You can add contacts on a user's profile under My Account!" key='two_way_communication_on_profile'}}
+          {{t "This feature is limited to communicators with a currently-active premium account" key='currently_premium_required'}}
         </p>
-      {{/unless}}
+      {{/if}}
       <div style='clear: both; border-top: 2px solid #ccc; margin: 10px 0;'></div>
       {{#if shares.clipboard}}
       <div class='col-md-2 col-sm-3 col-xs-4'>

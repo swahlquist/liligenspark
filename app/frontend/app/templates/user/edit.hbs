@@ -83,7 +83,14 @@
             {{/each}}
           </ul>
         {{/if}}
-        {{#if model.expired_or_limited_supervisor_or_modeling_only}}
+
+    
+        {{#if app_state.supporter_role}}
+          <p class='text-danger'>{{t "NOTE: contacts will only show up in Speak Mode for communicators with a currently-active premium account" key='premium_account_required_for_contacts'}}</p>
+        {{else if app_state.sessionUser.any_limited_supervisor}}
+          <p class='text-danger'>{{t "NOTE: contacts will not show up in Speak Mode for supervised users who do not have a currently-active premium account" key='premium_communicator_required_for_contacts'}}</p>
+        {{else if model.currently_premium}}
+        {{else}}
           <p class='text-danger'>{{t "NOTE: contacts will not show up in Speak Mode for users who do not have a currently-active premium account" key='premium_required_for_contacts'}}</p>
         {{/if}}
       </div>

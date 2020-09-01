@@ -873,13 +873,17 @@ var app_state = EmberObject.extend({
         var already_speaking_as_someone_else = app_state.get('speakModeUser.id') && app_state.get('speakModeUser.id') != app_state.get('sessionUser.id');
         if(app_state.get('currentBoardState')) { delete app_state.get('currentBoardState').reload_token }
         // when entering speak mode, if the user is expired,
-        // or the supervisor doesn't have any premium supervisees,
+        // or modeling-only w/o hany premium supervisees,
         // pop up a closeable notice about purchasing the app
         // (the speak mode session will time out on its own)
-        var communicator_limited = app_state.get('currentUser.expired');
-        var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.any_limited_supervisor');
+        // NOTE: For a paid supporter, it seems out of place
+        // to pester them every time they enter Speak Mode
+        // w/o supervisees, so we'll just tell them when it times out instead
+        var speaking_user = (app_state.get('speakModeUser') || app_state.get('currentUser'))
+        var communicator_limited = speaking_user && speaking_user.get('expired');
+        var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.modeling_only') && !app_state.get('speakModeUser');
         if(app_state.get('currentUser') && !opts.reminded && (communicator_limited || supervisor_limited) && !already_speaking_as_someone_else) {
-          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
+          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
             opts.reminded = true;
             app_state.toggle_mode(mode, opts);
           });
@@ -910,9 +914,10 @@ var app_state = EmberObject.extend({
       stashes.persist('board_level', null);
     }
     var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
-    // TODO: same as above, in .toggle_mode
-    if(speak_mode_user && !opts.reminded && speak_mode_user.get('expired')) {
-      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, remind_to_upgrade: true, action: 'app_speak_mode'}).then(function() {
+    var communicator_limited = speak_mode_user.get('expired');
+    var supervisor_limited = speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
+    if(speak_mode_user && !opts.reminded && (communicator_limited || supervisor_limited)) {
+      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
         opts.reminded = true;
         app_state.home_in_speak_mode(opts);
       });
@@ -1732,11 +1737,11 @@ var app_state = EmberObject.extend({
     if(this.get('speak_mode') && this.get('speak_mode_started')) {
       var started = this.get('speak_mode_started');
       var done = false;
-      // If running speak mode for themselves, supervisors need to be paid or working with someone
+      // If running speak mode for themselves, supervisors need to be working with someone
       if(this.get('currentUser.id') == this.get('sessionUser.id') && !this.get('referenced_speak_mode_user') && this.get('currentUser.any_limited_supervisor')) {
         if(started < now - (15 * 60 * 1000)) {
           redirect_option = 'contact';
-          done = i18n.t('limited_supervisor_timeout', "Speak mode sessions are limited to 15 minutes for supervisors not working with paid communicators. Please contact us if you need a full-featured evaluation account.");
+          done = i18n.t('limited_supervisor_timeout', "Speak mode sessions are limited to 15 minutes for supervisors not working with paid communicators. Please consider a communicator or evaluator account if you need longer sessions.");
         }
       // If running speak mode for a communicator, check the status of the communicator
       } else if(this.get('sessionUser.id') != this.get('referenced_speak_mode_user.id') && this.get('referenced_speak_mode_user.expired')) {
