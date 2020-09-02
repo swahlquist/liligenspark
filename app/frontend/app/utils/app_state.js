@@ -916,8 +916,8 @@ var app_state = EmberObject.extend({
       stashes.persist('board_level', null);
     }
     var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
-    var communicator_limited = speak_mode_user.get('expired');
-    var supervisor_limited = speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
+    var communicator_limited = speak_mode_user && speak_mode_user.get('expired');
+    var supervisor_limited = speak_mode_user && speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
     if(speak_mode_user && !opts.reminded && (communicator_limited || supervisor_limited)) {
       return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
         opts.reminded = true;

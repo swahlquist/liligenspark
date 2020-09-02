@@ -730,7 +730,6 @@ evaluation.callback = function(key) {
   if(!app_state.get('currentUser.currently_premium_or_premium_supporter')) { 
     board = obf.shell(1, 1);
     var bg_word = words.find(function(w) { return w.label == 'backgrounds'; });
-    currently_premium_or_premium_supporter
     var msg = i18n.t('login_required', "Evaluations require you to be logged in first");
     if(app_state.get('currentUser')) {
       msg = i18n.t('login_required', "Evaluations require an active paid account");

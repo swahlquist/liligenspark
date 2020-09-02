@@ -755,7 +755,6 @@ module Subscription
   end
 
   def legacy_free_premium?
-    # TODO: phase this out eventually
     self.created_at && self.created_at < Date.parse('June 15, 2020') && self.settings && self.settings['subscription'] && self.settings['subscription']['free_premium']
   end
 
