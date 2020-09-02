@@ -166,7 +166,6 @@ var app_state = EmberObject.extend({
         capabilities.nfc.listen('global', function(tag) {
           app_state.handle_tag(tag);
         }).then(null, function() {
-          // TODO: error message stating NFC listening failed?
         })
       }
     });
@@ -284,7 +283,6 @@ var app_state = EmberObject.extend({
         }
       }, 10);
     });
-    // TODO: this is a dumb way to do this (remove the "loading..." message)...
     $('#loading_box').remove();
     $("body").removeClass('pretty_loader');
   },
@@ -312,28 +310,9 @@ var app_state = EmberObject.extend({
     if(transition.aborted) { return; }
     app_state.set('from_url', app_state.get('route._router.url') || app_state.get('route.router.url'));
     var from = [transition.from_route].concat(transition.from_params);
-    // if(!from[0]) {
-    //   // TODO: this should go away
-    //   var rec = this.get('route._router._routerMicrolib.recognizer') || this.get('route.router._routerMicrolib.recognizer');
-    //   var pieces = rec && rec.recognize(app_state.get('from_url'));
-    //   if(pieces && pieces.length > 0) {
-    //     var args = [pieces[pieces.length - 1].handler];
-    //     var handle_piece = function(name) {
-    //       args.push(piece.params[name]);
-    //     };
-    //     for(var idx = 0; idx < pieces.length; idx++) {
-    //       var piece = pieces[idx];
-    //       if(piece && piece.isDynamic) {
-    //         (transition._router || transition.router).getHandler(piece.handler)._names.forEach(handle_piece);
-    //       }
-    //     }
-    //     from = args;
-    //   }
-    // }
     if(from[0] && from[0] != 'board.index') {
       app_state.set('from_route', from);
     }
-//     console.log("came from", app_state.get('from_route'));
     app_state.set('latest_board_id', null);
     app_state.set('login_modal', false);
     app_state.set('to_target', transition.to_route);
@@ -363,7 +342,6 @@ var app_state = EmberObject.extend({
     modal.close();
     modal.close_board_preview();
     if(app_state.get('edit_mode')) {
-      // TODO: confirm leaving exit mode before continuing
       app_state.toggle_edit_mode();
     }
 //           $(".hover_button").remove();
@@ -826,8 +804,9 @@ var app_state = EmberObject.extend({
         if(opts.temporary_home && board_state && board_state.id != opts.override_state.id) {
           // If not currently on the override_state board,
           // set the current board as temporary home, and the override_state
-          // board as the actual hom
+          // board as the actual home
           temporary_root_state = board_state;
+          board_level = board_state.level || board_state.default_level || null;
         } else {
           // If starting on the user's home board, use that level
           // unless a different one has already been set
