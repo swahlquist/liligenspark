@@ -986,13 +986,13 @@ module Purchasing
       end
       user_id = customer['metadata'] && customer['metadata']['user_id']
       user = user_id && User.find_by_global_id(user_id)
-      if !user && cancels[customer['id']].blank?
+      customer_subs = customer['subscriptions'].to_a.select{|s| ((s['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop' }
+      if !user && cancels[customer['id']].blank? && !customer_subs.blank?
         problems << "#{customer['id']} no user found"
         output "\tuser not found"
         next
       end
 
-      customer_subs = customer['subscriptions'].to_a
       user_active = user && user.recurring_subscription?
       user_active_ids << user.global_id if user_active
       customer_active = false
@@ -1115,7 +1115,7 @@ module Purchasing
     if problems.length > 0
       output "PROBLEMS:\n#{problems.join("\n")}\n"
     end
-    output "PURCHASES: #{tallies.to_json}"
+    output "LARGE PURCHASES: #{tallies.to_json}"
     output "LICENSES (approx): #{tally_months.to_json}"
     output "YEARS: #{years.to_json}"
     output "TOTALS: checked #{total}, paying customers (not trialing, not duplicates) #{customer_active_ids.uniq.length}, subscription users #{user_active_ids.uniq.length}"
