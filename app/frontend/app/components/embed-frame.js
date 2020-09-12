@@ -49,6 +49,9 @@ export default Component.extend({
       }
     }, 5000);
   },
+  willDestroyElement: function() {
+    frame_listener.unload();
+  },
   overlay_style: computed('board_style', function() {
     var res = this.get('board_style');
     res = res.string || res;
