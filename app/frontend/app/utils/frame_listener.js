@@ -166,7 +166,7 @@ var frame_listener = EmberObject.extend({
       div.style.left = (data.target.left_percent * rect.width) + "px";
       div.style.top = (data.target.top_percent * rect.height) + "px";
       overlay.appendChild(div);
-      var found = targets.find(function(t) { return t.id == data.target.id; });
+      var found = targets.find(function(t) { return t.id == data.target.id && t.session_id == data.session_id; });
       if(!found) {
         targets.push({id: data.target.id, session_id: data.session_id, target: data.target, dom: div, respond: data.respond});
       } else {
