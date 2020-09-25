@@ -93,17 +93,7 @@ export default Component.extend({
           }
           res = document.execCommand('copy');
           if(!res) {
-            var textArea = document.createElement('textArea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            var range = document.createRange();
-            range.selectNodeContents(textArea);
-            var selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            textArea.setSelectionRange(0, 999999);        
-            res = document.execCommand('copy');
-            document.body.removeChild(textArea);
+            capabilities.sharing.copy_text(text);
           }
           window.getSelection().removeAllRanges();
         }

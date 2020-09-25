@@ -783,6 +783,27 @@ var capabilities;
           }
           return promise;
         },
+        copy_text: function(text) {
+          var elem = document.querySelector('#text_copy')
+          if(!elem) {
+            elem = document.createElement('span');
+            elem.id = 'text_copy';
+            elem.style.position = 'absolute';
+            elem.style.leftt = '-1000px';
+            document.body.appendChild(elem);
+          }
+          window.getSelection().removeAllRanges();
+          elem.innerText = text;
+          var range = document.createRange();
+          range.selectNode(elem);
+          window.getSelection().addRange(range);
+          var res = document.execCommand('copy');
+          if(!res) {
+            capabilities.sharing.copy_text(text);
+          }
+          window.getSelection().removeAllRanges();
+          return res;
+        },
         share: function(type, message, url, image_url) {
           var promise = capabilities.mini_promise();
           var share_type = (capabilities.sharing.types()[type] || {})[capabilities.system] || type;

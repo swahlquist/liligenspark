@@ -1159,6 +1159,22 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':copy',
+      description: i18n.t('copy_sentence', "Copy what's in the sentence box to the clipboard"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          var voc = stashes.get('working_vocalization') || [];
+          var sentence = voc.map(function(v) { return v.label; }).join(' ');
+          var res = capabilities.sharing.copy_text(sentence);
+          if(res) {
+            modal.notice(i18n.t('text_copied', "Sentence box copied to the clipboard!"));
+          } else {
+            modal.error(i18n.t('text_failed', "Nothing copied to the clipboard"));
+          }
+        }    
+      }
+    },
+    {
       action: ':alerts',
       description: i18n.t('alerts_window', "Open the Alerts window"),
       trigger: function() {
