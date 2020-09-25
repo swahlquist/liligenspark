@@ -108,8 +108,11 @@ export default Controller.extend({
       var assessment = this.get('model.evaluation');
       if(this.get('model.eval_in_memory')) {
         assessment = app_state.get('last_assessment_for_' + this.get('user.id')) || {};
+        // TODO: how to get log_session_id for in-memory evaluation
+        assessment.log_session_id;
+      } else {
+        assessment.log_session_id = this.get('model.id');
       }
-      assessment.log_session_id = this.get('model.id');
       evaluation.resume(assessment);
     },
     highlight: function(event_id, do_highlight) {

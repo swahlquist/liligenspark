@@ -80,6 +80,7 @@ var evaluation = {
   persist: function() {
     assessment.ended = (new Date()).getTime() / 1000;
     assessment.working_stash = Object.assign({}, working);
+    assessment.ref_id = assessment.ref_id || "tmp." + (new Date()).getTime() + "." + (Math.random());
     delete assessment.working_stash['ref'];
     // save the evaluation
     app_state.set('last_assessment_for_' + assessment.user_id, assessment);
@@ -729,7 +730,7 @@ var core_prompts = {};
 evaluation.callback = function(key) {
   if(!app_state.get('currentUser.currently_premium_or_premium_supporter')) { 
     board = obf.shell(1, 1);
-    var bg_word = words.find(function(w) { return w.label == 'backgrounds'; });
+      var bg_word = words.find(function(w) { return w.label == 'backgrounds'; });
     var msg = i18n.t('login_required', "Evaluations require you to be logged in first");
     if(app_state.get('currentUser')) {
       msg = i18n.t('login_required', "Evaluations require an active paid account");
@@ -881,6 +882,7 @@ evaluation.callback = function(key) {
     if(library == 'photos' && step.find) {
       library = 'default';
     }
+    level.libraries_used = level.libraries_used || {};
     level.libraries_used[library] = true;
     if(Object.keys(level.libraries_used).length >= 4) {
       // don't make communicators do more than 4 libraries

@@ -478,8 +478,8 @@ var app_state = EmberObject.extend({
     }
     var history = this.get_history();
     old_state = old_state || this.get('currentBoardState');
-    if(stashes.get('board_level')) {
-      old_state.level = stashes.get('board_level');
+    if(stashes.get('board_level') && old_state) {
+      emberSet(old_state, 'level', stashes.get('board_level'));
     }
     history.push(old_state);
     stashes.log({

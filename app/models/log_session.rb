@@ -928,9 +928,19 @@ class LogSession < ActiveRecord::Base
                   evl = event['eval']
                   evl = evl['eval'] if evl['eval'].is_a?(Hash)
                   params = {eval: evl}
-                  if evl['log_session_id']
-                    s = LogSession.find_by_global_id(evl['log_session_id'])
-                    if s && s.user == self.user && s.author == self.author
+                  if evl['log_session_id'] || evl['ref_id']
+                    s = nil
+                    if evl['ref_id'] && evl['ref_id'].match(/^tmp/)
+                      ref, ts, etc = evl['ref_id'].split(/\./)
+                      cutoff = [Time.at(ts.to_i /  1000) - 24.hours, 72.hours.ago].min
+                      if cutoff
+                        s = LogSession.where(log_type: 'eval').where(['created_at > ?', cutoff]).detect do |ls|
+                          ls.data['eval'] && ls.data['eval']['ref_id'] == evl['ref_id']
+                        end
+                      end
+                    end
+                    s ||= LogSession.find_by_global_id(evl['log_session_id'])
+                    if s && s.log_type == 'eval' && s.user == user && s.author == self.author
                       s.process({eval: evl})
                       params = nil
                     end

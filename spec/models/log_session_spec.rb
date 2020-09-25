@@ -882,6 +882,243 @@ describe LogSession, :type => :model do
       expect(log.user).to eq(u2)
       expect(log.author).to eq(u)
     end
+
+    it "should not duplicate resumed evals" do
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1,
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log = LogSession.find_by(log_type: 'eval')
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1})
+
+      events = [{
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'b' => 1,
+          'log_session_id' => log.global_id
+        }
+      }]
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log.reload
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'b' => 1, 'log_session_id' => log.global_id})
+    end
+
+    it "should not allow overwriting a non-eval log" do
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1,
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log = LogSession.find_by(log_type: 'eval')
+      ses = LogSession.find_by(log_type: 'session')
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1})
+
+      events = [{
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'b' => 1,
+          'log_session_id' => ses.global_id
+        }
+      }]
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(4)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'eval', 'session', 'session'])
+      log.reload
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1})
+      log2 = LogSession.last
+      expect(log2.user).to eq(u2)
+      expect(log2.author).to eq(u)
+      expect(log2.data['eval']).to eq({'b' => 1, 'log_session_id' => ses.global_id})
+    end
+
+    it "should create a new copy if the eval was resumed by a different author" do
+      u2 = User.create
+      u3 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+      User.link_supervisor_to_user(u3, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1,
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log = LogSession.find_by(log_type: 'eval')
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1})
+
+      events = [{
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'b' => 1,
+          'log_session_id' => log.global_id
+        }
+      }]
+      s = LogSession.new(:data => {'events' => events}, :user => u3, :author => u3, :device => d)
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(4)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'eval', 'session', 'session'])
+      log.reload
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1})
+      log2 = LogSession.last
+      expect(log2.user).to eq(u2)
+      expect(log2.author).to eq(u3)
+      expect(log2.data['eval']).to eq({'b' => 1, 'log_session_id' => log.global_id})
+    end
+
+    it "should process resumed evals by ref_id" do
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      ref_id = "tmp.#{Time.now.to_i * 1000}.0.232523523"
+      events << {
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'a' => 1,
+          'ref_id' => ref_id
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log = LogSession.find_by(log_type: 'eval')
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'a' => 1, 'ref_id' => ref_id})
+
+      events = [{
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'eval',
+        'user_id' => u2.global_id,
+        'eval' => {
+          'b' => 1,
+          'ref_id' => ref_id
+        }
+      }]
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      s.split_out_later_sessions(true)
+      expect(LogSession.count).to eq(3)
+      expect(LogSession.all.map(&:log_type).sort).to eq(['eval', 'session', 'session'])
+      log.reload
+      expect(log.user).to eq(u2)
+      expect(log.author).to eq(u)
+      expect(log.data['eval']).to eq({'b' => 1, 'ref_id' => ref_id})
+    end
   end
 
   describe "handle_alert" do
