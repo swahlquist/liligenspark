@@ -12,14 +12,14 @@ module JsonApi::ButtonSet
       json['id'] = board.global_id
       json['key'] = board.key
       json['name'] = board.settings && board.settings['name']
-      json['full_set_revision'] = board.full_set_revision
+      json['full_set_revision'] = button_set.data['full_set_revision'] || board.full_set_revision
     end
     
-    json['root_url'] = button_set.url_for(args[:permissions])
+    json['root_url'] = button_set.url_for(args[:permissions], board.settings['full_set_revision'])
     json['remote_enabled'] = !!ENV['REMOTE_EXTRA_DATA']
 
     # TODO: make this only accessible when REMOTE_EXTRA_DATA is not set
-    if !json['root_url'] || !args[:remote_support]
+    if (!json['root_url'] || !args[:remote_support])
       bs_buttons = button_set.buttons
       json['buttons'] = (bs_buttons || []).map{|b| 
         res = {}.merge(b) 

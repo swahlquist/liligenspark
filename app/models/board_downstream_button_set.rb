@@ -102,9 +102,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data && (self.data['buttons'] || self.data['extra_url'])
   end
 
-  def url_for(user)
+  def url_for(user, full_set_revision)
     allowed_ids = {}
     button_set = self
+    # Force an auto-regenerate if the revision doesn't match
+    return nil unless button_set.data['full_set_revision'] == full_set_revision
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
       button_set ||= self
@@ -169,7 +171,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
     end
-    url = button_set.url_for(user)
+    url = button_set.url_for(user, board.settings['full_set_revision'])
     return {success: true, url: url} if url
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids')
     remote_path = button_set.instance_variable_get('@remote_path')
@@ -243,6 +245,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id) rescue nil
       set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id)
       set.data['source_id'] = nil if set.data['source_id'] == set.global_id
+      set.data['full_set_revision'] = board.settings['full_set_revision']
       # Don't re-update if you've updated more recently than when this
       # job was scheduled
       return if self.last_scheduled_stamp && (set.updated_at.to_i - 5) > self.last_scheduled_stamp
@@ -396,6 +399,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         # so I changed it to only update everyone with no source, since 
         # bs.buttons should update to the right source eventually
         if bs && bs.global_id != set.global_id && !bs.data['source_id'] # bs.data['source_id'] != set.global_id
+          bs.data['full_set_revision'] = brd.settings['full_set_revision']
           bs.data['source_id'] = set.global_id
           bs.data['buttons'] = nil
           bs.save

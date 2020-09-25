@@ -49,7 +49,7 @@ class Api::ButtonSetsController < ApplicationController
     return unless exists?(board, params['id'])
     button_set = board && board.board_downstream_button_set
     return unless allowed?(board, 'view')
-    download_url = button_set && button_set.url_for(@api_user)
+    download_url = button_set && button_set.url_for(@api_user, board.settings['full_set_revision'])
     if button_set && download_url
       render json: {exists: true, id: params['id'], url: download_url}
       return

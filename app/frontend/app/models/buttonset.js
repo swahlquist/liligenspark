@@ -788,7 +788,7 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
         var found_url = function(url) {
           CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
             var reload = RSVP.resolve();
-            if(!button_set.get('root_url')) {
+            if(!button_set.get('root_url') || button_set.get('root_url') != url) {
               force = true;
               reload = button_set.reload().then(null, function() { return RSVP.resolve(); });
               button_set.set('root_url', url);
@@ -822,13 +822,23 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
   }
 
   var res = CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-    if(!button_set.get('root_url') && button_set.get('remote_enabled')) {
-      // if root_url not available for the user, try to build one
-      return generate(id);
-    } else {
-      // otherwise you should be good to go
-      return button_set.load_buttons(force);
+    var reload = RSVP.resolve();
+    // try to reload before checking for root_url 
+    // to ensure we have the freshest result
+    if(persistence.get('online') && !button_set.get('fresh')) {
+      reload = button_set.reload().then(null, function(err) {
+        return RSVP.resolve(button_set) 
+      });
     }
+    return reload.then(function(button_set) {
+      if(!button_set.get('root_url') && button_set.get('remote_enabled')) {
+        // if root_url not available for the user, try to build one
+        return generate(id);
+      } else {
+        // otherwise you should be good to go
+        return button_set.load_buttons(force);
+      }  
+    })
   }, function(err) {
     // if not found error, it may need to be regenerated
     if(err.error == 'Record not found' && err.id && err.id.match(/^\d/)) {
