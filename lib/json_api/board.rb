@@ -64,14 +64,6 @@ module JsonApi::Board
         json['permissions'] = board.permissions_for(args[:permissions])
         json['starred'] = board.starred_by?(args[:permissions])
       end      
-      # TODO: remove these once the new app versions is pushed everywhere
-      if Date.today.year == 2019 && json['buttons'] && !FeatureFlags.feature_enabled_for?('inflections_overlay', args[:permissions])
-        json['buttons'].each{|b| b.delete('inflection_defaults') }
-      end 
-    else
-      if json['buttons'] && Date.today.year == 2019
-        json['buttons'].each{|b| b.delete('inflection_defaults') }
-      end
     end
     
     if json['permissions'] && json['permissions']['edit']

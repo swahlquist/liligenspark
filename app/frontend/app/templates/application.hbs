@@ -22,7 +22,18 @@
         </button>
       {{/if}}
       {{#unless app_state.eval_mode}}
-        {{#if app_state.reply_note}}
+        {{#if app_state.pairing}}
+          <button class={{if app_state.pairing.user.online 'btn over pair access online' 'btn over pair access'}} {{action 'remote_modeling'}} id='reply_icon'>
+            {{#if app_state.pairing.model}}
+              <span class='glyphicon glyphicon-road'></span>
+            {{else}}
+              <span class='glyphicon glyphicon-send'></span>
+            {{/if}}
+            {{#if app_state.pairing.user}}
+              <img src={{app_state.pairing.user.avatar_url_with_fallback}} />
+            {{/if}}
+          </button>
+        {{else app_state.reply_note}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
         {{else if app_state.insertion}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
@@ -118,6 +129,8 @@
         <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
           {{#if app_state.referenced_user.unread_alerts}}
             <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
+          {{else if app_state.referenced_user.request_alert}}
+            <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>*</span>
           {{/if}}
           <span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span>
         </button>

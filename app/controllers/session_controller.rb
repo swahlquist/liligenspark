@@ -236,6 +236,7 @@ class SessionController < ApplicationController
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
         scopes: device && device.permission_scopes,
         sale: ENV['CURRENT_SALE'],
+        ws_url: ENV['CDWEBSOCKET_URL'],
         global_integrations: UserIntegration.global_integrations.keys
       }
       json[:can_refresh] = true if needs_refresh && !expired
@@ -244,6 +245,7 @@ class SessionController < ApplicationController
       render json: {
         authenticated: false, 
         sale: ENV['CURRENT_SALE'],
+        ws_url: ENV['CDWEBSOCKET_URL'],
         global_integrations: UserIntegration.global_integrations.keys
       }.to_json
     end

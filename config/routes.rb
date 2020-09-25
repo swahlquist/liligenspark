@@ -183,6 +183,8 @@ Coughdrop::Application.routes.draw do
       post 'translate' => 'users#translate'
       get 'board_revisions' => 'users#board_revisions'
       get 'places' => 'users#places'
+      get 'ws_settings' => 'users#ws_settings'
+      get 'ws_lookup' => 'users#ws_lookup'
       get 'daily_use' => 'users#daily_use'
       get 'core_lists' => 'users#core_lists'
       put 'core_list' => 'users#update_core_list'

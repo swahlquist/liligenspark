@@ -568,7 +568,8 @@ class User < ActiveRecord::Base
       'new_index', 'debounce', 'cookies', 'preferred_symbols', 'tag_ids', 'vibrate_buttons',
       'highlighted_buttons', 'never_delete', 'dim_header', 'inflections_overlay',
       'highlight_popup_text', 'phrase_categories', 'high_contrast', 'swipe_pages',
-      'hide_pin_hint', 'battery_sounds', 'auto_inflections']
+      'hide_pin_hint', 'battery_sounds', 'auto_inflections',
+      'remote_support', 'remote_support_auto_follow', 'remote_support_auto_accept']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'geo_logging', 'allow_log_reports', 'cookies', 'never_delete']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 

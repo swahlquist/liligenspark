@@ -141,6 +141,9 @@ var session = EmberObject.extend({
       if(data.sale !== undefined) {
         CoughDrop.sale = parseInt(data.sale, 10) || false;
       }
+      if(data.ws_url) {
+        stashes.persist('ws_url', data.ws_url);
+      }
       if(data.global_integrations) {
         stashes.persist('global_integrations', data.global_integrations);
         if(window.user_preferences) {

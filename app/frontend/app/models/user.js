@@ -136,6 +136,9 @@ CoughDrop.User = DS.Model.extend({
     });
     return notifs;
   }),
+  online: computed('last_ws_access', function() {
+    return this.get('last_ws_access') > (((new Date()).getTime() - (5 * 60 * 1000)) / 1000);
+  }),
   update_voice_uri: observer(
     'preferences.device.voice.voice_uri',
     'preferences.device.voice.voice_uris',

@@ -1,4 +1,5 @@
 //= require application-preload.js
+//= require action_cable
 //= require vendor.js
 //= require frontend.js
 

@@ -1,0 +1,55 @@
+{{#modal-dialog action="close" opening='opening' closing='closing'}}
+  <div class="modal-header">
+    <button type="button" class="close" {{action 'close'}}>&times;</button>
+    <h3>{{t "Remote Modeling" key='remote_modeling'}}</h3>
+  </div>
+  <div class="modal-body">
+    <p>
+      {{#if model.user.avatar_url_with_fallback}}
+        <img src={{model.user.avatar_url_with_fallback}} style='float: left; width: 50px; margin: 0 10px 5px 0;'/>
+      {{else}}
+        <span class='glyphicon glyphicon-send' style='float: left; font-size: 50px; margin: 0 10px 5px 0;'></span>
+      {{/if}}
+      {{t "Remote modeling allows supporters to follow a communicator's actions, and even help prompt them to hit target buttons. Communicators will need to authorize the connection before you can model for them." key='remote_modeling_explanation'}}
+    </p>
+    <div style='clear: left; margin-botom: 10px;'></div>
+    {{#if model.user.user_name}}
+      <div class='btn-group' style='width: 100%; margin: 20px 0; display: flex; flex-direction: row;'>
+        <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'follow'}} class={{if following_mode 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>
+          <span class='glyphicon glyphicon-send'></span>
+          {{t "Follow activity<br/>for %{user_name}" key='follow_user' user_name=model.user.user_name}}
+        </button>
+        <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'model'}} class={{if following_mode 'btn btn-default btn-lg' 'btn btn-primary btn-lg'}}>
+          <span class='glyphicon glyphicon-road'></span>
+          {{t "Follow and model activity<br/>for %{user_name}" key='model_for_user' user_name=model.user.user_name}}
+        </button>
+      </div>
+      <div style='margin-top: 30px;'>
+        <button class='btn btn-primary btn-lg' {{action 'request'}} disabled={{connect_pending}}>
+          {{#if model.status.connecting}}
+            {{t "Requesting Connection..." key='requesting_connection'}}
+          {{else if model.status.pair_timeout}}
+            {{t "Request Timed Out" key='request_timed_out'}}
+          {{else if model.status.pair_reject}}
+            {{t "Request Not Accepted" key='request_rejected'}}
+          {{else if model.status.error_connecting}}
+            {{t "Requesting Failed Unexpectedly" key='request_failed'}}
+          {{else}}
+            {{t "Request Connection" key='request_connection'}}
+          {{/if}}
+        </button>
+        {{#if app_state.pairing}}
+          <button class='btn btn-default' {{action 'end'}}>{{t "End Connection" key='end_connection'}}</button>
+        {{/if}}
+      </div>
+    {{else}}
+      <div style='margin: 20px 0;'>
+        {{#if model.user_error}}
+          <h2>{{t "Error Loading User" key='error_loading_user'}}</h2>
+        {{else}}
+          <h2>{{t "Loading User..." key='loading_user'}}</h2>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
+{{/modal-dialog}}

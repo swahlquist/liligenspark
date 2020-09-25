@@ -94,7 +94,9 @@ var stashes = EmberObject.extend({
       'label_locale': null,
       'last_root': null,
       'vocalization_locale': null,
-      'global_integrations': null
+      'global_integrations': null,
+      'ws_url': null,
+      'ws_settings': null
     };
     // TODO: some of these will want to be retrieved from server stash, not just localstorage
     for(var idx in defaults) {

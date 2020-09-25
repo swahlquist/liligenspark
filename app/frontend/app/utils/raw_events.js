@@ -110,7 +110,7 @@ $(document).on('mousedown touchstart', function(event) {
   // if(app_state.get('edit_mode')) { return; }
   if(event.keyCode == 13 || event.keyCode == 32) {
     if(event.target.tagName != 'INPUT') {
-      buttonTracker.button_select(this);
+      buttonTracker.button_select(this, null, 'keyboard');
     }
   }
 }).on('keypress', '.integration_target', function(event) {
@@ -134,6 +134,7 @@ $(document).on('mousedown touchstart', function(event) {
       vocalization: key,
       prevent_return: true,
       button_id: null,
+      source: 'keyboard',
       board: {id: 'external_keyboard', key: 'core/external_keyboard'},
       type: 'speak'
     });
@@ -171,6 +172,7 @@ $(document).on('mousedown touchstart', function(event) {
         vocalization: ':clear',
         prevent_return: true,
         button_id: null,
+        source: 'keyboard',
         board: {id: 'external_keyboard', key: 'core/external_keyboard'},
         type: 'speak'
       });
@@ -186,6 +188,7 @@ $(document).on('mousedown touchstart', function(event) {
         vocalization: ':backspace',
         prevent_return: true,
         button_id: null,
+        source: 'keyboard',
         board: {id: 'external_keyboard', key: 'core/external_keyboard'},
         type: 'speak'
       });
@@ -213,7 +216,7 @@ $(document).on('mousedown touchstart', function(event) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
-        buttonTracker.element_release(buttonTracker.last_dwell_linger, e);
+        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'switch');
       }
     }
   }
@@ -249,7 +252,7 @@ $(document).on('mousedown touchstart', function(event) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
-        buttonTracker.element_release(buttonTracker.last_dwell_linger, e);
+        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'expression');
       }
     }
   }
@@ -257,7 +260,7 @@ $(document).on('mousedown touchstart', function(event) {
   var element_wrap = buttonTracker.find_selectable_under_event(event);
   buttonTracker.frame_event(event, 'select');
   if(element_wrap && element_wrap.button) {
-    buttonTracker.button_select(element_wrap);
+    buttonTracker.button_select(element_wrap, null, 'dwell');
   } else {
     $(this).trigger('click');
   }
@@ -853,7 +856,7 @@ var buttonTracker = EmberObject.extend({
       // if it either started or ended on a selectable item then there's a
       // chance we need to trigger a 'click', so pass it along
       buttonTracker.buttonDown = true;
-      buttonTracker.element_release(selectable_wrap, event);
+      buttonTracker.element_release(selectable_wrap, event, 'click');
     } else {
       var $modal = $(event.target).closest(".modal-content");
       if($modal.length > 0 && app_state.get('speak_mode') && event.type == 'touchend' && buttonTracker.dwell_enabled) {
@@ -875,7 +878,7 @@ var buttonTracker = EmberObject.extend({
     app_state.get('board_virtual_dom').clear_touched();
     $('.touched').removeClass('touched');
   },
-  element_release: function(elem_wrap, event) {
+  element_release: function(elem_wrap, event, event_source) {
     // don't remember why this is important, but I'm pretty sure it is
     if(buttonTracker.ignored_region(event)) {
       if(editManager.finding_target()) {
@@ -1049,7 +1052,7 @@ var buttonTracker = EmberObject.extend({
             $(elem_wrap.dom).trigger(e);
           } else if((elem_wrap.dom.className || "").match(/button/) || elem_wrap.virtual_button) {
             event.swipe_direction = swipe_direction;
-            buttonTracker.button_release(elem_wrap, event);
+            buttonTracker.button_release(elem_wrap, event, event_source);
           } else if(elem_wrap.dom.classList.contains('integration_target')) {
             frame_listener.trigger_target(elem_wrap.dom);
           } else if(elem_wrap.dom.id == 'sidebar_tease' || elem_wrap.dom.id == 'sidebar_close') {
@@ -1096,15 +1099,15 @@ var buttonTracker = EmberObject.extend({
     buttonTracker.buttonDown = false;
     buttonTracker.multi_touch = null;
   },
-  button_release: function(elem_wrap, event) {
+  button_release: function(elem_wrap, event, source) {
     // buttons have a slightly-more advanced logic, because of all the selection
     // targets available in edit mode (image, action button, etc.) and the option
     // of applying stashed buttons/swapping buttons
     var $target = $(event.target);
     if(editManager.finding_target()) {
-      buttonTracker.button_select(elem_wrap);
+      buttonTracker.button_select(elem_wrap, null, source);
     } else if(!app_state.get('edit_mode')) {
-      buttonTracker.button_select(elem_wrap, {clientX: event.clientX, clientY: event.clientY, swipe_direction: event.swipe_direction});
+      buttonTracker.button_select(elem_wrap, {clientX: event.clientX, clientY: event.clientY, swipe_direction: event.swipe_direction}, source);
     } else if(app_state.get('edit_mode') && !editManager.paint_mode) {
       event.preventDefault();
       if($target.closest('.action').length > 0) {
@@ -1455,7 +1458,7 @@ var buttonTracker = EmberObject.extend({
             if(buttonTracker.last_dwell_linger && buttonTracker.last_dwell_linger.events) {
               var events = buttonTracker.last_dwell_linger.events;
               var e = events[events.length - 1];
-              buttonTracker.element_release(buttonTracker.last_dwell_linger, e);
+              buttonTracker.element_release(buttonTracker.last_dwell_linger, e, type == 'keyboard' ? 'keyboard_control' : type);
               if(buttonTracker.gamepadupdate) {
                 buttonTracker.gamepadupdate('select', e);
               }
@@ -1743,7 +1746,7 @@ var buttonTracker = EmberObject.extend({
         // trigger selection if dwell has been for long enough
         if(now - buttonTracker.last_dwell_linger.started > buttonTracker.dwell_timeout) {
           event.dwell_linger = true;
-          buttonTracker.element_release(buttonTracker.last_dwell_linger, event);
+          buttonTracker.element_release(buttonTracker.last_dwell_linger, event, 'dwell');
           buttonTracker.last_triggering_dwell_event = event;
           buttonTracker.last_dwell_linger = null;
           if(buttonTracker.dwell_delay) {
@@ -1942,10 +1945,10 @@ var buttonTracker = EmberObject.extend({
         addClass: function(str) {
           app_state.get('board_virtual_dom').add_state(str, elem.id);
         },
-        trigger: function(event) {
+        trigger: function(event, source) {
           app_state.get('board_virtual_dom').trigger(event, elem.id);
         },
-        trigger_special: function(event, args) {
+        trigger_special: function(event, args, source) {
           app_state.get('board_virtual_dom').trigger(event, elem.id, args);
         },
         loose_bounds: function() {
@@ -1972,11 +1975,14 @@ var buttonTracker = EmberObject.extend({
         addClass: function(str) {
           $e.addClass(str);
         },
-        trigger: function(event) {
-          $e.trigger(event);
-        },
-        trigger_special: function(event, args) {
+        trigger: function(event, source) {
           var e = $.Event( event );
+          e.trigger_source = source;
+          $e.trigger(e);
+        },
+        trigger_special: function(event, args, source) {
+          var e = $.Event( event );
+          e.trigger_source = source;
           for(var idx in args) {
             e[idx] = args[idx];
           }
@@ -2001,7 +2007,7 @@ var buttonTracker = EmberObject.extend({
     }
     return res;
   },
-  button_select: function(elem, args) {
+  button_select: function(elem, args, source) {
     var dom = elem.dom || elem;
     if(dom && dom.classList && dom.classList.contains('overlay_button')) {
       if(dom.select_callback) {
@@ -2010,7 +2016,7 @@ var buttonTracker = EmberObject.extend({
         dom.select_callback(event);
       }
     } else if(elem.dom && elem.trigger) {
-      args ? elem.trigger_special('buttonselect', args) : elem.trigger('buttonselect');
+      args ? elem.trigger_special('buttonselect', args, source) : elem.trigger('buttonselect', source);
     } else {
       $(elem).trigger('buttonselect');
     }
@@ -2237,7 +2243,7 @@ var buttonTracker = EmberObject.extend({
         event.target = target;
         event.clientX = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientX;
         event.clientY = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientY;
-        buttonTracker.element_release(selectable_wrap, event);
+        buttonTracker.element_release(selectable_wrap, event, 'longpress');
         this.ignoreUp = true;
       }
     }

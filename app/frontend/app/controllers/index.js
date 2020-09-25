@@ -11,6 +11,7 @@ import app_state from '../utils/app_state';
 import Badge from '../models/badge';
 import session from '../utils/session';
 import modal from '../utils/modal';
+import sync from '../utils/sync';
 import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
@@ -422,6 +423,13 @@ export default Controller.extend({
     run_eval: function(user) {
       if(user.premium || emberGet(user, 'currently_premium')) {
         app_state.set_speak_mode_user(emberGet(user, 'id'), false, false, 'obf/eval');
+      } else {
+        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation'});
+      }
+    },
+    remote_model: function(user) {
+      if(user.premium || emberGet(user, 'currently_premium')) {
+        modal.open('modals/remote-model', {user_id: user.id});
       } else {
         modal.open('premium-required', {user_name: user.user_name, action: 'evaluation'});
       }

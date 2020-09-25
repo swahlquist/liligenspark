@@ -38,6 +38,65 @@ class Api::UsersController < ApplicationController
     return unless allowed?(user, 'model')
     render json: Geolocation.find_places(params['latitude'], params['longitude'])
   end
+
+  def ws_lookup
+    obfuscated_user_id = params['user_id']
+    return api_error(400, 'user_id required') unless obfuscated_user_id
+    str, iv = obfuscated_user_id.sub(/^me\$/, '').split(/\$/)
+    user_id, device_id = GoSecure.decrypt(str, iv, 'ws_device_id_encrypted').split(/\./)
+    user = User.find_by_path(user_id)
+    return unless exists?(user, params['user_id'])
+    render json: {
+      user_id: user.global_id,
+      user_name: user.user_name,
+      device_id: device_id,
+      avatar_url: user.generated_avatar_url('fallback')
+    }
+  end
+
+  def ws_settings
+    # Self should always get the verifier
+    # Supervisor should get supervisee ids
+    # Org manager should be able to query for individual ids in their org
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    res = {
+      user_id: user.global_id,
+      ws_user_id: user.global_id
+    }
+
+    iv = Digest::SHA2.hexdigest("user_settings_iv_for_" + (@token || @api_user.global_id))[0, 16]
+    device_id = GoSecure.encrypt("#{@api_user.global_id}.#{@api_device_id}", 'ws_device_id_encrypted', nil, iv).map(&:strip).join('$')
+    ts = Time.now.to_i
+    if user.global_id == @api_user.global_id
+      res[:my_device_id] = "me$#{device_id}"
+    else
+      res[:my_device_id] = device_id
+    end
+    code = GoSecure.sha512("#{res[:ws_user_id]}:#{res[:my_device_id]}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30]
+    res[:verifier] = "#{code}:#{ts}"
+    if user.supporter_role?
+      sups = user.supervisees
+      if sups.length < 20
+        res[:supervisees] = sups.map do |sup|
+          ws_user_id = sup.global_id
+          sup = {
+            user_id: sup.global_id,
+            ws_user_id: ws_user_id,
+          }
+          if user.global_id == @api_user.global_id
+            sup[:my_device_id] = device_id
+            code = GoSecure.sha512("#{ws_user_id}:#{device_id}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30]
+            sup[:verifier] = "#{code}:#{ts}"
+          end
+          sup
+        end
+      end
+    end
+
+    render json: res
+  end
   
   def index
     if !Organization.admin_manager?(@api_user)

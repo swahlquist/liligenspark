@@ -527,6 +527,13 @@ export default Controller.extend({
     vocalize: function(opts) {
       this.vocalize(null, opts);
     },
+    remote_modeling: function() {
+      if(app_state.get('pairing.user_id')) {
+        modal.open('modals/remote-model', {user_id: app_state.get('pairing.user_id')});
+      } else {
+        modal.error(i18n.t('remote_modeling_error', "Error loading remote modeling"));
+      }
+    },
     alert: function() {
       utterance.alert({button_triggered: true});
       this.send('hide_temporary_sidebar');
@@ -547,6 +554,7 @@ export default Controller.extend({
           vocalization: opts.action,
           prevent_return: true,
           button_id: null,
+          source: 'click',
           board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
           type: 'speak'
         };
@@ -1028,6 +1036,7 @@ export default Controller.extend({
       obj.label = options.overlay_label || obj.label;
       obj.vocalization = options.overlay_vocalization || obj.vocalization;
       if(options.event && options.event.overlay_target) { obj.overlay = options.event.overlay_target; }
+      if(options.event && options.event.trigger_source) { obj.source = options.event.trigger_source; }
       var location = buttonTracker.locate_button_on_board(button.id, options.event);
       if(location) {
         obj.percent_x = location.percent_x;
@@ -1169,6 +1178,7 @@ export default Controller.extend({
     'stashes.root_board_state.text_direction',
     'extras.eye_gaze_state',
     'show_back',
+    'app_state.pairing',
     'app_state.currentUser.preferences.device.button_text_position',
     'app_state.currentUser.preferences.device.utterance_text_only',
     'app_state.currentUsser.preferences.high_contrast',
@@ -1196,8 +1206,11 @@ export default Controller.extend({
       if(speecher.text_direction() == 'rtl' || stashes.get('root_board_state.text_direction') == 'rtl') {
         res = res + "rtl ";
       }
+      if(app_state.get('pairing')) {
+        res = res + "paired ";
+      }
       var text_position = (app_state.get('currentUser.preferences.device.button_text_position') || window.user_preferences.device.button_text_position);
-      var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only);
+      var show_always = (app_state.get('currentUser.preferences.device.utterance_text_only') || window.user_preferences.device.utterance_text_only || app_state.get('pairing.partner'));
       if(text_position == 'text_only' || show_always || flipped) {
         res = res + "text_only ";
       }

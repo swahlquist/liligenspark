@@ -1,5 +1,10 @@
 <div class="well" style="text-align: center;">
-  <img src={{model.avatar_url_with_fallback}} style="max-height: 100px;"/>
+  <div style='position: relative;'>
+    <img src={{model.avatar_url_with_fallback}} style="max-height: 100px;"/>
+    {{#if model.online}}
+      <div title='currently online' class='online_marker'></div>
+    {{/if}}
+  </div>
   <h2 style="margin-bottom: 0;">{{ model.name }}</h2>
   <div style="margin-bottom: 10px;">{{ model.user_name }}</div>
   <div>{{ model.description }}</div>

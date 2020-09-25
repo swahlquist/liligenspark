@@ -561,6 +561,43 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Core, Phrases and Modeling" glyph='glyphicon glyphicon-comment' title_key='core_phrases_and_modeling'}}
+    {{#if app_state.feature_flags.remote_modeling}}
+      <div class="form-group">
+        <label for="remote_modeling" class="col-sm-3 control-label">{{t "Remote Modeling" key='remote_modeling'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=pending_preferences.remote_modeling}}
+              {{t "Enable remote modeling so supervisors can request a connection to your device remotely" key='enable_remote_modeling'}}
+            </label>
+          </div>
+        </div>
+      </div>
+      {{#if pending_preferences.remote_modeling}}
+        <div class="form-group">
+          <label for="" class="col-sm-3 control-label"></label>
+          <div class="col-sm-5">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=pending_preferences.remote_modeling_auto_follow}}
+                {{t "Automatically allow supervisors to remotely follow activity in real-time" key='enable_remote_modeling_auto_follow'}}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="" class="col-sm-3 control-label"></label>
+          <div class="col-sm-5">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=pending_preferences.remote_modeling_auto_accept}}
+                {{t "Automatically allow supervisors to remotely initiate a modeling session (otherwise requires manual approval)" key='enable_remote_modeling_auto_accept'}}
+              </label>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
     <div class="form-group">
       <label for="core_word_list" class="col-sm-3 control-label">{{t "Core Word List" key='core_word_list'}}</label>
       <div class='col-sm-6'>

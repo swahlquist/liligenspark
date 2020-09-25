@@ -32,6 +32,7 @@ import Button from './button';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import sync from './sync';
 
 // tracks:
 // current mode (edit mode, speak mode, default)
@@ -169,6 +170,7 @@ var app_state = EmberObject.extend({
         })
       }
     });
+    sync.default_listen();
     Button.load_actions();
 //    speecher.check_for_upgrades();
     this.refresh_user();
@@ -885,6 +887,24 @@ var app_state = EmberObject.extend({
     editManager.clear_paint_mode();
     editManager.clear_preview_levels();
   },
+  sync_keepalive: observer('short_refresh_stamp', function() {
+    var last = app_state.get('last_keepalive') || 0;
+    var now = (new Date()).getTime();
+    if(app_state.get('speak_mode') && !app_state.get('currentUser.supporter_role')) {
+      // every 20 seconds, re-assert board state
+      if(last < now - (20 * 1000))     {
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
+        app_state.set('last_keepalive', now);
+        sync.keepalive();
+      }
+    } else {
+      // every 5 minutes, send a keepalive
+      if(last < now - (2 * 60 * 1000)) {
+        app_state.set('last_keepalive', now);
+        sync.keepalive();
+      }
+    }
+  }),
   home_in_speak_mode: function(opts) {
     // This is only entered for the current
     // user, not for supervisees
@@ -914,6 +934,9 @@ var app_state = EmberObject.extend({
   },
   check_scanning: function() {
     var _this = this;
+    if(app_state.get('skip_next_sync_update_for') != app_state.get('currentBoardState.id')) {
+      sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
+    }
     runLater(function() {
       buttonTracker.scan_modeling = false;
       if(app_state.get('speak_mode') && _this.get('currentUser.preferences.device.scanning')) { // scanning mode
@@ -1212,6 +1235,7 @@ var app_state = EmberObject.extend({
     if(app_state.get('currentUser')) {
       app_state.set('currentUser.load_all_connections', true);
     }
+    sync.connect();
   }),
   eye_gaze_state: computed(
     'currentUser.preferences.device.dwell',
@@ -1568,6 +1592,8 @@ var app_state = EmberObject.extend({
         buttonTracker.hit_spots = [];
         app_state.set('suggestion_id', null);
         if(this.get('last_speak_mode') !== false) {
+          app_state.set('pairing', null);
+          sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
           stashes.persist('sticky_board', false);
           stashes.persist('speak_mode_user_id', null);
@@ -1658,6 +1684,7 @@ var app_state = EmberObject.extend({
         vocalization: text,
         prevent_return: true,
         button_id: null,
+        source: 'tag',
         board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
         type: 'speak'
       };
@@ -2155,6 +2182,7 @@ var app_state = EmberObject.extend({
       obj.modeling = true;
     }
 
+
     if(button.vocalization == ':suggestion') {
       obj.vocalization = ':predict';
       if(button.board && button.board.get('suggestion_lookups')) {
@@ -2304,6 +2332,7 @@ var app_state = EmberObject.extend({
     obj.access = app_state.get('currentUser.access_method');
     obj.overlay = !!overlay;
     stashes.log(obj);
+    sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj);
     var _this = this;
 
     // highlight the button that if highlights are enabled

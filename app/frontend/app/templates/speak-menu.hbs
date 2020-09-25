@@ -45,6 +45,8 @@
             <div class='col-sm-2 col-xs-4 speak_menu_button' id='menu_inbox_button'>
               {{#if app_state.referenced_user.unread_alerts}}
                 <span class='label label-danger unread' style='position: absolute; top: 5px; right: 10px; border-radius: 10px; font-size: 14px;'>{{app_state.referenced_user.unread_alerts}}</span>
+              {{else if app_state.referenced_user.request_alert}}
+                <span class='label label-danger unread' style='position: absolute; top: 5px; right: 10px; border-radius: 10px; font-size: 14px;'>*</span>
               {{/if}}
               <span class='glyphicon glyphicon-inbox'></span>
               {{t "Alerts" key='alerts'}}

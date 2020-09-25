@@ -107,6 +107,7 @@ var frame_listener = EmberObject.extend({
       image: data.image_url,
       prevent_return: true,
       button_id: null,
+      source: 'external',
       board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
       type: 'speak'
     };

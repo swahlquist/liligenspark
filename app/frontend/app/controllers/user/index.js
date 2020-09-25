@@ -333,6 +333,12 @@ export default Controller.extend({
         app_state.set_speak_mode_user(_this.get('model.id'), false, false, 'obf/eval');
       });
     },
+    remote_model: function(user) {
+      var _this = this;
+      app_state.check_for_currently_premium(_this.get('model'), 'eval', false, true).then(function() {
+        modal.open('modals/remote-model', {user_id: _this.get('model.id')});
+      });
+    },
     eval_settings: function() {
       modal.open('modals/eval-status', {user: this.get('model')});
     },
