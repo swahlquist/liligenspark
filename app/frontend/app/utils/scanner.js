@@ -539,7 +539,7 @@ var scanner = EmberObject.extend({
   hide_input: function(force) {
     if(window.Keyboard && window.Keyboard.hide && app_state.get('speak_mode') && scanner.scanning) {
       if(this.find_elem("#hidden_input:focus").length > 0 || (window.Keyboard && window.Keyboard.isVisible) || force) {
-        window.Keyboard.hide();
+        // window.Keyboard.hide();
         window.Keyboard.hideFormAccessoryBar(true, function() { });
         capabilities.toggle_keyboard_accessory(false);
       }
@@ -547,6 +547,7 @@ var scanner = EmberObject.extend({
   },
   generate_input: function(reset) {
     var type = capabilities.system == 'iOS' ? 'text' : 'checkbox';
+    type = 'checkbox'; // WKWebView handles checkbox input now (without showing the keyboard!)
 
     // when in whole-screen-as-switch mode, don't bother listening for key events
     if(buttonTracker.left_screen_action || buttonTracker.right_screen_action) {
@@ -561,7 +562,7 @@ var scanner = EmberObject.extend({
         $elem.val("");
       }, 500);
     }
-    $elem[0].addEventListener('textInput', function(event) {
+    $elem[0].addEventListener('input', function(event) {
       // check the text box (are single key strokes getting added?)
       // and send :complete if it's replacing keystrokes,
       // or :predict if it's auto-suggest not autocomplete
@@ -578,6 +579,7 @@ var scanner = EmberObject.extend({
             completion: event.data,
             prevent_return: true,
             button_id: null,
+            source: 'keyboard',
             board: {id: 'external_keyboard', key: 'core/external_keyboard'},
             type: 'speak'
           });
@@ -587,6 +589,7 @@ var scanner = EmberObject.extend({
       }
     });
     document.body.appendChild($elem[0]);
+    return $elem;
   },
   listen_for_input: function(reset) {
     // Listens for bluetooth/external keyboard events. On iOS we only get those when
@@ -597,7 +600,12 @@ var scanner = EmberObject.extend({
 
     // Initialize the hidden element, including 
     if($elem.length === 0) {
-      scanner.generate_input(reset);
+      $elem = scanner.generate_input(reset);
+    }
+    if(!$elem[0])  {
+      // Native keyboard preference still requires
+      // a text box for autocomplete
+      $elem[0].type = buttonTracker.native_keyboard ? 'text' : 'checkbox';
     }
     // Draw focus to the correct element (iOS is really stingy w/ key events)
     // unless we already tried and it popped up the virtual keyboard
@@ -960,7 +968,10 @@ window.addEventListener('keyboardWillShow', function() {
     if(scanner.scanning) {
       scanner.keyboard_tried_to_show = true;
     }
-    scanner.hide_input(true);
+    // TODO: pretty sure this is unnecessary now, since
+    // focusing on a checkbox element won't try to bring
+    // up the keyboard in WKWebView (huzzah!)
+    // scanner.hide_input(true);
   }
 });
 window.addEventListener('keyboardDidShow', function() {
