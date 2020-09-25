@@ -20,7 +20,7 @@ module Subscription
       end
     end
     
-    if self.billing_state(true) == :subscribed_communicator
+    if self.billing_state('communicator') == :subscribed_communicator
       started = Time.parse(self.settings['subscription']['started']) rescue nil
       if started
         self.settings['past_purchase_durations'] ||= []
@@ -677,10 +677,10 @@ module Subscription
     Organization.supervisor?(self)
   end
 
-  def billing_state(force_to_consider_as_communicator=false)
+  def billing_state(force_type=nil)
     self.settings ||= {}
     self.settings['subscription'] ||= {}
-    if self.communicator_role? || force_to_consider_as_communicator
+    if (self.communicator_role? && force_type == nil) || force_type == 'communicator'
       return :never_expires_communicator if self.settings['subscription']['never_expires']
       return :eval_communicator if self.settings['subscription']['eval_account']
 #      return :eval_communicator if self.settings['subscription']['plan_id'] == 'eval_monthly_free'
@@ -880,6 +880,9 @@ module Subscription
       # currently-sponsored as a communicator
       json['active'] = true
       json['org_sponsored'] = true
+    elsif billing_state == :expired_communicator
+      sup_billing_state = self.billing_state('supporter')
+      json['premium_supporter_as_communicator'] = true if [:premium_supporter].include?(sup_billing_state)
     elsif billing_state == :eval_communicator
       json['active'] = true
       json['eval_account'] = true
@@ -895,7 +898,7 @@ module Subscription
       # have access to reports and logs, even if they set their role as supporter
       # to enable this, set json['premium_supporter_plus_communicator']
       # long-term communicator, subscribed communicator, org_sponsored
-      com_billing_state = self.billing_state(true)
+      com_billing_state = self.billing_state('communicator')
       json['premium_supporter_plus_communicator'] = true if [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
       json['never_expires'] = true if self.settings['subscription']['never_expires']
       json['org_sponsored'] = true if com_billing_state == :org_sponsored_communicator

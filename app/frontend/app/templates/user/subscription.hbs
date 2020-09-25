@@ -53,6 +53,9 @@
     {{else if subscription.user.subscription.currently_premium}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
       {{t "Thank you for purchasing %app_name%! This account has cloud extra features enabled and is fully functional. We hope %app_name% is working well for you!" key='currently_premium'}}
+    {{else if subscription.user.subscription.premium_supporter_as_communicator}}
+      <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
+      {{t "You purchased %app_name% using a premium supporter account, but have currently set it as a communicator role. As such, some features will be limited in this account. You can switch back to a supporter role to remove this notice. If you would like to fully unlock the communicator role, please purchase a full license of %app_name%." key='expired_but_only_as_communicator'}}
     {{else}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
       {{t "You haven't purchased %app_name% yet. Currently you're running a free trial, hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
