@@ -1699,7 +1699,7 @@ var app_state = EmberObject.extend({
         CoughDrop.store.findRecord('tag', tag_id).then(function(tag_object) {
           if(tag_object.get('button')) {
             var button = Button.create(tag_object.get('button'));
-            app_state.controller.activateButton(button, {board: editManager.controller.get('model')});
+            app_state.controller.activateButton(button, {board: editManager.controller.get('model'), trigger_source: 'tag'});
           } else {
             text_fallback(tag_object.get('label'));
           }
@@ -2091,6 +2091,12 @@ var app_state = EmberObject.extend({
       speecher.click('ding');
     }
     this.set('last_ding_state', ref_id);
+  }),
+  ding_on_reequest_alert: observer('referenced_user.request_alert', function() {
+    if(this.get('referenced_user.request_alert') && this.get('speak_mode') && !this.get('referenced_user.request_alert.dinged')) {
+      this.set('referenced_user.request_alert.dinged', true);
+      speecher.click('ding');
+    }
   }),
   load_user_badge: observer('speak_mode', 'referenced_user', 'persistence.online', function() {
     if(this.get('speak_mode') && this.get('persistence.online')) {

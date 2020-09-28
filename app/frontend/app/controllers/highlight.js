@@ -79,6 +79,8 @@ export default modal.ModalController.extend({
       this.set('model.bottom_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (bottom) + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: 5000px;"));
       this.set('model.highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top - 4) + "px; left: " + (left - 4) + "px; width: " + (width + 8) + "px; height: " + (height + 8) + "px; cursor: pointer;"));
       this.set('model.inner_highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top) + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; cursor: pointer;"));
+      var icon_size = Math.min(Math.max(8, (height - 27) / 2), 75);
+      this.set('model.icon_style', htmlSafe("font-size: " + icon_size + 'px;'));
     }
   ),
   actions: {

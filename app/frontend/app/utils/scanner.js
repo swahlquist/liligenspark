@@ -515,7 +515,7 @@ var scanner = EmberObject.extend({
       // if button links to something else, don't resume scanning 
       // until board jumping has completed
       reset_now = false;
-      app.activateButton(button, {board: board});
+      app.activateButton(button, {board: board, trigger_source: 'switch'});
     } else if(dom.hasClass('integration_target')) {
       frame_listener.trigger_target(dom[0]);
     } else if(dom.hasClass('button_list')) {

@@ -11,6 +11,9 @@
   <div class="highlight box" style={{model.highlight_style}} {{action "select"}}>
   </div>
   <div class="highlight box inner advanced_selection" id='highlight_box' style={{model.inner_highlight_style}} {{action "select"}}>
+    {{#if model.icon_class}}
+      <span class={{model.icon_class}} style={{model.icon_style}}></span>
+    {{/if}}
   </div>
 {{/touch-listener}}
 {{/opening-observer}}

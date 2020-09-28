@@ -278,6 +278,7 @@ var editManager = EmberObject.extend({
         overlay_label: label,
         overlay_vocalization: vocalization,
         event: event,
+        trigger_source: 'overlay',
         overlay_location: event.overlay_location
       });
     };

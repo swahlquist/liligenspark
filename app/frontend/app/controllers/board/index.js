@@ -1021,7 +1021,7 @@ export default Controller.extend({
         var controller = this;
         var board = this.get('model');
         var app = app_state.controller;
-        app.activateButton(button, {board: board});
+        app.activateButton(button, {board: board, trigger_source: 'completion'});
       } catch(e) { debugger }
     },
     symbolSelect: function(id) {

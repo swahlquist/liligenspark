@@ -116,7 +116,7 @@ export default modal.ModalController.extend({
         modal.highlight($button).then(function() {
           var button = editManager.find_button(result.id);
           var board = editManager.controller.get('model');
-          app_state.controller.activateButton(button, {board: board});
+          app_state.controller.activateButton(button, {board: board, trigger_source: 'click'});
         }, function() { });
       } else {
         var buttons = result.pre_buttons || [];

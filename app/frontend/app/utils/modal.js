@@ -105,6 +105,9 @@ var modal = EmberObject.extend({
       settings.set('overlay', options.overlay);
       if(settings.get('overlay') !== false) { settings.set('overlay', true); }
       settings.set('clear_overlay', options.clear_overlay);
+      if(options.icon) {
+        settings.set('icon_class', 'highlight_icon glyphicon glyphicon-' + options.icon);
+      }
       settings.set('prevent_close', options.prevent_close);
       settings.set('select_anywhere', options.select_anywhere);
       settings.set('highlight_type', options.highlight_type);

@@ -1017,6 +1017,7 @@ export default Controller.extend({
         sound: (sound && sound.get('url')) || button.get('original_sound_url'),
         board: oldState,
         completion: button.completion,
+        source: options.trigger_source,
         blocking_speech: button.blocking_speech,
         type: 'speak'
       };

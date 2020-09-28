@@ -1,5 +1,3 @@
-alert('show trigger type on highlight')
-alert('finish inbox request workflow');
 import CoughDrop from '../app';
 import EmberObject from '@ember/object';
 import stashes from './_stashes';
@@ -241,7 +239,7 @@ var sync = EmberObject.extend({
       last_action: app_state.get('last_activation'),
       speak_mode: app_state.get('speak_mode')
     };
-    if(app_state.get('sessionUser.preferences.remote_modeling')) {
+    if(!app_state.get('sessionUser.preferences.remote_modeling')) {
       // If remote support is completely disabled, don't send anything
       return;
     }
@@ -392,7 +390,7 @@ var sync = EmberObject.extend({
                 sync.handled_pair_codes = sync.handled_pair_codes.slice(-5);
                 sync.user_lookup(message.data.partner_id).then(function(user) {
                   // Note the pair request, wait for user response
-                  app_state.set('referenced_user.request_alert', {type: 'model', user: user, pair: message.data});
+                  app_state.set('sessionUser.request_alert', {type: 'model', user: user, pair: message.data});
                   // sync.confirm_pair(message.data.pair_code, message.data.partner_id);
                 });
               }
@@ -550,7 +548,23 @@ var sync = EmberObject.extend({
           var $button = $(".button[data-id='" + action.id + "']");
           speecher.click('ding');
           console.log("BUTTON SOURCE", action);
-          modal.highlight($button, {clear_overlay: true}).then(function() {
+          var icon = 'hand-up';
+          // click, completion, tag, overlay, switch, keyboard,
+          // expression, keyboard_control, dwell, 
+          // longpress, gamepad
+          if(action.source == 'dwell') {
+            icon = 'screenshot';
+          } else if(action.source == 'switch') { 
+            icon = 'record';
+          } else if(action.source == 'expression') {
+            icon = 'sunglasses';
+          } else if(action.source == 'keyboard') {
+            icon = 'text-background';
+          } else if(action.source == 'gamepad') {
+            icon = 'tower';
+          }
+
+          modal.highlight($button, {clear_overlay: true, icon: icon}).then(function() {
             modal.close_highlight();
           }, function() { });
           sync.next_action.timer = runLater(function() {

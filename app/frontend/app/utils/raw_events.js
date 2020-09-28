@@ -110,7 +110,7 @@ $(document).on('mousedown touchstart', function(event) {
   // if(app_state.get('edit_mode')) { return; }
   if(event.keyCode == 13 || event.keyCode == 32) {
     if(event.target.tagName != 'INPUT') {
-      buttonTracker.button_select(this, null, 'keyboard');
+      buttonTracker.button_select(this, null, 'keyboard'); // trigger_source
     }
   }
 }).on('keypress', '.integration_target', function(event) {
@@ -216,7 +216,7 @@ $(document).on('mousedown touchstart', function(event) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
-        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'switch');
+        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'switch'); // trigger_source
       }
     }
   }
@@ -252,7 +252,7 @@ $(document).on('mousedown touchstart', function(event) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
-        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'expression');
+        buttonTracker.element_release(buttonTracker.last_dwell_linger, e, 'expression'); // trigger_source
       }
     }
   }
@@ -260,7 +260,7 @@ $(document).on('mousedown touchstart', function(event) {
   var element_wrap = buttonTracker.find_selectable_under_event(event);
   buttonTracker.frame_event(event, 'select');
   if(element_wrap && element_wrap.button) {
-    buttonTracker.button_select(element_wrap, null, 'dwell');
+    buttonTracker.button_select(element_wrap, null, 'dwell'); // trigger_source
   } else {
     $(this).trigger('click');
   }
@@ -856,7 +856,7 @@ var buttonTracker = EmberObject.extend({
       // if it either started or ended on a selectable item then there's a
       // chance we need to trigger a 'click', so pass it along
       buttonTracker.buttonDown = true;
-      buttonTracker.element_release(selectable_wrap, event, 'click');
+      buttonTracker.element_release(selectable_wrap, event, 'click'); // trigger_source
     } else {
       var $modal = $(event.target).closest(".modal-content");
       if($modal.length > 0 && app_state.get('speak_mode') && event.type == 'touchend' && buttonTracker.dwell_enabled) {
@@ -1388,7 +1388,7 @@ var buttonTracker = EmberObject.extend({
 
             }
           }
-          type = 'gamepad';
+          type = 'gamepad';  // trigger_source
         }
         if(buttonTracker.head_tilt && buttonTracker.head_tilt.uses < 10) {
           pad_actions.left = buttonTracker.head_tilt.left;
@@ -1458,7 +1458,7 @@ var buttonTracker = EmberObject.extend({
             if(buttonTracker.last_dwell_linger && buttonTracker.last_dwell_linger.events) {
               var events = buttonTracker.last_dwell_linger.events;
               var e = events[events.length - 1];
-              buttonTracker.element_release(buttonTracker.last_dwell_linger, e, type == 'keyboard' ? 'keyboard_control' : type);
+              buttonTracker.element_release(buttonTracker.last_dwell_linger, e, type == 'keyboard' ? 'keyboard_control' : type); // trigger_source
               if(buttonTracker.gamepadupdate) {
                 buttonTracker.gamepadupdate('select', e);
               }
@@ -1746,7 +1746,7 @@ var buttonTracker = EmberObject.extend({
         // trigger selection if dwell has been for long enough
         if(now - buttonTracker.last_dwell_linger.started > buttonTracker.dwell_timeout) {
           event.dwell_linger = true;
-          buttonTracker.element_release(buttonTracker.last_dwell_linger, event, 'dwell');
+          buttonTracker.element_release(buttonTracker.last_dwell_linger, event, 'dwell'); // trigger_source
           buttonTracker.last_triggering_dwell_event = event;
           buttonTracker.last_dwell_linger = null;
           if(buttonTracker.dwell_delay) {
@@ -2243,7 +2243,7 @@ var buttonTracker = EmberObject.extend({
         event.target = target;
         event.clientX = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientX;
         event.clientY = (this.shortPressEvent.originalEvent || this.shortPressEvent).clientY;
-        buttonTracker.element_release(selectable_wrap, event, 'longpress');
+        buttonTracker.element_release(selectable_wrap, event, 'longpress'); // trigger_source
         this.ignoreUp = true;
       }
     }

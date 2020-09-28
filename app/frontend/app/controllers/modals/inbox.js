@@ -3,6 +3,7 @@ import stashes from '../../utils/_stashes';
 import persistence from '../../utils/persistence';
 import app_state from '../../utils/app_state';
 import speecher from '../../utils/speecher';
+import sync from '../../utils/sync';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet, get as emberGet } from '@ember/object';
@@ -157,6 +158,21 @@ export default modal.ModalController.extend({
           modal.open('share-utterance', {utterance: stashes.get('working_vocalization')});
         }
       }
+    },
+    accept_pair: function() {
+      var pair = this.get('model.pair');
+      sync.confirm_pair(pair.pair_code, pair.partner_id);
+      modal.close();
+    },
+    reject_pair: function() {
+      app_state.set('referenced_user.request_alert', null);
+      var pair = this.get('model.pair');
+      sync.send(app_state.get('sessionUser.id'), {
+        type: 'reject',
+        pair_code: pair.pair_code,
+        partner_id: pair.partner_id
+      });
+      modal.close();
     }
   }
 });
