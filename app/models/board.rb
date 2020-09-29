@@ -837,7 +837,7 @@ class Board < ActiveRecord::Base
       end
     end
     self.settings['buttons'] = buttons.map do |button|
-      trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s]
+      trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s] || (self.settings['translations'] || {})[button['id'].to_s]
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
@@ -859,14 +859,24 @@ class Board < ActiveRecord::Base
             loc = loc['locale']
           end
           next unless tran
-          tran['locale'] ||= loc
+          if loc == self.settings['locale']
+            orig_button = (self.settings['buttons'] || []).find{|b| b['id'] == button['id'] }
+            # button settings overwrite translation settings for the default locale
+            ['label', 'vocalization', 'inflections'].each do |k|
+              if !orig_button || orig_button[k] != button[k]
+                tran[k] = button[k] if button[k]
+                tran.delete(k) if !button[k] && k != 'inflections'
+              end
+            end
+          end
+          loc = tran['locale'] || loc
           self.settings['translations'][button['id'].to_s] ||= {}
-          self.settings['translations'][button['id'].to_s][tran['locale']] ||= {}
-          self.settings['translations'][button['id'].to_s][tran['locale']]['label'] = tran['label'].to_s if tran['label']
-          self.settings['translations'][button['id'].to_s][tran['locale']]['vocalization'] = tran['vocalization'].to_s if tran['vocalization']
+          self.settings['translations'][button['id'].to_s][loc] ||= {}
+          self.settings['translations'][button['id'].to_s][loc]['label'] = tran['label'].to_s if tran['label']
+          self.settings['translations'][button['id'].to_s][loc]['vocalization'] = tran['vocalization'].to_s if tran['vocalization']
           tran['inflections'].to_a.each_with_index do |str, idx|
-            self.settings['translations'][button['id'].to_s][tran['locale']]['inflections'] ||= []
-            self.settings['translations'][button['id'].to_s][tran['locale']]['inflections'][idx] = str.to_s if str
+            self.settings['translations'][button['id'].to_s][loc]['inflections'] ||= []
+            self.settings['translations'][button['id'].to_s][loc]['inflections'][idx] = str.to_s if str
           end
           # ignore inflection_defaults, those should get re-added on their own
         end
@@ -952,7 +962,16 @@ class Board < ActiveRecord::Base
     res
   end
 
-  def translate_set(translations, source_lang, dest_lang, board_ids, set_as_default=true, user_for_paper_trail=nil, user_local_id=nil, visited_board_ids=[])
+  def translate_set(translations, opts)
+    allow_fallbacks = opts['allow_fallbacks']
+    source_lang = opts['source']
+    dest_lang = opts['dest']
+    board_ids = opts['board_ids']
+    set_as_default = opts['default'] != false
+    user_for_paper_trail = opts['user_key']
+    user_local_id = opts['user_local_id']
+    visited_board_ids = opts['visited_board_ids'] || []
+
     user_local_id ||= self.user_id
     source_lang = 'en' if source_lang.blank?
     label_lang = dest_lang
@@ -983,6 +1002,15 @@ class Board < ActiveRecord::Base
           self.settings['translations'][button['id'].to_s][dest_lang]['label'] = translations[button['label']]
           button['label'] = translations[button['label']] if set_as_default_here
           @buttons_changed = 'translated'
+        elsif allow_fallbacks && set_as_default_here
+          fallback = ((self.settings['translations'][button['id'].to_s] || {})[dest_lang] || {})['label']
+          if fallback
+            button['label'] = fallback 
+            @buttons_changed = 'translated'
+          elsif button['label']
+            button.delete('label')
+            @buttons_changed = 'translated'
+          end
         end
         if button['vocalization'] && translations[button['vocalization']]
           self.settings['translations'][button['id'].to_s] ||= {}
@@ -992,6 +1020,25 @@ class Board < ActiveRecord::Base
           self.settings['translations'][button['id'].to_s][dest_lang]['vocalization'] = translations[button['vocalization']]
           button['vocalization'] = translations[button['vocalization']] if set_as_default_here
           @buttons_changed = 'translated'
+        elsif  allow_fallbacks && set_as_default_here
+          fallback = ((self.settings['translations'][button['id'].to_s] || {})[dest_lang] || {})['vocalization']
+          if fallback
+            button['vocalization'] = fallback 
+            @buttons_changed = 'translated'
+          elsif button['vocalization']
+            button.delete('vocalization')
+            @buttons_changed = 'translated'
+          end
+        end
+        if allow_fallbacks && set_as_default_here
+          fallback = ((self.settings['translations'][button['id'].to_s] || {})[dest_lang] || {})['inflections']
+          if fallback
+            button['inflections'] = fallback 
+            @buttons_changed = 'translated'
+          elsif button['inflections']
+            button.delete('inflections')
+            @buttons_changed = 'translated'
+          end
         end
       end
       whodunnit = PaperTrail.request.whodunnit
@@ -1026,7 +1073,16 @@ class Board < ActiveRecord::Base
     visited_board_ids << self.global_id
     downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
-      brd.translate_set(translations, source_lang, dest_lang, board_ids, set_as_default, user_for_paper_trail, user_local_id, visited_board_ids)
+      brd.translate_set(translations, {
+        'source' => source_lang,
+        'dest' => dest_lang,
+        'board_ids' => board_ids,
+        'default' => set_as_default,
+        'user_key' => user_for_paper_trail,
+        'user_local_id' => user_local_id,
+        'allow_fallbacks' => allow_fallbacks,
+        'visited_board_ids' => visited_board_ids
+      })
       visited_board_ids << brd.global_id
     end
     {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids, updated: visited_board_ids}

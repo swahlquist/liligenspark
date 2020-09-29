@@ -539,7 +539,7 @@ class WordData < ActiveRecord::Base
 
   def self.inflection_locations_for(words, locale)
     hash = {}
-    return hash if words.blank? || !locale
+    return hash if words.blank? || !locale || locale.blank?
     locales = [locale.downcase, locale.split(/-|_/)[0].downcase]
     known_types = ['adjective', 'noun', 'verb', 'adverb', 'pronoun']
     WordData.where(locale: locales, word: words.map(&:downcase)).each do |word_data|

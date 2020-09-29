@@ -106,7 +106,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     allowed_ids = {}
     button_set = self
     # Force an auto-regenerate if the revision doesn't match
-    return nil unless button_set.data['full_set_revision'] == full_set_revision
+    return nil unless full_set_revision && button_set.data['full_set_revision'] == full_set_revision
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
       button_set ||= self
@@ -178,7 +178,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     remote_hash = button_set.instance_variable_get('@remote_hash')
     if !button_set.data['extra_data_nonce']
       # If the button set has never been detached, do that part
-      button_set.detach_extra_data
+      button_set.detach_extra_data(true)
       return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank?
     end
     button_set.data['remote_paths'] ||= {}

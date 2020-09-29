@@ -931,6 +931,12 @@ RSpec.describe WordData, :type => :model do
       expect(WordData.inflection_locations_for(['a'], nil)).to eq({})
     end
 
+    it "should not barf on empty string locale" do
+      expect(WordData).to_not receive(:where)
+      expect(WordData.inflection_locations_for([], '')).to eq({})
+      expect(WordData.inflection_locations_for(['a'], '')).to eq({})
+    end
+
     it "should return parts of speech for matching words" do
       hash = WordData.inflection_locations_for(['hat', 'want', 'angrily', 'I', 'he'], 'en')
       expect(hash['angrily']['types'][0]).to eq('adverb')

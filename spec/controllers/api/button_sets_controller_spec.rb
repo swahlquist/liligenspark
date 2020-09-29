@@ -97,7 +97,7 @@ describe Api::ButtonSetsController, :type => :controller do
 
     it "should return exists message if true, including URL" do
       token_user
-      b = Board.create(user: @user)
+      b = Board.create(user: @user, :settings => {'full_set_revision' => 'asdf'})
       BoardDownstreamButtonSet.update_for(b.global_id,true)
       b.reload
       expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b)
@@ -153,7 +153,7 @@ describe Api::ButtonSetsController, :type => :controller do
 
     it "should return a url on progress completion" do
       token_user
-      b = Board.create(user: @user)
+      b = Board.create(user: @user, :settings => {'full_set_revision' => 'aaaa'})
       BoardDownstreamButtonSet.update_for(b.global_id, true)
       post :generate, params: {'id' => b.global_id}
       json = assert_success_json
@@ -166,7 +166,7 @@ describe Api::ButtonSetsController, :type => :controller do
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
-      expect(bs).to receive(:url_for).with(@user).and_return("asdf")
+      expect(bs).to receive(:url_for).with(@user, 'aaaa').and_return("asdf")
       Progress.perform_action(p.id)
       expect(p.reload.settings['result']).to eq({'success' => true, 'url' => 'asdf'})
     end

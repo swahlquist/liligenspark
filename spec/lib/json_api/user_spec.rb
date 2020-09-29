@@ -285,7 +285,7 @@ describe JsonApi::User do
         
         u.settings['subscription']['started'] = nil
         json = JsonApi::User.build_json(u, permissions: u)
-        expect(json['subscription']).to eq({
+        expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :grace_period_communicator,
           'grace_period' => true,
           'expires' => u.expires_at.iso8601

@@ -1521,7 +1521,7 @@ describe Board, :type => :model do
       expect(b2.settings['copy_id']).to eq(nil)
       b2.process({
         'source_id' => b.global_id
-      })
+      }) 
       expect(b2.settings['copy_id']).to eq(nil)
     end
 
@@ -1542,6 +1542,30 @@ describe Board, :type => :model do
         'source_id' => b.global_id
       }, {'user' => u2})
       expect(b2.settings['copy_id']).to eq(nil)
+    end
+
+    it "should update the translations hash for the board's current locale when buttons are updated" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['translations'] = {
+        '1' => {'en' => {'label' => 'whatever'}},
+        '2' => {'en' => {'label' => 'whatever'}},
+        '3' => {'en' => {'label' => 'whatever'}},
+      }
+      b.process({
+        'buttons' => [{'id' => 1, 'label' => 'friend'}, {'id' => 2, 'label' => 'send'}, {'id' => '3', 'label' => 'blend'}],
+        'grid' => {
+          'rows' => 3,
+          'columns' => 3,
+          'order' => [[nil,1,nil],[2,nil,3],[nil,nil,nil]]
+        }
+      })
+      expect(b.settings['grid']['order']).to eq([[nil,1,nil],[2,nil,3],[nil,nil,nil]])
+      expect(b.settings['translations']).to eq({
+        '1' => {'en' => {'label' => 'friend'}},
+        '2' => {'en' => {'label' => 'send'}},
+        '3' => {'en' => {'label' => 'blend'}},
+      })
     end
   end
 
@@ -2311,7 +2335,15 @@ describe Board, :type => :model do
     it "should return done if user_id doesn't match" do
       u = User.create
       b = Board.create(:user => u)
-      res = b.translate_set({}, 'en', 'es', [b.global_id], true, 'asdf', 1234)
+      res = b.translate_set({}, 
+      { 
+        'source' => 'en', 
+        'dest' => 'es', 
+        'boards_ids' => [b.global_id], 
+        'default' => true, 
+        'user_key' => 'asdf', 
+        'user_local_id' => 1234
+      })
       expect(res).to eq({done: true, translated: false, reason: 'mismatched user'})
     end
     
@@ -2323,7 +2355,11 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat'}
       ]
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('hat')
     end
@@ -2336,7 +2372,11 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat'}
       ]
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('sat')
       expect(b.settings['translations']).to eq({
@@ -2362,7 +2402,11 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat'}
       ]
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('sat')
       expect(b.settings['translations']).to eq({
@@ -2380,7 +2424,11 @@ describe Board, :type => :model do
       })
       
       b.reload
-      res = b.translate_set({'sat' => 'yat', 'rat' => 'eat'}, 'es', 'fr', [b.global_id])
+      res = b.translate_set({'sat' => 'yat', 'rat' => 'eat'}, {
+        'source' => 'es', 
+        'dest' => 'fr', 
+        'board_ids' => [b.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('yat')
       expect(b.settings['translations']).to eq({
@@ -2408,7 +2456,12 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat'}
       ]
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id], false)
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id], 
+        'default' => false
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('hat')
       expect(b.settings['translations']).to eq({
@@ -2456,7 +2509,11 @@ describe Board, :type => :model do
       ]
       b5.save
       
-      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, 'en', 'es', [b1.global_id, b2.global_id, b3.global_id, b4.global_id])
+      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b1.global_id, b2.global_id, b3.global_id, b4.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b1.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
       expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat']) # already translated
@@ -2496,7 +2553,11 @@ describe Board, :type => :model do
       ]
       b5.save
       
-      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, 'en', 'es', [b1.global_id, b3.global_id, b4.global_id])
+      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b1.global_id, b3.global_id, b4.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b1.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
       expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat'])
@@ -2514,7 +2575,11 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cat'}
       ]
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       expect(res[:done]).to eq(true)
       expect(b.settings['buttons'][0]['label']).to eq('sat')
       expect(b.settings['translations']).to eq({
@@ -2552,9 +2617,80 @@ describe Board, :type => :model do
       Worker.process_queues
       versions = b.reload.versions.count
 
-      b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       Worker.process_queues
       expect(b.reload.versions.count).to eq(versions + 1)
+    end
+
+    it "should allow for using existing known translations when translating if specified" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(:user => u, :settings => {'locale' => 'es'})
+      b3 = Board.create(:user => u)
+      b4 = Board.create(:user => u)
+      b5 = Board.create(:user => u)
+      b1.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'vocalization' => 'cap', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => 2, 'label' => 'cat', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => 3, 'label' => 'rat', 'load_board' => {'id' => b5.global_id, 'key' => b5.key}}
+      ]
+      b1.settings['translations'] = {
+        '1' => {'es' => {'label' => 'top'}},
+        '2' => {'es' => {'label' => 'feline', 'vocalization' => 'meow'}},
+        '3' => {'es' => {'label' => 'mouse'}}
+      }
+      b1.save
+      b2.settings['buttons'] = [
+        {'id' => 1, 'label' => 'fat', 'load_board' => {'id' => b4.global_id, 'key' => b4.key}}
+      ]
+      b2.settings['translations'] = {
+        '1' => {'es' => {'label' => 'lard'}}
+      }
+      b2.save
+      b3.settings['buttons'] = [
+        {'id' => 1, 'label' => 'cheese', 'vocalization' => 'hat'}
+      ]
+      b3.settings['translations'] = {
+        '1' => {'es' => {'vocalization' => 'top'}}
+      }
+      b3.save
+      b4.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b1.global_id, 'key' => b1.key}}
+      ]
+      b4.settings['translations'] = {
+        '1' => {'es' => {'label' => 'frog'}}
+      }
+      b4.save
+      b5.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat'}
+      ]
+      b5.settings['translations'] = {
+        '1' => {'es' => {'label' => 'top', 'vocalization' => 'wut'}}
+      }
+      b5.save
+      
+      # 'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'
+      res = b1.translate_set({}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'allow_fallbacks' => true,
+        'board_ids' => [b1.global_id, b2.global_id, b3.global_id, b4.global_id]
+      })
+      expect(res[:done]).to eq(true)
+      expect(b1.reload.settings['buttons'].map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
+      expect(b1.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq([nil, 'meow', nil])
+      expect(b2.reload.settings['buttons'].map{|b| b['label'] }).to eq(['fat']) # already translated
+      expect(b2.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq([nil])
+      expect(b3.reload.settings['buttons'].map{|b| b['label'] }).to eq([nil])
+      expect(b3.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq(['top'])
+      expect(b4.reload.settings['buttons'].map{|b| b['label'] }).to eq(['frog'])
+      expect(b4.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq([nil])
+      expect(b5.reload.settings['buttons'].map{|b| b['label'] }).to eq(['hat']) # not in to-translate list
+      expect(b5.reload.settings['buttons'].map{|b| b['vocalization'] }).to eq([nil])
     end
 
     it 'should track image uses with new strings on the correct locale' do
@@ -2588,7 +2724,11 @@ describe Board, :type => :model do
             "locale":"es"}
         ])
       end
-      b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, 'en', 'es', [b.global_id])
+      b.schedule(:translate_set, {'hat' => 'sat', 'cat' => 'rat'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b.global_id]
+      })
       Worker.process_queues
       expect(b.reload.versions.count).to eq(versions + 1)
     end

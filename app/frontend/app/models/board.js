@@ -279,6 +279,7 @@ CoughDrop.Board = DS.Model.extend({
     var trans = this.get('translations') || {};
     var buttons = this.get('buttons') || [];
     if(!trans) { return buttons; }
+    var current_locale = this.get('locale') || 'en';
     label_locale = label_locale || trans.current_label || this.get('locale') || 'en';
     vocalization_locale = vocalization_locale || trans.current_vocalization || this.get('locale') || 'en';
     if(trans.current_label == label_locale && trans.current_vocalization == vocalization_locale) { return buttons; }
@@ -287,10 +288,10 @@ CoughDrop.Board = DS.Model.extend({
     buttons.forEach(function(button) {
       var b = $.extend({}, button);
       if(trans[b.id]) {
-        if(trans[b.id][label_locale] && trans[b.id][label_locale].label) {
+        if(label_locale != current_locale && trans[b.id][label_locale] && trans[b.id][label_locale].label) {
           b.label = trans[b.id][label_locale].label;
         }
-        if(trans[b.id][vocalization_locale] && (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label)) {
+        if(vocalization_locale != current_locale && trans[b.id][vocalization_locale] && (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label)) {
           b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
         }
       }

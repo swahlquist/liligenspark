@@ -878,17 +878,28 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'aha'
       expect(u).to receive(:private_viewable_board_ids).and_return(['3', '4'])
       expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(u)).to eq('qwer')
+      expect(bs.url_for(u, 'aha')).to eq('qwer')
     end
 
     it "should return the private url if no user but everything is public" do
       bs = BoardDownstreamButtonSet.create
       bs.data['public_board_ids'] = ['1', '2', '3', '4']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'aha'
       expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(nil)).to eq('qwer')
+      expect(bs.url_for(nil, 'aha')).to eq('qwer')
+    end
+
+    it "should return nil on a mismatched revision hash" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
+      expect(bs).to_not receive(:extra_data_private_url)
+      expect(bs.url_for(nil, 'aha')).to eq(nil)
     end
 
     it "should return nil if it needs a custom url but none is available" do
@@ -896,9 +907,10 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
-      expect(bs.url_for(u)).to eq(nil)
+      expect(bs.url_for(u, 'abc')).to eq(nil)
     end
 
     it "should return the private url if the user is a global admin" do
@@ -908,8 +920,9 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs = BoardDownstreamButtonSet.create
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
       expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(u)).to eq('qwer')
+      expect(bs.url_for(u, 'abc')).to eq('qwer')
     end
 
     it "should return the cached path if it exists already for the user's viewable set" do
@@ -917,6 +930,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
       ids = ['4']
       hash = GoSecure.sha512(ids.sort.to_json, bs.data['remote_salt'])
       bs.data['remote_paths'] = {}
@@ -927,7 +941,7 @@ describe BoardDownstreamButtonSet, :type => :model do
 
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
-      expect(bs.url_for(u)).to eq("https://www.example.com/zxcv")
+      expect(bs.url_for(u, 'abc')).to eq("https://www.example.com/zxcv")
     end
 
     it "should schedule a remote touch if expiring soon" do
@@ -935,6 +949,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
       ids = ['4']
       hash = GoSecure.sha512(ids.sort.to_json, bs.data['remote_salt'])
       bs.data['remote_paths'] = {}
@@ -944,11 +959,12 @@ describe BoardDownstreamButtonSet, :type => :model do
 
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
-      expect(bs.url_for(u)).to eq("https://www.example.com/zxcv")
+      expect(bs.url_for(u, 'abc')).to eq("https://www.example.com/zxcv")
     end
 
     it "should use the source button set if one is defined" do
       bs = BoardDownstreamButtonSet.create
+      bs.data['full_set_revision'] = 'abc'
       bs2 = BoardDownstreamButtonSet.create
       bs2.data['public_board_ids'] = ['1', '2', '3', '4']
       bs2.data['board_ids'] = ['1', '2', '3', '4']
@@ -958,7 +974,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['source_id'] = bs2.global_id
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs2.global_id).and_return(bs2)
       expect(bs2).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(nil)).to eq('qwer')
+      expect(bs.url_for(nil, 'abc')).to eq('qwer')
     end
   end
 
@@ -1046,28 +1062,40 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs2)
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs.global_id).and_return(bs)
-      expect(bs).to receive(:url_for).with(u).and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, nil).and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should return the existing url if there is one" do
       u = User.create
-      b = Board.create(user: u)
-      bs = BoardDownstreamButtonSet.create
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
-      expect(bs).to receive(:url_for).with(u).and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, 'asdf').and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should generate the default extra_data if there isn't one" do
       u = User.create
-      b = Board.create(user: u)
-      bs = BoardDownstreamButtonSet.create
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
-      expect(bs).to receive(:url_for).with(u).and_return(nil)
+      expect(bs).to receive(:url_for).with(u, 'asdf').and_return(nil)
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+    end
+
+    it "should return the newly-generated default extra_data if it matches for the user" do
+      u = User.create
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(bs).to receive(:detach_extra_data)
+      expect(bs).to receive(:url_for).with(u, 'asdf').and_return(nil)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
@@ -1079,16 +1107,16 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
-      expect(bs).to receive(:url_for).with(u).and_return(nil)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should not try to generate again less than 12 hours after a failed generation attempt" do
       u = User.create
-      b = Board.create(user: u)
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
       bs = BoardDownstreamButtonSet.create
       bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['1', '2', '3'].to_json, bs.data['remote_salt'])
       bs.data['remote_paths'] = {}
       bs.data['remote_paths'][hash] = {'generated' => 2.hours.ago.to_i}
@@ -1100,9 +1128,10 @@ describe BoardDownstreamButtonSet, :type => :model do
 
     it "should remote upload only the available boards based on the user" do
       u = User.create
-      b = Board.create(user: u)
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
       bs = BoardDownstreamButtonSet.create
       bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
       bs.data['buttons'] = [
         {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
@@ -1133,9 +1162,10 @@ describe BoardDownstreamButtonSet, :type => :model do
 
     it "should record an error on upload fail" do
       u = User.create
-      b = Board.create(user: u)
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
       bs = BoardDownstreamButtonSet.create
       bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
       bs.data['buttons'] = [
         {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
@@ -1167,9 +1197,10 @@ describe BoardDownstreamButtonSet, :type => :model do
 
     it "should return the URL on a successful generation" do
       u = User.create
-      b = Board.create(user: u)
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
       bs = BoardDownstreamButtonSet.create
       bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
       bs.data['buttons'] = [
         {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
@@ -1192,7 +1223,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       end
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
     end
-  end
+ end
 
   describe "flush_caches" do
     it "should not error on bad board ids" do
