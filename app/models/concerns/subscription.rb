@@ -435,7 +435,7 @@ module Subscription
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
         'subscribe' => true,
-        'subscription_id' => 'free',
+        'subscription_id' => "free-#{Time.now.iso8601}",
         'token_summary' => (type == 'manual_supporter') ? "Manually-set Supporter Account" : "Communicator-Granted Supporter Account",
         'plan_id' => 'slp_monthly_granted'
       })

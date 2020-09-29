@@ -542,6 +542,146 @@ describe Supervising, :type => :model do
       expect(o.reload.pending_supervisor?(u.reload)).to eq(false)
       expect(o.reload.supervisor?(u)).to eq(false)
     end
+
+    it "should allow using a supporter code for a new supporter" do
+      u = User.create
+      u2 = User.create
+      u2.settings['subscription']['purchased_supporters'] = 3
+      u2.save!
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u2.reload.premium_supporter_grants).to eq(2)
+    end
+
+    it "should allow using a supporter code for an already-added supporter" do
+      u = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+      u2.settings['subscription']['purchased_supporters'] = 3
+      u2.save!
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u2.reload.premium_supporter_grants).to eq(2)
+    end
+
+    it "should not use one of my credits if the supporter is already premium" do
+      u = User.create
+      u2 = User.create
+      u.subscription_override('granted_supporter')
+      expect(u.billing_state).to eq(:premium_supporter)
+      User.link_supervisor_to_user(u, u2, nil, true, 'granted')
+      u2.settings['subscription']['purchased_supporters'] = 3
+      u2.save!
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u2.reload.premium_supporter_grants).to eq(3)
+    end
+
+    it "should use one of my credits if the supporter is in the trial period still" do
+      u = User.create
+      u2 = User.create
+      u2.settings['subscription']['purchased_supporters'] = 3
+      u2.save!
+      u2.process({'supervisor_key' => "add_premium_edit-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'edit_permission' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.billing_state).to eq(:premium_supporter)
+      expect(u2.reload.premium_supporter_grants).to eq(2)
+    end
     
     it "should set a user to not-pending if they approve a pending org" do
       u = User.create

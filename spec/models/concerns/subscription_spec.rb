@@ -2924,6 +2924,43 @@ describe Subscription, :type => :model do
     end
   end  
 
+  describe "grant_premium_supporter" do
+    it "should return false if no grants available" do
+      u = User.create
+      expect(u.grant_premium_supporter(u)).to eq(false)
+    end
+
+    it "should set role to supporter" do
+      u1 = User.create
+      u1.settings['subscription']['purchased_supporters'] = 2
+      u2 = User.create
+      expect(u2.supporter_role?).to eq(false)
+      expect(u1.grant_premium_supporter(u2)).to eq(true)
+      expect(u2.supporter_role?).to eq(true)
+    end
+
+    it "should do nothing if already a premium supporter" do
+      u1 = User.create
+      u1.settings['subscription']['purchased_supporters'] = 2
+      u2 = User.create
+      u2.subscription_override('granted_supporter')
+      expect(u2.billing_state).to eq(:premium_supporter)
+      expect(u1.grant_premium_supporter(u2)).to eq(false)
+      expect(u2.billing_state).to eq(:premium_supporter)
+    end
+
+    it "should grant credit and decrement available grants" do
+      u1 = User.create
+      u1.settings['subscription']['purchased_supporters'] = 2
+      expect(u1.premium_supporter_grants).to eq(2)
+      u2 = User.create
+      expect(u2.billing_state).to_not eq(:premium_supporter)
+      expect(u1.grant_premium_supporter(u2)).to eq(true)
+      expect(u2.billing_state).to eq(:premium_supporter)
+      expect(u1.premium_supporter_grants).to eq(1)
+    end
+  end
+
   describe "transfer_eval_to" do
     it "should transfer logs to the new user" do
       u = User.create
