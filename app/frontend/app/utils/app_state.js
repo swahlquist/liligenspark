@@ -2205,8 +2205,8 @@ var app_state = EmberObject.extend({
       }
     }
 
-    // update button attributes preemptively
     app_state.set('last_activation', now);
+    // update button attributes preemptively
     if(button.link_disabled) {
       button = $.extend({}, button);
       setProperties(button, {

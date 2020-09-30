@@ -286,6 +286,7 @@ export default Controller.extend({
       }
     },
     backspace: function(opts) {
+      app_state.set('last_activation', (new Date()).getTime());
       utterance.backspace(opts);
       if(!opts || !opts.skip_click) {
         if(app_state.get('currentUser.preferences.click_buttons') && app_state.get('speak_mode')) {
@@ -297,6 +298,7 @@ export default Controller.extend({
       }
     },
     clear: function(opts) {
+      app_state.set('last_activation', (new Date()).getTime());
       app_state.toggle_modeling(false);
       utterance.clear(opts);
       if(!opts || !opts.skip_click) {
@@ -335,6 +337,7 @@ export default Controller.extend({
       }, 100);
     },
     home: function(opts) {
+      app_state.set('last_activation', (new Date()).getTime());
       opts = opts || {};
       if(app_state.get('eval_mode') && app_state.get('speak_mode')) {
         modal.notice(i18n.t('eval_mode_home_disabled', "Home is disabled during an evaluation, you can end the evaluation using the menu icon"), true);
@@ -505,6 +508,7 @@ export default Controller.extend({
       // full screen browser mode? Prolly needs a localstorage component as well,
       // since if I reload and then click the browser back button it's all kinds
       // of backward.
+      app_state.set('last_activation', (new Date()).getTime());
       if(stashes.get('sticky_board') && app_state.get('speak_mode')) {
         modal.warning(i18n.t('sticky_board_notice', "Board lock is enabled, disable to leave this board."), true);
       } else {
@@ -525,6 +529,7 @@ export default Controller.extend({
       modal.open('modals/board-intro', {board: this.get('board.model'), step: 0});
     },
     vocalize: function(opts) {
+      app_state.set('last_activation', (new Date()).getTime());
       this.vocalize(null, opts);
     },
     remote_modeling: function() {
