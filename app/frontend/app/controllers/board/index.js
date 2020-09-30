@@ -633,6 +633,7 @@ export default Controller.extend({
       });
       app_state.set('board_virtual_dom.ordered_buttons', ob);
       app_state.align_button_list();
+      CoughDrop.log.track('done computing dimensions');
     }
   ),
   long_description: computed('model.description', 'model.name', function() {

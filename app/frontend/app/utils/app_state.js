@@ -725,6 +725,7 @@ var app_state = EmberObject.extend({
     editManager.clear_paint_mode();
   },
   toggle_mode: function(mode, opts) {
+    CoughDrop.log.track('setting mode to ' + mode);
     opts = opts || {};
     utterance.clear({skip_logging: true});
     var current_mode = stashes.get('current_mode');
@@ -886,6 +887,7 @@ var app_state = EmberObject.extend({
     $stash_hover.removeClass('on_button').data('button_id', null);
     editManager.clear_paint_mode();
     editManager.clear_preview_levels();
+    CoughDrop.log.track('done setting mode to ' + mode);
   },
   sync_keepalive: observer('short_refresh_stamp', function() {
     var last = app_state.get('last_keepalive') || 0;

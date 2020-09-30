@@ -19,9 +19,6 @@
       {{/unless}}
     {{/unless}}
   </span>
-  {{#if button.sound}}
-    <audio style="display: none;" preload="auto" src={{button.local_sound_url}} rel={{button.sound.url}}></audio>
-  {{/if}}
   <div class={{if button.text_only text_only_button_symbol_class button_symbol_class}}>
     {{#if editModeNormalText}}
       {{#if button.sound}}
