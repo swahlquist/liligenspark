@@ -9,10 +9,17 @@
       {{#if app_state.referenced_user.request_alert.user.avatar_url}}
         <img src={{app_state.referenced_user.request_alert.user.avatar_url}} style='float: left; height: 75px; margin-right: 10px;' />
       {{/if}}
-      <p>
-        <strong>{{app_state.referenced_user.request_alert.user.user_name}}</strong> 
-        {{t "wants to pair with you for remote modeling. They will see your button presses, as well as be able to add visual prompts and start a video or audio call with this device. Would you like to accept this pairing?" key='confirm_pairing'}}
-      </p>
+      {{#if app_state.referenced_user.request_alert.model}}
+        <p>
+          <strong>{{app_state.referenced_user.request_alert.user.user_name}}</strong> 
+          {{t "wants to pair with you for remote modeling. They will see your button presses, as well as be able to add visual prompts and start a video or audio call with this device. Other supervisors will be able to follow your actions during pairing. Would you like to accept this pairing?" key='confirm_pairing'}}
+        </p>
+      {{else}}
+        <p>
+          <strong>{{app_state.referenced_user.request_alert.user.user_name}}</strong> 
+          {{t "wants to follow your activity. If you enable following for this Speak Mode session, other supeervisors will also be able to follow your activity. Would you like to enable followers for this Speak Mode session?" key='confirm_following'}}
+        </p>
+      {{/if}}
     {{else if current}}
       {{#if current.author.image_url}}
         <img src={{current.author.image_url}} style='width: 50px; height: 50px; float: left; margin: -20px 5px 0 0;' class='fit_image' />

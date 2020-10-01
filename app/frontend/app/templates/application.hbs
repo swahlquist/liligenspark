@@ -33,12 +33,18 @@
               <img src={{app_state.pairing.user.avatar_url_with_fallback}} />
             {{/if}}
           </button>
-        {{else app_state.reply_note}}
+        {{else if app_state.reply_note}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
         {{else if app_state.insertion}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
         {{else if app_state.flipped}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-repeat'></span></div>
+        {{else if app_state.followers.active}}
+          <div class='label label-info over clear' id='reply_icon'>
+            {{#each app_state.followers.active as |user|}}
+              <img src={{user.avatar_url}} class='follower' />
+            {{/each}}
+          </div>
         {{/if}}
       {{/unless}}
       <a href='#' tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">

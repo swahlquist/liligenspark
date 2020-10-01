@@ -80,7 +80,7 @@ export default modal.ModalController.extend({
     },
     delete_board_intro_section: function(section) {
       if(!this.get('model.intro.sections')) { return; }
-      var sections = this.get('model.intro.sections');
+      var sections = this.get('model.intro.sections') || [];
       sections = sections.filter(function(s) { return s != section; });
       this.set('model.intro.sections', sections);
     }

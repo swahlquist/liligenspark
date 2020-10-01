@@ -5,6 +5,7 @@ import persistence from './persistence';
 import app_state from './app_state';
 import modal from './modal';
 import speecher from './speecher';
+import RSVP from 'rsvp';
 import $ from 'jquery';
 import {
   set as emberSet,
@@ -19,9 +20,10 @@ var sync = EmberObject.extend({
     return new Promise(function(resolve, reject) {
       var now = (new Date()).getTime();
       var sub = sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == opts.user_id; });
+      var old_sub = null;
       if(sub && sub.started < (now - (60 * 60 * 1000))) {
         // TODO: wait until connection succeeds befor stopping prior
-        sub.unsubscribe();
+        old_sub = sub;
         sub = null;
       }
       sub = sub || sync.con.subscriptions.create({
@@ -35,7 +37,7 @@ var sync = EmberObject.extend({
             // Rebroadcast of my own message, ignore
             return;
           }
-          console.log("CDWS Data", sub.user_id, data); 
+          // console.log("CDWS Data", sub.user_id, data); 
           sync.listeners = sync.listeners || {};
           if(data.partner_id == opts.ws_user_id) {
             data.partner_is_self = true;
@@ -60,7 +62,7 @@ var sync = EmberObject.extend({
             var sup = app_state.get('sessionUser.known_supervisees').find(function(sup) { return sup.id == sub.user_id; });
             if(sup) {
               var cutoff = ((new Date()).getTime() - (10 * 60 * 1000)) / 1000;
-              console.log("SUP", sup.user_name, data, cutoff);
+              // console.log("SUP", sup.user_name, data, cutoff);
               emberSet(sup, 'online', sub.last_communicator_access > cutoff);
             }
             var user = CoughDrop.store.peekRecord('user', sub.user_id);
@@ -77,6 +79,9 @@ var sync = EmberObject.extend({
           }
         },
         connected: function() {
+          if(old_sub) {
+            old_sub.unsubscribe();
+          }
           runLater(function() {
             sub.send({type: 'users'});
           }, 200);
@@ -90,6 +95,7 @@ var sync = EmberObject.extend({
       });  
       sub.user_id = opts.user_id;
       sub.ws_user_id = opts.ws_user_id;
+      sub.manual_user = opts.manual_follow;
       sub.started = sub.started || now;
     });
   },
@@ -104,19 +110,22 @@ var sync = EmberObject.extend({
     return res;
   },
   connect: function(user) {
-    // TODO: call connect every 2-ish hours
-    // Need a way to replace device_id without
-    // needing to re-pair
     var connect_promise = new Promise(function(resolve, reject) {
       if(!window.ActionCable) { return reject({error: 'no ActionCable'}); }
       if(stashes.get('ws_url') && !sync.con) {
         sync.con = window.ActionCable.createConsumer(stashes.get('ws_url'));
       }
       user = user || app_state.get('sessionUser');
-      if(user && !user.sync_connected && (!user.get('supporter_role') || user.get('supervisees.length'))) {
-        user.sync_connected = true;
-        if(sync.pending_connect) { return sync.pending_connect; }
-        sync.pending_connect = connect_promise;
+      var manual_follow = user.get('id') != app_state.get('sessionUser.id');
+      var connected = user.get('sync_connected') || 0;
+      var now = (new Date()).getTime();
+      sync.pending_connect_for = sync.pending_connect_for || {};
+      // Re-connect every 2-ish hours
+      if(user && connected < now - (2 * 60 * 60 * 1000) && (!user.get('supporter_role') || user.get('supervisees.length'))) {
+        user.set('sync_connected', now);
+        if(sync.pending_connect_for[user.get('id')]) { return sync.pending_connect_for[user.get('id')]; }
+        sync.pending_connect_for[user.get('id')] = connect_promise;
+        console.log("COUGHDROP: ws connect");
         persistence.ajax('/api/v1/users/self/ws_settings', {type: 'GET'}).then(function(res) {
           res.retrieved = (new Date()).getTime();
           var cached_settings = stashes.get('ws_settings');
@@ -128,17 +137,27 @@ var sync = EmberObject.extend({
           res = Object.assign({}, res);
           delete res['meta'];
           if(user.get('id') == app_state.get('sessionUser.id')) {
+            // Store settings for the session user
             stashes.persist('ws_settings', res);
+            // ..and retry all manual connections at the same time
+            var manuals = sync.con.subscriptions.subscriptions.filter(function(sub) { return sub.manual_user; });
+            manuals.forEach(function(sub) {
+              sync.connect(sub.manual_user);
+            });
           }
-          sync.pending_connect = false;
+          sync.pending_connect_for[user.get('id')] = false;
           sync.self_settings = res;
           var promises = [];
           if(!user.get('supporter_role')) {
             promises.push(sync.subscribe({
               user_id: res.user_id,
               ws_user_id: res.my_device_id,
+              manual_follow: manual_follow && user,
               room_id: res.ws_user_id,
               verifier: res.verifier
+            }).then(null, function(err) {
+              user.set('sync_connected', 0);
+              return err;
             }));
           }
           if(res.supervisees) {
@@ -161,7 +180,7 @@ var sync = EmberObject.extend({
             })
           }
         }, function(err) {
-          sync.pending_connect = false;
+          sync.pending_connect_for[user.get('id')] = false;
           reject(err);
         });
       } else {
@@ -226,6 +245,45 @@ var sync = EmberObject.extend({
       sync.send(sub.user_id, {type: 'keepalive', following: (app_state.get('pairing.user_id') == sub.user_id)});
     })
   },
+  check_following: function(partner_id) {
+    var now = (new Date()).getTime();
+    // Note the user recently continued to follow
+    var lookup = RSVP.resolve();
+    if(partner_id) {
+      lookup = sync.user_lookup(partner_id);
+    }
+    lookup.then(function(user) {
+      var follow_stamps = app_state.get('followers') || {};
+      if(user) {
+        follow_stamps[user.user_id] = {
+          user: user,
+          last_update: now
+        };  
+      }
+      if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || follow_stamps.allowed) {
+        // Already broadcasting
+        follow_stamps.active = [];
+        for(var key in follow_stamps) {
+          if(follow_stamps[key] && follow_stamps[key].last_update > (now - (5 * 60 * 1000))) {
+            follow_stamps.active.push(follow_stamps[key].user);
+          }
+        }
+      } else if(!follow_stamps.ignore_until || follow_stamps.ignore_until < now) {
+        // If this user hasn't asked to follow before
+        // during this session, or it's been five minutes
+        // since the last rejection, show a prompt
+        if(user) {
+          app_state.set('sessionUser.request_alert', {follow: true, user: user});
+        }
+
+      }
+      if(app_state.get('speak_mode')) {
+        app_state.set('followers', follow_stamps);
+      }
+      // sync.confirm_pair(message.data.pair_code, message.data.partner_id);
+    });
+
+  },
   send_update: function(user_id, button_obj) {
     // generate an id for the update,
     // if currently-paired then keep sending
@@ -243,7 +301,7 @@ var sync = EmberObject.extend({
       // If remote support is completely disabled, don't send anything
       return;
     }
-    if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow')) {
+    if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed')) {
       // If paired, or allowing auto-followers, include current state
       if(app_state.get('speak_mode')) {
         if(button_obj) {
@@ -306,6 +364,7 @@ var sync = EmberObject.extend({
     } else {
       send_it(update);
     }
+    sync.check_following();
   },
   confirm_pair: function(code, partner_id) {
     sync.send(app_state.get('sessionUser.id'), {
@@ -381,7 +440,7 @@ var sync = EmberObject.extend({
               sync.confirm_pair(message.data.pair_code, message.data.partner_id);
             } else if(auto_accept && message.data.communicator_ids.length < 2) {
               // If auto-accept is enabled and there's
-              // only one active communicator device in the channeel
+              // only one active communicator device in the channel
               sync.confirm_pair(message.data.pair_code, message.data.partner_id);
             } else {
               sync.handled_pair_codes = sync.handled_pair_codes || [];
@@ -390,7 +449,7 @@ var sync = EmberObject.extend({
                 sync.handled_pair_codes = sync.handled_pair_codes.slice(-5);
                 sync.user_lookup(message.data.partner_id).then(function(user) {
                   // Note the pair request, wait for user response
-                  app_state.set('sessionUser.request_alert', {type: 'model', user: user, pair: message.data});
+                  app_state.set('sessionUser.request_alert', {model: true, user: user, pair: message.data});
                   // sync.confirm_pair(message.data.pair_code, message.data.partner_id);
                 });
               }
@@ -405,6 +464,9 @@ var sync = EmberObject.extend({
         } else if(message.type == 'query') {
           // Someone asked for an update
           sync.send_update(message.user_id);
+          sync.check_following(message.data.partner_id);
+        } else if(message.type == 'following') {
+          sync.check_following(message.data.partner_id);
         }
       } else {
         // Check if it's for one of my supervisees

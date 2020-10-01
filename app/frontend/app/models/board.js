@@ -875,9 +875,9 @@ CoughDrop.Board = DS.Model.extend({
       board_ids: board_ids,
       max_results: suggested_buttons.length * 2
     }).then(function(result) {
-      var unique_result = result.filter(function(sugg) { return sugg.word && !skip_labels[sugg.word.toLowerCase()]; });
+      var unique_result = (result || []).filter(function(sugg) { return sugg.word && !skip_labels[sugg.word.toLowerCase()]; });
       result = unique_result.concat(result).uniq();
-      (result||[]).forEach(function(sugg, idx) {
+      (result || []).forEach(function(sugg, idx) {
         if(suggested_buttons[idx]) {
           var suggestion_button = suggested_buttons[idx];
           _this.update_suggestion_button(suggestion_button, sugg);

@@ -47,7 +47,7 @@ export default modal.ModalController.extend({
         var json = {};
         var hidden_level = null, link_disabled_level = null;
         var advanced = false;
-        var strip = function(list) { return list.filter(function(k) { return k != 'hidden' && k != 'link_disabled'; }) };
+        var strip = function(list) { return (list || []).filter(function(k) { return k != 'hidden' && k != 'link_disabled'; }) };
         for(var idx in mods) {
           if(idx == 'pre') {
             var keys = Object.keys(mods[idx]).sort();

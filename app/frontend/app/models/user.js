@@ -137,7 +137,19 @@ CoughDrop.User = DS.Model.extend({
     return notifs;
   }),
   online: computed('last_ws_access', function() {
-    return this.get('last_ws_access') > (((new Date()).getTime() - (5 * 60 * 1000)) / 1000);
+    CoughDrop.User.ws_accesses = CoughDrop.User.ws_accesses || {};
+    var last_access = this.get('last_ws_access');
+    if(!last_access) {
+      if(CoughDrop.User.ws_accesses[this.get('id')]) {
+        last_access = CoughDrop.User.ws_accesses[this.get('id')];
+        runLater(function() {
+          this.set('last_ws_access', CoughDrop.User.ws_accesses[this.get('id')]);
+        }, 50)
+      }
+    } else {
+      CoughDrop.User.ws_accesses[this.get('id')] = Math.max(CoughDrop.User.ws_accesses[this.get('id')] || 0, this.get('last_ws_access'));
+    }
+    return last_access > (((new Date()).getTime() - (5 * 60 * 1000)) / 1000);
   }),
   update_voice_uri: observer(
     'preferences.device.voice.voice_uri',
@@ -883,7 +895,7 @@ CoughDrop.User = DS.Model.extend({
     stashes.push_log(true);
     persistence.find('dataCache', 'word_log/' + user_id).then(null, function() { return RSVP.resolve([]); }).then(function(list) {
       var cutoff = parseInt(window.moment().add(-2, 'week').format('X'), 10);
-      list = list.filter(function(e) { return e.timestamp > cutoff; });
+      list = (list || []).filter(function(e) { return e.timestamp > cutoff; });
       list.push(opts);
       persistence.store('dataCache', list, 'word_log/' + user_id).then(null, function() { });
     });

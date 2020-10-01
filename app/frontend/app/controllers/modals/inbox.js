@@ -160,18 +160,31 @@ export default modal.ModalController.extend({
       }
     },
     accept_pair: function() {
-      var pair = this.get('model.pair');
-      sync.confirm_pair(pair.pair_code, pair.partner_id);
+      var req = app_state.get('sessionUser.request_alert');
+      app_state.set('referenced_user.request_alert', null);
+      if(req && req.pair && req.pair.pair_code) {
+        // Rejecting explicit pairing
+        sync.confirm_pair(req.pair.pair_code, req.pair.partner_id);
+      } else {
+        // Rejecting follow request, prevent re-requests for 5 minutes 
+        var follow_stamps = app_state.get('followers') || {};
+        follow_stamps.ignore_until = (new Date()).getTime() + (5 * 60 * 1000);
+        app_state.set('followers', follow_stamps);
+      }
       modal.close();
     },
     reject_pair: function() {
+      var req = app_state.get('sessionUser.request_alert');
       app_state.set('referenced_user.request_alert', null);
-      var pair = this.get('model.pair');
-      sync.send(app_state.get('sessionUser.id'), {
-        type: 'reject',
-        pair_code: pair.pair_code,
-        partner_id: pair.partner_id
-      });
+      if(req && req.pair && req.pair.pair_code) {
+        sync.send(app_state.get('sessionUser.id'), {
+          type: 'reject',
+          pair_code: req.pair.pair_code,
+          partner_id: req.pair.partner_id
+        });
+      } else if(req && req.follow) {
+        // prevent more follow requests for 5 minutes
+      }
       modal.close();
     }
   }

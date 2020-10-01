@@ -54,7 +54,7 @@ export default modal.ModalController.extend({
           app_state.set('pairing', {partner: true, follow: true, user: _this.get('model.user'), user_id: _this.get('model.user.id'), communicator_id: _this.get('model.user.id')});
           app_state.set_speak_mode_user(_this.get('model.user.id'), true, true);
           setTimeout(function() {
-            sync.send(_this.get('model.user.id'), {type: 'query'});
+            sync.send(_this.get('model.user.id'), {type: 'query', following: true});
           }, 500);
         } else {
           var sync_handled = false;

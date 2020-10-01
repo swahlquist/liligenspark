@@ -889,6 +889,9 @@ var app_state = EmberObject.extend({
     editManager.clear_preview_levels();
     CoughDrop.log.track('done setting mode to ' + mode);
   },
+  sync_reconnect: observer('refresh_stamp', function() {
+    sync.connect();
+  }),
   sync_keepalive: observer('short_refresh_stamp', function() {
     var last = app_state.get('last_keepalive') || 0;
     var now = (new Date()).getTime();
@@ -901,7 +904,12 @@ var app_state = EmberObject.extend({
       }
     } else {
       // every 5 minutes, send a keepalive
-      if(last < now - (2 * 60 * 1000)) {
+      var cutoff = now - (2 * 60 * 1000);
+      if(app_state.get('pairing.partner') && app_state.get('pairing.follow')) {
+        // If following, let them know more often you're watching
+        cutoff = (20 * 1000);
+      }
+      if(last < cutoff) {
         app_state.set('last_keepalive', now);
         sync.keepalive();
       }
@@ -1169,7 +1177,7 @@ var app_state = EmberObject.extend({
         if(v.sentence == phrase.sentence && !phrase.stash) { matches++; return matches > 1; }
         return true;
       });
-      stash = stash.filter(function(v) {
+      stash = (stash || []).filter(function(v) {
         if(v.sentence == phrase.sentence && phrase.stash) { matches++; return matches > 1; }
         return true;
       });
@@ -1594,7 +1602,9 @@ var app_state = EmberObject.extend({
         buttonTracker.hit_spots = [];
         app_state.set('suggestion_id', null);
         if(this.get('last_speak_mode') !== false) {
+          app_state.set('sessionUser.request_alert', null);
           app_state.set('pairing', null);
+          app_state.set('followers', null);
           sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
           stashes.persist('sticky_board', false);

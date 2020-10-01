@@ -3232,6 +3232,9 @@ to { -webkit-transform: rotate(359deg) scale(1); }
   color: #000;
   display: inline-block;
   vertical-align: top;
+  &.clear {
+    background: transparent;
+  }
   &.pair {
     width: 50px;
     height: 50px;
@@ -3269,6 +3272,12 @@ to { -webkit-transform: rotate(359deg) scale(1); }
     margin-right: -30px;
     &.pair {
       margin-right: -54px;
+    }
+    .follower {
+      width: 30px;
+      height: 30px;
+      margin-right: -15px;
+      margin-top: -5px;
     }
   }
 }

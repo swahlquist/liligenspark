@@ -46,7 +46,7 @@ export default Controller.extend({
       var board_id = this.get('model.id');
       var _this = this;
       if(board_id && app_state.get('currentBoardState')) {
-        var shares = (app_state.get('currentUser.pending_board_shares') || []);
+        var shares = app_state.get('currentUser.pending_board_shares') || [];
         var matching_shares = shares.filter(function(s) { return s.board_id && s.board_id == board_id; });
         if(matching_shares.length > 0) {
           // If not in Speak Mode, or just barely launched into Speak Mode
