@@ -1012,6 +1012,7 @@ var buttonTracker = EmberObject.extend({
             document.elementsFromPoint(event.clientX, event.clientY).forEach(function(e) {
               if(e.id == 'identity_button') {
                 modal.close(null, 'highlight');
+                modal.close(null, 'highlight-secondary');
                 elem_wrap = {dom: e, wait: true};
               }
             });

@@ -93,10 +93,11 @@ export default Controller.extend({
     'has_board_intro',
     'app_state.feature_flags.find_multiple_buttons',
     'app_state.currentUser.preferences.progress.board_intros',
+    'app_state.pairing',
     'board.model.id',
     function() {
       // true if has_board_intro AND board intro hasn't been viewed yet
-      if(this.get('has_board_intro') && app_state.get('feature_flags.find_multiple_buttons')) {
+      if(this.get('has_board_intro') && app_state.get('feature_flags.find_multiple_buttons') && !app_state.get('pairing')) {
         var found = false;
         var board_id = this.get('board.model.id');
         var intros = app_state.get('currentUser.preferences.progress.board_intros') || [];
@@ -805,7 +806,9 @@ export default Controller.extend({
           }, function(err) {
             if(err && (err.reason == 'force close' || err.highlight_close)) {
               runLater(function() {
-                if(!modal.is_open('highlight')) {
+                var not_highlighting = (modal.highlight_settings || {}).highlight_type == 'button_search' && !modal.is_open('highlight');
+                not_highlighting = not_highlighting || ((modal.highlight2_settings || {}).highlight_type == 'button_search' && !modal.is_open('highlight-secondary'));
+                if(not_highlighting) {
                   _this.highlight_button('resume');
                 }
               }, 1000);
@@ -854,7 +857,9 @@ export default Controller.extend({
                 }, function(err) {
                   if(err && (err.reason == 'force close' || err.highlight_close)) {
                     runLater(function() {
-                      if(!modal.is_open('highlight')) {
+                      var not_highlighting = (modal.highlight_settings || {}).highlight_type == 'button_search' && !modal.is_open('highlight');
+                      not_highlighting = not_highlighting || ((modal.highlight2_settings || {}).highlight_type == 'button_search' && !modal.is_open('highlight-secondary'));
+                      if(not_highlighting) {
                         _this.highlight_button('resume');
                       }
                     }, 1000);

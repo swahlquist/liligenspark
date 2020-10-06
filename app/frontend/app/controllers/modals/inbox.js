@@ -163,13 +163,15 @@ export default modal.ModalController.extend({
       var req = app_state.get('sessionUser.request_alert');
       app_state.set('referenced_user.request_alert', null);
       if(req && req.pair && req.pair.pair_code) {
-        // Rejecting explicit pairing
         sync.confirm_pair(req.pair.pair_code, req.pair.partner_id);
       } else {
-        // Rejecting follow request, prevent re-requests for 5 minutes 
         var follow_stamps = app_state.get('followers') || {};
-        follow_stamps.ignore_until = (new Date()).getTime() + (5 * 60 * 1000);
+        follow_stamps.allowed = true;
         app_state.set('followers', follow_stamps);
+        setTimeout(function() {
+          sync.check_following();
+          sync.send_update(app_state.get('sessionUser.id'));
+        }, 500);
       }
       modal.close();
     },
@@ -177,13 +179,17 @@ export default modal.ModalController.extend({
       var req = app_state.get('sessionUser.request_alert');
       app_state.set('referenced_user.request_alert', null);
       if(req && req.pair && req.pair.pair_code) {
+        // Rejecting explicit pairing
         sync.send(app_state.get('sessionUser.id'), {
           type: 'reject',
           pair_code: req.pair.pair_code,
           partner_id: req.pair.partner_id
         });
       } else if(req && req.follow) {
-        // prevent more follow requests for 5 minutes
+        // Rejecting follow request, prevent re-requests for 5 minutes 
+        var follow_stamps = app_state.get('followers') || {};
+        follow_stamps.ignore_until = (new Date()).getTime() + (5 * 60 * 1000);
+        app_state.set('followers', follow_stamps);
       }
       modal.close();
     }

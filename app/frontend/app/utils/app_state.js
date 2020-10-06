@@ -898,6 +898,7 @@ var app_state = EmberObject.extend({
     if(app_state.get('speak_mode') && !app_state.get('currentUser.supporter_role')) {
       // every 20 seconds, re-assert board state
       if(last < now - (20 * 1000))     {
+        sync.check_following();
         sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
         app_state.set('last_keepalive', now);
         sync.keepalive();
@@ -907,7 +908,7 @@ var app_state = EmberObject.extend({
       var cutoff = now - (2 * 60 * 1000);
       if(app_state.get('pairing.partner') && app_state.get('pairing.follow')) {
         // If following, let them know more often you're watching
-        cutoff = (20 * 1000);
+        cutoff = now - (20 * 1000);
       }
       if(last < cutoff) {
         app_state.set('last_keepalive', now);
@@ -944,9 +945,7 @@ var app_state = EmberObject.extend({
   },
   check_scanning: function() {
     var _this = this;
-    if(app_state.get('skip_next_sync_update_for') != app_state.get('currentBoardState.id')) {
-      sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
-    }
+    sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
     runLater(function() {
       buttonTracker.scan_modeling = false;
       if(app_state.get('speak_mode') && _this.get('currentUser.preferences.device.scanning')) { // scanning mode
@@ -2189,6 +2188,10 @@ var app_state = EmberObject.extend({
       if(!buttonTracker.check('native_keyboard') && !buttonTracker.check('scanning_enabled')) {
         $(":focus").blur();
       }
+    }
+    if(app_state.get('pairing.partner') && app_state.get('pairing.model')) {
+      sync.model_button(button, obj);
+      return;
     }
 
     // track modeling events correctly

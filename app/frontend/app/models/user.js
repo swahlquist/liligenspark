@@ -140,10 +140,11 @@ CoughDrop.User = DS.Model.extend({
     CoughDrop.User.ws_accesses = CoughDrop.User.ws_accesses || {};
     var last_access = this.get('last_ws_access');
     if(!last_access) {
+      var _this = this;
       if(CoughDrop.User.ws_accesses[this.get('id')]) {
         last_access = CoughDrop.User.ws_accesses[this.get('id')];
         runLater(function() {
-          this.set('last_ws_access', CoughDrop.User.ws_accesses[this.get('id')]);
+          _this.set('last_ws_access', CoughDrop.User.ws_accesses[this.get('id')]);
         }, 50)
       }
     } else {
@@ -544,7 +545,15 @@ CoughDrop.User = DS.Model.extend({
     }
   }),
   known_supervisees: computed('all_supervisees', 'supervisees', function() {
-    return this.get('all_supervisees') || this.get('supervisees') || [];
+    var res = this.get('all_supervisees') || this.get('supervisees') || [];
+    CoughDrop.User.ws_accesses = CoughDrop.User.ws_accesses || {};
+    var cutoff = ((new Date()).getTime() - (10 * 60 * 1000)) / 1000;
+    res.forEach(function(sup) {
+      if(CoughDrop.User.ws_accesses[emberGet(sup, 'id')] > cutoff) {
+        emberSet(sup, 'online', true);          
+      }  
+    });
+    return res;
   }),
   check_all_connections: observer(
     'all_connections',

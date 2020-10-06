@@ -113,7 +113,7 @@ export default modal.ModalController.extend({
       if(result.board_id == editManager.controller.get('model.id')) {
         var $button = $(".button[data-id='" + result.id + "']");
         var _this = this;
-        modal.highlight($button).then(function() {
+        modal.highlight($button, {highlight_type: 'button_search'}).then(function() {
           var button = editManager.find_button(result.id);
           var board = editManager.controller.get('model');
           app_state.controller.activateButton(button, {board: board, trigger_source: 'click'});

@@ -15,6 +15,7 @@ import {
   later as runLater,
   cancel as runCancel,
 } from '@ember/runloop';
+import editManager from './edit_manager';
 var sync = EmberObject.extend({
   subscribe: function(opts) {
     return new Promise(function(resolve, reject) {
@@ -37,7 +38,7 @@ var sync = EmberObject.extend({
             // Rebroadcast of my own message, ignore
             return;
           }
-          // console.log("CDWS Data", sub.user_id, data); 
+          console.log("CDWS Data", sub.user_id, data); 
           sync.listeners = sync.listeners || {};
           if(data.partner_id == opts.ws_user_id) {
             data.partner_is_self = true;
@@ -54,17 +55,20 @@ var sync = EmberObject.extend({
           if(data.paired_partner_id == opts.ws_user_id) {
             data.paired_partner_is_self = true;
           }
-          if(data.type == 'users' || (data.type == 'update' && data.user_id.match(/^me/))) {
+          if(data.type == 'users' || (data.type == 'update' && (data.user_id || '').match(/^me/))) {
             sub.last_communicator_access = parseInt(data.last_communicator_access, 10) || 0;
             if(data.type == 'update') {
               sub.last_communicator_access = sub.last_communicator_access || ((new Date()).getTime() / 1000);
             }
             var sup = app_state.get('sessionUser.known_supervisees').find(function(sup) { return sup.id == sub.user_id; });
+            CoughDrop.User.ws_accesses = CoughDrop.User.ws_accesses || {};
             if(sup) {
               var cutoff = ((new Date()).getTime() - (10 * 60 * 1000)) / 1000;
               // console.log("SUP", sup.user_name, data, cutoff);
               emberSet(sup, 'online', sub.last_communicator_access > cutoff);
             }
+            CoughDrop.User.ws_accesses[sub.user_id] = sub.last_communicator_access;
+
             var user = CoughDrop.store.peekRecord('user', sub.user_id);
             if(user) {
               user.set('last_ws_access', sub.last_communicator_access);
@@ -110,12 +114,20 @@ var sync = EmberObject.extend({
     return res;
   },
   connect: function(user) {
+    if(!app_state || !app_state.get) {
+      console.log("PENDING");
+      runLater(function() {
+        sync.connect(user);
+      }, 100);
+      return;
+    }
     var connect_promise = new Promise(function(resolve, reject) {
       if(!window.ActionCable) { return reject({error: 'no ActionCable'}); }
       if(stashes.get('ws_url') && !sync.con) {
         sync.con = window.ActionCable.createConsumer(stashes.get('ws_url'));
       }
       user = user || app_state.get('sessionUser');
+      if(!user) { return; }
       var manual_follow = user.get('id') != app_state.get('sessionUser.id');
       var connected = user.get('sync_connected') || 0;
       var now = (new Date()).getTime();
@@ -253,7 +265,7 @@ var sync = EmberObject.extend({
       lookup = sync.user_lookup(partner_id);
     }
     lookup.then(function(user) {
-      var follow_stamps = app_state.get('followers') || {};
+      var follow_stamps = Object.assign({}, app_state.get('followers') || {});
       if(user) {
         follow_stamps[user.user_id] = {
           user: user,
@@ -297,16 +309,24 @@ var sync = EmberObject.extend({
       last_action: app_state.get('last_activation'),
       speak_mode: app_state.get('speak_mode')
     };
-    if(!app_state.get('sessionUser.preferences.remote_modeling')) {
-      // If remote support is completely disabled, don't send anything
-      return;
+    if(!app_state.get('sessionUser.preferences.remote_modeling') && app_state.get('sessionUser.id') == user_id) {
+      // If remote support is completely disabled, 
+      // (as the communicator) don't send anything
+      return RSVP.reject();
     }
+    console.log("UPDATE");
     if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed')) {
       // If paired, or allowing auto-followers, include current state
       if(app_state.get('speak_mode')) {
         if(button_obj) {
           update.current_action = {type: 'button', id: button_obj.button_id, board_id: button_obj.board.id, source: button_obj.source};
+          if(button_obj.model_confirm) {
+            update.current_action.model = 'select';
+          } else if(button_obj.remote_model) {
+            update.current_action.model = 'prompt';            
+          }
         }
+        console.log("w/ brd state");
         update.board_state = {
           id: app_state.get('currentBoardState.id'),
           level: app_state.get('currentBoardState.level'),
@@ -325,7 +345,7 @@ var sync = EmberObject.extend({
       // When someone else navigates you to a board,
       // don't assert that board or you can end up
       // in a bad loop
-      return;
+      return RSVP.reject();
     }
     
     // TODO: if paired as partner,
@@ -333,38 +353,84 @@ var sync = EmberObject.extend({
     //     (button hits will initially highlight, the
     //      partner can double-hit them to manually select)
     // - following: whatever
+    var defer = RSVP.defer();
 
     var send_it = function(update) {
       sync.send(user_id, update);
-      if(sync.pending_update_id == update.update_id && update.attempts < 20) {
+      if(sync.pending_update && sync.pending_update.id == update.update_id && update.attempts < 20) {
         update.attempts = (update.attempts || 0) + 1;
         runLater(function() {
-          if(sync.pending_update_id == update.update_id) {
+          if(sync.pending_update && sync.pending_update.id == update.update_id) {
             send_it(update);
           }
         }, 500);
       } else if(sync.cached_updates.length > 0) {
         runLater(function() {
           var update = sync.cached_updates.shift();
-          sync.pending_update_id = update.update_id;
+          sync.pending_update = {id: update.update_id, defer: update.defer};
+          delete update['defer'];
           send_it(update);
         }, 500);
       } else {
-        sync.pending_update_id = null;
+        sync.pending_update = null;
       }
     };
     if(sync.current_pairing && sync.current_pairing.room_user_id == user_id) {
-      if(sync.pending_update_id) {
+      if(sync.pending_update) {
+        update.defer = defer;
         sync.cached_updates.push(update);
         // queue the update to send later
       } else {
-        sync.pending_update_id = update_id;
+        sync.pending_update = {defer: defer, id: update_id};
         send_it(update);
       }
     } else {
+      defer.resolve();
       send_it(update);
     }
     sync.check_following();
+    return defer.promise;
+  },
+  model_button: function(button, obj) {
+    if(!button.id || !button.board) { return; }
+    var $button = $(".board[data-id='" + button.board.id + "'] .button[data-id='" + button.id + "']");
+    if($button[0]) {
+      var model_handled = false;
+      setTimeout(function() {
+        if(model_handled) { return; }
+        model_handled = true;
+        obj.remote_model = true;
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj);
+      }, 500);
+      modal.highlight($button, {clear_overlay: true, highlight_type: 'model', icon: 'send' }).then(function(highlight) {
+        model_handled = true;
+        if(highlight && highlight.pending) {
+          highlight.pending();
+        }
+        obj.model_confirm = true;
+        obj.modeling = true;
+        // send activation
+        var confirmed = false;
+        setTimeout(function() {
+          if(confirmed) { return; }
+          confirmed = true;
+          modal.close_highlight();
+        }, 5000);
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj).then(function() {
+          if(confirmed) { return; }
+          confirmed = true;
+          modal.close_highlight();
+        }, function() {
+          if(confirmed) { return; }
+          confirmed = true;
+          modal.close_highlight();
+        });
+      }, function() { 
+        model_handled = true;
+      });
+      return;
+    }
+
   },
   confirm_pair: function(code, partner_id) {
     sync.send(app_state.get('sessionUser.id'), {
@@ -464,9 +530,9 @@ var sync = EmberObject.extend({
         } else if(message.type == 'query') {
           // Someone asked for an update
           sync.send_update(message.user_id);
-          sync.check_following(message.data.partner_id);
+          sync.check_following(message.data.sender_id);
         } else if(message.type == 'following') {
-          sync.check_following(message.data.partner_id);
+          sync.check_following(message.data.sender_id);
         }
       } else {
         // Check if it's for one of my supervisees
@@ -511,8 +577,9 @@ var sync = EmberObject.extend({
           }
         } else if(message.type == 'confirm') {
           // Update confirmed by partner, stop retrying
-          if(message.data.update_id == sync.pending_update_id) {
-            sync.pending_update_id = null;
+          if(sync.pending_update && message.data.update_id == sync.pending_update.id) {
+            sync.pending_update.defer.resolve();
+            sync.pending_update = null;
           }
         } else if(message.type == 'update') {
           if(message.data.pair_code == sync.pair_code) {
@@ -606,32 +673,70 @@ var sync = EmberObject.extend({
           sync.next_action();
         }, did_change ? 500 : 50);
       } else if(action.type == 'button') {
+        console.log("BUTTON?")
         if(app_state.get('currentBoardState.id') == action.board_id) {
+          var close_on_next = false;
+          console.log("ACTION", action);
           var $button = $(".button[data-id='" + action.id + "']");
           speecher.click('ding');
-          console.log("BUTTON SOURCE", action);
-          var icon = 'hand-up';
-          // click, completion, tag, overlay, switch, keyboard,
-          // expression, keyboard_control, dwell, 
-          // longpress, gamepad
-          if(action.source == 'dwell') {
-            icon = 'screenshot';
-          } else if(action.source == 'switch') { 
-            icon = 'record';
-          } else if(action.source == 'expression') {
-            icon = 'sunglasses';
-          } else if(action.source == 'keyboard') {
-            icon = 'text-background';
-          } else if(action.source == 'gamepad') {
-            icon = 'tower';
+          var hit_button = function() {
+            if(app_state.get('currentBoardState.id') == action.board_id) {
+              var btn = editManager.find_button(action.id);
+              var obj = {
+                label: btn.label,
+                vocalization: btn.vocalization,
+                button_id: btn.id,
+                source: 'prompt',
+                board: {id: app_state.get('currentBoardState.id'), parent_id: app_state.get('currentBoardState.parent_id'), key: app_state.get('currentBoardState.key')},
+                type: 'speak'        
+              }
+              app_state.activate_button(btn, obj);
+            }
+          };
+          if(action.model == 'prompt') {
+            // Partner sending modeling prompt
+            modal.highlight($button, {clear_overlay: true, highlight_type: 'model'}).then(function() {
+              // activate!
+              modal.close_highlight();
+              hit_button();
+            }, function() { });  
+          } else if(action.model == 'select') {
+            // Partner forced selection of modeling prompt
+            hit_button();
+            runLater(function() {
+              modal.close_highlight();
+            }, 500);
+          } else {
+            // Communicator hit a button
+            console.log("BUTTON SOURCE", action);
+            var icon = 'hand-up';
+            // click, completion, tag, overlay, switch, keyboard,
+            // expression, keyboard_control, dwell, 
+            // longpress, gamepad
+            if(action.source == 'dwell') {
+              icon = 'screenshot';
+            } else if(action.source == 'switch') { 
+              icon = 'record';
+            } else if(action.source == 'expression') {
+              icon = 'sunglasses';
+            } else if(action.source == 'keyboard') {
+              icon = 'text-background';
+            } else if(action.source == 'gamepad') {
+              icon = 'tower';
+            }
+            close_on_next = true;
+            modal.highlight($button, {clear_overlay: true, icon: icon, highlight_type: 'model'}).then(function() {
+              close_on_next = false;
+              modal.close_highlight();
+            }, function() { 
+              close_on_next = false;              
+            });  
           }
-
-          modal.highlight($button, {clear_overlay: true, icon: icon}).then(function() {
-            modal.close_highlight();
-          }, function() { });
           sync.next_action.timer = runLater(function() {
             sync.next_action.timer = null;
-            modal.close_highlight();
+            if(close_on_next) {
+              modal.close_highlight();
+            }
             sync.next_action();
           }, 1500);
         }

@@ -19,8 +19,18 @@ var modal = EmberObject.extend({
     this.route = null;
   },
   open: function(template, options) {
-    var outlet = template == 'highlight' ? 'highlight' : 'modal';
-    if(template != 'highlight') {
+    var outlet = template;
+    var render_template = template;
+    if(template != 'highlight' && template != 'highlight-secondary') {
+      outlet = 'modal';
+    }
+    if(outlet == 'highlight-secondary') {
+      render_template = 'highlight2';
+      options = options || {};
+      options.secondary_highlight = true;
+      options.clear_overlay = true;
+    }
+    if(template != 'highlight' && template != 'highlight-secondary') {
       this.resume_scanning = true;
       scanner.stop();  
       runLater(function() {
@@ -35,15 +45,15 @@ var modal = EmberObject.extend({
     }
     if(!this.route) { throw "must call setup before trying to open a modal"; }
 
-    this.settings_for[template] = options;
+    this.settings_for[render_template] = options;
     this.last_any_template = template;
-    if(template != 'highlight') {
+    if(template != 'highlight' && template != 'highlight-secondary') {
       this.last_template = template;
     }
-    this.route.render(template, { into: 'application', outlet: outlet});
+    this.route.render(render_template, { into: 'application', outlet: outlet});
     var _this = this;
     return new RSVP.Promise(function(resolve, reject) {
-      if(template != 'highlight') {
+      if(template != 'highlight' && template != 'highlight-secondary') {
         _this.last_promise = {
           resolve: resolve,
           reject: reject
@@ -54,6 +64,8 @@ var modal = EmberObject.extend({
   is_open: function(template) {
     if(template == 'highlight') {
       return !!this.highlight_controller;
+    } else if(template == 'highlight-secondary') {
+      return !!this.highlight2_controller;
     } else if(template) {
       return this.last_template == template;
     } else {
@@ -112,33 +124,46 @@ var modal = EmberObject.extend({
       settings.set('select_anywhere', options.select_anywhere);
       settings.set('highlight_type', options.highlight_type);
       settings.set('defer', defer);
+      var template = 'highlight';
+      var controller_name = 'highlight_controller';
+      var promise_name = 'highlight_promise';
+      var settings_name = 'highlight_settings';
+      if((options.highlight_type == 'model' || options.highlight_type == 'button_search') && scanner.scanning) {
+        // If scanning, we can't use the primary
+        // highlight mechanism
+        template = 'highlight-secondary';
+        controller_name = 'highlight2_controller';
+        promise_name = 'highlight2_promise';
+        settings_name = 'highlight2_settings';
+      }
       var promise = settings.get('defer').promise;
 
-      if(modal.highlight_controller) {
-        if(modal.highlight_promise) {
-          modal.highlight_promise.reject({reason: 'closing due to new highlight', highlight_close: true});
+      if(modal[controller_name]) {
+        if(modal[promise_name]) {
+          modal[promise_name].reject({reason: 'closing due to new highlight', highlight_close: true});
         }
-        modal.highlight_controller.set('model', settings);
+        modal[controller_name].set('model', settings);
       } else {
-        modal.close(null, 'highlight');
+        modal.close(null, template);
         runLater(function() {
-          modal.open('highlight', settings);
+          modal.open(template, settings);
         });
       }
-      modal.highlight_promise = settings.get('defer');
-      modal.highlight_settings = settings;
+      modal[promise_name] = settings.get('defer');
+      modal[settings_name] = settings;
     }, 100);
     return defer.promise;
   },
   close_highlight: function() {
     if(this.highlight_controller) {
       modal.close(null, 'highlight');
+      modal.close(null, 'highlight-secondary');
     }
   },
   close: function(success, outlet) {
     outlet = outlet || 'modal';
     if(!this.route) { return; }
-    if(this.last_promise && outlet != 'highlight') {
+    if(this.last_promise && outlet != 'highlight' && outlet != 'highlight-secondary') {
       if(success || success === undefined) {
         this.last_promise.resolve(success);
       } else {
@@ -150,6 +175,10 @@ var modal = EmberObject.extend({
       this.highlight_promise.reject({reason: 'force close'});
       this.highlight_promise = null;
     }
+    if(this.highlight2_promise && outlet == 'highlight-secondary') {
+      this.highlight2_promise.reject({reason: 'force close'});
+      this.highlight2_promise = null;
+    }
     if(this.resume_scanning) {
       var _this = this;
       runLater(function() {
@@ -159,16 +188,21 @@ var modal = EmberObject.extend({
         }
       });
     }
-    if(outlet != 'highlight') {
+    if(outlet != 'highlight' && outlet != 'highlight-secondary') {
       this.last_template = null;
       runLater(function() {
         modal.close(null, 'highlight');
+        modal.close(null, 'highlight-secondary');
       });
     }
     if(this.route.disconnectOutlet) {
       if(outlet == 'highlight') {
         if(this.highlight_controller && this.highlight_controller.closing) {
           this.highlight_controller.closing();
+        }
+      } else if(outlet == 'highlight-secondary') {
+        if(this.highlight2_controller && this.highlight2_controller.closing) {
+          this.highlight2_controller.closing();
         }
       } else {
         if(this.last_controller && this.last_controller.closing) {
@@ -259,7 +293,7 @@ modal.ModalController = Controller.extend({
       if(!template) { console.error("can't find template name"); }
       var settings = modal.settings_for[template] || {};
       var controller = this;
-      if(modal.last_any_template != 'highlight') {
+      if(modal.last_any_template != 'highlight' && modal.last_any_template != 'highlight-secondary') {
         modal.last_controller = controller;        
       }
       controller.set('model', settings);

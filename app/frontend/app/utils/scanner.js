@@ -51,6 +51,7 @@ var scanner = EmberObject.extend({
     options.all_elements = [];
 
     var highlight_type = emberGet(modal.highlight_settings || {}, 'highlight_type');
+    var highlight2_type = emberGet(modal.highlight2_settings || {}, 'highlight_type');
     var scannable_targets = modal.scannable_targets();
     if(scannable_targets.length > 0) {
       rows = [];
@@ -78,7 +79,7 @@ var scanner = EmberObject.extend({
         }
       };
       rows.reload();
-    } else if((modal.is_open() && !modal.is_open('highlight')) || highlight_type == 'button_search') {
+    } else if((modal.is_open() && !modal.is_open('highlight') && !modal.is_open('highlight-secondary')) || highlight_type == 'button_search' || highlight2_type == 'button_search') {
       return;
     } else if(options && options.scan_mode == 'axes') {
     } else {
@@ -905,6 +906,7 @@ var scanner = EmberObject.extend({
     options.prevent_close = true;
     options.overlay = false;
     options.select_anywhere = true;
+    options.highlight_type = 'scanning';
     // Only prevent auto-start at the first iteration, after that
     // go ahead and resume whenever it stops
     // options.auto_start = true;

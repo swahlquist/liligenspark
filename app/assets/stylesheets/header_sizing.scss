@@ -212,6 +212,12 @@ header {
           }
         }
         &.over {
+          .follower {
+            width: 20px;
+            height: 20px;
+            margin-right: -10px;
+            margin-top: -5px;
+          }
           &.pair {
             margin-right: -44px;
           }

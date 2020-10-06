@@ -185,6 +185,8 @@ Coughdrop::Application.routes.draw do
       get 'places' => 'users#places'
       get 'ws_settings' => 'users#ws_settings'
       get 'ws_lookup' => 'users#ws_lookup'
+      post 'ws_encrypt' => 'users#ws_encrypt'
+      post 'ws_decrypt' => 'users#ws_decrypt'
       get 'daily_use' => 'users#daily_use'
       get 'core_lists' => 'users#core_lists'
       put 'core_list' => 'users#update_core_list'

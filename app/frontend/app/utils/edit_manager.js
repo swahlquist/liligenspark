@@ -70,7 +70,7 @@ var editManager = EmberObject.extend({
           // open this overlay via scanning anyway? Idea: another button
           var grid = editManager.grid_for(opts.button_id);
           var $button = $(".button[data-id='" + opts.button_id + "']");
-          if($button[0] && grid && !modal.is_open() && !modal.is_open('highlight')) {
+          if($button[0] && grid && !modal.is_open() && !modal.is_open('highlight') && !modal.is_open('highlight-secondary')) {
             editManager.overlay_grid(grid, $button[0], opts);
           }
           return true;

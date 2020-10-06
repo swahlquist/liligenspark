@@ -13,7 +13,7 @@ export default Component.extend({
       this.sendAction('opening');
     }
     this.set('auto_close', !!modal.auto_close);
-    if(modal.last_any_template != 'highlight') {
+    if(modal.last_any_template != 'highlight' && modal.last_any_template != 'highlight-secondary') {
       modal.component = this;
     }
     var height = $(window).height() - 50;

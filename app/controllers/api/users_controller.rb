@@ -39,6 +39,24 @@ class Api::UsersController < ApplicationController
     render json: Geolocation.find_places(params['latitude'], params['longitude'])
   end
 
+  def ws_encrypt
+    # user = User.find_by_path(params['user_id'])
+    # return unless exists?(user, params['user_id'])
+    # return unless authorized?(user, 'supervise')
+    # str = GoSecure.encrypt("#{params['user_id']}.#{params['text']}", 'ws_content_encrypted').map(&:strip).join('$')
+    # render json: {encoded: str, user_id: user.global_id}
+  end
+
+  def ws_decrypt
+    # user = User.find_by_path(params['user_id'])
+    # return unless exists?(user, params['user_id'])
+    # return unless authorized?(user, 'supervise')
+    # str, iv = params['text'].split(/\$/)
+    # user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted').split(/\./, 2)
+    # return api_error(400, 'user_id mismatch') unless user_id = user.global_id
+    # render json: {decoded: text, user_id: user.global_id}    
+  end
+
   def ws_lookup
     obfuscated_user_id = params['user_id']
     return api_error(400, 'user_id required') unless obfuscated_user_id
@@ -66,6 +84,8 @@ class Api::UsersController < ApplicationController
       ws_user_id: user.global_id
     }
 
+    # We manually set the IV so that device_id remains consistent across 
+    # page reloads, and doesn't imply multiple devices to the websocket service
     iv = Digest::SHA2.hexdigest("user_settings_iv_for_" + (@token || @api_user.global_id))[0, 16]
     device_id = GoSecure.encrypt("#{@api_user.global_id}.#{@api_device_id}", 'ws_device_id_encrypted', nil, iv).map(&:strip).join('$')
     ts = Time.now.to_i

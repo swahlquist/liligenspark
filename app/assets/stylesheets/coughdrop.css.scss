@@ -554,9 +554,16 @@ footer .wide_links {
 }
 .highlight.box {
   border: 8px solid #ff0;
+  transition: border-color 0.5s linear;
   box-shadow: 2px 2px 30px rgba(60, 60, 60, 0.7), -2px -2px 30px rgba(60, 60, 60, 0.7), -2px 2px 30px rgba(60, 60, 60, 0.7), 2px -2px 30px rgba(60, 60, 60, 0.7);
   /* border-image: linear-gradient(to bottom right, #f00, #ff0); */
   /* border-image-slice: 1; */
+  &.secondary {
+    border-color: #1f0;
+  }
+  &.pending {
+    animation: throb 0.5s ease-in-out infinite;
+  }
   &.inner {
     border: 4px solid #f00;
     box-shadow: none;
@@ -570,6 +577,9 @@ footer .wide_links {
       padding: 10px 5px 5px;
       opacity: 0.7;
       display: inline-block;
+    }
+    &.secondary {
+      border-color: #b969ff;
     }
   }
 }

@@ -4,19 +4,28 @@ import {
 } from '@ember/runloop';
 import $ from 'jquery';
 import modal from '../utils/modal';
+import app_state from '../utils/app_state';
 import scanner from '../utils/scanner';
 import buttonTracker from '../utils/raw_events';
 import { htmlSafe } from '@ember/string';
-import { observer } from '@ember/object';
+import { observer, computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     modal.highlight_controller = this;
-    scanner.setup(this);
+    this.set('pending', false);
+    if(!this.get('model.secondary_highlight')) {
+      scanner.setup(this);
+    }
     var _this = this;
     runLater(function() {
       _this.compute_styles();
     }, 500);
+    if(_this.get('model.highlight_type') == 'model') {
+      runLater(function() {
+        _this.set('model.shift_color', true);
+      }, 15000);
+    }
     if(_this.recompute) {
       window.removeEventListener('resize', _this.recompute);
     }
@@ -25,6 +34,20 @@ export default modal.ModalController.extend({
     };
     window.addEventListener('resize', _this.recompute);
   },
+  shift_color: observer(
+    'app_state.short_refresh_stamp',
+    'model.shift_color',
+    function() {
+      if(this.get('model.shift_color')) {
+        var now = (new Date()).getTime();
+        var last = this.get('model.last_shift') || 0;
+        if(last < now - 1000) {
+          this.set('model.shifted_color', !this.get('model.shifted_color'));
+          this.set('model.last_shift', now);
+        }
+      }
+    }
+  ),
   closing: function() {
     window.removeEventListener('resize', this.recompute);
     this.recompute = null;
@@ -39,6 +62,7 @@ export default modal.ModalController.extend({
     'model.right',
     'model.overlay',
     'model.clear_overlay',
+    'model.secondary_highlight',
     function() {
       var opacity = "0.3";
       var display = this.get('model.overlay') ? '' : 'display: none;';
@@ -73,23 +97,69 @@ export default modal.ModalController.extend({
       if(width > window_width - 8) {
         width = window_width - 8;
       }
-      this.set('model.top_style', htmlSafe(display + "z-index: 2000; position: absolute; top: -" + header_height + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: " + (top + header_height) + "px;"));
-      this.set('model.left_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (top) + "px; left: 0; background: #000; opacity: " + opacity + "; width: " + left + "px; height: " + height + "px;"));
-      this.set('model.right_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (top) + "px; left: calc(" + left+ "px + " + width + "px); background: #000; opacity: " + opacity + "; width: calc(100% - " + left + "px - " + width + "px); height: " + height + "px;"));
-      this.set('model.bottom_style', htmlSafe(display + "z-index: 2000; position: absolute; top: " + (bottom) + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: 5000px;"));
-      this.set('model.highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top - 4) + "px; left: " + (left - 4) + "px; width: " + (width + 8) + "px; height: " + (height + 8) + "px; cursor: pointer;"));
-      this.set('model.inner_highlight_style', htmlSafe("z-index: 2001; position: absolute; top: " + (top) + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; cursor: pointer;"));
+      var z = 2000;
+      if(this.get('model.secondary_highlight')) {
+        z = 2005;
+        left = left + 10;
+        right = right - 10;
+        width = width - 20;
+        top = top + 10;
+        bottom = bottom - 10;
+        height = height - 20;
+      }
+      this.set('model.top_style', htmlSafe(display + "z-index: " + z + "; position: absolute; top: -" + header_height + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: " + (top + header_height) + "px;"));
+      this.set('model.left_style', htmlSafe(display + "z-index: " + z + "; position: absolute; top: " + (top) + "px; left: 0; background: #000; opacity: " + opacity + "; width: " + left + "px; height: " + height + "px;"));
+      this.set('model.right_style', htmlSafe(display + "z-index: " + z + "; position: absolute; top: " + (top) + "px; left: calc(" + left+ "px + " + width + "px); background: #000; opacity: " + opacity + "; width: calc(100% - " + left + "px - " + width + "px); height: " + height + "px;"));
+      this.set('model.bottom_style', htmlSafe(display + "z-index: " + z + "; position: absolute; top: " + (bottom) + "px; left: 0; background: #000; opacity: " + opacity + "; width: 100%; height: 5000px;"));
+      this.set('model.highlight_style', htmlSafe("z-index: " + (z + 1) + "; position: absolute; top: " + (top - 4) + "px; left: " + (left - 4) + "px; width: " + (width + 8) + "px; height: " + (height + 8) + "px; cursor: pointer;"));
+      this.set('model.inner_highlight_style', htmlSafe("z-index: " + (z + 1) + "; position: absolute; top: " + (top) + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; cursor: pointer;"));
       var icon_size = Math.min(Math.max(8, (height - 27) / 2), 75);
       this.set('model.icon_style', htmlSafe("font-size: " + icon_size + 'px;'));
+    }
+  ),
+  highlight_class: computed(
+    'model.secondary_highlight',
+    'model.shifted_color',
+    'pending',
+    function() {
+      var str = "highlight box";
+      if(this.get('model.secondary_highlight') || this.get('model.shifted_color')) {
+        str = str + " secondary";
+      }
+      if(this.get('pending')) {
+        str = str + " pending";
+      }
+      return htmlSafe(str);
+    }
+  ),  
+  highlight_inner_class: computed(
+    'model.secondary_highlight',
+    'model.shifted_color',
+    'pending',
+    function() {
+      var str = "highlight box inner advanced_selection";
+      if(this.get('model.secondary_highlight') || this.get('model.shifted_color')) {
+        str = str + " secondary";
+      }
+      if(this.get('pending')) {
+        // str = str + " pending";
+      }
+      return htmlSafe(str);
     }
   ),
   actions: {
     select: function() {
       if(this.get('model.defer')) {
-        this.get('model.defer').resolve();
+        var _this = this;
+        _this.get('model.defer').resolve({
+          pending: function() {
+            _this.set('pending', true);
+          }
+        });
       }
       if(!this.get('model.prevent_close')) {
         modal.close(null, 'highlight');
+        modal.close(null, 'highlight-secondary');
       }
     },
     select_release: function(e) {
@@ -110,12 +180,13 @@ export default modal.ModalController.extend({
         }
         if(!this.get('model.prevent_close')) {
           modal.close(null, 'highlight');
+          modal.close(null, 'highlight-secondary');
         }
       }
     },
     opening: function() {
       this.set('close_handled', false);
-      var settings = modal.settings_for['highlight'] || {};
+      var settings = Object.assign({}, modal.settings_for['highlight'] || {});
       var controller = this;
       modal.last_controller = controller;
       controller.set('model', settings);

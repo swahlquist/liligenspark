@@ -50,9 +50,28 @@ export default modal.ModalController.extend({
         if(handled) { return; }
         handled = true;
         if(_this.get('following_mode')) {
-          modal.close();
-          app_state.set('pairing', {partner: true, follow: true, user: _this.get('model.user'), user_id: _this.get('model.user.id'), communicator_id: _this.get('model.user.id')});
-          app_state.set_speak_mode_user(_this.get('model.user.id'), true, true);
+          var sync_handled = false;
+          var listen_id = 'remote_model_request.' + (new Date()).getTime();
+          setTimeout(function() {
+            if(sync_handled) { return; }
+            sync_handled = true;
+            _this.set('model.status', {pair_timeout: true});
+            sync.stop_listening(listen_id);
+          }, 60000)
+          sync.listen(listen_id, function(message) {
+            // Wait until you get an actual update to
+            // confirm that the follow is accepted
+            if(message && message.user_id == _this.get('model.user.id')) {
+              if(message.type == 'update' && message.data.board_state) {
+                sync_handled = true;
+                sync.stop_listening(listen_id);
+                modal.close();
+                app_state.set('pairing', {partner: true, follow: true, user: _this.get('model.user'), user_id: _this.get('model.user.id'), communicator_id: _this.get('model.user.id')});
+                app_state.set_speak_mode_user(_this.get('model.user.id'), true, true);      
+              }
+            }
+          });
+          // TODO: wait for any update before marking as official
           setTimeout(function() {
             sync.send(_this.get('model.user.id'), {type: 'query', following: true});
           }, 500);
