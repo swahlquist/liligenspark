@@ -1,6 +1,38 @@
 # CoughDrop Changelog
 
 ## Master
+### 2020-09-30
+- Head and gaze tracking in ARKit/ARCore
+- Switch to WKWebView for iOS app
+- Updated billing, premium supporters and evals
+- Support for IAP subscriptions
+- Remote modeling support (feature flag)
+- Enable evals for premium accounts
+
+### 2019-11-25
+- High-contrast symbols settings
+- Drag action to toggle modeling
+- Translation improvements
+- Track "travel" as level of work for hitting buttons
+- Background images for boards
+- Evalutions (feature flag)
+
+
+### 2019-10-08
+- Updated sentence dropdown
+- Search supports locale-based lookups
+- Inflections management tool for admins
+- Long-press for inflections menu on buttons
+- Swipe-based inflections on buttons
+- Repairs allows adding words mid-sentence
+- Native keyboard support
+- Ask about trusted sessions on all devices at login
+- In-App Purchases support for iOS
+- Find-a-button allows searching for whole phrases
+- Normalize speech rate across engines
+- Better recovery from partial data loss on mobile devices
+- Cleaner Preferences page
+
 ### 2019-05-09
 - In-app error tracking 
 - Local storage optimizations
