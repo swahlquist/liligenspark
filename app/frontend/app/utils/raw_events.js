@@ -863,7 +863,7 @@ var buttonTracker = EmberObject.extend({
         event.preventDefault();
         event.stopPropagation();
         $(event.target).trigger('click');
-        if(event.target.tagName == 'INPUT') {
+        if(event.target.tagName == 'INPUT' || event.target.tagName == 'SELECT') {
           runLater(function() {
             $(event.target).select().focus();
           });

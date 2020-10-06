@@ -21,9 +21,14 @@ export default modal.ModalController.extend({
     runLater(function() {
       _this.compute_styles();
     }, 500);
+    _this.set('model.shift_color', false);
     if(_this.get('model.highlight_type') == 'model') {
+      var id = Math.random();
+      this.set('model.shift_id', id;
       runLater(function() {
-        _this.set('model.shift_color', true);
+        if(_this.get('model.shift_id') == id {
+          _this.set('model.shift_color', true);
+        }
       }, 15000);
     }
     if(_this.recompute) {

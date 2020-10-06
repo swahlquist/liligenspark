@@ -114,7 +114,7 @@ var sync = EmberObject.extend({
     return res;
   },
   connect: function(user) {
-    if(!app_state || !app_state.get) {
+    if(!app_state || !app_state.get || !stashes || !stashes.get) {
       console.log("PENDING");
       runLater(function() {
         sync.connect(user);
