@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200206195533) do
+ActiveRecord::Schema.define(version: 20201006232408) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -52,6 +52,14 @@ ActiveRecord::Schema.define(version: 20200206195533) do
     t.index ["board_id"], name: "index_board_button_sounds_on_board_id", using: :btree
   end
 
+  create_table "board_contents", force: :cascade do |t|
+    t.text     "settings"
+    t.integer  "board_count"
+    t.integer  "source_board_id"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
+  end
+
   create_table "board_downstream_button_sets", force: :cascade do |t|
     t.text     "data"
     t.integer  "board_id"
@@ -74,6 +82,7 @@ ActiveRecord::Schema.define(version: 20200206195533) do
     t.datetime "updated_at"
     t.string   "current_revision", limit: 255
     t.boolean  "any_upstream"
+    t.integer  "board_content_id"
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree

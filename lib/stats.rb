@@ -1031,7 +1031,7 @@ module Stats
     if home_board
       max_core_word = [core_word_counts.to_a.map(&:last).max || 1, 1].max
       if max_core_word && max_core_word > 0
-        home_board.settings['buttons'].each do |button|
+        home_board.buttons.each do |button|
           word = (button['vocalization'] || button['label'] || '').downcase
           if max_core_word && (!button['load_board'] || button['link_disabled']) && !button['hidden']
             if default_core.include?(word)

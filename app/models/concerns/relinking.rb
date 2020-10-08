@@ -2,7 +2,7 @@ module Relinking
   extend ActiveSupport::Concern
   
   def links_to?(board, skip_disabled_links=false)
-    (self.settings['buttons'] || []).each do |button|
+    (self.buttons || []).each do |button|
       if button['load_board'] && button['load_board']['id'] == board.global_id
         if skip_disabled_links
           return !button['hidden'] && !button['link_disabled']
@@ -33,14 +33,15 @@ module Relinking
     board.settings['locale'] = self.settings['locale']
     board.settings['locales'] = self.settings['locales']
     board.settings['translations'] = self.settings['translations']
+    board.settings['background'] = self.settings['background']
     board.settings['buttons'] = self.settings['buttons']
+    board.settings['grid'] = self.settings['grid']
     board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
     board.settings['word_suggestions'] = self.settings['word_suggestions']
     board.settings['categories'] = self.settings['categories']
     board.settings['license'] = self.settings['license']
     board.settings['intro'] = self.settings['intro']
     board.settings['intro']['unapproved'] = true if board.settings['intro']
-    board.settings['grid'] = self.settings['grid']
     board.settings['never_edited'] = true
     board.public = true if make_public
     board.save!

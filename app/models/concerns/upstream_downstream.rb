@@ -17,8 +17,8 @@ module UpstreamDownstream
   
   def edit_stats
     {
-      'total_buttons' => self.settings['buttons'].length,
-      'unlinked_buttons' => self.settings['buttons'].select{|btn| !btn['load_board'] }.length,
+      'total_buttons' => self.buttons.length,
+      'unlinked_buttons' => self.buttons.select{|btn| !btn['load_board'] }.length,
       'current_revision' => self.current_revision
     }
   end
@@ -251,7 +251,7 @@ module UpstreamDownstream
   
   def get_immediately_downstream_board_ids
     downs = []
-    (self.settings['buttons'] || []).each do |button|
+    (self.buttons || []).each do |button|
       if button['load_board'] && button['load_board']['id']
         downs << button['load_board']['id']
       end

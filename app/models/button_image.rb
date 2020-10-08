@@ -75,7 +75,7 @@ class ButtonImage < ActiveRecord::Base
         # fallback for legacy button images
         bbi = BoardButtonImage.where(button_image_id: self.id).order('id').first
         board = bbi && bbi.board
-        button = board.settings['buttons'].detect{|b| b['image_id'] == self.global_id}
+        button = board.buttons.detect{|b| b['image_id'] == self.global_id}
         term = button && button['label']
       end
       if term

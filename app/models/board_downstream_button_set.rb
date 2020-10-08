@@ -316,7 +316,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           images = board_to_visit.button_images
           visited_board_ids << board_to_visit.global_id
           # add all buttons
-          board_to_visit.settings['buttons'].each_with_index do |button, idx|
+          board_to_visit.buttons.each_with_index do |button, idx|
             image = images.detect{|i| button['image_id'] == i.global_id }
             visible_level = 1
             linked_level = 1

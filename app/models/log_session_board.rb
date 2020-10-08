@@ -23,7 +23,7 @@ class LogSessionBoard < ActiveRecord::Base
   def self.track_button!(stats, event, board, board_id)
     # on this board
     button_id = event['button']['id']
-    button = (board.settings['buttons'] || []).detect{|b| b['id'] == button_id }
+    button = (board.buttons || []).detect{|b| b['id'] == button_id }
 
     # TRACK:
     # number of times each button was hit

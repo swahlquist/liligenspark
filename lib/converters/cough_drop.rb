@@ -60,9 +60,9 @@ module Converters::CoughDrop
     end
     grid = []
     res['buttons'] = []
-    button_count = board.settings['buttons'].length
+    button_count = board.buttons.length
     locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']
-    board.settings['buttons'].each_with_index do |original_button, idx|
+    board.buttons.each_with_index do |original_button, idx|
       button = {
         'id' => original_button['id'],
         'label' => original_button['label'],

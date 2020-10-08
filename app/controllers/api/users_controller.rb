@@ -218,7 +218,7 @@ class Api::UsersController < ApplicationController
     board = Board.find_by_path(params['board_id'])
     return unless exists?(board, params['board_id'])
     return unless allowed?(board, 'view')
-    button = params['button_id'] && board.settings['buttons'].detect{|b| b['id'].to_s == params['button_id'].to_s }
+    button = params['button_id'] && board.buttons.detect{|b| b['id'].to_s == params['button_id'].to_s }
     if !button
       return api_error(400, {error: 'button not found'})
     elsif !button['integration'] || !button['integration']['user_integration_id']

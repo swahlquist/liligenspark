@@ -19,6 +19,7 @@ class Board < ActiveRecord::Base
   has_many :log_session_boards
   belongs_to :user
   belongs_to :parent_board, :class_name => 'Board'
+  belongs_to :board_content
   has_many :child_boards, :class_name => 'Board', :foreign_key => 'parent_board_id'
   pg_search_scope :search_by_text, :against => :search_string, :ranked_by => "log(boards.popularity + boards.home_popularity + 3) * :tsearch"
   pg_search_scope :search_by_text_for_home_popularity, :against => :search_string, :ranked_by => "log(boards.home_popularity + 2) * :tsearch"
@@ -26,6 +27,7 @@ class Board < ActiveRecord::Base
   before_save :generate_stats
   before_save :require_key
   before_save :check_inflections
+  before_save :check_content_overrides
   after_save :post_process
   after_destroy :flush_related_records
 #  replicated_model
@@ -145,12 +147,17 @@ class Board < ActiveRecord::Base
       end
     end
     self.any_upstream ||= false
-    self.settings['total_buttons'] = (self.settings['buttons'] || []).length + (self.settings['total_downstream_buttons'] || 0)
-    self.settings['unlinked_buttons'] = (self.settings['buttons'] || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
-    if !self.settings['buttons'] || self.settings['buttons'].length == 0
+    self.settings['total_buttons'] = (self.buttons || []).length + (self.settings['total_downstream_buttons'] || 0)
+    self.settings['unlinked_buttons'] = (self.buttons || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
+    if (self.buttons || []).length == 0
       self.popularity = 0
       self.home_popularity = 0
     end
+    true
+  end
+
+  def check_content_overrides
+    BoardContent.track_differences(self, self.board_content) if self.board_content
     true
   end
 
@@ -225,8 +232,8 @@ class Board < ActiveRecord::Base
       self.settings['default_image_url'] = nil
     end
     @brand_new = !self.id
-    @buttons_changed = true if self.settings['buttons'] && !self.id
-    @button_links_changed = true if (self.settings['buttons'] || []).any?{|b| b['load_board'] } && !self.id
+    @buttons_changed = true if self.buttons && !self.id
+    @button_links_changed = true if (self.buttons || []).any?{|b| b['load_board'] } && !self.id
     if @edit_description
       if self.settings['edit_description'] && self.settings['edit_description']['timestamp'] < @edit_description['timestamp'] - 1
         @edit_description = nil
@@ -236,7 +243,7 @@ class Board < ActiveRecord::Base
     @edit_description = nil
 
     self.settings['buttons'] ||= []
-    self.settings['buttons'].each do |button|
+    self.buttons.each do |button|
       if button['load_board'] && button['load_board']['id'] && button['load_board']['id'] == self.related_global_id(self.parent_board_id) && @update_self_references == nil && !self.settings['self_references_updated']
         @update_self_references = true
       end
@@ -258,12 +265,12 @@ class Board < ActiveRecord::Base
     if self.settings['grid']['order'].length > self.settings['grid']['rows']
       self.settings['grid']['order'] = self.settings['grid']['order'].slice(0, self.settings['grid']['rows'])
     end
-    if self.settings['grid']['labels'] && self.settings['buttons'].length == 0
+    if self.settings['grid']['labels'] && self.buttons.length == 0
       self.populate_buttons_from_labels(self.settings['grid'].delete('labels'), self.settings['grid'].delete('labels_order'))
     end
     update_immediately_downstream_board_ids
     
-    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + self.settings['grid'].to_json + "_" + self.settings['buttons'].to_json)
+    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + self.settings['grid'].to_json + "_" + self.buttons.to_json)
     self.settings['revision_hashes'] ||= []
     if !self.settings['revision_hashes'].last || self.settings['revision_hashes'].last[0] != data_hash
       @track_revision = [data_hash, Time.now.to_i]
@@ -322,7 +329,7 @@ class Board < ActiveRecord::Base
     return @labels if @labels
     list = []
     grid = self.settings['grid']
-    buttons = self.settings['buttons']
+    buttons = self.buttons
     return "" if !grid || !buttons
     grid['columns'].times do |jdx|
       grid['rows'].times do |idx|
@@ -345,7 +352,7 @@ class Board < ActiveRecord::Base
   
   def populate_buttons_from_labels(labels, labels_order)
     labels_order ||= 'columns'
-    max_id = self.settings['buttons'].map{|b| b['id'].to_i || 0 }.max || 0
+    max_id = self.buttons.map{|b| b['id'].to_i || 0 }.max || 0
     idx = 0
     labels.split(/\n|,\s*/).each do |label|
       label.strip!
@@ -467,7 +474,7 @@ class Board < ActiveRecord::Base
   
   def update_self_references
     @update_self_references = false
-    buttons = self.settings['buttons'] || []
+    buttons = self.buttons || []
     self.using(:master).reload
     save_if_same_edit_key do
       self.settings['self_references_updated'] = true
@@ -597,6 +604,10 @@ class Board < ActiveRecord::Base
   
   def cached_user_name
     (self.key || "").split(/\//)[0]
+  end
+
+  def buttons
+    BoardContent.load_content(self, 'buttons')
   end
   
   def process_params(params, non_user_params)
@@ -740,17 +751,17 @@ class Board < ActiveRecord::Base
   end
     
   def check_for_parts_of_speech_and_inflections(do_save=true)
-    if self.settings && self.settings['buttons']
+    if self.buttons
       any_changed = false
       (self.settings['locales'] || [self.settings['locale']]).each do |loc|
-        words_to_check = self.settings['buttons'].map{|b|
+        words_to_check = self.buttons.map{|b|
           btn = ((self.settings['translations'] || {})[b['id'].to_s] || {})[loc] || b
           already_updated = btn['inflection_defaults'] && btn['inflection_defaults']['v'] == WordData::INFLECTIONS_VERSION
           already_updated = false if do_save == 'force'
           already_updated ? nil : (btn['vocalization'] || btn['label'])
         }.compact
         inflections = WordData.inflection_locations_for(words_to_check, loc)
-        self.settings['buttons'].each do |button|
+        self.buttons.each do |button|
           if loc == self.settings['locale'] || !self.settings['locale']
             # look for part of speech when loading the default locale
             word = button['vocalization'] || button['label']
@@ -797,7 +808,7 @@ class Board < ActiveRecord::Base
   end
   
   def process_button(button)
-    found_button = (self.settings['buttons'] || []).detect{|b| b['id'].to_s == button['id'].to_s }
+    found_button = (self.buttons || []).detect{|b| b['id'].to_s == button['id'].to_s }
     if button['sound_id']
       found_button['sound_id'] = button['sound_id']
       @buttons_changed = 'button updated in-place'
@@ -827,7 +838,7 @@ class Board < ActiveRecord::Base
     clear_cached("images_and_sounds_with_fallbacks")
     @edit_notes ||= []
     @check_for_parts_of_speech = true
-    prior_buttons = self.settings['buttons'] || []
+    prior_buttons = self.buttons || []
     approved_link_ids = []
     new_link_ids = []
     prior_buttons.each do |button|
@@ -860,7 +871,7 @@ class Board < ActiveRecord::Base
           end
           next unless tran
           if loc == self.settings['locale']
-            orig_button = (self.settings['buttons'] || []).find{|b| b['id'] == button['id'] }
+            orig_button = (self.buttons || []).find{|b| b['id'] == button['id'] }
             # button settings overwrite translation settings for the default locale
             ['label', 'vocalization', 'inflections'].each do |k|
               if !orig_button || orig_button[k] != button[k]
@@ -892,12 +903,12 @@ class Board < ActiveRecord::Base
     # TODO: for each button use tinycolor to compute a "safe" color for border and bg,
     # also a hover color for each, and mark them as "server-side approved"
 
-    if self.settings['buttons'].to_json != prior_buttons.to_json
+    if self.buttons.to_json != prior_buttons.to_json
       @edit_notes << "modified buttons"
       @buttons_changed = 'buttons processed' 
       @button_links_changed = true if new_link_ids.length > 0
     end
-    self.settings['buttons']
+    self.buttons
   end
   
   def icon_url_or_fallback
@@ -943,7 +954,7 @@ class Board < ActiveRecord::Base
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
-    if self.settings && (self.settings['buttons'] || []).detect{|b| b && b['sound_id']}
+    if (self.buttons || []).detect{|b| b && b['sound_id']}
       res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }
     else
       res['sounds'] = []
@@ -993,7 +1004,7 @@ class Board < ActiveRecord::Base
         self.settings['translations']['current_label'] = label_lang
         self.settings['translations']['current_vocalization'] = vocalization_lang
       end
-      self.settings['buttons'].each do |button|
+      self.buttons.each do |button|
         if button['label'] && translations[button['label']]
           self.settings['translations'][button['id'].to_s] ||= {}
           self.settings['translations'][button['id'].to_s][source_lang] ||= {}
@@ -1100,9 +1111,9 @@ class Board < ActiveRecord::Base
 
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id
-      words = self.settings['buttons'].map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
+      words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
       defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author)
-      self.settings['buttons'].each do |button|
+      self.buttons.each do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
           image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, author) || [])[0]
@@ -1148,7 +1159,7 @@ class Board < ActiveRecord::Base
   
   def additional_webhook_record_codes(notification_type, additional_args)
     if notification_type == 'button_action' && additional_args && additional_args['button_id']
-      button = self.settings['buttons'].detect{|b| b['id'].to_s == additional_args['button_id'].to_s }
+      button = (self.buttons || []).detect{|b| b['id'].to_s == additional_args['button_id'].to_s }
       user = additional_args && User.find_by_path(additional_args['user_id'])
       res = []
       if button && button['integration'] && button['integration']['user_integration_id'] && self.allows?(user, 'view')
@@ -1163,7 +1174,7 @@ class Board < ActiveRecord::Base
   
   def webhook_content(notification_type, content_type, additional_args)
     if notification_type == 'button_action' && additional_args && additional_args['button_id']
-      button = self.settings['buttons'].detect{|b| b['id'].to_s == additional_args['button_id'].to_s }
+      button = (self.buttons || []).detect{|b| b['id'].to_s == additional_args['button_id'].to_s }
       res = {}
       user = additional_args && User.find_by_path(additional_args['user_id'])
       if button && button['integration'] && button['integration']['user_integration_id'] && self.allows?(user, 'view')

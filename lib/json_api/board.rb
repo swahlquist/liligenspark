@@ -11,7 +11,8 @@ module JsonApi::Board
     json['id'] = board.global_id
     json['key'] = board.key
     json['simple_refs'] = true if args[:skip_subs]
-    ['grid', 'name', 'description', 'image_url', 'buttons', 'background', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories', 'intro'].each do |key|
+    json['buttons'] = board.buttons
+    ['grid', 'name', 'description', 'image_url', 'background', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories', 'intro'].each do |key|
       json[key] = board.settings[key]
     end
     list = [board.settings['locale'] || 'en']

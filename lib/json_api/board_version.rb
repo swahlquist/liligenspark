@@ -60,7 +60,7 @@ module JsonApi::BoardVersion
           json['action'] = obj.settings['edit_description']['notes'].join(', ')
         end
         json['name'] = obj.settings['name']
-        json['button_labels'] = (obj.settings['buttons'] || []).map{|b| b['label'] || b['vocalization'] }
+        json['button_labels'] = (obj.buttons || []).map{|b| b['label'] || b['vocalization'] }
         json['grid'] = obj.settings['grid']
         if args[:admin]
           args[:board_lookups] ||= {}
