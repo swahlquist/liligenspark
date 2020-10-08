@@ -5,6 +5,7 @@ import persistence from './persistence';
 import app_state from './app_state';
 import modal from './modal';
 import speecher from './speecher';
+import utterance from './utterance';
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import {
@@ -284,7 +285,7 @@ var sync = EmberObject.extend({
         // If this user hasn't asked to follow before
         // during this session, or it's been five minutes
         // since the last rejection, show a prompt
-        if(user) {
+        if(user && app_state.get('sessionUser.request_alert.user') != user) {
           app_state.set('sessionUser.request_alert', {follow: true, user: user});
         }
 
@@ -296,7 +297,7 @@ var sync = EmberObject.extend({
     });
 
   },
-  send_update: function(user_id, button_obj) {
+  send_update: function(user_id, extra) {
     // generate an id for the update,
     // if currently-paired then keep sending
     // it and queue other updates until the 
@@ -314,23 +315,31 @@ var sync = EmberObject.extend({
       // (as the communicator) don't send anything
       return RSVP.reject();
     }
-    console.log("UPDATE");
     if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed')) {
       // If paired, or allowing auto-followers, include current state
       if(app_state.get('speak_mode')) {
-        if(button_obj) {
-          update.current_action = {type: 'button', id: button_obj.button_id, board_id: button_obj.board.id, source: button_obj.source};
-          if(button_obj.model_confirm) {
-            update.current_action.model = 'select';
-          } else if(button_obj.remote_model) {
-            update.current_action.model = 'prompt';            
+        if(app_state.get('pairing.model') || app_state.get('sessionUser.id') == user_id) {
+          // Only send state if modeling or if you're the communicator
+          if(extra && extra.button) {
+            var button_obj = extra.button
+            update.current_action = {type: 'button', id: button_obj.button_id, board_id: button_obj.board.id, source: button_obj.source};
+            if(button_obj.model_confirm) {
+              update.current_action.model = 'select';
+            } else if(button_obj.remote_model) {
+              update.current_action.model = 'prompt';            
+            }
+          }
+          if(extra && extra.utterance) {
+            update.utterance = extra.utterance;
+          }
+          if(!extra || extra.button) {
+            console.log("w/ brd state");
+            update.board_state = {
+              id: app_state.get('currentBoardState.id'),
+              level: app_state.get('currentBoardState.level'),
+            };  
           }
         }
-        console.log("w/ brd state");
-        update.board_state = {
-          id: app_state.get('currentBoardState.id'),
-          level: app_state.get('currentBoardState.level'),
-        };
         if(app_state.get('pairing') && sync.current_pairing && sync.current_pairing) {
           update.paired = true;
         }
@@ -400,7 +409,7 @@ var sync = EmberObject.extend({
         if(model_handled) { return; }
         model_handled = true;
         obj.remote_model = true;
-        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj);
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {button: obj});
       }, 500);
       modal.highlight($button, {clear_overlay: true, highlight_type: 'model', icon: 'send' }).then(function(highlight) {
         model_handled = true;
@@ -416,7 +425,7 @@ var sync = EmberObject.extend({
           confirmed = true;
           modal.close_highlight();
         }, 5000);
-        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj).then(function() {
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {button: obj}).then(function() {
           if(confirmed) { return; }
           confirmed = true;
           modal.close_highlight();
@@ -531,8 +540,11 @@ var sync = EmberObject.extend({
           // Someone asked for an update
           sync.send_update(message.user_id);
           sync.check_following(message.data.sender_id);
+          app_state.sync_send_utterance();
         } else if(message.type == 'following') {
           sync.check_following(message.data.sender_id);
+        } else if(message.type == 'pair_confirm') {
+          app_state.sync_send_utterance();          
         }
       } else {
         // Check if it's for one of my supervisees
@@ -633,6 +645,23 @@ var sync = EmberObject.extend({
           // TODO: if paired, only listen to updates from the paired device
           // TODO: this is what what following looks like
           if(app_state.get('speak_mode') && following) {
+            if(message.data.utterance) {
+              var prefix = message.data.utterance.substring(0, 10);
+              if(sync.get('last_utterance_prefix') != prefix) {
+                sync.set('last_utterance_prefix', prefix);
+                persistence.ajax('/api/v1/users/' + message.user_id + '/ws_decrypt', {
+                  type: 'POST',
+                  data: {text: message.data.utterance}
+                }).then(function(res) {
+                  try {
+                    var voc = JSON.parse(res.decoded);
+                    stashes.set('working_vocalization', voc);
+                    utterance.set('rawButtonList', voc);
+                    utterance.set_button_list();
+                  } catch(e) { }
+                }, function(err) { });
+              }
+            }
             if(message.data.board_state) {
               CoughDrop.store.findRecord('board', message.data.board_state.id).then(function(board) {
                 sync.handle_action({type: 'board_assertion', board: board});

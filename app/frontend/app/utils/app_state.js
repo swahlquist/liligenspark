@@ -892,6 +892,49 @@ var app_state = EmberObject.extend({
   sync_reconnect: observer('refresh_stamp', function() {
     sync.connect();
   }),
+  sync_send_utterance: observer('stashes.working_vocalization', function() {
+    if(!CoughDrop || !CoughDrop.store) { return; }
+    var shareable_voc = function() {
+      var u = CoughDrop.store.createRecord('utterance', {
+        button_list: stashes.get('working_vocalization') || [], 
+        timestamp: (new Date()).getTime() / 1000,
+        user_id: app_state.get('referenced_user.id')
+      });
+      u.assert_remote_urls();
+      return u.get('button_list');
+    };
+
+    if(!app_state.get('sessionUser.supporter_role')) {
+      // TODO: DRY this check, it's in sync too
+      if(app_state.get('sessionUser.preferences.remote_modeling') && (app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed'))) {
+        var json = app_state.get('sync_utterance.json');
+        app_state.set('sync_utterance', {
+          attempted: true,
+          json: json
+        });
+        var str = JSON.stringify(shareable_voc());
+        if(str != app_state.get('sync_utterance.json') && window.persistence) {
+          app_state.set('sync_utterance', {
+            json: str,
+            attempted: true
+          });
+          window.persistence.ajax('/api/v1/users/' + app_state.get('sessionUser.id') + '/ws_encrypt', {
+            type: 'POST',
+            data: {text: str}
+          }).then(function(res) {
+            if(JSON.stringify(shareable_voc()) == str) {
+              app_state.set('sync_utterance', {
+                json: str,
+                encoded: res.encoded,
+                attempted: true
+              });
+              sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {utterance: res.encoded});
+            }
+          }, function(err) { });
+        }
+      }
+    }
+  }),
   sync_keepalive: observer('short_refresh_stamp', function() {
     var last = app_state.get('last_keepalive') || 0;
     var now = (new Date()).getTime();
@@ -899,7 +942,13 @@ var app_state = EmberObject.extend({
       // every 20 seconds, re-assert board state
       if(last < now - (20 * 1000))     {
         sync.check_following();
-        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'));
+        var obj = {};
+        if(app_state.get('sync_utterance.encoded')) {
+          obj.utterance = app_state.get('sync_utterance.encoded');
+        } else if(!app_state.get('sync_utterance.attempted')) {
+          app_state.sync_send_utterance();
+        }
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj);
         app_state.set('last_keepalive', now);
         sync.keepalive();
       }
@@ -1604,6 +1653,7 @@ var app_state = EmberObject.extend({
           app_state.set('sessionUser.request_alert', null);
           app_state.set('pairing', null);
           app_state.set('followers', null);
+          app_state.set('sync_utterance', null);
           sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
           stashes.persist('sticky_board', false);
@@ -2103,7 +2153,7 @@ var app_state = EmberObject.extend({
     }
     this.set('last_ding_state', ref_id);
   }),
-  ding_on_reequest_alert: observer('referenced_user.request_alert', function() {
+  ding_on_request_alert: observer('referenced_user.request_alert', function() {
     if(this.get('referenced_user.request_alert') && this.get('speak_mode') && !this.get('referenced_user.request_alert.dinged')) {
       this.set('referenced_user.request_alert.dinged', true);
       speecher.click('ding');
@@ -2353,7 +2403,7 @@ var app_state = EmberObject.extend({
     obj.access = app_state.get('currentUser.access_method');
     obj.overlay = !!overlay;
     stashes.log(obj);
-    sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), obj);
+    sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {button: obj});
     var _this = this;
 
     // highlight the button that if highlights are enabled

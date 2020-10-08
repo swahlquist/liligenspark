@@ -40,21 +40,21 @@ class Api::UsersController < ApplicationController
   end
 
   def ws_encrypt
-    # user = User.find_by_path(params['user_id'])
-    # return unless exists?(user, params['user_id'])
-    # return unless authorized?(user, 'supervise')
-    # str = GoSecure.encrypt("#{params['user_id']}.#{params['text']}", 'ws_content_encrypted').map(&:strip).join('$')
-    # render json: {encoded: str, user_id: user.global_id}
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    str = GoSecure.encrypt("#{params['user_id']}.#{params['text']}", 'ws_content_encrypted').map(&:strip).join('$')
+    render json: {encoded: str, user_id: user.global_id}
   end
 
   def ws_decrypt
-    # user = User.find_by_path(params['user_id'])
-    # return unless exists?(user, params['user_id'])
-    # return unless authorized?(user, 'supervise')
-    # str, iv = params['text'].split(/\$/)
-    # user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted').split(/\./, 2)
-    # return api_error(400, 'user_id mismatch') unless user_id = user.global_id
-    # render json: {decoded: text, user_id: user.global_id}    
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    str, iv = params['text'].split(/\$/)
+    user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted').split(/\./, 2)
+    return api_error(400, 'user_id mismatch') unless user_id = user.global_id
+    render json: {decoded: text, user_id: user.global_id}    
   end
 
   def ws_lookup

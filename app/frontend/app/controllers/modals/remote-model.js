@@ -68,12 +68,20 @@ export default modal.ModalController.extend({
                 modal.close();
                 app_state.set('pairing', {partner: true, follow: true, user: _this.get('model.user'), user_id: _this.get('model.user.id'), communicator_id: _this.get('model.user.id')});
                 app_state.set_speak_mode_user(_this.get('model.user.id'), true, true);      
+                sync.send(_this.get('model.user.id'), {type: 'query'});
               }
             }
           });
-          // TODO: wait for any update before marking as official
-          setTimeout(function() {
+          var query = function() {
+            if(sync_handled || query.attempts > 5) { return; }
+            query.attempts = (query.attempts || 0) + 1;
             sync.send(_this.get('model.user.id'), {type: 'query', following: true});
+            setTimeout(function() {
+              query();
+            }, 500);
+          };
+          setTimeout(function() {
+            query();
           }, 500);
         } else {
           var sync_handled = false;
