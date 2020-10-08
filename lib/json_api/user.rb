@@ -143,6 +143,12 @@ module JsonApi::User
         json['supervisors'] = supervisors[0, 10].map{|u| JsonApi::User.as_json(u, limited_identity: true, supervisee: user) }
       end
       if supervisees.length > 0
+        json['premium_voices']['claimed'] ||= []
+        # Supervisors can download voices activated by supervisees
+        # TODO: Limit usage of supervisee-activated voices?
+        supervisees.each do |sup|
+          json['premium_voices']['claimed'] = json['premium_voices']['claimed'] | ((sup.settings['premium_voices'] || {})['claimed'] || [])
+        end
         json['supervisees'] = supervisees[0, 10].map{|u| JsonApi::User.as_json(u, limited_identity: true, supervisor: user) }
         json['supervised_units'] = OrganizationUnit.supervised_units(user).map{|ou|
           {
