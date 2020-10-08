@@ -527,7 +527,7 @@ export default Controller.extend({
       if(!user_name) {
         if((app_state.get('currentUser.supervisees') || []).length > 0) {
           var prompt = i18n.t('select_user_for_reports', "Select User for Reports");
-          app_state.controller.send('switch_communicators', {stay: true, modeling: true, skip_me: true, route: 'user.stats', header: prompt});
+          app_state.controller.send('switch_communicators', {stay: true, modeling: true, skip_me: !app_state.get('currentUser.subscription.premium_supporter_plus_communicator'), route: 'user.stats', header: prompt});
           return;
         } else {
           user_name = app_state.get('currentUser.user_name');
@@ -538,7 +538,7 @@ export default Controller.extend({
     goals: function() {
       if((app_state.get('currentUser.supervisees') || []).length > 0) {
         var prompt = i18n.t('select_user_for_goals', "Select User for Goals");
-        app_state.controller.send('switch_communicators', {stay: true, modeling: true, skip_me: true, route: 'user.goals', header: prompt});
+        app_state.controller.send('switch_communicators', {stay: true, modeling: true, skip_me: !app_state.get('currentUser.subscription.premium_supporter_plus_communicator'), route: 'user.goals', header: prompt});
         return;
       } else {
         var user_name = app_state.get('currentUser.user_name');
