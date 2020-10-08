@@ -57,12 +57,12 @@ class Organization < ActiveRecord::Base
     user.save_with_sync('add_manager')
 #     self.attach_user(user, 'manager')
     # TODO: trigger notification
-    if user.grace_period? && !Organization.managed?(user)
+    if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
       user.update_subscription({
         'subscribe' => true,
-        'subscription_id' => 'free_auto_adjusted',
+        'subscription_id' => "free_auto_adjusted:#{self.global_id}",
         'token_summary' => "Automatically-set Supporter Account",
-        'plan_id' => 'slp_monthly_free'
+        'plan_id' => 'slp_monthly_granted'
       })
     end
     link = UserLink.generate(user, self, 'org_manager')
@@ -136,12 +136,12 @@ class Organization < ActiveRecord::Base
     user.assert_current_record!
     user.save_with_sync('add_supervisor')
 #     self.attach_user(user, 'supervisor')
-    if user.grace_period? && !Organization.managed?(user)
+    if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
       user.update_subscription({
         'subscribe' => true,
-        'subscription_id' => 'free_auto_adjusted',
+        'subscription_id' => "free_auto_adjusted:#{self.global_id}",
         'token_summary' => "Automatically-set Supporter Account",
-        'plan_id' => 'slp_monthly_free'
+        'plan_id' => 'slp_monthly_granted'
       })
     end
     link = UserLink.generate(user, self, 'org_supervisor')
