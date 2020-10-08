@@ -62,7 +62,7 @@ class Organization < ActiveRecord::Base
         'subscribe' => true,
         'subscription_id' => "free_auto_adjusted:#{self.global_id}",
         'token_summary' => "Automatically-set Supporter Account",
-        'plan_id' => 'slp_monthly_granted'
+        'plan_id' => 'slp_monthly_free'
       })
     end
     link = UserLink.generate(user, self, 'org_manager')
@@ -131,18 +131,20 @@ class Organization < ActiveRecord::Base
 #     user.settings ||= {}
 #     user.settings['supervisor_for'] ||= {}
 #     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
-    user.settings['preferences']['role'] = 'supporter'
+    user.settings['preferences']['role'] = 'supporter' if !pending
     user.settings['pending'] = false
     user.assert_current_record!
     user.save_with_sync('add_supervisor')
 #     self.attach_user(user, 'supervisor')
-    if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
-      user.update_subscription({
-        'subscribe' => true,
-        'subscription_id' => "free_auto_adjusted:#{self.global_id}",
-        'token_summary' => "Automatically-set Supporter Account",
-        'plan_id' => 'slp_monthly_granted'
-      })
+    if !pending
+      if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
+        user.update_subscription({
+          'subscribe' => true,
+          'subscription_id' => "free_auto_adjusted:#{self.global_id}",
+          'token_summary' => "Automatically-set Supporter Account",
+          'plan_id' => 'slp_monthly_free'
+        })
+      end
     end
     link = UserLink.generate(user, self, 'org_supervisor')
     link.data['state']['pending'] = pending unless link.data['state']['pending'] == false
@@ -157,6 +159,18 @@ class Organization < ActiveRecord::Base
   
   def approve_supervisor(user)
     links = UserLink.links_for(user).select{|l| l['type'] == 'org_supervisor' && l['record_code'] == Webhook.get_record_code(self) }
+    user.settings['preferences']['role'] = 'supporter'
+    user.settings['pending'] = false
+    user.assert_current_record!
+    user.save_with_sync('add_supervisor')
+    if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
+      user.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => "free_auto_adjusted:#{self.global_id}",
+        'token_summary' => "Automatically-set Supporter Account",
+        'plan_id' => 'slp_monthly_free'
+      })
+    end
     if links.length > 0
       link = UserLink.generate(user, self, 'org_supervisor')
       link.data['state']['pending'] = false

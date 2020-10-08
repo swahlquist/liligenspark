@@ -103,13 +103,16 @@ describe Organization, :type => :model do
     it "should correctly add a supervisor" do
       o = Organization.create
       u = User.create
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       o.add_supervisor(u.user_name, true)
       expect(o.supervisor?(u.reload)).to eq(true)
       expect(o.pending_supervisor?(u.reload)).to eq(true)
+      expect(u.reload.billing_state).to eq(:trialing_communicator)
       
       o.add_supervisor(u.user_name, false)
       expect(o.supervisor?(u.reload)).to eq(true)
       expect(o.pending_supervisor?(u.reload)).to eq(false)
+      expect(u.reload.billing_state).to eq(:org_supporter)
     end
     
     it "should allow being a supervisor for multiple organizations" do
@@ -123,6 +126,21 @@ describe Organization, :type => :model do
       expect(o1.pending_supervisor?(u)).to eq(true)
       expect(o2.supervisor?(u)).to eq(true)
       expect(o2.pending_supervisor?(u)).to eq(false)
+    end
+
+    it "should add and allow approving a pending supervisor" do
+      o = Organization.create(settings: {'total_licenses' => 5})
+      u1 = User.create(:settings => {:preferences => {role: 'supporter'}})
+      u1.settings['preferences']['role'] = 'supporter'
+      u1.save
+      expect(u1.reload.billing_state).to eq(:trialing_supporter)
+      Worker.process_queues
+      o.add_supervisor(u1.user_name, true)
+      Worker.process_queues
+      expect(u1.reload.billing_state).to eq(:trialing_supporter)
+
+      o.approve_supervisor(u1)
+      expect(u1.reload.billing_state).to eq(:org_supporter)
     end
     
     it "should error adding a null user as a supervisor" do
@@ -197,12 +215,12 @@ describe Organization, :type => :model do
       o = Organization.create
       u = User.create
       expect(u.grace_period?).to eq(true)
-      o.add_supervisor(u.user_name)
+      o.add_supervisor(u.user_name, false)
       u.reload
       expect(u.grace_period?).to eq(false)
       expect(u.settings['subscription']['plan_id']).to eq('slp_monthly_free')
       expect(u.settings['subscription']['modeling_only']).to eq(true)
-      expect(u.settings['subscription']['subscription_id']).to eq('free_auto_adjusted')
+      expect(u.settings['subscription']['subscription_id']).to eq("free_auto_adjusted:#{o.global_id}")
     end
     
     it "should not mark the user as a free supporter if they're not on the free trial" do

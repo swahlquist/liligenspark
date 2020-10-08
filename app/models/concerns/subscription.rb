@@ -241,7 +241,7 @@ module Subscription
           self.settings['pending'] = false unless self.settings['subscription']['modeling_only']
           self.settings['preferences']['progress'] ||= {}
           self.settings['preferences']['progress']['subscription_set'] = true
-          self.expires_at = nil if self.settings['subscription']['started']
+          self.expires_at = nil if self.settings['subscription']['started'] || args['plan_id'].match(/free|granted/)
           self.assert_current_record!
           self.save_with_sync('subscribe')
           self.schedule(:remove_supervisors!) if self.premium_supporter? || self.modeling_only?
