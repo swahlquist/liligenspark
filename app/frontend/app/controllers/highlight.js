@@ -24,9 +24,9 @@ export default modal.ModalController.extend({
     _this.set('model.shift_color', false);
     if(_this.get('model.highlight_type') == 'model') {
       var id = Math.random();
-      this.set('model.shift_id', id;
+      this.set('model.shift_id', id);
       runLater(function() {
-        if(_this.get('model.shift_id') == id {
+        if(_this.get('model.shift_id') == id) {
           _this.set('model.shift_color', true);
         }
       }, 15000);
