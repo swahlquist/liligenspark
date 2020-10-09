@@ -43,7 +43,7 @@ class Api::UsersController < ApplicationController
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
-    str = GoSecure.encrypt("#{params['user_id']}.#{params['text']}", 'ws_content_encrypted').map(&:strip).join('$')
+    str = GoSecure.encrypt("#{params['user_id']}.#{params['text']}", 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
     render json: {encoded: str, user_id: user.global_id}
   end
 
@@ -52,23 +52,26 @@ class Api::UsersController < ApplicationController
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
     str, iv = params['text'].split(/\$/)
-    user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted').split(/\./, 2)
-    return api_error(400, 'user_id mismatch') unless user_id = user.global_id
+    user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).split(/\./, 2) rescue nil
+    return api_error(400, {error: 'invalid decryption'}) unless user_id && text
+    return api_error(400, {error: 'user_id mismatch'}) unless user_id == user.global_id
     render json: {decoded: text, user_id: user.global_id}    
   end
 
   def ws_lookup
     obfuscated_user_id = params['user_id']
-    return api_error(400, 'user_id required') unless obfuscated_user_id
+    return api_error(400, {error: 'user_id required'}) unless !obfuscated_user_id.blank?
     str, iv = obfuscated_user_id.sub(/^me\$/, '').split(/\$/)
-    user_id, device_id = GoSecure.decrypt(str, iv, 'ws_device_id_encrypted').split(/\./)
+    user_id, device_id = GoSecure.decrypt(str, iv, 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).split(/\./) rescue nil
+    return api_error(400, {error: 'invalid decryption'}) unless user_id && device_id
     user = User.find_by_path(user_id)
-    return unless exists?(user, params['user_id'])
+    return unless exists?(user, user_id)
+    return unless allowed?(user, 'supervise')
     render json: {
       user_id: user.global_id,
       user_name: user.user_name,
       device_id: device_id,
-      avatar_url: user.generated_avatar_url('fallback')
+      avatar_url: user.generated_avatar_url
     }
   end
 
@@ -87,7 +90,7 @@ class Api::UsersController < ApplicationController
     # We manually set the IV so that device_id remains consistent across 
     # page reloads, and doesn't imply multiple devices to the websocket service
     iv = Digest::SHA2.hexdigest("user_settings_iv_for_" + (@token || @api_user.global_id))[0, 16]
-    device_id = GoSecure.encrypt("#{@api_user.global_id}.#{@api_device_id}", 'ws_device_id_encrypted', nil, iv).map(&:strip).join('$')
+    device_id = GoSecure.encrypt("#{@api_user.global_id}.#{@api_device_id}", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY'], iv).map(&:strip).join('$')
     ts = Time.now.to_i
     if user.global_id == @api_user.global_id
       res[:my_device_id] = "me$#{device_id}"

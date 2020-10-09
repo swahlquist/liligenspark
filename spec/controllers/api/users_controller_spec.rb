@@ -2026,4 +2026,276 @@ describe Api::UsersController, :type => :controller do
       expect(json['alert'].length).to eq(0)
     end
   end
+
+  describe "GET ws_settings" do
+    it 'should require authentication' do
+      get 'ws_settings', params: {user_id: ''}
+      assert_missing_token
+    end
+
+    it 'should require a user_id' do
+      token_user
+      get 'ws_settings', params: {user_id: 'some'}
+      assert_not_found('some')
+    end
+
+    it 'should require authorization' do
+      token_user
+      u = User.create
+      get 'ws_settings', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it 'should return room info for self' do
+      token_user
+      get 'ws_settings', params: {user_id: 'self'}
+      json = assert_success_json
+      expect(json['user_id']).to eq(@user.global_id)
+      expect(json['ws_user_id']).to_not eq(nil)
+      expect(json['my_device_id']).to match(/me\$.+\$.+/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+      expect(json['supervisees']).to eq(nil)
+    end
+
+    it "should include room info for supervisees on self" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      get 'ws_settings', params: {user_id: 'self'}
+      json = assert_success_json
+      expect(json['user_id']).to eq(@user.global_id)
+      expect(json['ws_user_id']).to_not eq(nil)
+      expect(json['my_device_id']).to match(/me\$.+\$.+/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+      expect(json['supervisees'].length).to eq(1)
+      expect(json['supervisees'][0]['user_id']).to eq(u.global_id)
+      expect(json['supervisees'][0]['ws_user_id']).to_not eq(nil)
+      expect(json['supervisees'][0]['my_device_id']).to match(/.+\$.+/)
+      expect(json['supervisees'][0]['my_device_id']).to_not match(/^me/)
+      expect(json['supervisees'][0]['verifier']).to_not eq(json['verifier'])
+    end
+
+    it 'should return room info for a supervisee' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      get 'ws_settings', params: {user_id: u.global_id}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['ws_user_id']).to_not eq(nil)
+      expect(json['my_device_id']).to match(/.+\$.+/)
+      expect(json['my_device_id']).to_not match(/^me/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+      expect(json['supervisees']).to eq(nil)
+    end
+
+    it 'should return room info for a communicator I am an admin for' do
+      token_user
+      u = User.create
+      o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
+      o.add_manager(@user.user_name, true)
+      o.add_user(u.user_name, false)
+      get 'ws_settings', params: {user_id: u.global_id}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['ws_user_id']).to_not eq(nil)
+      expect(json['my_device_id']).to match(/.+\$.+/)
+      expect(json['my_device_id']).to_not match(/^me/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+      expect(json['supervisees']).to eq(nil)
+    end
+
+    it "should not include room info for supervisees on a different supervisor" do
+      token_user
+      u1 = User.create
+      u2 = User.create
+      o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
+      o.add_manager(@user.user_name, true)
+      o.add_supervisor(u1.user_name, false)
+      User.link_supervisor_to_user(u1, u2)
+      get 'ws_settings', params: {user_id: u1.global_id}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u1.global_id)
+      expect(json['ws_user_id']).to_not eq(nil)
+      expect(json['my_device_id']).to match(/.+\$.+/)
+      expect(json['my_device_id']).to_not match(/^me/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+      expect(json['supervisees'].length).to eq(1)
+      expect(json['supervisees'][0]['user_id']).to eq(u2.global_id)
+      expect(json['supervisees'][0]['ws_user_id']).to_not eq(nil)
+      expect(json['supervisees'][0]['my_device_id']).to eq(nil)
+      expect(json['supervisees'][0]['verifier']).to eq(nil)
+    end
+
+    it 'should have a consistent iv for multiple requests in the same session' do
+      token_user
+      get 'ws_settings', params: {user_id: 'self'}
+      json = assert_success_json
+      expect(json['my_device_id']).to match(/me\$.+\$.+/)
+      code, ts = json['verifier'].split(/:/, 2)
+      expect(ts.to_i).to be > 5.seconds.ago.to_i
+      expect(ts.to_i).to be < 5.seconds.from_now.to_i
+      expect(code).to eq(GoSecure.sha512("#{json['ws_user_id']}:#{json['my_device_id']}:#{ts}", "room_join_verifier", ENV['CDWEBSOCKET_SHARED_VERIFIER'])[0, 30])
+
+      get 'ws_settings', params: {user_id: 'self'}
+      json2 = assert_success_json
+      expect(json2['my_device_id']).to match(/me\$.+\$.+/)
+      code, ts = json2['verifier'].split(/:/, 2)
+      expect(json2['my_device_id']).to eq(json['my_device_id'])
+    end
+  end
+
+  describe "GET ws_lookup" do
+    it 'should require authentication' do
+      get 'ws_lookup', params: {user_id: ''}
+      assert_missing_token
+    end
+
+    it 'should require a user_id' do
+      token_user
+      get 'ws_lookup', params: {user_id: ''}
+      assert_error('user_id required')
+    end
+
+    it 'should error gracefully on bad decrypt' do
+      token_user
+      get 'ws_lookup', params: {user_id: 'asdf'}
+      assert_error('invalid decryption')
+    end
+
+    it 'should error on invalid user_id' do
+      token_user
+      str = GoSecure.encrypt("bad_user.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: str}
+      assert_not_found('bad_user')
+    end
+
+    it 'should require authorization' do
+      token_user
+      u = User.create
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: str}
+      assert_unauthorized
+    end
+
+    it 'should return user data' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: str}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['user_name']).to eq(u.user_name)
+      expect(json['device_id']).to eq('bacon')
+    end
+
+    it 'should filter "me" prefix' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: "me$#{str}"}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['user_name']).to eq(u.user_name)
+      expect(json['device_id']).to eq('bacon')
+    end
+  end
+
+  describe "POST ws_encrypt" do
+    it 'should require authentication' do
+      post 'ws_encrypt', params: {user_id: 'whatever'}
+      assert_missing_token
+    end
+
+    it 'should require a valid user' do
+      token_user
+      post 'ws_encrypt', params: {user_id: 'whatever'}
+      assert_not_found('whatever')
+    end
+
+    it 'should require authorization' do
+      token_user
+      u = User.create
+      post 'ws_encrypt', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it 'should require matching user_id' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      post 'ws_encrypt', params: {user_id: u.global_id, text: "something cool"}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      str, iv = json['encoded'].split(/\$/)
+      user_id, text = GoSecure.decrypt(str, iv, 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).split(/\./, 2)
+      expect(user_id).to eq(u.global_id)
+      expect(text).to eq("something cool")
+    end
+  end
+
+  describe "POST ws_decrypt" do
+    it 'should require authentication' do
+      post 'ws_decrypt', params: {user_id: 'whatever'}
+      assert_missing_token
+    end
+
+    it 'should require a valid user' do
+      token_user
+      post 'ws_decrypt', params: {user_id: 'whatever'}
+      assert_not_found('whatever')
+    end
+
+    it 'should require authorization' do
+      token_user
+      u = User.create
+      post 'ws_decrypt', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it 'should require matching user_id' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      str = GoSecure.encrypt("bad_user.bacon", 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      post 'ws_decrypt', params: {user_id: u.global_id, text: str}
+      assert_error('user_id mismatch')
+    end
+
+    it 'should decrypt correctly' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      post 'ws_decrypt', params: {user_id: u.global_id, text: str}
+      json = assert_success_json
+      expect(json['decoded']).to eq('bacon')
+    end
+
+    it 'should error gracefully on bad decrypt' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_content_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      post 'ws_decrypt', params: {user_id: u.global_id, text: "aasdsf"}
+      assert_error('invalid decryption')
+    end
+  end
 end
