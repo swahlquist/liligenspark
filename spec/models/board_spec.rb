@@ -958,25 +958,50 @@ describe Board, :type => :model do
       b.populate_buttons_from_labels("a,b,c,d,e\nf,g\nbacon and eggs,t,q", 'columns')
       expect(b.settings['grid']['order']).to eq([[5, 7, 9, 11],[6, 8, 10, 12]])
     end
+
+    it "should work for boards with board_content" do
+      u = User.create
+      b = Board.new(user: u)
+      bc = BoardContent.new(settings: {})
+      bc.settings['buttons'] = [{'id' => 4}]
+      bc.save
+      b.board_content = bc
+      b.generate_defaults
+      expect(b.settings['buttons']).to eq([])
+      b.populate_buttons_from_labels("a,b,c,d,e\nf,g\nbacon and eggs,t,q", 'columns')
+      expect(b.settings['buttons'][0]).to eq({'id' => 4})
+      expect(b.settings['buttons'][1]).to eq({'id' => 5, 'label' => "a", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][2]).to eq({'id' => 6, 'label' => "b", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][3]).to eq({'id' => 7, 'label' => "c", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][4]).to eq({'id' => 8, 'label' => "d", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][5]).to eq({'id' => 9, 'label' => "e", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][6]).to eq({'id' => 10, 'label' => "f", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][7]).to eq({'id' => 11, 'label' => "g", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][8]).to eq({'id' => 12, 'label' => "bacon and eggs", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][9]).to eq({'id' => 13, 'label' => "t", 'suggest_symbol' => true})
+      expect(b.settings['buttons'][10]).to eq({'id' => 14, 'label' => "q", 'suggest_symbol' => true})
+      expect(b.settings['grid']['order']).to eq([[5, 7, 9, 11], [6, 8, 10, 12]])
+      b.save
+      b.reload
+      expect(b.settings['buttons']).to eq([])
+      expect(bc.settings['buttons'].length).to eq(1)
+      expect(b.settings['content_overrides']).to_not eq(nil)
+      expect(b.buttons[0]).to eq({'id' => 4})
+      expect(b.buttons[1]).to eq({'id' => 5, 'label' => "a", 'suggest_symbol' => true})
+      expect(b.buttons[2]).to eq({'id' => 6, 'label' => "b", 'suggest_symbol' => true})
+      expect(b.buttons[3]).to eq({'id' => 7, 'label' => "c", 'suggest_symbol' => true})
+      expect(b.buttons[4]).to eq({'id' => 8, 'label' => "d", 'suggest_symbol' => true})
+      expect(b.buttons[5]).to eq({'id' => 9, 'label' => "e", 'suggest_symbol' => true})
+      expect(b.buttons[6]).to eq({'id' => 10, 'label' => "f", 'suggest_symbol' => true})
+      expect(b.buttons[7]).to eq({'id' => 11, 'label' => "g", 'suggest_symbol' => true})
+      expect(b.buttons[8]).to eq({'id' => 12, 'label' => "bacon and eggs", 'suggest_symbol' => true})
+      expect(b.buttons[9]).to eq({'id' => 13, 'label' => "t", 'suggest_symbol' => true})
+      expect(b.buttons[10]).to eq({'id' => 14, 'label' => "q", 'suggest_symbol' => true})
+      expect(b.settings['grid']['order']).to eq([[5, 7, 9, 11], [6, 8, 10, 12]])
+    end
   end
   
   describe "private boards" do
-#     it "should not allow creating a private board without a premium user account" do
-#       u = User.create(:expires_at => 3.days.ago)
-#       res = Board.process_new({:public => false}, {:user => u})
-#       expect(res.errored?).to eql(true)
-#       expect(res.processing_errors).to eq(["only premium users can make boards private"])
-#     end
-    
-#     it "should not allow changing a board to private without a premium user account" do
-#       u = User.create(:expires_at => 3.days.ago)
-#       b = Board.create(:user => u, :public => true)
-#       expect(u.any_premium_or_grace_period?).to eql(false)
-#       res = b.process({:public => false}, {:user => u})
-#       expect(res).to eql(false)
-#       expect(b.processing_errors).to eq(["only premium users can make boards private"])
-#     end
-    
     it "should allow making a private board public without a premium user account" do
       u = User.create(:expires_at => 3.days.ago)
       b = Board.create(:user => u, :public => false)
@@ -1896,6 +1921,162 @@ describe Board, :type => :model do
       expect(b.settings['translations']['2']['en']['inflection_defaults']).to eq(nil)
       expect(b.settings['translations']['2']['fr']['inflection_defaults']).to eq(nil)
     end
+
+    it "should work for boards with board_content" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_by(word: 'bacon', locale: 'en') || WordData.create(word: 'bacon', locale: 'en')
+      w.process({
+        'primary_part_of_speech' => 'noun',
+        'parts_of_speech' => ['noun'],
+        'antonyms' => 'grossness',
+        'inflection_overrides' => {
+          'plural' => 'bacons',
+          'possessive' => "bacon's",
+          'regulars' => ['possessive']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_by(word: 'chat', locale: 'fr') || WordData.create(word: 'chat', locale: 'fr')
+      w.process({
+        'primary_part_of_speech' => 'noun',
+        'parts_of_speech' => ['noun']
+      }, {updater: u.reload})
+
+      b = Board.create(user: u)
+      b.settings['locale'] = 'fr'
+      b.settings['locales'] = ['en', 'fr']
+      b.settings['translations'] = {
+        'default' => 'fr',
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        '1' => {
+          'en' => {'label' => 'bacon'}, 'fr' => {'label' => 'baconne'}
+        },
+        '2' => {
+          'en' => {'label' => 'cat'}, 'fr' => {'label' => 'chat'}
+        }
+      }
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'baconne'},
+        {'id' => 2, 'label' => 'chat'}
+      ]
+      bc = BoardContent.new(settings: {})
+      bc.settings['buttons'] = b.settings['buttons']
+      bc.settings['translations'] = b.settings['translations']
+      bc.save
+      b.board_content = bc
+      b.check_for_parts_of_speech_and_inflections
+      expect(b.buttons[0]['label']).to eq('baconne')
+      expect(b.buttons[0]['part_of_speech']).to eq(nil)
+      expect(b.buttons[0]['suggested_part_of_speech']).to eq(nil)
+      expect(b.buttons[1]['label']).to eq('chat')
+      expect(b.buttons[1]['part_of_speech']).to eq('noun')
+      expect(b.buttons[1]['suggested_part_of_speech']).to eq('noun')
+      expect(b.buttons[0]['inflection_defaults']).to eq(nil)
+      expect(b.buttons[1]['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['1']['en']['inflection_defaults']).to eq({
+        'c' => 'bacon',
+        'n' => 'bacons',
+        'se' => 'grossness',
+        'src' => 'bacon',
+        'types' => ['noun'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+      expect(BoardContent.load_content(b, 'translations')['1']['fr']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['1']['fr']['label']).to eq('baconne')
+      expect(BoardContent.load_content(b, 'translations')['2']['en']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['2']['en']['label']).to eq('cat')
+      expect(BoardContent.load_content(b, 'translations')['2']['fr']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['2']['fr']['label']).to eq('chat')
+      b.save
+      expect(b.settings['buttons']).to eq([])
+      expect(b.settings['translations']).to eq(nil)
+      expect(b.settings['content_overrides']).to_not eq(nil)
+      expect(b.buttons[0]['label']).to eq('baconne')
+      expect(b.buttons[0]['part_of_speech']).to eq(nil)
+      expect(b.buttons[0]['suggested_part_of_speech']).to eq(nil)
+      expect(b.buttons[1]['label']).to eq('chat')
+      expect(b.buttons[1]['part_of_speech']).to eq('noun')
+      expect(b.buttons[1]['suggested_part_of_speech']).to eq('noun')
+      expect(b.buttons[0]['inflection_defaults']).to eq(nil)
+      expect(b.buttons[1]['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['1']['en']['inflection_defaults']).to eq({
+        'c' => 'bacon',
+        'n' => 'bacons',
+        'se' => 'grossness',
+        'src' => 'bacon',
+        'types' => ['noun'],
+        'v' => WordData::INFLECTIONS_VERSION
+      })
+      expect(BoardContent.load_content(b, 'translations')['1']['fr']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['1']['fr']['label']).to eq('baconne')
+      expect(BoardContent.load_content(b, 'translations')['2']['en']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['2']['en']['label']).to eq('cat')
+      expect(BoardContent.load_content(b, 'translations')['2']['fr']['inflection_defaults']).to eq(nil)
+      expect(BoardContent.load_content(b, 'translations')['2']['fr']['label']).to eq('chat')
+    end
+  end
+
+  describe "update_self_references" do
+    it 'should change legacy parent refs to self refs only once' do
+      u = User.create
+      b = Board.create(user: u)
+      b.generate_defaults
+      b.parent_board_id = 99
+      b.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => b.related_global_id(99)}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.related_global_id(99)}},
+      ]
+      b.save
+      expect(b.buttons).to eq([
+        {'id' => 1, 'load_board' => {'id' => b.global_id, 'key' => b.key}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.global_id, 'key' => b.key}},
+      ])
+      expect(b.settings['self_references_updated']).to eq(true)
+
+      b.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => b.related_global_id(99)}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.related_global_id(99)}},
+      ]
+      b.save
+      expect(b.buttons).to eq([
+        {'id' => 1, 'load_board' => {'id' => b.related_global_id(99)}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.related_global_id(99)}},
+      ])
+    end
+
+    it "should work for boards with board_content" do
+      u = User.create
+      b = Board.create(user: u)
+      b.generate_defaults
+      b.parent_board_id = 99
+      b.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => b.related_global_id(99)}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.related_global_id(99)}},
+      ]
+      bc = BoardContent.new(settings: {})
+      bc.settings['buttons'] = b.settings['buttons']
+      bc.save
+      b.board_content = bc
+      b.save
+      expect(b.buttons).to eq([
+        {'id' => 1, 'load_board' => {'id' => b.global_id, 'key' => b.key}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.global_id, 'key' => b.key}},
+      ])
+      expect(bc.settings['buttons']).to eq([
+        {'id' => 1, 'load_board' => {'id' => b.related_global_id(99)}},
+        {'id' => 2, 'load_board' => {'id' => b.related_global_id(98)}},
+        {'id' => 3, 'load_board' => {'id' => b.related_global_id(99)}},
+      ])
+      expect(b.settings['self_references_updated']).to eq(true)
+    end
   end
   
   describe "edit_description" do
@@ -2732,6 +2913,60 @@ describe Board, :type => :model do
       Worker.process_queues
       expect(b.reload.versions.count).to eq(versions + 1)
     end
+
+    it "should work for boards with board_content" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(:user => u, :settings => {'locale' => 'es'})
+      b3 = Board.create(:user => u)
+      b4 = Board.create(:user => u)
+      b5 = Board.create(:user => u)
+      b1.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => 2, 'label' => 'cat', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => 3, 'label' => 'rat', 'load_board' => {'id' => b5.global_id, 'key' => b5.key}}
+      ]
+      bc1 = BoardContent.new(settings: {})
+      bc1.settings['buttons'] = b1.settings['buttons']
+      bc1.save
+      b1.board_content = bc1
+      b1.save
+      b2.settings['buttons'] = [
+        {'id' => 1, 'label' => 'fat', 'load_board' => {'id' => b4.global_id, 'key' => b4.key}}
+      ]
+      b2.save
+      b3.settings['buttons'] = [
+        {'id' => 1, 'label' => 'cheese', 'vocalization' => 'hat'}
+      ]
+      b3.save
+      b4.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'load_board' => {'id' => b1.global_id, 'key' => b1.key}}
+      ]
+      bc4 = BoardContent.new(settings: {})
+      bc4.settings['buttons'] = b4.settings['buttons']
+      bc4.save
+      b4.board_content = bc4
+      b4.save
+      b5.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hat'}
+      ]
+      b5.save
+      puts b1.reload.settings
+      
+      res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, {
+        'source' => 'en', 
+        'dest' => 'es', 
+        'board_ids' => [b1.global_id, b2.global_id, b3.global_id, b4.global_id]
+      })
+      expect(res[:done]).to eq(true)
+      puts b1.reload.settings
+      expect(b1.reload.buttons.map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
+      expect(b2.reload.buttons.map{|b| b['label'] }).to eq(['fat']) # already translated
+      expect(b3.reload.buttons.map{|b| b['label'] }).to eq(['cheese'])
+      expect(b3.reload.buttons.map{|b| b['vocalization'] }).to eq(['top'])
+      expect(b4.reload.buttons.map{|b| b['label'] }).to eq(['top'])
+      expect(b5.reload.buttons.map{|b| b['label'] }).to eq(['hat'])
+    end
   end
   
   describe 'swap_images' do
@@ -3043,6 +3278,55 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end
+
+    it "should work for boards with board_content offload" do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      bc = BoardContent.generate_from(b)
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      bc2 = BoardContent.generate_from(b2)
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      bc3 = BoardContent.generate_from(b3)
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([{
+        'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
+      res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
+      bis = b.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(1)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(b.reload.buttons).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => bi2.global_id, 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(b3.reload.buttons).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
   end
   
   describe "process_button" do
@@ -3095,6 +3379,26 @@ describe Board, :type => :model do
         {'id' => '123'}, {'id' => '234', 'sound_id' => s.global_id}
       ])
       expect(b.button_sounds).to eq([s])
+    end
+
+    it "should work for boards with board_content" do
+      u = User.create
+      b = Board.create(:user => u, :settings => {
+        'buttons' => [
+          {'id' => '123'}, {'id' => '234'}
+        ]
+      })
+      bc = BoardContent.generate_from(b)
+      expect(b.reload.buttons).to eq([
+        {'id' => '123'}, {'id' => '234'}
+      ])
+      b.process_button({
+        'id' => '234',
+        'sound_id' => '12345'
+      })
+      expect(b.reload.buttons).to eq([
+        {'id' => '123'}, {'id' => '234', 'sound_id' => '12345'}
+      ])
     end
   end
   

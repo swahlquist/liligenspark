@@ -354,6 +354,7 @@ class Board < ActiveRecord::Base
     labels_order ||= 'columns'
     max_id = self.buttons.map{|b| b['id'].to_i || 0 }.max || 0
     idx = 0
+    buttons = self.buttons
     labels.split(/\n|,\s*/).each do |label|
       label.strip!
       next if label.blank?
@@ -363,7 +364,7 @@ class Board < ActiveRecord::Base
         'label' => label,
         'suggest_symbol' => true
       }
-      self.settings['buttons'] << button
+      buttons << button
       @buttons_changed = 'populated_from_labels'
 
       row = idx % self.settings['grid']['rows']
@@ -378,6 +379,7 @@ class Board < ActiveRecord::Base
       end
       idx += 1
     end
+    self.settings['buttons'] = buttons
   end
   
   def self.save_without_post_processing(board_ids)
@@ -546,7 +548,7 @@ class Board < ActiveRecord::Base
 
     images = []
     sounds = []
-    ((self.settings || {})['buttons'] || []).each do |button|
+    (self.buttons || []).each do |button|
       images << {:id => button['image_id'], :label => button['label']} if button['image_id']
       sounds << {:id => button['sound_id']} if button['sound_id']
     end
@@ -808,11 +810,13 @@ class Board < ActiveRecord::Base
   end
   
   def process_button(button)
-    found_button = (self.buttons || []).detect{|b| b['id'].to_s == button['id'].to_s }
+    buttons = self.buttons
+    found_button = buttons.detect{|b| b['id'].to_s == button['id'].to_s }
     if button['sound_id']
       found_button['sound_id'] = button['sound_id']
       @buttons_changed = 'button updated in-place'
     end
+    self.settings['buttons'] = buttons
     self.schedule_once(:update_button_sets)
     self.save!
   end
@@ -1004,7 +1008,9 @@ class Board < ActiveRecord::Base
         self.settings['translations']['current_label'] = label_lang
         self.settings['translations']['current_vocalization'] = vocalization_lang
       end
-      self.buttons.each do |button|
+      buttons = self.buttons
+      buttons = self.buttons.map do |button|
+        button = button.dup
         if button['label'] && translations[button['label']]
           self.settings['translations'][button['id'].to_s] ||= {}
           self.settings['translations'][button['id'].to_s][source_lang] ||= {}
@@ -1051,6 +1057,10 @@ class Board < ActiveRecord::Base
             @buttons_changed = 'translated'
           end
         end
+        button
+      end
+      if @buttons_changed
+        self.settings['buttons'] = buttons
       end
       whodunnit = PaperTrail.request.whodunnit
       PaperTrail.request.whodunnit = user_for_paper_trail.to_s || 'user:unknown'
@@ -1108,12 +1118,11 @@ class Board < ActiveRecord::Base
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
-
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id
       words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
       defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author)
-      self.buttons.each do |button|
+      buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
           image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, author) || [])[0]
@@ -1124,10 +1133,14 @@ class Board < ActiveRecord::Base
             @buttons_changed = 'swapped images'
           end
         end
+        button
       end
       whodunnit = PaperTrail.request.whodunnit
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
-      self.save if @buttons_changed
+      if @buttons_changed
+        self.settings['buttons'] = buttons
+        self.save 
+      end
       PaperTrail.request.whodunnit = whodunnit
     else
       return {done: true, swapped: false, reason: 'board not in list'}

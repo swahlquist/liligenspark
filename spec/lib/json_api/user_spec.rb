@@ -65,6 +65,17 @@ describe JsonApi::User do
       expect(json['premium_voices']).to eq({'claimed' => [], 'allowed' => 0})
     end
 
+    it "should include supervisee claimed voices if any" do
+      u = User.create(:settings => {'premium_voices' => {'claimed' => ['abc', 'bcd']}})
+      u2 = User.create(:settings => {'premium_voices' => {'claimed' => ['abc', 'cde', 'def']}})
+      u3 = User.create(:settings => {'premium_voices' => {'claimed' => ['efg', 'cde', 'fgh']}})
+      u4 = User.create(:settings => {'premium_voices' => {'claimed' => ['ghi', 'ijk']}})
+      User.link_supervisor_to_user(u, u2)
+      User.link_supervisor_to_user(u, u3)
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['premium_voices']).to eq({'always_allowed' => true, 'claimed' => ["abc", "bcd", "cde", "def", "efg", "fgh"]})
+    end
+
     it "should include user vocalizations (saved phrases)" do
       u = User.create(:settings => {'vocalizations' => [
         {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},

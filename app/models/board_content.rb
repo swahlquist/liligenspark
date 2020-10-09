@@ -48,7 +48,7 @@ class BoardContent < ApplicationRecord
     board.settings ||= {}
     res = board.settings[attr] if !board.settings[attr].blank?
     if board.board_content_id && !res
-      res = board.board_content.settings[attr]
+      res = board.board_content.settings[attr].deep_dup
       from_offload = true
     end
     res ||= board.settings[attr]
@@ -61,9 +61,12 @@ class BoardContent < ApplicationRecord
         if attr == 'buttons'
           over.each do |id, hash|
             btn = res.detect{|b| b['id'].to_s == id.to_s }
-            next unless btn
-            hash.each do |key, val|
-              btn[key] = val
+            if btn
+              hash.each do |key, val|
+                btn[key] = val
+              end
+              else
+              res << hash 
             end
           end
         elsif ['grid', 'intro', 'background', 'translations'].include?(attr)
@@ -108,9 +111,8 @@ class BoardContent < ApplicationRecord
       board.settings['buttons'].each do |btn|
         offload_btn = content.settings['buttons'].detect{|b| b['id'].to_s == btn['id'].to_s }
         if offload_btn
-          btn.keys.each do |key, val|
+          btn.each do |key, val|
             revision = {}
-            mapped_board = board_map[offload_btn['id']]
             if offload_btn[key] != val
               board.settings['content_overrides'] ||= {}
               board.settings['content_overrides']['buttons'] ||= {}

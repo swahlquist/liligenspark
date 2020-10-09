@@ -115,6 +115,34 @@ describe Relinking, :type => :model do
         {'load_board' => {'id' => b3.global_id}}
       ])
     end
+
+    it "should work correctly with board_content" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b3.settings['buttons'] = [
+        {},
+        {'id' => 2},
+        {'load_board' => {'id' => b1.global_id}},
+        {'load_board' => {'id' => b3.global_id}}
+      ]
+      b3.save
+      expect(b3.buttons).to eq([
+        {},
+        {'id' => 2},
+        {'load_board' => {'id' => b1.global_id}},
+        {'load_board' => {'id' => b3.global_id}}
+      ])
+      BoardContent.generate_from(b3)
+      b3.replace_links!(b1, b2)
+      expect(b3.buttons).to eq([
+        {},
+        {'id' => 2},
+        {'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'load_board' => {'id' => b3.global_id}}
+      ])
+    end
   end
   
   describe "copy_board_links_for" do

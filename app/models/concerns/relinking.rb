@@ -98,12 +98,14 @@ module Relinking
   end
   
   def replace_links!(old_board, new_board)
-    (self.settings['buttons'] || []).each_with_index do |button, idx|
+    buttons = self.buttons
+    buttons.each_with_index do |button, idx|
       if button['load_board'] && button['load_board']['id'] == old_board.global_id
-        self.settings['buttons'][idx]['load_board']['id'] = new_board.global_id
-        self.settings['buttons'][idx]['load_board']['key'] = new_board.key
+        button['load_board']['id'] = new_board.global_id
+        button['load_board']['key'] = new_board.key
       end
     end
+    self.settings['buttons'] = buttons
     self.settings['downstream_board_ids'] = (self.settings['downstream_board_ids'] || []).map{|id| id == old_board.global_id ? new_board.global_id : id }
   end
 
