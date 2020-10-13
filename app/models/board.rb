@@ -157,7 +157,7 @@ class Board < ActiveRecord::Base
   end
 
   def check_content_overrides
-    BoardContent.track_differences(self, self.board_content) if self.board_content
+    BoardContent.track_differences(self, self.board_content, true) if self.board_content
     true
   end
 
@@ -249,28 +249,30 @@ class Board < ActiveRecord::Base
       end
     end
     self.any_upstream = self.settings && self.settings['immediately_upstream_board_ids'] && self.settings['immediately_upstream_board_ids'].length > 0
-    self.settings['grid'] ||= {}
-    self.settings['grid']['rows'] = (self.settings['grid']['rows'] || 2).to_i
-    self.settings['grid']['columns'] = (self.settings['grid']['columns'] || 4).to_i
-    self.settings['grid']['order'] ||= []
-    self.settings['grid']['rows'].times do |i|
-      self.settings['grid']['order'][i] ||= []
-      self.settings['grid']['columns'].times do |j|
-        self.settings['grid']['order'][i][j] ||= nil
+    grid = BoardContent.load_content(self, 'grid')
+    grid ||= {}
+    grid['rows'] = (grid['rows'] || 2).to_i
+    grid['columns'] = (grid['columns'] || 4).to_i
+    grid['order'] ||= []
+    grid['rows'].times do |i|
+      grid['order'][i] ||= []
+      grid['columns'].times do |j|
+        grid['order'][i][j] ||= nil
       end
-      if self.settings['grid']['order'][i].length > self.settings['grid']['columns']
-        self.settings['grid']['order'][i] = self.settings['grid']['order'][i].slice(0, self.settings['grid']['columns'])
+      if grid['order'][i].length > grid['columns']
+        grid['order'][i] = grid['order'][i].slice(0, grid['columns'])
       end
     end
-    if self.settings['grid']['order'].length > self.settings['grid']['rows']
-      self.settings['grid']['order'] = self.settings['grid']['order'].slice(0, self.settings['grid']['rows'])
+    if grid['order'].length > grid['rows']
+      grid['order'] = grid['order'].slice(0, grid['rows'])
     end
-    if self.settings['grid']['labels'] && self.buttons.length == 0
-      self.populate_buttons_from_labels(self.settings['grid'].delete('labels'), self.settings['grid'].delete('labels_order'))
+    if grid['labels'] && self.buttons.length == 0
+      self.populate_buttons_from_labels(grid.delete('labels'), grid.delete('labels_order'))
     end
+    self.settings['grid'] = grid # TODO: ...only set if changed
     update_immediately_downstream_board_ids
     
-    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + self.settings['grid'].to_json + "_" + self.buttons.to_json)
+    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json)
     self.settings['revision_hashes'] ||= []
     if !self.settings['revision_hashes'].last || self.settings['revision_hashes'].last[0] != data_hash
       @track_revision = [data_hash, Time.now.to_i]
@@ -294,11 +296,9 @@ class Board < ActiveRecord::Base
     # TODO: encrypted search, lol
     self.settings['locale'] ||= 'en'
     langs = []
-    if self.settings['translations']
-      self.settings['translations'].each do |k, trans|
-        if trans.is_a?(Hash)
-          langs += trans.keys
-        end
+    (BoardContent.load_content(self, 'translations') || {}).each do |k, trans|
+      if trans.is_a?(Hash)
+        langs += trans.keys
       end
     end
     self.settings['locales'] = ([self.settings['locale']] + langs).uniq
@@ -328,7 +328,7 @@ class Board < ActiveRecord::Base
   def labels
     return @labels if @labels
     list = []
-    grid = self.settings['grid']
+    grid = BoardContent.load_content(self, 'grid')
     buttons = self.buttons
     return "" if !grid || !buttons
     grid['columns'].times do |jdx|
@@ -355,6 +355,7 @@ class Board < ActiveRecord::Base
     max_id = self.buttons.map{|b| b['id'].to_i || 0 }.max || 0
     idx = 0
     buttons = self.buttons
+    grid = BoardContent.load_content(self, 'grid')
     labels.split(/\n|,\s*/).each do |label|
       label.strip!
       next if label.blank?
@@ -367,18 +368,19 @@ class Board < ActiveRecord::Base
       buttons << button
       @buttons_changed = 'populated_from_labels'
 
-      row = idx % self.settings['grid']['rows']
-      col = (idx - row) / self.settings['grid']['rows']
+      row = idx % grid['rows']
+      col = (idx - row) / grid['rows']
       if labels_order == 'rows'
-        col = idx % self.settings['grid']['columns']
-        row = (idx - col) / self.settings['grid']['columns']
+        col = idx % grid['columns']
+        row = (idx - col) / grid['columns']
       end  
 
-      if row < self.settings['grid']['rows'] && col < self.settings['grid']['columns']
-        self.settings['grid']['order'][row][col] = button['id']
+      if row < grid['rows'] && col < grid['columns']
+        grid['order'][row][col] = button['id']
       end
       idx += 1
     end
+    self.settings['grid'] = grid
     self.settings['buttons'] = buttons
   end
   
@@ -618,7 +620,7 @@ class Board < ActiveRecord::Base
     self.user ||= non_user_params[:user] if non_user_params[:user]
     
     
-    if !params['parent_board_id'].blank?
+    if !params['parent_board_id'].blank? && !self.parent_board_id
       parent_board = Board.find_by_global_id(params['parent_board_id'])
       if !parent_board
         add_processing_error('parent board not found')
@@ -627,7 +629,10 @@ class Board < ActiveRecord::Base
         add_processing_error('cannot copy protected boards')
         return false
       end
-      self.parent_board = parent_board
+      if self.parent_board_id != parent_board.id
+        self.parent_board = parent_board
+        BoardContent.apply_clone(parent_board, self) if parent_board.board_content_id
+      end
     end
     self.settings ||= {}
     self.settings['last_updated'] = Time.now.iso8601
@@ -653,6 +658,7 @@ class Board < ActiveRecord::Base
     @edit_notes << "changed the image" if params['image_url'] && params['image_url'] != self.settings['image_url']
     self.settings['image_url'] = params['image_url'] if params['image_url']
     @edit_notes << "changed the background" if params['background'] && params['background'] != self.settings['background'].to_json
+    self.settings['background'] = BoardContent.load_content(self, 'background')
     self.settings['background'] = params['background'] if params['background']
     if self.settings['background']
       self.settings['background']['delay_prompts'] ||= self.settings['background']['delayed_prompts'] if self.settings['background']['delayed_prompts']
@@ -679,7 +685,7 @@ class Board < ActiveRecord::Base
     @edit_notes << "changed the license" if self.settings['license'].to_json != prior_license
 
     if params['translations']
-      self.settings['translations'] ||= {}
+      self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
       self.settings['translations']['default'] = params['translations']['default']
       self.settings['translations']['current_label'] = params['translations']['current_label']
       self.settings['translations']['current_vocalization'] = params['translations']['current_vocalization']
@@ -755,15 +761,16 @@ class Board < ActiveRecord::Base
   def check_for_parts_of_speech_and_inflections(do_save=true)
     if self.buttons
       any_changed = false
+      trans = BoardContent.load_content(self, 'translations') || {}
       (self.settings['locales'] || [self.settings['locale']]).each do |loc|
         words_to_check = self.buttons.map{|b|
-          btn = ((self.settings['translations'] || {})[b['id'].to_s] || {})[loc] || b
+          btn = (trans[b['id'].to_s] || {})[loc] || b
           already_updated = btn['inflection_defaults'] && btn['inflection_defaults']['v'] == WordData::INFLECTIONS_VERSION
           already_updated = false if do_save == 'force'
           already_updated ? nil : (btn['vocalization'] || btn['label'])
         }.compact
         inflections = WordData.inflection_locations_for(words_to_check, loc)
-        self.buttons.each do |button|
+        buttons = self.buttons.map do |button|
           if loc == self.settings['locale'] || !self.settings['locale']
             # look for part of speech when loading the default locale
             word = button['vocalization'] || button['label']
@@ -793,12 +800,17 @@ class Board < ActiveRecord::Base
               any_changed = true
             end
           end
-          btn = ((self.settings['translations'] || {})[button['id'].to_s] || {})[loc]
+          btn = (trans[button['id'].to_s] || {})[loc]
           if btn && inflections[btn['vocalization'] || btn['label']] && inflections[btn['vocalization'] || btn['label']]['v']
-            self.settings['translations'][button['id'].to_s][loc]['inflection_defaults'] = inflections[btn['vocalization'] || btn['label']]
+            trans[button['id'].to_s][loc]['inflection_defaults'] = inflections[btn['vocalization'] || btn['label']]
             any_changed = true
           end
+          button
         end
+      end
+      if any_changed
+        self.settings['buttons'] = buttons 
+        self.settings['translations'] = trans 
       end
       if any_changed && do_save
         self.assert_current_record!
@@ -852,7 +864,7 @@ class Board < ActiveRecord::Base
       end
     end
     self.settings['buttons'] = buttons.map do |button|
-      trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s] || (self.settings['translations'] || {})[button['id'].to_s]
+      trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s] || (BoardContent.load_content(self, 'translations') || {})[button['id'].to_s]
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
@@ -867,7 +879,7 @@ class Board < ActiveRecord::Base
         end
       end
       if trans
-        self.settings['translations'] ||= {}
+        self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
         trans.each do |loc, tran|
           if loc.is_a?(Hash)
             tran = loc
@@ -999,7 +1011,7 @@ class Board < ActiveRecord::Base
         self.settings['name'] = translations[self.settings['name']]
       end
       self.settings['locale'] ||= source_lang
-      self.settings['translations'] ||= {}
+      self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
       self.settings['translations']['default'] ||= source_lang
       self.settings['translations']['current_label'] ||= source_lang
       self.settings['translations']['current_vocalization'] ||= source_lang

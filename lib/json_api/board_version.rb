@@ -61,7 +61,7 @@ module JsonApi::BoardVersion
         end
         json['name'] = obj.settings['name']
         json['button_labels'] = (obj.buttons || []).map{|b| b['label'] || b['vocalization'] }
-        json['grid'] = obj.settings['grid']
+        json['grid'] = BoardContent.load_content(obj, 'grid')
         if args[:admin]
           args[:board_lookups] ||= {}
           upstream_ids = obj.settings['immediately_upstream_board_ids'] || []

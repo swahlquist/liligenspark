@@ -16,7 +16,7 @@ module JsonApi::Board
       json[key] = board.settings[key]
     end
     list = [board.settings['locale'] || 'en']
-    (board.settings['translations'] || {}).each{|k, h| if h.is_a?(Hash); list += h.keys; end }
+    (BoardContent.load_content(board, 'translations') || {}).each{|k, h| if h.is_a?(Hash); list += h.keys; end }
     json['translated_locales'] = list.uniq
     self.trace_execution_scoped(['json/board/license']) do
       json['license'] = OBF::Utils.parse_license(board.settings['license'])
@@ -114,7 +114,8 @@ module JsonApi::Board
       }
     end
     if args.key?(:permissions)
-      json['board']['translations'] = board.settings['translations'] if board.settings['translations']
+      trans = BoardContent.load_content(board, 'translations')
+      json['board']['translations'] = trans if trans
       self.trace_execution_scoped(['json/board/copy_check']) do
         copies = board.find_copies_by(args[:permissions])
         copy = copies[0]

@@ -1496,7 +1496,46 @@ describe Board, :type => :model do
       expect(b2.errored?).to eq(true)
       expect(b2.processing_errors).to eq(['cannot copy protected boards'])
     end
-    
+
+    it "should allow referencing an allowed board as parent board, and create a clone" do
+      u = User.create
+      b1 = Board.create(user: u, public: true)
+      b1.process(buttons: [
+        {id: 1, label: 'bacon'},
+        {id: 2, label: 'cheddar'},
+        {id: 3, label: 'broccoli'},
+        {id: 4, label: 'sour cream'},
+      ], grid: {
+        rows: 2,
+        columns: 2,
+        order: [[1, 3], [2, 4]]
+      })
+      BoardContent.generate_from(b1)
+      b2 = Board.create(:user => u)
+      b2.process({
+        buttons: [
+          {id: 1, label: 'bacon'},
+          {id: 2, label: 'cheddar'},
+          {id: 3, label: 'broccoli'},
+          {id: 4, label: 'sour cream'},
+        ], grid: {
+          rows: 2,
+          columns: 2,
+          order: [[1, 3], [2, 4]]
+        },
+        'parent_board_id' => b1.global_id
+      })
+      expect(b2.parent_board).to eq(b1)
+      expect(b2.board_content).to_not eq(nil)
+      expect(b2.board_content).to eq(b1.board_content)
+      expect(b2.buttons.map{|b| b.slice('id', 'label')}).to eq([
+        {'id'=> 1, 'label'=> 'bacon'},
+        {'id'=> 2, 'label'=> 'cheddar'},
+        {'id'=> 3, 'label'=> 'broccoli'},
+        {'id'=> 4, 'label'=> 'sour cream'},
+      ])
+    end
+
     it "should set visibility to public" do
       u = User.create
       b = Board.create(:user => u)

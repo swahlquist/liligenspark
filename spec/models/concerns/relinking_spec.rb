@@ -93,6 +93,31 @@ describe Relinking, :type => :model do
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
       expect(b.settings['buttons'][0]['load_board']['id']).to eq(b.global_id)
     end
+
+    it "should create a new copy of the specified board for the user and clone content" do
+      u = User.create
+      b = Board.create(:user => u, :settings => {'hat' => true, 'image_url' => 'bob'})
+      b.process({'buttons' => [{'id' => '1', 'label' => 'a'}, {'id' => '2', 'label' => 'b'}, {'id' => '4', 'label' => 'c'}], 'grid' => {'rows' => 2, 'columns' => 2, 'order' => [['1', '2'],[nil, '4']]}}, {'user' => u})
+      BoardContent.generate_from(b)
+      res = b.copy_for(u)
+      expect(res.settings['name']).to eq(b.settings['name'])
+      expect(res.settings['description']).to eq(b.settings['description'])
+      expect(res.settings['image_url']).to eq(b.settings['image_url'])
+      expect(res.settings['image_url']).to eq('bob')
+      expect(res.settings['buttons']).to eq([])
+      expect(res.buttons).to eq(b.buttons)
+      expect(res.buttons.length).to eq(3)
+      expect(res.settings['license']).to eq(b.settings['license'])
+      expect(res.settings['grid']).to eq(nil)
+      expect(BoardContent.load_content(res, 'grid')).to eq(BoardContent.load_content(b, 'grid'))
+      expect(BoardContent.load_content(res, 'grid')).to eq({
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [['1', '2'], [nil, '4']]
+      })
+      expect(res.settings['hat']).to eq(nil)
+      expect(res.key).to eq(b.key + "_1")
+    end
   end
   
   describe "replace_links!" do

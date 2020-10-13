@@ -25,21 +25,23 @@ module Converters::CoughDrop
     res['description_html'] = board.settings['description'] || "built with CoughDrop"
     res['license'] = OBF::Utils.parse_license(board.settings['license'])
     if !opts || !opts['simple']
-      if board.settings['translations']
-        res['default_locale'] = board.settings['translations']['default']
-        res['label_locale'] = board.settings['translations']['current_label']
-        res['vocalization_locale'] = board.settings['translations']['current_vocalization']
+      trans = BoardContent.load_content(board, 'translations')
+      if trans
+        res['default_locale'] = trans['default']
+        res['label_locale'] = trans['current_label']
+        res['vocalization_locale'] = trans['current_vocalization']
       end
-      if board.settings['background']
+      bg = BoardContent.load_content(board, 'background')
+      if bg
         res['background'] = {
-          'image_url' => board.settings['background']['image'] || board.settings['background']['image_url'],
-          'ext_coughdrop_image_exclusion' => board.settings['background']['ext_coughdrop_image_exclusion'],
-          'color' => board.settings['background']['color'],
-          'position' => board.settings['background']['position'],
-          'text' => board.settings['background']['text'],
-          'prompt_text' => board.settings['background']['prompt'] || board.settings['background']['prompt_text'],
-          'delayed_prompts' => board.settings['background']['delay_prompts'] || board.settings['background']['delayed_prompts'],
-          'delay_prompt_timeout' => board.settings['background']['delay_prompt_timeout']
+          'image_url' => bg['image'] || bg['image_url'],
+          'ext_coughdrop_image_exclusion' => bg['ext_coughdrop_image_exclusion'],
+          'color' => bg['color'],
+          'position' => bg['position'],
+          'text' => bg['text'],
+          'prompt_text' => bg['prompt'] || bg['prompt_text'],
+          'delayed_prompts' => bg['delay_prompts'] || bg['delayed_prompts'],
+          'delay_prompt_timeout' => bg['delay_prompt_timeout']
         }
         res['background'].keys.each{|key| res['background'].delete(key) unless res['background'][key] }
       end
@@ -77,7 +79,7 @@ module Converters::CoughDrop
       if !opts || !opts['simple']
         inflection_defaults = nil
         trans = {}
-        (board.settings['translations'] || {}).each do |loc, hash|
+        (BoardContent.load_content(board, 'translations') || {}).each do |loc, hash|
           next unless hash && hash.is_a?(Hash)
           if hash[original_button['id']]
             trans[loc] = hash[original_button['id']]
@@ -204,7 +206,7 @@ module Converters::CoughDrop
       res['buttons'] << button
       Progress.update_current_progress(idx.to_f / button_count.to_f)
     end
-    res['grid'] = board.settings['grid']
+    res['grid'] = BoardContent.load_content(board, 'grid')
     res
   end
   

@@ -1,4 +1,5 @@
 class BoardContent < ApplicationRecord
+  include Async
   include SecureSerialize
   secure_serialize :settings
 
@@ -31,6 +32,10 @@ class BoardContent < ApplicationRecord
       content.settings[attr] = val if val
     end
     content.save
+    if board.board_content
+      # TODO: schedule check to mark content as stale if
+      # no one is using it anymore
+    end
     board.board_content = content
     attrs.each do |attr|
       board.settings.delete(attr)
@@ -52,7 +57,7 @@ class BoardContent < ApplicationRecord
       from_offload = true
     end
     res ||= board.settings[attr]
-    if (board.settings['content_overrides'] || {})[attr] && from_offload
+    if (board.settings['content_overrides'] || {}).has_key?(attr) && from_offload
       over = board.settings['content_overrides'][attr]
       if over == nil && board.settings['content_overrides'].has_key?(attr)
         # If override defined but nil, that means it was cleared
@@ -64,6 +69,7 @@ class BoardContent < ApplicationRecord
             if btn
               hash.each do |key, val|
                 btn[key] = val
+                btn.delete(key) if val == nil
               end
               else
               res << hash 
@@ -72,6 +78,7 @@ class BoardContent < ApplicationRecord
         elsif ['grid', 'intro', 'background', 'translations'].include?(attr)
           over.each do |key, val|
             res[key] = val
+            res.delete(key) if val == nil
           end
         end
       end
@@ -79,32 +86,45 @@ class BoardContent < ApplicationRecord
     res
   end
 
-  # Also include a differencing helper method for all the hashes/arrays
-  # and a tool for retroactively 
+  def self.attach_as_clone(board)
+    if board.parent_board
+      BoardContent.apply_clone(board.parent_board, board, true)
+      board.save!
+    end
+  end
+
   def self.apply_clone(original, copy, prevent_new_copy=false)
+    # copy=nil when you want to manually offload content as-is
+    # prevent_new_copy=true when you want to use existing offloaded content 
+    #    (think manually linking legacy copies)
     content = original.board_content
-    if !content || (!BoardContent.has_changes?(original, content) && !prevent_new_copy)
+    if !content || (BoardContent.has_changes?(original, content) && !prevent_new_copy)
       # generate a new content offload
       content = BoardContent.generate_from(original)
     end
     if copy
       # use the newly-generated content
       copy.board_content = content
-      # TODO: generate the override mapping for board_ids
-      BoardContent.track_differences(copy, content)
+      BoardContent.track_differences(copy, content, true)
     end
-    # copy=nil when you want to manually offload content as-is
-    # prevent_new_copy=true when you want to use existing offloaded content 
-    #    (think manually linking legacy copies)
   end
 
   def self.has_changes?(board, content)
-    return true if board.board_content_id != content.id
-    !(board.settings['content_overrides'] || {}).keys.empty?
+    return true if !content || board.board_content_id != content.id
+    any_not_blank = false
+    (board.settings['content_overrides'] || {}).each do |key, hash|
+      any_not_blank = true if !hash.empty?
+    end
+    return any_not_blank
   end
 
-  def self.track_differences(board, content)
-    return true unless content
+  def self.track_differences(board, content, skip_save=false)
+    if !content
+      if board && board.settings && board.settings['content_overrides']
+        board.settings.delete('content_overrides')
+      end
+      return true 
+    end
     return false if content.id != board.board_content_id
     changed = false
     if !board.settings['buttons'].blank? && content.settings['buttons']
@@ -116,15 +136,24 @@ class BoardContent < ApplicationRecord
             if offload_btn[key] != val
               board.settings['content_overrides'] ||= {}
               board.settings['content_overrides']['buttons'] ||= {}
-              board.settings['content_overrides']['buttons'][btn['id']] ||= {}
-              board.settings['content_overrides']['buttons'][btn['id']][key] = val
+              board.settings['content_overrides']['buttons'][btn['id'].to_s] ||= {}
+              board.settings['content_overrides']['buttons'][btn['id'].to_s][key] = val
+              changed = true
+            end
+          end
+          offload_btn.each do |key, val|
+            if val && !btn[key]
+              board.settings['content_overrides'] ||= {}
+              board.settings['content_overrides']['buttons'] ||= {}
+              board.settings['content_overrides']['buttons'][btn['id'].to_s] ||= {}
+              board.settings['content_overrides']['buttons'][btn['id'].to_s][key] = nil
               changed = true
             end
           end
         else
           board.settings['content_overrides'] ||= {}
           board.settings['content_overrides']['buttons'] ||= {}
-          board.settings['content_overrides']['buttons'][btn['id']] = btn
+          board.settings['content_overrides']['buttons'][btn['id'].to_s] = btn
           changed = true
         end
       end
@@ -139,7 +168,7 @@ class BoardContent < ApplicationRecord
         end
         board.settings.delete(attr)
       elsif !board.settings[attr].blank? && content.settings[attr]
-          board.settings[attr].each do |key, val|
+        board.settings[attr].each do |key, val|
           if content.settings[attr][key] != val
             board.settings['content_overrides'] ||= {}
             board.settings['content_overrides'][attr] ||= {}
@@ -147,10 +176,18 @@ class BoardContent < ApplicationRecord
             changed = true
           end
         end
+        content.settings[attr].each do |key, val|
+          if val && !board.settings[attr][key]
+            board.settings['content_overrides'] ||= {}
+            board.settings['content_overrides'][attr] ||= {}
+            board.settings['content_overrides'][attr][key] = nil
+            changed = true
+          end
+        end
         board.settings.delete(attr)
       end
     end
-    board.save if changed
+    board.save if changed && !skip_save
     true
   end
 end

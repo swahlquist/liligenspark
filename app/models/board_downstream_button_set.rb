@@ -103,10 +103,10 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   end
 
   def url_for(user, full_set_revision)
+    # Force an auto-regenerate if the revision doesn't match
     allowed_ids = {}
     button_set = self
-    # Force an auto-regenerate if the revision doesn't match
-    return nil unless full_set_revision && button_set.data['full_set_revision'] == full_set_revision
+    button_set_revision = button_set.data['full_set_revision']
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
       button_set ||= self
@@ -124,7 +124,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
     end
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
-    return button_set.extra_data_private_url if @unviewable_ids.blank?
+    revision_match = full_set_revision && button_set_revision == full_set_revision
+    return button_set.extra_data_private_url if @unviewable_ids.blank? && revision_match
 
     if !button_set.data['remote_salt']
       button_set.generate_defaults
@@ -132,7 +133,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
 
     @remote_hash = GoSecure.sha512(@unviewable_ids.sort.to_json, button_set.data['remote_salt'])
-    if (((button_set.data['remote_paths'] || {})[@remote_hash] || {})['expires'] || 0) > Time.now.to_i
+    if revision_match && (((button_set.data['remote_paths'] || {})[@remote_hash] || {})['expires'] || 0) > Time.now.to_i
       if button_set.data['remote_paths'][@remote_hash]['expires'] < 2.weeks.from_now.to_i
         button_set.schedule_once(:touch_remote, @remote_hash)
       end
@@ -173,7 +174,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     url = button_set.url_for(user, board.settings['full_set_revision'])
     return {success: true, url: url} if url
-    unviewable_ids = button_set.instance_variable_get('@unviewable_ids')
+    unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
     remote_hash = button_set.instance_variable_get('@remote_hash')
     if !button_set.data['extra_data_nonce']
