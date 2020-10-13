@@ -46,7 +46,7 @@ describe UserMailer, :type => :mailer do
   
   describe "confirm_registration" do
     it "should find the correct user" do
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.confirm_registration(u.global_id)
       expect(m.subject).to eq("CoughDrop - Welcome!")
@@ -72,7 +72,7 @@ describe UserMailer, :type => :mailer do
       expect(JsonApi::Json.current_domain['settings']['app_name']).to eq("Cheddar")
       expect(JsonApi::Json.current_domain['settings']['company_name']).to eq("Cheddarific")
 
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.confirm_registration(u.global_id)
       expect(m.subject).to eq("Cheddar - Welcome!")
@@ -83,7 +83,7 @@ describe UserMailer, :type => :mailer do
   
   describe "forgot_password" do
     it "should find the correct user" do
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.forgot_password([u.global_id])
       expect(m.subject).to eq("CoughDrop - Forgot Password Confirmation")
@@ -133,7 +133,7 @@ describe UserMailer, :type => :mailer do
       Worker.set_domain_id('https://cheddar.org')
       expect(JsonApi::Json.current_domain['settings']['app_name']).to eq("Cheddar")
 
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.forgot_password([u.global_id])
       expect(m.subject).to eq("Cheddar - Forgot Password Confirmation")
@@ -160,7 +160,7 @@ describe UserMailer, :type => :mailer do
   
   describe "password_changed" do
     it "should find the correct user" do
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       m = UserMailer.password_changed(u.global_id)
       expect(m.subject).to eq("CoughDrop - Password Changed")
@@ -177,7 +177,7 @@ describe UserMailer, :type => :mailer do
   
   describe "email_changed" do
     it "should email both addresses" do
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
       expect_any_instance_of(User).to receive(:prior_named_email).and_return("fred@example.com")
       m = UserMailer.email_changed(u.global_id)
@@ -195,7 +195,7 @@ describe UserMailer, :type => :mailer do
   
   describe "log_message" do
     it "should email the right address" do
-      u = User.create
+      u = User.create(settings: {email: 'test@example.com'})
       d = Device.create(:user => u)
       l = LogSession.create(:user => u, :author => u, :device => d)
       l.data['note'] = {'text' => "you are my friend"}

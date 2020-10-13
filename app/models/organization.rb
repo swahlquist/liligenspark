@@ -62,9 +62,10 @@ class Organization < ActiveRecord::Base
         'subscribe' => true,
         'subscription_id' => "free_auto_adjusted:#{self.global_id}",
         'token_summary' => "Automatically-set Supporter Account",
-        'plan_id' => 'slp_monthly_free'
+        'plan_id' => 'slp_monthly_granted'
       })
     end
+
     link = UserLink.generate(user, self, 'org_manager')
     link.data['state']['added'] ||= Time.now.iso8601
     link.data['state']['full_manager'] = true if full

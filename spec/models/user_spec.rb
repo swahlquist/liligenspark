@@ -816,7 +816,6 @@ describe User, :type => :model do
       u.reload
       u.process({'authored_organization_id' => o.global_id}, {'pending' => true, 'author' => u})
       expect(u.settings['authored_organization_id']).to eq(nil)
-      expect(u.settings['pending']).to eq(true)
     end
 
     it "should set the device as long_token_set if long_token is set" do

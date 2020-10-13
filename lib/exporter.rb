@@ -186,7 +186,7 @@ More information about the file formats being used is available at https://www.o
       ':ing' => 'present-participle'
     }
     log_session.assert_extra_data
-    log_session.data['events'].each_with_index do |event, idx|
+    (log_session.data['events'] || []).each_with_index do |event, idx|
       next if event['skip']
       prev_event = log_session.data['events'][idx - 1] || event
       next_event = log_session.data['events'][idx + 1] || event

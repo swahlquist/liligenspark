@@ -305,9 +305,9 @@ describe BoardCaching, :type => :model do
     # if me and someone else supervise each other, we shouldn't get caught in a loop on update
     it "should not get stuck in supervision loops" do
       u1 = User.create(:user_name => "user1")
-      u1.update_subscription('subscribe' => true, 'plan_id' => 'slp_monthly_free', 'subscription_id' => 'free')
+      u1.update_subscription('subscribe' => true, 'plan_id' => 'slp_monthly_granted', 'subscription_id' => 'free')
       u2 = User.create(:user_name => "user2")
-      u2.update_subscription('subscribe' => true, 'plan_id' => 'slp_monthly_free', 'subscription_id' => 'free')
+      u2.update_subscription('subscribe' => true, 'plan_id' => 'slp_monthly_granted', 'subscription_id' => 'free')
       Worker.process_queues
       expect(u1.reload.grace_period?).to eq(false)
       expect(u2.reload.grace_period?).to eq(false)
