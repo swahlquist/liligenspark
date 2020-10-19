@@ -174,7 +174,7 @@ var evaluation = {
         step.forEach(function(event) {
           console.log("EVENT");
         });
-        if(!step || (idx == 0 && !(step[0] || {}).time)) { 
+        if(!step || idx == 0) { //(idx == 0 && !(step[0] || {}).time)) { 
           var level_name = key || 'no-key';
           if(key == 'find_target') { level_name = i18n.t('find_target_level', "Find a target in a grid of empty buttons"); }
           else if(key == 'diff_target') { level_name = i18n.t('diff_target_level', "Find a target in a grid of populated buttons"); }
@@ -293,7 +293,7 @@ var evaluation = {
           fail: !!fail,
           type: name,
           name: long_name,
-          pct: pct * 100,
+          pct: Math.round(pct * 100 * 10) / 10,
           attempts: step.length,
           avg_time: Math.round(full_time / Math.max(step.length, 1) / 1000 * 100) / 100
         });
@@ -475,7 +475,7 @@ var evaluation = {
       if(maxes['symbols'] && (!best_max[measurement] || maxes['symbols'][measurement] > best_max[measurement])) {
         best_max[measurement] = maxes['symbols'][measurement];
       }
-      best_max[measurement] = best_max[measurement] || maxes['find_target'][measurement];
+      best_max[measurement] = best_max[measurement] || (maxes['find_target'] || {})[measurement];
     });
     res.button_width = Math.round((best_max.win || 0) * 10) / 10;
     res.button_height = Math.round((best_max.hin || 0) * 10) / 10;
@@ -608,7 +608,7 @@ var working = {};
 var mastery_cutoff = 0.69;
 var non_mastery_cutoff = 0.32;
 var attempt_minimum = 2;
-var attempt_maximum = 8;
+var attempt_maximum = 6;
 var testing_min_attempts = null;
 var levels = [
   // TODO: best way to assess different symbol libraries
