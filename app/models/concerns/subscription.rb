@@ -958,7 +958,7 @@ module Subscription
       [1, 3].each do |num|
         approaching_expires = User.where(['expires_at > ? AND expires_at < ?', num.months.from_now - 0.5.days, num.months.from_now + 0.5.days])
         approaching_expires.each do |user|
-          if !user.grace_period? && user.any_premium_or_grace_period? && !user.supporter_role?
+          if [:trialing_communicator, :long_term_active_communicator, :grace_period_communicator, :lapsed_communicator].include?(user.billing_state)
             alerts[:approaching] += 1
             user.settings['subscription'] ||= {}
             last_message = Time.parse(user.settings['subscription']['last_approaching_notification']) rescue Time.at(0)
@@ -972,13 +972,13 @@ module Subscription
           end
         end
       end
-      
+
       upcoming_expires = User.where(['expires_at > ? AND expires_at < ?', 6.hours.from_now, 1.week.from_now])
       # send out a warning notification 1 week before, and another one the day before,
       # to all the ones that haven't been warned yet for this cycle
       upcoming_expires.each do |user|
         # only notify expired communicators
-        next if !user.communicator_role? || user.eval_account?
+        next if !user.communicator_role? || user.eval_account? || [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator, :org_sponsored_communicator].include?(user.billing_state)
         alerts[:upcoming] += 1
         user.settings['subscription'] ||= {}
         last_day = Time.parse(user.settings['subscription']['last_expiring_day_notification']) rescue Time.at(0)
@@ -1002,7 +1002,7 @@ module Subscription
       # send out an expiration notification to all the ones that haven't been notified yet
       now_expired.each do |user|
         # only notify expired communicators
-        next unless user.communicator_role? && !user.eval_account?
+        next if !user.communicator_role? || user.eval_account? || [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator, :org_sponsored_communicator].include?(user.billing_state)
         alerts[:expired] += 1
         user.settings['subscription'] ||= {}
         last_expired = Time.parse(user.settings['subscription']['last_expired_notification']) rescue Time.at(0)
