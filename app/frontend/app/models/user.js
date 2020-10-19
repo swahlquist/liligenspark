@@ -213,7 +213,7 @@ CoughDrop.User = DS.Model.extend({
     // remained unsynced for a while could be
     // marked as not-currently-premium, but if you're 
     // offline they're not going to be adding any load anyway
-    return (this.get('subscription.active') || this.get('grace_period')) && !this.get('expired') && (!this.get('subscription.premium_supporter') || this.get('subscription.premium_supporter_plus_communicator'));
+    return (!this.get('subscription.premium_supporter') || this.get('subscription.billing_state') == 'trialing_supporter' || this.get('subscription.premium_supporter_plus_communicator'));
   }),
   currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
     return !!(this.get('currently_premium') || this.get('fully_purchased'));
