@@ -361,7 +361,7 @@ class Api::UsersController < ApplicationController
       return require_api_token unless @api_user
       return unless allowed?(user, 'edit')
       progress = Progress.schedule(user, :redeem_gift_token, token['code'])
-    elsif['never_expires', 'eval', 'add_1', 'manual_supporter', 'add_voice', 'communicator_trial', 'force_logout', 'enable_extras', 'supporter_credit', 'restore', 'manual_modeler'].include?(params['type'])
+    elsif['never_expires', 'eval', 'add_1', 'add_5_years', 'manual_supporter', 'add_voice', 'communicator_trial', 'force_logout', 'enable_extras', 'supporter_credit', 'restore', 'manual_modeler'].include?(params['type'])
       return require_api_token unless @api_user
       return unless allowed?(user, 'admin_support_actions')
       progress = Progress.schedule(user, :subscription_override, params['type'], @api_user && @api_user.global_id)

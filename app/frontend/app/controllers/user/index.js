@@ -429,6 +429,8 @@ export default Controller.extend({
         this.set('subscription_settings', {action: action, type: i18n.t('manual_modeler', "Manually Set as Modeler")});
       } else if(action == 'add_1') {
         this.set('subscription_settings', {action: action, type: i18n.t('add_one_month', "Add 1 Month to Expiration")});
+      } else if(action == 'add_5_years') {
+        this.set('subscription_settings', {action: action, type: i18n.t('add_five_years', "Add 5 Years to Expiration")});
       } else if(action == 'communicator_trial') {
         this.set('subscription_settings', {action: action, type: i18n.t('communicator_trial', "Manually Set as Communicator Free Trial")});
       } else if(action == 'add_voice') {
