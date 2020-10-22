@@ -399,7 +399,7 @@ module Subscription
         'purchase' => true,
         'purchase_id' => 'restore'        
       })
-    elsif type == 'add_1' || type == 'communicator_trial'
+    elsif type == 'add_1' || type == 'communicator_trial' || type == 'add_5_years'
       if type == 'communicator_trial'
         self.settings['preferences'] ||= {}
         self.settings['preferences']['role'] = 'communicator'
@@ -414,7 +414,7 @@ module Subscription
       end
       self.expires_at ||= Time.now
       if self.expires_at
-        self.expires_at = [self.expires_at, Time.now].max + 1.month
+        self.expires_at = [self.expires_at, Time.now].max + (type == 'add_5_years' ? 5.years : 1.month)
         self.settings ||= {}
         self.settings['subscription_adders'] ||= []
         self.settings['subscription_adders'] << [user_id, Time.now.to_i]
