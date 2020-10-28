@@ -255,6 +255,15 @@ export default Controller.extend({
   ios_app: computed(function() {
     return capabilities.system == 'iOS' && capabilities.installed_app;
   }),
+  raw_core_word_list: computed('core_lists.for_user', function() {
+    var div = document.createElement('div');
+    (this.get('core_lists.for_user') || []).each(function(w) {
+      var span = document.createElement('span');
+      span.innerText = w;
+      div.appendChild(span);
+    });
+    return htmlSafe(div.innerHTML);
+  }),
   set_auto_sync: observer('model.id', 'model.auto_sync', function() {
     if(this.get('pending_preferences.device')) {
       this.set('pending_preferences.device.auto_sync', this.get('model.auto_sync'));

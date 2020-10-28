@@ -608,9 +608,7 @@
         {{else if core_lists}}
           <p class='form-control-static'><em>{{t "Core words are the most common words in a language, and often express multiple intents or meanings. The following list of words will be marked as \"core\" (as opposed to \"fringe\") for this user." key='core_words_explainer'}}</em></p>
           <div style='max-height: 100px; overflow: auto; padding: 5px 15px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; margin-bottom: 5px;'>
-            {{#each core_lists.for_user as |word|}}
-              <span style='padding-right: 5px;'>{{word}}</span>
-            {{/each}}
+            {{raw_user_core_list}}
           </div>
           <button type='button' {{action 'modify_core'}} class='btn btn-default'>{{t "Modify Core Word List" key='modify_core_word_list'}}</button>
           <span style='padding-left: 10px;'>

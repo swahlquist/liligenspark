@@ -3,6 +3,7 @@ import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -41,6 +42,15 @@ export default modal.ModalController.extend({
   }),
   word_lines: computed('words', function() {
     return (this.get('words') || []).join('\n');
+  }),
+  raw_words_list: computer('words', function() {
+    var div = document.createElement('div');
+    (this.get('words') || []).each(function(w) {
+      var span = document.createElement('span');
+      span.innerText = w;
+      div.appendChild(span);
+    });
+    return htmlSafe(div.innerHTML);
   }),
   parsed_words: computed('word_lines', function() {
     var words = (this.get('word_lines') || "").split(/[\n,]/).filter(function(w) { return w && w.length > 0; });

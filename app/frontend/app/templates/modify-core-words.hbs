@@ -24,10 +24,7 @@
         {{textarea value=word_lines class='form-control' placeholder='Type or paste in a list of words, either separated by commas or one per line' rows=6}}
       {{else}}
         <div style='max-height: 150px; overflow: auto; padding: 5px 15px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc;'>
-          {{#each words as |word|}}
-            <span style='padding-right: 5px;'>{{word}}</span>
-          {{/each}}
-        </div>
+          {{raw_words_list}}
       {{/if}}
       <div style='text-align: right;'>
         {{t "word" count=parsed_words.length key='n_words'}}
