@@ -128,6 +128,10 @@ $(document).on('mousedown touchstart', function(event) {
       $input.val($input.val() + (event.key == 'Enter' ? ' ' : event.key));
     }
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
+    if(event.keyCode == 77 && (event.altKey || event.ctrlKey)) {
+      // Toggling modeling, so don't add to the sentence box
+      return;
+    }
     buttonTracker.last_key = event.key;
     app_state.activate_button({}, {
       label: event.key,
@@ -201,6 +205,7 @@ $(document).on('mousedown touchstart', function(event) {
   } else if(event.keyCode == 77 && (event.altKey || event.ctrlKey)) {
     console.log("Keyboard shortcut for toggle modeling");
     app_state.toggle_modeling_if_possible();
+    event.preventDefault();
   }
 }).on('keyup', function(event) {
   if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {

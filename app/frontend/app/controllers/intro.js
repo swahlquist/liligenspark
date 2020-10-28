@@ -27,6 +27,9 @@ export default modal.ModalController.extend({
     next: function() {
       var page = this.get('page') || 1;
       page++;
+      if(app_state.get('currentUser.modeling_only')) {
+        
+      }
       if(page > this.get('total_pages')) { page = this.get('total_pages'); }
       this.set('page', page);
     },
