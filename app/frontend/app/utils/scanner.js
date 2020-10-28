@@ -357,7 +357,7 @@ var scanner = EmberObject.extend({
         for(var jdx = 0; jdx < grid.order[idx].length; jdx++) {
           var $button = scanner.find_elem(".button[data-id='" + grid.order[idx][jdx] + "']:not(.hidden_button):not(.clone)");
           var button = editManager.find_button(grid.order[idx][jdx]);
-          $button.label = (button && (button.get('vocalization') || button.get('label'))) || "";
+          $button.label = (button && (button.get('label') || button.get('vocalization'))) || "";
           $button.sound = (button && button.get('sound')) || null;
           res.order[idx][jdx] = $button;
         }
