@@ -66,7 +66,10 @@ class Api::UsersController < ApplicationController
     return api_error(400, {error: 'invalid decryption'}) unless user_id && device_id
     user = User.find_by_path(user_id)
     return unless exists?(user, user_id)
-    return unless allowed?(user, 'supervise')
+    # Supervisee needs to look up supervisors as well
+    if !@api_user.allows?(user, 'supervise')
+      return unless allowed?(user, 'supervise')
+    end
     render json: {
       user_id: user.global_id,
       user_name: user.user_name,

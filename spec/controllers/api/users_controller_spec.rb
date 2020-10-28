@@ -2193,6 +2193,31 @@ describe Api::UsersController, :type => :controller do
       assert_unauthorized
     end
 
+    it 'should allow supervisee to look up supervisors' do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(u, @user)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: str}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['user_name']).to eq(u.user_name)
+      expect(json['device_id']).to eq('bacon')
+    end
+
+    it 'should allow supervisee to look up following admins' do
+      token_user
+      u = User.create
+      o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
+      o.add_manager(u.user_name, true)
+      str = GoSecure.encrypt("#{u.global_id}.bacon", 'ws_device_id_encrypted', ENV['CDWEBSOCKET_ENCRYPTION_KEY']).map(&:strip).join('$')
+      get 'ws_lookup', params: {user_id: str}
+      json = assert_success_json
+      expect(json['user_id']).to eq(u.global_id)
+      expect(json['user_name']).to eq(u.user_name)
+      expect(json['device_id']).to eq('bacon')
+    end
+
     it 'should return user data' do
       token_user
       u = User.create

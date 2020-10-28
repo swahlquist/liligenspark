@@ -294,7 +294,7 @@ var sync = EmberObject.extend({
         app_state.set('followers', follow_stamps);
       }
       // sync.confirm_pair(message.data.pair_code, message.data.partner_id);
-    });
+    }, function(err) { });
 
   },
   send_update: function(user_id, extra) {
