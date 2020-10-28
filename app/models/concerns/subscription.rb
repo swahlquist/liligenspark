@@ -806,7 +806,12 @@ module Subscription
   # end
   
   def grace_period?
-    return [:trialing_communicator, :grace_period_communicator, :trialing_supporter, :grace_period_supporter].include?(self.billing_state)
+    return [
+      :trialing_communicator, 
+      :grace_period_communicator, 
+      :trialing_supporter, 
+      :grace_period_supporter
+    ].include?(self.billing_state)
     # true for the initial trial period, as well as for
     # any intermediate expires_at updates such as the
     # grace period you get after unsubscribing or being 
@@ -827,7 +832,9 @@ module Subscription
     # !!(self.expires_at && self.expires_at > Time.now && !self.full_premium? && !self.org_supporter?)
   end
   
-  def any_premium_or_grace_period?
+  def any_premium_or_grace_period?(include_lapsed=false)
+    state = self.billing_state
+    return true if include_lapsed && state == :lapsed_communicator
     return [
       :never_expires_communicator,
       :eval_communicator,
@@ -836,7 +843,6 @@ module Subscription
       :long_term_active_communicator,
       :grace_period_communicator,
       :org_sponsored_communicator,
-      :lapsed_communicator,
       :premium_supporter,
       :trialing_supporter,
       :grace_period_supporter,
@@ -849,7 +855,13 @@ module Subscription
   end
 
   def full_premium?
-    return [:never_expires_communicator, :eval_communicator, :subscribed_communicator, :long_term_active_communicator, :org_sponsored_communicator].include?(self.billing_state)
+    return [
+      :never_expires_communicator, 
+      :eval_communicator, 
+      :subscribed_communicator, 
+      :long_term_active_communicator, 
+      :org_sponsored_communicator
+    ].include?(self.billing_state)
     # full_premium means paid for and active cloud extras
     # * not in a grace period *
     # Checks full_premium_or_fully_purchased?
@@ -921,7 +933,7 @@ module Subscription
         json['active'] = true
         json['purchased'] = self.settings['subscription']['customer_id'] != 'free'
         json['plan_id'] = self.settings['subscription']['last_purchase_plan_id']
-      elsif billing_state == :lapsed_communicators
+      elsif billing_state == :lapsed_communicator
         json['lapsed_communicator'] = self.lapsed_communicator?
         json['free_premium'] = true
       end
@@ -958,7 +970,7 @@ module Subscription
       [1, 3].each do |num|
         approaching_expires = User.where(['expires_at > ? AND expires_at < ?', num.months.from_now - 0.5.days, num.months.from_now + 0.5.days])
         approaching_expires.each do |user|
-          if [:trialing_communicator, :long_term_active_communicator, :grace_period_communicator, :lapsed_communicator].include?(user.billing_state)
+          if [:long_term_active_communicator, :grace_period_communicator, :lapsed_communicator].include?(user.billing_state)
             alerts[:approaching] += 1
             user.settings['subscription'] ||= {}
             last_message = Time.parse(user.settings['subscription']['last_approaching_notification']) rescue Time.at(0)

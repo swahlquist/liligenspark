@@ -207,12 +207,15 @@ CoughDrop.User = DS.Model.extend({
   // as in a paid or sponsored communicator
   // (even a paid communicator who sets their role to supporter)
   // * or a free trial *
-  currently_premium: computed('subscription.active', 'expired', 'subscription.premium_supporter', 'subscription.premium_supporter_plus_communicator', 'grace_period', 'subscription.never_expires', 'subscription.timestamp', function() {
+  currently_premium: computed('subscription.billing_state', 'grace_period', 'subscription.premium_supporter', 'subscription.premium_supporter_plus_communicator', 'grace_period', 'subscription.never_expires', 'subscription.timestamp', function() {
     if(this.get('subscription.never_expires')) { return true; }
     // NOTE: Long-term purchases that have expired and have
     // remained unsynced for a while could be
     // marked as not-currently-premium, but if you're 
     // offline they're not going to be adding any load anyway
+    if(this.get('grace_period')) { return true; }
+    if(this.get('subscription.billing_state') == 'modeling_only') { return false; }
+    if(this.get('subscription.billing_state') == 'expired_communicator' || this.get('subscription.billing_state') == 'lapsed_communicator') { return false; }
     return (!this.get('subscription.premium_supporter') || this.get('subscription.billing_state') == 'trialing_supporter' || this.get('subscription.premium_supporter_plus_communicator'));
   }),
   currently_premium_or_fully_purchased: computed('currently_premium', 'fully_purchased', function() {
@@ -241,13 +244,13 @@ CoughDrop.User = DS.Model.extend({
   // no personal home board
   // yes modeling ideas for supervisees
   modeling_only: computed(
-    'subscription.modeling_only', 
+    'subscription.billing_state', 
     'supporter_role',
     'grace_period',
     'expiration_passed',
     'subscription.premium_supporter',
     function() {
-      if(this.get('subscription.modeling_only') && !this.get('grace_period')) { return true; }
+      if(this.get('subscription.billing_state') == 'modeling_only' && !this.get('grace_period')) { return true; }
       // auto-convert a free-trial supporter to modeling_only when their trial expires
       if(this.get('supporter_role') && !this.get('subscription.premium_supporter')) {
         if(this.get('expiration_passed')) { return true; }

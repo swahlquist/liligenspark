@@ -285,7 +285,7 @@ class Board < ActiveRecord::Base
     if self.unshareable?
       self.public = false unless self.settings['protected'] && self.settings['protected']['demo'] && !self.parent_board_id
     elsif self.public == nil
-      if self.user && self.user.any_premium_or_grace_period?
+      if self.user && self.user.any_premium_or_grace_period?(true)
         self.public = false
       else
         self.public = true
