@@ -675,7 +675,13 @@ CoughDrop.Visualizations = {
       var one_done = function(type) {
         one_done[type] = true;
         if(one_done.graphs && one_done.maps) {
-          window.google.charts.load('current', {packages:["corechart", "sankey"], callback: CoughDrop.Visualizations.handle_callbacks});
+          if(!window.google || !window.google.charts || !window.google.charts.load) {
+            setTimeout(function() {
+              one_done('both');
+            }, 500);
+          } else {
+            window.google.charts.load('current', {packages:["corechart", "sankey"], callback: CoughDrop.Visualizations.handle_callbacks});
+          }
         }
       };
 
