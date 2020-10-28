@@ -36,7 +36,7 @@ class Api::CallbacksController < ApplicationController
         Rails.logger.warn(json_body.to_json)
         verifier = Aws::SNS::MessageVerifier.new
         if !verifier.authentic?(body)
-          return api_error 400, {error: 'inauthentic message'}
+          return api_error 401, {error: 'inauthentic message'}
         end
         message = json_body['Message']
         res = RemoteTarget.process_inbound(message)
