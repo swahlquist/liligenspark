@@ -38,7 +38,7 @@ class Api::CallbacksController < ApplicationController
         if !verifier.authentic?(body)
           return api_error 401, {error: 'inauthentic message'}
         end
-        message = json_body['Message']
+        message = JSON.parse(json_body['Message'])
         res = RemoteTarget.process_inbound(message)
         if res
           render json: {handled: true}
