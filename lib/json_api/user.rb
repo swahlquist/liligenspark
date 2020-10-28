@@ -191,6 +191,7 @@ module JsonApi::User
       json['unread_messages'] = user.settings['unread_messages'] || 0
       json['unread_alerts'] = user.settings['unread_alerts'] || 0
       json['email'] = user.settings['email'] if args[:include_email]
+      json['remote_modeling'] = !!user.settings['preferences']['remote_modeling']
       if args[:supervisor]
         json['edit_permission'] = args[:supervisor].edit_permission_for?(user)
         json['premium'] = user.any_premium_or_grace_period?

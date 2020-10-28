@@ -87,6 +87,9 @@ class BoardContent < ApplicationRecord
   end
 
   def self.attach_as_clone(board)
+    # Manually takes an existing board and makes it a clone 
+    # of its existing parent board (will also make a clone 
+    # of the parent board only if it hasn't already been cloned)
     if board.parent_board
       BoardContent.apply_clone(board.parent_board, board, true)
       board.save!

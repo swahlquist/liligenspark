@@ -1,34 +1,42 @@
 require 'aws-sdk-sns'
 
 module Pusher
-  def self.sms(phone, message)
+  def self.sms(phone, message, origination_number=nil)
     client = config
     raise "phone missing" unless phone
     raise "message missing" unless message
+    orig_phone = phone
     phone.strip!
     if phone.match(/,/)
       return  phone.split(/,/).map{|p| Pusher.sms(p, message)[0]}
     end
     phones = phone.split(/,/)
     if !phone.match(/^\+\d/)
-      phone = "+1" + phone
+      phone = RemoteTarget.canonical_target('sms', phone)
     end
-    phone = phone.gsub(/[^\+\d]/, '')
-    res = client.publish({
+    publish_opts = {
       phone_number: phone,
       # TODO: support app_name
       message: "CoughDrop: #{message}",
       message_attributes: {
         "AWS.SNS.SMS.MaxPrice" => {
           data_type: "Number",
-          string_value: "0.5"
+          string_value: "1.0"
         },
         "AWS.SNS.SMS.SenderID" => {
           data_type: "String",
           string_value: "CoughDrop"
         }
       }
-    })
+    }
+    if origination_number
+      publish_opts[:message_attributes]['AWS.MM.SMS.OriginationNumber'] = {
+        data_type: "String",
+        string_value: origination_number
+      }
+    end
+    
+    res = client.publish(publish_opts)
     message_id = res.message_id
     [message_id]
   end

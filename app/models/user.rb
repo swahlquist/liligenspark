@@ -1181,7 +1181,9 @@ class User < ActiveRecord::Base
       })
     elsif notification_type == 'utterance_shared'
       pref = (self.settings && self.settings['preferences'] && self.settings['preferences']['share_notifications']) || 'email'
-      record.deliver_message(pref, self, args)
+      sharer = User.find_by_global_id(args['sharer']['user_id'])
+      # Utterance.deliver_message
+      record.deliver_message(pref, self, args, sharer)
       if pref == 'none'
         return
       end

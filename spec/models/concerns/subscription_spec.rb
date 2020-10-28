@@ -343,7 +343,8 @@ describe Subscription, :type => :model do
       u.settings['past_purchase_durations'] = [{'role' => 'communicator', 'duration' => 3.years.to_i}]
       expect(u.fully_purchased?).to eq(true)
       expect(u.fully_purchased?(true)).to eq(true)
-      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.any_premium_or_grace_period?(true)).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       expect(u.premium_supporter?).to eq(false)
       expect(u.lapsed_communicator?).to eq(true)
       expect(u.expired_communicator?).to eq(false)
@@ -368,7 +369,8 @@ describe Subscription, :type => :model do
       expect(u.reload.expires_at).to be >= 2.years.from_now - 1.week
       expect(Time).to receive(:now).and_return(3.years.from_now).at_least(1).times
       expect(u.fully_purchased?).to eq(true)
-      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.any_premium_or_grace_period?(true)).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       expect(u.premium_supporter?).to eq(false)
       expect(u.lapsed_communicator?).to eq(true)
       expect(u.expired_communicator?).to eq(false)
@@ -457,7 +459,8 @@ describe Subscription, :type => :model do
       expect(u.recurring_subscription?).to eq(false)
 
       u.expires_at = 2.days.ago
-      expect(u.any_premium_or_grace_period?).to eq(true)
+      expect(u.any_premium_or_grace_period?(true)).to eq(true)
+      expect(u.any_premium_or_grace_period?).to eq(false)
       expect(u.fully_purchased?).to eq(true)
       expect(u.grace_period?).to eq(false)
       expect(u.premium_supporter?).to eq(false)
@@ -2161,11 +2164,16 @@ describe Subscription, :type => :model do
     end
     
     it "should notify users whose expiration is approaching" do
-      u1 = User.create(:expires_at => 3.months.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
-      u2 = User.create(:expires_at => 3.months.from_now + 2.days, :settings => {'subscription' => {'started' => 'sometime'}})
-      u3 = User.create(:expires_at => 2.months.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
-      u4 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      u1 = User.create(:expires_at => 3.months.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u1.reload.billing_state).to eq(:long_term_active_communicator)
+      u2 = User.create(:expires_at => 3.months.from_now + 2.days, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u2.reload.billing_state).to eq(:long_term_active_communicator)
+      u3 = User.create(:expires_at => 2.months.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u3.reload.billing_state).to eq(:long_term_active_communicator)
+      u4 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u4.reload.billing_state).to eq(:long_term_active_communicator)
       u5 = User.create(:expires_at => 1.month.from_now)
+      expect(u5.reload.billing_state).to eq(:trialing_communicator)
       
       expect(SubscriptionMailer).to receive(:deliver_message).with(:expiration_approaching, u1.global_id)
       expect(SubscriptionMailer).to receive(:deliver_message).with(:expiration_approaching, u4.global_id)
@@ -2175,16 +2183,24 @@ describe Subscription, :type => :model do
     end
     
     it "should not notify users whose expiration is approaching more than once" do
-      u1 = User.create(:expires_at => 3.months.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      u1 = User.create(:expires_at => 3.months.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
       u1.settings['subscription']['last_approaching_notification'] = 2.days.ago.iso8601
       u1.save
-      u2 = User.create(:expires_at => 3.months.from_now + 2.days, :settings => {'subscription' => {'started' => 'sometime'}})
-      u3 = User.create(:expires_at => 2.months.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
-      u4 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u1.reload.billing_state).to eq(:long_term_active_communicator)
+      u2 = User.create(:expires_at => 3.months.from_now + 2.days, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u2.reload.billing_state).to eq(:long_term_active_communicator)
+      u3 = User.create(:expires_at => 2.months.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u3.reload.billing_state).to eq(:long_term_active_communicator)
+      u4 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
       u4.settings['subscription']['last_approaching_notification'] = 2.months.ago.iso8601
       u4.save
+      expect(u4.reload.billing_state).to eq(:long_term_active_communicator)
       u5 = User.create(:expires_at => 1.month.from_now)
-      u6 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u5.reload.billing_state).to eq(:trialing_communicator)
+      u6 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'expiration_source' => 'purchase', 'last_purchase_plan_id' => 'asdf'}})
+      expect(u6.reload.billing_state).to eq(:long_term_active_communicator)
+      u7 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u7.reload.billing_state).to eq(:subscribed_communicator)
       
       expect(SubscriptionMailer).to receive(:deliver_message).with(:expiration_approaching, u4.global_id)
       expect(SubscriptionMailer).to receive(:deliver_message).with(:expiration_approaching, u6.global_id)
@@ -2194,6 +2210,27 @@ describe Subscription, :type => :model do
 
       res = User.check_for_subscription_updates
       expect(res[:approaching]).to eq(3)
+      expect(res[:approaching_emailed]).to eq(0)
+    end
+
+    it "should not notify org-sponsored supervisors" do
+      o = Organization.create
+      u1 = User.create(:expires_at => 1.months.from_now, :settings => {'preferences' => {'role' => 'supporter'}, 'subscription' => {'expiration_source' => 'grace'}})
+      expect(u1.reload.billing_state).to eq(:grace_period_supporter)
+      o.add_supervisor(u1.user_name, false)
+      expect(u1.reload.billing_state).to eq(:org_supporter)
+      u2 = User.create(:expires_at => 3.months.from_now + 2.days, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u2.billing_state).to eq(:subscribed_communicator)
+      u3 = User.create(:expires_at => 2.months.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u3.billing_state).to eq(:subscribed_communicator)
+      u4 = User.create(:expires_at => 1.month.from_now, :settings => {'subscription' => {'started' => 'sometime'}})
+      expect(u4.billing_state).to eq(:subscribed_communicator)
+      u5 = User.create(:expires_at => 1.month.from_now)
+      expect(u5.billing_state).to eq(:trialing_communicator)
+      
+      expect(SubscriptionMailer).to_not receive(:deliver_message)
+      res = User.check_for_subscription_updates
+      expect(res[:approaching]).to eq(0)
       expect(res[:approaching_emailed]).to eq(0)
     end
   end
@@ -2358,7 +2395,8 @@ describe Subscription, :type => :model do
 
       expect(u.subscription_override('restore')).to eq(true)
       
-      expect(u.reload.any_premium_or_grace_period?).to eq(true)
+      expect(u.reload.any_premium_or_grace_period?(true)).to eq(true)
+      expect(u.reload.any_premium_or_grace_period?).to eq(false)
       expect(u.reload.billing_state).to eq(:lapsed_communicator)
       expect(u.full_premium?).to eq(false)
       expect(u.reload.modeling_only?).to eq(false)

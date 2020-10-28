@@ -138,5 +138,46 @@ describe Api::CallbacksController, :type => :controller do
       expect(bs.settings['content_type']).to eq('audio/mp3')
       expect(bs.settings['duration']).to eq(111)
     end
+
+    env_wrap({
+      'SMS_ORIGINATORS' => "+15558675309,+79876543,+15551234567,+3719875278,+9416751",
+      'SMS_ENCRYPTION_KEY' => "abcdefg"
+    }) do
+      it "should handle inbound sms" do
+        u = User.create
+        t = RemoteTarget.new(target_type: 'sms', user: u)
+        t.target_index = 1
+        t.contact_id = "mycontact"
+        t.target = "5551234567"
+        t.save!
+
+        v = OpenStruct.new
+        expect(Aws::SNS::MessageVerifier).to receive(:new).and_return(v)
+        expect(v).to receive(:authentic?).and_return(true)
+        request.headers['x-amz-sns-message-type'] = 'Notification'
+        request.headers['x-amz-sns-topic-arn'] = 'fried:sms_inbound:chicken'
+        expect(LogSession).to receive(:message).with({
+          device: nil,
+          message: "EXAMPLE",
+          notify: 'user_only',
+          recipient: u,
+          reply_id: nil,
+          sender: u,
+          sender_id: 'mycontact'
+        })
+        post 'callback', body: {a: '1', 'Message':  {
+          "originationNumber": "+15551234567",
+          "destinationNumber": "+15558675309",
+          "messageKeyword": "JOIN",
+          "messageBody": "EXAMPLE",
+          "inboundMessageId": "cae173d2-66b9-564c-8309-21f858e9fb84",
+          "previousPublishedMessageId": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        }}.to_json
+        expect(response).to be_successful
+        json = JSON.parse(response.body)
+        expect(json).to eq({'handled' => true})
+        # process_inbound
+      end
+    end
   end
 end

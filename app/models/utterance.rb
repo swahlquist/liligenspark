@@ -185,13 +185,15 @@ class Utterance < ActiveRecord::Base
     share_code = Utterance.to_alpha_code(args['share_index'] || 0)
     reply_url = "#{JsonApi::Json.current_host}/u/#{self.reply_nonce}#{share_code}"
     if args['email']
-      self.deliver_message('email', nil, args)
+      # Utterance.deliver_message
+      self.deliver_message('email', nil, args, User.find_by_path(args['user_id']))
       return true
     elsif args['user_id']
       user = User.find_by_path(args['user_id'])
       if user
         contact = user.lookup_contact(args['user_id'])
         if contact
+          # Utterance.deliver_message
           self.deliver_message(contact['contact_type'], nil, {
             'sharer' => {'user_name' => sharer.user_name, 'user_id' => sharer.global_id, 'name' => sharer.settings['name']},
             'recipient_id' => args['user_id'],
@@ -201,7 +203,7 @@ class Utterance < ActiveRecord::Base
             'utterance_id' => self.global_id,
             'reply_url' => reply_url,
             'text' => text
-          })
+          }, user)
         else
           notify('utterance_shared', {
             'sharer' => {'user_name' => sharer.user_name, 'user_id' => sharer.global_id, 'name' => sharer.settings['name']},
@@ -218,7 +220,7 @@ class Utterance < ActiveRecord::Base
     raise "share failed"
   end
 
-  def deliver_message(pref, recipient_user, args)
+  def deliver_message(pref, recipient_user, args, ref_user=nil)
     record = self
     args['sharer'] ||= {}
     if !args['sharer']['user_name'] && (args['sharer_id'] || args['sharer']['user_id'])
@@ -229,6 +231,7 @@ class Utterance < ActiveRecord::Base
         args['sharer']['name'] = sharer.settings['name']
       end
     end
+    ref_user ||= User.find_by_path(args['sharer_id'] || args['sharer']['user_id'])
     if (!args['reply_url'] || !args['reply_id']) && args['share_index']
       share_code = Utterance.to_alpha_code(args['share_index'] || 0)
       args['reply_url'] ||= "#{JsonApi::Json.current_host}/u/#{self.reply_nonce}#{share_code}"
@@ -255,7 +258,20 @@ class Utterance < ActiveRecord::Base
         if args['reply_url']
           msg += "\n\nreply at #{args['reply_url']}"
         end
-        Worker.schedule_for(:priority, Pusher, :sms, cell, msg)
+        origination = nil
+        if ref_user
+          target = RemoteTarget.find_or_assert('sms', cell, ref_user)
+          source = target && target.current_source
+          if source && source[:id]
+            origination = source[:id]
+            target.last_outbound_at = Time.now
+            contact_id = (self.data['share_user_ids'] || [])[args['share_index']] if args['share_index']
+            target.contact_id = contact_id if contact_id
+            target.save
+          end
+        end
+        Worker.schedule_for(:priority, Pusher, :sms, cell, msg, origination)
+    
         if record && record.data
           record.reload
           record.data['sms_attempts'] ||= []

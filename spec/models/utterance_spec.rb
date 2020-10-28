@@ -264,30 +264,65 @@ describe Utterance, :type => :model do
       expect(res).to eq(false)
     end
 
-    it "should allow sending an sms message to a user contact" do
-      u = User.create
-      d = Device.create(user: u)
-      u.settings['cell_phone'] = '123456'
-      u.settings['contacts'] = [
-        { 
-          'hash' => '48toytn4ta84ty',
-          'contact_type' => 'sms',
-          'cell_phone' => '98765',
-          'name' => 'Mom'
-        }
-      ]
-      u.save
-      utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'whatevs'}]})
-      utterance.share_with({'user_id' => "#{u.global_id}x48toytn4ta84ty"}, u)
-      expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
-      Worker.process_queues
-      utterance.reload
-      expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
-      )
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
-      expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
-    end    
+    env_wrap({
+      'SMS_ORIGINATORS' => "+45558675309,+79876543,+45551234567,+3719875278,+9416751",
+      'SMS_ENCRYPTION_KEY' => "abcdefg"
+    }) do
+      it "should allow sending an sms message to a user contact" do
+        u = User.create
+        d = Device.create(user: u)
+        u.settings['cell_phone'] = '123456'
+        u.settings['contacts'] = [
+          { 
+            'hash' => '48toytn4ta84ty',
+            'contact_type' => 'sms',
+            'cell_phone' => '98765',
+            'name' => 'Mom'
+          }
+        ]
+        u.save
+        utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'whatevs'}]})
+        utterance.share_with({'user_id' => "#{u.global_id}x48toytn4ta84ty"}, u)
+        expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
+        Worker.process_queues
+        utterance.reload
+        expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
+          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+        )
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
+        expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      end    
+    end
+
+    env_wrap({
+      'SMS_ORIGINATORS' => "+15558675309,+79876543,+15551234567,+3719875278,+9416751",
+      'SMS_ENCRYPTION_KEY' => "abcdefg"
+    }) do
+      it "should send sms to a user contact with one of the specified originators" do
+        u = User.create
+        d = Device.create(user: u)
+        u.settings['cell_phone'] = '123456'
+        u.settings['contacts'] = [
+          { 
+            'hash' => '48toytn4ta84ty',
+            'contact_type' => 'sms',
+            'cell_phone' => '5558675307',
+            'name' => 'Mom'
+          }
+        ]
+        u.save
+        utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'whatevs'}]})
+        utterance.share_with({'user_id' => "#{u.global_id}x48toytn4ta84ty"}, u)
+        expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
+        Worker.process_queues
+        utterance.reload
+        expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
+          {'cell' => '5558675307', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+        )
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '5558675307', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", "+15551234567")).to eq(true)
+        expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      end    
+    end
   end
  
   describe "deliver_to" do
@@ -387,7 +422,7 @@ describe Utterance, :type => :model do
         'utterance_id' => utterance.global_id,
         'reply_url' => "#{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}#{Utterance.to_alpha_code(0)}",
         'text' => 'hat cat scat',
-      })
+      }, u)
       res = utterance.deliver_to({'sharer_id' => u.global_id, 'user_id' => contact_id, 'share_index' => 0})
       expect(res).to eq(true)
     end
@@ -423,55 +458,60 @@ describe Utterance, :type => :model do
   end
 
   describe "deliver_message" do
-    it "should send a text message to a user" do
-      u = User.create
-      u.settings['cell_phone'] = '123456'
-      utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'howdy'}]})
-      utterance.deliver_message('text', u, {'sharer' => {'name' => 'bob'}})
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', 'from bob - howdy')).to eq(true)
-      expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '123456', 'pushed' => true, 'text' => 'from bob - howdy'}
-      )
-      expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
-    end
+    env_wrap({
+      'SMS_ORIGINATORS' => "+45558675309,+79876543,+45551234567,+3719875278,+9416751",
+      'SMS_ENCRYPTION_KEY' => "abcdefg"
+    }) do
+      it "should send a text message to a user" do
+        u = User.create
+        u.settings['cell_phone'] = '123456'
+        utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'howdy'}]})
+        utterance.deliver_message('text', u, {'sharer' => {'name' => 'bob'}})
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', 'from bob - howdy', nil)).to eq(true)
+        expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
+          {'cell' => '123456', 'pushed' => true, 'text' => 'from bob - howdy'}
+        )
+        expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      end
 
-    it "should include a reply email in an sms message" do
-      u = User.create
-      u.settings['cell_phone'] = '123456'
-      utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'howdy'}]})
-      utterance.data['share_user_ids'] = ['asdf', 'qwer']
-      utterance.save
-      utterance.deliver_message('text', u, {'sharer' => {'name' => 'bob'}, 'share_index' => 1})
-      expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '123456', 'pushed' => true, 'text' => "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B"}
-      )
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B")).to eq(true)
-      expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
-    end
+      it "should include a reply email in an sms message" do
+        u = User.create
+        u.settings['cell_phone'] = '123456'
+        utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'howdy'}]})
+        utterance.data['share_user_ids'] = ['asdf', 'qwer']
+        utterance.save
+        utterance.deliver_message('text', u, {'sharer' => {'name' => 'bob'}, 'share_index' => 1})
+        expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
+          {'cell' => '123456', 'pushed' => true, 'text' => "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B"}
+        )
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B", nil)).to eq(true)
+        expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      end
 
-    it "should allow sending an sms message to a user contact" do
-      u = User.create
-      Device.create(user: u)
-      u.settings['cell_phone'] = '123456'
-      u.settings['contacts'] = [
-        { 
-          'hash' => '48toytn4ta84ty',
-          'contact_type' => 'sms',
-          'cell_phone' => '98765',
-          'name' => 'Mom'
-        }
-      ]
-      u.save
-      utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'whatevs'}]})
-      utterance.share_with({'user_id' => "#{u.global_id}x48toytn4ta84ty"}, u)
-      expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
-      Worker.process_queues
-      utterance.reload
-      expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-        {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
-      )
-      expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A")).to eq(true)
-      expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      it "should allow sending an sms message to a user contact" do
+        u = User.create
+        Device.create(user: u)
+        u.settings['cell_phone'] = '123456'
+        u.settings['contacts'] = [
+          { 
+            'hash' => '48toytn4ta84ty',
+            'contact_type' => 'sms',
+            'cell_phone' => '98765',
+            'name' => 'Mom'
+          }
+        ]
+        u.save
+        utterance = Utterance.create(user: u, data: {'button_list' => [{'label' => 'whatevs'}]})
+        utterance.share_with({'user_id' => "#{u.global_id}x48toytn4ta84ty"}, u)
+        expect(utterance.data['share_user_ids']).to eq(["#{u.global_id}x48toytn4ta84ty"])
+        Worker.process_queues
+        utterance.reload
+        expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
+          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+        )
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
+        expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
+      end
     end
 
     it "should send an email to a user" do

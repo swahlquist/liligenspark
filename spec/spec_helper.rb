@@ -58,6 +58,18 @@ RSpec.configure do |config|
   end
 end
 
+def env_wrap(overrides, &block)
+  fallbacks = {}
+  overrides.each{|k, v| fallbacks[k] = ENV[k] }
+  before(:each) do
+    overrides.each{|k, v| ENV[k] = v }
+  end
+  after(:each) do
+    fallbacks.each{|k, v| ENV[k] = v }
+  end
+  block.call
+end
+
 def write_this_test
   expect("test").to eq("needs written")
 end
