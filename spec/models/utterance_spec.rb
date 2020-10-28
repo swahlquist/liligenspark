@@ -426,6 +426,51 @@ describe Utterance, :type => :model do
       res = utterance.deliver_to({'sharer_id' => u.global_id, 'user_id' => contact_id, 'share_index' => 0})
       expect(res).to eq(true)
     end
+
+    env_wrap({
+      'SMS_ORIGINATORS' => "+15558675309,+79876543,+15551234567,+3719875278,+9416751",
+      'SMS_ENCRYPTION_KEY' => "abcdefg"
+    }) do
+      it "should deliver to a tracked sms target" do
+        u = User.create
+        u.process({'offline_actions' => [{'action' => 'add_contact', 'value' => {'name' => 'Fred', 'contact' => '5558675309'}}]}, {})
+        d = Device.create(user: u)
+        expect(u.reload.settings['contacts'].length).to eq(1)
+        contact_hash = u.settings['contacts'][0]['hash']
+        contact_id = "#{u.global_id}x#{contact_hash}"
+        session = LogSession.message({
+          recipient: u,
+          sender: u,
+          sender_id: contact_id,
+          notify: 'user_only',
+          device: d,
+          message: 'howdy doody'
+        })
+    
+        expect(session.data['author_contact']['name']).to eq('Fred')
+        button_list = [
+          {'label' => 'hat', 'image' => 'http://www.example.com/pib.png'},
+          {'label' => 'cat', 'image' => 'http://www.example.com/pib.png'},
+          {'label' => 'scat', 'image' => 'http://www.example.com/pic.png'}
+        ]
+        utterance = Utterance.create(:data => {
+          'button_list' => button_list,
+          'sentence' => 'hat cat scat',
+          'author_ids' => [contact_id],
+          'reply_ids' => {'0' => Webhook.get_record_code(session)},
+          'share_user_ids' => [u.global_id]
+        })
+
+        res = utterance.deliver_to({'sharer_id' => u.global_id, 'user_id' => contact_id, 'share_index' => 0})
+        expect(res).to eq(true)
+        t = RemoteTarget.last
+        expect(t).to_not eq(nil)
+        expect(t.user).to eq(u)
+        expect(t.target_id).to eq(5309)
+        expect(t.current_source[:id]).to eq('+15551234567')
+        expect(t.contact_id).to eq(contact_id)
+      end
+    end
   end
   
   describe "process_params" do

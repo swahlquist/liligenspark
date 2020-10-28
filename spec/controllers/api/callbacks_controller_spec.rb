@@ -172,7 +172,7 @@ describe Api::CallbacksController, :type => :controller do
           "messageBody": "EXAMPLE",
           "inboundMessageId": "cae173d2-66b9-564c-8309-21f858e9fb84",
           "previousPublishedMessageId": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-        }}.to_json
+      }.to_json }.to_json
         expect(response).to be_successful
         json = JSON.parse(response.body)
         expect(json).to eq({'handled' => true})

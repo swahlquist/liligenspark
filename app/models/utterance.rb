@@ -266,6 +266,7 @@ class Utterance < ActiveRecord::Base
             origination = source[:id]
             target.last_outbound_at = Time.now
             contact_id = (self.data['share_user_ids'] || [])[args['share_index']] if args['share_index']
+            contact_id ||= args['recipient_id']
             target.contact_id = contact_id if contact_id
             target.save
           end
