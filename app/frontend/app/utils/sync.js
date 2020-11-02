@@ -224,16 +224,22 @@ var sync = EmberObject.extend({
   },
   unpair: function() {
     if(sync.current_pairing) {
-      var user_id = sync.current_pairing.room_user_id;
       sync.send(sync.current_pairing.room_user_id, {type: 'unpair'});
       speecher.click('partner_end');
       app_state.set('pairing', null);
-      // Send unpair messages for the next 30 seconds
-      app_state.set('unpaired', (new Date()).getTime());
+      // Send unpair messages for the next 60 seconds
+      var other_user_id = sync.current_pairing.other_user_id;
+      app_state.set('unpaired', other_user_id);
+      setTimeout(function() {
+        if(app_state.get('unpaired') == other_user_id) {
+          app_state.set('unpaired', null);
+        }
+      }, 60000)
+
       // Remove the paired partner from the list of followers
       var follow_stamps = Object.assign({}, app_state.get('followers') || {});
-      delete follow_stamps[user_id];
-      follow_stamps.active = (follow_stamps.active || []).filter(function(u) { return u.user_id != sync.current_pairing.other_user_id; });
+      delete follow_stamps[other_user_id];
+      follow_stamps.active = (follow_stamps.active || []).filter(function(u) { return u.user_id != other_user_id; });
       app_state.set('followers', follow_stamps);
       sync.current_pairing = null;  
     }
@@ -301,8 +307,12 @@ var sync = EmberObject.extend({
         var prior_active_followers = (follow_stamps.active || []).length;
         follow_stamps.active = [];
         for(var key in follow_stamps) {
+          // Add all recently-updated followers to the list
           if(follow_stamps[key] && follow_stamps[key].last_update > (now - (5 * 60 * 1000))) {
-            follow_stamps.active.push(follow_stamps[key].user);
+            // ..Unless they were just unpaired
+            if(follow_stamps[key].user && app_state.get('unpaired') != follow_stamps[key].user.user_id) {
+              follow_stamps.active.push(follow_stamps[key].user);
+            }
           }
         }
         if(follow_stamps.active.length > prior_active_followers) {
@@ -374,11 +384,9 @@ var sync = EmberObject.extend({
           // For 60 seconds after manual unpairing,
           // keep sending the unpair message to
           // ensure it gets delivered
-          if(!app_state.get('pairing') && app_state.get('unpaired') > ((new Date()).getTime() - (60 * 1000))) {
+          if(!app_state.get('pairing')) {
             delete update.paired;
             update.unpaired = true;
-          } else {
-            app_state.set('unpaired', null);
           }
         }
       } else {
