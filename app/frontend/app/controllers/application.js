@@ -535,7 +535,7 @@ export default Controller.extend({
     },
     remote_modeling: function() {
       if(app_state.get('pairing.user_id')) {
-        modal.open('modals/remote-model', {user_id: app_state.get('pairing.user_id')});
+        modal.open('modals/remote-model', {communicator: !app_state.get('pairing.partner'), user_id: app_state.get('pairing.user_id')});
       } else {
         modal.error(i18n.t('remote_modeling_error', "Error loading remote modeling"));
       }

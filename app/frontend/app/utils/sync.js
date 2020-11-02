@@ -222,13 +222,29 @@ var sync = EmberObject.extend({
       }
     });
   },
+  unpair: function() {
+    if(sync.current_pairing) {
+      var user_id = sync.current_pairing.room_user_id;
+      sync.send(sync.current_pairing.room_user_id, {type: 'unpair'});
+      speecher.click('partner_end');
+      app_state.set('pairing', null);
+      // Send unpair messages for the next 30 seconds
+      app_state.set('unpaired', (new Date()).getTime());
+      // Remove the paired partner from the list of followers
+      var follow_stamps = Object.assign({}, app_state.get('followers') || {});
+      delete follow_stamps[user_id];
+      follow_stamps.active = (follow_stamps.active || []).filter(function(u) { return u.user_id != sync.current_pairing.other_user_id; });
+      app_state.set('followers', follow_stamps);
+      sync.current_pairing = null;  
+    }
+  },
   pair_as: function(role, user_id, other_ws_user_id, pair_code) {
     if(role == 'none') {
       // if already pairing for the specified user_id, end it
       if(sync.current_pairing && sync.current_pairing.room_user_id == user_id) {
+        speecher.click('partner_end');
         app_state.set('pairing', null);
         sync.current_pairing = null;
-        // app_state.end_pair();
       }
       return;
     }
@@ -248,6 +264,9 @@ var sync = EmberObject.extend({
       // set pairing state
       CoughDrop.store.findRecord('user', other_user.user_id).then(function(u) {
         var communicator_id = role == 'partner' ? u.get('id') : app_state.get('sessionUser.id');
+        if(role == 'partner') {
+          speecher.click('partner_start');
+        }
         app_state.set('pairing', {partner: role == 'partner', model: true, user_id: u.get('id'), user: u, communicator_id: communicator_id});
       });
     });
@@ -272,14 +291,22 @@ var sync = EmberObject.extend({
           user: user,
           last_update: now
         };  
+        var user_record = CoughDrop.store.peekRecord('user', user.user_id);
+        if(user_record) {
+          user_record.set('last_ws_access', now);
+        }
       }
       if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || follow_stamps.allowed) {
         // Already broadcasting
+        var prior_active_followers = (follow_stamps.active || []).length;
         follow_stamps.active = [];
         for(var key in follow_stamps) {
           if(follow_stamps[key] && follow_stamps[key].last_update > (now - (5 * 60 * 1000))) {
             follow_stamps.active.push(follow_stamps[key].user);
           }
+        }
+        if(follow_stamps.active.length > prior_active_followers) {
+          speecher.click('follower');
         }
       } else if(!follow_stamps.ignore_until || follow_stamps.ignore_until < now) {
         // If this user hasn't asked to follow before
@@ -340,8 +367,19 @@ var sync = EmberObject.extend({
             };  
           }
         }
-        if(app_state.get('pairing') && sync.current_pairing && sync.current_pairing) {
+        if(app_state.get('pairing') && sync.current_pairing) {
           update.paired = true;
+        }
+        if(app_state.get('unpaired')) {
+          // For 60 seconds after manual unpairing,
+          // keep sending the unpair message to
+          // ensure it gets delivered
+          if(!app_state.get('pairing') && app_state.get('unpaired') > ((new Date()).getTime() - (60 * 1000))) {
+            delete update.paired;
+            update.unpaired = true;
+          } else {
+            app_state.set('unpaired', null);
+          }
         }
       } else {
         // Remember, you may have a pairing in-process,
@@ -349,6 +387,8 @@ var sync = EmberObject.extend({
         // there's no way you could be paired
         update.unpaired = true;
       }
+    } else {
+
     }
     if(update.board_state && !update.current_action && update.board_state.id == sync.last_board_id_assertion && app_state.get('sessionUser.id') != user_id) {
       // When someone else navigates you to a board,
@@ -442,6 +482,7 @@ var sync = EmberObject.extend({
 
   },
   confirm_pair: function(code, partner_id) {
+    speecher.click('partner_start');
     sync.send(app_state.get('sessionUser.id'), {
       type: 'accept',
       pair_code: code,
@@ -500,6 +541,7 @@ var sync = EmberObject.extend({
         matched = true;
         // Message in my room!
         if(message.type == 'pair_request') {
+          app_state.set('unpaired', null);
           var auto_accept = app_state.get('sessionUser.preferences.remote_modeling_auto_accept');
           if(app_state.get('speak_mode')) {
             // Someone sent a pair request
@@ -542,6 +584,8 @@ var sync = EmberObject.extend({
           sync.check_following(message.data.sender_id);
           app_state.sync_send_utterance();
         } else if(message.type == 'following') {
+          sync.check_following(message.data.sender_id);
+        } else if(message.type == 'confirm') {
           sync.check_following(message.data.sender_id);
         } else if(message.type == 'pair_confirm') {
           app_state.sync_send_utterance();          

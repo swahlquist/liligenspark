@@ -10,37 +10,48 @@
       {{else}}
         <span class='glyphicon glyphicon-send' style='float: left; font-size: 50px; margin: 0 10px 5px 0;'></span>
       {{/if}}
-      {{t "Remote modeling allows supporters to follow a communicator's actions, and even help prompt them to hit target buttons. Communicators will need to authorize the connection before you can model for them." key='remote_modeling_explanation'}}
+      {{#if model.communicator}}
+        {{t "Remote modeling allows supporters to follow a communicator's actions, and even help prompt them to hit target buttons. Communicators can terminate an active modeling session at any time." key='remote_modeling_communicator_explanation'}}
+      {{else}}
+        {{t "Remote modeling allows supporters to follow a communicator's actions, and even help prompt them to hit target buttons. Communicators will need to authorize the connection before you can model for them." key='remote_modeling_explanation'}}
+      {{/if}}
     </p>
     <div style='clear: left; margin-botom: 10px;'></div>
     {{#if model.user.user_name}}
-      <div class='btn-group' style='width: 100%; margin: 20px 0; display: flex; flex-direction: row;'>
-        <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'follow'}} class={{if following_mode 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>
-          <span class='glyphicon glyphicon-send'></span>
-          {{t "Follow activity<br/>for %{user_name}" key='follow_user' user_name=model.user.user_name}}
-        </button>
-        <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'model'}} class={{if following_mode 'btn btn-default btn-lg' 'btn btn-primary btn-lg'}}>
-          <span class='glyphicon glyphicon-road'></span>
-          {{t "Follow and model activity<br/>for %{user_name}" key='model_for_user' user_name=model.user.user_name}}
-        </button>
-      </div>
+      {{#if model.communicator}}
+        <p>{{t "You are currently in an active remote modeling session with %{user_name}. You can stop this remote connection at any time." user_name=model.user.user_name key='cancel_remote_model_with_user'}}</p>
+      {{else}}
+        <div class='btn-group' style='width: 100%; margin: 20px 0; display: flex; flex-direction: row;'>
+          <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'follow'}} class={{if following_mode 'btn btn-primary btn-lg' 'btn btn-default btn-lg'}}>
+            <span class='glyphicon glyphicon-send'></span>
+            {{t "Follow activity<br/>for %{user_name}" key='follow_user' user_name=model.user.user_name}}
+          </button>
+          <button type='button' style='flex: 1; white-space: normal; max-width: 50%; overflow: hidden; text-overflow: ellipsis;' {{action 'set_modeling' 'model'}} class={{if following_mode 'btn btn-default btn-lg' 'btn btn-primary btn-lg'}}>
+            <span class='glyphicon glyphicon-road'></span>
+            {{t "Follow and model activity<br/>for %{user_name}" key='model_for_user' user_name=model.user.user_name}}
+          </button>
+        </div>
+      {{/if}}
       <div style='margin-top: 30px;'>
-        <button class='btn btn-primary btn-lg' {{action 'request'}} disabled={{connect_pending}}>
-          {{#if model.status.connecting}}
-            {{t "Requesting Connection..." key='requesting_connection'}}
-          {{else if model.status.pair_timeout}}
-            {{t "Request Timed Out" key='request_timed_out'}}
-          {{else if model.status.pair_reject}}
-            {{t "Request Not Accepted" key='request_rejected'}}
-          {{else if model.status.error_connecting}}
-            {{t "Requesting Failed Unexpectedly" key='request_failed'}}
-          {{else}}
-            {{t "Request Connection" key='request_connection'}}
-          {{/if}}
-        </button>
+        {{#unless model.communicator}}
+          <button class='btn btn-primary btn-lg' {{action 'request'}} disabled={{connect_pending}}>
+            {{#if model.status.connecting}}
+              {{t "Requesting Connection..." key='requesting_connection'}}
+            {{else if model.status.pair_timeout}}
+              {{t "Request Timed Out" key='request_timed_out'}}
+            {{else if model.status.pair_reject}}
+              {{t "Request Not Accepted" key='request_rejected'}}
+            {{else if model.status.error_connecting}}
+              {{t "Requesting Failed Unexpectedly" key='request_failed'}}
+            {{else}}
+              {{t "Request Connection" key='request_connection'}}
+            {{/if}}
+          </button>
+        {{/unless}}
         {{#if app_state.pairing}}
-          <button class='btn btn-default' {{action 'end'}}>{{t "End Connection" key='end_connection'}}</button>
+          <button class='btn btn-default btn-lg' {{action 'end'}}>{{t "End Connection" key='end_connection'}}</button>
         {{/if}}
+        <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Close" key='close'}}</button>
       </div>
     {{else}}
       <div style='margin: 20px 0;'>

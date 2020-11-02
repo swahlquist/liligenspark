@@ -22,6 +22,9 @@ var speecher = EmberObject.extend({
   battery_url: "https://d18vdu4p71yql0.cloudfront.net/battery.mp3",
   glug_url: "https://d18vdu4p71yql0.cloudfront.net/glug.mp3",
   dice_url: "https://d18vdu4p71yql0.cloudfront.net/dice.mp3",
+  partner_start_url: "https://d18vdu4p71yql0.cloudfront.net/partner-start.mp3",
+  partner_end_url: "https://d18vdu4p71yql0.cloudfront.net/partner-end.mp3",
+  follower_url: "https://d18vdu4p71yql0.cloudfront.net/follower.mp3",
   voices: [],
   text_direction: function() {
     var voice = speecher.get('voices').find(function(v) { return v.voiceURI == speecher.voiceURI; });

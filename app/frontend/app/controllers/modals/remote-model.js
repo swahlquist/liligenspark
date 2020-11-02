@@ -9,7 +9,7 @@ export default modal.ModalController.extend({
     var _this = this;
     this.set('modeling_type', 'follow');
     if(app_state.get('pairing.model')) {
-      app_state.set('modeling_type', 'model');
+      _this.set('modeling_type', 'model');
     }
     CoughDrop.store.findRecord('user', this.get('model.user_id')).then(function(user) {
       _this.set('model.user', user);
@@ -29,11 +29,7 @@ export default modal.ModalController.extend({
     },
     end: function() {
       if(app_state.get('pairing.user_id')) {
-        sync.send(app_state.get('pairing.user_id'), {
-          type: 'unpair'
-        });
-        app_state.set('pairing', null);
-        sync.current_pairing = null;
+        sync.unpair();
       }
       modal.close();
     },
