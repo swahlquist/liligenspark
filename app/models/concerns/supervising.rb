@@ -50,10 +50,10 @@ module Supervising
     end
   end
   
-  def managing_organization
+  def managing_organization(pending=false)
     orgs = Organization.attached_orgs(self)
-    org = orgs.detect{|o| o['type'] == 'user' && !o['pending'] && o['sponsored'] }
-    org ||= orgs.detect{|o| o['type'] == 'user' && !o['pending'] }
+    org = orgs.detect{|o| o['type'] == 'user' && (pending ? o['pending'] : !o['pending']) && o['sponsored'] }
+    org ||= orgs.detect{|o| o['type'] == 'user' && (pending ? o['pending'] : !o['pending']) }
     org ||= orgs.detect{|o| o['type'] == 'user' }
     if org
       Organization.find_by_global_id(org['id'])
@@ -115,7 +115,7 @@ module Supervising
       return true
     elsif action == 'approve' && key == 'org'
       self.settings['pending'] = false
-      self.update_subscription_organization(self.managing_organization.global_id, false, nil, nil)
+      self.update_subscription_organization(self.managing_organization(true).global_id, false, nil, nil)
       true
     elsif action == 'approve_supervision'
       org = Organization.find_by_global_id(key)

@@ -32,7 +32,7 @@ class Board < ActiveRecord::Base
   after_destroy :flush_related_records
 #  replicated_model
  
-  has_paper_trail :only => [:current_revision, :settings, :name, :key, :public, :parent_board_id, :user_id],
+  has_paper_trail :only => [:current_revision, :settings, :name, :key, :public, :parent_board_id, :user_id, :board_content_id],
                   :if => Proc.new{|b| PaperTrail.request.whodunnit && !PaperTrail.request.whodunnit.match(/^job/) }
   secure_serialize :settings
 

@@ -367,8 +367,10 @@ module Subscription
   
   def subscription_override(type, user_id=nil)
     if type == 'never_expires'
+      self.log_subscription_event(:log => 'subscription override: free forever', :args => {user_id: self.global_id, author_id: user_id})
       self.process({}, {'pending' => false, 'premium_until' => 'forever'})
     elsif type == 'eval'
+      self.log_subscription_event(:log => 'subscription override: eval account', :args => {user_id: self.global_id, author_id: user_id})
       self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'communicator'
       self.update_subscription({
@@ -378,17 +380,20 @@ module Subscription
         'plan_id' => 'eval_monthly_granted'
       })
     elsif type == 'add_voice'
+      self.log_subscription_event(:log => 'subscription override: add premium voice', :args => {user_id: self.global_id, author_id: user_id})
       self.allow_additional_premium_voice!
     elsif type == 'force_logout'
       self.devices.each{|d| d.invalidate_keys! }
       true
     elsif type == 'enable_extras'
+      self.log_subscription_event(:log => 'subscription override: extras enabled', :args => {user_id: self.global_id, author_id: user_id})
       User.purchase_extras({
         'user_id' => self.global_id,
         'premium_symbols' => true,
         'source' => 'admin_override'
       })
     elsif type == 'supporter_credit'
+      self.log_subscription_event(:log => 'subscription override: add supporter credit', :args => {user_id: self.global_id, author_id: user_id})
       User.purchase_extras({
         'user_id' => self.global_id,
         'premium_supporters' => 1,
@@ -400,6 +405,7 @@ module Subscription
         'purchase_id' => 'restore'        
       })
     elsif type == 'add_1' || type == 'communicator_trial' || type == 'add_5_years'
+      self.log_subscription_event(:log => 'subscription override: #{type}', :args => {user_id: self.global_id, author_id: user_id})
       if type == 'communicator_trial'
         self.settings['preferences'] ||= {}
         self.settings['preferences']['role'] = 'communicator'
@@ -422,6 +428,7 @@ module Subscription
         self.save_with_sync('expires')
       end
     elsif type == 'manual_modeler'
+      self.log_subscription_event(:log => 'subscription override: manual modeling', :args => {user_id: self.global_id, author_id: user_id})
       self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
@@ -431,6 +438,7 @@ module Subscription
         'plan_id' => 'slp_monthly_free'
       })
     elsif type == 'manual_supporter' || type == 'granted_supporter'
+      self.log_subscription_event(:log => 'subscription override: #{type}', :args => {user_id: self.global_id, author_id: user_id})
       self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
