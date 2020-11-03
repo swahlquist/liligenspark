@@ -24,7 +24,6 @@ var sync = EmberObject.extend({
       var sub = sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == opts.user_id; });
       var old_sub = null;
       if(sub && sub.started < (now - (60 * 60 * 1000))) {
-        // TODO: wait until connection succeeds befor stopping prior
         old_sub = sub;
         sub = null;
       }
@@ -309,8 +308,8 @@ var sync = EmberObject.extend({
         for(var key in follow_stamps) {
           // Add all recently-updated followers to the list
           if(follow_stamps[key] && follow_stamps[key].last_update > (now - (5 * 60 * 1000))) {
-            // ..Unless they were just unpaired
-            if(follow_stamps[key].user && app_state.get('unpaired') != follow_stamps[key].user.user_id) {
+            // ..Unless they were just unpaired or are the pairing partner
+            if(follow_stamps[key].user && app_state.get('unpaired') != follow_stamps[key].user.user_id && (sync.current_pairing || {}).other_user_id != follow_stamps[key].user.user_id) {
               follow_stamps.active.push(follow_stamps[key].user);
             }
           }

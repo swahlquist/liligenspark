@@ -65,6 +65,7 @@ var evaluation = {
     assessment.label = settings.label;
     assessment.accommodations = settings.accommodations;
     assessment.prompts = settings.prompts;
+    assessment.chimes = settings.chimes;
     if(settings.for_user && !assessment.saved) {
       if(settings.for_user.user_id == 'self') {
         emberSet(settings.for_user, 'user_id', app_state.get('currentUser.id'));
@@ -432,6 +433,8 @@ var evaluation = {
     res.access_settings.push({key: i18n.t('button-text', "button-text"), val: assessment.button_text});
     res.access_settings.push({key: i18n.t('text-position', "text-position"), val: assessment.text_position});
     res.access_settings.push({key: i18n.t('font', "font"), val: assessment.text_font});
+    res.access_settings.push({key: i18n.t('prompts', "prompts"), val: (!!assessment.prompts).toString()});
+    res.access_settings.push({key: i18n.t('chimes', "chimes"), val: (!!assessment.chimes).toString()});
     if(assessment.high_contrast) {
       res.access_settings.push({key: i18n.t('high-contrast', "high-contrast"), val: "true"});
     }
@@ -832,6 +835,7 @@ evaluation.callback = function(key) {
       attempt_maximum: attempt_maximum,
       ppi: window.ppi,
       prompts: true,
+      chimes: true,
       default_library: 'default',
       name: 'Unnamed Eval',
     };
@@ -1295,11 +1299,9 @@ evaluation.callback = function(key) {
       if(board.background.image) {
         board.background.position = board.background.position || "center,0,0,6,1";
       }
-      if(assessment.prompts) {
-        board.background.prompt = {
-          text: prompt_text
-        };
-      }
+      board.background.prompt = {
+        text: prompt_text
+      };
     } else if(step.core) {
       board.background.position = 'center,0,0,10,2';
       board.background.prompt = null;
@@ -1357,6 +1359,12 @@ evaluation.callback = function(key) {
         text: bg_prompt,
         loop: true
       };
+    }
+    if(assessment.prompts === false) {
+      if(board.background) {
+        delete board.background.prompt;
+        delete board.background.delay_prompts
+      }
     }
     var loc = null;
     var spacing = step.spacing || 1;
@@ -1642,7 +1650,11 @@ evaluation.callback = function(key) {
         handling = true;
         // ding, wait, then jump!
         if(!step.prompts) {
-          speecher.click(button.id == 'button_correct' ? 'ding' : null);
+          if(assessment.chimes === false) {
+            speecher.click();          
+          } else {
+            speecher.click(button.id == 'button_correct' ? 'ding' : null);
+          }
           working.attempts = (working.attempts || 0) + 1;
           working.correct = (working.correct || 0);
         } else if(button.id == 'button_done') {

@@ -293,7 +293,6 @@ class Board < ActiveRecord::Base
     end
     UserLink.invalidate_cache_for(self)
           
-    # TODO: encrypted search, lol
     self.settings['locale'] ||= 'en'
     langs = []
     (BoardContent.load_content(self, 'translations') || {}).each do |k, trans|
@@ -302,6 +301,7 @@ class Board < ActiveRecord::Base
       end
     end
     self.settings['locales'] = ([self.settings['locale']] + langs).uniq
+    # TODO: encrypted search, lol
     self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
     self.search_string = self.fully_listed? ? self.settings['search_string'] : nil
     true

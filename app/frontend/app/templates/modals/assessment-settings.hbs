@@ -67,6 +67,14 @@
             </label>
           </div>
         </div>
+        <div class='form-group'>
+          <div class="col-sm-9 col-sm-offset-3">
+            <label id='home'>
+              {{input type='checkbox' checked=settings.chimes}}
+              {{t "Play a sound on correct actions" key='play_sound_on_success'}}
+            </label>
+          </div>
+        </div>
       {{/unless}}
       <!-- 
         attempt_minimum, attempt_maximum, mastery_cutoff, target
