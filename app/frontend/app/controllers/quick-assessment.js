@@ -35,7 +35,7 @@ export default modal.ModalController.extend({
       this.get('model.user.active_goals').forEach(function(goal) {
         res.push({id: goal.get('id'), name: goal.get('summary')});
       });
-      res.push({id: '', name: i18n.t('clear_assessment_type', "Clear Assessment Type")});
+      res.push({id: '', name: i18n.t('clear_assessment_type', "[ Clear Assessment Type ]")});
     }
     return res;
   }),

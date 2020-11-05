@@ -77,27 +77,34 @@ var session = EmberObject.extend({
   authenticate: function(credentials) {
     var _this = this;
     var res = new RSVP.Promise(function(resolve, reject) {
-      var data = {
-        grant_type: 'password',
-        client_id: 'browser',
-        client_secret: credentials.client_secret,
-        username: credentials.identification,
-        password: credentials.password,
-        device_id: capabilities.device_id(),
-        long_token: credentials.long_token,
-        mobile: (!!capabilities.mobile).toString()
+      var go = function(password) {
+        var data = {
+          grant_type: 'password',
+          client_id: 'browser',
+          client_secret: credentials.client_secret,
+          username: credentials.identification,
+          password: password,
+          device_id: capabilities.device_id(),
+          long_token: credentials.long_token,
+          mobile: (!!capabilities.mobile).toString()
+        };
+  
+        persistence.ajax('/token', {method: 'POST', data: data}).then(function(response) {
+          session.confirm_authentication(response).then(function() {
+            resolve(response);
+          });
+        }, function(data) {
+          var xhr = data.fakeXHR || {};
+          run(function() {
+            reject(xhr.responseJSON || xhr.responseText);
+          });
+        });  
       };
-
-      persistence.ajax('/token', {method: 'POST', data: data}).then(function(response) {
-        session.confirm_authentication(response).then(function() {
-          resolve(response);
-        });
-      }, function(data) {
-        var xhr = data.fakeXHR || {};
-        run(function() {
-          reject(xhr.responseJSON || xhr.responseText);
-        });
-      });
+      session.hashed_password(credentials.password).then(function(pw) {
+        go(pw);
+      }, function(err) {
+        go(credentials.password);
+      })
     });
     res.then(null, function() { });
     return res;

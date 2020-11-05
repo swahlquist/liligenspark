@@ -19,6 +19,22 @@ import {
 import editManager from './edit_manager';
 var sync = EmberObject.extend({
   subscribe: function(opts) {
+    if(!sync.con) {
+      return new Promise(function(res, rej) {
+        var check = function() {
+          if(!sync.con) {
+            setTimeout(check, 500);
+          } else  {
+            sync.subscribe(opts).then(function(success) {
+              res(success);
+            }, function(err) {
+              rej(err);
+            });
+          }
+        };
+        setTimeout(check, 500);
+      });
+    }
     return new Promise(function(resolve, reject) {
       var now = (new Date()).getTime();
       var sub = sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == opts.user_id; });
@@ -114,12 +130,21 @@ var sync = EmberObject.extend({
     return res;
   },
   connect: function(user) {
-    if(!app_state || !app_state.get || !stashes || !stashes.get) {
-      console.log("PENDING");
-      runLater(function() {
-        sync.connect(user);
-      }, 100);
-      return;
+    if(!app_state || !app_state.get || !stashes || !stashes.get || !stashes.get('ws_url')) {
+      return new Promise(function(res, rej) {
+        var check = function() {
+          if(!app_state || !app_state.get || !stashes || !stashes.get || !stashes.get('ws_url')) {
+            setTimeout(check, 500);
+          } else {
+            sync.connect(user).then(function(success) {
+              res(success);
+            }, function(err) {
+              rej(err);
+            });
+          }
+        };
+        setTimeout(check, 500);
+      });
     }
     var connect_promise = new Promise(function(resolve, reject) {
       if(!window.ActionCable) { return reject({error: 'no ActionCable'}); }

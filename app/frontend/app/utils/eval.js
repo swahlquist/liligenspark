@@ -776,7 +776,6 @@ evaluation.callback = function(key) {
       next_word();
     }
     words.prefetched = true;
-    evaluation.words = words;
   }
   evaluation.checks_for = evaluation.checks_for || {};
   var user_id = app_state.get('sessionUser.id');
@@ -2507,6 +2506,7 @@ var words = [
   {label: 'done', type: 'filler', urls: {photos: "", lessonpix: "", pcs_hc: "", pcs: "", twemoji: "", default: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2705.svg"}},
   {label: 'backgrounds', type: 'filler', urls: {intro: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20enter_1.png", intro2: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/service_235_g.svg", find_target: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Magnifying-Glass_918_708000.svg", diff_target: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/choose.png", symbols: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f5bc.svg", find_shown: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/point.png", open_ended: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/tell.png", categories: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/living%20thing.png", inclusion_exclusion_association: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/groups.png", literacy: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20read_2.png", done: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f389.svg"}},
 ];
+evaluation.words = words;
 
 evaluation.level_prompt = function(step) {
   var res = "blank";
