@@ -39,6 +39,7 @@ export default Route.extend({
       parent_id: model.get('parent_board_id'),
       name: model.get('name'),
       has_fallbacks: model.get('has_fallbacks'),
+      extra_back: model.get('local_only') && model.get('extra_back'),
       default_locale: model.get('locale'),
       copy_version: model.get('copy_version'),
       integration_name: model.get('integration') && model.get('integration_name'),

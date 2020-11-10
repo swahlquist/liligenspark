@@ -1189,8 +1189,9 @@ export default Controller.extend({
     'app_state.empty_board_history',
     'app_state.currentUser.preferences.device.always_show_back',
     'app_state.eval_mode',
+    'app_state.currentBoardState.extra_back',
     function() {
-      return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back') || this.get('eval_mode'));
+      return (!this.get('app_state.empty_board_history') || this.get('app_state.currentUser.preferences.device.always_show_back') || this.get('eval_mode') || app_state.get('currentBoardState.extra_back'));
     }
   ),
   on_home: computed(

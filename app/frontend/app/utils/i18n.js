@@ -1374,6 +1374,11 @@ var i18n = EmberObject.extend({
     zh: "chi",
     zu: "zul",
   },
+  locales_localized: {
+    en: "English",    
+    es: "Español",
+    fr: "Français"
+  },
   locales: {
     af_NA: "Afrikaans (Namibia)",
     af_ZA: "Afrikaans (South Africa)",

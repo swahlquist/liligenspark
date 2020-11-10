@@ -1,12 +1,12 @@
 import Controller from '@ember/controller';
-import modal from '../utils/modal';
+import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import obf from '../utils/obf';
 import emergency from '../utils/obf-emergency';
 import persistence from '../utils/persistence';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
-import { computed, observer } from '@ember/object';
+import { computed, observer, set as emberSet } from '@ember/object';
 
 export default Controller.extend({
   preferred_locale: computed('last_locale', function() {
@@ -16,7 +16,6 @@ export default Controller.extend({
   locales: computed(function() {
     var res = [];
     var pref = this.get('preferred_locale');
-    var locs = i18n.locales;
     for(var key in emergency.boards) {
       var starters = (emergency.boards[key] || []).filter(function(b) { return b.starter; });
       res.push({
@@ -24,7 +23,7 @@ export default Controller.extend({
         open: pref == key,
         boards: starters,
         tally: i18n.t('n_boards', "board", {count: starters.length}),
-        locale_text: locs[key] || key,
+        locale_text: i18n.locales_localized[key] || i18n.locales[key] || key,
         icon_class: "glyphicon glyphicon-globe"
       });
     }
@@ -34,5 +33,16 @@ export default Controller.extend({
 
   }),
   actions: {
+    pick: function(board) {
+      window.emergency = emergency;
+      var list = this.get('locales');
+      list.forEach(function(loc) {
+        loc.boards.forEach(function(b) {
+          console.log(b.id, board.id);
+          emberSet(b, 'chosen', (b == board));
+        });  
+      });
+      app_state.home_in_speak_mode({reminded: true, force_board_state: {key: board.path}});
+    }
   }
 });

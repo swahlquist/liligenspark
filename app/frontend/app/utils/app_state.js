@@ -54,7 +54,7 @@ var app_state = EmberObject.extend({
     this.set('stashes', stashes);
     this.set('geolocation', geolocation);
     this.set('installed_app', capabilities.installed_app);
-    this.set('no_linky', capabilities.installed_app && capabilities.system == 'iOS');
+    this.set('no_linky', true); //capabilities.installed_app && capabilities.system == 'iOS');
     this.set('licenseOptions', CoughDrop.licenseOptions);
     this.set('device_name', capabilities.readable_device_name);
     var settings = window.domain_settings || {};
@@ -604,7 +604,12 @@ var app_state = EmberObject.extend({
     opts = opts || {};
     var history = this.get_history();
     var state = history.pop();
-    if(!state) { return; }
+    if(!state) { 
+      if(app_state.get('currentBoardState.extra_back') == 'emergency') {
+        this.controller.transitionToRoute('offline_boards');
+      }
+      return; 
+    }
     buttonTracker.transitioning = true;
     if(state && state.id && state.id == this.get('currentBoardState.id')) {
       buttonTracker.transitioning = false;
@@ -1701,7 +1706,9 @@ var app_state = EmberObject.extend({
         buttonTracker.hit_spots = [];
         app_state.set('suggestion_id', null);
         if(this.get('last_speak_mode') !== false) {
-          app_state.set('sessionUser.request_alert', null);
+          if(app_state.get('sessionUser')) {
+            app_state.set('sessionUser.request_alert', null);
+          }
           app_state.set('pairing', null);
           app_state.set('followers', null);
           app_state.set('sync_utterance', null);
@@ -1851,6 +1858,9 @@ var app_state = EmberObject.extend({
   auto_exit_speak_mode: observer('speak_mode_started', 'medium_refresh_stamp', function() {
     var now = (new Date()).getTime();
     var redirect_option = false;
+    if(app_state.controller && app_state.controller.get('board.model.local_only') && app_state.controller.get('board.model.obf_type') == 'emergency') {
+      return;
+    }
     // if we're speaking as the current user and they're a limited supervisor, or if
     // we're speaking/modeling related to a supervisee and they're expired, limit
     // the session to 15 minutes and notify them of the time limit.

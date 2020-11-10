@@ -1,6 +1,7 @@
 <div class='row'>
   <div class='col-sm-4 col-sm-offset-4'>
     <h2>{{t "Always-Available Boards" key='always_available_boards'}}</h2>
+    <p>{{t "Below is a collection of free and always-available emergency and critical-use boards that we provide along with our partners. Anyone who downloads the %app_name% app will always have access to these boards, with or without an Internet connection." key='offline_boards_explainer'}}</p>
     <form class="form-horizontal">
       {{#each locales as |loc|}}
         <div style='margin-bottom: 20px;'>
@@ -8,7 +9,7 @@
             <div class="list-group">
               {{#each loc.boards as |board|}}
                 {{#if board.starter}}
-                  {{#link-to 'board' board.path class='list-group-item'}}{{board.name}}{{/link-to}}
+                  <a href="#" class={{if board.chosen 'list-group-item active' 'list-group-item'}} {{action 'pick' board}}>{{board.name}}</a>
                 {{/if}}
               {{/each}}
             </div>

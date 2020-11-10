@@ -15,6 +15,8 @@ var obf = EmberObject.extend({
       attributes: {}
     }});
     board.set('local_only', true);
+    board.set('extra_back',  hash['extra_back']);
+    board.set('obf_type', hash['obf_type']);
     board.set('grid', hash['grid']);
     
     board.set('id', id);

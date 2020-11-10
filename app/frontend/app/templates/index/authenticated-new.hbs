@@ -570,6 +570,14 @@
               {{t "My Account" key='my_account'}}
             {{/link-to}}
           </div>
+          {{#if app_state.feature_flags.emergency_boards}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              {{#link-to 'offline_boards' class='btn big_button btn-default emergency_button'}}
+                <span class='glyphicon glyphicon-exclamation-sign'></span>
+                {{t "Critical Access" key='critical_access'}}
+              {{/link-to}}
+            </div>
+          {{/if}}
         {{else if persistence.online}}
           {{#if app_state.currentUser.current_badge}}
             {{badge-progress badge=app_state.currentUser.current_badge big=true}}
