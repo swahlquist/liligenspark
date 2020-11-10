@@ -72,6 +72,10 @@ export default Component.extend({
         ignore = true;
         event.fake_event = true;
       }
+    } else if(event.clientX == 0 && event.clientY == 0) {
+      // on window blur if the focus is on a dropdown,
+      // it seems to trigger a phantom mouseup event
+      ignore = true;
     }
     if(!ignore) {
       this.send('close', event);
