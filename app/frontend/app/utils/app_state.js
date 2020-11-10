@@ -54,7 +54,7 @@ var app_state = EmberObject.extend({
     this.set('stashes', stashes);
     this.set('geolocation', geolocation);
     this.set('installed_app', capabilities.installed_app);
-    this.set('no_linky', true); //capabilities.installed_app && capabilities.system == 'iOS');
+    this.set('no_linky', capabilities.installed_app && capabilities.system == 'iOS');
     this.set('licenseOptions', CoughDrop.licenseOptions);
     this.set('device_name', capabilities.readable_device_name);
     var settings = window.domain_settings || {};
