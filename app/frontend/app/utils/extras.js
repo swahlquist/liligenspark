@@ -229,6 +229,16 @@ import app_state from './app_state';
       var error = options.error;
       options.success = null;
       options.error = null;
+      var error_prep = function(xhr, message, data) {
+        if(xhr.responseJSON && !xhr.responseJSON.errors) {
+          var response = xhr.responseJSON;
+          response.errors = [JSON.parse(xhr.responseText)];
+          response.errors[0].parsed = true;
+          xhr.responseText = JSON.stringify(response);
+          xhr.responseJSON = response;
+        }
+
+      };
       var res = $.realAjax(options).then(function(data, message, xhr) {
         if(typeof(data) == 'string') {
           data = {text: data};
@@ -240,6 +250,7 @@ import app_state from './app_state';
           } else {
             console.log("ember ajax error: " + data.status + ": " + data.error + " (" + options.url + ")");
             if(error) {
+              error_prep(xhr, message, data);
               error.call(this, xhr, message, data);
               // The bowels of ember aren't expecting $.ajax to return a real
               // promise and so they don't catch the rejection properly, which
@@ -291,11 +302,12 @@ import app_state from './app_state';
             });
           }
         }
+        error_prep(xhr, message, result);
         if(xhr.responseJSON && xhr.responseJSON.error) {
           result = xhr.responseJSON.error;
         }
         console.log("ember ajax error: " + xhr.status + ": " + result + " (" + options.url + ")");
-        if(error) {
+        if(error && xhr.responseJSON) {
           error.call(this, xhr, message, result);
         }
         var rej = RSVP.reject({

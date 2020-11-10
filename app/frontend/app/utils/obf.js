@@ -117,7 +117,7 @@ var obf = EmberObject.extend({
       }
       if(button.sound) {
         var snd = Object.assign({}, button.sound);
-        snd.id = "snd_" + (++shell.id_index);
+        snd.id = "tmpsnd_" + (++shell.id_index);
         var existing = CoughDrop.store.peekRecord('sound', img.id);
         if(existing && existing.get('incomplete')) {
           existing.set('url', snd.url);

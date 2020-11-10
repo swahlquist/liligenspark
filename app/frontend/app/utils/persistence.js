@@ -2669,7 +2669,7 @@ persistence.DSExtend = {
           if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
             // for expired tokens, allow local results as a fallback
             local_fallback = true;
-          } else if(err && err.errors && err.errors[0] && err.errors[0].status && err.errors[0].status.substring(0, 1) == '5') {
+          } else if(err && err.errors && err.errors[0] && err.errors[0].status && err.errors[0].status.toString().substring(0, 1) == '5') {
             // for server errors, allow local results as a fallback
             local_fallback = true;
           } else if(err && err.fakeXHR && err.fakeXHR.status === 0) {
@@ -2680,6 +2680,9 @@ persistence.DSExtend = {
             local_fallback = true;
           } else {
             // any other exceptions?
+          }
+          if(err && !err.error && err.errors) {
+            err.error = err.errors[0];
           }
           if(local_fallback) {
             return original_find.then(local_processed, function() { return RSVP.reject(err); });
