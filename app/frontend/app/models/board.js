@@ -159,10 +159,21 @@ CoughDrop.Board = DS.Model.extend({
     var images = CoughDrop.store.peekAll('image');
     var result = [];
     var missing = false;
+    var fallbacks = this.get('fallback_images') || [];
     this.get('used_buttons').forEach(function(button) {
       if(button && button.image_id) {
         var image = images.findBy('id', button.image_id.toString());
         if(image) {
+          if(!image.get('license')) {
+            var fb = fallbacks.find(function(i) { return i.url == image.get('url'); });
+            if(fb && fb.license) {
+              image.set('license', fb.license);
+            } else {
+              CoughDrop.store.findRecord('image', button.image_id).then(function(img) {
+                image.set('license', img.get('license'));
+              });    
+            }
+          }
           result.push(image);
         } else {
 //          console.log('missing image ' + button.image_id);
@@ -201,10 +212,22 @@ CoughDrop.Board = DS.Model.extend({
     var sounds = CoughDrop.store.peekAll('sound');
     var result = [];
     var missing = false;
+    var fallbacks = this.get('fallback_sounds') || [];
     this.get('used_buttons').forEach(function(button) {
       if(button && button.sound_id) {
         var sound = sounds.findBy('id', button.sound_id.toString());
         if(sound) {
+          if(!sound.get('license')) {
+            var fb = fallbacks.find(function(i) { return i.url == sound.get('url'); });
+            if(fb && fb.license) {
+              sound.set('license', fb.license);
+            } else {
+              CoughDrop.store.findRecord('sound', button.sound_id).then(function(snd) {
+                sound.set('license', snd.get('license'));
+              });    
+
+            }
+          }
           result.push(sound);
         } else {
 //          console.log('missing sound ' + button.sound_id);
@@ -529,7 +552,26 @@ CoughDrop.Board = DS.Model.extend({
     var res = {};
     res[this.get('visibility')] = true;
     return res;
-  }),  
+  }),
+  lookup_editable_source: observer('local_only', 'editable_source', 'editable_source_key', function() {
+    if(this.get('local_only')) {
+      if(this.get('editable_source_key') && this.get('editable_source.key') != this.get('editable_source_key')) {
+        var _this = this;
+        var key = _this.get('editable_source_key');
+        CoughDrop.store.findRecord('board', key).then(function(board) {
+          if(_this.get('editable_source_key') == key) {
+            _this.set('editable_source', board);
+          }
+        }, function(err) { });
+      }
+    }
+  }),
+  uncopyable: computed('local_only', 'editable_source', function() {
+    if(this.get('local_only')) {
+      return !this.get('editable_source');
+    }
+    return false;
+  }),
   create_copy: function(user, make_public) {
     var board = CoughDrop.store.createRecord('board', {
       parent_board_id: this.get('id'),
@@ -549,6 +591,9 @@ CoughDrop.Board = DS.Model.extend({
       for_user_id: (user && user.get('id')),
       translations: this.get('translations')
     });
+    if(this.get('local_only')) {
+      board.set('parent_board_id', null);
+    }
     if(board.get('intro')) {
       board.set('intro.unapproved', true);
     }

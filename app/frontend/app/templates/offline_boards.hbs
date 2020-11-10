@@ -1,0 +1,20 @@
+<div class='row'>
+  <div class='col-sm-4 col-sm-offset-4'>
+    <h2>{{t "Always-Available Boards" key='always_available_boards'}}</h2>
+    <form class="form-horizontal">
+      {{#each locales as |loc|}}
+        <div style='margin-bottom: 20px;'>
+          {{#preference-box title=loc.locale_text glyph=loc.icon_class title_key=loc.locale closed_text=loc.tally open=loc.open}}
+            <div class="list-group">
+              {{#each loc.boards as |board|}}
+                {{#if board.starter}}
+                  {{#link-to 'board' board.path class='list-group-item'}}{{board.name}}{{/link-to}}
+                {{/if}}
+              {{/each}}
+            </div>
+          {{/preference-box}}
+        </div>
+      {{/each}}
+    </form>
+  </div>
+</div>

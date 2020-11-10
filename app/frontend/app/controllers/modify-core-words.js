@@ -43,7 +43,7 @@ export default modal.ModalController.extend({
   word_lines: computed('words', function() {
     return (this.get('words') || []).join('\n');
   }),
-  raw_words_list: computer('words', function() {
+  raw_words_list: computed('words', function() {
     var div = document.createElement('div');
     (this.get('words') || []).each(function(w) {
       var span = document.createElement('span');

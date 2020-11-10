@@ -206,7 +206,11 @@
           {{#if app_state.currentBoardState.integration_name}}
             {{app_state.currentBoardState.integration_name}}
           {{else}}
-            {{#link-to 'user' app_state.current_board_user_name}}{{app_state.current_board_user_name}}{{/link-to}} /
+            {{#if board.model.local_only}}
+              {{app_state.current_board_user_name}} / 
+            {{else}}
+              {{#link-to 'user' app_state.current_board_user_name}}{{app_state.current_board_user_name}}{{/link-to}} /
+            {{/if}}
             {{app_state.current_board_name}}
           {{/if}}
           {{#if stashes.board_level}}
@@ -510,9 +514,11 @@
                     <span class="wide">{{t "Purchase Board" key="purchase_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-usd"></span>
                   </a>
                 {{else}}
-                  <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
-                    <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
-                  </a>
+                  {{#unless board.model.uncopyable}}
+                    <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
+                      <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
+                    </a>
+                  {{/unless}}
                 {{/if}}
                 {{#unless app_state.current_board_is_home}}
                   {{#unless app_state.currentUser.preferences.home_board}}
@@ -522,22 +528,24 @@
                   {{/unless}}
                 {{/unless}}
               {{/if}}
-              {{#if app_state.currentUser}}
-                <a class='btn btn-default not_really_skinny' href="#" {{action "star"}}>
-                  <img src={{board.starImage}} alt={{board.starAlt}} style="margin-top: -5px; width: 20px;"/>
-                  <span class="wide">{{t "Like" key="star"}}</span> <span class="badge">{{board.stars}}</span>
-                </a>
-              {{else}}
-                <span class='btn btn-default not_really_skinny' href="#">
-                  <img src={{board.starImage}} alt={{board.starAlt}} style="margin-top: -5px; width: 20px;"/>
-                  <span class="wide">{{t "Like" key="star"}}</span> <span class="badge">{{board.stars}}</span>
-                </span>
-              {{/if}}
-              {{#if board.model.shareable}}
-                <a class='btn btn-default' href="#" {{action "shareBoard"}}>
-                  <span class="wide">{{t "Share" key="share"}}</span><span class="skinny real_skinny glyphicon glyphicon-share"></span>
-                </a>
-              {{/if}}
+              {{#unless board.model.uncopyable}}
+                {{#if app_state.currentUser}}
+                  <a class='btn btn-default not_really_skinny' href="#" {{action "star"}}>
+                    <img src={{board.starImage}} alt={{board.starAlt}} style="margin-top: -5px; width: 20px;"/>
+                    <span class="wide">{{t "Like" key="star"}}</span> <span class="badge">{{board.stars}}</span>
+                  </a>
+                {{else}}
+                  <span class='btn btn-default not_really_skinny' href="#">
+                    <img src={{board.starImage}} alt={{board.starAlt}} style="margin-top: -5px; width: 20px;"/>
+                    <span class="wide">{{t "Like" key="star"}}</span> <span class="badge">{{board.stars}}</span>
+                  </span>
+                {{/if}}
+                {{#if board.model.shareable}}
+                  <a class='btn btn-default' href="#" {{action "shareBoard"}}>
+                    <span class="wide">{{t "Share" key="share"}}</span><span class="skinny real_skinny glyphicon glyphicon-share"></span>
+                  </a>
+                {{/if}}
+              {{/unless}}
               <span class="dropdown" style="display: inline-block;">
                 <a class='btn btn-default' href="#" data-toggle="dropdown">
                   <span class="wide">{{t "More" key="more"}} <b class="caret"></b></span><span class="skinny real_skinny glyphicon glyphicon-chevron-down"></span>
@@ -546,45 +554,55 @@
                   <li role="presentation">
                     <a role="menuitem" tabindex="-1" href="#" {{action "boardDetails"}}>{{t "Board Details" key="board_details"}}</a>
                   </li>
-                  {{#if app_state.currentUser}}
-                    {{#if board.model.permissions.edit}}
+                  {{#unless board.model.uncopyable}}
+                    {{#if app_state.currentUser}}
+                      {{#if board.model.permissions.edit}}
+                        <li role="presentation">
+                          <a role="menuitem" tabindex="-1" href="#" {{action "toggleEditMode"}}>{{t "Edit Board" key='edit_board'}}</a>
+                        </li>
+                      {{/if}}
                       <li role="presentation">
-                        <a role="menuitem" tabindex="-1" href="#" {{action "toggleEditMode"}}>{{t "Edit Board" key='edit_board'}}</a>
+                        <a role="menuitem" tabindex="-1" href="#" {{action "tweakBoard"}}>{{t "Make a Copy" key="make_copy"}}</a>
+                      </li>
+                      {{#if app_state.current_board_not_home_or_supervising}}
+                        <li role="presentation">
+                          <a role="menuitem" tabindex="-1" href="#" {{action "setAsHome"}}>{{t "Set as Home Board" key="set_as_home"}}</a>
+                        </li>
+                      {{/if}}
+                      <li role="presentation">
+                          <a role="menuitem" tabindex="-1" href="#" {{action "add_to_sidebar"}}>{{t "Add to Sidebar" key="add_to_sidebar"}}</a>
                       </li>
                     {{/if}}
                     <li role="presentation">
-                      <a role="menuitem" tabindex="-1" href="#" {{action "tweakBoard"}}>{{t "Make a Copy" key="make_copy"}}</a>
+                      <a role="menuitem" tabindex="-1" href="#" {{action "downloadBoard"}}>{{t "Download Board" key="download_board"}}</a>
                     </li>
-                    {{#if app_state.current_board_not_home_or_supervising}}
-                      <li role="presentation">
-                        <a role="menuitem" tabindex="-1" href="#" {{action "setAsHome"}}>{{t "Set as Home Board" key="set_as_home"}}</a>
-                      </li>
-                    {{/if}}
                     <li role="presentation">
-                        <a role="menuitem" tabindex="-1" href="#" {{action "add_to_sidebar"}}>{{t "Add to Sidebar" key="add_to_sidebar"}}</a>
+                      <a role="menuitem" tabindex="-1" href="#" {{action "printBoard"}}>{{t "Print Board" key="print_board"}}</a>
                     </li>
-                  {{/if}}
-                  <li role="presentation">
-                    <a role="menuitem" tabindex="-1" href="#" {{action "downloadBoard"}}>{{t "Download Board" key="download_board"}}</a>
-                  </li>
-                  <li role="presentation">
-                    <a role="menuitem" tabindex="-1" href="#" {{action "printBoard"}}>{{t "Print Board" key="print_board"}}</a>
-                  </li>
-                  {{#if board.model.levels}}
-                    {{#if board.model.multiple_copies}}
-                      <li role="presentation">
-                        <a role='menuitem' tabindex='-1' href="#" {{action 'list_copies'}}>{{t "View Copies" key="view_copies"}}</a>
-                      </li>
-                    {{else if board.model.copy.key}}
-                      <li role="presentation">
-                        {{#link-to 'board' board.model.copy.key role='menuitem' tabindex='-1'}}{{t "View My Copy" key="view_my_copy"}}{{/link-to}}
-                      </li>
-                    {{else if board.model.original.key}}
-                      <li role="presentation">
-                        {{#link-to 'board' board.model.original.key role='menuitem' tabindex='-1'}}{{t "View Original" key="original_board"}}{{/link-to}}
-                      </li>
+                    {{#if board.model.local_only}}
+                      {{#if board.model.editable_source_key}} 
+                          <li role="presentation">
+                            {{#link-to 'board' board.model.editable_source_key role='menuitem' tabindex='-1'}}{{t "Editable Version" key="editable_version"}}{{/link-to}}
+                          </li>
+                      {{/if}}
+                    {{else}}
+                      {{#if board.model.levels}}
+                        {{#if board.model.multiple_copies}}
+                          <li role="presentation">
+                            <a role='menuitem' tabindex='-1' href="#" {{action 'list_copies'}}>{{t "View Copies" key="view_copies"}}</a>
+                          </li>
+                        {{else if board.model.copy.key}}
+                          <li role="presentation">
+                            {{#link-to 'board' board.model.copy.key role='menuitem' tabindex='-1'}}{{t "View My Copy" key="view_my_copy"}}{{/link-to}}
+                          </li>
+                        {{else if board.model.original.key}}
+                          <li role="presentation">
+                            {{#link-to 'board' board.model.original.key role='menuitem' tabindex='-1'}}{{t "View Original" key="original_board"}}{{/link-to}}
+                          </li>
+                        {{/if}}
+                      {{/if}}
                     {{/if}}
-                  {{/if}}
+                  {{/unless}}
                 </ul>
               </span>
             {{/if}}

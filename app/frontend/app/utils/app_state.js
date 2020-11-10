@@ -496,7 +496,26 @@ var app_state = EmberObject.extend({
       stashes.persist('board_level', new_state.level);
     }
     this.set('referenced_board', new_state);
-    this.controller.transitionToRoute('board', new_state.key);
+    var _this = this;
+    var promise = new RSVP.Promise(function(resolve, reject) {
+      _this.controller.transitionToRoute('board', new_state.key);
+      var check = function() {
+        check.attempts = (check.attempts || 0);
+        if(!buttonTracker.transitioning) { check.attempts++; }
+        if(app_state.get('currentBoardState.key') == new_state.key) {
+          resolve();
+        } else {
+          if(check.attempts > 20) {
+            reject({error: 'not loaded'});
+          } else {
+            runLater(check, 200);
+          }  
+        }
+      };
+      runLater(check, 100);
+    });
+    promise.then(null, function() { });
+    return promise;
   },
   check_for_lock_on_board_state: observer('currentBoardState', function() {
     var state = this.get('currentBoardState');
@@ -699,25 +718,57 @@ var app_state = EmberObject.extend({
       this.controller.send('pickWhichHome');
     }
   },
+  assert_source: function() {
+    var _this = this;
+    var board = _this.controller.get('board.model');
+    if(!board) { return RSVP.reject({error: 'no board found'}); }
+    if(board.get('local_only')) {
+      if(board.get('editable_source_key')) {
+        var load_board = function() {
+          return app_state.jump_to_board({
+            key: board.get('editable_source_key')
+            // TODO: home lock???
+          });
+        };
+        if(board.get('editable_source')) {
+          return load_board();
+        } else {
+          runLater(function() {
+            if(board.get('editable_source')) {
+              return load_board();
+            } else {
+              return RSVP.reject({error: ' ditable source never loaded for local board'});
+            }
+          }, 2000);
+        }
+      } else {
+        return RSVP.reject({error: 'no editable source for local board'});
+      }
+    } else {
+      return RSVP.resolve(board);
+    }
+  },
   toggle_edit_mode: function(decision) {
     editManager.clear_history();
     var _this = this;
-    if(!this.get('controller.board.model.permissions.edit')) {
-      modal.open('confirm-needs-copying', {board: this.controller.get('board.model')}).then(function(res) {
-        if(res == 'confirm') {
-          _this.toggle_mode('edit', {copy_on_save: true});
-        }
-      });
-      return;
-    } else if(decision == null && !app_state.get('edit_mode') && this.controller && this.controller.get('board').get('model').get('could_be_in_use')) {
-      modal.open('confirm-edit-board', {board: this.controller.get('board.model')}).then(function(res) {
-        if(res == 'tweak') {
-          _this.controller.send('tweakBoard');
-        }
-      });
-      return;
-    }
-    this.toggle_mode('edit');
+    this.assert_source().then(function() {
+      if(!_this.get('controller.board.model.permissions.edit')) {
+        modal.open('confirm-needs-copying', {board: _this.controller.get('board.model')}).then(function(res) {
+          if(res == 'confirm') {
+            _this.toggle_mode('edit', {copy_on_save: true});
+          }
+        });
+        return;
+      } else if(decision == null && !app_state.get('edit_mode') && _this.controller && _this.controller.get('board').get('model').get('could_be_in_use')) {
+        modal.open('confirm-edit-board', {board: _this.controller.get('board.model')}).then(function(res) {
+          if(res == 'tweak') {
+            _this.controller.send('tweakBoard');
+          }
+        });
+        return;
+      }
+      _this.toggle_mode('edit');  
+    }, function() { });
   },
   clear_mode: function() {
     stashes.persist('current_mode', 'default');

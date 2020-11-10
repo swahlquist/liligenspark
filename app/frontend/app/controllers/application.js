@@ -390,74 +390,78 @@ export default Controller.extend({
     setAsHome: function(option) {
       var _this = this;
       app_state.check_for_needing_purchase().then(function() {
-        var board = _this.get('board.model');
-        if(option == 'starting') {
-          board = stashes.get('root_board_state') || _this.get('board').get('model');
-        }
-        var board_user_name = emberGet(board, 'key').split(/\//)[1];
-        var preferred_symbols = app_state.get('currentUser.preferences.preferred_symbols') || 'original';
-        var needs_confirmation = app_state.get('currentUser.supervisees') || preferred_symbols != 'original' || board_user_name != app_state.get('currentUser.user_name');
-        var done = function(sync) {
-          if(sync && persistence.get('online') && persistence.get('auto_sync')) {
-            _this.set('simple_board_header', false);
-            runLater(function() {
-              if(persistence.get('auto_sync')) {
-                console.debug('syncing because home board changes');
-                persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+        app_state.assert_source().then(function() {
+          var board = _this.get('board.model');
+          if(option == 'starting') {
+            board = stashes.get('root_board_state') || _this.get('board').get('model');
+          }
+          var board_user_name = emberGet(board, 'key').split(/\//)[1];
+          var preferred_symbols = app_state.get('currentUser.preferences.preferred_symbols') || 'original';
+          var needs_confirmation = app_state.get('currentUser.supervisees') || preferred_symbols != 'original' || board_user_name != app_state.get('currentUser.user_name');
+          var done = function(sync) {
+            if(sync && persistence.get('online') && persistence.get('auto_sync')) {
+              _this.set('simple_board_header', false);
+              runLater(function() {
+                if(persistence.get('auto_sync')) {
+                  console.debug('syncing because home board changes');
+                  persistence.sync('self', null, null, 'home_board_changed').then(null, function() { });
+                }
+              }, 1000);
+              if(_this.get('setup_footer')) {
+                _this.send('setup_go', 'forward');
+              } else {
+                modal.success(i18n.t('board_set_as_home', "Great! This is now the user's home board!"), true);
               }
-            }, 1000);
-            if(_this.get('setup_footer')) {
-              _this.send('setup_go', 'forward');
             } else {
-              modal.success(i18n.t('board_set_as_home', "Great! This is now the user's home board!"), true);
+              if(_this.get('setup_footer')) {
+                _this.send('setup_go', 'forward');
+              }          
             }
-          } else {
-            if(_this.get('setup_footer')) {
-              _this.send('setup_go', 'forward');
-            }          
           }
-        }
-        if(needs_confirmation && !option) {
-          modal.open('set-as-home', {board: board}).then(function(res) {
-            if(res && res.updated) {
-              done(true);
-            }
-          }, function() { });
-        } else {
-          var user = app_state.get('currentUser');
-          if(user) {
-            if(option == 'starting') {
-              user.copy_home_board(board, true).then(function() { }, function() {
-                modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
-              });
-              done();
-            } else {
-              user.set('preferences.home_board', {
-                id: emberGet(board, 'id'),
-                level: stashes.get('board_level'),
-                key: emberGet(board, 'key')
-              });
-              user.save().then(function() {
+          if(needs_confirmation && !option) {
+            modal.open('set-as-home', {board: board}).then(function(res) {
+              if(res && res.updated) {
                 done(true);
-              }, function() {
-                modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
-              });
+              }
+            }, function() { });
+          } else {
+            var user = app_state.get('currentUser');
+            if(user) {
+              if(option == 'starting') {
+                user.copy_home_board(board, true).then(function() { }, function() {
+                  modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
+                });
+                done();
+              } else {
+                user.set('preferences.home_board', {
+                  id: emberGet(board, 'id'),
+                  level: stashes.get('board_level'),
+                  key: emberGet(board, 'key')
+                });
+                user.save().then(function() {
+                  done(true);
+                }, function() {
+                  modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
+                });
+              }
             }
-          }
-        }  
+          }  
+        }, function() { });
       });
     },
     add_to_sidebar: function() {
       var _this = this;
       app_state.check_for_needing_purchase().then(function() {
-        var board = _this.get('board').get('model');
-        modal.open('add-to-sidebar', {board: {
-          name: board.get('name'),
-          key: board.get('key'),
-          levels: board.get('levels'),
-          home_lock: false,
-          image: board.get('image_url')
-        }});  
+        app_state.assert_source().then(function() {
+          var board = _this.get('board').get('model');
+          modal.open('add-to-sidebar', {board: {
+            name: board.get('name'),
+            key: board.get('key'),
+            levels: board.get('levels'),
+            home_lock: false,
+            image: board.get('image_url')
+          }});  
+        }, function() { });
       });
     },
     adjust_level: function(direction) {
@@ -626,7 +630,10 @@ export default Controller.extend({
       });
     },
     shareBoard: function() {
-      modal.open('share-board', {board: this.get('board.model')});
+      var _this = this;
+      app_state.assert_source().then(function() {
+        modal.open('share-board', {board: _this.get('board.model')});
+      }, function() { }); 
     },
     copy_and_edit_board: function() {
       var _this = this;
@@ -647,26 +654,34 @@ export default Controller.extend({
     tweakBoard: function(decision) {
       var _this = this;
       app_state.check_for_needing_purchase().then(function() {
-        if(app_state.get('edit_mode')) {
-          app_state.toggle_mode('edit');
-        }
-        _this.copy_board(decision).then(function(board) {
-          if(board) {
-            app_state.jump_to_board({
-              id: board.id,
-              key: board.key
-            });
+        app_state.assert_source().then(function() {
+          if(app_state.get('edit_mode')) {
+            app_state.toggle_mode('edit');
           }
-        }, function() { });
+          _this.copy_board(decision).then(function(board) {
+            if(board) {
+              app_state.jump_to_board({
+                id: board.id,
+                key: board.key
+              });
+            }
+          }, function() { });
+        }, function() { });  
       }, function() { });
     },
     downloadBoard: function() {
-      var has_links = this.get('board').get('model').get('linked_boards').length > 0;
-      modal.open('download-board', {type: 'obf', has_links: has_links, id: this.get('board.model.id')});
+      var _this = this;
+      app_state.assert_source().then(function() {
+        var has_links = _this.get('board').get('model').get('linked_boards').length > 0;
+        modal.open('download-board', {type: 'obf', has_links: has_links, id: _this.get('board.model.id')});
+      }, function() { });
     },
     printBoard: function() {
-      var has_links = this.get('board').get('model').get('linked_boards').length > 0;
-      modal.open('download-board', {type: 'pdf', has_links: has_links, id: this.get('board.model.id')});
+      var _this = this;
+      app_state.assert_source().then(function() {
+        var has_links = _this.get('board').get('model').get('linked_boards').length > 0;
+        modal.open('download-board', {type: 'pdf', has_links: has_links, id: _this.get('board.model.id')});
+      }, function() { });
     },
     saveBoard: function() {
       this.get('board').saveButtonChanges();
@@ -702,12 +717,15 @@ export default Controller.extend({
       }
     },
     star: function() {
-      var board = this.get('board').get('model');
-      if(board.get('starred')) {
-        board.unstar();
-      } else {
-        board.star();
-      }
+      var _this = this;
+      app_state.assert_source().then(function() {
+        var board = _this.get('board').get('model');
+        if(board.get('starred')) {
+          board.unstar();
+        } else {
+          board.star();
+        }
+      }, function() { });
     },
     check_scanning: function() {
       app_state.check_scanning();

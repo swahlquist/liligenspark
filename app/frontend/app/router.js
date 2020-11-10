@@ -82,6 +82,7 @@ Router.map(function() {
   this.route('gift_purchase', { path: '/gift' });
   this.route('bulk_purchase', { path: '/purchase/:id'});
   this.route('troubleshooting', { path: '/troubleshooting' });
+  this.route('offline_boards', { path: '/offline-boards' });
   this.route('user', { resetNamespace: true, path: '/:user_id' }, function() {
     this.route('edit');
     this.route('preferences');
