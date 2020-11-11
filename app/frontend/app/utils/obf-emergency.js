@@ -152,6 +152,7 @@ emergency.callback = function(key) {
   var board = obf.shell(ref.rows, ref.cols);
   board.name = ref.name || ref.id;
   board.public = true;
+  board.locale = locale;
   board.extra_back = ref.starter ? 'emergency' : null;
   board.obf_type = 'emergency';
   board.source_key = ref.key;
