@@ -130,6 +130,7 @@ class BoardContent < ApplicationRecord
     end
     return false if content.id != board.board_content_id
     changed = false
+    board.settings ||= {}
     if !board.settings['buttons'].blank? && content.settings['buttons']
       board.settings['buttons'].each do |btn|
         offload_btn = content.settings['buttons'].detect{|b| b['id'].to_s == btn['id'].to_s }

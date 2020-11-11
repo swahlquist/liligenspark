@@ -200,7 +200,7 @@ b = Board.find_by_path(path)
 imgs = []
 lines = []
 grid = BoardContent.load_content(b, 'grid')
-lines << "{id: '#{path.split(/\//)[1]}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
+lines << "{id: '#{path.split(/\//)[1]}', name: '#{b.settings['name']}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
 images = b.button_images
 word_list = words.to_a
 grid['order'].each do |row|

@@ -619,7 +619,7 @@ class Board < ActiveRecord::Base
     @edit_notes = []
     self.user ||= non_user_params[:user] if non_user_params[:user]
     
-    
+    self.settings ||= {}
     if !params['parent_board_id'].blank? && !self.parent_board_id
       parent_board = Board.find_by_global_id(params['parent_board_id'])
       if !parent_board
@@ -634,7 +634,6 @@ class Board < ActiveRecord::Base
         BoardContent.apply_clone(parent_board, self) if parent_board.board_content_id
       end
     end
-    self.settings ||= {}
     self.settings['last_updated'] = Time.now.iso8601
 
     self.settings['locale'] = params['locale'] if params['locale']
