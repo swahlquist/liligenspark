@@ -8,6 +8,7 @@ class Api::BoardsController < ApplicationController
       conn = (Octopus.config[Rails.env] || {}).keys.sample
       boards = boards.using(conn) if conn
     end
+    boards = boards.includes(:board_content)
 
     Rails.logger.warn('checking key')
     self.class.trace_execution_scoped(['boards/key_check']) do
