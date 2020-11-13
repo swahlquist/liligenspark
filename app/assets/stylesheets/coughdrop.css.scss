@@ -4769,7 +4769,7 @@ body:-ms-fullscreen {
 }
  
 
-@media (min-width: 915px) {
+@media (min-width: 1000px) {
   h1 span, h1 span.label {
     display: inline;
   }
@@ -4997,36 +4997,7 @@ body:-ms-fullscreen {
     left: -130px;
   }
 }
-
-@media (min-width: 790px) {
-  #header_line_2 {
-    display: block;
-  }
-  #speak_mode_notification {
-    width: 150px;
-    margin-left: -214px;
-    margin-right: 61px;
-    position: relative;
-  }
-  #speak_options {
-    margin-left: -55px; 
-  }
-  .button_list {
-    width: -webkit-calc(100% - 179px); 
-    width: calc(100% - 179px); 
-  }
-  .button_list.with_back {
-    width: -webkit-calc(100% - 242px);
-    width: calc(100% - 242px);
-  }
-  .button_list.with_eyes {
-    width: -webkit-calc(100% - 232px);
-    width: calc(100% - 232px);
-  }
-  .button_list.with_back.with_eyes {
-    width: -webkit-calc(100% - 292px);
-    width: calc(100% - 292px);
-  }
+@media (min-width: 850px) {
   header .btn .skinny, header .btn .skinny.real_skinny {
     display: none;
   }
@@ -5058,6 +5029,46 @@ body:-ms-fullscreen {
   #nav_header {
     width: -webkit-calc(100% - 150px);
     width: calc(100% - 150px);
+  }
+}
+@media (min-width: 850px) and (max-width: 950px) {
+  header .btn.not_really_skinny .skinny, header .btn.not_really_skinny .skinny.real_skinny {
+    display: inline;
+  }
+  header .btn.not_really_skinny .wide {
+    display: none;
+  }
+}
+
+
+@media (min-width: 790px) {
+  #header_line_2 {
+    display: block;
+  }
+  #speak_mode_notification {
+    width: 150px;
+    margin-left: -214px;
+    margin-right: 61px;
+    position: relative;
+  }
+  #speak_options {
+    margin-left: -55px; 
+  }
+  .button_list {
+    width: -webkit-calc(100% - 179px); 
+    width: calc(100% - 179px); 
+  }
+  .button_list.with_back {
+    width: -webkit-calc(100% - 242px);
+    width: calc(100% - 242px);
+  }
+  .button_list.with_eyes {
+    width: -webkit-calc(100% - 232px);
+    width: calc(100% - 232px);
+  }
+  .button_list.with_back.with_eyes {
+    width: -webkit-calc(100% - 292px);
+    width: calc(100% - 292px);
   }
   #grid_selection {
     padding-left: 10px;

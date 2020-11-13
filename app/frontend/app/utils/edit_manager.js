@@ -1677,6 +1677,8 @@ var editManager = EmberObject.extend({
               old_board_id: old_board.get('id'),
               new_board_id: board.get('id'),
               update_inline: (decision == 'modify_links_update'),
+              old_default_locale: old_board.get('locale'),
+              new_default_locale: old_board.get('default_locale') || old_board.get('locale'),
               swap_library: swap_library,
               ids_to_copy: ids_to_copy.join(','),
               make_public: make_public

@@ -10,9 +10,17 @@ export default modal.ModalController.extend({
   opening: function() {
     var board = this.get('model.board');
     this.set('model', board);
+    if(!board.get('button_locale')) {
+      board.set('button_locale', app_state.get('label_locale') || board.get('locale'));
+    }
     this.set('originally_public', board.get('public'));
   },
   closing: function() {
+    if(this.get('model.translations.board_name') && this.get('model.locale')) {
+      var trans = this.get('model.translations');
+      trans.board_name[this.get('model.locale')] = this.get('model.name');
+      this.set('model.translations', trans);
+    }
     if(this.get('model.home_board')) {
       var cats = [];
       (this.get('board_categories') || []).forEach(function(cat) {

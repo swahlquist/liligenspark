@@ -119,7 +119,124 @@ describe Relinking, :type => :model do
       expect(res.key).to eq(b.key + "_1")
     end
   end
+
+  describe "update_default_locale!" do
+    it "should do nothing if new locale not specified" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardContent).to_not receive(:load_content)
+      b.update_default_locale!(nil, nil)
+    end
+
+    it "should do nothing if not matching old locale" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardContent).to_not receive(:load_content)
+      b.update_default_locale!('fr', 'es')
+    end
+
+    it "should do nothiing if old and new locales match" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(BoardContent).to_not receive(:load_content)
+      b.update_default_locale!('en', 'en')
+    end
+
+    it "should set translations for old locale if not specified" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['locale']
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'bacon'},
+        {'id' => 2, 'label' => 'happy', 'vocalization' => "I am happy"},
+        {'id' => 'asdf', 'label' => 'whatever', 'inflections' => {'a' => 'a'}},
+      ]
+      b.update_default_locale!('en', 'fr')
+      expect(b.settings['locale']).to eq('en')
+      expect(b.settings['translations']).to_not eq(nil)
+      expect(b.settings['translations']['1']).to eq({'en' => {'label' => 'bacon'}})
+      expect(b.settings['translations']['2']).to eq({'en' => {'label' => 'happy', 'vocalization' => "I am happy"}})
+      expect(b.settings['translations']['asdf']).to eq({'en' => {'label' => 'whatever', 'inflections' => {'a' => 'a'}}})
+    end
+
+    it "should update button strings for a matching locale change" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['locale']
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'bacon'},
+        {'id' => 2, 'label' => 'happy', 'vocalization' => "I am happy"},
+        {'id' => 'asdf', 'label' => 'whatever', 'inflections' => {'a' => 'a'}},
+      ]
+      b.settings['translations'] = {
+        '1' => {
+          'fr' => {'label' => 'baconne', 'vocalization' => 'je suis'}
+        },
+        '2' => {
+          'fr' => {'label' => 'joyeux'}
+        },
+        'asdf' => {
+          'fr' => {'label' => 'whatevs'}
+        }
+      }
+      b.update_default_locale!('en', 'fr')
+      expect(b.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'baconne', 'vocalization' => 'je suis'},
+        {'id' => 2, 'label' => 'joyeux'},
+        {'id' => 'asdf', 'label' => 'whatevs'},
+      ])
+      expect(b.settings['translations']['1']).to eq({'en' => {'label' => 'bacon'}, 'fr' => {'label' => 'baconne', 'vocalization' => 'je suis'}})
+      expect(b.settings['translations']['2']).to eq({'en' => {'label' => 'happy', 'vocalization' => "I am happy"}, 'fr' => {'label' => 'joyeux'}})
+      expect(b.settings['translations']['asdf']).to eq({'en' => {'label' => 'whatever', 'inflections' => {'a' => 'a'}}, 'fr' => {'label' => 'whatevs'}})
+      expect(b.settings['locale']).to eq('fr')
+    end
+
+    it "should not update button strings if no translation available" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['locale']
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'bacon'},
+        {'id' => 2, 'label' => 'happy', 'vocalization' => "I am happy"},
+        {'id' => 'asdf', 'label' => 'whatever', 'inflections' => {'a' => 'a'}},
+      ]
+      b.update_default_locale!('en', 'fr')
+      expect(b.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'bacon'},
+        {'id' => 2, 'label' => 'happy', 'vocalization' => "I am happy"},
+        {'id' => 'asdf', 'label' => 'whatever', 'inflections' => {'a' => 'a'}},
+      ])
+      expect(b.settings['translations']['1']).to eq({'en' => {'label' => 'bacon'}})
+      expect(b.settings['translations']['2']).to eq({'en' => {'label' => 'happy', 'vocalization' => "I am happy"}})
+      expect(b.settings['translations']['asdf']).to eq({'en' => {'label' => 'whatever', 'inflections' => {'a' => 'a'}}})
+      expect(b.settings['locale']).to eq('en')
+    end
+  end
   
+  # def update_default_locale!(old_default_locale, new_default_locale)
+  #   if new_default_locale && self.settings['locale'] == old_default_locale && old_default_locale != new_default_locale
+  #     buttons = self.buttons
+  #     trans = BoardContent.load_content(self, 'translations') || {}
+  #     buttons.each do |btn|
+  #       btn_trans = trans[btn['id'].to_s] || {}
+  #       btn_trans[old_default_locale] ||= {}
+  #       if !btn_trans[old_default_locale]['label']
+  #         btn_trans[old_default_locale]['label'] = btn['label']
+  #         btn_trans[old_default_locale]['vocalization'] = btn['vocalization']
+  #         btn_trans[old_default_locale]['inflections'] = btn['inflections']
+  #       end
+  #       if btn_trans[new_default_locale]
+  #         btn['label'] = btn_trans[new_default_locale]['label']
+  #         btn['vocalization'] = btn_trans[new_default_locale]['vocalization']
+  #         btn['inflections'] = btn_trans[new_default_locale]['inflections']
+  #       end
+  #       trans[btn['id'].to_s] = btn_trans
+  #     end
+  #     self.settings['buttons'] = buttons
+  #     self.settings['translations'] = trans
+  #     self.settings['locale'] = new_default_locale
+  #   end
+  # end
   describe "replace_links!" do
     it "should replace links in buttons section" do
       u = User.create
@@ -405,6 +522,45 @@ describe Relinking, :type => :model do
       expect(b2.settings['copy_id']).to eq(nil)
       b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
       expect(b2a.settings['buttons'][0]['load_board']['key']).to eq(b1b.key)
+      expect(b2a.settings['copy_id']).to eq(b2.global_id)
+    end
+
+    it "should update locale and button strings only for sub-boards that match the old locale" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(:user => u1, :public => true)
+      b1a = Board.create(:user => u1, :public => true)
+      b1a.save
+      b1b = Board.create(:user => u1, :public => true)
+      b1b.settings['buttons'] = [{'id' => 1, 'label' => 'hola'}]
+      b1b.settings['translations'] = {'1' => {'fr' => {'label' => 'bonjour'}}}
+      b1b.settings['locale'] = 'es'
+      b1b.save
+      b1a.settings['buttons'] = [{'id' => 1, 'label' => 'house', 'load_board' => {'key' => b1b.key, 'id' => b1b.global_id, 'link_disabled' => true}}]
+      b1a.settings['translations'] = {'1' => {'fr' => {'label' => 'maison'}}}
+      b1a.save!
+      b1a.track_downstream_boards!
+      b1.settings['buttons'] = [{'id' => 1, 'label' => 'car', 'load_board' => {'key' => b1a.key, 'id' => b1a.global_id}}]
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'voiture'}}}
+      b1.save!
+      b1.track_downstream_boards!
+      expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id, b1b.global_id])
+      b2 = b1.copy_for(u2)
+      Board.copy_board_links_for(u2, {:valid_ids => [b1.global_id, b1a.global_id, b1b.global_id], :starting_old_board => b1, :starting_new_board => b2, :old_default_locale => 'en', :new_default_locale => 'fr'})
+
+      b2.reload
+      expect(b2.settings['buttons'][0]['load_board']['key']).not_to eq(b1a.key)
+      expect(b2.settings['buttons'][0]['label']).to eq('car')
+      expect(b2.settings['locale']).to eq('en')
+      expect(b2.settings['copy_id']).to eq(nil)
+      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
+      expect(b2a.settings['buttons'][0]['load_board']['key']).to_not eq(b1b.key)
+      expect(b2a.settings['buttons'][0]['label']).to eq('maison')
+      expect(b2a.settings['locale']).to eq('fr')
+      expect(b2a.settings['copy_id']).to eq(b2.global_id)
+      b2b = Board.find_by_path(b2a.settings['buttons'][0]['load_board']['key'])
+      expect(b2b.settings['buttons'][0]['label']).to eq('hola')
+      expect(b2b.settings['locale']).to eq('es')
       expect(b2a.settings['copy_id']).to eq(b2.global_id)
     end
   end
@@ -971,6 +1127,86 @@ describe Relinking, :type => :model do
       expect(root.settings['downstream_board_ids']).to be_include(new.global_id)
       expect(u.settings['preferences']['sidebar_boards'].length).to eq(count)
       expect(u.settings['preferences']['home_board']['id']).to eq(new.global_id)
+    end
+
+    it "should update locale and button strings only for boards that match the old locale and are updated" do
+      u = User.create
+      level0 = Board.create(:user => u, :public => true, :settings => {'name' => 'car'})
+      level1 = Board.create(:user => u, :public => true, :settings => {'name' => 'house'})
+      level2 = Board.create(:user => u, :public => true, :settings => {'name' => 'chair'})
+      level3 = Board.create(:user => u, :public => true, :settings => {'name' => 'window'})
+      
+      level0.settings['buttons'] = [
+        {'id' => 1, 'label' => 'yes', 'load_board' => {'id' => level1.global_id}}
+      ]
+      level0.settings['translations'] = {
+        'board_name' => {'fr' => 'voiture'},
+        '1' => {'fr' => {'label' => 'oui', 'vocalization' => 'oui bien'}}
+      }
+      level0.save
+      level1.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hola', 'load_board' => {'id' => level2.global_id}}
+      ]
+      level1.settings['translations'] = {
+        'board_name' => {'fr' => 'maison'},
+        '1' => {'fr' => {'label' => 'bonjour'}}
+      }
+      level1.settings['locale'] = 'es'
+      level1.save
+      level2.settings['buttons'] = [
+        {'id' => 1, 'label' => 'why', 'vocalization' => 'but whyyy', 'load_board' => {'id' => level3.global_id}}
+      ]
+      level2.settings['translations'] = {
+        'board_name' => {'fr' => 'chaise'},
+        '1' => {'fr' => {'label' => 'pourquoi'}}
+      }
+      level2.save
+      
+      new_level3 = level3.copy_for(u)
+      new_level3.settings['name'] = 'new_level3'
+      new_level3.save
+      u.settings['preferences']['home_board'] = {'id' => level0.global_id}
+      u.save
+      Worker.process_queues
+      
+      Board.replace_board_for(u.reload, {:starting_old_board => level3.reload, :starting_new_board => new_level3.reload, :old_default_locale => 'en', :new_default_locale => 'fr'})
+      expect(u.settings['preferences']['home_board']['id']).not_to eq(level0.global_id)
+      b = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(b).not_to eq(nil)
+      expect(b.settings['name']).to eq('voiture')
+      expect(b.settings['buttons'][0].except('load_board')).to eq(
+        {'id' => 1, 'label' => 'oui', 'vocalization' => 'oui bien'}
+      )
+      expect(b.settings['locale']).to eq('fr')
+      expect(b.settings['immediately_downstream_board_ids'].length).to eq(1)
+      expect(b.settings['immediately_downstream_board_ids']).not_to be_include(level1.global_id)
+      
+      b = Board.find_by_path(b.settings['immediately_downstream_board_ids'][0])
+      expect(b).not_to eq(nil)
+      expect(b).not_to eq(level1)
+      expect(b.settings['name']).to eq('house')
+      expect(b.settings['buttons'][0].except('load_board')).to eq(
+        {'id' => 1, 'label' => 'hola'}
+      )
+      expect(b.settings['locale']).to eq('es')
+      expect(b.settings['immediately_downstream_board_ids'].length).to eq(1)
+      expect(b.settings['immediately_downstream_board_ids']).not_to be_include(level2.global_id)
+      
+      b = Board.find_by_path(b.settings['immediately_downstream_board_ids'][0])
+      expect(b).not_to eq(nil)
+      expect(b.settings['name']).to eq('chaise')
+      expect(b.settings['buttons'][0].except('load_board')).to eq(
+        {'id' => 1, 'label' => 'pourquoi'}
+      )
+      expect(b.settings['locale']).to eq('fr')
+      expect(b.settings['immediately_downstream_board_ids'].length).to eq(1)
+      expect(b.settings['immediately_downstream_board_ids']).not_to be_include(level3.global_id)
+      expect(b.settings['immediately_downstream_board_ids']).to be_include(new_level3.global_id)
+      
+      expect(level0.reload.child_boards.count).to eq(1)
+      expect(level1.reload.child_boards.count).to eq(1)
+      expect(level2.reload.child_boards.count).to eq(1)
+      expect(level3.reload.child_boards.count).to eq(1)
     end
   end
   

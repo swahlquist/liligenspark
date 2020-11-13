@@ -136,7 +136,6 @@ class BoardContent < ApplicationRecord
         offload_btn = content.settings['buttons'].detect{|b| b['id'].to_s == btn['id'].to_s }
         if offload_btn
           btn.each do |key, val|
-            revision = {}
             if offload_btn[key] != val
               board.settings['content_overrides'] ||= {}
               board.settings['content_overrides']['buttons'] ||= {}

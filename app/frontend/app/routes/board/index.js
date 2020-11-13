@@ -47,6 +47,7 @@ export default Route.extend({
       text_direction: i18n.text_direction(model.get('locale')),
       translatable: (model.get('locales') || []).length > 1
     });
+
     if(stashes.get('root_board_state.id') == app_state.get('currentBoardState.id')) {
       if(!stashes.get('root_board_state.text_direction')) {
         stashes.set('root_board_state.text_direction', app_state.get('currentBoardState.text_direction'));

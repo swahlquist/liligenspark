@@ -15,6 +15,7 @@ export default modal.ModalController.extend({
     this.set('sidebar_board', null);
     this.set('in_board_set', null);
     this.set('in_sidebar_set', null);
+    this.set('default_locale', app_state.get('label_locale') || this.get('model.board.locale'));
     this.set('home_board', null);
     var user_name = this.get('model.selected_user_name');
     var supervisees = [];
@@ -139,7 +140,7 @@ export default modal.ModalController.extend({
       if(this.get('translate') && this.get('translate_locale')) {
         translate_locale = this.get('translate_locale');
       }
-      modal.close({action: decision, user: this.get('current_user'), shares: shares, board_name: this.get('board_name'), make_public: this.get('public'), translate_locale: translate_locale});
+      modal.close({action: decision, user: this.get('current_user'), shares: shares, board_name: this.get('board_name'), make_public: this.get('public'), default_locale: this.get('default_locale'), translate_locale: translate_locale});
     },
     close: function() {
       modal.close(false);

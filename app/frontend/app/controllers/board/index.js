@@ -102,11 +102,46 @@ export default Controller.extend({
       });
     }
   ),
-  saveButtonChanges: function(decision) {
+  saveButtonChanges: function() {
+
     var state = editManager.process_for_saving();
 
     if(this.get('model.license')) {
       this.set('model.license.copyright_notice_url', CoughDrop.licenseOptions.license_url(this.get('model.license.type')));
+    }
+
+    var button_locale = this.get('model.button_locale') || app_state.get('label_locale');
+    var needs_redraw = false;
+    if(button_locale && button_locale != this.get('model.locale')) {
+      needs_redraw = true;
+      var _this = this;
+      state.buttons.forEach(function(btn) {
+        btn.translations = btn.translations || []
+        var btn_trans = btn.translations.find(function(t) { return t.locale == button_locale} );
+        if(!btn_trans) {
+          btn_trans = {
+            code: button_locale,
+            locale: button_locale,
+          };
+          btn.translations.push(btn_trans);
+        }
+        emberSet(btn_trans, 'label', btn_trans.label || btn.label);
+        emberSet(btn_trans, 'vocalization', btn_trans.vocalization || btn.vocalization);
+        emberSet(btn_trans, 'inflections', btn_trans.inflections || btn.inflections);
+        var trans = btn.translations.find(function(t) { return t.locale == _this.get('model.locale')})
+        trans = trans || (_this.get('model.translations')[btn.id] || {})[_this.get('model.locale')];
+        if(trans) {
+          emberSet(btn, 'vocalization', null);
+          emberSet(btn, 'inflections', null);
+          for(var key in trans) {
+            if(key != 'code' && key != 'locale') {
+              emberSet(btn, key, trans[key]);
+            }
+          }
+        } else {
+          debugger
+        }
+      });
     }
 
     this.set('model.buttons', state.buttons);
@@ -122,6 +157,7 @@ export default Controller.extend({
 
     var board = this.get('model');
     board.save().then(function(brd) {
+      editManager.process_for_displaying();
       if(brd.get('protected_material') && brd.get('visibility') != 'private') {
         modal.notice(i18n.t('remember_fallbacks', "This board has premium content, any users who access it without premium access will see free alternatives instead."), true, false, {timeout: 5000});
       }
@@ -216,6 +252,7 @@ export default Controller.extend({
     'model.description',
     'app_state.sidebar_pinned',
     'app_state.sidebar_visible',
+    'long_description',
     'app_state.currentUser.preferences.word_suggestion_images',
     'text_position',
     'stashes.board_level',

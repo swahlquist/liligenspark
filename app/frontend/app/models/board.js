@@ -41,6 +41,7 @@ CoughDrop.Board = DS.Model.extend({
   updated: DS.attr('date'),
   user_name: DS.attr('string'),
   locale: DS.attr('string'),
+  button_locale: DS.attr('string'),
   translated_locales: DS.attr('raw'),
   full_set_revision: DS.attr('string'),
   current_revision: DS.attr('string'),
@@ -258,6 +259,22 @@ CoughDrop.Board = DS.Model.extend({
     callback();
     this.set('no_lookups', false);
   },
+  multiple_locales: computed('locales', function() {
+    return (this.get('locales') || []).length > 1;
+  }),
+  readable_locales: computed('locales', function() {
+    var res = [];
+    (this.get('locales') || []).forEach(function(loc) {
+      var str = (i18n.locales_localized[loc] || i18n.locales[loc] || loc) + " (" + loc + ")";
+      res.push({
+        string: str,
+        id: loc,
+        name: str,
+        locale: loc
+      })
+    });
+    return res;
+  }),
   locales: computed('translations', 'translated_locales', function() {
     var res = this.get('translated_locales');
     var button_ids = (this.get('translations') || {});
@@ -314,8 +331,12 @@ CoughDrop.Board = DS.Model.extend({
         if(label_locale != current_locale && trans[b.id][label_locale] && trans[b.id][label_locale].label) {
           b.label = trans[b.id][label_locale].label;
         }
-        if(vocalization_locale != current_locale && trans[b.id][vocalization_locale] && (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label)) {
-          b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
+        if(vocalization_locale != current_locale) {
+          if(trans[b.id][vocalization_locale] && trans[b.id][vocalization_locale].vocalization) {
+            b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
+          } else {
+            delete b['vocalization'];
+          }
         }
       }
       if(level && level < 10) {
@@ -327,6 +348,14 @@ CoughDrop.Board = DS.Model.extend({
   },
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
+    if(label_locale) {
+      var trans = this.get('translations') || {};
+      trans.board_name = trans.board_name || {};
+      trans.board_name[this.get('locale')] = trans.board_name[this.get('locale')] || this.get('name');
+      if(trans.board_name[label_locale]) {
+        this.set('name', trans.board_name[label_locale]);
+      }
+    }
     if(app_state.get('speak_mode')) {
       if(label_locale == vocalization_locale) {
         if(app_state.get('referenced_user.preferences.auto_inflections')) {
@@ -591,6 +620,32 @@ CoughDrop.Board = DS.Model.extend({
       for_user_id: (user && user.get('id')),
       translations: this.get('translations')
     });
+    if(this.get('default_locale') && this.get('default_locale') != this.get('locale')) {
+      // If setting a new default locale, do it here
+      var new_loc = this.get('default_locale');
+      var old_loc = this.get('locale');
+      var trans = this.get('translations');
+      var buttons = board.get('buttons') || [];
+      buttons.forEach(function(btn) {
+        trans[btn.id] = trans[btn.id] || {};
+        trans[btn.id][old_loc] = trans[btn.id][old_loc] || {}
+        if(!trans[btn.id][old_loc].label) {
+          trans[btn.id][old_loc].label = btn.label;
+          trans[btn.id][old_loc].vocalization = btn.vocalization;  
+          trans[btn.id][old_loc].inflections = btn.inflections;  
+        }
+        if(trans[btn.id][new_loc]) {
+          btn.label = trans[btn.id][new_loc].label;
+          btn.vocalization = trans[btn.id][new_loc].vocalization;
+          btn.inflections = trans[btn.id][new_loc].inflections;
+        }
+      });
+      if(trans['board_name'] && trans['board_name'][new_loc]) {
+        board.set('name', trans['board_name'][new_loc]);
+      }
+      board.set('buttons', buttons);
+      board.set('locale', new_loc);
+    }
     if(this.get('local_only')) {
       board.set('parent_board_id', null);
     }

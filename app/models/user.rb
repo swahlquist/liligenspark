@@ -1286,7 +1286,16 @@ class User < ActiveRecord::Base
       valid_ids = ids_to_copy.split(/,/)
       valid_ids = nil if valid_ids.length == 0
     end
-    Board.replace_board_for(self, {:starting_old_board => starting_old_board, :starting_new_board => starting_new_board, :valid_ids => valid_ids, :update_inline => update_inline, :make_public => make_public, :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)})
+    Board.replace_board_for(self, {
+      :starting_old_board => starting_old_board, 
+      :starting_new_board => starting_new_board, 
+      :old_default_locale => opts[:old_default_locale],
+      :new_default_locale => opts[:new_default_locale],
+      :valid_ids => valid_ids, 
+      :update_inline => update_inline, 
+      :make_public => make_public, 
+      :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
+    })
     ids = [starting_old_board_id]
     ids += (starting_old_board.reload.settings['downstream_board_ids'] || []) if starting_old_board
     # This was happening too slowly/unreliably in a separate bg job
@@ -1314,7 +1323,15 @@ class User < ActiveRecord::Base
       valid_ids = ids_to_copy.split(/,/)
       valid_ids = nil if valid_ids.length == 0
     end
-    change_hash = Board.copy_board_links_for(self, {:starting_old_board => starting_old_board, :starting_new_board => starting_new_board, :valid_ids => valid_ids, :make_public => make_public, :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)}) || {}
+    change_hash = Board.copy_board_links_for(self, {
+      :starting_old_board => starting_old_board, 
+      :starting_new_board => starting_new_board, 
+      :old_default_locale => opts[:old_default_locale],
+      :new_default_locale => opts[:new_default_locale],
+      :valid_ids => valid_ids, 
+      :make_public => make_public, 
+      :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
+    }) || {}
     updated_ids = [starting_new_board_id]
     ids = [starting_old_board_id]
     ids += (starting_old_board.reload.settings['downstream_board_ids'] || []) if starting_old_board

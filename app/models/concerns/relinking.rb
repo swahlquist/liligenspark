@@ -110,6 +110,45 @@ module Relinking
     self.settings['downstream_board_ids'] = (self.settings['downstream_board_ids'] || []).map{|id| id == old_board.global_id ? new_board.global_id : id }
   end
 
+  def update_default_locale!(old_default_locale, new_default_locale)
+    if new_default_locale && self.settings['locale'] == old_default_locale && old_default_locale != new_default_locale
+      buttons = self.buttons
+      trans = BoardContent.load_content(self, 'translations') || {}
+      anything_translated = false
+      trans['board_name'] ||= {}
+      trans['board_name'][old_default_locale] ||= self.settings['name']
+      if trans['board_name'][new_default_locale]
+        self.settings['name'] = trans['board_name'][new_default_locale]
+        anything_translated = true
+      end
+      buttons.each do |btn|
+        btn_trans = trans[btn['id'].to_s] || {}
+        btn_trans[old_default_locale] ||= {}
+        if !btn_trans[old_default_locale]['label']
+          btn_trans[old_default_locale]['label'] = btn['label']
+          btn_trans[old_default_locale]['vocalization'] = btn['vocalization']
+          btn_trans[old_default_locale].delete('vocalization') if !btn_trans[old_default_locale]['vocalization']
+          btn_trans[old_default_locale]['inflections'] = btn['inflections']
+          btn_trans[old_default_locale].delete('inflections') if !btn_trans[old_default_locale]['inflections']
+        end
+        if btn_trans[new_default_locale]
+          anything_translated = true
+          btn['label'] = btn_trans[new_default_locale]['label']
+          btn['vocalization'] = btn_trans[new_default_locale]['vocalization']
+          btn.delete('vocalization') if !btn['vocalization']
+          btn['inflections'] = btn_trans[new_default_locale]['inflections']
+          btn.delete('inflections') if !btn['inflections']
+        end
+        trans[btn['id'].to_s] = btn_trans
+      end
+      self.settings['translations'] = trans
+      if anything_translated
+        self.settings['buttons'] = buttons
+        self.settings['locale'] = new_default_locale
+      end
+    end
+  end
+
   module ClassMethods
     # take the previous board set in its entirety,
     # and, depending on the preference, make new copies
@@ -156,7 +195,16 @@ module Relinking
 
       # we will need to update user preferences 
       # if the home board or sidebar changed
-      user_home_changed = relink_board_for(user, {:boards => boards, :copy_id => starting_new_board.global_id, :pending_replacements => pending_replacements, :update_preference => (update_inline ? 'update_inline' : nil), :make_public => make_public, :authorized_user => auth_user})
+      user_home_changed = relink_board_for(user, {
+        :boards => boards, 
+        :copy_id => starting_new_board.global_id, 
+        :old_default_locale => opts[:old_default_locale],
+        :new_default_locale => opts[:new_default_locale],
+        :pending_replacements => pending_replacements, 
+        :update_preference => (update_inline ? 'update_inline' : nil), 
+        :make_public => make_public, 
+        :authorized_user => auth_user
+      })
       sidebar_changed = false
       sidebar_ids.each do |key, id|
         if @replacement_map && @replacement_map[id]
@@ -209,12 +257,20 @@ module Relinking
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
           copy = orig.copy_for(user, make_public, starting_new_board.global_id)
+          copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig, copy]
         end
       end
       boards = [starting_old_board] + boards
 
-      relink_board_for(user, {:boards => boards, :copy_id => starting_new_board.global_id, :pending_replacements => pending_replacements, :update_preference => 'update_inline', :make_public => make_public, :authorized_user => auth_user})
+      relink_board_for(user, {
+        :boards => boards, 
+        :copy_id => starting_new_board.global_id, 
+        :pending_replacements => pending_replacements, 
+        :update_preference => 'update_inline', 
+        :make_public => make_public, 
+        :authorized_user => auth_user
+      })
       @replacement_map
     end
     
@@ -262,7 +318,10 @@ module Relinking
           end
         end
       end
-      boards_to_save.uniq.each{|b| b.save }
+      boards_to_save.uniq.each do |brd|
+        brd.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
+        brd.save
+      end
       @replacement_map = replacement_map
       
       return replacement_map[user.settings['preferences']['home_board']['id']] if user.settings['preferences'] && user.settings['preferences']['home_board']

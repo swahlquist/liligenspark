@@ -35,6 +35,10 @@ export default modal.ModalController.extend({
     }
     this.get('model.board').set('downstream_board_ids_to_copy', board_ids_to_include);
     var _this = this;
+    _this.set('model.board.default_locale', null);
+    if(this.get('model.default_locale') && this.get('model.board.locale') != this.get('model.default_locale')) {
+      _this.set('model.board.default_locale', this.get('model.default_locale'));
+    }
     editManager.copy_board(_this.get('model.board'), _this.get('model.action'), _this.get('model.user'), _this.get('model.make_public')).then(function(board) {
       var next = RSVP.resolve();
       var new_board_ids = board_ids_to_include ? board.get('new_board_ids') : null;

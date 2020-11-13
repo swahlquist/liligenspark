@@ -75,9 +75,9 @@ export default modal.ModalController.extend({
       modal.close({switched: true});
     },
     clear_languages: function() {
-      app_state.set('label_locale', null);
+      app_state.set('label_locale', this.get('model.board.locale'));
       stashes.persist('label_locale', null);
-      app_state.set('vocalization_locale', null);
+      app_state.set('vocalization_locale', this.get('model.board.locale'));
       stashes.persist('vocalization_locale', null);
       modal.close({switched: true});
     }

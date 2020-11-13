@@ -57,6 +57,7 @@ export default Controller.extend({
       }
     }
     var _this = this;
+    needs_decision = needs_decision || !!oldBoard.get('multiple_locales');
     needs_decision = needs_decision || (app_state.get('currentUser.supervisees') || []).length > 0;
     needs_decision = needs_decision || (app_state.get('currentUser.stats.board_set_ids') || []).indexOf(oldBoard.get('id')) >= 0;
     needs_decision = true;
@@ -70,7 +71,7 @@ export default Controller.extend({
     decision.user = decision.user || app_state.get('currentUser');
     decision.action = decision.action || "nothing";
     oldBoard.set('copy_name', decision.board_name);
-    return modal.open('copying-board', {board: oldBoard, action: decision.action, user: decision.user, shares: decision.shares, make_public: decision.make_public, translate_locale: decision.translate_locale});
+    return modal.open('copying-board', {board: oldBoard, action: decision.action, user: decision.user, shares: decision.shares, make_public: decision.make_public, default_locale: decision.default_locale, translate_locale: decision.translate_locale});
   },
   board_levels: computed(function() {
     return CoughDrop.board_levels.slice(1, 11);
@@ -732,6 +733,13 @@ export default Controller.extend({
     },
     boardDetails: function() {
       modal.open('board-details', {board: this.get('board.model')});
+    },
+    set_locale: function(loc) {
+      app_state.set('label_locale', loc);
+      app_state.set('vocalization_locale', loc);
+      stashes.persist('label_locale', loc);
+      stashes.persist('vocalization_locale', loc);
+      editManager.process_for_displaying();      
     },
     openButtonStash: function() {
       if(!app_state.get('edit_mode')) { return; }

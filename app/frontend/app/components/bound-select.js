@@ -2,7 +2,7 @@ import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 import { reads } from '@ember/object/computed';
 import $ from 'jquery';
-import { computed } from '@ember/object';
+import { computed, observer } from '@ember/object';
 
 export default Component.extend({
   tagName: 'span',
@@ -15,12 +15,34 @@ export default Component.extend({
   init: function() {
     this._super(...arguments);
   },
+  didInsertElement: function() {
+    if(this.get('selection') && this.element.querySelector('select')) {
+      this.element.querySelector('select').value = this.get('selection');
+    }
+  },
+  update_selection: observer('selection', function() {
+    if(this.get('selection') && this.element.querySelector('select')) {
+      this.element.querySelector('select').value = this.get('selection');
+    }
+  }),
   select_style: computed('short', function() {
     if(this.get('short')) {
       return htmlSafe('height: 25px; padding-top: 0; padding-bottom: 0;');
     } else {
       return htmlSafe('');
     }
+  }),
+  raw_content: computed('content', function() {
+    // Ember got super slow at long lists for some reason..
+    var elem = document.createElement('div');
+    this.get('content').forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.id;
+      opt.innerText = c.name;
+      opt.disabled = !!c.disabled;
+      elem.appendChild(opt);
+    });
+    return htmlSafe(elem.innerHTML);
   }),
 
   actions: {

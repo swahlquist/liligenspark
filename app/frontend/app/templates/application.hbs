@@ -505,6 +505,23 @@
                   {{/if}}
                 {{/if}}
 
+                {{#if app_state.currentBoardState.translatable}}
+                  <span class="dropdown" style="display: inline-block;">
+                    <a class='btn btn-default' data-toggle="dropdown" href="#" >
+                      <span class='glyphicon glyphicon-globe'></span>
+                      {{app_state.label_locale}}
+                      <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                      {{#each board.model.readable_locales as |loc|}}
+                        <li role="presentation">
+                          <a role="menuitem" tabindex="-1" href="#" {{action "set_locale" loc.locale}}>{{loc.string}}</a>
+                        </li>
+                      {{/each}}
+                    </ul>
+                  </span>
+                {{/if}}
+
                 {{#if board.model.permissions.edit}}
                   <a class='btn btn-default not_really_skinny' href="#" {{action "toggleEditMode"}}>
                     <span class="wide">{{t "Edit Board" key="edit_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-pencil"></span>
@@ -530,7 +547,7 @@
               {{/if}}
               {{#unless board.model.uncopyable}}
                 {{#if app_state.currentUser}}
-                  <a class='btn btn-default not_really_skinny' href="#" {{action "star"}}>
+                  <a class='btn btn-default medium_skinny not_really_skinny' href="#" {{action "star"}}>
                     <img src={{board.starImage}} alt={{board.starAlt}} style="margin-top: -5px; width: 20px;"/>
                     <span class="wide">{{t "Like" key="star"}}</span> <span class="badge">{{board.stars}}</span>
                   </a>

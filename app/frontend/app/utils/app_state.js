@@ -903,6 +903,12 @@ var app_state = EmberObject.extend({
       stashes.persist('copy_on_save', null);
     } else {
       if(mode == 'edit') {
+        if(app_state.controller.get('board.model')) {
+          app_state.controller.set('board.model.button_locale', app_state.controller.get('board.model.locale'));
+          if(app_state.get('label_locale') && app_state.controller.get('board.model.locale') != app_state.get('label_locale')) {
+            app_state.controller.set('board.model.button_locale', app_state.get('label_locale'));
+          }
+        }
         stashes.persist('last_mode', stashes.get('current_mode'));
         if(opts.copy_on_save) {
           stashes.persist('copy_on_save', app_state.get('currentBoardState.id'));
@@ -1611,11 +1617,11 @@ var app_state = EmberObject.extend({
             capabilities.wakelock('speak!', true);
           }
           // When entering Speak Mode, use the board's default locale
-          if(this.get('currentBoardState.default_locale')) {
-            var loc = this.get('currentBoardState.default_locale');
-            app_state.set('label_locale', loc);
-            app_state.set('vocalization_locale', loc);
-          }
+          // if(this.get('currentBoardState.default_locale')) {
+          //   var loc = this.get('currentBoardState.default_locale');
+          //   app_state.set('label_locale', loc);
+          //   app_state.set('vocalization_locale', loc);
+          // }
           this.set_history([]);
           var noticed = false;
           if(stashes.get('logging_enabled')) {
@@ -1717,9 +1723,9 @@ var app_state = EmberObject.extend({
           stashes.persist('sticky_board', false);
           stashes.persist('speak_mode_user_id', null);
           stashes.persist('all_buttons_enabled', null);
-          app_state.set('label_locale', null);
+          // app_state.set('label_locale', null);
           stashes.persist('label_locale', null);
-          app_state.set('vocalization_locale', null);
+          // app_state.set('vocalization_locale', null);
           stashes.persist('vocalization_locale', null);
           app_state.set('manual_modeling', false);
           app_state.set('referenced_speak_mode_user', null);

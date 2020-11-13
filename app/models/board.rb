@@ -174,7 +174,7 @@ class Board < ActiveRecord::Base
         conn = (Octopus.config[Rails.env] || {}).keys.sample
         boards = Board.using(conn) if conn
       end
-      boards.where(:parent_board_id => self.id, :user_id => ids).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
+      boards.includes(:board_content).where(:parent_board_id => self.id, :user_id => ids).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
     else
       []
     end
@@ -686,8 +686,13 @@ class Board < ActiveRecord::Base
     if params['translations']
       self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
       self.settings['translations']['default'] = params['translations']['default']
-      self.settings['translations']['current_label'] = params['translations']['current_label']
-      self.settings['translations']['current_vocalization'] = params['translations']['current_vocalization']
+      self.settings['translations']['current_label'] = params['locale'] || params['translations']['current_label']
+      self.settings['translations']['current_vocalization'] = params['locale'] || params['translations']['current_vocalization']
+      self.settings['translations']['board_name'] = params['translations']['board_name']
+      if self.settings['name'] && params['locale']
+        self.settings['translations']['board_name'] ||= {}
+        self.settings['translations']['board_name'][params['locale']] = self.settings['name']
+      end
     end
     self.star(non_user_params[:starrer], params['starred']) if params['starred'] != nil
     
@@ -899,7 +904,7 @@ class Board < ActiveRecord::Base
           self.settings['translations'][button['id'].to_s] ||= {}
           self.settings['translations'][button['id'].to_s][loc] ||= {}
           self.settings['translations'][button['id'].to_s][loc]['label'] = tran['label'].to_s if tran['label']
-          self.settings['translations'][button['id'].to_s][loc]['vocalization'] = tran['vocalization'].to_s if tran['vocalization']
+          self.settings['translations'][button['id'].to_s][loc]['vocalization'] = tran['vocalization'].to_s if tran['vocalization'] || tran['label']
           tran['inflections'].to_a.each_with_index do |str, idx|
             self.settings['translations'][button['id'].to_s][loc]['inflections'] ||= []
             self.settings['translations'][button['id'].to_s][loc]['inflections'][idx] = str.to_s if str
@@ -1006,11 +1011,14 @@ class Board < ActiveRecord::Base
     set_as_default_here = !!set_as_default
     set_as_default_here = false if self.settings['locale'] == label_lang
     if board_ids.blank? || board_ids.include?(self.global_id)
+      self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
+      self.settings['translations']['board_name'] ||= {}
       if self.settings['name'] && translations[self.settings['name']] && set_as_default_here
+        self.settings['translations']['board_name'][source_lang] ||= self.settings['name']
         self.settings['name'] = translations[self.settings['name']]
+        self.settings['translations']['board_name'][dest_lang] = translations[self.settings['name']]
       end
       self.settings['locale'] ||= source_lang
-      self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
       self.settings['translations']['default'] ||= source_lang
       self.settings['translations']['current_label'] ||= source_lang
       self.settings['translations']['current_vocalization'] ||= source_lang

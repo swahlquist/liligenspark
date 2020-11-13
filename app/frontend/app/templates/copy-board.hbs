@@ -71,11 +71,20 @@
     </div>
     {{#if translate}}
       <div class="row">
-        <label class="col-sm-2 control-label" for="translate_locale">
-          Language:
+        <label class="col-sm-4 control-label" for="translate_locale">
+          {{t "Language:" key='language'}}
         </label>
         <div class="col-sm-4">
           {{bound-select select_class="form-control" select_id="translate_locale" content=locales selection=translate_locale action=(action (mut translate_locale)) }}
+        </div>
+      </div>
+    {{else if model.board.multiple_locales}}
+      <div class="row" style='margin-top: 30px;'>
+        <label class="col-sm-4 control-label" for="default_locale">
+          {{t "Default Language:" key='default_language'}}
+        </label>
+        <div class="col-sm-4">
+          {{bound-select select_class="form-control" select_id="default_locale" content=model.board.readable_locales selection=default_locale action=(action (mut default_locale)) }}
         </div>
       </div>
     {{/if}}
