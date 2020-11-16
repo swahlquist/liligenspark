@@ -2591,6 +2591,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'cat'}
       ]
+      b.settings['name'] = 'radish'
       b.save
       res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
         'source' => 'en', 
@@ -2603,6 +2604,7 @@ describe Board, :type => :model do
         'default' => 'en',
         'current_label' => 'es',
         'current_vocalization' => 'es',
+        'board_name' => {'en' => 'radish'},
         '1' => {
           'en' => {'label' => 'hat'},
           'es' => {'label' => 'sat'}
@@ -2633,6 +2635,7 @@ describe Board, :type => :model do
         'default' => 'en',
         'current_label' => 'es',
         'current_vocalization' => 'es',
+        'board_name' => {},
         '1' => {
           'en' => {'label' => 'hat'},
           'es' => {'label' => 'sat'}
@@ -2655,6 +2658,7 @@ describe Board, :type => :model do
         'default' => 'en',
         'current_label' => 'fr',
         'current_vocalization' => 'fr',
+        "board_name" => {},
         '1' => {
           'en' => {'label' => 'hat'},
           'es' => {'label' => 'sat'},
@@ -2675,8 +2679,9 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'cat'}
       ]
+      b.settings['name'] = "my board"
       b.save
-      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat'}, {
+      res = b.translate_set({'hat' => 'sat', 'cat' => 'rat', 'my board' => 'boardiness'}, {
         'source' => 'en', 
         'dest' => 'es', 
         'board_ids' => [b.global_id], 
@@ -2688,6 +2693,7 @@ describe Board, :type => :model do
         'default' => 'en',
         'current_label' => 'en',
         'current_vocalization' => 'en',
+        'board_name' => {'en' => 'my board', 'es' => 'boardiness'},
         '1' => {
           'en' => {'label' => 'hat'},
           'es' => {'label' => 'sat'}
@@ -2806,6 +2812,7 @@ describe Board, :type => :model do
         'default' => 'en',
         'current_label' => 'es',
         'current_vocalization' => 'es',
+        'board_name' => {},
         '1' => {
           'en' => {
             'label' => 'hat'
@@ -2990,7 +2997,6 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat'}
       ]
       b5.save
-      puts b1.reload.settings
       
       res = b1.translate_set({'hat' => 'top', 'cat' => 'feline', 'rat' => 'mouse', 'fat' => 'lard'}, {
         'source' => 'en', 
@@ -2998,7 +3004,6 @@ describe Board, :type => :model do
         'board_ids' => [b1.global_id, b2.global_id, b3.global_id, b4.global_id]
       })
       expect(res[:done]).to eq(true)
-      puts b1.reload.settings
       expect(b1.reload.buttons.map{|b| b['label'] }).to eq(['top', 'feline', 'mouse'])
       expect(b2.reload.buttons.map{|b| b['label'] }).to eq(['fat']) # already translated
       expect(b3.reload.buttons.map{|b| b['label'] }).to eq(['cheese'])

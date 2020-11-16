@@ -807,6 +807,7 @@ describe Converters::CoughDrop do
         'default' => 'en',
         'current_label' => 'en',
         'current_vocalization' => 'en',
+        "board_name" => {"en"=>"Cool Board"},
         '2' => {
           'en' => {
             'label' => 'apple',
@@ -901,6 +902,7 @@ describe Converters::CoughDrop do
         'default' => 'en',
         'current_label' => 'en',
         'current_vocalization' => 'en',
+        "board_name" => {"en"=>"Cool Board"},
         '2' => {
           'en' => {
             'label' => 'apple',

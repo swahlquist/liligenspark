@@ -264,8 +264,9 @@ CoughDrop.Board = DS.Model.extend({
   }),
   readable_locales: computed('locales', function() {
     var res = [];
+    var _this = this;
     (this.get('locales') || []).forEach(function(loc) {
-      var str = (i18n.locales_localized[loc] || i18n.locales[loc] || loc) + " (" + loc + ")";
+      var str = (i18n.locales_localized[loc] || i18n.locales[loc] || loc) + (_this.get('locale') == loc ? '*' : '') + " (" + loc + ")";
       res.push({
         string: str,
         id: loc,

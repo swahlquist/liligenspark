@@ -905,6 +905,7 @@ class Board < ActiveRecord::Base
           self.settings['translations'][button['id'].to_s][loc] ||= {}
           self.settings['translations'][button['id'].to_s][loc]['label'] = tran['label'].to_s if tran['label']
           self.settings['translations'][button['id'].to_s][loc]['vocalization'] = tran['vocalization'].to_s if tran['vocalization'] || tran['label']
+          self.settings['translations'][button['id'].to_s][loc].delete('vocalization') if self.settings['translations'][button['id'].to_s][loc]['vocalization'] == ""
           tran['inflections'].to_a.each_with_index do |str, idx|
             self.settings['translations'][button['id'].to_s][loc]['inflections'] ||= []
             self.settings['translations'][button['id'].to_s][loc]['inflections'][idx] = str.to_s if str
@@ -1013,10 +1014,12 @@ class Board < ActiveRecord::Base
     if board_ids.blank? || board_ids.include?(self.global_id)
       self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
       self.settings['translations']['board_name'] ||= {}
-      if self.settings['name'] && translations[self.settings['name']] && set_as_default_here
+      if self.settings['name'] && self.settings['name'] != "Unnamed Board"
         self.settings['translations']['board_name'][source_lang] ||= self.settings['name']
+        self.settings['translations']['board_name'][dest_lang] = translations[self.settings['name']] if translations[self.settings['name']]
+      end
+      if self.settings['name'] && translations[self.settings['name']] && set_as_default_here
         self.settings['name'] = translations[self.settings['name']]
-        self.settings['translations']['board_name'][dest_lang] = translations[self.settings['name']]
       end
       self.settings['locale'] ||= source_lang
       self.settings['translations']['default'] ||= source_lang

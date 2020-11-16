@@ -661,6 +661,8 @@ export default Controller.extend({
           }
           _this.copy_board(decision).then(function(board) {
             if(board) {
+              stashes.persist('label_locale', null);
+              stashes.persist('vocalization_locale', null);
               app_state.jump_to_board({
                 id: board.id,
                 key: board.key

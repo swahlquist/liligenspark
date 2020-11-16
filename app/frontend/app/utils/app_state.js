@@ -728,6 +728,10 @@ var app_state = EmberObject.extend({
     var board = _this.controller.get('board.model');
     if(!board) { return RSVP.reject({error: 'no board found'}); }
     if(board.get('local_only')) {
+      if(board.get('locale') && !app_state.get('speak_mode')) {
+        stashes.persist('label_locale', board.get('locale'));
+        stashes.persist('vocalization_locale', board.get('locale'));
+      }
       if(board.get('editable_source_key')) {
         var load_board = function() {
           return app_state.jump_to_board({
@@ -1029,7 +1033,9 @@ var app_state = EmberObject.extend({
   }),
   home_in_speak_mode: function(opts) {
     // This is only entered for the current
-    // user, not for supervisees
+    // user, not for supervisees (see set_speak_mode_user)
+    stashes.persist('label_locale', null);
+    stashes.persist('vocalization_locale', null);
     opts = opts || {};
     var speak_mode_user = opts.user || app_state.get('currentUser');
     // TODO: if preferred matches user's home board, pass the user's level instead of the board's default level
@@ -1173,6 +1179,14 @@ var app_state = EmberObject.extend({
   },
   set_speak_mode_user: function(board_user_id, jump_home, keep_as_self, board_key) {
     var session_user_id = this.get('sessionUser.id');
+    // If switching to the communicator's home,
+    // or if not already on a board (i.e. starting a new
+    // speak mode session) then clear the
+    // stashed locale settings
+    if(jump_home || !app_state.get('currentBoardState')) {
+      stashes.persist('label_locale', null);
+      stashes.persist('vocalization_locale', null);
+    }
     if(board_user_id == 'self' || (session_user_id && board_user_id == session_user_id)) {
       app_state.set('speakModeUser', null);
       app_state.set('referenced_speak_mode_user', null);
