@@ -101,7 +101,11 @@ class Api::BoardsController < ApplicationController
         if params['sort'] == 'popularity'
           boards = boards.order(popularity: :desc, home_popularity: :desc, id: :desc)
         elsif params['sort'] == 'home_popularity'
-          boards = boards.where(['home_popularity > ?', 0]).order(home_popularity: :desc, id: :desc)
+          if !params['user_id']
+            boards = boards.where(['home_popularity > ?', 0]).order(home_popularity: :desc, id: :desc)
+          else
+            boards = boards.order(home_popularity: :desc, id: :desc)
+          end
         elsif params['sort'] == 'custom_order'
           boards = boards[0, 100].sort_by{|b| b.settings['custom_order'] || b.id }
         end
