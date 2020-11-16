@@ -35,7 +35,7 @@ export default Component.extend({
   raw_content: computed('content', function() {
     // Ember got super slow at long lists for some reason..
     var elem = document.createElement('div');
-    this.get('content').forEach(function(c) {
+    (this.get('content') || []).forEach(function(c) {
       var opt = document.createElement('option');
       opt.value = c.id;
       opt.innerText = c.name;
