@@ -142,9 +142,17 @@ export default Controller.extend({
         }
         res.filtered_results = new_list.slice(0, 18);
       }
+      res.filtered_results_key = res.filtered_results.map(function(b) { return b.id || b.board.id; }).join(',');
       return res;
     }
   ),
+  update_filtered_results: observer('board_list.filtered_results_key', function() {
+    var last_key = this.get('last_filtered_results_key');
+    if(last_key != this.get('board_list.filtered_results_key')) {
+      this.set('last_filtered_results_key', this.get('board_list.filtered_results_key'));
+      this.set('filtered_results', this.get('board_list.filtered_results'));       
+    }
+  }),
   set_show_all_boards: function() {
     this.set('show_all_boards', true);
   },
