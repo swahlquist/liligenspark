@@ -133,6 +133,7 @@ task "extras:desktop" => :environment do
       puts "copying static assets"
       puts `cp ./public/images/* ../#{folder}/www/images`
       puts `cp ./public/images/logos/* ../#{folder}/www/images/logos`
+      puts `cp ./public/images/emergency/* ../#{folder}/www/images/emergency`
       puts `cp ./public/fonts/* ../#{folder}/www/fonts`
       puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
       puts `cp #{js} ../#{folder}/www/app.js`
@@ -240,6 +241,9 @@ task "extras:mobile" => :environment do
       puts "copying static assets"
       puts `cp ./public/images/* ../#{folder}/www/images`
       puts `cp ./public/images/logos/* ../#{folder}/www/images/logos`
+      puts "..."
+      puts `cp ./public/images/emergency/* ../#{folder}/www/images/emergency`
+      puts "..."
       puts `cp ./public/fonts/* ../#{folder}/www/fonts`
       puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
       puts "retrieving remote assets"

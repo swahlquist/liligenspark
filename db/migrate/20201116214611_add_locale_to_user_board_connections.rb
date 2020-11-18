@@ -9,12 +9,9 @@ class AddLocaleToUserBoardConnections < ActiveRecord::Migration[5.0]
       board_ids += batch.map(&:board_id)
     end
     board_ids.uniq!; board_ids.length
-    Board.where(id: board_ids, public: true).select('id').find_in_batches(batch_size: 200) do |batch|
+    Board.where(id: board_ids).select('id').find_in_batches(batch_size: 200) do |batch|
       Board.schedule(:refresh_stats, batch.map(&:global_id))
-      # puts "..."
-      # batch.each do |board|
-      #   UserBoardConnection.where(board_id: board.id).update_all(locale: board.settings['locale'] || 'en') if board.settings
-      # end
+      puts "..."
     end
     Board.where(['popularity > ?', 0]).where(public: true).select('id').find_in_batches(batch_size: 200) do |batch|
       Board.schedule(:refresh_stats, batch.map(&:global_id))

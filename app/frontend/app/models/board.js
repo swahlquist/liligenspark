@@ -777,13 +777,12 @@ CoughDrop.Board = DS.Model.extend({
   }),
   prompt: function(action) {
     var _this = this;
-    if(action == 'clear') {
+    if(action == 'clear' || !app_state.get('speak_mode')) {
       if(_this.get('reprompt_wait')) {
         runCancel(_this.get('reprompt_wait'));
         _this.set('reprompt_wait', null);
       }
     } else {
-      // TODO: schedule a delay and then re-prompt if any delay prompts are set
       var text = _this.get('background.prompt.text');
       if(action == 'reprompt' && _this.get('background.delay_prompts.length') > 0) {
         var idx = _this.get('prompt_index') || 0;

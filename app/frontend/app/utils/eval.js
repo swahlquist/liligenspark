@@ -953,7 +953,12 @@ evaluation.callback = function(key) {
       core_list = opts.core_list;
     }
     board = obf.shell(step_rows, step_cols);
-    board.key = 'obf/eval';
+    board.key = 'obf/eval-' + Math.round(Math.random() * 9999) + "-" + (new Date()).getTime();
+    board.name = "Evaluation Board";
+    board.locale = 'en';
+    board.obf_type = 'eval';
+    board.license = {private: true};
+  
     // TODO: make sure you exclude all items in the list from being distractors
     // TODO: option to have a consistent mapping of distractors to row, col locations
     // TODO: record for each answer what the prompt was
