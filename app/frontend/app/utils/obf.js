@@ -142,8 +142,8 @@ var obf = EmberObject.extend({
   }
 }).create();
 
-obf.register("eval", evaluation.callback);
-obf.register("emergency", emergency.callback);
+evaluation.register(obf);
+emergency.register(obf);
 window.obf = obf;
 
 export default obf;

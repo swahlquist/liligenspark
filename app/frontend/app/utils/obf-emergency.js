@@ -17,8 +17,8 @@ import { set as emberSet, observer } from '@ember/object';
 // select language when starting assessment
 
 var emergency = {
-  register: function() {
-    obf.register("eval", emergency.callback);
+  register: function(obf) {
+    obf.register("emergency", emergency.callback);
     obf.emergency = emergency;
   },
 };

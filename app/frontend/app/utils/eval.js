@@ -23,7 +23,7 @@ import { set as emberSet, observer } from '@ember/object';
 var pixels_per_inch = 96;
 window.ppi = window.ppi || 96;
 var evaluation = {
-  register: function() {
+  register: function(obf) {
     obf.register("eval", evaluation.callback);
     obf.eval = evaluation;
     if(!window.ppi_accurate) {

@@ -207,7 +207,7 @@ CoughDrop.User = DS.Model.extend({
   // as in a paid or sponsored communicator
   // (even a paid communicator who sets their role to supporter)
   // * or a free trial *
-  currently_premium: computed('subscription.billing_state', 'grace_period', 'subscription.premium_supporter', 'subscription.premium_supporter_plus_communicator', 'grace_period', 'subscription.never_expires', 'subscription.timestamp', function() {
+  currently_premium: computed('subscription.billing_state', 'grace_period', 'subscription.premium_supporter', 'subscription.premium_supporter_plus_communicator', 'subscription.never_expires', 'subscription.timestamp', function() {
     if(this.get('subscription.never_expires')) { return true; }
     // NOTE: Long-term purchases that have expired and have
     // remained unsynced for a while could be
