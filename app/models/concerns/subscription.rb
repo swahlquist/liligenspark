@@ -36,12 +36,12 @@ module Subscription
         self.settings['subscription']['canceled'][key] = self.settings['subscription'][key]
       end
     end
-    ['subscription_id', 'token_summary', 'started', 'plan_id', 'free_premium', 'limited_premium_purchase', 'eval_account', 'modeling_only', 'never_expires'].each do |key|
+    ['subscription_id', 'token_summary', 'started', 'plan_id', 'free_premium', 'limited_premium_purchase', 'eval_account', 'modeling_only'].each do |key|
       self.settings['subscription'].delete(key)
     end
 
     self.settings['subscription'].delete('started')
-    self.settings['subscription'].delete('never_expires')
+    # self.settings['subscription'].delete('never_expires')
     self.settings['subscription'].delete('added_to_organization')
     if opts[:removed_org_links]
       self.settings['past_purchase_durations'] ||= []
