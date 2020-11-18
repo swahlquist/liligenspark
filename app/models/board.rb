@@ -163,6 +163,10 @@ class Board < ActiveRecord::Base
     self.settings['recent_forks'] = 0
     self.settings['locale_home_forks'] = {}
     child_conns.each do |ubc|
+      if !ubc.locale
+        UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
+        ubc.locale = ubc.board.settings['locale']
+      end
       loc = (ubc.locale || 'en').split(/_|-/)[0]
       self.settings['home_forks'] += 1 if ubc.home
       self.settings['locale_home_forks'][ubf.locale] = (self.settings['locale_home_forks'][ubf.locale] || 0) + 1 if ubc.home
@@ -181,6 +185,10 @@ class Board < ActiveRecord::Base
     self.settings['non_author_uses'] = 0
     self.settings['locale_home_uses'] = {}
     conns.each do |ubc|
+      if !ubc.locale
+        UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
+        ubc.locale = ubc.board.settings['locale']
+      end
       loc = (ubc.locale || 'en').split(/_|-/)[0]
       self.settings['home_uses'] +=1 if ubc.home
       self.settings['recent_home_uses'] += 1 if ubc.home && ubc.updated_at > 30.days.ago
