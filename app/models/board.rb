@@ -11,7 +11,7 @@ class Board < ActiveRecord::Base
   include SecureSerialize
   include Sharing
   include Renaming
-  include PgSearch::Model
+
   has_many :board_button_images
   has_many :button_images, :through => :board_button_images
   has_many :board_button_sounds
@@ -21,10 +21,9 @@ class Board < ActiveRecord::Base
   belongs_to :parent_board, :class_name => 'Board'
   belongs_to :board_content
   has_many :child_boards, :class_name => 'Board', :foreign_key => 'parent_board_id'
-  pg_search_scope :search_by_text, :against => :search_string, :ranked_by => "log(boards.popularity + boards.home_popularity + 3) * :tsearch"
-  pg_search_scope :search_by_text_for_home_popularity, :against => :search_string, :ranked_by => "log(boards.home_popularity + 2) * :tsearch"
+  # pg_search_scope :search_by_text, :against => :search_string, :ranked_by => "log(boards.popularity + boards.home_popularity + 3) * :tsearch"
+  # pg_search_scope :search_by_text_for_home_popularity, :against => :search_string, :ranked_by => "log(boards.home_popularity + 2) * :tsearch"
   before_save :generate_defaults
-  before_save :generate_stats
   before_save :require_key
   before_save :check_inflections
   before_save :check_content_overrides
@@ -64,18 +63,22 @@ class Board < ActiveRecord::Base
   cache_permissions
 
   def starred_by?(user)
-    !!(user && user.global_id && (self.settings['starred_user_ids'] || []).include?(user.global_id))
+    user_id = user && user.global_id
+    !!(user && user.global_id && !!(self.settings['starred_user_ids'] || []).detect{|id| id == user_id || id.to_s.match(/.+:#{user_id}/) })
   end
   
-  def star(user, star)
+  def star(user, star, locale=nil)
     self.settings ||= {}
+    locale ||= self.settings['locale'] || 'en'
     self.settings['starred_user_ids'] ||= []
     if user
       if star
-        self.settings['starred_user_ids'] << user.global_id if user
-        self.settings['starred_user_ids'].uniq!
+        if !starred_by?(user)
+          self.settings['starred_user_ids'] << "#{locale}:#{user.global_id}"
+        end
       else
-        self.settings['starred_user_ids'] = self.settings['starred_user_ids'] - [user.global_id]
+        user_id = user.global_id
+        self.settings['starred_user_ids'] = self.settings['starred_user_ids'].select{|id| id != user_id && !id.to_s.match(/.+:#{user_id}/) }
       end
       self.settings['never_edited'] = false
       user.schedule(:remember_starred_board!, self.global_id)
@@ -114,26 +117,80 @@ class Board < ActiveRecord::Base
   end
   
   def non_author_starred?
-    self.user && ((self.settings || {})['starred_user_ids'] || []).any?{|s| s != self.user.global_id }
+    self.user && ((self.settings || {})['starred_user_ids'] || []).any?{|s| s != self.user.global_id && !s.to_s.match(self.user.global_id) }
   end
   
   def stars
-    (self.settings || {})['stars'] || 0
+    (self.settings || {})['stars'] || ((self.settings || {})['starred_user_ids'] || []).length
+  end
+
+  def self.refresh_stats(board_ids)
+    Board.find_all_by_global_id(board_ids).each do |board|
+      board.generate_stats
+      board.save_without_post_processing
+    end
   end
   
   def generate_stats
+    # TODO: only recount these when necessary
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
+    self.settings['locale_stars'] = {}
+
+    pops = {}
+    home_pops = {}
+    locales = []
+    (BoardContent.load_content(self, 'translations') || {}).each do |k, trans|
+      if trans.is_a?(Hash)
+        locales += trans.keys
+      end
+    end
+    locales.uniq!
+    (self.settings['starred_user_ids'] || []).select{|s| s.to_s.match(/:/) }.each do |str|
+      loc = str.split(/:/)[0]
+      self.settings['locale_stars'][loc] ||= 0
+      self.settings['locale_stars'][loc] += 1
+      if loc.match(/-|_/)
+        lang = loc.split(/-|_/)[0]
+        self.settings['locale_stars'][lang] ||= 0
+        self.settings['locale_stars'][lang] += 1
+      end
+    end
     child_board_ids = self.child_boards.select('id').map(&:id)
     self.settings['forks'] = child_board_ids.length
-    self.settings['home_forks'] = UserBoardConnection.where(:board_id => child_board_ids, :home => true).count
-    self.settings['home_uses'] = UserBoardConnection.where(:board_id => self.id, :home => true).count
-    self.settings['recent_home_uses'] = UserBoardConnection.where(['board_id = ? AND home = ? AND updated_at > ?', self.id, true, 30.days.ago]).count
-    self.settings['recent_home_forks'] = UserBoardConnection.where(:board_id => child_board_ids).where(['home = ? AND updated_at > ?', true, 30.days.ago]).count
-    self.settings['uses'] = UserBoardConnection.where(:board_id => self.id).count
-    self.settings['recent_uses'] = UserBoardConnection.where(['board_id = ? AND updated_at > ?', self.id, 30.days.ago]).count
-    self.settings['recent_forks'] = UserBoardConnection.where(:board_id => child_board_ids).where(['updated_at > ?', 30.days.ago]).count
-    self.settings['non_author_uses'] = UserBoardConnection.where(['board_id = ? AND user_id != ?', self.id, self.user_id]).count
-    self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
+    child_conns = UserBoardConnection.where(:board_id => child_board_ids)
+    self.settings['home_forks'] = 0
+    self.settings['recent_home_forks'] = 0
+    self.settings['recent_forks'] = 0
+    self.settings['locale_home_forks'] = {}
+    child_conns.each do |ubc|
+      loc = (ubc.locale || 'en').split(/_|-/)[0]
+      self.settings['home_forks'] += 1 if ubc.home
+      self.settings['locale_home_forks'][ubf.locale] = (self.settings['locale_home_forks'][ubf.locale] || 0) + 1 if ubc.home
+      self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + 1 if ubc.home && ubc.locale != loc
+      if ubc.updated_at > 30.days.ago
+        self.settings['recent_forks'] += 1 
+        self.settings['recent_home_forks'] += 1 if ubc.home
+      end
+    end
+      
+    conns = UserBoardConnection.where(:board_id => self.id)
+    self.settings['home_uses'] = 0
+    self.settings['recent_home_uses'] = 0
+    self.settings['uses'] = 0
+    self.settings['recent_uses'] = 0
+    self.settings['non_author_uses'] = 0
+    self.settings['locale_home_uses'] = {}
+    conns.each do |ubc|
+      loc = (ubc.locale || 'en').split(/_|-/)[0]
+      self.settings['home_uses'] +=1 if ubc.home
+      self.settings['recent_home_uses'] += 1 if ubc.home && ubc.updated_at > 30.days.ago
+      self.settings['uses'] += 1
+      self.settings['recent_uses'] += 1 if ubc.updated_at > 30.days.ago
+      self.settings['non_author_uses'] +=1 if ubc.user_id != self.user_id
+      self.settings['locale_home_uses'][ubc.locale] = (self.settings['locale_home_uses'][ubc.locale] || 0) + 1 if ubc.home
+      self.settings['locale_home_uses'][loc] = (self.settings['locale_home_uses'][loc] || 0) + 1 if ubc.home && ubc.locale != loc
+    end
+    self.any_upstream ||= false
     if self.settings['never_edited']
       self.popularity = -1
       self.home_popularity = -1
@@ -146,14 +203,133 @@ class Board < ActiveRecord::Base
         self.home_popularity /= 3
       end
     end
-    self.any_upstream ||= false
+    found_locales = {}
+    found_locales[self.settings['locale']] = true
+    locales.each do |locale|
+      found_locales[locale] = true
+      lang = locale.split(/-|_/)[0]
+      found_locales[lang] = true
+      pop_score = ((self.settings['locale_stars'][locale] || 0) * 10) + (self.settings['locale_home_uses'][locale] || 0) + ((self.settings['locale_home_forks'][locale] || 0) * 2)
+      home_pop_score = (self.any_upstream ? 0 : 10) + ((self.settings['locale_stars'][locale] || 0) * 3) + (self.settings['locale_home_uses'][locale] || 0) + ((self.settings['locale_home_forks'][locale] || 0) * 2)
+      pops[locale] = pop_score
+      home_pops[locale] = home_pop_score
+      pops[lang] = [pops[lang] || 0, pop_score].max
+      home_pops[lang] = [home_pops[lang] || 0, home_pop_score].max
+    end
     self.settings['total_buttons'] = (self.buttons || []).length + (self.settings['total_downstream_buttons'] || 0)
     self.settings['unlinked_buttons'] = (self.buttons || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
+    if self.public
+      found_locales.each do |locale, nvmd|
+        bl = BoardLocale.find_or_create_by(board_id: self.id, locale: locale)
+        bl.search_string = self.search_string_for(locale)
+        if self.settings['never_edited']
+          bl.popularity = -1
+          bl.home_popularity = -1
+        else
+          bl.popularity = home_pops[locale] || 0
+          bl.home_popularity = pops[locale] || 0
+        end
+        bl.save
+      end
+    else
+      BoardLocale.where(board_id: self.id).delete_all
+    end
     if (self.buttons || []).length == 0
       self.popularity = 0
       self.home_popularity = 0
     end
     true
+  end
+
+  def search_string_for(locale)
+    lang = locale.split(/-|_/)[0]
+    trans =  BoardContent.load_content(self, 'translations') || {}
+    board_string = ""
+    val = nil
+    if trans['board_name']
+      val = trans['board_name'][locale] || trans['board_name'][lang]
+      if !val
+        other = trans['board_name'].keys.detect{|l| l.match(/^#{lang}/)}
+        val = trans['board_name'][other] if other
+      end
+    end
+    val ||= self.settings['name']
+    board_string += val
+    grid = BoardContent.load_content(self, 'grid')
+    buttons = self.buttons
+    if grid && buttons
+      grid['columns'].times do |jdx|
+        grid['rows'].times do |idx|
+          id = grid['order'][idx] && grid['order'][idx][jdx]
+          button = buttons.detect{|b| b['id'] == id } || {}
+          btn_trans = ((trans || {})[id.to_s] || {})
+          val = (btn_trans[locale] || {})['label'] || (btn_trans[lang] || {})['label']
+          if !val
+            other = btn_trans.keys.detect{|l| l.match(/^#{lang}/)}
+            val = btn_trans[other]['label'] if other
+          end
+          val ||= button['label'] || ''
+          board_string += " " + val + ","
+        end
+      end
+    end
+    board_string += " " + self.key
+    board_string += " " + (self.settings['name'] || "").downcase
+    board_string += " " + (self.settings['description'] || "").downcase
+    board_string
+  end
+
+  def self.sort_for_query(boards, query, locale)
+    locale ||= 'any'
+    boards.each_with_index{|brd, idx| brd.instance_variable_set('@sort_idx', idx) }
+    lang = locale.split(/-|_/)[0]
+    query = CGI.unescape(query || '').downcase
+    res = boards.sort_by do |board|
+      board_string = ""
+      boost = 1 - (board.instance_variable_get('@sort_idx').to_f / boards.length.to_f / 2.0)
+      if board.settings['locale'] == locale
+        boost += 1 
+        board_string += "locale:#{locale}"
+      elsif board.settings['locale'].split(/-|_/)[0] == lang.split(/-|_/)[0]
+        boost += 0.5 
+        board_string += "locale:#{lang}"
+      end
+      board_string = " " + board.search_string_for(locale == 'any' ? board.settings['locale'] : locale)
+      if board_string.match(/#{query}/i)
+        boost *= 10 
+        board.instance_variable_set('@sort_match', true)
+      else
+        board.instance_variable_set('@sort_match', false)
+      end
+      boost
+    end
+    res.select{|b| b.instance_variable_get('@sort_match') }.reverse
+  end
+
+  def self.sort_for_locale(boards, locale, sort, ranks)
+    # When sorting by locale, apply a locale boost for a re-sort
+    return boards unless locale && locale != 'any' && sort
+    res = boards.sort_by do |board|
+      boost = 1 * (ranks[board.id] || 0.1)
+      forks = (board.settings['locale_home_forks'] || {})[locale] || (board.settings['locale_home_forks'] || {})[locale.split(/-|_/)[0]] || 0
+      uses = (board.settings['locale_home_uses'] || {})[locale] || (board.settings['locale_home_uses'] || {})[locale.split(/-|_/)[0]] || 0
+      stars = (board.settings['locale_stars'] || {})[locale] || (board.settings['locale_stars'] || {})[locale.split(/-|_/)[0]] || 0
+      if sort == 'popularity'
+        boost += 5 if board.settings['locale'] == locale
+        boost += 3 if board.settings['locale'] != locale && board.settings['locale'].split(/-|_/)[0] == locale.split(/-|_/)[0]
+        boost += uses / 3
+        boost += forks / 5
+        boost += stars
+      elsif sort == 'home_popularity'
+        boost += 5 if board.settings['locale'] == locale
+        boost += 3 if board.settings['locale'] != locale && board.settings['locale'].split(/-|_/)[0] == locale.split(/-|_/)[0]
+        boost += uses
+        boost += forks / 3
+        boost += stars / 2
+      end
+      board.popularity * boost
+    end
+    res.reverse
   end
 
   def check_content_overrides
@@ -225,6 +401,7 @@ class Board < ActiveRecord::Base
   def generate_defaults
     self.settings ||= {}
     self.settings['name'] ||= "Unnamed Board"
+    self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
     if !self.settings['image_url']
       self.settings['image_url'] = DEFAULT_ICON
       self.settings['default_image_url'] = DEFAULT_ICON
@@ -249,6 +426,7 @@ class Board < ActiveRecord::Base
       end
     end
     self.any_upstream = self.settings && self.settings['immediately_upstream_board_ids'] && self.settings['immediately_upstream_board_ids'].length > 0
+    self.any_upstream ||= false
     grid = BoardContent.load_content(self, 'grid')
     grid ||= {}
     grid['rows'] = (grid['rows'] || 2).to_i
@@ -300,10 +478,30 @@ class Board < ActiveRecord::Base
         langs += trans.keys
       end
     end
+    langs.uniq!
     self.settings['locales'] = ([self.settings['locale']] + langs).uniq
-    # TODO: encrypted search, lol
-    self.settings['search_string'] = "#{self.settings['name']} #{self.settings['description'] || ""} #{self.key} #{self.labels} locale:#{self.settings['locale'] || ''}".downcase
-    self.search_string = self.fully_listed? ? self.settings['search_string'] : nil
+    self.settings.delete('search_string')
+    self.search_string = self.settings['locales'].map{|s| "locale:#{s}" }.join(" ")
+    # self.settings['search_string'] = "#{self.settings['name']} locale:#{self.settings['locale'] || ''}".downcase
+    # langs.each do |loc, txt|
+    #   self.settings['search_string'] += "locale:#{loc}"
+    # end
+    # locs = {}
+    # (BoardContent.load_content(board, 'translations') || {}).each do |attr, hash|
+    #   if hash.is_a?(Hash)
+    #     hash.each do |loc, vals|
+    #       locs[loc] ||= ""
+    #       if attr == 'board_name'
+    #         locs[loc] += " #{vals}"
+    #       elsif vals.is_a?(Hash) && vals['label']
+    #         locs[loc] += " #{vals['label']}"
+    #       end
+    #     end
+    #   end
+    # end
+    # self.settings['search_string'] += " #{self.key} #{self.labels} #{self.settings['description'] || ""}".downcase
+    # search_string is limited to 4096
+    # self.search_string = self.fully_listed? ? (self.settings['search_string'] || '')[0, 4096] : nil
     true
   end
   

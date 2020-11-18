@@ -19,11 +19,28 @@ export default Component.extend({
     if(!board.reload && board.key) {
       var _this = this;
       CoughDrop.store.findRecord('board', board.key).then(function(b) {
+        if(board.locale) {
+          b.set('localized_locale', board.locale);
+          _this.set('localized', true);
+        }
         _this.set('board_record', b);
       }, function() { });
     } else {
       this.set('board_record', board);
     }
+  }),
+  best_name: computed('board_record.name', 'board_record.translations.board_name', 'board_record.localized_name', 'localized', function() {
+    if(this.get('localized')) {
+      if(this.get('board_record.translations')) {
+        var names = this.get('board_record.translations.board_name') || {};
+        if(names[this.get('board_record.localized_locale')]) {
+          return names[this.get('board_record.localized_locale')];
+        }
+      } else if(this.get('board_record.localized_name')) {
+        return this.get('board_record.localized_name');
+      }
+    }
+    this.get('board_record.name');
   }),
   display_class: computed('children', function() {
     var e = this.element;
@@ -46,21 +63,32 @@ export default Component.extend({
     board_preview: function(board) {
       var _this = this;
       board.preview_option = null;
-      modal.board_preview(board, function() {
+      if(_this.get('localized')) {
+        board.preview_locale = this.get('board_record.localized_locale');
+      }
+      modal.board_preview(board, board.preview_locale, function() {
         _this.send('pick_board', board);
       });
     },
     pick_board: function(board) {
+      // TODO: consider whether localized=true
       var _this = this;
       if(this.get('children')) {
         _this.sendAction('action', this.get('board'));
       } else if(this.get('option') == 'select') {
         board.preview_option = 'select';
-        modal.board_preview(board, function() {
+        if(_this.get('localized')) {
+          board.preview_locale = this.get('board_record.localized_locale');
+        }
+        modal.board_preview(board, board.preview_locale, function() {
           _this.sendAction('action', board);
         });
       } else {
-        app_state.home_in_speak_mode({force_board_state: {key: board.get('key'), id: board.get('id')}});
+        var opts = {force_board_state: {key: board.get('key'), id: board.get('id')}};
+        if(_this.get('localized')) {
+          opts.force_board_state.locale = this.get('board_record.localized_locale');
+        }
+        app_state.home_in_speak_mode(opts);
       }
     }
   }

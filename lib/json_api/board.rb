@@ -19,8 +19,17 @@ module JsonApi::Board
       json[key] = board.settings[key]
     end
     list = [board.settings['locale'] || 'en']
-    (BoardContent.load_content(board, 'translations') || {}).each{|k, h| if h.is_a?(Hash); list += h.keys; end }
+    trans = (BoardContent.load_content(board, 'translations') || {})
+    trans.each{|k, h| if h.is_a?(Hash); list += h.keys; end }
     json['translated_locales'] = list.uniq
+    if args[:locale]
+      matching = list.detect{|l| l == args[:locale] }
+      matching ||= list.detect{|l| l.split(/-|_/)[0] == args[:locale] }
+      if matching
+        json['localized_name'] = (trans['board_name'] || {})[matching] || json['name']
+        json['localized_locale'] = matching
+      end
+    end
     self.trace_execution_scoped(['json/board/license']) do
       json['license'] = OBF::Utils.parse_license(board.settings['license'])
     end

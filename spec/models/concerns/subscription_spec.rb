@@ -830,7 +830,7 @@ describe Subscription, :type => :model do
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_assigned, u.global_id, o.global_id)
       u.update_subscription_organization(o.global_id)
       expect(u.settings['subscription']['added_to_organization']).to eql(Time.now.iso8601)
-      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
     end
     
     it "should set eval accounts as eval users" do
@@ -2914,7 +2914,7 @@ describe Subscription, :type => :model do
       u.reload
       u.settings['subscription'] = {'eval_account' => true}
       u.reset_eval(d.global_id)
-      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
     end
 
     it "should delete all devices but the current device" do

@@ -2,7 +2,7 @@ import Component from '@ember/component';
 import CoughDrop from '../app';
 import modal from '../utils/modal';
 import app_state from '../utils/app_state';
-import persistence from '../utils/persistence';
+import i18n from '../utils/i18n';
 import { computed } from '@ember/object';
 
 export default Component.extend({
@@ -24,6 +24,15 @@ export default Component.extend({
       });
     }
   },
+  multiple_locales: computed('model.locales', function() {
+    return (this.get('model.locales') || []).length > 1;
+  }),
+  languages: computed('model.locales', function() {
+    return (this.get('model.locales') || []).map(function(l) { return i18n.readable_language(l); }).join(', ');
+  }),
+  language: computed('model.locale', function() {
+    return i18n.readable_language(this.get('model.locale'));
+  }),
   select_option: computed('option', function() {
     return this.get('option') == 'select';
   }),
@@ -35,7 +44,7 @@ export default Component.extend({
       modal.close_board_preview();
     },
     visit: function() {
-      app_state.set('referenced_board', {id: this.get('model.id'), key: this.get('model.key')});
+      app_state.set('referenced_board', {id: this.get('model.id'), key: this.get('model.key'), locale: this.get('locale')});
       app_state.controller.transitionToRoute('board', this.get('model.key'));
     }
   }

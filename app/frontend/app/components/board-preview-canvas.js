@@ -52,7 +52,8 @@ export default Component.extend({
         var rows = board.get('grid.rows');
         var columns = board.get('grid.columns');
         var buttons = {};
-        (board.get('buttons') || []).forEach(function(button) {
+        var locale = this.get('locale');
+        (board.translated_buttons(locale, locale) || []).forEach(function(button) {
           buttons[button.id] = button;
         });
         var button_width = width / columns;
@@ -205,6 +206,7 @@ export default Component.extend({
     'current_level',
     'base_level',
     'board.image_urls',
+    'locale',
     function() {
       var _this = this;
       runLater(function() {

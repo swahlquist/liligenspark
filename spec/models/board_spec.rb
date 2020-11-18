@@ -385,7 +385,7 @@ describe Board, :type => :model do
       expect(u.global_id).not_to eq(nil)
       b = Board.new
       b.star(u, true)
-      expect(b.settings['starred_user_ids']).to eq([u.global_id])
+      expect(b.settings['starred_user_ids']).to eq(["en:" + u.global_id])
     end
     
     it "should not keep repeat ids" do
@@ -396,7 +396,13 @@ describe Board, :type => :model do
       b.star(u, true)
       b.star(u, true)
       b.star(u, true)
+      expect(b.settings['starred_user_ids']).to eq(["en:" + u.global_id])
+      b.settings['starred_user_ids'] = [u.global_id]
+      b.star(u, true)
       expect(b.settings['starred_user_ids']).to eq([u.global_id])
+      b.settings['starred_user_ids'] = ["es:" + u.global_id]
+      b.star(u, true)
+      expect(b.settings['starred_user_ids']).to eq(["es:" + u.global_id])
     end
     
     it "should remove the user if set to unstar" do
@@ -405,7 +411,9 @@ describe Board, :type => :model do
       expect(u.global_id).not_to eq(nil)
       b = Board.new
       b.star(u, true)
-      expect(b.settings['starred_user_ids']).to eq([u.global_id])
+      expect(b.settings['starred_user_ids']).to eq(["en:" + u.global_id])
+      b.star(u, true)
+      expect(b.settings['starred_user_ids']).to eq(["en:" + u.global_id])
       b.star(u, false)
       expect(b.settings['starred_user_ids']).to eq([])
     end
@@ -435,7 +443,7 @@ describe Board, :type => :model do
       b = Board.create(user: u)
       u2 = User.create
       b.star!(u2, true)
-      expect(b.settings['starred_user_ids']).to eq([u2.global_id])
+      expect(b.settings['starred_user_ids']).to eq(["en:" + u2.global_id])
       expect(b.versions.length).to eq(1)
       expect(b.versions.map(&:whodunnit)).to eq(['nunya'])
     end
@@ -462,6 +470,9 @@ describe Board, :type => :model do
       expect(b.settings['uses']).to eq(0)
       expect(b.settings['recent_uses']).to eq(0)
       expect(b.settings['non_author_uses']).to eq(0)
+      expect(b.settings['locale_stars']).to eq({})
+      expect(b.settings['locale_home_forks']).to eq({})
+      expect(b.settings['locale_home_uses']).to eq({})
       expect(b.popularity).to eq(0)
       expect(b.home_popularity).to eq(0)
     end
@@ -470,22 +481,118 @@ describe Board, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       3.times do
-        UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 98765)
+        UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 98765, locale: 'en_US')
       end
-      UserBoardConnection.create(:board_id => b.id, :user_id => u.id)
+      UserBoardConnection.create(:board_id => b.id, :user_id => u.id, locale: 'es')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en')
       b.settings['starred_user_ids'] = [1,2]
       b.settings['buttons'] = [{}]
       b.generate_stats
       expect(b.settings['stars']).to eq(2)
       expect(b.settings['forks']).to eq(0)
-      expect(b.settings['home_uses']).to eq(3)
-      expect(b.settings['recent_home_uses']).to eq(3)
-      expect(b.settings['uses']).to eq(4)
-      expect(b.settings['recent_uses']).to eq(4)
+      expect(b.settings['home_uses']).to eq(4)
+      expect(b.settings['recent_home_uses']).to eq(4)
+      expect(b.settings['uses']).to eq(5)
+      expect(b.settings['recent_uses']).to eq(5)
       expect(b.settings['non_author_uses']).to eq(3)
-      expect(b.popularity).to eq(36)
+      expect(b.settings['locale_stars']).to eq({} )
+      expect(b.settings['locale_home_forks']).to eq({})
+      expect(b.settings['locale_home_uses']).to eq({'en' => 4, 'en_US' => 3})
+      expect(b.popularity).to eq(40)
       expect(b.any_upstream).to eq(false)
-      expect(b.home_popularity).to eq(34)
+      expect(b.home_popularity).to eq(40)
+    end
+
+    it "should generate board locale records for each locale and lang" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.public = true
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en-US')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en-GB')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 111, locale: 'en')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 222, locale: 'es')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'es_US')
+      UserBoardConnection.create(:board_id => b.id, :user_id => u.id, locale: 'es_US')
+      UserBoardConnection.create(:board_id => b.id, :user_id => u.id, locale: 'en')
+      b.settings['starred_user_ids'] = ["en:1",2,"es_US:2","en-US:3"]
+      b.settings['buttons'] = [{}]
+      b.settings['translations'] = {'board_name' => {'es_US' => 'a', 'en-US' => 'b'}}
+      b.save
+      b.generate_stats
+      expect(b.settings['stars']).to eq(4)
+      expect(b.settings['forks']).to eq(0)
+      expect(b.settings['home_uses']).to eq(6)
+      expect(b.settings['recent_home_uses']).to eq(6)
+      expect(b.settings['uses']).to eq(8)
+      expect(b.settings['recent_uses']).to eq(8)
+      expect(b.settings['non_author_uses']).to eq(2)
+      expect(b.settings['locale_stars']).to eq({'en' => 2, 'en-US' => 1, 'es_US' => 1, 'es' => 1})
+      expect(b.settings['locale_home_uses']).to eq({"en"=>4, "en-GB"=>1, "en-US"=>1, "es"=>2, "es_US"=>1})
+      expect(b.settings['locale_home_forks']).to eq({})
+      expect(b.popularity).to eq(72)
+      expect(b.any_upstream).to eq(false)
+      expect(b.home_popularity).to eq(58)
+      bls = BoardLocale.where(board_id: b.id)
+      expect(bls.count).to eq(4)
+      expect(bls.map(&:locale).sort).to eq(["en", "en-US", "es", "es_US"])
+    end
+
+    it "should generate localized search strings" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.public = true
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en-US')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'en-GB')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 111, locale: 'en')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => 222, locale: 'es')
+      UserBoardConnection.create(:board_id => b.id, :home => true, :user_id => u.id, locale: 'es_US')
+      UserBoardConnection.create(:board_id => b.id, :user_id => u.id, locale: 'es_US')
+      UserBoardConnection.create(:board_id => b.id, :user_id => u.id, locale: 'en')
+      b.settings['starred_user_ids'] = ["en:1",2,"es_US:2","en-US:3"]
+      b.settings['name'] = 'c'
+      b.settings['buttons'] = [{id: '1', label: 'frogs'}, {id: '2', label: 'cheese'}]
+      b.settings['translations'] = {
+        'board_name' => {'es_US' => 'a', 'en-US' => 'b'},
+        '1' => {'es_US' => {'label' => 'frogger'}, 'en' => {'label' => 'frogs'}, 'en-US' => {'label' => 'rather frog'}},
+        '2' => {'es' => {'label' => 'cheddar'}, 'es_US' => {'label' => 'cheesy'}}
+      }
+      b.settings['grid'] =  {'rows' => 1, 'columns' => 2, 'order' => [['1', '2']]}
+      b.save
+      b.generate_stats
+      expect(b.settings['stars']).to eq(4)
+      expect(b.settings['forks']).to eq(0)
+      expect(b.settings['home_uses']).to eq(6)
+      expect(b.settings['recent_home_uses']).to eq(6)
+      expect(b.settings['uses']).to eq(8)
+      expect(b.settings['recent_uses']).to eq(8)
+      expect(b.settings['non_author_uses']).to eq(2)
+      expect(b.settings['locale_stars']).to eq({'en' => 2, 'en-US' => 1, 'es_US' => 1, 'es' => 1})
+      expect(b.settings['locale_home_uses']).to eq({"en"=>4, "en-GB"=>1, "en-US"=>1, "es"=>2, "es_US"=>1})
+      expect(b.settings['locale_home_forks']).to eq({})
+      expect(b.popularity).to eq(72)
+      expect(b.any_upstream).to eq(false)
+      expect(b.home_popularity).to eq(58)
+      bls = BoardLocale.where(board_id: b.id)
+      expect(bls.count).to eq(4)
+      expect(bls.order('id').map(&:locale)).to eq(["es_US", "es", "en-US", "en"])
+      expect(bls.order('id').map(&:search_string)).to eq([
+        "a frogger, cheesy, #{b.key} ",
+        "a frogger, cheddar, #{b.key} ",
+        "b rather frog, cheese, #{b.key} ",
+        "b frogs, cheese, #{b.key} ",
+      ])
+      expect(bls.map(&:locale).sort).to eq(["en", "en-US", "es", "es_US"])
+    end
+
+    it "should clear board locales for non-public boards" do
+      u = User.create
+      b = Board.create(:user => u)
+      BoardLocale.create(board_id: b.id)
+      expect(BoardLocale.where(board_id: b.id).count).to eq(1)
+      b.generate_stats
+      expect(BoardLocale.where(board_id: b.id).count).to eq(0)
     end
   end
 
@@ -570,7 +677,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['columns']).to eq(4)
       expect(b.settings['grid']['order']).to eq([[nil, nil, nil, nil], [nil, nil, nil, nil]])
       expect(b.settings['immediately_downstream_board_ids']).to eq([])
-      expect(b.search_string).to eq("unnamed board    locale:en")
+      expect(b.search_string).to eq("locale:en")
       expect(b.settings['image_url']).to eq(Board::DEFAULT_ICON)
     end
     
@@ -591,7 +698,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['columns']).to eq(5)
       expect(b.settings['grid']['order']).to eq([[nil, nil, nil, nil, nil], [nil, nil, nil, nil, nil], [nil, nil, nil, nil, nil]])
       expect(b.settings['immediately_downstream_board_ids']).to eq([])
-      expect(b.search_string).to eq("friends and romans a good little board   locale:es")
+      expect(b.search_string).to eq("locale:es")
     end
     
     it "should enforce proper format/dimensions for grid value" do
@@ -647,7 +754,7 @@ describe Board, :type => :model do
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
     end
     
-    it "should clear the search_string for unlisted boards" do
+    it "should not clear the search_string for unlisted boards" do
       b = Board.new
       b.settings = {}
       b.settings['name'] = 'Friends and Romans'
@@ -657,10 +764,24 @@ describe Board, :type => :model do
       b.settings['grid']['columns'] = 5
       b.settings['locale'] = 'es'
       b.generate_defaults
-      expect(b.search_string).to eq("friends and romans a good little board   locale:es")
+      expect(b.search_string).to eq("locale:es")
       b.settings['unlisted'] = true
       b.generate_defaults
-      expect(b.search_string).to eq(nil)
+      expect(b.search_string).to eq("locale:es")
+    end
+
+    it "should include all locales in the search string" do
+      b = Board.new
+      b.settings = {}
+      b.settings['name'] = 'Friends and Romans'
+      b.settings['description'] = "A good little board"
+      b.settings['grid'] = {}
+      b.settings['grid']['rows'] = 3
+      b.settings['grid']['columns'] = 5
+      b.settings['locale'] = 'es'
+      b.settings['translations'] = {'board_name' => {'en' => 'assdf', 'fr' => 'qwert'}}
+      b.generate_defaults
+      expect(b.search_string).to eq("locale:es locale:en locale:fr")
     end
   end
   

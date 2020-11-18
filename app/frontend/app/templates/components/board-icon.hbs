@@ -4,7 +4,7 @@
   {{/unless}}
   <img src={{board_record.icon_url_with_fallback}} onerror="button_broken_image(this);"/>
   <div class={{if noinfo 'name compact' 'name'}}>
-  {{board_record.name}}
+  {{best_name}}
   </div>
   <div class='author'>
     {{#if children}}

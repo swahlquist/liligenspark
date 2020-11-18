@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201027171357) do
+ActiveRecord::Schema.define(version: 20201117190530) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -66,6 +66,16 @@ ActiveRecord::Schema.define(version: 20201027171357) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["board_id"], name: "index_board_downstream_button_sets_on_board_id", unique: true, using: :btree
+  end
+
+  create_table "board_locales", force: :cascade do |t|
+    t.integer  "board_id"
+    t.integer  "popularity"
+    t.integer  "home_popularity"
+    t.string   "locale"
+    t.string   "search_string",   limit: 10000
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
   end
 
   create_table "boards", force: :cascade do |t|
@@ -134,7 +144,7 @@ ActiveRecord::Schema.define(version: 20201027171357) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -368,6 +378,7 @@ ActiveRecord::Schema.define(version: 20201027171357) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "parent_board_id"
+    t.string   "locale"
     t.index ["board_id", "home", "updated_at"], name: "user_board_lookups", using: :btree
   end
 

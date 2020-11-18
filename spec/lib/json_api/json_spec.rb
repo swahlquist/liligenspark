@@ -8,6 +8,7 @@ describe JsonApi::Json do
       expect(JsonApi::Board).to receive(:build_json).with(obj, args).and_return({'a' => 1})
       expect(JsonApi::Board.as_json(obj, args)).to eq({'a' => 1})
     end
+
     it "should wrap in a wrapper if specified" do
       obj = {}
       args = {:wrapper => true}
@@ -16,6 +17,7 @@ describe JsonApi::Json do
       hash[JsonApi::User::TYPE_KEY] = {'a' => 1}
       expect(JsonApi::User.as_json(obj, args)).to eq(hash)
     end
+
     it "should call extra_includes if available and wrapper is specified" do
       obj = {}
       args = {:wrapper => true}

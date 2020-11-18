@@ -267,8 +267,8 @@ var modal = EmberObject.extend({
   success: function(text, below_header, sticky, opts) {
     modal.flash(text, 'success', below_header, sticky, opts);
   },
-  board_preview: function(board, callback) {
-    modal.route.render('board-preview', { into: 'application', outlet: 'board-preview', model: {board: board, option: board.preview_option, callback: callback}});
+  board_preview: function(board, locale, callback) {
+    modal.route.render('board-preview', { into: 'application', outlet: 'board-preview', model: {board: board, locale: locale, option: board.preview_option, callback: callback}});
   },
   cancel_auto_close: function() {
     modal.auto_close = false;

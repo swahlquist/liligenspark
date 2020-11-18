@@ -289,7 +289,7 @@ class User < ActiveRecord::Base
     if self.settings['preferences']['home_board']
       self.settings['preferences']['progress']['home_board_set'] = true
       self.settings['all_home_boards'] ||= []
-      self.settings['all_home_boards'] << self.settings['preferences']['home_board'].slice('key', 'id')
+      self.settings['all_home_boards'] << self.settings['preferences']['home_board'].slice('key', 'id', 'locale')
       self.settings['all_home_boards'] = self.settings['all_home_boards'].uniq
     end
     self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
@@ -439,15 +439,19 @@ class User < ActiveRecord::Base
     linked_boards = []
     board_ids_to_recalculate = []
     if self.settings['preferences'] && self.settings['preferences']['home_board'] && self.settings['preferences']['home_board']['id']
+      brd = Board.find_by_path(self.settings['preferences']['home_board']['id'])
       linked_boards << {
-        board: Board.find_by_path(self.settings['preferences']['home_board']['id']),
+        board: brd,
+        locale: self.settings['preferences']['home_board']['locale'] || brd.settings['locale'] || 'en',
         home: true
       }
     end
     if self.settings['preferences'] && self.settings['preferences']['sidebar_boards']
       self.settings['preferences']['sidebar_boards'].each do |brd|
+        board_record = Board.find_by_path(brd['key'])
         linked_boards << {
-          board: Board.find_by_path(brd['key']),
+          board: board_record,
+          locale: brd['locale'] || board_record.settings['locale'] || 'en',
           home: false
         } if brd['key']
       end
@@ -459,9 +463,14 @@ class User < ActiveRecord::Base
       if board
         orphan_board_ids -= [board.id]
         # TODO: sharding
-        UserBoardConnection.find_or_create_by(:board_id => board.id, :user_id => self.id, :home => hash[:home]) do |rec|
+        ubc = UserBoardConnection.find_or_create_by(:board_id => board.id, :user_id => self.id, :home => hash[:home]) do |rec|
+          # Remember: only called on create, not find
+          rec.locale = hash[:locale] || rec.locale
           board_added = true
           UserBoardConnection.where(board_id: rec.id).update_all(parent_board_id: rec.parent_board_id)
+        end
+        if ubc.locale != hash[:locale] && hash[:locale]
+          UserBoardConnection.where(id: ubc.id).update_all(locale: hash[:locale])
         end
         board.instance_variable_set('@skip_update_available_boards', true)
         # TODO: I *think* this is here because board permissions may change for
@@ -473,10 +482,15 @@ class User < ActiveRecord::Base
           if downstream_board
             orphan_board_ids -= [downstream_board.id]
             downstream_board_added = false
-            UserBoardConnection.find_or_create_by(:board_id => downstream_board.id, :user_id => self.id) do |rec|
+            ubc = UserBoardConnection.find_or_create_by(:board_id => downstream_board.id, :user_id => self.id) do |rec|
+              # Remember: only called on create, not find
+              rec.locale = hash[:locale] || rec.locale
               board_added = true
               downstream_board_added = true
               UserBoardConnection.where(board_id: rec.id).update_all(parent_board_id: rec.parent_board_id)
+            end
+            if ubc.locale != hash[:locale] && hash[:locale]
+              UserBoardConnection.where(id: ubc.id).update_all(locale: hash[:locale])
             end
             # When a user updated their home board/sidebar, all linked boards will have updated
             # tallies for popularity, home_popularity, etc.
@@ -499,14 +513,14 @@ class User < ActiveRecord::Base
     # TODO: sharding
     board_ids_to_recalculate += Board.where(:id => orphan_board_ids).select('id').map(&:global_id)
     # to regenerates stats?
-    Board.schedule(:save_without_post_processing, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
+    Board.schedule(:refresh_stats, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
     true
   end
 
   def remember_starred_board!(board_id)
     board = Board.find_by_path(board_id)
     if board
-      star = (board.settings['starred_user_ids'] || []).include?(self.global_id)
+      star = board.starred_by?(self)
       self.settings['starred_board_ids'] ||= []
       if star
         self.settings['starred_board_ids'] << board.global_id if board
@@ -923,6 +937,7 @@ class User < ActiveRecord::Base
         'id' => board.global_id,
         'key' => board.key
       }
+      self.settings['preferences']['home_board']['locale'] = home_board['locale'] || board.settings['locale']
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     elsif board && non_user_params['updater'] && board.allows?(non_user_params['updater'], 'share')
       if non_user_params['async']
@@ -934,6 +949,7 @@ class User < ActiveRecord::Base
         'id' => board.global_id,
         'key' => board.key
       }
+      self.settings['preferences']['home_board']['locale'] = home_board['locale'] || board.settings['locale']
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     else
       self.settings['preferences'].delete('home_board')
@@ -977,6 +993,7 @@ class User < ActiveRecord::Base
             'image' => board['image'] || record.settings['image_url'] || 'https://opensymbols.s3.amazonaws.com//libraries/arasaac/board_3.png',
             'home_lock' => !!board['home_lock']
           }
+          brd['locale'] = board['locale'] || record.settings['locale']
           brd['level'] = board['level'] if board['level']
           valid_types = []
           if board['highlight_type'] == 'custom'

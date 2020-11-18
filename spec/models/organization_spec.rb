@@ -559,7 +559,7 @@ describe Organization, :type => :model do
       u2.reload
       o.add_user(u2.user_name, false, true)
       Worker.process_queues
-      expect(u2.reload.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      expect(u2.reload.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
       expect(b.shared_with?(u2)).to eq(true)
     end
   end

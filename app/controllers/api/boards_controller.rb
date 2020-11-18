@@ -69,20 +69,39 @@ class Api::BoardsController < ApplicationController
     end
     
     Rails.logger.warn('public query')
+    ranks = {}
     self.class.trace_execution_scoped(['boards/public_query']) do
-      if params['q'] && params['q'].length > 0 && params['public']
+      if !params['q'].blank? && params['public']
         q = CGI.unescape(params['q']).downcase
-        # TODO: real search via https://github.com/casecommons/pg_search or elasticsearch with facets
-        if params['sort'] == 'home_popularity'
-          boards = boards.search_by_text_for_home_popularity(q).limit(100)
-        else
-          boards = boards.search_by_text(q).limit(100) #where(['search_string ILIKE ?', "%#{q}%"])
+        locs = BoardLocale
+        if !params['locale'].blank? && params['locale'] != 'any'
+          locs = locs.where(locale: [params['locale'], params['locale'].split(/-|_/)[0]])
         end
-        # TODO: is it possible to just de-prioritize copies instead of excluding them?
-        # boards = boards.where('parent_board_id IS NULL')
+        if params['user_id']
+          board_ids = boards.select('id').limit(2000).map(&:id)
+          locs = locs.where(board_id: board_ids)
+        end
+        if params['sort'] == 'home_popularity'
+          board_ids = []
+          locs.search_by_text_for_home_popularity(q).limit(250).with_pg_search_rank.each do |bl|
+            board_ids << bl.board_id
+            ranks[bl.board_id] = bl.pg_search_rank
+          end
+          boards = boards.where(id: board_ids)
+        else
+          board_ids = []
+          locs.search_by_text(q).limit(250).with_pg_search_rank.each do |bl|
+            board_ids << bl.board_id
+            ranks[bl.board_id] = bl.pg_search_rank
+          end
+          boards = boards.where(id: board_ids)
+        end
       end
     end
-    if params['public'] && params['locale'] && params['locale'] != 'any' && params['locale'] != ''
+    if !params['locale'].blank? && params['locale'] != 'any' && (params['q'].blank? || !params['public'])
+      # board.search_string now includes locales, even on private boards
+      # This filter should be applied for private searches (which wouldn't yet
+      # have been filtered by locale) or for requests without a search query
       lang = params['locale'].split(/-|_/)[0].downcase
       boards = boards.where(['search_string ILIKE ?', "%locale:#{lang}%"])
     end
@@ -93,7 +112,6 @@ class Api::BoardsController < ApplicationController
         boards = boards.where(:public => true)
       end
     end
-    
 
     Rails.logger.warn('sort board')
     self.class.trace_execution_scoped(['boards/sort']) do
@@ -128,33 +146,39 @@ class Api::BoardsController < ApplicationController
     Rails.logger.warn('category filter')
     self.class.trace_execution_scoped(['boards/category']) do
       if params['category']
-        boards = boards.limit(100) if boards.respond_to?(:limit)
-        boards = boards[0, 100].select{|b| b.categories.include?(params['category']) }
+        boards = boards.limit(200) if boards.respond_to?(:limit)
+        boards = boards[0, 200].select{|b| b.categories.include?(params['category']) }
       elsif params['copies'] == false || params['copies'] == 'false'
         boards = boards.limit(500) if boards.respond_to?(:limit)
         boards = boards[0, 500].select{|b| !b.parent_board_id }[0, 100]
       end
     end
-    
+
+    if params['sort'] && params['sort'] != 'custom_order' && params['locale']
+      # All locale-defined lists should already have been filtered by locale
+      # and search relevance, so we can safely trim to the top results here
+      boards = Board.sort_for_locale(boards[0, 200], params['locale'], params['sort'], ranks)
+    end
+
     # Private boards don't have search_string set as a column to protect against 
     # leakage of private information. This iterative method is slower than a db clause
-    # but the number of private boards is probably going to be small enough that it's ok.
-    # TODO: assumptions containing the word "probably" tend to break sooner than you think
+    # so we limit the possible result set to be more performant, which will only
+    # be an issue for search users with very many boards (still problematic, I know)
     Rails.logger.warn('private query')
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['root']
         boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
       end
 
-      if params['q'] && params['q'].length > 0 && !params['public']
-        boards = boards.select{|b| (b.settings['search_string'] || "").match(/#{CGI.unescape(params['q']).downcase}/i) }
+      if !params['q'].blank? && !params['public']
+        boards = Board.sort_for_query(boards[0, 1000], params['q'], params['locale'])
       end
     end
     
     json = nil
     Rails.logger.warn('start paginated result')
     self.class.trace_execution_scoped(['boards/json_paginate']) do
-      json = JsonApi::Board.paginate(params, boards)
+      json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
     end
 
     render json: json

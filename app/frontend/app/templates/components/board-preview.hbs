@@ -38,8 +38,12 @@
         <dt>{{t "Last Updated" key='updated'}}</dt>
           <dd>{{date model.updated 'day'}}</dd>
         {{#if model.locale}}
-          <dt>{{t "Language" key='language'}}</dt>
+          <dt>{{t "Default Language" key='default_language'}}</dt>
             <dd>{{language}}</dd>
+        {{/if}}
+        {{#if multiple_locales}}
+          <dt>{{t "Translations" key='translations'}}</dt>
+            <dd>{{languages}}</dd>
         {{/if}}
         <dt>{{t "People Using" key='people_using'}}</dt>
           <dd>
@@ -64,7 +68,7 @@
   </div>
   {{#if include_canvas}}
     <div class='col-sm-8'>
-      {{board-preview-canvas board=model show_links=true size='modal'}}
+      {{board-preview-canvas board=model locale=locale show_links=true size='modal'}}
     </div>
   {{/if}}
 </div>

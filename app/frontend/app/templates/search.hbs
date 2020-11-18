@@ -32,7 +32,7 @@
           {{#each online_results.results as |board|}}
             {{#if board.key}}
               <div class={{if app_state.currentUser 'col-md-3 col-sm-4 col-xs-4 simple_board_holder' 'col-sm-2 col-xs-4 simple_board_holder'}}>
-                {{board-icon board=board}}
+                {{board-icon board=board localized=true}}
               </div>
             {{/if}}
           {{/each}}
@@ -58,7 +58,7 @@
               {{#each personal_results.results as |board|}}
                 {{#if board.key}}
                   <div class="col-md-4 col-sm-6 col-xs-4 simple_board_holder">
-                    {{board-icon board=board}}
+                    {{board-icon board=board localized=true}}
                   </div>
                 {{/if}}
               {{/each}}

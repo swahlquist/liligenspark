@@ -136,6 +136,7 @@ module UpstreamDownstream
       updates = {}
       changes.each{|k, vals| updates[k] = vals[1] }
       updates['last_tracked'] = Time.now.to_i
+      board.generate_stats
       board.update_setting(updates, nil, :save_without_post_processing)
       board.complete_stream_checks(already_visited_ids, trigger_stamp)
     end

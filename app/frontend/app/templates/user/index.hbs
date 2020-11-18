@@ -370,7 +370,7 @@
             {{/if}}
           {{/unless}}
           {{#if model.permissions.model}}
-            <li role="presentation" class={{if root_selected 'root'}}><a href="#" {{action 'set_selected' 'root'}}>{{t "Root" key='root'}}</a></li>
+            <li role="presentation" class={{if root_selected 'active'}}><a href="#" {{action 'set_selected' 'root'}}>{{t "Root" key='root'}}</a></li>
           {{/if}}
           {{#unless app_state.currentUser.modeling_only}}
             <li role="presentation" class={{if starred_selected 'active'}}><a href="#" {{action 'set_selected' 'starred'}}>{{t "Liked" key='starred'}}</a></li>

@@ -36,6 +36,25 @@ describe JsonApi::Board do
       b.settings['translations'] = {'a' => 1}
       expect(JsonApi::Board.as_json(b, :permissions => u, :wrapper => true)['board']['translations']).to eq({'a' => 1})
     end
+
+    it "should include content retrieved from board_content record" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['buttons'] = [
+        {id: 1, label: 'asdf'},
+        {id: 2, label: 'qwer'}
+      ]
+      b.settings['grid'] = {
+        rows: 2,
+        columns: 2,
+        order: [[nil, 1], [2, nil]]
+      }
+      BoardContent.generate_from(b)
+      expect(b.settings['buttons']).to eq([])
+      json = JsonApi::Board.as_json(b)
+      expect(json['buttons']).to eq([{"id"=>1, "label"=>"asdf"}, {"id"=>2, "label"=>"qwer"}])
+      expect(json['grid']).to eq({"columns"=>2, "order"=>[[nil, 1], [2, nil]], "rows"=>2})
+    end
   end
   
   describe "extra_includes" do

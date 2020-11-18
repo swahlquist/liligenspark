@@ -58,6 +58,7 @@ export default modal.ModalController.extend({
           name: board.name,
           key: board.key,
           level: level,
+          locale: app_state.get('label_locale'),
           home_lock: !!board.home_lock,
           image: board.image
         });

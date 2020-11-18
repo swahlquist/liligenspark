@@ -104,6 +104,11 @@ describe Api::BoardsController, :type => :controller do
       u = User.create(:settings => {:public => true})
       b = Board.create(:user => u, :public => true, :settings => {'name' => "one two three"})
       b2 = Board.create(:user => u, :public => true, :settings => {'name' => "four five six"})
+      b.generate_stats
+      b.save
+      b2.generate_stats
+      b2.save
+      expect(BoardLocale.count).to eq(2)
       get :index, params: {:q => "two"}
       expect(response).to be_successful
       json = JSON.parse(response.body)
@@ -137,8 +142,12 @@ describe Api::BoardsController, :type => :controller do
     it "should allow sorting by popularity or home_popularity" do
       u = User.create(:settings => {:public => true})
       b = Board.create(:user => u, :public => true)
-      Board.where(:id => b.id).update_all({:home_popularity => 3, :popularity => 1})
       b2 = Board.create(:user => u, :public => true)
+      b.generate_stats
+      b.save
+      b2.generate_stats
+      b2.save
+      Board.where(:id => b.id).update_all({:home_popularity => 3, :popularity => 1})
       Board.where(:id => b2.id).update_all({:home_popularity => 1, :popularity => 3})
       get :index, params: {:sort => "home_popularity"}
       expect(response).to be_successful
@@ -158,10 +167,16 @@ describe Api::BoardsController, :type => :controller do
     it "should allow filtering by board category" do  
       u = User.create(:settings => {:public => true})
       b = Board.create(:user => u, :public => true, :settings => {'categories' => ['friends', 'ice_cream', 'cheese']})
-      Board.where(:id => b.id).update_all({:home_popularity => 3, :popularity => 1})
       b2 = Board.create(:user => u, :public => true, :settings => {'categories' => ['ice_cream']})
-      Board.where(:id => b2.id).update_all({:home_popularity => 1, :popularity => 3})
       b3 = Board.create(:user => u, :public => true, :settings => {'categories' => ['cheese']})
+      b.generate_stats
+      b.save
+      b2.generate_stats
+      b2.save
+      b3.generate_stats
+      b3.save
+      Board.where(:id => b.id).update_all({:home_popularity => 3, :popularity => 1})
+      Board.where(:id => b2.id).update_all({:home_popularity => 1, :popularity => 3})
       Board.where(:id => b2.id).update_all({:home_popularity => 1, :popularity => 3})
       get :index, params: {:category => "ice_cream"}
       expect(response).to be_successful
@@ -268,6 +283,101 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board'].length).to eq(2)
       expect(json['board'][0]['id']).to eq(b.global_id)
       expect(json['board'][1]['id']).to eq(b3.global_id)
+    end
+
+    it "should use board locales for searching public queries" do
+      u = User.create
+      b1 = Board.create(user: u, public: true, popularity: 10, home_popularity: 10)
+      b2 = Board.create(user: u, public: true, popularity: 5, home_popularity: 5)
+      bl1 = BoardLocale.create(board_id: b1.id, popularity: 5, home_popularity: 3, locale: 'en', search_string: "whatever cheese is good for you")
+      bl2 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'en', search_string: "I don't know what to say about this, but, well, um, cheese")
+      bl3 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "whatever cheese is good for you")
+      bl4 = BoardLocale.create(board_id: b2.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "this is the best frog I have ever eaten with cheese")
+
+      get :index, params: {public: true, locale: 'en-GB', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(1)
+      expect(json['board'][0]['id']).to eq(b1.global_id)
+
+      get :index, params: {public: true, locale: 'es', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'][0]['id']).to eq(b1.global_id)
+      expect(json['board'][1]['id']).to eq(b2.global_id)
+
+      get :index, params: {public: true, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(1)
+      expect(json['board'][0]['id']).to eq(b2.global_id)
+    end
+
+    it "should return a localized board name" do
+      write_this_test
+    end
+
+    it "should use localized search string for searching private queries" do
+      token_user
+      u = @user
+      b1 = Board.create(user: u)
+      b1.settings['buttons'] = [
+        {id: '1', 'label' => 'cheese'}      
+      ]
+      b1.settings['grid'] = {'rows' => 1, 'columns' => 1, 'order' => [['1']]}
+      b1.settings['translations'] = {
+        '1' => {
+          'es' => {'label' => 'frog'}
+        },
+        '2' => {
+          'es' => {'label' => 'frog'}
+        }
+      }
+      b1.settings['locale'] = 'en'
+      b1.popularity = 3
+      b1.save
+      b2 = Board.create(user: u)
+      b2.settings['buttons'] = [
+        {id: '1', 'label' => 'frog is fun'}      
+      ]
+      b2.settings['grid'] = {'rows' => 1, 'columns' => 1, 'order' => [['1']]}
+      b2.settings['translations'] = {
+        '1' => {
+          'en' => {'label' => 'cheese'}
+        }
+      }
+      b2.popularity = 5
+      b2.settings['locale'] = 'es_SP'
+      b2.save
+      b3 = Board.create(user: u)
+      b3.settings['buttons'] = [
+        {id: '1', 'label' => 'frog is fun'}      
+      ]
+      b3.settings['grid'] = {'rows' => 1, 'columns' => 1, 'order' => [['1']]}
+      b3.settings['translations'] = {
+        '1' => {
+          'en-US' => {'label' => 'cheese curds'}
+        }
+      }
+      b3.settings['locale'] = 'es_SP'
+      b3.popularity = 1
+      b3.save
+
+      get :index, params: {user_id: u.global_id, locale: 'en-GB', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(3)
+      expect(json['board'][0]['id']).to eq(b1.global_id)
+      expect(json['board'][1]['id']).to eq(b2.global_id)
+      expect(json['board'][2]['id']).to eq(b3.global_id)
+
+      get :index, params: {user_id: u.global_id, locale: 'es', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(0)
+
+      get :index, params: {user_id: u.global_id, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(3)
+      expect(json['board'][0]['id']).to eq(b2.global_id)
+      expect(json['board'][1]['id']).to eq(b3.global_id)
+      expect(json['board'][2]['id']).to eq(b1.global_id)
     end
   end
 
@@ -716,7 +826,7 @@ describe Api::BoardsController, :type => :controller do
       b = Board.create(:user => @user)
       post :star, params: {:board_id => b.global_id}
       expect(response).to be_successful
-      expect(b.reload.settings['starred_user_ids']).to eq([@user.global_id])
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
       json = JSON.parse(response.body)
       expect(json).to eq({'starred' => true, 'stars' => 1})
     end
@@ -793,7 +903,6 @@ describe Api::BoardsController, :type => :controller do
     it "should return basic stats" do
       token_user
       b = Board.new(:user => @user)
-      expect(b).to receive(:generate_stats).and_return(nil)
       b.settings = {}
       b.settings['stars'] = 4
       b.settings['uses'] = 3

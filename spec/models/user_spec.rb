@@ -300,7 +300,7 @@ describe User, :type => :model do
       expect(Board).to receive(:where).with(:id => [b.id]).and_return(o)
       expect(o).to receive(:select).with('id').and_return([b])
       u.track_boards(true)
-      expect(Worker.scheduled?(Board, :perform_action, {'method' => 'save_without_post_processing', 'arguments' => [[b.global_id]]})).to eq(true)
+      expect(Worker.scheduled?(Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id]]})).to eq(true)
     end
 
     it "should create missing connections" do
@@ -1274,6 +1274,7 @@ describe User, :type => :model do
         'name' => b.settings['name'],
         'key' => b.key,
         'home_lock' => false,
+        'locale' => 'en',
         'image' => 'https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png'
       })
     end
@@ -1338,6 +1339,7 @@ describe User, :type => :model do
         'name' => 'Fred',
         'key' => b.key,
         'home_lock' => true,
+        'locale' => 'en',
         'image' => 'http://www.example.com/pic.png'
       })
     end

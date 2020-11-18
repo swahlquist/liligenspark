@@ -495,6 +495,10 @@ var app_state = EmberObject.extend({
     if(new_state.level) {
       stashes.persist('board_level', new_state.level);
     }
+    if(new_state.locale) {
+      stashes.persist('label_locale', new_state.locale);
+      stashes.persist('vocalization_locale', new_state.locale);
+    }
     this.set('referenced_board', new_state);
     var _this = this;
     var promise = new RSVP.Promise(function(resolve, reject) {
@@ -640,6 +644,10 @@ var app_state = EmberObject.extend({
       if(app_state.get('currentBoardState.key') != state.key) {
         buttonTracker.transitioning = true;
         stashes.persist('board_level', state.level || state.default_level);
+        if(state.locale) {
+          stashes.persist('label_locale', state.locale);
+          stashes.persist('vocalization_locale', state.locale);
+        }
         this.set('referenced_board', state);
         this.controller.transitionToRoute('board', state.key);
         do_log = current && current.key && state.key != current.key;
@@ -1043,6 +1051,10 @@ var app_state = EmberObject.extend({
       stashes.persist('board_level', null);
     }
     var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
+    if(preferred.locale) {
+      stashes.persist('label_locale', preferred.locale);
+      stashes.persist('vocalization_locale', preferred.locale);
+    }
     var communicator_limited = speak_mode_user && speak_mode_user.get('expired');
     var supervisor_limited = speak_mode_user && speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
     if(speak_mode_user && !opts.reminded && (communicator_limited || supervisor_limited)) {

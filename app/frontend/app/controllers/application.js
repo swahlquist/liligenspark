@@ -384,6 +384,7 @@ export default Controller.extend({
           key: path,
           source: source,
           level: board.level,
+          locale: board.locale,
           home_lock: board.home_lock
         });
       }
@@ -437,6 +438,7 @@ export default Controller.extend({
                 user.set('preferences.home_board', {
                   id: emberGet(board, 'id'),
                   level: stashes.get('board_level'),
+                  locale: app_state.get('label_locale'), // optional locale, otherwise server will assign board's locale
                   key: emberGet(board, 'key')
                 });
                 user.save().then(function() {

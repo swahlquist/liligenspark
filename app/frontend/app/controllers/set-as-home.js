@@ -86,6 +86,7 @@ export default modal.ModalController.extend({
       CoughDrop.store.findRecord('user', for_user_id).then(function(user) {
         user.set('preferences.home_board', {
           level: level,
+          locale: app_state.get('label_locale'),
           id: board.get('id'),
           key: board.get('key')
         });

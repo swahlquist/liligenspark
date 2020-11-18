@@ -44,7 +44,7 @@ export default Controller.extend({
           _this.set('online_results', {results: []});
         });
         if(app_state.get('currentUser')) {
-          CoughDrop.store.query('board', {q: str, user_id: 'self'}).then(function(res) {
+          CoughDrop.store.query('board', {q: str, user_id: 'self', locale: locale}).then(function(res) {
             _this.set('personal_results', {results: res.map(function(i) { return i; })});
           }, function() {
             _this.set('personal_results', {results: []});
