@@ -40,7 +40,7 @@ export default Component.extend({
         return this.get('board_record.localized_name');
       }
     }
-    this.get('board_record.name');
+    return this.get('board_record.name');
   }),
   display_class: computed('children', function() {
     var e = this.element;
