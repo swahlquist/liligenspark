@@ -112,10 +112,25 @@ export default Controller.extend({
 
     var button_locale = this.get('model.button_locale') || app_state.get('label_locale');
     var needs_redraw = false;
+    // If editing for a non-default locale, we
+    // will need to revert all the localized values and
+    // apply them as a translation instead
     if(button_locale && button_locale != this.get('model.locale')) {
+      var changes = this.get('model').changedAttributes();
+      if(changes.name && changes.name[0] != changes.name[1]) {
+        var trans = this.get('model.translations') || {};
+        trans.board_name = trans.board_name || {};
+        trans.board_name[button_locale] = changes.name[1];
+        trans.board_name[this.get('model.locale')] = trans.board_name[this.get('model.locale')] || changes.name[0];
+        this.set('model.name', changes.name[0]);
+        this.set('model.translations', trans);
+      }
+      var old_name = this.get('model.name');
+      if(old_name)
       needs_redraw = true;
       var _this = this;
       state.buttons.forEach(function(btn) {
+        // Record the button changes as a translation
         btn.translations = btn.translations || []
         var btn_trans = btn.translations.find(function(t) { return t.locale == button_locale} );
         if(!btn_trans) {
@@ -128,9 +143,12 @@ export default Controller.extend({
         emberSet(btn_trans, 'label', btn_trans.label || btn.label);
         emberSet(btn_trans, 'vocalization', btn_trans.vocalization || btn.vocalization);
         emberSet(btn_trans, 'inflections', btn_trans.inflections || btn.inflections);
+
+        // Revert the actual button value to what it was before
         var trans = btn.translations.find(function(t) { return t.locale == _this.get('model.locale')})
         trans = trans || (_this.get('model.translations')[btn.id] || {})[_this.get('model.locale')];
         if(trans) {
+          // Either find it in the translations hash...
           emberSet(btn, 'vocalization', null);
           emberSet(btn, 'inflections', null);
           for(var key in trans) {
@@ -139,7 +157,13 @@ export default Controller.extend({
             }
           }
         } else {
-          debugger
+          // Or on the original button itself
+          var old_btn = this.get('model.buttons').find(function(b) { return b.id == btn.id; });
+          if(old_btn) {
+            emberSet(btn, 'label', old_btn.label);
+            emberSet(btn, 'vocalization', old_btn.vocalization);
+            emberSet(btn, 'inflections', old_btn.inflections);  
+          }
         }
       });
     }
@@ -165,14 +189,6 @@ export default Controller.extend({
       console.error(err);
       modal.error(i18n.t('board_save_failed', "Failed to save board"));
     });
-
-    // TODO: on commit, only send attributes that have changed
-    // to prevent stepping on other edits if all you're doing is
-    // updating the name, for example. Side note: this is one
-    // of the things that stresses me out about ember-data, changes
-    // made out from underneath without you knowing. It happened
-    // before, but with all the local caching it's more likely to
-    // happen more often.
   },
   valid_fast_html: computed(
     'model.fast_html',

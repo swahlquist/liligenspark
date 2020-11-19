@@ -842,7 +842,13 @@ class Board < ActiveRecord::Base
     end
     self.settings['last_updated'] = Time.now.iso8601
 
-    self.settings['locale'] = params['locale'] if params['locale']
+    old_name = nil
+    if params['locale']
+      if self.settings['locale'] != params['locale']
+        old_name = {locale: self.settings['locale'], name: self.settings['name']}
+      end
+      self.settings['locale'] = params['locale'] 
+    end
     if !self.id && params['source_id']
       # check if the user has edit permission on the source, and only set this if so
       ref_board = Board.find_by_global_id(params['source_id'])
@@ -898,6 +904,9 @@ class Board < ActiveRecord::Base
       if self.settings['name'] && params['locale']
         self.settings['translations']['board_name'] ||= {}
         self.settings['translations']['board_name'][params['locale']] = self.settings['name']
+        if old_name
+          self.settings['translations']['board_name'][old_name[:locale]] ||= old_name[:name]
+        end
       end
     end
     self.star(non_user_params[:starrer], params['starred']) if params['starred'] != nil
