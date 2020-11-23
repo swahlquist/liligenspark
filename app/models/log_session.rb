@@ -948,9 +948,12 @@ class LogSession < ActiveRecord::Base
                 elsif event && event['share']
                   JobStash.remove_events_from(self, [event])
                   already_sent = false
+                  utterance_user = User.find_by_path(event['user_id'])
+                  utterance_user = nil if utterance_user && !utterance_user.allows?(user, 'supervise')
+                  utterance_user ||= user
                   if event['share']['message_uid']
                     # if the message_uid was already used to create an utterance, don't do it again
-                    already_sent = Utterance.where(user: user, nonce: GoSecure.sha512(event['share']['message_uid'], 'utterance_message_uid')).where(['created_at > ?', 7.days.ago]).count > 0
+                    already_sent = Utterance.where(user: utterance_user, nonce: GoSecure.sha512(event['share']['message_uid'], 'utterance_message_uid')).where(['created_at > ?', 7.days.ago]).count > 0
                   end
                   if !already_sent
                     utterance = Utterance.process_new({
@@ -958,16 +961,16 @@ class LogSession < ActiveRecord::Base
                       timestamp: event['timestamp'],
                       message_uid: event['share']['message_uid'],
                       sentence: event['share']['sentence']
-                    }, {:user => user})
+                    }, {:user => utterance_user})
                     if !event['share']['recipient_id'] && event['share']['reply_id']
                       # TODO: remove this after like June 2020
                       reply = LogSession.find_reply(event['share']['reply_id']) rescue nil
                       if reply && reply[:contact]
-                        contact = (user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
-                        event['share']['recipient_id'] = "#{user.global_id}x#{contact['hash']}" if contact
+                        contact = (utterance_user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
+                        event['share']['recipient_id'] = "#{utterance_user.global_id}x#{contact['hash']}" if contact
                       end
                     end
-                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, user.global_id)
+                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, utterance_user.global_id)
                   end
                   params = nil
                 elsif event && event['alert']

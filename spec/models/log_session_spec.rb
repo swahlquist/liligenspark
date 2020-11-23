@@ -729,6 +729,80 @@ describe LogSession, :type => :model do
       expect(LogSession.count).to eq(2)
     end
 
+    it "should create utterance for the specified user" do
+      u2 = User.create
+      Device.create(user: u2)
+      u = User.create
+      User.link_supervisor_to_user(u, u2)
+
+      events = []
+      e = {'user_id' => u.global_id, 'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'user_id' => u2.global_id,
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'share',
+        'share' => {
+          'utterance' => [{'label' => 'how'}, {'label' => 'do'}, {'label' => 'you'}, {'label' => 'do'}],
+          'recipient_id' => u2.global_id
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      expect(Utterance.count).to eq(1)
+      utterance = Utterance.last
+      expect(utterance.user).to eq(u2)
+      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil}, u2.global_id]})).to eq(true)
+      Worker.process_queues
+      expect(LogSession.count).to eq(3)
+    end
+
+    it "should not create an utterance if the specified user isn't accessible" do
+      u2 = User.create
+      Device.create(user: u2)
+      u = User.create
+      
+      events = []
+      e = {'user_id' => u.global_id, 'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+      e['timestamp'] += User.default_log_session_duration + 100
+      e['button'] = {'label' => 'bad', 'board' => {'id' => '1_1'}}
+      events << e.merge({})
+
+      events << {
+        'user_id' => u2.global_id,
+        'timestamp' => User.default_log_session_duration + 101,
+        'type' => 'share',
+        'share' => {
+          'utterance' => [{'label' => 'how'}, {'label' => 'do'}, {'label' => 'you'}, {'label' => 'do'}],
+          'recipient_id' => u2.global_id
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      expect(Utterance.count).to eq(0)
+      Worker.process_queues
+      expect(LogSession.count).to eq(2)
+    end
+
     it "should not deliver 'share' events more than once, even if processed more than once" do
       u = User.create
       cutoff = 12.weeks.ago.to_i

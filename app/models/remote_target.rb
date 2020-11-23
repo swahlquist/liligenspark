@@ -129,8 +129,8 @@ class RemoteTarget < ApplicationRecord
   end
 
   def self.process_inbound(opts)
-    target_str = opts['originationNumber']
-    source_str = opts['destinationNumber']
+    target_str = opts['originationNumber'] # (from AWS) The phone number that sent the incoming message to you (in other words, your customer's phone number).
+    source_str = opts['destinationNumber'] # (from AWS) The phone number that the customer sent the message to (your dedicated phone number).
     return false unless target_str && source_str
     message = opts['messageBody'] || 'no message'
     target = RemoteTarget.latest_for('sms', target_str, source_str)
