@@ -594,8 +594,8 @@ var persistence = EmberObject.extend({
       persistence.json_cache = persistence.json_cache || {};
       persistence.json_cache[url] = json;
     }
-    return _this.store_url(url, 'json').then(function(data_uri) {
-      if(data_uri && data_uri.data_uri) { data_uri = data_uri.data_uri; }
+    return _this.store_url(url, 'json').then(function(storage) {
+      var data_uri = storage.data_uri || storage;
       var result = undefined;
       if(typeof(data_uri) == 'string') {
         try {
@@ -604,6 +604,14 @@ var persistence = EmberObject.extend({
           console.error("json storage", e);
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
+      } else if(!json && storage && storage.local_url) {
+        return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'json'}).then(null, function(err) {
+          if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
+            persistence.remove('dataCache', storage.local_url);
+            persistence.url_cache[storage.local_url] = null;
+          }
+          return RSVP.reject(err);
+        });
       }
       if(data_uri || result !== undefined) {
         return result || json;
