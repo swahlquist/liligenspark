@@ -28,10 +28,10 @@ var words = {
   "virus": {path: "virus.png", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/virus.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "http://catedu.es/arasaac/", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}},
   "coronavirus": {path: "bacteria2.svg", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Bacteria_851_g.svg", license: {type: "CC-By", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", source_url: "http://thenounproject.com/", author_name: "Blair Adams", author_url: "http://thenounproject.com/blairwolf"}},
   "sick": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20get%20sick.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "http://catedu.es/arasaac/", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "sick.png"},
-  "pandemic": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/world.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "https://mulberrysymbols.org/", author_name: "Paxtoncrafts Charitable Trust", author_url: "http://straight-street.org/lic.php"}, path: "pandemic.svg"},
+  "pandemic": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/Earth.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "https://mulberrysymbols.org/", author_name: "Paxtoncrafts Charitable Trust", author_url: "http://straight-street.org/lic.php"}, path: "pandemic.svg"},
   "quarantine": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/barrier_285_136215.svg", license: {type: "CC By", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", source_url: "http://thenounproject.com/", author_name: "Tyler Glaude", author_url: "http://thenounproject.com/tyler.glaude"}, path: "quarantine.svg"},
   "safe": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/security.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "http://catedu.es/arasaac/", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "safe.png"},
-  "social-distancing": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to%20separate_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "http://catedu.es/arasaac/", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "social-distancing.png"},
+  "social-distancing": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/take%20away_2.pnghttps://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/take%20away_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "http://catedu.es/arasaac/", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "social-distancing.png"},
   "dont-touch": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/don't touch!.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "dont-touch.png"},
   "soap": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/soap.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "soap.png"},
   "sanitizer": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/liquid soap.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "", author_name: "Paxtoncrafts Charitable Trust ", author_url: "http://straight-street.org/lic.php"}, path: "sanitizer.svg"},
@@ -102,6 +102,11 @@ var words = {
   "bed": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/bed.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "bed.png"},
   "pet": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/pet.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "pet.png"},
   "family": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/family_5.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "family.png"},
+  "blanket2": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/blanket.svg", license: {type: 'CC BY-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-sa/2.0/uk', source_url: '', author_name: 'Paxtoncrafts Charitable Trust ', author_url: 'http://straight-street.org/lic.php'}},  
+  "stay-at-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
+  "that-was-scary": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Scared_176_320418.svg", license: {type: 'CC By', copyright_notice_url: 'http://creativecommons.org/licenses/by/3.0/us/', source_url: '', author_name: 'Oliviu Stoian', author_url: 'http://thenounproject.com/smashicons'}},
+  "go-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
+  "miss-friends": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/friends.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
 };
 /*
 require 'typhoeus'
@@ -157,13 +162,6 @@ emergency.callback = function(key) {
   board.obf_type = 'emergency';
   board.source_key = ref.key;
   board.license = ref.license;
-  // {
-  //   type: "CC-By", 
-  //   copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", 
-  //   source_url: "http://thenounproject.com/maxim221/Maxim+Kulikov", 
-  //   author_name: "Blair Adams", 
-  //   author_url: "http://thenounproject.com/maxim221"
-  // };
   ref.buttons.forEach(function(row, idx) {
     row.forEach(function(button, jdx) {
       if(button && button.label) {
@@ -195,21 +193,37 @@ emergency.callback = function(key) {
 
 /*
 path = 'emergency/ussaac-hand-washing-1'
+locale = 'en'
 words ||= {}
-b = Board.find_by_path(path)
+brd = Board.find_by_path(path)
 imgs = []
 lines = []
-grid = BoardContent.load_content(b, 'grid')
-lines << "{id: '#{path.split(/\//)[1]}', name: '#{b.settings['name']}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
-images = b.button_images
+grid = BoardContent.load_content(brd, 'grid')
+buttons = brd.buttons.map{|b| {}.merge(b) }
+name = brd.settings['name']
+if brd.settings['locale'] != locale
+  trans = BoardContent.load_content(brd, 'translations') || {}
+  name = (trans['board_name'] || {})[locale] || name
+  buttons.each do  |btn|
+    btn_trans = (trans[btn['id'].to_s] || {})[locale] || {}
+    if btn_trans['label']
+      btn['other_word'] = btn['label']
+      btn['label'] = btn_trans['label']
+      btn['vocalization'] = btn_trans['vocalization']
+      btn['inflections'] = btn_trans['inflections']
+    end
+  end
+end
+lines << "{id: '#{path.split(/\//)[1].gsub(/_/, '-')}-#{locale}', name: '#{name}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
+images = brd.button_images
 word_list = words.to_a
 grid['order'].each do |row|
   row_content = []
   row.each do |id|
-    btn = b.buttons.detect{|b| b['id'].to_s == id.to_s }
+    btn = buttons.detect{|b| b['id'].to_s == id.to_s }
     if btn
-      bi =  images.detect{|i| i.global_id == btn['image_id'] }
-      word = bi && word_list.detect{|w| w[1][:url]  == bi.url }
+      bi = images.detect{|i| i.global_id == btn['image_id'] }
+      word = bi && word_list.detect{|w| w[1][:url]  == URI.encode(bi.url) || w[1][:url]  == bi.url }
       if word && (word[0].to_s != btn['label'].to_s)
         row_content << "{label: \"#{btn['label']}\", word: \"#{word[0]}\"}"
       else
@@ -220,10 +234,10 @@ grid['order'].each do |row|
     end
   end
   lines << "  [#{row_content.join(', ')}],";
-end
-lines << "], license: {type: '#{b.settings['license']['type']}', copyright_notice_url: '#{b.settings['license']['copyright_notice_url']}', author_name: '#{b.settings['license']['author_name']}', author_url: '#{b.settings['license']['author_url']}'}},"
-b.button_images.each do |bi|
-  btn = b.buttons.detect{|b| b['image_id'] == bi.global_id }
+end.length
+lines << "], license: {type: '#{brd.settings['license']['type']}', copyright_notice_url: '#{brd.settings['license']['copyright_notice_url']}', author_name: '#{brd.settings['license']['author_name']}', author_url: '#{brd.settings['license']['author_url']}'}},"
+brd.button_images.each do |bi|
+  btn = brd.buttons.detect{|b| b['image_id'] == bi.global_id }
   if btn && bi
     lines << "\"#{btn['label']}\": {url: \"#{bi.url}\", license: {type: '#{bi.settings['license']['type']}', copyright_notice_url: '#{bi.settings['license']['copyright_notice_url']}', source_url: '#{bi.settings['license']['source_url']}', author_name: '#{bi.settings['license']['author_name']}', author_url: '#{bi.settings['license']['author_url']}'}},"
   end
@@ -285,9 +299,57 @@ emergency.boards = {
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
   ],
   es: [
-    {id: 'ussaac-sensory-needs-1_7', name: "USSAAC - Necesidades Sensoriales (2 x 4)", rows: 2, cols: 4, key: 'emergency/ussaac-sensory-needs-1_7', starter: true, buttons: [
-      [{label: "¡Necesito calmarme!", word: "calm"}, {label: "Necesito taparme los oídos", word: "cover-ears"}, {label: "Necesito una manta con peso", word: 'blanket'}, {label: "Necesito auriculares con cancelación de ruido", word: "headphones"}],
+    {id: 'ussaac-covid-1-es', name: 'USSAAC - Condiciones generales de Covid (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-covid-1', starter: true, buttons: [
+      [{label: "gérmenes", word: "germs"}, {label: "virus"}, {label: "coronavirus"}, {label: "enfermos", word: "sick"}],
+      [{label: "pandemia", word: "pandemic"}, {label: "cuarentena", word: "quarantine"}, {label: "mantenerse a salvo", word: "safe"}, {label: "distanciamiento social", word: "social-distancing"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-emotions-1-es', name: 'USSAAC - Emociones (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-emotions-1', starter: true, buttons: [
+      [{label: "Estoy loco", word: "mad"}, {label: "estoy frustrado", word: "frustrated"}, {label: "estoy triste", word: "sad"}, {label: "Okay", word: 'ok'}],
+      [{label: "estoy aburrido", word: "bored"}, {label: "estoy asustado", word: "scared"}, {label: "Yo estoy feliz", word: "happy"}, {label: "estoy emocionado", word: "excited"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-hand-washing-1-es', name: 'USSAAC - Lavado de manos (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-hand-washing-1', starter: true, buttons: [
+      [{label: "lavarse las manos", word: "wash-hands"}, {label: "20 segundos", word: "20-seconds"}, {label: "manos secas", word: "dry-hands"}, {label: "manos limpias", word: "clean-hands"}],
+      [{label: "manos sucias", word: "dirty"}, {label: "alcohol en gel", word: "sanitizer"}, {label: "usar jabón", word: "soap"}, {label: "no toques superficies", word: "dont-touch"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-needs-1-2-es', name: 'USSAAC - Necesidades (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-needs-1-2', starter: true, buttons: [
+      [{label: "Estoy hambriento", word: "hungry"}, {label: " estoy sediento", word: "thirsty"}, {label: "¿Puedo tomar una bebida?", word: "drink"}, {label: "¿Puedo comer algo?", word: "snak"}],
+      [{label: "estoy cansado", word: "yawn"}, {label: "¿Puedo acostarme?", word: "lay"}, {label: "soy frío", word: "cold"}, {label: "¿Puedo tener una manta?", word: 'blanket2'}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-mask-1-es', name: 'USSAAC - Uso de máscara (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-mask-1', starter: true, buttons: [
+      [{label: "¿Dónde está mi máscara?", word: "mask"}, {label: "No puedo respirar", word: "breathe"}, {label: "mascarilla", word: "face-mask"}, {label: "En", word: "on"}],
+      [{label: "apagado", word: "off"}, {label: "Necesito una mascara", word: "want"}, {label: "¿Puedo quitarme la máscara?", word: "take-off"}, {label: "¿Necesito una mascarilla?", word: "ask2"}],    
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-questions-1-es', name: 'USSAAC - Preguntas (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-questions-1', starter: true, buttons: [
+      [{label: "¿Donde están mis amigos?", word: "friends"}, {label: "¿Cuándo puedo volver a la escuela?", word: "school"}, {label: "¿Cuándo podemos ir a casa?", word: "home"}, {label: "¿Por qué yo?", word: "dont-know"}],
+      [{label: "¿Qué está pasando?", word: "happening"}, {label: "¿Porque nosotros?", word: "why"}, {label: "¿Qué vamos a hacer?", word: "ask"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-red-cross-1-es', name: 'USSAAC - Cruz Roja (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-red-cross-1', starter: true, buttons: [
+      [{label: "necesito ayuda", word: "help"}, {label: "necesito dinero", word: "money"}, {label: "necesito comida", word: "food"}, {label: "necesito agua", word: "water"}],
+      [{label: "Necesito una linterna", word: "flashlight"}, {label: "Necesito una manta", word: "blanket"}, {label: "Me he quedado sin medicación", word: "medication"}, {label: "¿Cuánto tiempo estaremos en un refugio?", word: "when"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-sensory-needs-1-es', name: 'USSAAC - Necesidades sensoriales (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-sensory-needs-1', starter: true, buttons: [
+      [{label: "¡Necesito calmarme!", word: "calm"}, {label: "Necesito taparme los oídos", word: "cover-ears"}, {label: "Necesito una manta con peso", word: "blanket"}, {label: "Necesito auriculares con cancelación de ruido", word: "headphones"}],
       [{label: "Necesito la caja de arena", word: "sand-box"}, {label: "Necesito un espacio tranquilo", word: "quiet"}, {label: "Necesito", word: "help"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-shelter-sensory-1-es', name: 'USSAAC - Tablero sensorial de refugio (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-shelter-sensory-1', starter: true, buttons: [
+      [{label: "¡Es demasiado ruidoso!", word: "noisy"}, {label: "¿Cuando nos vamos?", word: "leave"}, {label: "¡No quiero estar aquí!", word: "not"}, {label: "Necesito un lugar tranquilo.", word: "quiet"}],
+      [{label: "Huele.", word: "smell"}, {label: "¡Hace calor!", word: "hot"}, {label: "¡Hace frío!", word: "cold"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-social-distancing-1-es', name: 'USSAAC - Social Distancing (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
+      [{label: "stay at home"}, {label: "don't shake hands", word: "shake-hands"}, {label: "6 feet apart", word: "apart"}, {label: "no park", word: "park"}],
+      [{label: "no mall", word: "mall"}, {label: "no theater", word: "theater"}, {label: "wear a face mask", word: "face-mask"}, {label: "stay safe", word: "safe"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-social-distancing-1-es', name: 'USSAAC - Distanciamiento social (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
+      [{label: "Quédate en casa", word: "stay-at-home"}, {label: "no estreches la mano", word: "shake-hands"}, {label: "6 pies de distancia", word: "apart"}, {label: "no parque", word: "park"}],
+      [{label: "no hay centro comercial", word: "mall"}, {label: "sin teatro", word: "theater"}, {label: "usar una mascarilla", word: "face-mask"}, {label: "mantenerse a salvo", word: "safe"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},      
+    {id: 'ussaac-statement-after-1-es', name: 'USSAAC - Declaraciones posteriores al hecho (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-after-1', starter: true, buttons: [
+      [{label: "¡Eso fue espantoso!", word: 'that-was-scary'}, {label: "¿Cómo estaremos a salvo la próxima vez?", word: "next-time"}, {label: "¿Que pasará ahora?", word: "look"}, {label: "Vete a casa", word: 'go-home'}],
+      [{label: "¡No quiero estar aquí!", word: "not"}, {label: "¡Seré valiente!", word: "brave"}, {label: "¡Estaremos bien!", word: "ok"}, {label: "Permanecer juntos", word: "friends"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},  
+    {id: 'ussaac-statement-missing-1-es', name: 'USSAAC - Declaraciones de desaparición (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-missing-1', starter: true, buttons: [
+      [{label: "extraño a mi familia", word: "family"}, {label: "echo de menos a mis amigos", word: "miss-friends"}, {label: "Extraño a mi mascota", word: "pet"}, {label: "Extraño mi cama", word: "bed"}],
+      [{label: "Extraño mi casa", word: "house"}, {label: "Extraño mi TV", word: "tv"}, {label: "Extraño mi iPad", word: "ipad"}, null],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
   ]
 }
@@ -297,6 +359,5 @@ for(var loc in emergency.boards) {
     b.name = b.name || b.id;
   })
 }
-
 
 export default emergency;

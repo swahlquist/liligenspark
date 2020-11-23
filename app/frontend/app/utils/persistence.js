@@ -551,31 +551,41 @@ var persistence = EmberObject.extend({
   },
   find_json: function(url) {
     var _this = this;
-    return _this.find_url(url, 'json').then(function(uri) {
-      if(typeof(uri) == 'string' && uri.match(/^data:/)) {
-        var json = null;
-        try {
-          json = JSON.parse(atob(uri.split(/,/)[1]));
-        } catch(e) {
-          return RSVP.reject({error: "Error parsing JSON dataURI"});
-        }
-        if(json) {
-          return json;
-        } else {
-          return RSVP.reject({error: "No JSON dataURI result"});
-        }
-      } else if(typeof(uri) == 'string') {
-        var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
-        res.then(null, function(err) {
-          if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
-            persistence.remove('dataCache', url);
-            persistence.url_cache[url] = null;
+    return new RSVP.Promise(function(resolve, reject) {
+      _this.find_url(url, 'json').then(function(uri) {
+        if(typeof(uri) == 'string' && uri.match(/^data:/)) {
+          var json = null;
+          try {
+            json = JSON.parse(atob(uri.split(/,/)[1]));
+          } catch(e) {
+            CoughDrop.track_error("error parsing JSO data URI", e);
+            reject({error: "Error parsing JSON dataURI"});
           }
-        });
-        return res;
-      } else {
-        return uri;
-      }
+          if(json) {
+            resolve(json);
+          } else {
+            CoughDrop.track_error("No JSON dataURI");
+            reject({error: "No JSON dataURI result"});
+          }
+        } else if(typeof(uri) == 'string') {
+          var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
+          res.then(function(data) {
+            resolve(data);
+          }, function(err) {
+            if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
+              persistence.remove('dataCache', url);
+              persistence.url_cache[url] = null;
+            }
+            CoughDrop.track_error("JSON data retrieval error", err);
+            reject(err);
+          });
+        } else {
+          resolve(uri);
+        }
+      }, function(err) {
+        CoughDrop.track_error("JSON DATA find_url error", err);
+        reject(err);
+      });
     });
   },
   store_json: function(url, json) {
@@ -2173,6 +2183,9 @@ var persistence = EmberObject.extend({
                 }, 150);
               } else {
                 // TODO: if a board has been deleted
+                if(err.error && err.error.error) {
+                  err = err.error;
+                }
                 if(err && err.error == "Record not found" && err.deleted) {
                   board_errors.push({error: "board " + (key || id) + " has been deleted, linked from " + source, board_unauthorized: board_unauthorized, board_id: id, board_key: key});
                 } else {

@@ -841,6 +841,9 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
     })
   }, function(err) {
     // if not found error, it may need to be regenerated
+    if(err.error && err.error.error) {
+      err = err.error;
+    }
     if(err.error == 'Record not found' && err.id && err.id.match(/^\d/)) {
       return generate(id);
     } else {
