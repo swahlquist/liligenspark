@@ -15,7 +15,8 @@ module FeatureFlags
               'audio_recordings', 'app_connections', 'enable_all_buttons', 'badge_progress',
               'premium_symbols', 'board_levels', 'native_keyboard', 'app_store_purchases',
               'find_multiple_buttons', 'new_speak_menu', 'swipe_pages', 'inflections_overlay',
-              'ios_head_tracking']
+              'ios_head_tracking', 'emergency_boards', 'evaluations',
+              'vertical_ios_head_tracking']
   DISABLED_CANARY_FEATURES = []
   FEATURE_DATES = {
     'word_suggestion_images' => 'Jan 21, 2017',
