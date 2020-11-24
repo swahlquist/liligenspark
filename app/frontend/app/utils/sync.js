@@ -250,7 +250,6 @@ var sync = EmberObject.extend({
     if(sync.current_pairing) {
       sync.send(sync.current_pairing.room_user_id, {type: 'unpair'});
       speecher.click('partner_end');
-      app_state.set('pairing', null);
       // Send unpair messages for the next 60 seconds
       var other_user_id = sync.current_pairing.other_user_id;
       app_state.set('unpaired', other_user_id);
@@ -266,7 +265,14 @@ var sync = EmberObject.extend({
       follow_stamps.active = (follow_stamps.active || []).filter(function(u) { return u.user_id != other_user_id; });
       app_state.set('followers', follow_stamps);
       sync.current_pairing = null;  
+    } else if(app_state.get('pairing.partner')) {
+      speecher.click('partner_end');
+      sync.send(app_state.get('pairing.communicator_id'), {type: 'unpair'});
+      setTimeout(function() {
+        sync.send(app_state.get('pairing.communicator_id'), {type: 'unpair'});
+      }, 1000);
     }
+    app_state.set('pairing', null);
   },
   pair_as: function(role, user_id, other_ws_user_id, pair_code) {
     if(role == 'none') {
@@ -307,7 +313,7 @@ var sync = EmberObject.extend({
       sync.send(sub.user_id, {type: 'keepalive', following: (app_state.get('pairing.user_id') == sub.user_id)});
     })
   },
-  check_following: function(partner_id) {
+  check_following: function(partner_id, unfollow) {
     var now = (new Date()).getTime();
     // Note the user recently continued to follow
     var lookup = RSVP.resolve();
@@ -319,7 +325,7 @@ var sync = EmberObject.extend({
       if(user) {
         follow_stamps[user.user_id] = {
           user: user,
-          last_update: now
+          last_update: unfollow ? 0 : now
         };  
         var user_record = CoughDrop.store.peekRecord('user', user.user_id);
         if(user_record) {
@@ -341,6 +347,9 @@ var sync = EmberObject.extend({
         }
         if(follow_stamps.active.length > prior_active_followers) {
           speecher.click('follower');
+        } else if(follow_stamps.active.length < prior_active_followers) {
+          // TODO: is this a good idea?
+          // speecher.click('partner_end');
         }
       } else if(!follow_stamps.ignore_until || follow_stamps.ignore_until < now) {
         // If this user hasn't asked to follow before
@@ -621,6 +630,9 @@ var sync = EmberObject.extend({
           sync.check_following(message.data.sender_id);
         } else if(message.type == 'pair_confirm') {
           app_state.sync_send_utterance();          
+        } else if(message.type == 'unfollow') {
+          // You are not paired with this user
+          sync.check_following(message.data.sender_id, true);
         }
       } else {
         // Check if it's for one of my supervisees
