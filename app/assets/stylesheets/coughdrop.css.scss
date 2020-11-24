@@ -1224,6 +1224,22 @@ tr.accuracy_non_mastered {
     transition: width 2s ease-in-out, height 2s ease-in-out, margin-left 2s ease-in-out, margin-top 2s ease-in-out, opacity 1s ease-in-out 0.9s;
   }
 }
+body > .popover.bottom {
+  margin-left: 120px;
+  margin-top: 5px;
+  font-size: 20px;
+}
+.popover img {
+  width: 60px;
+  height: 60px;
+  margin-right: 5px;
+  object-fit: contain;
+  object-position: center;
+  &.user {
+    width: 30px;
+    height: 30px;      
+  }
+}
   
 #stash_hover {
   position: absolute; 
@@ -3241,6 +3257,27 @@ to { -webkit-transform: rotate(359deg) scale(1); }
 75%, 95% { opacity: 1.0; }
 }
 
+.reactions {
+  overflow: auto;
+  max-height: 185px;
+  img {
+    width: 73px;
+    height: 73px;
+    margin: 2px;
+    object-fit: contain;
+    object-position: center;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+    &:hover {
+      background: #eee;
+    }
+    &.sending {
+      background: #ddd;
+    }
+  }
+}
 #reply_icon {
   border-radius: 20px;
   width: 25px;
@@ -3265,6 +3302,7 @@ to { -webkit-transform: rotate(359deg) scale(1); }
     color: #888;
     span {
       font-size: 30px;
+      transform: scaleX(-1);
     }
     img {
       position: absolute;
@@ -3272,7 +3310,7 @@ to { -webkit-transform: rotate(359deg) scale(1); }
       height: 30px;
       border-radius: 30px;
       object-fit: contain;
-      object-position: contain;
+      object-position: center;
       right: 0;
       bottom: 0;
     }

@@ -246,6 +246,39 @@ var sync = EmberObject.extend({
       }
     });
   },
+  handle_message: function(data) {
+    sync.user_lookup(data.sender_id).then(function(user) {
+      var valid_message = false;
+      if(app_state.get('pairing.user.id') == user.id) {
+        valid_message = true;
+      } else if((app_state.get('followers.active') || []).find(function(u) { return u.user_id == user.id; })) {
+        valid_message = true;
+      }
+      if(valid_message) {
+        sync.recent_message_ids = sync.recent_message_ids || [];
+        if(sync.recent_message_ids.indexOf(data.message_id) == -1) {
+          sync.recent_message_ids.push(data.message_id);
+          sync.recent_message_ids = sync.recent_message_ids.slice(-10);
+          utterance.silent_speak_button({
+            message: data.message,
+            avatar_url: user.avatar_url
+          });  
+        }
+      }
+    });
+  },
+  message: function(user_id, message) {
+    var message_id = (new Date()).getTime() + "." + Math.random();
+    var tally = 0;
+    var send = function() {
+      tally++;
+      sync.send(user_id, {type: 'message', message: message, message_id: message_id});
+      if(tally < 10) {
+        setTimeout(send, 500);
+      }
+    };
+    send();
+  },
   unpair: function() {
     if(sync.current_pairing) {
       sync.send(sync.current_pairing.room_user_id, {type: 'unpair'});
@@ -267,10 +300,15 @@ var sync = EmberObject.extend({
       sync.current_pairing = null;  
     } else if(app_state.get('pairing.partner')) {
       speecher.click('partner_end');
-      sync.send(app_state.get('pairing.communicator_id'), {type: 'unpair'});
-      setTimeout(function() {
-        sync.send(app_state.get('pairing.communicator_id'), {type: 'unpair'});
-      }, 1000);
+      var user_id = app_state.get('pairing.communicator_id');
+      var tally = 0;
+      var send_unpair = function() {
+        tally++;
+        sync.send(user_id, {type: 'unpair'});
+        if(tally < 5) {
+          setTimeout(send_unpair, 300);
+        }
+      };
     }
     app_state.set('pairing', null);
   },
@@ -633,6 +671,8 @@ var sync = EmberObject.extend({
         } else if(message.type == 'unfollow') {
           // You are not paired with this user
           sync.check_following(message.data.sender_id, true);
+        } else if(message.type == 'message') {
+          sync.handle_message(message.data);
         }
       } else {
         // Check if it's for one of my supervisees
@@ -795,7 +835,6 @@ var sync = EmberObject.extend({
           var close_on_next = false;
           console.log("ACTION", action);
           var $button = $(".button[data-id='" + action.id + "']");
-          speecher.click('ding');
           var hit_button = function() {
             if(app_state.get('currentBoardState.id') == action.board_id) {
               var btn = editManager.find_button(action.id);
@@ -818,6 +857,7 @@ var sync = EmberObject.extend({
               hit_button();
             }, function() { });  
           } else if(action.model == 'select') {
+            speecher.click('ding');
             // Partner forced selection of modeling prompt
             hit_button();
             runLater(function() {
@@ -825,6 +865,7 @@ var sync = EmberObject.extend({
             }, 500);
           } else {
             // Communicator hit a button
+            speecher.click('ding');
             console.log("BUTTON SOURCE", action);
             var icon = 'hand-up';
             // click, completion, tag, overlay, switch, keyboard,

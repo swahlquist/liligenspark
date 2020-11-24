@@ -467,23 +467,49 @@ var utterance = EmberObject.extend({
   },
   silent_speak_button: function(button) {
     var selector = '#speak_mode';
+    var opts = {html: true};
+    var timeout = 2000;
     if(app_state.get('speak_mode')) {
-      selector = '#button_list';
+      opts.container = 'body';
+      opts.placement = 'bottom';
+      selector = '#home_button';
     }
     if(!$(selector).attr('data-popover')) {
-      $(selector).attr('data-popover', true).popover({html: true});
+      $(selector).attr('data-popover', true).popover(opts);
     }
     runCancel(this._popoverHide);
-    var str = button.vocalization || button.label;
-    var text = "\"" + $('<div/>').text(str).html() + "\"";
-    if(button.sound) {
-      text = text + " <span class='glyphicon glyphicon-volume-up'></span>";
+    var div = document.createElement('div');
+    div.innerText = "\"" + (button.vocalization || button.label) + "\"";
+    if(button.message) {
+      if(button.message.match(/^http/)) {
+        var img = document.createElement('img');
+        img.setAttribute('class', 'reaction');
+        img.src = button.message;
+        div.innerText = "";
+        div.append(img);
+        timeout = 3000;
+      } else {
+        div.innerText = button.message;
+        timeout = 5000;
+      }
     }
-    $(selector).attr('data-content', text).popover('show');
+    if(button.sound) {
+      var span = document.createElement('span');
+      span.setAttribute('class', 'glyphicon glyphicon-volume-up');
+      div.append(" ");
+      div.append(span);
+    }
+    if(button.avatar_url) {
+      var img = document.createElement('img');
+      img.setAttribute('class', 'user');
+      img.src = button.avatar_url;
+      div.prepend(img);
+    }
+    $(selector).attr('data-content', div.innerHTML).popover('show');
 
     this._popoverHide = runLater(this, function() {
       $(selector).popover('hide');
-    }, 2000);
+    }, timeout);
   },
   speak_text: function(text) {
     if(text == ':beep') {
@@ -618,5 +644,6 @@ var utterance = EmberObject.extend({
     });
   }
 }).create({scope: (window.polyspeech || window)});
+window.utterance = utterance;
 
 export default utterance;

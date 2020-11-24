@@ -3,6 +3,7 @@ import sync from '../../utils/sync';
 import app_state from '../../utils/app_state';
 import CoughDrop from '../../app';
 import { computed } from '@ember/object';
+import { set as emberSet, get as emberGet } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -23,7 +24,63 @@ export default modal.ModalController.extend({
   connect_pending: computed('model.status', function() {
     return this.get('model.status.connecting');
   }),
+  paired_with_current_user: computed('model.communicator', 'model.user.id', 'app_state.pairing.user.id', function() {
+    if(!this.get('model.communicator')) {
+      return this.get('model.user.id') == app_state.get('pairing.user.id');
+    }
+    return false;
+  }),
+  reactions: computed(function() {
+    return [
+      {text: "laugh", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f602.svg"},
+      {text: "sad", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f622.svg"},
+      {text: "kiss", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f618.svg"},
+      {text: "heart eyes", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f60d.svg"},
+      {text: "party", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f973.svg"},
+      {text: "thumbs up", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44d.svg"},
+      {text: "rose", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f339.svg"},
+      {text: "heart", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2764.svg"},
+      {text: "pray", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f64f-1f3fe.svg"},
+      {text: "clap", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44f-1f3fd.svg"},
+      {text: "tired", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f634.svg"},
+      {text: "mad", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f621.svg"},
+      {text: "barf", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f92e.svg"},
+      {text: "rolling eyes", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f644.svg"},
+      {text: "shrug", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f937-200d-2640-fe0f.svg"},
+      {text: "smile", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f642.svg"},
+      {text: "laugh", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f604.svg"},
+      {text: "tongue", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f61d.svg"},
+      {text: "surprised", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f62e.svg"},
+      {text: "crying", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f62d.svg"},
+      {text: "broken heart", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f494.svg"},
+      {text: "fries", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f35f.svg"},
+      {text: "shamrock", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2618.svg"},
+      {text: "100", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f4af.svg"},
+      {text: "poop", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f4a9.svg"},
+      {text: "cool", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f60e.svg"},
+      {text: "thinking", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f914.svg"},
+      {text: "fist", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/270a-1f3fd.svg"},
+      {text: "mail", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f4ec.svg"},
+      {text: "raise hand", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f64b-1f3fe.svg"},
+    ];
+  }),
   actions: {
+    send_reaction: function(reaction) {
+      var react_id = Math.random();
+      emberSet(reaction, 'sending', react_id);
+      setTimeout(function() {
+        if(emberGet(reaction, 'sending') == react_id) {
+          emberSet(reaction, 'sending', false);
+        }
+      }, 1000);
+      sync.message(this.get('model.user.id'), reaction.url);
+    },
+    send_message: function() {
+      var str = this.get('model_message');
+      if(str) {
+        sync.message(this.get('model.user.id'), str);
+      }
+    },
     set_modeling: function(type) {
       this.set('modeling_type', type);
     },
