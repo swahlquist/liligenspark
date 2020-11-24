@@ -83,42 +83,44 @@
         {{t "for many different reasons. It's really not that different from using a keyboard to write messages online, except some people have to type even what they want to say out loud. Using pictures to help identify words and ideas can sometimes make it easier to find the right words to say." key='stash_explanation_2'}}
       </p>
       {{#if model.permissions.edit}}
-        <div class="row"><div class="col-sm-6">
-        <form class="form-horizontal well" {{action "update_utterance" on="submit"}} style="margin-top: 20px;">
-          <div class="form-group">
-            <div class="col-sm-8">
-              <h2>{{t "Sentence settings" key='sentence_settings'}}</h2>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-8">
-              <div class="checkbox big_checkbox">
-                <label>
-                  {{input type="checkbox" checked=model.show_user}}
-                  {{t "Show author name when sharing" key='show_author'}}
-                </label>
+        {{#unless single_button_full_sentence}}
+          <div class="row"><div class="col-sm-6">
+          <form class="form-horizontal well" {{action "update_utterance" on="submit"}} style="margin-top: 20px;">
+            <div class="form-group">
+              <div class="col-sm-8">
+                <h2>{{t "Sentence settings" key='sentence_settings'}}</h2>
               </div>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-12">
-              <p class="form-control-static">
-                {{t "In some web sites, an image preview will be shown. You can select the image you would like to appear in these cases." key='preview_symbol'}}<br/>
-                <button type='button' {{action 'change_image' 'prev'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-left'></span></button>
-                <span style="width: 400px; height: 200px; display: inline-block; overflow: hidden; vertical-align: middle; text-align: center;">
-                <img src={{image_url}} style="max-height: 200px; max-width: 400px;" alt="preview symbol"/>
-                </span>
-                <button type='button' {{action 'change_image' 'next'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-right'></span></button>
-              </p>
+            <div class="form-group">
+              <div class="col-sm-8">
+                <div class="checkbox big_checkbox">
+                  <label>
+                    {{input type="checkbox" checked=model.show_user}}
+                    {{t "Show author name when sharing" key='show_author'}}
+                  </label>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-8">
-              <button class='btn btn-primary' type='submit'>{{t "Save Settings" key='save_settings'}}</button>
+            <div class="form-group">
+              <div class="col-sm-12">
+                <p class="form-control-static">
+                  {{t "In some web sites, an image preview will be shown. You can select the image you would like to appear in these cases." key='preview_symbol'}}<br/>
+                  <button type='button' {{action 'change_image' 'prev'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-left'></span></button>
+                  <span style="width: 400px; height: 200px; display: inline-block; overflow: hidden; vertical-align: middle; text-align: center;">
+                  <img src={{image_url}} style="max-height: 200px; max-width: 400px;" alt="preview symbol"/>
+                  </span>
+                  <button type='button' {{action 'change_image' 'next'}} class='btn btn-default'><span class='glyphicon glyphicon-chevron-right'></span></button>
+                </p>
+              </div>
             </div>
-          </div>
-        </form>
-        </div></div>
+            <div class="form-group">
+              <div class="col-sm-8">
+                <button class='btn btn-primary' type='submit'>{{t "Save Settings" key='save_settings'}}</button>
+              </div>
+            </div>
+          </form>
+          </div></div>
+        {{/unless}}
       {{/if}}
       {{#unless model.show_attribution}}
         <p><a href="#" {{action 'show_attribution'}}>{{t "show attributions" key='show_attribution'}}</a></p>

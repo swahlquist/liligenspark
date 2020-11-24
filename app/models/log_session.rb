@@ -958,6 +958,7 @@ class LogSession < ActiveRecord::Base
                   if !already_sent
                     utterance = Utterance.process_new({
                       button_list: event['share']['utterance'],
+                      private_only: event['share']['private_only'],
                       timestamp: event['timestamp'],
                       message_uid: event['share']['message_uid'],
                       sentence: event['share']['sentence']

@@ -42,19 +42,22 @@ export default modal.ModalController.extend({
       }
       var _this = this;
       _this.set('loading', true);
-      if(app_state.get('referenced_user')) {
-        app_state.set('referenced_user.last_share', (new Date()).getTime());
-      }
+      var sharer = _this.get('model.sharer') || app_state.get('referenced_user');
+      if(!sharer) { return; }
+      // We set this so app_state knows to check
+      // more often for replies for a little while
+      sharer.set('last_share', (new Date()).getTime());
       var fallback = function() {
         if(_this.get('model.raw')) {
           stashes.log_event({
             share: true,
             utterance: _this.get('model.raw'),
             message_uid: Math.random() + ":" + (new Date()).getTime(),
+            private_only: _this.get('model.private_only'),
             sentence: _this.get('model.sentence'),
             recipient_id: _this.get('model.user.id'),
             reply_id: _this.get('model.reply_id')
-          }, app_state.get('referenced_user.id'));
+          }, sharer.get('id'));
           modal.close('confirm-notify-user');
           if(persistence.get('online')) {
             stashes.push_log();
@@ -72,7 +75,7 @@ export default modal.ModalController.extend({
         persistence.ajax('/api/v1/utterances/' + this.get('model.utterance.id') + '/share', {
           type: 'POST',
           data: {
-            sharer_id: _this.get('model.sharer_id') || app_state.get('referenced_user.id'),
+            sharer_id: sharer.get('id'),
             user_id: _this.get('model.user.id'),
             reply_id: _this.get('model.reply_id')
           }

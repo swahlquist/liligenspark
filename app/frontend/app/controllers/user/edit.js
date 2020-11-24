@@ -167,7 +167,7 @@ export default Controller.extend({
       }
       var _this = this;
       u.save().then(function(u) {
-        modal.open('confirm-notify-user', {user: user, sharer_id: _this.get('model.id'), raw: u.get('button_list'), sentence: u.get('sentence'), utterance: u});
+        modal.open('confirm-notify-user', {user: user, private_only: true, sharer: _this.get('model'), raw: u.get('button_list'), sentence: u.get('sentence'), utterance: u});
       }, function() {
         modal.error(i18n.t('error_creating_utterance', "There was an unexpected error generating the message"));
       });
