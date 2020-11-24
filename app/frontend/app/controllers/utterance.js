@@ -33,6 +33,14 @@ export default Controller.extend({
     this.get('model').check_for_large_image_url();
     this.set('speakable', speecher.ready);
   }),
+  single_button_full_sentence: computed('model.button_list', 'model.sentence', function() {
+    if(!this.get('model.button_list.length') == 0) {
+      return true;
+    } else if(this.get('model.button_list.length') == 1) {
+      return !this.get('model.button_list')[0].image && this.get('model.button_list')[0].label == this.get('model.sentence');
+    }
+    return false;
+  }),
   user_showable: computed('model.show_user', 'model.user.name', 'model.user.user_name', function() {
     return this.get('model.show_user') && this.get('model.user.name') && this.get('model.user.user_name');
   }),
