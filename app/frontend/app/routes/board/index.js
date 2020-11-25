@@ -61,7 +61,7 @@ export default Route.extend({
     // to use that
     if(stashes.get('label_locale')) {
       var preferred_lang = stashes.get('label_locale').split(/-|_/)[0];
-      var board_langs = model.get('locales').map(function(l) { return l.split(/-|_/)[0]; });
+      var board_langs = (model.get('locales') || []).map(function(l) { return l.split(/-|_/)[0]; });
       if(board_langs.indexOf(preferred_lang) == -1) {
         app_state.set('label_locale', model.get('locale'));
       } else {
@@ -72,7 +72,7 @@ export default Route.extend({
     }
     if(stashes.get('vocalization_locale')) {
       var preferred_lang = stashes.get('vocalization_locale').split(/-|_/)[0];
-      var board_langs = model.get('locales').map(function(l) { return l.split(/-|_/)[0]; });
+      var board_langs = (model.get('locales') || []).map(function(l) { return l.split(/-|_/)[0]; });
       if(board_langs.indexOf(preferred_lang) == -1) {
         app_state.set('vocalization_locale', model.get('locale'));
       } else {

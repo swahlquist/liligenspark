@@ -762,7 +762,7 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
   CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
   var promise = CoughDrop.Buttonset.pending_promises[id];
   if(promise) { return promise; }
-  if(id && id.match(/^b/)) {
+  if(id && (id.match(/^b/) || id.match(/^i/))) {
     return RSVP.reject();
   }
 
