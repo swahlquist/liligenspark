@@ -250,7 +250,7 @@ class Board < ActiveRecord::Base
   end
 
   def search_string_for(locale)
-    lang = locale.split(/-|_/)[0]
+    lang = (locale || 'en').split(/-|_/)[0]
     trans =  BoardContent.load_content(self, 'translations') || {}
     board_string = ""
     val = nil
@@ -302,7 +302,7 @@ class Board < ActiveRecord::Base
         boost += 0.5 
         board_string += "locale:#{lang}"
       end
-      board_string = " " + board.search_string_for(locale == 'any' ? board.settings['locale'] : locale)
+      board_string = " " + board.search_string_for(locale == 'any' ? (board.settings['locale'] || 'en') : locale)
       if board_string.match(/#{query}/i)
         boost *= 10 
         board.instance_variable_set('@sort_match', true)
