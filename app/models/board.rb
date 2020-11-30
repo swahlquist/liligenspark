@@ -169,7 +169,7 @@ class Board < ActiveRecord::Base
       end
       loc = (ubc.locale || 'en').split(/_|-/)[0]
       self.settings['home_forks'] += 1 if ubc.home
-      self.settings['locale_home_forks'][ubf.locale] = (self.settings['locale_home_forks'][ubf.locale] || 0) + 1 if ubc.home
+      self.settings['locale_home_forks'][ubc.locale] = (self.settings['locale_home_forks'][ubc.locale] || 0) + 1 if ubc.home
       self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + 1 if ubc.home && ubc.locale != loc
       if ubc.updated_at > 30.days.ago
         self.settings['recent_forks'] += 1 
@@ -298,7 +298,7 @@ class Board < ActiveRecord::Base
       if board.settings['locale'] == locale
         boost += 1 
         board_string += "locale:#{locale}"
-      elsif board.settings['locale'].split(/-|_/)[0] == lang.split(/-|_/)[0]
+      elsif (board.settings['locale'] || 'en').split(/-|_/)[0] == lang.split(/-|_/)[0]
         boost += 0.5 
         board_string += "locale:#{lang}"
       end
