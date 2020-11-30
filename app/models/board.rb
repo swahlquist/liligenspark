@@ -287,31 +287,30 @@ class Board < ActiveRecord::Base
     board_string
   end
 
-  def self.sort_for_query(boards, query, locale)
+  def self.sort_for_query(all_boards, query, locale)
     locale ||= 'any'
-    boards.each_with_index{|brd, idx| brd.instance_variable_set('@sort_idx', idx) }
+    boards = []
     lang = locale.split(/-|_/)[0]
-    query = CGI.unescape(query || '').downcase
-    res = boards.sort_by do |board|
+    all_boards.each_with_index do |brd, idx| 
+      break if boards.length > 50
       board_string = ""
-      boost = 1 - (board.instance_variable_get('@sort_idx').to_f / boards.length.to_f / 2.0)
-      if board.settings['locale'] == locale
+      boost = 1 - (idx.to_f / all_boards.length.to_f / 2.0)
+      if brd.settings['locale'] == locale
         boost += 1 
         board_string += "locale:#{locale}"
-      elsif (board.settings['locale'] || 'en').split(/-|_/)[0] == lang.split(/-|_/)[0]
+      elsif (brd.settings['locale'] || 'en').split(/-|_/)[0] == lang.split(/-|_/)[0]
         boost += 0.5 
         board_string += "locale:#{lang}"
       end
-      board_string = " " + board.search_string_for(locale == 'any' ? (board.settings['locale'] || 'en') : locale)
+      board_string = " " + brd.search_string_for(locale == 'any' ? (brd.settings['locale'] || 'en') : locale)
       if board_string.match(/#{query}/i)
         boost *= 10 
-        board.instance_variable_set('@sort_match', true)
-      else
-        board.instance_variable_set('@sort_match', false)
+        boards << brd
       end
-      boost
+      brd.instance_variable_set('@boost', boost) 
     end
-    res.select{|b| b.instance_variable_get('@sort_match') }.reverse
+    query = CGI.unescape(query || '').downcase
+    res = boards.sort_by{|b| b.instance_variable_get('@boost')}.reverse
   end
 
   def self.sort_for_locale(boards, locale, sort, ranks)
@@ -490,6 +489,7 @@ class Board < ActiveRecord::Base
     self.settings['locales'] = ([self.settings['locale']] + langs).uniq
     self.settings.delete('search_string')
     self.search_string = self.settings['locales'].map{|s| "locale:#{s}" }.join(" ")
+    self.search_string += " root" if !self.settings['copy_id'] || (self.id && self.settings['copy_id'] == self.global_id)
     # self.settings['search_string'] = "#{self.settings['name']} locale:#{self.settings['locale'] || ''}".downcase
     # langs.each do |loc, txt|
     #   self.settings['search_string'] += "locale:#{loc}"
