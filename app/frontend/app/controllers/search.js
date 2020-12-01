@@ -53,7 +53,6 @@ export default Controller.extend({
                 if(event.status == 'errored') {
                   _this.set('personal_results', {results: []});
                 } else if(event.status == 'finished') {
-                  debugger
                   var result = [];
                   event.result.board.forEach(function(board) {
                     result.push(CoughDrop.store.push({ data: {

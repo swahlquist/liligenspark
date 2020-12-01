@@ -187,7 +187,7 @@ class Api::BoardsController < ApplicationController
     Rails.logger.warn('start paginated result')
     self.class.trace_execution_scoped(['boards/json_paginate']) do
       json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
-      json['meta']['progress'] = JsonApi::Progress.as_json(progress) if progress
+      json[:meta]['progress'] = JsonApi::Progress.as_json(progress) if progress
     end
 
     render json: json
