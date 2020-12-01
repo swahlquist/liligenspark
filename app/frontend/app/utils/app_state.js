@@ -981,16 +981,12 @@ var app_state = EmberObject.extend({
     if(!app_state.get('sessionUser.supporter_role')) {
       // TODO: DRY this check, it's in sync too
       if(app_state.get('sessionUser.preferences.remote_modeling') && (app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed'))) {
-        var json = app_state.get('sync_utterance.json');
-        app_state.set('sync_utterance', {
-          attempted: true,
-          json: json
-        });
         var str = JSON.stringify(shareable_voc());
-        if(str != app_state.get('sync_utterance.json') && window.persistence) {
+        // If the sentence has changed or hasn't been
+        // encoded, then send it through encoding
+        if((str != app_state.get('sync_utterance.json') || !app_state.get('sync_utterance.encoded')) && window.persistence) {
           app_state.set('sync_utterance', {
-            json: str,
-            attempted: true
+            json: str
           });
           window.persistence.ajax('/api/v1/users/' + app_state.get('sessionUser.id') + '/ws_encrypt', {
             type: 'POST',
@@ -1005,6 +1001,12 @@ var app_state = EmberObject.extend({
               sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {utterance: res.encoded});
             }
           }, function(err) { });
+        } else {
+          var encoded = app_state.get('sync_utterance.encoded');
+          if(encoded) {
+            sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {utterance: encoded});
+            app_state.set('sync_utterance.attempted', true);
+          }
         }
       }
     }

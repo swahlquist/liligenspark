@@ -249,7 +249,7 @@ var sync = EmberObject.extend({
   handle_message: function(data) {
     sync.user_lookup(data.sender_id).then(function(user) {
       var valid_message = false;
-      if(app_state.get('pairing.user.id') == user.id) {
+      if(app_state.get('pairing.user.id') == user.user_id) {
         valid_message = true;
       } else if((app_state.get('followers.active') || []).find(function(u) { return u.user_id == user.id; })) {
         valid_message = true;
