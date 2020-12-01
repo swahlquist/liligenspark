@@ -251,7 +251,7 @@ var sync = EmberObject.extend({
       var valid_message = false;
       if(app_state.get('pairing.user.id') == user.user_id) {
         valid_message = true;
-      } else if((app_state.get('followers.active') || []).find(function(u) { return u.user_id == user.id; })) {
+      } else if((app_state.get('followers.active') || []).find(function(u) { return u.user_id == user.user_id; })) {
         valid_message = true;
       }
       if(valid_message) {
