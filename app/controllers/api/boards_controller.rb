@@ -157,7 +157,8 @@ class Api::BoardsController < ApplicationController
     if params['sort'] && params['sort'] != 'custom_order' && params['locale'] && params['locale'] != 'any'
       # All locale-defined lists should already have been filtered by locale
       # and search relevance, so we can safely trim to the top results here
-      boards = Board.sort_for_locale(boards[0, 25], params['locale'], params['sort'], ranks)
+      boards = boards.limit(50) if boards.respond_to?(:limit)
+      boards = Board.sort_for_locale(boards[0, 50], params['locale'], params['sort'], ranks)
     end
 
     # Private boards don't have search_string set as a column to protect against 
