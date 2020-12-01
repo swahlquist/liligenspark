@@ -319,6 +319,7 @@ var sync = EmberObject.extend({
         speecher.click('partner_end');
         app_state.set('pairing', null);
         sync.current_pairing = null;
+        sync.check_following(other_ws_user_id, true);
       }
       return;
     }
