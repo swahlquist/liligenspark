@@ -287,14 +287,27 @@ class Board < ActiveRecord::Base
     board_string
   end
 
-  def self.sort_for_query(all_boards, query, locale)
+  def self.long_query(query, locale, board_ids)
+    offset = 0
+    result = []
+    board_ids.each_slice(25) do |ids|
+      break if result.length > 50
+      boards = Board.find_all_by_global_id(ids).sort_by{|b| ids.index(b.global_id) }
+      result += Board.sort_for_query(boards, query, locale, offset, board_ids.length)
+      offset += 25
+    end
+    result = result.sort_by{|b| b.instance_variable_get('@boost')}.reverse
+    JsonApi::Board.paginate({}, result, {locale: locale})
+  end
+
+  def self.sort_for_query(boards_slice, query, locale, offset, total)
     locale ||= 'any'
     boards = []
     lang = locale.split(/-|_/)[0]
-    all_boards.each_with_index do |brd, idx| 
+    boards_slice.each_with_index do |brd, idx| 
       break if boards.length > 50
       board_string = ""
-      boost = 1 - (idx.to_f / all_boards.length.to_f / 2.0)
+      boost = 1 - ((idx + offset).to_f / total.to_f / 2.0)
       if brd.settings['locale'] == locale
         boost += 1 
         board_string += "locale:#{locale}"

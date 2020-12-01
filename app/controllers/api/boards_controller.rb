@@ -165,14 +165,21 @@ class Api::BoardsController < ApplicationController
     # so we limit the possible result set to be more performant, which will only
     # be an issue for search users with very many boards (still problematic, I know)
     Rails.logger.warn('private query')
+    progress = nil
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['root']
         boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
+#        boards = boards.where(['search_string ILIKE ?', "%root%"])
       end
 
       if !params['q'].blank? && !params['public']
-        boards = boards.limit(500) if boards.respond_to?(:limit)
-        boards = Board.sort_for_query(boards, params['q'], params['locale'])
+        limited_boards = boards
+        limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
+        limited_boards = limited_boards[0, 25]
+        if boards.count > 25 && (params['allow_job'] || true)
+          progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
+        end
+        boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
       end
     end
     
@@ -180,6 +187,7 @@ class Api::BoardsController < ApplicationController
     Rails.logger.warn('start paginated result')
     self.class.trace_execution_scoped(['boards/json_paginate']) do
       json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
+      json['meta']['progress'] = JsonApi::Progress.as_json(progress) if progress
     end
 
     render json: json
