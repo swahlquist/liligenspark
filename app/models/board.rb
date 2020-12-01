@@ -347,7 +347,7 @@ class Board < ActiveRecord::Base
         boost += forks / 3
         boost += stars / 2
       end
-      board.popularity * boost
+      (board.popularity || -1) * boost
     end
     res.reverse
   end
