@@ -6,6 +6,7 @@ import session from '../utils/session';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import progress_tracker from '../utils/progress_tracker';
 
 export default Controller.extend({
   title: computed('searchString', function() {
@@ -38,14 +39,35 @@ export default Controller.extend({
         _this.set('online_results', {loading: true, results: []});
         _this.set('personal_results', {loading: true, results: []});
         var locale = (_this.get('locale') || window.navigator.language || 'en').split(/-/)[0];
+        // TODO: ensure that search results show up localized
+        // for translated boards with a different default locale
         CoughDrop.store.query('board', {q: str, locale: locale, sort: 'popularity'}).then(function(res) {
           _this.set('online_results', {results: res.map(function(i) { return i; })});
         }, function() {
           _this.set('online_results', {results: []});
         });
         if(app_state.get('currentUser')) {
-          CoughDrop.store.query('board', {q: str, user_id: 'self', locale: locale}).then(function(res) {
-            _this.set('personal_results', {results: res.map(function(i) { return i; })});
+          CoughDrop.store.query('board', {q: str, user_id: 'self', locale: locale, allow_job: true}).then(function(res) {
+            if(res.meta && res.meta.progress) {
+              progress_tracker.track(res.meta.progress, function(event) {
+                if(event.status == 'errored') {
+                  _this.set('personal_results', {results: []});
+                } else if(event.status == 'finished') {
+                  debugger
+                  var result = [];
+                  event.result.board.forEach(function(board) {
+                    result.push(CoughDrop.store.push({ data: {
+                      id: board.id,
+                      type: 'board',
+                      attributes: board
+                    }}));
+                  });
+                  _this.set('personal_results', {results: result});
+                }
+              });
+            } else {
+              _this.set('personal_results', {results: res.map(function(i) { return i; })});
+            }
           }, function() {
             _this.set('personal_results', {results: []});
           });

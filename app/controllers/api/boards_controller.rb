@@ -176,7 +176,7 @@ class Api::BoardsController < ApplicationController
         limited_boards = boards
         limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
         limited_boards = limited_boards[0, 25]
-        if boards.count > 25 && (params['allow_job'] || true)
+        if boards.count > 25 && params['allow_job']
           progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
         end
         boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
