@@ -22,6 +22,7 @@ export default modal.ModalController.extend({
       _this.compute_styles();
     }, 500);
     _this.set('model.shift_color', false);
+    _this.set('model.shifted_color', null);
     if(_this.get('model.highlight_type') == 'model') {
       var id = Math.random();
       this.set('model.shift_id', id);
@@ -30,6 +31,11 @@ export default modal.ModalController.extend({
           _this.set('model.shift_color', true);
         }
       }, 15000);
+      runLater(function() {
+        if(_this.get('model.shift_id') == id) {
+          _this.set('model.clear_overlay', false);
+        }
+      }, 30000);
     }
     if(_this.recompute) {
       window.removeEventListener('resize', _this.recompute);
@@ -54,6 +60,8 @@ export default modal.ModalController.extend({
     }
   ),
   closing: function() {
+    this.set('model.shift_color', false);
+    this.set('model.shifted_color', null);
     window.removeEventListener('resize', this.recompute);
     this.recompute = null;
     modal.highlight_controller = null;

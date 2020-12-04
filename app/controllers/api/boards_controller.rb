@@ -170,17 +170,20 @@ class Api::BoardsController < ApplicationController
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['root']
         boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
+        # TODO: swap these after most boards have been updated
 #        boards = boards.where(['search_string ILIKE ?', "%root%"])
       end
 
       if !params['q'].blank? && !params['public']
         limited_boards = boards
-        limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
-        limited_boards = limited_boards[0, 25]
         if boards.count > 25 && params['allow_job']
           progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
+          boards = []
+        else
+          limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
+          limited_boards = limited_boards[0, 25]
+          boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
         end
-        boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
       end
     end
     

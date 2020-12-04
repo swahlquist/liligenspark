@@ -924,4 +924,15 @@ class WordData < ActiveRecord::Base
     @@message_bank_suggestions ||= []
     @@message_bank_suggestions
   end
+
+  def self.revert_board_inflections(board)
+    buttons = board.buttons
+    buttons.each do |btn|
+      if !btn['suggested_part_of_speech'] && !btn['painted_part_of_speech'] && btn['part_of_speech']
+        btn['suggested_part_of_speech'] = btn['part_of_speech']
+      end
+    end
+    board.settings['buttons'] = buttons 
+    board.check_for_parts_of_speech_and_inflections(true)
+  end
 end

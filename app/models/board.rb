@@ -1025,8 +1025,12 @@ class Board < ActiveRecord::Base
               end
             elsif button['part_of_speech'] && button['suggested_part_of_speech'] && button['part_of_speech'] != button['suggested_part_of_speech']
               str = "#{word}-#{button['part_of_speech']}"
+              button['original_part_of_speech'] = button['suggested_part_of_speech']
+              button.delete('suggested_part_of_speech')
               RedisInit.default.hincrby('overridden_parts_of_speech', str, 1) if RedisInit.default
             end
+            # If there are any overrides compared to the javascript defaults,
+            # persist them to the button object
             if word && inflections[word] && inflections[word]['v']
               button['inflection_defaults'] = inflections[word]
               any_changed = true
