@@ -1067,7 +1067,7 @@ class Board < ActiveRecord::Base
       @buttons_changed = 'button updated in-place'
     end
     self.settings['buttons'] = buttons
-    self.schedule_once(:update_button_sets)
+#    self.schedule_once(:update_button_sets)
     self.save!
   end
   
@@ -1076,7 +1076,7 @@ class Board < ActiveRecord::Base
     visited_ids = []
     while upstreams.length > 0
       board = upstreams.shift
-      BoardDownstreamButtonSet.schedule_once(:update_for, board.global_id)
+#      BoardDownstreamButtonSet.schedule_once(:update_for, board.global_id)
       visited_ids << board.global_id
       ups = Board.find_all_by_global_id(board.settings['immediately_upstream_board_ids'])
       ups.each do |up|

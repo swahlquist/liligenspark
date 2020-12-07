@@ -1319,7 +1319,7 @@ class User < ActiveRecord::Base
     ids = [starting_old_board_id]
     ids += (starting_old_board.reload.settings['downstream_board_ids'] || []) if starting_old_board
     # This was happening too slowly/unreliably in a separate bg job
-    button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
+#    button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
     {'affected_board_ids' => ids.uniq}
   ensure
     PaperTrail.request.whodunnit = prior

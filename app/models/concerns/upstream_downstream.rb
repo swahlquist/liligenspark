@@ -154,7 +154,7 @@ module UpstreamDownstream
   
   def schedule_update_button_set
     return true if self.class.add_lumped_trigger({'type' => 'update_button_set', 'id' => self.global_id})
-    BoardDownstreamButtonSet.schedule_once(:update_for, self.global_id)
+#    BoardDownstreamButtonSet.schedule_once(:update_for, self.global_id)
   end
   
   def schedule_update_available_boards(breadth='all', frd=false)
@@ -212,7 +212,7 @@ module UpstreamDownstream
     self.settings['immediately_upstream_board_ids'] << id
     self.settings['immediately_upstream_board_ids'] = self.settings['immediately_upstream_board_ids'].uniq.sort
     self.update_setting('immediately_upstream_board_ids', self.settings['immediately_upstream_board_ids'], :save!)
-    BoardDownstreamButtonSet.schedule_once(:update_for, self.global_id)
+#    BoardDownstreamButtonSet.schedule_once(:update_for, self.global_id)
   end
   
   def update_any_upstream
@@ -294,10 +294,10 @@ module UpstreamDownstream
       if triggers
         triggers.each do |trigger|
           if trigger['type'] == 'update_button_set' && trigger['id']
-            Worker.schedule_for(:slow, BoardDownstreamButtonSet, :perform_action, {
-              'method' => 'update_for',
-              'arguments' => [trigger['id']]
-            })
+            # Worker.schedule_for(:slow, BoardDownstreamButtonSet, :perform_action, {
+            #   'method' => 'update_for',
+            #   'arguments' => [trigger['id']]
+            # })
 #            BoardDownstreamButtonSet.update_for(trigger['id'])
           elsif trigger['type'] == 'update_available_boards' && trigger['id']
             user = User.find_by_path(trigger['id'])

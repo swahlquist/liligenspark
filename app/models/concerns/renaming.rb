@@ -98,6 +98,8 @@ module Renaming
         board_ids = board_ids.uniq.sort
       end
       Board.find_all_by_global_id(all_up_ids).each do |board|
+        # TODO: right now revision hash doesn't include key, so until that
+        # happens, renaming must trigger a button set update
         BoardDownstreamButtonSet.schedule_once(:update_for, board.global_id)
       end
       User.find_all_by_global_id(record.shared_user_ids).each do |user|

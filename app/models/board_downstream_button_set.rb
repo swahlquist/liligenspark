@@ -398,7 +398,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       # Any boards that we no longer referenced are going to need their
       # own button data instead of using this button set as their source
       lost_board_ids.each do |id|
-        BoardDownstreamButtonSet.schedule_update(id, traversed_ids)
+        # BoardDownstreamButtonSet.schedule_update(id, traversed_ids) # :update_for
         board_ids_to_flush << id
       end
 
