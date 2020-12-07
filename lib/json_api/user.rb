@@ -213,25 +213,37 @@ module JsonApi::User
         json['subscription']['lessonpix'] = true if UserIntegration.integration_keys_for(user).include?('lessonpix')
       end
       if args[:organization]
+        links = UserLink.links_for(user)
+        org_code = Webhook.get_record_code(args[:organization])
+
+        manager = !!links.detect{|l| l['type'] == 'org_manager' && l['record_code'] == org_code }
+        sup = !!links.detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == org_code }
+        mngd = !!links.detect{|l| l['type'] == 'org_user' && l['record_code'] == org_code }
+    
         if args[:organization_manager]
           json['goal'] = user.settings['primary_goal']
         end
-        if Organization.manager?(user)
+        if manager
           json['org_manager'] = args[:organization].manager?(user)
           json['org_assistant'] = args[:organization].assistant?(user)
         end
-        if Organization.supervisor?(user)
+        if sup
           json['org_supervision_pending'] = args[:organization].pending_supervisor?(user)
           if !json['org_supervision_pending']
-            supervisees = user.supervisees
-            # TODO: sharding
-            supervisees = args[:organization].users.where(:id => supervisees.map(&:id))
+            supervisees = []
+            if args[:paginated]
+              args[:org_users] ||= args[:organization].users
+              user_supervisee_ids = user.supervised_user_ids
+              supervisees = args[:org_users].select{|u| user_supervisee_ids.include?(u.global_id) }
+            else
+              supervisees = args[:organizaation].users.limit(10).find_all_by_global_id(user.supervised_user_ids)
+            end
             if supervisees.length > 0
               json['org_supervisees'] = supervisees[0, 10].map{|u| JsonApi::User.as_json(u, limited_identity: true, supervisor: user) }
             end
           end
         end
-        if Organization.managed?(user)
+        if mngd
           json['org_pending'] = args[:organization].pending_user?(user)
           json['org_sponsored'] = args[:organization].sponsored_user?(user)
           json['org_eval'] = args[:organization].eval_user?(user)

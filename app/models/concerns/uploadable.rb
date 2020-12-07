@@ -113,8 +113,15 @@ module Uploadable
       self.schedule(:upload_to_remote, self.settings['pending_url'])
       @schedule_upload_to_remote = false
     end
-    if self.url && Uploader.protected_remote_url?(self.url)
-      self.schedule(:assert_cached_copy)
+    if self.url && Uploader.protected_remote_url?(self.url) && self.settings && !self.settings['cached_copy_url']
+      # Try a little bit to find an existing cache url before resorting to a bg job
+      found = ButtonImage.where(self.user).limit(3)
+      found.each do |bi|
+        self.settings['cached_copy_url'] ||= bi.settings['cached_copy_url'] if bi.settings['cached_copy_url']
+      end
+      if !self.settings['cached_copy_url']
+        self.schedule(:assert_cached_copy)
+      end
     end
     if self.url && self.settings && self.settings['content_type'] && self.settings['content_type'].match(/image\/svg/) && !self.settings['rasterized']
       self.schedule(:assert_raster)
@@ -325,10 +332,13 @@ module Uploadable
       caches = {}
       fallbacks = {}
       records.each do |record|
+        # Retrieve the attributes for the source image
         url = record.is_a?(String) ? record : record.url
         ref = self.cached_copy_identifiers(url)
         next unless ref
         if !record.is_a?(String) && record.settings['cached_copy_url']
+          # If the record has a cached url already, use that
+          # along with whatever fallback is available
           if ref[:library] == 'lessonpix'
             fallbacks[url] = Uploader.fallback_image_url(ref[:image_id], ref[:library])
             if sources[:lessonpix]
@@ -336,6 +346,8 @@ module Uploadable
             end
           end
         else
+          # Otherwise, set the fallback and note
+          # that the cached url needs to be looked up on another record
           if url && Uploader.protected_remote_url?(url)
             if ref[:library] == 'lessonpix'
               fallbacks[url] = Uploader.fallback_image_url(ref[:image_id], ref[:library])
@@ -348,6 +360,8 @@ module Uploadable
       end
       if lookups.keys.length > 0 || fallbacks.keys.length > 0
         if lookups.keys.length > 0
+          # For any where a cache url couldn't be found, look
+          # on other records with the same url
           ButtonImage.where(:url => lookups.keys).each do |bi|
             if bi.settings['cached_copy_url']
               caches[lookups[bi.url]] = bi.settings['cached_copy_url'] 
@@ -356,6 +370,8 @@ module Uploadable
             end
           end
         end
+        # For all records without a cached url, try 
+        # setting/updating it now if it was just found
         records.each do |record|
           url = record.is_a?(String) ? record : record.url
           if !record.is_a?(String)

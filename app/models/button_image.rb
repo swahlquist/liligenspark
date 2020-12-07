@@ -52,7 +52,9 @@ class ButtonImage < ActiveRecord::Base
       })
     end
     if self.settings['protected_source'] && self.user
-      self.user.schedule(:track_protected_source,self.settings['protected_source'])
+      if !user.settings['activated_sources'].include?(self.settings['protected_source'])
+        self.user.schedule(:track_protected_source,self.settings['protected_source'])
+      end
     end
     # TODO: if from a protected source, check if the user
     # has already registered as a user for that source

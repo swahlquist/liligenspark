@@ -1588,8 +1588,10 @@ class LogSession < ActiveRecord::Base
   
   def self.push_logs_remotely
     remotes = LogSession.where(:needs_remote_push => true).where(['ended_at < ?', 2.hours.ago]).where(['ended_at > ?', 2.days.ago])
-    remotes.each do |session|
-      session.notify('new_session')
+    remotes.find_in_batches(batch_size: 30) do |batch|
+      batch.each do |session|
+        session.notify('new_session')
+      end
     end
     remotes.update_all(:needs_remote_push => false)
   end

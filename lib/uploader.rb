@@ -329,7 +329,7 @@ module Uploader
     {}
   end
   
-  def self.find_images(keyword, library, user, alt_user=nil)
+  def self.find_images(keyword, library, user, alt_user=nil, batch=false)
     return false if (keyword || '').strip.blank? || (library || '').strip.blank?
     if library == 'ss'
       return false
@@ -377,7 +377,7 @@ module Uploader
           }          
         }
       end
-      Worker.schedule_for(:slow, ButtonImage, :perform_action, {
+      Worker.schedule_for(batch ? :whenever : :slow, ButtonImage, :perform_action, {
         'method' => 'assert_cached_copies',
         'arguments' => [list.map{|r| r['url'] }]
       })

@@ -65,6 +65,7 @@ module JsonApi::Json
     if self.respond_to?(:page_data)
       args[:page_data] = self.page_data(results)
     end
+    args[:paginated] = true
     json[self::TYPE_KEY] = results.map{|i| as_json(i, args) }
     json
   end

@@ -125,9 +125,11 @@ class Board < ActiveRecord::Base
   end
 
   def self.refresh_stats(board_ids)
-    Board.find_all_by_global_id(board_ids).each do |board|
-      board.generate_stats
-      board.save_without_post_processing
+    board_ids.each_slice(25) do |ids|
+      Board.find_all_by_global_id(ids).each do |board|
+        board.generate_stats
+        board.save_without_post_processing
+      end
     end
   end
   
@@ -1379,7 +1381,7 @@ class Board < ActiveRecord::Base
       buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
-          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, author) || [])[0]
+          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, author, nil, true) || [])[0]
           if image_data
             image_data['button_label'] = button['label']
             bi = ButtonImage.process_new(image_data, {user: author})

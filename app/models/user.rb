@@ -547,9 +547,12 @@ class User < ActiveRecord::Base
       root_board_ids += [self.settings['preferences']['home_board']['id']] 
     end
     if include_supervisees
-      self.supervisees.each do |u|
-        if u.settings && u.settings['preferences'] && u.settings['preferences']['home_board']
-          root_board_ids  += [u.settings['preferences']['home_board']['id']]
+      # TODO: large groups of supervisees bogs down this lookup too much
+      if self.supervised_user_ids.length < 5
+        self.supervisees.each do |u|
+          if u.settings && u.settings['preferences'] && u.settings['preferences']['home_board']
+            root_board_ids  += [u.settings['preferences']['home_board']['id']]
+          end
         end
       end
     end

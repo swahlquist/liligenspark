@@ -164,13 +164,22 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     user = user_id && User.find_by_global_id(user_id)
     return {success: false, error: 'missing board or user'} unless board && user
     button_set = board.board_downstream_button_set
+    just_generated = false
     if !button_set
+      # Generate the button set if it doesn't already exist
+      just_generated = true
       self.update_for(board_id, true)
       button_set = board.reload.board_downstream_button_set
     end
     return {success: false, error: 'could not generate button set'} unless button_set
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+    end
+    if button_set.data['full_set_revision'] != board.settings['full_set_revision'] && !just_generated
+      # Force-update the button set if it's stale
+      just_generated = true
+      self.update_for(board_id, true)
+      button_set = board.reload.board_downstream_button_set
     end
     url = button_set.url_for(user, board.settings['full_set_revision'])
     return {success: true, url: url} if url
@@ -192,6 +201,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
     end
 
+    # Generate a subset version of the button set for the specified user's access level
     button_set.generate_defaults
     bad_ids = {}
     unviewable_ids.each{|id| bad_ids[id] = true }
