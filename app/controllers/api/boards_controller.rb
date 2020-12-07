@@ -17,7 +17,7 @@ class Api::BoardsController < ApplicationController
         if @api_user
           keys << "#{@api_user.user_name}/#{params['key']}"
         end
-        boards = boards.where(:key => keys)
+        boards = boards.where(:key => keys).limit(1)
       end
     end
     
@@ -169,14 +169,13 @@ class Api::BoardsController < ApplicationController
     progress = nil
     self.class.trace_execution_scoped(['boards/private_query']) do
       if params['root']
-        boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
-        # TODO: swap these after most boards have been updated
-#        boards = boards.where(['search_string ILIKE ?', "%root%"])
+#        boards = boards.select{|b| !b.settings['copy_id'] || b.settings['copy_id'] == b.global_id }
+        boards = boards.where(['search_string ILIKE ?', "%root%"])
       end
 
       if !params['q'].blank? && !params['public']
         limited_boards = boards
-        if boards.count > 25 && params['allow_job']
+        if params['allow_job'] #&& boards.limit(26).select('id').length > 25
           progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
           boards = []
         else
