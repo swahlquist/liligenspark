@@ -200,13 +200,13 @@ module Sharing
   
   module ClassMethods
     def all_shared_board_ids_for(user, plus_editing=false)
-      links = UserLink.links_for(user).select{|l| l['type'] == 'board_share' }
-      return [] if links.length == 0
       user.settings['all_shared_board_ids'] ||= {}
       sub_key = plus_editing ? 'editing' : 'viewing'
       if user.settings['all_shared_board_ids'][sub_key] && user.settings['all_shared_board_ids'][sub_key]['timestamp'] >= user.boards_updated_at.to_f.round(2)
         return user.settings['all_shared_board_ids'][sub_key]['list']
       end
+      links = UserLink.links_for(user).select{|l| l['type'] == 'board_share' }
+      return [] if links.length == 0
       
 #      cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
 #      return cached if cached
