@@ -232,14 +232,21 @@ module JsonApi::User
           if !json['org_supervision_pending']
             supervisees = []
             if args[:paginated]
-              args[:org_users] ||= args[:organization].users
-              user_supervisee_ids = user.supervised_user_ids
-              supervisees = args[:org_users].select{|u| user_supervisee_ids.include?(u.global_id) }
+              if !args[:org_users]
+                hash = {}
+                args[:organization].users.select('id', 'user_name').each{|u| hash[u.global_id] = {'id' => u.global_id, 'user_name' => u.user_name } }
+                args[:org_users] ||= hash
+              end
+              json['org_supervisees'] = []
+              user.supervised_user_ids.each{|uid| json['org_supervisees'] << args[:org_users][uid] if args[:org_users][uid] }
+              json['org_supervisees'].sort_by{|u| u['user_name'] }
             else
-              supervisees = args[:organizaation].users.limit(10).find_all_by_global_id(user.supervised_user_ids)
-            end
-            if supervisees.length > 0
-              json['org_supervisees'] = supervisees[0, 10].map{|u| JsonApi::User.as_json(u, limited_identity: true, supervisor: user) }
+              supervisees = args[:organization].users.select('id', 'user_name').limit(10).find_all_by_global_id(user.supervised_user_ids)
+              if supervisees.length > 0
+                json['org_supervisees'] = supervisees[0, 10].map{|u| 
+                  {'id' => u.global_id, 'user_name' => u.user_name }
+              }.sort_by{|u| u['user_name'] }
+              end
             end
           end
         end
