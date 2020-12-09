@@ -170,7 +170,7 @@ module Stats
     # number of forks
     res[:forks] = board.settings['forks']
     # popular copies
-    boards = Board.where(:parent_board_id => board.id).order('home_popularity DESC').limit(100).select{|b| b.settings['uses'] > 10 }.reverse[0, 5]
+    boards = Board.where(:parent_board_id => board.id).order('home_popularity DESC').limit(100).select{|b| (b.settings['uses'] || 0) > 10 }.reverse[0, 5]
     res[:popular_forks] = boards.map{|b| JsonApi::Board.as_json(b) }
     # TODO: total uses over time
     # TODO: uses of each button over time

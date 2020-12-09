@@ -231,6 +231,8 @@ module Subscription
           self.settings['subscription']['started'] = nil if args['plan_id'].match(/free|granted/)
           self.settings['subscription']['token_summary'] = args['token_summary']
           self.settings['subscription']['plan_id'] = args['plan_id']
+          self.settings['subscription']['prior_purchase_plan_id'] = self.settings['subscription']['last_purchase_plan_id'] if self.settings['subscription']['last_purchase_plan_id']
+          self.settings['subscription'].delete('last_purchase_plan_id')
           self.settings['subscription']['unsubscribe_reason'] = nil
           self.settings['subscription']['purchase_amount'] = args['purchase_amount']
           self.settings['subscription']['eval_account'] = !!args['plan_id'].match(/^eval/)

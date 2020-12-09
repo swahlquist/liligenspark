@@ -81,6 +81,7 @@ class Board < ActiveRecord::Base
         self.settings['starred_user_ids'] = self.settings['starred_user_ids'].select{|id| id != user_id && !id.to_s.match(/.+:#{user_id}/) }
       end
       self.settings['never_edited'] = false
+      self.generate_stats
       user.schedule(:remember_starred_board!, self.global_id)
     end
   end
@@ -525,6 +526,7 @@ class Board < ActiveRecord::Base
     # self.settings['search_string'] += " #{self.key} #{self.labels} #{self.settings['description'] || ""}".downcase
     # search_string is limited to 4096
     # self.search_string = self.fully_listed? ? (self.settings['search_string'] || '')[0, 4096] : nil
+    self.generate_stats unless self.settings['stars']
     true
   end
   
