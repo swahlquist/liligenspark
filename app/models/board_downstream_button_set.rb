@@ -206,7 +206,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     bad_ids = {}
     unviewable_ids.each{|id| bad_ids[id] = true }
     button_set.assert_extra_data
-    available_buttons = button_set.data['buttons'].select{|b| !bad_ids[b['board_id']] }
+    available_buttons = button_set.buttons.select{|b| !bad_ids[b['board_id']] }
 
     path = remote_path
     button_set.data['remote_paths'][remote_hash] = {'generated' => Time.now.to_i, 'path' => path, 'expires' => 5.months.from_now.to_i}
