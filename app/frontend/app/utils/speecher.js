@@ -664,7 +664,13 @@ var speecher = EmberObject.extend({
     promises.push(this.load_sound('ding_url'));
     promises.push(this.load_sound('bleep_url'));
     promises.push(this.load_sound('spinner_url'));
+    promises.push(this.load_sound('battery_url'));
+    promises.push(this.load_sound('glug_url'));
     promises.push(this.load_sound('dice_url'));
+    promises.push(this.load_sound('partner_start_url'));
+    promises.push(this.load_sound('partner_end_url'));
+    promises.push(this.load_sound('follower_url'));
+   
     return RSVP.all_wait(promises);
   },
   load_sound: function(attr) {
@@ -692,7 +698,7 @@ var speecher = EmberObject.extend({
         return RSVP.reject(err);
       });
     } else {
-      return RSVP.reject({error: "beep sound not saved"});
+      return RSVP.reject({error: "beep sound not saved: " + attr});
     }
   },
   play_audio: function(elem) {

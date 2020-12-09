@@ -1097,7 +1097,7 @@ var persistence = EmberObject.extend({
       }, function(err) {
         persistence.url_uncache = persistence.url_uncache || {};
         persistence.url_uncache[url_id] = true;
-        var error = {error: "saving to data cache failed"};
+        var error = {error: "saving to data cache failed for " + url_id};
         if(err && err.name == "QuotaExceededError") {
           capabilities.storage.already_limited_size = true;
           stashes.persist('allow_local_filesystem_request', false);
