@@ -111,7 +111,7 @@ module Uploadable
   def check_for_cached_copy
     if self.url && Uploader.protected_remote_url?(self.url) && self.settings && !self.settings['cached_copy_url']
       # Try a little bit to find an existing cache url before resorting to a bg job
-      found = ButtonImage.where(user: self.user).limit(3)
+      found = ButtonImage.where(url: self.url).limit(3)
       found.each do |bi|
         self.settings['cached_copy_url'] ||= bi.settings['cached_copy_url'] if bi.settings['cached_copy_url']
         label = self.settings['button_label'] || self.settings['search_term']
