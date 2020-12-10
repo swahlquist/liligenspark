@@ -78,24 +78,22 @@ class Api::BoardsController < ApplicationController
           locs = locs.where(locale: [params['locale'], params['locale'].split(/-|_/)[0]])
         end
         if params['user_id']
-          board_ids = boards.select('id').limit(2000).map(&:id)
+          board_ids = boards.select('id').limit(1000).map(&:id)
           locs = locs.where(board_id: board_ids)
         end
+        board_ids = []
         if params['sort'] == 'home_popularity'
-          board_ids = []
-          locs.search_by_text_for_home_popularity(q).limit(250).with_pg_search_rank.each do |bl|
+          locs.search_by_text_for_home_popularity(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id
             ranks[bl.board_id] = bl.pg_search_rank
           end
-          boards = boards.where(id: board_ids)
         else
-          board_ids = []
-          locs.search_by_text(q).limit(250).with_pg_search_rank.each do |bl|
+          locs.search_by_text(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id
             ranks[bl.board_id] = bl.pg_search_rank
           end
-          boards = boards.where(id: board_ids)
         end
+        boards = boards.where(id: board_ids)
       end
     end
     if !params['locale'].blank? && params['locale'] != 'any' && (params['q'].blank? || !params['public'])

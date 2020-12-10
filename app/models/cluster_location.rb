@@ -89,36 +89,54 @@ include Replicate
     elsif self.geo?
       sessions = self.geo_sessions
     end
+    if self.data['last_session_id']
+      sessions = sessions.where(['id > ?', self.data['last_session_id']])
+    end
     
     total_utterances = 0
     button_counts = {}
+    total_buttons = 0
     board_counts = {}
-    total_events = 0
+    total_boards = 0
     geos = []
+    self.data['session_ids'] ||= []
     Rails.logger.info("finding batches #{self.global_id}")
-    sessions.find_in_batches(batch_size: 20).with_index do |batch, idx|
+    
+    self.data['total_utterances'] ||= 0
+    self.data['total_buttons'] ||= 0
+    self.data['total_boards'] ||= 0
+    self.data['total_sessions'] ||= 0
+
+    sessions.select('id, created_at').find_in_batches(batch_size: 500).with_index do |batch, idx|
       Rails.logger.info("batch set #{idx} #{self.global_id}")
       batch.each do |session|
-        if session.data['stats']
-          total_utterances += session.data['stats']['utterances']
-          session.data['stats']['all_button_counts'].each do |ref, button|
-            if button_counts[ref]
-              button_counts[ref]['count'] += button['count']
-            else
-              button_counts[ref] = button.merge({})
+        if session.created_at > Date.parse('Dec 10, 2020')
+          session.reload
+          self.data['last_session_id'] = [self.data['last_session_id'] || 0, session.id].max
+          self.data['total_sessions'] += 1
+          if session.data['stats']
+            self.data['total_utterances'] += session.data['stats']['utterances']
+            session.data['stats']['all_button_counts'].each do |ref, button|
+              self.data['total_buttons'] += button['count']
+              # if button_counts[ref]
+              #   button_counts[ref]['count'] += button['count']
+              # else
+              #   button_counts[ref] = button.merge({})
+              # end
+            end
+            session.data['stats']['all_board_counts'].each do |ref, board|
+              self.data['total_boards'] = board['count']
+              # if board_counts[ref]
+              #   board_counts[ref]['count'] += board['count']
+              # else
+              #   board_counts[ref] = board.merge({})
+              # end
             end
           end
-          session.data['stats']['all_board_counts'].each do |ref, board|
-            if board_counts[ref]
-              board_counts[ref]['count'] += board['count']
-            else
-              board_counts[ref] = board.merge({})
+          if self.geo?
+            if session.data['geo']
+              geos << session.data['geo']
             end
-          end
-        end
-        if self.geo?
-          if session.data['geo']
-            geos << session.data['geo']
           end
         end
       end
@@ -126,12 +144,14 @@ include Replicate
     Rails.logger.info("calculating geo #{self.global_id}")
     # TODO: guess at geo for ip addresses
     if self.geo? && !geos.blank?
+      if self.data['geo']
+        (self.data['total_sessions'] || 5).times do 
+          geos << self.data['geo']
+        end
+      end
       self.data['geo'] = ClusterLocation.median_geo(geos)
       self.data['location_suggestion'] = name_suggestions[0]
     end
-    self.data['total_utterances'] = total_utterances
-    self.data['total_buttons'] = button_counts.map{|k, v| v['count'] }.sum
-    self.data['total_boards'] = board_counts.map{|k, v| v['count'] }.sum
     Rails.logger.info("saving #{self.global_id}")
     self.save
   end
