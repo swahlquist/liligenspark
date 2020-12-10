@@ -125,7 +125,21 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
     revision_match = full_set_revision && button_set_revision == full_set_revision
-    return button_set.extra_data_private_url if @unviewable_ids.blank? && revision_match
+    if @unviewable_ids.blank? && revision_match
+      if self.data['private_cdn_url']
+        return self.data['private_cdn_url']
+      end
+      private_path = button_set.extra_data_private_url
+      private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "")
+      url = Uploader.check_existing_upload(private_path)
+      if url
+        self.data['private_cdn_url'] = url
+        self.save
+        return url
+      else
+        self.schedule_once(:detach_extra_data, 'force')
+      end
+    end
 
     if !button_set.data['remote_salt']
       button_set.generate_defaults
@@ -140,7 +154,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       url = Uploader.check_existing_upload(button_set.data['remote_paths'][@remote_hash]['path'])
       return url if url
     end
-    @remote_path = "extras/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
+    @remote_path = "extras-cache#{button_set.global_id[-1]}/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
     return nil
   end
 

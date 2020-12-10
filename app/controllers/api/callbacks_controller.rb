@@ -14,7 +14,7 @@ class Api::CallbacksController < ApplicationController
         token = json_body['Token'] || json_body['token']
         Rails.logger.warn(json_body.to_json)
         cred = Aws::Credentials.new(ENV['AWS_KEY'], ENV['AWS_SECRET'])
-        client = Aws::SNS::Client.new(region: ENV['SNS_REGION'], credentials: cred)
+        client = Aws::SNS::Client.new(region: ENV['SNS_REGION'], credentials: cred, retry_limit: 2, retry_backoff: lambda { |c| sleep(3) })
         client.confirm_subscription({topic_arn: topic_arn, token: token, authenticate_on_unsubscribe: 'true'})
         render json: {confirmed: true}
       else

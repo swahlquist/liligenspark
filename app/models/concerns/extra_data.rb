@@ -142,7 +142,7 @@ module ExtraData
   
     def extra_data_remote_paths(nonce, global_id, version=1)
       private_key = GoSecure.hmac(nonce, 'extra_data_private_key', 1)
-      dir = "extras/#{self.to_s}/#{global_id}/#{nonce}/"
+      dir = "extras#{nonce[0]}/#{self.to_s}/#{global_id}/#{nonce}/"
       dir = "/" + dir if version==0
       public_path = dir + "data-#{global_id}.json"
       private_path = dir + "data-#{private_key}.json"

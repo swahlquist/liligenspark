@@ -43,6 +43,6 @@ module Pusher
 
   def self.config
     cred = Aws::Credentials.new((ENV['TRANSCODER_KEY'] || ENV['AWS_KEY']), (ENV['TRANSCODER_SECRET'] || ENV['AWS_SECRET']))
-    Aws::SNS::Client.new(region: (ENV['TRANSCODER_REGION'] || ENV['AWS_REGION']), credentials: cred)
+    Aws::SNS::Client.new(region: (ENV['TRANSCODER_REGION'] || ENV['AWS_REGION']), credentials: cred, retry_limit: 2, retry_backoff: lambda { |c| sleep(3) })
   end
 end

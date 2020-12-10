@@ -33,14 +33,19 @@ module Uploader
   def self.check_existing_upload(remote_path)
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
+    if remote_path.match(/^\//)
+      remote_path = remote_path[1..-1]
+    end
     bucket = service.buckets.find(config[:bucket_name])
-    object = bucket.objects.find(path) rescue nil
+    object = bucket.objects.find(remote_path) rescue nil
     if object
-      if object.expiration
-        time = Time.parse(object.expiration) rescue nil
-        if time && time > 48.hours.from_now
-          return "#{ENV['UPLOADS_S3_CDN']}#{remote_path.match(/\//) ? '' : '/'}#{remote_path}"
-        end
+      req = object.send(:object_request, :head, {})
+      exp = ((req['x-amz-expiration'] || "").match(/expiry-date="([^"]+)"/) || [])[1]
+      exp = Time.parse(exp) rescue nil
+      if exp && exp < 48.hours.from_now
+        return nil
+      else
+        return "#{ENV['UPLOADS_S3_CDN']}/#{remote_path}"
       end
     end
     return nil
@@ -50,6 +55,9 @@ module Uploader
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
     bucket = service.buckets.find(config[:bucket_name])
+    if path.match(/^\//)
+      path = path[1..-1]
+    end
     object = bucket.objects.find(path) rescue nil
     return false unless object
     res = object.copy(:key => path, :bucket => bucket) rescue nil
