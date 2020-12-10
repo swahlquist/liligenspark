@@ -146,7 +146,7 @@ export default Controller.extend({
 
         // Revert the actual button value to what it was before
         var trans = btn.translations.find(function(t) { return t.locale == _this.get('model.locale')})
-        trans = trans || (_this.get('model.translations')[btn.id] || {})[_this.get('model.locale')];
+        trans = trans || ((_this.get('model.translations') || {})[btn.id] || {})[_this.get('model.locale')];
         if(trans) {
           // Either find it in the translations hash...
           emberSet(btn, 'vocalization', null);
