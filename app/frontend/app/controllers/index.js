@@ -420,21 +420,21 @@ export default Controller.extend({
         var _this = this;
         modal.open('quick-assessment', {user: user});
       } else {
-        modal.open('premium-required', {user_name: user.user_name, action: 'quick_assessment'});
+        modal.open('premium-required', {user_name: user.user_name, action: 'quick_assessment', reason: 'not_currently_premium'});
       }
     },
     run_eval: function(user) {
       if(user.premium || emberGet(user, 'currently_premium')) {
         app_state.set_speak_mode_user(emberGet(user, 'id'), false, false, 'obf/eval');
       } else {
-        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation'});
+        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation', reason: 'not_currently_premium'});
       }
     },
     remote_model: function(user) {
       if(user.premium || emberGet(user, 'currently_premium')) {
         modal.open('modals/remote-model', {user_id: user.id});
       } else {
-        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation'});
+        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation', reason: 'not_currently_premium'});
       }
     },
     getting_started: function() {

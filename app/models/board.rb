@@ -867,7 +867,7 @@ class Board < ActiveRecord::Base
 
     old_name = nil
     if params['locale']
-      if self.settings['locale'] != params['locale']
+      if self.settings['locale'] != params['locale'] && self.settings['locale'] && self.settings['name']
         old_name = {locale: self.settings['locale'], name: self.settings['name']}
       end
       self.settings['locale'] = params['locale'] 
@@ -927,7 +927,7 @@ class Board < ActiveRecord::Base
       if self.settings['name'] && params['locale']
         self.settings['translations']['board_name'] ||= {}
         self.settings['translations']['board_name'][params['locale']] = self.settings['name']
-        if old_name
+        if old_name && !old_name[:locale].blank? && !old_name[:name].blank?
           self.settings['translations']['board_name'][old_name[:locale]] ||= old_name[:name]
         end
       end

@@ -342,7 +342,7 @@ CoughDrop.Badge.best_next_badge = function(badges, goal_id) {
   return badges[0];
 };
 CoughDrop.Badge.best_earned_badge = function(badges) {
-  badges = badges.filter(function(b) { return b.get('earned'); })
+  badges = (badges || []).filter(function(b) { return b.get('earned'); })
   badges = badges.sort(function(a, b) {
     // first show non-dismissed badges, then show most-recently-earned
     if(a.get('dismissed') && !b.get('dismissed')) {

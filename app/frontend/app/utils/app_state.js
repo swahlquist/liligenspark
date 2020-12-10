@@ -939,7 +939,7 @@ var app_state = EmberObject.extend({
         var communicator_limited = speaking_user && speaking_user.get('expired');
         var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.modeling_only') && !app_state.get('speakModeUser');
         if(app_state.get('currentUser') && !opts.reminded && (communicator_limited || supervisor_limited) && !already_speaking_as_someone_else) {
-          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
+          return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, reason: (communicator_limited ? 'communicator_limited' : 'supervisor_limited'), limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
             opts.reminded = true;
             app_state.toggle_mode(mode, opts);
           });
@@ -1060,7 +1060,7 @@ var app_state = EmberObject.extend({
     var communicator_limited = speak_mode_user && speak_mode_user.get('expired');
     var supervisor_limited = speak_mode_user && speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
     if(speak_mode_user && !opts.reminded && (communicator_limited || supervisor_limited)) {
-      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
+      return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, reason: (communicator_limited ? 'communicator_limited' : 'supervisor_limited'), remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
         opts.reminded = true;
         app_state.home_in_speak_mode(opts);
       });
@@ -1568,7 +1568,7 @@ var app_state = EmberObject.extend({
       return RSVP.resolve({dialog: false});
     } else {
       // prevent action if not currently_premium
-      return modal.open('premium-required', {user_name: user.get('user_name'), user: user, action: action}).then(function() {
+      return modal.open('premium-required', {user_name: user.get('user_name'), user: user, reason: "combo-" + allow_fully_purchased + "." + (user && user.get('fully_purchased')) + "-" + allow_premium_supporter + "." + (user && user.get('currently_premium_or_premium_supporter')), action: action}).then(function() {
         return RSVP.reject({dialog: true});
       });
     }
@@ -1582,7 +1582,7 @@ var app_state = EmberObject.extend({
     // and possibly prevent the action.
     if(!user || (user.get('really_expired') || user.get('modeling_only'))) {
       var user_name = user && user.get('user_name');
-      return modal.open('premium-required', {user_name: user_name, cancel_on_close: false, remind_to_upgrade: true}).then(function() {
+      return modal.open('premium-required', {user_name: user_name, reason: "combo2-" + !user + "." + (user.get('really_expired')+  "." + user.get('modeling_only')), cancel_on_close: false, remind_to_upgrade: true}).then(function() {
         if(user.get('modeling_only') || prevent_unless_purchased) {
           // modeling-only are prevented from the actions
           // not just reminded about them.
