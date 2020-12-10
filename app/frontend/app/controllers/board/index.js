@@ -109,6 +109,7 @@ export default Controller.extend({
     if(this.get('model.license')) {
       this.set('model.license.copyright_notice_url', CoughDrop.licenseOptions.license_url(this.get('model.license.type')));
     }
+    var _this = this;
 
     var button_locale = this.get('model.button_locale') || app_state.get('label_locale');
     var needs_redraw = false;
@@ -158,7 +159,7 @@ export default Controller.extend({
           }
         } else {
           // Or on the original button itself
-          var old_btn = this.get('model.buttons').find(function(b) { return b.id == btn.id; });
+          var old_btn = _this.get('model.buttons').find(function(b) { return b.id == btn.id; });
           if(old_btn) {
             emberSet(btn, 'label', old_btn.label);
             emberSet(btn, 'vocalization', old_btn.vocalization);
