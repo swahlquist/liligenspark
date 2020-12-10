@@ -231,9 +231,12 @@ module UpstreamDownstream
     ids.each{|id| UserLink.invalidate_cache_for("Board:#{id}", time.to_f) }
   end
   
-  def schedule_downstream_checks
+  def schedule_downstream_checks(trigger_stamp)
     if @track_downstream_boards || @buttons_affecting_upstream_changed
-      self.schedule(:track_downstream_boards!, [], @buttons_affecting_upstream_changed, Time.now.to_i)
+      if trigger_stamp && self.settings['last_tracked'] && self.settings['last_tracked'] > trigger_stamp
+      else
+        self.schedule(:track_downstream_boards!, [], @buttons_affecting_upstream_changed, trigger_stamp || Time.now.to_i)
+      end
       @buttons_affecting_upstream_changed = nil
       @track_downstream_boards = nil
     end

@@ -1175,12 +1175,12 @@ class LogSession < ActiveRecord::Base
         Octopus.using(:master) do
           # active_session.with_lock do
             active_session.process(params, non_user_params)
-            active_session.schedule(:check_for_merger)
+            active_session.schedule_once(:check_for_merger)
           # end
         end
       else
         session = self.process_new(params, non_user_params)
-        session.schedule(:check_for_merger)
+        session.schedule_once(:check_for_merger)
       end
       stash.destroy if stash
     else

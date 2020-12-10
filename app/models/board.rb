@@ -144,7 +144,7 @@ class Board < ActiveRecord::Base
     locales = []
     (BoardContent.load_content(self, 'translations') || {}).each do |k, trans|
       if trans.is_a?(Hash)
-        locales += trans.keys
+        locales += trans.keys.compact
       end
     end
     locales.uniq!
@@ -215,8 +215,14 @@ class Board < ActiveRecord::Base
       end
     end
     found_locales = {}
-    found_locales[self.settings['locale']] = true
+    if self.settings['locale']
+      found_locales[self.settings['locale']] = true
+      if self.settings['locale'].match(/-|_/)
+        found_locales[self.settings['locale'].split(/-|_/)[0]] = true
+      end
+    end
     locales.each do |locale|
+      next unless locale
       found_locales[locale] = true
       lang = locale.split(/-|_/)[0]
       found_locales[lang] = true
@@ -264,7 +270,7 @@ class Board < ActiveRecord::Base
         val = trans['board_name'][other] if other
       end
     end
-    val ||= self.settings['name']
+    val ||= self.settings['name'] || ''
     board_string += val
     grid = BoardContent.load_content(self, 'grid')
     buttons = self.buttons
@@ -284,7 +290,7 @@ class Board < ActiveRecord::Base
         end
       end
     end
-    board_string += " " + self.key
+    board_string += " " + (self.key || '')
     board_string += " " + (self.settings['name'] || "").downcase
     board_string += " " + (self.settings['description'] || "").downcase
     board_string
@@ -650,7 +656,7 @@ class Board < ActiveRecord::Base
     end
     schedule(:update_affected_users, @brand_new) if content_changed
 
-    schedule_downstream_checks
+    schedule_downstream_checks(Board.last_scheduled_stamp)
   end
 
   def check_inflections

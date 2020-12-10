@@ -107,6 +107,20 @@ module Uploadable
     end
     false
   end
+
+  def check_for_cached_copy
+    if self.url && Uploader.protected_remote_url?(self.url) && self.settings && !self.settings['cached_copy_url']
+      # Try a little bit to find an existing cache url before resorting to a bg job
+      found = ButtonImage.where(user: self.user).limit(3)
+      found.each do |bi|
+        self.settings['cached_copy_url'] ||= bi.settings['cached_copy_url'] if bi.settings['cached_copy_url']
+        label = self.settings['button_label'] || self.settings['search_term']
+        if label && bi.settings['fallback'] && (bi.settings['button_label'] == label || bi.settings['search_term'] == label)
+          self.settings['fallback'] ||= bi.settings['fallback']
+        end
+      end
+    end
+  end
     
   def upload_after_save
     if @schedule_upload_to_remote
@@ -114,11 +128,6 @@ module Uploadable
       @schedule_upload_to_remote = false
     end
     if self.url && Uploader.protected_remote_url?(self.url) && self.settings && !self.settings['cached_copy_url']
-      # Try a little bit to find an existing cache url before resorting to a bg job
-      found = ButtonImage.where(user: self.user).limit(3)
-      found.each do |bi|
-        self.settings['cached_copy_url'] ||= bi.settings['cached_copy_url'] if bi.settings['cached_copy_url']
-      end
       if !self.settings['cached_copy_url']
         self.schedule(:assert_cached_copy)
       end
@@ -411,6 +420,7 @@ module Uploadable
   included do
     before_save :check_for_pending
     before_save :check_for_removable
+    before_save :check_for_cached_copy
     after_save :upload_after_save
     after_destroy :schedule_remote_removal_if_unique
   end
