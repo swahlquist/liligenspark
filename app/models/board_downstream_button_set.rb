@@ -130,14 +130,16 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         return self.data['private_cdn_url']
       end
       private_path = button_set.extra_data_private_url
-      private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "")
+      private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
       url = Uploader.check_existing_upload(private_path)
       if url
         self.data['private_cdn_url'] = url
         self.save
         return url
-      else
+      elsif self.data['buttons']
         self.schedule_once(:detach_extra_data, 'force')
+      else
+        BoardDownstreamButtonSet.schedule_once(:update_for, self.related_global_id(self.board_id))
       end
     end
 

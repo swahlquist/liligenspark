@@ -166,7 +166,7 @@ class Board < ActiveRecord::Base
     self.settings['recent_forks'] = 0
     self.settings['locale_home_forks'] = {}
     child_conns.each do |ubc|
-      if !ubc.locale
+      if !ubc.locale && ubc.board && ubc.board.settings
         UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
         ubc.locale = ubc.board.settings['locale']
       end
@@ -188,7 +188,7 @@ class Board < ActiveRecord::Base
     self.settings['non_author_uses'] = 0
     self.settings['locale_home_uses'] = {}
     conns.each do |ubc|
-      if !ubc.locale
+      if !ubc.locale && ubc.board && ubc.board.settings
         UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
         ubc.locale = ubc.board.settings['locale']
       end

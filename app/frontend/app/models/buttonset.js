@@ -87,6 +87,10 @@ CoughDrop.Buttonset = DS.Model.extend({
           } else if(buttons && !buttons.find) {
             if(!bs.get('buttons')) {
               bs.set('buttons', []);
+              persistence.ajax('/api/v1/buttonsets/' + gs.get('id') + '/generate', {
+                type: 'POST',
+                data: { }
+              });
             }
             CoughDrop.track_error("buttons has no find ", buttons);
             return reject({error: "not a valid buttonset result"});

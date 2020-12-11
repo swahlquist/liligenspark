@@ -31,6 +31,7 @@ module Uploader
   end
   
   def self.check_existing_upload(remote_path)
+    return nil unless remote_path
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
     if remote_path.match(/^\//)
