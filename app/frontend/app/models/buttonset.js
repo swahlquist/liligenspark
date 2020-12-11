@@ -77,13 +77,16 @@ CoughDrop.Buttonset = DS.Model.extend({
       if(hash_mismatch) { force = true; }
       if(bs.get('root_url') && (!bs.get('buttons_loaded') || hash_mismatch)) {
         var process_buttons = function(buttons) {
-          if(buttons) {
+          if(buttons && buttons.find) {
             bs.set('buttons_loaded', true);
             bs.set('buttons_loaded_hash', bs.get('full_set_revision'));
             bs.set('buttons', buttons);
             if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
               bs.set('buttons', bs.redepth(board_id));
             }
+          } else if(buttons && !buttons.find) {
+            CoughDrop.track_error("buttons has no find ", buttons);
+            return reject({error: "not a valid buttonset result"});
           }
           resolve(bs);
         };
