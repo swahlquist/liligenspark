@@ -1357,7 +1357,7 @@ class LogSession < ActiveRecord::Base
               slices = ['type', 'percent_x', 'percent_y', 'timestamp', 'action', 'button', 'utterance']
               merger.data['events'].each do |e|
                 json = e.slice(*slices).to_json if max_precision <= 1
-                found = !!log.data['events'].detect do |me|
+                found = !!(log.data['events'] || []).detect do |me|
                   if max_precision > 1
                     me['timestamp'] == e['timestamp']
                   else

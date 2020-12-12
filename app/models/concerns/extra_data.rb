@@ -10,6 +10,7 @@ module ExtraData
       return true
     end
     raise "extra_data_attribute not defined" unless self.extra_data_attribute
+
     Octopus.using(:master) do
       if self.data['extra_data_nonce'] && !self.data[self.extra_data_attribute]
         self.assert_extra_data
@@ -23,6 +24,7 @@ module ExtraData
         # for button_sets, pull out self.data['buttons']
         # for logs, pull out self.data['events']
         extra_data = self.data[extra_data_attribute]
+        return false if extra_data == nil
 
         extra_data_version = 1
         private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, extra_data_version)
@@ -68,6 +70,7 @@ module ExtraData
 
   def extra_data_private_url
     return nil unless self.data && self.data['extra_data_nonce']
+    return nil if self.is_a?(BoardDownstreamButtonSet) && self.data['source_id']
     path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, self.data['extra_data_version'] || 0)[0]
     "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/#{path}"
   end
