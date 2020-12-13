@@ -125,8 +125,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
     revision_match = full_set_revision && button_set_revision == full_set_revision
-    if @unviewable_ids.blank? && revision_match
-      if self.data['private_cdn_url']
+    if @unviewable_ids.blank? && revision_match && self.data['source_id']
+      if self.data['private_cdn_url'] && self.data['private_cdn_revision'] == button_set_revision
         return self.data['private_cdn_url']
       end
       private_path = button_set.extra_data_private_url
@@ -134,6 +134,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       url = Uploader.check_existing_upload(private_path)
       if url
         self.data['private_cdn_url'] = url
+        self.data['private_cdn_revision'] = button_set_revision
         self.save
         return url
       elsif self.data['buttons']
