@@ -51,6 +51,8 @@
               {{ login_error }}
             </p>
           </div>
+        {{else}}
+          <div style='margin-top:-15px; margin-bottom: 10px;'><em style={{if first_login 'color: #ba4a59;' 'color: #888'}}>{{t "Remember: all boards and reports may contain user data, and should be kept private and treated with respect." key='private_data_reminder'}}</em></div>
         {{/if}}
         <div class="form-group">
           <button type="submit" class='btn btn-primary btn-lg' disabled={{noSubmit}}>

@@ -57,6 +57,7 @@ var session = EmberObject.extend({
         return RSVP.reject({error: "selfUserId not persisted from login"});
       }));
     }
+    stashes.persist('prior_login', 'true');
     stashes.persist_object('just_logged_in', true, false);
     return RSVP.all_wait(promises).then(null, function() { return RSVP.resolve(); });
   },

@@ -64,6 +64,9 @@ export default Component.extend({
       });
     }
   },
+  first_login: computed(function() {
+    return !stashes.get('prior_login');
+  }),
   box_class: computed('left', 'wide', function() {
     if(this.get('wide')) {
       return htmlSafe('col-md-8 col-md-offset-2 col-sm-offset-1 col-sm-10');

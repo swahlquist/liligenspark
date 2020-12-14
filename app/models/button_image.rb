@@ -56,8 +56,6 @@ class ButtonImage < ActiveRecord::Base
         self.user.schedule(:track_protected_source,self.settings['protected_source'])
       end
     end
-    # TODO: if from a protected source, check if the user
-    # has already registered as a user for that source
     if self.settings && self.settings['protected'] && !self.settings['fallback']
       if self.settings['button_label'] || self.settings['search_term']
         Worker.schedule_for(:slow, ButtonImage, :perform_action, {

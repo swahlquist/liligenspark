@@ -95,6 +95,7 @@ var stashes = EmberObject.extend({
       'last_root': null,
       'vocalization_locale': null,
       'global_integrations': null,
+      'prior_login': null,
       'ws_url': null,
       'ws_settings': null
     };
