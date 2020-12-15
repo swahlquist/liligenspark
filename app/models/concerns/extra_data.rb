@@ -26,10 +26,10 @@ module ExtraData
         extra_data = self.data[extra_data_attribute]
         return false if extra_data == nil
 
-        extra_data_version = 1
+        extra_data_version = 2
         private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, extra_data_version)
         public_extra_data = extra_data && self.class.extra_data_public_transform(extra_data)
-        if public_extra_data
+        if public_extra_data && false
           self.data['extra_data_public'] = true
           file = Tempfile.new("stash")
           file.write(public_extra_data.to_json)
@@ -143,9 +143,13 @@ module ExtraData
       nil
     end
   
-    def extra_data_remote_paths(nonce, global_id, version=1)
+    def extra_data_remote_paths(nonce, global_id, version=2)
       private_key = GoSecure.hmac(nonce, 'extra_data_private_key', 1)
-      dir = "extras#{nonce[0]}/#{self.to_s}/#{global_id}/#{nonce}/"
+      if version == 2
+        dir = "extras#{nonce[0,5]}/#{self.to_s}/#{global_id}/#{nonce}/"
+      else
+        dir = "extras#{nonce[0]}/#{self.to_s}/#{global_id}/#{nonce}/"
+      end
       dir = "/" + dir if version==0
       public_path = dir + "data-#{global_id}.json"
       private_path = dir + "data-#{private_key}.json"
