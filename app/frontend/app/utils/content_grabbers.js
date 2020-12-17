@@ -2098,7 +2098,7 @@ var boardGrabber = EmberObject.extend({
     var search_type = this.controller.get('board_search_type');
     this.controller.set('foundBoards', {term: this.controller.get('linkedBoardName'), ready: false});
     this.controller.set('confirm_found_board', null);
-    var find_args =  {allow_job: true};
+    var find_args =  {};
     var q = this.controller.get('linkedBoardName');
     if(search_type == 'personal') {
       find_args = {user_id: 'self', include_shared: true};
@@ -2115,6 +2115,7 @@ var boardGrabber = EmberObject.extend({
     } else {
       find_args = {public: true};
     }
+    find_args.allow_job = true;
     var url_prefix = new RegExp("^" + location.protocol + "//" + location.host + "/");
     var key = (this.controller.get('linkedBoardName') || "").replace(url_prefix, "");
     var keyed_find = RSVP.resolve([]);
