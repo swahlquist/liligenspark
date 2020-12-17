@@ -683,8 +683,8 @@ module Subscription
     Organization.sponsored?(self)
   end
 
-  def org_supporter?
-    Organization.supervisor?(self)
+  def org_supporter?(premium=false)
+    Organization.supervisor?(self, premium)
   end
 
   def billing_state(force_type=nil)
@@ -714,7 +714,7 @@ module Subscription
     else
       # eval accounts set as supporters are limited to modeling-only
       # but other paid accounts can switch to premium supporter if they like
-      return :org_sponsored_supporter if false
+      return :org_sponsored_supporter if self.settings['possibly_premium_supporter'] && self.org_supprter?(true)
       return :premium_supporter if self.settings['subscription']['never_expires']
       return :premium_supporter if self.fully_purchased?
       return :premium_supporter if self.settings['subscription']['started']
@@ -919,10 +919,6 @@ module Subscription
       # currently-added as an org supervisor
       json['active'] = true
       json['premium_supporter'] = true
-      # TODO: communicator who paid $200 or are paying $6/mo should still 
-      # have access to reports and logs, even if they set their role as supporter
-      # to enable this, set json['premium_supporter_plus_communicator']
-      # long-term communicator, subscribed communicator, org_sponsored
       com_billing_state = self.billing_state('communicator')
       json['premium_supporter_plus_communicator'] = true if billing_state == :org_sponsored_supporter || [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
       json['never_expires'] = true if self.settings['subscription']['never_expires']

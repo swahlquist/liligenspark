@@ -138,6 +138,7 @@ class Organization < ActiveRecord::Base
 #     user.settings['supervisor_for'] ||= {}
 #     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
     user.settings['preferences']['role'] = 'supporter' if !pending
+    user.settings['possibly_premium_supporter'] = true if premium
     user.settings['pending'] = false
     user.assert_current_record!
     user.save_with_sync('add_supervisor')
@@ -320,9 +321,9 @@ class Organization < ActiveRecord::Base
     !!links.detect{|l| l['type'] == 'org_user' }
   end
   
-  def self.supervisor?(user)
+  def self.supervisor?(user, premium=false)
     links = UserLink.links_for(user)
-    !!links.detect{|l| l['type'] == 'org_supervisor' }
+    !!links.detect{|l| l['type'] == 'org_supervisor' && (!premium || l['state']['premium'])}
   end
   
   def self.manager?(user)

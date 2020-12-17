@@ -177,6 +177,9 @@ class Api::BoardsController < ApplicationController
           progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
           boards = []
         else
+          # For private user searches this will limit to the user's first 25 boards
+          # since no search has been performed yet, so it will most likely
+          # not be useful
           limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
           limited_boards = limited_boards[0, 25]
           boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
