@@ -217,7 +217,7 @@ module JsonApi::User
         org_code = Webhook.get_record_code(args[:organization])
 
         manager = !!links.detect{|l| l['type'] == 'org_manager' && l['record_code'] == org_code }
-        sup = !!links.detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == org_code }
+        sup = links.detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == org_code }
         mngd = !!links.detect{|l| l['type'] == 'org_user' && l['record_code'] == org_code }
     
         if args[:organization_manager]
