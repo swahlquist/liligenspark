@@ -2098,7 +2098,7 @@ var boardGrabber = EmberObject.extend({
     var search_type = this.controller.get('board_search_type');
     this.controller.set('foundBoards', {term: this.controller.get('linkedBoardName'), ready: false});
     this.controller.set('confirm_found_board', null);
-    var find_args =  {};
+    var find_args =  {allow_job: true};
     var q = this.controller.get('linkedBoardName');
     if(search_type == 'personal') {
       find_args = {user_id: 'self', include_shared: true};
@@ -2130,8 +2130,27 @@ var boardGrabber = EmberObject.extend({
       if(!board || !_this.controller.get('linkedBoardName')) {
         find_args.q = q;
         CoughDrop.store.query('board', find_args).then(function(data) {
-          _this.controller.set('foundBoards.ready', true);
-          _this.controller.set('foundBoards.results', data);
+          if(data.meta && data.meta.progress) {
+            progress_tracker.track(data.meta.progress, function(event) {
+              if(event.status == 'errored') {
+                _this.set('personal_results', {results: []});
+              } else if(event.status == 'finished') {
+                var result = [];
+                event.result.board.forEach(function(board) {
+                  result.push(CoughDrop.store.push({ data: {
+                    id: board.id,
+                    type: 'board',
+                    attributes: board
+                  }}));
+                });
+                _this.controller.set('foundBoards.ready', true);
+                _this.controller.set('foundBoards.results', result);
+              }
+            });
+          } else {
+            _this.controller.set('foundBoards.ready', true);
+            _this.controller.set('foundBoards.results', data.map(function(i) { return i; }));
+          }
         });
       } else {
         _this.pick_board(board);
