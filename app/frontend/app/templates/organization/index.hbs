@@ -159,7 +159,7 @@
                 {{/link-to}}
                 {{#if user.org_supervision_pending}}
                   <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(pending)" key='pending'}}</span>
-                {{#if user.org_premium_supervisor}}
+                {{else if user.org_premium_supervisor}}
                   <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(premium)" key='premium'}}</span>
                 {{/if}}
               </td>
