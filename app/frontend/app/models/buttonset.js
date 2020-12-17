@@ -87,7 +87,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           } else if(buttons && !buttons.find) {
             if(!bs.get('buttons')) {
               bs.set('buttons', []);
-              persistence.ajax('/api/v1/buttonsets/' + gs.get('id') + '/generate', {
+              persistence.ajax('/api/v1/buttonsets/' + bs.get('id') + '/generate', {
                 type: 'POST',
                 data: { }
               });
