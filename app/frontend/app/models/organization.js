@@ -27,13 +27,16 @@ CoughDrop.Organization = DS.Model.extend({
   admin: DS.attr('boolean'),
   allotted_licenses: DS.attr('number'),
   allotted_eval_licenses: DS.attr('number'),
+  allotted_supervisor_licenses: DS.attr('number'),
   allotted_extras: DS.attr('number'),
   used_licenses: DS.attr('number'),
   used_evals: DS.attr('number'),
+  used_supervisors: DS.attr('number'),
   used_extras: DS.attr('number'),
   total_users: DS.attr('number'),
   total_managers: DS.attr('number'),
   total_supervisors: DS.attr('number'),
+  total_premium_supervisors: DS.attr('number'),
   total_extras: DS.attr('number'),
   include_extras: DS.attr('boolean'),
   licenses_expire: DS.attr('string'),
@@ -58,6 +61,9 @@ CoughDrop.Organization = DS.Model.extend({
   }),
   eval_licenses_available: computed('allotted_eval_licenses', 'used_evals', function() {
     return (this.get('allotted_eval_licenses') || 0) > (this.get('used_evals') || 0);
+  }),
+  supervisor_licenses_available: computed('allotted_supervisor_licenses', 'used_supervisors', function() {
+    return (this.get('allotted_supervisor_licenses') || 0) > (this.get('used_supervisors') || 0);
   }),
   extras_available: computed('allotted_extras', 'used_extras', function() {
     return (this.get('allotted_extras') || 0) > (this.get('used_extras') || 0);

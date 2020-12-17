@@ -714,6 +714,7 @@ module Subscription
     else
       # eval accounts set as supporters are limited to modeling-only
       # but other paid accounts can switch to premium supporter if they like
+      return :org_sponsored_supporter if false
       return :premium_supporter if self.settings['subscription']['never_expires']
       return :premium_supporter if self.fully_purchased?
       return :premium_supporter if self.settings['subscription']['started']
@@ -780,7 +781,7 @@ module Subscription
   end
 
   def premium_supporter?
-    return [:trialing_supporter, :grace_period_supporter, :premium_supporter, :org_supporter].include?(self.billing_state)
+    return [:trialing_supporter, :grace_period_supporter, :premium_supporter, :org_supporter, :org_sponsored_supporter].include?(self.billing_state)
     # # Returns true if this user does not have a full-premium
     # # purchase, but has limited-premium enabled (i.e. bought)
     
@@ -856,6 +857,7 @@ module Subscription
       :premium_supporter,
       :trialing_supporter,
       :grace_period_supporter,
+      :org_sponsored_supporter,
       :org_supporter
     ].include?(self.billing_state)
     # Some kind of purchase or access granted, either
@@ -869,8 +871,9 @@ module Subscription
       :never_expires_communicator, 
       :eval_communicator, 
       :subscribed_communicator, 
-      :long_term_active_communicator, 
-      :org_sponsored_communicator
+      :long_term_active_communicator,
+      :org_sponsored_communicator,
+      :org_sponsored_supporter
     ].include?(self.billing_state)
     # full_premium means paid for and active cloud extras
     # * not in a grace period *
@@ -921,7 +924,7 @@ module Subscription
       # to enable this, set json['premium_supporter_plus_communicator']
       # long-term communicator, subscribed communicator, org_sponsored
       com_billing_state = self.billing_state('communicator')
-      json['premium_supporter_plus_communicator'] = true if [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
+      json['premium_supporter_plus_communicator'] = true if billing_state == :org_sponsored_supporter || [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
       json['never_expires'] = true if self.settings['subscription']['never_expires']
       json['org_sponsored'] = true if com_billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']

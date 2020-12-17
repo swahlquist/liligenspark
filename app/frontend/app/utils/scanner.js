@@ -603,7 +603,7 @@ var scanner = EmberObject.extend({
     if($elem.length === 0) {
       $elem = scanner.generate_input(reset);
     }
-    if(!$elem[0])  {
+    if($elem[0])  {
       // Native keyboard preference still requires
       // a text box for autocomplete
       $elem[0].type = buttonTracker.native_keyboard ? 'text' : 'checkbox';

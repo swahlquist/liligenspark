@@ -229,6 +229,7 @@ module JsonApi::User
         end
         if sup
           json['org_supervision_pending'] = args[:organization].pending_supervisor?(user)
+          json['org_premium_supervisor'] = true if sup['state']['premium']
           if !json['org_supervision_pending']
             supervisees = []
             if args[:paginated]

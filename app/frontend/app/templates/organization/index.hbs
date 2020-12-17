@@ -144,6 +144,9 @@
     {{#if supervisors.data}}
       <p>
         {{t "supervisor" key='supervisors' count=model.total_supervisors}}
+        {{#if model.allotted_supervisors}}
+          ({{model.used_supervisors}} / {{model.allotted_supervisors}} {{t "premium sponsorships used" key='premium_sponsorships_used'}})
+        {{/if}}
       </p>
       <table class="table table-hover" style="width: 600px;">
         <tbody>
@@ -155,7 +158,9 @@
                   {{user.user_name}}
                 {{/link-to}}
                 {{#if user.org_supervision_pending}}
-                  <span style="vertical-align: middle;" class="text-muted">{{t "(pending)" key='pending'}}</span>
+                  <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(pending)" key='pending'}}</span>
+                {{#if user.org_premium_supervisor}}
+                  <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(premium)" key='premium'}}</span>
                 {{/if}}
               </td>
               <td style='font-size: 14px;'>

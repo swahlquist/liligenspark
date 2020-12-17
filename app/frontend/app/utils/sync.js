@@ -442,7 +442,6 @@ var sync = EmberObject.extend({
             update.utterance = extra.utterance;
           }
           if(!extra || extra.button) {
-            console.log("w/ brd state");
             update.board_state = {
               id: app_state.get('currentBoardState.id'),
               level: app_state.get('currentBoardState.level'),

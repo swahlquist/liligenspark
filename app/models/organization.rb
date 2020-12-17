@@ -123,13 +123,18 @@ class Organization < ActiveRecord::Base
     self.schedule(:remove_manager, user_key)
   end
   
-  def add_supervisor(user_key, pending=true)
+  def add_supervisor(user_key, pending=true, premium=false)
     user = User.find_by_path(user_key)
     raise "invalid user, #{user_key}" unless user
     if user.settings['authored_organization_id'] && user.settings['authored_organization_id'] == self.global_id && user.created_at > 2.weeks.ago
       pending = false
     end
-#     user.settings ||= {}
+    if premium
+      premium_supporter_count = self.premium_supervisors.count
+      raise "no premium supporter licenses available" if ((self.settings || {})['total_supervisor_licenses'] || 0) <= premium_supporter_count
+    end
+
+    #     user.settings ||= {}
 #     user.settings['supervisor_for'] ||= {}
 #     user.settings['supervisor_for'][self.global_id] = {'pending' => pending, 'added' => Time.now.iso8601}
     user.settings['preferences']['role'] = 'supporter' if !pending
@@ -149,13 +154,14 @@ class Organization < ActiveRecord::Base
     end
     link = UserLink.generate(user, self, 'org_supervisor')
     link.data['state']['pending'] = pending unless link.data['state']['pending'] == false
+    link.data['state']['premium'] = premium unless link.data['state']['premium'] == true
     link.data['state']['added'] ||= Time.now.iso8601
     link.save
     self.schedule(:org_assertions, user.global_id, 'supervisor')
     self.touch
     true
   rescue ActiveRecord::StaleObjectError
-    self.schedule(:add_supervisor, user_key, pending)
+    self.schedule(:add_supervisor, user_key, pending, premium)
   end
   
   def approve_supervisor(user)
@@ -498,6 +504,8 @@ class Organization < ActiveRecord::Base
       links = links.select{|l| l['type'] == 'org_manager' }
     elsif user_type == 'supervisor'
       links = links.select{|l| l['type'] == 'org_supervisor' }
+    elsif user_type == 'premium_supervisor'
+      links = links.select{|l| l['type'] == 'org_supervisor' && l['state']['premium'] }
     elsif user_type == 'eval'
       links = links.select{|l| l['type'] == 'org_user' && l['state']['eval'] }
     elsif user_type == 'subscription'
@@ -559,7 +567,11 @@ class Organization < ActiveRecord::Base
   def supervisors
     self.attached_users('supervisor')
   end  
-  
+
+  def premium_supervisors
+    self.attached_users('premium_supervisor')
+  end  
+
   def subscriptions
     self.attached_users('subscription')
   end
@@ -770,6 +782,23 @@ class Organization < ActiveRecord::Base
         }, false)
       end
     end
+    if params[:allotted_supervisors]
+      total = params[:allotted_supervisors].to_i
+      used = self.premium_supervisors.count
+      if total < used
+        add_processing_error("too few licenses, remove some users first")
+        return false
+      end
+      if self.settings['total_supervisor_licenses'] != total
+        self.settings['total_supervisor_licenses'] = total
+        self.log_purchase_event({
+          'type' => 'update_supervisor_license_count',
+          'count' => total,
+          'updater_id' => non_user_params['updater'].global_id,
+          'updater_user_name' => non_user_params['updater'].user_name
+        }, false)
+      end
+    end
     if params[:allotted_eval_licenses]
       total = params[:allotted_eval_licenses].to_i
       used = self.eval_users(false).count
@@ -869,6 +898,8 @@ class Organization < ActiveRecord::Base
           self.add_user(key, true, true, true)
         elsif action == 'add_supervisor'
           self.add_supervisor(key, true)
+        elsif action == 'add_premium_supervisor'
+          self.add_supervisor(key, true, true)
         elsif action == 'add_assistant' || action == 'add_manager'
           self.add_manager(key, action == 'add_manager')
         elsif action == 'add_extras'

@@ -24,11 +24,14 @@ module JsonApi::Organization
       end
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0
+      json['allotted_supervisor_licenses'] = org.settings['total_supervisor_licenses'] || 0
       json['allotted_extras'] = org.settings['total_extras'] || 0
       json['used_licenses'] = 0
       json['used_evals'] = 0
+      json['used_supervisors'] = 0
       json['total_users'] = 0
       json['total_managers'] = 0
+      json['total_premium_supervisors'] = 0
       json['total_supervisors'] = 0
       json['used_extras'] = org.extras_users.count || 0
       json['include_extras'] = org.settings['include_extras']
@@ -38,6 +41,10 @@ module JsonApi::Organization
           json['total_managers'] += 1
         elsif link['type'] == 'org_supervisor'
           json['total_supervisors'] += 1
+          if link['state']['premium']
+            json['total_premium_supervisors'] += 1 
+            json['used_supervisors'] += 1
+          end
         elsif link['type'] == 'org_user'
           user_ids << link['user_id']
           json['total_users'] += 1
