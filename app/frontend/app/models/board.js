@@ -900,7 +900,7 @@ CoughDrop.Board = DS.Model.extend({
         if((_this.get('fresh') || force) && !button_set.get('fresh')) {
           return button_set.reload().then(function(bs) { return bs.load_buttons(force); });
         } else {
-          return button_set;
+          return button_set.load_buttons(force);
         }
       });
       res.then(null, function() { });
