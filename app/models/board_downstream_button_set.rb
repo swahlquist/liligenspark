@@ -338,6 +338,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       visited_board_ids = []
       linked_board_ids = []
       all_buttons = []
+      set.data['tmp_buttons'] = []
       while boards_to_visit.length > 0
         bv = boards_to_visit.shift
         board_to_visit = Board.find_by_global_id(bv[:board_id])
@@ -361,6 +362,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
                 linked_level = 1
               end
             end
+            set.data['tmp_buttons'] << {'id'=>button['id'],'board_id' => board_to_visit.global_id}
             button_data = {
               'id' => button['id'],
               'locale' => board_to_visit.settings['locale'] || 'en',
@@ -407,6 +409,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         end
         boards_to_visit.sort_by!{|bv| [bv[:depth], bv[:index]] }
       end
+      set.data['included_board_ids'] = visited_board_ids
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
       set.save
