@@ -211,6 +211,11 @@ class Board < ActiveRecord::Base
         self.settings['locale_home_uses'][loc] = (self.settings['locale_home_uses'][loc] || 0) + count if lang != loc
       end
     else
+      self.settings['home_uses'] = 0
+      self.settings['recent_home_uses'] = 0
+      self.settings['uses'] = 0
+      self.settings['recent_uses'] = 0
+      self.settings['non_author_uses'] = 0
       conns.each do |ubc|
         if !ubc.locale && ubc.board && ubc.board.settings
           UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
