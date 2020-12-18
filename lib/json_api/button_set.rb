@@ -12,7 +12,7 @@ module JsonApi::ButtonSet
       json['id'] = board.global_id
       json['key'] = board.key
       json['name'] = board.settings && board.settings['name']
-      json['full_set_revision'] = button_set.data['full_set_revision'] || board.settings['current_revision'] || board.full_set_revision
+      json['full_set_revision'] = button_set.data['full_set_revision'] || 'none'
     end
     
     json['root_url'] = button_set.url_for(args[:permissions], board.settings['full_set_revision'])

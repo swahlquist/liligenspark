@@ -10,11 +10,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
   before_save :generate_defaults
   
-  def generate_defaults
+  def generate_defaults(force=false)
     self.data ||= {}
     self.data['remote_salt'] ||= GoSecure.nonce('remote_salt')
     @buttons = nil
-    unless skip_extra_data_processing?
+    unless skip_extra_data_processing? || force
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
       self.data['public_board_ids'] = Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
@@ -145,7 +145,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
 
     if !button_set.data['remote_salt']
-      button_set.generate_defaults
+      button_set.generate_defaults(true)
       button_set.save
     end
 
@@ -219,7 +219,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
 
     # Generate a subset version of the button set for the specified user's access level
-    button_set.generate_defaults
+    button_set.generate_defaults(true)
     bad_ids = {}
     unviewable_ids.each{|id| bad_ids[id] = true }
     button_set.assert_extra_data
@@ -338,7 +338,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       visited_board_ids = []
       linked_board_ids = []
       all_buttons = []
-      set.data['tmp_buttons'] = []
+      # set.data['tmp_buttons'] = []
       while boards_to_visit.length > 0
         bv = boards_to_visit.shift
         board_to_visit = Board.find_by_global_id(bv[:board_id])
@@ -362,7 +362,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
                 linked_level = 1
               end
             end
-            set.data['tmp_buttons'] << {'id'=>button['id'],'board_id' => board_to_visit.global_id}
+            # set.data['tmp_buttons'] << {'id'=>button['id'],'board_id' => board_to_visit.global_id}
             button_data = {
               'id' => button['id'],
               'locale' => board_to_visit.settings['locale'] || 'en',
@@ -412,6 +412,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set.data['included_board_ids'] = visited_board_ids
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
+      set.generate_defaults(true)
       set.save
 
       board_ids_to_flush = [board.global_id]
