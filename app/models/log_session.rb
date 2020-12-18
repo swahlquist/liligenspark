@@ -1592,7 +1592,7 @@ class LogSession < ActiveRecord::Base
     remotes = LogSession.where(:needs_remote_push => true).where(['ended_at < ?', 2.hours.ago]).where(['ended_at > ?', 2.days.ago])
     remotes.find_in_batches(batch_size: 30) do |batch|
       batch.each do |session|
-        session.notify('new_session')
+        session.notify('new_session', {'slow' => true})
       end
     end
     remotes.update_all(:needs_remote_push => false)
