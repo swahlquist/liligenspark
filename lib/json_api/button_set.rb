@@ -42,7 +42,7 @@ module JsonApi::ButtonSet
       if args[:permissions]
         # Always allow showing your own buttons, even if jobs are behind
         user_name = args[:permissions].user_name if args[:permissions].respond_to?(:user_name)
-        bs_buttons.each{|b| allowed_ids[b['board_id']] = true if b['board_key'].match(/^#{user_name}/)}
+        (bs_buttons || []).each{|b| allowed_ids[b['board_id']] = true if b['board_key'].match(/^#{user_name}/)}
         args[:permissions].private_viewable_board_ids.each do |id|
           allowed_ids[id] = true
         end
