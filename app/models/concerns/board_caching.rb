@@ -65,7 +65,7 @@ module BoardCaching
     if ab_json != self.settings['available_private_board_ids'].to_json
       self.save_with_sync('board_list_changed')
       self.supervisors.each do |sup|
-        sup.schedule_once(:update_available_boards)
+        sup.schedule_once_for(:slow, :update_available_boards)
       end
     else
       self.save

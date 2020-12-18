@@ -160,7 +160,7 @@ module UpstreamDownstream
   def schedule_update_available_boards(breadth='all', frd=false)
     return true if self.class.add_lumped_trigger({'type' => 'update_available_boards', 'id' => self.global_id, 'breadth' => breadth})
     if !frd
-      self.schedule_once(:schedule_update_available_boards, breadth, true)
+      self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
     end
     ids = []
@@ -172,7 +172,7 @@ module UpstreamDownstream
       ids = self.author_ids
     end
     User.find_all_by_global_id(ids).each do |user|
-      user.schedule_once(:update_available_boards)
+      user.schedule_once_for(:slow, :update_available_boards)
     end
   end
     

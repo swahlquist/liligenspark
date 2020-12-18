@@ -282,7 +282,9 @@ class LogSession < ActiveRecord::Base
     end
     
     self.processed ||= false
-    self.needs_remote_push = !!(self.log_type == 'session' && self.user_id) if self.needs_remote_push == nil
+    if self.needs_remote_push == nil
+      self.needs_remote_push = !!(self.log_type == 'session' && self.user_id) 
+    end
     throw(:abort) unless self.user_id && self.author_id && self.device_id
     true
   end
@@ -1175,12 +1177,12 @@ class LogSession < ActiveRecord::Base
         Octopus.using(:master) do
           # active_session.with_lock do
             active_session.process(params, non_user_params)
-            active_session.schedule_once(:check_for_merger)
+            active_session.check_for_merger
           # end
         end
       else
         session = self.process_new(params, non_user_params)
-        session.schedule_once(:check_for_merger)
+        session.check_for_merger
       end
       stash.destroy if stash
     else
@@ -1308,7 +1310,7 @@ class LogSession < ActiveRecord::Base
     }
 #    Octopus.using(:master) do
       LogSession.where(id: log_ids).each do |session|
-        session.schedule_once(:check_for_merger)
+        session.schedule_once_for(:slow, :check_for_merger)
       end
       merged_ids = {}
       LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).each do |merger|
@@ -1319,7 +1321,7 @@ class LogSession < ActiveRecord::Base
         merged_ids[merger.log_session_id] = true
         log = LogSession.using(:master).find_by(id: merger.log_session_id)
         if log
-          log.schedule_once(:check_for_merger, true)
+          log.schedule_once_for(:slow, :check_for_merger, true)
           log_ids << log.id
         end
       end
