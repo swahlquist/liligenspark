@@ -788,7 +788,13 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
       }
     });
   }
-  if(found) { found.load_buttons(force); return RSVP.resolve(found); }
+  if(found) {
+    var board = CoughDrop.store.peekRecord('board', found.get('id'));
+    if(!board || board.get('full_set_revision') == found.get('full_set_revision')) {
+      found.load_buttons(force); 
+      return RSVP.resolve(found); 
+    }
+  }
   var generate = function(id) {
     return new RSVP.Promise(function(resolve, reject) {
       persistence.ajax('/api/v1/buttonsets/' + id + '/generate', {
@@ -848,7 +854,7 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
         // otherwise you should be good to go
         return button_set.load_buttons(force);
       }  
-    })
+    });
   }, function(err) {
     // if not found error, it may need to be regenerated
     if(err.error && err.error.error) {
@@ -856,6 +862,9 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
     }
     if(err.error == 'Record not found' && err.id && err.id.match(/^\d/)) {
       return generate(id);
+    } else if(found) {
+      found.load_buttons(force); 
+      return RSVP.resolve(found); 
     } else {
       return RSVP.reject(err);
     }
