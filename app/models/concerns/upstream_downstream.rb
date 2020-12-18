@@ -91,7 +91,7 @@ module UpstreamDownstream
     end
     downstream_boards_changed = false
     changes = {}
-    full_set_revision = Digest::MD5.hexdigest(revision_hashes.join('_'))[0, 10]
+    full_set_revision = Digest::MD5.hexdigest(revision_hashes.join('_'))[0, 10] + "-#{revision_hashes.length}"
     if self.settings['full_set_revision'] != full_set_revision
       changes['full_set_revision'] = [self.settings['full_set_revision'], full_set_revision]
       #self.settings['full_set_revision'] = full_set_revision

@@ -277,6 +277,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       # job was scheduled
       return if self.last_scheduled_stamp && (set.updated_at.to_i - 5) > self.last_scheduled_stamp
       
+      set.data['full_set_revision'] = board.settings['full_set_revision']
       existing_board_ids = (set.data || {})['linked_board_ids'] || []
       Board.find_batches_by_global_id(board.settings['immediately_upstream_board_ids'] || [], :batch_size => 3) do |brd|
         set.data['found_upstream_board'] = true
@@ -407,7 +408,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
-      set.data['full_set_revision'] = board.settings['full_set_revision']
       set.save
 
       board_ids_to_flush = [board.global_id]
