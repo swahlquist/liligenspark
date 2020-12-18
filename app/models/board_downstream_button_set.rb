@@ -273,7 +273,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id) rescue nil
       set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id)
       set.data['source_id'] = nil if set.data['source_id'] == set.global_id
-      set.data['full_set_revision'] = board.settings['full_set_revision']
       # Don't re-update if you've updated more recently than when this
       # job was scheduled
       return if self.last_scheduled_stamp && (set.updated_at.to_i - 5) > self.last_scheduled_stamp
@@ -408,6 +407,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
+      set.data['full_set_revision'] = board.settings['full_set_revision']
       set.save
 
       board_ids_to_flush = [board.global_id]
