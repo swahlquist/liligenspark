@@ -28,6 +28,9 @@ module JsonApi::ButtonSet
       }
 
       board_ids = button_set.data['board_ids'] || bs_buttons.map{|b| b['board_id'] }.uniq
+      # boards = Board.select('id', 'user_id').find_all_by_global_id(board_ids)
+      # user_ids_for_boards = {}
+      # boards.each{|b| user_ids_for_boards[b.global_id] = b.related_global_id(b.user_id) }
       
       # TODO: sharding
       allowed_ids = {}
@@ -37,6 +40,9 @@ module JsonApi::ButtonSet
       # TODO: should site admins have access to all boards?
       allowed_ids[board.global_id] = true if board
       if args[:permissions]
+        # Always allow showing your own buttons, even if jobs are behind
+        user_name = args[:permissions].user_name if args[:permissions].respond_to?(:user_name)
+        bs_buttons.each{|b| allowed_ids[b['board_id']] = true if b['board_key'].match(/^#{user_name}/)}
         args[:permissions].private_viewable_board_ids.each do |id|
           allowed_ids[id] = true
         end
