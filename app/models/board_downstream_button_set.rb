@@ -267,6 +267,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
     board = Board.find_by_global_id(board_id)
     return if board && traversed_ids.include?(board.global_id)
+    board.track_downstream_boards! if !board.settings['full_set_revision']
     if board
       # Prevent loop from running forever
       traversed_ids << board.global_id
