@@ -79,6 +79,10 @@ class LogSession < ActiveRecord::Base
     spelling_sequence = []
     highlight_words = []
     last_board_id = nil
+    word_lookup_events = (self.data['events']).select{|e| e['button'] && e['button']['label'] && !e['button']['parts_of_speech']}
+    # TODO: find_words can support locales
+    words = WordData.find_words(word_lookup_events.map{|e| LogSession.event_text(e) })
+    incrs = 0
     (self.data['events'] || []).each_with_index do |event, idx|
       next_event = self.data['events'][idx + 1]
       event.each do |key, val|
@@ -131,11 +135,13 @@ class LogSession < ActiveRecord::Base
           speech = {'types' => [event['button']['part_of_speech']]}
         end
         word = LogSession.event_text(event)
+        speech ||= words[word]
 
-        speech ||= WordData.find_word(word)
+        # speech ||= WordData.find_word(word)
         if !speech && !event['modified_by_next'] && (event['spelling'] || event['button']['completion'] || !(event['button']['vocalization'] || "").strip.match(/^[\+:]/))
           speech = {'types' => ['other']}
-          if event['button'] && event['button']['type'] == 'speak' && !word.match(/\s/)
+          if event['button'] && event['button']['type'] == 'speak' && !word.match(/\s/) && incrs < 25
+            incrs += 1
             RedisInit.default.hincrby('missing_words', word.to_s, 1) if RedisInit.default
           end
         end

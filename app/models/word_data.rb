@@ -162,6 +162,18 @@ class WordData < ActiveRecord::Base
     word = find_word_record(text, locale)
     word && word.data
   end
+
+  def self.find_words(list, locale='en')
+    locale ||= 'en'
+    root_locale = locale.split(/-/)[0]
+    res = {}
+    map = {}
+    list.each{|t| map[t.downcase] = t }
+    WordData.where(locale: [locale, root_locale], word: list.compact.map(&:downcase)).each do |word|
+      res[map[word.word]] = word.data
+    end
+    res
+  end
   
   def self.find_word_record(text, locale='en')
     return nil if text && text.match(/^[\+\:]/)
