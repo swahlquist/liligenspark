@@ -1343,7 +1343,10 @@ class LogSession < ActiveRecord::Base
         log.assert_extra_data
         cutoff = (log.user && log.user.log_session_duration) || User.default_log_session_duration
         matches = LogSession.where(log_type: 'session', user_id: log.user_id, author_id: log.author_id, device_id: log.device_id); matches.count
-        mergers = matches.where(['id != ?', log.id]).where(['ended_at >= ? AND ended_at <= ?', log.started_at - cutoff, log.ended_at + cutoff]).order('id ASC')
+        mergers = []
+        if cutoff && log.started_at
+          mergers = matches.where(['id != ?', log.id]).where(['ended_at >= ? AND ended_at <= ?', log.started_at - cutoff, log.ended_at + cutoff]).order('id ASC')
+        end
         stop_iterating = false
         mergers.each do |merger|
           next if merger.id == log.id || merger == log || stop_iterating

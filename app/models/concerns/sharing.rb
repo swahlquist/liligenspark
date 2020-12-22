@@ -200,6 +200,7 @@ module Sharing
   
   module ClassMethods
     def all_shared_board_ids_for(user, plus_editing=false)
+      return [] unless user
       user.settings ||= {}
       user.settings['all_shared_board_ids'] ||= {}
       sub_key = plus_editing ? 'editing' : 'viewing'
