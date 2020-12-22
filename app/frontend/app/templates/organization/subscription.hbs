@@ -9,6 +9,12 @@
         </div>
       </div>
       <div class="form-group">
+        <label for="allotted_supervisor_licenses" class="col-sm-2 control-label">{{t "Premium Supervisors" key='premium_supervisors'}}</label>
+        <div class="col-sm-1">
+          {{input value=model.allotted_supervisor_licenses class="form-control" id="allotted_supervisor_licenses" placeholder="0"}}
+        </div>
+      </div>
+      <div class="form-group">
         <label for="allotted_eval_licenses" class="col-sm-2 control-label">{{t "Eval Accounts" key='eval_accounts'}}</label>
         <div class="col-sm-1">
           {{input value=model.allotted_eval_licenses class="form-control" id="allotted_eval_licenses" placeholder="0"}}

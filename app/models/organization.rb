@@ -783,8 +783,8 @@ class Organization < ActiveRecord::Base
         }, false)
       end
     end
-    if params[:allotted_supervisors]
-      total = params[:allotted_supervisors].to_i
+    if params[:allotted_supervisor_licenses]
+      total = params[:allotted_supervisor_licenses].to_i
       used = self.premium_supervisors.count
       if total < used
         add_processing_error("too few licenses, remove some users first")

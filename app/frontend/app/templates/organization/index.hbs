@@ -144,8 +144,8 @@
     {{#if supervisors.data}}
       <p>
         {{t "supervisor" key='supervisors' count=model.total_supervisors}}
-        {{#if model.allotted_supervisors}}
-          ({{model.used_supervisors}} / {{model.allotted_supervisors}} {{t "premium sponsorships used" key='premium_sponsorships_used'}})
+        {{#if model.allotted_supervisor_licenses}}
+          ({{model.used_supervisors}} / {{model.allotted_supervisor_licenses}} {{t "premium sponsorships used" key='premium_sponsorships_used'}})
         {{/if}}
       </p>
       <table class="table table-hover" style="width: 600px;">
@@ -189,6 +189,7 @@
     {{/if}}
     <div style='margin-top: -15px;'>
       {{input value=supervisor_user_name placeholder="user name" class="form-control inline inline-masquerade input-sm"}}
+      <button disabled={{no_supervisor_licenses}} class="btn btn-default btn-sm" {{action "management_action" 'add_premium_supervisor'}}>{{t "Add Premium Supervisor" key='add_premium_supervisor'}}</button>
       <button class="btn btn-default btn-sm" {{action "management_action" 'add_supervisor'}}>{{t "Add Supervisor" key='add_supervisor'}}</button>
       <a href="#" {{action "new_user" 'add_supervisor'}} style='padding-left: 10px;'>{{t "New User" key='new_user'}}</a>
       {{#if suggest_creating_supervisor}}

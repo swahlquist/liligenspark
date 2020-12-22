@@ -103,6 +103,9 @@ export default Controller.extend({
   no_licenses: computed('model.licenses_available', function() {
     return !this.get('model.licenses_available');
   }),
+  no_supervisor_licenses: computed('model.supervisor_licenses_available', function() {
+    return !this.get('model.supervisor_licenses_available');
+  }),
   no_eval_licenses: computed('model.eval_licenses_available', function() {
     return !this.get('model.eval_licenses_available');
   }),
@@ -255,7 +258,7 @@ export default Controller.extend({
     new_user: function(attr) {
       var _this = this;
 
-      modal.open('new-user', {default_org_management_action: attr, organization_id: this.get('model.id'), no_licenses: this.get('no_licenses')}).then(function(res) {
+      modal.open('new-user', {default_org_management_action: attr, organization_id: this.get('model.id'), no_licenses: this.get('no_licenses'), no_supervisor_licenses: this.get('no_supervisor_licenses'), no_eval_licenses: this.get('no_eval_licenses')}).then(function(res) {
         if(res && res.created) {
           if(res.user && res.user.get('org_management_action')) {
             // because of the way we hash all user/org settings, this doesn't always get
@@ -289,6 +292,9 @@ export default Controller.extend({
           user_name = this.get('manager_user_name');
           cleanup = function() { _this.set('manager_user_name', ''); };
         } else if(action == 'add_supervisor') {
+          user_name = this.get('supervisor_user_name');
+          cleanup = function() { _this.set('supervisor_user_name', ''); };
+        } else if(action == 'add_premium_supervisor') {
           user_name = this.get('supervisor_user_name');
           cleanup = function() { _this.set('supervisor_user_name', ''); };
         } else if(action == 'add_user' || action == 'add_unsponsored_user') {

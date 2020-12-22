@@ -20,7 +20,7 @@ export default modal.ModalController.extend({
     this.set('model.user', user);
     this.set('model.user.org_management_action', this.get('model.default_org_management_action'));
   },
-  user_types: computed('model.no_licenses', function() {
+  user_types: computed('model.no_licenses', 'model.no_supervisor_licenses', 'model.no_eval_licenses', function() {
     var res = [];
     res.push({id: '', name: i18n.t('select_user_type', "[ Add This User As ]")});
     if(this.get('model.no_licenses')) {
@@ -32,14 +32,35 @@ export default modal.ModalController.extend({
       res.push({id: 'add_user', name: i18n.t('add_sponsored_used', "Add this User As a Sponsored Communicator")});
     }
     res.push({id: 'add_unsponsored_user', name: i18n.t('add_unsponsored_used', "Add this User As an Unsponsored Communicator")});
+    if(this.get('model.no_supervisor_licenses')) {
+      res.push({id: 'add_premium_supervisor', disabled: true, name: i18n.t('add_premium_supervisor', "Add this User As a Premium Supervisor")});
+      if(this.get('model.user.org_management_action') == 'add_premium_supervisor') {
+        this.set_unsponsored_action('supervisor');
+      }
+    } else {
+      res.push({id: 'add_premium_supervisor', name: i18n.t('add_premium_supervisor', "Add this User As a Premium Supervisor")});
+    }
     res.push({id: 'add_supervisor', name: i18n.t('add_supervisor', "Add this User As a Supervisor")});
     res.push({id: 'add_manager', name: i18n.t('add_manager', "Add this User As a Full Manager")});
     res.push({id: 'add_assistant', name: i18n.t('add_assistant', "Add this User As a Management Assistant")});
+    if(this.get('model.no_eval_licenses')) {
+      res.push({id: 'add_eval', disabled: true, name: i18n.t('add_eval', "Add this User As a Paid Eval Account")});
+      if(this.get('model.user.org_management_action') == 'add_eval') {
+        this.set_unsponsored_action();
+      }
+    } else {
+      res.push({id: 'add_eval', name: i18n.t('add_eval', "Add this User As a Paid Eval Account")});
+    }
+
     res.push({id: 'add_eval', name: i18n.t('add_eval', "Add this User As a Paid Eval Account")});
     return res;
   }),
-  set_unsponsored_action() {
-    this.set('model.user.org_management_action', 'add_unsponsored_user');
+  set_unsponsored_action(type) {
+    if(type == 'supervisor') {
+      this.set('model.user.org_management_action', 'add_supervisor');      
+    } else {
+      this.set('model.user.org_management_action', 'add_unsponsored_user');
+    }
   },
   linking_or_exists: computed('linking', 'model.user.user_name_check.exists', function() {
     return this.get('linking') || this.get('model.user.user_name_check.exists');

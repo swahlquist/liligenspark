@@ -714,7 +714,7 @@ module Subscription
     else
       # eval accounts set as supporters are limited to modeling-only
       # but other paid accounts can switch to premium supporter if they like
-      return :org_sponsored_supporter if self.settings['possibly_premium_supporter'] && self.org_supprter?(true)
+      return :org_sponsored_supporter if self.settings['possibly_premium_supporter'] && self.org_supporter?(true)
       return :premium_supporter if self.settings['subscription']['never_expires']
       return :premium_supporter if self.fully_purchased?
       return :premium_supporter if self.settings['subscription']['started']

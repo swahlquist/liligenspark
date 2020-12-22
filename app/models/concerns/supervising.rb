@@ -220,7 +220,7 @@ module Supervising
 
       supervisor.using(:master).reload
       # first-time supervisors should automatically be set to the supporter role
-      if !supervisor.settings['supporter_role_auto_set']
+      if !supervisor.settings['supporter_role_auto_set'] && supervisor.settings['preferences']['role'] != 'supporter'
         supervisor.settings['supporter_role_auto_set'] = true
         supervisor.settings['preferences']['role'] = 'supporter'
       end
