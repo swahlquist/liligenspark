@@ -101,6 +101,7 @@ describe Api::BoardsController, :type => :controller do
     end
     
     it "should search by query string" do
+      expect(BoardLocale.count).to eq(0)
       u = User.create(:settings => {:public => true})
       b = Board.create(:user => u, :public => true, :settings => {'name' => "one two three"})
       b2 = Board.create(:user => u, :public => true, :settings => {'name' => "four five six"})
@@ -293,6 +294,7 @@ describe Api::BoardsController, :type => :controller do
       bl2 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'en', search_string: "I don't know what to say about this, but, well, um, cheese")
       bl3 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "whatever cheese is good for you")
       bl4 = BoardLocale.create(board_id: b2.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "this is the best frog I have ever eaten with cheese")
+      Board.where(id: b2.id).update_all(home_popularity: 5)
 
       get :index, params: {public: true, locale: 'en-GB', q: 'cheese', sort: 'popularity'}
       json = assert_success_json
@@ -312,7 +314,48 @@ describe Api::BoardsController, :type => :controller do
     end
 
     it "should return a localized board name" do
-      write_this_test
+      u = User.create
+      b1 = Board.create(user: u, public: true, popularity: 10, home_popularity: 10)
+      b1.settings['name'] = 'ahoo'
+      b1.settings['translations'] = {
+        'board_name' => {'es' => 'ahem'}
+      }
+      b1.save
+      b2 = Board.create(user: u, public: true, popularity: 5, home_popularity: 5)
+      b2.settings['name'] = 'ahii'
+      b2.settings['translations'] = {
+        'board_name' => {'es' => 'ahoy'}
+      }
+      b2.save
+      bl1 = BoardLocale.create(board_id: b1.id, popularity: 5, home_popularity: 3, locale: 'en', search_string: "whatever cheese is good for you")
+      bl2 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'en', search_string: "I don't know what to say about this, but, well, um, cheese")
+      bl3 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "whatever cheese is good for you")
+      bl4 = BoardLocale.create(board_id: b2.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "this is the best frog I have ever eaten with cheese")
+      Board.where(id: b2.id).update_all(home_popularity: 5)
+
+      get :index, params: {public: true, locale: 'en-GB', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(1)
+      expect(json['board'][0]['id']).to eq(b1.global_id)
+      expect(json['board'][0]['name']).to eq('ahoo')
+      expect(json['board'][0]['localized_name']).to eq('ahoo')
+
+      get :index, params: {public: true, locale: 'es', q: 'cheese', sort: 'popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'][0]['id']).to eq(b1.global_id)
+      expect(json['board'][0]['name']).to eq('ahoo')
+      expect(json['board'][0]['localized_name']).to eq('ahem')
+      expect(json['board'][1]['id']).to eq(b2.global_id)
+      expect(json['board'][1]['name']).to eq('ahii')
+      expect(json['board'][1]['localized_name']).to eq('ahoy')
+
+      get :index, params: {public: true, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(1)
+      expect(json['board'][0]['id']).to eq(b2.global_id)
+      expect(json['board'][0]['name']).to eq('ahii')
+      expect(json['board'][0]['localized_name']).to eq('ahoy')
     end
 
     it "should use localized search string for searching private queries" do

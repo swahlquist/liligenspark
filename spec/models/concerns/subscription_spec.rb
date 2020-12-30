@@ -2233,6 +2233,14 @@ describe Subscription, :type => :model do
       expect(res[:approaching]).to eq(0)
       expect(res[:approaching_emailed]).to eq(0)
     end
+
+    it "should handle org-sponsored premium supporters correctly" do
+      o = Organization.create(settings: {'total_supervisor_licenses' => 5})
+      u1 = User.create(:expires_at => 1.months.from_now, :settings => {'preferences' => {'role' => 'supporter'}, 'subscription' => {'expiration_source' => 'grace'}})
+      expect(u1.reload.billing_state).to eq(:grace_period_supporter)
+      o.add_supervisor(u1.user_name, false, true)
+      expect(u1.reload.billing_state).to eq(:org_sponsored_supporter)
+    end
   end
   
   describe "subscription_override" do
@@ -2627,6 +2635,7 @@ describe Subscription, :type => :model do
         'type' => 'org_supervisor',
         'state' => {
           'pending' => false,
+          'premium' => false,
           'added' => links[0]['state']['added']
         }
       }])
@@ -2663,6 +2672,7 @@ describe Subscription, :type => :model do
         'type' => 'org_supervisor',
         'state' => {
           'pending' => false,
+          'premium' => false,
           'added' => links[0]['state']['added']
         }
       }])
@@ -2699,6 +2709,7 @@ describe Subscription, :type => :model do
         'type' => 'org_supervisor',
         'state' => {
           'pending' => false,
+          'premium' => false,
           'added' => links[0]['state']['added']
         }
       }])

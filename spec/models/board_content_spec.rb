@@ -1111,4 +1111,93 @@ describe BoardContent, :type => :model do
       })
     end
   end
+
+  it "should not update an old clone when the source moves to a new content record" do
+    u = User.create
+    b1 = Board.create(user: u)
+    b1.process(buttons: [
+      {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
+      {id: 2, label: 'cheddar'},
+      {id: 3, label: 'broccoli'},
+      {id: 4, label: 'sour cream'},
+    ], grid: {
+      rows: 2,
+      columns: 2,
+      order: [[1, 3], [2, 4]]
+    }, background: {
+      image: 'pic',
+      prompt: 'hello'
+    }, intro: {
+      sections: ['a', 'b']
+    })
+    bc = BoardContent.generate_from(b1)
+    b2 = Board.create(user: u)
+    BoardContent.apply_clone(b1, b2, true)
+    expect(b2.board_content).to eq(bc)
+
+    b1.process(buttons: [
+      {id: 1, label: 'bakin', translations: {'fr' => {'label' => 'oui'}}},
+      {id: 2, label: 'cheddar', translations: {'fr' => {'label' => 'non'}}},
+      {id: 4, label: 'sour cream', 'vocalization' => 'sauer creme'},
+      {id: 5, label: 'weeee'}
+    ], grid: {
+      rows: 2,
+      columns: 3,
+      order: [[1, 3], [2, 5]]
+    }, background: 'delete', intro: {
+      sections: ['a', 'b'],
+      best: true
+    })
+    expect(b1.settings['content_overrides']).to eq({
+      'buttons' => {
+        "1"=>{"label"=>"bakin", "part_of_speech"=>nil, "suggested_part_of_speech"=>nil}, 
+        "4"=>{"vocalization"=>"sauer creme", "part_of_speech"=>nil, "suggested_part_of_speech"=>nil}, 
+        "5"=>{"id"=>5, "label"=>"weeee"}
+      },
+      'background' => nil,
+      'intro' => {'best' => true},
+      'grid' => {'columns' => 3, 'order' => [[1,3,nil],[2,5,nil]]},
+      "translations" => {"2"=>{"fr"=>{"label"=>"non"}}},
+
+    })
+    expect(b1.buttons).to eq([{"id"=>1,
+      "label"=>"bakin",
+    },{
+      "id"=>2,
+      "label"=>"cheddar",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"
+    }, {
+      "id"=>3,
+      "label"=>"broccoli",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"
+    }, {
+      "id"=>4,
+      "label"=>"sour cream",
+      "vocalization"=>"sauer creme"
+    }, {
+      "id"=>5, "label"=>"weeee"
+    }])
+    expect(BoardContent.load_content(b1, 'grid')).to eq({
+      'rows' => 2,
+      'columns' => 3,
+      'order' => [[1,3,nil],[2,5,nil]]
+    })
+    expect(BoardContent.load_content(b1, 'intro')).to eq({
+      'sections' => ['a', 'b'],
+      'best' => true
+    })
+    expect(BoardContent.load_content(b1, 'background')).to eq(nil)
+    expect(BoardContent.load_content(b1, 'translations')).to eq({
+      '1' => {'fr' => {'label' => 'oui'}},
+      '2' => {'fr' => {'label' => 'non'}}
+    })
+    expect(b2.reload.buttons).to eq([
+      {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
+      {id: 2, label: 'cheddar'},
+      {id: 3, label: 'broccoli'},
+      {id: 4, label: 'sour cream'},
+    ])
+  end
 end

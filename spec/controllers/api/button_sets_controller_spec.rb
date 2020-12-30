@@ -103,10 +103,37 @@ describe Api::ButtonSetsController, :type => :controller do
       expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b)
       bs = b.board_downstream_button_set
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
-      expect(bs).to receive(:extra_data_private_url).and_return("asdf")
+      expect(bs).to receive(:extra_data_private_url).and_return("asdf").at_least(1).times
+      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return('jkl')
       post :generate, params: {'id' => b.global_id}
       json = assert_success_json
-      expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'asdf'})
+      expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'jkl'})
+      expect(bs.reload.data['private_cdn_url']).to eq('jkl')
+      expect(bs.reload.data['private_cdn_revision']).to eq('asdf')
+    end
+
+    it "should return exists message if URL is correctly cached" do
+      token_user
+      b = Board.create(user: @user, :settings => {'full_set_revision' => 'asdf'})
+      BoardDownstreamButtonSet.update_for(b.global_id,true)
+      b.reload
+      expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b).at_least(1).times
+      bs = b.board_downstream_button_set
+      bs.data['private_cdn_url'] = 'jklo'
+      bs.data['private_cdn_revision'] = 'asdf'
+      bs.save
+      expect(b).to receive(:board_downstream_button_set).and_return(bs).at_least(1).times
+      expect(bs).to receive(:extra_data_private_url).and_return("asdf").at_least(1).times
+      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return('jkl')
+      post :generate, params: {'id' => b.global_id}
+      json = assert_success_json
+      expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'jklo'})
+
+      bs.data['private_cdn_revision'] = 'asdof'
+      bs.save
+      post :generate, params: {'id' => b.global_id}
+      json = assert_success_json
+      expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'jkl'})
     end
 
     it "should return a progress response if not yet generated" do
@@ -162,10 +189,10 @@ describe Api::ButtonSetsController, :type => :controller do
       expect(p.settings['class']).to eq('BoardDownstreamButtonSet')
       expect(p.settings['method']).to eq('generate_for')
       expect(p.settings['arguments']).to eq([b.global_id, @user.global_id])
-      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b).at_least(1).times
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
-      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs).at_least(1).times
       expect(bs).to receive(:url_for).with(@user, 'aaaa').and_return("asdf")
       Progress.perform_action(p.id)
       expect(p.reload.settings['result']).to eq({'success' => true, 'url' => 'asdf'})

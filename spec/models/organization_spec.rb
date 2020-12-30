@@ -913,7 +913,35 @@ describe Organization, :type => :model do
       }])
       expect(links[0]['state']['added']).to_not eq(nil)
     end
-    
+
+    it "should process premium supporters" do
+      o = Organization.create(:settings => {'total_supervisor_licenses' => 1})
+      u = User.create
+      res = o.process({
+        :management_action => "add_premium_supervisor-#{u.user_name}"
+      }, {'updater' => User.create})
+      expect(res).to eq(true)
+      expect(o.users.length).to eq(1)
+      u.reload
+      expect(o.attached_users('user').length).to eq(0)
+      expect(o.attached_users('approved_user').length).to eq(0)
+      expect(o.attached_users('sponsored_user').length).to eq(0)
+      expect(o.attached_users('supervisor').length).to eq(1)
+      expect(o.attached_users('premium_supervisor').length).to eq(1)
+      
+      links = UserLink.links_for(u)
+      expect(links).to eq([{
+        'user_id' => u.global_id,
+        'record_code' => Webhook.get_record_code(o),
+        'type' => 'org_supervisor',
+        'state' => {
+          'premium' => true, 
+          'added' => links[0]['state']['added']
+        }
+      }])
+      expect(links[0]['state']['added']).to_not eq(nil)
+    end
+
     it "should allow setting a public home board" do
       u = User.create
       b = Board.create(user: u, public: true)

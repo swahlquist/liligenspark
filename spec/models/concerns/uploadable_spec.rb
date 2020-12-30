@@ -319,7 +319,7 @@ describe Uploadable, :type => :model do
   describe "cached_copy" do
     it "should schedule to cache a copy for protected images" do
       i = ButtonImage.new
-      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true)
+      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true).at_least(1).times
       i.url = "http://www.example.com/pic.png"
       i.save
       expect(Worker.scheduled?(ButtonImage, 'perform_action', {'id' => i.id, 'method' => 'assert_cached_copy', 'arguments' => []})).to eq(true)
@@ -391,7 +391,7 @@ describe Uploadable, :type => :model do
       bi.url = "http://www.example.com/pic.png"
       bi.save
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true)
-      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false)
+      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false).at_least(1).times
       expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false)
       expect(ButtonImage).to receive(:cached_copy_identifiers).with("http://www.example.com/pic.png").and_return({
         library: 'lessonpix',
@@ -422,7 +422,7 @@ describe Uploadable, :type => :model do
       bi.url = "http://www.example.com/pic.png"
       bi.save
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true)
-      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false)
+      expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false).at_least(1).times
       expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false)
       expect(ButtonImage).to receive(:cached_copy_identifiers).with("http://www.example.com/pic.png").and_return({
         library: 'lessonpix',
@@ -569,9 +569,9 @@ describe Uploadable, :type => :model do
           image_id: '123',
           url: 'bacon:3'
         })
-        expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(7).times
+        expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(7).times
         expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
-        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
+        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").at_least(4).times
         hash = ButtonImage.cached_copy_urls([bbi1, bbi2, bbi3, bbi4, bbi5], u)
         expect(hash).to eq({
           'http://www.example.com/bacon/1' => 'http://www.example.com/bacon/cache/1',
@@ -618,9 +618,9 @@ describe Uploadable, :type => :model do
           image_id: '123',
           url: 'bacon:3'
         })
-        expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(7).times
+        expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(7).times
         expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
-        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
+        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").at_least(4).times
         hash = ButtonImage.cached_copy_urls([bbi1, bbi2, bbi3, bbi4, bbi5], u)
         expect(hash).to eq({
           'http://www.example.com/bacon/1' => 'http://www.example.com/bacon/cache/1',
@@ -677,9 +677,9 @@ describe Uploadable, :type => :model do
           image_id: '123',
           url: 'bacon:3'
         })
-        expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(4).times
+        expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(4).times
         expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
-        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
+        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").at_least(4).times
         hash = ButtonImage.cached_copy_urls([bbi1, bbi2, bbi3, bbi4, bbi5], u)
         expect(hash).to eq({
           'http://www.example.com/bacon/1' => 'http://www.example.com/bacon/cache/1',
@@ -736,9 +736,9 @@ describe Uploadable, :type => :model do
           image_id: '123',
           url: 'bacon:3'
         })
-        expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(7).times
+        expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(7).times
         expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
-        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
+        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").at_least(4).times
         hash = ButtonImage.cached_copy_urls([bbi1, bbi2, bbi3, bbi4, bbi5], u)
         expect(hash).to eq({
           'http://www.example.com/bacon/1' => 'http://www.example.com/bacon/cache/1',
@@ -795,9 +795,9 @@ describe Uploadable, :type => :model do
           image_id: '123',
           url: 'bacon:3'
         })
-        expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(4).times
+        expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(4).times
         expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
-        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
+        expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").at_least(4).times
         hash = ButtonImage.cached_copy_urls([bbi1, bbi2, bbi3, bbi4, bbi5], u)
         expect(hash).to eq({
           'http://www.example.com/bacon/1' => 'http://www.example.com/bacon/cache/fallback',

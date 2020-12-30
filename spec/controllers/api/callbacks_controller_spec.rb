@@ -21,7 +21,12 @@ describe Api::CallbacksController, :type => :controller do
       ENV['SNS_REGION'] = 'overthere'
       expect(Aws::Credentials).to receive(:new).with('nonsense', 'shhhhhh').and_return('creds')
       client = OpenStruct.new
-      expect(Aws::SNS::Client).to receive(:new).with(region: 'overthere', credentials: 'creds').and_return(client)
+      expect(Aws::SNS::Client).to receive(:new){|opts| 
+        expect(opts[:region]).to eq('overthere')
+        expect(opts[:credentials]).to eq('creds')
+        expect(opts[:retry_limit]).to eq(2)
+        expect(opts[:retry_backoff]).to_not eq(nil)
+      }.and_return(client)
       expect(client).to receive(:confirm_subscription).with(topic_arn: 'fried', token: 'ahem', authenticate_on_unsubscribe: 'true')
       request.headers['x-amz-sns-message-type'] = 'SubscriptionConfirmation'
       request.headers['x-amz-sns-topic-arn'] = 'fried'
@@ -38,7 +43,12 @@ describe Api::CallbacksController, :type => :controller do
       ENV['SNS_REGION'] = 'overthere'
       expect(Aws::Credentials).to receive(:new).with('nonsense', 'shhhhhh').and_return('creds')
       client = OpenStruct.new
-      expect(Aws::SNS::Client).to receive(:new).with(region: 'overthere', credentials: 'creds').and_return(client)
+      expect(Aws::SNS::Client).to receive(:new){|opts| 
+        expect(opts[:region]).to eq('overthere')
+        expect(opts[:credentials]).to eq('creds')
+        expect(opts[:retry_limit]).to eq(2)
+        expect(opts[:retry_backoff]).to_not eq(nil)
+      }.and_return(client)
       expect(client).to receive(:confirm_subscription).with(topic_arn: 'fried', token: 'ahem', authenticate_on_unsubscribe: 'true')
       request.headers['x-amz-sns-message-type'] = 'SubscriptionConfirmation'
       request.headers['x-amz-sns-topic-arn'] = 'fried'

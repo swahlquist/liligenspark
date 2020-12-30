@@ -677,7 +677,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['columns']).to eq(4)
       expect(b.settings['grid']['order']).to eq([[nil, nil, nil, nil], [nil, nil, nil, nil]])
       expect(b.settings['immediately_downstream_board_ids']).to eq([])
-      expect(b.search_string).to eq("locale:en")
+      expect(b.search_string).to eq("locale:en root")
       expect(b.settings['image_url']).to eq(Board::DEFAULT_ICON)
     end
     
@@ -698,7 +698,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['columns']).to eq(5)
       expect(b.settings['grid']['order']).to eq([[nil, nil, nil, nil, nil], [nil, nil, nil, nil, nil], [nil, nil, nil, nil, nil]])
       expect(b.settings['immediately_downstream_board_ids']).to eq([])
-      expect(b.search_string).to eq("locale:es")
+      expect(b.search_string).to eq("locale:es root")
     end
     
     it "should enforce proper format/dimensions for grid value" do
@@ -764,10 +764,10 @@ describe Board, :type => :model do
       b.settings['grid']['columns'] = 5
       b.settings['locale'] = 'es'
       b.generate_defaults
-      expect(b.search_string).to eq("locale:es")
+      expect(b.search_string).to eq("locale:es root")
       b.settings['unlisted'] = true
       b.generate_defaults
-      expect(b.search_string).to eq("locale:es")
+      expect(b.search_string).to eq("locale:es root")
     end
 
     it "should include all locales in the search string" do
@@ -781,7 +781,7 @@ describe Board, :type => :model do
       b.settings['locale'] = 'es'
       b.settings['translations'] = {'board_name' => {'en' => 'assdf', 'fr' => 'qwert'}}
       b.generate_defaults
-      expect(b.search_string).to eq("locale:es locale:en locale:fr")
+      expect(b.search_string).to eq("locale:es locale:en locale:fr root")
     end
   end
   
@@ -3154,8 +3154,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3171,8 +3171,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3195,8 +3195,8 @@ describe Board, :type => :model do
       ]
       b.save
       expect(b).to_not receive(:save)
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([])
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([])
       res = b.swap_images('bacon', u, [])
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
@@ -3269,8 +3269,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3424,8 +3424,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])

@@ -25,6 +25,7 @@ module JsonApi::Board
     if args[:locale]
       matching = list.detect{|l| l == args[:locale] }
       matching ||= list.detect{|l| l.split(/-|_/)[0] == args[:locale] }
+      matching ||= list.detect{|l| l.split(/-|_/)[0] == args[:locale].split(/-|_/)[0] }
       if matching
         json['localized_name'] = (trans['board_name'] || {})[matching] || json['name']
         json['localized_locale'] = matching
