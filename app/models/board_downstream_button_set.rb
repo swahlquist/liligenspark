@@ -14,7 +14,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data ||= {}
     self.data['remote_salt'] ||= GoSecure.nonce('remote_salt')
     @buttons = nil
-    unless skip_extra_data_processing? || force
+    if !skip_extra_data_processing? || force
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
       self.data['public_board_ids'] = Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
@@ -125,7 +125,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
     revision_match = full_set_revision && button_set_revision == full_set_revision
-    if @unviewable_ids.blank? && revision_match && self.data['source_id']
+    if @unviewable_ids.blank? && revision_match && !self.data['source_id']
       if self.data['private_cdn_url'] && self.data['private_cdn_revision'] == button_set_revision
         return self.data['private_cdn_url']
       end

@@ -265,21 +265,23 @@ class Board < ActiveRecord::Base
     end
     self.settings['total_buttons'] = (self.buttons || []).length + (self.settings['total_downstream_buttons'] || 0)
     self.settings['unlinked_buttons'] = (self.buttons || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
-    if self.public
-      found_locales.each do |locale, nvmd|
-        bl = BoardLocale.find_or_create_by(board_id: self.id, locale: locale)
-        bl.search_string = self.search_string_for(locale)
-        if self.settings['never_edited']
-          bl.popularity = -1
-          bl.home_popularity = -1
-        else
-          bl.popularity = home_pops[locale] || 0
-          bl.home_popularity = pops[locale] || 0
+    if self.id
+      if self.public
+        found_locales.each do |locale, nvmd|
+          bl = BoardLocale.find_or_create_by(board_id: self.id, locale: locale)
+          bl.search_string = self.search_string_for(locale)
+          if self.settings['never_edited']
+            bl.popularity = -1
+            bl.home_popularity = -1
+          else
+            bl.popularity = home_pops[locale] || 0
+            bl.home_popularity = pops[locale] || 0
+          end
+          bl.save
         end
-        bl.save
+      else
+        BoardLocale.where(board_id: self.id).delete_all
       end
-    else
-      BoardLocale.where(board_id: self.id).delete_all
     end
     if (self.buttons || []).length == 0
       self.popularity = 0
