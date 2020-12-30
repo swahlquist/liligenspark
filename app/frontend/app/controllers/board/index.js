@@ -287,6 +287,7 @@ export default Controller.extend({
       }
       this.set('window_inner_width', inner_width);
       app_state.set('window_inner_width', inner_width);
+      app_state.set('window_inner_height', height);
       var show_description = !app_state.get('edit_mode') && !app_state.get('speak_mode') && this.get('long_description');
       var topHeight = app_state.get('header_height') + 5;
       var sidebarTopHeight = topHeight;

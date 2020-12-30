@@ -1523,6 +1523,7 @@ var app_state = EmberObject.extend({
   header_size: computed(
     'currentUser.preferences.device.vocalization_height',
     'window_inner_width',
+    'window_inner_height',
     'flipped',
     'currentUser.preferences.device.flipped_override',
     function() {

@@ -104,7 +104,7 @@ export default Component.extend({
       var voc_text_height = text_height;
       var position = prefs.device.button_text_position || 'top';
       var text_only = position == 'text_only';
-      var voc_text_only = prefs.device.utterance_text_only;
+      var voc_text_only = text_only || prefs.device.utterance_text_only;
       var flipped_voc_height = voc_height;
       var flipped_text_height = voc_text_height;
       if(prefs.device.flipped_override) {
