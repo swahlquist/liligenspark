@@ -265,7 +265,14 @@ class Device < ActiveRecord::Base
         conn = (Octopus.config[Rails.env] || {}).keys.sample
         users_lookup = users_lookup.using(conn) if conn
       end
-      user = users_lookup.find_by_global_id(user_id)
+      # Check for bad connection as caused by Octopus failing to reconnect
+      begin
+        user = users_lookup.find_by_global_id(user_id)
+      rescue ActiveRecord::StatementInvalid => e
+        if defined?(Octopus) && e.message.include?("PG::ConnectionBad")
+          ActiveRecord::Base.connection.verify!
+        end
+      end
       if defined?(Octopus)
         user ||= User.using(:master).find_by_global_id(user_id)
       end
