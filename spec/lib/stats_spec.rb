@@ -618,13 +618,14 @@ describe Stats do
     it "should return basic board stats" do
       u = User.create
       b = Board.new(:user => u)
-      expect(b).to receive(:generate_stats).and_return(nil)
       b.settings = {}
       b.settings['stars'] = 4
       b.settings['uses'] = 3
       b.settings['home_uses'] = 4
       b.settings['forks'] = 1
       b.save
+      expect(Board).to receive(:find).with(b.id).and_return(b).at_least(1).times
+      Worker.process_queues
       res = Stats.board_use(b.global_id, {})
       expect(res).not_to eq(nil)
       expect(res[:stars]).to eq(4)

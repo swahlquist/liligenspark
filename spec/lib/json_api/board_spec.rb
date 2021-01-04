@@ -137,7 +137,7 @@ describe JsonApi::Board do
         image_id: '123',
         url: 'bacon:3'
       })
-      expect(Uploader).to receive(:protected_remote_url?).and_return(true).exactly(7).times
+      expect(Uploader).to receive(:protected_remote_url?).and_return(true).at_least(7).times
       expect(ButtonImage).to receive(:cached_copy_identifiers).with('http://www.example.com/bacon/4').and_return(nil)
       expect(Uploader).to receive(:fallback_image_url).and_return("http://www.example.com/bacon/cache/fallback").exactly(4).times
       

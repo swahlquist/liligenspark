@@ -191,7 +191,12 @@ describe Transcoder do
       ENV['AWS_SECRET'] = 'fried'
       ENV['TRANSCODER_REGION'] = 'overthere'
       expect(Aws::Credentials).to receive(:new).with('bacon', 'fried').and_return('bob')
-      expect(Aws::ElasticTranscoder::Client).to receive(:new).with(region: 'overthere', credentials: 'bob')
+      expect(Aws::ElasticTranscoder::Client).to receive(:new) do |opts|
+        expect(opts[:region]).to eq('overthere')
+        expect(opts[:credentials]).to eq('bob')
+        expect(opts[:retry_limit]).to eq(2)
+        expect(opts[:retry_backoff]).to_not eq(nil)
+      end
       Transcoder.config
     end
   end
