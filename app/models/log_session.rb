@@ -79,9 +79,9 @@ class LogSession < ActiveRecord::Base
     spelling_sequence = []
     highlight_words = []
     last_board_id = nil
-    word_lookup_events = (self.data['events']).select{|e| e['button'] && e['button']['label'] && !e['button']['parts_of_speech']}
+    word_lookups = (self.data['events']).map{|e| LogSession.event_text(e) }.compact.uniq
     # TODO: find_words can support locales
-    words = WordData.find_words(word_lookup_events.map{|e| LogSession.event_text(e) })
+    words = WordData.find_words(word_lookups)
     incrs = 0
     (self.data['events'] || []).each_with_index do |event, idx|
       next_event = self.data['events'][idx + 1]
@@ -106,12 +106,14 @@ class LogSession < ActiveRecord::Base
       elsif parts.any?{|p| p.match(/^:/) }
         spelling_sequence << ":"
       end
+      event_word_updated = false
       
       # if this is the end of the spelling sequence, go ahead and try to process it
       if spelling_sequence.length > 0 && !event['modified_by_next']
         # if it's not tainted, combine it
         if !spelling_sequence.any?{|s| s == ":" }
           spelling = spelling_sequence.join("").strip
+          event_word_updated = true unless event['spelling'] == spelling
           event['spelling'] = spelling unless spelling.match(/:/)
         end
         spelling_sequence = []
@@ -136,8 +138,8 @@ class LogSession < ActiveRecord::Base
         end
         word = LogSession.event_text(event)
         speech ||= words[word]
+        speech ||= WordData.find_word(word) if event_word_updated
 
-        # speech ||= WordData.find_word(word)
         if !speech && !event['modified_by_next'] && (event['spelling'] || event['button']['completion'] || !(event['button']['vocalization'] || "").strip.match(/^[\+:]/))
           speech = {'types' => ['other']}
           if event['button'] && event['button']['type'] == 'speak' && !word.match(/\s/) && incrs < 25
@@ -297,7 +299,7 @@ class LogSession < ActiveRecord::Base
   
   def self.event_text(event)
     return nil unless event
-    (event['button'] && event['button']['completion']) || event['spelling'] || (event['button'] && event['button']['vocalization']) || (event['button'] && event['button']['label'])
+    (event['button'] && event['button']['completion']) || event['spelling'] || (event['button'] && event['button']['vocalization']) || (event['button'] && event['button']['label']) || nil
   end
 
   def anonymized_identifier
