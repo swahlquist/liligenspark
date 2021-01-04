@@ -843,7 +843,7 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
   }
 
   var res = CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
-    var reload = RSVP.resolve();
+    var reload = RSVP.resolve(button_set);
     // try to reload before checking for root_url 
     // to ensure we have the freshest result
     if(persistence.get('online') && !button_set.get('fresh')) {

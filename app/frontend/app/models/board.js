@@ -882,6 +882,7 @@ CoughDrop.Board = DS.Model.extend({
       return button_set.load_buttons();
     } else {
       var valid_button_set = null;
+      // first check if there's a satisfactory higher-level buttonset that can be used instead
       CoughDrop.store.peekAll('buttonset').map(function(i) { return i; }).forEach(function(bs) {
         if(bs && (bs.get('board_ids') || []).indexOf(_this.get('id')) != -1) {
           if(bs.get('buttons') || bs.get('root_url')) {
@@ -898,7 +899,6 @@ CoughDrop.Board = DS.Model.extend({
         } else{
         }
       }
-      // first check if there's a satisfactory higher-level buttonset that can be used instead
       var res = CoughDrop.Buttonset.load_button_set(this.get('id'), force).then(function(button_set) {
         _this.set('button_set', button_set);
         if((_this.get('fresh') || force) && !button_set.get('fresh')) {
