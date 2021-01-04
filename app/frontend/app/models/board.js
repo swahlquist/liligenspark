@@ -866,7 +866,9 @@ CoughDrop.Board = DS.Model.extend({
       this.set('button_set_needs_reload', null);
     }
     if(this.get('button_set') && !force) {
-      return this.get('button_set').load_buttons();
+      if(this.get('button_set.buttons') || this.get('button_set.root_url')) {
+        return this.get('button_set').load_buttons();
+      }
     }
     if(this.get('local_only')) { 
       var res = RSVP.reject({error: 'board is local only'}); 
@@ -875,22 +877,24 @@ CoughDrop.Board = DS.Model.extend({
     }
     if(!this.get('id')) { return RSVP.reject({error: 'board has no id'}); }
     var button_set = CoughDrop.store.peekRecord('buttonset', this.get('id'));
-    if(button_set && !force) {
+    if(button_set && !force && (button_set.get('buttons') || button_set.get('root_url'))) {
       this.set('button_set', button_set);
       return button_set.load_buttons();
     } else {
       var valid_button_set = null;
-      var button_sets = CoughDrop.store.peekAll('buttonset').map(function(i) { return i; }).forEach(function(bs) {
+      CoughDrop.store.peekAll('buttonset').map(function(i) { return i; }).forEach(function(bs) {
         if(bs && (bs.get('board_ids') || []).indexOf(_this.get('id')) != -1) {
-          if(bs.get('fresh') || !valid_button_set) {
-            valid_button_set = bs;
+          if(bs.get('buttons') || bs.get('root_url')) {
+            if(bs.get('fresh') || !valid_button_set) {
+              valid_button_set = bs;
+            }
           }
         }
       });
       if(valid_button_set && !force) {
         if(!_this.get('fresh') || valid_button_set.get('fresh')) {
           _this.set('button_set', valid_button_set);
-          return valid_button_set.load_buttons();
+          return valid_button_set.load_buttons();  
         } else{
         }
       }

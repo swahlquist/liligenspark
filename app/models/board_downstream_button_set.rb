@@ -125,20 +125,20 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
     revision_match = full_set_revision && button_set_revision == full_set_revision
-    if @unviewable_ids.blank? && revision_match && !self.data['source_id']
-      if self.data['private_cdn_url'] && self.data['private_cdn_revision'] == button_set_revision
-        return self.data['private_cdn_url']
+    if @unviewable_ids.blank? && revision_match && !button_set.data['source_id']
+      if button_set.data['private_cdn_url'] && button_set.data['private_cdn_revision'] == button_set_revision
+        return button_set.data['private_cdn_url']
       end
       private_path = button_set.extra_data_private_url
       private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
       url = Uploader.check_existing_upload(private_path)
       if url
-        self.data['private_cdn_url'] = url
-        self.data['private_cdn_revision'] = button_set_revision
-        self.save
+        button_set.data['private_cdn_url'] = url
+        button_set.data['private_cdn_revision'] = button_set_revision
+        button_set.save
         return url
-      elsif self.data['buttons']
-        self.schedule_once(:detach_extra_data, 'force')
+      elsif button_set.data['buttons']
+        button_set.schedule_once(:detach_extra_data, 'force')
       else
         BoardDownstreamButtonSet.schedule_once(:update_for, self.related_global_id(self.board_id))
       end
@@ -203,13 +203,13 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
     remote_hash = button_set.instance_variable_get('@remote_hash')
-    if !button_set.data['extra_data_nonce']
-      # If the button set has never been detached, do that part
+    if !button_set.data['extra_data_nonce'] || just_generated
+      # If the button set has never been detached or was just updated, do that part
       button_set.detach_extra_data(true)
       return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank?
     end
     button_set.data['remote_paths'] ||= {}
-    if button_set.data['remote_paths'][remote_hash] && !button_set.data['remote_paths'][remote_hash]['path'] && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
+    if button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path'] != false && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
       # Don't allow repeated regeneration attempts to bog things down
       if button_set.data['remote_paths'][remote_hash]['path']
         return {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}

@@ -70,6 +70,9 @@ CoughDrop.Buttonset = DS.Model.extend({
     return count;
   },
   load_buttons: function(force) {
+    // Takes a button set that is known to be generated
+    // and retrieves the button list for that set. Will
+    // error if the button set needs to be generated first.
     var bs = this;
     var board_id = bs.get('id');
     return new RSVP.Promise(function(resolve, reject) {
@@ -791,8 +794,10 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
   if(found) {
     var board = CoughDrop.store.peekRecord('board', found.get('id'));
     if(!board || board.get('full_set_revision') == found.get('full_set_revision')) {
-      found.load_buttons(force); 
-      return RSVP.resolve(found); 
+      if(found.get('buttons') || found.get('root_url')) {
+        found.load_buttons(force); 
+        return RSVP.resolve(found);
+      }
     }
   }
   var generate = function(id) {
@@ -850,10 +855,12 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
       if(!button_set.get('root_url') && button_set.get('remote_enabled')) {
         // if root_url not available for the user, try to build one
         return generate(id);
-      } else {
+      } else if(button_set.get('buttons') || button_set.get('root_url')) {
         // otherwise you should be good to go
         return button_set.load_buttons(force);
-      }  
+      } else {
+        return generate(id);
+      }
     });
   }, function(err) {
     // if not found error, it may need to be regenerated
