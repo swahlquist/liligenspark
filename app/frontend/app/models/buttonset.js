@@ -882,7 +882,7 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
     if(CoughDrop.Buttonset.pending_promises[id] == res) {
       delete CoughDrop.Buttonset.pending_promises[id];
     }
-  }, 10000);
+  }, 30000);
   return res;
 };
 

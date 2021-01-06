@@ -192,25 +192,26 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       self.update_for(board_id, true)
       button_set = board.reload.board_downstream_button_set
     end
+    button_set_revision = button_set && button_set.data['full_set_revision']
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
     end
     return {success: false, error: 'could not generate button set'} unless button_set
-    if button_set.data['full_set_revision'] != board.settings['full_set_revision'] && !just_generated
+    if button_set_revision != board.settings['full_set_revision'] && !just_generated
       # Force-update the button set if it's stale
       just_generated = true
       self.update_for(board_id, true)
       button_set = board.reload.board_downstream_button_set
     end
-    url = button_set.url_for(user, board.settings['full_set_revision'], true)
+    url = button_set.board && button_set.url_for(user, button_set.board.settings['full_set_revision'], true)
     return {success: true, url: url} if url
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
     remote_hash = button_set.instance_variable_get('@remote_hash')
     if !button_set.data['extra_data_nonce'] || just_generated
-      # If the button set has never been detached or was just updated, do that part
+      # If the button set has never been detached or was just updated, ensure it is detached
       button_set.detach_extra_data(true)
-      return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank?
+      return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank? && button_set.extra_data_private_url
     end
     button_set.data['remote_paths'] ||= {}
     if button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path'] != false && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
