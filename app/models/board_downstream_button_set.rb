@@ -102,7 +102,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data && (self.data['buttons'] || self.data['extra_url'])
   end
 
-  def url_for(user, full_set_revision)
+  def url_for(user, full_set_revision, allow_detach=false)
     # Force an auto-regenerate if the revision doesn't match
     allowed_ids = {}
     button_set = self
@@ -132,6 +132,10 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       private_path = button_set.extra_data_private_url
       private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
       url = Uploader.check_existing_upload(private_path)
+      if !url && button_set.data['buttons'] && allow_detach
+        button_set.detach_extra_data('force')
+        url = Uploader.check_existing_upload(private_path)
+      end
       if url
         button_set.data['private_cdn_url'] = url
         button_set.data['private_cdn_revision'] = button_set_revision
@@ -157,7 +161,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       url = Uploader.check_existing_upload(button_set.data['remote_paths'][@remote_hash]['path'])
       return url if url
     end
-    @remote_path = "extras-cache#{button_set.global_id[-1]}/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
+    @remote_path = "extras-cache#{button_set.global_id[-5,5]}/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
     return nil
   end
 
@@ -198,7 +202,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       self.update_for(board_id, true)
       button_set = board.reload.board_downstream_button_set
     end
-    url = button_set.url_for(user, board.settings['full_set_revision'])
+    url = button_set.url_for(user, board.settings['full_set_revision'], true)
     return {success: true, url: url} if url
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
@@ -347,7 +351,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           visited_board_ids << board_to_visit.global_id
           # add all buttons
           board_to_visit.buttons.each_with_index do |button, idx|
-            next unless button
             image = images.detect{|i| button['image_id'] == i.global_id }
             visible_level = 1
             linked_level = 1

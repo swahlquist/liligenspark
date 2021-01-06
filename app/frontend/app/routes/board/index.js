@@ -32,7 +32,8 @@ export default Route.extend({
     controller.set('ordered_buttons', null);
     controller.set('preview_level', null);
     model.set('show_history', false);
-    model.load_button_set();
+    // do we need to preload the buttonset here?
+    // model.load_button_set();
     app_state.set('currentBoardState', {
       id: model.get('id'),
       key: model.get('key'),

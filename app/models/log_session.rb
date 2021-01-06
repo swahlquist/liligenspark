@@ -841,27 +841,34 @@ class LogSession < ActiveRecord::Base
   
   def update_board_connections(frd=false)
     return true if @skip_extra_data_update
-    if frd
-      board_ids = []
-      if self.data['events']
-        self.data['events'].each do |event|
-          if event['type'] == 'button' && event['button'] && event['button']['board']
-            board_ids << event['button']['board']['id']
-            board_ids << event['button']['board']['parent_id']
-          elsif event['type'] == 'action' && event['action'] && event['action']['action'] == 'open_board'
-            pre = event['action']['previous_key']
-            board_ids << pre['id'] if pre && pre['id']
-            post = event['action']['new_id']
-            board_ids << post['id'] if post && post['id']
-          end
+    board_ids = []
+    if self.data['events']
+      self.data['events'].each do |event|
+        if event['type'] == 'button' && event['button'] && event['button']['board']
+          board_ids << event['button']['board']['id']
+          board_ids << event['button']['board']['parent_id']
+        elsif event['type'] == 'action' && event['action'] && event['action']['action'] == 'open_board'
+          pre = event['action']['previous_key']
+          board_ids << pre['id'] if pre && pre['id']
+          post = event['action']['new_id']
+          board_ids << post['id'] if post && post['id']
         end
       end
-      Board.find_all_by_global_id(board_ids.uniq).each do |board|
-        LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
+    end
+    board_ids -= (self.data['known_board_ids'] || [])
+    if board_ids.length > 0
+      if frd
+        self.data['known_board_ids'] = (self.data['known_board_ids'] ||  []) | board_ids
+        @skip_extra_data_update = true
+        self.save
+        @skip_extra_data_update = false
+        Board.find_all_by_global_id(board_ids.uniq).each do |board|
+          LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
+        end
+      else
+        schedule_once_for('slow', :update_board_connections, true)
+        return true
       end
-    else
-      schedule_once_for('slow', :update_board_connections, true)
-      return true
     end
   end
   
@@ -1381,7 +1388,7 @@ class LogSession < ActiveRecord::Base
                 if !found
                   if e['user_id'] == merger_user_id
                     # replace any colliding event ids
-                    e['id'] = (ids.max || 0) + 1 if merger.data['events'].detect{|me| me['id'] == e['id'] }
+                    e['id'] = (ids.max || 0) + 1 if (merger.data['events'] || []).detect{|me| me['id'] == e['id'] }
                     ids << e['id']
                     transferred_events << e
                   else
