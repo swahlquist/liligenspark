@@ -102,11 +102,11 @@ var words = {
   "bed": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/bed.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "bed.png"},
   "pet": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/pet.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "pet.png"},
   "family": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/family_5.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "family.png"},
-  "blanket2": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/blanket.svg", license: {type: 'CC BY-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-sa/2.0/uk', source_url: '', author_name: 'Paxtoncrafts Charitable Trust ', author_url: 'http://straight-street.org/lic.php'}},  
-  "stay-at-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
-  "that-was-scary": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Scared_176_320418.svg", license: {type: 'CC By', copyright_notice_url: 'http://creativecommons.org/licenses/by/3.0/us/', source_url: '', author_name: 'Oliviu Stoian', author_url: 'http://thenounproject.com/smashicons'}},
-  "go-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
-  "miss-friends": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/friends.png", license: {type: 'CC BY-NC-SA', copyright_notice_url: 'http://creativecommons.org/licenses/by-nc-sa/3.0/', source_url: '', author_name: 'Sergio Palao', author_url: 'http://www.catedu.es/arasaac/condiciones_uso.php'}},
+  "blanket2": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/blanket.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "", author_name: "Paxtoncrafts Charitable Trust ", author_url: "http://straight-street.org/lic.php"}, path: "blanket2.svg"},
+  "stay-at-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "stay-at-home.png"},
+  "that-was-scary": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Scared_176_320418.svg", license: {type: "CC By", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", source_url: "", author_name: "Oliviu Stoian", author_url: "http://thenounproject.com/smashicons"}, path: "that-was-scary.svg"},
+  "go-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "go-home.png"},
+  "miss-friends": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/friends.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "miss-friends.png"},
 };
 /*
 require 'typhoeus'
@@ -192,8 +192,8 @@ emergency.callback = function(key) {
 };
 
 /*
+locale = 'pl'
 path = 'emergency/ussaac-hand-washing-1'
-locale = 'en'
 words ||= {}
 brd = Board.find_by_path(path)
 imgs = []
@@ -236,6 +236,7 @@ grid['order'].each do |row|
   lines << "  [#{row_content.join(', ')}],";
 end.length
 lines << "], license: {type: '#{brd.settings['license']['type']}', copyright_notice_url: '#{brd.settings['license']['copyright_notice_url']}', author_name: '#{brd.settings['license']['author_name']}', author_url: '#{brd.settings['license']['author_url']}'}},"
+lines << ""
 brd.button_images.each do |bi|
   btn = brd.buttons.detect{|b| b['image_id'] == bi.global_id }
   if btn && bi
@@ -335,10 +336,6 @@ emergency.boards = {
       [{label: "¡Es demasiado ruidoso!", word: "noisy"}, {label: "¿Cuando nos vamos?", word: "leave"}, {label: "¡No quiero estar aquí!", word: "not"}, {label: "Necesito un lugar tranquilo.", word: "quiet"}],
       [{label: "Huele.", word: "smell"}, {label: "¡Hace calor!", word: "hot"}, {label: "¡Hace frío!", word: "cold"}, null],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-social-distancing-1-es', name: 'USSAAC - Social Distancing (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
-      [{label: "stay at home"}, {label: "don't shake hands", word: "shake-hands"}, {label: "6 feet apart", word: "apart"}, {label: "no park", word: "park"}],
-      [{label: "no mall", word: "mall"}, {label: "no theater", word: "theater"}, {label: "wear a face mask", word: "face-mask"}, {label: "stay safe", word: "safe"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
     {id: 'ussaac-social-distancing-1-es', name: 'USSAAC - Distanciamiento social (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
       [{label: "Quédate en casa", word: "stay-at-home"}, {label: "no estreches la mano", word: "shake-hands"}, {label: "6 pies de distancia", word: "apart"}, {label: "no parque", word: "park"}],
       [{label: "no hay centro comercial", word: "mall"}, {label: "sin teatro", word: "theater"}, {label: "usar una mascarilla", word: "face-mask"}, {label: "mantenerse a salvo", word: "safe"}],
@@ -350,6 +347,44 @@ emergency.boards = {
     {id: 'ussaac-statement-missing-1-es', name: 'USSAAC - Declaraciones de desaparición (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-missing-1', starter: true, buttons: [
       [{label: "extraño a mi familia", word: "family"}, {label: "echo de menos a mis amigos", word: "miss-friends"}, {label: "Extraño a mi mascota", word: "pet"}, {label: "Extraño mi cama", word: "bed"}],
       [{label: "Extraño mi casa", word: "house"}, {label: "Extraño mi TV", word: "tv"}, {label: "Extraño mi iPad", word: "ipad"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+  ],
+  pl: [
+    {id: 'ussaac-hand-washing-1-pl', name: 'PLAAC - Mycie rąk (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-hand-washing-1', starter: true, buttons: [
+      [{label: "myć ręce", word: "wash-hands"}, {label: "20 sekund", word: "20-seconds"}, {label: "suche ręce", word: "dry-hands"}, {label: "czyste ręce", word: "clean-hands"}],
+      [{label: "brudne ręce", word: "dirty"}, {label: "płyn antybakteryjny", word: "sanitizer"}, {label: "użyj mydła", word: "soap"}, {label: "nie dotykaj powierzchni", word: "dont-touch"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-needs-1-2-pl', name: 'PLAAC - Potrzeby (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-needs-1-2', starter: true, buttons: [
+      [{label: "jestem głodny", word: "hungry"}, {label: " Chce mi się pić", word: "thirsty"}, {label: "Czy mogę prosić o coś do picia?", word: "drink"}, {label: "Czy mogę dostać przekąskę?", word: "snak"}],
+      [{label: "jestem zmęczony", word: "yawn"}, {label: "Czy mogę się położyć?", word: "lay"}, {label: "zimno mi", word: "cold"}, {label: "Czy mogę dostać koc?", word: "blanket2"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-mask-1-pl', name: 'PLAAC - Maseczki (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-mask-1', starter: true, buttons: [
+      [{label: "Gdzie jest moja maska?", word: "mask"}, {label: "Nie mogę oddychać", word: "breathe"}, {label: "maska", word: "face-mask"}, {label: "na", word: "on"}],
+      [{label: "poza", word: "off"}, {label: "Potrzebuję maski", word: "want"}, {label: "Czy mogę zdjąć maskę?", word: "take-off"}, {label: "Czy potrzebuję maski?", word: "ask2"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},        
+    {id: 'plaac-questions-1-pl', name: 'PLAAC - Pytania (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-questions-1', starter: true, buttons: [
+      [{label: "Gdzie są moi przyjaciele?", word: "friends"}, {label: "Kiedy mogę wrócić do szkoły?", word: "school"}, {label: "Kiedy możemy iść do domu?", word: "home"}, {label: "Dlaczego ja?", word: "dont-know"}],
+      [{label: "Co się dzieje?", word: "happening"}, {label: "Dlaczego my?", word: "why"}, {label: "Co zrobimy?", word: "ask"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-sensory-needs-1-pl', name: 'PLAAC - Potrzeby 2 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-sensory-needs-1', starter: true, buttons: [
+      [{label: "Muszę się uspokoić!", word: "calm"}, {label: "Muszę zakryć uszy", word: "cover-ears"}, {label: "Potrzebuję kołdry obciążeniowej", word: "blanket"}, {label: "Potrzebuję słuchawek z redukcją szumów", word: "headphones"}],
+      [{label: "Potrzebuję piaskownicy", word: "sand-box"}, {label: "Potrzebuję cichej przestrzeni", word: "quiet"}, {label: "potrzebuję", word: "help"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-shelter-sensory-1-pl', name: 'PLAAC - Ciche Miejsce (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-shelter-sensory-1', starter: true, buttons: [
+      [{label: "Jest zbyt głośno!", word: "noisy"}, {label: "Kiedy idziemy?", word: "leave"}, {label: "Nie chcę tu być!", word: "not"}, {label: "Potrzebuję spokojnego miejsca.", word: "quiet"}],
+      [{label: "To pachnie.", word: "smell"}, {label: "Jest gorące!", word: "hot"}, {label: "Jest zimno!", word: "cold"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-social-distancing-1-pl', name: 'PLAAC - Dystans (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
+      [{label: "Zostań w domu", word: "stay-at-home"}, {label: "nie podawaj sobie rąk", word: "shake-hands"}, {label: "2 metry od siebie", word: "apart"}, {label: "żadnego parku", word: "park"}],
+      [{label: "żadnego centrum handlowego", word: "mall"}, {label: "żadnego teatru", word: "theater"}, {label: "nosić maskę na twarz", word: "face-mask"}, {label: "bądź bezpieczny", word: "safe"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-statement-after-1-pl', name: 'PLAAC - Po chorobie (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-after-1', starter: true, buttons: [
+      [{label: "To było straszne!", word: "that-was-scary"}, {label: "Jak następnym razem będziemy bezpieczni?", word: "next-time"}, {label: "Co się teraz stanie?", word: "look"}, {label: "Idź do domu", word: "stay-at-home"}],
+      [{label: "Nie chcę tu być!", word: "not"}, {label: "Będę odważny!", word: "brave"}, {label: "Będzie dobrze!", word: "ok"}, {label: "Zostać razem", word: "friends"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'plaac-statement-missing-1-pl', name: 'PLAAC - Tęsknota(2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-missing-1', starter: true, buttons: [
+      [{label: "Tęsknię za moją rodziną", word: "family"}, {label: "Tęsknię za przyjaciółmi", word: "miss-friends"}, {label: "Tęsknię za moim zwierzakiem", word: "pet"}, {label: "Brakuje mi łóżka", word: "bed"}],
+      [{label: "Tęsknię za moim domem", word: "house"}, {label: "Brakuje mi telewizora", word: "tv"}, {label: "Brakuje mi mojego iPada", word: "ipad"}, null],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
   ]
 }

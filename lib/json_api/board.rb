@@ -21,7 +21,7 @@ module JsonApi::Board
     list = [board.settings['locale'] || 'en']
     trans = (BoardContent.load_content(board, 'translations') || {})
     trans.each{|k, h| if h.is_a?(Hash); list += h.keys; end }
-    json['translated_locales'] = list.uniq
+    json['translated_locales'] = list.select{|loc| !loc.blank? }.uniq
     if args[:locale]
       matching = list.detect{|l| l == args[:locale] }
       matching ||= list.detect{|l| l.split(/-|_/)[0] == args[:locale] }

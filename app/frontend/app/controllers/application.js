@@ -82,9 +82,9 @@ export default Controller.extend({
     if(desc) { desc = htmlSafe(desc.replace(/-/, '<br/>')); }
     return null; //desc;
   }),
-  update_level_buttons: observer('board.current_level', 'board.model.button_set', function() {
+  update_level_buttons: observer('board.current_level', 'board.model.button_set', 'app_state.speak_mode', function() {
     var _this = this;
-    if(this.get('board.model')) {
+    if(this.get('board.model') && !app_state.get('speak_mode')) {
       this.get('board.model').load_button_set().then(function(bs) {
         _this.set('level_buttons', bs.buttons_for_level(_this.get('board.model.id'), _this.get('board.current_level')));
       }, function() { });

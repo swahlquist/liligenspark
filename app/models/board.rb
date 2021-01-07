@@ -1269,6 +1269,24 @@ class Board < ActiveRecord::Base
     res
   end
 
+  def import_translation(translated_copy, locale, overwrite=false)
+    raise "only copies can be imported for now" unless translated_copy.parent_board == self
+    self.settings['translations'] ||= {}
+    buttons = self.buttons
+    translated_copy.settings['translations'] ||= {}
+    translated_copy.settings['translations'].each do |btn_or_ref, locs_hash|
+      if btn_or_ref == 'board_name' || buttons.detect{|b| b['id'].to_s == btn_or_ref.to_s}
+        self.settings['translations'][btn_or_ref] ||= {}
+        locs_hash.each do |loc, hash|
+          if loc == locale && (!self.settings['translations'][btn_or_ref][loc] || overwrite)
+            self.settings['translations'][btn_or_ref][loc] = hash
+          end
+        end
+      end
+    end
+    self.save
+  end
+
   def translate_set(translations, opts)
     allow_fallbacks = opts['allow_fallbacks']
     source_lang = opts['source']

@@ -262,7 +262,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
     end
   end
-  
+
   def self.update_for(board_id, immediate_update=false, traversed_ids=[])
     traversed_ids ||= []
     key = "traversed/button_set/#{board_id}"
