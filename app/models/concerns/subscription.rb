@@ -724,7 +724,7 @@ module Subscription
         if self.settings['subscription']['expiration_source']
           return :trialing_supporter if self.settings['subscription']['expiration_source'] == 'free_trial'
           return :premium_supporter if self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/)
-          return :grace_period_supporter
+          return :grace_period_supporter unless self.org_sponsored?
         else
           # legacy logic
           return :trialing_supporter if !self.created_at || self.created_at > 60.days.ago
