@@ -41,6 +41,10 @@ describe ExtraData, :type => :model do
       expect(paths).to eq(['public', 'private'])
     end
 
+    it 'should not re-upload if already uploaded the button set with the same revision hash' do
+      write_this_test
+    end
+
     it 'should upload if no extra_data_nonce defined and data too big' do
       u = User.create
       d = Device.create(user: u)

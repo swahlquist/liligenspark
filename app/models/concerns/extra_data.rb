@@ -13,6 +13,14 @@ module ExtraData
 
     Octopus.using(:master) do
       if self.data['extra_data_nonce'] && !self.data[self.extra_data_attribute]
+        if self.data['extra_data_revision'] == self.data['full_set_revision']
+          private_path = self.extra_data_private_url
+          private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
+          url = Uploader.check_existing_upload(private_path)
+          # If we've already uploaded this exact revision, don't bother
+          # re-uploading and risking a SlowDown error
+          return true if url
+        end
         self.assert_extra_data
       end
       # figure out a quick check to see if it's small enough to ignore
@@ -40,7 +48,10 @@ module ExtraData
         file = Tempfile.new("stash")
         file.write(extra_data.to_json)
         file.close
-        Uploader.remote_upload(private_path, file.path, 'text/json')
+        res = Uploader.remote_upload(private_path, file.path, 'text/json')
+        if res && self.is_a?(BoardDownstreamButtonSet)
+          self.data['extra_data_revision'] = self.data['full_set_revision']
+        end
         # persist the nonce and the url, remove the big-data attribute
         self.data['extra_data_version'] = extra_data_version
         self.data.delete(extra_data_attribute)
