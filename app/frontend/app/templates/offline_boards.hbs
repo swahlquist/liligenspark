@@ -6,6 +6,9 @@
       {{#each locales as |loc|}}
         <div style='margin-bottom: 20px;'>
           {{#preference-box title=loc.locale_text glyph=loc.icon_class title_key=loc.locale closed_text=loc.tally open=loc.open}}
+            {{#if loc.credit}}
+              <p class='text-muted' style='font-style: italic;'>{{t "translations provided by" key='translations_by'}} {{loc.credit}}</p>
+            {{/if}}
             <div class="list-group">
               {{#each loc.boards as |board|}}
                 {{#if board.starter}}

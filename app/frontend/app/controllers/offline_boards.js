@@ -18,12 +18,20 @@ export default Controller.extend({
     var pref = this.get('preferred_locale');
     for(var key in emergency.boards) {
       var starters = (emergency.boards[key] || []).filter(function(b) { return b.starter; });
+      var str = i18n.locales_localized[key] || i18n.locales[key] || key;
+      var credit = "";
+      if(key == 'pl') {
+        credit = "Includo AT Poland";
+      } else if(key == 'es') {
+        credit = "Google Translate";
+      }
       res.push({
         locale: key,
         open: pref == key,
         boards: starters,
         tally: i18n.t('n_boards', "board", {count: starters.length}),
-        locale_text: i18n.locales_localized[key] || i18n.locales[key] || key,
+        locale_text: str,
+        credit: credit,
         icon_class: "glyphicon glyphicon-globe"
       });
     }
