@@ -13,7 +13,7 @@
     {{else if trends.error}}
       {{t "Error loading trends." key='error_loading_trends'}}
     {{else if trends}}
-      <p>{{t "Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</p>
+      <p><em style='font-weight: bold; font-size: 18px;'>{{t "Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
       <div class="col-sm-3 col-xs-6" style={{elem_style}}>
         <div class="panel panel-default summary">
           <div class="panel-heading">
@@ -55,6 +55,47 @@
         </div>
       </div>
 
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Avg. Sessions per User" key='average_sessions_per_user'}}
+          </div>
+          <div class="panel-body">
+            {{trends.sessions_per_user}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Total Words" key='total_words'}}
+          </div>
+          <div class="panel-body">
+            {{delimit trends.total_words}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Auto-Home Enabled" key='auto_home_enabled'}}
+          </div>
+          <div class="panel-body">
+            {{auto_home_pct}}%
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Touch-Based Hits" key='touch-based hits'}}
+          </div>
+          <div class="panel-body">
+            {{touch_pct}}%
+          </div>
+        </div>
+      </div>
+
       {{#if trends.total_users}}
         {{#unless showing_private_info}}
           <div class='col-sm-12' style='margin-bottom: 5px; text-align: right;'>
@@ -87,20 +128,10 @@
           <div class="col-sm-3 col-xs-6">
             <div class="panel panel-default summary">
               <div class="panel-heading">
-                {{t "Avg. Sessions per User" key='average_sessions_per_user'}}
+                {{t "Active Researchable" key='active_researchable'}}
               </div>
               <div class="panel-body">
-                {{trends.sessions_per_user}}
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-3 col-xs-6">
-            <div class="panel panel-default summary">
-              <div class="panel-heading">
-                {{t "Total Words" key='total_words'}}
-              </div>
-              <div class="panel-body">
-                {{delimit trends.total_words}}
+                {{delimit trends.research_active_users}}
               </div>
             </div>
           </div>
@@ -135,26 +166,27 @@
         {{/if}}
       </div>
 
-
-      <div class='col-sm-6' style='margin-bottom: 50px;'>
-        <h4>{{t "Most-Commonly-Used Boards" key='most_common_boards'}}</h4>
-        {{#if common_boards}}
-          <div style='max-height: 300px; overflow: auto;'>
-            <div class="list-group">
-              {{#each common_boards as |board|}}
-                {{#link-to 'board' board.key class='list-group-item'}}
-                  {{board.key}}
-                  {{#if showing_private_info}}
-                    <span class='text-muted'>({{delimit board.pct}})</span>
-                  {{/if}}
-                {{/link-to}}
-              {{/each}}
+      {{#if showing_private_info}}
+        <div class='col-sm-6' style='margin-bottom: 50px;'>
+          <h4>{{t "Most-Commonly-Used Boards" key='most_common_boards'}}</h4>
+          {{#if common_boards}}
+            <div style='max-height: 300px; overflow: auto;'>
+              <div class="list-group">
+                {{#each common_boards as |board|}}
+                  {{#link-to 'board' board.key class='list-group-item'}}
+                    {{board.key}}
+                    {{#if showing_private_info}}
+                      <span class='text-muted'>({{delimit board.pct}})</span>
+                    {{/if}}
+                  {{/link-to}}
+                {{/each}}
+              </div>
             </div>
-          </div>
-        {{else}}
-          {{t "None available" key='none_available'}}
-        {{/if}}
-      </div>
+          {{else}}
+            {{t "None available" key='none_available'}}
+          {{/if}}
+        </div>
+      {{/if}}
 
       <div class='col-sm-6' style='margin-bottom: 50px;'>
         <h4>{{t "Hardware Device" key='hardware_device'}}</h4>
@@ -193,6 +225,108 @@
                       ({{delimit access.total}})
                     {{else}}
                       ({{access.percent}}%)
+                    {{/if}}
+                  </span>
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
+        <h4>{{t "Board Languages" key='board_languages'}}</h4>
+        {{#if locales}}
+          <div style='max-height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each locales as |loc|}}
+                <span class='list-group-item'>
+                  {{loc.name}} <span class='text-muted'>{{loc.locale}}</span>
+                  <span class='text-muted'>
+                    {{#if showing_private_info}}
+                      ({{delimit loc.total}})
+                    {{else}}
+                      ({{loc.percent}}%)
+                    {{/if}}
+                  </span>
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
+      {{#if showing_private_info}}
+        <div class='col-sm-6' style='margin-bottom: 50px;'>
+          <h4>{{t "Voice Output" key='voice_output'}}</h4>
+          {{#if voices}}
+            <div style='max-height: 300px; overflow: auto;'>
+              <div class="list-group">
+                {{#each voices as |voice|}}
+                  <span class='list-group-item'>
+                    {{voice.name}}
+                    <span class='text-muted'>
+                      {{#if showing_private_info}}
+                        ({{delimit voice.total}})
+                      {{else}}
+                        ({{voice.percent}}%)
+                      {{/if}}
+                    </span>
+                  </span>
+                {{/each}}
+              </div>
+            </div>
+          {{else}}
+            {{t "None available" key='none_available'}}
+          {{/if}}
+        </div>
+      {{/if}}
+
+
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
+        <h4>{{t "Button Hit Levels" key='button_hit-levels'}}</h4>
+        {{#if depths}}
+          <div style='max-height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each depths as |depth|}}
+                <span class='list-group-item'>
+                  {{t "button hit" n=depth.level key='n_button_hits'}}
+                  <span class='text-muted'>
+                    {{#if showing_private_info}}
+                      ({{delimit depth.total}})
+                    {{else}}
+                      ({{depth.percent}}%)
+                    {{/if}}
+                  </span>
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
+      <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
+        <h4>{{t "Common Words" key='common_words'}}</h4>
+        {{#if words}}
+          <div style='max-height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each words as |word|}}
+                <span class='list-group-item'>
+                  {{word.name}}
+                  <span class='text-muted' style='margin-left: 20px; font-size: 12px;'>
+                    <br/>
+                    {{t "frequency:" key='frequency'}} {{word.pct}}%<br/>
+                    {{#if word.travel}}
+                      {{t "avg. travel:" key='avg_travel'}} {{word.travel}}<br/>
+                    {{/if}}
+                    {{#if word.available}}
+                      {{t "available:" key='available'}} {{word.available}}%
                     {{/if}}
                   </span>
                 </span>

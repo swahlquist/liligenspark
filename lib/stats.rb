@@ -1355,15 +1355,19 @@ module Stats
     res[:hours] = (seconds / 3600.0).round(2)
     res[:hours_users] = LogSession.where(:log_type => 'session').where(['started_at > ? AND started_at < ?', prev_month, date]).distinct.count('user_id')
     puts "log hours: #{res[:hours]} for #{res[:hours_users]} users"
-    res[:premium_users] = User.where(['created_at < ?', date]).where(:possibly_full_premium => true).select(&:full_premium?).count
-    puts "premium_users: #{res[:premium_users]}"
+    res[:premium_users] = 0
     res[:communicators] = 0
     res[:new_communicators] = 0
+    res[:anonymous_allowed] = 0
     User.where(['created_at < ?', date]).find_in_batches(:batch_size => 100).each do |batch|
       comms = batch.select(&:communicator_role?).select{|u| !u.supporter_registration? }
+      res[:premium_users] += batch.select(&:full_premium?).count
+      res[:anonymous_allowed] += batch.select{|u| (u.settings['preferences'] || {})['allow_log_reports'] }.count
       res[:communicators] += comms.count
       res[:new_communicators] += comms.select{|u| u.created_at > prev_month }.count
     end
+    puts "premium_users: #{res[:premium_users]}"
+    puts "anonymous_allowed: #{res[:anonymous_allowed]}"
     puts "communicators: #{res[:communicators]}"
     maps = {:android => [], :ios => [], :windows => [], :browser => []}
     Device.where(['created_at < ?', date]).find_in_batches(:batch_size => 100).each do |batch|

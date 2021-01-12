@@ -1378,7 +1378,7 @@ var i18n = EmberObject.extend({
     en: "English",    
     es: "Español",
     fr: "Français",
-    pl: "Polskie"
+    pl: "Polski"
   },
   locales: {
     af_NA: "Afrikaans (Namibia)",

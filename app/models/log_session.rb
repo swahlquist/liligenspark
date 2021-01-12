@@ -1141,6 +1141,9 @@ class LogSession < ActiveRecord::Base
       }
       stash = JobStash.create(data: stash_data)
       res.data['stash_id'] = stash.global_id
+      if (user.settings['preferences'] || {})['allow_log_reports']
+        res.data['allow_research'] = true
+      end
       Rails.logger.warn('scheduling process')
       schedule(:process_delayed_follow_on, stash.global_id, non_user_params)
       Rails.logger.warn('done with process_as_follow_on')

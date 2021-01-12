@@ -57,10 +57,11 @@ export default Controller.extend({
       return res;
     }
   }),
-  compute_breakdown(attr) {
+  compute_breakdown(attr, max) {
     var res = [];
     var systems = attr || {};
     var total = 0;
+    var max_value = attr['max_value'] || max;
     for(var idx in systems) {
       if(idx != 'max_value' && systems[idx] != null) {
         total = total + systems[idx];
@@ -75,19 +76,69 @@ export default Controller.extend({
           num: systems[idx] || 0,
           percent: pct
         };
-        if(systems.max_value) {
-          obj.total = Math.round(systems[idx] * systems.max_value);
+        if(max_value) {
+          obj.total = Math.round(systems[idx] * max_value);
         }
         res.push(obj);
       }
     }
     return res.sort(function(a, b) { return b.num - a.num; });
   },
+  auto_home_pct: computed('trends.device.auto_home_returns', function() {
+    var trues = this.get('trends.device.auto_home_returns.true') || 0;
+    var falses = this.get('trends.device.auto_home_returns.false') || 0;
+    var sum = trues + falses;
+    if(sum == 0)  { sum = 1; }
+    return Math.round((trues / sum) * 1000) / 10;
+  }),
+  touch_pct: computed('trends.device.access_methods', function() {
+    var touch = 0;
+    var all = 0;
+    var methods = this.get('trends.device.access_methods');
+    for(var idx in methods) {
+      if(idx != 'max_value')  {
+        all = all + methods[idx];
+        if(idx == 'touch') {
+          touch = touch + methods[idx];
+        }
+      }
+    }
+    if(all == 0) { all = 1; }
+    return Math.round((touch / all) * 1000) / 10;
+  }),
   systems: computed('trends.device.systems', function() {
     return this.compute_breakdown(this.get('trends.device.systems') || {});
   }),
   access_methods: computed('trends.device.access_methods', function() {
     return this.compute_breakdown(this.get('trends.device.access_methods') || {});
+  }),
+  locales: computed('trends.board_locales', function() {
+    var res = this.compute_breakdown(this.get('trends.board_locales') || {}, this.get('trends.max_board_locales_count'));
+    res.forEach(function(loc) {
+      loc.locale = loc.name;
+      loc.name = i18n.locales[loc.locale] || loc.locale;
+    });
+  }),
+  voices: computed('trends.device.voice_uris', function() {
+    return this.compute_breakdown(this.get('trends.device.voice_uris') || {});
+  }),
+  depths: computed('trends.depth_counts', function() {
+    return this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));
+  }),
+  words: computed('trends.word_counts', 'trends.word_travels', 'trends.available_words', function() {
+    var res = [];
+    var counts = this.get('trends.word_counts') || {};
+    var travels = this.get('trends.word_travels') || {};
+    var available  = this.get('trends.available_words') || {};
+    for(var word in counts) {
+      var wrd = {name: word};
+      wrd.pct = counts[word] * 100.0;
+      wrd.available = (available[word] || 0) * 100.0;
+      wrd.travel = travels[word] || 0;
+      res.push(wrd);
+    }
+    res = res.sort(function(a, b) { return b.pct - a.pct; }).slice(200);
+    return res;
   }),
   word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
     var res = [];

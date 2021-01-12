@@ -106,6 +106,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     summary.data['stats'] = total_stats
     summary.data['session_ids'] = sessions.map(&:global_id)
     res = summary.save
+
+    research_user_ids = {}
+    sessions.each do |s|
+      research_user_ids[s.related_global_id(s.user_id)] = true if s.data['allow_research']
+    end
+    summary.data['research_user_ids'] = research_user_ids.keys
     
     if current_weekyear == self.weekyear
       if (target_words[:watchwords][:suggestions] || []).length > 0
@@ -430,9 +436,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
     total.data['available_words'] = {}
+    # Only save words available to more than 5 users, and available to at least
+    # a quarter of all users for the week.
     word_user_counts.each do |word, user_ids|
       user_ids.uniq!
-      if user_ids.length >= 3 && user_ids.length > total.data['totals']['total_users'] / 3
+      if user_ids.length >= 5 && user_ids.length > total.data['totals']['total_users'] / 4
         total.data['available_words'][word] = user_ids
       end
     end
@@ -513,6 +521,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:word_travels] = {}
     stash[:board_usages] = {}
     stash[:board_locales] = {}
+    stash[:research_user_ids] = []
     stash[:home_board_user_ids] = []
     stash[:device] = {}
     earliest = nil
@@ -538,6 +547,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         stash[:core_words] += summary.data['totals']['total_core_words']
         stash[:total_words] += summary.data['totals']['total_words']
         stash[:user_ids] += summary.data['user_ids'] || []
+        stash[:research_user_ids] += summary.data['research_user_ids'] || []
         stash[:total_sessions] += summary.data['totals']['total_sessions']
         (summary.data['totals']['modeled_session_events'] || {}).each do |total, cnt|
           stash[:modeled_sessions] += cnt if total >= minimum_session_modeling_events
@@ -658,14 +668,15 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:core_percent] = res[:core_percent].round(2)
     res[:words_per_minute] = (stash[:total_words].to_f / stash[:total_session_seconds].to_f * 60.0).round(1)
     res[:words_per_minute] = 0.0 if res[:words_per_minute].nan?
-    res[:research_communicators] = 1100
+    res[:research_active_users] = stash[:research_user_ids].uniq.length
+    res[:research_communicators] = 2500
+    res[:sessions_per_user] = (res[:total_sessions].to_f / res[:total_users].to_f).round(1)
+    res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
+    res[:total_words] = stash[:total_words]
     if include_admin
       res[:total_users] = total_users
       res[:total_sessions] = stash[:total_sessions]
       res[:modeled_sessions] = stash[:modeled_sessions]
-      res[:sessions_per_user] = (res[:total_sessions].to_f / res[:total_users].to_f).round(1)
-      res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
-      res[:total_words] = stash[:total_words]
     end
     
     if stash[:board_usages]
@@ -690,7 +701,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:max_depth_count] = max_depth_count if include_admin
       stash[:depth_counts].each do |depth, cnt|
         res[:depth_counts] ||= {}
-        res[:depth_counts][depth] = ((cnt.to_f / max_depth_count.to_f * 50.0).round(1) / 50.0).round(2)
+        res[:depth_counts][depth] = ((cnt.to_f / max_depth_count.to_f * 500.0).round(1) / 500.0).round(3)
       end
     end
 
@@ -720,7 +731,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
     
-    if stash[:available_words] && include_admin
+    if stash[:available_words]
       stash[:available_words].each do |word, user_ids|
         res[:available_words] ||= {}
         res[:available_words][word] = ((user_ids.uniq.length.to_f / home_board_users * 10.0).round(1) / 10.0).round(2)
