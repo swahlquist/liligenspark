@@ -145,10 +145,12 @@ export default Controller.extend({
       wrd.pct = Math.round(counts[word] * 100.0);
       wrd.available = Math.round((available[word] || 0) * 100.0);
       wrd.travel = travels[word] || 0;
+      var travel_pct = wrd.travel / 1.0;
+      wrd.score = wrd.pct + wrd.available + (1 - travel_pct);
       res.push(wrd);
     }
-    res = res.sort(function(a, b) { return b.pct - a.pct; });
-    res = res.slice(200);
+    res = res.sort(function(a, b) { return b.score - a.score; });
+    res = res.slice(0, 200);
     return res;
   }),
   word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
