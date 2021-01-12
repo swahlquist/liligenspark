@@ -42,7 +42,7 @@ export default Controller.extend({
       });
     }
   }),
-  board_locales: computed('trends.board_locales', 'showing_private_info', function() {
+  locales: computed('trends.board_locales', 'showing_private_info', function() {
     var hash = this.get('trends.board_locales');
     var tally = this.get('trends.max_board_locales_count') || 1000;
     if(hash) {
@@ -118,6 +118,7 @@ export default Controller.extend({
       loc.locale = loc.name;
       loc.name = i18n.locales[loc.locale] || loc.locale;
     });
+    return res;
   }),
   voices: computed('trends.device.voice_uris', function() {
     return this.compute_breakdown(this.get('trends.device.voice_uris') || {});
@@ -126,7 +127,7 @@ export default Controller.extend({
     var res = this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));
     var lows = 0;
     res.forEach(function(d) {
-      d.level = parseInt(d.name);
+      d.level = parseInt(d.name) + 1;
       if(d.pct == "<1") {
         lows++;
       }

@@ -294,7 +294,7 @@
             <div class="list-group">
               {{#each depths as |depth|}}
                 <span class='list-group-item'>
-                  {{t "button hit" n=depth.level key='n_button_hits'}}
+                  {{t "button hit" count=depth.level key='n_button_hits'}}
                   <span class='text-muted'>
                     {{#if showing_private_info}}
                       ({{delimit depth.total}})
