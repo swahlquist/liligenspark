@@ -123,7 +123,16 @@ export default Controller.extend({
     return this.compute_breakdown(this.get('trends.device.voice_uris') || {});
   }),
   depths: computed('trends.depth_counts', function() {
-    return this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));
+    var res = this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));
+    var lows = 0;
+    res.forEach(function(d) {
+      d.level = parseInt(d.name);
+      if(d.pct == "<1") {
+        lows++;
+      }
+      if(lows > 5) { d.skip = true; }
+    });
+    return res.filter(function(d) { return !d.skip; });
   }),
   words: computed('trends.word_counts', 'trends.word_travels', 'trends.available_words', function() {
     var res = [];
@@ -137,7 +146,7 @@ export default Controller.extend({
       wrd.travel = travels[word] || 0;
       res.push(wrd);
     }
-    res = res.sort(function(a, b) { return b.pct - a.pct; }).slice(200);
+    res = res.sort(function(a, b) { return b.pct - a.pct; }).reverse().slice(200);
     return res;
   }),
   word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
