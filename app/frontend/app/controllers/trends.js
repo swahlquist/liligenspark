@@ -128,7 +128,7 @@ export default Controller.extend({
     var lows = 0;
     res.forEach(function(d) {
       d.level = parseInt(d.name) + 1;
-      if(d.pct == "<1") {
+      if(d.percent == "<1") {
         lows++;
       }
       if(lows > 5) { d.skip = true; }
@@ -142,12 +142,13 @@ export default Controller.extend({
     var available  = this.get('trends.available_words') || {};
     for(var word in counts) {
       var wrd = {name: word};
-      wrd.pct = counts[word] * 100.0;
-      wrd.available = (available[word] || 0) * 100.0;
+      wrd.pct = Math.roound(counts[word] * 100.0);
+      wrd.available = Math.round((available[word] || 0) * 100.0);
       wrd.travel = travels[word] || 0;
       res.push(wrd);
     }
-    res = res.sort(function(a, b) { return b.pct - a.pct; }).reverse().slice(200);
+    res = res.sort(function(a, b) { return b.pct - a.pct; });
+    res = res.slice(200);
     return res;
   }),
   word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
