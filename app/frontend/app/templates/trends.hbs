@@ -295,6 +295,7 @@
               {{#each depths as |depth|}}
                 <span class='list-group-item'>
                   {{t "button hit" count=depth.level key='n_button_hits'}}
+                  {{t "to select" key='to_select'}}
                   <span class='text-muted'>
                     {{#if showing_private_info}}
                       ({{delimit depth.total}})
