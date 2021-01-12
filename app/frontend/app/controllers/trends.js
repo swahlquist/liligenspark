@@ -142,7 +142,7 @@ export default Controller.extend({
     var available  = this.get('trends.available_words') || {};
     for(var word in counts) {
       var wrd = {name: word};
-      wrd.pct = Math.roound(counts[word] * 100.0);
+      wrd.pct = Math.round(counts[word] * 100.0);
       wrd.available = Math.round((available[word] || 0) * 100.0);
       wrd.travel = travels[word] || 0;
       res.push(wrd);
