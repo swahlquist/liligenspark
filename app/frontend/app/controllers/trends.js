@@ -42,21 +42,6 @@ export default Controller.extend({
       });
     }
   }),
-  locales: computed('trends.board_locales', 'showing_private_info', function() {
-    var hash = this.get('trends.board_locales');
-    var tally = this.get('trends.max_board_locales_count') || 1000;
-    if(hash) {
-      var res = [];
-      for(var idx in hash) {
-        res.push({key: idx, pct: (hash[idx] * tally)});
-      }
-      res = res.sort(function(a, b) {
-        return b.pct - a.pct;
-      });
-      res = res.slice(0, 50);
-      return res;
-    }
-  }),
   compute_breakdown(attr, max) {
     var res = [];
     var systems = attr || {};
@@ -113,7 +98,14 @@ export default Controller.extend({
     return this.compute_breakdown(this.get('trends.device.access_methods') || {});
   }),
   locales: computed('trends.board_locales', function() {
-    var res = this.compute_breakdown(this.get('trends.board_locales') || {}, this.get('trends.max_board_locales_count'));
+    var hash = {};
+    var locs = this.get('trends.board_locales') || {};
+    for(var loc in locs) {
+      var lang = loc.split(/-|_/)[0];
+      hash[lang] = (hash[lang] || 0) +  locs[loc];
+    }
+    var max = this.get('trends.max_board_locales_count') * Math.max.apply(null, Object.values(hash));
+    var res = this.compute_breakdown(hash, max);
     res.forEach(function(loc) {
       loc.locale = loc.name;
       loc.name = i18n.locales[loc.locale] || loc.locale;
@@ -121,7 +113,7 @@ export default Controller.extend({
     return res;
   }),
   voices: computed('trends.device.voice_uris', function() {
-    return this.compute_breakdown(this.get('trends.device.voice_uris') || {});
+    return this.compute_breakdown(this.get('trends.device.voice_uris') || {}).select(function(v) { return v.total > 0; });
   }),
   depths: computed('trends.depth_counts', function() {
     var res = this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));
