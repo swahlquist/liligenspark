@@ -74,8 +74,18 @@ Ember.templateHelpers.delimit = function(num, type) {
   pieces = pieces.reverse().map(function(p, idx) { p = p.toString(); while(idx > 0 && p.length < 3) { p = "0" + p; } return p; });
   if(pieces.length == 1) {
     return val.toString();
+  } else if(pieces.length > 3 && type != 'full') {
+    pieces.pop();
+    pieces.pop();
+    if(pieces.length == 1 && pieces[0] < 10) {
+      pieces[0] = Math.round(pieces[0] * 100) / 100;
+    }
+    return i18n.t('n_million', "%{num}M", {num: pieces.join(',')});
   } else if(pieces.length > 2 && type != 'full') {
     pieces.pop();
+    if(pieces.length == 1 && pieces[0] < 10) {
+      pieces[0] = Math.round(pieces[0] * 10) / 10;
+    }
     return i18n.t('n_thousand', "%{num}k", {num: pieces.join(',')});
   } else {
     return pieces.join(',');

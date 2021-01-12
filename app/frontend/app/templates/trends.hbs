@@ -166,6 +166,30 @@
         {{/if}}
       </div>
 
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
+        <h4>{{t "Board Languages" key='board_languages'}}</h4>
+        {{#if locales}}
+          <div style='height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each locales as |loc|}}
+                <span class='list-group-item'>
+                  {{loc.name}} <span class='text-muted'>{{loc.locale}}</span>
+                  <span class='text-muted'>
+                    {{#if showing_private_info}}
+                      ({{delimit loc.total}})
+                    {{else}}
+                      ({{loc.percent}}%)
+                    {{/if}}
+                  </span>
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
       {{#if showing_private_info}}
         <div class='col-sm-6' style='margin-bottom: 50px;'>
           <h4>{{t "Most-Commonly-Used Boards" key='most_common_boards'}}</h4>
@@ -236,30 +260,6 @@
         {{/if}}
       </div>
 
-      <div class='col-sm-6' style='margin-bottom: 50px;'>
-        <h4>{{t "Board Languages" key='board_languages'}}</h4>
-        {{#if locales}}
-          <div style='height: 300px; overflow: auto;'>
-            <div class="list-group">
-              {{#each locales as |loc|}}
-                <span class='list-group-item'>
-                  {{loc.name}} <span class='text-muted'>{{loc.locale}}</span>
-                  <span class='text-muted'>
-                    {{#if showing_private_info}}
-                      ({{delimit loc.total}})
-                    {{else}}
-                      ({{loc.percent}}%)
-                    {{/if}}
-                  </span>
-                </span>
-              {{/each}}
-            </div>
-          </div>
-        {{else}}
-          {{t "None available" key='none_available'}}
-        {{/if}}
-      </div>
-
       {{#if showing_private_info}}
         <div class='col-sm-6' style='margin-bottom: 50px;'>
           <h4>{{t "Voice Output" key='voice_output'}}</h4>
@@ -311,7 +311,7 @@
         {{/if}}
       </div>
 
-      <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
         <h4>{{t "Common Words" key='common_words'}}</h4>
         {{#if words}}
           <div style='height: 300px; overflow: auto;'>
@@ -326,7 +326,7 @@
                       {{t "avg. travel:" key='avg_travel'}} {{word.travel}}&nbsp;&nbsp;
                     {{/if}}
                     {{#if word.available}}
-                      {{t "available:" key='available'}} {{word.available}}%
+                      {{t "available to:" key='available'}} {{word.available}}%
                     {{/if}}
                   </span>
                 </span>
@@ -361,6 +361,7 @@
       </div>
       
       <div class='col-sm-6'>
+        <h4>{{t "Have More Questions?" key='have_more_questions'}}</h4>
         <p>{{t "Isn't data great? Usually when we see a little bit, it makes us think of more questions to ask, and we want to dig in deeper. There's always more to learn, more research we can do to help communicators succeed." key='data_summary_1'}}</p>
         <p>{{t "Did you know we have over <b>%{cnt}</b> communicators who have opted in to sharing their anonymized usage data with researchers? We work with AAC research organizations and institutions to discover valuable trends and insights that can help move the industry forward." key='data_summary_2' cnt=trends.research_communicators}}</p>
         <p>{{#link-to 'contact'}}{{t "Please contact us" key='please_contact_us'}}{{/link-to}} {{t "if you'd like to collaborate on an AAC research project." key='for_research_project'}}</p>
