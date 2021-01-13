@@ -599,7 +599,7 @@ var evaluation = {
       } else {
         modal.notice(i18n.t('speak_mode_required_for_buttons', "Please enter speak mode before trying to run an evaluation"), true);
       }
-      return {ignore: true, highlight: false};
+      return {ignore: true, highlight: false, auto_return: false};
     };
     return {board: board, handler: handler};
   }
@@ -682,16 +682,32 @@ var levels = [
     {id: 'core-find', core: true, find: 'core', difficulty: 0, distractors: true, min_attempts: 3},
     {id: 'core-find+', core: true, find: 'core', difficulty: 1, distractors: true, min_attempts: 3},
   ], [
-    {intro: 'open_ended'}, // open-ended commenary on pictures, only up to observed proficiency level
+    {intro: 'open_ended'}, // open-ended commentary on pictures, only up to observed proficiency level
     {id: 'open-core', core: true, difficulty: 1, distractors: true, prompts: [
-      {id: 'kid1', url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {id: 'kid2', url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {id: 'kid3', url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      //    ['happy', 'sad', 'dog', 'eat', 'play', 'read', 'ball']
+      {id: 'kidc1', core_word: 'eat', url: 'https://images.pexels.com/photos/6413448/pexels-photo-6413448.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc2', core_word: 'play', url: 'https://images.pexels.com/photos/4004418/pexels-photo-4004418.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc3', core_word: 'read', url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc4', core_word: 'read', url: 'https://images.pexels.com/photos/1741230/pexels-photo-1741230.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc5', core_word: 'eat', url: 'https://images.pexels.com/photos/5693056/pexels-photo-5693056.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc6', core_word: 'dog', url: 'https://images.pexels.com/photos/332974/pexels-photo-332974.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc7', core_word: 'play', url: 'https://images.pexels.com/photos/3618499/pexels-photo-3618499.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc8', core_word: 'play', url: 'https://images.pexels.com/photos/974498/pexels-photo-974498.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc9', core_word: 'happy', url: 'https://images.pexels.com/photos/294173/pexels-photo-294173.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc10', core_word: 'play', url: 'https://images.pexels.com/photos/4691579/pexels-photo-4691579.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc11', core_word: 'sad', url: 'https://images.pexels.com/photos/208087/pexels-photo-208087.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc12', core_word: 'read', url: 'https://images.pexels.com/photos/5634667/pexels-photo-5634667.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidc13', core_word: 'they', url: 'https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'}
     ]}, // allow cycling through while staying on the same step
     {id: 'open-keyboard', core: true, keyboard: true, prompts: [
-      {id: 'kid4', url: 'https://images.pexels.com/photos/159823/kids-girl-pencil-drawing-159823.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {id: 'kid5', url: 'https://images.pexels.com/photos/207697/pexels-photo-207697.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
-      {id: 'kid6', url: 'https://images.pexels.com/photos/261895/pexels-photo-261895.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk1', ref: 'bike', url: 'https://images.pexels.com/photos/5792901/pexels-photo-5792901.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk2', ref: 'game', url: 'https://images.pexels.com/photos/4691587/pexels-photo-4691587.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk3', ref: 'snack', url: 'https://images.pexels.com/photos/5692278/pexels-photo-5692278.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk4', ref: 'bake', url: 'https://images.pexels.com/photos/3992206/pexels-photo-3992206.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk5', ref: 'race', url: 'https://images.pexels.com/photos/1571939/pexels-photo-1571939.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk6', ref: 'construction', url: 'https://images.pexels.com/photos/544966/pexels-photo-544966.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk7', ref: 'library', url: 'https://images.pexels.com/photos/1106468/pexels-photo-1106468.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
+      {id: 'kidk8', ref: 'shopping', url: 'https://images.pexels.com/photos/896018/pexels-photo-896018.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500'},
     ]}
   ], [
     {intro: 'categories', continue_on_non_mastery: true}, 
@@ -951,6 +967,16 @@ evaluation.callback = function(key) {
       opts = evaluation.core_list(step, step_rows, step_cols);
       core = opts.core;
       core_list = opts.core_list;
+      if(step.prompts && working.ref.core_step != step) {
+        working.ref.core_step = step;
+        working.ref.core_prompts = [];
+        step.prompts.forEach(function(prompt) {
+          if(step.keyboard || !prompt.core_word || core_list.indexOf(prompt.core_word) != -1) {
+            working.ref.core_prompts.push(prompt);
+          }
+        });
+        working.ref.core_prompts = shuffle(working.ref.core_prompts);
+      }
     }
     board = obf.shell(step_rows, step_cols);
     board.key = 'obf/eval-' + Math.round(Math.random() * 9999) + "-" + (new Date()).getTime();
@@ -1311,7 +1337,9 @@ evaluation.callback = function(key) {
       board.background.prompt = null;
       board.background.text = null;
 
-      working.ref.prompt_index = working.ref.prompt_index || Math.floor(Math.random() * step.prompts.length);
+      // TODO: only include images/prompts that apply to
+      // the current core list
+      working.ref.prompt_index = working.ref.prompt_index || Math.floor(Math.random() * step.prompts.length) || 0;
       working.ref.prompt_index++;
       if(working.ref.prompt_index >= step.prompts.length) { working.ref.prompt_index = 0; }
       var prompt = step.prompts[working.ref.prompt_index];
@@ -1577,7 +1605,8 @@ evaluation.callback = function(key) {
           if(letter) {
             board.add_button({
               label: letter,
-              vocalization: letter == '_' ? ':space' : '+' + letter,
+              vocalization: letter == '⎵' ? ':space' : '+' + letter,
+              text_only: true,
               image: null,
             }, idx * spacing + offset + skip_rows, jdx * spacing + offset)            
           } else {
@@ -1867,7 +1896,7 @@ evaluation.core_list = function(step, step_rows, step_cols) {
     core = [
       ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
       ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', null],
-      ['_', 'z', 'x', 'c', 'v', 'b', 'n', 'm', null, '_']
+      ['⎵', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '⎵', '⎵']
     ];  
   } else if(step_rows >= 6) {
     if(step_cols == 5 || true) {
@@ -1882,7 +1911,7 @@ evaluation.core_list = function(step, step_rows, step_cols) {
     if(step_cols == 4 || true) {
       step_cols = 5;
       core = [
-        ['he',  'is', 'eat', 'good', 'bad'],
+        ['he',  'is', 'eat', 'happy', 'sad'],
         ['she', 'want', 'play', 'ball', 'dog'],
         ['they',  'not', 'read', 'treat', 'book'],
       ];
@@ -1916,6 +1945,8 @@ evaluation.core_list = function(step, step_rows, step_cols) {
   }
   var core_list = [];
   if(!step.keyboard) {
+    // this shuffles the list of core words so
+    // that "find [core_word]" is randomized
     for(var idx = 0; idx < core.length; idx++) {
       for(var jdx = 0; jdx < core[idx].length; jdx++) {
         core_list.push(core[idx][jdx]);

@@ -74,14 +74,14 @@ Ember.templateHelpers.delimit = function(num, type) {
   pieces = pieces.reverse().map(function(p, idx) { p = p.toString(); while(idx > 0 && p.length < 3) { p = "0" + p; } return p; });
   if(pieces.length == 1) {
     return val.toString();
-  } else if(pieces.length > 3 && type != 'full') {
+  } else if(pieces.length > 2 && type != 'full') {
     pieces.pop();
     pieces.pop();
     if(pieces.length == 1 && pieces[0] < 10) {
       pieces[0] = Math.round(pieces[0] * 100) / 100;
     }
     return i18n.t('n_million', "%{num}M", {num: pieces.join(',')});
-  } else if(pieces.length > 2 && type != 'full') {
+  } else if(pieces.length > 1 && type != 'full') {
     pieces.pop();
     if(pieces.length == 1 && pieces[0] < 10) {
       pieces[0] = Math.round(pieces[0] * 10) / 10;
@@ -127,7 +127,8 @@ Ember.templateHelpers.seconds_ago = function(seconds, distance) {
     var hours = Math.round(seconds / 3600 * 10) / 10;
     if(distance != 'long' || hours < 24) {
       if(hours > 999) {
-        hours = Ember.templateHelpers.delimit(hours);
+        hours = Ember.templateHelpers.delimit(hours) + " ";
+        distance = 'brief';
       }
       if(distance == 'brief') {
         return i18n.t('brief_hours_ago', "%{n}hr", {hash: {n: hours, number: true}});

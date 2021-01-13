@@ -5,13 +5,14 @@
 -->
 <div class='row'>
   <div class='col-sm-8 col-sm-offset-2'>
-    <h2 style='margin-bottom: 30px;'>{{t "%app_name% Usage Trends" key='coughdrop_usage_trends'}}</h2>
+    <h2 style='margin-bottom: 30px;'>{{t "%app_name% Aggregate Research" key='coughdrop_aggregate_research'}}</h2>
 
-    <p style='margin-bottom: 20px;'>{{t "Curious how %app_name% is being used? We have a large number of communicators using %app_name%, and thought it might help to see how those communicators are benefitting from our cloud-based, team-enabling AAC app. The following data is based on activity by active %app_name% users over the past few months." key='trends_explainer'}}</p>
+    <p style='margin-bottom: 20px;'>{{t "%app_name% users can opt-in to recording their usagee data for personal and team analysis and reference. Whenever someone opts-in to data logging, we also ask if they would be willing to share an anonymized record of their usage with independent researchers. We partner with research firms to analyze this data in aggregate to provide better insights into AAC use and to investigate how supports can be improved." key='trends_explainer'}}</p>
+    <p style='margin-bottom: 20px;'>{{t "If you are interested in conducting AAC research, please consider reaching out to us to learn more about this important project. Below are some examples of the types of data that can be collected, anonymously and in aggregate, to help aid AAC research." key='trends_explainer2'}}</p>
     {{#if trends.loading}}
-      {{t "Loading trends..." key='loading_trends'}}
+      {{t "Loading anonymized snapshot..." key='loading_trends'}}
     {{else if trends.error}}
-      {{t "Error loading trends." key='error_loading_trends'}}
+      {{t "Error loading anonymized snapshot." key='error_loading_trends'}}
     {{else if trends}}
       <p><em style='font-weight: bold; font-size: 18px;'>{{t "Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
       <div class="col-sm-3 col-xs-6" style={{elem_style}}>
@@ -363,8 +364,7 @@
       
       <div class='col-sm-6'>
         <h4>{{t "Have More Questions?" key='have_more_questions'}}</h4>
-        <p>{{t "Isn't data great? Usually when we see a little bit, it makes us think of more questions to ask, and we want to dig in deeper. There's always more to learn, more research we can do to help communicators succeed." key='data_summary_1'}}</p>
-        <p>{{t "Did you know we have over <b>%{cnt}</b> communicators who have opted in to sharing their anonymized usage data with researchers? We work with AAC research organizations and institutions to discover valuable trends and insights that can help move the industry forward." key='data_summary_2' cnt=trends.research_communicators}}</p>
+        <p>{{t "We hope this small data sample has helped you think of some of the additional questions we could  all benefit from answering with the help of anonymized AAC usage data. We have over <b>%{cnt}</b> communicators who have opted in to sharing their anonymized usage data with researchers, in a strictly private and protected manner." key='data_summary_2' cnt=trends.research_communicators}}</p>
         <p>{{#link-to 'contact'}}{{t "Please contact us" key='please_contact_us'}}{{/link-to}} {{t "if you'd like to collaborate on an AAC research project." key='for_research_project'}}</p>
       </div>
 
