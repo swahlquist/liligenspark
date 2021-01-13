@@ -585,9 +585,9 @@ class User < ActiveRecord::Base
       'new_index', 'debounce', 'cookies', 'preferred_symbols', 'tag_ids', 'vibrate_buttons',
       'highlighted_buttons', 'never_delete', 'dim_header', 'inflections_overlay',
       'highlight_popup_text', 'phrase_categories', 'high_contrast', 'swipe_pages',
-      'hide_pin_hint', 'battery_sounds', 'auto_inflections',
+      'hide_pin_hint', 'battery_sounds', 'auto_inflections', 'private_logging',
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept']
-  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'geo_logging', 'allow_log_reports', 'cookies', 'never_delete']
+  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 'cookies', 'never_delete']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 
       'home_board_set', 'app_added', 'skipped_subscribe_modal', 'speak_mode_intro_done',
@@ -851,6 +851,10 @@ class User < ActiveRecord::Base
       self.settings['display_user_name'] = new_user_name
     end
     true
+  end
+
+  def private_logging?
+    !!(self.settings && self.settings['preferences'] && self.settings['preferences']['private_logging'])
   end
 
   def update_home_board_inflections

@@ -72,6 +72,9 @@ export default Controller.extend({
   some_highlighted_buttons: computed('pending_preferences.highlighted_buttons', function() {
     return this.get('pending_preferences.highlighted_buttons') && this.get('pending_preferences.highlighted_buttons') != 'none';
   }),
+  cant_change_private_logging: computed('pending_preferences.private_logging', 'model.permissions.delete', function() {
+    return this.get('pending_preferences.private_logging') && !this.get('model.permissions.delete');
+  }),
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
     {name: i18n.t('default_font_caps', "Default Font, All Uppercase"), id: "default_caps"},

@@ -291,7 +291,7 @@ class LogSession < ActiveRecord::Base
     
     self.processed ||= false
     if self.needs_remote_push == nil
-      self.needs_remote_push = !!(self.log_type == 'session' && self.user_id) 
+      self.needs_remote_push = !!(self.log_type == 'session' && self.user_id && self.user && !self.user.private_logging?) 
     end
     throw(:abort) unless self.user_id && self.author_id && self.device_id
     true
@@ -1622,7 +1622,7 @@ class LogSession < ActiveRecord::Base
   def additional_webhook_record_codes(notification_type, additional_args)
     res = []
     if notification_type == 'new_session'
-      if self.user && self.user.record_code
+      if self.user && self.user.record_code && !self.private_logging?
         res << "#{self.user.record_code}::*"
         res << "#{self.user.record_code}::log_session:*"
       end

@@ -35,7 +35,7 @@ class Organization < ActiveRecord::Base
   def log_sessions
     sessions = LogSession.where(:log_type => 'session')
     if !self.admin
-      user_ids = self.users.map(&:id)
+      user_ids = self.users.select{|u| !u.private_logging? }.map(&:id)
       sessions = sessions.where(:user_id => user_ids)
     end
     sessions.where(['started_at > ? AND started_at <= ?', 6.months.ago, Time.now]).order('started_at DESC')

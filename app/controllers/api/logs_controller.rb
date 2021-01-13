@@ -6,12 +6,15 @@ class Api::LogsController < ApplicationController
     return unless allowed?(user, 'supervise')
     if user.modeling_only?
       return unless allowed?(user, 'never_allow')
+    elsif user.private_logging? && (@true_user || @api_user) != user
+      return unless allowed?(user, 'never_allow')
     end
+
     user_ids = [user.id]
     for_self = true
     user_ids = [] if params['supervisees']
     if params['supervisees']
-      user_ids += user.supervisees.map(&:id)
+      user_ids += user.supervisees.select{|u| !u.private_logging? }.map(&:id)
       for_self = false
     end
     user_ids = user_ids.uniq
@@ -77,6 +80,9 @@ class Api::LogsController < ApplicationController
     return unless exists?(log, params['id'])
     user = log && log.user
     return unless allowed?(user, 'supervise')
+    if user.private_logging? && (@true_user || @api_user) != user
+      return unless allowed?(user, 'never_allow')
+    end
     
     render json: JsonApi::Log.as_json(log, :wrapper => true, :permissions => @api_user).to_json
   end
