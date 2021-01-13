@@ -8,13 +8,13 @@
     <h2 style='margin-bottom: 30px;'>{{t "%app_name% Aggregate Research" key='coughdrop_aggregate_research'}}</h2>
 
     <p style='margin-bottom: 20px;'>{{t "%app_name% users can opt-in to recording their usage data for personal and team analysis and reference. Whenever someone opts-in to data logging, we also ask if they would be willing to share an anonymized record of their usage data with independent researchers. We collaborate with non-profit research organizations to analyze this data in aggregate to provide better insights into AAC use and to investigate how supports can be improved." key='trends_explainer'}}</p>
-    <p style='margin-bottom: 20px;'>{{t "If you are interested in conducting AAC research, please consider reaching out to us to learn more about this important project. Below are some examples of the types of data that can be collected, anonymously and in aggregate, to help aid AAC research. All word usage information is based on aggregate data only from users who have opted in to anonymized research." key='trends_explainer2'}}</p>
+    <p style='margin-bottom: 20px;'>{{t "If you are interested in conducting AAC research, please consider reaching out to us to learn more about this important project. Below are some examples of the types of data that can be collected, anonymously and in aggregate, to help aid AAC research. All word usage information is based on aggregate data only from users who have opted in to anonymized research and reporting." key='trends_explainer2'}}</p>
     {{#if trends.loading}}
       {{t "Loading anonymized snapshot..." key='loading_trends'}}
     {{else if trends.error}}
       {{t "Error loading anonymized snapshot." key='error_loading_trends'}}
     {{else if trends}}
-      <p><em style='font-weight: bold; font-size: 18px;'>{{t "Anonymized Aggregate Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
+      <p><em style='font-weight: bold; font-size: 18px;'>{{t "Anonymized Aggregate Research Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
       <div class="col-sm-3 col-xs-6" style={{elem_style}}>
         <div class="panel panel-default summary">
           <div class="panel-heading">
@@ -28,10 +28,34 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary">
           <div class="panel-heading">
+            {{t "Avg. Sessions per User" key='average_sessions_per_user'}}
+          </div>
+          <div class="panel-body">
+            {{trends.sessions_per_user}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
             {{t "Modeling Frequency" key='percent_modeling'}}
           </div>
           <div class="panel-body">
             {{trends.modeled_percent}}%
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Total Words" key='total_words'}}
+          </div>
+          <div class="panel-body">
+            {{#if showing_private_info}}
+              {{delimit trends.admin_total_words}}
+            {{else}}
+              {{delimit trends.total_words}}
+            {{/if}}
           </div>
         </div>
       </div>
@@ -56,26 +80,6 @@
         </div>
       </div>
 
-      <div class="col-sm-3 col-xs-6">
-        <div class="panel panel-default summary">
-          <div class="panel-heading">
-            {{t "Avg. Sessions per User" key='average_sessions_per_user'}}
-          </div>
-          <div class="panel-body">
-            {{trends.sessions_per_user}}
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-3 col-xs-6">
-        <div class="panel panel-default summary">
-          <div class="panel-heading">
-            {{t "Total Words" key='total_words'}}
-          </div>
-          <div class="panel-body">
-            {{delimit trends.total_words}}
-          </div>
-        </div>
-      </div>
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary">
           <div class="panel-heading">
@@ -133,6 +137,16 @@
               </div>
               <div class="panel-body">
                 {{delimit trends.research_active_users}}
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3 col-xs-6">
+            <div class="panel panel-default summary">
+              <div class="panel-heading">
+                {{t "Active Publishable" key='active_publishable'}}
+              </div>
+              <div class="panel-body">
+                {{delimit trends.publishing_active_users}}
               </div>
             </div>
           </div>

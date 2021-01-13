@@ -108,10 +108,13 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res = summary.save
 
     research_user_ids = {}
+    publishing_user_ids = {}
     sessions.each do |s|
       research_user_ids[s.related_global_id(s.user_id)] = true if s.data['allow_research']
+      publishing_user_ids[s.related_global_id(s.user_id)] = true if s.data['allow_publishing']
     end
     summary.data['research_user_ids'] = research_user_ids.keys
+    summary.data['publishing_user_ids'] = publishing_user_ids.keys
     
     if current_weekyear == self.weekyear
       if (target_words[:watchwords][:suggestions] || []).length > 0
@@ -269,6 +272,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     home_boards = {}
     device_prefs = {}
     user_ids_with_home_boards = []
+    logging_warned = Date.parse('April 18, 2018')
     sums.find_in_batches(batch_size: 5) do |batch|
       # TODO: sharding
       users = User.where(:id => batch.map(&:user_id))
@@ -295,6 +299,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
         # quick win with some basic, easy data to track
         sum_user = users.detect{|u| u.id == summary.user_id }
         include_word_reports = sum_user && sum_user.settings && sum_user.settings['preferences'] && sum_user.settings['preferences']['allow_log_reports']
+        total.data['totals']['admin_total_words'] += (summary.data['stats']['all_word_counts'] || {}).map(&:last).sum + (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
+        next if sum_user && sum_user.created_at < logging_warned && !include_word_reports
         total_keys.each do |key|
           total.data['totals'][key] ||= 0
           total.data['totals'][key] += (summary.data['stats'] || {})[key] || 0
@@ -523,16 +529,17 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:total_buttons] = 0
     stash[:core_words] = 0
     stash[:total_words] = 0
+    stash[:admin_total_words] = 0
     stash[:user_ids] = []
     stash[:total_sessions] = 0
     stash[:modeled_sessions] = 0
-    stash[:total_words] = 0
     stash[:word_counts] = {}
     stash[:depth_counts] = {}
     stash[:word_travels] = {}
     stash[:board_usages] = {}
     stash[:board_locales] = {}
     stash[:research_user_ids] = []
+    stash[:publishing_user_ids] = []
     stash[:home_board_user_ids] = []
     stash[:device] = {}
     earliest = nil
@@ -557,8 +564,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
         stash[:total_buttons] += summary.data['totals']['total_buttons']
         stash[:core_words] += summary.data['totals']['total_core_words']
         stash[:total_words] += summary.data['totals']['total_words']
+        stash[:admin_total_words] += (summary.data['totals']['admin_total_words'] || summary.data['totals']['total_words'])
         stash[:user_ids] += summary.data['user_ids'] || []
         stash[:research_user_ids] += summary.data['research_user_ids'] || []
+        stash[:publishing_user_ids] += summary.data['publishing_user_ids'] || []
         stash[:total_sessions] += summary.data['totals']['total_sessions']
         (summary.data['totals']['modeled_session_events'] || {}).each do |total, cnt|
           stash[:modeled_sessions] += cnt if total >= minimum_session_modeling_events
@@ -680,10 +689,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:words_per_minute] = (stash[:total_words].to_f / stash[:total_session_seconds].to_f * 60.0).round(1)
     res[:words_per_minute] = 0.0 if res[:words_per_minute].nan?
     res[:research_active_users] = stash[:research_user_ids].uniq.length if include_admin
+    res[:publishing_active_users] = stash[:publishing_user_ids].uniq.length if include_admin
     res[:research_communicators] = 2500
     res[:sessions_per_user] = (stash[:total_sessions].to_f / total_users.to_f).round(1)
     res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
     res[:total_words] = stash[:total_words]
+    res[:admin_total_words] = stash[:admin_total_words]
     if include_admin
       res[:total_users] = total_users
       res[:total_sessions] = stash[:total_sessions]

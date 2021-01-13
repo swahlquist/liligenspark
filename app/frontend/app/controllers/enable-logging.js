@@ -7,13 +7,12 @@ export default modal.ModalController.extend({
   opening: function() {
     this.set('research', false);
     this.set('model.user.preferences.allow_log_reports', false);
+    this.set('publishing', false);
+    this.set('model.user.preferences.allow_log_publishing', false);
   },
   closing: function() {
-    if(this.get('research')) {
-      this.set('model.user.preferences.allow_log_reports', true);
-    } else {
-      this.set('model.user.preferences.allow_log_reports', false);
-    }
+    this.set('model.user.preferences.allow_log_reports', !!this.get('research'));
+    this.set('model.user.preferences.allow_log_publishing', !!this.get('publishing'));
     if(this.get('model.save')) {
       this.get('model.user').save();
     }
