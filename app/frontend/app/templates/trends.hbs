@@ -14,7 +14,7 @@
     {{else if trends.error}}
       {{t "Error loading anonymized snapshot." key='error_loading_trends'}}
     {{else if trends}}
-      <p><em style='font-weight: bold; font-size: 18px;'>{{t "Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
+      <p><em style='font-weight: bold; font-size: 18px;'>{{t "Anonymized Data for %{start} to %{end}" start=trends.started_at end=trends.ended_at key='data_for_start_to_end'}}</em></p>
       <div class="col-sm-3 col-xs-6" style={{elem_style}}>
         <div class="panel panel-default summary">
           <div class="panel-heading">
