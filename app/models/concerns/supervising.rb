@@ -111,7 +111,10 @@ module Supervising
       return false if !supervisor || self == supervisor
       grant_code = nil
       grant_code = 'granted' if action_parts.include?('premium') && self.premium_supporter_grants > 0
-      self.class.link_supervisor_to_user(supervisor, self, nil, action_parts.include?('edit'), grant_code)
+      type = nil
+      type = 'edit' if action_parts.include?('edit')
+      type = 'modeling_only' if action_parts.include?('modeling')
+      self.class.link_supervisor_to_user(supervisor, self, nil, type, grant_code)
       return true
     elsif action == 'approve' && key == 'org'
       self.settings['pending'] = false
@@ -199,7 +202,9 @@ module Supervising
       end
     end
     
-    def link_supervisor_to_user(supervisor, user, code=nil, editor=true, organization_unit_id=nil)
+    def link_supervisor_to_user(supervisor, user, code=nil, type=true, organization_unit_id=nil)
+      type = 'edit' if type == true
+      type ||= 'read_only'
       supervisor = user if supervisor.global_id == user.global_id
       
       grant_premium = false
@@ -211,7 +216,8 @@ module Supervising
       org_unit_ids += UserLink.links_for(user).select{|l| l['type'] == 'supervisor' && l['record_code'] == Webhook.get_record_code(supervisor) }.map{|l| l['state'] && l['state']['organization_unit_ids'] }.compact.flatten
 
       link = UserLink.generate(user, supervisor, 'supervisor')
-      link.data['state']['edit_permission'] = true if editor
+      link.data['state']['edit_permission'] = true if type == 'edit'
+      link.data['state']['modeling_only'] = true if type == 'modeling_only'
       link.data['state']['supervisee_user_name'] = user.user_name
       link.data['state']['supervisor_user_name'] = supervisor.user_name
       link.data['state']['organization_unit_ids'] = ((org_unit_ids || []) + ([organization_unit_id].compact)).uniq

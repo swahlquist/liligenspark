@@ -49,6 +49,8 @@
               {{/if}}
               {{#if supervisor.edit_permission}}
                 <span class="text-muted">{{t "(editing allowed)" key='editing_allowed'}}</span>
+              {{else if supervisor.modeling_only}}
+                <span class="text-muted">{{t "(modeling only)" key='modeling_only'}}</span>
               {{/if}}
             </td>
             <td style="width: 30px; font-size: 20px; vertical-align: middle;">
@@ -90,6 +92,8 @@
                 {{#link-to 'user' supervisee.user_name}}{{supervisee.user_name}}{{/link-to}}
                 {{#if supervisee.edit_permission}}
                   <span class="text-muted">{{t "(editing allowed)" key='editing_allowed'}}</span>
+                {{else if supervisee.modeling_only}}
+                  <span class="text-muted">{{t "(modeling only)" key='modeling_only'}}</span>
                 {{/if}}
               </td>
               <td style="width: 30px; font-size: 20px; vertical-align: middle;">

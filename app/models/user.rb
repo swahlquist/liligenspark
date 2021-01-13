@@ -44,9 +44,9 @@ class User < ActiveRecord::Base
   add_permissions('edit', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, true) }
   add_permissions('edit', 'edit_boards', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, false) }
   add_permissions('view_existence', 'view_detailed', 'model') {|user| user.supervisor_for?(self) }
-  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| user.supervisor_for?(self) && !user.modeling_only? }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) }
   add_permissions('view_detailed', 'model', ['basic_supervision']) {|user| user.supervisor_for?(self) }
-  add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only? }
+  add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) }
   add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
   add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) }
   add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| Organization.manager_for?(user, self, true) }
