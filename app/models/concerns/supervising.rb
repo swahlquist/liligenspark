@@ -91,6 +91,11 @@ module Supervising
     sup || Organization.manager_for?(self, supervisee, include_admin_managers)
   end
 
+  def modeling_only_for?(supervisee, include_admin_managers=true)
+    return true if self.modeling_only?
+    supervisee.supervisor_links.any?{|l| l['record_code'] == Webhook.get_record_code(self) && l['user_id'] == supervisee.global_id && l['state']['modeling_only'] } 
+  end
+
   def org_units_for_supervising(supervisee)
     unit_ids = supervisee_links.map{|l| l['state']['organization_unit_ids'] }.compact.flatten.uniq
     OrganizationUnit.find_all_by_global_id(unit_ids)

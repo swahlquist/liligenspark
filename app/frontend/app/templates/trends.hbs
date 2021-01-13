@@ -7,8 +7,8 @@
   <div class='col-sm-8 col-sm-offset-2'>
     <h2 style='margin-bottom: 30px;'>{{t "%app_name% Aggregate Research" key='coughdrop_aggregate_research'}}</h2>
 
-    <p style='margin-bottom: 20px;'>{{t "%app_name% users can opt-in to recording their usage data for personal and team analysis and reference. Whenever someone opts-in to data logging, we also ask if they would be willing to share an anonymized record of their usage with independent researchers. We partner with research firms to analyze this data in aggregate to provide better insights into AAC use and to investigate how supports can be improved." key='trends_explainer'}}</p>
-    <p style='margin-bottom: 20px;'>{{t "If you are interested in conducting AAC research, please consider reaching out to us to learn more about this important project. Below are some examples of the types of data that can be collected, anonymously and in aggregate, to help aid AAC research." key='trends_explainer2'}}</p>
+    <p style='margin-bottom: 20px;'>{{t "%app_name% users can opt-in to recording their usage data for personal and team analysis and reference. Whenever someone opts-in to data logging, we also ask if they would be willing to share an anonymized record of their usage data with independent researchers. We collaborate with non-profit research organizations to analyze this data in aggregate to provide better insights into AAC use and to investigate how supports can be improved." key='trends_explainer'}}</p>
+    <p style='margin-bottom: 20px;'>{{t "If you are interested in conducting AAC research, please consider reaching out to us to learn more about this important project. Below are some examples of the types of data that can be collected, anonymously and in aggregate, to help aid AAC research. All word usage information is based on aggregate data only from users who have opted in to anonymized research." key='trends_explainer2'}}</p>
     {{#if trends.loading}}
       {{t "Loading anonymized snapshot..." key='loading_trends'}}
     {{else if trends.error}}
@@ -140,7 +140,7 @@
       {{/if}}
 
       <div class='col-sm-12' style='margin-bottom: 50px;'>
-        <h4>{{t "Most-Common Words" key='most_common_words'}}</h4>
+        <h4>{{t "Frequently-Used Core Words" key='most_common_core_words'}}</h4>
         {{stats/word-cloud stats=word_cloud_stats zoom=1}}
       </div>
 
@@ -314,7 +314,7 @@
       </div>
 
       <div class='col-sm-6' style='margin-bottom: 50px;'>
-        <h4>{{t "Common Words" key='common_words'}}</h4>
+        <h4>{{t "Core Words by Frequency" key='common_words'}}</h4>
         {{#if words}}
           <div style='height: 300px; overflow: auto;'>
             <div class="list-group">
@@ -341,7 +341,7 @@
       </div>
 
       <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
-        <h4>{{t "Common Word Pairings" key='common_word_pairs'}}</h4>
+        <h4>{{t "Most-Frequent Core Word Pairings" key='common_word_pairs'}}</h4>
         {{#if word_pairs}}
           <div style='height: 300px; overflow: auto;'>
             <div class="list-group">
