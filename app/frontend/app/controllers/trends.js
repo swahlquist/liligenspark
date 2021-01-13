@@ -113,7 +113,7 @@ export default Controller.extend({
     return res;
   }),
   voices: computed('trends.device.voice_uris', function() {
-    return this.compute_breakdown(this.get('trends.device.voice_uris') || {}).select(function(v) { return v.total > 0; });
+    return this.compute_breakdown(this.get('trends.device.voice_uris') || {}).filter(function(v) { return v.total > 0; });
   }),
   depths: computed('trends.depth_counts', function() {
     var res = this.compute_breakdown(this.get('trends.depth_counts') || {}, this.get('trends.max_depth_count'));

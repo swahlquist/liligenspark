@@ -237,8 +237,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
     sums = WeeklyStatsSummary.where(:weekyear => weekyear).where(['user_id > ?', 0])
     total = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => 0)
     
-    total_keys = ['total_sessions', 'total_utterances', 'total_utterance_words', 
-              'total_utterance_buttons', 'total_session_seconds']
+    total_keys = ['total_sessions', 'total_session_seconds']
+    total_word_keys = ['total_utterances', 'total_utterance_words', 
+              'total_utterance_buttons']
               
     # clear the current tallies since we're reviewing all the data anyway
     total.data ||= {}
@@ -292,109 +293,119 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
       batch.each do |summary|
         # quick win with some basic, easy data to track
+        sum_user = users.detect{|u| u.id == summary.user_id }
+        include_word_reports = sum_user && sum_user.settings && sum_user.settings['preferences'] && sum_user.settings['preferences']['allow_log_reports']
         total_keys.each do |key|
           total.data['totals'][key] ||= 0
           total.data['totals'][key] += (summary.data['stats'] || {})[key] || 0
         end
-        (summary.data['modeled_session_events'] || {}).each do |total, cnt|
-          total.data['modeled_session_events'][total] = (total.data['modeled_session_events'][total] || 0) + cnt
-        end
-        summary.data['stats'] ||= {}
-        total.data['totals']['total_modeled_words'] += (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
-        total.data['totals']['total_modeled_buttons'] += (summary.data['stats']['modeled_button_counts'] || {}).map{|k, h| h['count'] }.sum
-        total.data['totals']['total_words'] += (summary.data['stats']['all_word_counts'] || {}).map(&:last).sum + (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
-        total.data['totals']['total_buttons'] += (summary.data['stats']['all_button_counts'] || {}).map{|k, h| h['count'] }.sum + (summary.data['stats']['modeled_button_counts'] || {}).map{|k, h| h['count'] }.sum
-        (summary.data['stats']['all_button_counts'] || {}).each do |button_id, button|
-          if button['depth_sum']
-            avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
-            total.data['depth_counts'][avg_depth] ||= 0
-            total.data['depth_counts'][avg_depth] += button['count']
-          end
-          if button['full_travel_sum']
-            total.data['word_travels'][button['text']] ||= 0
-            total.data['word_travels'][button['text']] += button['full_travel_sum']
-          end
-        end
-        
-        total.data['totals']['total_core_words'] += (summary.data['stats']['core_words'] || {})['core'] || 0
         total.data['totals']['total_users'] += 1
-        (summary.data['stats']['all_word_counts'] || {}).each do |word, cnt|
-          if word && valid_words[word.downcase]
-            total.data['word_counts'][word.downcase] = (total.data['word_counts'][word.downcase] || 0) + cnt 
+        if include_word_reports
+          total_word_keys.each do |key|
+            total.data['totals'][key] ||= 0
+            total.data['totals'][key] += (summary.data['stats'] || {})[key] || 0
           end
-        end
-        
-        if summary.data['stats']['buttons_used']
-          (summary.data['stats']['buttons_used']['button_ids'] || []).each do |button_id|
-            board_id = button_id.split(/:/, 2)[0]
-            board_usages[board_id] = (board_usages[board_id] || 0) + 1
+          summary.data['stats'] ||= {}
+          
+          (summary.data['modeled_session_events'] || {}).each do |total, cnt|
+            total.data['modeled_session_events'][total] = (total.data['modeled_session_events'][total] || 0) + cnt
           end
-        end
-        
-        if summary.data['stats']['goals']
-          (summary.data['stats']['goals']['goals_set'] || {}).each do |goal_id, goal|
-            if goal['template_goal_id']
-              total.data['goals']['goals_set'][goal['template_goal_id']] ||= {
-                'name' => goal['name'],
-                'user_ids' => []
-              }
-              total.data['goals']['goals_set'][goal['template_goal_id']]['user_ids'] << summary.user_id
-            else
-              total.data['goals']['goals_set']['private'] ||= {
-                'ids' => [],
-                'user_ids' => []
-              }
-              total.data['goals']['goals_set']['private']['ids'] << goal_id
-              total.data['goals']['goals_set']['private']['user_ids'] << summary.user_id
+  
+          total.data['totals']['total_modeled_words'] += (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
+          total.data['totals']['total_modeled_buttons'] += (summary.data['stats']['modeled_button_counts'] || {}).map{|k, h| h['count'] }.sum
+          total.data['totals']['total_words'] += (summary.data['stats']['all_word_counts'] || {}).map(&:last).sum + (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
+          total.data['totals']['total_buttons'] += (summary.data['stats']['all_button_counts'] || {}).map{|k, h| h['count'] }.sum + (summary.data['stats']['modeled_button_counts'] || {}).map{|k, h| h['count'] }.sum
+          (summary.data['stats']['all_button_counts'] || {}).each do |button_id, button|
+            if button['depth_sum']
+              avg_depth = (button['depth_sum'].to_f / button['count'].to_f).round.to_i
+              total.data['depth_counts'][avg_depth] ||= 0
+              total.data['depth_counts'][avg_depth] += button['count']
+            end
+            if button['full_travel_sum']
+              total.data['word_travels'][button['text']] ||= 0
+              total.data['word_travels'][button['text']] += button['full_travel_sum']
             end
           end
-          (summary.data['stats']['goals']['badges_earned'] || {}).each do |badge_id, badge|
-            if badge['template_goal_id']
-              total.data['goals']['badges_earned'][badge['template_goal_id']] ||= {
-                'goal_id' => badge['template_goal_id'],
-                'name' => badge['name'],
-                'global' => badge['global'],
-                'levels' => [],
-                'user_ids' => [],
-                'shared_user_ids' => []
-              }
-              total.data['goals']['badges_earned'][badge['template_goal_id']]['user_ids'] << summary.user_id
-              total.data['goals']['badges_earned'][badge['template_goal_id']]['levels'] << badge['level']
-              total.data['goals']['badges_earned'][badge['template_goal_id']]['shared_user_ids'] << summary.user_id if badge['shared']
-            else
-              total.data['goals']['badges_earned']['private'] ||= {
-                'ids' => [],
-                'names' => [],
-                'user_ids' => []
-              }
-              total.data['goals']['badges_earned']['private']['user_ids'] << summary.user_id
-              total.data['goals']['badges_earned']['private']['names'] << badge['name']
-              total.data['goals']['badges_earned']['private']['ids'] << badge_id
+        
+          total.data['totals']['total_core_words'] += (summary.data['stats']['core_words'] || {})['core'] || 0
+          (summary.data['stats']['all_word_counts'] || {}).each do |word, cnt|
+            if word && valid_words[word.downcase]
+              total.data['word_counts'][word.downcase] = (total.data['word_counts'][word.downcase] || 0) + cnt 
             end
           end
-        end
         
-        # iterate through events, tracking previous and (possibly) current spoken event
-        # if there's a previous and current, and there hasn't been too long a delay
-        # between them, and both words are included in a core word list, 
-        # generate a one-way hash of the pairing and 
-        # add the timestamp and user_id (if not already added) for the hash.
-        (summary.data['stats']['word_pairs'] || {}).each do |k, pair|
-          if pair['a'] && pair['a'] != pair['b']
-            word_pairs[k] ||= {}
-            word_pairs[k][:count] = (word_pairs[k][:count] || 0) + pair['count']
-            word_pairs[k][:user_ids] ||= []
-            word_pairs[k][:user_ids] << summary.user_id
-            word_pairs[k]['a'] = pair['a']
-            word_pairs[k]['b'] = pair['b']
+          if summary.data['stats']['buttons_used']
+            (summary.data['stats']['buttons_used']['button_ids'] || []).each do |button_id|
+              board_id = button_id.split(/:/, 2)[0]
+              board_usages[board_id] = (board_usages[board_id] || 0) + 1
+            end
           end
-        end
         
-        Stats::DEVICE_PREFERENCES.each do |pref|
-          ((summary.data['stats']['device'] || {})["#{pref}s"] || {}).each do |key, val|
-            device_prefs["#{pref}s"] ||= {}
-            device_prefs["#{pref}s"][key] ||= 0
-            device_prefs["#{pref}s"][key] += val || 0
+          if summary.data['stats']['goals']
+            (summary.data['stats']['goals']['goals_set'] || {}).each do |goal_id, goal|
+              if goal['template_goal_id']
+                total.data['goals']['goals_set'][goal['template_goal_id']] ||= {
+                  'name' => goal['name'],
+                  'user_ids' => []
+                }
+                total.data['goals']['goals_set'][goal['template_goal_id']]['user_ids'] << summary.user_id
+              else
+                total.data['goals']['goals_set']['private'] ||= {
+                  'ids' => [],
+                  'user_ids' => []
+                }
+                total.data['goals']['goals_set']['private']['ids'] << goal_id
+                total.data['goals']['goals_set']['private']['user_ids'] << summary.user_id
+              end
+            end
+            (summary.data['stats']['goals']['badges_earned'] || {}).each do |badge_id, badge|
+              if badge['template_goal_id']
+                total.data['goals']['badges_earned'][badge['template_goal_id']] ||= {
+                  'goal_id' => badge['template_goal_id'],
+                  'name' => badge['name'],
+                  'global' => badge['global'],
+                  'levels' => [],
+                  'user_ids' => [],
+                  'shared_user_ids' => []
+                }
+                total.data['goals']['badges_earned'][badge['template_goal_id']]['user_ids'] << summary.user_id
+                total.data['goals']['badges_earned'][badge['template_goal_id']]['levels'] << badge['level']
+                total.data['goals']['badges_earned'][badge['template_goal_id']]['shared_user_ids'] << summary.user_id if badge['shared']
+              else
+                total.data['goals']['badges_earned']['private'] ||= {
+                  'ids' => [],
+                  'names' => [],
+                  'user_ids' => []
+                }
+                total.data['goals']['badges_earned']['private']['user_ids'] << summary.user_id
+                total.data['goals']['badges_earned']['private']['names'] << badge['name']
+                total.data['goals']['badges_earned']['private']['ids'] << badge_id
+              end
+            end
+          end
+        
+          # iterate through events, tracking previous and (possibly) current spoken event
+          # if there's a previous and current, and there hasn't been too long a delay
+          # between them, and both words are included in a core word list, 
+          # generate a one-way hash of the pairing and 
+          # add the timestamp and user_id (if not already added) for the hash.
+          (summary.data['stats']['word_pairs'] || {}).each do |k, pair|
+            if pair['a'] && pair['a'] != pair['b']
+              word_pairs[k] ||= {}
+              word_pairs[k][:count] = (word_pairs[k][:count] || 0) + pair['count']
+              word_pairs[k][:user_ids] ||= []
+              word_pairs[k][:user_ids] << summary.user_id
+              word_pairs[k]['a'] = pair['a']
+              word_pairs[k]['b'] = pair['b']
+            end
+          end
+        
+          Stats::DEVICE_PREFERENCES.each do |pref|
+            ((summary.data['stats']['device'] || {})["#{pref}s"] || {}).each do |key, val|
+              device_prefs["#{pref}s"] ||= {}
+              device_prefs["#{pref}s"][key] ||= 0
+              device_prefs["#{pref}s"][key] += val || 0
+            end
           end
         end
       end
@@ -434,14 +445,14 @@ class WeeklyStatsSummary < ActiveRecord::Base
           end
         end
       end
-    end
-    total.data['available_words'] = {}
-    # Only save words available to more than 5 users, and available to at least
-    # a quarter of all users for the week.
-    word_user_counts.each do |word, user_ids|
-      user_ids.uniq!
-      if user_ids.length >= 5 && user_ids.length > total.data['totals']['total_users'] / 4
-        total.data['available_words'][word] = user_ids
+      total.data['available_words'] = {}
+      # Only save words available to more than 5 users, and available to at least
+      # a quarter of all users for the week.
+      word_user_counts.each do |word, user_ids|
+        user_ids.uniq!
+        if user_ids.length >= 5 && user_ids.length > total.data['totals']['total_users'] / 4
+          total.data['available_words'][word] = user_ids
+        end
       end
     end
     
