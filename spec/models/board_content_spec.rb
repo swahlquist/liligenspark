@@ -1133,7 +1133,24 @@ describe BoardContent, :type => :model do
     bc = BoardContent.generate_from(b1)
     b2 = Board.create(user: u)
     BoardContent.apply_clone(b1, b2, true)
-    expect(b2.board_content).to eq(bc)
+    b2.save
+    expect(b2.reload.board_content).to eq(bc)
+    expect(b2.buttons).to eq([{"id"=>1,
+      "label"=>"bacon",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>2,
+      "label"=>"cheddar",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>3,
+      "label"=>"broccoli",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>4,
+      "label"=>"sour cream",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"}])
 
     b1.process(buttons: [
       {id: 1, label: 'bakin', translations: {'fr' => {'label' => 'oui'}}},
@@ -1193,11 +1210,21 @@ describe BoardContent, :type => :model do
       '1' => {'fr' => {'label' => 'oui'}},
       '2' => {'fr' => {'label' => 'non'}}
     })
-    expect(b2.reload.buttons).to eq([
-      {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
-      {id: 2, label: 'cheddar'},
-      {id: 3, label: 'broccoli'},
-      {id: 4, label: 'sour cream'},
-    ])
+    expect(b2.reload.buttons).to eq([{"id"=>1,
+      "label"=>"bacon",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>2,
+      "label"=>"cheddar",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>3,
+      "label"=>"broccoli",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"},
+     {"id"=>4,
+      "label"=>"sour cream",
+      "part_of_speech"=>"noun",
+      "suggested_part_of_speech"=>"noun"}])
   end
 end

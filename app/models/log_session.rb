@@ -1625,7 +1625,7 @@ class LogSession < ActiveRecord::Base
   def additional_webhook_record_codes(notification_type, additional_args)
     res = []
     if notification_type == 'new_session'
-      if self.user && self.user.record_code && !self.private_logging?
+      if self.user && self.user.record_code && !self.user.private_logging?
         res << "#{self.user.record_code}::*"
         res << "#{self.user.record_code}::log_session:*"
       end

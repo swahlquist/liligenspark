@@ -354,6 +354,32 @@
         {{/if}}
       </div>
 
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
+        <h4>{{t "Modeled Core Words by Frequency" key='modeled_common_words'}}</h4>
+        {{#if words}}
+          <div style='height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each words as |word|}}
+                <span class='list-group-item'>
+                  {{word.name}}
+                  <span class='text-muted' style='margin-left: 20px; font-size: 12px;'>
+                    <br/>
+                    {{t "freq:" key='frequency'}} {{word.pct}}%&nbsp;&nbsp;
+                    {{#if word.travel}}
+                      {{t "avg. travel:" key='avg_travel'}} {{word.travel}}&nbsp;&nbsp;
+                    {{/if}}
+                    {{#if word.available}}
+                      {{t "available to:" key='available'}} {{word.available}}%
+                    {{/if}}
+                  </span>
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
       <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
         <h4>{{t "Most-Frequent Core Word Pairings" key='common_word_pairs'}}</h4>
         {{#if word_pairs}}

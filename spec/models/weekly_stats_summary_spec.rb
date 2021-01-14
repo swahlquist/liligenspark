@@ -68,7 +68,7 @@ describe WeeklyStatsSummary, :type => :model do
   
   describe "track_for_trends" do
     it 'should collect data from all summaries for the specified weekyear' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d = Device.create
       s1 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -80,7 +80,7 @@ describe WeeklyStatsSummary, :type => :model do
         {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => 1430856977}
       ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
     
-      u2 = User.create
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d2 = Device.create
       s3 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -106,7 +106,7 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include basic totals' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d = Device.create
       s1 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -118,7 +118,7 @@ describe WeeklyStatsSummary, :type => :model do
         {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => 1430856977}
       ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
           
-      u2 = User.create
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d2 = Device.create
       s3 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -148,7 +148,7 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include word counts, travel sums and depth counts' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d = Device.create
       s1 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 0, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -161,7 +161,7 @@ describe WeeklyStatsSummary, :type => :model do
       ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       expect(s1.data['stats']['all_button_counts']['1::1_1']['depth_sum']).to eq(0)
     
-      u2 = User.create
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d2 = Device.create
       s3 = LogSession.process_new({'events' => [
         {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'depth' => 5, 'percent_travel' => 0.2, 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
@@ -201,7 +201,7 @@ describe WeeklyStatsSummary, :type => :model do
       
       threes = ['me', 'me', 'that', 'that', 'baegwgaweg']
       10.times do |i|
-        u = User.create
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create(user: u)
         b = Board.create(:user => u, :settings => {
           'buttons' => [
@@ -229,7 +229,7 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include only public user home board roots' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(:user => u, :public => true)
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
@@ -238,7 +238,7 @@ describe WeeklyStatsSummary, :type => :model do
       ]}, {:user => u, :author => u, :device => Device.create(:user => u), :ip_address => '1.2.3.4'})
       WeeklyStatsSummary.update_for(s1.global_id)
       
-      u2 = User.create
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b2 = Board.create(:user => u2)
       u2.settings['preferences']['home_board'] = {'id' => b2.global_id, 'key' => b2.key}
       u2.save
@@ -248,7 +248,7 @@ describe WeeklyStatsSummary, :type => :model do
       WeeklyStatsSummary.update_for(s2.global_id)
       
       5.times do |i|
-        u3 = User.create
+        u3 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         b3 = Board.create(:user => u, :public => false, :parent_board => b)
         u3.settings['preferences']['home_board'] = {'id' => b3.global_id, 'key' => b3.key}
         u3.save
@@ -276,7 +276,7 @@ describe WeeklyStatsSummary, :type => :model do
     it 'should include word matches' do
       user_ids = []
       6.times do
-        u = User.create
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         user_ids << u.id
         d = Device.create
         s1 = LogSession.process_new({'events' => [
@@ -324,7 +324,7 @@ describe WeeklyStatsSummary, :type => :model do
     
       
     it "should include goal data" do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       tg = UserGoal.create(template: true, global: true, settings: {'summary' => 'template goal'})
       g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => 2.weeks.ago.iso8601})
       g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => 1.week.ago.iso8601})
@@ -363,10 +363,10 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it "should include buttons used data" do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
       6.times do
-        u = User.create
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
           {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
@@ -444,10 +444,10 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include board usages' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
       6.times do
-        u = User.create
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
           {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
@@ -476,7 +476,7 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include goals data' do
-      u = User.create
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       tg = UserGoal.create(template: true, global: true, settings: {'summary' => 'template goal'})
       g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => 2.weeks.ago.iso8601})
       g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => 1.week.ago.iso8601})
@@ -625,8 +625,8 @@ describe WeeklyStatsSummary, :type => :model do
       expect(res[:words_per_minute]).to eq(((2+12+12+6).to_f / (123+456).to_f * 60.0).round(1))
       expect(res[:total_users]).to eq(nil)
       expect(res[:total_sessions]).to eq(nil)
-      expect(res[:sessions_per_user]).to eq(nil)
-      expect(res[:total_words]).to eq(nil)
+      expect(res[:total_words]).to eq(32)
+      expect(res[:sessions_per_user]).to eq(1.8)
     end
     
     it 'should include extra data for admins' do

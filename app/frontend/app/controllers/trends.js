@@ -145,6 +145,24 @@ export default Controller.extend({
     res = res.slice(0, 200);
     return res;
   }),
+  modeled_words: computed('trends.modeled_word_counts', 'trends.word_travels', 'trends.available_words', function() {
+    var res = [];
+    var counts = this.get('trends.word_counts') || {};
+    var travels = this.get('trends.word_travels') || {};
+    var available  = this.get('trends.available_words') || {};
+    for(var word in counts) {
+      var wrd = {name: word};
+      wrd.pct = Math.round(counts[word] * 100.0);
+      wrd.available = Math.round((available[word] || 0) * 100.0);
+      wrd.travel = travels[word] || 0;
+      var travel_pct = wrd.travel / 1.0;
+      wrd.score = wrd.pct + wrd.available + (1 - travel_pct);
+      res.push(wrd);
+    }
+    res = res.sort(function(a, b) { return b.score - a.score; });
+    res = res.slice(0, 200);
+    return res;
+  }),
   word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
     var res = [];
     var pairs = this.get('trends.word_pairs') || {};

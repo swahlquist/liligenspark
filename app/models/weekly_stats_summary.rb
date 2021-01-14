@@ -252,10 +252,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total.data['totals']['total_modeled_words'] = 0
     total.data['totals']['total_modeled_buttons'] = 0
     total.data['totals']['total_words'] = 0
+    total.data['totals']['admin_total_words'] = 0
     total.data['totals']['total_buttons'] = 0
     total.data['totals']['total_core_words'] = 0
     total.data['totals']['modeled_session_events'] = {}
     total.data['word_counts'] = {}
+    total.data['modeled_word_counts'] = {}
     total.data['word_travels'] = {}
     total.data['depth_counts'] = {}
     total.data['user_ids'] = []
@@ -337,6 +339,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
           (summary.data['stats']['all_word_counts'] || {}).each do |word, cnt|
             if word && valid_words[word.downcase]
               total.data['word_counts'][word.downcase] = (total.data['word_counts'][word.downcase] || 0) + cnt 
+            end
+          end
+          (summary.data['stats']['modeled_word_counts'] || {}).each do |word, cnt|
+            if word && valid_words[word.downcase]
+              total.data['modeled_word_counts'][word.downcase] = (total.data['modeled_word_counts'][word.downcase] || 0) + cnt 
             end
           end
         
@@ -534,6 +541,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:total_sessions] = 0
     stash[:modeled_sessions] = 0
     stash[:word_counts] = {}
+    stash[:modeled_word_counts] = {}
     stash[:depth_counts] = {}
     stash[:word_travels] = {}
     stash[:board_usages] = {}
@@ -541,12 +549,14 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:research_user_ids] = []
     stash[:publishing_user_ids] = []
     stash[:home_board_user_ids] = []
+    stash[:total_summaries] = 0
     stash[:device] = {}
     earliest = nil
     latest = nil
     WeeklyStatsSummary.where(['weekyear >= ? AND weekyear <= ?', cutoffweekyear, nowweekyear]).where(:user_id => 0).find_in_batches(batch_size: 20) do |batch|
       batch.each do |summary|
         next unless summary.data && summary.data['totals']
+        stash[:total_summaries] += 1
         date = Date.commercial(summary.weekyear / 100, summary.weekyear % 100) - 1
         earliest = [earliest, date].compact.min
         latest = [latest, date].compact.max
@@ -577,6 +587,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
         if summary.data['word_counts']
           summary.data['word_counts'].each do |word, cnt|
             stash[:word_counts][word] = (stash[:word_counts][word] || 0) + cnt
+          end
+        end
+        if summary.data['modeled_word_counts']
+          summary.data['modeled_word_counts'].each do |word, cnt|
+            stash[:modeled_word_counts][word] = (stash[:modeled_word_counts][word] || 0) + cnt
           end
         end
 
@@ -742,6 +757,14 @@ class WeeklyStatsSummary < ActiveRecord::Base
       stash[:word_counts].each do |word, cnt|
         res[:word_counts] ||= {}
         res[:word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 10
+      end
+    end
+    if stash[:modeled_word_counts]
+      max_word_count = stash[:modeled_word_counts].map(&:last).max || 0.0
+      res[:max_modeled_word_count] = max_word_count if include_admin
+      stash[:modeled_word_counts].each do |word, cnt|
+        res[:modeled_word_counts] ||= {}
+        res[:modeled_word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 5
       end
     end
 

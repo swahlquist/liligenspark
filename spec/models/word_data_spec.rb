@@ -232,6 +232,7 @@ RSpec.describe WordData, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "you", "like", "he", "think", "favorite", "pretend"])
     end
     
@@ -256,6 +257,7 @@ RSpec.describe WordData, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "you", "like", "he", "think", "favorite", "pretend"])
     end
     
@@ -280,6 +282,7 @@ RSpec.describe WordData, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "like", "no", "yes", "think", "favorite", "pretend"])
     end
     
@@ -304,6 +307,7 @@ RSpec.describe WordData, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(WordData.reachable_core_list_for(u)).to eq(["you", "like", "favorite"])
     end
   end
@@ -761,7 +765,7 @@ RSpec.describe WordData, :type => :model do
         ]
       }
       u.save!
-      expect(WordData).to receive(:core_and_fringe_for).with(u).and_return({
+      expect(WordData).to receive(:core_and_fringe_for).with(u,  true).and_return({
         :reachable_for_user => ['about', 'more', 'want', 'like', 'not'],
         :reachable_fringe_for_user => []
       })

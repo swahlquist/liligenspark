@@ -288,7 +288,7 @@ class WordData < ActiveRecord::Base
     end
     
     # get the user's suggested words
-    lists = self.core_and_fringe_for(user)
+    lists = self.core_and_fringe_for(user, true)
     available_words = lists[:reachable_for_user] + lists[:reachable_fringe_for_user]
     basic_core = self.basic_core_list
 
@@ -735,10 +735,17 @@ class WordData < ActiveRecord::Base
     self.core_list_for(user).map(&:downcase).include?(word.downcase.sub(/[^\w]+$/, ''))
   end
   
-  def self.core_and_fringe_for(user)
+  def self.core_and_fringe_for(user, allow_slow=false)
     res = {}
     res[:for_user] = WordData.core_list_for(user)
     button_sets = BoardDownstreamButtonSet.for_user(user)
+    if allow_slow
+      button_sets.each do |bs|
+        if bs.board && bs.data['full_set_revision'] != bs.board.settings['full_set_revision']
+          BoardDownstreamButtonSet.update_for(bs.board.global_id, true)
+        end
+      end
+    end
     cache_key = "reachable_phrases_and_words/#{user.cache_key}/#{button_sets.map(&:cache_key).join('/')}"
     hashes = user.get_cached(cache_key)
     if !hashes

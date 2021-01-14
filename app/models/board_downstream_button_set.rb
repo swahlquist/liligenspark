@@ -29,13 +29,21 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data && self.data['json_response']
   end
   
-  def self.for_user(user)
+  def self.for_user(user, allow_slow=false)
     board_ids = []
     if user.settings['preferences'] && user.settings['preferences']['home_board']
       board_ids << user.settings['preferences']['home_board']['id']
     end
     board_ids += user.sidebar_boards.map{|b| b['key'] }
     boards = Board.find_all_by_path(board_ids).uniq
+    if allow_slow
+      boards.each do |brd|
+        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings['full_set_revision']
+          BoardDownstreamButtonSet.update_for(brd, true)
+          brd.board_downstream_button_set.reload
+        end
+      end
+    end
     
     button_sets = boards.map{|b| b.board_downstream_button_set }.compact.uniq
     button_sets.each{|bs| bs.assert_extra_data }
@@ -193,7 +201,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       button_set = board.reload.board_downstream_button_set
     end
     button_set_revision = button_set && button_set.data['full_set_revision']
-    if button_set.data['source_id']
+    if button_set && button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
     end
     return {success: false, error: 'could not generate button set'} unless button_set
@@ -242,7 +250,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       button_set.data['remote_paths'][remote_hash]['error'] = e.message
     end
     button_set.save
-    return {success: false, error: 'button set failed to generate'} unless button_set.data['remote_paths'][remote_hash]['path']
+    return {success: false, error: 'button set failed to generate'} unless button_set.data && button_set.data['remote_paths'] && button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path']
     {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
   end
 
