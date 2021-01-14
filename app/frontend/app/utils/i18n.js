@@ -76,16 +76,16 @@ Ember.templateHelpers.delimit = function(num, type) {
     return val.toString();
   } else if(pieces.length > 2 && type != 'full') {
     pieces.pop();
-    var dec = pieces.pop();
+    var dec = parseInt(pieces.pop(), 10);
     if(pieces.length == 1 && pieces[0] < 10) {
-      pieces[0] = pieces[0] + (dec / 1000);
+      pieces[0] = parseInt(pieces[0], 10) + (dec / 1000);
       pieces[0] = Math.round(pieces[0] * 100) / 100;
     }
     return i18n.t('n_million', "%{num}M", {num: pieces.join(',')});
   } else if(pieces.length > 1 && type != 'full') {
-    var dec = pieces.pop();
+    var dec = parseInt(pieces.pop(), 10);
     if(pieces.length == 1 && pieces[0] < 10) {
-      pieces[0] = pieces[0] + (dec / 1000);
+      pieces[0] = parseInt(pieces[0], 10) + (dec / 1000);
       pieces[0] = Math.round(pieces[0] * 10) / 10;
     }
     return i18n.t('n_thousand', "%{num}k", {num: pieces.join(',')});
