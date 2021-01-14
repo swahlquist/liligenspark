@@ -147,7 +147,7 @@ export default Controller.extend({
   }),
   modeled_words: computed('trends.modeled_word_counts', 'trends.word_travels', 'trends.available_words', function() {
     var res = [];
-    var counts = this.get('trends.word_counts') || {};
+    var counts = this.get('trends.modeled_word_counts') || {};
     var travels = this.get('trends.word_travels') || {};
     var available  = this.get('trends.available_words') || {};
     for(var word in counts) {
