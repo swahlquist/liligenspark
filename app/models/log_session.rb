@@ -209,7 +209,7 @@ class LogSession < ActiveRecord::Base
       end
       self.started_at ||= Time.now
       self.ended_at ||= self.started_at
-      str = "Note by #{self.author.user_name}: "
+      str = "Note by #{self.author ? self.author.user_name : 'user'}: "
       str = "Note by #{self.data['author_contact']['name']}: " if self.data['author_contact']
       if self.data['note']['video'] 
         duration = self.data['note']['video']['duration'].to_i
@@ -224,7 +224,7 @@ class LogSession < ActiveRecord::Base
       end
     elsif self.data['assessment']
       self.log_type = 'assessment'
-      str = "Assessment by #{self.author.user_name}: "
+      str = "Assessment by #{self.author ? self.author.user_name : 'user'}: "
       str += self.data['assessment']['description'] || "Quick assessment"
 
       self.data['assessment']['totals'] ||= {}
@@ -253,7 +253,7 @@ class LogSession < ActiveRecord::Base
       self.ended_at ||= self.started_at
     elsif self.data['eval']
       self.log_type = 'eval'
-      str = "Evaluation by #{self.author.user_name}: "
+      str = "Evaluation by #{self.author ? self.author.user_name : 'user'}: "
       str += self.data['eval']['name'] || "Evaluation"
       self.started_at = DateTime.strptime(self.data['eval']['started'].to_s, '%s') if self.data['eval']['started']
       self.ended_at = DateTime.strptime(self.data['eval']['ended'].to_s, '%s') if self.data['eval']['ended']

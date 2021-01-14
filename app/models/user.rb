@@ -513,7 +513,7 @@ class User < ActiveRecord::Base
     # TODO: sharding
     board_ids_to_recalculate += Board.where(:id => orphan_board_ids).select('id').map(&:global_id)
     # to regenerates stats?
-    Board.schedule_for(:slow,:refresh_stats, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
+    Board.schedule_for(:slow, :refresh_stats, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
     true
   end
 

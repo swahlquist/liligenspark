@@ -55,18 +55,31 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     return @buttons if @buttons
     brd = self
     visited_sources = []
+    # TODO: we have a potential problem, if the root board referenced by
+    # source_id disappears, then updates will stop because source_id disappears then since  we're
+    # updating on-demand 
     while brd && brd.data['source_id'] && !visited_sources.include?(brd.global_id)
       visited_sources << brd.global_id
       bs = BoardDownstreamButtonSet.find_by_global_id(brd.data['source_id'])
       if bs && !bs.data['source_id']
-        bs.assert_extra_data
-        @buttons = bs.buttons_starting_from(self.related_global_id(self.board_id))
-        bs.touch if bs.updated_at && bs.updated_at < 1.week.ago
-        if self.data['source_id'] != bs.global_id
-          self.data['source_id'] = bs.global_id
+        if bs.data['linked_board_ids'].include?(self.related_global_id(self.board_id))
+          bs.assert_extra_data
+          @buttons = bs.buttons_starting_from(self.related_global_id(self.board_id))
+          bs.touch if bs.updated_at && bs.updated_at < 1.week.ago
+          if self.data['source_id'] != bs.global_id
+            self.data['source_id'] = bs.global_id
+            self.save
+          end
+          return @buttons
+        else
+          # Source no longer references this board, so this button set is 
+          # source information is out of date
+          self.class.schedule_once(:update_for, self.related_global_id(self.board_id))
+          self.data['source_id'] = nil
+          self.data['full_set_revision'] = 'outdated'
           self.save
+          @buttons = []
         end
-        return @buttons
       else
         brd = bs if bs
       end
@@ -113,11 +126,18 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   def url_for(user, full_set_revision, allow_detach=false)
     # Force an auto-regenerate if the revision doesn't match
     allowed_ids = {}
-    button_set = self
+    original = self
+    button_set = original
     button_set_revision = button_set.data['full_set_revision']
     if button_set.data['source_id']
       button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
-      button_set ||= self
+      if button_set && !button_set.data['linked_board_ids'].include?(original.related_global_id(original.board_id))
+        original.data['source_id'] = nil
+        original.data['full_set_revision'] = 'outdated'
+        original.save
+        return nil
+      end
+      button_set ||= original
     end
     public_board_ids = button_set.data['public_board_ids'] || Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
     public_board_ids.each{|id| allowed_ids[id] = true }
@@ -280,7 +300,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
     board = Board.find_by_global_id(board_id)
     return if board && traversed_ids.include?(board.global_id)
-    board.track_downstream_boards! if !board.settings || !board.settings['full_set_revision']
+    board.track_downstream_boards! if board && (!board.settings || !board.settings['full_set_revision'])
     if board
       # Prevent loop from running forever
       traversed_ids << board.global_id
@@ -295,6 +315,12 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       existing_board_ids = (set.data || {})['linked_board_ids'] || []
       Board.find_batches_by_global_id(board.settings['immediately_upstream_board_ids'] || [], :batch_size => 3) do |brd|
         set.data['found_upstream_board'] = true
+        just_updated = false
+        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings['full_set_revision']
+          BoardDownstreamButtonSet.update_for(brd.global_id, false, traversed_ids)
+          just_updated = true
+          brd.reload
+        end
         bs = brd.board_downstream_button_set
         set.data['found_upstream_set'] = true if bs
         source_board_id = nil
@@ -330,7 +356,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         if source_board_id
           # If pointing to a source, go ahead and update that source
           # as part of the update process for this button set
-          if do_update && !traversed_ids.include?(source_board_id)
+          if do_update && !just_updated && !traversed_ids.include?(source_board_id)
             # If we're already in a slow background job, just do everything immediately
             if immediate_update || Worker.current_speed.to_s == 'slow'
               BoardDownstreamButtonSet.update_for(source_board_id, true, traversed_ids)

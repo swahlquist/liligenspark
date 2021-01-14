@@ -127,7 +127,8 @@ Coughdrop::Application.routes.draw do
   get ':id' => 'boards#user', :constraints => {:id => user_id_regex}
   get ':id' => 'boards#board', :constraints => {:id => board_id_regex}
   get ':id/icon' => 'boards#icon', :constraints => {:id => board_id_regex}
-  
+  get ':id/history' => 'boards#board', :constraints => {:id => board_id_regex}
+    
   get 'login' => ember_handler
   get 'organizations/:org_id/:path' => ember_handler
   get ':id/confirm_registration/:key' => ember_handler, :constraints => {:id => user_id_regex}

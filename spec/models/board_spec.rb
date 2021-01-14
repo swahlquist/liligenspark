@@ -576,12 +576,12 @@ describe Board, :type => :model do
       expect(b.home_popularity).to eq(58)
       bls = BoardLocale.where(board_id: b.id)
       expect(bls.count).to eq(4)
-      expect(bls.order('id').map(&:locale)).to eq(["es_US", "es", "en-US", "en"])
+      expect(bls.order('id').map(&:locale)).to eq(["en", "es_US", "es", "en-US"])
       expect(bls.order('id').map(&:search_string)).to eq([
-        "a frogger, cheesy, #{b.key} ",
-        "a frogger, cheddar, #{b.key} ",
-        "b rather frog, cheese, #{b.key} ",
-        "b frogs, cheese, #{b.key} ",
+        "b frogs, cheese, #{b.key} c ",
+        "a frogger, cheesy, #{b.key} c ",
+        "a frogger, cheddar, #{b.key} c ",
+        "b rather frog, cheese, #{b.key} c ",
       ])
       expect(bls.map(&:locale).sort).to eq(["en", "en-US", "es", "es_US"])
     end
@@ -799,6 +799,7 @@ describe Board, :type => :model do
       b2.settings['buttons'] = [{'id' => 1, 'label' => 'feet'}]
       b2.instance_variable_set('@buttons_changed', true)
       b2.save
+      Worker.process_queues
       Worker.process_queues
       expect(b1.reload.settings['full_set_revision']).to_not eq(hash)
       expect(b1.current_revision).to eq(current_hash)
@@ -1104,7 +1105,7 @@ describe Board, :type => :model do
       expect(b.settings['grid']['order']).to eq([[5, 7, 9, 11], [6, 8, 10, 12]])
       b.save
       b.reload
-      expect(b.settings['buttons']).to eq([])
+      expect(b.settings['buttons']).to eq(nil)
       expect(bc.settings['buttons'].length).to eq(1)
       expect(b.settings['content_overrides']).to_not eq(nil)
       expect(b.buttons[0]).to eq({'id' => 4})
@@ -1979,7 +1980,6 @@ describe Board, :type => :model do
       expect(b.settings['buttons'][0]['part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][0]['suggested_part_of_speech']).to eq('noun')
       expect(b.settings['buttons'][1]['part_of_speech']).to eq('verb')
-      expect(b.settings['buttons'][1]['suggested_part_of_speech']).to eq('noun')
       
       words = RedisInit.default.hgetall('overridden_parts_of_speech')
       expect(words).not_to eq(nil)
@@ -3227,8 +3227,8 @@ describe Board, :type => :model do
           'content_type' => 'image/png'
         }
       })
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([])
-      expect(Uploader).to_not receive(:find_images).with('cats', 'bacon', u)
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([])
+      expect(Uploader).to_not receive(:find_images).with('cats', 'bacon', u, nil, true)
       res = b.swap_images('bacon', u, [])
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
@@ -3251,8 +3251,8 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u, nil, true)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
       expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
@@ -3301,13 +3301,13 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u, nil, true)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
@@ -3348,8 +3348,8 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u, nil, true)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
       expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
@@ -3391,11 +3391,11 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', u, nil, true)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u, nil, true)
       res = b.swap_images('bacon', u, [b.global_id, b3.global_id])
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
@@ -3465,13 +3465,13 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u).and_return([{
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', u, nil, true).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', u, nil, true)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
@@ -3511,7 +3511,7 @@ describe Board, :type => :model do
       ])
     end 
     
-    it "should schedule a button set update" do
+    it "should not schedule a button set update" do
       u = User.create
       b = Board.create(:user => u, :settings => {
         'buttons' => [
@@ -3525,7 +3525,7 @@ describe Board, :type => :model do
       expect(b.reload.settings['buttons']).to eq([
         {'id' => '123'}, {'id' => '234', 'sound_id' => '12345'}
       ])
-      expect(Worker.scheduled?(Board, :perform_action, {:id => b.id, :method => 'update_button_sets', :arguments => []})).to eq(true)
+      expect(Worker.scheduled?(Board, :perform_action, {:id => b.id, :method => 'update_button_sets', :arguments => []})).to eq(false)
     end
     
     it "should align the button to the sound record" do
@@ -3567,24 +3567,24 @@ describe Board, :type => :model do
     end
   end
   
-  describe "update_button_sets" do
-    it "should schedule updates for all upstream button sets" do
-      u = User.create
-      b1 = Board.create(:user => u)
-      b2 = Board.create(:user => u, :settings => {
-        'immediately_upstream_board_ids' => [b1.global_id]
-      })
-      b3 = Board.create(:user => u, :settings => {
-        'immediately_upstream_board_ids' => [b2.global_id]
-      })
-      b2.settings['immediately_upstream_board_ids'] = [b1.global_id, b3.global_id]
-      b2.save
-      b3.update_button_sets
-      expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b1.global_id]})).to eq(true)
-      expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b2.global_id]})).to eq(true)
-      expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b3.global_id]})).to eq(true)
-    end
-  end
+  # describe "update_button_sets" do
+  #   it "should schedule updates for all upstream button sets" do
+  #     u = User.create
+  #     b1 = Board.create(:user => u)
+  #     b2 = Board.create(:user => u, :settings => {
+  #       'immediately_upstream_board_ids' => [b1.global_id]
+  #     })
+  #     b3 = Board.create(:user => u, :settings => {
+  #       'immediately_upstream_board_ids' => [b2.global_id]
+  #     })
+  #     b2.settings['immediately_upstream_board_ids'] = [b1.global_id, b3.global_id]
+  #     b2.save
+  #     b3.update_button_sets
+  #     expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b1.global_id]})).to eq(true)
+  #     expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b2.global_id]})).to eq(true)
+  #     expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {:method => 'update_for', :arguments => [b3.global_id]})).to eq(true)
+  #   end
+  # end
 
   describe "restore_urls" do
     # if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])

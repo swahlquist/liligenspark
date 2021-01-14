@@ -300,7 +300,7 @@ describe User, :type => :model do
       expect(Board).to receive(:where).with(:id => [b.id]).and_return(o)
       expect(o).to receive(:select).with('id').and_return([b])
       u.track_boards(true)
-      expect(Worker.scheduled?(Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id]]})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id]]})).to eq(true)
     end
 
     it "should create missing connections" do
@@ -1199,10 +1199,11 @@ describe User, :type => :model do
     end
     
     it "should generate an AuditEvent record when a voice is added" do
+      expect(AuditEvent.count).to eq(0)
       u = User.create
       u.subscription_override('never_expires')
       u.settings['premium_voices'] = {'claimed' => [], 'allowed' => 3}
-      expect(AuditEvent.count).to eq(0)
+      expect(AuditEvent.count).to eq(1)
       res = u.add_premium_voice('abcd', 'Windows')
       expect(res).to eq(true)
       expect(AuditEvent.count).to eq(1)
@@ -1213,13 +1214,14 @@ describe User, :type => :model do
     end
     
     it "should not generate an AuditEvent record for an already-claimed voice" do
+      expect(AuditEvent.count).to eq(0)
       u = User.create
       u.subscription_override('never_expires')
+      expect(AuditEvent.count).to eq(1)
       u.settings['premium_voices'] = {'claimed' => ['abcd'], 'allowed' => 3}
-      expect(AuditEvent.count).to eq(0)
       res = u.add_premium_voice('abcd', 'Windows')
       expect(res).to eq(true)
-      expect(AuditEvent.count).to eq(0)
+      expect(AuditEvent.count).to eq(1)
     end
 
     it "should always allow global admins to add voices, and its hould not generate AuditEvents for them" do

@@ -355,7 +355,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs.data['buttons'][10]['depth']).to eq(2)
     end
     
-    it "should trigger an update when a board's content has changed" do
+    it "should update when a board's content has changed" do
       u = User.create
       b = Board.create(:user => u)
       b.process({'buttons' => [
@@ -363,12 +363,17 @@ describe BoardDownstreamButtonSet, :type => :model do
       ]})
       Worker.process_queues
       Worker.process_queues
+
+      bs = b.reload.board_downstream_button_set
+      expect(bs).to eq(nil)
+      BoardDownstreamButtonSet.update_for(b.global_id)
+
       bs = b.reload.board_downstream_button_set
       expect(bs).not_to eq(nil)
       expect(bs.data['buttons'].length).to eq(1)
     end
     
-    it "should trigger an update when a downstream board's content has changed" do
+    it "should update correctly when a downstream board's content has changed" do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
@@ -382,7 +387,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       Worker.process_queues
       
       expect(b2.reload.settings['immediately_upstream_board_ids']).to eq([b.global_id])
-      BoardDownstreamButtonSet.update_for(b2.global_id)
+      BoardDownstreamButtonSet.update_for(b2.global_id, true)
 
       bs = b.reload.board_downstream_button_set
       expect(bs).not_to eq(nil)
@@ -398,9 +403,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       ]}, :user => u)
 
       Worker.process_queues
-      expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {'method' => 'update_for', 'arguments' => [b2.global_id]})).to eq(true)
       Worker.process_queues
-      expect(Worker.scheduled?(BoardDownstreamButtonSet, :perform_action, {'method' => 'update_for', 'arguments' => [b.global_id]})).to eq(true)
       BoardDownstreamButtonSet.update_for(b.global_id)
       BoardDownstreamButtonSet.update_for(b2.global_id)
       
@@ -426,6 +429,9 @@ describe BoardDownstreamButtonSet, :type => :model do
       ]}, {:user => u})
       Worker.process_queues
       Worker.process_queues
+      bs = b.reload.board_downstream_button_set
+      expect(bs).to eq(nil)
+      BoardDownstreamButtonSet.update_for(b2.global_id, true)
       
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
@@ -462,11 +468,17 @@ describe BoardDownstreamButtonSet, :type => :model do
       
       Worker.process_queues
       Worker.process_queues
+      bs = bb.reload.board_downstream_button_set
+      expect(bs).to eq(nil)
+      BoardDownstreamButtonSet.update_for(bb.global_id, true)
 
       bs = bb.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
       expect(bs.data['buttons']).to_not eq(nil)
       expect(bs.buttons.length).to eq(4)
+      bs2 = bb2.reload.board_downstream_button_set
+      expect(bs2).to eq(nil)
+      BoardDownstreamButtonSet.update_for(bb2.global_id, true)
       bs2 = bb2.reload.board_downstream_button_set
       expect(bs2).to_not eq(nil)
       expect(bs2.data['buttons']).to eq(nil)
@@ -498,6 +510,9 @@ describe BoardDownstreamButtonSet, :type => :model do
       
       Worker.process_queues
       Worker.process_queues
+      bs = bb.reload.board_downstream_button_set
+      expect(bs).to eq(nil)
+      BoardDownstreamButtonSet.update_for(bb2.global_id, true)
 
       bs = bb.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
@@ -529,6 +544,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       ]}, {:user => u})
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b3.global_id, true)
       
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
@@ -545,13 +561,24 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs3.data['buttons']).to eq(nil)
       expect(bs3.data['source_id']).to eq(bs.global_id)
       expect(bs3.buttons.length).to eq(2)
-      
+      expect(b2.reload.settings['full_set_revision']).to eq(bs2.reload.data['full_set_revision'])
+      expect(b.reload.settings['full_set_revision']).to eq(bs.reload.data['full_set_revision'])
+      expect(b3.reload.settings['full_set_revision']).to eq(bs3.reload.data['full_set_revision'])
+
       b.process({'buttons' => [
         {'id' => 1, 'label' => 'hat'},
         {'id' => 2, 'label' => 'car'}
       ]}, {:user => u})
       Worker.process_queues
       Worker.process_queues
+      expect(b.reload.settings['full_set_revision']).to_not eq(bs.reload.data['full_set_revision'])
+      expect(b2.reload.settings['full_set_revision']).to eq(bs2.reload.data['full_set_revision'])
+      expect(b3.reload.settings['full_set_revision']).to eq(bs3.reload.data['full_set_revision'])
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      bs2 = b2.reload.board_downstream_button_set
+      expect(bs2.reload.buttons).to eq([])
+      expect(b2.reload.settings['full_set_revision']).to_not eq(bs2.reload.data['full_set_revision'])
+      BoardDownstreamButtonSet.update_for(b3.global_id, true)
 
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
@@ -660,13 +687,14 @@ describe BoardDownstreamButtonSet, :type => :model do
       ]}, {'user' => u})
       Worker.process_queues
       Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b4.global_id, true)
       bs1 = b1.reload.board_downstream_button_set.reload
       bs2 = b2.reload.board_downstream_button_set.reload
       bs3 = b3.reload.board_downstream_button_set.reload
       bs4 = b4.reload.board_downstream_button_set.reload
       expect(bs2.reload.data['source_id']).to eq(bs1.global_id)
-      expect(bs3.reload.data['source_id']).to eq(bs2.global_id)
-      expect(bs4.reload.data['source_id']).to eq(bs3.global_id)
+      expect(bs3.reload.data['source_id']).to eq(bs1.global_id)
+      expect(bs4.reload.data['source_id']).to eq(bs1.global_id)
       
       BoardDownstreamButtonSet.update_for(b1.global_id)
       bs2.reload.buttons
@@ -770,26 +798,28 @@ describe BoardDownstreamButtonSet, :type => :model do
   
   describe "buttons" do
     it "should retrieve from the correct source" do
-      bs = BoardDownstreamButtonSet.create(board_id: 1)
-      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2'}]
+      bs = BoardDownstreamButtonSet.new(board_id: 1, data: {})
+      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_2'}]
+      expect(bs.buttons.length).to eq(2)
       bs.save
-      expect(bs.buttons).to eq([{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2'}])
+      expect(bs.data['linked_board_ids']).to eq(['1_2'])
+      expect(bs.buttons).to eq([{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_2'}])
       bs2 = BoardDownstreamButtonSet.create(board_id: 2)
       bs2 = BoardDownstreamButtonSet.find(bs2.id)
       bs2.data['source_id'] = bs.global_id
-      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0}])
+      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0, 'linked_board_id' => '1_2'}])
     end
 
     it "should recurse through multiple levels if needed" do
       bs = BoardDownstreamButtonSet.create(board_id: 1)
-      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2'}, {'id' => 3, 'board_id' => '1_3'}]
+      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}]
       bs.save
-      expect(bs.buttons).to eq([{"id"=>1, "board_id"=>"1_1"}, {"id"=>2, "board_id"=>"1_2"}, {"id"=>3, "board_id"=>"1_3"}])
+      expect(bs.buttons).to eq([{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}])
       bs2 = BoardDownstreamButtonSet.create(board_id: 2)
       bs2 = BoardDownstreamButtonSet.find(bs2.id)
       bs2.data['source_id'] = bs.global_id
       bs2.save
-      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0}])
+      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0, 'linked_board_id' => '1_3'}, {"board_id"=>"1_3", "depth"=>1, "id"=>3}])
       bs3 = BoardDownstreamButtonSet.create(board_id: 3)
       bs3 = BoardDownstreamButtonSet.find(bs3.id)
       bs3.data['source_id'] = bs2.global_id
@@ -799,14 +829,14 @@ describe BoardDownstreamButtonSet, :type => :model do
 
     it "should update the source_id if mismatched" do
       bs = BoardDownstreamButtonSet.create(board_id: 1)
-      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2'}, {'id' => 3, 'board_id' => '1_3'}]
+      bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}]
       bs.save
-      expect(bs.buttons).to eq([{"id"=>1, "board_id"=>"1_1"}, {"id"=>2, "board_id"=>"1_2"}, {"id"=>3, "board_id"=>"1_3"}])
+      expect(bs.buttons).to eq([{"id"=>1, "board_id"=>"1_1", 'linked_board_id' => '1_2'}, {"id"=>2, "board_id"=>"1_2", 'linked_board_id' => '1_3'}, {"id"=>3, "board_id"=>"1_3"}])
       bs2 = BoardDownstreamButtonSet.create(board_id: 2)
       bs2 = BoardDownstreamButtonSet.find(bs2.id)
       bs2.data['source_id'] = bs.global_id
       bs2.save
-      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0}])
+      expect(bs2.buttons).to eq([{'id' => 2, 'board_id' => '1_2', 'depth' => 0, 'linked_board_id' => '1_3'}, {"board_id"=>"1_3", "depth"=>1, "id"=>3}])
       bs3 = BoardDownstreamButtonSet.create(board_id: 3)
       bs3 = BoardDownstreamButtonSet.find(bs3.id)
       bs3.data['source_id'] = bs2.global_id
@@ -833,8 +863,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         {'id' => 3, 'label' => 'hax'},
         {'id' => 4, 'label' => 'cax'}
       ]}, {:user => u})
-      Worker.process_queues
-      Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
       
       bs = b.reload.board_downstream_button_set
       expect(bs.buttons_starting_from(b.global_id).length).to eq(6)
@@ -859,9 +888,8 @@ describe BoardDownstreamButtonSet, :type => :model do
         {'id' => 3, 'label' => 'hax'},
         {'id' => 4, 'label' => 'cax'}
       ]}, {:user => u})
-      Worker.process_queues
-      Worker.process_queues
-      
+      BoardDownstreamButtonSet.update_for(b.global_id, true)
+
       bs = b.reload.board_downstream_button_set
       expect(bs.buttons_starting_from(b.global_id).length).to eq(6)
       expect(bs.buttons_starting_from(b.global_id).map{|b| b['depth']}).to eq([0, 0, 1, 1, 2, 2])
@@ -880,8 +908,9 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'aha'
       expect(u).to receive(:private_viewable_board_ids).and_return(['3', '4'])
-      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(u, 'aha')).to eq('qwer')
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(bs.url_for(u, 'aha')).to eq('zxcv')
     end
 
     it "should return the private url if no user but everything is public" do
@@ -889,8 +918,9 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['public_board_ids'] = ['1', '2', '3', '4']
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'aha'
-      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(nil, 'aha')).to eq('qwer')
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(bs.url_for(nil, 'aha')).to eq('zxcv')
     end
 
     it "should return nil on a mismatched revision hash" do
@@ -898,6 +928,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['public_board_ids'] = ['1', '2', '3', '4']
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'abc'
+      expect(Uploader).to_not receive(:check_existing_upload)
       expect(bs).to_not receive(:extra_data_private_url)
       expect(bs.url_for(nil, 'aha')).to eq(nil)
     end
@@ -909,6 +940,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'abc'
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
+      expect(Uploader).to_not receive(:check_existing_upload)
       expect(bs).to_not receive(:extra_data_private_url)
       expect(bs.url_for(u, 'abc')).to eq(nil)
     end
@@ -921,8 +953,11 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'abc'
-      expect(bs).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(u, 'abc')).to eq('qwer')
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(bs.url_for(u, 'abc')).to eq('zxcv')
+      expect(bs.data['private_cdn_url']).to eq("zxcv")
+      expect(bs.data['private_cdn_revision']).to eq("abc")
     end
 
     it "should return the cached path if it exists already for the user's viewable set" do
@@ -942,7 +977,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
       expect(bs.url_for(u, 'abc')).to eq("https://www.example.com/zxcv")
-    end
+  end
 
     it "should schedule a remote touch if expiring soon" do
       bs = BoardDownstreamButtonSet.create
@@ -962,7 +997,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs.url_for(u, 'abc')).to eq("https://www.example.com/zxcv")
     end
 
-    it "should use the source button set if one is defined" do
+    it "should return nil if the source button set is not valid" do
       bs = BoardDownstreamButtonSet.create
       bs.data['full_set_revision'] = 'abc'
       bs2 = BoardDownstreamButtonSet.create
@@ -973,8 +1008,52 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs2.data['board_ids']).to eq(['1', '2', '3', '4'])
       bs.data['source_id'] = bs2.global_id
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs2.global_id).and_return(bs2)
-      expect(bs2).to receive(:extra_data_private_url).and_return('qwer')
-      expect(bs.url_for(nil, 'abc')).to eq('qwer')
+      expect(bs2).to_not receive(:extra_data_private_url)
+      expect(Uploader).to_not receive(:check_existing_upload)
+      expect(bs.url_for(nil, 'abc')).to eq(nil)
+    end
+
+    it "should use the source button set if one is defined" do
+      bs = BoardDownstreamButtonSet.create
+      bs.board_id = 9
+      bs.data['full_set_revision'] = 'abc'
+      bs.data['linked_board_ids'] = ['1', '2', '3', '4']
+      bs2 = BoardDownstreamButtonSet.create
+      bs2.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs2.data['board_ids'] = ['1', '2', '3', '4']
+      bs2.data['linked_board_ids'] = ['1', '2', '3', '4', '1_9']
+      expect(bs2).to receive(:skip_extra_data_processing?).and_return(true).at_least(1).times
+      bs2.save
+      expect(bs2.data['board_ids']).to eq(['1', '2', '3', '4'])
+      expect(bs2.data['linked_board_ids']).to eq(['1', '2', '3', '4', '1_9'])
+      bs.data['source_id'] = bs2.global_id
+      expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs2.global_id).and_return(bs2)
+      expect(Uploader).to receive(:check_existing_upload).with(nil).and_return('zxcv')
+      expect(bs.url_for(nil, 'abc')).to eq('zxcv')
+    end
+
+    it "should use cached cdn url if it matches" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'aha'
+      bs.data['private_cdn_url'] = 'tyuui'
+      bs.data['private_cdn_revision'] = 'aha'
+      expect(bs).to_not receive(:extra_data_private_url)
+      expect(Uploader).to_not receive(:check_existing_upload)
+      expect(bs.url_for(nil, 'aha')).to eq('tyuui')
+    end
+
+    it "should not used cached cdn url if it doesn't match" do
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2', '3', '4']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'aha'
+      bs.data['private_cdn_url'] = 'tyuui'
+      bs.data['private_cdn_revision'] = 'ahaaa'
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(bs.url_for(nil, 'aha')).to eq('zxcv')
     end
   end
 
@@ -1054,7 +1133,7 @@ describe BoardDownstreamButtonSet, :type => :model do
     it "should return the source button set's url" do
       u = User.create
       b = Board.create(user: u)
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       bs2 = BoardDownstreamButtonSet.create
       expect(bs2).to receive(:skip_extra_data_processing?).and_return(true).at_least(1).times
       bs2.data['source_id'] = bs.global_id
@@ -1062,59 +1141,59 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs2)
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs.global_id).and_return(bs)
-      expect(bs).to receive(:url_for).with(u, nil).and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, nil, true).and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should return the existing url if there is one" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'}, board: b)
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
-      expect(bs).to receive(:url_for).with(u, 'asdf').and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should generate the default extra_data if there isn't one" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'}, board: b)
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
-      expect(bs).to receive(:url_for).with(u, 'asdf').and_return(nil)
-      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return(nil)
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should return the newly-generated default extra_data if it matches for the user" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(:data => {'full_set_revision' => 'asdf'}, board: b)
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
-      expect(bs).to receive(:url_for).with(u, 'asdf').and_return(nil)
-      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return(nil)
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should return the newly-generated default extra_data if it matches for the user" do
       u = User.create
       b = Board.create(user: u)
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
-      expect(bs).to receive(:extra_data_private_url).and_return('asdf')
+      expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
     end
 
     it "should not try to generate again less than 12 hours after a failed generation attempt" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       bs.data['board_ids'] = ['1', '2', '3']
       bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['1', '2', '3'].to_json, bs.data['remote_salt'])
@@ -1129,7 +1208,7 @@ describe BoardDownstreamButtonSet, :type => :model do
     it "should remote upload only the available boards based on the user" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       bs.data['board_ids'] = ['1', '2', '3']
       bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
@@ -1163,7 +1242,7 @@ describe BoardDownstreamButtonSet, :type => :model do
     it "should record an error on upload fail" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       bs.data['board_ids'] = ['1', '2', '3']
       bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
@@ -1198,7 +1277,7 @@ describe BoardDownstreamButtonSet, :type => :model do
     it "should return the URL on a successful generation" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
-      bs = BoardDownstreamButtonSet.create
+      bs = BoardDownstreamButtonSet.create(board: b)
       bs.data['board_ids'] = ['1', '2', '3']
       bs.data['full_set_revision'] = 'asdf'
       hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
