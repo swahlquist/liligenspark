@@ -297,6 +297,51 @@ describe WeeklyStatsSummary, :type => :model do
       })
     end
 
+    it 'should not include users in word stats who have not enabled log reports' do
+      user_ids = []
+      all_user_ids = []
+      6.times do
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+        user_ids << u.id
+        all_user_ids << u.global_id
+        d = Device.create
+        s1 = LogSession.process_new({'events' => [
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+        ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+        WeeklyStatsSummary.update_for(s1.global_id)
+      end
+      sum = WeeklyStatsSummary.last
+      expect(sum.data['stats']['word_pairs']).to eq({"4ef675c7908e29474e184f185134bfd6"=>{"a"=>"this", "b"=>"that", "count"=>1}, "51122eaf1983d05e75976c574d8530ef"=>{"a"=>"that", "b"=>"then", "count"=>1}})
+      6.times do
+        u = User.create(:settings => {'preferences' => {'allow_log_reports' => false}})
+        all_user_ids << u.global_id
+        d = Device.create
+        s1 = LogSession.process_new({'events' => [
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'big', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bad', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bold', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+        ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+        WeeklyStatsSummary.update_for(s1.global_id)
+      end
+      sum = WeeklyStatsSummary.last
+      expect(sum.data['stats']['word_pairs']).to eq({"1f265e9248329382b176b97963cb0d75" => {"a"=>"big", "b"=>"bad", "count"=>1}})
+      
+      sum = WeeklyStatsSummary.track_trends(sum.weekyear)
+      expect(sum.data['totals']['total_users']).to eq(12)
+      expect(sum.data['totals']['total_words']).to eq(18) # not 36
+      expect(sum.data['totals']['admin_total_words']).to eq(36)
+      expect(sum.data['user_ids']).to eq(all_user_ids)
+      expect(sum.data['word_counts']).to eq({
+        'this' => 6, 'that' => 6, 'then' => 6
+      })
+      expect(sum.data['word_pairs']).to eq({
+        "4ef675c7908e29474e184f185134bfd6"=>{"count"=>6, "a"=>"this", "b"=>"that", "user_ids"=>user_ids, 'user_count' => 6}, 
+        "51122eaf1983d05e75976c574d8530ef"=>{"count"=>6, "a"=>"that", "b"=>"then", "user_ids"=>user_ids, 'user_count' => 6}
+      })
+    end
+
     it "should update a user's target_list if for the current week" do
       u = User.create
       d = Device.create

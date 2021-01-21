@@ -40,7 +40,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       boards.each do |brd|
         if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings['full_set_revision']
           BoardDownstreamButtonSet.update_for(brd, true)
-          brd.board_downstream_button_set.reload
+          brd.reload
+          brd.board_downstream_button_set.reload if brd.board_downstream_button_set
         end
       end
     end

@@ -921,7 +921,8 @@ describe Organization, :type => :model do
         :management_action => "add_premium_supervisor-#{u.user_name}"
       }, {'updater' => User.create})
       expect(res).to eq(true)
-      expect(o.users.length).to eq(1)
+      expect(o.users.length).to eq(0)
+      expect(o.supervisors.length).to eq(1)
       u.reload
       expect(o.attached_users('user').length).to eq(0)
       expect(o.attached_users('approved_user').length).to eq(0)
@@ -936,6 +937,7 @@ describe Organization, :type => :model do
         'type' => 'org_supervisor',
         'state' => {
           'premium' => true, 
+          'pending' => true,
           'added' => links[0]['state']['added']
         }
       }])

@@ -1206,7 +1206,7 @@ describe User, :type => :model do
       expect(AuditEvent.count).to eq(1)
       res = u.add_premium_voice('abcd', 'Windows')
       expect(res).to eq(true)
-      expect(AuditEvent.count).to eq(1)
+      expect(AuditEvent.count).to eq(2)
       ae = AuditEvent.last
       expect(ae.event_type).to eq('voice_added')
       expect(ae.data['voice_id']).to eq('abcd')

@@ -738,14 +738,7 @@ class WordData < ActiveRecord::Base
   def self.core_and_fringe_for(user, allow_slow=false)
     res = {}
     res[:for_user] = WordData.core_list_for(user)
-    button_sets = BoardDownstreamButtonSet.for_user(user)
-    if allow_slow
-      button_sets.each do |bs|
-        if bs.board && bs.data['full_set_revision'] != bs.board.settings['full_set_revision']
-          BoardDownstreamButtonSet.update_for(bs.board.global_id, true)
-        end
-      end
-    end
+    button_sets = BoardDownstreamButtonSet.for_user(user, true)
     cache_key = "reachable_phrases_and_words/#{user.cache_key}/#{button_sets.map(&:cache_key).join('/')}"
     hashes = user.get_cached(cache_key)
     if !hashes
@@ -861,6 +854,13 @@ class WordData < ActiveRecord::Base
       res << word if reachable_hash[word.downcase.sub(/[^\w]+$/, '')]
     end
     res
+  end
+
+  def self.clear_lists
+    @@default_core_list = nil
+    @@basic_core_list = nil
+    @@core_lists = nil
+    @@fringe_lists = nil
   end
   
   def self.default_core_list

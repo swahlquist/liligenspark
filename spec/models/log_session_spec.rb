@@ -167,7 +167,8 @@ describe LogSession, :type => :model do
     
     it "should mark as needing push if that's true" do
       s = LogSession.new
-      s.user_id = 123
+      u = User.create
+      s.user = u
       s.data = {}
       time1 = 10.minutes.ago
       time2 = 8.minutes.ago
@@ -2793,10 +2794,10 @@ describe LogSession, :type => :model do
       LogSession.where(:id => s4.id).update_all(:ended_at => 6.hours.ago, :needs_remote_push => nil)
       expect(LogSession.where(:needs_remote_push => true).count).to eq(3)
       LogSession.push_logs_remotely
-      expect(Worker.scheduled?(Webhook, 'notify_all_with_code', s1.record_code, 'new_session', nil)).to eq(false)
-      expect(Worker.scheduled?(Webhook, 'notify_all_with_code', s2.record_code, 'new_session', nil)).to eq(true)
-      expect(Worker.scheduled?(Webhook, 'notify_all_with_code', s3.record_code, 'new_session', nil)).to eq(false)
-      expect(Worker.scheduled?(Webhook, 'notify_all_with_code', s4.record_code, 'new_session', nil)).to eq(false)
+      expect(Worker.scheduled_for?(:slow, Webhook, 'notify_all_with_code', s1.record_code, 'new_session', {'slow' => true})).to eq(false)
+      expect(Worker.scheduled_for?(:slow, Webhook, 'notify_all_with_code', s2.record_code, 'new_session', {'slow' => true})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, Webhook, 'notify_all_with_code', s3.record_code, 'new_session', {'slow' => true})).to eq(false)
+      expect(Worker.scheduled_for?(:slow, Webhook, 'notify_all_with_code', s4.record_code, 'new_session', {'slow' => true})).to eq(false)
       expect(s1.reload.needs_remote_push).to eq(true)
       expect(s2.reload.needs_remote_push).to eq(false)
       expect(s3.reload.needs_remote_push).to eq(true)

@@ -193,7 +193,7 @@ describe Api::ButtonSetsController, :type => :controller do
       bs = b.reload.board_downstream_button_set
       expect(bs).to_not eq(nil)
       expect(b).to receive(:board_downstream_button_set).and_return(bs).at_least(1).times
-      expect(bs).to receive(:url_for).with(@user, 'aaaa').and_return("asdf")
+      expect(bs).to receive(:url_for).with(@user, 'aaaa', true).and_return("asdf")
       Progress.perform_action(p.id)
       expect(p.reload.settings['result']).to eq({'success' => true, 'url' => 'asdf'})
     end

@@ -55,6 +55,7 @@ RSpec.configure do |config|
     ENV['REMOTE_EXTRA_DATA'] = nil
     Permissable.set_redis(RedisInit.permissions, RedisInit.cache_token)
     RedisInit.default.del('domain_org_ids')
+    WordData.clear_lists
   end
 end
 

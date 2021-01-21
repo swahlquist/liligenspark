@@ -1349,10 +1349,6 @@ RSpec.describe WordData, :type => :model do
       })
     end
 
-    it "should add as many inflections as it can fit for 'is', 'am', 'be' and 'are'" do
-      write_this_test
-    end
-
     it "should include secondary parts of speech inflections where possible" do
       o = Organization.create(admin: true)
       u = User.create

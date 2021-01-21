@@ -832,6 +832,7 @@ describe Board, :type => :model do
       b4.save
       Worker.process_queues
       Worker.process_queues
+      Worker.process_queues
       expect(b1.reload.settings['full_set_revision']).to_not eq(hash1)
       expect(b1.current_revision).to eq(current1)
       expect(b2.reload.settings['full_set_revision']).to_not eq(hash2)

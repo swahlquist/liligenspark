@@ -36,13 +36,18 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(2).times
+      end.exactly(1).times
       s.detach_extra_data('force')
-      expect(paths).to eq(['public', 'private'])
+      expect(paths).to eq(['private'])
     end
 
     it 'should not re-upload if already uploaded the button set with the same revision hash' do
-      write_this_test
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf'})
+      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(Uploader).to_not receive(:remote_upload)
+      s.detach_extra_data('force')
     end
 
     it 'should upload if no extra_data_nonce defined and data too big' do
@@ -62,15 +67,15 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(2).times
+      end.exactly(1).times
       s.detach_extra_data(true)
-      expect(paths).to eq(['public', 'private'])
+      expect(paths).to eq(['private'])
     end
 
     it 'should upload if extra_data_nonce is already defined and the data has changed' do
       u = User.create
       d = Device.create(user: u)
-      s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'bacon'})
+      s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'bacon', 'events' => [{}, {}]})
       expect(s).to receive(:assert_extra_data).at_least(1).times
       expect(s).to receive(:extra_data_too_big?).and_return(true)
       paths = []
@@ -107,9 +112,9 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(2).times
+      end.exactly(1).times
       s.detach_extra_data('force')
-      expect(paths).to eq(['public', 'private'])   
+      expect(paths).to eq(['private'])   
     end
 
     it 'should upload a public data version as well if available' do
@@ -142,9 +147,9 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(2).times
+      end.exactly(1).times
       s.detach_extra_data('force')
-      expect(paths).to eq(['public', 'private'])   
+      expect(paths).to eq(['private'])   
     end
 
     it 'should clear the data attribute when uploading remote version' do
@@ -170,9 +175,9 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(2).times
+      end.exactly(1).times
       s.detach_extra_data('force')
-      expect(paths).to eq(['public', 'private']) 
+      expect(paths).to eq(['private']) 
       expect(s.data['events']).to eq(nil)
       expect(s.data['extra_data_nonce']).to_not eq(nil)
     end
@@ -258,14 +263,14 @@ describe ExtraData, :type => :model do
       private_key = GoSecure.hmac('nonce', 'extra_data_private_key', 1)
       expect(LogSession.extra_data_remote_paths('nonce', 'global_id')).to eq(
         [
-          "extras/LogSession/global_id/nonce/data-#{private_key}.json",
-          "extras/LogSession/global_id/nonce/data-global_id.json"
+          "extrasnonce/LogSession/global_id/nonce/data-#{private_key}.json",
+          "extrasnonce/LogSession/global_id/nonce/data-global_id.json"
         ]
       )
       expect(LogSession.extra_data_remote_paths('nonce', 'global_id', 0)).to eq(
         [
-          "/extras/LogSession/global_id/nonce/data-#{private_key}.json",
-          "/extras/LogSession/global_id/nonce/data-global_id.json"
+          "/extrasn/LogSession/global_id/nonce/data-#{private_key}.json",
+          "/extrasn/LogSession/global_id/nonce/data-global_id.json"
         ]
       )
     end

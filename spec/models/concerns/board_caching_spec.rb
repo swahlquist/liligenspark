@@ -192,7 +192,7 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
       Worker.process_queues
 
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u3.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -223,14 +223,14 @@ describe BoardCaching, :type => :model do
       b.reload.process({'buttons' => [{'id' => 1, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}]}, {:user => u2})
       RedisInit.permissions.keys.each{|k| RedisInit.permissions.del(k) }
 
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u3.id,
         'method' => 'update_available_boards',
         'arguments' => []
       })).to eq(false)
       Worker.process_queues
       Worker.process_queues
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u3.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -317,7 +317,7 @@ describe BoardCaching, :type => :model do
       expect(u1.reload.supervisors).to eq([u2])
       expect(u2.reload.supervisors).to eq([u1])
       u1.reload.update_available_boards
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u2.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -325,19 +325,19 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
       expect(u1.reload.supervisors).to eq([u2])
       expect(u2.reload.supervisors).to eq([u1])
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u1.id,
         'method' => 'update_available_boards',
         'arguments' => []
       })).to eq(true)
       Worker.process_queues
       Worker.process_queues
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u1.id,
         'method' => 'update_available_boards',
         'arguments' => []
       })).to eq(false)
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u2.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -359,7 +359,7 @@ describe BoardCaching, :type => :model do
       expect(u2.supervisors).to eq([])
       Worker.flush_queues
       u1.reload.update_available_boards
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u2.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -376,7 +376,7 @@ describe BoardCaching, :type => :model do
       expect(u2.supervisors).to eq([])
       Worker.flush_queues
       u1.reload.update_available_boards
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u2.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -451,7 +451,7 @@ describe BoardCaching, :type => :model do
       })).to eq(false)
       Worker.process_queues
       Worker.process_queues
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u1.id,
         'method' => 'update_available_boards',
         'arguments' => []
@@ -591,7 +591,7 @@ describe BoardCaching, :type => :model do
       u2.save
       u1.update_available_boards
       expect(u1.private_viewable_board_ids).to eq([b.global_id])
-      expect(Worker.scheduled?(User, :perform_action, {
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u4.id,
         'method' => 'update_available_boards',
         'arguments' => []

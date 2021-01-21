@@ -392,7 +392,7 @@ describe Uploadable, :type => :model do
       bi.save
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true)
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false).at_least(1).times
-      expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false)
+      expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false).at_least(1).times
       expect(ButtonImage).to receive(:cached_copy_identifiers).with("http://www.example.com/pic.png").and_return({
         library: 'lessonpix',
         user_id: u.global_id,
@@ -423,7 +423,7 @@ describe Uploadable, :type => :model do
       bi.save
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/pic.png").and_return(true)
       expect(Uploader).to receive(:protected_remote_url?).with("http://www.example.com/uploads/pic.png").and_return(false).at_least(1).times
-      expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false)
+      expect(Uploader).to receive(:protected_remote_url?).with("coughdrop://something.png").and_return(false).at_least(1).times
       expect(ButtonImage).to receive(:cached_copy_identifiers).with("http://www.example.com/pic.png").and_return({
         library: 'lessonpix',
         user_id: u.global_id,

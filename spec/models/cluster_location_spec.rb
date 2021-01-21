@@ -120,7 +120,7 @@ describe ClusterLocation, :type => :model do
       ClusterLocation.all.each{|c| c.generate_stats(true) }
       c1 = ClusterLocation.first
       expect(c1.cluster_type).to eq('geo')
-      expect(c1.data['geo']).to eq([13.0001, 12.0001, 0])
+      expect(c1.data['geo']).to eq([13.0, 12.0, 0])
       expect(c1.geo_sessions.count).to eq(5)
       expect(c1.ip_sessions.count).to eq(0)
       c2 = ClusterLocation.last
@@ -159,7 +159,7 @@ describe ClusterLocation, :type => :model do
       expect(s1.reload.geo_cluster_id).to eq(c1.id)
       ClusterLocation.all.each{|c| c.generate_stats(true) }
       c1.reload
-      expect(c1.data['geo']).to eq([13.0, 12.0, 0.0])
+      expect(c1.data['geo']).to eq([13.00005, 12.00005, 0.0])
     end
     
     it "should automatically be scheduled on save for an unassigned log session" do
