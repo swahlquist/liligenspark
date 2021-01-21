@@ -223,10 +223,11 @@ export default Controller.extend({
           });
         } else {
           var list = 'homeBoards';
-          var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 12};
           var locale = (window.navigator.language || 'en').split(/-/)[0];
-          // TODO: user preference to override device locale
-          // or maybe a dropdown like in search
+          if(app_state.get('currentUser.preferences.locale')) {
+            locale = app_state.get('currentUser.preferences.locale').split(/-/)[0];
+          }
+          var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 12, preferred_locale: locale};
           if(key == 'personal') {
             list = 'personalBoards';
             opts = {user_id: 'self', root: true, per_page: 12};
@@ -504,6 +505,7 @@ export default Controller.extend({
       if(window.ga) {
         window.ga('send', 'event', 'Setup', 'start', 'Setup started');
       }
+      app_state.set('auto_setup', false);
       this.transitionToRoute('setup');
     },
     opening_index: function() {

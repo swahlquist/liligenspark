@@ -297,6 +297,12 @@ export default Controller.extend({
       console.debug('syncing because manually triggered');
       persistence.sync(this.get('model.id'), 'all_reload').then(null, function() { });
     },
+    setup: function() {
+      if(window.ga) {
+        window.ga('send', 'event', 'Setup', 'start', 'Setup started');
+      }
+      this.transitionToRoute('setup');
+    },
     quick_assessment: function() {
       var _this = this;
       app_state.check_for_currently_premium(_this.get('model', 'quick_assessment')).then(function() {

@@ -300,6 +300,12 @@ var app_state = EmberObject.extend({
     }
     if(_this.get('currentUser') && _this.get('currentUser').reload) {
       _this.get('currentUser').reload().then(function() {
+        if(capabilities.installed_app && capabilities.system == 'iOS' && _this.get('currentUser.subscription.plan_id') == 'CoughDropiOSMonthly' && !_this.get('currentUser.checked_iap')) {
+          _this.set('currentUser.checked_iap', true);
+          // TODO: API call that triggers Purchasing.verify_receipt for the user
+          // and reloads again on success
+        }
+
         refresh();
       }, function() {
         refresh();

@@ -10,6 +10,8 @@ export default modal.ModalController.extend({
         user.set('terms_agree', true);
         user.save().then(function() {
           _this.send('close');
+          app_state.set('auto_setup', true);
+          _this.transitionToRoute('setup');
         }, function() {
           _this.set('agree_error', true);
         });

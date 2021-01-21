@@ -148,6 +148,17 @@ export default Controller.extend({
     {name: i18n.t('communicator', "Communicator View"), id: 'communicator'},
     {name: i18n.t('supporter', "Therapist/Parent/Supporter View"), id: 'supporter'}
   ],
+  localeList: computed(function() {
+    var list = i18n.get('locales');
+    var res = [{name: i18n.t('english_default', "English (default)"), id: 'en'}];
+    for(var key in list) {
+      if(!key.match(/-|_/)) {
+        var str = /* i18n.locales_localized[key] ||*/ i18n.locales[key] || key;
+        res.push({name: str, id: key});
+      }
+    }
+    return res; //.sort(function(a, b) { return a.name.localeCompare(b.name)});
+  }),
   scanningModeList: [
     {name: i18n.t('row_based', "Row-Based Scanning"), id: "row"},
     {name: i18n.t('column_based', "Column-Based Scanning"), id: "column"},

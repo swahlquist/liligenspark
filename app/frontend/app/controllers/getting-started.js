@@ -62,6 +62,7 @@ export default modal.ModalController.extend({
       if(window.ga) {
         window.ga('send', 'event', 'Setup', 'launch', 'Setup started');
       }
+      app_state.set('auto_setup', false);
       this.transitionToRoute('setup');
       modal.close();
     },

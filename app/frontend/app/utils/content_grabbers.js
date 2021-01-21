@@ -2116,6 +2116,7 @@ var boardGrabber = EmberObject.extend({
       find_args = {public: true};
     }
     find_args.allow_job = true;
+    find_args.preferred_locale = this.controller.get('board.locale');
     var url_prefix = new RegExp("^" + location.protocol + "//" + location.host + "/");
     var key = (this.controller.get('linkedBoardName') || "").replace(url_prefix, "");
     var keyed_find = RSVP.resolve([]);
@@ -2130,6 +2131,7 @@ var boardGrabber = EmberObject.extend({
       var board = data.find(function() { return true; });
       if(!board || !_this.controller.get('linkedBoardName')) {
         find_args.q = q;
+        _this.controller.set('foundBoards.locale', find_args.preferred_locale);
         CoughDrop.store.query('board', find_args).then(function(data) {
           if(data.meta && data.meta.progress) {
             progress_tracker.track(data.meta.progress, function(event) {

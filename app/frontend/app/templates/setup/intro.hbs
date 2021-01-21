@@ -6,9 +6,15 @@
     <p class='prompt'>{{t "First, remember your username (<b>%{un}</b>), you can use it to log in when you download the free app. You can also edit boards, practice and view reports from any computer with a web browser!" un=app_state.currentUser.user_name key='intro_3'}}</p>
   {{/if}}
   <p class='prompt'>{{t "Next we'd like to teach just a little about AAC (Augmentative and Alternative Communication), and then help make sure you've got %app_name% set up correctly. Hit \"Next\" in the bottom corner to get started." key='intro_2'}}</p>
-  <div style='float: left'>
-    <button class='btn btn-default btn-lg' {{action 'choose_board'}}>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
-  </div>
+  {{#if app_state.auto_start}}
+    <div style='float: left'>
+      <button class='btn btn-default btn-lg' {{action 'done'}}>{{t "Skip For Now, Return<br/>to the Dashboard" key='skip_to_dashboard'}}</button>
+    </div>
+  {{else}}
+    <div style='float: left'>
+      <button class='btn btn-default btn-lg' {{action 'choose_board'}}>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
+    </div>
+  {{/if}}
   <div style='float: right;'>
     <span class='glyphicon glyphicon-arrow-right' style='font-size: 70px; transform: rotate(45deg);'></span>
   </div>

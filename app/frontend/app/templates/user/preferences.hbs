@@ -68,7 +68,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="hide_pin_hint" class="col-sm-3 control-label">{{t "Exiting" key='editing'}}</label>
+        <label for="hide_pin_hint" class="col-sm-3 control-label">{{t "Hide PIN" key='hide_pin'}}</label>
         <div class="col-sm-5">
           <div class="checkbox big_checkbox">
             <label>
@@ -82,6 +82,12 @@
         </div>
       </div>
     {{/if}}
+    <div class="form-group">
+      <label for="locale" class="col-sm-3 control-label">{{t "Preferred Language" key='preferred_language'}}</label>
+      <div class="col-sm-5">
+        {{bound-select select_class="form-control" select_id="locale" content=localeList selection=pending_preferences.locale action=(action (mut pending_preferences.locale)) }}
+      </div>
+    </div>
   {{/preference-box}}
   {{#preference-box title="Styling" glyph='glyphicon glyphicon-picture' title_key='styling'}}
     <div class="form-group">

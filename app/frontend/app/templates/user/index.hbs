@@ -75,7 +75,7 @@
       <div class='col-sm-3 col-xs-6 big_button_holder'>
         {{#if model.preferences.home_board.key}}
           <div style='position: absolute; z-index: 2; margin: 6px 12px;'><span class='glyphicon glyphicon-home'></span> {{t "Home Board:" key='home_board'}}</div>
-          {{board-icon board=model.preferences.home_board}}
+          {{board-icon board=model.preferences.home_board localized=true}}
         {{else}}
           {{#link-to 'home-boards' class='btn big_button btn-default'}}
             <span class='glyphicon glyphicon-home'></span>
@@ -129,7 +129,7 @@
                   <li><a href="#" {{action 'eval_settings'}}>Eval Status</a></li>
                 {{/if}}
                 {{#if model.permissions.delete}}
-                  <li>{{#link-to 'setup'}}{{t "Getting Started Wizard" key='getting_started_wizard'}}{{/link-to}}</li>
+                  <li><a href="#" {{action 'setup'}}>{{t "Getting Started Wizard" key='getting_started_wizard'}}</a></li>
                 {{/if}}
               </ul>
             </div>
@@ -248,7 +248,7 @@
       {{/if}}
       {{#if model.permissions.delete}}
         <div class='col-xs-12' style='margin-top: 10px; margin-bottom: 15px;'>
-          {{#link-to 'setup' class='btn btn-default'}}{{t "Launch the Getting Started Wizard Again" key='launch_setup'}}{{/link-to}}
+          <a href="#" {{action 'setup'}} class='btn btn-default'>{{t "Launch the Getting Started Wizard Again" key='launch_setup'}}</a>
         </div>
       {{/if}}
     {{/if}}

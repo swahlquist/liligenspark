@@ -21,6 +21,7 @@ export default modal.ModalController.extend({
       if(window.ga) {
         window.ga('send', 'event', 'Setup', 'launch', 'Setup started');
       }
+      app_state.get('auto_setup', true);
       this.transitionToRoute('setup');
     },
     subscription_error: function(err) {
@@ -28,6 +29,7 @@ export default modal.ModalController.extend({
     },
     subscription_success: function(msg) {
       modal.close();
+      app_state.get('auto_setup', true);
       this.transitionToRoute('setup');
       modal.success(msg);
     }

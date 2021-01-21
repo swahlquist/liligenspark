@@ -329,6 +329,9 @@ describe("contentGrabbers", function() {
     it("should search for pcs symbols correctly", function() {
       expect('test').toEqual('todo');
     });
+    it("should search for symbolstix symbols correctly", function() {
+      expect('test').toEqual('todo');
+    });
   });
 
   describe("upload_to_remote", function() {

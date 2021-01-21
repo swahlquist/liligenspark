@@ -482,6 +482,9 @@ export default Controller.extend({
       }
       this.transitionToRoute('home-boards');
     },
+    done: function() {
+      this.transitionToRoute('index');
+    },
     show_advanced: function() {
       this.set('advanced', true);
     },
