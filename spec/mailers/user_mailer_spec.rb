@@ -636,8 +636,46 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/\+100\.0%/)
       expect(html).to match(/so no reports are generated/)
     end
+
+    it "should not include raw logs for private_logging supervisees" do
+      write_this_test
+    end
     
     it "should include goal data"
+  end
+
+  describe "valet_password_enabled" do
+    it "should have send message to user" do
+      u = User.create(settings: {email: 'test@example.com'})
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.valet_password_enabled(u.global_id)
+      expect(m.subject).to eq("CoughDrop - Valet Login Enabled")
+      expect(m.to).to eq(["bob@example.com"])
+      html = message_body(m, :html)
+      expect(html).to match(/were recently enabled/)
+      expect(html).to match(/<b>#{u.user_name}<\/b>/)
+      
+      text = message_body(m, :text)
+      expect(text).to match(/were recently enabled/)
+      expect(text).to match(/\"#{u.user_name}\"/)
+    end
+  end
+
+  describe "valet_password_used" do
+    it "should have send message to user" do
+      u = User.create(settings: {email: 'test@example.com'})
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.valet_password_used(u.global_id)
+      expect(m.subject).to eq("CoughDrop - Valet Login Used")
+      expect(m.to).to eq(["bob@example.com"])
+      html = message_body(m, :html)
+      expect(html).to match(/were recently used to log in to your account/)
+      expect(html).to match(/<b>#{u.user_name}<\/b>/)
+      
+      text = message_body(m, :text)
+      expect(text).to match(/were recently used to log in to your account/)
+      expect(text).to match(/\"#{u.user_name}\"/)
+    end
   end
   
   it "should have a default reply-to of noreply@mycoughdrop.com"

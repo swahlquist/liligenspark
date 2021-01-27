@@ -232,9 +232,11 @@ var app_state = EmberObject.extend({
             if(!user.get('fresh') && stashes.get('online')) {
               // if online, try reloading, but it's ok if you can't
               user.reload().then(function(user) {
+                user.set('modeling_session', session.get('modeling_session'));
                 app_state.set('sessionUser', user);
               }, function() { });
             }
+            user.set('modeling_session', session.get('modeling_session'));
             app_state.set('sessionUser', user);
 
             if(stashes.get('speak_mode_user_id') || stashes.get('referenced_speak_mode_user_id')) {
@@ -1170,9 +1172,11 @@ var app_state = EmberObject.extend({
     CoughDrop.store.findRecord('user', 'self').then(function(user) {
       if(!user.get('fresh')) {
         user.reload().then(function(user) {
+          user.set('modeling_session', session.get('modeling_session'));
           app_state.set('sessionUser', user);
         }, function() { });
       }
+      user.set('modeling_session', session.get('modeling_session'));
       app_state.set('sessionUser', user);
     }, function() { });
   },

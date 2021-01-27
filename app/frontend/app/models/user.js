@@ -51,6 +51,9 @@ CoughDrop.User = DS.Model.extend({
   permissions: DS.attr('raw'),
   unread_messages: DS.attr('number'),
   unread_alerts: DS.attr('number'),
+  valet_password: DS.attr('string'),
+  valet_login: DS.attr('boolean'),
+  valet_disabled: DS.attr('boolean'),
   last_message_read: DS.attr('number'),
   last_alert_access: DS.attr('number'),
   last_access: DS.attr('date'),
@@ -247,9 +250,11 @@ CoughDrop.User = DS.Model.extend({
     'subscription.billing_state', 
     'supporter_role',
     'grace_period',
+    'modeling_session',
     'expiration_passed',
     'subscription.premium_supporter',
     function() {
+      if(this.get('modeling_session')) { return true; }
       if(this.get('subscription.billing_state') == 'modeling_only' && !this.get('grace_period')) { return true; }
       // auto-convert a free-trial supporter to modeling_only when their trial expires
       if(this.get('supporter_role') && !this.get('subscription.premium_supporter')) {

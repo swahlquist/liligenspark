@@ -241,4 +241,16 @@ class UserMailer < ActionMailer::Base
     @org = Organization.find_by_global_id(org_id)
     mail_message(@user, "Organization Sponsorship Removed") if @user && @org
   end
+
+  def valet_password_enabled(user_id)
+    @user = User.find_by_global_id(user_id)
+    @re_enable = true if @user.settings['valet_password_disabled_since'] && @user.settings['valet_password_disabled_since'] > 4.weeks.ago.to_i
+    mail_message(@user, "Valet Login Enabled") if @user
+  end
+  
+  def valet_password_used(user_id)
+    @user = User.find_by_global_id(user_id)
+    mail_message(@user, "Valet Login Used") if @user
+  end
+
 end

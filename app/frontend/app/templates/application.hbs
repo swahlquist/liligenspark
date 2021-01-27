@@ -420,18 +420,20 @@
                     </a>
                     <ul class="dropdown-menu" role="menu">
                       <li><a href="#" {{action "setSpeakModeUser" 'self'}}>{{t "speak as me" key='speak_as_me'}}</a></li>
-                      {{#if few_supervisees}}
-                        {{#each few_supervisees.list as |supervisee|}}
-                          <li><a href="#" {{action "setSpeakModeUser" supervisee.id 'modeling'}}>{{t "model for" key='model_for'}} {{supervisee.user_name}}</a></li>
-                          <li><a href="#" {{action "setSpeakModeUser" supervisee.id}}>{{t "speak as" key='speak_as'}} {{supervisee.user_name}}</a></li>
-                        {{/each}}
-                        {{#if few_supervisees.more}}
+                      {{#if app_state.currentUser.permissions.delete}}
+                        {{#if few_supervisees}}
+                          {{#each few_supervisees.list as |supervisee|}}
+                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id 'modeling'}}>{{t "model for" key='model_for'}} {{supervisee.user_name}}</a></li>
+                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id}}>{{t "speak as" key='speak_as'}} {{supervisee.user_name}}</a></li>
+                          {{/each}}
+                          {{#if few_supervisees.more}}
+                            <li><a href="#" {{action "pickSpeakModeUser" 'modeling'}}>{{t "model for..." key='model_for_ellipsis'}}</a></li>
+                            <li><a href="#" {{action "pickSpeakModeUser" 'speak'}}>{{t "speak as..." key='speak_as_ellipsis'}}</a></li>
+                          {{/if}}
+                        {{else}}
                           <li><a href="#" {{action "pickSpeakModeUser" 'modeling'}}>{{t "model for..." key='model_for_ellipsis'}}</a></li>
                           <li><a href="#" {{action "pickSpeakModeUser" 'speak'}}>{{t "speak as..." key='speak_as_ellipsis'}}</a></li>
                         {{/if}}
-                      {{else}}
-                        <li><a href="#" {{action "pickSpeakModeUser" 'modeling'}}>{{t "model for..." key='model_for_ellipsis'}}</a></li>
-                        <li><a href="#" {{action "pickSpeakModeUser" 'speak'}}>{{t "speak as..." key='speak_as_ellipsis'}}</a></li>
                       {{/if}}
                     </ul>
                   </div>
@@ -632,6 +634,13 @@
     <span id="identity" class={{if app_state.speak_mode 'advanced_selection undwellable' 'advanced_selection'}}>
       <span style="display: inline-block;" class={{if app_state.super_no_linky 'dropdown hidden' 'dropdown'}}>
         <a class={{if persistence.online 'btn btn-default online' 'btn btn-default offline'}} id='identity_button' href="#" data-toggle="dropdown">
+          {{#if app_state.speak_mode}}
+            {{#if stashes.logging_enabled}}
+              {{#unless stashes.logging_paused_at}}
+                <span class='logging_enabled glyphicon glyphicon-briefcase'></span>
+              {{/unless}}
+            {{/if}}
+          {{/if}}
           {{#if app_state.currentUser}}
             <span class='user_holder'>
               <img src={{app_state.currentUser.avatar_url_with_fallback}} class='user' onerror='button_broken_image(this);' />
@@ -678,16 +687,18 @@
             {{#if app_state.currentBoardState.id}}
               {{#if simple_board_header}}
                 {{#if app_state.currentUser}}
-                  <li role="presentation" class='big' id='exit_speak_mode'>
-                    <a href="#" {{action "setAsHome" 'starting'}}>
-                      {{#if app_state.root_board_is_home}}
-                        {{t "Set as Home Board" key="set_as_home"}}
-                      {{else}}
-                        {{t "Make This my Home Board" key="set_as_home"}}
-                      {{/if}}
-                    </a>
-                  </li>
-                  <li class="divider"></li>
+                  {{#if app_state.currentUser.permissions.delete}}
+                    <li role="presentation" class='big' id='exit_speak_mode'>
+                      <a href="#" {{action "setAsHome" 'starting'}}>
+                        {{#if app_state.root_board_is_home}}
+                          {{t "Set as Home Board" key="set_as_home"}}
+                        {{else}}
+                          {{t "Make This my Home Board" key="set_as_home"}}
+                        {{/if}}
+                      </a>
+                    </li>
+                    <li class="divider"></li>
+                  {{/if}}
                 {{/if}}
               {{/if}}
             {{/if}}
@@ -760,9 +771,11 @@
                   {{#link-to "index"}}{{t "Dashboard" key='dashboard'}}{{/link-to}}
                 </li>
               {{/unless}}
-              <li role="presentation">
-                {{#link-to "user" app_state.currentUser.user_name}}{{t "My Account" key='my_account'}}{{/link-to}}
-              </li>
+              {{#if app_state.currentUser.permissions.delete}}
+                <li role="presentation">
+                  {{#link-to "user" app_state.currentUser.user_name}}{{t "My Account" key='my_account'}}{{/link-to}}
+                </li>
+              {{/if}}
               {{#if persistence.syncing}}
                 <li role="presentation" style='display: none;'>
                   <a href="#" {{action 'cancel_sync'}}>{{t "Cancel Sync" key='cancel_sync'}}</a>
@@ -796,7 +809,9 @@
             {{#unless app_state.eval_mode}}
               {{#if app_state.sessionUser.supervisees}}
                 {{#if app_state.speak_mode}}
-                  <li><a href="#" {{action "switch_communicators"}}>{{t "Switch Communicators" key='switch_communicators'}}</a></li>
+                  {{#if app_state.currentUser.permissions.delete}}
+                    <li><a href="#" {{action "switch_communicators"}}>{{t "Switch Communicators" key='switch_communicators'}}</a></li>
+                  {{/if}}
                 {{/if}}
               {{/if}}
               {{#if app_state.currentBoardState}}
@@ -840,8 +855,13 @@
                           {{t "Resume Logging" key='resume_logging'}}
                         </a></li>
                       {{else}}
-                        <li><a href="#" {{action "toggle_pause_logging"}}>{{t "Pause Logging" key='pause_logging'}}</a></li>
+                        <li><a href="#" {{action "toggle_pause_logging"}}>
+                          <span class="" style='padding: 3px;'><span class='glyphicon glyphicon-briefcase'></span></span>
+                          {{t "Pause Logging" key='pause_logging'}}
+                        </a></li>
                       {{/if}}
+                    {{else}}
+                      <!-- TODO: option to log temporarily/conclude temp log -->
                     {{/if}}
                   {{/if}}
                 {{/if}}
@@ -852,15 +872,19 @@
             {{#if session.isAuthenticated}}
               {{#unless app_state.speak_mode}}
                 <li>{{#link-to "search" "any" "_"}}{{t "Find Board" key='find_board'}}{{/link-to}}</li>
-                <li><a href="#" {{action "newBoard"}}>{{t "Create a New Board" key='create_a_new_board'}}</a></li>
-              {{/unless}}
-              <li>{{#link-to 'user.preferences' app_state.currentUser.user_name}}{{t "Preferences" key='preferences'}}{{/link-to}}</li>
-              <li>{{#link-to 'user.logs' app_state.currentUser.user_name (query-params type='note')}}
-                {{#if app_state.currentUser.unread_messages}}
-                  <span class="label label-danger" style="border-radius: 5px;">{{app_state.currentUser.unread_messages}}</span>
+                {{#if app_state.currentUser.permissions.delete}}
+                  <li><a href="#" {{action "newBoard"}}>{{t "Create a New Board" key='create_a_new_board'}}</a></li>
                 {{/if}}
-                {{t "Messages" key='messages'}}
-              {{/link-to}}</li>
+              {{/unless}}
+              {{#if app_state.currentUser.permissions.delete}}
+                <li>{{#link-to 'user.preferences' app_state.currentUser.user_name}}{{t "Preferences" key='preferences'}}{{/link-to}}</li>
+                <li>{{#link-to 'user.logs' app_state.currentUser.user_name (query-params type='note')}}
+                  {{#if app_state.currentUser.unread_messages}}
+                    <span class="label label-danger" style="border-radius: 5px;">{{app_state.currentUser.unread_messages}}</span>
+                  {{/if}}
+                  {{t "Messages" key='messages'}}
+                {{/link-to}}</li>
+              {{/if}}
               {{#if session.as_user_id}}
                 <li><a href="#" {{action "stopMasquerading"}}>{{t "Stop Masquerading" key='stop_masquerading'}}</a></li>
               {{/if}}

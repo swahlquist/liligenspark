@@ -27,37 +27,38 @@ class User < ActiveRecord::Base
   secure_serialize :settings
   attr_accessor :permission_scopes
 
-  # TODO: callback to update board names if username changes
-  # ...I guess should do something about old links as well. Github
-  # doesn't redirect on old usernames, but I think it does on old
-  # repo names, at least until they're replaces by a same-named repo.
-
   # cache should be invalidated if:
   # - a supervisor is added or removed
   # super-fast lookups, already have the data
   add_permissions('view_existence', ['*']) { true } # anyone can get basic information
-  add_permissions('view_existence', 'view_detailed', 'view_deleted_boards', 'view_word_map', ['*']) {|user| user.id == self.id }
-  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards') {|user| user.id == self.id }
+  add_permissions('view_existence', 'view_detailed', 'view_deleted_boards', 'view_word_map', ['*']) {|user| user.id == self.id && !user.valet_mode? }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards') {|user| user.id == self.id && !user.valet_mode? }
+  add_permissions('view_existence', 'view_detailed', 'view_word_map', 'model', ['modeling']) {|user| user.id == self.id && user.valet_mode? }
   add_permissions('view_existence', 'view_detailed', ['*']) { self.settings && self.settings['public'] == true }
-  add_permissions('set_goals', ['basic_supervision']) {|user| user.id == self.id }
+  add_permissions('set_goals', ['basic_supervision']) {|user| user.id == self.id && !user.valet_mode? }
 
-  add_permissions('edit', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, true) }
-  add_permissions('edit', 'edit_boards', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, false) }
-  add_permissions('view_existence', 'view_detailed', 'model') {|user| user.supervisor_for?(self) }
-  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) }
-  add_permissions('view_detailed', 'model', ['basic_supervision']) {|user| user.supervisor_for?(self) }
-  add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) }
-  add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) }
-  add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) }
-  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| Organization.manager_for?(user, self, true) }
-  add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) }
+  add_permissions('edit', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, true) && !user.valet_mode? }
+  add_permissions('edit', 'edit_boards', 'manage_supervision', 'view_deleted_boards') {|user| user.edit_permission_for?(self, false) && !user.valet_mode? }
+  add_permissions('view_existence', 'view_detailed', 'model') {|user| user.supervisor_for?(self) && !user.valet_mode?}
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) && !user.valet_mode? }
+  add_permissions('view_detailed', 'model', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.valet_mode? }
+  add_permissions('view_detailed', 'view_deleted_boards', 'model', 'set_goals', ['basic_supervision']) {|user| user.supervisor_for?(self) && !user.modeling_only_for?(self) && !user.valet_mode? }
+  add_permissions('view_word_map', ['*']) {|user| user.supervisor_for?(self) && !user.valet_mode? }
+  add_permissions('manage_supervision', 'support_actions') {|user| Organization.manager_for?(user, self) && !user.valet_mode? }
+  add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'view_deleted_boards', 'set_goals') {|user| Organization.manager_for?(user, self, true) && !user.valet_mode? }
+  add_permissions('admin_support_actions', 'support_actions', 'view_deleted_boards') {|user| Organization.admin_manager?(user) && !user.valet_mode? }
   cache_permissions
   
-  def self.find_for_login(user_name, org_id=nil, password=nil)
+  def self.find_for_login(user_name, org_id=nil, password=nil, allow_modeling=false)
     user_name = user_name.strip
     res = nil
+    if user_name.match(/^mdl@/) && allow_modeling
+      user_id = user_name.sub(/^mdl@/, '').sub(/-/, '_')
+      res = self.find_by_global_id(user_id)
+      res.assert_valet_mode! if res
+    end
     if !user_name.match(/@/)
-      res = self.find_by(:user_name => user_name)
+      res ||= self.find_by(:user_name => user_name)
       res ||= self.find_by(:user_name => user_name.downcase)
       res ||= self.find_by(:user_name => User.clean_path(user_name.downcase))
     end
@@ -648,6 +649,15 @@ class User < ActiveRecord::Base
       self.settings['user_notifications_cutoff'] = Time.now.utc.iso8601
     end
     self.settings['preferences'] ||= {}
+    if !non_user_params['updater'] || non_user_params['updater'].global_id != self.global_id
+      params['preferences'].delete('private_logging') if params['preferences']
+      params.delete('valet_login')
+    end
+    if params['valet_login']
+      self.set_valet_password(params['valet_password'])
+    elsif params['valet_login'] == false
+      self.set_valet_password(false)
+    end
     if params['preferences']
       CONFIRMATION_PREFERENCE_PARAMS.each do |key|
         if params['preferences'][key] != self.settings['preferences'][key]

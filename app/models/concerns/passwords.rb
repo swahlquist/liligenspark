@@ -48,25 +48,100 @@ module Passwords
     self.settings['password_resets'].select!{|r| r['timestamp'] > now - (60 * 60 * 3) }
   end
 
+  def valet_mode?
+    !!@valet_mode
+  end
+
+  def valet_allowed?
+    # If the valet password has been triggered and not re-activated
+    # more than 24 hours ago, then its use is not allowed. When
+    # the valet password has been triggered and the regular password
+    # is subsequently used, the valet password should be de-activated.
+    return false if !self.settings || self.settings['valet_password_disabled']
+    return false if self.settings['valet_password_at'] && self.settings['valet_password_at'] < 24.hours.ago.to_i
+    return false unless self.settings['valet_password']
+    return true
+  end
+
+  def set_valet_password(password)
+    if password == false
+      self.settings.delete('valet_password')
+    else
+      password = GoSecure.nonce('valet_temporary_password')[0, 10] if password.blank?
+      no_password = self.settings['valet_password'] == nil
+      if password
+        generate_valet_password(password)
+      end
+      self.assert_valet_mode!
+      # Notify the user that the valet login has been enabled or re-enabled
+      self.settings['valet_password_disabled_since'] = [self.settings['valet_password_disabled'], self.settings['valet_password_at'], 0].compact.max
+      UserMailer.schedule_delivery(:valet_password_enabled, self.global_id) if self.settings['valet_password_disabled'] || self.settings['valet_password_at'] || no_password
+    end
+    self.settings.delete('valet_password_at')
+    self.settings.delete('valet_password_disabled')
+  end
+  
+  def valet_password_used!
+    # Record the valet password as having been triggered.
+    do_notify = !self.settings['valet_password_at'] || self.settings['valet_password_at'] < 30.minutes.ago.to_i
+    self.settings['valet_password_at'] ||= Time.now.to_i
+    self.save!
+    # Notify user that the valet password was used
+    UserMailer.schedule_delivery(:valet_password_used, self.global_id) if do_notify
+  end
+
+  def password_used!
+    # If the valet password has been triggered, mark it as
+    # disabled until the user re-activates it. Also clear
+    # the record of the valet password being triggered.
+    if self.settings['valet_password_at'] && !self.valet_mode?
+      self.settings.delete('valet_password_at')
+      self.settings['valet_password_disabled'] = Time.now.to_i
+      self.save!
+    else
+      true
+    end
+  end
+
+  def assert_valet_mode!(mode=true)
+    @valet_mode = mode
+  end
+
   def valid_password?(guess)
     self.settings ||= {}
     guess ||= ''
-    if self.settings['password'] && self.settings['password']['pre_hash_algorithm'] && !guess.match(/^hashed\?:#/)
-      guess = pre_hashed_password(guess)
-    end
-    res = GoSecure.matches_password?(guess, self.settings['password'])
-    if res && self.schedule_deletion_at
-      # prevent auto-deletion whenever a user logs in
-      self.schedule_deletion_at = nil
-      self.save
-    end
-    if res && !guess.match(/^hashed\?:#/)
-      hashed = pre_hashed_password(guess)
-      self.generate_password(hashed)
-      self.save
-    elsif res && GoSecure.outdated_password?(self.settings['password'])
-      self.generate_password(guess)
-      self.save
+    if self.valet_mode?
+      if self.settings['valet_password'] && self.settings['valet_password']['pre_hash_algorithm'] && !guess.match(/^hashed\?:#/)
+        guess = pre_hashed_password(guess)
+      end
+        res = self.valet_allowed? && GoSecure.matches_password?(guess, self.settings['valet_password'])
+      self.valet_password_used! if res
+      if res && !guess.match(/^hashed\?:#/)
+        hashed = pre_hashed_password(guess)
+        self.generate_valet_password(hashed)
+        self.save
+      elsif res && GoSecure.outdated_password?(self.settings['valet_password'])
+        self.generate_valet_password(guess)
+        self.save
+      end
+    else
+      if self.settings['password'] && self.settings['password']['pre_hash_algorithm'] && !guess.match(/^hashed\?:#/)
+        guess = pre_hashed_password(guess)
+      end
+        res = GoSecure.matches_password?(guess, self.settings['password'])
+      if res && self.schedule_deletion_at
+        # prevent auto-deletion whenever a user logs in
+        self.schedule_deletion_at = nil
+        self.save
+      end
+      if res && !guess.match(/^hashed\?:#/)
+        hashed = pre_hashed_password(guess)
+        self.generate_password(hashed)
+        self.save
+      elsif res && GoSecure.outdated_password?(self.settings['password'])
+        self.generate_password(guess)
+        self.save
+      end
     end
     res
   end
@@ -74,7 +149,14 @@ module Passwords
   def pre_hashed_password(str)
     ['hashed', 'sha512', Digest::SHA512.hexdigest("cdpassword:#{str}:digested")].join("?:#")
   end
-  
+
+  def generate_valet_password(password)
+    password = pre_hashed_password(password) if !password.match(/^hashed\?:#/)
+    self.settings ||= {}
+    self.settings['valet_password'] = GoSecure.generate_password(password)
+    self.settings['valet_password']['pre_hash_algorithm'] = 'sha512'
+  end
+
   def generate_password(password)
     password = pre_hashed_password(password) if !password.match(/^hashed\?:#/)
     self.settings ||= {}

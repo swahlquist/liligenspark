@@ -659,6 +659,13 @@ describe Api::BoardsController, :type => :controller do
       put :update, params: {:id => b.global_id}
       assert_unauthorized
     end
+
+    it "should not be allowed in valet mode" do
+      valet_token_user
+      b = Board.create(:user => @user)
+      put :update, params: {:id => b.global_id, :board => {:name => "cool board 2"}}
+      assert_unauthorized
+    end
     
     it "should update the board" do
       token_user

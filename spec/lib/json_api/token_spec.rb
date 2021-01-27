@@ -7,7 +7,7 @@ describe JsonApi::Token do
       d.generate_token!
       u = User.new(user_name: 'fred')
       hash = JsonApi::Token.as_json(u, d)
-      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'scopes', 'token_type', 'user_id', 'user_name'])
+      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'modeling_session', 'scopes', 'token_type', 'user_id', 'user_name'])
       expect(hash['access_token']).to eq(d.tokens[0])
       expect(hash['token_type']).to eq('bearer')
       expect(hash['user_name']).to eq('fred')
@@ -20,7 +20,7 @@ describe JsonApi::Token do
       d.generate_token!
       u = User.new(user_name: 'fred')
       hash = JsonApi::Token.as_json(u, d)
-      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'scopes', 'token_type', 'user_id', 'user_name'])
+      expect(hash.keys.sort).to eq(['access_token', 'anonymized_user_id', 'long_token', 'long_token_set', 'modeling_session', 'scopes', 'token_type', 'user_id', 'user_name'])
       expect(hash['access_token']).to eq(d.tokens[0])
       expect(hash['scopes']).to eq(['a', 'b'])
     end

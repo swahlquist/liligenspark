@@ -19,13 +19,21 @@ export default modal.ModalController.extend({
     sup.set('watch_user_name_and_cookies', true);
     this.set('model.supervisor', sup);
   },
-  supervisor_sponsorhips: computed(
+  supervisor_sponsorships: computed(
     'model.user.subscription.purchased_supporters',
     'model.user.subscription.available_supporters',
     function() {
       return this.get('model.user.subscription.available_supporters') || 0;
     }
   ),
+  supervisor_types: computed(function() {
+    return [
+      {name: i18n.t('unspecified', "[ Choose Access Level ]"), id: ''},
+      {name: i18n.t('edit_access', "Can modify boards and settings and see reports"), id: 'edit'},
+      {name: i18n.t('read_only_access', "Can see boards, settings and reports but not modify"), id: 'read_only'},
+      {name: i18n.t('modeling_access', "Can see boards and model only"), id: 'modeling_only'},
+    ];
+  }),
   actions: {
     close: function() {
       modal.close();
@@ -41,6 +49,7 @@ export default modal.ModalController.extend({
     },
     add: function() {
       var controller = this;
+      if(!controller.get('supervisor_permission')) { return; }
       controller.set('linking', true);
       var get_user_name = RSVP.resolve(this.get('supervisor_key'));
       if(this.get('new_user')) {
@@ -55,12 +64,12 @@ export default modal.ModalController.extend({
       get_user_name.then(function(user_name) {
         var user = controller.get('model.user');
         var type = 'add';
-        if(controller.get('edit_permission')) {
+        if(controller.get('supervisor_permission') == 'edit') {
           type = 'add_edit';
-        } else if(controller.get('edit_permission')) {
+        } else if(controller.get('supervisor_permission') == 'modeling_only') {
           type = 'add_modeling';
         }
-        if(controller.get('premium_supporter') && controller.get('supervisor_sponsorhips')) {
+        if(controller.get('premium_supporter') && controller.get('supervisor_sponsorships')) {
           type = type.replace(/^add/, 'add_premium');
         }
         user.set('supervisor_key', type + "-" + user_name);

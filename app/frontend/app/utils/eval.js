@@ -964,7 +964,7 @@ evaluation.callback = function(key) {
     var core_list = [];
     // ADD "THE", INFLECTIONS 
     if(step.core) {
-      opts = evaluation.core_list(step, step_rows, step_cols);
+      opts = evaluation.core_list(step, step_rows - skip_rows, step_cols);
       core = opts.core;
       core_list = opts.core_list;
       if(step.prompts && working.ref.core_step != step) {

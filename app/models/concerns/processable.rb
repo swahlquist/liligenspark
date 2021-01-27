@@ -118,6 +118,9 @@ module Processable
       raise "unknown class: #{self.class.to_s}"
     end
     
+    if suggestion.match(/^mdl+/)
+      suggestion = suggestion.sub(/^mdl+/, 'mdl_')
+    end
     if Coughdrop::RESERVED_ROUTES.include?(suggestion) || (collision && collision != self)
       # try something else
       trailing_number = suggestion.match(/_\d+$/)

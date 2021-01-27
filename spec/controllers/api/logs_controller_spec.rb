@@ -14,6 +14,18 @@ describe Api::LogsController, :type => :controller do
       assert_unauthorized
     end
     
+    it "should not be allowed in valet mode" do
+      valet_token_user
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :index, params: {:user_id => @user.global_id}
+      assert_unauthorized
+    end
+
     it "should return a list of logs" do
       token_user
       LogSession.process_new({

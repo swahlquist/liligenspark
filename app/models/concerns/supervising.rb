@@ -87,6 +87,7 @@ module Supervising
   end
   
   def edit_permission_for?(supervisee, include_admin_managers=true)
+    return false if self.valet_mode?
     sup = !self.modeling_only? && supervisee.supervisor_links.any?{|l| l['record_code'] == Webhook.get_record_code(self) && l['user_id'] == supervisee.global_id && l['state']['edit_permission'] } 
     sup || Organization.manager_for?(self, supervisee, include_admin_managers)
   end

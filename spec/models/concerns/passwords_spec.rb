@@ -132,6 +132,23 @@ describe Passwords, :type => :model do
       expect(u.valid_password?('bacon')).to eq(true)
       expect(u.valid_password?(u.pre_hashed_password('bacon'))).to eq(true)
     end
+
+    it "should validate a valet password" do
+      u = User.new
+      u.settings = {}
+      salt = Digest::MD5.hexdigest("pw" + Time.now.to_i.to_s)
+      hash = Digest::SHA512.hexdigest(GoSecure.encryption_key + salt + "bacon")
+      u.settings['valet_password'] = {
+        'hash_type' => 'sha512',
+        'hashed_password' => hash,
+        'salt' => salt
+      }
+      expect(GoSecure.outdated_password?(u.settings['valet_password'])).to eq(true)
+      u.assert_valet_mode!
+      expect(u.valid_password?('bracken')).to eq(false)
+      expect(u.valid_password?('bacon')).to eq(true)
+      expect(u.valid_password?(u.pre_hashed_password('bacon'))).to eq(true)
+    end
     
     it "should re-generate a non-pre-hashed password" do
       u = User.new
@@ -181,4 +198,176 @@ describe Passwords, :type => :model do
       expect(u.settings['password']['salt']).to eq(salt)
     end
   end
+
+  describe "valet_mode?" do
+    it "should return the correct value" do
+      u = User.new
+      expect(u.valet_mode?).to eq(false)
+      u.assert_valet_mode!(true)
+      expect(u.valet_mode?).to eq(true)
+      u.assert_valet_mode!(false)
+      expect(u.valet_mode?).to eq(false)
+    end
+  end
+
+  describe "valet_allowed?" do
+    it "should return the correct value" do
+      u = User.new
+      expect(u.valet_allowed?).to eq(false)
+      u.settings = {}
+      expect(u.valet_allowed?).to eq(false)
+      u.settings['valet_password'] = {}
+      expect(u.valet_allowed?).to eq(true)
+      u.settings['valet_password_disabled'] = 5.seconds.ago.to_i
+      expect(u.valet_allowed?).to eq(false)
+      u.settings['valet_password_disabled'] = nil
+      u.settings['valet_password_at'] = 10.minutes.ago.to_i
+      expect(u.valet_allowed?).to eq(true)
+      u.settings['valet_password_at'] = 30.hours.ago.to_i
+      expect(u.valet_allowed?).to eq(false)
+    end
+  end
+
+  describe "set_valet_password" do
+    it "should set to a non-blank password if none specified" do
+      u = User.create
+      expect(GoSecure).to receive(:nonce).with('valet_temporary_password').and_return("abcdefghijklmnop")
+      u.set_valet_password(nil)
+      u.assert_valet_mode!
+      expect(u.valid_password?("abcdefghij")).to eq(true)
+    end
+
+    it "should clear if password set to false" do
+      u = User.create
+      expect(GoSecure).to receive(:nonce).with('valet_temporary_password').and_return("abcdefghijklmnop")
+      u.set_valet_password(nil)
+      u.assert_valet_mode!
+      expect(u.valid_password?("abcdefghij")).to eq(true)
+      expect(u.settings['valet_password']).to_not eq(nil)
+      u.set_valet_password(false)
+      expect(u.valid_password?("abcdefghij")).to eq(false)
+      expect(u.settings['valet_password']).to eq(nil)
+      u.set_valet_password("whatever you say")
+      expect(u.valid_password?("whatever you say")).to eq(true)
+      expect(u.settings['valet_password']).to_not eq(nil)
+    end
+
+    it "should notify when enabling valet login for the first time" do
+      u = User.create
+      expect(GoSecure).to receive(:nonce).with('valet_temporary_password').and_return("abcdefghijklmnop")
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
+      u.set_valet_password(nil)
+    end
+
+    it "should not notify when valet login already enabled" do
+      u = User.create
+      u.settings['valet_password'] = {}
+      expect(GoSecure).to_not receive(:nonce)
+      expect(UserMailer).to_not receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
+      u.set_valet_password("baconator")
+    end
+
+    it "should notify when valet login was disabled and password was already set" do
+      u = User.create
+      u.settings['valet_password'] = {}
+      u.settings['valet_password_disabled'] = Time.now.to_i
+      expect(GoSecure).to_not receive(:nonce)
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
+      u.set_valet_password("baconator")
+    end
+
+    it "should notify when valet login was about to be disabled and password was already set" do
+      u = User.create
+      u.settings['valet_password'] = {}
+      u.settings['valet_password_at'] = Time.now.to_i
+      expect(GoSecure).to_not receive(:nonce)
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
+      u.set_valet_password("baconator")
+    end
+
+    it "should clear any disablings" do
+      u = User.create
+      u.settings['valet_password_at'] = 'asdf'
+      u.settings['valet_password_disabled'] = 'asdf'
+      u.set_valet_password(false)
+      expect(u.settings['valet_password_at']).to eq(nil)
+      expect(u.settings['valet_password_disabled']).to eq(nil)
+    end
+  end
+  
+  describe "valet_password_used!" do
+    it "should have record usage" do
+      u = User.create
+      expect(u.settings['valet_password_at']).to eq(nil)
+      u.valet_password_used!
+      expect(u.settings['valet_password_at']).to be > Time.now.to_i - 5
+    end
+    
+    it "should keep the oldest usage stamp" do
+      u = User.create
+      u.settings['valet_password_at'] = 123
+      u.valet_password_used!
+      expect(u.settings['valet_password_at']).to eq(123)
+    end
+
+    it "should notify user if not a repeat use" do
+      u = User.create
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      u.valet_password_used!
+    end
+
+    it "should not notify the user if just notified" do
+      u = User.create
+      u.settings['valet_password_at'] = 5.minutes.ago.to_i
+      expect(UserMailer).to_not receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      u.valet_password_used!
+    end
+
+    it "should notify if not notified for a while" do
+      u = User.create
+      u.settings['valet_password_at'] = 1.hour.ago.to_i
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      u.valet_password_used!
+    end
+  end
+
+  describe "password_used!" do
+    it "should disable a used valet password" do
+      u = User.create
+      u.settings['valet_password_at'] = {}
+      expect(u.settings['valet_password_at']).to eq({})
+      expect(u.settings['valet_password_disabled']).to eq(nil)
+      u.settings['valet_password'] = {}
+      expect(u.settings['valet_password_at']).to eq({})
+      expect(u.settings['valet_password_disabled']).to eq(nil)
+      u.password_used!
+      expect(u.settings['valet_password_at']).to eq(nil)
+      expect(u.settings['valet_password_disabled']).to be > Time.now.to_i - 5
+    end
+  end
+
+  describe "assert_valet_mode!" do
+    it "should set valet mode" do
+      u = User.new
+      expect(u.valet_mode?).to eq(false)
+      u.assert_valet_mode!(true)
+      expect(u.valet_mode?).to eq(true)
+      u.assert_valet_mode!(false)
+      expect(u.valet_mode?).to eq(false)
+    end
+  end
+
+  describe "generate_valet_password" do
+    it "should generate a password" do
+      u = User.new
+      u.generate_valet_password("hippo")
+      expect(u.settings['valet_password']['hash_type']).to eq('pbkdf2-sha256-2')
+      expect(u.settings['valet_password']['hashed_password']).not_to eq(nil)
+      expect(u.settings['valet_password']['salt']).not_to eq(nil)
+      
+      expect(GoSecure).to receive(:generate_password).with("hashed?:#sha512?:#628e5bdc3a64db65f14447a68796223925dcd0465c26cb3f86e16776552e0959ecd9a1a9140980593392e969e0027d49300bd64bbf9e28de351228e8ef047b93").and_return({})
+      User.new.generate_valet_password("bacon")
+    end
+  end
+
 end

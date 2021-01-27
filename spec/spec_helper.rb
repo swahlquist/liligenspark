@@ -125,6 +125,12 @@ def token_user(scopes=nil)
   request.headers['Check-Token'] = "true"
 end
 
+def valet_token_user
+  token_user
+  @device.settings['valet'] = true
+  @device.save
+end
+
 def with_versioning
   was_enabled = PaperTrail.enabled?
   was_enabled_for_controller = true #PaperTrail.enabled_for_controller?

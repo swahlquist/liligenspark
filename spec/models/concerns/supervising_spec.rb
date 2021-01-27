@@ -336,6 +336,15 @@ describe Supervising, :type => :model do
         }
       ])
       expect(u.reload.settings['supervisees']).to eq(nil)
+      perms = u2.permissions_for(u)
+      expect(perms['edit']).to eq(true)
+      expect(perms['edit_boards']).to eq(true)
+      expect(perms['delete']).to eq(nil)
+      expect(perms['supervise']).to eq(true)
+      expect(perms['model']).to eq(true)
+      expect(perms['view_detailed']).to eq(true)
+      expect(perms['view_existence']).to eq(true)
+      expect(perms['view_word_map']).to eq(true)
     end
 
     it "should allow adding a supervisor while granting a premium credit" do
@@ -403,6 +412,46 @@ describe Supervising, :type => :model do
       expect(u.billing_state).to eq(:trialing_supporter)
     end
 
+    it "should allow adding a modeling-only supervisor" do
+      u = User.create
+      u2 = User.create
+      u2.process({'supervisor_key' => "add_modeling-#{u.global_id}"})
+      expect(u2.reload.supervisor_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'modeling_only' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u2.reload.settings['supervisors']).to eq(nil)
+      expect(u.reload.supervisee_links).to eq([
+        'user_id' => u2.global_id,
+        'record_code' => Webhook.get_record_code(u),
+        'type' => 'supervisor', 
+        'state' => {
+          'modeling_only' => true,
+          'organization_unit_ids' => [],
+          'supervisor_user_name' => u.user_name,
+          'supervisee_user_name' => u2.user_name
+        }
+      ])
+      expect(u.reload.settings['supervisees']).to eq(nil)
+      expect(u.modeling_only_for?(u2)).to eq(true)
+      perms = u2.permissions_for(u)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['edit_boards']).to eq(nil)
+      expect(perms['delete']).to eq(nil)
+      expect(perms['supervise']).to eq(nil)
+      expect(perms['model']).to eq(true)
+      expect(perms['view_detailed']).to eq(true)
+      expect(perms['view_existence']).to eq(true)
+      expect(perms['view_word_map']).to eq(true)
+    end
+
     it "should raise an error when supervisor adding fails" do
       res = User.process_new({'supervisor_key' => "add-bacon"})
       expect(res.errored?).to eql(true)
@@ -442,6 +491,7 @@ describe Supervising, :type => :model do
       expect(u2.reload.supervisee_links).to eq([])
       expect(u2.reload.settings['supervisees']).to eq([])
     end
+
     it "should raise an error when supervisor remove fails" do
       u = User.create
       u.process({'supervisor_key' => "remove_supervisor-0_1"})

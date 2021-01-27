@@ -33,9 +33,9 @@ module BoardCaching
     supervisee_authored = []
     supervisee_view_shared = []
     supervisee_edit_shared = []
-    self.supervisees.select{|s| self.edit_permission_for?(s) }.each do |sup|
-      supervisee_view_shared += sup.private_viewable_board_ids
-      supervisee_edit_shared += sup.private_editable_board_ids
+    self.supervisees.each do |sup| #.select{|s| self.edit_permission_for?(s) }.each do |sup|
+      supervisee_view_shared += sup.private_viewable_board_ids 
+      supervisee_edit_shared += sup.private_editable_board_ids if self.edit_permission_for?(sup)
 #       # TODO: sharding
 #       supervisee_authored += Board.where(:public => false, :user_id => sup.id).select('id').map(&:global_id)
 #       supervisee_view_shared += Board.all_shared_board_ids_for(sup, false)

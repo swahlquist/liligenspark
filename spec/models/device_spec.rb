@@ -420,6 +420,9 @@ describe Device, :type => :model do
       expect(d.inactivity_timeout).to eq(24.hours.to_i)
       d.settings['long_token'] = false
       expect(d.inactivity_timeout).to eq(24.hours.to_i)
+      d.user_integration_id = nil
+      d.settings['valet'] = true
+      expect(d.inactivity_timeout).to eq(20.hours.to_i)
     end
   end
   
@@ -597,7 +600,7 @@ describe Device, :type => :model do
         expect(key).to eq("user_token/#{d.tokens[0]}")
         expect(ts).to be > (12.hours.to_i - 100)
         expect(ts).to be < (12.hours.to_i + 100)
-        expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b")
+        expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b::false")
       end
       res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
@@ -611,9 +614,37 @@ describe Device, :type => :model do
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
       res = Device.check_token(d.tokens[0], '1.2.3')
       expect(res[:user]).to eq(u)
+      expect(res[:user].valet_mode?).to eq(false)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)
       expect(res[:user].permission_scopes).to eq(['full'])
+    end
+
+    it "should correctly assert valet mode" do
+      u = User.create
+      d = Device.create(user: u)
+      d.settings['valet'] = true
+      d.save
+      expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      res = Device.check_token(d.tokens[0], '1.2.3')
+      expect(res[:user]).to eq(u)
+      expect(res[:user].valet_mode?).to eq(true)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:error]).to eq(nil)
+      expect(res[:user].permission_scopes).to eq(['full', 'modeling'])
+    end
+
+    it "should retrieve valet mode data from cache" do
+      u = User.create
+      d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
+      expect(RedisInit.permissions).to receive(:get).with('user_token/asdf').and_return("#{u.global_id}::#{d.global_id}::a,b::true")
+      res = Device.check_token('asdf', '1.2.3')
+      expect(res[:cached]).to eq(true)
+      expect(res[:user]).to eq(u)
+      expect(res[:user].valet_mode?).to eq(true)
+      expect(res[:error]).to eq(nil)
+      expect(res[:device_id]).to eq(d.global_id)
+      expect(res[:user].permission_scopes).to eq(['a', 'b'])
     end
   end
 
@@ -630,6 +661,8 @@ describe Device, :type => :model do
       expect(d.token_timeout).to eq(5.years)
       d.settings['long_token'] = false
       expect(d.token_timeout).to eq(28.days.to_i)
+      d.settings['valet'] = true
+      expect(d.token_timeout).to eq(24.hours.to_i)
     end
   end
 

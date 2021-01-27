@@ -26,6 +26,8 @@ class Device < ActiveRecord::Base
     # force a logout for tokens that have been used for an extended period of time
     if self.settings['temporary_device']
       30.minutes.to_i
+    elsif self.settings['valet']
+      24.hours.to_i
     elsif self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
       if long_token
         5.years.to_i
@@ -90,6 +92,8 @@ class Device < ActiveRecord::Base
       (self.settings && self.settings['permission_scopes']) || []
     elsif self.developer_key_id && self.developer_key_id != 0
       (self.settings && self.settings['permission_scopes']) || []
+    elsif self.settings && self.settings['valet']
+      ['full', 'modeling']
     else
       ['full']
     end
@@ -161,6 +165,8 @@ class Device < ActiveRecord::Base
     if self.token_type == :integration
       # integration tokens must be refreshed every 24 hours
       24.hours.to_i
+    elsif self.settings['valet']
+      20.hours.to_i
     elsif self.settings && self.settings['long_token']
       if self.token_type == :app
         # app tokens can go a long time between uses if on a trusted device
@@ -230,11 +236,12 @@ class Device < ActiveRecord::Base
 
   def self.check_token(token, app_version)
     # Skip device lookup if you already have the necessary information cached
-    user = nil, device_id = nil, scopes = nil
+    user = nil, device_id = nil, scopes = nil, valet = nil, valet_mode = false
     cached = RedisInit.permissions.get("user_token/#{token}")
     res = {}
     if cached
-      user_id, device_id, scopes_string = cached.split(/::/)
+      user_id, device_id, scopes_string, valet_mode = cached.split(/::/)
+      valet_mode = (valet_mode == 'true')
       scopes = (scopes_string || "").split(',')
       res[:cached] = true
     else
@@ -257,6 +264,7 @@ class Device < ActiveRecord::Base
         res[:can_refresh] = true if needs_refresh && device && !device.disabled?
         res[:invalid_token] = true
       end
+      valet_mode = true if device && device.settings['valet']
       scopes = device && device.permission_scopes
     end
     if user_id
@@ -279,9 +287,10 @@ class Device < ActiveRecord::Base
       if user && device_id
         user.permission_scopes = scopes
 
-        store = [user_id, device_id, scopes.join(',')].join("::")
+        store = [user_id, device_id, scopes.join(','), valet_mode].join("::")
         RedisInit.permissions.setex("user_token/#{token}", 12.hours.to_i, store) if !res[:error]
         res[:user] = user
+        user.assert_valet_mode! if valet_mode
         res[:device_id] = device_id
       elsif user_id
         res[:error] = "Missing user"

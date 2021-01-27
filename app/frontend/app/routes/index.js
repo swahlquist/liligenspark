@@ -98,7 +98,7 @@ export default Route.extend({
     homeInSpeakMode: function(board_for_user_id, keep_as_self) {
       if(board_for_user_id) {
         app_state.set_speak_mode_user(board_for_user_id, true, keep_as_self);
-      } else if((app_state.get('currentUser.supervisees') || []).length > 0) {
+      } else if(app_state.get('currentUser.permissions.delete') && (app_state.get('currentUser.supervisees') || []).length > 0) {
         var prompt = i18n.t('speak_as_which_user', "Select User to Speak As");
         app_state.set('referenced_speak_mode_user', null);
         app_state.controller.send('switch_communicators', {stay: true, modeling: 'ask', skip_me: false, header: prompt});

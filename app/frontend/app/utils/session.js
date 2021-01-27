@@ -47,6 +47,7 @@ var session = EmberObject.extend({
       access_token: response.access_token,
       token_type: response.token_type,
       user_name: response.user_name,
+      modeling_session: response.modeling_session,
       user_id: response.user_id
     }));
     // update selfUserId, in the off chance that it has changed from our local copy
@@ -136,6 +137,7 @@ var session = EmberObject.extend({
       if(data.user_name) {
         session.set('user_name', data.user_name);
         session.set('user_id', data.user_id);
+        session.set('modeling_session', data.modeling_session)
         if(window.ga) {
           window.ga('set', 'userId', data.user_id);
           window.ga('send', 'event', 'authentication', 'user-id available');
@@ -190,6 +192,7 @@ var session = EmberObject.extend({
       session.set('access_token', store_data.access_token);
       session.set('user_name', store_data.user_name);
       session.set('user_id', store_data.user_id);
+      session.set('modeling_session', store_data.modeling_session)
       if(window.ga && store_data.user_id) {
         window.ga('set', 'userId', store_data.user_id);
         window.ga('send', 'event', 'authentication', 'user-id available');

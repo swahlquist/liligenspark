@@ -39,6 +39,25 @@ describe User, :type => :model do
       expect(u.allows?(u, 'edit')).to eq(true)
       expect(u.allows?(u2, 'edit')).to eq(false)
     end
+
+    it "should limit permissions if self but valet_mode" do
+      u = User.create
+      expect(u.valet_mode?).to eq(false)
+      expect(u.allows?(u, 'view_detailed')).to eq(true)
+      expect(u.allows?(u, 'edit')).to eq(true)
+      expect(u.allows?(u, 'supervise')).to eq(true)
+      expect(u.allows?(u, 'model')).to eq(true)
+      expect(u.allows?(u, 'delete')).to eq(true)
+      expect(u.allows?(u, 'view_existence')).to eq(true)
+      u.assert_valet_mode!
+      expect(u.valet_mode?).to eq(true)
+      expect(u.allows?(u, 'view_detailed', ['full', 'modeling'])).to eq(true)
+      expect(u.allows?(u, 'edit', ['full', 'modeling'])).to eq(false)
+      expect(u.allows?(u, 'supervise', ['full', 'modeling'])).to eq(false)
+      expect(u.allows?(u, 'model', ['full', 'modeling'])).to eq(true)
+      expect(u.allows?(u, 'delete', ['full', 'modeling'])).to eq(false)
+      expect(u.allows?(u, 'view_existence', ['full', 'modeling'])).to eq(true)
+    end
     
     it "should only allow managers view_deleted_boards" do
       u = User.create
@@ -921,6 +940,41 @@ describe User, :type => :model do
       u.settings['preferences']['inflections_overlay'] = true
       u.process({'preferences' => {'inflections_overlay' => true}})
       expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_home_board_inflections', 'arguments' => []})).to eq(false)
+    end
+
+    it "should correctly disable valet login" do
+      u = User.create
+      expect(u.settings['valet_password']).to eq(nil)
+      u.process({'valet_login' => true}, {'updater' => u})
+      expect(u.settings['valet_password']).to_not eq(nil)
+      u.process({'valet_login' => false}, {'updater' => nil})
+      expect(u.settings['valet_password']).to_not eq(nil)
+      u.process({'valet_login' => false}, {'updater' => u})
+      expect(u.settings['valet_password']).to eq(nil)
+    end
+
+    it "should correctly enable valet login" do
+      u = User.create
+      expect(u.settings['valet_password']).to eq(nil)
+      u.process({'valet_login' => true}, {'updater' => u})
+      expect(u.settings['valet_password']).to_not eq(nil)
+    end
+
+    it "should notify when valet login is enabled"  do
+      u = User.create
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
+      expect(u.settings['valet_password']).to eq(nil)
+      u.process({'valet_login' => true}, {'updater' => u})
+      expect(u.settings['valet_password']).to_not eq(nil)
+    end
+
+    it  "should correctly set a new valet login password" do
+      u = User.create
+      expect(u.settings['valet_password']).to eq(nil)
+      u.process({'valet_login' => true, 'valet_password' => 'gemini'}, {'updater' => u})
+      expect(u.settings['valet_password']).to_not eq(nil)
+      u.assert_valet_mode!
+      expect(u.valid_password?('gemini')).to eq(true)
     end
   end
 
@@ -2214,6 +2268,26 @@ describe User, :type => :model do
       expect(User.find_for_login('bob@example.com')).to eq(u1)
       expect(User.find_for_login('bob@example.com', nil, 'bacon')).to eq(nil)
       expect(User.find_for_login('bob@example.com', nil, 'cheddar')).to eq(nil)
+    end
+
+    it "should not permit a valet login if not allowed" do
+      u = User.create(:user_name => 'brody')
+      u.process({'valet_login' => true, 'valet_password' => 'protractor'}, {'updater' => u})
+      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}")
+      expect(res).to eq(nil)
+      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}", nil, nil, true)
+      expect(res).to eq(u)
+      expect(res.valet_mode?).to eq(true)
+    end
+
+    it "should correctly process a valet login" do
+      u = User.create(:user_name => 'brody')
+      u.process({'valet_login' => true, 'valet_password' => 'protractor'}, {'updater' => u})
+      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}")
+      expect(res).to eq(nil)
+      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}", nil, 'whatever', true)
+      expect(res).to eq(u)
+      expect(res.valet_mode?).to eq(true)
     end
   end
   

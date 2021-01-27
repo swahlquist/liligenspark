@@ -13,6 +13,27 @@ describe Api::UsersController, :type => :controller do
       assert_not_found('asdf');
     end
 
+    it "should not allow looking up supervisees in valet mode" do
+      valet_token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      get :show, params: {:id => @user.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user']['id']).to eq(@user.global_id)
+      expect(json['user']['permissions']['model']).to eq(true)
+      expect(json['user']['permissions']['supervise']).to eq(nil)
+      expect(json['user']['user_token']).to_not eq(nil)
+
+      get :show, params: {:id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user']['id']).to eq(u.global_id)
+      expect(json['user']['permissions']['model']).to eq(nil)
+      expect(json['user']['permissions']['supervise']).to eq(nil)
+      expect(json['user']['user_token']).to eq(nil)
+    end
+
     it "should return a valid object" do
       u = User.create
       get :show, params: {:id => u.global_id}
@@ -330,6 +351,12 @@ describe Api::UsersController, :type => :controller do
       expect(@user.reload.settings['name']).to eq('bob')
     end
     
+    it "should not be allowed in valet mode" do
+      valet_token_user
+      post :update, params: {:id => @user.global_id, :user => {:name => 'bob'}}
+      assert_unauthorized
+    end
+
     it "should update device-specific settings if for the current user" do
       token_user
       post :update, params: {:id => @user.global_id, :user => {:name => 'bob', :preferences => {:device => {:a => 1}}}}
@@ -840,6 +867,12 @@ describe Api::UsersController, :type => :controller do
       assert_missing_token
     end
     
+    it "should not be allowed in valet mode" do
+      valet_token_user
+      get 'daily_stats', params: {:user_id => @user.global_id}
+      assert_unauthorized
+    end
+
     it "should error on expected errors" do
       token_user
       expect(Stats).to receive(:daily_use).with(@user.global_id, {}).and_raise(Stats::StatsError, 'bacon')

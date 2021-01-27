@@ -2,10 +2,17 @@
   <div class="">
     <button class='expand btn btn-default' style='float: right; margin-right: 5px;' {{action 'expand_left_nav'}}><span class={{if left_nav_expanded 'caret' 'caret-right'}}></span></button>
   <h2 style='padding-left: 5px;'>
-    {{#link-to 'user' app_state.currentUser.user_name class='hidden_link'}}
-      <img src={{app_state.currentUser.avatar_url_with_fallback}} class='fit_image' style="height: 45px; width: 45px; margin-bottom: -5px; border: 1px solid rgba(0, 0, 0, 0.5); border-radius: 100%; padding: 1px; background: #fff; box-shadow: 0px 0px 3px;"/>
-      <span style='vertical-align: middle'>{{app_state.currentUser.user_name}}</span>
-    {{/link-to}}
+    {{#if app_state.currentUser.permissions.delete}}
+      {{#link-to 'user' app_state.currentUser.user_name class='hidden_link'}}
+        <img src={{app_state.currentUser.avatar_url_with_fallback}} class='fit_image' style="height: 45px; width: 45px; margin-bottom: -5px; border: 1px solid rgba(0, 0, 0, 0.5); border-radius: 100%; padding: 1px; background: #fff; box-shadow: 0px 0px 3px;"/>
+        <span style='vertical-align: middle'>{{app_state.currentUser.user_name}}</span>
+      {{/link-to}}
+    {{else}}
+      <span>
+        <img src={{app_state.currentUser.avatar_url_with_fallback}} class='fit_image' style="height: 45px; width: 45px; margin-bottom: -5px; border: 1px solid rgba(0, 0, 0, 0.5); border-radius: 100%; padding: 1px; background: #fff; box-shadow: 0px 0px 3px;"/>
+        <span style='vertical-align: middle'>{{app_state.currentUser.user_name}}</span>
+      </span>
+    {{/if}}
   </h2>
   <div class="left_links list-group no_curve">
     {{#if blank_slate}}
@@ -23,7 +30,11 @@
       {{#if app_state.currentUser.modeling_only}}
         {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item half_size"}}
           <span class="glyphicon glyphicon-info-sign"></span>
-          <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
+          {{#if app_state.currentUser.permissions.delete}}
+            <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
+          {{else}}
+            <strong>{{t "This is a moddeling-only session" key='modeling_only_session'}}</strong>
+          {{/if}}
         {{/link-to}}
       {{else if app_state.currentUser.expired_or_grace_period}}
         {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item"}}
@@ -172,55 +183,59 @@
     {{/if}}
 
     {{#unless app_state.currentUser.supporter_role}}
-      <a href="#" class="list-group-item collapsible" {{action "manage_supervisors"}}>
-        <span>
-        <span class="glyphicon glyphicon-user"></span>
-        {{#if app_state.currentUser.supervisors.length}}
-          {{t "Supervisor" key='n_supervisors' count=app_state.currentUser.supervisors.length}}
-        {{else}}
-          {{t "No Supervisors" key='no_supervisors'}}
-        {{/if}}
-        </span>
-      </a>
-    {{/unless}}
-    {{#if app_state.currentUser.supervised_units}}
-      <a class="list-group-item half_size">
-        <span>
-          <span class='glyphicon glyphicon-education'></span>
-          {{t "rooms:" key='rooms'}}
-          {{#each app_state.currentUser.supervised_units as |unit|}}
-            <span style='margin-right: 10px;'>
-              {{#link-to 'organization.room' unit.organization_id unit.id}}
-                {{unit.name}}
-              {{/link-to}}
-            </span>
-          {{/each}}
-        </span>
-      </a>
-    {{/if}}
-    {{#if app_state.currentUser.has_management_responsibility}}
-      {{#if app_state.currentUser.manages_multiple_orgs}}
-        <a class="list-group-item half_size">
-          <span class="glyphicon glyphicon-paperclip"></span>
-          {{#each app_state.currentUser.managed_orgs as |org|}}
-            <span style="margin-right: 10px;">
-              {{#link-to 'organization' org.id}}
-                {{org.name}}
-              {{/link-to}}
-            </span>
-          {{/each}}
+      {{#unless app_state.currentUser.modeling_only}}
+        <a href="#" class="list-group-item collapsible" {{action "manage_supervisors"}}>
+          <span>
+          <span class="glyphicon glyphicon-user"></span>
+          {{#if app_state.currentUser.supervisors.length}}
+            {{t "Supervisor" key='n_supervisors' count=app_state.currentUser.supervisors.length}}
+          {{else}}
+            {{t "No Supervisors" key='no_supervisors'}}
+          {{/if}}
+          </span>
         </a>
-      {{else}}
-        {{#each app_state.currentUser.managed_orgs as |org|}}
-          {{#link-to 'organization' org.id class="list-group-item half_size"}}
-            <span class="glyphicon glyphicon-paperclip"></span>
-            <span style="margin-right: 10px;">
-              {{t "Organization Management" key='org_management'}}
-            </span>
-          {{/link-to}}
-        {{/each}}
+      {{/unless}}
+    {{/unless}}
+    {{#unless app_state.currentUser.modeling_only}}
+      {{#if app_state.currentUser.supervised_units}}
+        <a class="list-group-item half_size">
+          <span>
+            <span class='glyphicon glyphicon-education'></span>
+            {{t "rooms:" key='rooms'}}
+            {{#each app_state.currentUser.supervised_units as |unit|}}
+              <span style='margin-right: 10px;'>
+                {{#link-to 'organization.room' unit.organization_id unit.id}}
+                  {{unit.name}}
+                {{/link-to}}
+              </span>
+            {{/each}}
+          </span>
+        </a>
       {{/if}}
-    {{/if}}
+      {{#if app_state.currentUser.has_management_responsibility}}
+        {{#if app_state.currentUser.manages_multiple_orgs}}
+          <a class="list-group-item half_size">
+            <span class="glyphicon glyphicon-paperclip"></span>
+            {{#each app_state.currentUser.managed_orgs as |org|}}
+              <span style="margin-right: 10px;">
+                {{#link-to 'organization' org.id}}
+                  {{org.name}}
+                {{/link-to}}
+              </span>
+            {{/each}}
+          </a>
+        {{else}}
+          {{#each app_state.currentUser.managed_orgs as |org|}}
+            {{#link-to 'organization' org.id class="list-group-item half_size"}}
+              <span class="glyphicon glyphicon-paperclip"></span>
+              <span style="margin-right: 10px;">
+                {{t "Organization Management" key='org_management'}}
+              </span>
+            {{/link-to}}
+          {{/each}}
+        {{/if}}
+      {{/if}}
+    {{/unless}}
 
     {{#if app_state.currentUser.modeling_only}}
     {{else if app_state.currentUser}}
@@ -286,25 +301,30 @@
     <div class='col-xs-12' style='position: absolute; top: -40px;'>
       <ul class="nav nav-pills new_pills">
         <li role="presentation" class={{if index_nav.main 'active'}}><a href="#" {{action 'set_index_nav' 'main'}}>{{t "Actions" key='actions'}}</a></li>
-        {{#if app_state.currentUser.supporter_role}}
-          <li role="presentation" class={{if index_nav.supervisees 'active'}}><a href="#" {{action 'set_index_nav' 'supervisees'}}>{{t "Communicators" key='communicators'}}</a></li>
-        {{/if}}
-        <li role="presentation" class={{if index_nav.boards 'active'}}><a href="#" {{action 'set_index_nav' 'boards'}}>{{t "Boards" key='boards'}}</a></li>
-        <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}}><a href="#" {{action 'set_index_nav' 'updates'}}>
-          {{t "Updates" key='updates'}}
-          {{#if pending_updates}}
-            <span class="label label-danger unread hidden-xs">
-              {{#if pending_updates.count}}
-                {{pending_updates.count}}
-              {{else}}
-                {{t "!" key='exclaim'}}
-              {{/if}}
-            </span>
+        {{#unless app_state.currentUser.modeling_only}}
+          {{#if app_state.currentUser.supporter_role}}
+            <li role="presentation" class={{if index_nav.supervisees 'active'}}><a href="#" {{action 'set_index_nav' 'supervisees'}}>{{t "Communicators" key='communicators'}}</a></li>
           {{/if}}
-        </a></li>
+        {{/unless}}
+        <li role="presentation" class={{if index_nav.boards 'active'}}><a href="#" {{action 'set_index_nav' 'boards'}}>{{t "Boards" key='boards'}}</a></li>
+        {{#unless app_state.currentUser.modeling_only}}
+          <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}}><a href="#" {{action 'set_index_nav' 'updates'}}>
+            {{t "Updates" key='updates'}}
+            {{#if pending_updates}}
+              <span class="label label-danger unread hidden-xs">
+                {{#if pending_updates.count}}
+                  {{pending_updates.count}}
+                {{else}}
+                  {{t "!" key='exclaim'}}
+                {{/if}}
+              </span>
+            {{/if}}
+          </a></li>
+        {{/unless}}
       </ul>
     </div>
     {{#if index_nav.supervisees}}
+      {{#unless app_state.currentUser.modeling_only}}
       <div class='col-xs-12'>
         <h4>{{t "People I Supervise" key='people_i_supervise'}}</h4>
       </div><div style='clear: left;'></div>
@@ -399,6 +419,7 @@
           </div>
         </div>
       {{/each}}
+      {{/unless}}
     {{else if index_nav.main}}
       <div class={{if show_main_extras 'main' 'main short_list'}}>
         {{#if app_state.currentUser.eval_ended}}
@@ -436,6 +457,7 @@
               </button>
             {{/if}}
           </div>
+        {{else if session.modeling_session}}
         {{else if app_state.currentUser.expired_or_grace_period}}
           <div>
             {{#link-to 'user.subscription' app_state.currentUser.user_name class='purchase_link'}}
@@ -466,12 +488,14 @@
           </button>
         </div>
         {{#if app_state.currentUser.modeling_only}}
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            {{#link-to 'user' app_state.currentUser.user_name id='nav_secondary' class='btn big_button btn-default'}}
-              <img src={{app_state.currentUser.avatar_url_with_fallback}} onerror='button_broken_image(this);' />
-              {{t "My Account" key='my_account'}}
-            {{/link-to}}
-          </div>
+          {{#if app_state.currentUser.permissions.delete}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              {{#link-to 'user' app_state.currentUser.user_name id='nav_secondary' class='btn big_button btn-default'}}
+                <img src={{app_state.currentUser.avatar_url_with_fallback}} onerror='button_broken_image(this);' />
+                {{t "My Account" key='my_account'}}
+              {{/link-to}}
+            </div>
+          {{/if}}
         {{else}}
           <div class='col-md-3 col-xs-4 big_button_holder'>
             <button id='nav_secondary' class='btn big_button btn-default' {{action 'stats'}}>
@@ -489,20 +513,24 @@
               </button>
             </div>
           {{else}}
-            <div class='col-md-3 col-xs-4 big_button_holder'>
-              <button id='nav_tertiary' class='btn big_button btn-default' {{action "newBoard"}}>
-                <img src={{path 'images/new.svg'}} />
-                {{t "New Board" key='new_board'}}
-              </button>
-            </div>
+            {{#unless app_state.currentUser.modeling_only}}
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button id='nav_tertiary' class='btn big_button btn-default' {{action "newBoard"}}>
+                  <img src={{path 'images/new.svg'}} />
+                  {{t "New Board" key='new_board'}}
+                </button>
+              </div>
+            {{/unless}}
           {{/if}}
         {{else}}
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            <button id='nav_tertiary' class='btn big_button btn-default middle_row' {{action "intro"}}>
-              <img src={{path 'images/learn.png'}} />
-              {{t "Learn<br/>and Setup" key='learn_and_setup'}}
-            </button>
-          </div>
+          {{#unless app_state.currentUser.modeling_only}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              <button id='nav_tertiary' class='btn big_button btn-default middle_row' {{action "intro"}}>
+                <img src={{path 'images/learn.png'}} />
+                {{t "Learn<br/>and Setup" key='learn_and_setup'}}
+              </button>
+            </div>
+          {{/unless}}
         {{/if}}
         <div class='col-md-3 col-xs-4 big_button_holder'>
           <button id='nav_extras' class='btn big_button btn-default' {{action 'toggle_extras'}} style='touch-action: manipulation;'>
@@ -511,33 +539,37 @@
           </button>
         </div>
         {{#if show_main_extras}}
-          {{#if app_state.currentUser.preferences.progress.intro_watched}}
-            <div class='col-md-3 col-xs-4 big_button_holder'>
-              <button class='btn big_button btn-default middle_row' {{action "intro"}}>
-                <img src={{path 'images/learn.png'}} />
-                {{t "Learn<br/>and Setup" key='learn_and_setup'}}
-              </button>
-            </div>
-          {{else}}
+          {{#unless app_state.currentUser.modeling_only}}
+            {{#if app_state.currentUser.preferences.progress.intro_watched}}
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button class='btn big_button btn-default middle_row' {{action "intro"}}>
+                  <img src={{path 'images/learn.png'}} />
+                  {{t "Learn<br/>and Setup" key='learn_and_setup'}}
+                </button>
+              </div>
+            {{else}}
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
+                  <img src={{path 'images/new.svg'}} />
+                  {{t "New Board" key='new_board'}}
+                </button>
+              </div>
+            {{/if}}
             <div class='col-md-3 col-xs-4 big_button_holder'>
               <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
                 <img src={{path 'images/new.svg'}} />
                 {{t "New Board" key='new_board'}}
               </button>
             </div>
+          {{/unless}}
+          {{#if app_state.currentUser.permissions.delete}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              <button class='btn big_button btn-default middle_row' {{action "manage_supervisors"}}>
+                <span class='glyphicon glyphicon-user'></span>
+                {{t "Supervisors" key='manage_supervisors'}}
+              </button>
+            </div>
           {{/if}}
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
-              <img src={{path 'images/new.svg'}} />
-              {{t "New Board" key='new_board'}}
-            </button>
-          </div>
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            <button class='btn big_button btn-default middle_row' {{action "manage_supervisors"}}>
-              <span class='glyphicon glyphicon-user'></span>
-              {{t "Supervisors" key='manage_supervisors'}}
-            </button>
-          </div>
           {{#if sync_able}}
             <div class='col-md-3 col-xs-4 big_button_holder'>
               <button class='btn big_button btn-default middle_row' {{action "sync_details"}}>
@@ -546,30 +578,36 @@
               </button>
             </div>
           {{/if}}
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            <button class='btn big_button btn-default bottom_row' {{action 'goals'}}>
-              <span class='glyphicon glyphicon-flag'></span>
-              {{t "Goals" key='goals'}}
-            </button>
-          </div>
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            <button class='btn big_button btn-default bottom_row' {{action "record_note"}}>
-              <span class='glyphicon glyphicon-file'></span>
-              {{t "New Note" key='new_note'}}
-            </button>
-          </div>
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            {{#link-to 'user.recordings' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
-              <span class='glyphicon glyphicon-bullhorn'></span>
-              {{t "Recordings" key='recordings'}}
-            {{/link-to}}
-          </div>
-          <div class='col-md-3 col-xs-4 big_button_holder'>
-            {{#link-to 'user' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
-              <img src={{app_state.currentUser.avatar_url_with_fallback}} onerror='button_broken_image(this);' />
-              {{t "My Account" key='my_account'}}
-            {{/link-to}}
-          </div>
+          {{#if app_state.currentUser.permissions.delete}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              <button class='btn big_button btn-default bottom_row' {{action 'goals'}}>
+                <span class='glyphicon glyphicon-flag'></span>
+                {{t "Goals" key='goals'}}
+              </button>
+            </div>
+          {{/if}}
+          {{#unless app_state.currentUser.modeling_only}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              <button class='btn big_button btn-default bottom_row' {{action "record_note"}}>
+                <span class='glyphicon glyphicon-file'></span>
+                {{t "New Note" key='new_note'}}
+              </button>
+            </div>
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              {{#link-to 'user.recordings' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
+                <span class='glyphicon glyphicon-bullhorn'></span>
+                {{t "Recordings" key='recordings'}}
+              {{/link-to}}
+            </div>
+          {{/unless}}
+          {{#if app_state.currentUser.permissions.delete}}
+            <div class='col-md-3 col-xs-4 big_button_holder'>
+              {{#link-to 'user' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
+                <img src={{app_state.currentUser.avatar_url_with_fallback}} onerror='button_broken_image(this);' />
+                {{t "My Account" key='my_account'}}
+              {{/link-to}}
+            </div>
+          {{/if}}
           {{#if app_state.feature_flags.emergency_boards}}
             <div class='col-md-3 col-xs-4 big_button_holder'>
               {{#link-to 'offline_boards' class='btn big_button btn-default emergency_button'}}

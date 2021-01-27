@@ -728,6 +728,7 @@ describe SessionController, :type => :controller do
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full'])
+      expect(json['modeling_session']).to eq(nil)
     end
 
     it "should make a valid token for an eval login" do
@@ -787,6 +788,111 @@ describe SessionController, :type => :controller do
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['temporary_device']).to_not eq(true)
+    end
+
+    it "should log in correctly with a valet login" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.generate_password("seashell")
+      u.process({valet_login: true, valet_password: 'baconator'}, {updater: u})
+      u.save
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
+    end
+
+    it "should mark when a valet login is used, and notify the user" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.generate_password("seashell")
+      u.process({valet_login: true, valet_password: 'baconator'}, {updater: u})
+      u.save
+      expect(u.reload.settings['valet_password_at']).to eq(nil)
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to_not eq(nil)
+      expect(u.reload.settings['valet_password_at']).to be > Time.now.to_i - 5
+    end
+
+    it "should disable a used valet login when the regular login is used" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.generate_password("seashell")
+      u.process({valet_login: true, valet_password: 'baconator'}, {updater: u})
+      u.save
+      expect(u.valet_allowed?).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to eq(nil)
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to_not eq(nil)
+      expect(u.reload.settings['valet_password_at']).to be > Time.now.to_i - 5
+      expect(u.reload.settings['valet_password_disabled']).to eq(nil)
+
+      expect(u.valet_allowed?).to eq(true)
+      expect(UserMailer).to_not receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to_not eq(nil)
+      expect(u.reload.settings['valet_password_at']).to be > Time.now.to_i - 5
+      expect(u.reload.settings['valet_password_disabled']).to eq(nil)
+
+      expect(u.valet_allowed?).to eq(true)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "fred@example.com", :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['token_type']).to eq('bearer')
+      expect(json['scopes']).to eq(['full'])
+      expect(u.reload.settings['valet_password_at']).to eq(nil)
+      expect(u.reload.settings['valet_password_disabled']).to_not eq(nil)
+      expect(u.reload.settings['valet_password_disabled']).to be > Time.now.to_i - 5
+
+      expect(u.valet_allowed?).to eq(false)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to_not be_successful
+      json = JSON.parse(response.body)
+      expect(json['error']).to eq('Invalid authentication attempt')
+    end
+
+    it "should not disable an unused valet login when the regular login is used" do
+      token = GoSecure.browser_token
+      u = User.new(:user_name => "fred", :settings => {'email' => 'fred@example.com'})
+      u.generate_password("seashell")
+      u.process({valet_login: true, valet_password: 'baconator'}, {updater: u})
+      u.save
+      expect(u.valet_allowed?).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to eq(nil)
+
+      expect(u.valet_allowed?).to eq(true)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "fred@example.com", :password => 'seashell'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['token_type']).to eq('bearer')
+      expect(json['scopes']).to eq(['full'])
+      expect(u.reload.settings['valet_password_at']).to eq(nil)
+      expect(u.reload.settings['valet_password_disabled']).to eq(nil)
+      
+      expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
+      expect(u.reload.settings['valet_password_at']).to_not eq(nil)
+      expect(u.reload.settings['valet_password_at']).to be > Time.now.to_i - 5
+      expect(u.reload.settings['valet_password_disabled']).to eq(nil)
     end
   end
 
@@ -872,6 +978,17 @@ describe SessionController, :type => :controller do
       expect(json['authenticated']).to eq(false)
       expect(json['expired']).to eq(true)
       expect(json['can_refresh']).to eq(true)
+    end
+
+    it "should respond correctly for a valet token" do
+      token_user
+      @device.settings['valet'] = true
+      @device.save!
+      get :token_check, params: {:access_token => @device.tokens[0]}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(true)
+      expect(json['scopes']).to eq(['full', 'modeling'])
+      expect(json['modeling_session']).to eq(true)
     end
   end
 

@@ -29,6 +29,13 @@ export default Controller.extend({
   title: computed('model.user_name', function() {
     return "Edit " + this.get('model.user_name');
   }),
+  valet_user_name: computed('model.id', function() {
+    if(this.get('model.id')) {
+      return "mdl@" + this.get('model.id').replace(/_/, '-')
+    } else {
+      return "";
+    }
+  }),
   load_webhooks: function() {
     var _this = this;
     _this.set('webhooks', {loading: true});
@@ -67,8 +74,16 @@ export default Controller.extend({
       var user = this.get('model');
       user.set('preferences.progress.profile_edited', true);
       var _this = this;
+      if(user.get('password') && user.get('password').length < 6) {
+        modal.error(i18n.t('short_password', "Password must be at least 6 characters long"));
+        return;
+      } else if(user.get('valet_login') && (user.get('valet_password') || '').length < 6) {
+        modal.error(i18n.t('short_valet_password', "Valet Password must be at least 6 characters long"));
+        return;
+      }
       user.save().then(function(user) {
         user.set('password', null);
+        user.set('valet_password', null);
         _this.transitionToRoute('user', user.get('user_name'));
       }, function(err) {
         if(err.responseJSON && err.responseJSON.errors && err.responseJSON.errors[0] == "incorrect current password") {

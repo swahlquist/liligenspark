@@ -30,7 +30,10 @@ module JsonApi::User
       json['user_token'] = user.user_token
       journal_cutoff = 2.weeks.ago.to_i
       json['vocalizations'] = (user.settings['vocalizations'] || []).select{|v| v['category'] != 'journal' || (v['ts'] && v['ts'] > journal_cutoff) }
-      unless json['permissions']['delete']
+      if json['permissions']['delete']
+        json['valet_login'] = true if user.valet_allowed?
+        json['valet_disabled'] = true if user.settings['valet_password'] && !user.valet_allowed?
+      else
         json['vocalizations'] = json['vocalizations'].select{|v| v['category'] != 'journal' }
       end
       json['contacts'] = user.settings['contacts'] || []

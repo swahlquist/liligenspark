@@ -72,6 +72,7 @@ class SessionController < ApplicationController
       @error = error
       render :oauth, :status => 400
     else
+      user.password_used!
       config['user_id'] = user.id.to_s
       RedisInit.default.setex("oauth_#{params['code']}", 1.hour.to_i, config.to_json)
       if config['redirect_uri'] == DeveloperKey.oob_uri
@@ -169,7 +170,7 @@ class SessionController < ApplicationController
   def token
     set_browser_token_header
     if params['grant_type'] == 'password'
-      pending_u = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'])
+      pending_u = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'], true)
       u = nil
       if params['client_id'] == 'browser' && GoSecure.valid_browser_token?(params['client_secret'])
         u = pending_u
@@ -178,7 +179,6 @@ class SessionController < ApplicationController
       end
       if u && u.valid_password?(params['password'])
         # generated based on request headers
-        # TODO: should also have some kind of developer key for tracking
         device_key = request.headers['X-Device-Id'] || params['device_id'] || 'default'
         
         installed_app = request.headers['X-INSTALLED-COUGHDROP'] == 'true' || params['installed_app'] == 'true'
@@ -200,8 +200,11 @@ class SessionController < ApplicationController
         d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'
         d.settings['temporary_device'] = true if temporary_device
         d.settings.delete('temporary_device') unless u.eval_account?
+        d.settings.delete('temporary_device') if u.valet_mode?
+        d.settings['valet'] = !!u.valet_mode?
         d.settings['app'] = true if installed_app
-        d.generate_token!(!!(params['long_token'] && params['long_token'] != 'false'))
+        d.generate_token!(!!(params['long_token'] && params['long_token'] != 'false') && !u.valet_mode?)
+        u.password_used!
         # find or create a device based on the request information
         # some devices (i.e. generic browser) are allowed multiple
         # tokens, so the token 
@@ -233,6 +236,7 @@ class SessionController < ApplicationController
         user_name: @api_user.user_name, 
         user_id: @api_user.global_id,
         device_id: @api_device_id,
+        modeling_session: @api_user.valet_mode?,
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
         scopes: device && device.permission_scopes,
         sale: ENV['CURRENT_SALE'],
