@@ -637,10 +637,6 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/so no reports are generated/)
     end
 
-    it "should not include raw logs for private_logging supervisees" do
-      write_this_test
-    end
-    
     it "should include goal data"
   end
 

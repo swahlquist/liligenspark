@@ -31,7 +31,7 @@ export default Controller.extend({
   }),
   valet_user_name: computed('model.id', function() {
     if(this.get('model.id')) {
-      return "mdl@" + this.get('model.id').replace(/_/, '-')
+      return "model@" + this.get('model.id').replace(/_/, '.')
     } else {
       return "";
     }
@@ -66,10 +66,13 @@ export default Controller.extend({
         }
       });
     },
+    generate_qr: function() {
+      this.send('saveProfile', 'qr');
+    },
     enable_change_password: function() {
       this.set('change_password', true);
     },
-    saveProfile: function() {
+    saveProfile: function(action) {
       // TODO: add a "save pending..." status somewhere
       var user = this.get('model');
       user.set('preferences.progress.profile_edited', true);
@@ -77,21 +80,27 @@ export default Controller.extend({
       if(user.get('password') && user.get('password').length < 6) {
         modal.error(i18n.t('short_password', "Password must be at least 6 characters long"));
         return;
-      } else if(user.get('valet_login') && (user.get('valet_password') || '').length < 6) {
+      } else if(user.get('valet_login') && (user.get('valet_password') || '').length > 0 && (user.get('valet_password') || '').length < 6) {
         modal.error(i18n.t('short_valet_password', "Valet Password must be at least 6 characters long"));
+        return;
+      } else if(user.get('valet_login') && !user.get('valet_password_set') && (user.get('valet_password') || '').length == 0) {
+        modal.error(i18n.t('valet_password_required', "Valet Password must be set to enable valet login"));
         return;
       }
       user.save().then(function(user) {
         user.set('password', null);
         user.set('valet_password', null);
-        _this.transitionToRoute('user', user.get('user_name'));
+        if(action == 'qr') {
+          modal.open('modals/valet-mode', {user: user});
+        } else {
+          _this.transitionToRoute('user', user.get('user_name'));
+        }
       }, function(err) {
         if(err.responseJSON && err.responseJSON.errors && err.responseJSON.errors[0] == "incorrect current password") {
           modal.error(i18n.t('incorrect_password', "Incorrect current password"));
         } else {
           modal.error(i18n.t('save_failed', "Save failed."));
         }
-
       });
     },
     cancelSave: function() {

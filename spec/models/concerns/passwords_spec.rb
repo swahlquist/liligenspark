@@ -149,7 +149,25 @@ describe Passwords, :type => :model do
       expect(u.valid_password?('bacon')).to eq(true)
       expect(u.valid_password?(u.pre_hashed_password('bacon'))).to eq(true)
     end
-    
+
+    it "should validate a valet temp password" do
+      u = User.new
+      u.settings = {}
+      salt = Digest::MD5.hexdigest("pw" + Time.now.to_i.to_s)
+      hash = Digest::SHA512.hexdigest(GoSecure.encryption_key + salt + "bacon")
+      u.settings['valet_password'] = {
+        'hash_type' => 'sha512',
+        'hashed_password' => hash,
+        'salt' => salt
+      }
+      expect(GoSecure.outdated_password?(u.settings['valet_password'])).to eq(true)
+      u.assert_valet_mode!
+      expect(u.valid_password?('bracken')).to eq(false)
+      expect(u.valid_password?("asdf-#{GoSecure.sha512(hash, 'asdf')}")).to eq(true)
+      expect(u.valid_password?(u.valet_temp_password('whatever'))).to eq(true)
+      expect(u.valid_password?(u.pre_hashed_password("asdf-#{GoSecure.sha512(hash, 'asdf')}"))).to eq(false)
+    end
+
     it "should re-generate a non-pre-hashed password" do
       u = User.new
       u.settings = {}
@@ -265,6 +283,15 @@ describe Passwords, :type => :model do
       expect(GoSecure).to_not receive(:nonce)
       expect(UserMailer).to_not receive(:schedule_delivery).with(:valet_password_enabled, u.global_id)
       u.set_valet_password("baconator")
+    end
+
+    it "should not re-generate when setting to the same password" do
+      u = User.create
+      u.settings['valet_password'] = {}
+      u.set_valet_password("baconator")
+      hash = u.settings['valet_password']
+      u.set_valet_password("baconator")
+      expect(u.settings['valet_password']).to eq(hash)
     end
 
     it "should notify when valet login was disabled and password was already set" do

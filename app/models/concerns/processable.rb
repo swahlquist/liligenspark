@@ -118,8 +118,8 @@ module Processable
       raise "unknown class: #{self.class.to_s}"
     end
     
-    if suggestion.match(/^mdl+/)
-      suggestion = suggestion.sub(/^mdl+/, 'mdl_')
+    if suggestion.match(/^model+/)
+      suggestion = suggestion.sub(/^model+/, 'model_')
     end
     if Coughdrop::RESERVED_ROUTES.include?(suggestion) || (collision && collision != self)
       # try something else

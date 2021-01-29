@@ -833,6 +833,7 @@ describe Board, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      Worker.process_queues
       expect(b1.reload.settings['full_set_revision']).to_not eq(hash1)
       expect(b1.current_revision).to eq(current1)
       expect(b2.reload.settings['full_set_revision']).to_not eq(hash2)
@@ -1512,6 +1513,37 @@ describe Board, :type => :model do
             'vocalization' => 'hatz'
           }
         }
+      })
+    end
+
+    it "should clear accidental language switches if there was no real content set for the new language" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234'}
+      ], 'locale' => 'en', 'name' => 'awesome board', 'translations' => {}})
+      expect(b.settings['translations']).to eq({
+        'board_name' => {'en' => 'awesome board'},
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        'default' => nil
+      })
+      expect(b.settings['locale']).to eq('en')
+      b.process({'locale' => 'en_US', 'translations'=> {}})
+      expect(b.settings['translations']).to eq({
+        'board_name' => {'en_US' => 'awesome board'},
+        'current_label' => 'en_US',
+        'current_vocalization' => 'en_US',
+        'default' => nil
+      })
+      expect(b.settings['locale']).to eq('en_US')
+      b.process({'locale' => 'en', 'translations'=> {}})
+      expect(b.settings['locale']).to eq('en')
+      expect(b.settings['translations']).to eq({
+        'board_name' => {'en' => 'awesome board'},
+        'current_label' => 'en',
+        'current_vocalization' => 'en',
+        'default' => nil
       })
     end
   end

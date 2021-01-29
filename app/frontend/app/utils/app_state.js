@@ -945,7 +945,7 @@ var app_state = EmberObject.extend({
         // w/o supervisees, so we'll just tell them when it times out instead
         var speaking_user = (app_state.get('speakModeUser') || app_state.get('currentUser'))
         var communicator_limited = speaking_user && speaking_user.get('expired');
-        var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.modeling_only') && !app_state.get('speakModeUser');
+        var supervisor_limited = app_state.get('currentUser.supporter_role') && app_state.get('currentUser.modeling_only') && !app_state.get('speakModeUser') && !session.get('modeling_session');
         if(app_state.get('currentUser') && !opts.reminded && (communicator_limited || supervisor_limited) && !already_speaking_as_someone_else) {
           return modal.open('premium-required', {user_name: app_state.get('currentUser.user_name'), user: app_state.get('currentUser'), remind_to_upgrade: true, reason: (communicator_limited ? 'communicator_limited' : 'supervisor_limited'), limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
             opts.reminded = true;
@@ -972,7 +972,9 @@ var app_state = EmberObject.extend({
     CoughDrop.log.track('done setting mode to ' + mode);
   },
   sync_reconnect: observer('refresh_stamp', function() {
-    sync.connect();
+    if(app_state.get('sessionUser.permissions.supervise')) {
+      sync.connect();
+    }
   }),
   sync_send_utterance: observer('stashes.working_vocalization', function() {
     if(!CoughDrop || !CoughDrop.store) { return; }
@@ -1066,7 +1068,7 @@ var app_state = EmberObject.extend({
       stashes.persist('vocalization_locale', preferred.locale);
     }
     var communicator_limited = speak_mode_user && speak_mode_user.get('expired');
-    var supervisor_limited = speak_mode_user && speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only');
+    var supervisor_limited = speak_mode_user && speak_mode_user.get('supporter_role') && speak_mode_user.get('modeling_only') && !session.get('modeling_session');
     if(speak_mode_user && !opts.reminded && (communicator_limited || supervisor_limited)) {
       return modal.open('premium-required', {user_name: speak_mode_user.get('user_name'), user: speak_mode_user, reason: (communicator_limited ? 'communicator_limited' : 'supervisor_limited'), remind_to_upgrade: true, limited_supervisor: (!communicator_limited && supervisor_limited), action: 'app_speak_mode'}).then(function() {
         opts.reminded = true;
@@ -1393,7 +1395,9 @@ var app_state = EmberObject.extend({
     if(app_state.get('currentUser')) {
       app_state.set('currentUser.load_all_connections', true);
     }
-    sync.connect();
+    if(app_state.get('sessionUser.permissions.supervise')) {
+      sync.connect();
+    }
   }),
   eye_gaze_state: computed(
     'currentUser.preferences.device.dwell',

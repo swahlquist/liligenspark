@@ -53,6 +53,7 @@ CoughDrop.User = DS.Model.extend({
   unread_alerts: DS.attr('number'),
   valet_password: DS.attr('string'),
   valet_login: DS.attr('boolean'),
+  valet_password_set: DS.attr('boolean'),
   valet_disabled: DS.attr('boolean'),
   last_message_read: DS.attr('number'),
   last_alert_access: DS.attr('number'),

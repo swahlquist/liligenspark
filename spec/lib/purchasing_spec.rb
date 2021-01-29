@@ -1372,6 +1372,41 @@ describe Purchasing do
         Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200', g.code)
       end
 
+      it "should record a percent discount on the gift record" do
+        g = GiftPurchase.create(settings: {'discount' => 0.5})
+        expect(g.discount_percent).to eq(0.5)
+
+        # gift = GiftPurchase.find_by_code(discount_code) rescue nil
+        # return {success: false, error: "Invalid gift/discount code", code: discount_code} unless gift
+        # gift.redeem_code!(code, user)
+        # amount *= (1.0 - gift.discount_percent)
+
+        u = User.create
+        expect(Stripe::Charge).to receive(:create).with({
+          :amount => 10000,
+          :currency => 'usd',
+          :source => 'token',
+          :description => 'CoughDrop communicator license purchase',
+          :receipt_email => nil,
+          :metadata => {
+            'user_id' => u.global_id,
+            'platform_source' => 'coughdrop',
+            'plan_id' => 'long_term_200',
+            'type' => 'license'
+          }
+        }).and_return({
+          'id' => '23456',
+          'customer' => '45678'
+        })
+        expect(User).to receive(:subscription_event)
+        expect(g.settings['activations']).to eq(nil)
+        Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200', g.code)
+        g.reload
+        expect(g.settings['activations']).to_not eq(nil)
+        expect(g.settings['activations'].length).to eq(1)
+        expect(g.settings['activations'][0]['receiver_id']).to eq(u.global_id)
+      end
+
       it "should not apply discount codes to the supporter or symbols fees" do
         g = GiftPurchase.create(settings: {'discount' => 0.5})
         expect(g.discount_percent).to eq(0.5)

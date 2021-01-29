@@ -52,8 +52,8 @@ class User < ActiveRecord::Base
   def self.find_for_login(user_name, org_id=nil, password=nil, allow_modeling=false)
     user_name = user_name.strip
     res = nil
-    if user_name.match(/^mdl@/) && allow_modeling
-      user_id = user_name.sub(/^mdl@/, '').sub(/-/, '_')
+    if user_name.match(/^model@/) && allow_modeling
+      user_id = user_name.sub(/^model@/, '').sub(/\./, '_')
       res = self.find_by_global_id(user_id)
       res.assert_valet_mode! if res
     end

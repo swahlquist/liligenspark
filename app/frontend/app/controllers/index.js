@@ -251,8 +251,8 @@ export default Controller.extend({
       }
     });
   }),
-  allow_logs: computed('app_state.currentUser.preferences.logging', 'app_state.currentUser.modeling_only', 'app_state.currentUser.supporter_role', function() {
-    return app_state.get('currentUser.preferences.logging') && (!app_state.get('currentUser.supported_role') || !app_state.get('currentUser.modeling_only'));
+  allow_logs: computed('app_state.currentUser.preferences.logging', 'app_state.currentUser.modeling_only', 'app_state.currentUser.supporter_role', 'session.modeling_session', function() {
+    return app_state.get('currentUser.preferences.logging') && !app_state.get('currentUser.supporter_role') && !app_state.get('currentUser.modeling_only') && !session.get('modeling_session');
   }),
   reload_logs: observer('model.id', 'persistence.online', function() {
     var model = this.get('model');
@@ -293,6 +293,7 @@ export default Controller.extend({
   update_current_badges: observer(
     'app_state.sessionUser',
     'app_state.sessionUser.known_supervisees',
+    'session.modeling_session',
     'current_user_badges',
     function() {
       var _this = this;
@@ -301,7 +302,7 @@ export default Controller.extend({
       if(model && for_users[model.get('id')]) {
         var b = _this.best_badge(for_users[model.get('id')], model.get('goal.id'));
         var eb = _this.earned_badge(for_users[model.get('id')]);
-        if(!app_state.get('sessionUser.currently_premium') || app_state.get('sessionUser.supporter_role')) {
+        if(!app_state.get('sessionUser.currently_premium') || app_state.get('sessionUser.supporter_role') || session.get('modeling_session')) {
           b = null;
         }
         // If no badge for the current user use the supervisee if there's only one

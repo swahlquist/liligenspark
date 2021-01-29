@@ -224,6 +224,7 @@ var sync = EmberObject.extend({
         resolve();
       }
     });
+    connect_promise.then(null, function() { });
     return connect_promise;
   },
   listen: function(listen_id, callback) {

@@ -312,6 +312,7 @@ module Purchasing
         if discount_code
           gift = GiftPurchase.find_by_code(discount_code) rescue nil
           return {success: false, error: "Invalid gift/discount code", code: discount_code} unless gift
+          gift.redeem_code!(discount_code, user)
           amount *= (1.0 - gift.discount_percent)
         end
         if include_extras && !  ((user.settings['subscription'] || {})['extras'] || {})['enabled']

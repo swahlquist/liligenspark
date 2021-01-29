@@ -961,6 +961,13 @@ class Board < ActiveRecord::Base
         self.settings['translations']['board_name'][params['locale']] = self.settings['name']
         if old_name && !old_name[:locale].blank? && !old_name[:name].blank?
           self.settings['translations']['board_name'][old_name[:locale]] ||= old_name[:name]
+          if old_name[:name] == self.settings['name']
+            any_old_locale = false
+            self.settings['translations'].each do |k, hash|
+              any_old_locale = true if k != 'board_name' &&  hash.is_a?(Hash) && hash[old_name[:locale]]
+            end
+            self.settings['translations']['board_name'].delete(old_name[:locale]) if !any_old_locale
+          end
         end
       end
     end

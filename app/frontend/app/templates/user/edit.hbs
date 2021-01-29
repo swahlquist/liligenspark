@@ -158,45 +158,54 @@
       </div>
     </div>
   {{/unless}}
-  {{#if model.permissions.delete}}
-    <div class="form-group">
-      <label for="valet_login" class="col-sm-3 control-label">{{t "Valet Login" key='valet_login'}}</label>
-      <div class="col-sm-5">
-        <div class="checkbox big_checkbox">
-          <label>
-            {{input type="checkbox" checked=model.valet_login id="valet_login"}}
-            {{t "Enable valet login for modeling-only access"}}
-            {{#if model.valet_disabled}}
-              <br/><em class='text-danger'>{{t "(valet login was automatically disabled after being used)" key='valet_login_disabled'}}</em>
+  {{#unless app_state.supporter_role}}
+    {{#if model.permissions.delete}}
+      <div class="form-group">
+        <label for="valet_login" class="col-sm-3 control-label">{{t "Valet Login" key='valet_login'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=model.valet_login id="valet_login"}}
+              {{t "Enable valet login for modeling-only access"}}
+              {{#if model.valet_disabled}}
+                <br/><em class='text-danger'>{{t "(valet login was automatically disabled after being used)" key='valet_login_disabled'}}</em>
+              {{/if}}
+            </label>
+          </div>
+        </div>
+      </div>
+      {{#if model.valet_login}}
+        <div class='form-group'>
+          <div class='col-sm-6 col-sm-offset-3'>
+            <p class='form-control-static'><em>
+              {{t "Valet login allows you to share a temporary username and password outside of a trusted device without exposing your full account. When someone uses your valet login, that device will have access to boards and user preferences only, similar to a modeling-only account. The valet password will remain available for 24 hours or until you log in using your normal username and password. After that it will be disabled until you manually re-activate it." key='valet_login_explainer'}}
+            </em></p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="valet_user_name" class="col-sm-3 control-label">{{t "Valet User Name" key='valet_user_name'}}</label>
+          <div class="col-sm-5">
+            <p class="form-control-static">
+              {{valet_user_name}}
+            </p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for='valet_password'>{{t "Valet Password" key='valet_password'}}</label>
+          <div class="col-sm-3">
+            {{#if model.valet_password_set}}
+              {{input type="password" value=model.valet_password class="form-control" id="valet_password" placeholder="enter to change"}}
+            {{else}}
+              {{input type="password" value=model.valet_password class="form-control" id="valet_password" placeholder="required"}}
             {{/if}}
-          </label>
+          </div>
+          <div class="col-sm-2">
+            <button type='button' class='btn btn-default' {{action 'generate_qr'}}>{{t "Generate QR Code" key='generate_qr_code'}}</button>
+          </div>
         </div>
-      </div>
-    </div>
-    {{#if model.valet_login}}
-      <div class='form-group'>
-        <div class='col-sm-6 col-sm-offset-3'>
-          <p class='form-control-static'><em>
-            {{t "Valet login allows you to share a temporary username and password outside of a trusted device without exposing your full account. When someone uses your valet login, that device will have access to boards and user preferences only, similar to a modeling-only account. The valet password will remain available for 24 hours or until you log in using your normal username and password. After that it will be disabled until you manually re-activate it." key='valet_login_explainer'}}
-          </em></p>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="valet_user_name" class="col-sm-3 control-label">{{t "Valet User Name" key='valet_user_name'}}</label>
-        <div class="col-sm-5">
-          <p class="form-control-static">
-            {{valet_user_name}}
-          </p>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-3 control-label" for='valet_password'>{{t "Valet Password" key='valet_password'}}</label>
-        <div class="col-sm-5">
-          {{input type="password" value=model.valet_password class="form-control" id="valet_password" placeholder="enter to change"}}
-        </div>
-      </div>
+      {{/if}}
     {{/if}}
-  {{/if}}
+  {{/unless}}
   <div class="form-group">
     <label for="description" class="col-sm-3 control-label">{{t "One-Liner" key='one_liner'}}</label>
     <div class="col-sm-5">

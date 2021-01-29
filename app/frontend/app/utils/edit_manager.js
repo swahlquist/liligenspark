@@ -286,8 +286,8 @@ var editManager = EmberObject.extend({
     var lab_locale = app_state.get('label_locale') || navigator.language;
     var base_label = button.label;
     var trans = (app_state.controller.get('board.model.translations') || {})[button_id];
-    var voc = (trans || {})[voc_locale];
-    var lab = (trans || {})[lab_locale];
+    var voc = (trans || {})[voc_locale] || (trans || {})[voc_locale.split(/-|_/)[0]];
+    var lab = (trans || {})[lab_locale] || (trans || {})[lab_locale.split(/-|_/)[0]];
     var locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
     var list = [];
     var ignore_defaults = false;
@@ -323,6 +323,8 @@ var editManager = EmberObject.extend({
         if(for_current_locale && button.inflections && button.inflections[idx]) {
           defaults_allowed = false;
           list.push({location: locs[idx], label: button.inflections[idx]});
+        } else if(trans_voc && trans_lab) {
+          list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
         } else if(for_current_locale && button.inflection_defaults && button.inflection_defaults[locs[idx]]) {
           if(button.inflection_defaults.v != expected_inflections_version) {
             defaults_allowed = false;
@@ -332,8 +334,6 @@ var editManager = EmberObject.extend({
           } else {
             list.push({location: locs[idx], label: button.inflection_defaults[locs[idx]]});
           }
-        } else if(trans_voc && trans_lab) {
-          list.push({location: locs[idx], label: trans_lab, voc: trans_voc});
         }
       }
       if(list.length > 0) { 

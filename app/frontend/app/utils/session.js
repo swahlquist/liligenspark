@@ -102,11 +102,17 @@ var session = EmberObject.extend({
           });
         });  
       };
-      session.hashed_password(credentials.password).then(function(pw) {
-        go(pw);
-      }, function(err) {
+      if(credentials.identification && credentials.identification.match(/^model@/) &&  credentials.password && credentials.password.match(/\?:\#/)) {
+        // Modeling hashed passwords are already hashed, and
+        // pre-hashing them messes up our confirmation
         go(credentials.password);
-      })
+      } else {
+        session.hashed_password(credentials.password).then(function(pw) {
+          go(pw);
+        }, function(err) {
+          go(credentials.password);
+        });  
+      }
     });
     res.then(null, function() { });
     return res;

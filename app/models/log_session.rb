@@ -1140,13 +1140,6 @@ class LogSession < ActiveRecord::Base
         'non_user_params' => non_user_params
       }
       stash = JobStash.create(data: stash_data)
-      res.data['stash_id'] = stash.global_id
-      if (user.settings['preferences'] || {})['allow_log_reports']
-        res.data['allow_research'] = true
-      end
-      if (user.settings['preferences'] || {})['allow_log_publishing']
-        res.data['allow_publishing'] = true
-      end
       Rails.logger.warn('scheduling process')
       schedule(:process_delayed_follow_on, stash.global_id, non_user_params)
       Rails.logger.warn('done with process_as_follow_on')
@@ -1203,6 +1196,13 @@ class LogSession < ActiveRecord::Base
         end
       else
         session = self.process_new(params, non_user_params)
+        if (non_user_params[:user].settings['preferences'] || {})['allow_log_reports']
+          session.data['allow_research'] = true
+        end
+        if (non_user_params[:user].settings['preferences'] || {})['allow_log_publishing']
+          session.data['allow_publishing'] = true
+        end
+  
         session.check_for_merger
       end
       stash.destroy if stash
@@ -1465,6 +1465,15 @@ class LogSession < ActiveRecord::Base
       if params['events']
         self.data_will_change!
         self.assert_extra_data # TODO: cleaner way to do this?
+        if self.user && !self.id
+          if (self.user.settings['preferences'] || {})['allow_log_reports']
+            self.data['allow_research'] = true
+          end
+          if (self.user.settings['preferences'] || {})['allow_log_publishing']
+            self.data['allow_publishing'] = true
+          end
+        end
+
         self.data['events'].each do |e|
           pe = params['events'].detect{|ev| ev['id'] == e['id'] && ev['timestamp'].to_f == e['timestamp'] }
           if !e['id']

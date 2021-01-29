@@ -2273,9 +2273,9 @@ describe User, :type => :model do
     it "should not permit a valet login if not allowed" do
       u = User.create(:user_name => 'brody')
       u.process({'valet_login' => true, 'valet_password' => 'protractor'}, {'updater' => u})
-      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}")
+      res = User.find_for_login("model@#{u.global_id.sub(/_/, '.')}")
       expect(res).to eq(nil)
-      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}", nil, nil, true)
+      res = User.find_for_login("model@#{u.global_id.sub(/_/, '.')}", nil, nil, true)
       expect(res).to eq(u)
       expect(res.valet_mode?).to eq(true)
     end
@@ -2283,9 +2283,9 @@ describe User, :type => :model do
     it "should correctly process a valet login" do
       u = User.create(:user_name => 'brody')
       u.process({'valet_login' => true, 'valet_password' => 'protractor'}, {'updater' => u})
-      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}")
+      res = User.find_for_login("model@#{u.global_id.sub(/_/, '.')}")
       expect(res).to eq(nil)
-      res = User.find_for_login("mdl@#{u.global_id.sub(/_/, '-')}", nil, 'whatever', true)
+      res = User.find_for_login("model@#{u.global_id.sub(/_/, '.')}", nil, 'whatever', true)
       expect(res).to eq(u)
       expect(res.valet_mode?).to eq(true)
     end

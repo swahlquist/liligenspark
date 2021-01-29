@@ -164,6 +164,7 @@ Coughdrop::Application.routes.draw do
       get 'stats/daily' => 'users#daily_stats'
       get 'stats/hourly' => 'users#hourly_stats'
       get 'alerts' => 'users#alerts'
+      get 'valet_credentials' => 'users#valet_credentials'
       post 'confirm_registration'
       post 'password_reset'
       post 'replace_board'

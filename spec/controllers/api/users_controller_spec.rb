@@ -2356,4 +2356,61 @@ describe Api::UsersController, :type => :controller do
       assert_error('invalid decryption')
     end
   end
+
+  describe "valet_credentials" do
+    it "should require an api token" do
+      get :valet_credentials, :params => {user_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      get :valet_credentials, :params => {user_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+    
+    it "should require authorization" do
+      token_user
+      u = User.create
+      get :valet_credentials, :params => {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should generate a valid credential" do
+      token_user
+      @user.set_valet_password('bacon')
+      @user.save
+      get :valet_credentials, :params => {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json['user_name']).to eq("model@#{@user.global_id.sub(/_/, '.')}")
+      expect(json['password']).to_not eq(nil)
+      expect(json['url']).to_not eq(nil)
+      @user.assert_valet_mode!
+      expect(@user.valid_password?(json['password'])).to eq(true)
+    end
+
+    it "should not generate if no valet password set" do
+      token_user
+      get :valet_credentials, :params => {user_id: @user.global_id}
+      assert_unauthorized
+    end
+
+    it "should not allow supervisors to generate" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u)
+      u.set_valet_password('bacon')
+      u.save
+      get :valet_credentials, :params => {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should not allow a modeling session to generate" do
+      valet_token_user
+      @user.set_valet_password('bacon')
+      @user.save
+      get :valet_credentials, :params => {user_id: @user.global_id}
+      assert_unauthorized
+    end
+  end
 end

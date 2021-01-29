@@ -33,7 +33,7 @@
           {{#if app_state.currentUser.permissions.delete}}
             <strong>{{t "This is a modeling-only account" key='modeling_only_account'}}</strong>
           {{else}}
-            <strong>{{t "This is a moddeling-only session" key='modeling_only_session'}}</strong>
+            <strong>{{t "This is a modeling-only session" key='modeling_only_session'}}</strong>
           {{/if}}
         {{/link-to}}
       {{else if app_state.currentUser.expired_or_grace_period}}

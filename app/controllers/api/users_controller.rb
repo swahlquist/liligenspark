@@ -31,6 +31,20 @@ class Api::UsersController < ApplicationController
     end
     render json: {sync_stamp: (user.sync_stamp || user.updated_at).utc.iso8601, badges_updated_at: (user.badges_updated_at || user.created_at).utc.iso8601}
   end
+
+  def valet_credentials
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'delete')
+    if !user.settings['valet_password']
+      return unless allowed?(user, 'never_allow')
+    end
+    nonce = GoSecure.nonce('valet_hash_password')[0, 5]
+    password = user.valet_temp_password(nonce)
+    credentials = "model-#{user.global_id}:#{password.gsub(/\?:\#/, '-')}"
+    url = "#{JsonApi::Json.current_host}/login?#{credentials}"
+    render json: {user_name: "model@#{user.global_id.sub(/_/, '.')}", password: password, url: url}
+  end
   
   def places
     user = User.find_by_path(params['user_id'])
@@ -443,7 +457,7 @@ class Api::UsersController < ApplicationController
   def board_revisions
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
-    return unless allowed?(user, 'supervise')
+    return unless allowed?(user, 'model')
     roots = []
     if user.settings['preferences']['home_board']
       roots << Board.find_by_global_id(user.settings['preferences']['home_board']['id'])
