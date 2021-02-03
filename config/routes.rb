@@ -264,6 +264,8 @@ Coughdrop::Application.routes.draw do
       get 'lam'
       get 'obl', on: :collection
       post 'import' => 'logs#import', on: :collection
+      post 'code_check' => 'logs#code_check', on: :collection
+
       get 'trends', on: :collection
     end
     resources :webhooks do

@@ -8,6 +8,7 @@ import app_state from '../../utils/app_state';
 import EmberObject from '@ember/object';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default Controller.extend({
   queryParams: ['type', 'start', 'end', 'highlighted', 'device_id', 'location_id'],
@@ -43,6 +44,10 @@ export default Controller.extend({
   ),
   messages_only: computed('type', function() {
     return this.get('type') == 'note';
+  }),
+  logging_cutoff_seconds: computed('meta.logging_cutoff_min', function() {
+    var cutoff = this.get('meta.logging_cutoff_min') *  60 * 60;
+    return cutoff;
   }),
   all_logs: computed('type', 'filtered_results', 'highlighted', function() {
     return !this.get('filtered_results') && (!this.get('type') || this.get('type') == 'all') && this.get('highlighted') != '1';
@@ -80,6 +85,20 @@ export default Controller.extend({
           _this.send('refresh');
         });
       }, function() { });
+    },
+    update_logging_code: function() {
+      var code = this.get('logging_code');
+      var now = (new Date()).getTime();
+      var codes = CoughDrop.session.get('logging_codes') || [];
+      var _this = this;
+      codes = codes.filter(function(c) { return c.user_id  != _this.get('model.id')});
+      codes.push({
+        user_id: _this.get('model.id'),
+        code: code,
+        timestamp: now
+      });
+      CoughDrop.session.set('logging_codes', codes);
+      this.send('refresh');
     },
     refresh: function() {
       if(!this.get('model.id')) { return; }

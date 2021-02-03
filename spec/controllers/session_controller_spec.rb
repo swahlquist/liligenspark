@@ -728,7 +728,7 @@ describe SessionController, :type => :controller do
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full'])
-      expect(json['modeling_session']).to eq(nil)
+      expect(json['modeling_session']).to eq(false)
     end
 
     it "should make a valid token for an eval login" do
@@ -796,7 +796,7 @@ describe SessionController, :type => :controller do
       u.generate_password("seashell")
       u.process({valet_login: true, valet_password: 'baconator'}, {updater: u})
       u.save
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full', 'modeling'])
@@ -811,7 +811,7 @@ describe SessionController, :type => :controller do
       u.save
       expect(u.reload.settings['valet_password_at']).to eq(nil)
       expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full', 'modeling'])
@@ -829,7 +829,7 @@ describe SessionController, :type => :controller do
       expect(u.valet_allowed?).to eq(true)
       expect(u.reload.settings['valet_password_at']).to eq(nil)
       expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full', 'modeling'])
@@ -840,7 +840,7 @@ describe SessionController, :type => :controller do
 
       expect(u.valet_allowed?).to eq(true)
       expect(UserMailer).to_not receive(:schedule_delivery).with(:valet_password_used, u.global_id)
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full', 'modeling'])
@@ -860,7 +860,7 @@ describe SessionController, :type => :controller do
       expect(u.reload.settings['valet_password_disabled']).to be > Time.now.to_i - 5
 
       expect(u.valet_allowed?).to eq(false)
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to_not be_successful
       json = JSON.parse(response.body)
       expect(json['error']).to eq('Invalid authentication attempt')
@@ -885,7 +885,7 @@ describe SessionController, :type => :controller do
       expect(u.reload.settings['valet_password_disabled']).to eq(nil)
       
       expect(UserMailer).to receive(:schedule_delivery).with(:valet_password_used, u.global_id)
-      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "mdl@#{u.global_id.sub(/_/, '-')}", :password => 'baconator'}
+      post :token, params: {:grant_type => 'password', :client_id => 'browser', :client_secret => token, :username => "model@#{u.global_id.sub(/_/, '.')}", :password => 'baconator'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['scopes']).to eq(['full', 'modeling'])

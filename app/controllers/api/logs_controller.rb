@@ -1,6 +1,10 @@
 class Api::LogsController < ApplicationController
   before_action :require_api_token, :except => [:lam, :trends]
   
+  def logging_code_for(user)
+    request.headers["HTTP_X_LOGGING_CODE_FOR_#{user.global_id}"] || request.headers["X-Logging-Code-For-#{user.global_id}"]
+  end
+
   def index
     user = User.find_by_path(params['user_id'])
     return unless allowed?(user, 'supervise')
@@ -10,18 +14,50 @@ class Api::LogsController < ApplicationController
       return unless allowed?(user, 'never_allow')
     end
 
+    user_id_cutoffs = {}
     user_ids = [user.id]
     for_self = true
     user_ids = [] if params['supervisees']
     if params['supervisees']
-      user_ids += user.supervisees.select{|u| !u.private_logging? }.map(&:id)
+      sups = user.supervisees.select{|u| !u.private_logging? }
+      sups.each do |sup|
+        user_ids << sup.id
+        cutoff = sup.logging_cutoff_for(@api_user, logging_code_for(sup))
+        user_id_cutoffs[sup.id] = cutoff if cutoff
+      end
       for_self = false
+    else
+      cutoff = user.logging_cutoff_for(@api_user, logging_code_for(user))
+      if cutoff
+        user_id_cutoffs[user.id] = cutoff
+      end
     end
-    user_ids = user_ids.uniq
     
     options = {:start => params['start'], :end => params['end']}
     Stats.sanitize_find_options!(options)
     logs = LogSession.where({:user_id => user_ids}).where.not({:started_at => nil})
+    if user_id_cutoffs.keys.length > 0
+      # limit results for cutoffs
+      query_string = ""
+      query_params = []
+      user_ids.each do |id, cutoff|
+        cutoff = user_id_cutoffs[id]
+        query_string += " OR " if query_string.length > 0
+        if cutoff == 0
+          query_string += "(user_id != ?)"
+          query_params << id
+        elsif cutoff
+          query_string += "(user_id = ? AND started_at > ?)"
+          query_params << id
+          query_params << cutoff.hours.ago
+        else
+          query_string += "(user_id = ?)"
+          query_params << id
+        end
+      end
+      query_params = [query_string] + query_params
+      logs = logs.where(query_params)
+    end
     params['type'] ||= 'all'
     if params['type'] == 'journal'
       return unless allowed?(user, 'delete')
@@ -72,7 +108,23 @@ class Api::LogsController < ApplicationController
       logs = logs.where(['ended_at < ?', options[:end_at]])
     end
     logs = logs.order('started_at DESC, id')
-    render json: JsonApi::Log.paginate(params, logs)
+    json = JsonApi::Log.paginate(params, logs)
+    if user_id_cutoffs.keys.length > 0
+      json[:meta]['logging_cutoffs'] = true 
+      json[:meta]['logging_cutoff_min'] = user_id_cutoffs.values.compact.min
+    end
+    render json: json
+  end
+
+  def code_check
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    if user.private_logging? && (@true_user || @api_user) != user
+      return unless allowed?(user, 'never_allow')
+    end
+    matches = user.settings['preferences']['logging_code'] && params['code'] == user.settings['preferences']['logging_code']
+    render json: {valid: !!matches}
   end
   
   def show
@@ -83,6 +135,10 @@ class Api::LogsController < ApplicationController
     if user.private_logging? && (@true_user || @api_user) != user
       return unless allowed?(user, 'never_allow')
     end
+    cutoff = user.logging_cutoff_for(@api_user, logging_code_for(user))
+    if cutoff && log.started_at < cutoff.hours.ago
+      return unless allowed?(user, 'never_allow')
+    end    
     
     render json: JsonApi::Log.as_json(log, :wrapper => true, :permissions => @api_user).to_json
   end
@@ -130,7 +186,15 @@ class Api::LogsController < ApplicationController
   def update
     log = LogSession.find_by_global_id(params['id'])
     user = log && log.user
+    return unless exists?(log, params['id'])
     return unless allowed?(user, 'supervise')
+    if user.private_logging? && (@true_user || @api_user) != user
+      return unless allowed?(user, 'never_allow')
+    end
+    cutoff = user.logging_cutoff_for(@api_user, logging_code_for(user))
+    if cutoff && log.started_at < cutoff.hours.ago
+      return unless allowed?(user, 'never_allow')
+    end    
     
     log.process(params['log'], {
       :author => @api_user,
@@ -157,12 +221,27 @@ class Api::LogsController < ApplicationController
       return unless exists?(log, params['log_id'])
       return unless exists?(log.user)
       return unless allowed?(log.user, 'supervise')
+      if log.user.private_logging? && (@true_user || @api_user) != log.user
+        return unless allowed?(log.user, 'never_allow')
+      end
+      cutoff = log.user.logging_cutoff_for(@api_user, logging_code_for(log.user))
+      if cutoff && log.started_at < cutoff.hours.ago
+        return unless allowed?(log.user, 'never_allow')
+      end    
+  
       progress = Progress.schedule(Exporter, :export_log, log.global_id)
       render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
     elsif params['user_id']
       user = User.find_by_global_id(params['user_id'])
       return unless exists?(user, params['user_id'])
       return unless allowed?(user, 'supervise')
+      if user.private_logging? && (@true_user || @api_user) != user
+        return unless allowed?(user, 'never_allow')
+      end
+      cutoff = user.logging_cutoff_for(@api_user, logging_code_for(user))
+      if cutoff
+        return unless allowed?(user, 'never_allow')
+      end    
       progress = Progress.schedule(Exporter, :export_logs, user.global_id, !!params['anonymized'])
       render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
     end

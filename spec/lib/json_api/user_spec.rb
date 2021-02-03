@@ -99,6 +99,27 @@ describe JsonApi::User do
       expect(json['vocalizations'][0]['sentence']).to eq('whatevs')
     end
 
+    it "should specify valet_login and login_code details only for the actual user" do
+      u = User.create
+      u.settings['preferences']['logging_code'] = 'asdf'
+      u.set_valet_password('baconator')
+      u.save
+      u.assert_valet_mode!(false)
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      json = JsonApi::User.build_json(u, permissions: u2)
+      expect(json['valet_login']).to eq(nil)
+      expect(json['valet_password_set']).to eq(nil)
+      expect(json['valet_disabled']).to eq(nil)
+      expect(json['has_logging_code']).to eq(true)
+
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['valet_login']).to eq(true)
+      expect(json['valet_password_set']).to eq(true)
+      expect(json['valet_disabled']).to eq(nil)
+      expect(json['has_logging_code']).to eq(true)
+    end
+
     it "should only include recent journal entries for the user" do
       u = User.create(:settings => {'vocalizations' => [
         {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},

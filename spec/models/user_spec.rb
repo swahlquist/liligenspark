@@ -976,6 +976,64 @@ describe User, :type => :model do
       u.assert_valet_mode!
       expect(u.valid_password?('gemini')).to eq(true)
     end
+
+    it "should update private logging settings only if done by the actual user" do
+      u = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u, nil, true)
+      expect(u.settings['valet_password']).to eq(nil)
+      u.process({'valet_login' => true, 'preferences' => {'private_logging' => true, 'logging_code' => 'qwer', 'logging_cutoff' => '72'}}, {'updater' => u})
+      expect(u.settings['valet_password']).to_not eq(nil)
+      expect(u.settings['preferences']['private_logging']).to eq(true)
+      expect(u.settings['preferences']['logging_code']).to eq('qwer')
+      expect(u.settings['preferences']['logging_cutoff']).to eq(72)
+
+      u.process({'valet_login' => false, 'preferences' => {'private_logging' => false, 'logging_code' => 'false', 'logging_cutoff' => 'none'}}, {'updater' => u2})
+      expect(u.settings['valet_password']).to_not eq(nil)
+      expect(u.settings['preferences']['private_logging']).to eq(true)
+      expect(u.settings['preferences']['logging_code']).to eq('qwer')
+      expect(u.settings['preferences']['logging_cutoff']).to eq(72)
+
+      u.process({'valet_login' => false, 'preferences' => {'private_logging' => false, 'logging_code' => 'false', 'logging_cutoff' => 'none'}}, {'updater' => u})
+      expect(u.settings['valet_password']).to eq(nil)
+      expect(u.settings['preferences']['private_logging']).to eq(false)
+      expect(u.settings['preferences']['logging_code']).to eq(nil)
+      expect(u.settings['preferences']['logging_cutoff']).to eq(nil)
+
+      u.process({'valet_login' => true, 'preferences' => {'private_logging' => true, 'logging_code' => 'qwer', 'logging_cutoff' => '72'}}, {'updater' => u2})
+      expect(u.settings['valet_password']).to eq(nil)
+      expect(u.settings['preferences']['private_logging']).to eq(false)
+      expect(u.settings['preferences']['logging_code']).to eq(nil)
+      expect(u.settings['preferences']['logging_cutoff']).to eq(nil)
+    end
+  end
+  
+  describe "logging_cutoff_for" do
+    it "should return correct values" do
+      u = User.create
+      u2 = User.create
+      expect(u.logging_cutoff_for(u, nil)).to eq(nil)
+      expect(u.logging_cutoff_for(u2, nil)).to eq(nil)
+
+      u.settings['preferences']['logging_cutoff'] = 12
+      expect(u.logging_cutoff_for(u, nil)).to eq(12)
+      expect(u.logging_cutoff_for(u2, nil)).to eq(12)
+
+      u.settings['preferences']['logging_code'] =  'waterfall'
+      expect(u.logging_cutoff_for(u, nil)).to eq(12)
+      expect(u.logging_cutoff_for(u2, nil)).to eq(12)
+      expect(u.logging_cutoff_for(u, 'waterfall')).to eq(nil)
+      expect(u.logging_cutoff_for(u2, 'waterfall')).to eq(nil)
+
+      u.settings['preferences']['logging_permissions'] = {}
+      u.settings['preferences']['logging_permissions'][u2.global_id] = {'expires' => Time.now.to_i - 20, 'cutoff' => 200}
+      expect(u.logging_cutoff_for(u, nil)).to eq(12)
+      expect(u.logging_cutoff_for(u2, nil)).to eq(12)
+
+      u.settings['preferences']['logging_permissions'][u2.global_id] = {'expires' => Time.now.to_i + 20, 'cutoff' => 200}
+      expect(u.logging_cutoff_for(u, nil)).to eq(12)
+      expect(u.logging_cutoff_for(u2, nil)).to eq(200)
+    end
   end
 
   describe "replace_board" do

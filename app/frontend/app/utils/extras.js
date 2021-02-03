@@ -223,6 +223,15 @@ import app_state from './app_state';
         if(window.ApplicationCache) {
           options.headers['X-Has-AppCache'] = "true";
         }
+        if(CoughDrop.session && CoughDrop.session.get('logging_codes')) {
+          var codes = CoughDrop.session.get('logging_codes') || [];
+          var too_old = (new Date()).getTime() - (68 * 60 * 1000);
+          codes.forEach(function(code) {
+            if(code.code && code.user_id && code.timestamp > too_old) {
+              options.headers['X-Logging-Code-For-' + code.user_id] = code.code;
+            }
+          });
+        }
       }
 
       var success = options.success;

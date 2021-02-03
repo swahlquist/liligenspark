@@ -64,6 +64,16 @@ export default Controller.extend({
     {name: i18n.t('confirm_all_external_buttons', "Confirm Before Opening Any Externally-Linked Buttons"), id: "confirm_all"},
     {name: i18n.t('prevent_external_buttons', "Do Not Allow Opening Externally-Linked Buttons"), id: "prevent"}
   ],
+  cutoffsList: [
+    {name: i18n.t('limit_logging_by_cutoff', "[ Limit Log Access By Time ]"), id: "none"},
+    {name: i18n.t('', "Don't Show Any Logs"), id: "0"},
+    {name: i18n.t('', "Show the Last 12 Hours of Logs"), id: "12"},
+    {name: i18n.t('', "Show the Last 24 Hours of Logs"), id: "24"},
+    {name: i18n.t('', "Show the Last 3 Days of Logs"), id: "72"},
+    {name: i18n.t('', "Show the Last 1 Week of Logs"), id: "168"},
+    {name: i18n.t('', "Show the Last 2 Weeks of Logs"), id: "336"},
+    {name: i18n.t('', "Show All Logs"), id: "none"},
+  ],
   highlighted_buttons_list: [
     {name: i18n.t('dont_highlight', "Don't Highlight Buttons on Selection"), id: "none"},
     {name: i18n.t('highlight_all', "Highlight All Buttons on Selection"), id: "all"},
@@ -72,8 +82,8 @@ export default Controller.extend({
   some_highlighted_buttons: computed('pending_preferences.highlighted_buttons', function() {
     return this.get('pending_preferences.highlighted_buttons') && this.get('pending_preferences.highlighted_buttons') != 'none';
   }),
-  cant_change_private_logging: computed('pending_preferences.private_logging', 'model.permissions.delete', function() {
-    return this.get('pending_preferences.private_logging') && !this.get('model.permissions.delete');
+  cant_change_private_logging: computed('limited_logging', 'model.permissions.delete', function() {
+    return !this.get('model.permissions.delete');
   }),
   buttonStyleList: [
     {name: i18n.t('default_font', "Default Font"), id: "default"},
@@ -493,6 +503,17 @@ export default Controller.extend({
     res.forEach(function(b, idx) { b.idx = idx; });
     return res;
   }),
+  set_limited_logging: observer('model.has_logging_code', 'pending_preferences.logging_cutoff', 'pending_preferences.private_logging', function() {
+    if(this.get('model.has_logging_code') || this.get('pending_preferences.logging_cutoff') || this.get('pending_preferences.private_logging')) {
+      this.set('limited_logging', true);
+    }
+  }),
+  uncomfirmed_pin: computed('model.has_logging_code', 'model.confirmed_logging_code', function() {
+    return this.get('model.has_logging_code') && !this.get('model.confirmed_logging_code');
+  }),
+  logging_pin: computed('model.has_logging_code', function() {
+    return this.get('model.has_logging_code');
+  }),
   disabled_sidebar_options: computed(
     'pending_preferences.sidebar_boards',
     'include_prior_sidebar_buttons',
@@ -526,7 +547,12 @@ export default Controller.extend({
   logging_changed: observer('pending_preferences.logging', function() {
     if(this.get('pending_preferences.logging')) {
       if(this.get('logging_set') === false) {
-        modal.open('enable-logging', {save: false, user: this.get('model')});
+        var _this = this;
+        modal.open('enable-logging', {save: false, user: this.get('model')}).then(function() {
+          _this.set('pending_preferences.allow_log_reports', _this.get('model.preferences.allow_log_reports'));
+          _this.set('pending_preferences.allow_log_publishing', _this.get('model.preferences.allow_log_publishing'));
+          _this.set('pending_preferences.geo_logging', _this.get('model.preferences.geo_logging'));
+        });
       }
     }
     this.set('logging_set', this.get('pending_preferences.logging'));
@@ -675,6 +701,9 @@ export default Controller.extend({
       if(this.get('phrase_categories_string')) {
         this.set('pending_preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));
       }
+      if(!this.get('logging_pin')) {
+        this.set('pending_preferences.logging_code', 'false');
+      }
       this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
 
       var _this = this;
@@ -740,6 +769,24 @@ export default Controller.extend({
       user.rollbackAttributes();
       this.set('skip_save_on_transition', true);
       this.transitionToRoute('user', user.get('user_name'));
+    },
+    check_logging_code: function() {
+      var _this = this;
+      _this.set('pin_status', {checking: true});
+      var code = _this.get('logging_code_check');
+      persistence.ajax('/api/v1/logs/code_check', {type: 'POST', data: {
+        user_id: _this.get('model.id'),
+        code: code
+      }}).then(function(res) {
+        if(res.valid) {
+          _this.set('pin_status', null);
+          _this.set('model.confirmed_logging_code', code);
+        } else {
+          _this.set('pin_status', {wrong: true})
+        }
+      }, function(err) {
+        _this.set('pin_status', {error: true});
+      })
     },
     sidebar_button_settings: function(button) {
       modal.open('sidebar-button-settings', {button: button});

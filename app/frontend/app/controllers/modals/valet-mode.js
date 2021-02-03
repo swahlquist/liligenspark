@@ -47,9 +47,9 @@ export default modal.ModalController.extend({
       try {
         var data_uri = elem.toDataURL('image/png');
         var file = contentGrabbers.data_uri_to_blob(data_uri);
-        if(navigator.clipboard && navigator.clipboard.write) {
+        if(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
           navigator.clipboard.write([
-            new ClipboardItem({"image/png": file})
+            new window.ClipboardItem({"image/png": file})
           ]).then(function() {
             modal.close();
             modal.success(i18n.t('code_copied', "QR Code Image copied to the clipboard!"));

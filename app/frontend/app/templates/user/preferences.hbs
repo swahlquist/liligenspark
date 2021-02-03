@@ -345,31 +345,136 @@
             {{t "Log and analyze all Speak Mode actions" key='log_all_actions'}}
           </label>
         </div>
+      </div>
+    </div>
         
-        {{#if pending_preferences.logging}}
+    {{#if pending_preferences.logging}}
+      <div class="form-group">
+        <div class='col-sm-5 col-sm-offset-3'>
           <div class="checkbox big_checkbox">
             <label>
-              {{input type="checkbox" disabled=cant_change_private_logging checked=pending_preferences.private_logging id="private_logging"}}
-              {{t "Completely Restrict Data Log Access outside this login (includes supervisors, support, integrations & community summaries). NOTE: User account reports will still be available to supervisors with access permissions." key='restrict_log_access'}}
+              {{input type="checkbox" disabled=cant_change_private_logging checked=limited_logging id="limited_logging"}}
+              {{t "Restrict access to my raw usage logs. NOTE: User account reports will still be available to supervisors with access permissions." key='restrict_log_access'}}
               {{#if cant_change_private_logging}}
-                <div class='text-muted'>{{t "Only the user can disable this setting." key='user_only'}}</div>
+                <div class='text-muted'>{{t "Only the user can adjust this setting." key='user_only'}}</div>
               {{/if}}
             </label>
           </div>
+        </div>
+      </div>
+      {{#if limited_logging}}
+        {{#if uncomfirmed_pin}}
+          <div class="form-group">
+            <label for="logging_PIN" class="col-sm-3 control-label">{{t "Logging PIN" key='logging_pin'}}</label>
+            <div class='col-sm-5'>
+              <p class='form-control-static'>
+               {{t "Before you can change log access settings, you must confirm permission using the current logging code. If you have lost or forgotten this code, please contact technical support." key='confirm_logging_code'}}
+              </p>
+            </div>
+            {{#if cant_change_private_logging }}
+              <div class='col-sm-5 col-sm-offset-3'>
+                <p class='form-control-static text-muted'>
+                  {{t "Only the user can adjust these settings." key='user_only'}}
+                </p>
+              </div>
+            {{else}}
+              <div class='col-sm-2 col-sm-offset-3'>
+                {{input type='text' value=logging_code_check class='form-control' placeholder="Log PIN"}}
+              </div>
+              <div class='col-sm-2'>
+                <button type='button' {{action 'check_logging_code'}} disabled={{pin_status.checking}} class='btn btn-default'>
+                  {{#if pin_status.checking}}
+                    {{t "Checking PIN..." key='checking_pin'}}
+                  {{else if pin_status.error}}
+                    {{t "Error Checking PIN" key='error_checking_pin'}}
+                  {{else if pin_status.wrong}}
+                    {{t "Invalid PIN" key='invalid_pin'}}
+                  {{else}}
+                    {{t "Check PIN" key='check_logging_code'}}
+                  {{/if}}
+                </button>
+              </div>
+            {{/if}}
+          </div>
+        {{else}}
+          <div class="form-group">
+            <label for="logging_cutoff" class="col-sm-3 control-label">{{t "Logging Cutoff" key='logging_cutoff'}}</label>
+            <div class='col-sm-5'>
+              <div>
+                {{bound-select disabled=cant_change_private_logging select_class="form-control" select_id="external_links" content=cutoffsList selection=pending_preferences.logging_cutoff action=(action (mut pending_preferences.logging_cutoff)) }}
+              </div>
+              {{#if cant_change_private_logging}}
+                <div class='text-muted'>{{t "Only the user can adjust this setting." key='user_only'}}</div>
+              {{/if}}
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="logging_pin" class="col-sm-3 control-label">{{t "Logging PIN" key='logging_pin"'}}</label>
+            <div class='col-sm-5'>
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" disabled=cant_change_private_logging checked=logging_pin id="logging_code"}}
+                  {{t "Only allow changes to my logging preferences, and temporary access to all my logs, with a PIN" key='restrict_log_access_by_pin'}}
+                  {{#if cant_change_private_logging}}
+                    <div class='text-muted'>{{t "Only the user can adjust this setting." key='user_only'}}</div>
+                  {{/if}}
+                </label>
+              </div>
+              {{#if logging_pin}}
+                {{#if cant_change_private_logging}}
+                {{else}}
+                  <div>
+                    {{input type='text' value=pending_preferences.logging_code class='form-control' placeholder="Set/Change a Log PIN"}}
+                  </div>
+                  {{#if pending_preferences.logging_code}}
+                    <div class='text-danger'>{{t "NOTE: Remember this code! Once it has been set it can only be changed by remembering the current code, or by contacting technical support." key='logging_code_had_to_recover'}}</div>
+                  {{/if}}
+                {{/if}}
+              {{/if}}
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" disabled=cant_change_private_logging checked=pending_preferences.private_logging id="private_logging"}}
+                  {{t "Completely Restrict Data Log Access outside this login (includes supervisors, support, integrations & community summaries)." key='restrict_log_access'}}
+                  {{#if cant_change_private_logging}}
+                    <div class='text-muted'>{{t "Only the user can adjust this setting." key='user_only'}}</div>
+                  {{/if}}
+                </label>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
+      <div class="form-group">
+        <label class="col-sm-3 control-label">
+          {{t "Logging Opt-In" key='logging_opt_in'}}
+        </label>
+        <div class='col-sm-5'>
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=pending_preferences.allow_log_reports id="allow_log_reports"}}
               {{t "Allow anonymized log data to be used for AAC community and research purposes (unused accounts will be kept longer when this is enabled)" key='allow_log_reports'}}
             </label>
           </div>
+          {{#if pending_preferences.allow_log_reports}}
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type='checkbox' checked=pending_preferences.allow_log_publishing}}
+                {{t "Allow anonymized logs to be included in public data sets for automated research and analysis" key='allow_publishing'}}
+              </label>
+            </div>
+          {{/if}}
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=pending_preferences.geo_logging id="geo_logging"}}
               {{t "Include geolocation in Speak Mode logs" key='include_geo_in_logs'}}
             </label>
           </div>
-        {{else}}
-          {{#if model.permissions.delete}}
+        </div>
+      </div>
+    {{else}}
+      {{#if model.permissions.delete}}
+        <div class="form-group">
+          <div class='col-sm-5 col-sm-offset-3'>
             <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=pending_preferences.never_delete id="never_delete"}}
@@ -379,11 +484,15 @@
             <div style="margin-top: 10px;">
               <button type="button" class='btn btn-default' {{action "delete_logs"}}>{{t "Delete all stored logs" key='delete_logs'}}</button>
             </div>
-          {{/if}}
-        {{/if}}
-        <div style="margin-top: 10px;">
-          {{t "NOTE: When logging is enabled, anonymous usage data will be sent to Google services when generating report charts. When logging is disabled, goal tracking and badge awards will not update since no data will be logged." key='logging_uses_google'}}
+          </div>
         </div>
+      {{/if}}
+    {{/if}}
+    <div class="form-group">
+      <div class="col-sm-5 col-sm-offset-3">
+        <p class='form-control-static'>
+          {{t "NOTE: When logging is enabled, anonymous usage data will be sent to Google services when generating report charts. When logging is disabled, goal tracking and badge awards will not update since no data will be logged." key='logging_uses_google'}}
+        </p>
       </div>
     </div>
     <div class="form-group">

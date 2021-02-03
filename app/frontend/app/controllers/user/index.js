@@ -301,6 +301,7 @@ export default Controller.extend({
       if(window.ga) {
         window.ga('send', 'event', 'Setup', 'start', 'Setup started');
       }
+      app_state.set('auto_setup', false);
       this.transitionToRoute('setup');
     },
     quick_assessment: function() {

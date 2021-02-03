@@ -588,8 +588,9 @@ class User < ActiveRecord::Base
       'highlight_popup_text', 'phrase_categories', 'high_contrast', 'swipe_pages',
       'hide_pin_hint', 'battery_sounds', 'auto_inflections', 'private_logging',
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept',
-      'locale']
-  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 'allow_log_publishing', 'cookies', 'never_delete']
+      'locale', 'logging_cutoff', 'logging_permissions', 'logging_code']
+  CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
+      'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
 
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 
       'home_board_set', 'app_added', 'skipped_subscribe_modal', 'speak_mode_intro_done',
@@ -650,7 +651,12 @@ class User < ActiveRecord::Base
     end
     self.settings['preferences'] ||= {}
     if !non_user_params['updater'] || non_user_params['updater'].global_id != self.global_id
-      params['preferences'].delete('private_logging') if params['preferences']
+      if params['preferences']
+        params['preferences'].delete('private_logging') 
+        params['preferences'].delete('logging_cutoff') 
+        params['preferences'].delete('logging_preferences') 
+        params['preferences'].delete('logging_code') 
+      end
       params.delete('valet_login')
     end
     if params['valet_login']
@@ -685,8 +691,19 @@ class User < ActiveRecord::Base
       end
     end
     inflections_were_set = self.settings['preferences']['activation_location'] == 'swipe' || self.settings['preferences']['inflections_overlay']
+    params['preferences'].delete('logging_code') if params['preferences'] && params['preferences'] == ''
     PREFERENCE_PARAMS.each do |attr|
       self.settings['preferences'][attr] = params['preferences'][attr] if params['preferences'] && params['preferences'][attr] != nil
+    end
+    if params['preferences'] && (params['preferences']['logging_code'] == false || params['preferences']['logging_code'] == 'false')
+      self.settings['preferences'].delete('logging_code')
+    end
+    if self.settings['preferences']['logging_cutoff'].is_a?(String)
+      if self.settings['preferences']['logging_cutoff'] == 'none' || self.settings['preferences']['logging_cutoff'] == 'false'
+        self.settings['preferences'].delete('logging_cutoff')
+      else
+        self.settings['preferences']['logging_cutoff'] = self.settings['preferences']['logging_cutoff'].to_i
+      end
     end
     if self.settings['preferences']['inflections_overlay']
       self.settings['preferences'].delete('long_press_edit')
@@ -866,6 +883,30 @@ class User < ActiveRecord::Base
 
   def private_logging?
     !!(self.settings && self.settings['preferences'] && self.settings['preferences']['private_logging'])
+  end
+
+  def logging_cutoff_for(user, code)
+    if self.settings['preferences']['logging_cutoff']
+      if self.settings['preferences']['logging_code'] && code == self.settings['preferences']['logging_code']
+        return  nil
+      elsif self.settings['preferences']['logging_permissions'] && self.settings['preferences']['logging_permissions'][user.global_id]
+        # options for manually granting temporary access, or longer-term access to specific supervisors
+        exp = self.settings['preferences']['logging_permissions'][user.global_id]['expires']
+        if exp
+          if exp > Time.now.to_i
+            return self.settings['preferences']['logging_permissions'][user.global_id]['cutoff']
+          else
+            self.settings['preferences']['logging_cutoff']
+          end
+        else
+          return self.settings['preferences']['logging_permissions'][user.global_id]['cutoff']
+        end
+      else
+        self.settings['preferences']['logging_cutoff']
+      end
+    else
+      nil
+    end
   end
 
   def update_home_board_inflections

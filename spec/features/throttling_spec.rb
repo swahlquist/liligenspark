@@ -145,4 +145,21 @@ describe "throttling URLs" do
       })
     end
   end
+
+  describe "POST /api/v1/logs/code_check" do
+    it "should throttle aggressively" do
+      expect(Time).to receive(:now).and_return(Time.at(1455925189)).at_least(10).times
+      @user = User.create
+      @device = Device.create(:user => @user)
+      aggressive_throttle_check(->{
+        header 'Authorization', "Bearer #{@device.tokens[0]}"
+        header 'Check-Token', 'true'
+        post "/api/v1/logs/code_check", {:user_id => @user.global_id, :code => 'asdf'}, {'REMOTE_ADDR' => '1.2.3.4'}
+      }, ->{
+        expect(response.status).to eq(200)
+        json = JSON.parse(response.body)
+        expect(json['valid']).not_to eq(nil)
+      })
+    end
+  end
 end

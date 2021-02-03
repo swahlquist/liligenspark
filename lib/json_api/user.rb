@@ -43,6 +43,8 @@ module JsonApi::User
       ::User::PREFERENCE_PARAMS.each do |attr|
         json['preferences'][attr] = user.settings['preferences'][attr]
       end
+      json['has_logging_code'] = !json['preferences']['logging_code'].blank?
+      json['preferences'].delete('logging_code')
       json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
       json['preferences']['home_board'] = user.settings['preferences']['home_board']
       json['preferences']['progress'] = user.settings['preferences']['progress']

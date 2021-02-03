@@ -79,7 +79,50 @@ describe Api::LogsController, :type => :controller do
       expect(logs.map{|l| l['author']['id'] }.sort).to eq([users[0].global_id, users[0].global_id, users[0].global_id, users[1].global_id, users[1].global_id, users[1].global_id])
       expect(json['meta']['next_url']).to eq(nil)
     end
-    
+
+    it "should not return supervisee sessions that are before the user's login_cutoff" do
+      users = [User.create, User.create, User.create]
+      token_user
+      users.each_with_index do |u, idx|
+        u.settings['preferences']['logging_cutoff'] = 37
+        u.settings['preferences']['logging_code'] = u.global_id
+        u.save
+        User.link_supervisor_to_user(@user, u)
+        ts = (24 + (12 * idx)).hours.ago.to_i
+        d = Device.create(:user => u)
+        3.times do |i|
+          LogSession.process_new({
+            :events => [
+              {'timestamp' => ts, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+              {'timestamp' => ts + 100, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+            ]
+          }, {:user => u, :device => d, :author => u})
+        end
+      end
+      Worker.process_queues
+      expect(@user.reload.supervisees.length).to eq(3)
+      get :index, params: {:user_id => @user.global_id, :supervisees => true}
+      json = JSON.parse(response.body)
+      logs = json['log'].sort_by{|l| l['id'] }
+      expect(logs.length).to eq(6)
+      expect(logs.map{|l| l['author']['id'] }.sort).to eq([users[0].global_id, users[0].global_id, users[0].global_id, users[1].global_id, users[1].global_id, users[1].global_id])
+      expect(json['meta']['next_url']).to eq(nil)
+      expect(json['meta']['logging_cutoffs']).to eq(true)
+      expect(json['meta']['logging_cutoff_min']).to eq(37)
+
+      request.headers["X-Logging-Code-For-#{users[0].global_id}"] = users[0].global_id
+      request.headers["X-Logging-Code-For-#{users[1].global_id}"] = users[1].global_id
+      request.headers["X-Logging-Code-For-#{users[2].global_id}"] = users[2].global_id
+      get :index, params: {:user_id => @user.global_id, :supervisees => true}
+      json = JSON.parse(response.body)
+      logs = json['log'].sort_by{|l| l['id'] }
+      expect(logs.length).to eq(9)
+      expect(logs.map{|l| l['author']['id'] }.sort).to eq([users[0].global_id, users[0].global_id, users[0].global_id, users[1].global_id, users[1].global_id, users[1].global_id, users[2].global_id, users[2].global_id, users[2].global_id])
+      expect(json['meta']['next_url']).to eq(nil)
+      expect(json['meta']['logging_cutoffs']).to eq(nil)
+      expect(json['meta']['logging_cutoff_min']).to eq(nil)
+    end
+
     it "should filter by query parameters" do
       token_user
       geo = ClusterLocation.create(:user => @user, :cluster_type => 'geo')
@@ -295,6 +338,102 @@ describe Api::LogsController, :type => :controller do
       get :index, params: {:user_id => u.global_id, :type => 'journal'}
       assert_unauthorized
     end
+
+    it  "should not allow supervisors to see logs if private_logging is enabled" do
+      token_user
+      u = User.create
+      u.settings['preferences']['private_logging'] = true
+      u.save
+      User.link_supervisor_to_user(@user, u, nil, true)
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => u, :device => @device, :author => @user})
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => u, :device => @device, :author => @user})
+      get :index, params: {:user_id => u.global_id}
+      assert_unauthorized
+    end
+
+    it "should limit logs based on logging_cutoff parameter" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 12
+      @user.save
+      expect(@user.logging_cutoff_for(@user, nil)).to eq(12)
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['log'].length).to eq(1)
+      expect(json['meta']['logging_cutoffs']).to eq(true)
+      expect(json['meta']['logging_cutoff_min']).to eq(12)
+
+      @user.settings['preferences']['logging_cutoff'] = 24
+      @user.save
+      expect(@user.logging_cutoff_for(@user, nil)).to eq(24)
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['log'].length).to eq(2)
+      expect(json['meta']['logging_cutoffs']).to eq(true)
+      expect(json['meta']['logging_cutoff_min']).to eq(24)
+
+      @user.settings['preferences']['logging_cutoff'] = 0
+      @user.save
+      expect(@user.logging_cutoff_for(@user, nil)).to eq(0)
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['log'].length).to eq(0)
+      expect(json['meta']['logging_cutoffs']).to eq(true)
+      expect(json['meta']['logging_cutoff_min']).to eq(0)
+    end
+
+    it "should allow overriding logging_cutoff with a valid logging code" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 12
+      @user.settings['preferences']['logging_code'] = 'bacon'
+      @user.save
+      expect(@user.logging_cutoff_for(@user, nil)).to eq(12)
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 11.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      LogSession.process_new({
+        :events => [
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['log'].length).to eq(1)
+      expect(json['meta']['logging_cutoffs']).to eq(true)
+      expect(json['meta']['logging_cutoff_min']).to eq(12)
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'bacon'
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['log'].length).to eq(2)
+      expect(json['meta']['logging_cutoffs']).to eq(nil)
+      expect(json['meta']['logging_cutoff_min']).to eq(nil)
+    end
   end
 
   
@@ -399,6 +538,33 @@ describe Api::LogsController, :type => :controller do
       assert_unauthorized
     end
     
+    it "should limit log access based on logging_cutoff parameter" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 12
+      @user.save
+      d = Device.create(:user => @user)
+      log = LogSession.process_new({
+        :events => [
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 13.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      put 'update', params: {:id => log.global_id, 'log' => {}}
+      assert_unauthorized
+
+      @user.settings['preferences']['logging_code'] = 'bacon'
+      @user.save
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'bacon'
+      put 'update', params: {:id => log.global_id, 'log' => {}}
+      json = assert_success_json
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'wrong'
+      @user.settings['preferences']['logging_cutoff'] = 14
+      @user.save
+      put 'update', params: {:id => log.global_id, 'log' => {}}
+      json = assert_success_json
+    end
+
     it "should call process with :update_only flag" do
       token_user
       d = Device.create(:user => @user)
@@ -613,6 +779,34 @@ describe Api::LogsController, :type => :controller do
       assert_unauthorized
     end
 
+    it "should limit log access based on logging_cutoff parameter" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 6
+      @user.save
+      log = LogSession.process_new({
+        :events => [
+          {'timestamp' => 7.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 7.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :show, params: {:id => log.global_id}
+      assert_unauthorized
+
+      @user.settings['preferences']['logging_code'] = 'bacon'
+      @user.save
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'bacon'
+      get :show, params: {:id => log.global_id}
+      json = assert_success_json
+      expect(json['log']['id']).to eq(log.global_id)
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'wrong'
+      @user.settings['preferences']['logging_cutoff'] = 8
+      @user.save
+      get :show, params: {:id => log.global_id}
+      json = assert_success_json
+      expect(json['log']['id']).to eq(log.global_id)
+    end
+
     it 'should return a log result' do
       token_user
       log = LogSession.process_new({
@@ -653,6 +847,36 @@ describe Api::LogsController, :type => :controller do
       assert_unauthorized
     end
 
+    it "should limit log access based on logging_cutoff parameter" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 6
+      @user.save
+      log = LogSession.process_new({
+        :events => [
+          {'timestamp' => 7.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 7.hours.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :obl, params: {:log_id => log.global_id}
+      assert_unauthorized
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'bacon'
+      @user.settings['preferences']['logging_code'] = 'bacon'
+      @user.save
+      get :obl, params: {:log_id => log.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.last
+      expect(p.settings['method']).to eq('export_log')
+      expect(p.settings['arguments']).to eq([log.global_id])
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'wrong'
+      @user.settings['preferences']['logging_cutoff'] = 8
+      @user.save
+      get :obl, params: {:log_id => log.global_id}
+      json = assert_success_json
+    end
+
     it 'should return a progress record when generating for the log record' do
       token_user
       log = LogSession.process_new({
@@ -682,6 +906,28 @@ describe Api::LogsController, :type => :controller do
       assert_unauthorized
     end
 
+    it "should not allow by user_id if there is a logging_cutoff parameter" do
+      token_user
+      @user.settings['preferences']['logging_cutoff'] = 8
+      @user.save
+      get :obl, params: {user_id: @user.global_id}
+      assert_unauthorized
+
+      @user.settings['preferences']['logging_code'] = 'bacon'
+      @user.save
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'bacon'
+      get :obl, params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.last
+      expect(p.settings['method']).to eq('export_logs')
+      expect(p.settings['arguments']).to eq([@user.global_id, false])
+
+      request.headers["X-Logging-Code-For-#{@user.global_id}"] = 'wrong'
+      get :obl, params: {user_id: @user.global_id}
+      assert_unauthorized
+    end
+
     it 'should return a progress record when generating for the user' do
       token_user
       get :obl, params: {user_id: @user.global_id}
@@ -692,21 +938,50 @@ describe Api::LogsController, :type => :controller do
       expect(p.settings['arguments']).to eq([@user.global_id, false])
     end
   end
-end
 
-# def obl
-#   if params['log_id']
-#     log = LogSession.find_by_global_id(params['log_id'])
-#     return unless exists?(log, params['log_id'])
-#     return unless exists?(log.user)
-#     return unless allowed?(log.user, 'supervise')
-#     progress = Progress.schedule(Exporter, :export_log, log.global_id)
-#     render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
-#   elsif params['user_id']
-#     user = User.find_by_global_id(params['user_id'])
-#     return unless exists?(user, params['user_id'])
-#     return unless allowed?(user, 'supervise')
-#     progress = Progress.schedule(Exporter, :export_logs, user.global_id)
-#     render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
-#   end
-# end
+  describe "code_check" do
+    it "should require an API token" do
+      post :code_check, params: {user_id: 'asdf', code: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      post :code_check, params: {user_id: 'asdf', code: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require authorization" do
+      token_user
+      u = User.create
+      post :code_check, params: {user_id: u.global_id, code: 'asdf'}
+      assert_unauthorized
+    end
+
+    it "should not be allowed for supervisors if private_logging is enabled" do
+      token_user
+      u = User.create
+      u.settings['preferences']['private_logging'] = true
+      u.settings['preferences']['logging_code'] = 'tulip'
+      u.save
+      User.link_supervisor_to_user(@user, u, nil, true)
+      post :code_check, params: {user_id: u.global_id, code: 'asdf'}
+      assert_unauthorized
+    end
+
+    it "should return whether the code is valid" do
+      token_user
+      u = User.create
+      u.settings['preferences']['logging_code'] = 'tulip'
+      u.save
+      User.link_supervisor_to_user(@user, u, nil, true)
+      post :code_check, params: {user_id: u.global_id, code: 'tulip'}
+      json = assert_success_json
+      expect(json['valid']).to eq(true)
+
+      post :code_check, params: {user_id: u.global_id, code: 'tulips'}
+      json = assert_success_json
+      expect(json['valid']).to eq(false)
+    end
+  end
+end

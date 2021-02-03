@@ -37,6 +37,28 @@
   {{else if logs.error}}
     <p>{{t "Failed to load" key='failed_to_load'}}</p>
   {{else if logs}}
+    {{#if meta.logging_cutoffs}}
+      <div class='alert alert-warning'>
+        {{t "NOTE: The results you are seeing are limited based on the user's preferences. You are currently only able to see results from the last " key='limited_logging_results'}}
+        {{seconds_ago logging_cutoff_seconds}}.
+        {{#if model.permissions.delete}}
+          {{#if model.has_logging_code}}
+            {{t "If you know the logging access code, you may enter that to temporarily unlock full access to the user's logs." key='logging_code_for_full_access'}}
+
+            <form class="form-horizontal" {{action "update_logging_code" on="submit"}}>
+              <div class="form-group">
+                <div class="col-sm-2">
+                  {{input type='text' value=logging_code class='form-control'}}
+                </div>
+                <div class="col-sm-2">
+                  <button class='btn btn-default'>{{t "Submit Code" key='submit_code'}}</button>
+                </div>
+              </div>
+            </form>
+          {{/if}}
+        {{/if}}
+      </div>
+    {{/if}}
     <div class="table-responsive">
       <table class="table table-hover table-bordered">
         <thead>
