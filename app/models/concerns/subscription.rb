@@ -733,7 +733,7 @@ module Subscription
         end
       end
       return :premium_supporter if self.org_sponsored?
-      return :org_supporter if self.org_supporter?
+      return :org_supporter if self.org_supporter? || Organization.manager?(self)
       return :modeling_only
     end
   end

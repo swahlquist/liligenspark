@@ -58,6 +58,61 @@ describe User, :type => :model do
       expect(u.allows?(u, 'delete', ['full', 'modeling'])).to eq(false)
       expect(u.allows?(u, 'view_existence', ['full', 'modeling'])).to eq(true)
     end
+
+    it "should match correct permissions for different supervisor types" do
+      u = User.create
+      u2 = User.create
+      u3 = User.create
+      u4 = User.create
+      User.link_supervisor_to_user(u2, u, nil, 'read_only')
+      User.link_supervisor_to_user(u3, u, nil, 'edit')
+      User.link_supervisor_to_user(u4, u, nil, 'modeling_only')
+      
+      expect(u2.reload.supervisor_for?(u.reload)).to eq(true)
+      expect(u2.modeling_only_for?(u)).to eq(false)
+      perms = u.reload.permissions_for(u2.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['supervise']).to eq(true)
+      expect(perms['model']).to eq(true)
+
+      expect(u3.reload.supervisor_for?(u.reload)).to eq(true)
+      expect(u3.modeling_only_for?(u)).to eq(false)
+      perms = u.reload.permissions_for(u3.reload)
+      expect(perms['edit']).to eq(true)
+      expect(perms['supervise']).to eq(true)
+      expect(perms['model']).to eq(true)
+
+      expect(u4.reload.supervisor_for?(u.reload)).to eq(true)
+      expect(u4.modeling_only_for?(u)).to eq(true)
+      perms = u.reload.permissions_for(u4.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['supervise']).to eq(nil)
+      expect(perms['model']).to eq(true)
+    end
+
+    it "should allow managers (but not assistants) to supervise communicators in the organization" do
+      u = User.create
+      u2 = User.create
+      u3 = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_manager(u2.user_name, true)
+      o.add_manager(u3.user_name, false)
+      o.add_user(u.user_name, false, true)
+      u.reload
+      u2.reload
+      expect(Organization.manager_for?(u2, u, true)).to eq(true)
+      expect(Organization.manager_for?(u3, u, true)).to eq(false)
+
+      perms = u.reload.permissions_for(u2.reload)
+      expect(perms['edit']).to eq(true)
+      expect(perms['supervise']).to eq(true)
+      expect(perms['model']).to eq(true)
+
+      perms = u.reload.permissions_for(u3.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['supervise']).to eq(nil)
+      expect(perms['model']).to eq(nil)
+    end
     
     it "should only allow managers view_deleted_boards" do
       u = User.create
