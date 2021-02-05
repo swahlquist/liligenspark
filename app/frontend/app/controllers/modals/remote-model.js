@@ -25,7 +25,7 @@ export default modal.ModalController.extend({
     return this.get('model.status.connecting');
   }),
   paired_with_current_user: computed('app_state.speak_mode', 'model.communicator', 'model.user.id', 'app_state.pairing.user.id', function() {
-    if(!this.get('model.communicator') && app_state.get('spak_mode') && app_state.get('pairing')) {
+    if(!this.get('model.communicator') && app_state.get('speak_mode') && app_state.get('pairing')) {
       return this.get('model.user.id') == app_state.get('pairing.user.id');
     }
     return false;
