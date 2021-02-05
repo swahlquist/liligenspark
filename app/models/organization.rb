@@ -834,7 +834,7 @@ class Organization < ActiveRecord::Base
         }, false)
       end
     end
-    if params[:licenses_expire]
+    if !params[:licenses_expire].blank?
       time = Time.parse(params[:licenses_expire])
       self.settings['licenses_expire'] = time.iso8601
     end
