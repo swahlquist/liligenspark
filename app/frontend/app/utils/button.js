@@ -1175,6 +1175,24 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':paste',
+      description: i18n.t('past_sentence', "Paste the text contents of the clipbooard to the sentence box"),
+      trigger: function() {
+        if(app_state.get('speak_mode')) {
+          try {
+            navigator.clipboard.readText().then(function(text) {
+              utterance.add_button({label: text});
+            }, function(err) {
+              modal.error(i18n.t('paste_failed', "Failed to retrieve clipboard contents"));
+            });
+          } catch(e) {
+            modal.error(i18n.t('paste_failed', "Failed to retrieve clipboard contents"));
+          }
+          return {auto_return_possible: true};
+        }    
+      }
+    },
+    {
       action: ':alerts',
       description: i18n.t('alerts_window', "Open the Alerts window"),
       trigger: function() {

@@ -145,6 +145,7 @@
         </dd>
     </dl>
     {{#if model.permissions.edit}}
+      <div style='margin-bottom: 5px;'><button class='btn btn-default' {{action 'privacy'}}>{{t "Change Privacy" key='change_privacy'}}</button></div>
       <button class='btn btn-default' {{action 'translate'}}>{{t "Translate Board" key='translate_this_board'}}</button>
       <button class='btn btn-default' {{action 'swap_images'}}>{{t "Swap Images" key='swap_images_for_this_board'}}</button>
       <button class='btn btn-default' {{action 'batch_recording'}}>{{t "Record Messages" key='record_messages'}}</button>

@@ -56,6 +56,9 @@ export default modal.ModalController.extend({
     swap_images: function() {
       modal.open('swap-images', {board: this.get('model'), button_set: this.get('model.button_set')});
     },
+    privacy: function() {
+      modal.open('modals/board-privacy', {board: this.get('model'), button_set: this.get('model.button_set')});
+    },
     batch_recording: function() {
       var _this = this;
       modal.open('batch-recording', {user: app_state.get('currentUser'), board: this.get('model')}).then(function() {

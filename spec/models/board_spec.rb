@@ -3166,6 +3166,140 @@ describe Board, :type => :model do
       expect(b5.reload.buttons.map{|b| b['label'] }).to eq(['hat'])
     end
   end
+
+  describe 'update_privacy' do
+    it 'should return on an empty library' do
+      b = Board.new
+      expect(b.update_privacy(nil, nil, nil)).to eq({done: true, updated: false, reason: 'no privacy level specified'})
+      expect(b.update_privacy('', nil, nil)).to eq({done: true, updated: false, reason: 'no privacy level specified'})
+    end
+    
+    it 'should return on a mismatched board' do
+      b = Board.new
+      expect(b.update_privacy('public', nil, [], 'asdf')).to eq({done: true, updated: false, reason: 'mismatched user'})
+    end
+    
+    it 'should update privacy level' do
+      u = User.create
+      b = Board.create(:user => u)
+      b.save
+      res = b.update_privacy('public', u, [])
+      expect(res).to eq({done: true, privacy_level: 'public', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      b.reload
+      expect(b.public).to eq(true)
+      expect(b.settings['unlisted']).to eq(false)
+    end
+    
+    it 'should skip boards if not in list' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u, :key => "#{u.user_name}/keyboard")
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      list = [b.global_id, b3.global_id]
+      res = b.update_privacy('unlisted', u, list)
+      b.reload
+      expect(b.public).to eq(true)
+      expect(b.settings['unlisted']).to eq(true)
+      b2.reload
+      expect(b2.public).to eq(false)
+      expect(b2.settings['unlisted']).to eq(nil)
+      b3.reload
+      expect(b3.public).to eq(false)
+      expect(b3.settings['unlisted']).to eq(nil)
+    end
+    
+    it 'should recursively find boards' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      res = b.update_privacy('public', u, [b.global_id, b2.global_id, b3.global_id])
+      expect(res).to eq({done: true, privacy_level: 'public', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id, b2.global_id, b3.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(b.reload.settings['unlisted']).to eq(false)
+      expect(b.reload.public).to eq(true)
+      expect(b2.reload.settings['unlisted']).to eq(false)
+      expect(b2.reload.public).to eq(true)
+      expect(b3.reload.settings['unlisted']).to eq(false)
+      expect(b3.reload.public).to eq(true)
+    end
+    
+    it 'should stop when the user no longer matches' do
+      u = User.create
+      u2 = User.create
+      b = Board.create(:user => u, :public => true)
+      b2 = Board.create(:user => u2, :public => true)
+      b3 = Board.create(:user => u, :public => true)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u2})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      res = b.update_privacy('private', u, [b.global_id, b2.global_id, b3.global_id])
+      expect(res).to eq({done: true, privacy_level: 'private', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(b.reload.public).to eq(false)
+      expect(b2.reload.public).to eq(true)
+      expect(b3.reload.public).to eq(true)
+    end
+    
+    it 'should only find boards it can access' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      res = b.update_privacy('public', u, [b.global_id, b3.global_id])
+      expect(res).to eq({done: true, privacy_level: 'public', board_ids: [b.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(b.reload.public).to eq(true)
+      expect(b2.reload.public).to eq(false)
+      expect(b3.reload.public).to eq(false)
+    end
+  end
   
   describe 'swap_images' do
     it 'should return on an empty library' do

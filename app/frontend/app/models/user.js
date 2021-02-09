@@ -149,7 +149,7 @@ CoughDrop.User = DS.Model.extend({
       if(CoughDrop.User.ws_accesses[this.get('id')]) {
         last_access = CoughDrop.User.ws_accesses[this.get('id')];
         runLater(function() {
-          _this.set('last_ws_access', CoughDrop.User.ws_accesses[this.get('id')]);
+          _this.set('last_ws_access', CoughDrop.User.ws_accesses[_this.get('id')]);
         }, 50)
       }
     } else {

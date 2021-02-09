@@ -1430,6 +1430,33 @@ class Board < ActiveRecord::Base
     end
     {done: true, translations: translations, d: dest_lang, s: source_lang, board_ids: board_ids, updated: visited_board_ids}
   end
+
+  def update_privacy(privacy_level, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
+    author = User.find_by_global_id(author) if author && author.is_a?(String)
+    user_local_id ||= self.user_id
+    return {done: true, updated: false, reason: 'mismatched user'} if user_local_id != self.user_id
+    return {done: true, updated: false, reason: 'no privacy level specified'} if !privacy_level || privacy_level.blank?
+    return {done: true, updated: false, reason: 'author required'} unless author
+    if (board_ids.blank? || board_ids.include?(self.global_id))
+      updated_board_ids << self.global_id
+      whodunnit = PaperTrail.request.whodunnit
+      PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
+      self.public = (privacy_level == 'public'|| privacy_level == 'unlisted')
+      self.settings['unlisted'] = (privacy_level == 'unlisted')
+      self.save 
+      PaperTrail.request.whodunnit = whodunnit
+    else
+      return {done: true, updated: false, reason: 'board not in list'}
+    end
+    visited_board_ids << self.global_id
+    downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
+    Board.find_all_by_path(downstreams).each do |brd|
+      brd.update_privacy(privacy_level, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
+      visited_board_ids << brd.global_id
+    end
+    self.schedule_update_available_boards('all') if self.id
+    {done: true, privacy_level: privacy_level, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
+  end
   
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
     author = User.find_by_global_id(author) if author && author.is_a?(String)

@@ -154,6 +154,7 @@ Coughdrop::Application.routes.draw do
       get 'copies' => 'boards#copies'
       post 'translate' => 'boards#translate'
       post 'swap_images' => 'boards#swap_images'
+      post 'privacy' => 'boards#update_privacy'
     end
 
     resources :tags

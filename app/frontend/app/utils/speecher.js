@@ -751,16 +751,20 @@ var speecher = EmberObject.extend({
     };
     elem.lastListener = handler;
     var src = (elem.src || '');
-    if(capabilities.mobile && capabilities.installed_app && window.Media && !src.match(/http:\/\/localhost/)) {
+    if(false && capabilities.mobile && capabilities.installed_app && window.Media && !src.match(/http:\/\/localhost/)) {
       // console.log("using native media playback!");
       // iOS media plugin can't handle file:/// paths, so we strip it off and things work fine
       if(capabilities.system == 'iOS') {
         // src = src.replace(/^file:\/\//, '');
       }
-      var media = new window.Media(src, function() { }, function(err) {
+      var media = new window.Media(src, function() { 
+        media.release();
+      }, function(err) {
+        media.release();
         handler();
       }, function(status_code) {
         if(status_code == window.Media.MEDIA_PAUSED || status_code == window.Media.MEDIA_STOPPED) {
+          media.release();
           handler();
         }
       });
