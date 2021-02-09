@@ -286,6 +286,8 @@ module Uploader
   end
 
   def self.default_images(library, words, locale, user)
+    cache = LibraryCache.find_or_create_by(library: library, locale: locale)
+    found_words = cache.find_words(words, user) if cache
     if ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
       token = ENV['OPENSYMBOLS_TOKEN']
       protected_source = nil
@@ -298,13 +300,13 @@ module Uploader
       end
       url = "https://www.opensymbols.org/api/v2/repositories/#{library}/defaults"
       res = Typhoeus.post(url, body: {
-        words: words,
+        words: words - found_words.keys,
         locale: locale,
         search_token: token
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false)
       results = {}
       results = JSON.parse(res.body) unless res.code >= 400
-      hash = {}
+      hash = found_words || {}
       results.each do |word, result|
         if result['extension']
           type = MIME::Types.type_for(result['extension'])[0]
@@ -312,6 +314,11 @@ module Uploader
         end
       end
       results.each do |word, obj|
+        obj['protected'] = !!protected_source
+        obj['public'] = true
+        obj['protected_source'] = protected_source
+        obj['default'] = true
+        image_id = cache.add_word(word, obj)
         next unless words.include?(word)
         hash[word] = {
           'url' => obj['image_url'],
@@ -320,6 +327,7 @@ module Uploader
           'width' => obj['width'],
           'height' => obj['height'],
           'external_id' => obj['id'],
+          'coughdrop_image_id' => image_id,
           'public' => true,
           'protected' => !!protected_source,
           'protected_source' => protected_source,
@@ -333,13 +341,17 @@ module Uploader
           }
         }        
       end
+      cache.save_if_added
       return hash
+    elsif found_words
+      return found_words
     end
     {}
   end
   
-  def self.find_images(keyword, library, user, alt_user=nil, batch=false)
+  def self.find_images(keyword, library, locale, user, alt_user=nil, batch=false)
     return false if (keyword || '').strip.blank? || (library || '').strip.blank?
+    list = nil
     if library == 'ss'
       return false
     elsif library == 'lessonpix'
@@ -357,7 +369,7 @@ module Uploader
       end
       if !valid
         if alt_user && alt_user != user
-          return find_images(keyword, library, alt_user)
+          return find_images(keyword, library, locale, alt_user)
         else
           return false
         end
@@ -390,7 +402,6 @@ module Uploader
         'method' => 'assert_cached_copies',
         'arguments' => [list.map{|r| r['url'] }]
       })
-      return list
     elsif ['pixabay_vectors', 'pixabay_photos'].include?(library)
       type = library.match(/vector/) ? 'vector' : 'photo'
       key = ENV['PIXABAY_KEY']
@@ -421,7 +432,6 @@ module Uploader
           }          
         }
       end
-      return list
     elsif ['giphy_asl'].include?(library)
       str = "#asl #{keyword}"
       key = ENV['GIPHY_KEY']
@@ -448,7 +458,6 @@ module Uploader
           }
         end
       end
-      return list
     elsif ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
       str = keyword.to_s
       if library == 'tawasol'
@@ -473,7 +482,6 @@ module Uploader
           result['content_type'] = type.content_type
         end
       end
-      return [] if results.empty?
       list = []
       results.each do |obj|
         list << {
@@ -496,9 +504,11 @@ module Uploader
           }
         }        
       end
-      return list
     end
-    return false
+    cache = LibraryCache.find_or_create_by(library: library, locale: locale)
+    cache.add_word(keyword, list[0]) if cache && list[0]
+    cache.save_if_added
+    return list || false
   end
   
   def self.find_resources(query, source, user)

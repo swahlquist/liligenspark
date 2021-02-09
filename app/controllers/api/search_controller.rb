@@ -66,7 +66,7 @@ class Api::SearchController < ApplicationController
       end
     end
     if params['library']
-      res = Uploader.find_images(params['q'], params['library'], ref_user, @api_user)
+      res = Uploader.find_images(params['q'], params['library'], 'en', ref_user, @api_user)
     end
     if res == false
       return allowed?(@api_user, 'never_allowed')

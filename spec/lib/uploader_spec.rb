@@ -261,24 +261,24 @@ describe Uploader do
   describe 'find_images' do
     it 'should return nothing for unknown libraries' do
       expect(Typhoeus).to_not receive(:get)
-      expect(Uploader.find_images('bacon', 'cool-pics', nil)).to eq(false)
-      expect(Uploader.find_images('bacon', '', nil)).to eq(false)
-      expect(Uploader.find_images('bacon', nil, nil)).to eq(false)
-      expect(Uploader.find_images('bacon', '   ', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', 'cool-pics', 'en', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', '', 'en', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', nil, 'en', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', '   ', 'en', nil)).to eq(false)
     end
     
     it 'should return nothing for empty queries' do
       expect(Typhoeus).to_not receive(:get)
-      expect(Uploader.find_images(nil, 'arasaac', nil)).to eq(false)
-      expect(Uploader.find_images('', 'arasaac', nil)).to eq(false)
-      expect(Uploader.find_images('    ', 'arasaac', nil)).to eq(false)
+      expect(Uploader.find_images(nil, 'arasaac', 'en', nil)).to eq(false)
+      expect(Uploader.find_images('', 'arasaac', 'en', nil)).to eq(false)
+      expect(Uploader.find_images('    ', 'arasaac', 'en', nil)).to eq(false)
     end
     
     it 'should make a remote request' do
       res = OpenStruct.new(body: [
       ].to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'arasaac', nil)
+      images = Uploader.find_images('bacon', 'arasaac', 'en', nil)
       expect(images).to eq([])
     end
 
@@ -286,7 +286,7 @@ describe Uploader do
       res = OpenStruct.new(body: [
       ].to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'arasaac', nil)
+      images = Uploader.find_images('bacon', 'arasaac', 'en', nil)
       expect(images).to eq([])
     end
 
@@ -294,7 +294,7 @@ describe Uploader do
       res = OpenStruct.new(body: [
       ].to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'opensymbols', nil)
+      images = Uploader.find_images('bacon', 'opensymbols', 'en', nil)
       expect(images).to eq([])
     end
 
@@ -303,7 +303,7 @@ describe Uploader do
       ].to_json)
       u = User.create
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'pcs', u)
+      images = Uploader.find_images('bacon', 'pcs', 'en', u)
       expect(images).to eq([])
     end
 
@@ -326,7 +326,7 @@ describe Uploader do
       User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
       u.reload
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}:pcs", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'pcs', u)
+      images = Uploader.find_images('bacon', 'pcs', 'en', u)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
         'thumbnail_url' => 'http://www.example.com/pic.png',
@@ -358,7 +358,7 @@ describe Uploader do
       u2.reload
 
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'pcs', u)
+      images = Uploader.find_images('bacon', 'pcs', 'en', u)
       expect(images).to eq([])
     end
     
@@ -378,7 +378,7 @@ describe Uploader do
         }
       ].to_json)
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Aarasaac&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'arasaac', nil)
+      images = Uploader.find_images('bacon', 'arasaac', 'en', nil)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
         'thumbnail_url' => 'http://www.example.com/pic.png',
@@ -417,7 +417,7 @@ describe Uploader do
           'pageURL' => 'http://www.example.com/pics2',
         }]}.to_json)
       expect(Typhoeus).to receive(:get).with('https://pixabay.com/api/?key=pixkey&q=bacon&image_type=vector&per_page=30&safesearch=true', timeout: 5, :ssl_verifypeer => false).and_return(res)
-      images = Uploader.find_images('bacon', 'pixabay_vectors', nil)
+      images = Uploader.find_images('bacon', 'pixabay_vectors', 'en', nil)
       expect(images).to eq([{
         'url' => 'http://www.example.com/pic.png',
         'thumbnail_url' => 'http://www.example.com/pic.png',
@@ -455,7 +455,7 @@ describe Uploader do
     
     it "should handle lessonpix searches" do
       expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
-      expect(Uploader.find_images('bacon', 'lessonpix', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', nil)).to eq(false)
       
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({
@@ -464,7 +464,7 @@ describe Uploader do
         'token' => 'for_the_team'
       }).exactly(2).times
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: 'Token Mismatch'))
-      expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', u)).to eq(false)
 
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
@@ -473,7 +473,7 @@ describe Uploader do
           'title' => 'good pic'
         }
       ].to_json))
-      expect(Uploader.find_images('cheddar', 'lessonpix', u)).to eq([
+      expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u)).to eq([
         {
           'url' => "#{JsonApi::Json.current_host}/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345",
           'thumbnail_url' => "https://lessonpix.com/drawings/2345/100x100/2345.png",
@@ -499,7 +499,7 @@ describe Uploader do
 
     it "should fall back to the alt_user for lessonpix searches if needed" do
       expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
-      expect(Uploader.find_images('bacon', 'lessonpix', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', nil)).to eq(false)
       
       u = User.create
       u2 = User.create
@@ -522,7 +522,7 @@ describe Uploader do
           'title' => 'good pic'
         }
       ].to_json))
-      expect(Uploader.find_images('cheddar', 'lessonpix', u, u2)).to eq([
+      expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u, u2)).to eq([
         {
           'url' => "#{JsonApi::Json.current_host}/api/v1/users/#{u2.global_id}/protected_image/lessonpix/2345",
           'thumbnail_url' => "https://lessonpix.com/drawings/2345/100x100/2345.png",
@@ -594,7 +594,7 @@ describe Uploader do
           ]
         }.to_json
       }))
-      expect(Uploader.find_images('bacon', 'giphy_asl', nil)).to eq([
+      expect(Uploader.find_images('bacon', 'giphy_asl', 'en', nil)).to eq([
         {
           'url' => 'https://www.example.com/pic1.gif',
           'thumbnail_url' => 'https://www.example.com/pic1-small.gif',
@@ -648,7 +648,7 @@ describe Uploader do
         
     it 'should schedule caching action for returned results' do
       expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
-      expect(Uploader.find_images('bacon', 'lessonpix', nil)).to eq(false)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', nil)).to eq(false)
       
       u = User.create
       expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({
@@ -657,7 +657,7 @@ describe Uploader do
         'token' => 'for_the_team'
       }).exactly(2).times
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=bacon&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: 'Token Mismatch'))
-      expect(Uploader.find_images('bacon', 'lessonpix', u)).to eq(false)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', u)).to eq(false)
 
       expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
         {'iscategory' => 't'},
@@ -668,7 +668,7 @@ describe Uploader do
       ].to_json))
       expect(JsonApi::Json).to receive(:current_host).and_return("http://test.host")
       expect(Worker).to receive(:schedule_for).with(:slow, ButtonImage, :perform_action, {'method' => 'assert_cached_copies', 'arguments' => [["http://test.host/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345"]]})
-      expect(Uploader.find_images('cheddar', 'lessonpix', u)).to eq([
+      expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u)).to eq([
         {
           'url' => "http://test.host/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345",
           'thumbnail_url' => "https://lessonpix.com/drawings/2345/100x100/2345.png",
@@ -690,6 +690,62 @@ describe Uploader do
           }
         }
       ])
+    end
+
+    it "should save to the library cache on results" do
+      expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', nil)).to eq(false)
+      
+      u = User.create
+      u2 = User.create
+      expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({
+        'username' => 'pocatello',
+        'pid' => '99999',
+        'token' => 'for_the_team'
+      }).exactly(1).times
+      expect(Uploader).to receive(:lessonpix_credentials).with(u2).and_return({
+        'username' => 'nimue',
+        'pid' => '88888',
+        'token' => 'i_got_wet'
+      }).exactly(1).times
+
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: "Token Mismatch"))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=88888&username=nimue&token=i_got_wet&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [
+        {'iscategory' => 't'},
+        {
+          'image_id' => '2345',
+          'title' => 'good pic'
+        }
+      ].to_json))
+      expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u, u2)).to eq([
+        {
+          'url' => "#{JsonApi::Json.current_host}/api/v1/users/#{u2.global_id}/protected_image/lessonpix/2345",
+          'thumbnail_url' => "https://lessonpix.com/drawings/2345/100x100/2345.png",
+          'content_type' => 'image/png',
+          'name' => 'good pic',
+          'width' => 300,
+          'height' => 300,
+          'external_id' => '2345',
+          'public' => false,
+          'protected' => true,
+          'protected_source' => 'lessonpix',
+          'license' => {
+            'type' => 'private',
+            'source_url' => "https://lessonpix.com/pictures/2345/good+pic",
+            'author_name' => 'LessonPix',
+            'author_url' => 'https://lessonpix.com',
+            'uneditable' => true,
+            'copyright_notice_url' => 'https://lessonpix.com/articles/11/28/LessonPix+Terms+and+Conditions'
+          }
+        }
+      ])
+      cache = LibraryCache.find_by(library: 'lessonpix', locale: 'en')
+      expect(cache).to_not eq(nil)
+      expect(cache.data['fallbacks']['cheddar']).to_not eq(nil)
+      expect(cache.data['fallbacks']['cheddar']['url']).to eq("#{JsonApi::Json.current_host}/api/v1/users/#{u2.global_id}/protected_image/lessonpix/2345")
+      expect(cache.data['fallbacks']['cheddar']['image_id']).to_not eq(nil)
+      expect(cache.data['fallbacks']['cheddar']['added']).to be >  5.seconds.ago.to_i
+      expect(cache.data['fallbacks']['cheddar']['data']).to_not eq(nil)
     end
   end
 
@@ -789,6 +845,100 @@ describe Uploader do
       }))
       res = Uploader.default_images('pcs', ['a', 'b', 'c'], 'en', u.reload)
       expect(res.keys).to eq(['a', 'b'])
+    end
+
+    it "should use library cache results if available" do
+      cache = LibraryCache.create(library: 'arasaac', locale: 'en')
+      cache.data['defaults']['a'] = {
+        'url' => 'http://www.example.com/pic3.png',
+        'data' =>  {
+          'url' => 'http://www.example.com/pic3.png',
+          'content_type' => 'image/png',
+          'width' => 200,
+          'height' => 200,
+          'default' => true
+        },
+        'added' => 1.hour.ago.to_i,
+        'image_id' => 'aaa'
+      }
+      cache.save!
+      expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
+        words: ['b', 'c'],
+        locale: 'en',
+        search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
+      }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
+        body: {
+          'b' => {
+            'image_url' => 'http://www.example.com/pic2.png',
+            'extension' => '.png',
+            'width' => 300,
+            'height' => 300,
+            'id' => 'bbbb'
+          },
+          'd' => {}
+         }.to_json,
+        code: 200
+      }))
+      res = Uploader.default_images('arasaac', ['a', 'b', 'c'], 'en', nil)
+      bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
+      expect(res).to eq({
+        'a' => {"url"=>"http://www.example.com/pic.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200},
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+      })
+      expect(cache).to_not eq(nil)
+      expect(cache.data['defaults']['a']).to_not eq(nil)
+      expect(cache.data['defaults']['a']['url']).to eq('http://www.example.com/pic3.png')
+      expect(cache.data['defaults']['a']['image_id']).to eq(bi1.global_id)
+      expect(cache.data['defaults']['b']).to_not eq(nil)
+      expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
+      expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
+    end
+
+    it "should save looked-up results to the library cache" do
+      expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
+        words: ['a', 'b', 'c'],
+        locale: 'en',
+        search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
+      }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
+        body: {
+          'a' => {
+            'image_url' => 'http://www.example.com/pic.png',
+            'content_type' => 'image/png',
+            'width' => 200,
+            'height' => 200,
+            'id' => 'aaaa',
+            'license' => 'private',
+            'license_url' => 'http://www.example.com/license',
+            'source_url' => 'http://www.example.com/pic',
+            'author' => 'bob',
+            'author_url' => 'http://www.example.com/bob'
+          },
+          'b' => {
+            'image_url' => 'http://www.example.com/pic2.png',
+            'extension' => '.png',
+            'width' => 300,
+            'height' => 300,
+            'id' => 'bbbb'
+          },
+          'd' => {}
+         }.to_json,
+        code: 200
+      }))
+      res = Uploader.default_images('arasaac', ['a', 'b', 'c'], 'en', nil)
+      bi1 = ButtonImage.find_by(url: 'http://www.example.com/pic.png')
+      bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
+      expect(res).to eq({
+        'a' => {"url"=>"http://www.example.com/pic.png", "coughdrop_image_id" =>  bi1.global_id, "thumbnail_url"=>"http://www.example.com/pic.png", "content_type"=>"image/png", "width"=>200, "height"=>200, "external_id"=>"aaaa", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>"private", "copyright_notice_url"=>"http://www.example.com/license", "source_url"=>"http://www.example.com/pic", "author_name"=>"bob", "author_url"=>"http://www.example.com/bob", "uneditable"=>true}},
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+      })
+      cache = LibraryCache.find_by(library: 'arasaac', locale: 'en')
+      expect(cache).to_not eq(nil)
+      expect(cache.data['defaults']['a']).to_not eq(nil)
+      expect(cache.data['defaults']['a']['url']).to eq('http://www.example.com/pic.png')
+      expect(cache.data['defaults']['a']['image_id']).to eq(bi1.global_id)
+      expect(cache.data['defaults']['b']).to_not eq(nil)
+      expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
+      expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
     end
   end
 

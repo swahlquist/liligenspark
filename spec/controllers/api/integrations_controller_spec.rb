@@ -83,7 +83,7 @@ describe Api::IntegrationsController, :type => :controller do
         {'name' => 'password', 'type' => 'password'}
       ]})
       expect(UserIntegration.count).to eq(1)
-      expect(Uploader).to receive(:find_images){|str, library, ui|
+      expect(Uploader).to receive(:find_images){|str, library, loc, ui|
         expect(str).to eq('hat')
         expect(library).to eq('lessonpix')
         expect(ui).to_not eq(nil)
@@ -128,7 +128,7 @@ describe Api::IntegrationsController, :type => :controller do
         {'name' => 'password', 'type' => 'password'}
       ]})
       expect(UserIntegration.count).to eq(1)
-      expect(Uploader).to receive(:find_images){|str, library, ui|
+      expect(Uploader).to receive(:find_images){|str, library, loc, ui|
         expect(str).to eq('hat')
         expect(library).to eq('lessonpix')
         expect(ui).to_not eq(nil)

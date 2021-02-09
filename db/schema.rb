@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201117190530) do
+ActiveRecord::Schema.define(version: 20210209181846) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -144,7 +144,7 @@ ActiveRecord::Schema.define(version: 20201117190530) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -206,6 +206,16 @@ ActiveRecord::Schema.define(version: 20201117190530) do
     t.integer  "user_id"
     t.index ["created_at"], name: "index_job_stashes_on_created_at", using: :btree
     t.index ["user_id", "log_session_id"], name: "index_job_stashes_on_user_id_and_log_session_id", using: :btree
+  end
+
+  create_table "library_caches", force: :cascade do |t|
+    t.string   "library"
+    t.string   "locale"
+    t.text     "data"
+    t.datetime "invalidated_at"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
+    t.index ["library", "locale"], name: "index_library_caches_on_library_and_locale", unique: true, using: :btree
   end
 
   create_table "log_mergers", force: :cascade do |t|

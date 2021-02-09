@@ -165,7 +165,7 @@ describe Api::SearchController, :type => :controller do
     
     it "should return a result if authorized" do
       token_user
-      expect(Uploader).to receive(:find_images).with('gerbils', 'lessonpix', @user, @user).and_return([])
+      expect(Uploader).to receive(:find_images).with('gerbils', 'lessonpix', 'en', @user, @user).and_return([])
       get :protected_symbols, params: {:q => 'gerbils', :library => 'lessonpix'}
       expect(response).to be_successful
       json = JSON.parse(response.body)
@@ -250,7 +250,7 @@ describe Api::SearchController, :type => :controller do
 
     it 'should search for symbols' do
       token_user
-      expect(Uploader).to receive(:find_images).with('cheese', 'some_library', @user, @user).and_return([
+      expect(Uploader).to receive(:find_images).with('cheese', 'some_library', 'en', @user, @user).and_return([
         {
           'url' => 'http://www.example.com/pic1.png',
           'content_type' => 'image/png',

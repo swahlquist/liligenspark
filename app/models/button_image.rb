@@ -79,7 +79,8 @@ class ButtonImage < ActiveRecord::Base
         term = button && button['label']
       end
       if term
-        image = (Uploader.find_images(term, 'opensymbols', self.user) || [])[0]
+        image = (Uploader.default_images('opensymbols', [term], 'en', self.user) || {})[term]
+        image ||= (Uploader.find_images(term, 'opensymbols', 'en', self.user) || [])[0]
         if image
           self.settings['fallback'] = image
           self.save
@@ -125,7 +126,7 @@ class ButtonImage < ActiveRecord::Base
   end
   
   def process_params(params, non_user_params)
-    raise "user required as image author" unless self.user_id || non_user_params[:user]
+    raise "user required as image author" unless self.user_id || non_user_params[:user] || non_user_params[:no_author]
     self.user ||= non_user_params[:user] if non_user_params[:user]
     self.settings ||= {}
     if !self.url
@@ -138,6 +139,7 @@ class ButtonImage < ActiveRecord::Base
       # TODO: when cleaning up orphan images, don't delete avatar images
       self.settings['avatar'] = !!params['avatar'] if params['avatar'] != nil
       self.settings['badge'] = !!params['badge'] if params['badge'] != nil
+      self.settings['authorless'] = true if non_user_params[:no_author]
       
       # TODO: raise a stink if content_type, width or height are not provided
       process_license(params['license']) if params['license']

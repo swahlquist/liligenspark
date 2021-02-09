@@ -278,7 +278,7 @@ describe UserIntegration, :type => :model do
           {'name' => 'username'}, {'name' => 'password', 'type' => 'password', 'hash' => 'md5'}
         ]
       })
-      expect(Uploader).to receive(:find_images){|a, b, c|
+      expect(Uploader).to receive(:find_images){|a, b, l, c|
         expect(a).to eq('hat')
         expect(b).to eq('lessonpix')
         expect(c).to_not eq(nil)
@@ -301,7 +301,7 @@ describe UserIntegration, :type => :model do
           {'name' => 'username'}, {'name' => 'password', 'type' => 'password', 'hash' => 'md5'}
         ]
       })
-      expect(Uploader).to receive(:find_images){|a, b, c|
+      expect(Uploader).to receive(:find_images){|a, b, l, c|
         expect(a).to eq('hat')
         expect(b).to eq('lessonpix')
         expect(c).to_not eq(nil)
@@ -324,9 +324,10 @@ describe UserIntegration, :type => :model do
           {'name' => 'username'}, {'name' => 'password', 'type' => 'password', 'hash' => 'md5'}
         ]
       })
-      expect(Uploader).to receive(:find_images){|a, b, c|
+      expect(Uploader).to receive(:find_images){|a, b, l, c|
         expect(a).to eq('hat')
         expect(b).to eq('lessonpix')
+        expect(l).to eq('en')
         expect(c).to_not eq(nil)
       }.and_return([])
       ui1 = UserIntegration.process_new({

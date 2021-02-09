@@ -1474,8 +1474,12 @@ class Board < ActiveRecord::Base
       buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
-          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, author, nil, true) || [])[0]
-          if image_data
+          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true) || [])[0]
+          bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data['coughdrop_image_id']
+          if bi
+            button['image_id'] = bi.global_id
+            @buttons_changed = 'swapped images'
+          elsif image_data
             image_data['button_label'] = button['label']
             bi = ButtonImage.process_new(image_data, {user: author})
             button['image_id'] = bi.global_id

@@ -189,7 +189,7 @@ class UserIntegration < ActiveRecord::Base
           add_processing_error('account credentials already in use')
           return false
         end
-        res = Uploader.find_images('hat', 'lessonpix', self)
+        res = Uploader.find_images('hat', 'lessonpix', 'en', self)
         if res == false
           add_processing_error('invalid user credentials')
           return false

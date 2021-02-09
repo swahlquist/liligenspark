@@ -215,7 +215,7 @@ describe ButtonImage, :type => :model do
         'protected' => true,
         'button_label' => 'bacon',
       })
-      expect(Uploader).to receive(:find_images).with('bacon', 'opensymbols', nil).and_return([{a: 1}])
+      expect(Uploader).to receive(:find_images).with('bacon', 'opensymbols', 'en', nil).and_return([{a: 1}])
       i.generate_fallback
       expect(i.settings['fallback']).to_not eq(nil)
       expect(i.settings['fallback']['a']).to eq(1)
@@ -232,7 +232,7 @@ describe ButtonImage, :type => :model do
       }]
       b.save
       BoardButtonImage.create(board_id: b.id, button_image_id: i.id)
-      expect(Uploader).to receive(:find_images).with('bacon', 'opensymbols', nil).and_return([{a: 1}])
+      expect(Uploader).to receive(:find_images).with('bacon', 'opensymbols', 'en', nil).and_return([{a: 1}])
       i.generate_fallback
       expect(i.settings['fallback']).to_not eq(nil)
       expect(i.settings['fallback']['a']).to eq(1)

@@ -1602,10 +1602,12 @@ evaluation.callback = function(key) {
             word = working.ref['diff_map_for_' + assessment.label][idx * spacing + offset + skip_rows][jdx * spacing + offset];
           } else if(step.distractors) {
             if(core.length > 0) {
-              var word = core[idx][jdx];
-              word = words.find(function(w) { return w.label == word; });
-              if(!word) { debugger }
-              used_words[word.label] = true;
+              if(core[idx] && core[idx][jdx]) {
+                var word = core[idx][jdx];
+                word = words.find(function(w) { return w.label == word; });
+                if(!word) { debugger }
+                used_words[word.label] = true;  
+              }
             } else {
               var unused = distractor_words.filter(function(w) { return w != prompt && !used_words[w.label]; });
               var fails = 0;
