@@ -506,7 +506,7 @@ module Uploader
       end
     end
     cache = LibraryCache.find_or_create_by(library: library, locale: locale)
-    cache.add_word(keyword, list[0]) if cache && list[0]
+    cache.add_word(keyword, list[0]) if cache && list && list[0]
     cache.save_if_added
     return list || false
   end

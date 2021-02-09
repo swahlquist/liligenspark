@@ -667,7 +667,14 @@ describe Uploader do
         }
       ].to_json))
       expect(JsonApi::Json).to receive(:current_host).and_return("http://test.host")
-      expect(Worker).to receive(:schedule_for).with(:slow, ButtonImage, :perform_action, {'method' => 'assert_cached_copies', 'arguments' => [["http://test.host/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345"]]})
+      expect(Worker).to receive(:schedule_for) do |speed, klass, method, opts|
+        if opts['method'] == 'assert_cached_copies'
+          expect(klass).to eq(ButtonImage)
+          expect(speed).to eq(:slow)
+          expect(opts['arguments']).to eq([["http://test.host/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345"]])
+        end
+      end.at_least(1).times
+      
       expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u)).to eq([
         {
           'url' => "http://test.host/api/v1/users/#{u.global_id}/protected_image/lessonpix/2345",
@@ -804,9 +811,11 @@ describe Uploader do
         code: 200
       }))
       res = Uploader.default_images('arasaac', ['a', 'b', 'c'], 'en', nil)
+      bi1 = ButtonImage.find_by(url: 'http://www.example.com/pic.png')
+      bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
       expect(res).to eq({
-        'a' => {"url"=>"http://www.example.com/pic.png", "thumbnail_url"=>"http://www.example.com/pic.png", "content_type"=>"image/png", "width"=>200, "height"=>200, "external_id"=>"aaaa", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>"private", "copyright_notice_url"=>"http://www.example.com/license", "source_url"=>"http://www.example.com/pic", "author_name"=>"bob", "author_url"=>"http://www.example.com/bob", "uneditable"=>true}},
-        'b' => {"url"=>"http://www.example.com/pic2.png", "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+        'a' => {"url"=>"http://www.example.com/pic.png", "coughdrop_image_id" => bi1.global_id, "thumbnail_url"=>"http://www.example.com/pic.png", "content_type"=>"image/png", "width"=>200, "height"=>200, "external_id"=>"aaaa", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>"private", "copyright_notice_url"=>"http://www.example.com/license", "source_url"=>"http://www.example.com/pic", "author_name"=>"bob", "author_url"=>"http://www.example.com/bob", "uneditable"=>true}},
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
       })
     end
 
@@ -856,7 +865,6 @@ describe Uploader do
           'content_type' => 'image/png',
           'width' => 200,
           'height' => 200,
-          'default' => true
         },
         'added' => 1.hour.ago.to_i,
         'image_id' => 'aaa'
@@ -882,13 +890,14 @@ describe Uploader do
       res = Uploader.default_images('arasaac', ['a', 'b', 'c'], 'en', nil)
       bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
       expect(res).to eq({
-        'a' => {"url"=>"http://www.example.com/pic.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200},
+        'a' => {"url"=>"http://www.example.com/pic3.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200, "content_type" => 'image/png'},
         'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
       })
       expect(cache).to_not eq(nil)
+      cache.reload
       expect(cache.data['defaults']['a']).to_not eq(nil)
       expect(cache.data['defaults']['a']['url']).to eq('http://www.example.com/pic3.png')
-      expect(cache.data['defaults']['a']['image_id']).to eq(bi1.global_id)
+      expect(cache.data['defaults']['a']['image_id']).to eq('aaa')
       expect(cache.data['defaults']['b']).to_not eq(nil)
       expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
       expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)

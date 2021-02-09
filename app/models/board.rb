@@ -1475,7 +1475,7 @@ class Board < ActiveRecord::Base
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
           image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true) || [])[0]
-          bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data['coughdrop_image_id']
+          bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi
             button['image_id'] = bi.global_id
             @buttons_changed = 'swapped images'
