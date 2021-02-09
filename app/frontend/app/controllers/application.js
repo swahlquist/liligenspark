@@ -332,6 +332,9 @@ export default Controller.extend({
     change_section: function(direction) {
       obf.eval.move(direction);
     },
+    jump_section: function() {
+      obf.eval.jump_to();
+    },
     repeat_prompt: function() {
       var model = this.get('board.model');
       runLater(function() {
