@@ -415,7 +415,7 @@
                 {{#each filtered_results as |board|}}
                   {{#if board.board.key}}
                     {{#unless board.board.removed}}
-                      <div class="col-sm-2 col-xs-3 board_with_action simple_board_holder" style={{if board.active '' 'display: none;'}}>
+                      <div class="col-sm-2 col-xs-3 board_with_action simple_board_holder" style={{if board.hidden 'display: none;'}}>
                         {{#if board.children}}
                           {{board-icon board=board noinfo=true action='load_children'}}
                         {{else}}

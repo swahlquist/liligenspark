@@ -63,13 +63,18 @@ export default Controller.extend({
   filter_board_list: observer(
     'board_list.filtered_results',
     'filterString',
+    'show_all_boards',
     function() {
       if(this.get('filterString')) {
-        var re = new RegExp(this.get('filterString'), 'i');
-        (this.get('board_list.filtered_results') || []).forEach(function(i) {
-          var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
-          emberSet(i, 'hidden', !matches);
-        });
+        if(!this.get('show_all_boards')) {
+          this.set_show_all_boards();
+        } else {
+          var re = new RegExp(this.get('filterString'), 'i');
+          (this.get('board_list.filtered_results') || []).forEach(function(i) {
+            var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
+            emberSet(i, 'hidden', !matches);
+          });  
+        }
       } else {
         (this.get('board_list.filtered_results') || []).forEach(function(i) {
           emberSet(i, 'hidden', false);
@@ -154,7 +159,7 @@ export default Controller.extend({
           var obj = {board: b, children: []};
           var id = emberGet(b, 'id');
           if(copies[id]) {
-            copies[id].forEach(function(c) { copies[id].push({board: c})});
+            copies[id].forEach(function(c) { obj.children.push({board: c})});
             delete copies[id];
           }
           new_list.push(obj);
@@ -171,7 +176,7 @@ export default Controller.extend({
               board: CoughDrop.store.createRecord('board', {name: "Orphan Boards id:" + id}),
               children: []
             };
-            copies[id].forEach(function(c) { copies[id].push({board: c})});
+            copies[id].forEach(function(c) { obj.children.push({board: c})});
             new_list.push(obj);  
           } else {
             copies[id].forEach(function(c) {
@@ -179,15 +184,15 @@ export default Controller.extend({
             });
           }
         }
-        list.forEach(function(b) {
-          var obj = {board: b, children: []};
-          board_ids[emberGet(b, 'id')] = obj;
-          if(emberGet(b, 'copy_id') && board_ids[b.get('copy_id')]) {
-            board_ids[b.get('copy_id')].children.push({board: b});
-          } else {
-            new_list.push(obj);
-          }
-        });
+        // list.forEach(function(b) {
+        //   var obj = {board: b, children: []};
+        //   board_ids[emberGet(b, 'id')] = obj;
+        //   if(emberGet(b, 'copy_id') && board_ids[b.get('copy_id')]) {
+        //     board_ids[b.get('copy_id')].children.push({board: b});
+        //   } else {
+        //     new_list.push(obj);
+        //   }
+        // });
       }
       /* if(this.get('filterString')) {
         var re = new RegExp(this.get('filterString'), 'i');
@@ -432,7 +437,7 @@ export default Controller.extend({
     },
     load_children: function(obj) {
       this.set('show_all_boards', false);
-      if(ojb) {
+      if(obj) {
         this.set('prior_filter_string', this.get('filterString') || '');
         this.set('filterString', '');  
       } else {
