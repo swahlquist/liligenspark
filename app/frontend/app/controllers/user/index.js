@@ -68,7 +68,11 @@ export default Controller.extend({
         var re = new RegExp(this.get('filterString'), 'i');
         (this.get('board_list') || []).forEach(function(i) {
           var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
-          emberSet(i, 'active', !!matches);
+          emberSet(i, 'hidden', !matches);
+        });
+      } else {
+        (this.get('board_list') || []).forEach(function(i) {
+          emberSet(i, 'hidden', false);
         });
       }
     }
