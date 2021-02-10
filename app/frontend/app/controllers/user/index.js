@@ -60,11 +60,24 @@ export default Controller.extend({
         (this.get('shared_boards_shortened') || []).length === 0;
     }
   ),
+  filter_board_list: observer(
+    'board_list',
+    'filterString',
+    function() {
+      if(this.get('filterString')) {
+        var re = new RegExp(this.get('filterString'), 'i');
+        (this.get('board_list') || []).forEach(function(i) {
+          var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
+          emberSet(i, 'active', !!matches);
+        });
+      }
+    }
+  ),
   board_list: computed(
     'selected',
     'parent_object',
     'show_all_boards',
-    'filterString',
+    // 'filterString',
     'model.my_boards',
     'model.prior_home_boards',
     'model.public_boards',
@@ -172,13 +185,13 @@ export default Controller.extend({
           }
         });
       }
-      if(this.get('filterString')) {
+      /* if(this.get('filterString')) {
         var re = new RegExp(this.get('filterString'), 'i');
         new_list = new_list.filter(function(i) { 
           return i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
         });
         res.filtered_results = new_list.slice(0, 18);
-      } else if(this.get('show_all_boards')) {
+      } else */ if(this.get('show_all_boards')) {
         res.filtered_results = new_list.slice(0, 300);
       } else {
         if(list.done && new_list && new_list.length <= 18) {
