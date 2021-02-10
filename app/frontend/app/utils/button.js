@@ -1698,7 +1698,7 @@ Button.load_actions = function() {
     {
       action: ':say',
       has_sound: true,
-      match: /^:say\(.+\)/,
+      match: /^:say\((.+)\)/,
       description_callback: function(match) {
         var phrase = (match && match[1]) || "nothing";
         return i18n.t('say', "Say: ") + phrase;

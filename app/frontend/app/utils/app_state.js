@@ -2337,6 +2337,9 @@ var app_state = EmberObject.extend({
   }),
   activate_button: function(button, obj) {
     CoughDrop.log.start();
+    if(button.apply_level && button.board) {
+      button.apply_level(button.board.get('display_level'))
+    }
     // skip hidden buttons
     if((button.hidden || button.empty) && !this.get('edit_mode') && this.get('currentUser.preferences.hidden_buttons') == 'grid') {
       if(!stashes.get('all_buttons_enabled')) {
