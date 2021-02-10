@@ -422,9 +422,11 @@
                           {{board-icon board=board.board}}
                         {{/if}}
                         {{#if model.permissions.edit}}
-                          <button class="board_action" {{action 'remove_board' board_list.remove_type board.board}}>
-                            <span title={{board_list.remove_label}}><span class='glyphicon glyphicon-trash'></span></span>
-                          </button>
+                          {{#if board.id}}
+                            <button class="board_action" {{action 'remove_board' board_list.remove_type board.board}}>
+                              <span title={{board_list.remove_label}}><span class='glyphicon glyphicon-trash'></span></span>
+                            </button>
+                          {{/if}}
                         {{/if}}
                       </div>
                     {{/unless}}
