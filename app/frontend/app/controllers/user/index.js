@@ -62,6 +62,7 @@ export default Controller.extend({
   ),
   filter_board_list: observer(
     'board_list.filtered_results',
+    'filtered_results',
     'filterString',
     'show_all_boards',
     function() {
@@ -70,13 +71,13 @@ export default Controller.extend({
           this.set_show_all_boards();
         } else {
           var re = new RegExp(this.get('filterString'), 'i');
-          (this.get('board_list.filtered_results') || []).forEach(function(i) {
+          (this.get('filtered_results') || this.get('board_list.filtered_results') || []).forEach(function(i) {
             var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
             emberSet(i, 'hidden', !matches);
           });  
         }
       } else {
-        (this.get('board_list.filtered_results') || []).forEach(function(i) {
+        (this.get('filtered_results') || this.get('board_list.filtered_results') || []).forEach(function(i) {
           emberSet(i, 'hidden', false);
         });
       }
