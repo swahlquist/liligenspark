@@ -61,17 +61,17 @@ export default Controller.extend({
     }
   ),
   filter_board_list: observer(
-    'board_list',
+    'board_list.filtered_results',
     'filterString',
     function() {
       if(this.get('filterString')) {
         var re = new RegExp(this.get('filterString'), 'i');
-        (this.get('board_list') || []).forEach(function(i) {
+        (this.get('board_list.filtered_results') || []).forEach(function(i) {
           var matches = i.board.get('search_string').match(re) || i.children.find(function(c)  { return c.board.get('search_string').match(re); }); 
           emberSet(i, 'hidden', !matches);
         });
       } else {
-        (this.get('board_list') || []).forEach(function(i) {
+        (this.get('board_list.filtered_results') || []).forEach(function(i) {
           emberSet(i, 'hidden', false);
         });
       }
