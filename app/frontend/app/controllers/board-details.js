@@ -59,6 +59,9 @@ export default modal.ModalController.extend({
     privacy: function() {
       modal.open('modals/board-privacy', {board: this.get('model'), button_set: this.get('model.button_set')});
     },
+    categorize: function() {
+      modal.open('modals/tag-board', {board: this.get('model'), user: app_state.get('currentUser')});
+    },
     batch_recording: function() {
       var _this = this;
       modal.open('batch-recording', {user: app_state.get('currentUser'), board: this.get('model')}).then(function() {

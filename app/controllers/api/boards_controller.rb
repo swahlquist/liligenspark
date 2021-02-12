@@ -27,7 +27,7 @@ class Api::BoardsController < ApplicationController
       if params['user_id']
         user = User.find_by_path(params['user_id'])
         return unless allowed?(user, 'view_detailed')
-        unless params['starred']
+        unless params['starred'] || params['tag']
           if params['shared']
             Rails.logger.warn('looking up shared board ids')
             arel = Board.arel_table
@@ -54,13 +54,23 @@ class Api::BoardsController < ApplicationController
           Rails.logger.warn('checking for publicness')
           boards = boards.where(:public => false)
         end
-        if params['starred']
+        if params['starred'] || params['tag']
           Rails.logger.warn('filtering by user or public')
-          # TODO: this still won't include boards of people I supervise... (because it shouldn't)
-          boards = boards.where(['user_id = ? OR public = ?', user.id, true])
+          ids = [user.id] + User.local_ids(user.supervised_user_ids)
+          boards = boards.where(['user_id IN (?) OR public = ?',ids, true])
+        end
+        if params['starred']
           ids = (user.settings['starred_board_ids'] || [])
-          # TODO: sharding
           Rails.logger.warn('filtering by starred board ids')
+          boards = boards.where(:id => Board.local_ids(ids))
+        end
+        if params['tag']
+          return unless allowed?(user, 'model')
+          ids = []
+          if user.user_extra
+            ids = (user.user_extra.settings['board_tags'] || {})[params['tag']] || []
+          end
+          Rails.logger.warn('filtering by tagged board ids')
           boards = boards.where(:id => Board.local_ids(ids))
         end
       else
@@ -344,7 +354,9 @@ class Api::BoardsController < ApplicationController
     return unless exists?(board)
     return unless allowed?(board, 'edit')
     if params['new_key'] && params['old_key'] == board.key && board.rename_to(params['new_key'])
-      render json: {rename: true, key: params['new_key']}.to_json
+      un, ky = params['new_key'].split(/\//, 2)
+      key = "#{un}/#{Board.clean_path(ky)}"
+      render json: {rename: true, key: key}.to_json
     else
       api_error(400, {error: "board rename failed", key: params['key'], collision: board.collision_error?})
     end
@@ -363,6 +375,9 @@ class Api::BoardsController < ApplicationController
       board.star!(user, false)
     elsif type == 'unlink'
       board.unshare_with(user)
+    elsif type == 'untag'
+      extra = user.reload.user_extra
+      extra.tag_board(board, params['tag'], true, false) if extra
     else
       return api_error(400, {error: "unrecognized type"})
     end
@@ -371,6 +386,15 @@ class Api::BoardsController < ApplicationController
   
   def star
     star_or_unstar(true)
+  end
+
+  def tag
+    board = Board.find_by_path(params['board_id'])
+    return unless exists?(board, params['board_id'])
+    return unless allowed?(board, 'view')
+    extra = UserExtra.find_or_create_by(user: @api_user)
+    res = extra.tag_board(board, params['tag'], params['remove'], params['downstream'])
+    render json: {tagged: !!res, board_tags: res}
   end
   
   def unstar

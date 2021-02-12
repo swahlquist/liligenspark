@@ -266,7 +266,8 @@ class Api::UsersController < ApplicationController
     return unless allowed?(user, 'support_actions')
     return if params['new_key'].blank? && !allowed?(user, 'never_allow')
     if params['new_key'] && params['old_key'] == user.user_name && user.rename_to(params['new_key'])
-      render json: {rename: true, key: params['new_key']}.to_json
+      key = User.clean_path(params['new_key'])
+      render json: {rename: true, key: key}.to_json
     else
       api_error(400, {error: "user rename failed", key: params['key'], invalid_name: user.invalid_name_error?, collision: user.collision_error?})
     end

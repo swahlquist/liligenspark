@@ -131,6 +131,21 @@ describe JsonApi::User do
       expect(json['vocalizations'][0]['sentence']).to eq('whatevs')
       expect(json['vocalizations'][1]['sentence']).to eq('cat frog')
     end
+
+    it "should include board tags" do
+      u = User.create(:settings => {'vocalizations' => [
+        {'list' => [{'label' => 'whatevs'}], 'sentence' => 'whatevs'},
+        {'list' => [{'label' => 'cat'}, {'label' => 'frog'}], 'sentence' => 'cat frog', 'category' => 'journal', 'ts' => 5.seconds.ago.to_i},
+        {'list' => [{'label' => 'cat'}, {'label' => 'fog'}], 'sentence' => 'cat fog', 'category' => 'journal', 'ts' => 5.months.ago.to_i},
+      ]})
+      e = UserExtra.create(user: u)
+      e.settings['board_tags'] = {
+        'cheddar' => ['cc'],
+        'bacon' => ['a', 'b'],
+      }
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['board_tags']).to eq(['bacon', 'cheddar'])
+    end
     
     it "should include board ids if the user has set a home board" do
       u = User.create

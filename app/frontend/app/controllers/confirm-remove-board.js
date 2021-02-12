@@ -14,6 +14,9 @@ export default modal.ModalController.extend({
   unlink_action: computed('model.action', function() {
     return this.get('model.action') == 'unlink';
   }),
+  untag_action: computed('model.action', function() {
+    return this.get('model.action') == 'untag';
+  }),
   unstar_action: computed('model.action', function() {
     return this.get('model.action') == 'unstar';
   }),
@@ -24,7 +27,7 @@ export default modal.ModalController.extend({
       var _this = this;
       _this.set('loading', true);
       _this.set('error', false);
-      persistence.ajax('/api/v1/boards/unlink', {type: 'POST', data: {board_id: board.get('id'), user_id: user.get('id'), type: this.get('model.action')}}).then(function(res) {
+      persistence.ajax('/api/v1/boards/unlink', {type: 'POST', data: {board_id: board.get('id'), user_id: user.get('id'), tag: this.get('model.tag'), type: this.get('model.action')}}).then(function(res) {
         _this.set('loading', false);
         _this.set('error', false);
         board.set('removed', true);

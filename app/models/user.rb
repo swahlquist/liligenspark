@@ -16,6 +16,7 @@ class User < ActiveRecord::Base
   has_many :boards
   has_many :devices
   has_many :user_integrations
+  has_one :user_extra
   before_save :generate_defaults
   after_save :track_boards
   after_save :notify_of_changes

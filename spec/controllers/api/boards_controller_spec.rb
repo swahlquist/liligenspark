@@ -66,6 +66,87 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board'].map{|b| b['id'] }).to be_include(b3.global_id)
       expect(json['board'].map{|b| b['id'] }).not_to be_include(b2.global_id)
     end
+
+    it "should return supervisee boards if starred" do
+      token_user
+      b1 = Board.create(:user => @user)
+      u2 = User.create
+      b2 = Board.create(:user => u2)
+      u3 = User.create
+      b3 = Board.create(:user => u3, :public => true)
+      User.link_supervisor_to_user(@user, u2)
+      @user.reload
+      u2.reload
+      @user.settings['starred_board_ids'] = [b1.global_id, b2.global_id, b3.global_id]
+      @user.save
+      get :index, params: {:user_id => @user.global_id, :starred => true}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['board'].length).to eq(3)
+      expect(json['board'].map{|b| b['id'] }).to be_include(b1.global_id)
+      expect(json['board'].map{|b| b['id'] }).to be_include(b3.global_id)
+      expect(json['board'].map{|b| b['id'] }).to be_include(b2.global_id)
+    end
+
+    it "should return tagged boards if authorized" do
+      token_user
+      u2 = User.create
+      u2.settings['public'] = true
+      u2.save
+      b1 = Board.create(user: @user)
+      b2 = Board.create(user: @user)
+      b3 = Board.create(user: u2)
+      e = UserExtra.create(user: @user)
+      e.settings['board_tags'] = {
+        'bacon' => [b1.global_id, b3.global_id, 'a', 'b']
+      }
+      e.save
+      get :index, params: {:user_id => @user.global_id, :tag => 'bacon'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(1)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([b1.global_id])
+    end
+
+    it "should not return tagged boards if unauthorized" do
+      token_user
+      u2 = User.create
+      u2.settings['public'] = true
+      u2.save
+      b1 = Board.create(user: @user)
+      b2 = Board.create(user: @user)
+      b3 = Board.create(user: u2)
+      e = UserExtra.create(user: @user)
+      e.settings['board_tags'] = {
+        'bacon' => [b1.global_id, b3.global_id, 'a', 'b']
+      }
+      get :index, params: {:user_id => u2.global_id, :tag => 'bacon'}
+      assert_unauthorized
+    end
+
+    it "should include public, supervisee, and self-owned tagged boards, but not others" do
+      token_user
+      u2 = User.create
+      u2.settings['public'] = true
+      u2.save
+      u3 = User.create
+      User.link_supervisor_to_user(@user, u3)
+      b1 = Board.create(user: @user)
+      b2 = Board.create(user: @user)
+      b3 = Board.create(user: u2)
+      b4 = Board.create(user: u2, public: true)
+      b5 = Board.create(user: u3)
+      b6 = Board.create(user: u3, public: true)
+      e = UserExtra.create(user: @user)
+      e.tag_board(b1, 'water', false, false)
+      e.tag_board(b3, 'water', false, false)
+      e.tag_board(b4, 'water', false, false)
+      e.tag_board(b5, 'water', false, false)
+      e.tag_board(b6, 'water', false, false)
+      get :index, params: {:user_id => @user.global_id, :tag => 'water'}
+      json = assert_success_json
+      expect(json['board'].length).to eq(4)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([b1.global_id, b4.global_id, b5.global_id, b6.global_id])
+    end
     
     it "should always filter by public when user_id is not provided" do
       u = User.create(:settings => {:public => true})
@@ -1214,6 +1295,30 @@ describe Api::BoardsController, :type => :controller do
       expect(response).to be_successful
       expect(b.reload.shared_with?(@user.reload)).to eq(false)
     end
+
+    it "should untag a tagged board for the specified user" do
+      token_user
+      u = User.create
+      b = Board.create(:user => u)
+      e = UserExtra.create(user: @user)
+      e.settings['board_tags'] = {
+        'bacon' => [b.global_id],
+        'cheddar' => ['a', 'b', b.global_id, 'c']
+      }
+      e.save
+      post :unlink, params: {:board_id => b.global_id, :user_id => @user.global_id, :type => 'untag', :tag => 'bacon'}
+      expect(response).to be_successful
+      expect(e.reload.settings['board_tags']).to eq({
+        'cheddar' => ['a', 'b', b.global_id, 'c']
+      })
+
+      post :unlink, params: {:board_id => b.global_id, :user_id => @user.global_id, :type => 'untag', :tag => 'cheddar'}
+      expect(response).to be_successful
+      expect(e.reload.settings['board_tags']).to eq({
+        'cheddar' => ['a', 'b', 'c']
+      })
+
+    end
   end
   
   describe "history" do
@@ -1599,6 +1704,96 @@ describe Api::BoardsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['board']['protected']).to eq(false)
       expect(json['board']['public']).to eq(true)
+    end
+  end
+
+  describe "tag" do
+    it "should require an api token" do
+      post :tag, params: {board_id: 'asdf/asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid board" do
+      token_user
+      post :tag, params: {board_id: 'asdf/asdf'}
+      assert_not_found('asdf/asdf')
+    end
+
+    it "should require board authorization" do
+      token_user
+      u = User.create
+      b = Board.create(user: u)
+      post :tag, params: {board_id: b.global_id}
+      assert_unauthorized
+    end
+    
+    it "should not generate a blank tag" do
+      token_user
+      b = Board.create(user: @user)
+      post :tag, params: {board_id: b.global_id, tag: ''}
+      json = assert_success_json
+      expect(json['tagged']).to eq(false)
+      expect(json['board_tags']).to eq(nil)
+    end
+
+    it "should generate a tag" do
+      token_user
+      b = Board.create(user: @user)
+      post :tag, params: {board_id: b.global_id, tag: 'bacon'}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq(['bacon'])
+      expect(@user.reload.user_extra.settings['board_tags']['bacon']).to eq([b.global_id])
+    end
+
+    it "should tag downstream boards as well if specified" do
+      token_user
+      b = Board.create(user: @user)
+      b2 = Board.create(user: @user)
+      b3 = Board.create(user: @user)
+      b4 = Board.create(user: @user)
+      b5 = Board.create(user: @user)
+      b6 = Board.create(user: @user)
+      b.settings['downstream_board_ids'] = [b2.global_id, b3.global_id, b5.global_id, b6.global_id]
+      b.save
+      post :tag, params: {board_id: b.global_id, tag: 'bacon', downstream: true}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq(['bacon'])
+      expect(@user.reload.user_extra.settings['board_tags']['bacon']).to eq([b.global_id, b2.global_id, b3.global_id, b5.global_id, b6.global_id])
+    end
+
+    it "should remove a tag" do
+      token_user
+      b = Board.create(user: @user)
+      post :tag, params: {board_id: b.global_id, tag: 'bacon', remove: true}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq([])
+
+      post :tag, params: {board_id: b.global_id, tag: 'bacon'}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq(['bacon'])
+      expect(@user.reload.user_extra.settings['board_tags']['bacon']).to eq([b.global_id])
+
+      post :tag, params: {board_id: b.global_id, tag: 'bacon', remove: true}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq([])
+      expect(@user.reload.user_extra.settings['board_tags']['bacon']).to eq(nil)
+    end
+
+    it "should return a list of tags on success" do
+      token_user
+      b = Board.create(user: @user)
+      e = UserExtra.create(user: @user)
+      e.settings['board_tags'] = {'chocolate' => ['a', 'b'], 'alt' => ['cc']}
+      e.save
+      post :tag, params: {board_id: b.global_id, tag: 'bacon'}
+      json = assert_success_json
+      expect(json['tagged']).to eq(true)
+      expect(json['board_tags']).to eq(['alt', 'bacon', 'chocolate'])
     end
   end
 end

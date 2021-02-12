@@ -49,6 +49,7 @@ CoughDrop.User = DS.Model.extend({
   prior_avatar_urls: DS.attr('raw'),
   location: DS.attr('string'),
   permissions: DS.attr('raw'),
+  board_tags: DS.attr('raw'),
   unread_messages: DS.attr('number'),
   unread_alerts: DS.attr('number'),
   valet_password: DS.attr('string'),
@@ -675,6 +676,27 @@ CoughDrop.User = DS.Model.extend({
     var actions = this.get('offline_actions') || [];
     actions.push(action);
     this.set('offline_actions', actions);
+  },
+  tag_board: function(board, tag, remove, downstream) {
+    var _this = this;
+    return persistence.ajax('/api/v1/boards/' + board.get('id') + '/tag', {
+      type: 'POST',
+      data: {
+        tag: tag,
+        remove: !!remove,
+        downstream: !!downstream
+      }
+    }).then(function(res) {
+      if(res.tagged) {
+        if(res.board_tags) {
+          _this.set('board_tags', res.board_tags);
+          _this.reload();
+        }
+        return true;
+      } else {
+        return RSVP.reject({error: 'tag failed'});
+      }
+    });
   },
   copy_home_board: function(board, swap_images) {
     var user = this;

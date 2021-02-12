@@ -8,6 +8,8 @@
         {{t "Unlike this Board" key='unstar_this_board'}}
       {{else if unlink_action}}
         {{t "Unlink this Board" key='unlink_this_board'}}
+      {{else if untag_action}}
+        {{t "Remove this Board from Category" key='untag_this_board'}}
       {{else}}
         {{t "Remove this Board" key='remove_this_board'}}
       {{/if}}
@@ -29,6 +31,9 @@
         {{else if unlink_action}}
           <span class="glyphicon glyphicon-remove"></span>
           {{t "Are you sure you want to unlink this board?" key='confirm_unlink_board'}}
+        {{else if untag_action}}
+          <span class="glyphicon glyphicon-remove"></span>
+          {{t "Are you sure you want to remove this board from the category \"%{cat}\"?" cat=model.tag key='confirm_untag_board'}}
         {{else}}
           <span class="glyphicon glyphicon-remove"></span>
           {{t "Are you sure you want to remove this board?" key='confirm_remove_board'}}
@@ -46,6 +51,8 @@
       {{else if unstar_action}}
         {{t "Unlike Board" key='unstar_board'}}
       {{else if unlink_action}}
+        {{t "Unlink Board" key='unlink_board'}}
+      {{else if untag_action}}
         {{t "Unlink Board" key='unlink_board'}}
       {{else}}
         {{t "Remove Board" key='remove_board'}}

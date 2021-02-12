@@ -365,24 +365,40 @@
           {{/if}}
           {{#unless app_state.currentUser.modeling_only}}
             <li role="presentation" class={{if public_selected 'active'}}><a href="#" {{action 'set_selected' 'public'}}>{{t "Public" key='public'}}</a></li>
-            {{#if model.permissions.edit}}
-              <li role="presentation" class={{if private_selected 'active'}}><a href="#" {{action 'set_selected' 'private'}}>{{t "Private" key='private'}}</a></li>
-            {{/if}}
           {{/unless}}
           {{#if model.permissions.model}}
             <li role="presentation" class={{if root_selected 'active'}}><a href="#" {{action 'set_selected' 'root'}}>{{t "Root" key='root'}}</a></li>
           {{/if}}
           {{#unless app_state.currentUser.modeling_only}}
             <li role="presentation" class={{if starred_selected 'active'}}><a href="#" {{action 'set_selected' 'starred'}}>{{t "Liked" key='starred'}}</a></li>
-            {{#if model.permissions.edit}}
-              <li role="presentation" class={{if shared_selected 'active'}}><a href="#" {{action 'set_selected' 'shared'}}>{{t "Shared with Me" key='shared_with_me'}}</a></li>
+          {{/unless}}
+          
+          {{#unless app_state.currentUser.modeling_only}}
+            {{#if model.permissions.model}}
+              <li role="presentation" class={{if other_selected 'dropdown active' 'dropdown'}}>
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                  {{ more_label }}
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  {{#if model.permissions.edit}}
+                    <li><a href="#" {{action 'set_selected' 'shared'}}>{{t "Shared with Me" key='shared_with_me'}}</a></li>
+                  {{/if}}
+                  {{#if model.permissions.model}}
+                    {{#if model.prior_home_boards}}
+                      <li><a href="#" {{action 'set_selected' 'prior_home'}}>{{t "Prior Home Boards" key='prior_home'}}</a></li>
+                    {{/if}}
+                  {{/if}}
+                  {{#if model.permissions.edit}}
+                    <li role="presentation" class={{if private_selected 'active'}}><a href="#" {{action 'set_selected' 'private'}}>{{t "Private" key='private'}}</a></li>
+                  {{/if}}
+                  {{#each model.board_tags as |tag|}}
+                    <li><a href="#" {{action 'set_tag' tag}}>{{tag}}</a></li>
+                  {{/each}}
+                </ul>
+              </li>
             {{/if}}
           {{/unless}}
-          {{#if model.permissions.model}}
-            {{#if model.prior_home_boards}}
-              <li role="presentation" class={{if prior_home_selected 'active'}}><a href="#" {{action 'set_selected' 'prior_home'}}>{{t "Prior Home Boards" key='prior_home'}}</a></li>
-            {{/if}}
-          {{/if}}
         </ul>
         {{#if board_list}}
           {{#if board_list.loading}}
@@ -422,9 +438,9 @@
                           {{board-icon board=board.board}}
                         {{/if}}
                         {{#if model.permissions.edit}}
-                          {{#if board.id}}
+                          {{#if board.board.id}}
                             <button class="board_action" {{action 'remove_board' board_list.remove_type board.board}}>
-                              <span title={{board_list.remove_label}}><span class='glyphicon glyphicon-trash'></span></span>
+                              <span title={{board_list.remove_label}}><span class={{board_list.remove_icon}}></span></span>
                             </button>
                           {{/if}}
                         {{/if}}

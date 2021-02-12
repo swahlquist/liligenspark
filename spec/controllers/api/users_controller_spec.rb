@@ -652,7 +652,7 @@ describe Api::UsersController, :type => :controller do
       expect(response.body).to eq({confirmed: false}.to_json)
     end
     
-    it "should return whether registration was confirmed or not" do
+    it "should return whether registration was ever confirmed or not" do
       u = User.create
       post :confirm_registration, params: {:user_id => u.global_id, :code => u.registration_code}
       expect(response).to be_successful
@@ -664,7 +664,7 @@ describe Api::UsersController, :type => :controller do
 
       post :confirm_registration, params: {:user_id => u.global_id, :code => "abc"}
       expect(response).to be_successful
-      expect(response.body).to eq({confirmed: false}.to_json)
+      expect(response.body).to eq({confirmed: true}.to_json)
     end
   end
 

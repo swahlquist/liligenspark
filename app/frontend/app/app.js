@@ -241,6 +241,15 @@ Route.reopen({
   }
 });
 
+CoughDrop.clean_path = function(str) {
+  str = str.replace(/^\s+/, '').replace(/\s+$/, '');
+  if(str.length == 0) { str = "_"; }
+  if(str.match(/^\d/)) { str + "_" + str; }
+  str = str.replace(/\'/g, '').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+$/, '').replace(/-+/g, '-');
+  while(str.length < 3) { str = str + str; }
+  return str;  
+};
+
 CoughDrop.licenseOptions = [
   {name: i18n.t('private_license', "Private (no reuse allowed)"), id: 'private'},
   {name: i18n.t('cc_by_license', "CC By (attribution only)"), id: 'CC By', url: 'https://creativecommons.org/licenses/by/4.0/'},

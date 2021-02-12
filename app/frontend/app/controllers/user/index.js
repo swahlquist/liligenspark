@@ -95,6 +95,7 @@ export default Controller.extend({
     'model.root_boards',
     'model.starred_boards',
     'model.shared_boards',
+    'model.tagged_boards',
     'model.my_boards.length',
     'model.prior_home_boards.length',
     'model.public_boards.length',
@@ -104,7 +105,7 @@ export default Controller.extend({
     'model.shared_boards.length',
     function() {
       var list = [];
-      var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete")};
+      var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete"), remove_icon: 'glyphicon glyphicon-trash'};
       var cluster_orphans = false;
       if(this.get('selected') == 'mine' || !this.get('selected')) {
         list = this.get('model.my_boards');
@@ -119,10 +120,17 @@ export default Controller.extend({
         list = this.get('model.starred_boards');
         res.remove_type = 'unstar';
         res.remove_label = i18n.t('unstar', "unstar");
+        res.remove_icon = 'glyphicon glyphicon-star-empty';
       } else if(this.get('selected') == 'shared') {
         list = this.get('model.shared_boards');
         res.remove_type = 'unlink';
         res.remove_label = i18n.t('unlink', "unlink");
+        res.remove_icon = 'glyphicon glyphicon-remove';
+      } else if(this.get('selected') == 'tagged') {
+        list = this.get('model.tagged_boards');
+        res.remove_type = 'untag';
+        res.remove_label = i18n.t('unlink', "unlink");
+        res.remove_icon = 'glyphicon glyphicon-remove';
       } else if(this.get('selected') == 'prior_home') {
         list = this.get('model.prior_home_boards');
       }
@@ -318,7 +326,31 @@ export default Controller.extend({
       }
     });
   },
-  update_selected: observer('selected', 'persistence.online', function() {
+  more_label: computed(
+    'selected',
+    'current_tag',
+    'other_selected',
+    function() {
+      if(this.get('other_selected')) {
+        var sel = this.get('selected');
+        if(sel == 'shared') {
+          return i18n.t('shared', "Shared with Me");
+        } else if(sel == 'prior_home') {
+          return i18n.t('prior_home', "Prior Home Boards");
+        } else if(sel == 'private') {
+          return i18n.t('private', "Private");
+        } else if(sel == 'tagged') {
+          return this.get('current_tag');
+        } else {
+          return i18n.t('other', "Other");
+        }
+      } else {
+        return i18n.t('more_ellipsis', "More...");
+
+      }
+    }
+  ),
+  update_selected: observer('selected', 'persistence.online', 'current_tag', function() {
     var _this = this;
     var list_id = Math.random().toString();
     this.set('list_id', list_id);
@@ -328,7 +360,8 @@ export default Controller.extend({
     if(!_this.get('selected') && model) {
       default_key = model.get('permissions.supervise') ? 'mine' : 'public';
     }
-    ['mine', 'public', 'private', 'starred', 'shared', 'prior_home', 'root'].forEach(function(key, idx) {
+    this.set('other_selected', this.get('selected') && ['mine', 'public', 'root', 'liked'].indexOf(this.get('selected')) == -1);
+    ['mine', 'public', 'private', 'starred', 'shared', 'prior_home', 'root', 'tagged'].forEach(function(key, idx) {
       if(_this.get('selected') == key || key == default_key) {
         _this.set(key + '_selected', true);
         if(key == 'mine') {
@@ -345,6 +378,8 @@ export default Controller.extend({
           } else {
             _this.generate_or_append_to_list({user_id: model.get('id'), public: true, starred: true}, 'model.starred_boards', list_id);
           }
+        } else if(key == 'tagged') {
+          _this.generate_or_append_to_list({user_id: model.get('id'), tag: _this.get('current_tag'), sort: 'home_popularity'}, 'model.tagged_boards', list_id);
         } else if(key == 'shared') {
           _this.generate_or_append_to_list({user_id: model.get('id'), shared: true}, 'model.shared_boards', list_id);
         }
@@ -436,14 +471,20 @@ export default Controller.extend({
       this.set('parent_object', null);
 //       this.set('filterString', '');
     },
+    set_tag: function(tag) {
+      this.set('selected', 'tagged');
+      this.set('show_all_boards', false);
+      this.set('parent_object', null);
+      this.set('current_tag', tag);
+    },
     load_children: function(obj) {
       this.set('show_all_boards', false);
       if(obj) {
         this.set('prior_filter_string', this.get('filterString') || '');
         this.set('filterString', '');  
       } else {
-        this.set('prior_filter_string', '');
         this.set('filterString', this.get('prior_filter_string') || '');  
+        this.set('prior_filter_string', '');
       }
       this.set('parent_object', obj);
     },
@@ -461,7 +502,7 @@ export default Controller.extend({
           }
         });
       } else {
-        modal.open('confirm-remove-board', {action: action, board: board, user: this.get('model')}).then(function(res) {
+        modal.open('confirm-remove-board', {action: action, tag: _this.get('current_tag'), board: board, user: this.get('model')}).then(function(res) {
           if(res && res.update) {
             _this.update_selected();
           }
@@ -547,6 +588,7 @@ export default Controller.extend({
 
         var _this = this;
         var new_key = _this.get('new_user_name.value');
+        new_key = CoughDrop.clean_path(new_key);
         var old_key = _this.get('new_user_name.old_value');
         if(old_key != _this.get('model.user_name')) { return; }
 

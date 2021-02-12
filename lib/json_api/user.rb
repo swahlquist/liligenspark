@@ -142,6 +142,12 @@ module JsonApi::User
           'user_id' => link['user_id']
         }
       }
+
+      extra = user.user_extra
+      if extra && !args[:paginated]
+        tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
+        json['board_tags'] = tags if !tags.blank?
+      end
       
       supervisors = user.supervisors
       supervisees = user.supervisees
