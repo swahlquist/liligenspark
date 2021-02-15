@@ -642,6 +642,7 @@ var app_state = EmberObject.extend({
     var index_as_fallback = options.index_as_fallback;
     var auto_home = options.auto_home;
 
+
     this.set_history([]);
     var current = this.get('currentBoardState');
     var state = stashes.get('temporary_root_board_state') || stashes.get('root_board_state');
@@ -706,6 +707,9 @@ var app_state = EmberObject.extend({
     var preferred = app_state.get('speakModeUser.preferences.home_board') || app_state.get('currentUser.preferences.home_board');
     if(preferred && current) {
       emberSet(preferred, 'text_direction', current.text_direction);
+    }
+    if(preferred && app_state.get('label_locale') && app_state.get('label_locale') == app_state.get('vocalization_locale')) {
+      emberSet(preferred, 'locale', app_state.get('label_locale'));
     }
     
     if(!app_state.get('speak_mode')) {
@@ -840,6 +844,19 @@ var app_state = EmberObject.extend({
             }
           });
         }
+        var save_user = false;
+        if(user == speak_mode_user) {
+          // If entering Speak Mode on what is already
+          // the user's home board, but with a different
+          // locale, then update the user's preferences
+          // to set the new locale as the new preference
+          var home = user.get('preferences.home_board');
+          if(home && home.locale && home.locale != override_state.locale) {
+            user.set('preferences.home_board.locale', override_state.locale);
+            var save_user = false;
+          }
+        }
+        if(stashes.get('label_locale'))
         if(level.preferred || level.source) {
           // If the user has a preference for the currently-launching board,
           // then we take that into account. If already on a board and not in
@@ -858,14 +875,14 @@ var app_state = EmberObject.extend({
               // new preference.
               if(level.source == 'home') {
                 user.set('preferences.home_board.level', level.current);
-                user.save();
+                save_user = true;
               } else {
                 (user.get('preferences.sidebar_boards') || []).forEach(function(board) {
                   if(board && board.id == state.id) {
                     emberSet(board, 'level', level.current);
                   }
                 });
-                user.save();
+                save_user = true;
               }
             }
             board_level = level.current;
@@ -876,6 +893,9 @@ var app_state = EmberObject.extend({
             }
             board_level = level.preferred;
           }
+        }
+        if(save_user) {
+          user.save();
         }
       }
 

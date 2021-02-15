@@ -15,7 +15,7 @@ module JsonApi::Board
     ['grid', 'intro', 'background'].each do |key|
       json[key] = BoardContent.load_content(board, key)
     end
-    ['name', 'description', 'image_url', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories'].each do |key|
+    ['name', 'prefix', 'description', 'image_url', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories'].each do |key|
       json[key] = board.settings[key]
     end
     list = [board.settings['locale'] || 'en']

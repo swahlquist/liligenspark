@@ -427,6 +427,7 @@ class Api::UsersController < ApplicationController
       old_default_locale: params['old_default_locale'], 
       new_default_locale: params['new_default_locale'], 
       ids_to_copy: params['ids_to_copy'], 
+      copy_prefix: params['copy_prefix'],
       update_inline: params['update_inline'], 
       make_public: make_public,
       user_for_paper_trail: user_for_paper_trail
@@ -448,6 +449,7 @@ class Api::UsersController < ApplicationController
         old_default_locale: params['old_default_locale'], 
         new_default_locale: params['new_default_locale'], 
         ids_to_copy: params['ids_to_copy'], 
+        copy_prefix: params['copy_prefix'],
         make_public: make_public, 
         user_for_paper_trail: user_for_paper_trail,
         swap_library: params['swap_library']      

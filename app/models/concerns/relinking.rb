@@ -22,12 +22,23 @@ module Relinking
     return !self.public && self.for_user?(user) && !self.shared_by?(user)
   end
   
-  def copy_for(user, make_public=false, copy_id=nil)
+  def copy_for(user, make_public=false, copy_id=nil, prefix=nil)
+    # TODO: start creating content offload whenever a board is copied,
+    # either on the frontend or backend
     return nil unless user
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)
     board.key = board.generate_board_key(self.key.split(/\//)[1])
     board.settings['copy_id'] = copy_id
     board.settings['name'] = self.settings['name']
+    if !prefix.blank? && board.settings['name']
+      if self.settings['prefix'] && board.settings['name'].index(self.settings['prefix']) == 0
+        board.settings['name'] = board.settings['name'].sub(/#{self.settings['prefix']}\s+/, '')
+      end
+      if !board.settings['name'].index(prefix) != 0
+        board.settings['name'] = "#{prefix} #{board.settings['name']}"
+      end
+      board.settings['prefix'] = prefix
+    end
     board.settings['description'] = self.settings['description']
     board.settings['image_url'] = self.settings['image_url']
     board.settings['locale'] = self.settings['locale']
@@ -256,7 +267,7 @@ module Relinking
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
-          copy = orig.copy_for(user, make_public, starting_new_board.global_id)
+          copy = orig.copy_for(user, make_public, starting_new_board.global_id, opts[:copy_prefix])
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig, copy]
         end
@@ -303,7 +314,7 @@ module Relinking
             elsif !board.just_for_user?(user)
               # if it's not already private for the user, make a private copy for the user 
               # and add to list of replacements to handle.
-              copy = board.copy_for(user, opts[:make_public], opts[:copy_id])
+              copy = board.copy_for(user, opts[:make_public], opts[:copy_id], opts[:copy_prefix])
               copy.replace_links!(old_board, new_board)
               boards_to_save << copy
               replacement_map[board.global_id] = copy

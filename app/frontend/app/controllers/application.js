@@ -71,6 +71,7 @@ export default Controller.extend({
     decision.user = decision.user || app_state.get('currentUser');
     decision.action = decision.action || "nothing";
     oldBoard.set('copy_name', decision.board_name);
+    oldBoard.set('copy_prefix', decision.board_prefix);
     return modal.open('copying-board', {board: oldBoard, action: decision.action, user: decision.user, shares: decision.shares, make_public: decision.make_public, default_locale: decision.default_locale, translate_locale: decision.translate_locale});
   },
   board_levels: computed(function() {
@@ -746,7 +747,7 @@ export default Controller.extend({
       app_state.set('vocalization_locale', loc);
       stashes.persist('label_locale', loc);
       stashes.persist('vocalization_locale', loc);
-      editManager.process_for_displaying();      
+      editManager.process_for_displaying();    
     },
     openButtonStash: function() {
       if(!app_state.get('edit_mode')) { return; }

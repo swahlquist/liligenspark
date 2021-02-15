@@ -1609,6 +1609,7 @@ var editManager = EmberObject.extend({
   copy_board: function(old_board, decision, user, make_public, swap_library) {
     return new RSVP.Promise(function(resolve, reject) {
       var ids_to_copy = old_board.get('downstream_board_ids_to_copy') || [];
+      var prefix = old_board.get('copy_prefix');
       var save = old_board.create_copy(user, make_public);
       if(decision == 'remove_links') {
         save = save.then(function(res) {
@@ -1681,6 +1682,7 @@ var editManager = EmberObject.extend({
               new_default_locale: old_board.get('default_locale') || old_board.get('locale'),
               swap_library: swap_library,
               ids_to_copy: ids_to_copy.join(','),
+              copy_prefix: prefix,
               make_public: make_public
             }
           }).then(function(data) {

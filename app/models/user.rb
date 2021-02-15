@@ -1368,6 +1368,7 @@ class User < ActiveRecord::Base
       :starting_new_board => starting_new_board, 
       :old_default_locale => opts[:old_default_locale],
       :new_default_locale => opts[:new_default_locale],
+      :copy_prefix => opts[:copy_prefix],
       :valid_ids => valid_ids, 
       :update_inline => update_inline, 
       :make_public => make_public, 
@@ -1405,6 +1406,7 @@ class User < ActiveRecord::Base
       :starting_new_board => starting_new_board, 
       :old_default_locale => opts[:old_default_locale],
       :new_default_locale => opts[:new_default_locale],
+      :copy_prefix => opts[:copy_prefix],
       :valid_ids => valid_ids, 
       :make_public => make_public, 
       :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)

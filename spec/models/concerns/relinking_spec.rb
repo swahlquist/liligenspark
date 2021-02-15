@@ -118,6 +118,70 @@ describe Relinking, :type => :model do
       expect(res.settings['hat']).to eq(nil)
       expect(res.key).to eq(b.key + "_1")
     end
+
+    it "should prepend a new prefix" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['name'] = "Bacon"
+      b.save
+      res = b.copy_for(u, false, nil, "Cooked")
+      expect(res.settings['name']).to eq("Cooked Bacon")
+      expect(res.settings['prefix']).to eq("Cooked")
+    end
+
+    it "should remove the old prefix before adding the new prefix" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['name'] = "Bacon"
+      b.save
+      res = b.copy_for(u, false, nil, "Cooked")
+      expect(b.settings['name']).to eq("Bacon")
+      expect(b.settings['prefix']).to eq(nil)
+      expect(res.settings['name']).to eq("Cooked Bacon")
+      expect(res.settings['prefix']).to eq("Cooked")
+
+      res2 = res.copy_for(u, false, nil, "Frozen")
+      expect(b.settings['name']).to eq("Bacon")
+      expect(b.settings['prefix']).to eq(nil)
+      expect(res.settings['name']).to eq("Cooked Bacon")
+      expect(res.settings['prefix']).to eq("Cooked")
+      expect(res2.settings['name']).to eq("Frozen Bacon")
+      expect(res2.settings['prefix']).to eq("Frozen")
+    end
+
+    it "should just append the new prefix if the old prefix isn't at the beginning" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['name'] = "Bacon"
+      b.save
+      res = b.copy_for(u, false, nil, "Cooked")
+      expect(b.settings['name']).to eq("Bacon")
+      expect(b.settings['prefix']).to eq(nil)
+      expect(res.settings['name']).to eq("Cooked Bacon")
+      expect(res.settings['prefix']).to eq("Cooked")
+
+      res.settings['name'] = "Bacon"
+      res.save
+
+      res2 = res.copy_for(u, false, nil, "Frozen")
+      expect(b.settings['name']).to eq("Bacon")
+      expect(b.settings['prefix']).to eq(nil)
+      expect(res.settings['name']).to eq("Bacon")
+      expect(res.settings['prefix']).to eq("Cooked")
+      expect(res2.settings['name']).to eq("Frozen Bacon")
+      expect(res2.settings['prefix']).to eq("Frozen")
+    end
+
+    it "should ignore an empty string prefix" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['name'] = "Bacon"
+      b.save
+      res = b.copy_for(u, false, nil, "")
+      expect(res.settings['name']).to eq("Bacon")
+      expect(res.settings['prefix']).to eq(nil)
+    end
+
   end
 
   describe "update_default_locale!" do
@@ -213,30 +277,6 @@ describe Relinking, :type => :model do
     end
   end
   
-  # def update_default_locale!(old_default_locale, new_default_locale)
-  #   if new_default_locale && self.settings['locale'] == old_default_locale && old_default_locale != new_default_locale
-  #     buttons = self.buttons
-  #     trans = BoardContent.load_content(self, 'translations') || {}
-  #     buttons.each do |btn|
-  #       btn_trans = trans[btn['id'].to_s] || {}
-  #       btn_trans[old_default_locale] ||= {}
-  #       if !btn_trans[old_default_locale]['label']
-  #         btn_trans[old_default_locale]['label'] = btn['label']
-  #         btn_trans[old_default_locale]['vocalization'] = btn['vocalization']
-  #         btn_trans[old_default_locale]['inflections'] = btn['inflections']
-  #       end
-  #       if btn_trans[new_default_locale]
-  #         btn['label'] = btn_trans[new_default_locale]['label']
-  #         btn['vocalization'] = btn_trans[new_default_locale]['vocalization']
-  #         btn['inflections'] = btn_trans[new_default_locale]['inflections']
-  #       end
-  #       trans[btn['id'].to_s] = btn_trans
-  #     end
-  #     self.settings['buttons'] = buttons
-  #     self.settings['translations'] = trans
-  #     self.settings['locale'] = new_default_locale
-  #   end
-  # end
   describe "replace_links!" do
     it "should replace links in buttons section" do
       u = User.create

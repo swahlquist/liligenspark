@@ -918,6 +918,8 @@ class Board < ActiveRecord::Base
 
     @edit_notes << "renamed the board" if params['name'] && self.settings['name'] != params['name']
     self.settings['name'] = process_string(params['name']) if params['name']
+    self.settings['prefix'] = process_string(params['prefix']) if params['prefix']
+    self.settings.delete('prefix') if self.settings['prefix'].blank?
     self.settings['word_suggestions'] = params['word_suggestions'] if params['word_suggestions'] != nil
     @edit_notes << "updated the description" if params['description'] && params['description'] != self.settings['description']
     self.settings['description'] = process_string(params['description']) if params['description']

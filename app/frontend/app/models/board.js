@@ -36,6 +36,7 @@ CoughDrop.Board = DS.Model.extend({
   },
   name: DS.attr('string'),
   key: DS.attr('string'),
+  prefix: DS.attr('string'),
   description: DS.attr('string'),
   created: DS.attr('date'),
   updated: DS.attr('date'),
@@ -609,6 +610,7 @@ CoughDrop.Board = DS.Model.extend({
       parent_board_id: this.get('id'),
       key: this.get('key').split(/\//)[1],
       name: this.get('copy_name') || this.get('name'),
+      prefix: this.get('copy_prefix') || this.get('prefix'),
       description: this.get('description'),
       image_url: this.get('image_url'),
       license: this.get('license'),
@@ -656,6 +658,7 @@ CoughDrop.Board = DS.Model.extend({
       board.set('intro.unapproved', true);
     }
     this.set('copy_name', null);
+    this.set('copy_prefix', null);
     var _this = this;
     var res = board.save();
     res.then(function() {
