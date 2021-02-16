@@ -851,7 +851,7 @@ var app_state = EmberObject.extend({
           // locale, then update the user's preferences
           // to set the new locale as the new preference
           var home = user.get('preferences.home_board');
-          if(home && home.locale && opts.override_state && home.locale != opts.override_state.locale) {
+          if(home && home.locale && opts.override_state && home.locale != opts.override_state.locale && user.get('preferences.home_board')) {
             user.set('preferences.home_board.locale', opts.override_state.locale);
             var save_user = false;
           }
