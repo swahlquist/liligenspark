@@ -851,8 +851,8 @@ var app_state = EmberObject.extend({
           // locale, then update the user's preferences
           // to set the new locale as the new preference
           var home = user.get('preferences.home_board');
-          if(home && home.locale && home.locale != override_state.locale) {
-            user.set('preferences.home_board.locale', override_state.locale);
+          if(home && home.locale && opts.override_state && home.locale != opts.override_state.locale) {
+            user.set('preferences.home_board.locale', opts.override_state.locale);
             var save_user = false;
           }
         }
@@ -2290,6 +2290,7 @@ var app_state = EmberObject.extend({
     }
   }),
   load_user_badge: observer('speak_mode', 'referenced_user', 'persistence.online', function() {
+    // TODO: option to disable badges
     if(this.get('speak_mode') && this.get('persistence.online')) {
       var badge_hash = (this.get('referenced_user.id') || 'nobody') + "::" + ((new Date()).getTime() / 1000 / 3600)
       // don't check more than once an hour
@@ -2660,6 +2661,7 @@ var app_state = EmberObject.extend({
     return res;
   },
   highlight_selected_button: function(button, overlay, label_override) {
+    // TODO: ensure you are using the auto-inflected label for the highlight
     var $button = $(".button[data-id='" + button.id + "']");
     if(overlay) {
       $button = $(overlay);
