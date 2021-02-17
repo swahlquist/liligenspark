@@ -163,9 +163,9 @@ describe Passwords, :type => :model do
       expect(GoSecure.outdated_password?(u.settings['valet_password'])).to eq(true)
       u.assert_valet_mode!
       expect(u.valid_password?('bracken')).to eq(false)
-      expect(u.valid_password?("asdf-#{GoSecure.sha512(hash, 'asdf')}")).to eq(true)
+      expect(u.valid_password?("asdf?:##{GoSecure.sha512(hash, 'asdf')[0,30]}")).to eq(true)
       expect(u.valid_password?(u.valet_temp_password('whatever'))).to eq(true)
-      expect(u.valid_password?(u.pre_hashed_password("asdf-#{GoSecure.sha512(hash, 'asdf')}"))).to eq(false)
+      expect(u.valid_password?(u.pre_hashed_password("asdf?:##{GoSecure.sha512(hash, 'asdf')[0,30]}"))).to eq(false)
     end
 
     it "should re-generate a non-pre-hashed password" do

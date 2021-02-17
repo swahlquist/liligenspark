@@ -1157,6 +1157,11 @@ class Board < ActiveRecord::Base
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
             'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 'level_modifications', 'inflections');
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
+      if button['level_modifications'] && button['level_modifications']['override']
+        button['level_modifications']['override'].each do |attr, val|
+          button[attr] = val
+        end
+      end
       if button['load_board']
         if !approved_link_ids.include?(button['load_board']['id']) && !approved_link_ids.include?(button['load_board']['key'])
           link = Board.find_by_path(button['load_board']['id']) || Board.find_by_path(button['load_board']['key'])
