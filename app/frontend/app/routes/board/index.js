@@ -171,7 +171,7 @@ export default Route.extend({
   },
   error_message: computed('load_state', 'load_state.has_permissions', 'model.id', function() {
     if(this.get('model.id')) {
-      return i18n.t('unexpected_error', "This board should have loaded, but there was an unexpected problem");
+      return i18n.t('unexpected_board_error', "This board should have loaded, but there was an unexpected problem");
     } else {
       var error = this.get('load_state.error');
       if(error && error.errors) {

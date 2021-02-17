@@ -108,7 +108,7 @@ export default Controller.extend({
     },
     copy_event(res) {
       if(res) { modal.success(i18n.t('copied', "Copied to clipboard!")); }
-      else { modal.error(i18n.t('copy_failed', "Copy failed unexpectedly")); }
+      else { modal.error(i18n.t('copy_failed', "Copying to the clipboard failed.")); }
     },
     update_utterance: function() {
       this.set('model.image_url', this.get('image_url'));

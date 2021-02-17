@@ -24,7 +24,7 @@ export default Component.extend({
         var data = window.google.visualization.arrayToDataTable(table);
 
         var options = {
-          title: i18n.t('user_sessions', "User With Goals Defined"),
+          title: i18n.t('user_with_goals', "User With Goals Defined"),
           legend: {
             position: 'top',
             maxLines: 2

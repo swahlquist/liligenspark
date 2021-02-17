@@ -74,11 +74,11 @@ export default modal.ModalController.extend({
     return res;
   },
   highlight_types: [
-    {name: i18n.t('select_type', "[Select Type]"), id: 'none'},
+    {name: i18n.t('select_type', "[ Select Type ]"), id: 'none'},
     {name: i18n.t('location_based', "Highlight at Specific Locations"), id: 'locations'},
     {name: i18n.t('time_based', "Highlight at Certain Times of Day"), id: 'times'},
     {name: i18n.t('place_based', "Highlight at Types of Locations"), id: 'places'},
-    {name: i18n.t('custom', "Multiple Highlighting Types"), id: 'custom'}
+    {name: i18n.t('multiple_types', "Multiple Highlighting Types"), id: 'custom'}
   ],
   location_setting: computed('model.button.highlight_type', function() {
     return this.get('model.button.highlight_type') == 'locations' || this.get('model.button.highlight_type') == 'custom';

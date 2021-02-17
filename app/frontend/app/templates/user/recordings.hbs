@@ -29,12 +29,12 @@
               {{#if sound.url}}
                 <tr>
                   <td>
-                    {{sound.name}} <span class='text-muted'>{{t "created" key='created'}} {{date sound.created 'short_day'}}</span>
+                    {{sound.name}} <span class='text-muted'>{{t "created" key='created_lower'}} {{date sound.created 'short_day'}}</span>
                     <div class='text-muted' style='margin-left: 30px;'>
                       {{#if sound.transcription}}
                         {{sound.transcription}}
                         {{#if model.permissions.edit}}
-                          <a href="#" {{action 'edit_sound' sound}}>{{t "edit" key='edit'}}</a>
+                          <a href="#" {{action 'edit_sound' sound}}>{{t "edit" key='edit_lower'}}</a>
                         {{/if}}
                       {{else if sound.transcription_pending}}
                         {{t "checking for transcription..." key='transcription_pending'}}
@@ -62,8 +62,8 @@
                   <td style='width: 150px;'>
                     <a href={{sound.url}} class='btn btn-default' title={{t "download" key='download'}}><span class='glyphicon glyphicon-cloud-download'></span></a>
                     {{#if model.permissions.edit}}
-                      <button {{action 'edit_sound' sound}} class='btn btn-default' title={{t "edit" key='edit'}}><span class='glyphicon glyphicon-pencil'></span></button>
-                      <button {{action 'delete_sound' sound}} class='btn btn-default' title={{t "delete" key='delete'}}><span class='glyphicon glyphicon-trash'></span></button>
+                      <button {{action 'edit_sound' sound}} class='btn btn-default' title={{t "edit" key='edit_lower'}}><span class='glyphicon glyphicon-pencil'></span></button>
+                      <button {{action 'delete_sound' sound}} class='btn btn-default' title={{t "delete" key='delete_lower'}}><span class='glyphicon glyphicon-trash'></span></button>
                     {{/if}}
                   </td>
                 </tr>
@@ -99,7 +99,7 @@
     {{/if}}
   </div>
 {{else if session.isAuthenticated}}
-  <p>{{t "It looks like you don't have permission to access this information" key='not_authorized'}}</p>
+  <p>{{t "It looks like you don't have permission to access this information" key='not_authorized_for_access'}}</p>
 {{else}}
   {{login-form left=true prompt=true return=true}}
 {{/if}}

@@ -44,7 +44,7 @@
     {{/if}}
     <button {{action "close"}} class="btn btn-default">{{t "Cancel" key='cancel'}}</button>
     {{#if status.errored}}
-      <p class='text-danger'>{{t "Setting home board failed, please try again." key='set_as_home_failed'}}</p>
+      <p class='text-danger'>{{t "Setting home board failed, please try again." key='setting_home_failed'}}</p>
     {{else if status.updating}}
       <p class='text-info'>{{t "Updating user settings..." key='updating_user_settings'}}</p>
     {{else if status.copying}}

@@ -161,7 +161,7 @@
         <div class="checkbox big_checkbox">
           <label>
             {{input type="checkbox" checked=pending_preferences.dim_header id="dim_header"}}
-            {{t "Make the header and sidebar less bright" key='show_folder_icons'}}
+            {{t "Make the header and sidebar less bright" key='dim_header_long'}}
           </label>
         </div>
       </div>
@@ -318,7 +318,7 @@
       </div>
     {{/unless}}
     <div class="form-group">
-      <label for="debounce" class="col-sm-3 control-label">{{t "Ignore Repeat Hits For" key='debounce'}}</label>
+      <label for="debounce" class="col-sm-3 control-label">{{t "Ignore Repeat Hits For" key='ignore_repeat_hits'}}</label>
       <div class="col-sm-3">
         <div class="input-group">
           <span class="input-group-btn">
@@ -374,7 +374,7 @@
             {{#if cant_change_private_logging }}
               <div class='col-sm-5 col-sm-offset-3'>
                 <p class='form-control-static text-muted'>
-                  {{t "Only the user can adjust these settings." key='user_only'}}
+                  {{t "Only the user can adjust these settings." key='user_only_these'}}
                 </p>
               </div>
             {{else}}
@@ -434,7 +434,7 @@
               <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" disabled=cant_change_private_logging checked=pending_preferences.private_logging id="private_logging"}}
-                  {{t "Completely Restrict Data Log Access outside this login (includes supervisors, support, integrations & community summaries)." key='restrict_log_access'}}
+                  {{t "Completely Restrict Data Log Access outside this login (includes supervisors, support, integrations & community summaries)." key='completely_restrict_log_access'}}
                   {{#if cant_change_private_logging}}
                     <div class='text-muted'>{{t "Only the user can adjust this setting." key='user_only'}}</div>
                   {{/if}}
@@ -482,7 +482,7 @@
               </label>
             </div>
             <div style="margin-top: 10px;">
-              <button type="button" class='btn btn-default' {{action "delete_logs"}}>{{t "Delete all stored logs" key='delete_logs'}}</button>
+              <button type="button" class='btn btn-default' {{action "delete_logs"}}>{{t "Delete all stored logs" key='delete_all_logs'}}</button>
             </div>
           </div>
         </div>
@@ -501,7 +501,7 @@
         <div class="checkbox big_checkbox">
           <label>
             {{input type="checkbox" checked=pending_preferences.cookies id="cookies"}}
-            {{t "%app_name% can track my actions and pageviews for internal purposes like error handling, improving features and tracking trends" key='allow_cookies'}}
+            {{t "%app_name% can track my actions and pageviews for internal purposes like error handling, improving features and tracking trends" key='allow_cookies_checkbox'}}
           </label>
         </div>
       </div>
@@ -763,7 +763,7 @@
                   <div style='padrequested_phrase_changesding-left: 10px;'>
                     {{#if phrase.used}}<span class='glyphicon glyphicon-ok'></span>{{/if}}
                     {{phrase.text}}
-                    <a href="#" {{action 'remove_phrase' phrase.text}} style='padding-left: 5px; font-size: 12px;'>{{t "remove" key='remove'}}</a>
+                    <a href="#" {{action 'remove_phrase' phrase.text}} style='padding-left: 5px; font-size: 12px;'>{{t "remove" key='remove_lower'}}</a>
                   </div>
                 {{/each}}
               {{else}}
@@ -780,7 +780,7 @@
         </div>
       {{/if}}
       <div class="form-group">
-        <label for="phrase_categories" class="col-sm-3 control-label">{{t "Saved Phrase Types" key='saved_phrases'}}</label>
+        <label for="phrase_categories" class="col-sm-3 control-label">{{t "Saved Phrase Types" key='saved_phrase_types'}}</label>
         <div class="col-sm-5">
           {{input class='form-control' type='text' value=phrase_categories_string placeholder="list, of, phrase, categories"}}
           <em>{{t "CoughDrop has \"Quick\" and \"Journal\" categories by default, but you can list more categories to add here." key='phrase_categories_explainer'}}</em><br/>
@@ -844,7 +844,7 @@
                   <span style="float: right; margin-top: 5px;">
                     <button class='btn btn-default btn-sm' title={{t "move up" key='move_up'}} {{action 'move_sidebar_button' option 'up'}} style={{if option.top 'visibility: hidden;' ''}}><span class='glyphicon glyphicon-arrow-up'></span></button>
                     <button class='btn btn-default btn-sm' title={{t "move down" key='move_down'}} {{action 'move_sidebar_button' option 'down'}}style={{if option.bottom 'visibility:hidden;' ''}}><span class='glyphicon glyphicon-arrow-down'></span></button>
-                    <button class='btn btn-default btn-sm' title={{t "remove" key='remove'}} {{action 'move_sidebar_button' option 'delete'}}><span class='glyphicon glyphicon-trash'></span></button>
+                    <button class='btn btn-default btn-sm' title={{t "remove" key='remove_lower'}} {{action 'move_sidebar_button' option 'delete'}}><span class='glyphicon glyphicon-trash'></span></button>
                   </span>
                   <span style="cursor: pointer; margin-top: 10px; display: inline-block; margin-left: 5px;" {{action "sidebar_button_settings" option}}>
                     {{#if option.alert}}
@@ -985,7 +985,7 @@
         </div>
       {{/unless}}
       <div class="form-group">
-        <label for="flipped_override" class="col-sm-3 control-label">{{t "Flipped Vocalization Box" key='vocalization_box_text'}}</label>
+        <label for="flipped_override" class="col-sm-3 control-label">{{t "Flipped Vocalization Box" key='flipped_vocalization_box_text'}}</label>
         <div class="col-sm-5">
           <div class="checkbox big_checkbox">
             <label>
@@ -1019,7 +1019,7 @@
       </div>
     {{/if}}
     <div class="form-group">
-      <label for="always_show_back" class="col-sm-3 control-label">{{t "Back Button" key='always_show_back'}}</label>
+      <label for="always_show_back" class="col-sm-3 control-label">{{t "Back Button" key='back_button'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">
           <label>
@@ -1153,7 +1153,7 @@
                 <div class="checkbox big_checkbox">
                   <label>
                     {{input type="checkbox" checked=pending_preferences.device.alternate_voice.for_scanning id="scanning_voice"}}
-                    {{t "Use My Secondary Voice for Audio Prompts" key='scanning_voice'}}
+                    {{t "Use My Secondary Voice for Audio Prompts" key='use_scanning_voice'}}
                   </label>
                   {{#if pending_preferences.device.alternate_voice.for_scanning}}
                     <div style='margin-left: 20px;'><em>{{t "secondary voice options are available farther down" key='secondary_options_below'}}</em></div>
@@ -1331,7 +1331,7 @@
                 <div class="checkbox big_checkbox">
                   <label>
                     {{input type="checkbox" checked=pending_preferences.device.dwell_head_pointer id="dwell_head_pointer"}}
-                    {{t "Use head position as a direct pointer" key='dwell_head_pointer'}}
+                    {{t "Use head position as a direct pointer" key='use_dwell_head_pointer'}}
                   </label>
                 </div>
               </div>
@@ -1352,7 +1352,7 @@
               <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" checked=pending_preferences.device.dwell_cursor id="dwell_cursor"}}
-                  {{t "Show icon at current dwell location" key='dwell_cursor'}}
+                  {{t "Show icon at current dwell location" key='show_dwell_cursor'}}
                 </label>
               </div>
             </div>
@@ -1394,7 +1394,7 @@
           </div>
         {{else}}
           <div class="form-group">
-            <label for="dwell_no_cutoff" class="col-sm-3 control-label">{{t "Dwell Cutoff" key='dwell_no_cutoff'}}</label>
+            <label for="dwell_no_cutoff" class="col-sm-3 control-label">{{t "Dwell Cutoff" key='dwell_cutoff'}}</label>
             <div class="col-sm-5">
               <div class="checkbox big_checkbox">
                 <label>
@@ -1678,7 +1678,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="alternate_voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Secondary Voice Pitch" key='voice_pitch'}}</label>
+          <label for="alternate_voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Secondary Voice Pitch" key='secondary_voice_pitch'}}</label>
           <div class="col-sm-3 col-xs-7">
             <div class="input-group">
               <span class="input-group-btn">
@@ -1759,7 +1759,7 @@
   </div>
   </form>
 {{else if session.isAuthenticated}}
-  <p>{{t "It looks like you don't have permission to access this information" key='not_authorized'}}</p>
+  <p>{{t "It looks like you don't have permission to access this information" key='not_authorized_for_access'}}</p>
 {{else}}
   {{login-form left=true prompt=true return=true}}
 {{/if}}

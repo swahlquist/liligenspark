@@ -9,7 +9,7 @@
     {{#if choice.reset}}
       {{#if user.can_reset_eval}}
         <p>
-          {{t "Are you sure you want to reset the evaluation period for the account, <b>%{user_name}</b>? This will erase any personalizations and logs created on the account before now." user_name=user.user_name key='confirm_reset'}}
+          {{t "Are you sure you want to reset the evaluation period for the account, <b>%{user_name}</b>? This will erase any personalizations and logs created on the account before now." user_name=user.user_name key='confirm_reset_eval'}}
         </p>
         <p>
           {{t "To confirm the reset, please enter the user name for this evaluation account (%{user_name}), as well as a new email address to be used during the next eval." key='parameters_for_reset' user_name=user.user_name}}

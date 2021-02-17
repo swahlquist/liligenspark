@@ -87,7 +87,7 @@ var voices = EmberObject.extend({
           });
         }, function() {
           capabilities.wakelock('download_voice', false);
-          reject(i18n.t('error_downloading_voice', "There was an unexpected problem while updating the user's voice settings"));
+          reject(i18n.t('error_updating_voice', "There was an unexpected problem while updating the user's voice settings"));
         });
       }, function(err) {
         capabilities.wakelock('download_voice', false);

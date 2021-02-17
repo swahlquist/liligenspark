@@ -25,7 +25,7 @@
                   <span class='sr-only'>{{t "play" key='play'}}</span>
                 {{/if}}
               </button>
-              <button class='btn btn-default btn-sm' {{action 'select_audio' sound}} style='height: 40px;'>{{t "select" key='select'}}</button>
+              <button class='btn btn-default btn-sm' {{action 'select_audio' sound}} style='height: 40px;'>{{t "select" key='select_lower'}}</button>
             </div>
             {{sound.name}}, {{date sound.created 'short_day'}}
             <div style='padding-left: 20px;' class='text-muted'>
@@ -33,7 +33,7 @@
                 {{sound.transcription}} -
                 {{duration sound.duration}}
               {{else}}
-                {{t "duration:" key='duration'}}
+                {{t "duration:" key='duration_colon'}}
                 {{duration sound.duration}}
               {{/if}}
             </div>

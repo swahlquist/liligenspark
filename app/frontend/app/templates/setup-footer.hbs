@@ -10,7 +10,7 @@
       </span>
     {{else}}
       <span style='font-size: 14px;'>
-        {{#link-to 'index'}}{{t "Back to the Dashboard" key='done'}}{{/link-to}}
+        {{#link-to 'index'}}{{t "Back to the Dashboard" key='back_to_dashboard'}}{{/link-to}}
       </span>
     {{/if}}
     {{#if app_state.currentBoardState}}
@@ -19,7 +19,7 @@
           {{#if app_state.root_board_is_home}}
           {{else}}
             <a class="btn btn-primary" href="#" {{action "setAsHome" 'starting'}} style='margin-left: 20px;'>
-              <span class="wide">{{t "Make This my Home Board" key="set_as_home"}}</span>
+              <span class="wide">{{t "Make This my Home Board" key="make_home_board"}}</span>
             </a>
           {{/if}}
         {{/if}}

@@ -206,8 +206,8 @@ export default modal.ModalController.extend({
     var res = [
       {name: i18n.t('talk', "Add button to the vocalization box"), id: "talk"},
       {name: i18n.t('folder', "Open/Link to another board"), id: "folder"},
-      {name: i18n.t('link', "Open a web site in a browser tab"), id: "link"},
-      {name: i18n.t('app', "Launch an application"), id: "app"}
+      {name: i18n.t('link_tab', "Open a web site in a browser tab"), id: "link"},
+      {name: i18n.t('launch_app', "Launch an application"), id: "app"}
     ];
     res.push({name: i18n.t('integration', "Activate a connected tool"), id: "integration"});
     return res;
@@ -407,7 +407,7 @@ export default modal.ModalController.extend({
   }),
   image_libraries: computed('lessonpix_enabled', 'premium_symbols', function() {
     var res = [
-      {name: i18n.t('open_symbols', "opensymbols.org (default)"), id: 'opensymbols'}
+      {name: i18n.t('open_symbols_org', "opensymbols.org (default)"), id: 'opensymbols'}
     ];
     if(this.get('lessonpix_enabled') || this.get('premium_symbols')) {
       res.push({name: i18n.t('lessonpix_images', "LessonPix Images"), id: 'lessonpix'});
@@ -476,13 +476,13 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('public_boards', "Public Boards"), id: 'public'});
       res.push({name: i18n.t('their_starred_boards', "This User's Liked Boards"), id: 'current_user_starred'});
       res.push({name: i18n.t('my_public_boards', "My Public Boards"), id: 'personal_public'});
-      res.push({name: i18n.t('my_public_boards', "My Liked Public Boards"), id: 'personal_public_starred'});
-      res.push({name: i18n.t('all_my_boards', "All My Boards (includes shared)"), id: 'personal'});
+      res.push({name: i18n.t('my_liked_public_boards', "My Liked Public Boards"), id: 'personal_public_starred'});
+      res.push({name: i18n.t('all_my_boards_includes_shared', "All My Boards (includes shared)"), id: 'personal'});
       // TODO: add My Private Boards, but warn and have option to auto-share if selected
     } else {
-      res.push({name: i18n.t('my_boards', "My Boards (includes shared)"), id: 'personal'});
+      res.push({name: i18n.t('my_boards_includes_shared', "My Boards (includes shared)"), id: 'personal'});
       res.push({name: i18n.t('public_boards', "Public Boards"), id: 'public'});
-      res.push({name: i18n.t('starred_boards', "My Liked Boards"), id: 'personal_starred'});
+      res.push({name: i18n.t('my_starred_boards', "My Liked Boards"), id: 'personal_starred'});
     }
     return res;
   }),
@@ -706,7 +706,7 @@ export default modal.ModalController.extend({
   }),
   locales: computed('board.locale', function() {
     var list = i18n.get('locales');
-    var res = [{name: i18n.t('english_default', "English"), id: 'en'}];
+    var res = [{name: i18n.t('english', "English"), id: 'en'}];
     var short_locale = (this.get('board.locale') || "").split(/-|_/)[0].toLowerCase();
     if(short_locale) {
       for(var key in list) {

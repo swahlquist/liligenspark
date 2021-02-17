@@ -293,7 +293,7 @@ export default modal.ModalController.extend({
               'image_id': image.id
             });
           }, function(err) {
-            modal.error(i18n.t('error_saving_image', "There was an unexpected error adding the image"));
+            modal.error(i18n.t('error_adding_image', "There was an unexpected error adding the image"));
           });
         } else {
           editManager.lucky_symbol(button.id);

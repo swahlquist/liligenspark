@@ -80,7 +80,7 @@ export default modal.ModalController.extend({
     } else if(type == 'words') {
       return i18n.t('word_usages', "times used");
     } else if(type == 'modeling') {
-      return i18n.t('modeling_events', "modeling hits");
+      return i18n.t('modeling_hits', "modeling hits");
     } else {
       return i18n.t('events', "events");
     }

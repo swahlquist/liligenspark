@@ -10,11 +10,11 @@
       {{t "sending test message to event handler URLs..." key='testing_webhook'}}
     {{else if model.webhook.testing.error}}
       <span class='text-danger'>{{t "there was an unexpected error while trying to test the event handler" key='error_testing_webhook'}}</span><br/>
-      <a href="#" {{action 'test'}}>{{t "try again" key='try_again'}}</a>
+      <a href="#" {{action 'test'}}>{{t "try again" key='try_again_lower'}}</a>
     {{else}}
       {{#if model.webhook.testing.done}}
         <span class='text-success'>{{t "finished testing the event handler" key='done_testing_webhook'}}</span><br/>
-        <a href="#" {{action 'test'}}>{{t "try again" key='try_again'}}</a>
+        <a href="#" {{action 'test'}}>{{t "try again" key='try_again_lower'}}</a>
       {{else}}
         <a href="#" {{action 'test'}}>
           {{t "test" key='test'}}

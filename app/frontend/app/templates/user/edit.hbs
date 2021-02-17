@@ -307,7 +307,7 @@
                           <span class='label label-default'>{{t "button" key='for_buttons'}}</span>
                         {{/if}}
                         {{#if integration.render}}
-                          <span class='label label-default'>{{t "launch" key='for_buttons'}}</span>
+                          <span class='label label-default'>{{t "launch" key='launch'}}</span>
                         {{/if}}
                       </div>
                     </td>
@@ -325,8 +325,8 @@
           {{/if}}
           {{#if model.permissions.edit}}
             <div>
-              <a href="#" class='btn btn-default' {{action 'browse_tools'}}>{{t "browse tools" key='browse_tools'}}</a>
-              <a href="#" class='btn btn-default' {{action 'add_integration'}}>{{t "add custom tool" key='add_connected_tool'}}</a>
+              <a href="#" class='btn btn-default' {{action 'browse_tools'}}>{{t "browse tools" key='browse_tools_lower'}}</a>
+              <a href="#" class='btn btn-default' {{action 'add_integration'}}>{{t "add custom tool" key='add_custom_tool'}}</a>
             </div>
           {{/if}}
         </div>
@@ -364,7 +364,7 @@
                     </td>
                     {{#if model.permissions.edit}}
                       <td>
-                        <a href="#" {{action 'delete_webhook' webhook}}><span class='glyphicon glyphicon-trash'></span><span class='sr-only'>{{t "delete event handler" key='delete_event_handler'}}</span></a>
+                        <a href="#" {{action 'delete_webhook' webhook}}><span class='glyphicon glyphicon-trash'></span><span class='sr-only'>{{t "delete event handler" key='delete_event_handler_lower'}}</span></a>
                       </td>
                     {{/if}}
                   </tr>
@@ -389,7 +389,7 @@
     {{/if}}
   </div>
 {{else if session.isAuthenticated}}
-  <p>{{t "It appears you don't have permission to access this user's information" key='not_allowed'}}</p>
+  <p>{{t "It appears you don't have permission to access this user's information" key='not_allowed_user_long'}}</p>
 {{else}}
   {{login-form left=true prompt=true return=true}}
 {{/if}}

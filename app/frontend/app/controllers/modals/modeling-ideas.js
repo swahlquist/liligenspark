@@ -179,7 +179,7 @@ export default modal.ModalController.extend({
       primary_modeled_words: i18n.t('goal_words', "Goal Target"),
       secondary_words: i18n.t('goal_words', "Goal Target"),
       secondary_modeled_words: i18n.t('goal_words', "Goal Target"),
-      popular_modeled_words: i18n.t('modeled_words', "Frequently-Modeled"),
+      popular_modeled_words: i18n.t('frequently_modeled_words', "Frequently-Modeled"),
       infrequent_core_words: i18n.t('infrequent_core', "Rarely-Used Core"),
       emergent_words: i18n.t('emergent', "Emergent Use"),
       dwindling_words: i18n.t('dwindling', "Dwindling Use"),

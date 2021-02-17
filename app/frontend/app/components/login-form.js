@@ -160,7 +160,7 @@ export default Component.extend({
         app_state.set('logging_in', false);
         _this.set('logging_in', false);
         _this.set('logged_in', false);
-        _this.set('login_error', i18n.t('user_update_failed', "Retrieving login preferences failed"));
+        _this.set('login_error', i18n.t('user_retrieve_failed', "Retrieving login preferences failed"));
       });
     },
     logout: function() {
@@ -200,7 +200,7 @@ export default Component.extend({
           if(err.error == "Invalid authentication attempt") {
             _this.set('login_error', i18n.t('invalid_login', "Invalid user name or password"));
           } else if(err.error == "Invalid client secret") {
-            _this.set('login_error', i18n.t('invalid_login', "Your login token is expired, please try again"));
+            _this.set('login_error', i18n.t('expired_login', "Your login token is expired, please try again"));
           } else if(err.error && err.error.match(/user name was changed/i) && err.user_name) {
             _this.set('login_error', i18n.t('user_name_changed', "NOTE: User name has changed to \"%{un}\"", {un: err.user_name}));
           } else {

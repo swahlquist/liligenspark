@@ -33,7 +33,7 @@
             {{input value=model.supervisor.user_name class="form-control" placeholder="User name"}}
             {{#if model.supervisor.user_name_check.checking}}
             {{else if model.supervisor.user_name_check.exists}}
-              <span class='text-danger'>{{t '"%{user_name}" already exists' user_name=model.supervisor.user_name}}</span>
+              <span class='text-danger'>{{t "\"%{user_name}\" already exists" user_name=model.supervisor.user_name}}</span>
             {{/if}}
           </div>
         </div>

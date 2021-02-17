@@ -564,7 +564,7 @@ var Subscription = EmberObject.extend({
     var res = i18n.t('coughdrop_license', "%app_name% license");
     if(this.get('user_type') == 'communicator') {
       if(this.get('eval')) {
-        res = i18n.t('long_term_sub', "%app_name% evaluation account");
+        res = i18n.t('eval_sub', "%app_name% evaluation account");
       } else if(this.get('subscription_type') == 'extras') {
         res = i18n.t('extras_purchase', "%app_name% premium symbols")
       } else {

@@ -281,7 +281,7 @@ CoughDrop.registrationTypes = [
 ];
 
 CoughDrop.board_levels = [
-  {name: i18n.t('unspecified', "[  ]"), id: ''},
+  {name: i18n.t('unspecified_empty', "[  ]"), id: ''},
   {name: i18n.t('level_1', "1 - Minimal Targets"), id: '1'},
   {name: i18n.t('level_2', "2 - Basic Core"), id: '2'},
   {name: i18n.t('level_3', "3 - Additional Basic Core"), id: '3'},
@@ -309,7 +309,7 @@ CoughDrop.parts_of_speech = [
   {name: i18n.t('determiner', "Determiner (that, his)"), id: 'determiner'},
   {name: i18n.t('number', "Number (one, two)"), id: 'number'},
   {name: i18n.t('social_phrase', "Social Phrase (hello, thank you)"), id: 'social'},
-  {name: i18n.t('other', "Other word type"), id: 'other'},
+  {name: i18n.t('other_word_type', "Other word type"), id: 'other'},
   {name: i18n.t('custom_1', "Custom Word Type 1"), id: 'custom_1'},
   {name: i18n.t('custom_2', "Custom Word Type 2"), id: 'custom_2'},
   {name: i18n.t('custom_3', "Custom Word Type 3"), id: 'custom_3'}
@@ -320,7 +320,7 @@ CoughDrop.parts_of_speech = [
 CoughDrop.keyed_colors = [
   {border: "#ccc", fill: "#fff", color: i18n.t('white', "White"), types: ['conjunction', 'number']},
   {border: "#dd0", fill: "#ffa", color: i18n.t('yellow', "Yellow"), hint: i18n.t('people', "people"), types: ['pronoun']},
-  {border: "#6d0", fill: "#cfa", color: i18n.t('green', "Green"), hint: i18n.t('actions', "actions"), types: ['verb']},
+  {border: "#6d0", fill: "#cfa", color: i18n.t('green', "Green"), hint: i18n.t('actions_lower', "actions"), types: ['verb']},
   {fill: "#fca", color: i18n.t('orange', "Orange"), hint: i18n.t('nouns', "nouns"), types: ['noun', 'nominative']},
   {fill: "#acf", color: i18n.t('blue', "Blue"), hint: i18n.t('describing_words', "describing"), types: ['adjective']},
   {fill: "#caf", color: i18n.t('purple', "Purple"), hint: i18n.t('questions', "questions"), types: ['question']},
@@ -328,8 +328,8 @@ CoughDrop.keyed_colors = [
   {fill: "#fac", color: i18n.t('pink', "Pink"), hint: i18n.t('social_words', "social words"), types: ['preposition', 'social']},
   {fill: "#ca8", color: i18n.t('brown', "Brown"), hint: i18n.t('adverbs', "adverbs"), types: ['adverb']},
   {fill: "#ccc", color: i18n.t('gray', "Gray"), hint: i18n.t('determiners', "determiners"), types: ['article', 'determiner']},
-  {fill: 'rgb(115, 204, 255)', color: i18n.t('bluish', "Bluish"), hint: i18n.t('other', "other"), types: []},
-  {fill: "#000", color: i18n.t('black', "Black"), hint: i18n.t('contrast', "contrast"), types: []}
+  {fill: 'rgb(115, 204, 255)', color: i18n.t('bluish', "Bluish"), hint: i18n.t('other_lower', "other"), types: []},
+  {fill: "#000", color: i18n.t('black', "Black"), hint: i18n.t('contrast_lower', "contrast"), types: []}
 ];
 
 CoughDrop.licenseOptions.license_url = function(id) {

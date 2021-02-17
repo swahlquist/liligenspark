@@ -222,7 +222,7 @@ export default Controller.extend({
           _this.transitionToRoute('user.log', _this.get('model.user_name'), logs[0]);
         } else {
           _this.send('refresh');
-          modal.success(i18n.t('sounds_imported', "Your logs have been imported!"));
+          modal.success(i18n.t('logs_imported', "Your logs have been imported!"));
         }
       }, function() { });
     }

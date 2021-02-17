@@ -20,7 +20,7 @@
             <dd><div style='max-height: 50px; overflow: auto;'>{{using_user_names}}</div></dd>
           {{/if}}
 
-          <dt>{{t "Home Uses" key='people_using_this_board'}}</dt>
+          <dt>{{t "Home Uses" key='people_using_this_home_board'}}</dt>
           <dd>{{t "%{num} people use this as their home board" num=stats.home_uses key='n_people_use_this_home_board'}}</dd>
 
           <dt>{{t "Likes" key='stars'}}</dt>
@@ -69,7 +69,7 @@
           <p class="text-danger">{{t "Must be logged in to see board stats" key='must_be_logged_for_board_state'}}</p>
         {{/if}}
       {{else}}
-        <p class="text-danger">{{t "Not online" key='not_online'}}</p>
+        <p class="text-danger">{{t "Not Online" key='not_online'}}</p>
       {{/if}}
     {{/if}}
   </div>

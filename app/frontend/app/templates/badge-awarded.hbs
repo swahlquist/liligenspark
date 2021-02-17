@@ -20,7 +20,7 @@
     {{#if user_goals_and_badges}}
       <div style='margin-bottom: 15px;'>
         {{#if user_badges.loading}}
-          {{t "Loading Badges..." key='loading_badges'}}
+          {{t "Loading badges..." key='loading_badges'}}
         {{else if user_badges.error}}
           {{t "Error Loading Badges" key='error_loading_badges'}}
         {{else if user_badges}}
@@ -40,9 +40,9 @@
       </div>
       <div>
       {{#if user_goals.loading}}
-        {{t "Loading Goals..." key='loading_goals'}}
+        {{t "Loading goals..." key='loading_goals'}}
       {{else if user_goals.error}}
-        {{t "Error Loading Goals" key='error_loading_goals'}}
+        {{t "Error Loading Goals" key='error_loading_goals_cap'}}
       {{else if user_goals}}
         {{#each user_goals as |goal|}}
           <div {{action 'show_goal' goal.id}} class={{if goal.badge_image_url 'cursor'}} style='padding-top: 10px; padding-bottom: 15px; margin-bottom: 5px; border-bottom: 1px solid #eee;'>
@@ -74,7 +74,7 @@
         <p>{{t "This communicator had earned one or more badges! Some badges are automatically set up in %app_name%, but you can also easily set your own goals and assign new badges to go with them." key='badges_explainer'}}</p>
         <p>{{t "Setting goals is an important part of the communication process! In %app_name%, goals can help keep the team on the same page and working on the same thing, which is important for newly-developing communicators." key='goals_explainer'}}</p>
         {{#if app_state.speak_mode}}
-          <p>{{t "If you exit Speak Mode and go to the 'Goals' section of your account you can find an existing goal or set one of your own. You can even have the system automatically track progress toward the goal, and award badges to the communicator as they progress!" key='goals_explainer_3'}}</p>
+          <p>{{t "If you exit Speak Mode and go to the 'Goals' section of your account you can find an existing goal or set one of your own. You can even have the system automatically track progress toward the goal, and award badges to the communicator as they progress!" key='goals_explainer_12'}}</p>
         {{else}}
           <p>{{t "To set your first goal, hit the 'New Goal' button below and get started. You can find an existing goal or set one of your own. You can even have the system automatically track progress toward the goal, and award badges to the communicator as they progress!" key='goals_explainer_2'}}</p>
         {{/if}}
@@ -117,11 +117,11 @@
           {{/if}}
           <div style='font-weight: bold; font-size: 30px;'>{{model.badge.name}}</div>
           {{#if model.badge.level}}
-            <div style='color: #888; font-size: 16px;'>{{t "Level %{n}" n=model.badge.level key='level_n'}}</div>
+            <div style='color: #888; font-size: 16px;'>{{t "Level %{n}" n=model.badge.level key='level_n2'}}</div>
           {{/if}}
           {{#if model.badge.earned}}
             <div style='color: #888;'>
-              {{t "earned " key='earned'}}
+              {{t "earned" key='earned_lower'}} 
               {{date model.badge.earned 'short_day'}}
             </div>
           {{else if model.badge.id}}

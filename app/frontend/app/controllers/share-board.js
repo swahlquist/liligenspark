@@ -43,7 +43,7 @@ export default modal.ModalController.extend({
       board.save().then(function() {
       }, function(xhr) {
         console.log(xhr.responseJSON);
-        modal.error(i18n.t('sharing_failed', "Board sharing action failed"));
+        modal.error(i18n.t('board_sharing_failed', "Board sharing action failed"));
       });
     },
     unshare: function(id) {

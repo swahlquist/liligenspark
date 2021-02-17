@@ -18,7 +18,7 @@
           </p>
           {{share-bar url=board.link user=app_state.currentUser element_id='board_link' board=board copy_event='copy_event'}}
           {{#if copy_result.succeeded}}
-            <p class='text-success'>{{t "Link copied to the clipboard!" key='copied_to_clipboard'}}</p>
+            <p class='text-success'>{{t "Link copied to the clipboard!" key='link_copied_to_clipboard'}}</p>
           {{else if copy_result.failed}}
             <p class='text-danger'>{{t "Copying to the clipboard failed." key='copy_failed'}}</p>
           {{else}}
@@ -101,7 +101,7 @@
               <div class="col-sm-1" style='margin-left: -80px; margin-top: 5px;'>
                 <div class='btn-group'><!-- dropup -->
                   <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    {{t "user" key='user'}} <span class="caret"></span>
+                    {{t "user" key='user_lower'}} <span class="caret"></span>
                   </button>
                   <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left;">
                     {{#each app_state.currentUser.known_supervisees as |user|}}
@@ -121,7 +121,7 @@
               <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" checked=share_allow_editing}}
-                  {{t "allow editing (and deleting) as well" key='include_downstream_boards'}}
+                  {{t "allow editing (and deleting) as well" key='include_editing_downstream_boards'}}
                 </label>
               </div>
             </div>
@@ -132,7 +132,7 @@
                 {{/if}}
               {{/if}}
               <div style="margin-top: 5px;">
-                <button type="submit" class="btn btn-default">{{t "Share This Board" key='share_board'}}</button>
+                <button type="submit" class="btn btn-default">{{t "Share This Board" key='share_this_board'}}</button>
                 {{#if supervisee_share}}
                   {{#if not_copyable}}
                     <span class='text-muted'>{{t "You are a read-only supervisor for this user" key='read_only_supervisor'}}</span>

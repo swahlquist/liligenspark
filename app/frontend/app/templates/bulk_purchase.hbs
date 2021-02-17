@@ -4,7 +4,7 @@
       {{#if gift.loading}}
         {{t "Loading..." key='loading'}}
       {{else if gift.gift_types.multi_code}}
-        {{t "Gift Codes for" key='gift_codes'}}
+        {{t "Gift Codes for" key='gift_codes_for'}}
       {{else if gift.gift_types.discount}}
         {{t "Discount Redemptions for" key='discounts_for'}}
       {{else if gift.gift_types.user_gift}}
@@ -83,11 +83,11 @@
     {{#if gift.loading}}
       <p>{{t "Loading purchase information..." key='loading_purchase'}}</p>
     {{else if gift.error}}
-      <p>{{t "This purchase link appears to have been disabled or is an invalid link. If you believe there is an error, please contact our support team." key='invalid_gift'}}</p>
+      <p>{{t "This purchase link appears to have been disabled or is an invalid link. If you believe there is an error, please contact our support team." key='invalid_or_disabled_gift'}}</p>
     {{else if gift.gift_types.multi_code}}
       <h4>{{t "Gift Codes" key='gift_codes'}}</h4>
       <div style='margin-top: -5px; margin-bottom: 15px;'>
-        {{gift.redeemed_codes}} {{t "out of" key='out_of'}} {{gift.total_codes}} {{t "redeemed" key='redeemed'}}
+        {{gift.redeemed_codes}} {{t "out of" key='out_of'}} {{gift.total_codes}} {{t "redeemed" key='redeemed_lower'}}
       </div>
       <ul class='list-group'>
       {{#each gift.codes as |code|}}
@@ -101,7 +101,7 @@
                 {{/if}}
                 {{code.receiver.user_name}}
               {{/link-to}}
-              {{t "redeemed" key='redeemed'}}
+              {{t "redeemed" key='redeemed_lower'}}
               {{date code.redeemed_at 'day'}}
             </span>
           {{else}}
@@ -147,7 +147,7 @@
               {{/if}}
               {{code.receiver.user_name}}
             {{/link-to}}
-            {{t "redeemed" key='redeemed'}}
+            {{t "redeemed" key='redeemed_lower'}}
             {{date code.activated_at 'day'}}
           </span>
         </li>

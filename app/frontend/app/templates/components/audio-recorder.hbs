@@ -70,7 +70,7 @@
     {{else}}
       {{#if sound.url}}
         <div style="margin-bottom: 50px; margin-top: 50px; text-align: center;">
-          {{t "Current sound:" key='played_sound_colon'}} {{sound.name}}<br/>
+          {{t "Current sound:" key='current_sound_colon'}} {{sound.name}}<br/>
           <p class='text-muted'>{{sound.transcription}}</p>
           <audio controls src={{sound.url}}></audio>
           <div style='text-align: center;'>
@@ -95,7 +95,7 @@
         </div>
       {{else}}
         <div style='margin: 50px 0 80px; text-align: center;'>
-          <p>{{t "There was an unexpected error getting ready to record audio" key='error_recording_audio'}}</p>
+          <p>{{t "There was an unexpected error getting ready to record audio" key='error_prepping_recording_audio'}}</p>
         </div>
       {{/if}}
     {{/if}}

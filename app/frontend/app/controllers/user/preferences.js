@@ -26,26 +26,26 @@ export default Controller.extend({
   },
   speecher: speecher,
   buttonSpacingList: [
-    {name: i18n.t('minimal', "Minimal (1px)"), id: "minimal"},
-    {name: i18n.t('extra_small', "Extra-Small (2px)"), id: "extra-small"},
-    {name: i18n.t('small', "Small (5px)"), id: "small"},
-    {name: i18n.t('medium', "Medium (10px)"), id: "medium"},
-    {name: i18n.t('large', "Large (20px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (45px)"), id: "huge"},
+    {name: i18n.t('minimal_1', "Minimal (1px)"), id: "minimal"},
+    {name: i18n.t('extra_small_2', "Extra-Small (2px)"), id: "extra-small"},
+    {name: i18n.t('small_5', "Small (5px)"), id: "small"},
+    {name: i18n.t('medium_10', "Medium (10px)"), id: "medium"},
+    {name: i18n.t('larg_20e', "Large (20px)"), id: "large"},
+    {name: i18n.t('huge_45', "Huge (45px)"), id: "huge"},
     {name: i18n.t('none', "None"), id: "none"}
   ],
   buttonBorderList: [
     {name: i18n.t('none', "None"), id: "none"},
-    {name: i18n.t('small', "Small (1px)"), id: "small"},
-    {name: i18n.t('medium', "Medium (2px)"), id: "medium"},
-    {name: i18n.t('thick', "Thick (5px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (10px)"), id: "huge"}
+    {name: i18n.t('small_1', "Small (1px)"), id: "small"},
+    {name: i18n.t('medium_2', "Medium (2px)"), id: "medium"},
+    {name: i18n.t('thick_5', "Thick (5px)"), id: "large"},
+    {name: i18n.t('huge_10', "Huge (10px)"), id: "huge"}
   ],
   buttonTextList: [
-    {name: i18n.t('small', "Small (14px)"), id: "small"},
-    {name: i18n.t('medium', "Medium (18px)"), id: "medium"},
-    {name: i18n.t('large', "Large (22px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (35px)"), id: "huge"}
+    {name: i18n.t('small_14', "Small (14px)"), id: "small"},
+    {name: i18n.t('medium_18', "Medium (18px)"), id: "medium"},
+    {name: i18n.t('large_22', "Large (22px)"), id: "large"},
+    {name: i18n.t('huge_35', "Huge (35px)"), id: "huge"}
   ],
   buttonTextPositionList: [
     {name: i18n.t('no_text', "No Text (Images Only)"), id: "none"},
@@ -143,7 +143,7 @@ export default Controller.extend({
   buttonSpaceList: [
     {name: i18n.t('dont_stretch', "Don't Stretch Buttons"), id: "none"},
     {name: i18n.t('prefer_tall', "Stretch Buttons, Taller First"), id: "prefer_tall"},
-    {name: i18n.t('prefer_tall', "Stretch Buttons, Wider First"), id: "prefer_wide"},
+    {name: i18n.t('prefer_wide', "Stretch Buttons, Wider First"), id: "prefer_wide"},
   ],
   symbolBackgroundList: [
     {name: i18n.t('clear', "Clear"), id: "clear"},
@@ -155,8 +155,8 @@ export default Controller.extend({
     {name: i18n.t('black', "Black"), id: "black"}
   ],
   dashboardViewList: [
-    {name: i18n.t('communicator', "Communicator View"), id: 'communicator'},
-    {name: i18n.t('supporter', "Therapist/Parent/Supporter View"), id: 'supporter'}
+    {name: i18n.t('communicator_view', "Communicator View"), id: 'communicator'},
+    {name: i18n.t('supporter_view', "Therapist/Parent/Supporter View"), id: 'supporter'}
   ],
   localeList: computed(function() {
     var list = i18n.get('locales');
@@ -177,17 +177,17 @@ export default Controller.extend({
     {name: i18n.t('axis_based', "Axis-Based Scanning"), id: 'axes'}
   ],
   scanningAxisSpeedList: [
-    {name: i18n.t('moderate', "Moderate (3-second sweep)"), id: 'moderate'},
-    {name: i18n.t('quick', "Quick (2-second sweep)"), id: 'quick'},
-    {name: i18n.t('Speedy', "Speedy (1-second sweep)"), id: 'speedy'},
-    {name: i18n.t('slow', "Slow (5-second sweep)"), id: 'slow'},
-    {name: i18n.t('really_slow', "Really Slow (8-second sweep)"), id: 'really_slow'},
+    {name: i18n.t('moderate_3', "Moderate (3-second sweep)"), id: 'moderate'},
+    {name: i18n.t('quick_2', "Quick (2-second sweep)"), id: 'quick'},
+    {name: i18n.t('Speedy_1', "Speedy (1-second sweep)"), id: 'speedy'},
+    {name: i18n.t('slow_5', "Slow (5-second sweep)"), id: 'slow'},
+    {name: i18n.t('really_slow_8', "Really Slow (8-second sweep)"), id: 'really_slow'},
   ],
   dwellList: computed('head_tracking_capable', 'eyegaze_capable', 'model.feature_flags.ios_head_tracking', function() {
     var res = [
       {name: i18n.t('eye_gaze', "Eye Gaze Tracking"), id: 'eyegaze'},
       {name: i18n.t('mouse_dwell', "Cursor-Based Dwell Tracking"), id: 'mouse_dwell'},
-      {name: i18n.t('arrow_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
+      {name: i18n.t('joystick_key_dwell', "Joystick/Key-Based Dwell Tracking"), id: 'arrow_dwell'}
     ];
     if(this.get('head_tracking_capable')) {
       if(this.get('model.feature_flags.ios_head_tracking') && (capabilities.default_orientation == 'horizontal' || this.get('model.feature_flags.vertical_ios_head_tracking'))) {
@@ -211,10 +211,10 @@ export default Controller.extend({
   ],
   dwellIconList: [
     {name: i18n.t('dot', "A Small Dot"), id: 'dot'},
-    {name: i18n.t('arrow', "A Red Circle"), id: 'red_circle'},
+    {name: i18n.t('red_circle', "A Red Circle"), id: 'red_circle'},
     {name: i18n.t('arrow', "An Arrow Cursor"), id: 'arrow'},
-    {name: i18n.t('circle', "A Medium Circle"), id: 'circle'},
-    {name: i18n.t('circle', "A Large Circle"), id: 'ball'}
+    {name: i18n.t('medium_circle', "A Medium Circle"), id: 'circle'},
+    {name: i18n.t('large_circle', "A Large Circle"), id: 'ball'}
   ],
   dwellTiltList: [
     {name: i18n.t('normal', "Normal"), id: 'normal'},
@@ -254,9 +254,9 @@ export default Controller.extend({
     return res;
   }),
   dwellReleaseDistanceList: [
-    {name: i18n.t('small', "Small (10px)"), id: 10},
-    {name: i18n.t('medium', "Medium (30px)"), id: 30},
-    {name: i18n.t('large', "Large (50px)"), id: 50}
+    {name: i18n.t('small_10', "Small (10px)"), id: 10},
+    {name: i18n.t('medium_30', "Medium (30px)"), id: 30},
+    {name: i18n.t('large_50', "Large (50px)"), id: 50}
   ],
   targetingList: [
     {name: i18n.t('spinning_pie', "Spinning-Pie Animation"), id: 'pie'},
@@ -267,11 +267,11 @@ export default Controller.extend({
     {name: i18n.t('next', "Next"), id: "next"}
   ],
   vocalizationHeightList: [
-    {name: i18n.t('tiny', "Tiny (50px)"), id: "tiny"},
-    {name: i18n.t('small', "Small (70px)"), id: "small"},
-    {name: i18n.t('medium', "Medium (100px)"), id: "medium"},
-    {name: i18n.t('large', "Large (150px)"), id: "large"},
-    {name: i18n.t('huge', "Huge (200px)"), id: "huge"}
+    {name: i18n.t('tiny_50', "Tiny (50px)"), id: "tiny"},
+    {name: i18n.t('small_70', "Small (70px)"), id: "small"},
+    {name: i18n.t('medium_100', "Medium (100px)"), id: "medium"},
+    {name: i18n.t('large_150', "Large (150px)"), id: "large"},
+    {name: i18n.t('huge_200', "Huge (200px)"), id: "huge"}
   ],
   title: computed('model.user_name', function() {
     return "Preferences for " + this.get('model.user_name');
@@ -474,7 +474,7 @@ export default Controller.extend({
       if(result.length > 1) {
         result.push({
           id: 'force_default',
-          name: i18n.t('system_default_voice', 'System Default Voice')
+          name: i18n.t('system_default_voice', "System Default Voice");
         });
         result.unshift({
           id: 'default',

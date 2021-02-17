@@ -39,7 +39,7 @@
           <button class='btn btn-default' {{action 'search_extras'}}>{{t "Go" key='go'}}</button>
         </div>
       {{else}}
-        {{t "Extra Ideas is a %app_name% feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1'}}
+        {{t "Extra Ideas is a %app_name% feature that's only available to users who have a paid premium account. Please " key='purchase_subscription_1e'}}
         {{#if user}}
           {{#link-to 'user.subscription' user.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
         {{else if app_state.currentUser}}
@@ -73,7 +73,7 @@
       </div>
       {{#if category.items}}
         {{#if list.name}}
-          <button class='btn btn-default' {{action 'select_category'}} style='float: left; margin-right: 5px; height: 50px;'><span class='glyphicon glyphicon-arrow-left'></span><span class='sr-only'>{{t "Back to %{list}" key='back_to_list' list=list.name}}</span></button>
+          <button class='btn btn-default' {{action 'select_category'}} style='float: left; margin-right: 5px; height: 50px;'><span class='glyphicon glyphicon-arrow-left'></span><span class='sr-only'>{{t "Back to %{list}" key='back_to_named_list' list=list.name}}</span></button>
           <h4 style='margin-bottom: 0;'>
             {{category.name}}
           </h4>
@@ -94,7 +94,7 @@
             {{#each category.items as |item|}}
               <span class='btn btn-default' style={{if item.image 'height: 100px; text-align: left;' 'height: 50px; text-align: left;'}}>
                 <span style='float: right;'>
-                  <button class='btn btn-default' disabled={{full}} {{action 'add_item' item}}>{{t "add" key='add'}}</button>
+                  <button class='btn btn-default' disabled={{full}} {{action 'add_item' item}}>{{t "add" key='add_lower'}}</button>
                 </span>
                 {{#if item.image}}
                   <div style='height: 80px; width: 80px; overflow: hidden; float: left; margin-right: 10px;'>
@@ -132,7 +132,7 @@
               {{/if}}
               {{#if category.total}}
                 {{t "(" key='open_paren'}}{{#if category.used}}{{category.used}}{{else}}{{t "0" key='zero'}}{{/if}}
-                {{t "/" key='out_of'}}
+                {{t "/" key='out_of_slash'}}
                 {{category.total}}{{t ")" key='close_paren'}}
               {{/if}}
               <span style='clear: left;'></span>

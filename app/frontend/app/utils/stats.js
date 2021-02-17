@@ -235,7 +235,7 @@ CoughDrop.Stats = EmberObject.extend({
         return stats.devices[0].name;
       }
     }
-    return i18n.t('device', "device");
+    return i18n.t('device_lower', "device");
   }),
   location_name: computed('location_id', function() {
     var location_id = this.get('location_id');
@@ -250,7 +250,7 @@ CoughDrop.Stats = EmberObject.extend({
         }
       }
     }
-    return i18n.t('location', "location");
+    return i18n.t('location_lower', "location");
   }),
 });
 

@@ -1300,7 +1300,7 @@ var app_state = EmberObject.extend({
             stashes.persist('temporary_root_board_state', current);
           }
         }, function() {
-          modal.error(i18n.t('user_retrive_failed', "Failed to retrieve user details for Speak Mode"));
+          modal.error(i18n.t('user_retrive_failed2', "Failed to retrieve user details for Speak Mode"));
         });
       }, function() {
         modal.error(i18n.t('user_retrive_failed', "Failed to retrieve user for Speak Mode"));

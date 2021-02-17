@@ -109,7 +109,7 @@
           {{input value=badge.watch_type_minimum class="form-control" placeholder='#'}}
         </div>
         <div class='col-sm-3'>
-          <p class='form-control-static'>{{t "times per %{unit_type}" unit_type=unit_type key='from_the_list'}}</p>
+          <p class='form-control-static'>{{t "times per %{unit_type}" unit_type=unit_type key='from_the_type_list'}}</p>
         </div>
       </div>
       <div class='form-group'>
@@ -125,7 +125,7 @@
           {{input value=badge.watch_total class="form-control" placeholder='#'}}
         </div>
         <div class='col-sm-3'>
-          <p class='form-control-static'>{{t "of any %{types} from the list" types=watchlist_type_plural key='from_the_list'}}</p>
+          <p class='form-control-static'>{{t "of any %{types} from the list" types=watchlist_type_plural key='type_from_the_list'}}</p>
         </div>
       </div>
       <div class='form-group'>
@@ -242,7 +242,7 @@
         {{#if simple_word_badge}}
           {{t "must use the words at least" key='use_words_at_least'}}
         {{else if simple_button_badge}}
-          {{t "must hit at least" key='hit_at_least'}}
+          {{t "must hit at least" key='must_hit_at_least'}}
         {{else if simple_modeling_badge}}
           {{t "must have at least" key='must_have_at_least'}}
         {{else}}
@@ -265,7 +265,7 @@
           {{t "events" key='events'}}
         {{/if}}
         {{#if in_list}}
-          {{t "for" key='for'}}
+          {{t "for" key='for_lower'}}
           <span style='display: inline-block; width: 50px; margin: 0 5px;'>{{input value=badge.consecutive_units class="form-control" placeholder='#'}}</span>
           {{simple_badge_unit}} {{t "in a row" key='in_a_row'}}
         {{else}}

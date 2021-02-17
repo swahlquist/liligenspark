@@ -56,7 +56,7 @@
         {{date_ago notif.occurred_at}}
       </span>
       {{t " - " key='dash'}}
-      {{t "level %{level}" key='level_n' level=notif.badge_level}}
+      {{t "level %{level}" key='level_n_lower' level=notif.badge_level}}
     </span>
   {{else if notif.board_buttons_changed}}
     {{#link-to 'board' notif.key}}

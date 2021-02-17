@@ -64,7 +64,7 @@ export default Controller.extend({
       unit.set('management_action', action);
       unit.save().then(function() {
       }, function() {
-        modal.error(i18n.t('error_adding_user', "There was an unexpected error while trying to remove the user"));
+        modal.error(i18n.t('error_removing_user', "There was an unexpected error while trying to remove the user"));
       });
     },
   }

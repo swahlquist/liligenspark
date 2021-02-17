@@ -11,7 +11,7 @@
       <button class='btn btn-lg btn-default' {{action 'sync'}}>
         <span class={{refreshing_class}}></span>
         {{#if persistence.syncing}}
-          {{t "Syncing..." key='syncing'}}
+          {{t "Syncing..." key='syncing_ellipsis'}}
         {{else}}
           {{t "Sync Now" key='sync_now'}}
         {{/if}}
@@ -21,13 +21,13 @@
       <span>
       {{#if persistence.sync_succeeded}}
         {{#if session.invalid_token}}
-          {{t "Please re-login and sync again" key='sync_done'}}
+          {{t "Please re-login and sync again" key='please_resync'}}
         {{else}}
           {{t "Sync Done!" key='sync_done'}}
         {{/if}}
       {{else if persistence.sync_finished}}
         {{t "Done with " key='done_with'}}
-        {{t "error" key='n_errors' count=persistence.sync_errors}}
+        {{t "error" key='n_errors_lower' count=persistence.sync_errors}}
         {{t "(see log)" key='see_log'}}
       {{else}}
         {{#if persistence.sync_failed}}
@@ -37,13 +37,13 @@
           {{/if}}
         {{else}}
           {{#if persistence.syncing}}
-            {{t "Syncing..." key='syncing'}}
+            {{t "Syncing..." key='syncing_ellipsis'}}
             {{#if persistence.sync_progress}}
               {{#if persistence.sync_progress.total}}
                 {{persistence.sync_progress.visited}} /
                 {{t "board" key='communication_set_board' count=persistence.sync_progress.total}}
               {{else}}
-                {{t "initializing..." key='initializing'}}
+                {{t "initializing..." key='initializing_lower'}}
               {{/if}}
             {{/if}}
           {{else}}

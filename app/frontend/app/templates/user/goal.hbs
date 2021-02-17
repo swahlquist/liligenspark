@@ -16,7 +16,7 @@
 
         <br/>
         <span class='text-muted'>
-          {{t "author: " key='author'}}
+          {{t "author: " key='author_colon'}}
           {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
         </span>
       </div>
@@ -31,7 +31,7 @@
           {{else if model.ended}}
             {{t "ended" key='ended'}}
           {{else}}
-            {{t "none" key='none'}}
+            {{t "none" key='none_lower'}}
           {{/if}}
           {{#if model.active}}
             {{date model.started 'short_day'}}
@@ -41,11 +41,11 @@
           <br/>
           <span class='text-muted'>
             {{#if model.advance}}
-              {{t "changes" key='changes'}}
+              {{t "changes" key='changes_lower'}}
               <!-- TODO: make this a link to the template for the next goal -->
               {{date model.advance 'short_day'}}
             {{else if model.expires}}
-              {{t "concludes" key='concludes'}}
+              {{t "concludes" key='concludes_lower'}}
               {{date model.expires 'short_day'}}
             {{/if}}
             &nbsp;
@@ -75,7 +75,7 @@
     <div class="panel panel-default summary smaller">
       <div class="panel-heading">{{t "Total Sessions" key='total_sessions'}}</div>
       <div class="panel-body" style='line-height: 44px;'>
-        {{t "session" key='sessions' count=model.stats.sessions}}
+        {{t "session" key='n_sessions' count=model.stats.sessions}}
       </div>
     </div>
   </div>

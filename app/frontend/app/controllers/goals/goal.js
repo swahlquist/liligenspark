@@ -9,7 +9,7 @@ import { computed } from '@ember/object';
 
 export default Controller.extend({
   advance_options: [
-    {name: i18n.t('none', "Never"), id: "none"},
+    {name: i18n.t('never', "Never"), id: "none"},
     {name: i18n.t('on_the_date', "On the Date"), id: "date"},
     {name: i18n.t('after_time', "After Time"), id: "duration"}
   ],

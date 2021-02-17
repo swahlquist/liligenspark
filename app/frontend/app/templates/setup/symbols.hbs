@@ -55,7 +55,7 @@
 <div class='row'>
   <div class='col-sm-5 col-sm-offset-1'>
     <div class='setup_setting'>
-      <label>{{t "How do you want pictures to display?" key='symbol_background'}}</label>
+      <label>{{t "How do you want pictures to display?" key='symbol_background_question'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">
         <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} style='text-align: left;'>
           <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'>
@@ -67,13 +67,13 @@
           <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'>
             <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
           </span> 
-          {{t "Always with a white background" key='white_background'}}
+          {{t "Always with a white background" key='always_white_background'}}
         </a>
         <a href="#" class={{if background.black 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black'}} style='text-align: left;' >
           <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
             <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
           </span> 
-          {{t "Always with a black background" key='black_background'}}
+          {{t "Always with a black background" key='always_black_background'}}
         </a>
         <a href="#" class={{if background.black_with_high_contrast 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black_with_high_contrast'}} style='text-align: left;' >
           <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
@@ -127,11 +127,11 @@
 <div class='row'>
   <div class='col-sm-5 col-sm-offset-1'>
     <div class='setup_setting'>
-      <label>{{t "Which symbols do you prefer?" key='text_placement'}}</label>
+      <label>{{t "Which symbols do you prefer?" key='which_symbols'}}</label>
       <div class="btn-group-vertical" style="width: 100%; text-align: left;">
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.original 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'original'}} >
           <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2b50.svg" style='height: 40px; width: 40px; margin: -20px 0;'/>
-          {{t "Use the board's original symbols" key='original'}}
+          {{t "Use the board's original symbols" key='use_original_symbols'}}
         </a>
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.opensymbols 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'opensymbols'}} >
           <img src="https://www.opensymbols.org/find.png" style='height: 40px; width: 40px; margin: -20px 0;'/>
@@ -139,11 +139,11 @@
         </a>
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.lessonpix 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'lessonpix'}} >
           <img src="https://s3.amazonaws.com/coughdrop/icons/lessonpix.png" style='width: 40px; height: 40px; margin: -20px 0;' />
-          {{t "LessonPix symbol library" key='lessonpix'}}
+          {{t "LessonPix symbol library" key='lessonpix_library'}}
         </a>
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.symbolstix 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'symbolstix'}} >
           <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png" style='width: 40px; height: 40px; margin: -20px 0;' />
-          {{t "SymbolStix Symbols" key='symbolstix'}}
+          {{t "SymbolStix Symbols" key='symbolstix_images'}}
         </a>
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.pcs 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'pcs'}} >
           <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style='width: 40px; height: 40px; margin: -20px 0;' />

@@ -1513,7 +1513,7 @@ var persistence = EmberObject.extend({
         if(err.board_unauthorized) {
           persistence.set('sync_status_error', i18n.t('board_unauthorized', "One or more boards are private"));
         } else if(!persistence.get('online')) {
-          persistence.set('sync_status_error', i18n.t('not_online', "Must be online to sync"));
+          persistence.set('sync_status_error', i18n.t('online_required_to_sync', "Must be online to sync"));
         }
         var message = (err && err.error) || "unspecified sync error";
         var statuses = statuses.uniq(function(s) { return s.id; });
@@ -1524,7 +1524,7 @@ var persistence = EmberObject.extend({
           errored: true,
           finished: new Date(),
           statuses: statuses,
-          summary: i18n.t('finised_without_errors', "Error syncing %{user_id}: ", {user_id: user_name}) + message
+          summary: i18n.t('error_syncing_user', "Error syncing %{user_id}: ", {user_id: user_name}) + message
         });
         persistence.set('last_sync_event_at', (new Date()).getTime());
         persistence.set('sync_log', log);

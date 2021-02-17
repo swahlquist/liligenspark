@@ -55,7 +55,7 @@
         </div>
       {{/if}}
       <div class="form-group">
-        <label for="locale" class="col-sm-3 control-label">{{t "Default Language" key='default_locale'}}</label>
+        <label for="locale" class="col-sm-3 control-label">{{t "Default Language" key='default_language'}}</label>
         <div class="col-sm-9">
           {{bound-select select_class="form-control" select_id="locale" content=locales selection=model.locale action=(action (mut model.locale)) }}
         </div>

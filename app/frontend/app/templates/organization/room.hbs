@@ -19,10 +19,10 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">
-            {{t "Recent sessions" key='recent_sessions'}}
+            {{t "Recent Sessions" key='recent_sessions'}}
           </div>
           <div class="panel-body">
-            {{t "session" key='sessions' count=model.user_counts.recent_session_count}}
+            {{t "session" key='n_sessions' count=model.user_counts.recent_session_count}}
           </div>
         </div>
       </div>
@@ -33,7 +33,7 @@
           </div>
           <div class="panel-body">
             {{model.user_counts.recent_session_user_count}} / {{model.user_counts.total_users}}
-            {{t "users" key='users'}}
+            {{t "users" key='users_lower'}}
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@
   {{#if model.permissions.delete}}
     {{#if model.pending_org}}
       <div class='alert alert-info'>
-        {{t "%{org} wants to support this user as part of their organization. This addition must be approved before it is complete. If approved, the organization will have access to profile information for this user." key='confirm_pending_org' org=model.pending_org.name}}
+        {{t "%{org} wants to support this user as part of their organization. This addition must be approved before it is complete. If approved, the organization will have access to profile information for this user." key='confirm_pending_org2' org=model.pending_org.name}}
         {{#if model.pending_org.sponsored}}
           {{t "The organization will also sponsor this account, meaning it will be free as long as the organization remains a sponsor." key='org_sponsored'}}
         {{/if}}
@@ -74,7 +74,7 @@
     {{#if app_state.currentUser.preferences.new_index}}
       <div class='col-sm-3 col-xs-6 big_button_holder'>
         {{#if model.preferences.home_board.key}}
-          <div style='position: absolute; z-index: 2; margin: 6px 12px;'><span class='glyphicon glyphicon-home'></span> {{t "Home Board:" key='home_board'}}</div>
+          <div style='position: absolute; z-index: 2; margin: 6px 12px;'><span class='glyphicon glyphicon-home'></span> {{t "Home Board:" key='home_board_colon'}}</div>
           {{board-icon board=model.preferences.home_board localized=true}}
         {{else}}
           {{#link-to 'home-boards' class='btn big_button btn-default'}}
@@ -99,10 +99,10 @@
         <button class='btn big_button btn-default lesser_button' {{action "supervision_settings"}}>
           <span class='glyphicon glyphicon-user'></span>
           {{#if model.supporter_role}}
-            {{t "Supervision" key='manage_supervision'}}
+            {{t "Supervision" key='supervision'}}
             <div style='font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{{model.supervisee_names}}</div>
           {{else}}
-            {{t "Supervisors" key='manage_supervisors'}}
+            {{t "Supervisors" key='supervisors'}}
             <div style='font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{{model.supervisor_names}}</div>
           {{/if}}
         </button>
@@ -140,7 +140,7 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">
-            {{t "Current home board" key='current_home_board'}}
+            {{t "Current home board" key='current_home_board_cap'}}
           </div>
           <div class="panel-body">
               {{#if model.preferences.home_board.key}}
@@ -154,10 +154,10 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">
-            {{t "Current board set" key='current_home_board'}}
+            {{t "Current board set" key='current_home_board_set'}}
           </div>
           <div class="panel-body">
-            {{t "board" key='board' count=model.stats.board_set_ids}}
+            {{t "board" key='n_boards' count=model.stats.board_set_ids}}
           </div>
         </div>
       </div>
@@ -167,7 +167,7 @@
             {{t "Liked boards" key='starred_boards'}}
           </div>
           <div class="panel-body">
-            {{t "board" key='boards' count=model.stats.starred_boards}}
+            {{t "board" key='n_boards' count=model.stats.starred_boards}}
           </div>
         </div>
       </div>
@@ -178,9 +178,9 @@
           </div>
           <div class="panel-body">
             {{#if model.public}}
-              {{t "public" key='public'}}
+              {{t "public" key='public_lower'}}
             {{else}}
-              {{t "private" key='private'}}
+              {{t "private" key='private_lower'}}
             {{/if}}
           </div>
         </div>
@@ -225,7 +225,7 @@
                     </span>
                     <div class="sub_link">
                       {{#if model.permissions.manage_supervision}}
-                        <a href="#" {{action 'add_supervisor'}}>{{t "add supervisor" key='add_supervisor'}}</a>
+                        <a href="#" {{action 'add_supervisor'}}>{{t "add supervisor" key='add_supervisor_lower'}}</a>
                       {{/if}}
                       &nbsp;
                     </div>
@@ -277,7 +277,7 @@
                   {{#if log.assessment}}
                     {{t "assessment" key='assessment'}}
                   {{else if log.note}}
-                    {{t "note" key='note'}}
+                    {{t "note" key='note_lower'}}
                   {{else}}
                     {{t "button" count=log.button_count key='button_count'}}
                   {{/if}}
@@ -470,7 +470,7 @@
         {{#if password}}
           <div>
             {{#unless password.pw}}
-              {{t "Are you sure you want to reset this user's password? They will receive an email notifying them of the reset." key='confirm_reset'}}<br/>
+              {{t "Are you sure you want to reset this user's password? They will receive an email notifying them of the reset." key='confirm_reset_password'}}<br/>
               <button class='btn btn-default' {{action 'reset_password' true}}>{{t "Reset Password" key='reset_password'}}</button>
               <button class='btn btn-default' {{action 'reset_password' false}}>{{t "Cancel" key='cancel'}}</button>
             {{/unless}}
@@ -487,14 +487,14 @@
             {{t "Are you sure you want to change the user's user name? They will receive an email notifying them of the change." key='confirm_change'}}<br/>
             <form class="form-horizontal" {{action "nothing"}}>
               <div class="form-group">
-                <label for="old_key" class="col-sm-3 control-label">{{t "Current User Name" key='old_key'}}</label>
+                <label for="old_key" class="col-sm-3 control-label">{{t "Current User Name" key='current_user_name'}}</label>
                 <div class="col-sm-5">
                   {{input type='text' class='form-control' id='old_key' value=new_user_name.old_value placeholder="current user name"}}
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="new_key" class="col-sm-3 control-label">{{t "New User Name" key='new_key'}}</label>
+                <label for="new_key" class="col-sm-3 control-label">{{t "New User Name" key='new_user_name'}}</label>
                 <div class="col-sm-5">
                   {{input type='text' class='form-control' id='new_key' value=new_user_name.value placeholder="new key"}}
                 </div>
@@ -504,7 +504,7 @@
                 <div class='col-sm-5 col-sm-offset-3'>
                   <button class='btn btn-default' {{action 'rename_user' true}}>
                     {{#if new_user_name.renaming}}
-                      {{t "Changing User Name" key='change_user_name'}}
+                      {{t "Changing User Name" key='changing_user_name'}}
                     {{else if new_user_name.error}}
                       {{t "Error Changing User Name" key='error_changing_user_name'}}
                     {{else}}
@@ -539,10 +539,10 @@
                   {{t "premium voice" count=model.premium_voices.allowed key='premium_voices_count'}}{{t ", %{cnt} used" key='comma_premium_voices_used' cnt=model.premium_voices.claimed.length}}
                 {{/if}}
                 {{#if model.subscription.extras_enabled}}
-                  {{t " + premium symbols enabled" key='extras_enabled'}}
+                  {{t " + premium symbols enabled" key='plus_extras_enabled'}}
                 {{/if}}
                 {{#if model.subscription.purchased_supporters}}
-                  {{t " + " key='plus'}}
+                  {{t " + " key='plus_p'}}
                   {{model.subscription.available_supporters}} / {{model.subscription.purchased_supporters}}
                   {{t "supervisor credits available" key='supervisor_credits_available'}}
                 {{/if}}
@@ -599,7 +599,7 @@
               {{/each}}
             </div>
           {{else}}
-            <p>{{t "No data loaded" key='no_data'}}</p>
+            <p>{{t "No data loaded" key='no_data_loaded'}}</p>
           {{/if}}
 
           <h5 style="margin-top: 20px;">{{t "Devices:" key='devices_colon'}}</h5>
@@ -630,7 +630,7 @@
                         {{date device.last_used}}
                         <div style='font-size: 12px;'>
                           {{t "expires after" key='expires_after'}}
-                          {{device.token_timeout}}{{t ", or" key='or'}}
+                          {{device.token_timeout}}{{t ", or" key='comma_or'}}
                           {{device.inactivity_timeout}} 
                           {{t "of inactivity" key='of_inactivity'}}
                         </div>

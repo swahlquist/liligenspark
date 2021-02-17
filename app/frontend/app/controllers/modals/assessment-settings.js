@@ -69,7 +69,7 @@ export default modal.ModalController.extend({
         if(!lessonpix_added) {
           lessonpix_added = true;
           res.pushObject({
-            name: i18n.t('lessonpix', "LessonPix Symbols"),
+            name: i18n.t('lessonpix_symbols', "LessonPix Symbols"),
             id: 'lessonpix'
           });
         }
@@ -78,13 +78,13 @@ export default modal.ModalController.extend({
     if(app_state.get('currentUser.subscription.lessonpix') && !lessonpix_added) {
       lessonpix_added = true;
       res.push({
-        name: i18n.t('lessonpix', "LessonPix Symbols"),
+        name: i18n.t('lessonpix_symbols', "LessonPix Symbols"),
         id: 'lessonpix'
       });
     }
     if(app_state.get('currentUser.subscription.extras_enabled')) {
       res.pushObject({
-        name: i18n.t('pcs', "PCS (BoardMaker) symbols from Tobii-Dynavox"),
+        name: i18n.t('pcs_boardmaker', "PCS (BoardMaker) symbols from Tobii-Dynavox"),
         id: 'pcs'
       });
       res.pushObject({
@@ -93,7 +93,7 @@ export default modal.ModalController.extend({
       });
       // TODO: add symbolstix to evals
       res.pushObject({
-        name: i18n.t('symbolstix', "SymbolStix Symbols"),
+        name: i18n.t('symbolstix_images', "SymbolStix Symbols"),
         id: 'symbolstix'
       });
     }

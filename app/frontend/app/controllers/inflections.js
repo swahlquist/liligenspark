@@ -130,24 +130,24 @@ export default Controller.extend({
   }),
   word_types: computed('word.parts_of_speech', function() {
     var res = [
-      {name: i18n.t('unspecified', "[ Select Type ]"), id: ''},
-      {name: i18n.t('noun', "Noun (dog, window, idea)"), id: 'noun'},
-      {name: i18n.t('verb', "Verb (run, jump, cry, think)"), id: 'verb'},
-      {name: i18n.t('adjective', "Adjective (red, ugly, humble)"), id: 'adjective'},
-      {name: i18n.t('pronoun', "Pronoun (we, I, you, someone, anybody)"), id: 'pronoun'},
-      {name: i18n.t('adverb', "Adverb (kindly, often)"), id: 'adverb'},
-      {name: i18n.t('question', "Question (why, when)"), id: 'question'},
-      {name: i18n.t('conjunction', "Conjunction (and, but, if, because, although)"), id: 'conjunction'},
-      {name: i18n.t('negation', "Negation (not, never)"), id: 'negation'},
+      {name: i18n.t('select_type', "[ Select Type ]"), id: ''},
+      {name: i18n.t('noun2', "Noun (dog, window, idea)"), id: 'noun'},
+      {name: i18n.t('verb2', "Verb (run, jump, cry, think)"), id: 'verb'},
+      {name: i18n.t('adjective2', "Adjective (red, ugly, humble)"), id: 'adjective'},
+      {name: i18n.t('pronoun2', "Pronoun (we, I, you, someone, anybody)"), id: 'pronoun'},
+      {name: i18n.t('adverb2', "Adverb (kindly, often)"), id: 'adverb'},
+      {name: i18n.t('question2', "Question (why, when)"), id: 'question'},
+      {name: i18n.t('conjunction2', "Conjunction (and, but, if, because, although)"), id: 'conjunction'},
+      {name: i18n.t('negation2', "Negation (not, never)"), id: 'negation'},
       // https://www.talkenglish.com/vocabulary/top-50-prepositions.aspx
-      {name: i18n.t('preposition', "Preposition (after, in, on, to, with)"), id: 'preposition'},
-      {name: i18n.t('interjection', "Interjection (ahem, duh, hey)"), id: 'interjection'},
-      {name: i18n.t('article', "Article (a, an, the)"), id: 'article'},
+      {name: i18n.t('preposition2', "Preposition (after, in, on, to, with)"), id: 'preposition'},
+      {name: i18n.t('interjection2', "Interjection (ahem, duh, hey)"), id: 'interjection'},
+      {name: i18n.t('article2', "Article (a, an, the)"), id: 'article'},
       // https://www.ef.edu/english-resources/english-grammar/determiners/
-      {name: i18n.t('determiner', "Determiner (this, that, some, any, other, such, quite)"), id: 'determiner'},
-      {name: i18n.t('number', "Number (one, two, three)"), id: 'numeral'},
-      {name: i18n.t('social_phrase', "Social Phrase (hello, thank you)"), id: 'social'},
-      {name: i18n.t('other', "Other word type"), id: ''},
+      {name: i18n.t('determiner2', "Determiner (this, that, some, any, other, such, quite)"), id: 'determiner'},
+      {name: i18n.t('number2', "Number (one, two, three)"), id: 'numeral'},
+      {name: i18n.t('social_phrase2', "Social Phrase (hello, thank you)"), id: 'social'},
+      {name: i18n.t('other_word_type', "Other word type"), id: ''},
     ];
     
     var _this = this;

@@ -35,11 +35,11 @@
         {{else if parts_of_speech.error}}
           {{t "Error loading word data" key='error_loading_word_data'}}
         {{else}}
-          {{t "Data not available" key='no_data_available'}}
+          {{t "Data not available" key='data_not_available'}}
         {{/if}}
       </dd>
       {{#if model.usage_stats}}
-        <dt>{{t "Usage:" key='usage'}}</dt>
+        <dt>{{t "Usage:" key='usage_colon'}}</dt>
         <dd>
           {{#if frequency.total}}
             {{t "time" count=frequency.total key='n_times'}} ({{frequency.percent}}%) {{t "for the time period" key='for_the_period'}}
@@ -65,7 +65,7 @@
         </dd>
       {{/if}}
       {{#if part_of_speech}}
-        <dt>{{t "Suggestions:" key='suggestions'}}</dt>
+        <dt>{{t "Suggestions:" key='suggestions_colon'}}</dt>
         <dd>
           {{#if suggestions}}
             <br/>

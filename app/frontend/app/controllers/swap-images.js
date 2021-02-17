@@ -44,8 +44,8 @@ export default modal.ModalController.extend({
       res.push({id: 'lessonpix', name: i18n.t('lessonpix', "LessonPix")});
     }
     if(this.get('premium_symbols_enabled')) {
-      res.push({id: 'pcs', name: i18n.t('pcs', "PCS (BoardMaker) Symbols by Tobii Dynavox")});
-      res.push({id: 'symbolstix', name: i18n.t('symbolstix', "SymbolStix Symbols")});
+      res.push({id: 'pcs', name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox")});
+      res.push({id: 'symbolstix', name: i18n.t('symbolstix_images', "SymbolStix Symbols")});
     }
     return res;
   }),

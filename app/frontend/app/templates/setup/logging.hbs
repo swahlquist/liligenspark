@@ -5,7 +5,7 @@
   <img src={{path 'walkthrough/reports.gif'}} style='width: 100%;' />
 </div>
 <div class='col-sm-5'>
-  <p class='prompt'>{{t "%app_name% has powerful built-in reporting tools that allow caregivers, therapists and supporters to see things like what time of day the device is being used, most common words and progress toward goals. To use these helpful features, just enable logging." key='reports_1'}}</p>
+  <p class='prompt'>{{t "%app_name% has powerful built-in reporting tools that allow caregivers, therapists and supporters to see things like what time of day the device is being used, most common words and progress toward goals. To use these helpful features, just enable logging." key='logging_reports_1'}}</p>
   {{#if app_state.currentUser}}
     <p style='margin-top: 20px;'><button class='btn btn-default btn-lg' {{action 'set_preference' 'logging' true}}>
       {{#if app_state.currentUser.preferences.logging}}
@@ -29,17 +29,17 @@
 </div>
 <div class='col-sm-5'>
   <div class='setup_setting' style='margin-top: 0;'>
-    <label>{{t "How often do you want summary emails?" key='browse_categories'}}</label>
+    <label>{{t "How often do you want summary emails?" key='summary_emails'}}</label>
     <div class="btn-group-vertical" style="width: 100%;">
       <a href="#" class={{if notification.1_week 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' '1_week'}}>{{t "Every Week" key='every_week'}}</a>
-      <a href="#" class={{if notification.2_weeks 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' '2_weeks'}}>{{t "Every Other Week" key='every_two_weeks'}}</a>
+      <a href="#" class={{if notification.2_weeks 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' '2_weeks'}}>{{t "Every Other Week" key='every_other_week'}}</a>
       <a href="#" class={{if notification.1_month 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' '1_month'}}>{{t "Every Month" key='every_month'}}</a>
       <a href="#" class={{if notification.none 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' ''}}>{{t "Never" key='never'}}</a>
     </div>
   </div>
   {{#if app_state.currentUser.supporter_role}}
     <div class='setup_setting'>
-      <label>{{t "How would you like communicators to message you?" key='browse_categories'}}</label>
+      <label>{{t "How would you like communicators to message you?" key='comm_preference'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">
         <span class={{if notification.text 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'share_notifications' 'text'}}>
           {{t "As Text Messages" key='via_text'}}

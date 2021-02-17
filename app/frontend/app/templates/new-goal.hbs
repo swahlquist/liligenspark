@@ -102,7 +102,7 @@
               {{input type='date' value=goal.expires class="form-control" id="new_goal_concludes"}}
             </div>
             <div class='col-sm-3'>
-              <button class='btn btn-default' {{action 'clear_expires'}}>{{t "clear" key='clear'}}</button>
+              <button class='btn btn-default' {{action 'clear_expires'}}>{{t "clear" key='clear_lower'}}</button>
             </div>
           </div>
         {{/unless}}
@@ -146,7 +146,7 @@
       {{#if goals.loading}}
         <p>{{t "Loading goals..." key='loading_goals'}}</p>
       {{else if goals.error}}
-        <p>{{t "There was an error loading goals" key='error_loading_goals'}}</p>
+        <p>{{t "There was an error loading goals" key='error_loading_goals_lower'}}</p>
       {{/if}}
     {{else}}
       <form class="form-horizontal">
@@ -183,7 +183,7 @@
               {{input value=goal.instance_count class="form-control" id="new_goal_instance_count" placeholder="#"}}
             </div>
             <div class="col-sm-8">
-              <p class='form-control-static'>{{goal_simple_action}} {{t "per day" key='per_day'}}</p>
+              <p class='form-control-static'>{{goal_simple_action}} {{t "per day" key='per_day_lower'}}</p>
             </div>
           </div>
         {{/if}}
@@ -228,7 +228,7 @@
               <div class="checkbox big_checkbox">
                 <label>
                   {{input type="checkbox" checked=goal.auto_assessment id="auto_assessment"}}
-                  {{t "Generate a daily progress report for mastery of this goal" key='auto_assess_goal_daily'}}
+                  {{t "Generate a daily progress report for mastery of this goal" key='auto_generate_goal_daily'}}
                 </label>
               </div>
             </div>
@@ -295,7 +295,7 @@
                 {{input type='date' value=goal.expires class="form-control" id="new_goal_concludes"}}
               </div>
               <div class='col-sm-3'>
-                <button class='btn btn-default' {{action 'clear_expires'}}>{{t "clear" key='clear'}}</button>
+                <button class='btn btn-default' {{action 'clear_expires'}}>{{t "clear" key='clear_lower'}}</button>
               </div>
             </div>
           {{/if}}

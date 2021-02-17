@@ -30,7 +30,7 @@
         {{#if delete_downstream}}
           <p class='text-danger'>
             {{#if deleting_boards_count}}
-              {{t "Please double-check that you want to delete the following %{n} boards" n=deleting_boards_count key='confirm_downstream_delete'}}
+              {{t "Please double-check that you want to delete the following %{n} boards" n=deleting_boards_count key='confirm_downstream_delete_n'}}
             {{else}}
               {{t "Please double-check that you want to delete the following boards" key='confirm_downstream_delete'}}
             {{/if}}
@@ -44,7 +44,7 @@
               {{board-hierarchy hierarchy=hierarchy selectable=true}}
             </div>
           {{else}}
-            {{t "Could not load linked boards" key='no_linked_boards'}}
+            {{t "Could not load linked boards" key='error_loading_linked_boards'}}
           {{/if}}
         {{/if}}
       </div>

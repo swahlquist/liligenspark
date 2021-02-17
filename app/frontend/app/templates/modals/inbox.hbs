@@ -52,7 +52,7 @@
       </div>
       {{#if current.prior}}
         <div style='white-space: normal; margin-top: 30px;'>
-          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if current.prior_author}}{{t "message from " key='message_from'}}{{current.prior_author}}{{/if}}:</div>
+          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if current.prior_author}}{{t "message from" key='message_from'}} {{current.prior_author}}{{/if}}:</div>
           <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{current.prior}}</div>
         </div>
       {{/if}}
@@ -87,8 +87,13 @@
   </div>
   <div class="modal-footer">
     {{#if app_state.referenced_user.request_alert}}
-      <button class='btn btn-default btn-lg' {{action 'accept_pair'}}>{{t "Accept Pairing" key='accept_pairing'}}</button>
-      <button class='btn btn-default btn-lg' {{action 'reject_pair'}}>{{t "Cancel Pairing" key='cancel_pairing'}}</button>
+      {{#if app_state.referenced_user.request_alert.model}}
+        <button class='btn btn-default btn-lg' {{action 'accept_pair'}}>{{t "Pair With %{user_name} & Allow Followers" user_name=app_state.referenced_user.request_alert.user.user_name key='accept_pairing'}}</button>
+        <button class='btn btn-default btn-lg' {{action 'reject_pair'}}>{{t "Cancel Pairing" key='cancel_pairing'}}</button>
+      {{else}}
+        <button class='btn btn-default btn-lg' {{action 'accept_pair'}}>{{t "Allow Followers" key='allow_followers'}}</button>
+        <button class='btn btn-default btn-lg' {{action 'reject_pair'}}>{{t "Prevent Followers" key='prevent_followers'}}</button>
+      {{/if}}
     {{else}}
       {{#unless current}}
         {{#if working_vocalization}}

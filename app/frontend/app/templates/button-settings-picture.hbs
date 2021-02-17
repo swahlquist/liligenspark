@@ -2,7 +2,7 @@
 <div class={{if pictureState 'active' 'hidden'}}>
   {{#if show_libraries}}
     {{#if image_libraries}}
-      <div style='float: left; width: 55px; font-size: 12px;'>{{t "Library: " key='library'}}</div>
+      <div style='float: left; width: 55px; font-size: 12px;'>{{t "Library: " key='library_colon'}}</div>
       <div style='margin-top: -5px; width: 200px; float: left;'>
         {{bound-select select_class="form-control skip_select" select_id="image_library" short=true content=image_libraries selection=image_library action=(action (mut image_library)) }}
       </div>
@@ -186,7 +186,7 @@
               <div class="checkbox big_checkbox">
                 <label>
                   {{input checked=model.text_only type="checkbox"}}
-                  {{t "Show only text (as large as fits) for this button" key='text_only'}}
+                  {{t "Show only text (as large as fits) for this button" key='stretch_text_only'}}
                 </label>
               </div>
             {{/if}}

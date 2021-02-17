@@ -3,7 +3,7 @@
   {{#if history.loading}}
     {{t "Loading history..." key='loading_history'}}
   {{else if history.error}}
-    {{t "There was an error loading the user's history" key='error_loading_history'}}
+    {{t "There was an error loading the user's history" key='error_loading_user_history'}}
   {{else if history}}
     <table class='table table-striped table-hover'>
       <thead>
@@ -43,7 +43,7 @@
     {{t "No data available" key='no_data_available'}}
   {{/if}}
 {{else if session.isAuthenticated}}
-  <p>{{t "It appears you don't have permission to access this information" key='not_authorized'}}</p>
+  <p>{{t "It appears you don't have permission to access this information" key='not_allowed_long'}}</p>
 {{else}}
   {{login-form left=true prompt=true return=true}}
 {{/if}}

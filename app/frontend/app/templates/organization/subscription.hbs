@@ -3,7 +3,7 @@
   {{#if model.permissions.manage_subscription}}
     <form class="form-horizontal" {{action "update_org" on="submit"}}>
       <div class="form-group">
-        <label for="allotted_licenses" class="col-sm-2 control-label">{{t "Purchased Licenses" key='licenses'}}</label>
+        <label for="allotted_licenses" class="col-sm-2 control-label">{{t "Purchased Licenses" key='purchased_licenses'}}</label>
         <div class="col-sm-1">
           {{input value=model.allotted_licenses class="form-control" id="allotted_licenses" placeholder="0"}}
         </div>
@@ -92,7 +92,7 @@
           </li>
         {{else if event.update_eval_license_count}}
           <li class="list-group-item">
-            {{t "Eval account total was updated to %{num} - " key='license_count_updated' num=event.count}}
+            {{t "Eval account total was updated to %{num} - " key='eval_count_updated' num=event.count}}
             <span class='text-muted'>{{date_ago event.logged_at}}</span>
           </li>
         {{else if event.add_subscription}}

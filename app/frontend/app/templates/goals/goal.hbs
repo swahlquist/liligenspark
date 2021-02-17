@@ -140,7 +140,7 @@
             {{#if status.loading_templates}}
               <p class='form-control-static'>{{t "Loading templates..." key='loading_templates'}}</p>
             {{else if status.loading_templates_error}}
-              <p class='form-control-static'>{{t "There was an unexpected error loading templates..." key='error_loading_templates'}}</p>
+              <p class='form-control-static'>{{t "There was an unexpected error loading templates..." key='error_loading_templates2'}}</p>
             {{else}}
               {{bound-select select_class="form-control" select_id="next_template_id" content=template_options selection=model.next_template_id action=(action (mut model.next_template_id)) }}
             {{/if}}
@@ -178,7 +178,7 @@
             <div class="checkbox big_checkbox">
               <label>
                 {{input type="checkbox" checked=model.auto_assessment id="auto_assessment"}}
-                {{t "Assess this goal daily based on usage data" key='auto_assess_goal_daily'}}
+                {{t "Assess this goal daily based on usage data" key='assess_goal_daily'}}
               </label>
             </div>
           </div>

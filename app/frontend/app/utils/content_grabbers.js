@@ -636,7 +636,7 @@ var pictureGrabber = EmberObject.extend({
           source_url: text
         });
       }, function(xhr, message) {
-        var error = i18n.t('not_available', "Image retrieval failed unexpectedly.");
+        var error = i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
         if(message && message.error == "not online") {
           error = i18n.t('not_online_image_proxy', "Cannot retrieve image, please connect to the Internet first.");
         }
@@ -718,7 +718,7 @@ var pictureGrabber = EmberObject.extend({
     }).then(function(data) {
       return data;
     }, function(xhr, message) {
-      var error = i18n.t('not_available', "Image retrieval failed unexpectedly.");
+      var error = i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
       if(message && message.error == "not online") {
         error = i18n.t('not_online_image_search', "Cannot search, please connect to the Internet first.");
       }
@@ -762,7 +762,7 @@ var pictureGrabber = EmberObject.extend({
       });
       return res.slice(0, 20);
     }, function(xhr, message) {
-      return i18n.t('not_available', "Image retrieval failed unexpectedly.");
+      return i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
     });
   },
   openclipart_search: function(text) {
@@ -787,7 +787,7 @@ var pictureGrabber = EmberObject.extend({
       console.log(res);
       return res;
     }, function(xhr, message) {
-      return i18n.t('not_available', "Image retrieval failed unexpectedly.");
+      return i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
     });
   },
   pixabay_search: function(text, filter) {
@@ -823,7 +823,7 @@ var pictureGrabber = EmberObject.extend({
       console.log(res);
       return res;
     }, function(xhr, message) {
-      return i18n.t('not_available', "Image retrieval failed unexpectedly.");
+      return i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
     });
   },
   public_domain_image_search: function(text) {
@@ -861,7 +861,7 @@ var pictureGrabber = EmberObject.extend({
       });
       return res;
     }, function(xhr, message) {
-        return i18n.t('not_available', "Image retrieval failed unexpectedly.");
+        return i18n.t('image_not_available', "Image retrieval failed unexpectedly.");
     });
   },
   edit_image_preview: function() {
@@ -1053,7 +1053,7 @@ var pictureGrabber = EmberObject.extend({
       err = err || {};
       err.error = err.error || "unexpected error";
       coughDropExtras.track_error("upload failed: " + err.error);
-      alert(i18n.t('upload_failed', "upload failed:" + err.error));
+      alert(i18n.t('upload_failed_with_error', "upload failed: " + err.error));
       _this.controller.set('model.pending_image', false);
     });
   },
@@ -1070,7 +1070,7 @@ var pictureGrabber = EmberObject.extend({
         this.controller.get('model.image').save().then(function() {
           _this.controller.set('model.pending_image', false);
         }, function() {
-          alert(i18n.t('save_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving settings failed!"));
           _this.controller.set('model.pending_image', false);
         });
       }
@@ -1652,7 +1652,7 @@ var videoGrabber = EmberObject.extend({
       err = err || {};
       err.error = err.error || "unexpected error";
       coughDropExtras.track_error("upload failed: " + err.error);
-      alert(i18n.t('upload_failed', "upload failed: " + err.error));
+      alert(i18n.t('upload_failed_with_error', "upload failed: " + err.error));
       _this.controller.set('video_preview.saving', false);
       _this.controller.sendAction('video_not_ready');
     });
@@ -1669,7 +1669,7 @@ var videoGrabber = EmberObject.extend({
         this.controller.get('video').save().then(function() {
           _this.controller.set('pending_video', false);
         }, function() {
-          alert(i18n.t('save_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving settings failed!"));
           _this.controller.set('pending_video', false);
         });
       }
@@ -2032,7 +2032,7 @@ var soundGrabber = EmberObject.extend({
       err = err || {};
       err.error = err.error || "unexpected error";
       coughDropExtras.track_error("upload failed: " + err.error);
-      alert(i18n.t('upload_failed', "upload failed: " + err.error));
+      alert(i18n.t('upload_failed_with_error', "upload failed: " + err.error));
       if(_this.controller) {
         _this.controller.set('model.pending_sound', false);
       }
@@ -2050,7 +2050,7 @@ var soundGrabber = EmberObject.extend({
         this.controller.get('model.sound').save().then(function() {
           _this.controller.set('model.pending_sound', false);
         }, function() {
-          alert(i18n.t('save_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving settings failed!"));
           _this.controller.set('model.pending_sound', false);
         });
       }
@@ -2299,7 +2299,7 @@ var boardGrabber = EmberObject.extend({
     if(board) {
       boardGrabber.file_selected(board);
     } else {
-      alert(i18n.t('no_board_found', "No valid board file found"));
+      alert(i18n.t('no_valid_board_found', "No valid board file found"));
     }
   },
   file_selected: function(board) {

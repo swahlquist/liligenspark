@@ -83,7 +83,7 @@
 </div>
 <div class="col-sm-12 full_back" style="background: #eee; padding: 40px 10px 60px; border-top: 30px solid #f2b367;">
   <div class="col-sm-12" style="text-align: center; margin-bottom: 30px;">
-    <h2>with <span style="font-weight: 200;">{{t "%app_name_upper%" key='coughdrop'}}</span> you can:</h2>
+    <h2>with <span style="font-weight: 200;">{{t "%app_name_upper%" key='coughdrop_upper'}}</span> you can:</h2>
   </div>
   <div class="col-sm-4 icon_column">
     <span class="glyphicon glyphicon-comment big_icon" style="color: #49c7e8;"></span>
@@ -95,7 +95,7 @@
   <div class="col-sm-4 icon_column">
     <span class="glyphicon glyphicon-cloud big_icon" style="color: #f2b367;"></span>
     <span class="icon_under">
-    <strong>{{t "Work offline" key='work_offline'}}</strong>
+    <strong>{{t "Work Offline" key='work_offline'}}</strong>
     {{t "with backup in the cloud so it's painless to switch devices if something breaks. You can also share boards with others and open-license them for anyone to use." key='offline_text'}}
     </span>
   </div>
@@ -173,7 +173,7 @@
   {{#unless app_state.no_linky}}
     <div class="col-sm-12 full_back" style="background: #eee; padding: 40px 10px 60px; border-top: 30px solid #f2b367;">
       <div class="col-sm-12" style="text-align: center; margin-bottom: 30px;">
-        <h2>{{t "see how people are using" key='see_how'}} <span style="font-weight: 200;">{{t "%app_name_upper%" key='coughdrop'}}</span> {{t "right now" key='right_now'}}</h2>
+        <h2>{{t "see how people are using" key='see_how'}} <span style="font-weight: 200;">{{t "%app_name_upper%" key='coughdrop_upper'}}</span> {{t "right now" key='right_now'}}</h2>
       </div>
       <div class="col-sm-6" style='text-align: center;'>
         <h3>{{t "For Families" key='for_families'}}</h3>
@@ -197,7 +197,7 @@
       <div class="well with_bg">
       <div class="row">
         <div>
-          <h2>{{t "Try <span style='font-weight: 200;'>%app_name_upper%</span> for yourself" key='join_coughdrop'}}</h2>
+          <h2>{{t "Try <span style='font-weight: 200;'>%app_name_upper%</span> for yourself" key='try_coughdrop'}}</h2>
           <p>
             {{t "Ready to see more? Sign up now to get started!" key='sign_up_for_free'}}
           </p>
@@ -227,7 +227,7 @@
             <div class="form-group">
               {{input type="password" value=user.password class="form-control" id="password" title="password" placeholder="Password"}}
               {{#if shortPassword}}
-                <span class='text-danger'>{{t "password must be at least 6 characters" key='min_password'}}</span><br/>
+                <span class='text-danger'>{{t "password must be at least 6 characters" key='min_password_lower'}}</span><br/>
               {{/if}}
             </div>
             <div class="form-group">
@@ -249,7 +249,7 @@
               {{#if persistence.online}}
                 <button type="submit" class="btn btn-primary" disabled={{registering.saving}} style="width: 100px;">
                   {{#if registering.saving}}
-                    {{t "Signing Up.." key='signing_up'}}
+                    {{t "Signing Up..." key='signing_up'}}
                   {{else}}
                     {{t "Sign Up" key='sign_up'}}
                   {{/if}}

@@ -28,7 +28,7 @@ export default modal.ModalController.extend({
   ),
   supervisor_types: computed(function() {
     return [
-      {name: i18n.t('unspecified', "[ Choose Access Level ]"), id: ''},
+      {name: i18n.t('choose_access_level', "[ Choose Access Level ]"), id: ''},
       {name: i18n.t('edit_access', "Can modify boards and settings, and see reports"), id: 'edit'},
       {name: i18n.t('read_only_access', "Can see boards, settings and reports, but not modify"), id: 'read_only'},
       {name: i18n.t('modeling_access', "Can see boards, and model only"), id: 'modeling_only'},

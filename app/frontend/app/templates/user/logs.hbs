@@ -78,7 +78,7 @@
               <td>
                 {{#link-to 'user.log' user.user_name 'last-eval'}}
                   <span class="glyphicon glyphicon-list-alt"></span>
-                  <span class="sr-only">{{t "journal" key='journal'}}</span>
+                  <span class="sr-only">{{t "journal" key='journal_lower'}}</span>
                 {{/link-to}}
               </td>
               <td style="font-size: 12px; width: 100%;">
@@ -116,7 +116,7 @@
       {{#unless model.supporter_role}}
         <div class="btn-group dropup">
           <button class='btn btn-default dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
-            {{t "Add..." key='new'}} <span class="caret"></span>
+            {{t "Add..." key='add_ellipses'}} <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
             <li><a href="#" {{action 'recordNote'}}><strong>{{t "New Note" key='new_note'}}</strong></a></li>
@@ -145,7 +145,7 @@
 {{else if session.isAuthenticated}}
   <h2>{{t "Premium Membership Required" key='premium_required'}}</h2>
   <p>
-    {{t "%app_name% is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1'}}
+    {{t "%app_name% is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1g'}}
     {{#if app_state.feature_flags.subscriptions}}
       {{#link-to 'user.subscription' model.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
     {{else}}

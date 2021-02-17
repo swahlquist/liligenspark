@@ -577,7 +577,7 @@ export default Controller.extend({
           }
         }, function() { });
       }, function(err) {
-        modal.error(i18n.t('error_loading_user', "There was an unexpected error trying to load the user"));
+        modal.error(i18n.t('error_loading_user2', "There was an unexpected error trying to load the user"));
       });
     },
     update_evaluation: function(action) {

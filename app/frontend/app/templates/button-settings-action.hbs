@@ -15,7 +15,7 @@
             <img src={{model.icon}} style="height: 20px;"/>
             <a href={{model.link}} target="_blank">{{model.load_board.key}}</a>
           {{else}}
-            {{t "None set" key='none_set'}}
+            {{t "None Set" key='none_set'}}
           {{/if}}
         </p>
       </div>
@@ -213,7 +213,7 @@
     </div>
     {{#if model.integration}}
       <div class="form-group">
-        <label for="tool_action_type" class="col-sm-2 control-label">{{t "Action" key='code'}}</label>
+        <label for="tool_action_type" class="col-sm-2 control-label">{{t "Action" key='action'}}</label>
         <div class='col-sm-10'>
           {{#if selected_integration.has_multiple_actions}}
             {{bound-select select_class="form-control" select_id="tool_action_type" content=tool_action_types selection=model.integration.action_type action=(action (mut model.integration.action_type)) }}
@@ -267,7 +267,7 @@
               <iframe src={{video_test_url}} id="link_video_preview" frameborder="0" allow="autoplay; fullscreen; encrypted-media"></iframe>
             </div>
             {{#unless image_matches_video_thumbnail}}
-              <a href="#" {{action 'set_as_button_image' model.video.thumbnail_url model.video.thumbnail_content_type}}>{{t "set thumbnail as button image" key='set_as_button_image'}}</a>
+              <a href="#" {{action 'set_as_button_image' model.video.thumbnail_url model.video.thumbnail_content_type}}>{{t "set thumbnail as button image" key='set_thumbnail_as_button_image'}}</a>
             {{/unless}}
 
             {{#if player}}
@@ -382,7 +382,7 @@
                 </p>
               {{/if}}
               <p class="form-control-static">
-                <a target="_blank" href={{model.fixed_url}}>{{t "open in a browser tab" key='open_in_browser'}}</a>
+                <a target="_blank" href={{model.fixed_url}}>{{t "open in a browser tab" key='open_in_browser_lower'}}</a>
               </p>
             </div>
           </div>
@@ -494,7 +494,7 @@
                   </span>
                   <br/>
                   {{#if model.apps.android.custom}}
-                    {{t "App-registered URL/scheme:" key='custom_launch'}}
+                    {{t "App-registered URL/scheme:" key='app_launch'}}
                     {{input value=model.apps.android.launch_url class="form-control" placeholder="i.e. https://www.twitter.com/"}}
                   {{else}}
                     {{#if model.apps.android.launch_url}}
@@ -571,7 +571,7 @@
             <div class="form-group">
               <div class="col-sm-10 col-sm-offset-2">
                 <p class="form-control-static">
-                  <a target="_blank" href={{fixed_app_url}}>{{t "open in a browser tab" key='open_in_browser'}}</a>
+                  <a target="_blank" href={{fixed_app_url}}>{{t "open in a browser tab" key='open_in_browser_lower'}}</a>
                 </p>
               </div>
             </div>

@@ -69,7 +69,7 @@ export default Component.extend({
     }
   }),
   simple_types: [
-    {name: i18n.t('select_simple_tracking_type', "[ How to Earn This Badge ]"), id: ''},
+    {name: i18n.t('how_to_earn_badge', "[ How to Earn This Badge ]"), id: ''},
     {name: i18n.t('earned_by_words_per_day', "Earned by Watchwords Used Per Day"), id: 'words_per_day'},
     {name: i18n.t('earned_by_words_per_week', "Earned by Watchwords Used Per Week"), id: 'words_per_week'},
     {name: i18n.t('earned_by_buttons_per_day', "Earned by Buttons Hit Per Day"), id: 'buttons_per_day'},
@@ -104,13 +104,13 @@ export default Component.extend({
   ],
   instance_metric_list: [
     {name: i18n.t('select_metric_list', "[ Select Metric ]"), id: ''},
-    {name: i18n.t('words', "Selected Word(s)"), id: 'word'},
-    {name: i18n.t('buttons', "Selected Button(s)"), id: 'button'},
-    {name: i18n.t('sessions', "Session(s)"), id: 'session'},
-    {name: i18n.t('modeled_words', "Modeled Word(s)"), id: 'modeled_word'},
-    {name: i18n.t('modeled_buttons', "Modeled Button(s)"), id: 'modeled_button'},
-    {name: i18n.t('unique_words', "Unique Word(s)"), id: 'unique_word'},
-    {name: i18n.t('unique_buttons', "Unique Button(s)"), id: 'unique_button'},
+    {name: i18n.t('words2', "Selected Word(s)"), id: 'word'},
+    {name: i18n.t('selected_buttons2', "Selected Button(s)"), id: 'button'},
+    {name: i18n.t('sessions2', "Session(s)"), id: 'session'},
+    {name: i18n.t('modeled_words2', "Modeled Word(s)"), id: 'modeled_word'},
+    {name: i18n.t('modeled_buttons2', "Modeled Button(s)"), id: 'modeled_button'},
+    {name: i18n.t('unique_words2', "Unique Word(s)"), id: 'unique_word'},
+    {name: i18n.t('unique_buttons2', "Unique Button(s)"), id: 'unique_button'},
   ],
   custom_badge: computed('badge.simple_type', function() {
     return this.get('badge.simple_type') == 'custom';
@@ -133,11 +133,11 @@ export default Component.extend({
   simple_badge_unit: computed('badge.simple_type', function() {
     var type = this.get('badge.simple_type') || '';
     if(type.match(/per_day/)) {
-      return i18n.t('days', "days");
+      return i18n.t('days_lower', "days");
     } else if(type.match(/per_week/)) {
-      return i18n.t('weeks', "weeks");
+      return i18n.t('weeks_lower', "weeks");
     } else {
-      return i18n.t('units', "units");
+      return i18n.t('units_lower', "units");
     }
   }),
   criteria_type_list: computed('badge.interval', function() {

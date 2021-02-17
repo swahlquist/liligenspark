@@ -63,7 +63,7 @@ export default modal.ModalController.extend({
             stashes.push_log();
             modal.success(i18n.t('user_notified', "Message will be sent with logs or next sync."));
           } else {
-            modal.success(i18n.t('user_notified', "Message queued to be sent when online."));
+            modal.success(i18n.t('message_queued', "Message queued to be sent when online."));
           }
         } else {
           this.set('error', true);
@@ -82,7 +82,7 @@ export default modal.ModalController.extend({
         }).then(function(data) {
           _this.set('loading', false);
           modal.close('confirm-notify-user');
-          modal.success(i18n.t('user_notified', "Message sent!"));
+          modal.success(i18n.t('message_sent_excl', "Message sent!"));
         }, function(err) {
           _this.set('loading', false);
           if(err && err.result && err.result.status >= 400) {

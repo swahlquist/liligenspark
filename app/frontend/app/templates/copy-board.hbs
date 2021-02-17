@@ -10,7 +10,7 @@
   <div class="modal-body">
     <h4>{{t "Copy of " key='copy_of'}} {{ model.board.name }}</h4>
     <div>
-      <label class='form-control-static' style='display: inline-block;' for='board_name'>{{t "Name:" key='name'}}</label>
+      <label class='form-control-static' style='display: inline-block;' for='board_name'>{{t "Name:" key='name_colon'}}</label>
       <span style='width: 200px; display: inline-block;'>
         {{input type='text' class='form-control' id='board_name' value=board_name placeholder="Name for board copy"}}
       </span>
@@ -37,7 +37,7 @@
         {{t "This board is part of the user's communication set. Do you want to use the new copy in the communication set instead of the original?" key='copy_upstream_board_links'}}
         {{t "This action could make copies of other boards in the communication set as well." key='more_copies_warning'}}
       {{else if sidebar_board}}
-        {{t "This board is currently on the user's sidebar. Do you want to update the sidebar with the new copy?" key='copy_home_board'}}
+        {{t "This board is currently on the user's sidebar. Do you want to update the sidebar with the new copy?" key='copy_sidebar_board'}}
       {{else if in_sidebar_set}}
         {{t "This board is part of the user's sidebar set. Do you want to use the new copy in the sidebar instead of the original?" key='copy_upstream_sidebar_links'}}
         {{t "This action could make copies of other boards in the sidebar set as well." key='more_sidebar_copies_warning'}}
@@ -73,13 +73,13 @@
     <div class="row" style='margin-top: 20px;'>
       <label style='font-weight: normal; color: #888;' class="col-sm-12">
         {{input type='checkbox' checked=translate}}
-        &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards'}}
+        &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards_to_language'}}
       </label>
     </div>
     {{#if translate}}
       <div class="row">
         <label class="col-sm-4 control-label" for="translate_locale">
-          {{t "Language:" key='language'}}
+          {{t "Language:" key='language_colon'}}
         </label>
         <div class="col-sm-4">
           {{bound-select select_class="form-control" select_id="translate_locale" content=locales selection=translate_locale action=(action (mut translate_locale)) }}
@@ -88,7 +88,7 @@
     {{else if model.board.multiple_locales}}
       <div class="row" style='margin-top: 30px;'>
         <label class="col-sm-4 control-label" for="default_locale">
-          {{t "Default Language:" key='default_language'}}
+          {{t "Default Language:" key='default_language_colon'}}
         </label>
         <div class="col-sm-4">
           {{bound-select select_class="form-control" select_id="default_locale" content=model.board.readable_locales selection=default_locale action=(action (mut default_locale)) }}
@@ -102,12 +102,12 @@
   <div class="modal-footer">
     {{#if home_board}}
       <div class="btn-group dropup">
-        <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_home"}}>{{t "Copy as New Home Board" key='copy_linked_boards'}}</button>
+        <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_home"}}>{{t "Copy as New Home Board" key='copy_linked_boards_as_home'}}</button>
       </div>
       {{partial 'copy-just-this-board'}}
     {{else if sidebar_board}}
       <div class="btn-group dropup">
-        <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_sidebar"}}>{{t "Copy To  The Sidebar" key='copy_linked_boards'}}</button>
+        <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_sidebar"}}>{{t "Copy To The Sidebar" key='copy_linked_boards_to_sidebar'}}</button>
       </div>
       {{partial 'copy-just-this-board'}}
     {{else if in_board_set}}

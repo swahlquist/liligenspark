@@ -51,7 +51,7 @@
           {{partial "goal_in_list"}}
         {{/each}}
       {{else}}
-        {{t "None set" key='none_set'}}
+        {{t "None Set" key='none_set'}}
       {{/if}}
       <h3>{{t "Past Goals" key='past_goals'}}</h3>
       {{#if past_goals}}
@@ -66,7 +66,7 @@
 {{else if session.isAuthenticated}}
   <h2>{{t "Premium Membership Required" key='premium_required'}}</h2>
   <p>
-    {{t "%app_name% is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1'}}
+    {{t "%app_name% is a powerful, flexible communication tool with lots of great features. Some features, including this one, are only available to users who have purchased a premium account. Please " key='purchase_subscription_1f'}}
     {{#if app_state.feature_flags.subscriptions}}
       {{#link-to 'user.subscription' model.user_name}}{{t "purchase a premium account" key='purchase_subscription_2'}}{{/link-to}}
     {{else}}

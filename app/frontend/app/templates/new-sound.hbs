@@ -11,7 +11,7 @@
 <!-- https://coughdrop-usercontent.s3.amazonaws.com/sounds/2/9/1_29_635d33f9c9196f22140f3276-d7c75f40661f0ae83500a430bb1f774091c9b3a21e58143a71804e63077feb9a371827c1d11e59c5da913628428eb2903404eec886460b4eb4f6e50e032c085a -->
             {{input type='text' class='form-control' value=url placeholder='URL to audio file'}}
           </span>
-          <button class='btn btn-default' type='button' {{action 'find_url'}}>{{t "Retrieve" key='find'}}</button>
+          <button class='btn btn-default' type='button' {{action 'find_url'}}>{{t "Retrieve" key='retrieve'}}</button>
         </div>
         <div>
             <button type="button" {{action "record_sound" on="click"}} disabled={{recorder_unavailable}} class="btn btn-default">

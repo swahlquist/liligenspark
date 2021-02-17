@@ -2,14 +2,14 @@
   <div class="col-sm-8 col-sm-offset-2 col-lg-6 col-lg-offset-3">
     <h2>{{t "Give %app_name% as a Gift" key='give_as_a_gift'}}</h2>
     <span class="glyphicon glyphicon-gift" style="font-size: 50px; float: left; margin: 5px 10px 5px 0;"></span>
-    <p>{{t "%app_name% can be a powerful tool for developing communicators. If you know someone who could benefit from access to %app_name%, you can purchase a membership on their behalf. When you do you will receive an email with a gift code that can be used to redeem your gift for a %app_name% user." key='gift_details'}}</p>
+    <p>{{t "%app_name% can be a powerful tool for developing communicators. If you know someone who could benefit from access to %app_name%, you can purchase a membership on their behalf. When you do you will receive an email with a gift code that can be used to redeem your gift for a %app_name% user." key='gift_explainer'}}</p>
     {{#if subscription.purchase_complete}}
       <div style="margin: 50px 0;">
         <h4>
           <span class="glyphicon glyphicon-ok"></span>
           {{t "Purchase complete! Thank you!" key='purchase_complete'}}
         </h4>
-        <p>{{t "You should receive an email with the gift code associated with this purchase. You can forward the email to the intended recipient, or come up with a more creative way to get the code to them (I hear trumpets make things exciting). Make sure to check your spam box if you're not seeing the email come through within a few minutes." key='purchase_in_email'}}</p>
+        <p>{{t "You should receive an email with the gift code associated with this purchase. You can forward the email to the intended recipient, or come up with a more creative way to get the code to them (I hear trumpets make things exciting). Make sure to check your spam box if you're not seeing the email come through within a few minutes." key='gift_code_in_email'}}</p>
       </div>
     {{else if subscription.finalizing_purchase}}
       <div style="margin: 50px 0;">
@@ -20,11 +20,11 @@
       </div>
     {{else if subscription.no_purchasing}}
       <p style="margin: 50px 0; font-size: 18px;">
-        {{t "To purchase as a gift, please <b>visiting coughdrop.com</b> in your web browser." key='go_to_web_site'}}
+        {{t "To purchase as a gift, please <b>visiting coughdrop.com</b> in your web browser." key='gift_go_to_web_site'}}
       </p>
     {{else if subscription.app_pricing_override}}
       <p style="margin: 50px 0; font-size: 18px;">
-        {{t "To purchase as a gift, please <b>visiting coughdrop.com</b> in your web browser." key='go_to_web_site'}}
+        {{t "To purchase as a gift, please <b>visiting coughdrop.com</b> in your web browser." key='gift_go_to_web_site'}}
       </p>
     {{else}}
       <form {{action "purchase" on="submit"}}>

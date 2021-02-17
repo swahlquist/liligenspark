@@ -15,7 +15,7 @@ export default Controller.extend({
         _this.set('response', data);
       }, function(xhr, message) {
         if(message && message.error == 'not online') {
-          _this.set('response', {message: i18n.t('not_online', "Email not sent, please check your internet connection.")});
+          _this.set('response', {message: i18n.t('email_not_sent_check_internet', "Email not sent, please check your internet connection.")});
         } else if(xhr && xhr.result == "Too Many Requests") {
           _this.set('response', {message: i18n.t('request_throttled', "Too many requests, please wait a few minutes and try again.")});
         } else if(xhr && xhr.result) {

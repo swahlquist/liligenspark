@@ -38,17 +38,17 @@ export default modal.ModalController.extend({
   }),
   board_levels: computed(function() {
     return [
-      {name: i18n.t('unspecified', "[ Use the Default ]"), id: ''},
-      {name: i18n.t('level_1', "Level 1 (most simple)"), id: '1'},
-      {name: i18n.t('level_2', "Level 2"), id: '2'},
-      {name: i18n.t('level_3', "Level 3"), id: '3'},
-      {name: i18n.t('level_4', "Level 4"), id: '4'},
-      {name: i18n.t('level_5', "Level 5"), id: '5'},
-      {name: i18n.t('level_6', "Level 6"), id: '6'},
-      {name: i18n.t('level_7', "Level 7"), id: '7'},
-      {name: i18n.t('level_8', "Level 8"), id: '8'},
-      {name: i18n.t('level_9', "Level 9"), id: '9'},
-      {name: i18n.t('level_10', "Level 10 (all buttons and links)"), id: '10'},
+      {name: i18n.t('unspecified_2', "[ Use the Default ]"), id: ''},
+      {name: i18n.t('level_1_2', "Level 1 (most simple)"), id: '1'},
+      {name: i18n.t('level_2_2', "Level 2"), id: '2'},
+      {name: i18n.t('level_3_2', "Level 3"), id: '3'},
+      {name: i18n.t('level_4_2', "Level 4"), id: '4'},
+      {name: i18n.t('level_5_2', "Level 5"), id: '5'},
+      {name: i18n.t('level_6_2', "Level 6"), id: '6'},
+      {name: i18n.t('level_7_2', "Level 7"), id: '7'},
+      {name: i18n.t('level_8_2', "Level 8"), id: '8'},
+      {name: i18n.t('level_9_2', "Level 9"), id: '9'},
+      {name: i18n.t('level_10_2', "Level 10 (all buttons and links)"), id: '10'},
     ];
   }),
   pending: computed('status.updating', 'status.copying', function() {

@@ -260,7 +260,7 @@
               <th>{{t "Prompt" key='prompt'}}</th>
               <th>{{t "Answer" key='answer'}}</th>
               <th>{{t "Distractors" key='distractors'}}</th>
-              <th>{{t "Button Delay" key='delay'}}</th>
+              <th>{{t "Button Delay" key='button_delay'}}</th>
             </tr>          
           </thead>
           <tbody>
@@ -348,7 +348,7 @@
       {{/if}}
       {{#if model.note.prior}}
         <div style='white-space: normal; margin-top: 30px;'>
-          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if model.note.prior_contact}}{{t "message from " key='message_from'}}{{model.note.prior_contact.name}}{{/if}}:</div>
+          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if model.note.prior_contact}}{{t "message from" key='message_from'}} {{model.note.prior_contact.name}}{{/if}}:</div>
           <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{model.note.prior}}</div>
         </div>
       {{/if}}
@@ -412,7 +412,7 @@
               <td>
                 {{#if tally.running_correct_total}}
                   {{tally.running_correct_total}} / {{tally.running_total}}
-                  {{t "correct" key='correct'}}
+                  {{t "correct" key='correct_lower'}}
                 {{/if}}
               </td>
             </tr>
@@ -490,12 +490,12 @@
                 {{#if event.note_count}}
                   <button {{action 'toggle_notes' event.id}} class='btn btn-primary btn-sm' style="margin: -8px 0 -6px 5px; width: 35px; font-weight: bold;">
                     {{event.note_count}}
-                    <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
+                    <span class='sr-only'>{{t "add comment" key='add_comment_lower'}}</span>
                   </button>
                 {{else}}
                   <button {{action 'toggle_notes' event.id 'add'}} class='btn btn-default btn-sm' style="opacity: 0.8; margin: -8px 0 -6px 5px; width: 35px;">
                     <span class='glyphicon glyphicon-comment'></span>
-                    <span class='sr-only'>{{t "add comment" key='add_comment'}}</span>
+                    <span class='sr-only'>{{t "add comment" key='add_comment_lower'}}</span>
                   </button>
                 {{/if}}
               </td>

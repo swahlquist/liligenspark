@@ -168,7 +168,7 @@ export default Component.extend({
         }).then(function(data) {
           progress_tracker.track(data.progress, function(event) {
             if(event.status == 'errored') {
-              _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed', "Purchase failed. Please try again or contact support for help."));
+              _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed_try_again', "Purchase failed. Please try again or contact support for help."));
               _this.set('purchase_state', null);
               _this.send('reset');
               console.log(event);
@@ -181,7 +181,7 @@ export default Component.extend({
               _this.set('purchase_state', null);
               var str = i18n.t('card_declined', "Purchase failed, your card was declined. Please try a different card or contact support for help.");
               if(event.result.decline_code && event.result.decline_code == 'fraudulent') {
-                str = i18n.t('card_declined_by_billing', "Purchase failed, our billing system has flagged your card as high-risk. Please try a different card or contact support for help.");
+                str = i18n.t('card_declined_by_billing_high_risk', "Purchase failed, our billing system has flagged your card as high-risk. Please try a different card or contact support for help.");
               } else if(event.result.decline_code && event.result.decline_code == 'stolen_card') {
                 str = i18n.t('card_declined_by_billing_stolen', "Purchase failed, our billing system has flagged your card as being stolen. Please try a different card or contact support for help.");
               }
@@ -191,7 +191,7 @@ export default Component.extend({
               console.log(event);
             } else if (event.result && event.result.success === false) {
               _this.set('purchase_state', null);
-              _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed', "Purchase failed. Please try again or contact support for help."));
+              _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed_try_again', "Purchase failed. Please try again or contact support for help."));
               _this.send('reset');
               console.log(event);
               console.error('purchase_other_error');
@@ -222,7 +222,7 @@ export default Component.extend({
             console.error('purchase_subscription_missing_token');
             _this.sendAction('subscription_authentication_error', i18n.t('user_subscription_unauthenticated', "Purchase failed, it looks like your login may have timed out. Please try logging out and back in. If that doesn't help, please contact support and we'll help figure things out."));
           } else {
-            _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed', "Purchase failed unexpectedly. Please try logging out and back in. If that doesn't work, please contact support for help."));
+            _this.sendAction('subscription_error', i18n.t('user_subscription_update_failed_logout', "Purchase failed unexpectedly. Please try logging out and back in. If that doesn't work, please contact support for help."));
           }
         });
       };

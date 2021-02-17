@@ -105,7 +105,7 @@
               {{else if db}}
                 {{db.type}}
               {{else}}
-                {{t "none" key='none'}}
+                {{t "none" key='none_lower'}}
               {{/if}}
             </td>
             <td style='vertical-align: middle;'>
@@ -115,12 +115,12 @@
             </td>
           </tr>
           <tr>
-            <td style='vertical-align: middle;'>{{t "Local Storage" key='local_storage'}}</td>
+            <td style='vertical-align: middle;'>{{t "Local Storage" key='local_storage_name'}}</td>
             <td style='vertical-align: middle;'>
               {{#if local_storage}}
                 {{t "available" key='available'}}
               {{else}}
-                {{t "not available" key='not_available'}}
+                {{t "not available" key='not_available_lower'}}
               {{/if}}
             </td>
             <td style='vertical-align: middle;'>
@@ -134,13 +134,13 @@
             <td colspan='2'>{{app_state.version}}</td>
           </tr>
           <tr class='text-muted'>
-            <td>{{t "Recognized Device" key='version'}}</td>
+            <td>{{t "Recognized Device" key='recognized_device'}}</td>
             <td colspan='2'>{{app_state.device_name}}</td>
           </tr>
           {{#if has_debugging}}
             <tr class='text-muted'>
               <td>{{t "Debugging" key='debugging'}}</td>
-              <td colspan='2'><a href="#" {{action 'show_debugging'}}>{{t "Available" key='available'}}</a></td>
+              <td colspan='2'><a href="#" {{action 'show_debugging'}}>{{t "Available" key='available_cap'}}</a></td>
             </tr>
           {{/if}}
           <tr>
@@ -149,7 +149,7 @@
               {{#if local_boards}}
                 {{local_boards}}
               {{else}}
-                {{t "not available" key='not_available'}}
+                {{t "not available" key='not_available_lower'}}
               {{/if}}
             </td>
             <td style='vertical-align: middle;'>

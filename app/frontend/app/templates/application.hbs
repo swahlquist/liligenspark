@@ -75,7 +75,7 @@
               {{#if show_board_intro}}
                 <div {{action 'board_intro'}} class='extra-btn' style='position: absolute; top: 3px; bottom: 3px; border: 1px solid #ccc;  background: #eee; margin-top: 0; margin-bottom: 0; border-radius: 5px; padding: 5px 10px; max-height: 75px; cursor: pointer;'>
                   <img src={{path "images/learn.png"}} style='height: 100%; max-height: 50px;'/>
-                  {{t "Intro" key='board_intro'}}
+                  {{t "Intro" key='intro'}}
                 </div>
               {{else if app_state.eye_gaze_state}}
                 <div class="eye_status" title={{app_state.eye_gaze_state.status}}>
@@ -142,12 +142,12 @@
         </button>
       {{/unless}}
       <button class="btn btn-default access skinnier" id="backspace_button" {{action "backspace"}}>
-        <span class="sr-only">{{t "backspace" key='backspace'}}</span>
+        <span class="sr-only">{{t "backspace" key='backspace_lower'}}</span>
         <img src={{path "images/delete.svg"}}/>
       </button>
       {{#triple-click-listener triple_click='toggle_modeling'}}
         <button class="btn btn-default access" id="clear_button" {{action "clear"}} style='position: relative;'>
-          <span class="sr-only">{{t "clear" key='clear'}}</span>
+          <span class="sr-only">{{t "clear" key='clear_lower'}}</span>
           <span class="glyphicon glyphicon-remove button_icon" style="margin: 5px -5px 0;"></span>
           {{#if app_state.modeling}}
             <div style="position: absolute; bottom: 2px; left: 2px;">
@@ -174,7 +174,7 @@
       <a href="#" {{action "index"}}>
         <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} alt="CoughDrop"/>
         <span>
-          {{t "%app_name_upper%" key="coughdrop"}}
+          {{t "%app_name_upper%" key="coughdrop_upper"}}
         </span>
       </a>
     </h1>
@@ -275,7 +275,7 @@
           {{t "Done" key='done'}}
         </button>
       {{else}}
-        <button class={{no_paint_mode_class}} {{action "noPaint"}}><span class='wide'>{{t "&nbsp;&nbsp;Edit&nbsp;&nbsp;" key="edit"}}</span><span class='skinny glyphicon glyphicon-hand-up'></span></button>
+        <button class={{no_paint_mode_class}} {{action "noPaint"}}><span class='wide'>{{t "&nbsp;&nbsp;Edit&nbsp;&nbsp;" key="edit_padded"}}</span><span class='skinny glyphicon glyphicon-hand-up'></span></button>
         <span class="dropdown" style="display: inline-block;">
           <button class={{paint_mode_class}} data-toggle="dropdown">
             <span class="wide">{{t "Paint" key="paint"}}</span><span class="skinny glyphicon glyphicon-tint"></span>
@@ -301,8 +301,8 @@
               <span style="clear: left;"></span>
             </li>
             <li role="presentation" class="text-muted">
-              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "close"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="close"}}</a>
-              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "open"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-plus-sign"></span> {{t "Re-Link" key="open"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "close"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="de_link"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "open"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-plus-sign"></span> {{t "Re-Link" key="re_link"}}</a>
               <span style="clear: left;"></span>
             </li>
             {{#if app_state.feature_flags.board_levels}}
@@ -391,7 +391,7 @@
           {{#unless app_state.empty_board_history}}
             <a class="btn btn-default" href="#" {{action "back"}}>
               <span class="glyphicon glyphicon-arrow-left"></span>
-              <span class="hidden">{{t "back" key='back'}}</span>
+              <span class="hidden">{{t "back" key='back_lower'}}</span>
             </a>
           {{/unless}}
           {{#if app_state.currentBoardState.id}}
@@ -402,11 +402,11 @@
               {{#if app_state.currentUser}}
                 {{#if app_state.root_board_is_home}}
                   <a class="btn btn-default" href="#" {{action "setAsHome" 'starting'}}>
-                    <span class="wide"><span class='glyphicon glyphicon-ok'></span> {{t "Set as Home Board" key="set_as_home"}}</span><span class="skinny real_skinny glyphicon glyphicon-home"></span>
+                    <span class="wide"><span class='glyphicon glyphicon-ok'></span> {{t "Set as Home Board" key="set_as_home_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-home"></span>
                   </a>
                 {{else}}
                   <a class="btn btn-primary" href="#" {{action "setAsHome" 'starting'}}>
-                    <span class="wide">{{t "Make This my Home Board" key="set_as_home"}}</span><span class="skinny real_skinny glyphicon glyphicon-home"></span>
+                    <span class="wide">{{t "Make This my Home Board" key="make_home_board"}}</span><span class="skinny real_skinny glyphicon glyphicon-home"></span>
                   </a>
                 {{/if}}
               {{/if}}
@@ -423,8 +423,8 @@
                       {{#if app_state.currentUser.permissions.delete}}
                         {{#if few_supervisees}}
                           {{#each few_supervisees.list as |supervisee|}}
-                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id 'modeling'}}>{{t "model for" key='model_for'}} {{supervisee.user_name}}</a></li>
-                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id}}>{{t "speak as" key='speak_as'}} {{supervisee.user_name}}</a></li>
+                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id 'modeling'}}>{{t "model for" key='model_for_lower'}} {{supervisee.user_name}}</a></li>
+                            <li><a href="#" {{action "setSpeakModeUser" supervisee.id}}>{{t "speak as" key='speak_as_lower'}} {{supervisee.user_name}}</a></li>
                           {{/each}}
                           {{#if few_supervisees.more}}
                             <li><a href="#" {{action "pickSpeakModeUser" 'modeling'}}>{{t "model for..." key='model_for_ellipsis'}}</a></li>
@@ -463,7 +463,7 @@
                               <b>{{t "Level" key='level'}} {{board.current_level}}</b>
                             {{/if}}
                             {{#if level_buttons}}
-                              <div style='font-size: 12px;'>{{t "visible button" key='n_buttons' count=level_buttons}}</div>
+                              <div style='font-size: 12px;'>{{t "visible button" key='n_visible_buttons' count=level_buttons}}</div>
                             {{/if}}
                           </span>
                           <button class='skippy btn btn-default' {{action 'adjust_level' 'plus'}}><span class='glyphicon glyphicon-plus'></span></button>
@@ -585,7 +585,7 @@
                       </li>
                       {{#if app_state.current_board_not_home_or_supervising}}
                         <li role="presentation">
-                          <a role="menuitem" tabindex="-1" href="#" {{action "setAsHome"}}>{{t "Set as Home Board" key="set_as_home"}}</a>
+                          <a role="menuitem" tabindex="-1" href="#" {{action "setAsHome"}}>{{t "Set as Home Board" key="set_as_home_board"}}</a>
                         </li>
                       {{/if}}
                       <li role="presentation">
@@ -693,9 +693,9 @@
                     <li role="presentation" class='big' id='exit_speak_mode'>
                       <a href="#" {{action "setAsHome" 'starting'}}>
                         {{#if app_state.root_board_is_home}}
-                          {{t "Set as Home Board" key="set_as_home"}}
+                          {{t "Set as Home Board" key="set_as_home_board"}}
                         {{else}}
-                          {{t "Make This my Home Board" key="set_as_home"}}
+                          {{t "Make This my Home Board" key="make_home_board"}}
                         {{/if}}
                       </a>
                     </li>
@@ -721,7 +721,7 @@
               {{#if app_state.embedded}}
                 <li class="divider"></li>
                 <li role="presentation">
-                  <a href="#" {{action 'printBoard'}}>{{t "Print this Board" key="print_this_board"}}</a>
+                  <a href="#" {{action 'printBoard'}}>{{t "Print this Board" key="print_this_board_cap"}}</a>
                 </li>
                 <li role="presentation">
                   <a href="#" {{action 'launch_board'}}>{{t "Open in %app_name%" key="open_in_coughdrop"}}</a>
@@ -830,7 +830,6 @@
                     <li><a href="#" {{action "jump_section"}}><span class='glyphicon glyphicon-th-list'></span> {{t "Jump To..." key='jump_to'}}</a></li>
                     <li><a href="#" {{action "assessment_settings"}}><span class='glyphicon glyphicon-cog'></span> {{t "Eval Settings" key='eval_settings'}}</a></li>
                   {{else}}
-                      <!--li><a href="#" {{action "startRecording"}}>{{t "Recording (not yet)" key='start_recording'}}</a></li-->
                     {{#if app_state.currentBoardState.translatable}}
                       <li><a href="#" {{action "switch_languages"}}>{{t "Switch Languages" key='switch_languages'}}</a></li>
                     {{/if}}

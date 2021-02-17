@@ -52,7 +52,7 @@ describe('UserPreferencesController', 'controller:user-preferences', function() 
 //   buttonSpaceList: [
 //     {name: i18n.t('dont_stretch', "Don't Stretch Buttons"), id: "none"},
 //     {name: i18n.t('prefer_tall', "Stretch Buttons, Taller First"), id: "prefer_tall"},
-//     {name: i18n.t('prefer_tall', "Stretch Buttons, Wider First"), id: "prefer_wide"},
+//     {name: i18n.t('prefer_wide', "Stretch Buttons, Wider First"), id: "prefer_wide"},
 //   ],
 //   buttonBackgroundList: [
 //     {name: i18n.t('white', "White"), id: "#fff"},

@@ -165,7 +165,7 @@ BoardHierarchy.load_with_button_set = function(board, opts) {
 
     return RSVP.resolve(BoardHierarchy.create({board: board, button_set: button_set, options: opts}));
   }, function() {
-    return RSVP.reject(i18n.t('loading_board_failed', "Failed loading board links for copying"));
+    return RSVP.reject(i18n.t('loading_board_links_failed', "Failed loading board links for copying"));
   });
 
   return load_hierarchy;

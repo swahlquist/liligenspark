@@ -12,7 +12,7 @@ export default Controller.extend({
   recipient_list: [
     {name: i18n.t('general_info', "General Information"), id: "general info"},
     {name: i18n.t('sales', "Sales"), id: "sales"},
-    {name: i18n.t('support', "Technical Support"), id: "technical support"}
+    {name: i18n.t('tech_support', "Technical Support"), id: "technical support"}
   ],
   support_recipient: computed('recipient', function() {
     return this.get('recipient') == 'technical support';

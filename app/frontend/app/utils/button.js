@@ -782,23 +782,23 @@ Button.action_styling = function(action, button) {
   }
 
   if(action == 'folder') {
-    res.action_alt = i18n.t('folder', "folder");
+    res.action_alt = i18n.t('folder_lower', "folder");
   } else if(action == 'talk') {
-    res.action_alt = i18n.t('talk', "talk");
+    res.action_alt = i18n.t('talk_lower', "talk");
   } else if(action == 'link') {
     if(button.video && button.video.popup) {
-      res.action_alt = i18n.t('video', "video");
+      res.action_alt = i18n.t('video_lower', "video");
     } else if(button.book && button.book.popup) {
-      res.action_alt = i18n.t('book', "book");
+      res.action_alt = i18n.t('book_lower', "book");
     } else {
-      res.action_alt = i18n.t('link', "link");
+      res.action_alt = i18n.t('link_lower', "link");
     }
   } else if(action == 'app') {
-    res.action_alt = i18n.t('app', "app");
+    res.action_alt = i18n.t('app_lower', "app");
   } else if(action == 'integration') {
-    res.action_alt = i18n.t('integration', "integration");
+    res.action_alt = i18n.t('integration_lower', "integration");
   } else {
-    res.action_alt = i18n.t('unknown_action', "unknown action");
+    res.action_alt = i18n.t('unknown_action_lower', "unknown action");
   }
 
   return res;
@@ -1098,7 +1098,7 @@ Button.load_actions = function() {
     },
     {
       action: ':home',
-      description: i18n.t('home', "Jump to the current home board"),
+      description: i18n.t('jump_to_current_home', "Jump to the current home board"),
       trigger: function() {
         app_state.controller.send('home', {button_triggered: true, skip_click: true});
         return {already_navigating: true};
@@ -1106,7 +1106,7 @@ Button.load_actions = function() {
     },
     {
       action: ':back',
-      description: i18n.t('back', "Go back one board"),
+      description: i18n.t('go_back_one_board', "Go back one board"),
       trigger: function() {
         app_state.controller.send('back', {button_triggered: true, skip_click: true});
         return {already_navigating: true};
@@ -1114,7 +1114,7 @@ Button.load_actions = function() {
     },
     {
       action: ':backspace',
-      description: i18n.t('backspace', "Erase the last button from the utterance"),
+      description: i18n.t('erase_last_button', "Erase the last button from the utterance"),
       trigger: function() {
         app_state.controller.send('backspace', {button_triggered: true, skip_click: true});      
       }
@@ -1129,7 +1129,7 @@ Button.load_actions = function() {
     },
     {
       action: ':speak',
-      description: i18n.t('speak', "Speak the full utterance"),
+      description: i18n.t('speak_full_utterance', "Speak the full utterance"),
       has_sound: true,
       trigger: function() {
         app_state.controller.send('vocalize', {button_triggered: true});      
@@ -1237,7 +1237,7 @@ Button.load_actions = function() {
     },
     {
       action: ':hold-thought',
-      description: i18n.t('hold_thought', "Hold That Thought"),
+      description: i18n.t('hold_that_thought', "Hold That Thought"),
       trigger: function() {
         if(app_state.get('speak_mode')) {
           stashes.remember({stash: true});
@@ -1326,7 +1326,7 @@ Button.load_actions = function() {
     {
       action: ':comparative',
       modifier: true,
-      description: i18n.t('comparative', "Add \"more\" or \"er\" (comparative)"),
+      description: i18n.t('add_comparative', "Add \"more\" or \"-er\" (comparative)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.comparative(prior_text);
         altered.label = i18n.comparative(prior_label);
@@ -1336,7 +1336,7 @@ Button.load_actions = function() {
     {
       action: ':er',
       modifier: true,
-      description: i18n.t('comparative', "Add \"more\" or \"-er\" (comparative)"),
+      description: i18n.t('add_comparative', "Add \"more\" or \"-er\" (comparative)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.comparative(prior_text);
         altered.label = i18n.comparative(prior_label);
@@ -1346,7 +1346,7 @@ Button.load_actions = function() {
     {
       action: ':superlative',
       modifier: true,
-      description: i18n.t('superlative', "Add \"most\" or \"-est\" (superlative)"),
+      description: i18n.t('add_superlative', "Add \"most\" or \"-est\" (superlative)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.superlative(prior_text);
         altered.label = i18n.superlative(prior_label);
@@ -1366,7 +1366,7 @@ Button.load_actions = function() {
     {
       action: ':est',
       modifier: true,
-      description: i18n.t('superlative', "Add \"most\" or \"-est\" (superlative)"),
+      description: i18n.t('add_superlative', "Add \"most\" or \"-est\" (superlative)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.superlative(prior_text);
         altered.label = i18n.superlative(prior_label);
@@ -1376,7 +1376,7 @@ Button.load_actions = function() {
     {
       action: ':verb-negation',
       modifier: true,
-      description: i18n.t('negation', "Negate the word"),
+      description: i18n.t('negate_the_word', "Negate the word"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.verb_negation(prior_text);
         altered.label = i18n.verb_negation(prior_label);
@@ -1386,7 +1386,7 @@ Button.load_actions = function() {
     {
       action: ':possessive',
       modifier: true,
-      description: i18n.t('possessive', "Add \"\s\" (possessive)"),
+      description: i18n.t('add_possessive', "Add \"s\" (possessive)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.possessive(prior_text);
         altered.label = i18n.possessive(prior_label);
@@ -1396,7 +1396,7 @@ Button.load_actions = function() {
     {
       action: ':\'s',
       modifier: true,
-      description: i18n.t('possessive', "Add \"\s\" (possessive)"),
+      description: i18n.t('add_possessive', "Add \"s\" (possessive)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.possessive(prior_text);
         altered.label = i18n.possessive(prior_label);
@@ -1426,7 +1426,7 @@ Button.load_actions = function() {
     {
       action: ':present-participle',
       modifier: true,
-      description: i18n.t('present_participle', "Make the verb present participle"),
+      description: i18n.t('make_present_participle', "Make the verb present participle"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {present_participle: true});
         altered.label = i18n.tense(prior_label, {present_participle: true});
@@ -1436,7 +1436,7 @@ Button.load_actions = function() {
     {
       action: ':ing',
       modifier: true,
-      description: i18n.t('present_participle', "Make the verb present participle"),
+      description: i18n.t('make_present_participle', "Make the verb present participle"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {present_participle: true});
         altered.label = i18n.tense(prior_label, {present_participle: true});
@@ -1587,7 +1587,7 @@ Button.load_actions = function() {
       inline_description: "battery",
       description: i18n.t('battery_level', "Speak the current battery level"),
       content: function() {
-        return (app_state.get('battery') || i18n.t('unknown', "Unknown")) + " " + i18n.t('percent_battery', "percent battery left");
+        return (app_state.get('battery') || i18n.t('unknown', "Unknown")) + " " + i18n.t('percent_battery_left', "percent battery left");
       }
     },
     {

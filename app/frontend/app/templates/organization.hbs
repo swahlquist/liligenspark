@@ -21,7 +21,7 @@
         {{/if}}
       </div>
       {{#if model.created}}
-        <div title={{date model.created}}>{{t "created" key='created'}} {{date_ago model.created}}</div>
+        <div title={{date model.created}}>{{t "created" key='created_lower'}} {{date_ago model.created}}</div>
       {{/if}}
     </div>
     {{#if model.permissions.edit}}
@@ -40,11 +40,11 @@
             <span class="btn btn-default" style='text-align: left; display: none;'>
               <div style='margin-bottom: 4px;'>
                 {{input value=model.allotted_licenses class="form-control inline inline-licenses"}}
-                {{t "purchased licenses" key='licenses'}}
+                {{t "purchased licenses" key='purchased_licenses_lower'}}
               </div>
               {{input value=model.allotted_eval_licenses class="form-control inline inline-licenses"}}
-              {{t "eval accounts" key='eval_accounts'}}
-              <button class="btn btn-default" {{action "update_org"}}>{{t "update" key='update'}}</button>
+              {{t "eval accounts" key='eval_accounts_lower'}}
+              <button class="btn btn-default" {{action "update_org"}}>{{t "update" key='update_lower'}}</button>
             </span>
         {{/if}}
         {{#if model.admin}}
@@ -62,7 +62,7 @@
             </span>
             <span class="btn btn-default">
               {{input value=search_board enter=(action 'find_board') placeholder="board id/key" class="form-control inline inline-masquerade"}}
-              <button class="btn btn-default" {{action "find_board"}} style='width: 110px;'>{{t "find board" key='find_board'}}</button>
+              <button class="btn btn-default" {{action "find_board"}} style='width: 110px;'>{{t "find board" key='find_board_lower'}}</button>
             </span>
           {{/if}}
         {{/if}}

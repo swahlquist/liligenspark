@@ -31,7 +31,7 @@ export default modal.ModalController.extend({
           }, 10000);
 
         }, function() {
-          _this.set('error', i18n.t('delete_failed', "User account delete failed unexpectedly"));
+          _this.set('error', i18n.t('user_delete_failed', "User account delete failed unexpectedly"));
         });
       }
     }

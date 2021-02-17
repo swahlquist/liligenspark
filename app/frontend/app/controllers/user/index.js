@@ -105,7 +105,7 @@ export default Controller.extend({
     'model.shared_boards.length',
     function() {
       var list = [];
-      var res = {remove_type: 'delete', remove_label: i18n.t('delete', "delete"), remove_icon: 'glyphicon glyphicon-trash'};
+      var res = {remove_type: 'delete', remove_label: i18n.t('delete_lower', "delete"), remove_icon: 'glyphicon glyphicon-trash'};
       var cluster_orphans = false;
       if(this.get('selected') == 'mine' || !this.get('selected')) {
         list = this.get('model.my_boards');
@@ -547,7 +547,7 @@ export default Controller.extend({
           });
         }, function() {
           _this.set('subscription_settings.loading', false);
-          _this.set('subscription_settings.error', i18n.t('subscription_error', "There was an error updating the users's account information"));
+          _this.set('subscription_settings.error', i18n.t('subscription_update_error', "There was an error updating the users's account information"));
         });
       } else if(action == 'eval') {
         this.set('subscription_settings', {action: action, type: i18n.t('eval_device', "Evaluation Device")});
@@ -558,17 +558,17 @@ export default Controller.extend({
       } else if(action == 'manual_modeler') {
         this.set('subscription_settings', {action: action, type: i18n.t('manual_modeler', "Manually Set as Modeler")});
       } else if(action == 'add_1') {
-        this.set('subscription_settings', {action: action, type: i18n.t('add_one_month', "Add 1 Month to Expiration")});
+        this.set('subscription_settings', {action: action, type: i18n.t('add_one_month_to_expiration', "Add 1 Month to Expiration")});
       } else if(action == 'add_5_years') {
-        this.set('subscription_settings', {action: action, type: i18n.t('add_five_years', "Add 5 Years to Expiration")});
+        this.set('subscription_settings', {action: action, type: i18n.t('add_five_years_to_expiration', "Add 5 Years to Expiration")});
       } else if(action == 'communicator_trial') {
         this.set('subscription_settings', {action: action, type: i18n.t('communicator_trial', "Manually Set as Communicator Free Trial")});
       } else if(action == 'add_voice') {
-        this.set('subscription_settings', {action: action, type: i18n.t('add_premium_voice', "Add 1 Premium Voice")});
+        this.set('subscription_settings', {action: action, type: i18n.t('add_1_premium_voice', "Add 1 Premium Voice")});
       } else if(action == 'enable_extras') {
         this.set('subscription_settings', {action: action, type: i18n.t('enable_extras', "Enable Premium Symbols Access")});
       } else if(action == 'supporter_credit') {
-        this.set('subscription_settings', {action: action, type: i18n.t('add_supporter_credit', "Add 1 Premium Supporter Credit")});
+        this.set('subscription_settings', {action: action, type: i18n.t('add_premium_supporter_credit', "Add 1 Premium Supporter Credit")});
       } else if(action == 'restore_purchase') {
         this.set('subscription_settings', {action: action, type: i18n.t('restore_purchase', "Restore an Accidentally-Disabled Purchase")});
       } else if(action == 'force_logout') {

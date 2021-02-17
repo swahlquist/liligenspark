@@ -1,6 +1,6 @@
 {{#if trial_choice}}
   <div style='margin-top: 30px;'>
-    <button class='btn btn-default btn-lg' {{action 'skip_subscription'}} style='height: 75px; width: calc(50% - 7px); margin-right: 10px;'>{{t "Start with a<br/>2-month trial" key='two_month_trial'}}</button>
+    <button class='btn btn-default btn-lg' {{action 'skip_subscription'}} style='height: 75px; width: calc(50% - 7px); margin-right: 10px;'>{{t "Start with a<br/>2-month trial" key='start_with_two_month_trial'}}</button>
     <button class='btn btn-primary btn-lg' {{action 'check_pricing'}} style='height: 75px; width: calc(50% - 7px);'>{{t "See Purchasing<br/>Options" key='see_purchasing'}}</button>
   </div>
 {{else}}
@@ -11,7 +11,7 @@
         {{#if subscription.user.really_expired}}
         {{else}}
           <div style='margin-bottom: 10px;'>
-            <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a full-featured 2-month trial, no credit card required" key='two_month_trial'}}</button>
+            <button class='btn btn-default' {{action 'skip_subscription'}}>{{t "Start with a full-featured 2-month trial, no credit card required" key='two_month_trial_no_credit_card'}}</button>
           </div>
         {{/if}}
       {{/if}}
@@ -59,7 +59,7 @@
               US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>6</span>
             {{/if}}
             <div class='middle'>{{t "- or -" key='dash_or_dash'}}</div>
-            <div style='margin-top: -5px; line-height: 17px;'>{{t "per month" key='per_month'}}</div>
+            <div style='margin-top: -5px; line-height: 17px;'>{{t "per month" key='per_month_lower'}}</div>
           </td>
           {{/unless}}
           <td style='width: 25%; vertical-align: top; padding-top: 40px; color: #888; position: relative;'>
@@ -87,7 +87,7 @@
               {{#if subscription.user.lapsed}}
                 {{t "cloud re-purchase" key='cloud_re_purchase'}}
               {{else}}
-                {{t "lifetime purchase" key='one_time_purchase'}}
+                {{t "lifetime purchase" key='lifetime_purchase'}}
               {{/if}}
             </div>
           </td>
@@ -160,7 +160,7 @@
               </td>
               <td colspan={{if subscription.app_pricing_override '1' '2'}} class='separator semi_dim'>
                 {{t "user management tools available for organizations," key='org_tools_available'}}
-                {{#link-to 'contact'}}{{t "contact us!" key='contact_us'}}{{/link-to}}
+                {{#link-to 'contact'}}{{t "contact us!" key='contact_us_excl'}}{{/link-to}}
               </td>
             {{/if}}
           </tr>
@@ -177,7 +177,7 @@
             {{/if}}
           </td>
           <td colspan='1' class='separator semi_dim'>{{t "<a href='https://blog.mycoughdrop.com/what-in-the-world-are-aac-cloud-extras/' target='_blank'>cloud extras</a> for communicators" key='for_supported_communicators'}}</td>
-          <td colspan='1' class='semi_dim'>{{t "<a href='https://blog.mycoughdrop.com/what-in-the-world-are-aac-cloud-extras/' target='_blank'>cloud extras</a> reset after every eval" key='for_supported_communicators'}}</td>
+          <td colspan='1' class='semi_dim'>{{t "<a href='https://blog.mycoughdrop.com/what-in-the-world-are-aac-cloud-extras/' target='_blank'>cloud extras</a> reset after every eval" key='for_supported_communicators2'}}</td>
         </tr>
         {{#if pricing_only}}
           <tr>
@@ -201,7 +201,7 @@
                     <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                   {{/if}}
                   {{#if subscription.app_pricing_override}}
-                    {{subscription.monthly_app_price}} {{subscription.app_currency}}<br/>{{t "per month" key='per_month'}}
+                    {{subscription.monthly_app_price}} {{subscription.app_currency}}<br/>{{t "per month" key='per_month_lower'}}
                   {{else}}
                     {{t "US$6 per month" key='6_per_month'}}
                   {{/if}}
@@ -216,9 +216,9 @@
                   <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                 {{/if}}
                 {{#if subscription.app_pricing_override}}
-                  {{subscription.long_term_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
+                  {{subscription.long_term_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase_lower'}}
                 {{else}}
-                  US${{subscription.long_term_amount}} {{t "purchase" key='purchase'}}
+                  US${{subscription.long_term_amount}} {{t "purchase" key='purchase_lower'}}
                 {{/if}}
               </button>
             </td>
@@ -233,7 +233,7 @@
                     <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                   {{/if}}
                   {{#if subscription.app_pricing_override}}
-                    {{subscription.supporter_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
+                    {{subscription.supporter_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase_lower'}}
                   {{else}}
                     {{t "US$25 purchase" key='25_purchase'}}
                   {{/if}}
@@ -251,7 +251,7 @@
                     <b>{{t "select this plan" key='select_this_plan'}}</b><br/>
                   {{/if}}
                   {{#if subscription.app_pricing_override}}
-                    {{subscription.eval_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase'}}
+                    {{subscription.eval_app_price}} {{subscription.app_currency}}<br/>{{t "purchase" key='purchase_lower'}}
                   {{else}}
                     {{t "US$25 purchase" key='25_purchase'}}
                   {{/if}}
@@ -273,7 +273,7 @@
                     <label>
                       <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
                       {{input type='checkbox' checked=subscription.extras}}
-                      {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
+                      {{t "add symbols from LessonPix, PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols2'}}
                     </label>
                   {{/if}}
                 </td>
@@ -288,7 +288,7 @@
                       <label> 
                         <img src="https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg" style="float: left; width: 60px; margin-left: 20px;" />
                         {{input type='checkbox' checked=subscription.extras}}
-                        {{t "add symbols from PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols'}}
+                        {{t "add symbols from LessonPix, PCS (BoardMaker) Tobii Dynavox & SymbolStix for US$25" key='add_premium_symbols2'}}
                       </label>
                     {{/if}}
                   {{/if}}
@@ -343,11 +343,11 @@
             <td colspan={{if subscription.app_pricing_override_no_monthly "1" "2"}} style='text-align: right;'>
               {{#if move_gift_option}}
                 {{#if trial_option}}
-                  <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
+                  <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='start_two_month_trial'}}</button>
                 {{/if}}
               {{else if subscription.app_pricing_override}}
                 {{#if trial_option}}
-                  <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</button>
+                  <button class='btn btn-default' rel='free_trial' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='start_two_month_trial'}}</button>
                 {{/if}}
               {{else}}
                 {{#if subscription.gift_type}}
@@ -358,7 +358,7 @@
                     </span>
                     <button {{action 'check_gift'}} style='display: inline-block; width: 100px; margin-top: -4px;' class='btn btn-lg btn-default'>
                       {{#if subscription.gift_status.checking}}
-                        {{t "..." key='checking'}}
+                        {{t "..." key='ellipsis'}}
                       {{else if subscription.gift_status.error}}
                         {{t "Invalid" key='invalid'}}
                       {{else}}
@@ -375,7 +375,7 @@
             </td>
             <td colspan='2' class='separator semi_dim' style='text-align: right;'>
               {{#if subscription.modeling_long_term}}
-                <button class='btn btn-primary' style='width: auto;'>{{t "set as a free<br/> modeling-only account" key='set_as_free_modeling_only'}}</button>
+                <button class='btn btn-primary' style='width: auto;'>{{t "set as a free<br/> modeling-only account" key='set_as_free_modeling_only_two_lines'}}</button>
               {{else}}
                 <a href="#" {{action "set_subscription" 'slp_monthly_free'}}>{{t "set as a free modeling-only account" key='set_as_free_modeling_only'}}</a>
               {{/if}}
@@ -493,7 +493,7 @@
             {{else if subscription.user.really_expired}}
               &nbsp;&nbsp;<a href="#" rel='skip_subscription' class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "I need more time" key='i_need_more_time'}}</a>
             {{else}}
-              &nbsp;&nbsp;<a href="#" rel='free_trial' class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='two_month_trial'}}</a>
+              &nbsp;&nbsp;<a href="#" rel='free_trial' class='btn btn-default btn-lg' {{action 'skip_subscription'}}>{{t "Start with a 2-month trial" key='start_two_month_trial'}}</a>
             {{/if}}
           {{else}}
             <button type="button" rel='cancel' class="btn btn-lg btn-default" {{action "reset"}}>{{t "Cancel Changes" key='cancel_changes'}}</button>

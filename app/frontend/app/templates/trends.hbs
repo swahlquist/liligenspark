@@ -72,7 +72,7 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary">
           <div class="panel-heading">
-            {{t "Avg. Words per Minute" key='words_per_minute'}}
+            {{t "Avg. Words per Minute" key='avg_words_per_minute'}}
           </div>
           <div class="panel-body">
             {{trends.words_per_minute}}
@@ -342,7 +342,7 @@
                       {{t "avg. travel:" key='avg_travel'}} {{word.travel}}&nbsp;&nbsp;
                     {{/if}}
                     {{#if word.available}}
-                      {{t "available to:" key='available'}} {{word.available}}%
+                      {{t "available to:" key='available_to'}} {{word.available}}%
                     {{/if}}
                   </span>
                 </span>
@@ -369,7 +369,7 @@
                       {{t "avg. travel:" key='avg_travel'}} {{word.travel}}&nbsp;&nbsp;
                     {{/if}}
                     {{#if word.available}}
-                      {{t "available to:" key='available'}} {{word.available}}%
+                      {{t "available to:" key='available_to'}} {{word.available}}%
                     {{/if}}
                   </span>
                 </span>
@@ -409,7 +409,7 @@
       </div>
 
     {{else}}
-      {{t "No data to show." key='no_data_to_show'}}
+      {{t "No data to show." key='no_data_to_show_period'}}
     {{/if}}
   </div>
 </div>

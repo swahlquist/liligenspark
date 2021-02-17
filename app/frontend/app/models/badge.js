@@ -35,22 +35,22 @@ CoughDrop.Badge = DS.Model.extend({
     return htmlSafe("width: " + Math.min(Math.max((this.get('progress') || 0) * 100, 0), 100) + "%");
   }),
   numbered_interval: function(interval, number) {
-    var res = {multiplier: 1, unit: i18n.t('day', "day")};
+    var res = {multiplier: 1, unit: i18n.t('day_lower', "day")};
     if(interval == 'monthyear') {
-      res.unit = i18n.t('month', "month");
+      res.unit = i18n.t('month_lower', "month");
     } else if(interval == 'biweekyear') {
-      res.unit = i18n.t('week', "week");
+      res.unit = i18n.t('week_lower', "week");
       res.multiplier = 2;
       res.total = (number || 0) * 2;
     } else if(interval == 'weekyear') {
-      res.unit = i18n.t('week', "week");
+      res.unit = i18n.t('week_lower', "week");
     }
     res.total = (number || 0) * res.multiplier;
     return res;
   },
   time_left: computed('earned', 'progress', 'completion_settings', function() {
     if(this.get('earned')) {
-      return i18n.t('done', "Done!");
+      return i18n.t('done_excl', "Done!");
     } else if(this.get('completion_settings')) {
       var badge_level = this.get('completion_settings');
       var interval = this.numbered_interval(badge_level.interval);
@@ -106,9 +106,9 @@ CoughDrop.Badge = DS.Model.extend({
       }
       if(idx == list.length - 1) {
       } else if(idx == list.length - 2) {
-        res = res + i18n.t('comma_or', ", or ");
+        res = res + i18n.t('comma_or_space', ", or ");
       } else {
-        res = res + i18n.t('comma', ", ");
+        res = res + i18n.t('comma_space', ", ");
       }
     });
     return res;
@@ -121,7 +121,7 @@ CoughDrop.Badge = DS.Model.extend({
       if(each) {
         return i18n.t('each_month', "each month");
       } else {
-        return i18n.t('every_month', "per month");
+        return i18n.t('per_month_lower', "per month");
       }
     } else if(badge_level.interval == 'biweekyear') {
       return i18n.t('every_two_weeks', "every two weeks");
@@ -129,13 +129,13 @@ CoughDrop.Badge = DS.Model.extend({
       if(each) {
         return i18n.t('each_week', "each week");
       } else {
-        return i18n.t('every_week', "per week");
+        return i18n.t('per_week_lower', "per week");
       }
     } else {
       if(each) {
         return i18n.t('each_day', "each day");
       } else {
-        return i18n.t('every_day', "per day");
+        return i18n.t('per_day_lower', "per day");
       }
     }
   }),
@@ -156,14 +156,14 @@ CoughDrop.Badge = DS.Model.extend({
           res = res + i18n.t('at_least_once', " at least once");
         } else {
           if(badge_level.consecutive_units) {
-            res = res + i18n.t('for', " for ");
+            res = res + i18n.t('for_spaced', " for ");
           } else {
             res = res + i18n.t('for_any', " for any ");
           }
           res = res + i18n.t('n_units', interval.unit, {count: interval.total});
         }
         if(badge_level.consecutive_units && n > 1) {
-          res = res + i18n.t('in_a_row', " in a row");
+          res = res + " " + i18n.t('in_a_row', "in a row");
         }
       } else if(badge_level.watchlist) {
         res = res + i18n.t('for_a_total_of', " for a total of ");
@@ -217,7 +217,7 @@ CoughDrop.Badge = DS.Model.extend({
             str = i18n.t('use', "Use ");
             str = str + this.get('completion_watch_list');
           } else {
-            str = i18n.t('use_pos', "Use %{pos} ", {pos: i18n.pluralize(badge_level.parts_of_speech_list[0])});
+            str = i18n.t('use_pos_space', "Use %{pos} ", {pos: i18n.pluralize(badge_level.parts_of_speech_list[0])});
           }
           str = i18n.t('use', "Use ");
 

@@ -24,7 +24,7 @@
           {{#unless force_logout}}
             {{#if app_state.feature_flags.emergency_boards}}
               <div style='font-size: 18px; text-align: right; margin-bottom: 10px; margin-top: -20px;'>
-                {{#link-to 'offline_boards'}}<span style='color: #ba4a59;'>{{t "basic access" key='critical_access'}}</span>{{/link-to}}
+                {{#link-to 'offline_boards'}}<span style='color: #ba4a59;'>{{t "basic access" key='critical_access_lower'}}</span>{{/link-to}}
               </div>
             {{/if}}
           {{/unless}}
@@ -89,10 +89,10 @@
             {{#if app_state.no_linky}}
               {{#link-to 'forgot_login'}}{{t "need help?" key='forgot_login'}}{{/link-to}}
             {{else}}
-              {{#link-to 'forgot_password'}}{{t "forgot password" key='forgot_password'}}{{/link-to}}
+              {{#link-to 'forgot_password'}}{{t "forgot password" key='forgot_password_lower'}}{{/link-to}}
               {{#if app_state.domain_settings.full_domain}}
                 | 
-                {{#link-to 'register'}}{{t "sign up" key='register'}}{{/link-to}}
+                {{#link-to 'register'}}{{t "sign up" key='sign_up_lower'}}{{/link-to}}
               {{/if}}
             {{/if}}
           </span>

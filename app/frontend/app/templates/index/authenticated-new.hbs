@@ -40,10 +40,10 @@
         {{#link-to 'user.subscription' app_state.currentUser.user_name class="list-group-item"}}
           <span class={{if app_state.currentUser.expired "glyphicon glyphicon-info-sign expired" "glyphicon glyphicon-info-sign"}}></span>
           {{#if app_state.currentUser.expired}}
-            <strong class='text-danger'>{{t "Tap here to update your subscription" key='subscribe'}}</strong><br/>
+            <strong class='text-danger'>{{t "Tap here to update your subscription" key='tap_to_subscribe'}}</strong><br/>
             {{t "your free preview has ended" key='preview_expired'}}
           {{else}}
-            <strong>{{t "Please update your license" key='subscribe'}}</strong>
+            <strong>{{t "Please update your license" key='update_license'}}</strong>
             <div style='font-size: 12px; line-height: 13px;'>{{t "your free preview ends" key='preview_expires'}}<br/>{{date app_state.currentUser.subscription.expires 'day'}}</div>
           {{/if}}
         {{/link-to}}
@@ -61,7 +61,7 @@
         {{else if app_state.currentUser.preferences.home_board.key}}
           {{#link-to 'board' app_state.currentUser.preferences.home_board.key class="list-group-item half_size collapsible"}}
             <span class="glyphicon glyphicon-home"></span>
-            {{t "home:" key='home_board'}}
+            {{t "home:" key='home_colon'}}
             <strong>{{app_state.currentUser.preferences.home_board.key}}</strong>
           {{/link-to}}
         {{/if}}
@@ -71,13 +71,13 @@
             <span class={{refreshing_class}}></span>
             {{#if persistence.sync_succeeded}}
               {{#if session.invalid_token}}
-                {{t "Please re-login and sync again" key='sync_done'}}
+                {{t "Please re-login and sync again" key='please_resync'}}
               {{else}}
                 {{t "Sync Done!" key='sync_done'}}
               {{/if}}
             {{else if persistence.sync_finished}}
               {{t "Done with " key='done_with'}}
-              {{t "error" key='n_errors' count=persistence.sync_errors}}
+              {{t "error" key='n_errors_lower' count=persistence.sync_errors}}
               {{t "(see log)" key='see_log'}}
             {{else}}
               {{#if persistence.sync_failed}}
@@ -87,13 +87,13 @@
                 {{/if}}
               {{else}}
                 {{#if persistence.syncing}}
-                  {{t "Syncing..." key='syncing'}}
+                  {{t "Syncing..." key='syncing_ellipsis'}}
                   {{#if persistence.sync_progress}}
                     {{#if persistence.sync_progress.total}}
                       {{persistence.sync_progress.visited}} /
                       {{t "board" key='communication_set_board' count=persistence.sync_progress.total}}
                     {{else}}
-                      {{t "initializing..." key='initializing'}}
+                      {{t "initializing..." key='initializing_lower'}}
                     {{/if}}
                   {{/if}}
                 {{else}}
@@ -147,7 +147,7 @@
                 {{t "Sync Failed, see details below" key='sync_failed'}}
               {{else}}
                 {{#if persistence.syncing}}
-                  {{t "Syncing..." key='syncing'}}
+                  {{t "Syncing..." key='syncing_ellipsis'}}
                 {{else}}
                   {{#if needs_sync}}
                     {{t "Sync before going offline!" key='needs_update'}}
@@ -201,7 +201,7 @@
         <a class="list-group-item half_size">
           <span>
             <span class='glyphicon glyphicon-education'></span>
-            {{t "rooms:" key='rooms'}}
+            {{t "rooms:" key='rooms_colon'}}
             {{#each app_state.currentUser.supervised_units as |unit|}}
               <span style='margin-right: 10px;'>
                 {{#link-to 'organization.room' unit.organization_id unit.id}}
@@ -248,7 +248,7 @@
             {{#if app_state.currentUser.preferences.geo_logging}}
               {{t "fully enabled" key='fully_enabled'}}
             {{else}}
-              {{t "enabled (no geo)" key='logging_without_geo_is_enabled'}}
+              {{t "enabled (no geo)" key='logging_no_geo_is_enabled'}}
             {{/if}}
           {{else}}
             {{t "disabled" key='logging_is_disabled'}}
@@ -290,7 +290,7 @@
       <a href="#" {{action 'reload'}}>{{t "reload" key='reload'}}</a>
     </div>
     {{#if persistence.sync_log}}
-      <br/><a href="#" {{action 'sync_details'}}>{{t "recent sync details log" key='sync_details'}}</a>
+      <br/><a href="#" {{action 'sync_details'}}>{{t "recent sync details log" key='recent_sync_details'}}</a>
     {{/if}}
   </div>
   <div style="clear: both;"></div>
@@ -329,7 +329,7 @@
         <h4>{{t "People I Supervise" key='people_i_supervise'}}</h4>
       </div><div style='clear: left;'></div>
       {{#unless supervisees_with_badges}}
-        <div style='margin: 0 20px; max-width: 600px;'>{{t "You have not been added as a supervisor for any communicators. For privacy reasons, supervisors must be added from the communicators account. Once you have helped your communicators add you to their account as a supervisor, you will see them appear here." key='no_supervisors'}}</div>
+        <div style='margin: 0 20px; max-width: 600px;'>{{t "You have not been added as a supervisor for any communicators. For privacy reasons, supervisors must be added from the communicators account. Once you have helped your communicators add you to their account as a supervisor, you will see them appear here." key='no_supervisors_explainer'}}</div>
       {{/unless}}
       {{#each supervisees_with_badges as |supervisee|}}
         <div class='col-lg-6 col-md-12' style='padding: 0 5px;'>
@@ -393,7 +393,7 @@
                 </div>
               </button>
               <div class="btn-group">
-                <button class='btn btn-default dropdown-toggle button_row_extras' style='margin-bottom: 5px; border-width: 2px; border-color: #ddd; color: #888;'data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class='text'>{{t "Extras " key='extras'}}</span><span class="caret"></span></button>
+                <button class='btn btn-default dropdown-toggle button_row_extras' style='margin-bottom: 5px; border-width: 2px; border-color: #ddd; color: #888;'data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class='text'>{{t "Extras" key='extras'}} </span><span class="caret"></span></button>
                 <ul class="dropdown-menu" style='left: auto; right: 0;'>
                   <li>{{#link-to 'board' supervisee.home_board_key}}{{t "Home Board" key='home_board'}}{{/link-to}}</li>
                   <li>{{#link-to 'user' supervisee.user_name}}{{t "Account" key='account'}}{{/link-to}}</li>
@@ -509,7 +509,7 @@
             <div class='col-md-3 col-xs-4 big_button_holder'>
               <button id='nav_tertiary' class='btn big_button btn-default bottom_row' {{action 'modeling_ideas'}}>
                 <img src={{path 'images/modeling_ideas.svg'}} style='opacity: 0.9; filter: grayscale(60%);'/>
-                {{t "Modeling<br/>Ideas" key='modeling_ideas'}}
+                {{t "Modeling<br/>Ideas" key='modeling_ideas_two_lines'}}
               </button>
             </div>
           {{else}}
@@ -535,7 +535,7 @@
         <div class='col-md-3 col-xs-4 big_button_holder'>
           <button id='nav_extras' class='btn big_button btn-default' {{action 'toggle_extras'}} style='touch-action: manipulation;'>
             <img src={{path 'images/extras.svg'}}>
-            {{t "Extras" key='new_board'}} <span class={{if show_main_extras 'caret' 'caret-right'}}></span>
+            {{t "Extras" key='extras'}} <span class={{if show_main_extras 'caret' 'caret-right'}}></span>
           </button>
         </div>
         {{#if show_main_extras}}
@@ -566,7 +566,7 @@
             <div class='col-md-3 col-xs-4 big_button_holder'>
               <button class='btn big_button btn-default middle_row' {{action "manage_supervisors"}}>
                 <span class='glyphicon glyphicon-user'></span>
-                {{t "Supervisors" key='manage_supervisors'}}
+                {{t "Supervisors" key='supervisors'}}
               </button>
             </div>
           {{/if}}
@@ -740,7 +740,7 @@
             </div>
           </div>
         {{/if}}
-        <h4>{{t "Notifications" key='messages'}}</h4>
+        <h4>{{t "Notifications" key='notifications'}}</h4>
         <div style="margin-left: 20px;">
           {{#if app_state.currentUser.pending_org}}
             <p>

@@ -303,7 +303,7 @@ export default Controller.extend({
       if(result.length > 1) {
         result.push({
           id: 'force_default',
-          name: i18n.t('system_default_voice', 'System Default Voice'),
+          name: i18n.t('system_default_voice', "System Default Voice"),
           selected: !found
         });
       }

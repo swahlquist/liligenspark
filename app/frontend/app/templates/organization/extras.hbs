@@ -67,11 +67,11 @@
               </a>
               <div class='text-muted' style='font-size: 12px; margin-left: 15px;'>
                 {{#if gift.active}}
-                  {{t "pending," key='pending'}}
+                  {{t "pending," key='pending_comma'}}
                 {{else}}
-                  {{t "purchased," key='purchased'}}
+                  {{t "purchased," key='purchased_comma'}}
                 {{/if}}
-                {{t "created" key='created'}}
+                {{t "created" key='created_lower'}}
                 {{date gift.created 'day'}}
               </div>
             {{else if gift.gift_types.multi_code}}
@@ -84,11 +84,11 @@
               </a>
               <div class='text-muted' style='font-size: 12px; margin-left: 15px;'>
                 {{#if gift.active}}
-                  {{gift.redeemed_codes}} {{t "redeemed" key='redeemed'}}
+                  {{gift.redeemed_codes}} {{t "redeemed" key='redeemed_lower'}}
                 {{else}}
                   {{t "fully redeemed," key='fully_redeemed'}}
                 {{/if}}
-                {{t "created" key='created'}}
+                {{t "created" key='created_lower'}}
                 {{date gift.created 'day'}}
               </div>
             {{else if gift.gift_types.discount}}
@@ -96,15 +96,15 @@
                 {{gift.code}}
                 ({{gift.organization}})<br/>
                 {{#if gift.discount}}{{gift.discount_hundred}}% {{t "off" key='off'}}{{/if}}
-                {{#if gift.expires}}{{t "exp" key='expires'}} {{date gift.expires 'day'}}{{/if}}
+                {{#if gift.expires}}{{t "exp" key='expires_abbreviated'}} {{date gift.expires 'day'}}{{/if}}
               </a>
               <div class='text-muted' style='font-size: 12px; margin-left: 15px;'>
                 {{#if gift.active}}
-                  {{gift.activated_discounts}}{{#if gift.limit}} / {{gift.limit}}{{/if}} {{t "redeemed" key='redeemed'}}
+                  {{gift.activated_discounts}}{{#if gift.limit}} / {{gift.limit}}{{/if}} {{t "redeemed" key='redeemed_lower'}}
                 {{else}}
                   {{t "fully redeemed," key='fully_redeemed'}}
                 {{/if}}
-                {{t "created" key='created'}}
+                {{t "created" key='created_lower'}}
                 {{date gift.created 'day'}}
               </div>
             {{else}}
@@ -112,11 +112,11 @@
               {{gift.code}} - {{gift.duration}}
               <div class='text-muted' style='font-size: 12px; margin-left: 15px;'>
                 {{#if gift.active}}
-                  {{t "pending," key='pending'}}
+                  {{t "pending," key='pending_comma'}}
                 {{else}}
-                  {{t "redeemed," key='redeemed'}}
+                  {{t "redeemed," key='redeemed_comma'}}
                 {{/if}}
-                {{t "created" key='created'}}
+                {{t "created" key='created_lower'}}
                 {{date gift.created 'day'}}
               </div>
             {{/if}}

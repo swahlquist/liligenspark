@@ -43,7 +43,7 @@ export default modal.ModalController.extend({
       this.get('model.active_goals').forEach(function(goal) {
         res.push({id: goal.get('id'), name: goal.get('summary')});
       });
-      res.push({id: '', name: i18n.t('no_goal', "Don't Link this Note to a Goal")});
+      res.push({id: '', name: i18n.t('no_goal_link', "Don't Link this Note to a Goal")});
     }
     return res;
   }),

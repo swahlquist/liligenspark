@@ -35,7 +35,7 @@
 {{#if goals.loading}}
   <p>{{t "Loading goals..." key='loading_goals'}}</p>
 {{else if goals.error}}
-  <p>{{t "There was an error loading goals" key='error_loading_goals'}}</p>
+  <p>{{t "There was an error loading goals" key='error_loading_goals_lower'}}</p>
 {{/if}}
 
 {{#if app_state.currentUser.permissions.admin_support_actions}}
@@ -76,7 +76,7 @@
   {{#if global_goals.loading}}
     <p>{{t "Loading goals..." key='loading_goals'}}</p>
   {{else if global_goals.error}}
-    <p>{{t "There was an error loading goals" key='error_loading_goals'}}</p>
+    <p>{{t "There was an error loading goals" key='error_loading_goals_lower'}}</p>
   {{/if}}
 {{/if}}
 
@@ -141,7 +141,7 @@
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=new_goal.auto_assessment id="auto_assessment"}}
-              {{t "Assess this goal daily based on usage data" key='auto_assess_goal_daily'}}
+              {{t "Assess this goal daily based on usage data" key='assess_goal_daily'}}
             </label>
           </div>
         </div>
@@ -173,7 +173,7 @@
       {{/each}}
       <div class="form-group">
         <div class="col-sm-5">
-          <button class='btn btn-default' {{action 'add_badge_level'}}>{{t "Add a Badge Level" key='add_badge_level'}}</button>
+          <button class='btn btn-default' {{action 'add_badge_level'}}>{{t "Add a Badge Level" key='add_a_badge_level'}}</button>
         </div>
       </div>
     {{/if}}
@@ -181,14 +181,14 @@
       <div class="col-sm-offset-2 col-sm-4">
         <button type="submit" class="btn btn-primary" disabled={{status.saving}}>
           {{#if status.saving}}
-            {{t "Creating Goal..." key='saving_goal'}}
+            {{t "Creating Goal..." key='creating_goal'}}
           {{else}}
-            {{t "Create Goal" key='save_goal'}}
+            {{t "Create Goal" key='create_goal'}}
           {{/if}}
         </button>
         <button type="button" class="btn btn-default" {{action "cancel_new"}}>{{t "Cancel" key='cancel'}}</button>
         {{#if status.error}}
-          <p class='text-danger'>{{t "There was an unexpected error creating the goal" key='error_saving'}}</p>
+          <p class='text-danger'>{{t "There was an unexpected error creating the goal" key='error_creating_goal'}}</p>
         {{/if}}
       </div>
     </div>

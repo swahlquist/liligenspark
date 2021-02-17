@@ -78,8 +78,8 @@ export default Component.extend({
               var level = Math.round(count / max_count * 10);
               var str = i18n.t('n_sessions', "session", {count: count});
               if(goals > 0) {
-                str = str + i18n.t('comma', ", ");
-                str = str + i18n.t('n_goals', "goal event", {count: goals});
+                str = str + i18n.t('comma_space', ", ");
+                str = str + i18n.t('n_goal_events', "goal event", {count: goals});
               }
               user.week_stats.push({
                 count: count,
@@ -90,7 +90,7 @@ export default Component.extend({
             } else {
               var level = weeks && weeks[stamp] && (Math.round(weeks[stamp].average_level * 10) / 10);
               level = level || 0;
-              var str = i18n.t('activity_level', "week's activity level: ") + level;
+              var str = i18n.t('week_activity_level', "week's activity level: ") + level;
               user.week_stats.push({
                 count: level,
                 tooltip: str,

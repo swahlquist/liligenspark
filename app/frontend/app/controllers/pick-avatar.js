@@ -99,7 +99,7 @@ export default modal.ModalController.extend({
           _this.send('select');
         }, function(err) {
           _this.set('saving', false);
-          modal.error(i18n.t('error_saving_image', "Failed to save edited image"));
+          modal.error(i18n.t('error_editing_image', "Failed to save edited image"));
         });
       }, function(err) {
         _this.set('saving', false);

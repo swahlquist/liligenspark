@@ -15,7 +15,7 @@
     {{/if}}
   {{/if}}
   {{#if license.author_name}}
-    {{t " by " key='by'}}
+    {{t " by " key='by_padded'}}
     {{#if license.author_url}}
       <a href={{license.author_url}} target="_blank">{{license.author_name}}</a>
     {{else}}
@@ -27,7 +27,7 @@
     {{/if}}
   {{/if}}
   {{#if license.source_url}}
-    (<a href={{license.source_url}} target="_blank">{{t "source" key='source'}}</a>)
+    (<a href={{license.source_url}} target="_blank">{{t "source" key='source_lower'}}</a>)
   {{/if}}
 {{else}}
   {{t "Unspecified, assume all rights reserved." key='unspecified_all_rights'}}

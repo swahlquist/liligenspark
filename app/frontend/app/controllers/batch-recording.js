@@ -90,7 +90,7 @@ export default modal.ModalController.extend({
         _this.set('model.recordings', res);
         _this.set('recordings', res);
       }, function(err) {
-        modal.error(i18n.t('error_loading_recordings', "There was an unexpected error loading user recordings"));
+        modal.error(i18n.t('error_loading_user_recordings', "There was an unexpected error loading user recordings"));
       });
     } else {
       this.set('recordings', this.get('model.recordings'));

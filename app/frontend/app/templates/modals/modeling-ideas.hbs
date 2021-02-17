@@ -19,7 +19,7 @@
             </div>
           {{else if words_list}}
             <div class='text-muted' {{action 'target_words'}} style='cursor: pointer; padding: 0 10px; text-align: center;'>
-              <span style='color: #aaa;'>{{t "targets:" key='target_words'}}</span> {{words_list}}
+              <span style='color: #aaa;'>{{t "targets:" key='target_words_colon'}}</span> {{words_list}}
             </div>
           {{/if}}
         {{/if}}
@@ -48,7 +48,7 @@
                 {{word.text_reasons}}
                 {{#if word.matching_users}}
                   <div class='text-muted' style='font-size: 13px;'>
-                    {{t "for" key='for'}} {{t "user" count=word.matching_users key='n_users'}}
+                    {{t "for" key='for_lower'}} {{t "user" count=word.matching_users key='n_users'}}
                   </div>
                 {{/if}}
               </td>
@@ -64,7 +64,7 @@
     {{else if current_activity.target_words}}
       <span class='glyphicon glyphicon-screenshot' style='font-size: 80px; float: left; margin-right: 20px;'></span>
       <p>
-        {{t "As you use %app_name%, the app will automatically generate <b>target words</b> that you can choose to focus on with your communicator." key='target_words_explainer'}}
+        {{t "As you use %app_name%, the app will automatically generate <b>target words</b> that you can choose to focus on with your communicator." key='target_words_explainer2'}}
         {{#if user_words}}
           {{t "Below are some words you may want to consider using. %app_name% shows different ideas throughout the day for ways to use the target words, so check back regularly." key='target_user_words'}}
         {{else}}
@@ -135,9 +135,9 @@
       {{/if}}
     {{else if current_activity}}
       <img src={{path 'images/modeling_ideas.svg'}} style='width: 150px; float: left; margin-right: 10px;'/>
-      <p>{{t "Did you know that new communicators learn to combine words by observing others do it first? Did you know that babies hear thousands of hours of spoken language before speaking on their own? Or that AAC experts recommend up to 80% of communication with a new user be modeled on a device?" key='modeling_intro_1'}}</p>
+      <p>{{t "Did you know that new communicators learn to combine words by observing others do it first? Did you know that babies hear thousands of hours of spoken language before speaking on their own? Or that AAC experts recommend up to 80% of communication with a new user be modeled on a device?" key='modeling_ideas_intro_1'}}</p>
       <!-- source: https://www.facebook.com/groups/421704261346486/permalink/830509463799295/ -->
-      <p>{{t "Modeling, or showing examples of how to hit buttons to communicate, is very important! As you start work with communicators who are using AAC, look for chances to model different words, or the same words in different ways. It may take practice to get comfortable or to see results, but research has shown over and over how much of a different modeling makes!" key='modeling_intro_2'}}</p>
+      <p>{{t "Modeling, or showing examples of how to hit buttons to communicate, is very important! As you start work with communicators who are using AAC, look for chances to model different words, or the same words in different ways. It may take practice to get comfortable or to see results, but research has shown over and over how much of a different modeling makes!" key='modeling_ideas_intro_2'}}</p>
       <p>{{t "<b>Modeling Ideas</b> is a %app_name% tool that recommends a few activities every day based on target words from your user's goals and log history. We hope it helps give you lots of ideas to help your communicator grow!" key='modeling_intro_3'}}</p>
     {{/if}}
     <div style='clear: left;'></div>
@@ -152,19 +152,19 @@
         <div style='margin-top: 5px; margin-left: 89px;'>
           <button class={{if current_activity.complete_score.score_1 "btn btn-primary face_button" "btn btn-default face_button"}} style='width: 80px;' {{action 'complete' 1}}>
             <span class="face sad"></span>
-            {{t "We didn't<br>do it" key='we_didnt_do_it'}}
+            {{t "We didn't<br/>do it" key='we_didnt_do_it'}}
           </button>
           <button class={{if current_activity.complete_score.score_2 "btn btn-primary face_button" "btn btn-default face_button"}} style='width: 80px;' {{action 'complete' 2}}>
             <span class="face neutral"></span>
-            {{t "We barely<br>did it" key='we_barely_did_it'}}
+            {{t "We barely<br/>did it" key='we_barely_did_it'}}
           </button>
           <button class={{if current_activity.complete_score.score_3 "btn btn-primary face_button" "btn btn-default face_button"}} style='width: 80px;' {{action 'complete' 3}}>
             <span class="face happy"></span>
-            {{t "We did<br>good!" key='we_did_good'}}
+            {{t "We did<br/>good!" key='we_did_good'}}
           </button>
           <button class={{if current_activity.complete_score.score_4 "btn btn-primary face_button" "btn btn-default face_button"}} style='width: 80px;' {{action 'complete' 4}}>
             <span class="face laugh"></span>
-            {{t "We did<br>awesome!" key='we_did_awesome'}}
+            {{t "We did<br/>awesome!" key='we_did_awesome'}}
           </button>
         </div>
     {{else}}

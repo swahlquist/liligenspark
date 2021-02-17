@@ -13,7 +13,7 @@ export default Controller.extend({
       list.push({id: 'all_users', name: i18n.t('all_users', "All organization communicators") });
       list.push({id: 'all_supervisors', name: i18n.t('all_supervisors', "All organization supervisors") });
       if(this.get('model.permissions.manage')) {
-        list.push({id: 'recent_sessions', name: i18n.t('recent_sessions', "Recent user sessions") });
+        list.push({id: 'recent_sessions', name: i18n.t('recent_user_sessions', "Recent user sessions") });
       }
       if(this.get('model.admin')) {
         list.push({id: 'new_users', name: i18n.t('new_users', "Signed up in the last 2 weeks") });
@@ -155,7 +155,7 @@ export default Controller.extend({
         element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join("\n")));
         element.setAttribute('download', 'stats.csv');
       } else {
-        modal.error(i18n.t('no_results', "No results to download"));
+        modal.error(i18n.t('no_results_to_download', "No results to download"));
       }
 
       element.style.display = 'none';
@@ -182,7 +182,7 @@ export default Controller.extend({
         modal.success(i18n.t('user_removed', "The user %{user_name} was successfully removed.", {user_name: user.user_name}));
         _this.get_report();
       }, function(err) {
-        modal.error(i18n.t('error_removing_user', "There was an error removing the user %{user_name}", {user_name: user.user_name}));
+        modal.error(i18n.t('error_removing_user_name', "There was an error removing the user %{user_name}", {user_name: user.user_name}));
       });
     }
   }

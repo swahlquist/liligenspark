@@ -192,13 +192,13 @@ CoughDrop.Goal = DS.Model.extend({
     if(this.get('best_time_level') == 'none') { return []; }
     var units = this.get('time_units');
     var rows = [{
-      status_class: 'face', tooltip: i18n.t('we_did_awesome', "We did awesome! (4)"), time_blocks: []
+      status_class: 'face', tooltip: i18n.t('we_did_awesome_4', "We did awesome! (4)"), time_blocks: []
     }, {
-      status_class: 'face happy', tooltip: i18n.t('we_did_good', "We did good! (3)"), time_blocks: []
+      status_class: 'face happy', tooltip: i18n.t('we_did_good_3', "We did good! (3)"), time_blocks: []
     }, {
-      status_class: 'face neutral', tooltip: i18n.t('we_barely_did_id', "We barely did it (2)"), time_blocks: []
+      status_class: 'face neutral', tooltip: i18n.t('we_barely_did_it_2', "We barely did it (2)"), time_blocks: []
     }, {
-      status_class: 'face sad', tooltip: i18n.t('we_didnt_do_it', "We didn't do it (1)"), time_blocks: []
+      status_class: 'face sad', tooltip: i18n.t('we_didnt_do_it_1', "We didn't do it (1)"), time_blocks: []
     }];
     for(var idx = 0; idx < 14 && idx < units.length; idx++) {
       var unit = units[idx];
@@ -208,28 +208,28 @@ CoughDrop.Goal = DS.Model.extend({
       var level = Math.ceil(score / units.max * 10);
       rows[0].time_blocks.push({
         score: score,
-        tooltip: score ? (i18n.t('status_sessions', 'status', {count: score}) + ', ' + unit.label) : "",
+        tooltip: score ? (i18n.t('status_sessions', "status", {count: score}) + ', ' + unit.label) : "",
         style_class: 'time_block level_' + level
       });
       score = statuses.filter(function(s) { return s == 3; }).length;
       level = Math.ceil(score / units.max * 10);
       rows[1].time_blocks.push({
         score: score,
-        tooltip: score ? (i18n.t('status_sessions', 'status', {count: score}) + ', ' + unit.label) : "",
+        tooltip: score ? (i18n.t('status_sessions', "status", {count: score}) + ', ' + unit.label) : "",
         style_class: 'time_block level_' + level
       });
       score = statuses.filter(function(s) { return s == 2; }).length;
       level = Math.ceil(score / units.max * 10);
       rows[2].time_blocks.push({
         score: score,
-        tooltip: score ? (i18n.t('status_sessions', 'status', {count: score}) + ', ' + unit.label) : "",
+        tooltip: score ? (i18n.t('status_sessions', "status", {count: score}) + ', ' + unit.label) : "",
         style_class: 'time_block level_' + level
       });
       score = statuses.filter(function(s) { return s == 1; }).length;
       level = Math.ceil(score / units.max * 10);
       rows[3].time_blocks.push({
         score: score,
-        tooltip: score ? (i18n.t('status_sessions', 'status', {count: score}) + ', ' + unit.label) : "",
+        tooltip: score ? (i18n.t('status_sessions', "status", {count: score}) + ', ' + unit.label) : "",
         style_class: 'time_block level_' + level
       });
     }

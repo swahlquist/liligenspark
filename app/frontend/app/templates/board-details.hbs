@@ -15,7 +15,7 @@
       <dt>{{t "Last Updated" key='updated'}}</dt>
         <dd>{{date model.updated 'day'}}</dd>
       {{#if model.locale}}
-        <dt>{{t "Default Language" key='language'}}</dt>
+        <dt>{{t "Default Language" key='default_language'}}</dt>
           <dd>{{language}}</dd>
       {{/if}}
       {{#if multiple_locales}}
@@ -85,7 +85,7 @@
               <a href="#" {{action 'button_set_words'}}>{{t "see full button list" key='button_list'}}</a>
             {{/if}}
           </dd>
-        <dt>{{t "Revisions" key='history'}}</dt>
+        <dt>{{t "Revisions" key='revisions'}}</dt>
           <dd>
             {{#link-to 'board.history' model.key}}{{t "see board edit history" key='see_history'}}{{/link-to}}
           </dd>
@@ -96,7 +96,7 @@
         {{#if model.permissions.edit}}
           <dt>{{t "Rename" key='rename'}}</dt>
           <dd>
-            <a href="#" {{action 'renameBoard'}}>{{t "change board key" key='change_board_key'}}</a>
+            <a href="#" {{action 'renameBoard'}}>{{t "change board key" key='change_board_key_lower'}}</a>
           </dd>
         {{/if}}
       {{/unless}}

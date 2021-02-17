@@ -679,7 +679,7 @@ CoughDrop.Buttonset = DS.Model.extend({
                     'linked_board_id': button_set.get('id'),
                     'linked_board_key': button_set.get('key'),
                     'home_lock': button_set.get('home_lock_set'),
-                    'label': is_home ? i18n.t('home', 'Home') : i18n.t('sidebar_board', "Sidebar, %{board_name}", {hash: {board_name: button_set.get('name')}})
+                    'label': is_home ? i18n.t('home', "Home") : i18n.t('sidebar_board', "Sidebar, %{board_name}", {hash: {board_name: button_set.get('name')}})
                   });
                   matching_buttons.push(button);
                 });
