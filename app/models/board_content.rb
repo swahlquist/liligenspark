@@ -168,6 +168,7 @@ class BoardContent < ApplicationRecord
       (board.settings['content_overrides']['buttons'] || {}).each do |id, btn|
         board.settings['content_overrides']['buttons'].delete(id) if btn.keys.length == 0
       end
+      board.settings['content_overrides'].delete('buttons') if board.settings['content_overrides']['buttons'].keys.length == 0
       board.settings.delete('buttons')
     end
     ['grid', 'intro', 'background', 'translations'].each do |attr|
