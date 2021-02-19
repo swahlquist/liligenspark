@@ -1096,7 +1096,7 @@ describe User, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      expect(Board).to receive(:replace_board_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :update_inline => true, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil})
+      expect(Board).to receive(:replace_board_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :update_inline => true, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil,:copy_prefix=>nil})
       u.replace_board(old_board_id: b.global_id, new_board_id: b2.global_id, ids_to_copy: [], update_inline: true)
     end
 
@@ -1104,7 +1104,7 @@ describe User, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      expect(Board).to receive(:replace_board_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :update_inline => true, :authorized_user => nil, :make_public => true, :new_default_locale=>nil,:old_default_locale=>nil})
+      expect(Board).to receive(:replace_board_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :update_inline => true, :authorized_user => nil, :make_public => true, :new_default_locale=>nil,:old_default_locale=>nil,:copy_prefix=>nil})
       u.replace_board(old_board_id: b.global_id, new_board_id: b2.global_id, ids_to_copy: [], update_inline: true, make_public: true)
     end
 
@@ -1122,7 +1122,7 @@ describe User, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil})
+      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil,:copy_prefix=>nil})
       u.copy_board_links(old_board_id: b.global_id, new_board_id: b2.global_id)
     end
     
@@ -1130,7 +1130,7 @@ describe User, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => true, :new_default_locale=>nil,:old_default_locale=>nil})
+      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => true, :new_default_locale=>nil,:old_default_locale=>nil,:copy_prefix=>nil})
       res = u.copy_board_links(old_board_id: b.global_id, new_board_id: b2.global_id, ids_to_copy: [], make_public: true)
       expect(res.keys).to eq(['affected_board_ids', 'new_board_ids'])
     end
@@ -1205,7 +1205,7 @@ describe User, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b2 = Board.create(:user => u)
-      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil})
+      expect(Board).to receive(:copy_board_links_for).with(u, {:valid_ids => nil, :starting_old_board => b, :starting_new_board => b2, :authorized_user => nil, :make_public => false, :new_default_locale=>nil,:old_default_locale=>nil,:copy_prefix=>nil})
       expect(Board).to receive(:find_by_path).with(b.global_id).and_return(b)
       expect(Board).to receive(:find_by_path).with(b2.global_id).and_return(b2)
       expect(b2).to receive(:swap_images).with('bacon', u, [b2.global_id])
