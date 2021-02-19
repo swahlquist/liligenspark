@@ -27,7 +27,9 @@ export default modal.ModalController.extend({
   actions: {
     update: function() {
       stashes.persist('display_lang', this.get('lang'));
-      location.reload();
+      setTimeout(function() {
+        location.reload();
+      }, 1000);
     },
   }
 });
