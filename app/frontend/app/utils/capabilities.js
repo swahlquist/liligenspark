@@ -1215,6 +1215,27 @@ var capabilities;
           });
           return promise;
         },
+        local_json: function(path) {
+          var promise = capabilities.mini_promise();
+          window.resolveLocalFileSystemURL(window.cordova.file.applicationDirectory + "/www/" + path, function(e) {
+            e.file(function(file) {
+              var reader = new FileReader();
+              reader.onloadend = function() {
+                var str =  this.result;
+                try {
+                  promise.resolve(JSON.parse(str));
+                } catch(err) {
+                  promise.reject(err);
+                }
+                promise.resolve(this.result);
+              };
+              reader.readAsText(file);                    
+            }, function(err) { promise.reject(err); });
+          }, function(e) {
+            promise.reject(e);
+          });
+          return promise;
+        },
         root_entry: function(size) {
           // uses native calls
           var promise = capabilities.mini_promise();

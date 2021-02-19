@@ -222,7 +222,29 @@ var i18n = EmberObject.extend({
   t: function(key, str, options) {
     var terms = str.match(/%{(\w+)}/g);
     var value;
+    var localized = false;
+    if(i18n.langs && i18n.langs.preferred) {
+      if(i18n.langs.preferred == 'backwards') {
+        if(!str.match(/\%/))  {
+          str = str.split('').reverse().join('');
+          localized = true;
+        }
+      } else {
+        var lang_str = (i18n.langs[i18n.langs.preferred] || {})[key] || (i18n.langs[i18n.langs.fallback] || {})[key];
+        if(lang_str && lang_str.substring(0, 4) != '*** ') {
+          str = lang_str.split(/\s\[\[\s/)[0];
+          localized = true;
+        }  
+      }
+    }
     options = emberAssign({}, options);
+    if(key && localStorage.track_i18n == 'true') {
+      var keys = JSON.parse(localStorage.i18n_keys || "[]")
+      if(keys.indexOf(key) == -1) {
+        keys.push(key);
+        localStorage.i18n_keys = JSON.stringify(keys);
+      }
+    }
     if(options && !options.hash) { options.hash = options; }
     if(str.match(/%/)) {
       for(var idx = 0; terms && idx < terms.length; idx++) {
@@ -252,11 +274,31 @@ var i18n = EmberObject.extend({
     if(options && options.hash && options.hash.count !== undefined) {
       var count = options.hash.count;
       if(count && count.length && !options.hash.number) { count = count.length; }
-      if(options.increment == 'count' || options.hash.increment == 'count') { count++; }
-      if(count != 1) {
-        str = count + " " + this.pluralize(str);
+      if(localized || str.match(/\|/)) {
+        if(str.match(/\|/)) {
+          var parts = str.split(/\|/);
+          if(count == 0) {
+            str = parts[0];
+          } else if(count == 1) {
+            str = parts[1];
+          } else {
+            str = parts[2];
+          }
+          str ||= parts[0];
+          str = str.sub(/%\{n\}/, count);
+        } else if(str.match(/%\{n\}/)) {
+          str = str.sub(/%\{n\}/, count.toString());
+        } else {
+          str = count + " " + str;
+        }
       } else {
-        str = count + " " + str;
+        if(options.increment == 'count' || options.hash.increment == 'count') { count++; }
+
+        if(count != 1) {
+          str = count + " " + this.pluralize(str);
+        } else {
+          str = count + " " + str;
+        }  
       }
     }
     return str;
@@ -1387,11 +1429,18 @@ var i18n = EmberObject.extend({
     zh: "chi",
     zu: "zul",
   },
+  locales_translated: [
+    'en',
+    'backwards',
+    'es*'
+  ],
   locales_localized: {
     en: "English",    
     es: "Español",
     fr: "Français",
-    pl: "Polski"
+    pl: "Polski",
+    backwards: "Backwards English",
+    zh: "中文"
   },
   locales: {
     af_NA: "Afrikaans (Namibia)",

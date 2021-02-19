@@ -267,6 +267,9 @@ export default Controller.extend({
     support: function() {
       modal.open('support');
     },
+    language: function() {
+      modal.open('modals/choose-locale');
+    },
     stickSidebar: function() {
       var user = app_state.get('currentUser');
       user.set('preferences.quick_sidebar', !user.get('preferences.quick_sidebar'));

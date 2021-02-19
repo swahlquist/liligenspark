@@ -612,6 +612,15 @@ var app_state = EmberObject.extend({
       }
     }
   }),
+  current_locale_string: computed(function() {
+    var loc = (i18n.langs || {}).preferred || 'en';
+    var fallback = (i18n.langs || {}).fallback || 'en';
+    var res = i18n.locales_localized[loc] || i18n.locales[loc] || i18n.locales_localized[fallback] || i18n.locales[fallback] || loc;
+    if(i18n.locales_translated.indexOf(loc) == -1 && i18n.locales_translated.indexOf(fallback) == -1) {
+      res = res + "*";
+    }
+    return res;
+  }),
   back_one_board: function(opts) {
     opts = opts || {};
     var history = this.get_history();

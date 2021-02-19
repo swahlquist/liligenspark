@@ -28,7 +28,7 @@ import app_state from './app_state';
       });
       ready.type_callbacks[type] = null;
     }
-    if(ready.types.init && ready.types.extras && ready.types.device && !ready.done) {
+    if(ready.types.init && ready.types.extras && ready.types.device && ready.types.lang && !ready.done) {
       ready.done = true;
       ready('all');
       session.restore();

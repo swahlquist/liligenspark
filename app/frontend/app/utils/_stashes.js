@@ -7,8 +7,6 @@ import {
 import RSVP from 'rsvp';
 import $ from 'jquery';
 import CoughDrop from '../app';
-// import i18n from './i18n';
-// import modal from './modal';
 
 // NOTE: there is an assumption that each stashed value is independent and
 // non-critical, so for example if one attribute got renamed it would not
@@ -82,7 +80,7 @@ var stashes = EmberObject.extend({
       'root_board_state': null,
       'sidebar_enabled': false,
       'sticky_board': false,
-      'remembered_vocalizations': [], // TODO: this should probably be remembered server-side, change when speaking as someone else
+      'remembered_vocalizations': [],
       'stashed_buttons': [],
       'ghost_utterance': false,
       'recent_boards': [],
@@ -91,6 +89,7 @@ var stashes = EmberObject.extend({
       'last_sync_status': null,
       'protected_user': false,
       'allow_local_filesystem_request': true,
+      'display_lang': null,
       'label_locale': null,
       'last_root': null,
       'vocalization_locale': null,
@@ -99,7 +98,6 @@ var stashes = EmberObject.extend({
       'ws_url': null,
       'ws_settings': null
     };
-    // TODO: some of these will want to be retrieved from server stash, not just localstorage
     for(var idx in defaults) {
       var val = null;
       if(stashes.get('enabled')) {

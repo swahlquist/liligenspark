@@ -1356,7 +1356,7 @@ Button.load_actions = function() {
     {
       action: ':ordinal',
       modifier: true,
-      description: i18n.t('ordinal', "Add \"st\", \"nd\",\"th\", etc. to a number (ordinal)"),
+      description: i18n.t('ordinal', "Add \"st\", \"nd\",\"th\", etc. (1st, 2nd, 3rd) to a number (ordinal)"),
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.ordinal(prior_text);
         altered.label = i18n.ordinal(prior_label);

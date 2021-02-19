@@ -2,6 +2,7 @@
   <h2>{{t "General Preferences" key='general_preferences'}}</h2>
   <form class="form-horizontal" {{action "savePreferences" on="submit"}}>
   {{#preference-box title="Basics" title_key='basics' open=true}}
+    <span style='display: none;'>{{t "Basics" key='basics'}}</span>
     <div class="form-group">
       <label for="role" class="col-sm-3 control-label">{{t "Dashboard" key='role'}}</label>
       <div class="col-sm-5">
@@ -90,6 +91,7 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Styling" glyph='glyphicon glyphicon-picture' title_key='styling'}}
+    <span style='display: none;'>{{t "Styling" key='styling'}}</span>
     <div class="form-group">
       <label for="board_background" class="col-sm-3 control-label">{{t "Board Background Color" key='board_background'}}</label>
       <div class="col-sm-5">
@@ -174,6 +176,7 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Selection Settings" glyph='glyphicon glyphicon-hand-up' title_key='selection_settings'}}
+    <span style='display: none;'>{{t "Selection Settings" key='selection_settings'}}</span>
     <div class="form-group">
       <label for="auto_home_return" class="col-sm-3 control-label">{{t "On Select" key='on_select'}}</label>
       <div class="col-sm-5">
@@ -336,6 +339,7 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Logging and Sync" glyph='glyphicon glyphicon-refresh' title_key='logging_and_sync'}}
+    <span style='display: none;'>{{t "Logging and Sync" key='logging_and_sync'}}</span>
     <div class="form-group">
       <label for="logging" class="col-sm-3 control-label">{{t "Logging" key='logging'}}</label>
       <div class="col-sm-5">
@@ -537,6 +541,7 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Startup and Extras" glyph='glyphicon glyphicon-play-circle' title_key='startup_and_extras'}}
+    <span style='display: none;'>{{t "Startup and Extras" key='startup_and_extras'}}</span>
     {{#if fullscreen_capable}}
       <div class="form-group">
         <label for="fullscreen" class="col-sm-3 control-label">{{t "Full Screen" key='full_screen'}}</label>
@@ -686,6 +691,7 @@
     </div>
   {{/preference-box}}
   {{#preference-box title="Core, Phrases and Modeling" glyph='glyphicon glyphicon-comment' title_key='core_phrases_and_modeling'}}
+    <span style='display: none;'>{{t "Core, Phrases and Modeling" key='core_phrases_and_modeling'}}</span>
     {{#if app_state.feature_flags.remote_modeling}}
       <div class="form-group">
         <label for="remote_modeling" class="col-sm-3 control-label">{{t "Remote Modeling" key='remote_modeling'}}</label>
@@ -801,6 +807,7 @@
     {{/unless}}
   {{/preference-box}}
   {{#preference-box title="Sidebar and Shortcuts" glyph='glyphicon glyphicon-link' title_key='sidebar_and_shortcuts'}}
+    <span style='display: none;'>{{t "Sidebar and Shortcuts" key='sidebar_and_shortcuts'}}</span>
     <div class="form-group">
       <label for="quick_sidebar" class="col-sm-3 control-label">{{t "Quick Actions" key='quick_actions'}}</label>
       <div class="col-sm-5">
@@ -933,6 +940,7 @@
   <!-- keyboard shortcuts for actions/phrases, abbreviations/message expansions -->
   <h2 style="margin: 50px 0 20px 0;">{{t "Device Preferences" key='device_preferences'}} ({{pending_preferences.device.name}})</h2>
   {{#preference-box title="Device Layout" glyph='glyphicon glyphicon-th' title_key='device_layout'}}
+    <span style='display: none;'>{{t "Device Layout" key='device_layout'}}</span>
     <div class='form-group'>
       <div class='col-sm-5 col-sm-offset-3'>
         {{layout-preview preferences=pending_preferences user=model}}
@@ -1032,6 +1040,7 @@
   {{/preference-box}}
   {{#if advanced}}
     {{#preference-box title="Scanning Settings" glyph='glyphicon glyphicon-menu-hamburger' title_key='scanning_settings'}}
+      <span style='display: none;'>{{t "Scanning Settings" key='scanning_settings'}}</span>
       <div class="form-group">
         <label for="scanning" class="col-sm-3 control-label">{{t "Scanning" key='scanning'}}</label>
         <div class="col-sm-5">
@@ -1254,7 +1263,8 @@
         </div>
       {{/if}}
     {{/preference-box}}
-    {{#preference-box title="Dwell/Eye-Tracking" glyph='glyphicon glyphicon-eye-open' title_key='dwell_eye_tracking'}}
+    {{#preference-box title="Dwell/Eye Tracking" glyph='glyphicon glyphicon-eye-open' title_key='dwell_eye_tracking'}}
+      <span style='display: none;'>{{t "Dwell/Eye Tracking" key='dwell_eye_tracking'}}</span>
       <div class="form-group">
         <label for="eyegaze" class="col-sm-3 control-label">{{t "Dwell/Eye Tracking" key='dwell_eye_tracking'}}</label>
         <div class="col-sm-5">
@@ -1517,6 +1527,7 @@
     </div>
   {{else}}
     {{#preference-box title="Voice Settings" glyph='glyphicon glyphicon-volume-up' title_key='voice_settings'}}
+      <span style='display: none;'>{{t "Voice Settings" key='voice_settings'}}</span>
       {{#if user_voice_list}}
         <div class="form-group">
           <label for="voice_pitch" class="col-sm-3 col-xs-12 control-label">{{t "Voice" key='voiceURI'}}</label>

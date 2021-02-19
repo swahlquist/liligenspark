@@ -467,6 +467,50 @@ class WordData < ActiveRecord::Base
     
     return res
   end
+
+  def self.translate_locale_batch(locale)
+    fn = File.expand_path("../../../public/locales/#{locale}.json", __FILE__)
+    json = JSON.parse(File.read(fn))
+    subs = {}
+    temps = {}
+    json.each do |key, str|
+      if str.match(/^\*\*\*\s/) && subs.keys.length < 100
+        temp_str = str.sub(/^\*\*\*\s/, '').sub(/\%app_name\%/, '_TR1A_').sub(/\%app_name_upper\%/, '_TR2A_')
+        temp_str = temp_str.sub(/\s\|\|\s/, ' _._ ')
+        while temp_str.match(/\%\{\w+\}/)
+          match = temp_str.match(/\%\{\w+\}/)[0]
+          name = "_TR#{temps.keys.length + 1}B_";
+          temp_str = temp_str.sub(match, name)
+          temps[name] = match
+        end
+        subs[key] = temp_str
+      end
+    end
+    ref = []
+    subs.each{|k, s| ref << {text: s, key: k}}
+    res = query_translations(ref, 'en', locale.sub(/_/, '-'))
+    res.each do |trans|
+      if trans[:key] && json[trans[:key]]
+        str = trans[:translation]
+        text = trans[:text]
+        str = str.sub(/_TR1A_/, '%app_name%').sub(/_TR2A_/, '%app_name_upper%').sub(/\s+_\._\s+/, ' || ')
+        text = text.sub(/_TR1A_/, '%app_name%').sub(/_TR2A_/, '%app_name_upper%').sub(/\s+_\._\s+/, ' || ')
+        while str.match(/_TR\d+B_/)
+          match = str.match(/_TR\d+B_/)[0]
+          str = str.sub(match, temps[match])
+        end
+        while text.match(/_TR\d+B_/)
+          match = text.match(/_TR\d+B_/)[0]
+          text = text.sub(match, temps[match])
+        end
+        json[trans[:key]] = "#{str} [[ #{text}"
+        puts json[trans[:key]]
+      end
+    end
+    f = File.open(fn, 'w')
+    f.write JSON.pretty_generate(json)
+    f.close
+  end
   
   def self.query_translations(words, source_lang, dest_lang)
     return [] unless ENV['GOOGLE_TRANSLATE_TOKEN']
