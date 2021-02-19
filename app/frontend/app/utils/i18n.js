@@ -284,7 +284,7 @@ var i18n = EmberObject.extend({
           } else {
             str = parts[2];
           }
-          str ||= parts[0];
+          str = str || parts[0];
           str = str.sub(/%\{n\}/, count);
         } else if(str.match(/%\{n\}/)) {
           str = str.sub(/%\{n\}/, count.toString());
@@ -1431,8 +1431,8 @@ var i18n = EmberObject.extend({
   },
   locales_translated: [
     'en',
+    'es*',
     'backwards',
-    'es*'
   ],
   locales_localized: {
     en: "English",    
