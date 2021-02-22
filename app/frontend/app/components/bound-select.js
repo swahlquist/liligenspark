@@ -34,13 +34,13 @@ export default Component.extend({
   }),
   raw_content: computed('content', function() {
     // Ember got super slow at long lists for some reason..
-    var elem = document.createElement('div');
+    var elem = document.createElement('select');
     var sel = this.get('selection');
     (this.get('content') || []).forEach(function(c) {
       var opt = document.createElement('option');
       opt.value = c.id;
       if(sel && sel == opt.value) {
-        opt.selected = true;
+        opt.setAttribute('selected', true);
       }
       opt.innerText = c.name;
       opt.disabled = !!c.disabled;
