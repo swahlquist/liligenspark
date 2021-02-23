@@ -15,7 +15,7 @@ shown. Also please try to match capitalization where posssible.
 
 CoughDrop supports displaying the app interface in multiple languages. Each language must
 be manually enabled once an acceptable preliminary translation file has been generated.
-Translation files are contained in this repository under the `public/locales` directory.
+Translation files are contained in this repository under the [public/locales](public/locales) directory.
 
 Each locale is stored as a `json` file, which can be opened using any text-based editor
 or in the GitHub interface itself. Each line will look like one of the following:
@@ -24,7 +24,6 @@ or in the GitHub interface itself. Each line will look like one of the following
   "string_key1": "Fully-Approved Translation String",
   "string_key2": "Automatically Translated String [[ English Version for Reference and Confirmation",
   "string_key3": "*** English Text (no Automatic Translation was found or added)",
-
 ```
 
 #### Numbers
@@ -38,7 +37,17 @@ One exception is strings related to numbers. These will look as folloows:
 We include all three number formattings for labels in a single string, as you can see,
 separated by `||`. The program will automatically extract just the correct string given
 where and how it is being used, as long as you provide all three options in
-this order.
+this order. Note that the `%{n}` string will be replaced by a number by the app,
+so be sure to place it correctly in your string.
+
+#### Special Characters
+
+Some strings will have special characters that will be auto-replaced the app.
+For example, the string `"I love %app_name%!"` will be replaced by `"I love CoughDrop!"`
+when it is rendered in the app. Additionally the string `"Send a message to %{user_name}"`
+will be replaced with `"Send a message to susan"` when it is rendered in the app.
+These special characters need to be included in your translation in the appropriate
+place or they will not be shown correctly within the app.
 
 ### How to Edit Translation Files
 
@@ -60,13 +69,19 @@ that prevent you from having to do it all by hand.
 Once you have a partial or a completed translation file, please share it back to our
 team and we will merge your translations into the existing file.
 
-### New Translations
-
-If you are interested in adding a new translation file, please contact our team
-and we can create a preliminary file with auto-translations added to save you time.
-
 ### Approval Process
 
 Please keep in mind, depending on our prior relationship with you, we may need to vet
 your translation file with other translators or experts to ensure it is up to our
 professional standards. Please be patient as we do this.
+
+Also note that by submitting your translations, you are agreeing to have them included
+in the CoughDrop code repository, and you transfer ownership of the updated text
+to the copyright holders listed in this repository.
+
+### New Translations
+
+If you are interested in adding a new translation file, please contact our team
+and we can create a preliminary file with auto-translations added to save you time (it's
+just Google Translate, but it's a start!).
+
