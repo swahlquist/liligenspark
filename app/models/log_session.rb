@@ -1465,7 +1465,7 @@ class LogSession < ActiveRecord::Base
       if params['events']
         self.data_will_change!
         self.assert_extra_data # TODO: cleaner way to do this?
-        if self.user && !self.id
+        if self.user && self.created_at > 24.hours.ago
           if (self.user.settings['preferences'] || {})['allow_log_reports']
             self.data['allow_research'] = true
           end
@@ -1520,6 +1520,16 @@ class LogSession < ActiveRecord::Base
       if params['events']
         self.assert_extra_data
         self.data['events'] ||= []
+
+        if self.user && (!self.id || self.created_at > 24.hours.ago)
+          if (self.user.settings['preferences'] || {})['allow_log_reports']
+            self.data['allow_research'] = true
+          end
+          if (self.user.settings['preferences'] || {})['allow_log_publishing']
+            self.data['allow_publishing'] = true
+          end
+        end
+
         ref_user_ids = params['events'].map{|e| e['referenced_user_id'] }.compact.uniq
         valid_ref_user_ids = {}
         User.find_all_by_global_id(ref_user_ids).each do |u|

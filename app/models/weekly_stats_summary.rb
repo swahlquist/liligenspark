@@ -430,10 +430,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
     board_ids = board_usages.to_a.map(&:first)
     Board.where(id: Board.local_ids(board_ids)).find_in_batches(batch_size: 10) do |batch|
       batch.each do |board|
-        if board.fully_listed? && !board.parent_board_id
+        if board.fully_listed? && !board.parent_board_id && (board.settings['forks'] || 0) >  3
           total.data['board_usages'][board.key] = board_usages[board.global_id]
           total.data['board_locales'][board.settings['locale'] || 'en'] = (total.data['board_locales'][board.settings['locale'] || 'en'] || 0) + board_usages[board.global_id]
-        elsif board.parent_board && board.parent_board.fully_listed?
+        elsif board.parent_board && board.parent_board.fully_listed? && (board.parent_board.settings['forks'] || 0) > 3
           total.data['board_usages'][board.parent_board.key] = board_usages[board.global_id]
           total.data['board_locales'][board.settings['locale'] || 'en'] = (total.data['board_locales'][board.settings['locale'] || 'en'] || 0) + board_usages[board.global_id]
         end

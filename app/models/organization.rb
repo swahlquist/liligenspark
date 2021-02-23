@@ -78,7 +78,15 @@ class Organization < ActiveRecord::Base
   end
 
   def org_assertions(user_id, user_type)
-    if user_type == 'user' || user_type == 'supervisor' || user_id == 'all'
+    if user_type == 'manager'
+      user = User.find_by_path(user_id)
+      if user && user.org_supporter?(true)
+        user.settings['possibly_premium_supporter'] = true if premium
+        user.settings['pending'] = false
+        user.save
+      end
+    end
+    if user_type == 'user' || user_type == 'supervisor' || user_id == 'all'  
       if self.settings['include_extras']
         # users = []
         # if user_id == 'all'
@@ -436,7 +444,7 @@ class Organization < ActiveRecord::Base
   def children_orgs
     return [] unless self.has_children?
     # TODO: sharding
-    Organization.where(parent_organization_id: self.id)
+    Organization.where(parent_organization_id: self.id).sort_by{|o| o.settings['name'] }
   end
   
   def downstream_orgs
