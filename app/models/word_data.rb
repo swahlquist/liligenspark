@@ -468,13 +468,14 @@ class WordData < ActiveRecord::Base
     return res
   end
 
-  def self.translate_locale_batch(locale)
+  def self.translate_locale_batch(locale, nopes=nil)
+    nopes ||= []
     fn = File.expand_path("../../../public/locales/#{locale}.json", __FILE__)
     json = JSON.parse(File.read(fn))
     subs = {}
     temps = {}
     json.each do |key, str|
-      if str.match(/^\*\*\*\s/) && subs.keys.length < 100
+      if str.match(/^\*\*\*\s/) && subs.keys.length < 100 && !nopes.include?(key)
         temp_str = str.sub(/^\*\*\*\s/, '').sub(/\%app_name\%/, '_TR1A_').sub(/\%app_name_upper\%/, '_TR2A_')
         temp_str = temp_str.sub(/\s\|\|\s/, ' _._ ')
         while temp_str.match(/\%\{\w+\}/)
@@ -489,8 +490,10 @@ class WordData < ActiveRecord::Base
     ref = []
     subs.each{|k, s| ref << {text: s, key: k}}
     res = query_translations(ref, 'en', locale.sub(/_/, '-'))
+    found = {}
     res.each do |trans|
       if trans[:key] && json[trans[:key]]
+        found[trans[:key]] = true
         str = trans[:translation]
         text = trans[:text]
         str = str.sub(/_TR1A_/, '%app_name%').sub(/_TR2A_/, '%app_name_upper%').sub(/\s+_\._\s+/, ' || ')
@@ -507,9 +510,15 @@ class WordData < ActiveRecord::Base
         puts json[trans[:key]]
       end
     end
+    ref.each do |obj|
+      if !found[obj[:key]]
+        nopes << obj[:key]
+      end
+    end
     f = File.open(fn, 'w')
     f.write JSON.pretty_generate(json)
     f.close
+    nopes
   end
   
   def self.query_translations(words, source_lang, dest_lang)
