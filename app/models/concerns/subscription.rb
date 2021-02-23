@@ -722,6 +722,12 @@ module Subscription
       return :premium_supporter if (self.settings['subscription']['plan_id'] || '').match(/_granted$/)
       if self.expires_at && self.expires_at > Time.now
         if self.settings['subscription']['expiration_source']
+          if self.settings['possibly_premium_supporter'] == nil && rand(5) == 0 && self.org_supporter?(true)
+            # Race condition was preventing this value from getting saved occasionally
+            self.settings['possibly_premium_supporter'] = true
+            self.save
+            return :org_sponsored_supporter
+          end
           return :trialing_supporter if self.settings['subscription']['expiration_source'] == 'free_trial'
           return :premium_supporter if self.settings['subscription']['last_purchase_plan_id'] && !self.settings['subscription']['last_purchase_plan_id'].match(/free/)
           return :grace_period_supporter unless self.org_sponsored?
