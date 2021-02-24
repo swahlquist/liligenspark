@@ -8,7 +8,7 @@ export default {
   name: 'attempt_lang',
   initialize: function() {
     var lang = stashes.get('display_lang');
-    var translated = i18n.translated_locales;
+    var translated = i18n.translated_locales || [];
     if(!lang) {
       var nav_lang = navigator.language;
       var base_lang = nav_lang.split(/-|_/)[0];
