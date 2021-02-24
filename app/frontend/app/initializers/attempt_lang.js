@@ -7,7 +7,20 @@ import capabilities from '../utils/capabilities';
 export default {
   name: 'attempt_lang',
   initialize: function() {
-    var lang = stashes.get('display_lang') || navigator.language;
+    var lang = stashes.get('display_lang');
+    var translated = i18n.translated_locales;
+    if(!lang) {
+      var nav_lang = navigator.language;
+      var base_lang = nav_lang.split(/-|_/)[0];
+      // Don't use any of the auto-translated
+      // locales by default, should only default
+      // to user-translated locales
+      if(translated.indexOf(base_lang) != -1) {
+        lang = nav_lang;
+      } else {
+        lang = 'en';
+      }
+    }
     lang.replace(/-/, '_');
     i18n.langs = i18n.langs || {};
     var base_lang = lang.split(/-|_/)[0];
