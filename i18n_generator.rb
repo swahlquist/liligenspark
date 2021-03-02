@@ -207,7 +207,23 @@ end
 puts "TOTAL DUPS #{dups}"
 puts "TOTAL MISSING #{missing}"
 puts "TOTAL STRINGS #{strings.keys.length}"
-if ARGV.index('--generate') || ARGV.index('--merge')
+if ARGV.index('--confirm')
+  idx = ARGV.index('--confirm')
+  locale = ARGV[idx + 1]
+  line_number = ARGV[idx + 2].to_i
+  str = File.read("public/locales/#{locale}.json")
+  lines = []
+  str.split(/\n/).each_with_index do |line, idx|
+    if (idx + 1) <= line_number
+      lines << line.sub(/\s+\[\[.+\",/, "\",")
+    else
+      lines << line
+    end
+  end
+  f = File.open("public/locales/#{locale}.json", 'w')
+  f.write lines.join("\n")
+  f.close
+elsif ARGV.index('--generate') || ARGV.index('--merge')
   if dups > 0 || missing > 0
     puts "FOUND ISSUES, SO NO GENERATION"
   else
