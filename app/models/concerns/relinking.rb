@@ -337,5 +337,36 @@ module Relinking
       
       return replacement_map[user.settings['preferences']['home_board']['id']] if user.settings['preferences'] && user.settings['preferences']['home_board']
     end
+
+    def cluster_related_boards(user)
+      # Tries to cluster legacy boards for a user which never got clustered (copy_id) correctly
+      boards = Board.where(user: user); boards.count
+      roots = boards.where(['search_string ILIKE ?', "%root%"]).select{|b| !Board.find_all_by_global_id(b.settings['immediately_upstream_board_ids'] || []).detect{|b| b.user_id == user.id } }
+      counts = {}
+      roots.each do |board|
+        (board.settings['downstream_board_ids'] || []).each do |board_id|
+          counts[board_id] ||= 0
+          counts[board_id] += 1
+        end
+      end
+      unique_ids = counts.to_a.select{|id, cnt| cnt == 1 }.map(&:first)
+      boards.find_in_batches(batch_size: 25) do |batch|
+        batch.each do |sub_board|
+          roots.each do |board|
+            if !sub_board.settings['copy_id'] && (board.settings['downstream_board_ids'] || []).include?(sub_board.global_id) && unique_ids.include?(sub_board.global_id)
+              sub_board.settings['copy_id'] = board.global_id
+              sub_board.save
+            end
+          end
+          if !sub_board.settings['copy_id'] && (sub_board.settings['immediately_upstream_board_ids'] || []).length == 1
+            parent = Board.find_by_global_id(sub_board.settings['immediately_upstream_board_ids'])[0]
+            if parent.user_id == sub_board.user_id && parent.settings['copy_id']
+              sub_board.settings['copy_id'] = parent.settings['copy_id']
+              sub_board.save
+            end
+          end
+        end
+      end
+    end
   end
 end
