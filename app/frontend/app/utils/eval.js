@@ -1603,7 +1603,7 @@ evaluation.callback = function(key) {
           } else if(step.distractors) {
             if(core.length > 0) {
               if(core[idx] && core[idx][jdx]) {
-                var word = core[idx][jdx];
+                word = core[idx][jdx];
                 word = words.find(function(w) { return w.label == word; });
                 if(!word) { debugger }
                 used_words[word.label] = true;  
@@ -1640,6 +1640,7 @@ evaluation.callback = function(key) {
               image: null,
             }, idx * spacing + offset + skip_rows, jdx * spacing + offset)            
           } else {
+            word = word || {urls: {}};
             board.add_button({
               label: !step.distractors ? '' : word.label,
               skip_vocalization: !step.prompts,
@@ -1905,7 +1906,7 @@ evaluation.callback = function(key) {
         modal.notice(i18n.t('speak_mode_required_for_buttons', "Please enter speak mode before trying to run an evaluation"), true);
       }
       handling = false;
-      return null;
+      return {auto_return: false};
     };
   }
   // TODO: need settings for:
@@ -1928,7 +1929,7 @@ evaluation.core_list = function(step, step_rows, step_cols) {
       ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', null],
       ['⎵', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '⎵', '⎵']
     ];  
-  } else if(step_rows >= 6) {
+  } else if(step_rows >= 4) {
     if(step_cols == 5 || true) {
       core = [
         ['he',   'is', 'eat', 'happy', 'sad'],
@@ -1937,7 +1938,7 @@ evaluation.core_list = function(step, step_rows, step_cols) {
         ['it',   'not', 'the', 'good', 'bad'],
       ];
     }
-  } else if(step_rows == 5) {
+  } else if(step_rows == 3) {
     if(step_cols == 4 || true) {
       step_cols = 5;
       core = [
@@ -1946,7 +1947,7 @@ evaluation.core_list = function(step, step_rows, step_cols) {
         ['they',  'not', 'read', 'treat', 'book'],
       ];
     }
-  } else if(step_rows == 4) {
+  } else if(step_rows == 2) {
     if(step_cols == 4) {
       core = [
         ['they', 'want', 'eat', 'treat'],
