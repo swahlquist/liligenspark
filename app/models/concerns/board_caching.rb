@@ -59,6 +59,7 @@ module BoardCaching
     # save those lists
     @do_track_boards = false
     self.boards_updated_at = Time.now
+    Board.regenerate_shared_board_ids([self.global_id])
     self.assert_current_record!
     # if the lists changed, schedule this same update for all users
     # who would have been affected by a change (supervisors)

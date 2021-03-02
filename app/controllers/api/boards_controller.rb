@@ -37,7 +37,7 @@ class Api::BoardsController < ApplicationController
             boards = boards.where(arel[:id].in(Board.local_ids(shared_board_ids)))
           elsif params['include_shared']
             arel = Board.arel_table
-            Rails.logger.warn('looking up shared board ids')
+            Rails.logger.warn('looking up shared board ids 2')
             shared_board_ids = Board.all_shared_board_ids_for(user)
             # TODO: fix when sharding actually happens
             Rails.logger.warn('filtering by share board ids')

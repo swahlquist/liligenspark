@@ -509,6 +509,7 @@ class User < ActiveRecord::Base
     if board_added || orphan_board_ids.length > 0
       # TODO: sharding
       User.where(:id => self.id).update_all(:updated_at => Time.now, :sync_stamp => Time.now, :boards_updated_at => Time.now)
+      Board.schedule(:regenerate_shared_board_ids, [self.global_id])
     end
     
     UserBoardConnection.where(:user_id => self.id, :board_id => orphan_board_ids).delete_all

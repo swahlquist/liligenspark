@@ -26,6 +26,9 @@ class UserLink < ApplicationRecord
     if r
       # TODO: sharding
       r.class.where(id: r.id).update_all(r.is_a?(User) && board_share ? board_hash : simple_hash)
+      if r.is_a?(User)
+        Board.schedule(:regenerate_shared_board_ids, [r.global_id])
+      end
     end
     true
   end

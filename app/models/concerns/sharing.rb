@@ -56,7 +56,10 @@ module Sharing
     res
   end
   
-  def author_ids(plus_downstream_editing=false)
+  def author_ids(plus_downstream_editing=false, skip_cache=false)
+    if !skip_cache && self.settings['author_ids']
+      return self.settings['author_ids'][plus_downstream_editing ? 'editing' : 'viewing']
+    end
     links = UserLink.links_for(self).select{|l| l['type'] == 'board_share' }
     res = []
     res << self.related_global_id(self.user_id) if self.user_id
@@ -66,6 +69,15 @@ module Sharing
       else
         res << link['user_id'] if link['state'] && link['state']['allow_editing']
       end
+    end
+    if !self.settings['author_ids'] && !skip_cache
+      # This list doesn't change very often, and can easily be cached
+      self.settings['author_ids'] = {}
+      viewing = plus_downstream_editing ? self.author_ids(false, true) : res
+      editing = plus_downstream_editing ? res : self.author_ids(true, true)
+      self.settings['author_ids']['viewing'] = viewing
+      self.settings['author_ids']['editing'] = editing
+      self.save
     end
     res
   end
@@ -136,6 +148,8 @@ module Sharing
         user.save_with_sync('share')
       end
     end
+    self.settings['author_ids'] = nil
+    self.author_ids(nil)
     self.schedule_update_available_boards('all')
     schedule(:touch_downstreams)
     true
@@ -199,6 +213,12 @@ module Sharing
   end
   
   module ClassMethods
+    def generate_shared_board_ids(user_ids)
+      User.find_all_by_global_id(user_ids).each do |user|
+        Board.all_shared_board_ids_for(user)
+      end
+    end
+      
     def all_shared_board_ids_for(user, plus_editing=false)
       return [] unless user
       user.settings ||= {}
@@ -241,7 +261,7 @@ module Sharing
       valid_deep_board_ids = []
       # for every downstream board, mark it as shared if one of the current board's authors
       # matches one of the root-board authors, which would implicitly grant access
-      Board.find_all_by_global_id(all_deep_board_ids).each do |b|
+      Board.find_batches_by_global_id(all_deep_board_ids, {batch_size: 50}) do |b|
         b.author_ids.each do |author_id|
           valid_deep_board_ids << b.global_id if valid_deep_board_authors[b.global_id].include?(author_id)
         end
@@ -252,7 +272,7 @@ module Sharing
 #      user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
       user.boards_updated_at = Time.now
       user.settings['all_shared_board_ids'][sub_key] = {
-        'timestamp' => user.boards_updated_at.to_f.round(2),
+        'timestamp' => user.boards_updated_at.to_f.round(2) + 0.5,
         'list' => all_board_ids
       }
       user.save(touch: false)

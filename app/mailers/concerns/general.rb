@@ -3,7 +3,7 @@ module General
   
   def mail_message(user, subject, channel_type=nil)
     channel_type ||= caller_locations(1,1)[0].label
-    return nil unless user && user.settings && !user.settings['email'].blank?
+    return nil unless user && user.settings && !user.settings['email'].blank? && user.settings['email'].match(/\@/)
     from = JsonApi::Json.current_domain['settings']['admin_email']
     user.channels_for(channel_type).each do |path|
       opts = {to: path, subject: "#{app_name} - #{subject}"}
