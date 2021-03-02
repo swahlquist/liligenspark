@@ -511,7 +511,8 @@ class Board < ActiveRecord::Base
     self.settings['grid'] = grid # TODO: ...only set if changed
     update_immediately_downstream_board_ids
     
-    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json)
+    translations = (BoardContent.load_content(self, 'translations') || {})
+    data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json + "_" + self.public.to_s + "_" + self.settings['unlisted'].to_s + "_" + translations.to_json)
     self.settings['revision_hashes'] ||= []
     if !self.settings['revision_hashes'].last || self.settings['revision_hashes'].last[0] != data_hash
       @track_revision = [data_hash, Time.now.to_i]
@@ -534,7 +535,7 @@ class Board < ActiveRecord::Base
           
     self.settings['locale'] ||= 'en'
     langs = []
-    (BoardContent.load_content(self, 'translations') || {}).each do |k, trans|
+    translations.each do |k, trans|
       if trans.is_a?(Hash)
         langs += trans.keys
       end

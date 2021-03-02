@@ -533,11 +533,11 @@ class WordData < ActiveRecord::Base
 
       langs = {source: source_lang, dest: dest_lang}
       langs.each do |key, val|
-        if val.match(/zh_Hans/)
+        if val == 'zh-CN' || val.match(/zh_Hans/)
           langs[key] = 'zh-CN'
-        elsif val.match(/zh_Hant/)
+        elsif val == 'zh-TW' || val.match(/zh_Hant/)
           langs[key] = 'zh-TW'
-        elsif val.match(/zh/)
+        elsif val.match(/zh/) && !val.match(/-/)
           langs[key] = 'zh-CN'
         elsif val.match(/[_-]/)
           langs[key] = val.split(/[_-]/)[0].downcase

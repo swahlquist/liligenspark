@@ -40,15 +40,17 @@ module ExtraData
         if public_extra_data && false
           self.data['extra_data_public'] = true
           file = Tempfile.new("stash")
-          file.write(public_extra_data.to_json)
+          json = public_extra_data.to_json
+          file.write(json)
           file.close
-          Uploader.remote_upload(public_path, file.path, 'text/json')
+          Uploader.remote_upload(public_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
         end
         # upload to "/extras/<global_id>/<nonce>/<global_id>.json"
         file = Tempfile.new("stash")
-        file.write(extra_data.to_json)
+        json = extra_data.to_json
+        file.write(json)
         file.close
-        res = Uploader.remote_upload(private_path, file.path, 'text/json')
+        res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
         if res && self.is_a?(BoardDownstreamButtonSet)
           self.data['extra_data_revision'] = self.data['full_set_revision']
         end
