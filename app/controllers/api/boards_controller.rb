@@ -8,6 +8,7 @@ class Api::BoardsController < ApplicationController
       conn = (Octopus.config[Rails.env] || {}).keys.sample
       boards = boards.using(conn) if conn
     end
+    start = Time.now.to_i
     boards = boards.includes(:board_content)
 
     Rails.logger.warn('checking key')
@@ -204,6 +205,10 @@ class Api::BoardsController < ApplicationController
     self.class.trace_execution_scoped(['boards/json_paginate']) do
       json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
       json[:meta]['progress'] = JsonApi::Progress.as_json(progress) if progress
+    end
+
+    if (Time.now.to_i - start) > 5
+      Rails.logger.warn('extra-long-index')
     end
 
     render json: json

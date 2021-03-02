@@ -148,6 +148,7 @@ module Sharing
         user.save_with_sync('share')
       end
     end
+    self.reload
     self.settings['author_ids'] = nil
     self.author_ids(nil)
     self.schedule_update_available_boards('all')
@@ -241,10 +242,14 @@ module Sharing
       # sharing right now assumes that the board author will be the source of all shares
       deep_board_shares += links.select{|l| l['state'] && l['state']['sharer_id'] == user.global_id &&  l['state']['include_downstream'] && l['state']['allow_editing'] && !l['state']['pending'] }
       deep_board_ids = deep_board_shares.map{|l| l['record_code'].split(/:/)[1] }.uniq
-      
+
       # get all those boards
       boards = Board.find_all_by_global_id(deep_board_ids)
       valid_deep_board_authors = {}
+
+      # get the list of all possible downstream boards
+      all_deep_board_ids = boards.map{|b| b.settings['downstream_board_ids'] || [] }.flatten.compact.uniq
+      
       # for each explicitly-shared including-downstream board, mark all downstream boards
       # as possibly-shared if they were authored by any of the root board's authors
       boards.each do |b| 
@@ -255,8 +260,6 @@ module Sharing
           end
         end
       end
-      # get the list of all possible downstream boards
-      all_deep_board_ids = boards.map{|b| b.settings['downstream_board_ids'] || [] }.flatten.compact.uniq
       
       valid_deep_board_ids = []
       # for every downstream board, mark it as shared if one of the current board's authors
@@ -272,7 +275,7 @@ module Sharing
 #      user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
       user.boards_updated_at = Time.now
       user.settings['all_shared_board_ids'][sub_key] = {
-        'timestamp' => user.boards_updated_at.to_f.round(2) + 0.5,
+        'timestamp' => user.boards_updated_at.to_f.round(2),
         'list' => all_board_ids
       }
       user.save(touch: false)

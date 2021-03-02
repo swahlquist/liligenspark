@@ -741,8 +741,8 @@ describe Sharing, :type => :model do
       b4.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b5.global_id}}]
       b4.save
       Worker.process_queues
-      b.share_with(u3, true)
-      b4.share_with(u3)
+      b.reload.share_with(u3, true)
+      b4.reload.share_with(u3)
       
       expect(Board.all_shared_board_ids_for(u3.reload).sort).to eq([b.global_id, b2.global_id, b3.global_id, b4.global_id])
     end
@@ -763,8 +763,8 @@ describe Sharing, :type => :model do
       b4.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b5.global_id}}]
       b4.save
       Worker.process_queues
-      b.share_with(u3, true)
-      b4.share_with(u3)
+      b.reload.share_with(u3, true)
+      b4.reload.share_with(u3)
       
       expect(Board.all_shared_board_ids_for(u3.reload).sort).to eq([b.global_id, b3.global_id, b4.global_id])
     end
@@ -781,9 +781,9 @@ describe Sharing, :type => :model do
       b2.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b3.global_id}}]
       b2.save
       Worker.process_queues
-      b.share_with(u3, true)
-      b2.share_with(u3, true)
-      b3.share_with(u3, true)
+      b.reload.share_with(u3, true)
+      b2.reload.share_with(u3, true)
+      b3.reload.share_with(u3, true)
       
       expect(Board.all_shared_board_ids_for(u3.reload).sort).to eq([b.global_id, b2.global_id, b3.global_id])
     end
@@ -804,8 +804,8 @@ describe Sharing, :type => :model do
       b4.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b5.global_id}}]
       b4.save
       Worker.process_queues
-      b.share_with(u3, true)
-      b4.share_with(u3)
+      b.reload.reload.share_with(u3, true)
+      b4.reload.reload.share_with(u3)
       
       expect(Board.all_shared_board_ids_for(u3.reload).sort).to eq([b.global_id, b3.global_id, b4.global_id])
     end
@@ -822,7 +822,7 @@ describe Sharing, :type => :model do
       b2.save
       Worker.process_queues
       
-      b.share_with(u2, true, true)
+      b.reload.share_with(u2.reload, true, true)
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(Board.all_shared_board_ids_for(u2.reload).sort).to eq([b.global_id, b2.global_id, b3.global_id])
     end
@@ -840,8 +840,8 @@ describe Sharing, :type => :model do
       b4 = Board.create(:user => u)
       Worker.process_queues      
       
-      b.share_with(u2, true, true)
-      b4.share_with(u2, true)
+      b.reload.share_with(u2, true, true)
+      b4.reload.share_with(u2, true)
       expect(Board.all_shared_board_ids_for(u2.reload, true).sort).to eq([b.global_id])
     end
     
@@ -858,12 +858,12 @@ describe Sharing, :type => :model do
       b4 = Board.create(:user => u)
       Worker.process_queues      
       
-      b.share_with(u2, true, true)
-      b4.share_with(u2, true)
+      b.reload.share_with(u2, true, true)
+      b4.reload.share_with(u2, true)
       expect(Board.all_shared_board_ids_for(u2.reload, true).sort).to eq([b.global_id])
       b.reload.update_shares_for(u2, true)
       u2.reload
-      expect(Board.all_shared_board_ids_for(u2, true).sort).to eq([b.global_id, b2.global_id, b3.global_id])
+      expect(Board.all_shared_board_ids_for(u2.reload, true).sort).to eq([b.global_id, b2.global_id, b3.global_id])
     end
   end
   
@@ -933,7 +933,7 @@ describe Sharing, :type => :model do
       Worker.process_queues
       Board.where(:user_id => u.id).update_all(:updated_at => 2.weeks.ago)
       
-      b.share_with(u)
+      b.reload.share_with(u)
       expect(b.reload.updated_at).to be > 1.hour.ago
       expect(b2.reload.updated_at).to be < 1.hour.ago
       Board.where(:user_id => u.id).update_all(:updated_at => 2.weeks.ago)
@@ -1090,21 +1090,30 @@ describe Sharing, :type => :model do
       b.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b2.global_id}}]
       b.save
       Worker.process_queues
+      expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([])
+      expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([])
       expect(b2.allows?(u, 'view')).to eq(true)
       expect(b2.allows?(u, 'edit')).to eq(false)
       expect(b.allows?(u2, 'edit')).to eq(false)
       
-      b.share_with(u2, true, true)
+      # u shares with u2 (pending)
+      b.reload.share_with(u2, true, true)
       Worker.process_queues
       Worker.process_queues
+      expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([b.global_id])
+      expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([b.global_id])
       u2.reload
       u.reload
       expect(b2.allows?(u, 'view')).to eq(true)
       expect(b2.allows?(u, 'edit')).to eq(false)
       expect(b.allows?(u2, 'edit')).to eq(true)
 
+      # u2 accept share (allowing u downstream access)
       b.reload.update_shares_for(u2.reload, true)
       Worker.process_queues
+      expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([b.global_id, b2.global_id])
+      expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([b.global_id, b2.global_id])
+      expect(b.reload.shared_with?(u2, true)).to eq(true)
       u2.reload
       u.reload
       expect(b2.reload.allows?(u, 'view')).to eq(true)
