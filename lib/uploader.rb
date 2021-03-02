@@ -5,7 +5,15 @@ module Uploader
   S3_EXPIRATION_TIME=60*60
   CONTENT_LENGTH_RANGE=200.megabytes.to_i
   
-  def self.remote_upload(remote_path, local_path, content_type)
+  def self.remote_upload(remote_path, local_path, content_type, checksum=nil)
+    if checksum
+      # Don't upload (just touch) if it's identical to what's already there
+      url = check_existing_upload(remote_path, checksum)
+      if url
+        remote_touch(remote_path)
+        return url 
+      end
+    end
     params = remote_upload_params(remote_path, content_type)
     post_params = params[:upload_params]
     return nil unless File.exist?(local_path)
@@ -16,7 +24,11 @@ module Uploader
     if res.success?
       return params[:upload_url] + remote_path
     else
-      raise res.body
+      if res.body && res.body.match(/SlowDown/)
+        raise "throttled uploading to #{remote_path}"
+      else
+        raise res.body
+      end
       return nil
     end
   end
@@ -30,7 +42,7 @@ module Uploader
     "#{uri.scheme}://#{uri.host}#{port_suffix}#{uri.path}#{uri.query && "?#{uri.query}"}"
   end
   
-  def self.check_existing_upload(remote_path)
+  def self.check_existing_upload(remote_path, checksum=nil)
     return nil unless remote_path
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
@@ -41,6 +53,7 @@ module Uploader
     object = bucket.objects.find(remote_path) rescue nil
     if object
       req = object.send(:object_request, :head, {})
+      return nil if checksum && req['etag'] && checksum != req['etag'].gsub(/\"/, '')
       exp = ((req['x-amz-expiration'] || "").match(/expiry-date="([^"]+)"/) || [])[1]
       exp = Time.parse(exp) rescue nil
       if exp && exp < 48.hours.from_now
