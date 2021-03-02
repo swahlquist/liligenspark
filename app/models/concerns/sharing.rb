@@ -213,7 +213,7 @@ module Sharing
   end
   
   module ClassMethods
-    def generate_shared_board_ids(user_ids)
+    def regenerate_shared_board_ids(user_ids)
       User.find_all_by_global_id(user_ids).each do |user|
         Board.all_shared_board_ids_for(user)
       end

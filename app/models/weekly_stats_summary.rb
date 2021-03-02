@@ -105,7 +105,6 @@ class WeeklyStatsSummary < ActiveRecord::Base
     summary.data ||= {}
     summary.data['stats'] = total_stats
     summary.data['session_ids'] = sessions.map(&:global_id)
-    res = summary.save
 
     research_user_ids = {}
     publishing_user_ids = {}
@@ -115,6 +114,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
     summary.data['research_user_ids'] = research_user_ids.keys
     summary.data['publishing_user_ids'] = publishing_user_ids.keys
+    res = summary.save
     
     if current_weekyear == self.weekyear
       if (target_words[:watchwords][:suggestions] || []).length > 0

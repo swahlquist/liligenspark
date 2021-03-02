@@ -1522,10 +1522,10 @@ class LogSession < ActiveRecord::Base
         self.data['events'] ||= []
 
         if self.user && (!self.id || self.created_at > 24.hours.ago)
-          if (self.user.settings['preferences'] || {})['allow_log_reports']
+          if ((self.user.settings || {})['preferences'] || {})['allow_log_reports']
             self.data['allow_research'] = true
           end
-          if (self.user.settings['preferences'] || {})['allow_log_publishing']
+          if ((self.user.settings || {})['preferences'] || {})['allow_log_publishing']
             self.data['allow_publishing'] = true
           end
         end
