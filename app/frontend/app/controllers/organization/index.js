@@ -327,6 +327,8 @@ export default Controller.extend({
         console.log(err);
         if(err && err.errors && err.errors.length === 1 && err.errors[0].match(/invalid user/)) {
           _this.set('missing_user_name', user_name);
+        } else if(err && err.errors && err.errors.length === 1 && err.errors[0].match(/extras already activated/)) {
+          modal.error(i18n.t('user_already_has_premium_symbols', "Premium symbols have already been enabled for this user"));
         } else {
           modal.error(i18n.t('management_action_failed', "Management action failed unexpectedly"));
         }
