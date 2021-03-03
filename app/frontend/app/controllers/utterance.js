@@ -34,7 +34,7 @@ export default Controller.extend({
     this.set('speakable', speecher.ready);
   }),
   single_button_full_sentence: computed('model.button_list', 'model.sentence', function() {
-    if(!this.get('model.button_list.length') == 0) {
+    if(this.get('model.button_list.length') == 0) {
       return true;
     } else if(this.get('model.button_list.length') == 1) {
       return !this.get('model.button_list')[0].image && this.get('model.button_list')[0].label == this.get('model.sentence');

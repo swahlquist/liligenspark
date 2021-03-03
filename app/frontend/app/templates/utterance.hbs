@@ -26,14 +26,14 @@
         "<span id="sentence">{{model.sentence}}</span>"
       </h2>
       {{#if single_button_full_sentence}}
-        <div style='margin-bottom: 50px;'></div>
+        <div style='margin-bottom: 50px;'>{{model.sentence}}</div>
       {{else}}
         <div id="utterance" class="button_list" {{ action "vocalize"}}>
           {{#with model.button_list as |button_list|}}
             {{partial "button-list"}}
           {{/with}}
         </div>
-      {{/if}}>
+      {{/if}}
     {{/unless}}
     <div style="clear: both;"></div>
     {{#if model.permissions.reply}}
