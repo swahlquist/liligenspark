@@ -74,7 +74,7 @@ module Uploader
     end
     object = bucket.objects.find(path) rescue nil
     return false unless object
-    res = object.copy(:key => path, :bucket => bucket) rescue nil
+    res = object.copy(:key => prpath, :bucket => bucket, :acl => 'public-read') rescue nil
     !!res
   end
 
