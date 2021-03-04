@@ -136,6 +136,7 @@ task "extras:desktop" => :environment do
       puts `cp ./public/images/emergency/* ../#{folder}/www/images/emergency`
       puts `cp ./public/fonts/* ../#{folder}/www/fonts`
       puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
+      puts `cp ./public/locales/* ../#{folder}/www/locales`
       puts `cp #{js} ../#{folder}/www/app.js`
       puts `cp #{css} ../#{folder}/www/css/app.css`
 
@@ -246,6 +247,7 @@ task "extras:mobile" => :environment do
       puts "..."
       puts `cp ./public/fonts/* ../#{folder}/www/fonts`
       puts `cp ./public/icons/* ../#{folder}/www/assets/icons`
+      puts `cp ./public/locales/* ../#{folder}/www/locales`
       puts "retrieving remote assets"
       if domain_settings['css']
         url = domain_settings['css']

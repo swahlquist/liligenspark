@@ -3,6 +3,16 @@ files = Dir.glob('app/frontend/app/**/*.js')
 strings = {}
 dups = 0
 missing = 0
+priority_presets = [
+  {level: 10, regex: /app\/controllers\/organization/},
+  {level: 10, regex: /app\/templates\/organization/},
+  {level: 4, regex: /app\/controllers\/board/},
+  {level: 4, regex: /app\/templates\/board/},
+  {level: 8, regex: /app\/controllers\/goals/},
+  {level: 8, regex: /app\/templates\/goals/},
+  {level: 5, regex: /app\/controllers\/user/},
+  {level: 5, regex: /app\/templates\/user/},
+]
 english_plurals = {
   'buffalo': 'buffaloes',
   'domino': 'dominoes',
@@ -85,7 +95,9 @@ files.each do |fn|
               puts "  #{strings[key]['string']}"
               dups += 1
             else
-              strings[key] = {'string' => str, 'level' => 10}
+              preset = priority_presets.detect{|preset| fn.match(preset[:regex]) }
+              level = [(strings[key] || {})['level'] || 10, (preset || {})[:level] || 7].min
+              strings[key] = {'string' => str, 'level' => level}
             end
             # puts str
           else
@@ -167,7 +179,9 @@ files.each do |fn|
                 end
                 str = "0 #{plural_form} || 1 #{str} || %{n} #{plural_form}"
               end
-              strings[key] = {'string' => str, 'original' => original, 'level' => 10}
+              preset = priority_presets.detect{|preset| fn.match(preset[:regex]) }
+              level = [(strings[key] || {})['level'] || 10, (preset || {})[:level] || 7].min
+              strings[key] = {'string' => str, 'original' => original, 'level' => level}
             end
           end
         end

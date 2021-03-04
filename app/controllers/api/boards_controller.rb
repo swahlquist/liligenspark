@@ -83,6 +83,7 @@ class Api::BoardsController < ApplicationController
     ranks = {}
     self.class.trace_execution_scoped(['boards/public_query']) do
       if !params['q'].blank? && params['public']
+        Rails.logger.warn('public blank lookup')
         q = CGI.unescape(params['q']).downcase
         locs = BoardLocale
         if !params['locale'].blank? && params['locale'] != 'any'
@@ -110,6 +111,7 @@ class Api::BoardsController < ApplicationController
       end
     end
     if !params['locale'].blank? && params['locale'] != 'any' && (params['q'].blank? || !params['public'])
+      Rails.logger.warn('private locale search')
       # board.search_string now includes locales, even on private boards
       # This filter should be applied for private searches (which wouldn't yet
       # have been filtered by locale) or for requests without a search query
