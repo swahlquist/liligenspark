@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210211181945) do
+ActiveRecord::Schema.define(version: 20210304193115) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "btree_gin"
 
   create_table "api_calls", force: :cascade do |t|
     t.integer  "user_id"
@@ -76,6 +77,7 @@ ActiveRecord::Schema.define(version: 20210211181945) do
     t.string   "search_string",   limit: 10000
     t.datetime "created_at",                    null: false
     t.datetime "updated_at",                    null: false
+    t.index ["search_string"], name: "index_board_locales_on_search_string", using: :gin
   end
 
   create_table "boards", force: :cascade do |t|
@@ -96,6 +98,7 @@ ActiveRecord::Schema.define(version: 20210211181945) do
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
+    t.index ["search_string"], name: "index_boards_on_search_string", using: :gin
   end
 
   create_table "button_images", force: :cascade do |t|
