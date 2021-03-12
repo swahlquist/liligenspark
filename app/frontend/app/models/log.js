@@ -167,6 +167,7 @@ export default DS.Model.extend({
       res.push(day);
       date = date.add(1, 'day');
     }
+    res = res.slice(-90);
     var pct = Math.round(1 / res.length * 1000) / 10;
     res.forEach(function(d) {
       d.display_style = htmlSafe('width: ' + pct + '%;');

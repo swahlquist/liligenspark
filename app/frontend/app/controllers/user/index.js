@@ -11,6 +11,7 @@ import progress_tracker from '../../utils/progress_tracker';
 import Subscription from '../../utils/subscription';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
   title: computed('model.user_name', function() {
@@ -326,6 +327,22 @@ export default Controller.extend({
       }
     });
   },
+  raw_daily_use: computed('daily_use.daily_use_history', function() {
+    var div = document.createElement('div');
+    (this.get('daily_use.daily_use_history') || []).forEach(function(day) {
+      var sub = document.createElement('div');
+      sub.setAttribute('class', day.activity);
+      sub.setAttribute('style', day.display_style);
+      var span = document.createElement('span');
+      span.innerText = day.date;
+      sub.appendChild(span);
+      div.appendChild(sub);
+    })
+    return htmlSafe(div.innerHTML);
+  }),
+  filtered_devices: computed('model.devices', function() {
+    return (this.get('model.devices') || []).slice(0, 10);
+  }),
   more_label: computed(
     'selected',
     'current_tag',

@@ -590,13 +590,7 @@
             <p>{{t "Error loading data" key='error_loading_data'}}</p>
           {{else if daily_use.daily_use_history}}
             <div class='daily_use'>
-              {{#each daily_use.daily_use_history as |day|}}
-                <div class={{day.activity}} style={{day.display_style}}>
-                  <span>
-                    {{day.date}}
-                  </span>
-                </div>
-              {{/each}}
+              {{raw_daily_use}}
             </div>
           {{else}}
             <p>{{t "No data loaded" key='no_data_loaded'}}</p>
@@ -615,7 +609,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {{#each model.devices as |device|}}
+                  {{#each filtered_devices as |device|}}
                     <tr>
                       <td>{{device.name}}
                         <div style='font-size: 12px; color: #888;'>{{device.ref_id}}</div>
