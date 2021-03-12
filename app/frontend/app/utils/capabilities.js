@@ -242,10 +242,50 @@ var capabilities;
         return promise;
       
       },
-      eye_gaze: {
+      eye_gaze: { 
         listen: function() {
+          // TODO: idempotency
+          if(window.weblinger) {
+            var start = function() {            
+              window.weblinger.start_options = "gaze";
+              window.weblinger.start({
+                webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
+                weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
+                weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                source: 'gaze',
+                selection_type: 'none',
+                cursor: 'none',
+                mode: 'pointer',
+                event_callback: function(e) {
+                  if(e.type == 'linger') {
+                    var evt = $.Event('gazelinger');
+                    evt.clientX = e.x;
+                    evt.clientY = e.y;
+                    evt.eyegaze_hardware = 'camera';
+                    evt.pointer = true;
+                    evt.target = document.elementFromPoint(e.x, e.y) || document.body;
+                    evt.ts = (new Date()).getTime();
+                    $(evt.target).trigger(evt);
+                  }
+                }
+              });
+            };
+            if(window.weblinger.start_options && window.weblinger.start_options != "gaze") {
+              window.weblinger.stop(true).then(function(res) {
+                start();
+              });
+            } else if(window.weblinger.start_options) {
+              // already running
+            } else {
+              start();              
+            }
+          }
         },
         stop_listening: function() {
+          if(window.weblinger) {
+            window.weblinger.start_options = null;
+            window.weblinger.stop({teardown: true});
+          }
         },
         calibrate: function() {
         },
@@ -254,9 +294,61 @@ var capabilities;
         }
       },
       head_tracking: {
-        listen: function() {
+        listen: function(opts) {
+          // TODO: idempotency
+          if(window.weblinger) {
+            var opts_string = "head" + "_" + !!opts.head_pointing + "_" + opts.tilt;
+            var start = function() {
+              window.weblinger.start_options = opts_string;
+              window.weblinger.start({
+                webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
+                weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
+                weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                source: 'head',
+                tilt_sensitivity: opts.tilt || 1.0,
+                selection_type: 'none',
+                cursor: 'none',
+                mode: opts.head_pointing ? 'pointer' : 'joystick',
+                event_callback: function(e) {
+                  if(e.type == 'linger') {
+                    if(opts.head_pointing) {
+                      var evt = $.Event('gazelinger');
+                      evt.clientX = e.x;
+                      evt.clientY = e.y;
+                      evt.eyegaze_hardware = 'camera';
+                      evt.pointer = true;
+                      evt.target = document.elementFromPoint(e.x, e.y) || document.body;
+                      evt.ts = (new Date()).getTime();
+                      $(evt.target).trigger(evt);
+                    } else if(e.extras) {
+                      var evt = $.Event('headtilt');
+                      evt.clientX = 0;
+                      evt.clientY = 0;
+                      evt.vertical = e.extras.tilt_y / 6;
+                      evt.horizontal = e.extras.tilt_x / 6;
+                      evt.target = document.body;
+                      $(evt.target).trigger(evt);
+                    }
+                  }
+                }
+              });
+            };
+            if(window.weblinger.start_options && window.weblinger.start_options != opts_string) {
+              window.weblinger.stop(true).then(function(res) {
+                start();
+              });
+            } else if(window.weblinger.start_options) {
+              // already running
+            } else {
+              start();              
+            }
+          }
         },
         stop_listening: function() {
+          if(window.weblinger) {
+            window.weblinger.start_options = null;
+            window.weblinger.stop({teardown: true});
+          }
         },
         tilt_factor: function(level) {
           var res = 1.0;

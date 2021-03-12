@@ -90,6 +90,7 @@
     window.domain_settings['domain'] = "<%= @domain_overrides['domain'] %>";
   </script>
 <% end %>
+<script src='https://app.covidspeak.org/weblinger.js/weblinger.js' async='true'></script>
 <script type='text/javascript'>
   <% if ENV['SYMBOL_PROXY_KEY'] %>
     window.symbol_proxy_key = "<%= ENV['SYMBOL_PROXY_KEY'] %>";

@@ -23,6 +23,12 @@ export default Controller.extend({
     this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
     this.set('advanced', true);
     this.set('skip_save_on_transition', false);
+    var _this = this;
+    setTimeout(function() {
+      if(window.weblinger) {
+        _this.set('weblinger_enabled', true);
+      }
+    }, 1000);
   },
   speecher: speecher,
   buttonSpacingList: [
@@ -197,8 +203,8 @@ export default Controller.extend({
             eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
           }  
         }
-        res.push({name: i18n.t('head_dwell', "Head Tracking"), id: 'head'});
       }
+      res.push({name: i18n.t('head_dwell', "Head Tracking"), id: 'head'});
     }
     return res;
   }),
@@ -232,7 +238,7 @@ export default Controller.extend({
     }
     return res;
   }),
-  expressionList: computed('head_tracking_capable', function() {
+  expressionList: computed('head_tracking_capable', 'weblinger_enabled', function() {
     var res = [];
     if(capabilities.system == 'iOS' && this.get('head_tracking_capable')) {
       res.push({name: i18n.t('smile', "Smiling"), id: 'smile'});
@@ -248,6 +254,13 @@ export default Controller.extend({
       res.push({name: i18n.t('mouth_open', "Opening your Mouth"), id: 'mouth_open'});
       res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
       // res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
+      res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
+      res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});
+    } else if(window.weblinger) {
+      res.push({name: i18n.t('smile', "Smiling"), id: 'smile'});
+      res.push({name: i18n.t('mouth_open', "Opening your Mouth"), id: 'mouth_open'});
+      res.push({name: i18n.t('kiss', "Puckering your Lips (kiss)"), id: 'kiss'});
+      res.push({name: i18n.t('wink', "Winking One Eye"), id: 'wink'});
       res.push({name: i18n.t('smirk', "Smirking One Side of your Mouth"), id: 'smirk'});
       res.push({name: i18n.t('eyebrows', "Raising Both Eyebrows"), id: 'eyebrows'});
     }
@@ -428,8 +441,8 @@ export default Controller.extend({
   eyegaze_capable: computed(function() {
     return capabilities.eye_gaze.available;
   }),
-  head_tracking_capable: computed(function() {
-    return capabilities.head_tracking.available;
+  head_tracking_capable: computed('weblinger_enabled', function() {
+    return capabilities.head_tracking.available || window.weblinger;
   }),
   eyegaze_or_dwell_capable: computed('pending_preferences.device.dwell', function() {
     return this.get('pending_preferences.device.dwell') || capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available;

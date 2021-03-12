@@ -267,7 +267,7 @@ export default Component.extend({
           });
         }
       };
-      if(capabilities.head_tracking.available) {
+      if(capabilities.head_tracking.available || window.weblinger) {
         var tilt_factor = capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
         capabilities.head_tracking.listen({tilt: tilt_factor});
       }

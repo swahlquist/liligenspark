@@ -1547,6 +1547,7 @@ var buttonTracker = EmberObject.extend({
     var cursor_expected = arrow_or_head_cursor || buttonTracker.check('dwell_icon');
     if(!buttonTracker.dwell_elem) {
       var elem = document.createElement('div');
+      elem.style.pointerEvents = 'none';
       elem.id = 'linger';
       document.body.appendChild(elem);
       var spinner = document.createElement('div');
@@ -1572,6 +1573,7 @@ var buttonTracker = EmberObject.extend({
       var icon = document.createElement('div');
       icon.id = 'dwell_icon';
       icon.className = 'dwell_icon';
+      icon.style.pointerEvents = 'none';
       if(arrow_or_head_cursor && !buttonTracker.check('dwell_icon')) {
         icon.classList.add('big');
       } else if(buttonTracker.check('dwell_icon')) {

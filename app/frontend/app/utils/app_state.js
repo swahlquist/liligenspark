@@ -1192,7 +1192,7 @@ var app_state = EmberObject.extend({
         }
       } else {
         buttonTracker.dwell_enabled = false;
-        if(!capabilities.eye_gaze.calibrating_or_testing) {
+        if(!capabilities.eye_gaze.calibrating_or_testing || window.weblinger) {
           capabilities.eye_gaze.stop_listening();
           capabilities.head_tracking.stop_listening();
         }
