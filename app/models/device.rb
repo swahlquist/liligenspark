@@ -236,7 +236,11 @@ class Device < ActiveRecord::Base
 
   def self.check_token(token, app_version)
     # Skip device lookup if you already have the necessary information cached
-    user = nil, device_id = nil, scopes = nil, valet = nil, valet_mode = false
+    user = nil
+    device_id = nil
+    scopes = nil
+    valet = nil
+    valet_mode = false
     cached = RedisInit.permissions.get("user_token/#{token}")
     res = {}
     if cached
@@ -277,9 +281,10 @@ class Device < ActiveRecord::Base
       begin
         user = users_lookup.find_by_global_id(user_id)
       rescue ActiveRecord::StatementInvalid => e
-        if defined?(Octopus) && e.message.include?("PG::ConnectionBad")
+        # if defined?(Octopus) && e.message.include?("PG::ConnectionBad")
           ActiveRecord::Base.connection.verify!
-        end
+          user = User.find_by_global_id(user_id)
+        # end
       end
       if defined?(Octopus)
         user ||= User.using(:master).find_by_global_id(user_id)

@@ -210,7 +210,14 @@ class SessionController < ApplicationController
         # tokens, so the token 
         render json: JsonApi::Token.as_json(u, d).to_json
       else
-        old_key = OldKey.find_by(:type => 'user', :key => params['username'])
+        old_key = nil
+        begin
+          old_key = OldKey.find_by(:type => 'user', :key => params['username'])
+        rescue ActiveRecord::StatementInvalid => e
+          ActiveRecord::Base.connection.verify!
+          old_key = OldKey.find_by(:type => 'user', :key => params['username'])
+        end
+
         user = old_key && old_key.record
         if user && user.valid_password?(params['password'])
           api_error 400, { error: "User name was changed", user_name: user.user_name}
