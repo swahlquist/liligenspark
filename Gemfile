@@ -21,7 +21,7 @@ gem 'uglifier', '>= 1.3.0'
 
 gem 'typhoeus'
 gem 'coffee-rails'
-gem 'mail-ses'
+gem 'aws-sdk-rails'
 gem 'aws-sdk-sns', '~> 1'
 gem 'aws-sdk-ses', '~> 1'
 gem 'aws-sdk-elastictranscoder', '~> 1'
