@@ -134,7 +134,7 @@ class RemoteTarget < ApplicationRecord
     return false unless target_str && source_str
     message = opts['messageBody'] || 'no message'
     if message == 'STOP'
-      Setting.block_cell!(opts['originationNumber'])
+      Setting.block_cell!(RemoteTarget.canonical_target(opts['originationNumber'], 'sms'))
     end
     target = RemoteTarget.latest_for('sms', target_str, source_str)
     if target && target.user

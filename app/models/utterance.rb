@@ -200,6 +200,7 @@ class Utterance < ActiveRecord::Base
             'email' => contact['email'],
             'cell_phone' => contact['cell_phone'],
             'reply_id' => reply_id,
+            'share_index' => args['share_index'],
             'utterance_id' => self.global_id,
             'reply_url' => reply_url,
             'text' => text
@@ -209,6 +210,7 @@ class Utterance < ActiveRecord::Base
             'sharer' => {'user_name' => sharer.user_name, 'user_id' => sharer.global_id, 'name' => sharer.settings['name']},
             'user_id' => user.global_id,
             'reply_id' => reply_id,
+            'share_index' => args['share_index'],
             'utterance_id' => self.global_id,
             'reply_url' => reply_url,
             'text' => text
@@ -267,6 +269,7 @@ class Utterance < ActiveRecord::Base
             target.last_outbound_at = Time.now
             contact_id = (self.data['share_user_ids'] || [])[args['share_index']] if args['share_index']
             contact_id ||= args['recipient_id']
+            contact_id ||= recipient_user.global_id if recipient_user
             contact_id ||= args['sharer']['user_id'] if args['sharer']
             target.contact_id = contact_id
             target.save

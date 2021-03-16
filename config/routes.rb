@@ -245,6 +245,7 @@ Coughdrop::Application.routes.draw do
       get 'stats'
       get 'admin_reports'
       get 'blocked_emails'
+      get 'blocked_cells'
       post 'extra_action'
     end
     
