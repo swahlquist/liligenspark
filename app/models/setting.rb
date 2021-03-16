@@ -34,4 +34,21 @@ class Setting < ActiveRecord::Base
     setting.data[email] = true
     setting.save!
   end
+
+  def self.blocked_cell?(cell)
+    hash = self.get('blocked_cells') || {}
+    hash[email] == true
+  end
+  
+  def self.blocked_cells
+    hash = self.get('blocked_cells') || {}
+    hash.map{|k, v| k }.sort
+  end
+  
+  def self.block_cell!(cell)
+    setting = self.find_or_create_by(:key => 'blocked_cells')
+    setting.data ||= {}
+    setting.data[cell] = true
+    setting.save!
+  end
 end

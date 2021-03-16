@@ -26,6 +26,12 @@ export default Controller.extend({
     }, function(err) {
       _this.set('blocked_emails', {error: true});
     });
+    _this.set('blocked_cells', {loading: true});
+    persistence.ajax('/api/v1/organizations/' + this.get('model.id') + '/blocked_cells', {type: 'GET'}).then(function(res) {
+      _this.set('blocked_cells', res.emails);
+    }, function(err) {
+      _this.set('blocked_cells', {error: true});
+    });
   },
   gift_types: [
     {name: i18n.t('select_type', "[ Select Type ]"), id: ""},

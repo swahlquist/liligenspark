@@ -303,6 +303,14 @@ class Api::OrganizationsController < ApplicationController
     render json: {emails: Setting.blocked_emails}
   end
   
+  def blocked_cells
+    if !@org.admin
+      return allowed?(@org, 'never_allowed')
+    end
+    return unless allowed?(@org, 'manage')
+    render json: {cells: Setting.blocked_cells}
+  end
+
   def extra_action
     if !@org.admin
       return allowed?(@org, 'never_allowed')
