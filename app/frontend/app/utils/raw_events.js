@@ -122,7 +122,7 @@ $(document).on('mousedown touchstart', function(event) {
   }
 }).on('keydown', function(event) {
   // if(event.target && event.target.id == 'hidden_input') { return; }
-  var dwell_key = buttonTracker.check('dwell_enabled') && event.keyCode && event.keyCode == buttonTracker.check('select_keycode');
+  var dwell_key = buttonTracker.check('dwell_enabled') && event.keyCode && event.keyCode == buttonTracker.check('select_keycode') && buttonTracker.check('dwell_selection') == 'button';
   if(event.isComposing || event.keyCode == 229 || event.key == 'Unidentified' || event.key == 'Dead') { return; }
   if(special_keys.indexOf(event.key) != -1) { return; }
   if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !dwell_key && !modal.is_open()) {
