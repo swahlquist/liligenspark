@@ -351,8 +351,11 @@ var capabilities;
         },
         stop_canvas: function() {
           if(window.cordova && window.plugin && window.plugin.CanvasCamera) {
-            window.plugin.CanvasCamera.stop();
-            canvas.drawing = false;
+            var canvas = capabilities.head_tracking.native_canvas;
+            if(canvas) {
+              window.plugin.CanvasCamera.stop();
+              canvas.drawing = false;
+            }
           }
         },
         listen: function(opts) {
