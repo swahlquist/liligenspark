@@ -192,7 +192,7 @@ export default Component.extend({
       if(head_pointer) {
         capabilities.head_tracking.listen({head_pointing: true, tilt: capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'))});
       } else {
-        capabilities.eye_gaze.listen('noisy');
+        capabilities.eye_gaze.listen('noisy', true);
       }
       capabilities.eye_gaze.calibrating_or_testing = true;
       this.set('eye_listener', eye_listener);
@@ -349,7 +349,7 @@ export default Component.extend({
       this.set('gamepad_listener', null);
     }
     if(this.get('keycode_listener')) {
-      $(document).off('keypress', this.get('keycode_listener'));
+      $(document).off('keydown', this.get('keycode_listener'));
       this.set('keycode_listener', null);
     }
     if(this.get('expression_listener')) {

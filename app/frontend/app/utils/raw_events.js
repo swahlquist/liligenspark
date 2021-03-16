@@ -50,6 +50,8 @@ var eat_events = function(event) {
     event.preventDefault();
   }
 };
+// https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
+var special_keys = ["Unidentified", "Alt", "AltGraph", "CapsLock", "Control", "Fn", "FnLock", "Hyper", "Meta", "NumLock", "ScrollLock", "Shift", "Super", "Symbol", "SymbolLock", "Tab", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home", "PageDown", "PageUp", "Backspace", "Clear", "Copy", "CrSel", "Cut", "Delete", "EraseEof", "ExSel", "Insert", "Paste", "Redo", "Undo", "Accept", "Again", "Attn", "Cancel", "ContextMenu", "Escape", "Execute", "Find", "Finish", "Help", "Pause", "Play", "Props", "Select", "ZoomIn", "ZoomOut", "BrightnessDown", "BrightnessUp", "Eject", "LogOff", "Power", "PowerOff", "PrintScreen", "Hibernate", "Standby", "WakeUp", "HangulMode", "HanjaMode", "JunjaMode", "Eisu", "Hankaku", "Hiragana", "HiraganaKatakana", "KanaMode", "KanjiMode", "Katakana", "Romaji", "Zenkaku", "ZenkakuHanaku"];
 window.addEventListener('touchforcechange', function() {
   // alert('uo');
 });
@@ -105,7 +107,7 @@ $(document).on('mousedown touchstart', function(event) {
   if(!event.fake_event) {
     buttonTracker.touch_release(event);
   }
-}).on('keypress', '.button', function(event) {
+}).on('keyup', '.button', function(event) {
   // basic keyboard navigation
   // if(app_state.get('edit_mode')) { return; }
   if(event.keyCode == 13 || event.keyCode == 32) {
@@ -113,13 +115,16 @@ $(document).on('mousedown touchstart', function(event) {
       buttonTracker.button_select(this, null, 'keyboard'); // trigger_source
     }
   }
-}).on('keypress', '.integration_target', function(event) {
+}).on('keyup', '.integration_target', function(event) {
   // basic keyboard navigation
   if(event.keyCode == 13 || event.keyCode == 32) {
     frame_listener.trigger_target($(event.target).closest(".integration_target")[0]);
   }
-}).on('keypress', function(event) {
+}).on('keydown', function(event) {
+  // if(event.target && event.target.id == 'hidden_input') { return; }
   var dwell_key = buttonTracker.check('dwell_enabled') && event.keyCode && event.keyCode == buttonTracker.check('select_keycode');
+  if(event.isComposing || event.keyCode == 229 || event.key == 'Unidentified' || event.key == 'Dead') { return; }
+  if(special_keys.indexOf(event.key) != -1) { return; }
   if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !dwell_key && !modal.is_open()) {
     // add letter to the sentence box
     var key = "+" + event.key;
@@ -207,7 +212,7 @@ $(document).on('mousedown touchstart', function(event) {
     app_state.toggle_modeling_if_possible();
     event.preventDefault();
   }
-}).on('keyup', function(event) {
+}).on('keydown', function(event) {
   if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
     buttonTracker.direction_event(event);
   }
@@ -269,7 +274,7 @@ $(document).on('mousedown touchstart', function(event) {
   } else {
     $(this).trigger('click');
   }
-}).on('keypress', '#button_list', function(event) {
+}).on('keyup', '#button_list', function(event) {
   if(event.keyCode == 13 || event.keyCode == 32) {
     $(this).trigger('select');
   }

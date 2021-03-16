@@ -243,17 +243,19 @@ var capabilities;
       
       },
       eye_gaze: { 
-        listen: function() {
-          // TODO: idempotency
+        listen: function(listen_level, expression_watch) {
           if(window.weblinger) {
             var start = function() {            
               window.weblinger.start_options = "gaze";
+              var native_canvas = capabilities.head_tracking.setup_canvas();
               window.weblinger.start({
                 webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
                 weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
                 weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                canvas: native_canvas,
                 source: 'gaze',
-                selection_type: 'none',
+                selection_type: expression_watch ? 'expression' : 'none',
+                selection_action: 'none',
                 cursor: 'none',
                 mode: 'pointer',
                 event_callback: function(e) {
@@ -266,6 +268,17 @@ var capabilities;
                     evt.target = document.elementFromPoint(e.x, e.y) || document.body;
                     evt.ts = (new Date()).getTime();
                     $(evt.target).trigger(evt);
+                  } else if(e.type == 'expression') {
+                    var evt = $.Event('facechange');
+                    evt.clientX = 0;
+                    evt.clientY = 0;
+                    evt.expression = res.action;
+                    evt.ts = (new Date()).getTime();
+                    evt.target = document.body;
+                    $(evt.target).trigger(evt);
+                  } else if(e.type == 'stop' || e.type == 'fail') {
+                    window.weblinger.start_options = null;
+                    capabilities.head_tracking.stop_canvas();
                   }
                 }
               });
@@ -285,6 +298,7 @@ var capabilities;
           if(window.weblinger) {
             window.weblinger.start_options = null;
             window.weblinger.stop({teardown: true});
+            capabilities.head_tracking.stop_canvas();
           }
         },
         calibrate: function() {
@@ -294,19 +308,68 @@ var capabilities;
         }
       },
       head_tracking: {
+        setup_canvas: function() {
+          if(window.cordova && window.plugin && window.plugin.CanvasCamera) {
+            var canvas = capabilities.head_tracking.native_canvas;
+            if(!canvas) {
+              canvas = document.createElement('canvas');
+              canvas.id = 'head_tracking_render_canvas';
+              canvas.style.width = '300px';
+              canvas.style.height = '225px';
+              canvas.width = 640;
+              canvas.height = 480;
+              canvas.style.position = 'absolute';
+              canvas.style.display = 'none';
+              canvas.style.top = 0;
+              canvas.style.right = 0;  
+              document.body.appendChild(canvas);   
+              capabilities.head_tracking.native_canvas = canvas;
+            }
+            canvas.drawing = true;
+            if(canvas && !canvas.drawing) {
+              window.plugin.CanvasCamera.initialize(canvas);
+              window.plugin.CanvasCamera.start({
+                width: 640,
+                height: 480,
+                canvas: {
+                  width: 640,
+                  height: 480
+                },
+                capture: {
+                  width: 640,
+                  height: 480
+                },
+                fps: 30,
+                use: 'data',
+                flashMode: false,
+                thumbnailRatio: 1/6,
+                cameraFacing: 'front'
+              });
+            }
+            return canvas;
+          }
+        },
+        stop_canvas: function() {
+          if(window.cordova && window.plugin && window.plugin.CanvasCamera) {
+            window.plugin.CanvasCamera.stop();
+            canvas.drawing = false;
+          }
+        },
         listen: function(opts) {
-          // TODO: idempotency
           if(window.weblinger) {
             var opts_string = "head" + "_" + !!opts.head_pointing + "_" + opts.tilt;
             var start = function() {
               window.weblinger.start_options = opts_string;
+              var native_canvas = capabilities.head_tracking.setup_canvas();
               window.weblinger.start({
                 webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
                 weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
                 weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                canvas: native_canvas,
                 source: 'head',
                 tilt_sensitivity: opts.tilt || 1.0,
-                selection_type: 'none',
+                selection_type: 'expression',
+                selection_action: 'none',
                 cursor: 'none',
                 mode: opts.head_pointing ? 'pointer' : 'joystick',
                 event_callback: function(e) {
@@ -329,6 +392,17 @@ var capabilities;
                       evt.target = document.body;
                       $(evt.target).trigger(evt);
                     }
+                  } else if(e.type == 'expression') {
+                    var evt = $.Event('facechange');
+                    evt.clientX = 0;
+                    evt.clientY = 0;
+                    evt.expression = res.action;
+                    evt.ts = (new Date()).getTime();
+                    evt.target = document.body;
+                    $(evt.target).trigger(evt);
+                  } else if(e.type == 'stop' || e.type == 'fail') {
+                    window.weblinger.start_options = null;
+                    capabilities.head_tracking.stop_canvas();
                   }
                 }
               });
@@ -348,6 +422,7 @@ var capabilities;
           if(window.weblinger) {
             window.weblinger.start_options = null;
             window.weblinger.stop({teardown: true});
+            capabilities.head_tracking.stop_canvas();
           }
         },
         tilt_factor: function(level) {

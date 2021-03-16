@@ -563,12 +563,75 @@ var scanner = EmberObject.extend({
         $elem.val("");
       }, 500);
     }
+    $elem[0].addEventListener('beforeinput', function(event) {
+      event.target.prior_val = $elem.val();
+    });
     $elem[0].addEventListener('input', function(event) {
       // check the text box (are single key strokes getting added?)
       // and send :complete if it's replacing keystrokes,
       // or :predict if it's auto-suggest not autocomplete
       var action = null;
-      if(event.data && event.data != ' ' && buttonTracker.last_key != event.data) {
+      if(false && event.data && event.data != ' ') { //&& buttonTracker.last_key != event.data) {
+        // TODO: replace this nonsense with a text
+        // field and "add"/"cancel" buttons, maybe in a modal
+        if(event.inputType == 'insertCompositionText') {
+          // replace last word (Android uses this to start new word or append to string)
+        } else if(event.inputType == 'insertReplacementText') {
+          // replace via autocomplete
+        } else if(event.inputType == 'insertText' || event.inputType == 'insertFromPaste') {
+          // add to string (Android uses this for text prediction)
+        } else {
+          console.error("Unrecognized input type", event.inputType, event);
+        }
+        
+        var prior = event.target.prior_val || "";
+        var last_word = prior.split(/\s+/).pop();
+        prior_minus_last = prior.replace(last_word + "$", "");
+        var current = $elem.val();
+        action = null;
+        if(prior_minus_last + event.data == current) {
+          // TODO: Android sends a bunch of autocomplete
+          // events for what are really just normal key
+          // events... can we catch and repair?
+          // YES, adding one key will more often
+          // be a keyboard event than a completion
+          // so go ahead and assume that
+          action = ":complete";
+        } else if(prior.length > current.length) {
+          // TODO: backspace, can be accomplished
+          // by :complete maybe? but what if it
+          // goes farther than the last word?
+          action = ":backspace";
+        } else if(prior + (prior.length > 0 ? " " : "") + event.data == current) {
+          if(event.data.length > 1) { // unicode, I know
+            action = ":predict";
+          } else {
+            action = "+" + event.data;
+          }
+        } else {
+          // NOT PLUS
+          action = "+" + event.data;
+        }
+        if(action && action.match(/^\+/) && event.data && event.data.length > 1) {
+          action = ':predict';
+        }
+        // var existing = $elem.val();
+        // var action = (existing == '' || existing.match(/\s$/)) ? ':predict' : ':complete';
+        if(buttonTracker.check('keyboard_listen') && action) {
+          console.log("autocomplete", event.inputType, event.data);
+          // add autocomplete to the sentence box
+          app_state.activate_button({}, {
+            label: event.data,
+            vocalization: action,
+            completion: (action == ':complete' || action == ':predict') ? event.data : null,
+            prevent_return: true,
+            button_id: null,
+            source: 'keyboard',
+            board: {id: 'external_keyboard', key: 'core/external_keyboard'},
+            type: 'speak'
+          });
+        }
+      } else if(event.data && event.data != ' ' && buttonTracker.last_key != event.data) {
         var existing = $elem.val();
         var action = (existing == '' || existing.match(/\s$/)) ? ':predict' : ':complete';
         if(buttonTracker.check('keyboard_listen')) {
@@ -606,7 +669,7 @@ var scanner = EmberObject.extend({
     if($elem[0])  {
       // Native keyboard preference still requires
       // a text box for autocomplete
-      $elem[0].type = buttonTracker.native_keyboard ? 'text' : 'checkbox';
+      $elem[0].type = (buttonTracker.native_keyboard && capabilities.system == 'iOS') ? 'text' : 'checkbox';
     }
     // Draw focus to the correct element (iOS is really stingy w/ key events)
     // unless we already tried and it popped up the virtual keyboard

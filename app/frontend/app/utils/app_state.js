@@ -1180,7 +1180,7 @@ var app_state = EmberObject.extend({
         buttonTracker.dwell_gravity = _this.get('currentUser.preferences.device.dwell_gravity');
         buttonTracker.head_tracking = !!  (buttonTracker.dwell_type == 'head' && !head_pointer);
         if(buttonTracker.dwell_type == 'eyegaze') {
-          capabilities.eye_gaze.listen('noisy');
+          capabilities.eye_gaze.listen('noisy', buttonTracker.dwell_selection == 'expression');
         } else if(buttonTracker.dwell_type == 'head' || buttonTracker.dwell_selection == 'expression') {
           if(head_pointer) {
             buttonTracker.dwell_type = 'eyegaze';

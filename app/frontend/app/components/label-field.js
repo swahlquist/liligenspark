@@ -23,7 +23,7 @@ export default Component.extend({
     var id = $(this.get('element')).closest('.button').attr('data-id');
     editManager.clear_text_edit();
   },
-  keyPress: function(event) {
+  keyDown: function(event) {
     if(event.keyCode == 13) {
       this.change.call(this);
       var id = $(this.get('element')).closest('.button').attr('data-id');

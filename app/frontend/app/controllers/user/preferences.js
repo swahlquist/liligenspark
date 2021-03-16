@@ -438,8 +438,11 @@ export default Controller.extend({
   fullscreen_capable: computed(function() {
     return capabilities.fullscreen_capable();
   }),
-  eyegaze_capable: computed(function() {
-    return capabilities.eye_gaze.available;
+  eyegaze_capable: computed('weblinger_enabled', function() {
+    return capabilities.eye_gaze.available || window.weblinger;
+  }),
+  native_eyegaze_capable: computed('weblinger_enabled', function() {
+    return capabilities.eye_gaze.available && capabilities.eye_gaze.native;
   }),
   head_tracking_capable: computed('weblinger_enabled', function() {
     return capabilities.head_tracking.available || window.weblinger;
@@ -452,6 +455,13 @@ export default Controller.extend({
     'pending_preferences.device.dwell_type',
     function() {
       return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
+    }
+  ),
+  head_tracking_type: computed(
+    'pending_preferences.device.dwell',
+    'pending_preferences.device.dwell_type',
+    function() {
+      return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'head';
     }
   ),
   update_dwell_defaults: observer('pending_preferences.device.dwell', function() {

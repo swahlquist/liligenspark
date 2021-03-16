@@ -1,23 +1,43 @@
 {{#if model.admin}}
   {{#if model.permissions.manage}}
     <h2>{{t "Admin Actions" key='admin_actions'}}</h2>
-    <h4>{{t "Blocked Emails" key='blocked_emails'}}</h4>
-    {{#if blocked_emails.loading}}
-      <p>{{t "Loading..." key='loading'}}</p>
-    {{else if blocked_emails.error}}
-      <p>{{t "There was an error loading blocked emails" key='error_loading_blocked_emails'}}</p>
-    {{else if blocked_emails}}
-      <div class='list-group' style='max-width: 400px; margin-bottom: 5px;'>
-        {{#each blocked_emails as |email|}}
-          <a class='list-group-item'>{{email}}</a>
-        {{/each}}
+    <div class='row'>
+      <div class='col-sm-6'>
+        <h4>{{t "Blocked Emails" key='blocked_emails'}}</h4>
+        {{#if blocked_emails.loading}}
+          <p>{{t "Loading..." key='loading'}}</p>
+        {{else if blocked_emails.error}}
+          <p>{{t "There was an error loading blocked emails" key='error_loading_blocked_emails'}}</p>
+        {{else if blocked_emails}}
+          <div class='list-group' style='max-width: 400px; margin-bottom: 5px; max-height: 200px; overflow: auto;'>
+            {{#each blocked_emails as |email|}}
+              <a class='list-group-item'>{{email}}</a>
+            {{/each}}
+          </div>
+        {{else}}
+          <p>{{t "No data available" key='no_data_available'}}</p>
+        {{/if}}
+        <div>
+          {{input value=blocked_email_address placeholder="email address" class="form-control inline inline-masquerade input-sm"}}
+          <button class="btn btn-default btn-sm" {{action "block_email"}}>{{t "Block Email Address" key='block_email_address'}}</button>
+        </div>
       </div>
-    {{else}}
-      <p>{{t "No data available" key='no_data_available'}}</p>
-    {{/if}}
-    <div>
-      {{input value=blocked_email_address placeholder="email address" class="form-control inline inline-masquerade input-sm"}}
-      <button class="btn btn-default btn-sm" {{action "block_email"}}>{{t "Block Email Address" key='block_email_address'}}</button>
+      <div class='col-sm-6'>
+        <h4>{{t "Blocked Cells" key='blocked_cells'}}</h4>
+        {{#if blocked_cells.loading}}
+          <p>{{t "Loading..." key='loading'}}</p>
+        {{else if blocked_cells.error}}
+          <p>{{t "There was an error loading blocked cells" key='error_loading_blocked_cells'}}</p>
+        {{else if blocked_cells}}
+          <div class='list-group' style='max-width: 400px; margin-bottom: 5px; max-height: 200px; overflow: auto;'>
+            {{#each blocked_cells as |cell|}}
+              <a class='list-group-item'>{{cell}}</a>
+            {{/each}}
+          </div>
+        {{else}}
+          <p>{{t "No data available" key='no_data_available'}}</p>
+        {{/if}}
+      </div>
     </div>
     <h4 style='margin-top: 20px;'>{{t "Custom Purchases" key='custom_purchases'}}</h4>
     {{#if gifts.loading}}
