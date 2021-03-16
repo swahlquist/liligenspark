@@ -325,7 +325,6 @@ var capabilities;
               document.body.appendChild(canvas);   
               capabilities.head_tracking.native_canvas = canvas;
             }
-            canvas.drawing = true;
             if(canvas && !canvas.drawing) {
               window.plugin.CanvasCamera.initialize(canvas);
               window.plugin.CanvasCamera.start({
@@ -346,6 +345,7 @@ var capabilities;
                 cameraFacing: 'front'
               });
             }
+            canvas.drawing = true;
             return canvas;
           }
         },
