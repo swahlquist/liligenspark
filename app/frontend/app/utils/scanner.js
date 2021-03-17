@@ -586,7 +586,7 @@ var scanner = EmberObject.extend({
         
         var prior = event.target.prior_val || "";
         var last_word = prior.split(/\s+/).pop();
-        prior_minus_last = prior.replace(last_word + "$", "");
+        var prior_minus_last = prior.replace(last_word + "$", "");
         var current = $elem.val();
         action = null;
         if(prior_minus_last + event.data == current) {

@@ -110,19 +110,20 @@ $(document).on('mousedown touchstart', function(event) {
 }).on('keyup', '.button', function(event) {
   // basic keyboard navigation
   // if(app_state.get('edit_mode')) { return; }
-  if(event.keyCode == 13 || event.keyCode == 32) {
+  if(event.keyCode == 13 || event.keyCode == 32 || event.code == 'Enter' || event.code == 'Space') {
     if(event.target.tagName != 'INPUT') {
       buttonTracker.button_select(this, null, 'keyboard'); // trigger_source
     }
   }
 }).on('keyup', '.integration_target', function(event) {
   // basic keyboard navigation
-  if(event.keyCode == 13 || event.keyCode == 32) {
+  if(event.keyCode == 13 || event.keyCode == 32 || event.code == 'Enter' || event.code == 'Space') {
     frame_listener.trigger_target($(event.target).closest(".integration_target")[0]);
   }
 }).on('keydown', function(event) {
   // if(event.target && event.target.id == 'hidden_input') { return; }
-  var dwell_key = buttonTracker.check('dwell_enabled') && event.keyCode && event.keyCode == buttonTracker.check('select_keycode') && buttonTracker.check('dwell_selection') == 'button';
+  var select_code = buttonTracker.check('select_keycode') || -1;
+  var dwell_key = buttonTracker.check('dwell_enabled') && (event.keyCode == select_code || event.code == select_code) && buttonTracker.check('dwell_selection') == 'button';
   if(event.isComposing || event.keyCode == 229 || event.key == 'Unidentified' || event.key == 'Dead') { return; }
   if(special_keys.indexOf(event.key) != -1) { return; }
   if(buttonTracker.check('keyboard_listen') && !buttonTracker.check('scanning_enabled') && !dwell_key && !modal.is_open()) {
@@ -133,7 +134,7 @@ $(document).on('mousedown touchstart', function(event) {
       $input.val($input.val() + (event.key == 'Enter' ? ' ' : event.key));
     }
     if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
-    if(event.keyCode == 77 && (event.altKey || event.ctrlKey)) {
+    if((event.code == 'KeyM' || event.keyCode == 77) && (event.altKey || event.ctrlKey)) {
       // Toggling modeling, so don't add to the sentence box
       return;
     }
@@ -222,7 +223,8 @@ $(document).on('mousedown touchstart', function(event) {
   }
 }).on('keydown', function(event) {
   if(buttonTracker.check('dwell_enabled') && buttonTracker.check('select_keycode') && buttonTracker.check('dwell_selection') == 'button') {
-    if(event.keyCode && event.keyCode == buttonTracker.check('select_keycode')) {
+    var select_code = buttonTracker.check('select_keycode') || -1;
+    if(event.keyCode == select_code || event.code == select_code) {
       if(buttonTracker.last_dwell_linger) {
         var events = buttonTracker.last_dwell_linger.events;
         var e = events[events.length - 1];
@@ -235,19 +237,19 @@ $(document).on('mousedown touchstart', function(event) {
   }
   if(!buttonTracker.check('scanning_enabled')) { return; }
   if(event.target.tagName == 'INPUT' && event.target.id != 'hidden_input') { return; }
-  if(event.keyCode && event.keyCode == buttonTracker.check('select_keycode')) { // spacebar key
+  if((event.keyCode || -1) == buttonTracker.check('select_keycode') || (event.code || -1) == buttonTracker.check('select_keycode')) { // spacebar key
     scanner.pick();
     event.preventDefault();
-  } else if(event.keyCode && buttonTracker.check('any_select') && (!modal.is_open() || modal.is_open('highlight'))) {
+  } else if((event.keyCode || event.code) && buttonTracker.check('any_select') && (!modal.is_open() || modal.is_open('highlight'))) {
     scanner.pick();
     event.preventDefault();
-  } else if(event.keyCode && event.keyCode == buttonTracker.check('next_keycode')) { // 1 key
+  } else if((event.keyCode || -1) == buttonTracker.check('next_keycode') || (event.code || -1) == buttonTracker.check('next_keycode')) { // 1 key
     scanner.next();
     event.preventDefault();
-  } else if(event.keyCode && event.keyCode == buttonTracker.check('prev_keycode')) { // 2 key
+  } else if((event.keyCode || -1) == buttonTracker.check('prev_keycode') || (event.code || -1) == buttonTracker.check('prev_keycode')) { // 2 key
     scanner.prev();
     event.preventDefault();
-  } else if(event.keyCode && event.keyCode == buttonTracker.check('cancel_keycode')) { // esc key
+  } else if((event.keyCode || -1) == buttonTracker.check('cancel_keycode') || (event.code || -1) == buttonTracker.check('cancel_keycode')) { // esc key
     scanner.stop();
     event.preventDefault();
   }
@@ -275,7 +277,7 @@ $(document).on('mousedown touchstart', function(event) {
     $(this).trigger('click');
   }
 }).on('keyup', '#button_list', function(event) {
-  if(event.keyCode == 13 || event.keyCode == 32) {
+  if(event.keyCode == 13 || event.keyCode == 32 || event.code == 'Enter' || event.code == 'Space') {
     $(this).trigger('select');
   }
 }).on('drop', '.button,.board_drop', function(event) {
@@ -1310,10 +1312,10 @@ var buttonTracker = EmberObject.extend({
   direction_event: function(event) {
     buttonTracker.direction_keys = buttonTracker.direction_keys || {};
     buttonTracker.gamepad_down_buttons = buttonTracker.gamepad_down_buttons || {};
-    if(event.type == 'keydown' && event.keyCode) {
-      buttonTracker.direction_keys[event.keyCode] = (new Date()).getTime();
-    } else if(event.type == 'keyup' && event.keyCode) {
-      buttonTracker.direction_keys[event.keyCode] = false;
+    if(event.type == 'keydown' && (event.keyCode || event.code)) {
+      buttonTracker.direction_keys[event.keyCode || event.code] = (new Date()).getTime();
+    } else if(event.type == 'keyup' && (event.keyCode || event.code)) {
+      buttonTracker.direction_keys[event.keyCode || event.code] = false;
     }
     if(event.type == 'headtilt' && (buttonTracker.check('head_tracking') || buttonTracker.gamepadupdate)) {
       buttonTracker.head_tilt = {
@@ -1423,10 +1425,14 @@ var buttonTracker = EmberObject.extend({
           rate = 1.0;
         }
 
+        var last_left = Math.max(buttonTracker.direction_keys[37] || 0, buttonTracker.direction_keys['ArrowLeft'] || 0);
+        var last_right = Math.max(buttonTracker.direction_keys[39] || 0, buttonTracker.direction_keys['ArrowRight'] || 0);
+        var last_up = Math.max(buttonTracker.direction_keys[38] || 0, buttonTracker.direction_keys['ArrowUp'] || 0);
+        var last_down = Math.max(buttonTracker.direction_keys[40] || 0, buttonTracker.direction_keys['ArrowDown'] || 0);
         // update the coordinates, and check if oppossing 
         // arrows are both being held down
-        if(buttonTracker.direction_keys[37] || pad_actions.left) {
-          if(buttonTracker.direction_keys[39] && buttonTracker.direction_keys[39] > buttonTracker.direction_keys[37]) {
+        if(last_left || pad_actions.left) {
+          if(!pad_actions.left && last_right && last_right > last_left) {
             // if right was pressed more recently than left, ignore left
           } else if(x > 0) {
             x = x - ((pad_actions.left || 2.0) * rate);
@@ -1434,8 +1440,8 @@ var buttonTracker = EmberObject.extend({
           }
           type = type || 'keyboard';
         }
-        if(buttonTracker.direction_keys[39] || pad_actions.right) {
-          if(buttonTracker.direction_keys[37] && buttonTracker.direction_keys[37] > buttonTracker.direction_keys[39]) {
+        if(last_right || pad_actions.right) {
+          if(!pad_actions.right && last_left && last_left > last_right) {
             // if left was pressed more recently than right, ignore right
           } else if(x < window.innerWidth) {
             x = x + ((pad_actions.right || 2.0) * rate);
@@ -1443,8 +1449,8 @@ var buttonTracker = EmberObject.extend({
           }
           type = type || 'keyboard';
         }
-        if(buttonTracker.direction_keys[38] || pad_actions.up) {
-          if(buttonTracker.direction_keys[40] && buttonTracker.direction_keys[40] > buttonTracker.direction_keys[38]) {
+        if(last_up || pad_actions.up) {
+          if(!pad_actions.up && last_down && last_down > last_up) {
             // if down was pressed more recently than up, ignore up
           } else if(y > 0) {
             y = y - ((pad_actions.up || 2.0) * rate);
@@ -1452,8 +1458,8 @@ var buttonTracker = EmberObject.extend({
           }
           type = type || 'keyboard';
         }
-        if(buttonTracker.direction_keys[40] || pad_actions.down) {
-          if(buttonTracker.direction_keys[38] && buttonTracker.direction_keys[38] > buttonTracker.direction_keys[40]) {
+        if(last_down || pad_actions.down) {
+          if(!pad_actions.down && last_up && last_up > last_down) {
             // if up was pressed more recently than down, ignore down
           } else if(y < window.innerHeight) {
             y = y + ((pad_actions.down || 2.0) * rate);

@@ -13,7 +13,7 @@ export default TextField.extend({
     this.sendAction();
   },
   keyDown: function(event) {
-    if(event.keyCode == 13) {
+    if(event.keyCode == 13 || event.code == "Enter") {
       event.preventDefault();
       event.stopPropagation();
       if(this.get('select')) {

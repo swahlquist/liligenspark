@@ -2449,7 +2449,7 @@ $(document).on('change', '#image_upload,#sound_upload,#board_upload,#avatar_uplo
   }
   event.stopPropagation();
 }).on('keydown', '.form-horizontal', function(event) {
-  if(event.keyCode == 32 && event.target.tagName == 'BUTTON') {
+  if((event.code == 'Space' || event.keyCode == 32) && event.target.tagName == 'BUTTON') {
     if($(event.target).closest("#button_settings").length > 0) {
       if($("#recording_status").length > 0) {
         $("#recording_status").focus();

@@ -247,7 +247,7 @@ var capabilities;
           if(window.weblinger) {
             var start = function() {            
               window.weblinger.start_options = "gaze";
-              var native_canvas = capabilities.head_tracking.setup_canvas();
+              var native_canvas = capabilities.tracking.setup_canvas();
               window.weblinger.start({
                 webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
                 weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
@@ -272,13 +272,13 @@ var capabilities;
                     var evt = $.Event('facechange');
                     evt.clientX = 0;
                     evt.clientY = 0;
-                    evt.expression = res.action;
+                    evt.expression = e.expression;
                     evt.ts = (new Date()).getTime();
                     evt.target = document.body;
                     $(evt.target).trigger(evt);
                   } else if(e.type == 'stop' || e.type == 'fail') {
                     window.weblinger.start_options = null;
-                    capabilities.head_tracking.stop_canvas();
+                    capabilities.tracking.stop_canvas();
                   }
                 }
               });
@@ -298,7 +298,7 @@ var capabilities;
           if(window.weblinger) {
             window.weblinger.start_options = null;
             window.weblinger.stop({teardown: true});
-            capabilities.head_tracking.stop_canvas();
+            capabilities.tracking.stop_canvas();
           }
         },
         calibrate: function() {
@@ -307,7 +307,7 @@ var capabilities;
           cb(false);
         }
       },
-      head_tracking: {
+      tracking: {
         setup_canvas: function() {
           if(window.cordova && window.plugin && window.plugin.CanvasCamera) {
             var canvas = capabilities.head_tracking.native_canvas;
@@ -357,13 +357,16 @@ var capabilities;
               canvas.drawing = false;
             }
           }
-        },
+        }
+      },
+      head_tracking: {
+
         listen: function(opts) {
           if(window.weblinger) {
             var opts_string = "head" + "_" + !!opts.head_pointing + "_" + opts.tilt;
             var start = function() {
               window.weblinger.start_options = opts_string;
-              var native_canvas = capabilities.head_tracking.setup_canvas();
+              var native_canvas = capabilities.tracking.setup_canvas();
               window.weblinger.start({
                 webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
                 weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
@@ -399,13 +402,13 @@ var capabilities;
                     var evt = $.Event('facechange');
                     evt.clientX = 0;
                     evt.clientY = 0;
-                    evt.expression = res.action;
+                    evt.expression = e.expression;
                     evt.ts = (new Date()).getTime();
                     evt.target = document.body;
                     $(evt.target).trigger(evt);
                   } else if(e.type == 'stop' || e.type == 'fail') {
                     window.weblinger.start_options = null;
-                    capabilities.head_tracking.stop_canvas();
+                    capabilities.tracking.stop_canvas();
                   }
                 }
               });
@@ -425,7 +428,7 @@ var capabilities;
           if(window.weblinger) {
             window.weblinger.start_options = null;
             window.weblinger.stop({teardown: true});
-            capabilities.head_tracking.stop_canvas();
+            capabilities.tracking.stop_canvas();
           }
         },
         tilt_factor: function(level) {

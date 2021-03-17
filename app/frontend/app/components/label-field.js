@@ -24,7 +24,7 @@ export default Component.extend({
     editManager.clear_text_edit();
   },
   keyDown: function(event) {
-    if(event.keyCode == 13) {
+    if(event.keyCode == 13 || event.code == 'Enter') {
       this.change.call(this);
       var id = $(this.get('element')).closest('.button').attr('data-id');
       editManager.lucky_symbol(id);

@@ -23,9 +23,11 @@ export default Component.extend({
     if(this.get('value') == '9' && event.keyCode == 9) {
       // double-tab to escape text entry lockage
       return;
+    } else if(this.get('value') == 'Escape' && event.code == 'Escape') {
+      return;
     }
-    $(this.element).val(event.keyCode);
+    $(this.element).val(event.code || event.keyCode);
     event.preventDefault();
-    this.set('value', event.keyCode);
+    this.set('value', event.code || event.keyCode);
   }
 });

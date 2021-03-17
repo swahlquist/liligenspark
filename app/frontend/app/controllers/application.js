@@ -1359,9 +1359,7 @@ export default Controller.extend({
       if(app_state.get('browser') == 'Safari' || app_state.get('system') == 'iOS' || capabilities.system == 'iOS') {
         res = res + "low_for_high_contrast ";
       }
-      if(this.get('app_state.currentUser.preferences.new_index') || true) {
-        res = res + "new_index ";
-      }
+      res = res + "new_index ";
       return res;
     }
   ),
@@ -1371,9 +1369,7 @@ export default Controller.extend({
     'app_state.currentUser.preferences.new_index',
     function() {
       var res = "row ";
-      if(this.get('app_state.currentUser.preferences.new_index') || true) {
-        res = res + 'new_index ';
-      }
+      res = res + 'new_index ';
       if(this.get('app_state.header_size')) {
         res = res + this.get('app_state.header_size') + ' ';
       }

@@ -224,7 +224,8 @@ export default Component.extend({
     if(_this.get('preferences.device.dwell_type') == 'arrow_dwell' || (_this.get('preferences.device.dwell_type') == 'head' && !head_pointer)) {
       var key_listener = function(e) {
         if(_this.get('preferences.device.dwell_selection') == 'button') {
-          if(e.keyCode && e.keyCode == _this.get('preferences.device.scanning_select_keycode')) {
+          var select_code = _this.get('preferences.device.scanning_select_keycode');
+          if((e.keyCode && e.keyCode == select_code) || (e.code && e.code == select_code)) {
             buttonTracker.gamepadupdate('select', e);
           }
         }
