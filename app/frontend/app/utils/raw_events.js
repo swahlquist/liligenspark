@@ -150,7 +150,7 @@ $(document).on('mousedown touchstart', function(event) {
     });
   }
 }).on('keydown', function(event) {
-  if(event.keyCode == 9) { // tab
+  if(event.keyCode == 9 || event.code == 'Tab') { // tab
     $board_canvas = $("#board_canvas");
     if(!$board_canvas.data('focus_listener_set')) {
       $board_canvas.data('focus_listener_set', true);
@@ -167,12 +167,12 @@ $(document).on('mousedown touchstart', function(event) {
     } else {
       buttonTracker.clear_tab();
     }
-  } else if(event.keyCode == 13 || event.keyCode == 32) { // return
+  } else if(event.keyCode == 13 || event.keyCode == 32 || event.code == 'Enter' || event.code == 'Space') { // return
     $("#hidden_input").val("");
     if(event.target.tagName == 'CANVAS') {
       buttonTracker.select_tab();
     }
-  } else if(event.keyCode == 27) { // esc
+  } else if(event.keyCode == 27 || event.code == 'Escape') { // esc
     if(modal.is_open() && modal.is_closeable()) {// && (event.target.tagName == 'INPUT' || event.target.tagName == 'BUTTON' || event.target.tagName == 'TEXTAREA' || event.target.tagName == 'A')) {
       modal.close();
     } else if(buttonTracker.check('keyboard_listen') && !modal.is_open()) {
@@ -187,7 +187,7 @@ $(document).on('mousedown touchstart', function(event) {
         type: 'speak'
       });
     }
-  } else if(event.keyCode == 8) { // backspace
+  } else if(event.keyCode == 8 || event.code == 'Backspace') { // backspace
     if(buttonTracker.check('keyboard_listen') && !modal.is_open()) {
       var $input = $("#hidden_input");
       if($input.val()) {
@@ -203,18 +203,18 @@ $(document).on('mousedown touchstart', function(event) {
         type: 'speak'
       });
     }
-  } else if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
+  } else if([37, 38, 39, 40].indexOf(event.keyCode) != -1 || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.code) != -1) {
     if(buttonTracker.gamepadupdate) {
       event.preventDefault();
     }
     buttonTracker.direction_event(event);
-  } else if(event.keyCode == 77 && (event.altKey || event.ctrlKey)) {
+  } else if((event.keyCode == 77 || event.code == 'KeyM') && (event.altKey || event.ctrlKey)) {
     console.log("Keyboard shortcut for toggle modeling");
     app_state.toggle_modeling_if_possible();
     event.preventDefault();
   }
 }).on('keydown', function(event) {
-  if([37, 38, 39, 40].indexOf(event.keyCode) != -1) {
+  if([37, 38, 39, 40].indexOf(event.keyCode) != -1 || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.code) != -1) {
     buttonTracker.direction_event(event);
   }
 }).on('headtilt', function(event) {
