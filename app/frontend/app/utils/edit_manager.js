@@ -114,37 +114,38 @@ var editManager = EmberObject.extend({
     var rules = [
       // Verbs:
       //   pronoun (I, you, they, we): present (c)
-      {type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
+      {id: 'you_look', type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
       //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
-      {type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
+      {id: 'she_looks', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
       //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (-ing, going): infinitive (e)
-      {type: 'verb', lookback: [{type: 'pronoun'}, {words: ["is", "am", "are", "was", "were"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}, {type: 'verb', match: /ing$/}], inflection: 'infinitive', location: 'e'},
+      {id: 'he_is_looking_to_go', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["be", "is", "am", "are", "was", "were"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}, {type: 'verb', match: /ing$/}], inflection: 'infinitive', location: 'e'},
       //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
-      {type: 'verb', lookback: [], inflection: 'present_participle', location: 's'},
+      {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
+      {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
       //   verb (being, have, has, had) [adverb] [not]: past (w)
-      {type: 'verb', lookback: [{words: ["being", "doing", "has", "have", "had"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
+      {id: 'have_looked', type: 'verb', lookback: [{words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
       //   verb (have, has, had) pronoun (I, you, he) [adverb] [not]: past (w)
-      {type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
+      {id: 'have_you_looked', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
       //   verb (have, has, had) [not] been: present_participle (s)
-      {type: 'verb', lookback: [{words: ["have", "has", "had"]}, {words: ["not"], optional: true}, {words: ["been"]}], inflection: 'present_participle', location: 's'},
-      {type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {words: ["not"], optional: true}, {words: ["be"]}], inflection: 'present_participle', location: 's'},
+      {id: 'have_been_looking', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {words: ["not"], optional: true}, {words: ["been"]}], inflection: 'present_participle', location: 's'},
+      {id: 'can_be_looking', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {words: ["not"], optional: true}, {words: ["be"]}], inflection: 'present_participle', location: 's'},
       //   verb (is, am, was, be, are, were, etc.) [pronoun (he, she, it, etc.)] [not]: present_participle (s)
-      {type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
+      {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
       //   verb (do, does, did, etc.) pronoun (he, she, it, etc.) [not]: present (c)
       //   verb (do, does, did, etc.) [determiner] noun: present (c)
       //   noun (singular): simple_present (n)
-      {type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
+      {id: 'dog_looks', type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
       //   will: present (c)
       // Nouns: 
       //   plural determiners (those, these, some, many): plural (n)
-      {type: 'noun', lookback: [{words: ["those", "these", "some", "many"]}], inflection: 'plural', location: 'n'},
+      {id: 'these_dogs', type: 'noun', lookback: [{words: ["those", "these", "some", "many"]}], inflection: 'plural', location: 'n'},
       //   else: base (c)
       // Pronouns:
       //   (at, for, with): objective (n)
-      {type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
+      {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
       //   pronoun (that, it, this) verb (is, was): objective (n)
-      {type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
-      {type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
+      {id: 'it_is_him', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
+      {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
       //   (is, was): objective(n) or possesive_adjective (w)
     ];
     var matches = function(rule, history) {
@@ -284,7 +285,7 @@ var editManager = EmberObject.extend({
     };
     var voc_locale = app_state.get('vocalization_locale') || navigator.language;
     var lab_locale = app_state.get('label_locale') || navigator.language;
-    var base_label = button.label;
+    var base_label = button.original_label || button.label;
     var trans = (app_state.controller.get('board.model.translations') || {})[button_id];
     var voc = (trans || {})[voc_locale] || (trans || {})[voc_locale.split(/-|_/)[0]];
     var lab = (trans || {})[lab_locale] || (trans || {})[lab_locale.split(/-|_/)[0]];
@@ -337,7 +338,7 @@ var editManager = EmberObject.extend({
         }
       }
       if(list.length > 0) { 
-        list.push({location: 'c', label: (lab || {}).label || button.label, vocalization: (voc || {}).label || button.vocalization});
+        list.push({location: 'c', label: (lab || {}).label || button.original_label || button.label, vocalization: (voc || {}).label || button.vocalization});
         res = list; 
       }
     }
@@ -351,7 +352,7 @@ var editManager = EmberObject.extend({
         // can be replaced by up/down
         res = res.concat([
           {location: 'n', label: i18n.pluralize(base_label)},
-          {location: 'c', label: button.label},
+          {location: 'c', label: button.original_label || button.label},
           {location: 's', label: i18n.possessive(base_label)},
         ]);
         if(inflection_types.indexOf('verb') != -1) {
@@ -382,7 +383,7 @@ var editManager = EmberObject.extend({
           {location: 'e', label: i18n.superlative(base_label)},
           {location: 'nw', label: i18n.negation(base_label)},
           {location: 'w', label: i18n.negative_comparative(base_label)},
-          {location: 'c', label: button.label},
+          {location: 'c', label: button.original_label || button.label},
         ]);
         if(inflection_types.indexOf('noun') != -1) {
           res = res.concat([
@@ -403,7 +404,7 @@ var editManager = EmberObject.extend({
         }
       } else if(button.part_of_speech == 'pronoun') {
         res = res.concat([
-          {location: 'c', label: button.label},
+          {location: 'c', label: button.original_label || button.label},
           {location: 's', label: i18n.possessive(base_label, {pronoun: true})},
           {location: 'n', label: i18n.possessive(base_label, {objective: true})},
           {location: 'w', label: i18n.possessive(base_label, {})},
@@ -417,7 +418,7 @@ var editManager = EmberObject.extend({
           {location: 'n', label: i18n.tense(base_label, {simple_present: true})},
           {location: 'e', label: i18n.tense(base_label, {infinitive: true})},
           // {location: 'sw', label: i18n.perfect_non_progression(button.label)},
-          {location: 'c', label: button.label}
+          {location: 'c', label: button.original_label || button.label}
         ]);
         if(inflection_types.indexOf('noun') != -1) {
           res = res.concat([
@@ -445,7 +446,7 @@ var editManager = EmberObject.extend({
         }
         res = res.concat([
   //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
-          {location: 'c', label: button.label},
+          {location: 'c', label: button.original_label || button.label},
           {location: 'se', label: i18n.negation(base_label)},
   //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
         ]);

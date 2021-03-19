@@ -95,6 +95,7 @@ class Api::BoardsController < ApplicationController
         end
         board_ids = []
         if params['sort'] == 'home_popularity'
+          Rails.logger.warn('home_popularity search')
           locs.search_by_text_for_home_popularity(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id
             ranks[bl.board_id] = bl.pg_search_rank
@@ -102,6 +103,7 @@ class Api::BoardsController < ApplicationController
         else
           # TODO: Track locale of search results so you can show them with
           # the right localized name if !params['locale'] || params['locale'] == 'any'
+          Rails.logger.warn('popularity search')
           locs.search_by_text(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id
             ranks[bl.board_id] = bl.pg_search_rank

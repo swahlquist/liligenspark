@@ -37,7 +37,7 @@ class Setting < ActiveRecord::Base
 
   def self.blocked_cell?(cell)
     hash = self.get('blocked_cells') || {}
-    hash[email] == true
+    hash[cell] == true
   end
   
   def self.blocked_cells
