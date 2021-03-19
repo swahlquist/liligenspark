@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210304193115) do
+ActiveRecord::Schema.define(version: 20210319214253) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -77,7 +77,7 @@ ActiveRecord::Schema.define(version: 20210304193115) do
     t.string   "search_string",   limit: 10000
     t.datetime "created_at",                    null: false
     t.datetime "updated_at",                    null: false
-    t.index ["search_string"], name: "index_board_locales_on_search_string", using: :gin
+    t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "board_locales_search_string", using: :gin
   end
 
   create_table "boards", force: :cascade do |t|
@@ -95,10 +95,10 @@ ActiveRecord::Schema.define(version: 20210304193115) do
     t.string   "current_revision", limit: 255
     t.boolean  "any_upstream"
     t.integer  "board_content_id"
+    t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "boards_search_string", using: :gin
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
-    t.index ["search_string"], name: "index_boards_on_search_string", using: :gin
   end
 
   create_table "button_images", force: :cascade do |t|
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20210304193115) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
