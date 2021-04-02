@@ -32,7 +32,7 @@ export default modal.ModalController.extend({
     if(app_state.get('currentUser.preferences.preferred_symbols')) {
       var pref = app_state.get('currentUser.preferences.preferred_symbols');
       if((evaluation.libraries || []).indexOf(pref) != -1) {
-        this.set('setting.default_library', pref);
+        this.set('settings.default_library', pref);
       }
     }
   },

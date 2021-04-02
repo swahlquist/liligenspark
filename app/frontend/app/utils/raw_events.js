@@ -339,7 +339,7 @@ var buttonTracker = EmberObject.extend({
 
       event.preventDefault();
       event.stopPropagation();
-      // if no recent mouseup or touchend, then we can asusme
+      // if no recent mouseup or touchend, then we can assume
       // this is an artificial click event, and can be accepted
       var now = (new Date()).getTime();
       if(!buttonTracker.lastTouchRelease || now - buttonTracker.lastTouchRelease > 500) {
@@ -634,8 +634,10 @@ var buttonTracker = EmberObject.extend({
             // instead of WKWebView. Once we switch, if you set touches to
             // select after 100ms and you can hit blank spaces without it
             // hitting somewhere else then you should be good
-            buttonTracker.ignoredPressEvent = event;
-            event.preventDefault();
+            if(!buttonTracker.ignored_region(event)) {
+              buttonTracker.ignoredPressEvent = event;
+              event.preventDefault();  
+            }
           } else {
             buttonTracker.lastLastPressEvent = buttonTracker.lastPressEvent;
             buttonTracker.lastPressEvent = event;
