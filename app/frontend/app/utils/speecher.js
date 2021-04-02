@@ -137,7 +137,7 @@ var speecher = EmberObject.extend({
   },
   voiceList: computed('voices', function() {
     var res = [];
-    var current_locale = (window.navigator.language || "").replace(/-/g, '_').toLowerCase();
+    var current_locale = ((i18n.langs || {}).preferred || window.navigator.language || "").replace(/-/g, '_').toLowerCase();
     var current_lang = current_locale.split(/_/)[0];
     speecher.get('voices').forEach(function(v, idx) {
       var name = v.name;
@@ -393,7 +393,7 @@ var speecher = EmberObject.extend({
     };
     // Try to find the matching voice if you can
     var voice = uri_match();
-    var locale = (locale || window.navigator.language).toLowerCase().replace(/_/, '-');
+    var locale = (locale || (i18n.langs || {}).preferred || window.navigator.language).toLowerCase().replace(/_/, '-');
     var language = locale && locale.split(/-/)[0];
     var mapped_lang = i18n.lang_map[language] || language;
     if(locale && voice && voice.lang && locale != 'any') {
@@ -406,7 +406,7 @@ var speecher = EmberObject.extend({
     }
     if(allow_fallbacks) {
       if(locale == 'any') {
-        locale = window.navigator.language.toLowerCase().replace(/_/, '-');
+        locale = ((i18n.langs || {}).preferred || window.navigator.language).toLowerCase().replace(/_/, '-');
         language = locale && locale.split(/-/)[0];    
       }
       // Can't find an exact match? Look for a best match by locale

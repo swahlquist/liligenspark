@@ -662,7 +662,14 @@ var app_state = EmberObject.extend({
       if(app_state.get('currentBoardState.key') != state.key) {
         buttonTracker.transitioning = true;
         stashes.persist('board_level', state.level || state.default_level);
-        if(state.locale) {
+        if(stashes.get('override_label_locale')) {
+          // If manually-set for the session, revert
+          // to the preferred value
+          stashes.persist('label_locale', stashes.get('override_label_locale'));
+          stashes.persist('vocalization_locale', stashes.get('override_vocalization_locale'));
+        } else if(state.locale) {
+          // Otherwise revert to the original
+          // state in case it got changed during navigation
           stashes.persist('label_locale', state.locale);
           stashes.persist('vocalization_locale', state.locale);
         }
@@ -1795,10 +1802,6 @@ var app_state = EmberObject.extend({
           stashes.persist('sticky_board', false);
           stashes.persist('speak_mode_user_id', null);
           stashes.persist('all_buttons_enabled', null);
-          // app_state.set('label_locale', null);
-          stashes.persist('label_locale', null);
-          // app_state.set('vocalization_locale', null);
-          stashes.persist('vocalization_locale', null);
           app_state.set('manual_modeling', false);
           app_state.set('referenced_speak_mode_user', null);
           stashes.persist('referenced_speak_mode_user_id', null);

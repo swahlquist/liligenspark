@@ -25,7 +25,7 @@ export default modal.ModalController.extend({
       this.set('model.grid.labels_order', stashes.get('new_board_labels_order'));
     }
 
-    var locale = window.navigator.language.replace(/-/g, '_');
+    var locale = ((i18n.langs || {}).preferred || window.navigator.language || 'en').replace(/-/g, '_');
     var pieces = locale.split(/_/);
     if(pieces[0]) { pieces[0] = pieces[0].toLowerCase(); }
     if(pieces[1]) { pieces[1] = pieces[1].toUpperCase(); }

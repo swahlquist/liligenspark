@@ -90,6 +90,7 @@ export default Route.extend({
         app_state.toggle_home_lock(true);
       }
       emberSet(state, 'level', emberGet(state, 'default_level'));
+      emberSet(state, 'locale', app_state.get('label_locale'));
       stashes.persist('root_board_state', state);
       stashes.persist('board_level', state.level);
       stashes.persist('temporary_root_board_state', null);

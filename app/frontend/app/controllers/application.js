@@ -672,6 +672,8 @@ export default Controller.extend({
             if(board) {
               stashes.persist('label_locale', null);
               stashes.persist('vocalization_locale', null);
+              stashes.persist('override_label_locale', null);
+              stashes.persist('override_vocalization_locale', null);
               app_state.jump_to_board({
                 id: board.id,
                 key: board.key
@@ -750,6 +752,8 @@ export default Controller.extend({
       app_state.set('vocalization_locale', loc);
       stashes.persist('label_locale', loc);
       stashes.persist('vocalization_locale', loc);
+      stashes.persist('override_label_locale', loc);
+      stashes.persist('override_vocalization_locale', loc);
       editManager.process_for_displaying();    
     },
     openButtonStash: function() {

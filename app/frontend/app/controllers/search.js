@@ -38,7 +38,7 @@ export default Controller.extend({
       if(persistence.get('online')) {
         _this.set('online_results', {loading: true, results: []});
         _this.set('personal_results', {loading: true, results: []});
-        var locale = (_this.get('locale') || window.navigator.language || 'en').split(/-/)[0];
+        var locale = (_this.get('locale') || (i18n.langs || {}).preferred || window.navigator.language || 'en').split(/-/)[0];
         // TODO: ensure that search results show up localized
         // for translated boards with a different default locale
         CoughDrop.store.query('board', {q: str, locale: locale, sort: 'popularity'}).then(function(res) {

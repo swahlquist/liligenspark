@@ -72,6 +72,8 @@ export default modal.ModalController.extend({
       stashes.persist('label_locale', this.get('label_locale'));
       app_state.set('vocalization_locale', this.get('vocalization_locale'));
       stashes.persist('vocalization_locale', this.get('vocalization_locale'));
+      stashes.persist('override_label_locale', this.get('label_locale'));
+      stashes.persist('override_vocalization_locale', this.get('vocalization_locale'));
       modal.close({switched: true});
     },
     clear_languages: function() {
@@ -79,6 +81,8 @@ export default modal.ModalController.extend({
       stashes.persist('label_locale', null);
       app_state.set('vocalization_locale', this.get('model.board.locale'));
       stashes.persist('vocalization_locale', null);
+      stashes.persist('override_label_locale', null);
+      stashes.persist('override_vocalization_locale', null);
       modal.close({switched: true});
     }
   }

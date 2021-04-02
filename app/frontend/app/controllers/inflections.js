@@ -28,7 +28,7 @@ export default Controller.extend({
     types.forEach(function(type) {
       emberSet(type, 'checked', false);
     });
-    var locale = (this.get('locale') || window.navigator.language || 'en').split(/-|_/)[0];
+    var locale = (this.get('locale') || (i18n.langs || {}).preferred || window.navigator.language || 'en').split(/-|_/)[0];
     var opts = {locale: locale, for_review: true};
     if(_this.get('ref')) {
       opts.word = _this.get('ref');

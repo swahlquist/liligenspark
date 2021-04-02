@@ -36,6 +36,7 @@ export default modal.ModalController.extend({
         email: this.get('email'),
         recipient: 'support',
         subject: this.get('subject'),
+        locale: i18n.langs.preferred,
         message: this.get('message')
       };
       var _this = this;

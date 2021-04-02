@@ -223,7 +223,7 @@ export default Controller.extend({
           });
         } else {
           var list = 'homeBoards';
-          var locale = (window.navigator.language || 'en').split(/-/)[0];
+          var locale = ((i18n.langs || {}).preferred || window.navigator.language || 'en').split(/-/)[0];
           if(app_state.get('currentUser.preferences.locale')) {
             locale = app_state.get('currentUser.preferences.locale').split(/-/)[0];
           }

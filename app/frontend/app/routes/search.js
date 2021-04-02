@@ -1,5 +1,6 @@
 import Route from '@ember/routing/route';
 import app_state from '../utils/app_state';
+import i18n from '../utils/i18n';
 
 export default Route.extend({
   title: "Search",
@@ -8,7 +9,7 @@ export default Route.extend({
     if(q == '_') { q = ''; }
     this.set('q', q);
     this.set('queryString', decodeURIComponent(q));
-    this.set('locale', params.locale || params.l || window.navigator.language);
+    this.set('locale', params.locale || params.l || (i18n.langs || {}).preferred || window.navigator.language);
     return {};
   },
   setupController: function(controller) {

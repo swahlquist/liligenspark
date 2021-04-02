@@ -20,7 +20,7 @@ class ContactMessage < ActiveRecord::Base
   
   def process_params(params, non_user_params)
     self.settings ||= {}
-    ['name', 'email', 'subject', 'message', 'recipient'].each do |key|
+    ['name', 'email', 'subject', 'message', 'recipient', 'locale'].each do |key|
       self.settings[key] = process_string(params[key]) if params[key]
     end
     ['ip_address', 'user_agent', 'version'].each do |key|
@@ -49,6 +49,7 @@ class ContactMessage < ActiveRecord::Base
     if user
       body += (user.user_name) + '<br/>'
     end
+    body += "locale: #{self.settings['locale']}" + '<br/>' if self.settings['locale']
     body += (self.settings['ip_address'] ? "ip address: #{self.settings['ip_address']}" : 'no IP address found') + '<br/>'
     body += (self.settings['version'] ? "app version: #{self.settings['version']}" : 'no app version found') + '<br/>'
     body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span>"

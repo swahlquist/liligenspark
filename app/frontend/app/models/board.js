@@ -366,7 +366,7 @@ CoughDrop.Board = DS.Model.extend({
           var inflection_types = editManager.inflection_for_types(history || [], label_locale);
           res = editManager.update_inflections(res, inflection_types);
         }
-      }         
+      }
       if(capitalize) {
         // TODO: support capitalization
       }
