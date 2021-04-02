@@ -190,7 +190,7 @@ export default Component.extend({
         });
       };
       if(head_pointer) {
-        capabilities.head_tracking.listen({head_pointing: true, tilt: capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'))});
+        capabilities.head_tracking.listen({head_pointing: true, tilt: capabilities.tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'))});
       } else {
         capabilities.eye_gaze.listen('noisy', true);
       }
@@ -269,7 +269,7 @@ export default Component.extend({
         }
       };
       if(capabilities.head_tracking.available || window.weblinger) {
-        var tilt_factor = capabilities.head_tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
+        var tilt_factor = capabilities.tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
         capabilities.head_tracking.listen({tilt: tilt_factor});
       }
 

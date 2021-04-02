@@ -357,10 +357,20 @@ var capabilities;
               canvas.drawing = false;
             }
           }
+        },
+        tilt_factor: function(level) {
+          var res = 1.0;
+          if(level == 'sensitive') {
+            res = 2.0;
+          } else if(level == 'extra_sensitive') {
+            res = 3.0;
+          } else if(level == 'less_sensitive') {
+            res = 0.5;
+          }
+          return res;
         }
       },
       head_tracking: {
-
         listen: function(opts) {
           if(window.weblinger) {
             var opts_string = "head" + "_" + !!opts.head_pointing + "_" + opts.tilt;
@@ -430,17 +440,6 @@ var capabilities;
             window.weblinger.stop({teardown: true});
             capabilities.tracking.stop_canvas();
           }
-        },
-        tilt_factor: function(level) {
-          var res = 1.0;
-          if(level == 'sensitive') {
-            res = 2.0;
-          } else if(level == 'extra_sensitive') {
-            res = 3.0;
-          } else if(level == 'less_sensitive') {
-            res = 0.5;
-          }
-          return res;
         },
         calibrate: function() {
         },

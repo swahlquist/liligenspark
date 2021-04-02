@@ -448,7 +448,7 @@ export default Controller.extend({
     return capabilities.head_tracking.available || window.weblinger;
   }),
   eyegaze_or_dwell_capable: computed('pending_preferences.device.dwell', function() {
-    return this.get('pending_preferences.device.dwell') || capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available;
+    return this.get('pending_preferences.device.dwell') || capabilities.eye_gaze.available || buttonTracker.mouse_used || capabilities.head_tracking.available || window.weblinger;
   }),
   eyegaze_type: computed(
     'pending_preferences.device.dwell',

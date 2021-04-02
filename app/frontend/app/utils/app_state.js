@@ -1193,7 +1193,7 @@ var app_state = EmberObject.extend({
             buttonTracker.dwell_type = 'eyegaze';
           }
           var head_opts = {head_pointing: head_pointer};
-          head_opts.tilt = capabilities.head_tracking.tilt_factor(_this.get('currentUser.preferences.device.dwell_tilt_sensitivity'));
+          head_opts.tilt = capabilities.tracking.tilt_factor(_this.get('currentUser.preferences.device.dwell_tilt_sensitivity'));
   
           capabilities.head_tracking.listen(head_opts);
         }
