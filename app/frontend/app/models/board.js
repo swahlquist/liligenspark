@@ -952,6 +952,7 @@ CoughDrop.Board = DS.Model.extend({
     var has_suggested_buttons = false;
     var buttons = {};
     var skip_labels = {};
+    var history = stashes.get('working_vocalization') || [];
     var known_buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false) || [];
     known_buttons.forEach(function(button) {
       if(button.vocalization == ':suggestion') {
