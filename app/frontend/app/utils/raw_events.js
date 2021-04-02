@@ -257,7 +257,7 @@ $(document).on('mousedown touchstart', function(event) {
   if(buttonTracker.check('dwell_enabled') && buttonTracker.check('select_expression') && buttonTracker.check('dwell_selection') == 'expression') {
     var matching_expression = event.expression && event.expression == buttonTracker.check('select_expression');
     // smiles count as smirks
-    if(buttonTracker.check('select_expresison') == 'smirk' && event.expresssion == 'smile') {
+    if(buttonTracker.check('select_expression') == 'smirk' && event.expresssion == 'smile') {
       matching_expression = true;
     }
     if(matching_expression) {

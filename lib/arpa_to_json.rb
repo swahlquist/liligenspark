@@ -1,4 +1,6 @@
 module ArpaToJson
+  # https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/
+  # https://goofy.zamia.org/zamia-speech/lm/
   def self.convert(fn=nil)
     fn ||= "../ngrams.arpa"
     content = File.read(fn)
