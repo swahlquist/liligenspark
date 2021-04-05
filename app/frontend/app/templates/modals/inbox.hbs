@@ -52,7 +52,7 @@
       </div>
       {{#if current.prior}}
         <div style='white-space: normal; margin-top: 30px;'>
-          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}} {{#if current.prior_author}}{{t "message from" key='message_from'}} {{current.prior_author}}{{/if}}:</div>
+          <div class='text-muted'>{{t "in reply to" key='in_reply_to'}}{{#if current.prior_author}} {{t "message from" key='message_from'}} {{current.prior_author}}{{/if}}:</div>
           <div style='border-left: 2px solid #ddd; padding: 5px 0 5px 20px; white-space: pre-line; font-style: italic;'>{{current.prior}}</div>
         </div>
       {{/if}}

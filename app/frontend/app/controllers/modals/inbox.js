@@ -93,25 +93,27 @@ export default modal.ModalController.extend({
         var parts_list = text.split(/\b/).map(function(str) { return { str: str }; });
         var board_id = app_state.get('referenced_user.preferences.home_board.id');
         if(board_id && app_state.get('referenced_user.preferences.device.button_text') != 'text_only' && app_state.get('referenced_user.preferences.device.button_text_position') != 'text_only') {
-          CoughDrop.Buttonset.load_button_set(board_id).then(function(button_set) {
-            var search = button_set.find_sequence(text, board_id, app_state.get('referenced_user'), false);
-            search.then(function(results) {
-              var list = (results[0] || {}).steps || [];
-              var found_any = false;
-              list.forEach(function(step) {
-                if(step.button && step.button.label) {
-                  var parts = parts_list.filter(function(p) { return !p.image && p.str.toLowerCase() == step.button.label.toLowerCase() || p.str.toLowerCase() == (step.button.vocalization || '').toLowerCase(); });
-                  parts.forEach(function(part) {
-                    found_any = true;
-                    part.image = step.button.image;
-                  });
-                }
-              });
-              if(found_any) {
-                _this.set('current_with_images', parts_list);
-              }
-            });
-          })
+          // Don't symbolate messages anymore, see:
+          // https://bit.ly/3d0xABA
+          // CoughDrop.Buttonset.load_button_set(board_id).then(function(button_set) {
+          //   var search = button_set.find_sequence(text, board_id, app_state.get('referenced_user'), false);
+          //   search.then(function(results) {
+          //     var list = (results[0] || {}).steps || [];
+          //     var found_any = false;
+          //     list.forEach(function(step) {
+          //       if(step.button && step.button.label) {
+          //         var parts = parts_list.filter(function(p) { return !p.image && p.str.toLowerCase() == step.button.label.toLowerCase() || p.str.toLowerCase() == (step.button.vocalization || '').toLowerCase(); });
+          //         parts.forEach(function(part) {
+          //           found_any = true;
+          //           part.image = step.button.image;
+          //         });
+          //       }
+          //     });
+          //     if(found_any) {
+          //       _this.set('current_with_images', parts_list);
+          //     }
+          //   });
+          // })
         }
 
         var _this = this;
