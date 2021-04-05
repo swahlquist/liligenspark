@@ -107,6 +107,16 @@ var editManager = EmberObject.extend({
     if(!locale || !locale.match(/^en/) || history.length == 0) {
       return {};
     }
+    // TODO: Known Errors:
+    // what does he [like]
+    /* 
+      he likes [eating] vs. he wants [to tell] vs. she likes not [looking]
+      I want to be [asking] vs. did you like to be [asked]
+      he is [looking]
+      is she [looking]
+      I have [looked]
+      have you [looked]
+    */
     // TODO: support :pre(:past-tense) lookups to apply
     // tenses when available as a pre-application
     var inflections = {};
@@ -114,23 +124,56 @@ var editManager = EmberObject.extend({
     var rules = [
       // Verbs:
       //   pronoun (I, you, they, we): present (c)
+      //     Y: * they always [look]
+      {id: 'has_she_looked', type: 'verb', lookback: [{words: ['has', 'have', 'had']}, {words: ["you", "I", "he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'past_participle', location: 'sw'},
+      {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
       {id: 'you_look', type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
+      //   verb (do, does, did, can, could, will, would, may, might, must, shall, should) pronoun (he, she, it) [adverb (never, already, etc.)]: present (n)
+      {id: 'does_she_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {words: ["he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
+      {id: 'they_can_look', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this", "they"]}, {words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
+      // {id: 'has_she_looked'},
       //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
+      //     Y: * she never [looks]
+      //     Y: that smells weird
       {id: 'she_looks', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
+      //   pronoun ()
       //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (-ing, going): infinitive (e)
+      //     Y: they are not wanting [to look]
+      //     Y: tell me why she is wanting [to look]
       {id: 'he_is_looking_to_go', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["be", "is", "am", "are", "was", "were"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}, {type: 'verb', match: /ing$/}], inflection: 'infinitive', location: 'e'},
       //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
-      {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
-      {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
+      //     Y: he would be always [looking]
+      //     Y: they can like [eating]
+      //     Y: she hates [jumping]
+      //     N: she hates [to jump]
+      //     N: is there a reason she would want [to jump]
+      {id: 'would_she_want', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'pronoun'}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'infinitive', location: 'e'},
+      {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
+      {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
       //   verb (being, have, has, had) [adverb] [not]: past (w)
-      {id: 'have_looked', type: 'verb', lookback: [{words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
-      //   verb (have, has, had) pronoun (I, you, he) [adverb] [not]: past (w)
-      {id: 'have_you_looked', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
+      //     Y: I have always looked
+      //     Y: have looked
+      //     Y: he had eaten
+      //     Y: she has taken some more
+      //     N: I have to look at this
+      //     N: she had looked happier before
+      {id: 'have_looked', type: 'verb', lookback: [{optional: true, type: 'pronoun'}, {words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past_participle', location: 'sw'},
+      //   verb (have, has, had) pronoun (I, you, she) [adverb] [not]: past (w)
+      //     Y: have you looked at this
+      //     Y: tell me why has she 
+      //     N: have you taken your medicine (past participle)
+      {id: 'have_you_looked', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past_participle', location: 'sw'},
       //   verb (have, has, had) [not] been: present_participle (s)
+      //     Y: I have not been looking
+      //     N: She has been taken
       {id: 'have_been_looking', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {words: ["not"], optional: true}, {words: ["been"]}], inflection: 'present_participle', location: 's'},
+      //   verb (can, could, will, etc.) [not] be: present participle
+      //     Y: he could be thinking about tomorrow
+      //     N: it should be finished by now (past participle)
       {id: 'can_be_looking', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {words: ["not"], optional: true}, {words: ["be"]}], inflection: 'present_participle', location: 's'},
       //   verb (is, am, was, be, are, were, etc.) [pronoun (he, she, it, etc.)] [not]: present_participle (s)
-      {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
+      //     Y: the cat is licking her paws
+      //     N: the frog was forgotten
       //   verb (do, does, did, etc.) pronoun (he, she, it, etc.) [not]: present (c)
       //   verb (do, does, did, etc.) [determiner] noun: present (c)
       //   noun (singular): simple_present (n)
@@ -143,10 +186,13 @@ var editManager = EmberObject.extend({
       // Pronouns:
       //   (at, for, with): objective (n)
       {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
+      {id: 'about_him', type: 'pronoun', lookback: [{words: ["about"]}], inflection: 'objective', location: 'n'},
       //   pronoun (that, it, this) verb (is, was): objective (n)
-      {id: 'it_is_him', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
+      {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'possesive_adjective', location: 'w'},
       {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
       //   (is, was): objective(n) or possesive_adjective (w)
+      // TODO: hope that [he] *looks*
+      //       wish for *eating*
     ];
     var matches = function(rule, history) {
       if(history.length == 0) { return false; }
@@ -190,6 +236,9 @@ var editManager = EmberObject.extend({
           }
         }
       }
+      if(valid) {
+        // console.log("INFLECTIONS", valid);
+      }
       return valid;
     };
     if(history.length > 0) {
@@ -200,25 +249,25 @@ var editManager = EmberObject.extend({
         }
       });  
       // TO BE verb overrides
-      if(matches({lookback: [{words: ["i"]}]}, history)) {
+      if(matches({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["is"] = {type:'override', label: "am"};
         inflections["are"] = {type:'override', label: "am"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
         inflections["were"] = {type:'override', label: "was"};
       }
-      if(matches({lookback: [{words: ["you"]}]}, history)) {
+      if(matches({lookback: [{words: ["you"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["is"] = {type:'override', label: "are"};
         inflections["am"] = {type:'override', label: "are"};
         inflections["was"] = {type:'override', label: "were"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
       }
-      if(matches({lookback: [{words: ["he", "she"]}]}, history)) {
+      if(matches({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
       }
-      if(matches({lookback: [{words: ["it", "that", "this"]}]}, history)) {
+      if(matches({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
       }
