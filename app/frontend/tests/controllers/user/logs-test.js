@@ -9,7 +9,6 @@ import {
   stub
 } from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
-import startApp from '../../helpers/start-app';
 
 describe('UserLogsController', 'controller:user-logs', function() {
   it("should exist", function() {

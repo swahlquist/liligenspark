@@ -583,7 +583,7 @@ var persistence = EmberObject.extend({
           resolve(uri);
         }
       }, function(err) {
-        CoughDrop.track_error("JSON DATA find_url error", err);
+        CoughDrop.track_error("JSON DATA find_url error", (err || {}).error || err);
         reject(err);
       });
     });
@@ -717,6 +717,7 @@ var persistence = EmberObject.extend({
     if(_this.get('local_system.available') && _this.get('local_system.allowed') && stashes.get('auth_settings')) {
     } else {
       _this.primed = true;
+      console.log("COUGHDROP: done priming caches", check_file_system, (new Date()).getTime() - now);
       return RSVP.reject({error: 'not enabled or no user set'});
     }
     runLater(function() {

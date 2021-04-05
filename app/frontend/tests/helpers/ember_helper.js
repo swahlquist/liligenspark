@@ -21,7 +21,7 @@ import stashes from '../../utils/_stashes';
 import session from '../../utils/session';
 import buttonTracker from '../../utils/raw_events';
 import ApplicationAdapter from 'frontend/adapters/application';
-import startApp from '../helpers/start-app';
+// import startApp from '../helpers/start-app';
 import { run as emberRun } from '@ember/runloop';
 import $ from 'jquery';
 import TestAdapter from '@ember/test/adapter';
@@ -29,6 +29,7 @@ import { inspect } from '@ember/debug';
 import { set as emberSet, get as emberGet } from '@ember/object';
 
 window.user_preferences = {"device":{"voice":{"pitch":1,"volume":1},"button_spacing":"small","button_border":"small","button_text":"medium","vocalization_height":"small"},"any_user":{"activation_location":"end","auto_home_return":true,"vocalize_buttons":true,"confirm_external_links":true,"clear_on_vocalize":true,"sharing":true,"board_jump_delay":500},"authenticated_user":{"long_press_edit":true,"require_speak_mode_pin":false,"logging":false,"geo_logging":false,"role":"communicator","auto_open_speak_mode":true}};
+Ember.testing = true;
 
 /**
   @class JasmineAdapter
@@ -431,8 +432,9 @@ beforeEach(function() {
   CoughDrop.ignore_filesystem = true;
   capabilities.dbman = capabilities.dbman || capabilities.original_dbman;
   window.cough_drop_readiness = false;
-  App = startApp();
-  App.rootElement = '#ember-testing';
+  // TODO: https://alexlafroscia.com/ember-upgrade-to-new-qunit-api/
+  // App = startApp();
+  // App.rootElement = '#ember-testing';
   persistence.set('online', true);
   persistence.storing_urls = null;
   persistence.url_cache = null;
@@ -441,7 +443,7 @@ beforeEach(function() {
   persistence.sync_actions = null;
   stashes.set('online', true);
   app_state.reset();
-  CoughDrop.store = App.__container__.lookup('service:store');
+  CoughDrop.store = this.owner && this.owner.lookup('service:store');
   CoughDrop.all_wait = false;
 });
 
@@ -467,8 +469,8 @@ afterEach(function() {
     return ready;
   });
   runs(function() {
-    if(App && App.destroy) {
-      emberRun(App, App.destroy);
+    if(CoughDrop.app && CoughDrop.app.destroy) {
+      emberRun(CoughDrop.app, CoughDrop.app.destroy);
     }
   });
 });

@@ -32,7 +32,7 @@ Ember.onerror = function(err) {
       CoughDrop.track_error(JSON.stringify(err), false);
     }
   }
-  if(Ember.testing) {
+  if(Ember.testing || CoughDrop.testing) {
     throw(err);
   }
 };

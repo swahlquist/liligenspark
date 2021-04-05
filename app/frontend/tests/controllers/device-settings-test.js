@@ -9,7 +9,6 @@ import {
   stub
 } from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
-import startApp from '../helpers/start-app';
 
 describe('DeviceSettingsController', 'controller:device-settings', function() {
   it("should exist", function() {

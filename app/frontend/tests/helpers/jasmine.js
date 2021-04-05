@@ -1,8 +1,9 @@
 /*jshint -W079 */
-import { test, moduleFor } from 'ember-qunit';
-import { async } from 'qunit';
+// import { async } from 'qunit';
 import QUnit from 'qunit';
+import newTestHelpers from '@ember/test-helpers';
 import testHelpers from 'ember-test-helpers';
+import { setupRenderingTest, setupTest, setupApplicationTest } from 'ember-qunit';
 import EmberObject from '@ember/object';
 import { run as emberRun } from '@ember/runloop';
 import { set as emberSet, get as emberGet } from '@ember/object';
@@ -30,12 +31,16 @@ function test_wrap(name, instance, befores, afters, lookup) {
     });
   });
   current_afters = post;
-  QUnit.test(name, function(current_assert) {
+  QUnit.test(name, async function(current_assert) {
     var _this = this;
     assert = current_assert;
     emberRun(function() {
       pre.forEach(function(callback) {
-        callback.call(_this);
+        // try {
+          callback.call(_this);
+        // } catch(e) {
+        //   console.error(e);
+        // }
       });
 
       var this_arg = _this;
@@ -45,9 +50,13 @@ function test_wrap(name, instance, befores, afters, lookup) {
       }
 
       current_test_id++;
-      instance.call(this_arg);
+      // try {
+        instance.call(this_arg);
+      // } catch(e) {
+      //   console.error(e);
+      // }
 
-      waitsFor(function() { return waiting[current_test_id] <= 1; });
+      waitsFor(function() { return (waiting[current_test_id] || 0) <= 1; });
       runs(function() {
         current_afters = [];
         post.forEach(function(callback) {
@@ -65,25 +74,32 @@ var describe = function(name, lookup, callback) {
   } else {
     if(names.length === 0) { container_lookup = lookup; }
   }
-  if(names.length === 0) {
-    QUnit.module(name);
+  var add_test = function() {
+    names.push(name);
+    all_tests.push([]);
+    all_befores.push([]);
+    all_afters.unshift([]);
+    callback();
+    all_tests[all_tests.length - 1].forEach(function(args) {
+      if(args[1]) {
+        test_wrap(names.join(" ") + " - " + args[0], args[1], all_befores, all_afters, container_lookup);
+      } else {
+        console.debug('PENDING TEST: ' + names.join(" ") + " - " + args[0]);
+      }
+    });
+    names.pop();
+    all_befores.pop();
+    all_afters.shift();
+    all_tests.pop();
   }
-  names.push(name);
-  all_tests.push([]);
-  all_befores.push([]);
-  all_afters.unshift([]);
-  callback();
-  all_tests[all_tests.length - 1].forEach(function(args) {
-    if(args[1]) {
-      test_wrap(names.join(" ") + " - " + args[0], args[1], all_befores, all_afters, container_lookup);
-    } else {
-      console.debug('PENDING TEST: ' + names.join(" ") + " - " + args[0]);
-    }
-  });
-  names.pop();
-  all_befores.pop();
-  all_afters.shift();
-  all_tests.pop();
+  if(names.length === 0) {
+    QUnit.module(name, function(hooks) {
+      // setupTest(hooks);
+      add_test();
+    });
+  } else {
+    add_test();
+  }
 };
 var context = describe;
 var it = function(rule, testing) {

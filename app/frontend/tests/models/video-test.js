@@ -1,6 +1,5 @@
 import DS from 'ember-data';
 import RSVP from 'rsvp';
-import { test, moduleForModel } from 'ember-qunit';
 import {
   describe,
   it,

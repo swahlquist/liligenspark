@@ -11,7 +11,6 @@ import {
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import CoughDrop from '../../app';
 import persistence from '../../utils/persistence';
-import startApp from '../helpers/start-app';
 
 
 describe('Logging in', function() {

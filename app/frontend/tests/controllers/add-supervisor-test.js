@@ -10,7 +10,6 @@ import {
 } from 'frontend/tests/helpers/jasmine';
 import { queryLog } from 'frontend/tests/helpers/ember_helper';
 import EmberObject from '@ember/object';
-import startApp from '../helpers/start-app';
 
 describe('AddSupervisorController', 'controller:add-supervisor', function() {
   it("should exist", function() {

@@ -2,11 +2,6 @@ import DS from 'ember-data';
 import RSVP from 'rsvp';
 import EmberObject from '@ember/object';
 import {
-  test,
-  moduleForModel,
-  moduleForComponent
-} from 'ember-qunit';
-import {
   describe,
   it,
   expect,
@@ -27,7 +22,6 @@ import audioBrowser from '../../components/audio-browser';
 import Button from '../../utils/button';
 
 describe('audio-browser', function() {
-  moduleForComponent('audio-browser', 'test');
   var component = null;
   beforeEach(function() {
     component = this.subject();

@@ -122,7 +122,7 @@ var stashes = EmberObject.extend({
       window.user_preferences.global_integrations = stashes.get('global_integrations');
     } else if(!Ember.testing) {
       runLater(function() {
-        if(CoughDrop && CoughDrop.session && CoughDrop.session.check_token) {
+        if(CoughDrop && CoughDrop.session && CoughDrop.session.check_token && !CoughDrop.testing) {
           CoughDrop.session.check_token();
         }
       }, 500);

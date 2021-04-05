@@ -1,5 +1,4 @@
 import DS from 'ember-data';
-import { test, moduleForModel } from 'ember-qunit';
 import {
   describe,
   it,
