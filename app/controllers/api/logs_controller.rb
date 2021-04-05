@@ -250,12 +250,11 @@ class Api::LogsController < ApplicationController
   def trends
     extra_data = !!(@api_user && @api_user.allows?(@api_user, 'admin_support_actions'))
     res = JSON.parse(Permissable.permissions_redis.get('global/stats/trends')) rescue nil
-    if !res || extra_data
-      res = WeeklyStatsSummary.trends(extra_data)
-      if !extra_data
-        Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
-      end
+    if !res #|| extra_data
+      res = WeeklyStatsSummary.trends
+      Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
     end
+    res.delete(:admin) unless extra_data
     
     render json: res
   end

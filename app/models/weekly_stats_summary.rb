@@ -709,29 +709,30 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:core_percent] = res[:core_percent].round(2)
     res[:words_per_minute] = (stash[:total_words].to_f / stash[:total_session_seconds].to_f * 60.0).round(1)
     res[:words_per_minute] = 0.0 if res[:words_per_minute].nan?
-    res[:research_active_users] = stash[:research_user_ids].uniq.length if include_admin
-    res[:publishing_active_users] = stash[:publishing_user_ids].uniq.length if include_admin
+    res[:admin] = {}
+    res[:admin][:research_active_users] = stash[:research_user_ids].uniq.length #if include_admin
+    res[:admin][:publishing_active_users] = stash[:publishing_user_ids].uniq.length #if include_admin
     res[:research_communicators] = 2500
     res[:sessions_per_user] = (stash[:total_sessions].to_f / total_users.to_f).round(1)
     res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
     res[:total_words] = stash[:total_words]
     res[:admin_total_words] = stash[:admin_total_words]
-    if include_admin
-      res[:total_users] = total_users
-      res[:total_sessions] = stash[:total_sessions]
-      res[:modeled_sessions] = stash[:modeled_sessions]
+    if include_admin || true
+      res[:admin][:total_users] = total_users
+      res[:admin][:total_sessions] = stash[:total_sessions]
+      res[:admin][:modeled_sessions] = stash[:modeled_sessions]
     end
     
     if stash[:board_usages]
       max_usage_count = stash[:board_usages].map(&:last).max || 0.0
-      res[:max_board_usage_count] = max_usage_count if include_admin
+      res[:admin][:max_board_usage_count] = max_usage_count #if include_admin
       stash[:board_usages].each do |key, cnt|
         res[:board_usages] ||= {}
         res[:board_usages][key] = (cnt.to_f / max_usage_count.to_f).round(2) if cnt > 10
       end
       if stash[:board_locales]
         max_locale_count = stash[:board_locales].map(&:last).max || 0.0
-        res[:max_board_locales_count] = max_locale_count if include_admin
+        res[:admin][:max_board_locales_count] = max_locale_count #if include_admin
         stash[:board_locales].each do |key, cnt|
           res[:board_locales] ||= {}
           res[:board_locales][key] = (cnt.to_f / max_locale_count.to_f).round(3) if cnt > 5
@@ -741,7 +742,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     
     if stash[:depth_counts]
       max_depth_count = stash[:depth_counts].map(&:last).max || 0.0
-      res[:max_depth_count] = max_depth_count if include_admin
+      res[:admin][:max_depth_count] = max_depth_count #if include_admin
       stash[:depth_counts].each do |depth, cnt|
         res[:depth_counts] ||= {}
         res[:depth_counts][depth] = ((cnt.to_f / max_depth_count.to_f * 500.0).round(1) / 500.0).round(3)
@@ -759,7 +760,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
           end
         end
       end
-      res[:max_word_count] = max_word_count if include_admin
+      res[:admin][:max_word_count] = max_word_count #if include_admin
       stash[:word_counts].each do |word, cnt|
         res[:word_counts] ||= {}
         res[:word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 10
@@ -767,7 +768,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
     if stash[:modeled_word_counts]
       max_word_count = stash[:modeled_word_counts].map(&:last).max || 0.0
-      res[:max_modeled_word_count] = max_word_count if include_admin
+      res[:admin][:max_modeled_word_count] = max_word_count #if include_admin
       stash[:modeled_word_counts].each do |word, cnt|
         res[:modeled_word_counts] ||= {}
         res[:modeled_word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 5
@@ -819,7 +820,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     
     if stash[:word_pairs]
       max_word_pair = stash[:word_pairs].map{|k, p| p['count'] }.max || 0.0
-      res[:max_word_pair] = max_word_pair if include_admin
+      res[:admin][:max_word_pair] = max_word_pair #if include_admin]
       stash[:word_pairs].each do |k, pair|
         if pair['a'] != pair['b']
           res[:word_pairs] ||= {}
@@ -833,11 +834,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
     
+    res[:admin][:pref_maxes] = {}
     stash[:device].each do |pref, hash|
       res[:device] ||= {}
       res[:device][pref] ||= {}
       max_val = hash.to_a.map(&:last).max || 0.0
-      res[:device][pref][:max_value] = max_val if include_admin
+      res[:admin][:pref_maxed][pref] = max_val #if include_admin
       hash.each do |k, v|
         res[:device][pref][k] = (v.to_f / max_val.to_f * 50.0).round(1) / 50.0
       end

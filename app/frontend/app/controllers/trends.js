@@ -12,6 +12,18 @@ export default Controller.extend({
     var _this = this;
     _this.set('trends', {loading: true});
     persistence.ajax('/api/v1/logs/trends', {type: 'GET'}).then(function(res) {
+      if(res.admin) {
+        for(var key in res.admin) {
+          res[key] = res.admin[key];
+        }
+        if(res.admin.pref_maxed) {
+          for(var key in res.admin.pref_maxed) {
+            if(res.device[key]) {
+              res.device[key].max_value = res.admin.pref_maxed[key];
+            }
+          }
+        }
+      }
       _this.set('trends', res);
     }, function(err) {
       _this.set('trends', {error: true});
