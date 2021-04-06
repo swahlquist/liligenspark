@@ -2989,8 +2989,11 @@ describe('editManager', function() {
       was: {label: 'was', part_of_speech: 'verb'}, 
       like: {label: 'like', part_of_speech: 'verb'},
       likes: {label: 'likes', part_of_speech: 'verb'},
+      hate: {label: 'hate', part_of_speech: 'verb'},
       hates: {label: 'hates', part_of_speech: 'verb'},
+      thinks: {label: 'thinks', part_of_speech: 'verb'},
       want: {label: 'want', part_of_speech: 'verb'},
+      wants: {label: 'wants', part_of_speech: 'verb'},
       wanting: {label: 'wanting', part_of_speech: 'verb'},
       looking: {label: 'looking', part_of_speech: 'verb'},
       are: {label: 'are', part_of_speech: 'verb'},
@@ -3058,6 +3061,12 @@ describe('editManager', function() {
     });
 
     it("should handle tenses", function() {
+      // TODO:
+      // I want [to eat]
+      // I like [to eat]
+      // He hates [eating] before work
+      // She thinks [eating] is important
+      // 
       //   {id: 'does_she_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {words: ["he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
       var res = editManager.inflection_for_types(sentence('did she'), 'en');
       expect((res.verb || {}).inflection).toEqual('present');
@@ -3097,12 +3106,16 @@ describe('editManager', function() {
       expect((res.verb || {}).inflection).toEqual('present_participle');
       var res = editManager.inflection_for_types(sentence('he likes usually'), 'en');
       expect((res.verb || {}).inflection).toEqual('present_participle');
+      var res = editManager.inflection_for_types(sentence('he usually wants'), 'en');
+      expect((res.verb || {}).inflection).toEqual('infinitive');
       var res = editManager.inflection_for_types(sentence('they can like'), 'en');
-      expect((res.verb || {}).inflection).toEqual('present_participle');
+      expect((res.verb || {}).inflection).toEqual('infinitive');
       var res = editManager.inflection_for_types(sentence('she hates'), 'en');
       expect((res.verb || {}).inflection).toEqual('present_participle');
       var res = editManager.inflection_for_types(sentence('why would she want'), 'en');
       expect((res.verb || {}).inflection).toEqual('infinitive');
+      var res = editManager.inflection_for_types(sentence('why would she hate'), 'en');
+      expect((res.verb || {}).inflection).toEqual('present_participle');
 
       //   {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
 
@@ -3220,76 +3233,22 @@ describe('editManager', function() {
       expect((res.verb || {}).inflection).toEqual('past_participle');
       var res = editManager.inflection_for_types(sentence('have you'), 'en');
       expect((res.verb || {}).inflection).toEqual('past_participle');  
+
+      var res = editManager.inflection_for_types(sentence('I want'), 'en');
+      expect((res.verb || {}).inflection).toEqual('infinitive');  
+      var res = editManager.inflection_for_types(sentence('I want to'), 'en');
+      expect((res.verb || {}).inflection).toEqual(null);  
+      var res = editManager.inflection_for_types(sentence('I want want'), 'en');
+      expect((res.verb || {}).inflection).toEqual(null);  
+
+      var res = editManager.inflection_for_types(sentence('I like'), 'en');
+      expect((res.verb || {}).inflection).toEqual('infinitive');  
+      var res = editManager.inflection_for_types(sentence('he wants'), 'en');
+      expect((res.verb || {}).inflection).toEqual('infinitive');  
+      var res = editManager.inflection_for_types(sentence('she thinks'), 'en');
+      expect((res.verb || {}).inflection).toEqual('present_participle');  
+      var res = editManager.inflection_for_types(sentence('he hates'), 'en');
+      expect((res.verb || {}).inflection).toEqual('present_participle');  
     });
   })
 });
-
-// var rules = [
-//   // Verbs:
-//   //   pronoun (I, you, they, we): present (c)
-//   //     Y: * they always [look]
-//   {id: 'you_look', type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
-//   //   verb (do, does, did, can, could, will, would, may, might, must, shall, should) pronoun (he, she, it) [adverb (never, already, etc.)]: present (n)
-//   {id: 'they_can_look', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this", "they"]}, {words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
-//   // {id: 'has_she_looked'},
-//   //   pronoun (he, she, it) [adverb (never, already, etc.)]: simple_present (n)
-//   //     Y: * she never [looks]
-//   //     Y: that smells weird
-//   {id: 'she_looks', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
-//   //   pronoun ()
-//   //   pronoun (he, she, you, etc.) [verb (is, are, were, etc.)] [not|adverb (never, probably, etc.)] verb (-ing, going): infinitive (e)
-//   //     Y: they are not wanting [to look]
-//   //     Y: tell me why she is wanting [to look]
-//   {id: 'he_is_looking_to_go', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["be", "is", "am", "are", "was", "were"], optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}, {type: 'verb', match: /ing$/}], inflection: 'infinitive', location: 'e'},
-//   //   pronoun [verb (will, would, could, etc.)] verb (is, am, was) [not|adverb (never, already, etc.)]: present_participle (s)
-//   //     Y: he would be always [looking]
-//   //     Y: they can like [eating]
-//   //     Y: she hates [jumping]
-//   //     N: she hates [to jump]
-//   //     N: is there a reason she would want [to jump]
-//   {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
-//   {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
-//   //   verb (being, have, has, had) [adverb] [not]: past (w)
-//   //     Y: I have always looked
-//   //     Y: have looked
-//   //     Y: he had eaten
-//   //     Y: she has taken some more
-//   //     N: I have to look at this
-//   //     N: she had looked happier before
-//   {id: 'have_looked', type: 'verb', lookback: [{optional: true, type: 'pronoun'}, {words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
-//   //   verb (have, has, had) pronoun (I, you, she) [adverb] [not]: past (w)
-//   //     Y: have you looked at this
-//   //     Y: tell me why has she 
-//   //     N: have you taken your medicine (past participle)
-//   {id: 'have_you_looked', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {type: 'pronoun'}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past', location: 'w'},
-//   //   verb (have, has, had) [not] been: present_participle (s)
-//   //     Y: I have not been looking
-//   //     N: She has been taken
-//   {id: 'have_been_looking', type: 'verb', lookback: [{words: ["have", "has", "had"]}, {words: ["not"], optional: true}, {words: ["been"]}], inflection: 'present_participle', location: 's'},
-//   //   verb (can, could, will, etc.) [not] be: present participle
-//   //     Y: he could be thinking about tomorrow
-//   //     N: it should be finished by now (past participle)
-//   {id: 'can_be_looking', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {words: ["not"], optional: true}, {words: ["be"]}], inflection: 'present_participle', location: 's'},
-//   //   verb (is, am, was, be, are, were, etc.) [pronoun (he, she, it, etc.)] [not]: present_participle (s)
-//   //     Y: the cat is licking her paws
-//   //     N: the frog was forgotten
-//   {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
-//   //   verb (do, does, did, etc.) pronoun (he, she, it, etc.) [not]: present (c)
-//   //   verb (do, does, did, etc.) [determiner] noun: present (c)
-//   //   noun (singular): simple_present (n)
-//   {id: 'dog_looks', type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
-//   //   will: present (c)
-//   // Nouns: 
-//   //   plural determiners (those, these, some, many): plural (n)
-//   {id: 'these_dogs', type: 'noun', lookback: [{words: ["those", "these", "some", "many"]}], inflection: 'plural', location: 'n'},
-//   //   else: base (c)
-//   // Pronouns:
-//   //   (at, for, with): objective (n)
-//   {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
-//   //   pronoun (that, it, this) verb (is, was): objective (n)
-//   {id: 'it_is_him', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
-//   {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
-//   //   (is, was): objective(n) or possesive_adjective (w)
-//   // TODO: hope that [he] *looks*
-//   //       wish for *eating*
-// ];
