@@ -228,7 +228,7 @@ if ARGV.index('--confirm')
   str = File.read("public/locales/#{locale}.json")
   lines = []
   str.split(/\n/).each_with_index do |line, idx|
-    if (idx + 1) <= line_number
+    if line_number == 0 || (idx + 1) <= line_number
       lines << line.sub(/\s+\[\[.+\",/, "\",")
     else
       lines << line
