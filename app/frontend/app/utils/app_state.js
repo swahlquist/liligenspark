@@ -1864,17 +1864,28 @@ var app_state = EmberObject.extend({
   ),
   refresh_suggestions: function() {
     if(app_state.controller && app_state.controller.get('board.model')) {
+      // TODO: only load this if we know we need it?
       var history_string = (stashes.get('working_vocalization') || []).map(function(v) { return (v.label || "") + (v.button_id || "n") + ((v.board || {}).id || "n"); }).join(",");
       var ref = app_state.controller.get('board.model.id') + "::" + history_string;
       if(ref != app_state.get('suggestion_id')) {
-        app_state.set('suggestion_id', ref);
-        app_state.controller.get('board.model').load_word_suggestions([app_state.get('currentUser.preferences.home_board.id'), stashes.get('temporary_root_board_state.id')]);
-        if(app_state.get('referenced_user.preferences.auto_inflections')) {
-          app_state.controller.get('board.model').load_real_time_inflections();
+        var $board = $(".board[data-id='" + app_state.controller.get('board.model.id') + "']");
+        if($board.length > 0) {
+          app_state.set('suggestion_id', ref);
+          app_state.controller.get('board.model').load_word_suggestions([app_state.get('currentUser.preferences.home_board.id'), stashes.get('temporary_root_board_state.id')]);
+          if(app_state.get('referenced_user.preferences.auto_inflections')) {
+            app_state.controller.get('board.model').load_real_time_inflections();
+          }
         }
       }
     }
   },
+  inflection_prefix: computed('stashes.working_vocalization', 'referenced_user.preferences.auto_inflections', function() {
+      var sentence = null;
+      if(this.get('referenced_user.preferences.auto_inflections')) {
+        sentence = (stashes.get('working_vocalization') || []).map(function(v) { return v.label; }).join(' ');
+      }
+      return sentence;
+  }),
   handle_tag: function(tag) {
     if(!app_state.get('speak_mode')) { return; }
     var text_fallback = function(text) {

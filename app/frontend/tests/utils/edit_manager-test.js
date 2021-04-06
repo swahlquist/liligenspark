@@ -3201,10 +3201,18 @@ describe('editManager', function() {
       //   {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
       var res = editManager.inflection_for_types(sentence('with'), 'en');
       expect((res.pronoun || {}).inflection).toEqual('objective');
+      var res = editManager.inflection_for_types(sentence('with with'), 'en');
+      expect((res.pronoun || {}).inflection).toEqual('objective');
       var res = editManager.inflection_for_types(sentence('did you get that for'), 'en');
       expect((res.pronoun || {}).inflection).toEqual('objective');
       var res = editManager.inflection_for_types(sentence('tell me about'), 'en');
       expect((res.pronoun || {}).inflection).toEqual('objective');
+      var res = editManager.inflection_for_types(sentence('I like'), 'en');
+      expect((res.pronoun || {}).inflection).toEqual('objective');
+      var res = editManager.inflection_for_types(sentence('do you love'), 'en');
+      expect((res.pronoun || {}).inflection).toEqual('objective');
+      var res = editManager.inflection_for_types(sentence('I think'), 'en');
+      expect((res.pronoun || {}).inflection).toEqual('possesive_adjective');
       //   //   pronoun (that, it, this) verb (is, was): objective (n)
       //   {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'objective', location: 'n'},
       var res = editManager.inflection_for_types(sentence('that is'), 'en');

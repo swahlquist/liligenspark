@@ -4,6 +4,7 @@ import app_state from '../utils/app_state';
 import editManager from '../utils/edit_manager';
 import capabilities from '../utils/capabilities';
 import { htmlSafe } from '@ember/string';
+import stashes from '../utils/_stashes';
 
 export default Component.extend({
   didInsertElement: function() {
@@ -14,6 +15,7 @@ export default Component.extend({
         board.set('fast_html', {
           width: editManager.controller.get('width'),
           height: editManager.controller.get('height'),
+          inflection_prefix: app_state.get('inflection_prefix'),
           revision: editManager.controller.get('model.current_revision'),
           html: htmlSafe(elem.innerHTML)
         });
