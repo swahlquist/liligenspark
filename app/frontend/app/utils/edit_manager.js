@@ -107,18 +107,6 @@ var editManager = EmberObject.extend({
     if(!locale || !locale.match(/^en/) || history.length == 0) {
       return {};
     }
-    // TODO: Known Errors:
-    // what does he [like]
-    /* 
-      he likes [eating] vs. he wants [to tell] vs. she likes not [looking]
-      I want to be [asking] vs. did you like to be [asked]
-      he is [looking]
-      is she [looking]
-      I have [looked]
-      have you [looked]
-    */
-    // TODO: support :pre(:past-tense) lookups to apply
-    // tenses when available as a pre-application
     var inflections = {};
     // Greedy algorithm stops at the first match
     var rules = [
@@ -150,9 +138,11 @@ var editManager = EmberObject.extend({
       {id: 'would_she_want_to_look', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'pronoun'}, {type: 'verb', words: ['like', 'want']}, {optional: true, type: 'adverb'}], inflection: 'infinitive', location: 'e'},
       {id: 'she_wants_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['like', 'likes', 'want', 'wants']}], inflection: 'infinitive', location: 'e'},
       {id: 'she_can_want_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['want']}], inflection: 'infinitive', location: 'e'},
+      {id: 'have_looked', type: 'verb', lookback: [{optional: true, type: 'pronoun'}, {words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past_participle', location: 'sw'},
       {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
       {id: 'she_likes_not_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"], optional: true}, {type: 'verb'}, {optional: true, words: ["not"]}], inflection: 'present_participle', location: 's'},
       {id: 'would_she_think_looking', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should"]}, {type: 'pronoun'}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
+      {id: 'hope_for_eating', type: 'verb', lookback: [{type: 'verb'}, {words: ['for', 'from']}], inflection: 'present_participle', location: 's'},
       //   verb (being, have, has, had) [adverb] [not]: past (w)
       //     Y: I have always looked
       //     Y: have looked
@@ -160,7 +150,6 @@ var editManager = EmberObject.extend({
       //     Y: she has taken some more
       //     N: I have to look at this
       //     N: she had looked happier before
-      {id: 'have_looked', type: 'verb', lookback: [{optional: true, type: 'pronoun'}, {words: ["being", "doing", "has", "have", "had"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past_participle', location: 'sw'},
       //   verb (have, has, had) pronoun (I, you, she) [adverb] [not]: past (w)
       //     Y: have you looked at this
       //     Y: tell me why has she 
@@ -180,6 +169,17 @@ var editManager = EmberObject.extend({
       //   verb (do, does, did, etc.) pronoun (he, she, it, etc.) [not]: present (c)
       //   verb (do, does, did, etc.) [determiner] noun: present (c)
       //   noun (singular): simple_present (n)
+
+      // [jumping] am, on?, in?, are, is, go, off, on, prepositions?, there?, was, were, are, am, stop, the, because, done, no, not, together, lot, wether, than, favorite, perfect, silly, serious, own, me, him, her, them, us, -self, usual, despite, because, maybe, however, although
+      {id: 'still_laughing', type: 'verb', lookback: [{words: ['before', 'am', 'are', 'is', 'there', 'was', 'were', 'are', 'am', 'stop', 'the', 'because', 'done', 'no', 'not', 'together', 'than', 'own', 'usual', 'despite', 'maybe', 'however', 'although', 'usually', 'still']}], inflection: 'present_participle', location: 's'},
+      {id: 'over_laughing', type: 'verb', lookback: [{type: 'preposition', words: ['on', 'off', 'here', 'there', 'over', 'under']}], inflection: 'present_participle', location: 's'},
+      {id: 'his_laughing', type: 'verb', lookback: [{type: 'pronoun', words: ['my', 'his', 'her', 'our', 'their', 'mine', 'hers', 'ours', 'theirs', 'myself', 'himself', 'herself', 'themselves', 'ourselves']}], inflection: 'present_participle', location: 's'},
+
+      
+      {id: 'did_the_dog_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {type: "determiner"}, {type: 'noun'}], inflection: 'present', location: 'c'},
+      {id: 'did_my_dog_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {type: 'pronoun'}, {type: 'noun'}], inflection: 'present', location: 'c'},
+      {id: 'has_the_dog_eaten', type: 'verb', lookback: [{words: ['have', 'has', 'had']}, {type: 'determiner'}, {type: 'noun'}], inflection: 'past_participle', location: 'sw'},
+      {id: 'has_my_dog_eaten', type: 'verb', lookback: [{words: ['have', 'has', 'had']}, {type: 'pronoun'}, {type: 'noun'}], inflection: 'past_participle', location: 'sw'},
       {id: 'dog_looks', type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
       //   will: present (c)
       // Nouns: 
@@ -189,13 +189,28 @@ var editManager = EmberObject.extend({
       // Pronouns:
       //   (at, for, with): objective (n)
       {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
-      {id: 'about_him', type: 'pronoun', lookback: [{words: ["about"]}], inflection: 'objective', location: 'n'},
+
+      // [him/her/me/you/them/us] want, like, to, in, help, tell, near, over, under, for, preposition, give, get, make, not, stop, hello, goodbye, from, feed, bite, suck, hug, kiss, it's, count, around, beneath, among, beyond, visit, bug
+      {id: 'about_him', type: 'pronoun', lookback: [{words: ["about", "to", "tell", "for", "give", "get", "make", "not", "from", "among"]}], inflection: 'objective', location: 'n'},
       //   pronoun (that, it, this) verb (is, was): objective (n)
-      {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {words: ["is", "was"]}], inflection: 'possesive_adjective', location: 'w'},
-      {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {words: ["are", "were"]}], inflection: 'possesive_adjective', location: 'w'},
-      //   (is, was): objective(n) or possesive_adjective (w)
-      // TODO: hope that [he] *looks*
-      //       wish for *eating*
+      {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {type: 'adverb', optional: true}, {words: ["is", "was", "be"]}], inflection: 'possessive_adjective', location: 'w'},
+      {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {type: 'adverb', optional: true}, {words: ["are", "were", "be"]}], inflection: 'possessive_adjective', location: 'w'},
+      {id: 'i_think_he', type: 'pronoun', lookback: [{type: 'verb', words: ['think', 'hope', 'wish', 'is', 'am', 'was', 'were', 'be', 'been', 'being', 'do', 'does', 'did', 'have', 'has', 'had', 'can', 'could', 'will', 'would' ,'may', 'might', 'must', 'shall', 'should', 'are']}], inflection: 'default', location: 'c'},
+      // [his/her/my/your/their/our] eat, on, up, play, drink, off, down, out, is, are, read, use, wear, all, at, of, eat, drink, taste, lick, left, across, into, where's, lost, lower, raise, hide, lose, start, exit, run, turn, return, check, finish, continue, begin, improve, honor, change, reduce, grow, expand, shrink, it's, refill, drink, swallow, feel, communicate, resolve, describe, explain, represent, spray, scrub, wipe, wash, clean, learn, study, cheat, type, become, exercise, play, ponder, 
+      {id: 'eat_my', type: 'pronoun', lookback: [{words: ['eat', 'on', 'up', 'off', 'in', 'out', 'down', 
+                'drink', 'is', 'are', 'read', 'use', 'wear', 'all', 'of', 'eat', 'drink', 'taste', 'lick', 
+                'left', 'across', 'into', "where's", 'lost', 'lose', 'lower', 'raise', 'hide', 'start', 
+                'exit', 'run', 'turn', 'return', 'check', 'finish', 'continue', 'begin', 'improve', 'honor', 
+                'change', 'reduce', 'grow', 'expand', 'shrink', "it's", 'refill', 'drink', 'swallow', 'feel',
+                'communicate', 'resolve', 'describe', 'explain', 'represent', 'spray', 'scrub', 'wipe', 
+                'wash', 'clean', 'learn', 'study', 'cheat', 'type', 'become', 'exercise', 'play', 'ponder']}], inflection: 'possessive_adjective', location: 'w'},
+      {id: 'all_by_myself', type: 'pronoun', lookback: [{words: ['all', 'not']}, {words: ['by', 'with']}], inflection: 'reflexive', location: 'e'},
+      // [himself/herself/myself/ourself] by, view, prepare, settle, repeat, defend
+      {id: 'view_yourself', type: 'pronoun', lookback: [{words: ['view', 'prepare', 'settle', 'repeat', 'defend']}], inflection: 'reflexive', location: 'e'},
+      {id: 'near_me', type: 'pronoun', lookback: [{type: 'preposition'}], inflection: 'objective', location: 'n'},
+      {id: 'i_like_him', type: 'pronoun', lookback: [{type: 'verb'}], inflection: 'objective', location: 'n'},
+      {id: 'hug_me', type: 'pronoun', lookback: [{type: 'verb'}], inflection: 'objective', location: 'n'},
+      {id: 'i_am_his', type: 'pronoun', lookback: [{type: 'pronoun'}, {type: 'adverb', optional: true}, {type: 'verb', words: ["is", "am", "are", "be"]}], inflection: 'possessive_adjective', location: 'w'},
     ];
     var matches = function(rule, history) {
       if(history.length == 0) { return false; }
@@ -273,6 +288,9 @@ var editManager = EmberObject.extend({
       if(matches({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
+      }
+      if(matches({lookback: [{words: ["what"]}]}, history)) {
+        inflections["happen"] = {type:'override', label: "happened"};
       }
     }
 

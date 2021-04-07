@@ -520,6 +520,51 @@ class WordData < ActiveRecord::Base
     f.close
     nopes
   end
+
+  def self.check_inflections
+    b = Board.find_by_path('example/core-112')
+    ids = [b.global_id] + b.settings['downstream_board_ids']
+    buttons = []
+    Board.find_all_by_global_id(ids).each do |board|
+      board.buttons.each do |button|
+        buttons << button if button['part_of_speech']
+      end
+    end
+    f = URI.parse("https://coughdrop.s3.amazonaws.com/language/ngrams.arpa.json").open
+    json = Oj.load(f.read); 0
+    buttons.each do |button|
+      if json[button['label']]
+        print "\n#{button['label']}  "
+        json[button['label']].each do |word, score|
+          if ['i', 'you', 'your', 'yours', 'yourself', 'me', 'my', 'myself', 'mine', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'they', 'them', 'their', 'theirs', 'themself', 'themselves', 'us', 'we', 'our', 'ours', 'ourselves'].include?(word)
+            button['pronouns'] = (button['pronouns'] || []) + [word]
+          elsif word == 'to' || (!word.match(/thing$/) && !word.match(/ning$/) && word.match(/ing$/)) || word.match(/ed$/)
+            button['verbs'] = (button['verbs'] || []) + [word]
+          elsif word == 'less' || word == 'more' || word.match(/er$/) || word.match(/est$/)
+            button['ads'] = (button['ads'] || []) + [word]
+          end
+        end
+      else
+        print " #{button['label']}"
+      end
+    end; buttons.length
+    buttons.select{|b| b['pronouns']}.each do |button|
+      if ['i', 'he', 'she', 'you', 'they', 'we'].include?(button['pronouns'][0])
+      else
+        puts "#{button['label']}\t\t#{button['pronouns'].join(',')}"
+      end
+    end.length
+    buttons.each do |button|
+      if button['verbs']
+        puts "#{button['label']}\t\t#{button['verbs'][0,15].join(',')}"
+      end
+    end.length
+    buttons.each do |button|
+      if button['ads'] && button['ads'].length > 1
+        puts "#{button['label']}\t\t#{button['ads'][0,5].join(',')}"
+      end
+    end.length
+  end
   
   def self.query_translations(words, source_lang, dest_lang)
     return [] unless ENV['GOOGLE_TRANSLATE_TOKEN']
