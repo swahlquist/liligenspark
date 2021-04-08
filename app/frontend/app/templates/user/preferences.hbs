@@ -34,19 +34,6 @@
           </div>
         </div>
       </div>
-      {{#if app_state.feature_flags.auto_inflections}}
-        <div class="form-group">
-          <label for="auto_inflections" class="col-sm-3 control-label">{{t "Automatic Inflections" key='auto_inflections'}}</label>
-          <div class="col-sm-5">
-            <div class="checkbox big_checkbox">
-              <label>
-                {{input type="checkbox" checked=pending_preferences.auto_inflections id="auto_inflections"}}
-                {{t "Automatically update button inflections when the default doesn't match" key='enable_auto_inflections'}}
-              </label>
-            </div>
-          </div>
-        </div>
-      {{/if}}
     {{/if}}
     <div class="form-group">
       <label for="require_speak_mode_pin" class="col-sm-3 control-label">{{t "Exiting" key='editing'}}</label>
@@ -265,6 +252,19 @@
         </div>
       </div>
     </div>
+    {{#if app_state.feature_flags.auto_inflections}}
+      <div class="form-group">
+        <label for="auto_inflections" class="col-sm-3 control-label">{{t "Automatic Inflections" key='auto_inflections'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=pending_preferences.auto_inflections id="auto_inflections"}}
+              {{t "Automatically update button inflections when the default doesn't match" key='enable_auto_inflections'}}
+            </label>
+          </div>
+        </div>
+      </div>
+    {{/if}}
     {{#if app_state.feature_flags.inflections_overlay}}
       <div class="form-group">
         <label for="inflections_overlay" class="col-sm-3 control-label">{{t "Long-Press" key='long_press'}}</label>

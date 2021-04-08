@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import persistence from '../utils/persistence';
 
 export default Component.extend({
   tagName: 'span',
@@ -14,12 +15,19 @@ export default Component.extend({
     var _this = this;
     if(!this.get('users') && app_state.get('sessionUser.known_supervisees')) {
       app_state.get('sessionUser.known_supervisees').forEach(function(supervisee) {
-        supervisees.push({
+        var sup = {
           name: supervisee.user_name,
-          image: supervisee.avatar_url,
+          image: supervisee.local_avatar_url || supervisee.avatar_url,
           disabled: !_this.get('allow_all') && !supervisee.edit_permission,
           id: supervisee.id
-        });
+        };
+        supervisees.push(sup);
+        if(supervisee.avatar_url && !supervisee.local_avatar_url) {
+          persistence.find_url(supervisee.avatar_url, 'image').then(function(url) {
+            emberSet(supervisee, 'local_avatar_url', url);
+            emberSet(sup, 'image', url);
+          }, function(err) { });
+        }
       });
       if(supervisees.length > 0) {
         supervisees.unshift({

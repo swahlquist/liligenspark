@@ -2433,7 +2433,7 @@ var persistence = EmberObject.extend({
   },
   ajax: function() {
     var ajax_args = arguments;
-    var local_request = ajax_args && ajax_args[0] && ajax_args[0].match && ajax_args[0].match(/^file:\/\//);
+    var local_request = ajax_args && ajax_args[0] && ajax_args[0].match && (ajax_args[0].match(/^file:\/\//) || ajax_args[0].match(/^http:\/\/localhost/));
     if(this.get('online') || local_request) {
       // TODO: is this wrapper necessary? what's it for? maybe can just listen on
       // global ajax for errors instead...

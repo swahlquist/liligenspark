@@ -323,6 +323,11 @@ export default Controller.extend({
           var eb = _this.earned_badge(for_users[emberGet(sup, 'id')]);
           emberSet(sup, 'earned_badge', eb);
         }
+        if(sup.avatar_url && !sup.local_avatar_url) {
+          persistence.find_url(sup.avatar_url, 'image').then(function(url) {
+            emberSet(sup, 'local_avatar_url', url);
+          }, function(err) { });
+        }
         sups.push(sup);
       });
       _this.set('supervisees_with_badges', sups);
