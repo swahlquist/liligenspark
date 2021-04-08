@@ -6,6 +6,7 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
 import persistence from '../utils/persistence';
+import CoughDrop from '../app';
 
 export default Component.extend({
   tagName: 'span',
@@ -22,7 +23,7 @@ export default Component.extend({
           id: supervisee.id
         };
         supervisees.push(sup);
-        if(supervisee.avatar_url && !supervisee.local_avatar_url) {
+        if(CoughDrop.remote_url(supervisee.avatar_url) && !supervisee.local_avatar_url) {
           persistence.find_url(supervisee.avatar_url, 'image').then(function(url) {
             emberSet(supervisee, 'local_avatar_url', url);
             emberSet(sup, 'image', url);
