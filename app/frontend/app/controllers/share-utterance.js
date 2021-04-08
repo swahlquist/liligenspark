@@ -60,7 +60,7 @@ export default modal.ModalController.extend({
         })
       }
       res.forEach(function(contact) {
-        if(contact.avatar_url && contact.avatar_url.match(/^http/)) {
+        if(CoughDrop.remote_url(contact.avatar_url)) {
           persistence.find_url(contact.avatar_url, 'image').then(function(uri) {
             emberSet(contact, 'avatar_url', uri);
           }, function() { });

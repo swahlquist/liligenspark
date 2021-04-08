@@ -744,7 +744,7 @@ CoughDrop.Board = DS.Model.extend({
     this.set('checked_for_data_url', true);
     var url = this.get('icon_url_with_fallback');
     var _this = this;
-    if(!this.get('image_data_uri') && url && url.match(/^http/)) {
+    if(!this.get('image_data_uri') && CoughDrop.remote_url(url)) {
       return persistence.find_url(url, 'image').then(function(data_uri) {
         _this.set('image_data_uri', data_uri);
         return _this;
@@ -753,14 +753,14 @@ CoughDrop.Board = DS.Model.extend({
       return RSVP.resolve(this);
     }
     var url = this.get('background.image');
-    if(!this.get('background_image_data_uri') && url && url.match(/^http/)) {
+    if(!this.get('background_image_data_uri') && CoughDrop.remote_url(url)) {
       persistence.find_url(url, 'image').then(function(data_uri) {
         _this.set('background_image_data_uri', data_uri);
         return _this;
       });
     }
     var url = this.get('background.prompt.sound');
-    if(!this.get('background_sound_data_uri') && url && url.match(/^http/)) {
+    if(!this.get('background_sound_data_uri') && CoughDrop.remote_url(url)) {
       persistence.find_url(url, 'sound').then(function(data_uri) {
         _this.set('background_sound_data_uri', data_uri);
         return _this;

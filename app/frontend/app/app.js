@@ -86,6 +86,9 @@ CoughDrop.ad_referrer = (location.href.match(/\?ref=([^#]+)/) || [])[1];
 CoughDrop.referrer = document.referrer;
 CoughDrop.app_name = CoughDrop.app_name || (window.domain_settings || {}).app_name || "CoughDrop";
 CoughDrop.company_name = CoughDrop.company_name || (window.domain_settings || {}).company_name || "CoughDrop";
+CoughDrop.remote_url = function(url) {
+  return url && url.match(/^http/) && !url.match(/^http:\/\/localhost/);
+};
 
 CoughDrop.track_error = function(msg, stack) {
   var error = new Error();

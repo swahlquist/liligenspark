@@ -113,7 +113,7 @@ export default modal.ModalController.extend({
               if(b.sequence) {
                 images = b.steps.map(function(s) { return s.button.image; });
               }
-              var missing_image = images.find(function(i) { return !i || i.match(/^http/); });
+              var missing_image = images.find(function(i) { return !i || CoughDrop.remote_url(i); });
               if(!missing_image) {
                 new_results.push(b);
               } else { }

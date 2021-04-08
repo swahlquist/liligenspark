@@ -442,7 +442,7 @@ CoughDrop.User = DS.Model.extend({
     this.set('checked_for_data_url', true);
     var url = this.get('avatar_url_with_fallback');
     var _this = this;
-    if(!this.get('avatar_data_uri') && url && url.match(/^http/)) {
+    if(!this.get('avatar_data_uri') && CoughDrop.remote_url(url)) {
       return persistence.find_url(url, 'image').then(function(data_uri) {
         _this.set('avatar_data_uri', data_uri);
         return _this;
@@ -495,7 +495,7 @@ CoughDrop.User = DS.Model.extend({
     var _this = this;
     var localize_connections = function(sups) {
       (sups || []).forEach(function(sup) {
-        if(sup.avatar_url && sup.avatar_url.match(/^http/)) {
+        if(CoughDrop.remote_url(sup.avatar_url)) {
           persistence.find_url(sup.avatar_url, 'image').then(function(uri) {
             emberSet(sup, 'original_avatar_url', sup.avatar_url);
             emberSet(sup, 'avatar_url', uri);

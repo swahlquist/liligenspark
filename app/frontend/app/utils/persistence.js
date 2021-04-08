@@ -884,7 +884,7 @@ var persistence = EmberObject.extend({
   store_url_now: function(url, type, keep_big, force_reload) {
     if(!type) { return RSVP.reject('type required for storing'); }
     if(!url) { console.error('url not provided'); return RSVP.reject('url required for storing'); }
-    if(!window.coughDropExtras || !window.coughDropExtras.ready || url.match(/^data:/) || url.match(/^file:/) || url.match(/localhost:/)) {
+    if(!window.coughDropExtras || !window.coughDropExtras.ready || url.match(/^data:/) || url.match(/^file:/) || url.match(/localhost:/) || url.match(/http:\/\/localhost/)) {
       return RSVP.resolve({
         url: url,
         type: type
@@ -1575,12 +1575,12 @@ var persistence = EmberObject.extend({
     var retrieve_list = wait.then(null, function() { return RSVP.resolve(); }).then(function() {
       var all_store_images = [];
       (user.get('supervisors') || []).forEach(function(sup) {
-        if(sup.avatar_url && sup.avatar_url.match(/^http/)) {
+        if(CoughDrop.remote_url(sup.avatar_url)) {
           all_store_images.push(persistence.store_url(sup.avatar_url, 'image'));
         }
       });
       (user.get('contacts') || []).forEach(function(contact) {
-        if(contact.image_url && contact.image_url.match(/^http/)) {
+        if(CoughDrop.remote_url(contact.image_url)) {
           all_store_images.push(persistence.store_url(contact.image_url, 'image'));
         }
       });
@@ -2000,7 +2000,7 @@ var persistence = EmberObject.extend({
               synced_boards.push(board);
               visited_boards.push(id);
 
-              if(board.get('icon_url_with_fallback').match(/^http/)) {
+              if(CoughDrop.remote_url(board.get('icon_url_with_fallback'))) {
                 // store_url already has a queue, we don't need to fill the sync queue with these
                 visited_board_promises.push(persistence.store_url(board.get('icon_url_with_fallback'), 'image', false, force, sync_id).then(null, function() {
                   console.log("icon url failed to sync, " + board.get('icon_url_with_fallback'));
@@ -2008,14 +2008,14 @@ var persistence = EmberObject.extend({
                 }));
                 importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
               }
-              if((board.get('background.image') || '').match(/^http/)) {
+              if(CoughDrop.remote_url(board.get('background.image'))) {
                 visited_board_promises.push(persistence.store_url(board.get('background.image'), 'image', true, force, sync_id).then(null, function() {
                   console.log("bg url failed to sync, " + board.get('background.image'));
                   return RSVP.resolve();
                 }));
                 importantIds.push("dataCache_" + board.get('background.image'));
               }
-              if((board.get('background.prompt.sound') || '').match(/^http/)) {
+              if(CoughDrop.remote_url(board.get('background.prompt.sound'))) {
                 visited_board_promises.push(persistence.store_url(board.get('background.prompt.sound'), 'sound', true, force, sync_id).then(null, function() {
                   console.log("bg sound url failed to sync, " + board.get('background.prompt.sound'));
                   return RSVP.resolve();
@@ -2036,7 +2036,7 @@ var persistence = EmberObject.extend({
 //               board.get('local_images_with_license').forEach(function(image) {
                 importantIds.push("image_" + image.id);
                 var keep_big = !!(board.get('grid.rows') < 3 || board.get('grid.columns') < 6);
-                if(image.url && image.url.match(/^http/)) {
+                if(CoughDrop.remote_url(image.url)) {
                   // TODO: should this be app_state.currentUser instead of the currently-syncing user?
                   var personalized = image.url;
                   if(CoughDrop.Image && CoughDrop.Image.personalize_url) {
@@ -2054,7 +2054,7 @@ var persistence = EmberObject.extend({
               board.map_sound_urls(all_sound_urls).forEach(function(sound) {
 //               board.get('local_sounds_with_license').forEach(function(sound) {
                 importantIds.push("sound_" + sound.id);
-                if(sound.url && sound.url.match(/^http/)) {
+                if(CoughDrop.remote_url(sound.url)) {
                   visited_board_promises.push(//persistence.queue_sync_action('store_button_sound', sync_id, function() {
                      /*return*/ persistence.store_url(sound.url, 'sound', false, force, sync_id).then(null, function() {
                       return RSVP.reject({error: "button sound failed to sync, " + sound.url});

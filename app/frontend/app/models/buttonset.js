@@ -533,7 +533,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             }
             emberSet(button, 'on_same_board', emberGet(button, 'steps') === 0);
   
-            if(button.image && button.image.match(/^http/)) {
+            if(CoughDrop.remote_url(button.image)) {
               emberSet(button, 'original_image', button.image);
               word_suggestions.fallback_url().then(function(url) {
                 emberSet(button, 'fallback_image', url);
@@ -757,7 +757,7 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
   emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('blank.png'));
 
   emberSet(button, 'current_depth', (button.pre_buttons || []).length);
-  if(button.image && button.image.match(/^http/)) {
+  if(CoughDrop.remote_url(button.image)) {
     word_suggestions.fallback_url().then(function(url) {
       emberSet(button, 'fallback_image', url);
     });

@@ -27,11 +27,11 @@ CoughDrop.Utterance = DS.Model.extend({
       }
       return local;
     };
-    if(this.get('image_url') && !this.get('image_url').match(/^http/)) {
+    if(this.get('image_url') && !CoughDrop.remote_url(!this.get('image_url'))) {
       this.set('image_url', find_remote(this.get('image_url')));
     }
     (this.get('button_list') || []).forEach(function(btn) {
-      if(btn.image && !btn.image.match(/^http/)) {
+      if(btn.image && !CoughDrop.remote_url(!btn.image)) {
         btn.image = find_remote(btn.image);
       }
     });

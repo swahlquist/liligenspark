@@ -676,7 +676,7 @@ var speecher = EmberObject.extend({
   load_sound: function(attr) {
     if(speecher[attr]) {
       if(speecher[attr].match(/^data:/)) { return RSVP.resolve(true); }
-      else if(!speecher[attr].match(/^http/) || speecher[attr].match(/localhost:/)) { return RSVP.resolve(true); }
+      else if(!CoughDrop.remote_url(speecher[attr])) { return RSVP.resolve(true); }
       var find = persistence.find_url(speecher[attr], 'sound').then(function(data_uri) {
         if(data_uri) {
           speecher[attr] = data_uri;

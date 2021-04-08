@@ -90,7 +90,7 @@ CoughDrop.Image = DS.Model.extend({
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var _this = this;
-    if(!this.get('data_url') && this.get('personalized_url') && this.get('personalized_url').match(/^http/)) {
+    if(!this.get('data_url') && CoughDrop.remote_url(this.get('personalized_url'))) {
       return persistence.find_url(this.get('personalized_url'), 'image').then(function(data_uri) {
         _this.set('data_url', data_uri);
         if(data_uri && data_uri.match(/^file/)) {
