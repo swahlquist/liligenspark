@@ -839,7 +839,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:device] ||= {}
       res[:device][pref] ||= {}
       max_val = hash.to_a.map(&:last).max || 0.0
-      res[:admin][:pref_maxed][pref] = max_val #if include_admin
+      res[:admin][:pref_maxes][pref] = max_val #if include_admin
       hash.each do |k, v|
         res[:device][pref][k] = (v.to_f / max_val.to_f * 50.0).round(1) / 50.0
       end
