@@ -251,8 +251,8 @@ class Api::LogsController < ApplicationController
     extra_data = !!(@api_user && @api_user.allows?(@api_user, 'admin_support_actions'))
     res = JSON.parse(Permissable.permissions_redis.get('global/stats/trends')) rescue nil
     if !res #|| extra_data
-      res = WeeklyStatsSummary.trends
-      Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
+      progress = Progress.schedule(WeeklyStatsSummary, :trends)
+      res = JsonApi::Progress.as_json(progress, :wrapper => true)
     end
     res.delete(:admin) unless extra_data
     

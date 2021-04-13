@@ -3,6 +3,7 @@ import EmberObject from '@ember/object';
 import { later as runLater } from '@ember/runloop';
 import i18n from '../utils/i18n';
 import persistence from '../utils/persistence';
+import progress_tracker from '../utils/progress_tracker';
 import app_state from '../utils/app_state';
 import modal from '../utils/modal';
 import { computed } from '@ember/object';
@@ -12,19 +13,29 @@ export default Controller.extend({
     var _this = this;
     _this.set('trends', {loading: true});
     persistence.ajax('/api/v1/logs/trends', {type: 'GET'}).then(function(res) {
-      if(res.admin) {
-        for(var key in res.admin) {
-          res[key] = res.admin[key];
-        }
-        if(res.admin.pref_maxed) {
-          for(var key in res.admin.pref_maxed) {
-            if(res.device[key]) {
-              res.device[key].max_value = res.admin.pref_maxed[key];
+      if(res.progress) {
+        progress_tracker.track(res.progress, function(event) {
+          if(event.status == 'errored') {
+            _this.set('trends', {error: true});
+          } else if(event.status == 'finished') {
+            _this.load_trends();
+          }
+        });
+      } else {
+        if(res.admin) {
+          for(var key in res.admin) {
+            res[key] = res.admin[key];
+          }
+          if(res.admin.pref_maxes) {
+            for(var key in res.admin.pref_maxes) {
+              if(res.device[key]) {
+                res.device[key].max_value = res.admin.pref_maxes[key];
+              }
             }
           }
         }
+        _this.set('trends', res);  
       }
-      _this.set('trends', res);
     }, function(err) {
       _this.set('trends', {error: true});
     });
