@@ -116,6 +116,18 @@ class Board < ActiveRecord::Base
     bs.assert_extra_data if bs
     bs
   end
+
+  def source_board
+    res = nil
+    if self.settings && self.settings['source_board_id']
+      res = Board.find_by_path(self.settings['source_board_id'])
+    end
+    res ||= self
+    while res.parent_board
+      res = res.parent_board
+    end
+    res
+  end
   
   def non_author_starred?
     self.user && ((self.settings || {})['starred_user_ids'] || []).any?{|s| s != self.user.global_id && !s.to_s.match(self.user.global_id) }
@@ -893,6 +905,7 @@ class Board < ActiveRecord::Base
       end
       if self.parent_board_id != parent_board.id
         self.parent_board = parent_board
+        self.settings['source_board_id'] = parent_board.source_board.global_id
         BoardContent.apply_clone(parent_board, self) if parent_board.board_content_id
       end
     end

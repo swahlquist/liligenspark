@@ -29,6 +29,7 @@ module Relinking
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)
     board.key = board.generate_board_key(self.key.split(/\//)[1])
     board.settings['copy_id'] = copy_id
+    board.settings['source_board_id'] = self.source_board.global_id
     board.settings['name'] = self.settings['name']
     if !prefix.blank? && board.settings['name']
       if self.settings['prefix'] && board.settings['name'].index(self.settings['prefix']) == 0

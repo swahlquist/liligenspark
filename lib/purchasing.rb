@@ -933,6 +933,80 @@ module Purchasing
     users = User.where(possibly_full_premium: true).where(['updated_at > ?', 10.days.ago]); users.count
     users.select{|u| u.settings['needs_billing_update']}
   end
+
+  def self.validate_user(user)
+    # TODO: check the purchasing system and update the user record
+    # to match the data in the system
+  end
+
+  def self.usage_distribution(month_date)
+    # TODO: 
+    # - find all users who have daily_use during the month
+    start_date = month_date.beginning_of_month
+    end_date = start_date >> 1
+    uses = LogSession.where(log_type: 'daily_use').where(['created_at < ? AND updated_at > ?', end_date, start_date]); uses.count
+    user_ids = []
+    uses.find_in_batches(batch_size: 5) do |batch|
+      batch.each do |log|
+        score = 0
+        (log.data['days'] || {}).each do |str, hash|
+          d = Date.parse(str) rescue nil
+          if d && d >= start_date && d <= end_date
+            if hash['active']
+              score += 5
+            else
+              score += (hash['activity_level'] || 2) / 2
+            end
+          end
+        end
+        user_ids << log.related_global_id(log.user_id) if score >= 5
+      end
+    end
+    author_scores = {}
+    # - retrieve their boards and sidebar boards
+    cnt = 0
+    User.find_batches_by_global_id(user_ids, {block_size: 10}) do |user|
+      # - for subscription (1.0) or long-term (0.5) users, add to author's score
+      mult = 0.0
+      mult = 1.0 if user.recurring_subscription?
+      mult = 0.5 if user.billing_state == :long_term_active_communicator
+      mult = 0.1 if user.billing_state == :eval_communicator && false
+      mult = 0.5 if user.billing_state == :org_sponsored_communicator
+      next if mult == 0.0
+
+      cnt += 1
+      puts "#{user.user_name} (#{cnt})"
+      root_board_keys = []
+      root_board_keys << {id: user.settings['preferences']['home_board']['id'], score: 1.0} if user.settings['preferences'] && user.settings['preferences']['home_board']
+      root_board_keys += user.sidebar_boards.map{|b| {id: b['key'], score: 0.3} }
+      scores = {}
+      root_board_keys.each do |key|
+        # - retrieve the original source for each board 
+        root_board = Board.find_by_path(key[:id])
+        if root_board
+          src = root_board.source_board || root_board.parent_board || root_board
+          puts "  #{root_board.key} #{src.key}"
+          author = src.cached_user_name
+          # - tally the author based on the board's depth (sidebar * 0.3)
+          scores[author] = (scores[author] || 0) + key[:score]
+          Board.find_batches_by_global_id(root_board.settings['downstream_board_ids'], {block_size: 10}) do |brd|
+            src = brd.source_board || brd.parent_board || brd
+            author = src.cached_user_name
+            scores[author] = (scores[author] || 0) + (key[:score] * 0.1)
+          end
+        end
+      end
+      # - normalize the tallies to 1.0 total for each daily_use user
+      total_score = scores.to_a.map(&:last).sum
+      scores.each do |un, score|
+        if un != user.user_name
+          author_scores[un] = (author_scores[un] || 0) + (score / total_score * mult)
+        end
+      end
+    end
+    # - return the list of authors with scores above a threshold
+    author_scores.to_a.select{|a, b| b > 1 }.sort_by{|a, b| b }.reverse
+  end
   
   def self.reconcile(with_side_effects=false)
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']

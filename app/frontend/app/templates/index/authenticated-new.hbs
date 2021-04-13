@@ -150,7 +150,11 @@
                   {{t "Syncing..." key='syncing_ellipsis'}}
                 {{else}}
                   {{#if needs_sync}}
-                    {{t "Sync before going offline!" key='needs_update'}}
+                    {{#if app_state.installed_app}}
+                      {{t "Sync before going offline!" key='needs_update'}}
+                    {{else}}
+                      {{t "Sync if planning to go offline" key='sync_if_planning_offline'}}
+                    {{/if}}
                   {{else}}
                     {{t "Synced and ready for offline" key='up_to_date'}}
                   {{/if}}

@@ -850,6 +850,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # also: words available to % of users, most-common home boards
     # TODO: devices per communicator, supervisors per communicator, goals set, badges earned, most common badges
     
+    Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
     res
   end
   

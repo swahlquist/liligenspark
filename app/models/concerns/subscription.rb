@@ -407,7 +407,7 @@ module Subscription
         'purchase_id' => 'restore'        
       })
     elsif type == 'add_1' || type == 'communicator_trial' || type == 'add_5_years'
-      self.log_subscription_event(:log => 'subscription override: #{type}', :args => {user_id: self.global_id, author_id: user_id})
+      self.log_subscription_event(:log => "subscription override: #{type}", :args => {user_id: self.global_id, author_id: user_id})
       if type == 'communicator_trial'
         self.settings['preferences'] ||= {}
         self.settings['preferences']['role'] = 'communicator'
@@ -440,7 +440,7 @@ module Subscription
         'plan_id' => 'slp_monthly_free'
       })
     elsif type == 'manual_supporter' || type == 'granted_supporter'
-      self.log_subscription_event(:log => 'subscription override: #{type}', :args => {user_id: self.global_id, author_id: user_id})
+      self.log_subscription_event(:log => "subscription override: #{type}", :args => {user_id: self.global_id, author_id: user_id})
       self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'supporter'
       self.update_subscription({
