@@ -342,6 +342,7 @@ export default Controller.extend({
         'teaser_description': show_description
       });
       if(this.get('model.fast_html') && (this.get('model.fast_html.width') != this.get('width') || this.get('model.fast_html.height') != this.get('height') || this.get('model.fast_html.revision') != this.get('model.current_revision') || this.get('model.fast_html.inflection_prefix') != app_state.get('inflection_prefix'))) {
+        app_state.set('suggestion_id', null);
         this.set('model.fast_html', null);
         editManager.process_for_displaying();
       }

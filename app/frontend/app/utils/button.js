@@ -1307,6 +1307,7 @@ Button.load_actions = function() {
       action: ':plural',
       modifier: true,
       description: i18n.t('pluralize', "Make the word plural"),
+      types: ['noun'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.pluralize(prior_text);
         altered.label = i18n.pluralize(prior_label);
@@ -1317,6 +1318,7 @@ Button.load_actions = function() {
       action: ':singular',
       modifier: true,
       description: i18n.t('singularize', "Make the word singular"),
+      types: ['noun'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.singularize(prior_text);
         altered.label = i18n.singularize(prior_label);
@@ -1327,6 +1329,7 @@ Button.load_actions = function() {
       action: ':comparative',
       modifier: true,
       description: i18n.t('add_comparative', "Add \"more\" or \"-er\" (comparative)"),
+      types: ['adjective', 'adverb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.comparative(prior_text);
         altered.label = i18n.comparative(prior_label);
@@ -1337,6 +1340,7 @@ Button.load_actions = function() {
       action: ':er',
       modifier: true,
       description: i18n.t('add_comparative', "Add \"more\" or \"-er\" (comparative)"),
+      types: ['adjective', 'adverb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.comparative(prior_text);
         altered.label = i18n.comparative(prior_label);
@@ -1347,6 +1351,7 @@ Button.load_actions = function() {
       action: ':superlative',
       modifier: true,
       description: i18n.t('add_superlative', "Add \"most\" or \"-est\" (superlative)"),
+      types: ['adjective', 'adverb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.superlative(prior_text);
         altered.label = i18n.superlative(prior_label);
@@ -1357,6 +1362,7 @@ Button.load_actions = function() {
       action: ':ordinal',
       modifier: true,
       description: i18n.t('ordinal', "Add \"st\", \"nd\",\"th\", etc. (1st, 2nd, 3rd) to a number (ordinal)"),
+      types: ['number'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.ordinal(prior_text);
         altered.label = i18n.ordinal(prior_label);
@@ -1367,6 +1373,7 @@ Button.load_actions = function() {
       action: ':est',
       modifier: true,
       description: i18n.t('add_superlative', "Add \"most\" or \"-est\" (superlative)"),
+      types: ['adjective', 'adverb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.superlative(prior_text);
         altered.label = i18n.superlative(prior_label);
@@ -1377,6 +1384,7 @@ Button.load_actions = function() {
       action: ':verb-negation',
       modifier: true,
       description: i18n.t('negate_the_word', "Negate the word"),
+      types: ['verb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.verb_negation(prior_text);
         altered.label = i18n.verb_negation(prior_label);
@@ -1387,6 +1395,7 @@ Button.load_actions = function() {
       action: ':possessive',
       modifier: true,
       description: i18n.t('add_possessive', "Add \"s\" (possessive)"),
+      types: ['noun', 'pronoun'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.possessive(prior_text);
         altered.label = i18n.possessive(prior_label);
@@ -1397,6 +1406,7 @@ Button.load_actions = function() {
       action: ':\'s',
       modifier: true,
       description: i18n.t('add_possessive', "Add \"s\" (possessive)"),
+      types: ['noun', 'pronoun'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.possessive(prior_text);
         altered.label = i18n.possessive(prior_label);
@@ -1407,6 +1417,7 @@ Button.load_actions = function() {
       action: ':past',
       modifier: true,
       description: i18n.t('past_tense', "Make the verb past tense"),
+      types: ['verb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {simple_past: true});
         altered.label = i18n.tense(prior_label, {simple_past: true});
@@ -1417,6 +1428,7 @@ Button.load_actions = function() {
       action: ':ed',
       modifier: true,
       description: i18n.t('past_tense', "Make the verb past tense"),
+      types: ['verb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {simple_past: true});
         altered.label = i18n.tense(prior_label, {simple_past: true});
@@ -1427,6 +1439,7 @@ Button.load_actions = function() {
       action: ':present-participle',
       modifier: true,
       description: i18n.t('make_present_participle', "Make the verb present participle"),
+      types: ['verb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {present_participle: true});
         altered.label = i18n.tense(prior_label, {present_participle: true});
@@ -1437,6 +1450,7 @@ Button.load_actions = function() {
       action: ':ing',
       modifier: true,
       description: i18n.t('make_present_participle', "Make the verb present participle"),
+      types: ['verb'],
       alter: function(text, prior_text, prior_label, altered, addition) {
         altered.vocalization = i18n.tense(prior_text, {present_participle: true});
         altered.label = i18n.tense(prior_label, {present_participle: true});

@@ -914,9 +914,7 @@ CoughDrop.Board = DS.Model.extend({
       return res;
     }
   },
-  load_real_time_inflections: function() {
-    var history = stashes.get('working_vocalization') || [];
-    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
+  clear_real_time_changes: function() {
     var lbls_tmp = document.getElementsByClassName('tweaked_label');
     var lbls = [];
     for(var idx = 0; idx < lbls_tmp.length; idx++) {
@@ -928,6 +926,10 @@ CoughDrop.Board = DS.Model.extend({
         lbl.classList.remove('tweaked_label');
       }
     });
+  },
+  load_real_time_inflections: function() {
+    var history = stashes.get('working_vocalization') || [];
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
     var _this = this;
     buttons.forEach(function(button) {
       if(button.tweaked) {
@@ -951,12 +953,22 @@ CoughDrop.Board = DS.Model.extend({
     var _this = this;
     var has_suggested_buttons = false;
     var buttons = {};
+    var inflection_buttons = {};
     var skip_labels = {};
     var history = stashes.get('working_vocalization') || [];
     var known_buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false) || [];
+    var inflections = [];
+    CoughDrop.special_actions.forEach(function(act) {
+      if(act.types) {
+        inflections.push(act.action);
+      }
+    });
     known_buttons.forEach(function(button) {
       if(button.vocalization == ':suggestion') {
         buttons[button.id.toString()] = button;
+        has_suggested_buttons = true;
+      } else if(inflections.indexOf(button.vocalization) != -1) {
+        inflection_buttons[button.id.toString()] = button;
         has_suggested_buttons = true;
       } else if(button.label && !button.vocalization && !button.load_board) {
         skip_labels[button.label.toLowerCase()] = true;
@@ -966,6 +978,7 @@ CoughDrop.Board = DS.Model.extend({
       return null;
     }
     var suggested_buttons = [];
+    var inflectors = [];
     var order = this.get('grid.order') || [];
     for(var idx = 0; idx < order.length; idx++) {
       for(var jdx = 0; jdx < (order[idx] || []).length; jdx++) {
@@ -974,10 +987,23 @@ CoughDrop.Board = DS.Model.extend({
           if(button && button.vocalization == ':suggestion') {
             suggested_buttons.push(button);
           }
+          var infl = inflection_buttons[order[idx][jdx].toString()];
+          if(infl && inflections.indexOf(infl.vocalization) != -1) {
+            inflectors.push(infl);
+          }
         }
       }
     }
-    if(suggested_buttons.length == 0) { return null; }
+    if(suggested_buttons.length == 0 && inflectors.length == 0) { return null; }
+    inflectors.forEach(function(infl) {
+      var act = CoughDrop.special_actions.find(function(act) { return act.action == infl.vocalization; });
+      var last_button = working[working.length - 1];
+      if(last_button && !last_button.modified && act && act.types.indexOf(last_button.part_of_speech) != -1 && act.alter) {
+        var res = {};
+        act.alter(null, last_button.label, last_button.label, res);
+        _this.update_suggestion_button(infl, {word: res.label, temporary: true});
+      }
+    });
     word_suggestions.lookup({
       last_finished_word: last_word || "",
       second_to_last_word: second_to_last_word,

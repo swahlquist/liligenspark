@@ -2977,11 +2977,11 @@ describe('editManager', function() {
       sometimes: {label: 'sometimes', part_of_speech: 'adverb'},
       did: {label: 'did', part_of_speech: 'verb'},
       they: {label: 'they', part_of_speech: 'pronoun'}, 
-      might: {label: 'might', part_of_speech: 'adverb'},
-      would: {label: 'would', part_of_speech: 'adverb'},
-      could: {label: 'could', part_of_speech: 'adverb'},
-      can: {label: 'can', part_of_speech: 'adverb'},
-      will: {label: 'will', part_of_speech: 'adverb'},
+      might: {label: 'might', part_of_speech: 'verb'},
+      would: {label: 'would', part_of_speech: 'verb'},
+      could: {label: 'could', part_of_speech: 'verb'},
+      can: {label: 'can', part_of_speech: 'verb'},
+      will: {label: 'will', part_of_speech: 'verb'},
       usually: {label: 'usually', part_of_speech: 'adverb'},
       is: {label: 'is', part_of_speech: 'verb'}, 
       be: {label: 'be', part_of_speech: 'verb'}, 
@@ -3114,7 +3114,7 @@ describe('editManager', function() {
       check('did she', 'verb', 'present', 'does_she_look');
 
       //   {id: 'they_can_look', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this", "they"]}, {words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
-      check('they might', 'verb', 'present', 'you_look');
+      check('they might', 'verb', 'present', 'they_can_look');
 
       //   {id: 'she_looks', type: 'verb', lookback: [{words: ["he", "she", "it", "that", "this"]}, {optional: true, type: 'adverb'}], inflection: 'simple_present', location: 'n'},
       check('she', 'verb', 'simple_present', 'she_looks');
@@ -3140,7 +3140,7 @@ describe('editManager', function() {
       check('he will always be', 'verb', 'present_participle', 'is_she_looking');
       check('he likes usually', 'verb', 'present_participle', 'she_is_looking');
       check('he usually wants', 'verb', 'infinitive', 'she_wants_to_look');
-      check('they can like', 'verb', 'infinitive', 'she_wants_to_look');
+      check('they can like', 'verb', 'infinitive', 'they_can_like_to_look');
       check('she hates', 'verb', 'present_participle', 'she_is_looking');
       check('why would she want', 'verb', 'infinitive', 'would_she_want_to_look');
       check('why would she hate', 'verb', 'present_participle', 'she_is_looking');
@@ -3197,7 +3197,7 @@ describe('editManager', function() {
       //   //   noun (singular): simple_present (n)
       //   {id: 'dog_looks', type: 'verb', lookback: [{type: "noun", non_match: /[^s]s$/}], inflection: 'simple_present', location: 'n'},
       check('the dog', 'verb', 'simple_present', 'dog_looks');
-      check('the dog will', 'verb', null);
+      check('the dog will', 'verb', 'default', 'should_not_look');
       //   //   will: present (c)
       //   // Nouns: 
       //   //   plural determiners (those, these, some, many): plural (n)
@@ -3295,6 +3295,34 @@ describe('editManager', function() {
       var res = editManager.inflection_for_types(sentence('what'), 'en');
       expect((res.happen || {}).label).toEqual('happened');  
       // what happened
+
+      check('he might', 'verb', 'present', 'they_can_look');
+      check('I think this could', 'verb', 'present', 'they_can_look');
+      var res = editManager.inflection_for_types(sentence('I think this'), 'en');
+      expect(res.can.label).toEqual('can');  
+      check('I think he', 'verb', 'simple_present', 'she_looks');
+      check('I think that', 'verb', 'simple_present', 'she_looks');
+      
+      check('that is', 'pronoun', 'possessive_adjective', 'it_is_his');
+      check('he is', 'pronoun', 'possessive_adjective', 'eat_my');
+      check('I do not', 'verb', 'default', 'should_not_look');
+      check("I don't", 'verb', 'default', 'should_not_look');
+      check('I can not', 'verb', 'default', 'should_not_look');
+      check('I will', 'verb', 'default', 'should_not_look');
+      check('I will not', 'verb', 'default', 'should_not_look');
+      check("I won't", 'verb', 'default', 'should_not_look');
+
+      var res = editManager.inflection_for_types(sentence('she'), 'en');
+      expect((res.will || {}).label).toEqual('will');  
+
+      var res = editManager.inflection_for_types(sentence('I will'), 'en');
+      expect((res.is || {}).label).toEqual('be');  
+
+      var res = editManager.inflection_for_types(sentence('I am'), 'en');
+      expect((res.done || {}).label).toEqual('done');  
+
+      var res = editManager.inflection_for_types(sentence('they'), 'en');
+      expect((res.is || {}).label).toEqual('are');  
 
       // we want [him/her/me/you/them] Y
       // I don't like [her/him/me] Y
