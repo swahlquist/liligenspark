@@ -28,7 +28,7 @@ or in the GitHub interface itself. Each line will look like one of the following
 
 #### Numbers
 
-One exception is strings related to numbers. These will look as folloows:
+One exception is strings related to numbers. These will look as follows:
 
 ```
   "n_apples": "0 Apples || 1 Apple || %{n} Apples"
@@ -42,7 +42,7 @@ so be sure to place it correctly in your string.
 
 #### Special Characters
 
-Some strings will have special characters that will be auto-replaced the app.
+Some strings will have special characters that will be auto-replaced by the app.
 For example, the string `"I love %app_name%!"` will be replaced by `"I love CoughDrop!"`
 when it is rendered in the app. Additionally the string `"Send a message to %{user_name}"`
 will be replaced with `"Send a message to susan"` when it is rendered in the app.
@@ -51,7 +51,7 @@ place or they will not be shown correctly within the app.
 
 ### How to Edit Translation Files
 
-Strings are loosely sorted into levels, with the highest levels being more important
+Strings are loosely sorted into levels, with the higher levels being more important
 for the user interface. 
 
 Any strings that start with `*** ` should be translated first
