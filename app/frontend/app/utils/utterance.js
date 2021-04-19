@@ -13,6 +13,7 @@ import $ from 'jquery';
 import CoughDrop from '../app';
 import { observer } from '@ember/object';
 import word_suggestions from './word_suggestions';
+import editManager from './edit_manager';
 
 var punctuation_at_start = /^\+[\.\?\,\!]/;
 var punctuation_with_space = /^\s*[\.\?\,\!]\s*$/;
@@ -60,8 +61,51 @@ var utterance = EmberObject.extend({
       var rawList = _this.get('rawButtonList');
       if(!rawList) { app_state.set('button_list', []); return; }
       var last_append = null;
+      
+      
+      // check user.preferences.substitutions
+      if(rawList.length > 0 && rawList[rawList.length - 1].auto_substitute !== false) {
+        (app_state.get('sessionUser.preferences.substitutions') || []).forEach(function(sub) {
+          var rule_parts = sub.slice(0, -1);
+          if(rule_parts.length > 1 && utterance.matches_rule({lookback: rule_parts}, rawList, true)) {
+            var str = sub[sub.length - 1];
+            var original = rawList.slice(0 - rule_parts.length);
+            rawList = rawList.slice(0, 0 - rule_parts.length);
+            rawList.push({
+              pre_substitution: original,
+              auto_substitute: false,
+              image: original[original.length - 1].image,
+              label: str
+            });
+            _this.set('rawButtonList', rawList);
+          }
+        });
+        if(app_state.get('sessionUser.preferences.substitute_contractions')) {
+          for(var cont in i18n.substitutions.default_contractions) {
+            if(i18n.substitutions.default_contractions[cont]) {
+              var rule_parts = cont.toLowerCase().split(/\s+/);
+              if(utterance.matches_rule({lookback: rule_parts}, rawList, true)) {
+                var str = i18n.substitutions.default_contractions[cont];
+                var original = rawList.slice(0 - rule_parts.length);
+                rawList = rawList.slice(0, 0 - rule_parts.length);
+                rawList.push({
+                  pre_substitution: original,
+                  auto_substitute: false,
+                  image: original[original.length - 1].image,
+                  label: str
+                });
+                _this.set('rawButtonList', rawList);
+              }
+            }
+          }
+        } 
+      }
+      
+      
+      // Combine raw list into actual buttons/words
       for(var idx = 0; idx < rawList.length; idx++) {
         var button = rawList[idx];
+        emberSet(button, 'auto_substitute', false);
         button.raw_index = idx;
         last_append = null;
         var last = rawList[idx - 1] || {};
@@ -162,6 +206,7 @@ var utterance = EmberObject.extend({
       buttonList.forEach(function(button, idx) {
         var visualButton = EmberObject.create(button);
         visualButtonList.push(visualButton);
+        // Use cached images/sounds if available
         if(button.image && button.image.match(/^http/)) {
           visualButton.set('original_image', button.image);
           persistence.find_url(button.image, 'image').then(function(data_uri) {
@@ -225,6 +270,65 @@ var utterance = EmberObject.extend({
 
     }
   ),
+  matches_rule: function(rule, raw_buttons, prevent_expansion) {
+    var buttons = [];
+    if(raw_buttons.length == 0) { return false; }
+    raw_buttons.forEach(function(b) {
+      if(!prevent_expansion && b.pre_substitution) {
+        buttons = buttons.concat(b.pre_substitution);
+      } else {
+        buttons.push(b);
+      }
+    });
+    var history_idx = buttons.length - 1;
+    var valid = true;
+    for(var idx = rule.lookback.length - 1; idx >= 0 && valid; idx--) {
+      var item = buttons[history_idx]
+      var check = rule.lookback[idx];
+      if(typeof(check) == 'string') {
+        if(check.match(/^\(/)) {
+          check = {type: check.replace(/\(|\)/g, '')};
+        } else {
+          check = {words: [check]};
+        }
+      }
+      if(!item) { 
+        if(!check.optional) {
+          valid = false;
+        }
+      } else {
+        var label = item.label.toLowerCase();
+        var matching = false;
+        if(check.words) {
+          if(check.words.indexOf(label) != -1) {
+            matching = true;
+          }
+        } else if(check.type) {
+          if(item.part_of_speech == check.type) {
+            matching = true;
+          }
+        }
+        if(matching) {
+          if(check.match) {
+            if(!label.match(check.match)) {
+              matching = false;
+            }
+          }
+          if(check.non_match) {
+            if(label.match(check.non_match)) {
+              matching = false;
+            }
+          }  
+        }
+        if(matching) {
+          history_idx--;
+        } else if(!check.optional) {
+          valid = false;
+        }
+      }
+    }
+    return !!valid;
+  },
   process_inline_content: function(text, inline_actions) {
     var content = [];
     var loc = 0;
@@ -571,7 +675,11 @@ var utterance = EmberObject.extend({
           app_state.set('insertion.index', Math.max(-1, idx - 1));
         }
       } else {
-        list.popObject();
+        var popped = list.popObject();
+        if(popped && popped.pre_substitution) {
+          popped.pre_substitution[popped.pre_substitution.length - 1].auto_substitute = false
+          list.pushObjects(popped.pre_substitution);
+        }
       }
     } else {
       speecher.stop('all');

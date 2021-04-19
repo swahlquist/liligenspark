@@ -14,6 +14,7 @@ import progress_tracker from './progress_tracker';
 import word_suggestions from './word_suggestions';
 import i18n from './i18n';
 import { observer } from '@ember/object';
+import utterance from './utterance';
 
 var editManager = EmberObject.extend({
   setup: function(board) {
@@ -103,6 +104,55 @@ var editManager = EmberObject.extend({
       part_of_speech: button.get('part_of_speech')
     });
   },
+  parse_rules: function(str) {
+    var lines = str.split(/\n/);
+    var list = [];
+    var subs = {};
+    lines.forEach(function(line) {
+      var quotes = line.match(/\"[^\"]+\"/g);
+      var idx = 0;
+      (quotes || []).forEach(function(quote) {
+        idx++;
+        subs["sub__" + idx] = quote;
+        line.replace(quote, "sub__" + idx);
+      });
+      var parts = line.split(/=/);
+      if(parts.length == 2) {
+        var str = parts.pop();
+        var words = parts[0].split(/\s+/);
+        if(words.length > 1) {
+          words.forEach(function(w, idx) {
+            if(subs[w]) {
+              words[idx] = subs[w];
+            }
+          });
+          words.push(str);
+          list.push(words);
+        }
+      }
+    });
+    return list;
+  },
+  stringify_rules: function(obj) {
+    var lines = [];
+    obj.forEach(function(rule) {
+      var str = rule[rule.length - 1];
+      var line = rule.slice(0, -1).map(function(w) { 
+        if(w.match(/\s|\=/)) {
+          return "\"" + w + "\"";
+        } else {
+          return w;
+        }
+      }).join(" ");
+      lines.push(line + "=" + str);
+    });
+    for(var str in obj) {
+      var words = obj[str];
+      if(str && words) {
+      }
+    }
+    return lines.join("\n");
+  },
   inflection_for_types: function(history, locale) {
     if(!locale || !locale.match(/^en/) || history.length == 0) {
       return {};
@@ -114,7 +164,7 @@ var editManager = EmberObject.extend({
       //   pronoun (I, you, they, we): present (c)
       //     Y: * they always [look]
       {id: 'has_she_looked', type: 'verb', lookback: [{words: ['has', 'have', 'had', "hasn't", "haven't", "hadn't"]}, {words: ["you", "I", "he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'past_participle', location: 'sw'},
-      {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "are", "isn't", "aren't", "wasn't", "weren't", "aren't"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
+      {id: 'is_she_looking', type: 'verb', lookback: [{words: ["is", "am", "was", "were", "be", "to be", "are", "isn't", "aren't", "wasn't", "weren't", "aren't"]}, {type: 'pronoun', optional: true}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'present_participle', location: 's'},
       {id: 'you_look', type: 'verb', lookback: [{words: ["i", "you", "they", "we", "these", "those"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
       //   verb (do, does, did, can, could, will, would, may, might, must, shall, should) pronoun (he, she, it) [adverb (never, already, etc.)]: present (n)
       {id: 'does_she_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should', "don't", "doesn't", "didn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"]}, {words: ["he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
@@ -264,41 +314,41 @@ var editManager = EmberObject.extend({
     if(history.length > 0) {
       rules.forEach(function(rule) {
         if(inflections[rule.type]) { return; }
-        if(matches(rule, history)) {
+        if(utterance.matches_rule(rule, history)) {
           inflections[rule.type] = rule;
         }
       });  
       // TO BE verb overrides
-      if(matches({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["is"] = {type:'override', label: "am"};
         inflections["are"] = {type:'override', label: "am"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
         inflections["were"] = {type:'override', label: "was"};
       }
-      if(matches({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["is"] = {type:'override', label: "are"};
         inflections["am"] = {type:'override', label: "are"};
         inflections["was"] = {type:'override', label: "were"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
       }
-      if(matches({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
       }
-      if(matches({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}]}, history)) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
       }
-      if(matches({lookback: [{words: ["what"]}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["what"]}]}, history)) {
         inflections["happen"] = {type:'override', label: "happened"};
       }
-      if(matches({lookback: [{words: ["will", "won't", "can", "can't", "do", "don't"]}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["will", "won't", "can", "can't", "do", "don't"]}]}, history)) {
         inflections["am"] = {type:'override', label: "be"};
         inflections["is"] = {type:'override', label: "be"};
       }
-      if(matches({lookback: [{words: ["is", "are", "am", "be"]}]}, history)) {
+      if(utterance.matches_rule({lookback: [{words: ["is", "are", "am", "be"]}]}, history)) {
         inflections["I"] = {type:'override', label: "my"};
         inflections["done"] = {type:'override', label: "done"};
       }

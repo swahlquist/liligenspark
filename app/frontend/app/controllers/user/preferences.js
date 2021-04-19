@@ -14,6 +14,7 @@ import CoughDrop from '../../app';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
 import { htmlSafe } from '@ember/string';
+import editManager from '../../utils/edit_manager';
 
 export default Controller.extend({
   setup: function() {
@@ -300,6 +301,9 @@ export default Controller.extend({
       div.appendChild(span);
     });
     return htmlSafe(div.innerHTML);
+  }),
+  substitution_string: computed('pending_preferences.substitutions', function() {
+    return editManager.stringify_rules(this.get('pending_preferences.substitutions') || []);
   }),
   set_auto_sync: observer('model.id', 'model.auto_sync', function() {
     if(this.get('pending_preferences.device')) {
@@ -727,6 +731,7 @@ export default Controller.extend({
       if(!this.get('logging_pin')) {
         this.set('pending_preferences.logging_code', 'false');
       }
+      this.set('pending_preferences.substitutions', editManager.parse_rules(this.get('substitution_string')));
       this.set('phrase_categories_string', (this.get('pending_preferences.phrase_categories') || []).join(', '));
 
       var _this = this;
