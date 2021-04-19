@@ -664,16 +664,16 @@ footer .wide_links {
       font-family: "ArchitectsDaughter", Arial, sans-serif;
     }
     .text {
-      font-size: 14px;
+      font-size: 25px;
     }
     &.text_small .text {
-      font-size: 12px;
-    }
-    &.text_large .text {
       font-size: 20px;
     }
-    &.text_huge .text {
+    &.text_large .text {
       font-size: 30px;
+    }
+    &.text_huge .text {
+      font-size: 40px;
     }
     
     .history_button {
@@ -2160,13 +2160,28 @@ body > .popover.bottom {
 }
 .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
   visibility: visible;
-  opacity: 0.2;
+  opacity: 0.5;
   .action_container {
     visibility: visible;
   }
   .action_container .action {
     display: block;
   }
+}
+.color_black .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+  opacity: 0.7;
+}
+#overlay_container.board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+  opacity: 1.0;
+}
+.board .button.dim_button {
+  opacity: 0.5;
+}
+.color_black .board .button.dim_button {
+  opacity: 0.7;
+}
+#overlay_container.board .button.dim_button {
+  opacity: 1.0;
 }
 .board.show_all_buttons .button.hidden_button {
   visibility: visible;
