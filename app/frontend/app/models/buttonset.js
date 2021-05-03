@@ -211,7 +211,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       });
       sequences = new_sequences;
     }
-    return sequences.select(function(s) { return s.done; }).sort(function(a, b) { return b.steps - a.steps; })[0];
+    return sequences.filter(function(s) { return s.done; }).sort(function(a, b) { return b.steps - a.steps; })[0];
   },
   board_map: function(button_sets) {
     var _this = this;
