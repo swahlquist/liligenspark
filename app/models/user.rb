@@ -268,6 +268,7 @@ class User < ActiveRecord::Base
         'word_suggestion_images' => true,
         'hidden_buttons' => 'grid',
         'symbol_background' => 'clear',
+        'auto_capitalize' => true,
         'prefer_native_keyboard' => false
       },
       'authenticated_user' => {
@@ -320,6 +321,12 @@ class User < ActiveRecord::Base
     end
     if !FeatureFlags.user_created_after?(self, 'battery_sounds')
       self.settings['preferences']['battery_sounds'] = true if self.settings['preferences']['battery_sounds'] == nil
+    end
+    if !FeatureFlags.user_created_after?(self, 'auto_capitalize')
+      self.settings['preferences']['auto_capitalize'] = true if self.settings['preferences']['auto_capitalize'] == nil
+      self.settings['preferences']['devices'].each do |key, hash|
+        self.settings['preferences']['devices'][key]['utterance_text_only'] = true if self.settings['preferences']['devices'][key]['utterance_text_only'] == nil
+      end
     end
     if FeatureFlags.user_created_after?(self, 'new_index')
       self.settings['preferences']['new_index'] = true if self.settings['preferences']['new_index'] == nil
@@ -591,7 +598,7 @@ class User < ActiveRecord::Base
       'hide_pin_hint', 'battery_sounds', 'auto_inflections', 'private_logging',
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept',
       'locale', 'logging_cutoff', 'logging_permissions', 'logging_code',
-      'substitutions', 'substitute_contractions']
+      'substitutions', 'substitute_contractions', 'auto_capitalize']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
 
@@ -648,6 +655,10 @@ class User < ActiveRecord::Base
         self.settings['unread_alerts'] = 0
         self.settings['last_alert_access'] = params['last_alert_access']
       end
+    end
+    if params['focus_words'] && self.id
+      extra = UserExtra.find_or_create_by(user: self)
+      extra.process_focus_words(params['focus_words'])
     end
     if params['read_notifications']
       self.settings['user_notifications_cutoff'] = Time.now.utc.iso8601

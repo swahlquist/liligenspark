@@ -1169,8 +1169,11 @@ class Board < ActiveRecord::Base
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
-            'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 'level_modifications', 'inflections');
+            'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 
+            'level_modifications', 'inflections', 'ref_id', 'rules');
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
+      button.delete('ref_id') if button['ref_id'].blank?
+      button.delete('rules') if button['rules'].blank?
       if button['level_modifications'] && button['level_modifications']['override']
         button['level_modifications']['override'].each do |attr, val|
           button[attr] = val
@@ -1212,6 +1215,11 @@ class Board < ActiveRecord::Base
           tran['inflections'].to_a.each_with_index do |str, idx|
             self.settings['translations'][button['id'].to_s][loc]['inflections'] ||= []
             self.settings['translations'][button['id'].to_s][loc]['inflections'][idx] = str.to_s if str
+          end
+          if tran['rules'] && tran['rules'].length > 0
+            self.settings['translations'][button['id'].to_s][loc]['rules'] = tran['rules']
+          else
+            self.settings['translations'][button['id'].to_s][loc].delete('rules')
           end
           # ignore inflection_defaults, those should get re-added on their own
         end

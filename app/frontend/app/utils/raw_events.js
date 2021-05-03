@@ -1033,7 +1033,35 @@ var buttonTracker = EmberObject.extend({
             });
           }
           // different elements have different selection styles
-          if(elem_wrap.dom.id == 'identity' || elem_wrap.dom.id == 'identity_button') {
+          if(elem_wrap.dom.id == 'speak_options' && swipe_direction && buttonTracker.activation_location == 'swipe' && ['n', 's', 'e', 'w'].indexOf(swipe_direction) != -1) {
+            event.preventDefault();
+            if(swipe_direction == 'w') {
+              // comma
+              utterance.add_button({label: ",", vocalization: "+,"});
+            } else if(swipe_direction == 'e') {
+              // question
+              app_state.activate_button({vocalization: '+?'}, {
+                label: '?',
+                vocalization: '+?',
+                prevent_return: true,
+                button_id: null,
+                source: 'speak_menu',
+                board: {id: 'speak_menu', key: 'core/speak_menu'},
+                type: 'speak'
+              });
+            } else if(swipe_direction == 's') {
+              // period
+              app_state.activate_button({vocalization: '+.'}, {
+                label: '.',
+                vocalization: '+.',
+                prevent_return: true,
+                button_id: null,
+                source: 'speak_menu',
+                board: {id: 'speak_menu', key: 'core/speak_menu'},
+                type: 'speak'
+              });
+            }
+          } else if(elem_wrap.dom.id == 'identity' || elem_wrap.dom.id == 'identity_button') {
             event.preventDefault();
             // click events are eaten by our listener above, unless you
             // explicitly tell it to pass them through

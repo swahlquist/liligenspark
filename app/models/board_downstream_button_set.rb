@@ -386,6 +386,17 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           images = board_to_visit.button_images
           visited_board_ids << board_to_visit.global_id
           # add all buttons
+          trans = BoardContent.load_content(board_to_visit, 'translations') || {}
+
+          inflections = {}
+          (board_to_visit.settings['locales'] || []).each do |loc|
+            words_to_check = board_to_visit.buttons.map{|b|
+              btn = (trans[b['id'].to_s] || {})[loc] || b
+              btn['vocalization'] || btn['label']
+            }.compact
+            inflections[loc] = WordData.inflection_locations_for(words_to_check, loc, true)
+          end
+
           board_to_visit.buttons.each_with_index do |button, idx|
             image = images.detect{|i| button['image_id'] == i.global_id }
             visible_level = 1
@@ -417,6 +428,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
               'image_id' => button['image_id'],
               'sound_id' => button['sound_id'],
               'label' => button['label'],
+              'ref_id' => button['ref_id'],
               'force_vocalize' => button['add_to_vocalization'],
               'vocalization' => button['vocalization'],
               'link_disabled' => !!button['link_disabled'],
@@ -424,6 +436,35 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
               'background_color' => button['background_color'],
               'depth' => bv[:depth] || 0
             }
+            # Include translated strings in button_set data
+            (trans[button['id'].to_s] || {}).each do |loc, hash|
+              if hash['label'] || hash['vocalization']
+                button_data['tr'] ||= {}
+                button_data['tr'][loc] = [hash['label'] || '', hash['vocalization']].compact
+              end
+            end
+
+            # Include localized inflections in button_set data
+            inflections.each do |loc, hash|
+              btn = (trans[button['id'].to_s] || {})[loc] || button
+              word = btn && (hash[btn['vocalization']] || hash[btn['label']])
+              if btn || word
+                lookup = btn['inflection_defaults'] || (board_to_visit.settings['locale'] == loc && button['inflection_defaults']) || {}
+                arr = btn['inflections'] || (board_to_visit.settings['locale'] == loc && button['inflections']) || []
+                loc_hash = {'nw' => 0, 'n' => 1, 'ne' => 2, 'w' => 3, 'e' => 4, 'sw' => 5, 's' => 6, 'se' => 7};
+                lookup.each do |pt, str|
+                  arr[loc_hash[pt]] ||= str if loc_hash[pt]
+                end
+                (word || {}).each do |pt, str|
+                  arr[loc_hash[pt]] ||= str if loc_hash[pt]
+                end
+                if arr.compact.length > 0
+                  button_data['infl'] ||= {}
+                  button_data['infl'][loc] = arr.compact
+                end
+              end
+            end
+
             button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
             # check for any linked buttons
             if button['load_board'] && button['load_board']['id']

@@ -13,11 +13,10 @@ import $ from 'jquery';
 import CoughDrop from '../app';
 import { observer } from '@ember/object';
 import word_suggestions from './word_suggestions';
-import editManager from './edit_manager';
 
 var punctuation_at_start = /^\+[\.\?\,\!]/;
 var punctuation_with_space = /^\s*[\.\?\,\!]\s*$/;
-var punctuation_at_end = /[\.\?\,\!]$/;
+var punctuation_at_end = /[\.\?\,\!]\s*$/;
 var punctuation_ending_sentence = /[\.\?\!]/;
 var utterance = EmberObject.extend({
   setup: function(controller) {
@@ -65,12 +64,39 @@ var utterance = EmberObject.extend({
       
       // check user.preferences.substitutions
       if(rawList.length > 0 && rawList[rawList.length - 1].auto_substitute !== false) {
-        (app_state.get('sessionUser.preferences.substitutions') || []).forEach(function(sub) {
-          var rule_parts = sub.slice(0, -1);
-          if(rule_parts.length > 1 && utterance.matches_rule({lookback: rule_parts}, rawList, true)) {
-            var str = sub[sub.length - 1];
-            var original = rawList.slice(0 - rule_parts.length);
-            rawList = rawList.slice(0, 0 - rule_parts.length);
+        var rule = utterance.first_rules((app_state.get('sessionUser.preferences.substitutions') || []), rawList, true)[0];
+        if(rule && rule.lookback.length > 1) {
+          var str = rule.label;
+          var original = rawList.slice(0 - rule.lookback.length);
+          if(original[0].capitalized) {
+            str = utterance.capitalize(str);
+          }
+          rawList = rawList.slice(0, 0 - rule.lookback.length);
+          rawList.push({
+            pre_substitution: original,
+            auto_substitute: false,
+            capitalized: original[0].capitalized,
+            image: original[original.length - 1].image,
+            label: str
+          });
+          _this.set('rawButtonList', rawList);
+        }
+
+        if(app_state.get('sessionUser.preferences.substitute_contractions')) {
+          var rules = [];
+          for(var cont in i18n.substitutions.default_contractions) {
+            var rule_parts = cont.toLowerCase().split(/\s+/);
+            rule_parts.push(i18n.substitutions.default_contractions[cont]);
+            rules.push(rule_parts);
+          }
+          var rule = utterance.first_rules(rules, rawList, true)[0];
+          if(rule) {
+            var str = rule.label;
+            var original = rawList.slice(0 - rule.lookback.length);
+            if(original[0].capitalized) {
+              str = utterance.capitalize(str);
+            }
+            rawList = rawList.slice(0, 0 - rule.lookback.length);
             rawList.push({
               pre_substitution: original,
               auto_substitute: false,
@@ -78,25 +104,6 @@ var utterance = EmberObject.extend({
               label: str
             });
             _this.set('rawButtonList', rawList);
-          }
-        });
-        if(app_state.get('sessionUser.preferences.substitute_contractions')) {
-          for(var cont in i18n.substitutions.default_contractions) {
-            if(i18n.substitutions.default_contractions[cont]) {
-              var rule_parts = cont.toLowerCase().split(/\s+/);
-              if(utterance.matches_rule({lookback: rule_parts}, rawList, true)) {
-                var str = i18n.substitutions.default_contractions[cont];
-                var original = rawList.slice(0 - rule_parts.length);
-                rawList = rawList.slice(0, 0 - rule_parts.length);
-                rawList.push({
-                  pre_substitution: original,
-                  auto_substitute: false,
-                  image: original[original.length - 1].image,
-                  label: str
-                });
-                _this.set('rawButtonList', rawList);
-              }
-            }
           }
         } 
       }
@@ -270,6 +277,36 @@ var utterance = EmberObject.extend({
 
     }
   ),
+  first_rules: function(rules, history, prevent_expansion) {
+    var history_string = (history || []).map(function(b) { return b.label + "." + b.button_id + (b.board || {}).key}).join('_');
+    history_string = history_string + "::" + JSON.stringify(rules);
+    utterance.recent_rules = (utterance.recent_rules || []).slice(-5);
+    var match = utterance.recent_rules.find(function(r) { return r.key == history_string; });
+    if(match) { return match.result; }
+
+    var res = [];
+    var found_types = {};
+    (rules || []).forEach(function(rule) {
+      if(!rule.lookback && rule.forEach) {
+        var str = rule[rule.length - 1];
+        var rule_parts = rule.slice(0, -1);
+        rule = {
+          lookback: rule_parts.map(function(p) { return p.toLowerCase(); }),
+          type: 'substitution',
+          label: str
+        };
+      }
+      rule.type = rule.type || 'custom';
+      if(!found_types[rule.type]) {
+        if(utterance.matches_rule(rule, history, prevent_expansion)) {
+          res.push(rule);
+          found_types[rule.type] = true;
+        }
+      }
+    });
+    utterance.recent_rules.push({key: history_string, result: res});
+    return res;
+  },
   matches_rule: function(rule, raw_buttons, prevent_expansion) {
     var buttons = [];
     if(raw_buttons.length == 0) { return false; }
@@ -288,6 +325,8 @@ var utterance = EmberObject.extend({
       if(typeof(check) == 'string') {
         if(check.match(/^\(/)) {
           check = {type: check.replace(/\(|\)/g, '')};
+        } else if(check.match(/^\[/)) {
+          check = {words: check.replace(/^\[/, '').replace(/\[$/, '').split(/|/).map(function(w) { return w.replace(/^\s+/, '').replace(/\s+$/, ''); })};
         } else {
           check = {words: [check]};
         }
@@ -504,6 +543,34 @@ var utterance = EmberObject.extend({
     // add button to the raw button list
     var list = this.get('rawButtonList');
     var idx = app_state.get('insertion.index');
+    var possibly_capitalize = function(b, prior) {
+      var prior = prior || {};
+      var prior_text = prior.vocalization || prior.label || "";
+      var do_capitalize = false;
+      if(!prior_text) {
+        do_capitalize = true;
+      } else if(app_state.get('shift')) {
+        do_capitalize = true;
+      } else if(prior_text.match(punctuation_ending_sentence)) {
+        if(!button.unshifted) {
+          var do_capitalize = false;
+          var parts = prior_text.split(/\s*&&\s*/);
+          parts.forEach(function(part) {
+            if(part.match(punctuation_ending_sentence) && part.match(punctuation_at_end)) {
+              do_capitalize = true;
+            }
+          });
+        }
+      }
+      if(do_capitalize && app_state.get('shift') !== false && app_state.get('sessionUser.preference.auto_capitalize') !== false) {
+        if(b.vocalization) {
+          b.vocalization = utterance.capitalize(b.vocalization);
+        }
+        b.label = utterance.capitalize(b.label);
+        b.capitalized = true;
+      }
+      return do_capitalize;
+    }
     if(app_state.get('insertion') && isFinite(idx)) {
       // insertion.index is for the visual list, which has 
       // different items than the raw list
@@ -513,18 +580,29 @@ var utterance = EmberObject.extend({
         if(button.modifications) {
           raw_index = button.modifications[button.modifications.length - 1].raw_index || (raw_index + button.modifications.length);
         }
+        possibly_capitalize(b, list[raw_index]);
         list.insertAt(raw_index + 1, b);
       }
       if(!b.specialty_with_modifiers) {
         app_state.set('insertion.index', Math.min(list.length - 1, idx + 1));
       }
     } else {
+      possibly_capitalize(b, list[list.length - 1]);
       list.pushObject(b);
     }
+    app_state.set('shift', null);
     this.set('list_vocalized', false);
     // retrieve the correct result from the now-updated button list
     // should return whatever it is the vocalization is supposed to say
     return utterance.get('last_spoken_button');
+  },
+  capitalize: function(str) {
+    if(str.match(/^\+/)) {
+      return '+' + str.charAt(1).toUpperCase() + str.slice(2);
+    } else {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
   },
   speak_button: function(button) {
     var alt_voice = speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_buttons === true;
@@ -649,6 +727,7 @@ var utterance = EmberObject.extend({
     if(!opts.auto_cleared) {
       speecher.stop('all');
     }
+    app_state.set('shift', null);
     app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
@@ -688,6 +767,7 @@ var utterance = EmberObject.extend({
       action: 'backspace',
       button_triggered: opts.button_triggered
     });
+    app_state.set('shift', null);
     app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
