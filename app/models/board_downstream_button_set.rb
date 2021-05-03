@@ -394,7 +394,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
               btn = (trans[b['id'].to_s] || {})[loc] || b
               btn['vocalization'] || btn['label']
             }.compact
-            inflections[loc] = WordData.inflection_locations_for(words_to_check, loc, true)
+            inflections[loc] = WordData.inflection_locations_for(words_to_check, loc)
           end
 
           board_to_visit.buttons.each_with_index do |button, idx|
