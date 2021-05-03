@@ -307,7 +307,10 @@ More information about the file formats being used is available at https://www.o
           dest_id = event['action']['new_id']['id']
           # TODO: record the missing board id when saving the log rather than when 
           # generating the log file for better accuracy
-          dest_id ||= Board.where(key: event['action']['new_id']['key']).select('id').first.global_id if event['action']['new_id']['key']
+          if event['action']['new_id']['key'] && !dest_id
+            brd = Board.where(key: event['action']['new_id']['key']).select('id').first
+            dest_id = brd.global_id if brd
+          end
           e['destination_board_id'] = anon(dest_id) if dest_id
         end
       elsif event['type'] == 'utterance'

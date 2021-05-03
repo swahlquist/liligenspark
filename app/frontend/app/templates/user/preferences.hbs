@@ -112,6 +112,12 @@
       {{/if}}
     </div>
     <div class="form-group">
+      <label for="dim_level" class="col-sm-3 control-label">{{t "Dimmed Button Brigthness" key='dim_level'}}</label>
+      <div class="col-sm-5">
+        {{bound-select select_class="form-control" select_id="dim_level" content=dimLevelList selection=pending_preferences.dim_level action=(action (mut pending_preferences.dim_level)) }}
+      </div>
+    </div>
+    <div class="form-group">
       <label for="blank_status" class="col-sm-3 control-label">{{t "Status" key='status'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">

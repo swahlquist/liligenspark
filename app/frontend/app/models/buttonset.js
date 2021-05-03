@@ -211,7 +211,7 @@ CoughDrop.Buttonset = DS.Model.extend({
       });
       sequences = new_sequences;
     }
-    return sequences.sort(function(a, b) { return b.steps - a.steps; })[0];
+    return sequences.select(function(s) { return s.done; }).sort(function(a, b) { return b.steps - a.steps; })[0];
   },
   board_map: function(button_sets) {
     var _this = this;
@@ -683,17 +683,38 @@ CoughDrop.Buttonset = DS.Model.extend({
       hash['missing'] = [];
       hash['found'] = [];
       var already = {};
+      var found_strings = {};
+      var board_id_votes = {};
+      sets.found.forEach(function(btn) {
+        board_id_votes[btn.board_id] = (board_id_votes[btn.board_id] || 0) + 1;
+      });
       sets.found.forEach(function(btn) {
         var word = btn.str.toLowerCase();
         if(!already[word]) {
           already[word] = true;
         }
-        var min = null;
+        var min_steps = null;
+        var max_votes = 0;
         var best = null;
+        var all_steps = [];
         (found_words[word] || []).forEach(function(btn) {
+          votes = board_id_votes[btn.board_id] || 0;
           var steps = _this.button_steps(from_board_id, btn.board_id, map, from_board_id, null);
-          if(min == null || steps.steps < min) {
-            min = steps.steps;
+          all_steps.push(steps);
+          var do_update = false;
+          if(min_steps == null) {
+            do_update = true;
+          } else if(votes > max_votes && steps.steps < min_steps + 2) {
+            do_update = true;
+          } else if(votes >= max_votes && steps.steps < min_steps + 2) {
+          } else if(votes == max_votes && steps.steps < min_steps) {
+            do_update = true;
+          } else if(steps.steps < min_steps && votes > max_votes - (min_steps - steps.steps)) {
+            do_update = true;
+          }
+          if(do_update) {
+            min_steps = steps.steps;
+            max_votes = votes;
             best = btn;
             best.sequence = steps;
           }
@@ -706,8 +727,11 @@ CoughDrop.Buttonset = DS.Model.extend({
                 emberSet(btn, 'focus_image', data_uri);
               }, function() { });
             }
-          })
-          hash['found'].push(best);
+          });
+          if(!found_strings[word]) {
+            found_strings[word] = true;
+            hash['found'].push(best);
+          }
         }
       });
       words.forEach(function(word) {

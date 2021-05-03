@@ -2179,18 +2179,93 @@ body > .popover.bottom {
   .action_container .action {
     display: block;
   }
-}
-.color_black .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
-  opacity: 0.7;
-}
-#overlay_container.board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
-  opacity: 1.0;
+  &.dim_button {
+    opacity: 0.4;
+  }
 }
 .board .button.dim_button {
-  opacity: 0.4;
-}
-.color_black .board .button.dim_button {
   opacity: 0.5;
+}
+.color_black {
+  .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+    opacity: 0.7;    
+    &.dim_button {
+      opacity: 0.6;
+    }
+  }
+  .board .button.dim_button {
+    opacity: 0.7;
+  }
+}
+.barely_dim {
+  .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+    opacity: 0.7;
+    &.dim_button {
+      opacity: 0.6;
+    }
+  }
+  .board .button.dim_button {
+    opacity: 0.7;
+  }
+  &.color_black {
+    .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+      opacity: 0.85;    
+      &.dim_button {
+        opacity: 0.75;
+      }
+    }
+    .board .button.dim_button {
+      opacity: 0.85;
+    }      
+  }
+}
+.semi_dim {
+  .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+    opacity: 0.6;
+    &.dim_button {
+      opacity: 0.5;
+    }  
+  }
+  .board .button.dim_button {
+    opacity: 0.6;
+  }
+  &.color_black {
+    .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+      opacity: 0.8; 
+      &.dim_button {
+        opacity: 0.7;
+      }       
+    }
+    .board .button.dim_button {
+      opacity: 0.8;
+    }      
+  }
+}
+.extra_dim {
+  .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+    opacity: 0.3;
+    &.dim_button {
+      opacity: 0.2;
+    }  
+  }
+  .board .button.dim_button {
+    opacity: 0.3;
+  }
+  &.color_black {
+    .board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+      opacity: 0.5;    
+      &.dim_button {
+        opacity: 0.4;
+      }    
+    }
+    .board .button.dim_button {
+      opacity: 0.5;
+    }      
+  }
+}
+
+#overlay_container.board.hint_hidden_buttons:not(.edit):not(.show_all_buttons) .button.hidden_button {
+  opacity: 1.0;
 }
 #overlay_container.board .button.dim_button {
   opacity: 1.0;

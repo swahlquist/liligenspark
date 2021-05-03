@@ -598,7 +598,7 @@ class User < ActiveRecord::Base
       'hide_pin_hint', 'battery_sounds', 'auto_inflections', 'private_logging',
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept',
       'locale', 'logging_cutoff', 'logging_permissions', 'logging_code',
-      'substitutions', 'substitute_contractions', 'auto_capitalize']
+      'substitutions', 'substitute_contractions', 'auto_capitalize', 'dim_level']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
 

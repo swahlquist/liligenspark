@@ -65,6 +65,12 @@ export default Controller.extend({
     {name: i18n.t('show_dim', "Show as Dimmed Out"), id: "hint"},
     {name: i18n.t('hide_complete', "Hide Completely"), id: "hide"}
   ],
+  dimLevelList: [
+    {name: i18n.t('default_dimmed', "Default Dimmed"), id: "default_dim"},
+    {name: i18n.t('barely_dimmed', "Barely Dimmed"), id: "barely_dim"},
+    {name: i18n.t('semi_dimmed', "Semi-Dimmed"), id: "semi_dim"},
+    {name: i18n.t('extra_dimmed', "Extra-Dimmed"), id: "extra_dim"},
+  ],
   externalLinksList: [
     {name: i18n.t('allow_external_buttons', "Allow Opening Externally-Linked Buttons"), id: "allow"},
     {name: i18n.t('confirm_custom_external_buttons', "Confirm Before Opening Unrecognized Externally-Linked Buttons"), id: "confirm_custom"},

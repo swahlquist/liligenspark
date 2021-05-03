@@ -1148,6 +1148,9 @@ export default Controller.extend({
           if(color == '#000') { color = 'black'; }
           res = res + "color_" + color;
         }
+        if(app_state.get('currentUser.preferences.dim_level')) {
+          res = res + " " + app_state.get('currentUser.preferences.dim_level');
+        }
         if(app_state.get('currentUser.preferences.dim_header')) {
           res = res + " dim_sides";
         }
