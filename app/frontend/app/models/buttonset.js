@@ -248,7 +248,7 @@ CoughDrop.Buttonset = DS.Model.extend({
         }
       });
     });
-    var result = {buttons: buttons, map: board_map};
+    var result = {buttons: buttons, map: board_map, all_buttons: all_buttons};
     _this.last_board_map = {
       list: button_sets,
       result: result

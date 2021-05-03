@@ -385,15 +385,19 @@ CoughDrop.Board = DS.Model.extend({
                     }
                   }
                   for(var id in hash) {
-                    board_ids[id] = hash[id];
+                    if(id != 'missing' && id != 'found') {
+                      board_ids[id] = hash[id];
+                    }
                   }
                   if(app_state.get('focus_words')) {
                     app_state.set('focus_words.pending', false);
                     app_state.set('focus_words.board_ids', board_ids);
                     // force re-render
-                    runLater(function() {
-                      _this.set('focus_id', Math.random());
-                    });
+                    if(board_ids[_this.get('id')]) {
+                      runLater(function() {
+                        _this.set('focus_id', Math.random());
+                      });  
+                    }
                   }
                 }, function() {
                   if(app_state.get('focus_words')) {
