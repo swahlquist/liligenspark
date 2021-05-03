@@ -269,8 +269,11 @@ export default Controller.extend({
   computeHeight: observer(
     'app_state.speak_mode',
     'app_state.edit_mode',
+    'app_state.revision_id',
+    'app_state.focus_words.list',
     'model.word_suggestions',
     'model.description',
+    'model.focus_id',
     'app_state.sidebar_pinned',
     'app_state.sidebar_visible',
     'long_description',
@@ -345,6 +348,9 @@ export default Controller.extend({
         app_state.set('suggestion_id', null);
         this.set('model.fast_html', null);
         editManager.process_for_displaying();
+        runLater(function() {
+          app_state.refresh_suggestions();
+        });
       }
     }
   ),

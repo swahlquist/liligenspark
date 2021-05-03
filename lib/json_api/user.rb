@@ -147,6 +147,7 @@ module JsonApi::User
       if extra && !args[:paginated]
         tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
         json['board_tags'] = tags if !tags.blank?
+        json['focus_words'] = extra.active_focus_words
       end
       
       supervisors = user.supervisors

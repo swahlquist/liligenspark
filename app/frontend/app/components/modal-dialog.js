@@ -94,8 +94,12 @@ export default Component.extend({
         return this.sendAction();
       }
     },
-    any_select: function() {
-      modal.cancel_auto_close();
+    any_select: function(e) {
+      if(e && e.type == 'select' && e.target && e.target.closest('.auto_focus') != null) {
+        // auto-focus should not disable inactivity_timeout
+      } else {
+        modal.cancel_auto_close();
+      }
     }
   }
 });

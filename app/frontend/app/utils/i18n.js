@@ -211,12 +211,14 @@ var i18n = EmberObject.extend({
     this._super();
     for(var idx in this.substitutions) {
       var replaces = {};
-      for(var jdx in this.substitutions[idx]) {
-        for(var kdx in this.substitutions[idx][jdx]) {
-          replaces[kdx] = jdx;
+      if(idx != 'contractions') {
+        for(var jdx in this.substitutions[idx]) {
+          for(var kdx in this.substitutions[idx][jdx]) {
+            replaces[kdx] = jdx;
+          }
         }
+        this.substitutions[idx].replacements = replaces;  
       }
-      this.substitutions[idx].replacements = replaces;
     }
   },
   t: function(key, str, options) {
@@ -808,7 +810,6 @@ var i18n = EmberObject.extend({
       "there is": "there's",
       "here is": "here's",
       "is not": "isn't",
-      "are not": "aren't",
       "was not": "wasn't",
       "were not": "weren't",
       "do not": "don't",
@@ -824,6 +825,35 @@ var i18n = EmberObject.extend({
       "are not": "aren't",
     },
     contractions: {
+      "is not": "isn't",
+      "are not": "aren't",
+      "was not": "wasn't",
+      "were not": "weren't",
+      "do not": "don't",
+      "does not": "doesn't",
+      "did not": "didn't",
+      "have not": "haven't",
+      "has not": "hasn't",
+      "had not": "hadn't",
+      "can not": "can't",
+      "could not": "couldn't",
+      "will not": "won't",
+      "would not": "wouldn't",
+      "should not": "shouldn't",
+      "I am": "I'm",
+      "you are": "you're",
+      "we are": "we're",
+      "he is": "he's",
+      "she is": "she's",
+      "they are": "they're",
+      "it is": "it's",
+      "who is": "who's",
+      "what is": "what's",
+      "when is": "when's",
+      "where is": "where's",
+      "why is": "why's",
+      "how is": "how's",
+      "which is": "which's",
       "I will": "I'll",
       "you will": "you'll",
       "we will": "we'll",
@@ -852,20 +882,6 @@ var i18n = EmberObject.extend({
       "she had": "she'd",
       "they had": "they'd",
       "it had": "it'd",
-      "I am": "I'm",
-      "you are": "you're",
-      "we are": "we're",
-      "he is": "he's",
-      "she is": "she's",
-      "they are": "they're",
-      "it is": "it's",
-      "who is": "who's",
-      "what is": "what's",
-      "when is": "when's",
-      "where is": "where's",
-      "why is": "why's",
-      "how is": "how's",
-      "which is": "which's",
       "who are": "who're",
       "what are": "what're",
       "when are": "when're",
@@ -904,22 +920,6 @@ var i18n = EmberObject.extend({
       "that is": "that's",
       "there is": "there's",
       "here is": "here's",
-      "is not": "isn't",
-      "are not": "aren't",
-      "was not": "wasn't",
-      "were not": "weren't",
-      "do not": "don't",
-      "does not": "doesn't",
-      "did not": "didn't",
-      "have not": "haven't",
-      "has not": "hasn't",
-      "had not": "hadn't",
-      "can not": "can't",
-      "could not": "couldn't",
-      "will not": "won't",
-      "would not": "wouldn't",
-      "should not": "shouldn't",
-      "are not": "aren't",
       "somebody is": "somebody's",
       "everybody is": "everybody's",
       "anybody is": "anybody's",

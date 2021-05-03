@@ -1255,6 +1255,15 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':shift',
+      description: i18n.t('toggle_shift', "Toggle Shift State (capitalization)"),
+      trigger: function() {
+        app_state.set('shift', !app_state.get('shift'));
+        app_state.set('suggestion_id', null);
+        app_state.refresh_suggestions();
+      }
+    },
+    {
       action: ':space',
       completion: true,
       trigger: function() {

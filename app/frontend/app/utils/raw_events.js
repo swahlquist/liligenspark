@@ -11,6 +11,7 @@ import capabilities from './capabilities';
 import app_state from './app_state';
 import scanner from './scanner';
 import stashes from './_stashes';
+import utterance from './utterance';
 import frame_listener from './frame_listener';
 
 // gotchas:

@@ -97,6 +97,7 @@ Router.map(function() {
     this.route('badges');
     this.route('device');
     this.route('history');
+    this.route('focus');
     this.route('confirm_registration', { path: '/confirm_registration/:code' });
     this.route('password_reset', { path: '/password_reset/:code' });
   });

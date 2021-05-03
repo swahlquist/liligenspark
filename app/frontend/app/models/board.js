@@ -24,6 +24,7 @@ import { htmlSafe } from '@ember/string';
 import progress_tracker from '../utils/progress_tracker';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import utterance from '../utils/utterance';
 
 CoughDrop.Board = DS.Model.extend({
   didLoad: function() {
@@ -352,6 +353,7 @@ CoughDrop.Board = DS.Model.extend({
   },
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
+    var _this = this;
     if(label_locale) {
       var trans = this.get('translations') || {};
       trans.board_name = trans.board_name || {};
@@ -362,8 +364,91 @@ CoughDrop.Board = DS.Model.extend({
     }
     if(app_state.get('speak_mode')) {
       if(label_locale == vocalization_locale) {
+        if(app_state.get('focus_words')) {
+          var ids = app_state.get('focus_words.board_ids') || {};
+          if(app_state.get('focus_words.user_id') == app_state.get('sessionUser.id') && ids[_this.get('id')]) {
+            var active_button_ids = {};
+            ids[_this.get('id')].forEach(function(btn) { active_button_ids[btn.id.toString()] = true; });
+            res.forEach(function(button) {
+              button.dim = !active_button_ids[button.id.toString()];
+            });
+          } else {
+            if(!app_state.get('focus_words.pending')) {
+              app_state.set('focus_words.pending', true);
+              _this.load_button_set().then(function(set) {
+                set.find_routes(app_state.get('focus_words.list'), label_locale, _this.get('id'), app_state.get('sessionUser')).then(function(hash) {
+                  var board_ids = app_state.get('focus_words.board_ids');
+                  if(app_state.get('focus_words.user_id') != app_state.get('sessionUser.id')) {
+                    board_ids = {};
+                    if(app_state.get('focus_words')) {
+                      app_state.set('focus_words.user_id', app_state.get('sessionUser.id'));
+                    }
+                  }
+                  for(var id in hash) {
+                    board_ids[id] = hash[id];
+                  }
+                  if(app_state.get('focus_words')) {
+                    app_state.set('focus_words.pending', false);
+                    app_state.set('focus_words.board_ids', board_ids);
+                    // force re-render
+                    runLater(function() {
+                      _this.set('focus_id', Math.random());
+                    });
+                  }
+                }, function() {
+                  if(app_state.get('focus_words')) {
+                    app_state.set('focus_words.pending', false);
+                  }
+                });
+              }, function() {
+                if(app_state.get('focus_words')) {
+                  app_state.set('focus_words.pending', false);
+                }
+              });  
+            }
+          }
+        }
         if(app_state.get('referenced_user.preferences.auto_inflections')) {
           var inflection_types = editManager.inflection_for_types(history || [], label_locale);
+
+          res.forEach(function(button) {
+            var rules = (label_locale && (trans[label_locale] || {}).rules) || button.rules || [];
+            var already_replaced = false;
+            if(rules.length > 0 && !already_replaced) {
+              var rule = utterance.first_rules(rules, history, true)[0];
+              if(rule) {
+                if(rule.label.match(/^:/)) {
+                  var ref_id = rule.label.slice(1);
+                  // load button set, look for ref_id
+                  if(_this.get('button_set')) {
+                    var buttons = _this.get('button_set').redepth(_this.get('id'));
+                    var match = buttons.find(function(b) { return b.ref_id == ref_id; });
+                    if(match) {
+                      var urls = _this.get('image_urls') || {};
+                      // try to find cache of image
+                      if(!urls[match.image_id]) {
+                        urls[match.image_id] = match.image;
+                        persistence.find_url(match.image, 'image').then(function(data_uri) {
+                          urls[match.image_id] = data_uri;
+                        });  
+                      }
+                      inflection_types["btn" + button.id] = {
+                        label: match.label,
+                        image: match.image,
+                        image_id: match.image_id,
+                        board_id: match.linked_board_id,
+                        board_key: match.linked_board_key
+                      };
+                    }
+                  }
+                } else {
+                  inflection_types["btn" + button.id] = {label: rule.label, image: false};
+                }
+                already_replaced = true;
+              }
+            }  
+          });
+            
           res = editManager.update_inflections(res, inflection_types);
         }
       }
@@ -929,14 +1014,28 @@ CoughDrop.Board = DS.Model.extend({
   },
   load_real_time_inflections: function() {
     var history = stashes.get('working_vocalization') || [];
+    // TODO: update inflections for linked buttons as well
+    // for load_board settings add a new option to support inflections
     var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
     var _this = this;
+    var trans = this.get('translations') || {};
+    var loc = app_state.get('label_locale') == app_state.get('vocalization_locale') ? app_state.get('label_locale') : null;
     buttons.forEach(function(button) {
-      if(button.tweaked) {
-        console.log("CHANGE BUTTON", button);
+      var cap = app_state.get('shift');
+      if((button.vocalization || '').match(/^:/)) {
+      } else if(button.tweaked) {
+        var str = (history.length == 0 ? button.original_label : button.label);
+        if(cap) {
+          str = utterance.capitalize(str);
+        }
         _this.update_suggestion_button(button, {
           temporary: true,
-          word: (history.length == 0 ? button.original_label : button.label)
+          word: str
+        });
+      } else if(cap) {
+        _this.update_suggestion_button(button, {
+          temporary: true,
+          word: utterance.capitalize(button.label)
         });
       }
     });
@@ -1001,6 +1100,9 @@ CoughDrop.Board = DS.Model.extend({
       if(last_button && !last_button.modified && act && act.types.indexOf(last_button.part_of_speech) != -1 && act.alter) {
         var res = {};
         act.alter(null, last_button.label, last_button.label, res);
+        if(app_state.get('shift')) {
+          res.label = utterance.capitalize(res.label);
+        }
         _this.update_suggestion_button(infl, {word: res.label, temporary: true});
       }
     });
@@ -1016,6 +1118,10 @@ CoughDrop.Board = DS.Model.extend({
       (result || []).forEach(function(sugg, idx) {
         if(suggested_buttons[idx]) {
           var suggestion_button = suggested_buttons[idx];
+          if(sugg.word && app_state.get('shift')) {
+            sugg = $.extend({}, sugg);
+            sugg.word = utterance.capitalize(sugg.word);
+          }
           _this.update_suggestion_button(suggestion_button, sugg);
           sugg.image_update = function() {
             persistence.find_url(sugg.image, 'image').then(function(data_uri) {

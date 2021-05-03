@@ -9,6 +9,7 @@ import { set as emberSet } from '@ember/object';
 import capabilities from '../utils/capabilities';
 import CoughDrop from '../app';
 import { computed } from '@ember/object';
+import i18n from '../utils/i18n';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -24,9 +25,11 @@ export default modal.ModalController.extend({
       });
     }
     this.set('model', {});
+    this.set('punctuation_menu', false);
     this.set('repeat_menu', false);
     this.set('rememberedUtterances', utterances.slice(0, 7));
     var height = app_state.get('header_height');
+    $("#speak_menu").closest(".modal-dialog").css('top', (height - 40) + 'px');
     runLater(function() {
       $("#speak_menu").closest(".modal-dialog").css('top', (height - 40) + 'px');
     }, 100);
@@ -41,6 +44,29 @@ export default modal.ModalController.extend({
   working_vocalization_text: computed('stashes.working_vocalization', function() {
     var buttons = stashes.get('working_vocalization') || [{label: "no text"}];
     return buttons.map(function(b) { return b.label; }).join(" ");
+  }),
+  contraction: computed('working_vocalization_text', function() {
+    var buttons = app_state.get('button_list').slice(-2);
+    var str_2 = buttons.map(function(b) { return b.label; }).join(' ');
+    var str_1 = buttons[buttons.length - 1].label;
+    var res = null;
+    for(var words in i18n.substitutions.contractions) {
+      if(!res) {
+        var words_minus_last = words.split(/\s+/).slice(0, -1).join(' ');
+        if(words.length > 0 && str_2 == words) {
+          res = {lookback: words.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+        } else if(words_minus_last.length > 0 && str_1 == words_minus_last) {
+          res = {lookback: words_minus_last.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+        }
+      }
+    }
+    if(!res) {
+      var last = buttons.slice(-1)[0];
+      if(last && last.part_of_speech == 'noun') {
+        res = {lookback: 1, label: last.label + "'s"};
+      }
+    }
+    return res || {clearback: 0, label: "don't"};
   }),
   actions: {
     selectButton: function(button) {
@@ -109,7 +135,7 @@ export default modal.ModalController.extend({
             capabilities.vibrate();
           }
         };
-        if(button != 'menu_repeat_button') {
+        if(button != 'menu_repeat_button' && button != 'menu_punctuation_button') {
           modal.close(true);
         }
         if(button == 'menu_share_button') {
@@ -156,6 +182,73 @@ export default modal.ModalController.extend({
           click();
         } else if(button == 'menu_repair_button') {
           modal.open('modals/repairs', {inactivity_timeout: true, scannable: true});
+          click();
+        } else if(button == 'menu_contraction_button') {
+          var contraction = this.get('contraction');
+          var rawList = utterance.get('rawButtonList');
+          var to_remove = [];
+          if(contraction.lookback > 0) {
+            var buttons = app_state.get('button_list').slice(0 - contraction.lookback);
+            var last = buttons[buttons.length - 1] || {};
+            last = last.modifications ? (last.modifications[last.modifications.length - 1].raw_index) : last.raw_index;
+            var first = buttons[0] || {};
+            first = first.modifications ? (first.modifications[0].raw_index) : first.raw_index;
+            var count  =  (last - first) + 1;
+            to_remove = rawList.slice(0 - count);
+            rawList = rawList.slice(0, 0 - count);
+            utterance.set('rawButtonList', rawList);
+          }
+          app_state.activate_button({label: contraction.label}, {
+            label: contraction.label,
+            prevent_return: true,
+            button_id: null,
+            pre_substitution: to_remove,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
+        } else if(button == 'menu_quote_button') {
+          utterance.add_button({label: "\"", vocalization: "+\""});
+          click();
+        } else if(button == 'menu_colon_button') {
+          utterance.add_button({label: ":", vocalization: "+: "});
+          click();
+        } else if(button == 'menu_exclamation_button') {
+          app_state.activate_button({vocalization: '+!'}, {
+            label: '!',
+            vocalization: '+!',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
+        } else if(button == 'menu_comma_button') {
+          utterance.add_button({label: ",", vocalization: "+,"});
+          click();
+        } else if(button == 'menu_question_button') {
+          app_state.activate_button({vocalization: '+?'}, {
+            label: '?',
+            vocalization: '+?',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
+        } else if(button == 'menu_period_button') {
+          app_state.activate_button({vocalization: '+.'}, {
+            label: '.',
+            vocalization: '+.',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
+        } else if(button == 'menu_punctuation_button') {
+          this.set('ref', Math.random());
+          this.set('punctuation_menu', !this.get('punctuation_menu'));
           click();
         } else {
           console.error("unrecognized button", button);

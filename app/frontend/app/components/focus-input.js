@@ -6,6 +6,7 @@ import { observer } from '@ember/object';
 export default TextField.extend({
   becomeFocused: function() {
     if(!capabilities.mobile || this.get('force')) {
+      this.element.classList.add('auto_focus');
       $(this.element).focus().select();
     }
   }.on('didInsertElement'),

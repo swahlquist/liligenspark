@@ -18,6 +18,7 @@ import Button from '../utils/button';
 import Utils from '../utils/misc';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -152,6 +153,9 @@ export default modal.ModalController.extend({
         this.set('model.inflections', null);
       }
     }
+    if(this.get('rules_string')) {
+      this.set('model.rules', editManager.parse_rules(this.get('rules_string')));
+    }
     if(this.get('model.translations')) {
       this.get('model.translations').forEach(function(trans) {
         var hash = emberGet(trans, 'inflections_hash');
@@ -170,6 +174,10 @@ export default modal.ModalController.extend({
             emberSet(trans, 'inflections', null);
           }
         }
+        if(emberGet(trans, 'rules_string')) {
+          emberSet(trans, 'rules', editManager.parse_rules(emberGet(trans, 'rules_string')));
+        }
+        delete trans['rules_string'];
         delete trans['inflections_hash'];
         delete trans['inflections_suggestions'];
       });
@@ -325,11 +333,6 @@ export default modal.ModalController.extend({
         inflections[grid_map[idx]] = str;
       }
     });
-    // (this.get('model.inflection_defaults') || {}).forEach(function(str, idx) {
-    //   if(str && grid_map[idx]) {
-    //     inflection_defaults[grid_map[idx]] = str;
-    //   }
-    // });
     if(this.get('model.translations')) {
       this.get('model.translations').forEach(function(trans) {
         var i = {}, id = {};
@@ -344,18 +347,13 @@ export default modal.ModalController.extend({
             }
           });
         }
-        // if(trans.inflection_defaults) {
-        //   trans.inflection_defaults.forEach(function(str, idx) {
-        //     if(str && grid_map[idx]) {
-        //       id[grid_map[idx]] = str;
-        //     }
-        //   });
-        // }
         emberSet(trans, 'inflections_hash', i);
+        emberSet(trans, 'rules_string', editManager.stringify_rules(trans.rules));
         emberSet(trans, 'inflections_suggestions', id);
       });
     }
     this.set('inflections_hash', inflections);
+    this.set('rules_string', editManager.stringify_rules(this.get('model.rules')));
     this.set('inflections_suggestions', inflection_defaults);
   },
   update_integration: observer('integration_id', 'user_integrations', function() {
@@ -485,6 +483,9 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('my_starred_boards', "My Liked Boards"), id: 'personal_starred'});
     }
     return res;
+  }),
+  inflection_overrides_placeholder: computed(function() {
+    return htmlSafe(i18n.t('inflection_overrides_examples', "any inflection overrides, such as:\nI want=something\nhe (verb)=:pointer_id\nI [like|hate]=:favorites_link"));
   }),
   webcam_unavailable: computed(function() {
     return !contentGrabbers.pictureGrabber.webcam_available();

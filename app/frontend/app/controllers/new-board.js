@@ -127,43 +127,53 @@ export default modal.ModalController.extend({
       this.set('core_lists', i18n.get('core_words'));
       this.set('core_words', i18n.core_words_map());
     },
+    speech_content: function(str) {
+      this.send('add_recorded_word', str);
+    },
+    speech_error: function(err) {
+      this.set('speech.ready', false);
+    },
+    speech_stop: function() {
+      this.set('speech.ready', false);
+    },
     record_words: function() {
       var speech = this.get('speech');
       var _this = this;
-      if(speech && speech.engine) {
-        speech.engine.onresult = function(event) {
-          var result = event.results[event.resultIndex];
-          if(result && result[0] && result[0].transcript) {
-            var text = result[0].transcript.replace(/^\s+/, '');
-            _this.send('add_recorded_word', text);
-          }
-        };
-        speech.engine.onaudiostart = function(event) {
-          if(_this.get('speech')) {
-            _this.set('speech.recording', true);
-          }
-        };
-        speech.engine.onend = function(event) {
-          console.log("you are done talking");
-          if(_this.get('speech') && _this.get('speech.resume')) {
-            _this.set('speech.resume', false);
-            speech.engine.start();
-          }
-        };
-        speech.engine.onsoundstart = function() {
-          console.log('sound!');
-        };
-        speech.engine.onsoundend = function() {
-          console.log('no more sound...');
-        };
-        speech.engine.start();
-        if(this.get('speech')) {
-          this.set('speech.almost_recording', true);
-          this.set('speech.words', []);
-          this.set('core_lists', null);
-          this.set('core_words', null);
-        }
-      }
+      this.set('speech.ready', true);
+      // if(speech && speech.engine) {
+      //   speech.engine.onresult = function(event) {
+      //     var result = event.results[event.resultIndex];
+      //     if(result && result[0] && result[0].transcript) {
+      //       var text = result[0].transcript.replace(/^\s+/, '');
+      //       _this.send('add_recorded_word', text);
+      //     }
+      //   };
+      //   speech.engine.onaudiostart = function(event) {
+      //     if(_this.get('speech')) {
+      //       _this.set('speech.recording', true);
+      //     }
+      //   };
+      //   speech.engine.onend = function(event) {
+      //     console.log("you are done talking");
+      //     if(_this.get('speech') && _this.get('speech.resume')) {
+      //       _this.set('speech.resume', false);
+      //       speech.engine.start();
+      //     }
+      //   };
+      //   speech.engine.onsoundstart = function() {
+      //     console.log('sound!');
+      //   };
+      //   speech.engine.onsoundend = function() {
+      //     console.log('no more sound...');
+      //   };
+      //   speech.engine.start();
+      //   if(this.get('speech')) {
+      //     this.set('speech.almost_recording', true);
+      //     this.set('speech.words', []);
+      //     this.set('core_lists', null);
+      //     this.set('core_words', null);
+      //   }
+      // }
     },
     stop_recording: function() {
       if(this.get('speech') && this.get('speech.engine')) {
@@ -172,14 +182,13 @@ export default modal.ModalController.extend({
       }
       if(this.get('speech')) {
         this.set('speech.recording', false);
+        this.set('speech.ready', false);
         this.set('speech.almost_recording', false);
       }
     },
     next_word: function() {
       if(this.get('speech') && this.get('speech.engine')) {
-        var _this = this;
-        this.set('speech.resume', true);
-        this.get('speech.engine').stop();
+        this.set('speech.stop_and_resume', true);
       }
     },
     remove_word: function(id) {

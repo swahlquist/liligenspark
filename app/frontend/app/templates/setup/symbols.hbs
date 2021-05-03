@@ -220,4 +220,71 @@
     {{/if}}
   </div>
 </div>
+<div class='row'>
+  <div class='col-sm-5 col-sm-offset-1'>
+    <div class='setup_setting'>
+      <label>{{t "How do you want to see words combined?" key='utterance_layout'}}</label>
+      <div class="btn-group-vertical" style="width: 100%;">
+        <a href="#" class={{if utterance_layout.text_only 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.utterance_text_only' true}} >{{t "Show word text in combined sentences" key='show_words'}}</a>
+        <a href="#" class={{if utterance_layout.text_with_symbols 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.utterance_text_only' false}} >{{t "Show each button with symbols" key='show_symbols'}}</a>
+      </div>
+    </div>
+  </div>
+  <div class='col-sm-5' style='padding-top: 50px;'>
+    <div style='width: 70px; height: 100px; border-radius: 10px; border: 3px solid #888; text-align: center; margin-right: 5px; float: left; background: #fff; font-size: 40px; padding-top: 24px; color: #777;'>
+      <span class='glyphicon glyphicon-home'></span>
+    </div>
+    <div style='width: calc(100% - 150px); height: 100px; border-radius: 10px; border: 3px solid #888; text-align: left; padding: 10px 20px; margin: 0 auto; background-color:#fff; float: left; overflow: hidden;'>
+      {{#if utterance_layout.text_only}}
+        This is what the sentence box will look like
+      {{else}}
+        <div style='width: 70px; height: 70px; text-align: center; margin: 0 auto; float: left; margin-right: 15px;'>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44d.svg' style='width: 50px; height: 50px;'/>
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/good_274_g.svg'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/great.jpg'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/10180/480905273ecca528b3312edee90bc54a514591e90461d6431529644d56284ab48302ccfe76060398468d5b9207541278ea53722300ef47f281b6571d7d081cc7/10180.svg'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.symbolstix}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002688/1778b2858583568b64c6bb323e12ef1dc4b5df913f9a3c31097d8014e9733f4c0a36cfa2063fcab05b111c75d05fa95ccf8e6d486520e195c7620c464d9d9720/c-descriptives-feelings-good.png'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/20335/100x100/20335.png'  style='width: 50px; height: 50px;'/>
+          {{else}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/good.png'  style='width: 50px; height: 50px;'/>
+          {{/if}}
+          <div style='font-size: 20px; text-align: center;'>
+            {{t "good" key='good'}}
+          </div>
+        </div>
+        <div style='width: 70px; height: 70px; text-align: center; margin: 0 auto; float: left; margin-right: 15px;'>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f305.svg' style='width: 50px; height: 50px;'/>
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/sunrise_856_g.svg'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/morning.png'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/00629/2f0db3eae97b8c2c4569cfbd6ab1c60c6c3f21d03180dd3dd66fa70e09e8e47e3dfd2d60de3e12e96513f87748bd2e33dd6e1a8fb62350e592a4045b592fa4bb/00629.svg'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.symbolstix}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00001528/d84a4610a8ceaf632c8ae0fab8c93c860d2dfb287934ed217d3024072b4a797cf533a89a006e8233c483025edb6a526b69f00c731c49267c83b10675cc226ede/c-calendar_time-morning.png'  style='width: 50px; height: 50px;'/>
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/10646/100x100/10646.png'  style='width: 50px; height: 50px;'/>
+          {{else}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/morning.png'  style='width: 50px; height: 50px;'/>
+          {{/if}}
+          <div style='font-size: 20px; text-align: center;'>
+            {{t "morning" key='morning'}}
+          </div>
+        </div>
+      {{/if}}
+    </div>
+    <div style='width: 70px; height: 100px; border-radius: 10px; border: 3px solid #888; text-align: center; margin-left: 5px; float: left; background: #fff; font-size: 40px; padding-top: 24px; color: #777;'>
+      <span class='glyphicon glyphicon-remove'></span>
+    </div>
+    <div style='clear: left;'></div>
+    <p style='font-size: 16px; margin-top: 10px;'>{{t "Text-only can help communicators learn how words combine into sentences and help promote literacy as they see the emphasis on words, but it may not be the best fit for all users." key='utterance_suggestion'}}</p>
+  </div>
+</div>
 {{/unless}}

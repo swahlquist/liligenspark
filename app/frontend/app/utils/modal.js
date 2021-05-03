@@ -271,7 +271,9 @@ var modal = EmberObject.extend({
     modal.route.render('board-preview', { into: 'application', outlet: 'board-preview', model: {board: board, locale: locale, option: board.preview_option, callback: callback}});
   },
   cancel_auto_close: function() {
-    modal.auto_close = false;
+    try {
+      modal.auto_close = false;
+    } catch(e) { }
     if(modal.component) {
       modal.component.set('auto_close', false);      
     }

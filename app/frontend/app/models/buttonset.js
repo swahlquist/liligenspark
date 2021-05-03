@@ -253,7 +253,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     };
     return result;
   },
-  find_sequence: function(str, from_board_id, user, include_home_and_sidebar) {
+  find_sequence: function(str, from_board_id, user, include_home_and_sidebar, locale) {
     // TODO: consider optional support for keyboard for missing words
     if(str.length === 0) { return RSVP.resolve([]); }
     var query = str.toLowerCase();
@@ -553,6 +553,173 @@ CoughDrop.Buttonset = DS.Model.extend({
     });
 
     return image_lookups;
+  },
+  find_routes: function(words, locale, from_board_id, user) {
+    var allow_inflections = !!(user && user.get('preferences.inflections_overlay'));
+    var all_buttons_enabled = stashes.get('all_buttons_enabled');
+    var _this = this;
+
+    var res = _this.board_map([_this]);
+    var buttons = res.buttons || [];
+    var map = res.map;
+    var full = words.join(' ').toLowerCase();
+    if(from_board_id && from_board_id != _this.get('id')) {
+      // re-depthify all the buttons based on the starting board
+      buttons = _this.redepth(from_board_id);
+    }
+
+    var words_hash = {};
+    var missing_words = {};
+    var found_words = {};
+    words.forEach(function(s, idx) { 
+      words_hash[s.toLowerCase()] = idx + 1; 
+      missing_words[s.toLowerCase()] = true; 
+    });
+    var find_spoken_buttons = new RSVP.Promise(function(resolve, reject) {
+      var list = [];
+      var matches = function(str) {
+        var str_lower = str.toLowerCase().replace(/\s+/g, ' ');
+        if(str.match(/\s/)) {
+          if(full.indexOf(str_lower) != -1) {
+            var parts = str_lower.split(/\s+/);
+            var found = false;
+            words.forEach(function(s, idx) {
+              var slice = words.slice(idx, idx + parts.length);
+              if(found == false && slice.join(' ') == str_lower) {
+                slice.forEach(function(s) {
+                  delete missing_words[s.toLowerCase()];
+                });
+                found = idx + 1;
+              }
+            });  
+            return found || false;
+          } else {
+            return false;
+          }
+        } else {
+          delete missing_words[str_lower];
+          return words_hash[str_lower] || false;
+        }
+      };
+      buttons.forEach(function(button) {
+        var voc = button.vocalization;
+        var lbl = button.label;
+        if(button.tr && button.tr[locale]) {
+          voc = button.tr[locale][1];
+          lbl = button.tr[locale][0];
+        }
+        var matching = false;
+        if(voc && !voc.match(/^:/)) {
+          matching = matches(voc.toLowerCase());
+        } else if(lbl) {
+          matching = matches(lbl.toLowerCase());
+        }
+        if(allow_inflections && matching !== false) {
+          var infl = (button.infl || {})[locale] || [];
+          infl.forEach(function(s) { 
+            if(!matching && matches(s)) {
+              matching = matches(s);
+            }
+          });
+        }
+        if(matching !== false) { 
+          if((!button.linked_board_id || button.link_disabled) && (!button.hidden || all_buttons_enabled)) {
+            var str = ((voc && !voc.match(/^:/) ? voc : lbl) || '').toLowerCase();
+            found_words[str] = found_words[str] || [];
+            var button = $.extend({}, button);
+            button.loc = matching;
+            button.str = str;
+            found_words[str].push(button);
+            list.push(button); 
+          }
+        }
+      });
+      return resolve(list.sortBy('loc'));
+    });
+
+    var downs = {};
+    var find_upstreams = find_spoken_buttons.then(function(found_buttons) {
+      var repeat = true;
+      var links = [];
+      var reachable_board_ids = {};
+      found_buttons.forEach(function(b) { reachable_board_ids[b.board_id] = true; });
+      var linked_buttons = [];
+      buttons.forEach(function(button) {
+        if(button.linked_board_id && !button.link_disabled && (!button.hidden || all_buttons_enabled)) {
+          linked_buttons.push($.extend({}, button));
+          downs[button.board_id] = downs[button.board_id] || [];
+          downs[button.board_id].push(button);
+        }
+      });
+      while(repeat) {
+        repeat = false;
+        linked_buttons.forEach(function(button) {
+          if(reachable_board_ids[button.linked_board_id]) {
+            if(!button.added) {
+              button.added = true;
+              links.push(button);
+            }
+            if(!reachable_board_ids[button.board_id]) {
+              repeat = true;
+              reachable_board_ids[button.board_id] = true;
+            }
+          }
+        });
+      }
+      return {found: found_buttons, links: links};
+    });
+    var sort_buttons = find_upstreams.then(function(sets) {
+      var matches = sets.found.concat(sets.links);
+      var hash = {};
+      buttons.forEach(function(button) {
+        hash[button.board_id] = hash[button.board_id] ||  [];
+      });
+      matches.forEach(function(button) {
+        hash[button.board_id] = hash[button.board_id] ||  [];
+        hash[button.board_id].push(button);
+      })
+      hash['missing'] = [];
+      hash['found'] = [];
+      var already = {};
+      sets.found.forEach(function(btn) {
+        var word = btn.str.toLowerCase();
+        if(!already[word]) {
+          already[word] = true;
+        }
+        var min = null;
+        var best = null;
+        (found_words[word] || []).forEach(function(btn) {
+          var steps = _this.button_steps(from_board_id, btn.board_id, map, from_board_id, null);
+          if(min == null || steps.steps < min) {
+            min = steps.steps;
+            best = btn;
+            best.sequence = steps;
+          }
+        });
+        if(best) {
+          [best].concat(best.sequence.buttons).forEach(function(btn) {
+            emberSet(btn, 'focus_image', btn.image);
+            if(btn.image) {
+              persistence.find_url(btn.image, 'image').then(function(data_uri) {
+                emberSet(btn, 'focus_image', data_uri);
+              }, function() { });
+            }
+          })
+          hash['found'].push(best);
+        }
+      });
+      words.forEach(function(word) {
+        if(already[word.toLowerCase()]) {
+          return;
+        }
+        if(missing_words[word.toLowerCase()]) {
+          hash['missing'].push(word.toLowerCase());
+          already[word.toLowerCase()] = true;
+        }
+      });
+      return hash;
+    });
+    return sort_buttons;
   },
   find_buttons: function(str, from_board_id, user, include_home_and_sidebar) {
     var matching_buttons = [];

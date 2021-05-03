@@ -327,6 +327,13 @@ export default Controller.extend({
         stashes.persist('all_buttons_enabled', true);
       }
     },
+    toggle_focus: function() {
+      if(app_state.get('focus_words')) {
+        app_state.set('focus_words', null);
+      } else {
+        modal.open('modals/focus-words', {user: app_state.get('sessionUser'), root_board_id: stashes.get('root_board_state.id'), inactivity_timeout: true});
+      }
+    },
     end_evaluation: function() {
       obf.eval.conclude();
     },
@@ -1278,7 +1285,7 @@ export default Controller.extend({
         res = res + 'high_contrast ';
       }
 
-      if(app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {
+      if(app_state.get('flipped') && app_state.get('currentUser.preferences.device.flipped_override') && app_state.get('currentUser.preferences.device.flipped_text')) {
         res = res + 'text_' + app_state.get('currentUser.preferences.device.flipped_text') + ' ';
       } else {
         if(this.get('board.text_style')) {

@@ -135,7 +135,7 @@ var editManager = EmberObject.extend({
   },
   stringify_rules: function(obj) {
     var lines = [];
-    obj.forEach(function(rule) {
+    (obj || []).forEach(function(rule) {
       var str = rule[rule.length - 1];
       var line = rule.slice(0, -1).map(function(w) { 
         if(w.match(/\s|\=/)) {
@@ -312,46 +312,50 @@ var editManager = EmberObject.extend({
       return valid;
     };
     if(history.length > 0) {
-      rules.forEach(function(rule) {
-        if(inflections[rule.type]) { return; }
-        if(utterance.matches_rule(rule, history)) {
-          inflections[rule.type] = rule;
-        }
-      });  
       // TO BE verb overrides
-      if(utterance.matches_rule({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}]}, history)) {
+      var overrides = [];
+      overrides.push({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["is"] = {type:'override', label: "am"};
         inflections["are"] = {type:'override', label: "am"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
         inflections["were"] = {type:'override', label: "was"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["is"] = {type:'override', label: "are"};
         inflections["am"] = {type:'override', label: "are"};
         inflections["was"] = {type:'override', label: "were"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["what"]}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["what"]}], callback: function(inflections) {
         inflections["happen"] = {type:'override', label: "happened"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["will", "won't", "can", "can't", "do", "don't"]}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["will", "won't", "can", "can't", "do", "don't"]}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "be"};
         inflections["is"] = {type:'override', label: "be"};
-      }
-      if(utterance.matches_rule({lookback: [{words: ["is", "are", "am", "be"]}]}, history)) {
+      }});
+      overrides.push({lookback: [{words: ["is", "are", "am", "be"]}], callback: function(inflections) {
         inflections["I"] = {type:'override', label: "my"};
         inflections["done"] = {type:'override', label: "done"};
-      }
+      }});
+
+      utterance.first_rules(rules.concat(overrides), history).forEach(function(rule) {
+        if(rule.callback) {
+          rule.callback(inflections);
+        } else {
+          inflections[rule.type] = rule;
+        }
+      });
+
       inflections["can"] = {type:'override', label: "can"};
       inflections["can't"] = {type:'override', label: "can't"};
       inflections["could"] = {type:'override', label: "could"};
@@ -384,9 +388,22 @@ var editManager = EmberObject.extend({
     buttons.forEach(function(button) {
       var updated_button = Object.assign({}, button);
       // For now, skip if there are manual inflections
-      if(!button.inflections && !button.vocalization && !button.load_board) {
+      if(!button.inflections && !button.vocalization && (!button.load_board || button.inflect)) {
         arr.forEach(function(infl) {
-          if(infl.key == button.label && infl.type == 'override') {
+          if(infl.key == "btn" + button.id) {
+            updated_button.original_label = button.original_label || button.label;
+            updated_button.label = infl.label;
+            if(infl.board_id) {
+              updated_button.load_board = { id: infl.board_id, key: infl.board_key };
+            }
+            if(infl.image) {
+              updated_button.image = infl.image;
+              updated_button.image_id = infl.image_id;
+            } else {
+              updated_button.text_only = true;
+            }
+            updated_button.tweaked = true;
+          } else if(infl.key == button.label && infl.type == 'override') {
             updated_button.original_label = button.original_label || button.label;
             updated_button.label = infl.label;
             updated_button.tweaked = true;
@@ -1520,6 +1537,7 @@ var editManager = EmberObject.extend({
           } else {
             delete newButton['vocalization'];
           }
+          newButton.ref_id = currentButton.ref_id;
           newButton.image_id = currentButton.image_id;
           newButton.sound_id = currentButton.sound_id;
           var bg = window.tinycolor(currentButton.background_color);
@@ -1573,6 +1591,7 @@ var editManager = EmberObject.extend({
           newButton.home_lock = !!currentButton.home_lock;
           newButton.hide_label = !!currentButton.hide_label;
           newButton.blocking_speech = !!currentButton.blocking_speech;
+          newButton.rules = currentButton.rules;
           if(currentButton.get('translations.length') > 0) {
             newButton.translations = currentButton.get('translations');
           }

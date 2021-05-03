@@ -36,6 +36,20 @@ export default Controller.extend({
       return "setup/intro";
     }
   }),
+  utterance_layout: computed(
+    'fake_user.preferences.device.utterance_text_only',
+    'app_state.currentUser.preferences.device.utterance_text_only',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.device.utterance_text_only')) {
+        res.text_only = true;
+      } else {
+        res.text_with_symbols = true;
+      }
+      return res;
+    }
+  ),
   text_position: computed(
     'fake_user.preferences.device.button_text_position',
     'app_state.currentUser.preferences.device.button_text_position',

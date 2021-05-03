@@ -98,7 +98,8 @@ var stashes = EmberObject.extend({
       'global_integrations': null,
       'prior_login': null,
       'ws_url': null,
-      'ws_settings': null
+      'ws_settings': null,
+      'last_focus_words': null,
     };
     for(var idx in defaults) {
       var val = null;

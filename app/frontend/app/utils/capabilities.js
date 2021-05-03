@@ -240,7 +240,6 @@ var capabilities;
           promise.resolve();
         }
         return promise;
-      
       },
       eye_gaze: { 
         listen: function(listen_level, expression_watch) {

@@ -806,6 +806,17 @@
                     </a></li>
                   {{/unless}}
                 {{/unless}}
+                {{#if app_state.feature_flags.focus_word_highlighting}}
+                  {{#unless app_state.eval_mode}}
+                    <li><a href="#" {{action 'toggle_focus'}}>
+                      {{#if app_state.focus_words}}
+                        {{t "Clear Focus Words" key='clear_focus_words'}}
+                      {{else}}
+                        {{t "Focus Words" key='set_focus_words'}}
+                      {{/if}}
+                    </a></li>
+                  {{/unless}}
+                {{/if}}
               {{/if}}
             {{/if}}
             {{#unless app_state.eval_mode}}

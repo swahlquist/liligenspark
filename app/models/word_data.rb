@@ -1005,6 +1005,10 @@ class WordData < ActiveRecord::Base
     @@fringe_lists ||= []
     @@fringe_lists
   end
+
+  def self.focus_word_lists
+    @@focus_lists
+  end
   
   def self.import_suggestions
     suggestions = JSON.parse(File.read('./lib/core_suggestions.json')) rescue nil

@@ -80,6 +80,9 @@ var boundClasses = {};
       if(button.link_disabled) {
         classes = classes + " link_disabled";
       }
+      if(button.dim) {
+        classes = classes + " dim_button";
+      }
       emberSet(button, 'display_class', classes);
     }
   });

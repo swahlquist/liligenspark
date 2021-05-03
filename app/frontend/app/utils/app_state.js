@@ -1796,6 +1796,7 @@ var app_state = EmberObject.extend({
           }
           app_state.set('pairing', null);
           app_state.set('followers', null);
+          app_state.set('focus_words', null);
           app_state.set('sync_utterance', null);
           sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
@@ -1866,7 +1867,7 @@ var app_state = EmberObject.extend({
     if(app_state.controller && app_state.controller.get('board.model')) {
       // TODO: only load this if we know we need it?
       var history_string = (stashes.get('working_vocalization') || []).map(function(v) { return (v.label || "") + (v.button_id || "n") + ((v.board || {}).id || "n"); }).join(",");
-      var ref = app_state.controller.get('board.model.id') + "::" + history_string;
+      var ref = app_state.controller.get('board.model.id') + "::" + history_string + "::" + app_state.get('shift');
       if(true || ref != app_state.get('suggestion_id')) {
         var $board = $(".board[data-id='" + app_state.controller.get('board.model.id') + "']");
         if($board.length > 0) {

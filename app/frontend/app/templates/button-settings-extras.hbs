@@ -109,10 +109,20 @@
               <div style='float: left; width: calc(33% - 10px); margin: 5px;'>
                 {{input class='form-control' value=inflections_hash.se placeholder=inflections_suggestions.se}}
               </div>
+              <div>
+                {{textarea class='form-control' value=rules_string placeholder=inflection_overrides_placeholder}}
+              </div>
             {{/if}}
           </div>
         </div>
       </div>
     {{/if}}
+  <div class="form-group">
+    <label for="ref_id" class="col-sm-2 control-label" style='padding-left: 0; padding-right: 0;'>{{t "Pointer ID" key='pointer_id'}}</label>
+    <div class="col-sm-10">
+      {{input value=model.ref_id class="form-control" id="ref_id" placeholder='ID for custom referencing'}}
+    </div>
+  </div>
+
 </div>
 </form>

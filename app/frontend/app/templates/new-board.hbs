@@ -175,7 +175,7 @@
             <a href="#" data-count={{label_count}} {{action 'pick_core'}}>{{t "pick from core lists" key='pick_from_core_lists'}}</a>
             {{#if speech}}
                |
-              <a href="#" data-count={{label_count}} {{action 'record_words'}}>{{t "record words" key='record_words'}}</a>
+              <a href="#" data-count={{label_count}} {{action 'record_words'}}>{{t "speech recognition" key='record_words'}}</a>
             {{/if}}
             <a style="display: none;" href="#" {{action 'import_from_pdf'}}>{{t "import from pdf" key='import_from_pdf'}}</a>
           </div>
@@ -193,13 +193,13 @@
             </div>
           </div>
         {{else}}
-          {{#if speech.recording}}
+          {{#if speech.ready}}
             <div class="form-group">
               <div class="col-sm-10 col-sm-offset-2">
               <div style="margin-bottom: 5px;">
                 {{t "Listening..." key='listening'}}
                 <button class='btn btn-default' {{action 'next_word'}}>{{t "Next Word" key='next_word'}}</button>
-                <button class='btn btn-default' {{action 'stop_recording'}}>{{t "Stop Listening" key='stop_listening'}}</button>
+                {{speech-listener content=(action 'speech_content') error=(action 'speech_error') stop=(action 'speech_stop') speech=speech}}
               </div>
               <ul class="nav nav-pills">
                 {{#each speech.words as |word|}}
@@ -217,7 +217,7 @@
             {{#if speech.almost_recording}}
               <div class="form-group">
                 <div class="col-sm-10 col-sm-offset-2">
-                  <p>Waiting for approval...</p>
+                  <p>{{t "Waiting for Approval..." key='waiting_for_approval'}}</p>
                 </div>
               </div>
             {{/if}}
