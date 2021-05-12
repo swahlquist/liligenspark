@@ -144,22 +144,33 @@
               <button class="btn btn-default" {{action 'back' browse.category}} style="float: left; margin-right: 5px; height: 50px;"><span class="glyphicon glyphicon-arrow-left"></span><span class="sr-only">{{t "Back to Category" key='back_to_category'}}</span></button>
               <h4 style="margin-bottom: 0;">{{browse.category.title}}</h4>
               <div style='clear: left; margin-bottom: 10px;'></div>
-              {{#if category_items}}
+              {{#if browse.pending}}
+                <p>{{t "Loading results..." key='loading_results'}}</p>
+              {{else if browse.error}}
+                <p>{{t "Error loading results" key='error_loading_results'}}</p>
+              {{else if browse.items}}
                 <div>
-                  {{#each category_items as |item|}}
+                  {{#each browse.items as |item|}}
                     {{#unless item.deleted}}
                       <div style='margin-bottom: 5px;'>
-                        <span style='display: inline-block; width: calc(100% - 100px);'>
-                          <button class='btn btn-default list-group-item-warning' {{action 'pick_set' item}} style='width: 100%; height: 55px; text-align: left;'>
-                            {{item.title}} ({{item.user_name}})
-                            <div class='text-muted' style='width: 100%; overflow: hidden; text-overflow: ellipsis; font-style: italic;'>{{item.words}}</div>
+                        <span style={{if browse.category.saved 'display: inline-block; width: calc(100% - 100px);' 'display: inline-block; width: 100%;'}}>
+                          <button class='btn btn-default list-group-item-warning' {{action 'pick_set' item}} style='width: 100%; text-align: left;'>
+                            <img src={{item.image_url}} onerror="alert('assdf');this.style.visibility='hidden';" style='width: 50px; height: 50px; margin-right: 5px; float: left;'/>
+                            <span style='font-size: 14px; font-weight: bold; display: block; overflow: hidden;'>
+                              {{item.title}}
+                              {{#if item.author}}{{t "by" key='by'}} {{item.author}}{{/if}}
+                              {{#if item.user_name}} ({{item.user_name}}){{/if}}
+                            </span>
+                            <div class='text-muted' style='overflow: hidden; text-overflow: ellipsis; font-style: italic;'>{{item.words}}</div>
                           </button>
                         </span>
-                        <span style='display: inline-block; width: 80px; text-align: right;'>
-                          <button class='btn btn-default' {{action 'remove_set' item}} style='width: 100%; height: 55px;'>
-                            <span class='glyphicon glyphicon-remove'></span>
-                          </button>
-                        </span>
+                        {{#if browse.category.saved}}
+                          <span style='display: inline-block; width: 80px; text-align: right;'>
+                            <button class='btn btn-default' {{action 'remove_set' item}} style='width: 100%; height: 55px;'>
+                              <span class='glyphicon glyphicon-remove'></span>
+                            </button>
+                          </span>
+                        {{/if}}
                       </div>
                     {{/unless}}
                   {{/each}}
@@ -186,7 +197,7 @@
                 {{#each search.results as |item|}}
                   <button class='btn btn-default list-group-item-success' {{action 'pick_set' item}} style='width: 100%; margin-bottom: 5px; text-align: left;'>
                     <img src={{item.image_url}} onerror="alert('assdf');this.style.visibility='hidden';" style='width: 50px; height: 50px; margin-right: 5px; float: left;'/>
-                    <span style='font-size: 14px; font-weight: bold;'>
+                    <span style='font-size: 14px; font-weight: bold; display: block; overflow: hidden;'>
                       {{item.title}}
                       {{#if item.author}}{{t "by" key='by'}} {{item.author}}{{/if}}
                       {{#if item.user_name}} ({{item.user_name}}){{/if}}

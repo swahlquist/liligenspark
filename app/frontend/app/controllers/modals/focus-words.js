@@ -83,12 +83,48 @@ export default modal.ModalController.extend({
     }
     return res;
   }),
-  category_items: computed('model', 'browse.category', 'user_list', function() {
+  update_category_items: observer('model', 'browse', 'browse.category', 'user_list', function() {
     var _this = this;
-    if(_this.get('browse.category.id') == 'saved') {
-      return _this.get('user_list');
+    var cat = _this.get('browse.category.id');
+    if(!cat) { return; }
+    if(cat == 'saved') {
+      _this.set('browse.items', _this.get('user_list'));
     } else {
-      return [];
+      _this.set('browse.pending', true);
+      var opts = {sort: 'popularity'};
+      if(cat == 'shared_reading') {
+        opts.type = 'core_focus';
+        opts.category = 'books';
+        opts.valid = true;
+      } else if(cat == 'activities') {
+        opts.type = 'core_focus';
+        opts.category = 'activities';
+        opts.valid = true;
+      } else if(cat == 'books') {
+        opts.type = 'core_book';
+        opts.valid = true;
+      } else if(cat == 'other_focus') {
+        opts.type = 'core_focus';
+        opts.category = 'other';
+        opts.valid = true;
+      } else if(cat.match(/^tarheel_/)) {
+        opts.type = 'tarheel_book';
+        opts.category = cat.replace(/^tarheel_/, '');
+        opts.valid = true;
+      }
+      if(opts.valid) {
+        persistence.ajax('/api/v1/search/focus?q=&locale=' + (app_state.get('label_locale') || 'en').split(/-|_/)[0] + '&type=' + opts.type + '&category=' + opts.category + '&sort=' + opts.sort, {type: 'GET'}).then(function(list) {
+          _this.set('browse.pending', false);
+          _this.set('browse.items', list);
+        }, function(err) {
+          _this.set('browse.pending', false);
+          _this.set('browse.error', true);  
+        });  
+      } else if(this.get('browse')) {
+        _this.set('browse.pending', false);
+        _this.set('browse.error', false);  
+        _this.set('browse.items', null);  
+      }
     }
   }),
   update_search_items: observer('search.term', 'user_list', function() {
@@ -103,7 +139,7 @@ export default modal.ModalController.extend({
           res.push(item);
         }
       });
-      persistence.ajax('/api/v1/search/focus?locale=' + 'en' + '&q=' + encodeURIComponent(_this.get('search_term')), {type: 'GET'}).then(function(list) {
+      persistence.ajax('/api/v1/search/focus?locale=' + (app_state.get('label_locale') || 'en').split(/-|_/)[0](app_state.get('label_locale') || 'en').split(/-|_/)[0] + '&q=' + encodeURIComponent(_this.get('search_term')), {type: 'GET'}).then(function(list) {
         _this.set('search.loading', false);
         res = res.concat(list);
         _this.set('search.results', res.slice(0, 20));
@@ -139,6 +175,26 @@ export default modal.ModalController.extend({
     if(this.get('model.user')) {
       res.push({id: 'saved', title: i18n.t('saved_focus_word_sets', "Saved Focus Word Sets"), saved: true});
     }
+    res.push({id: 'shared_reading', title: i18n.t('shared_reading_books', "Shared-Reading Books")});
+    res.push({id: 'books', title: i18n.t('core_books', "Popular Core Workshop Books")});
+    res.push({id: 'activities', title: i18n.t('context_activities', "Context-Specific Activities")});
+    res.push({id: 'tarheel_Alph', title: i18n.t('tarheel_', "Tarheel Reader Alphabet Books")});
+    res.push({id: 'tarheel_Anim', title: i18n.t('tarheel_', "Tarheel Reader Animals & Nature Books")});
+    res.push({id: 'tarheel_ArtM', title: i18n.t('tarheel_', "Tarheel Reader Art & Music Books")});
+    res.push({id: 'tarheel_Biog', title: i18n.t('tarheel_', "Tarheel Reader Biography Books")});
+    res.push({id: 'tarheel_Fair', title: i18n.t('tarheel_', "Tarheel Reader Fairy & Folk Tale Books")});
+    res.push({id: 'tarheel_Fict', title: i18n.t('tarheel_', "Tarheel Reader Fiction Books")});
+    res.push({id: 'tarheel_Food', title: i18n.t('tarheel_', "Tarheel Reader Food Books")});
+    res.push({id: 'tarheel_Heal', title: i18n.t('tarheel_', "Tarheel Reader Health Books")});
+    res.push({id: 'tarheel_Hist', title: i18n.t('tarheel_', "Tarheel Reader History Books")});
+    res.push({id: 'tarheel_Holi', title: i18n.t('tarheel_', "Tarheel Reader Holiday Books")});
+    res.push({id: 'tarheel_Math', title: i18n.t('tarheel_', "Tarheel Reader Math Books")});
+    res.push({id: 'tarheel_Nurs', title: i18n.t('tarheel_', "Tarheel Reader Nursery Rhyme Books")});
+    res.push({id: 'tarheel_Peop', title: i18n.t('tarheel_', "Tarheel Reader People & Places Books")});
+    res.push({id: 'tarheel_Poet', title: i18n.t('tarheel_', "Tarheel Reader Poetry Books")});
+    res.push({id: 'tarheel_Recr', title: i18n.t('tarheel_', "Tarheel Reader Recreation Books")});
+    res.push({id: 'tarheel_Spor', title: i18n.t('tarheel_', "Tarheel Reader Sports Books")});
+    res.push({id: 'other_focus', title: i18n.t('other_focus_sets', "Other Focus Word Sets")});
     return res;
   }),
   save_set: function() {

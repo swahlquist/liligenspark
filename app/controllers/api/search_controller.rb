@@ -108,7 +108,7 @@ class Api::SearchController < ApplicationController
   end
 
   def focuses
-    req = Typhoeus.get("https://workshop.openaac.org/api/v1/search/focus?locale=#{CGI.escape(params['locale'] || 'en')}&q=#{CGI.escape(params['q'])}", timeout: 10)
+    req = Typhoeus.get("https://workshop.openaac.org/api/v1/search/focus?locale=#{CGI.escape(params['locale'] || 'en')}&q=#{CGI.escape(params['q'] || '')}&category=#{CGI.escape(params['category'] || '')}&type=#{CGI.escape(params['type'] || '')}&sort=#{CGI.escape(params['sort'] || '')}", timeout: 10)
     json = JSON.parse(req.body) rescue nil
     render json: req.body
   end
