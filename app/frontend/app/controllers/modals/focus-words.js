@@ -247,8 +247,9 @@ export default modal.ModalController.extend({
         _this.stash_set();
       }
       app_state.set('focus_words', {list: words});
-      editManager.process_for_displaying();
+      editManager.controller.model.set('focus_id', 'force_refresh');
       modal.close();
+      editManager.process_for_displaying();
     },
     analyze_focus_words: function() {
       var _this = this;

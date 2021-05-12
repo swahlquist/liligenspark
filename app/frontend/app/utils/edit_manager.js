@@ -1400,7 +1400,7 @@ var editManager = EmberObject.extend({
     var need_everything_local = app_state.get('speak_mode') || !persistence.get('online');
     if(app_state.get('speak_mode')) {
       controller.update_button_symbol_class();
-      if(!ignore_fast_html && board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix')) {
+      if(!ignore_fast_html && board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') && board.get('focus_id') == board.get('fast_html.focus_id')) {
         CoughDrop.log.track('already have fast render');
         resume_scanning();
         return;
@@ -1415,6 +1415,7 @@ var editManager = EmberObject.extend({
           extra_pad: controller.get('extra_pad'),
           inner_pad: controller.get('inner_pad'),
           display_level: board_level,
+          focus_id: board.get('focus_id'),
           base_text_height: controller.get('base_text_height'),
           text_only_button_symbol_class: controller.get('text_only_button_symbol_class'),
           button_symbol_class: controller.get('button_symbol_class')
