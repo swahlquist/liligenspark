@@ -329,8 +329,8 @@ export default Controller.extend({
     },
     toggle_focus: function() {
       if(app_state.get('focus_words')) {
-        editManager.controller.model.set('focus_id', null);
         app_state.set('focus_words', null);
+        editManager.controller.model.set('focus_id', 'blank');
       } else {
         modal.open('modals/focus-words', {user: app_state.get('sessionUser'), root_board_id: stashes.get('root_board_state.id'), inactivity_timeout: true});
       }
