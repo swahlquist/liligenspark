@@ -246,7 +246,7 @@ export default modal.ModalController.extend({
       } else {
         _this.stash_set();
       }
-      app_state.set('focus_words', {list: words});
+      app_state.set('focus_words', {list: words, focus_id: Math.random()});
       editManager.controller.model.set('focus_id', 'force_refresh');
       modal.close();
       editManager.process_for_displaying();

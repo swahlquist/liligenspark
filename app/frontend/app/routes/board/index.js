@@ -32,6 +32,7 @@ export default Route.extend({
     controller.set('ordered_buttons', null);
     controller.set('preview_level', null);
     model.set('show_history', false);
+    model.set('focus_id', app_state.get('focus_words.focus_id'));
     // do we need to preload the buttonset here?
     // model.load_button_set();
     app_state.set('currentBoardState', {
