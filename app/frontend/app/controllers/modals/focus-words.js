@@ -6,8 +6,12 @@ import { set as emberSet } from '@ember/object';
 import Button from '../../utils/button';
 import { computed,  observer } from '@ember/object';
 import RSVP from 'rsvp';
+import $ from 'jquery';
 import stashes from '../../utils/_stashes';
+import utterance from '../../utils/utterance';
 import i18n from '../../utils/i18n';
+import persistence from '../../utils/persistence';
+import editManager from '../../utils/edit_manager';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -34,7 +38,7 @@ export default modal.ModalController.extend({
   analysis_extras: computed('analysis.found', function() {
     return (this.get('analysis.found') || []).slice(3);
   }),
-  user_list: computed('model', function() {
+  user_list: computed('model', 'model.user.focus_words', function() {
     var list = [];
     var _this = this;
     var hash = _this.get('model.user.focus_words') || {};
@@ -73,6 +77,10 @@ export default modal.ModalController.extend({
       }
     });
     res = res.concat(more);
+    if(stashes.get('working_vocalization.length') > 0)  {
+      var str = utterance.sentence(stashes.get('working_vocalization') || []) || "";
+      res.unshift({title: i18n.t('current_vocalization', "Current Vocalization Box Contents"), words: str, tmp: true});
+    }
     return res;
   }),
   category_items: computed('model', 'browse.category', 'user_list', function() {
@@ -95,8 +103,15 @@ export default modal.ModalController.extend({
           res.push(item);
         }
       });
-      _this.set('search.loading', false);
-      _this.set('search.results', res);
+      persistence.ajax('/api/v1/search/focus?locale=' + 'en' + '&q=' + encodeURIComponent(_this.get('search_term')), {type: 'GET'}).then(function(list) {
+        _this.set('search.loading', false);
+        res = res.concat(list);
+        _this.set('search.results', res.slice(0, 20));
+  
+      }, function(err) {
+        _this.set('search.loading', false);
+        _this.set('search.results', res);  
+      });
     }
   }),
   reuse_or_existing: computed('reuse', 'existing', function() {
@@ -164,8 +179,18 @@ export default modal.ModalController.extend({
         this.set('browse', null);
       }
     },
-    delete: function(item) {
-
+    remove_set: function(set) {
+      var _this = this;
+      var focus = _this.get('model.user.focus_words') || {};
+      var found = focus[set.title];
+      if(found) {
+        emberSet(found, 'deleted', Math.round((new Date()).getTime() / 1000));
+      }
+      _this.set('model.user.focus_words', $.extend({}, focus));
+      _this.get('model.user').save().then(function() {
+      }, function(err) {
+        emberSet(found, 'deleted', null);
+      });
     },
     save_missing: function() {
       var _this = this;
@@ -222,6 +247,7 @@ export default modal.ModalController.extend({
         _this.stash_set();
       }
       app_state.set('focus_words', {list: words});
+      editManager.process_for_displaying();
       modal.close();
     },
     analyze_focus_words: function() {

@@ -17,7 +17,7 @@ class UserExtra < ApplicationRecord
     existing = self.settings['focus_words'] || {}
     hash.each do |name, opts|
       if existing[name]
-        if opts['updated'] > existing[name]['updated'] - 60 && opts['updated'] > (existing[name]['deleted'] || 60) - 60
+        if opts['updated'] > existing[name]['updated'] - 60 && !opts['deleted'] && opts['updated'] > (existing[name]['deleted'] || 60) - 60
           existing[name]['updated'] = opts['updated']
           existing[name].delete('deleted')
           existing[name]['words'] = opts['words']

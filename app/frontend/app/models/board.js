@@ -362,6 +362,7 @@ CoughDrop.Board = DS.Model.extend({
         this.set('name', trans.board_name[label_locale]);
       }
     }
+    res.forEach(function(b) { b.dim = false; });
     if(app_state.get('speak_mode')) {
       if(label_locale == vocalization_locale) {
         if(app_state.get('focus_words')) {

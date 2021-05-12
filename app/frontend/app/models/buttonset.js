@@ -78,10 +78,11 @@ CoughDrop.Buttonset = DS.Model.extend({
     return new RSVP.Promise(function(resolve, reject) {
       var hash_mismatch = bs.get('buttons_loaded_hash') && bs.get('full_set_revision') != bs.get('buttons_loaded_hash');
       if(hash_mismatch) { force = true; }
-      if(bs.get('root_url') && (!bs.get('buttons_loaded') || hash_mismatch)) {
+      if(bs.get('root_url') && (!bs.get('buttons_loaded') || hash_mismatch || (force && !bs.get('buttons_force_loaded')))) {
         var process_buttons = function(buttons) {
           if(buttons && buttons.find) {
             bs.set('buttons_loaded', true);
+            if(force) { bs.set('buttons_force_loaded', true); }
             bs.set('buttons_loaded_hash', bs.get('full_set_revision'));
             bs.set('buttons', buttons);
             if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
@@ -564,7 +565,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     var res = _this.board_map([_this]);
     var buttons = res.all_buttons || [];
     var map = res.map;
-    var full = words.join(' ').toLowerCase();
+    var full = (words || []).join(' ').toLowerCase();
     if(from_board_id && from_board_id != _this.get('id')) {
       // re-depthify all the buttons based on the starting board
       buttons = _this.redepth(from_board_id);
@@ -698,7 +699,7 @@ CoughDrop.Buttonset = DS.Model.extend({
         var best = null;
         var all_steps = [];
         (found_words[word] || []).forEach(function(btn) {
-          votes = board_id_votes[btn.board_id] || 0;
+          var votes = board_id_votes[btn.board_id] || 0;
           var steps = _this.button_steps(from_board_id, btn.board_id, map, from_board_id, null);
           all_steps.push(steps);
           var do_update = false;

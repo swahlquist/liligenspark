@@ -77,9 +77,15 @@ export default Component.extend({
       // it seems to trigger a phantom mouseup event
       ignore = true;
     }
-    if(!ignore) {
-      this.send('close', event);
+    if(this.last_started_on_modal) {
+      this.last_started_on_modal = false;
+      if(!ignore) {
+        this.send('close', event);
+      }
     }
+  },
+  mouseDown: function(event) {
+    this.last_started_on_modal = event.target.classList.contains('modal');
   },
   actions: {
     close: function(event) {

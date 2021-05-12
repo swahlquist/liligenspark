@@ -7,7 +7,7 @@ class BoardsController < ApplicationController
       @meta_record.title = @domain_overrides['settings']['app_name']
       @meta_record.summary = "#{@domain_overrides['settings']['app_name']} is a flexible AAC application"
     end
-    @meta_record.link = "#{request.protocol}://#{request.host_with_port}/"
+    @meta_record.link = "#{request.protocol}#{request.host_with_port}/"
     @meta_record.created = Time.parse("Jan 1 2014").iso8601
     @meta_record.updated = Time.now.iso8601
     if request.headers['Accept'] == 'image/*'
@@ -24,7 +24,7 @@ class BoardsController < ApplicationController
       @meta_record.title = "About #{@domain_overrides['settings']['app_name']}"
       @meta_record.summary = "A little information about the #{@domain_overrides['settings']['app_name']} AAC application"
     end
-    @meta_record.link = "#{request.protocol}://#{request.host_with_port}/about"
+    @meta_record.link = "#{request.protocol}#{request.host_with_port}/about"
     @meta_record.created = Time.parse("Jan 1 2014").iso8601
     @meta_record.updated = Time.now.iso8601
     render :index

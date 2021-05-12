@@ -56,6 +56,9 @@ GEM
     arel (7.1.4)
     aws-eventstream (1.1.1)
     aws-partitions (1.433.0)
+    aws-sdk-cloudfront (1.50.0)
+      aws-sdk-core (~> 3, >= 3.112.0)
+      aws-sigv4 (~> 1.1)
     aws-sdk-core (3.113.0)
       aws-eventstream (~> 1, >= 1.0.2)
       aws-partitions (~> 1, >= 1.239.0)
@@ -259,6 +262,7 @@ GEM
       redis-namespace (~> 1.6)
       sinatra (>= 0.9.2)
       vegas (~> 0.1.2)
+    rexml (3.2.5)
     rspec (3.9.0)
       rspec-core (~> 3.9.0)
       rspec-expectations (~> 3.9.0)
@@ -280,6 +284,9 @@ GEM
       rspec-mocks (~> 3.9.0)
       rspec-support (~> 3.9.0)
     rspec-support (3.9.0)
+    ruby-saml (1.12.2)
+      nokogiri (>= 1.10.5)
+      rexml
     rubyzip (2.3.0)
     s3 (0.3.28)
       addressable
@@ -342,6 +349,7 @@ PLATFORMS
 DEPENDENCIES
   accessible-books
   ar-octopus!
+  aws-sdk-cloudfront (~> 1)
   aws-sdk-elastictranscoder (~> 1)
   aws-sdk-rails
   aws-sdk-ses (~> 1)
@@ -374,6 +382,7 @@ DEPENDENCIES
   rails_12factor
   resque
   rspec-rails
+  ruby-saml
   s3
   sanitize
   sass-rails

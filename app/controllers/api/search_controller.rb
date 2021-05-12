@@ -106,6 +106,12 @@ class Api::SearchController < ApplicationController
     res = Uploader.find_resources(params['q'], params['source'], ref_user)
     render json: res.to_json
   end
+
+  def focuses
+    req = Typhoeus.get("https://workshop.openaac.org/api/v1/search/focus?locale=#{CGI.escape(params['locale'] || 'en')}&q=#{CGI.escape(params['q'])}", timeout: 10)
+    json = JSON.parse(req.body) rescue nil
+    render json: req.body
+  end
     
   def parts_of_speech
     data = WordData.find_word(params['q'])

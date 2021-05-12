@@ -261,6 +261,7 @@ Coughdrop::Application.routes.draw do
     get "search/parts_of_speech" => "search#parts_of_speech"
     get "search/apps" => "search#apps"
     get "search/audio" => "search#audio"
+    get "search/focus" => "search#focuses"
     get "progress/:id" => "progress#progress"
     
     resources :logs do
