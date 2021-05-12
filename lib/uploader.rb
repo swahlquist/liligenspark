@@ -41,6 +41,31 @@ module Uploader
     port_suffix = ":#{uri.port}" if (uri.scheme == 'http' && uri.port != 80)
     "#{uri.scheme}://#{uri.host}#{port_suffix}#{uri.path}#{uri.query && "?#{uri.query}"}"
   end
+
+  def self.invalidate_cdn(remote_path)
+    remote_path = "/" + remote_path unless remote_path.match(/^\//)
+    cred = Aws::Credentials.new(ENV['AWS_KEY'], ENV['AWS_SECRET'])
+    client = Aws::CloudFront::Client.new(
+      region: ENV['UPLOADS_S3_CDN_REGION'],
+      credentials: cred
+    )
+    res = true
+    begin
+      client.create_invalidation({
+        distribution_id: ENV['UPLOADS_S3_CDN_ID'],
+        invalidation_batch: {
+          paths: {
+            quantity: 1,
+            items: [remote_path]
+          },
+          caller_reference: "manual:#{Time.now.to_i}"
+        }
+      })
+    rescue Aws::CloudFront::Errors::InvalidArgument => e       
+      res = false
+    end
+    res
+  end
   
   def self.check_existing_upload(remote_path, checksum=nil)
     return nil unless remote_path

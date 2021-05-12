@@ -265,6 +265,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       file = Tempfile.new("stash")
       file.write(available_buttons.to_json)
       file.close
+      Uploader.invalidate_cdn(remote_path)
       Uploader.remote_upload(remote_path, file.path, 'text/json')
     rescue => e
       button_set.data['remote_paths'][remote_hash]['path'] = false
@@ -283,6 +284,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         bs.data['remote_paths'].each do |hash, obj|
           if obj['generated'] < timestamp && obj['path']
             path = obj['path']
+            Uploader.invalidate_cdn(path)            
             Uploader.remote_remove(path)
             bs.data['remote_paths'].delete(hash)
           end

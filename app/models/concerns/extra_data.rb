@@ -43,6 +43,7 @@ module ExtraData
           json = public_extra_data.to_json
           file.write(json)
           file.close
+          Uploader.invalidate_cdn(public_path)
           Uploader.remote_upload(public_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
         end
         # upload to "/extras/<global_id>/<nonce>/<global_id>.json"
@@ -50,6 +51,7 @@ module ExtraData
         json = extra_data.to_json
         file.write(json)
         file.close
+        Uploader.invalidate_cdn(private_path)
         res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
         if res && self.is_a?(BoardDownstreamButtonSet)
           self.data['extra_data_revision'] = self.data['full_set_revision']
@@ -171,7 +173,9 @@ module ExtraData
 
     def clear_extra_data(nonce, global_id, version)
       private_path, public_path = extra_data_remote_paths(nonce, global_id, version)
+      Uploader.invalidate_cdn(private_path)
       Uploader.remote_remove(private_path)
+      Uploader.invalidate_cdn(public_path)
       Uploader.remote_remove(public_path)
       # remove them both
     end
