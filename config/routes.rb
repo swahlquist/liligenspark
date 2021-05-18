@@ -146,6 +146,7 @@ Coughdrop::Application.routes.draw do
     post 'messages' => 'messages#create'
     post 'callback' => 'callbacks#callback'
     get 'domain_settings' => 'integrations#domain_settings'
+    post 'focus/usage' => 'integrations#focus_usage'
     
     resources :boards, :constraints => {:id => board_id_regex} do
       get 'stats' => 'boards#stats'

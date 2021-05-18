@@ -277,4 +277,19 @@ describe Api::IntegrationsController, :type => :controller do
       expect(json['integration']['render_url']).to eq('qwer')
     end
   end
+
+  describe "focus_usage" do
+    it 'should require authentication' do
+      post 'focus_usage'
+      assert_missing_token
+    end
+
+    it 'should schedule tracking' do
+      token_user
+      post 'focus_usage', params: {focus_id: 'abcdfg'}
+      json = assert_success_json
+      expect(json['accepted']).to eq(true)
+      expect(Worker.scheduled?(UserIntegration, :perform_action, {:method => 'track_focus', :arguments => [@user.global_id, 'abcdfg']}))
+    end
+  end
 end

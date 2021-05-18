@@ -572,4 +572,25 @@ describe Api::SearchController, :type => :controller do
       get :audio, params: {text: 'bacon'}
     end
   end
+
+  describe 'focuses' do
+    it "should return the results of a remote call" do
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/search/focus?locale=en&q=bacon&category=&type=&sort=", timeout: 10).and_return(OpenStruct.new(body: [
+        {a: 1}, {b: 2}
+      ].to_json))
+      post 'focuses', params: {q: 'bacon'}
+      json = assert_success_json
+      expect(json).to eq([{'a' => 1}, {'b' => 2}])
+    end
+
+    it "should pass valid query parameters" do
+      expect(Typhoeus).to receive(:get).with("https://workshop.openaac.org/api/v1/search/focus?locale=es&q=bacon&category=chocolate&type=cool&sort=popularity", timeout: 10).and_return(OpenStruct.new(body: [
+        {a: 1}, {b: 2}
+      ].to_json))
+      post 'focuses', params: {q: 'bacon', locale: 'es', category: 'chocolate', type: 'cool', sort: 'popularity', limit: 10}
+      json = assert_success_json
+      expect(json).to eq([{'a' => 1}, {'b' => 2}])
+    end
+  end
+
 end

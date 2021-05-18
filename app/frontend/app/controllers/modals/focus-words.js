@@ -19,6 +19,7 @@ export default modal.ModalController.extend({
     this.set('search', null);
     this.set('search_term', null);
     this.set('words', null);
+    this.set('focus_id', null);
     this.set('ideas', null);
     this.set('navigated', null);
     this.set('browse', null);
@@ -287,6 +288,7 @@ export default modal.ModalController.extend({
     pick_set: function(set) {
       this.set('navigated', true);
       this.set('words', set.words);
+      this.set('focus_id', set.id);
       this.set('title', set.tmp ? null : set.title);
       this.set('existing', true);
       this.set('browse', null);
@@ -302,6 +304,15 @@ export default modal.ModalController.extend({
       } else {
         _this.stash_set();
       }
+      if(_this.get('focus_id') && app_state.get('currentUser')) {
+        persistence.ajax('/api/v1/focus/usage', {
+          type: 'POST',
+          data: {
+            focus_id: _this.get('focus_id')
+          }
+        }).then(function(data) { }, function(err) { });  
+      }
+
       app_state.set('focus_words', {list: words, focus_id: Math.random()});
       editManager.controller.model.set('focus_id', 'force_refresh');
       modal.close();

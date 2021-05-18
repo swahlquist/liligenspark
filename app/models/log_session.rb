@@ -1291,7 +1291,7 @@ class LogSession < ActiveRecord::Base
 
           res = Typhoeus.post("https://workshop.openaac.org/api/v1/external", body: {
             integration_id: ui.device.developer_key.key,
-            integration_token: ui.device.developer_key.secret,
+            integration_secret: ui.device.developer_key.secret,
             user_id: user_id,
             updates: updates
           }, timeout: 10)

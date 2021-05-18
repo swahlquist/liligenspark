@@ -1,6 +1,6 @@
 require 'mime/types'
 class Api::SearchController < ApplicationController
-  before_action :require_api_token, :except => [:audio]
+  before_action :require_api_token, :except => [:audio, :focuses]
   def symbols
     token = ENV['OPENSYMBOLS_TOKEN']
     protected_source = nil

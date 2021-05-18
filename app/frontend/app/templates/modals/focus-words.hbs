@@ -196,7 +196,7 @@
               <div class='row'>
                 {{#each search.results as |item|}}
                   <button class='btn btn-default list-group-item-success' {{action 'pick_set' item}} style='width: 100%; margin-bottom: 5px; text-align: left;'>
-                    <img src={{item.image_url}} onerror="alert('assdf');this.style.visibility='hidden';" style='width: 50px; height: 50px; margin-right: 5px; float: left;'/>
+                    <img src={{item.image_url}} onerror="this.style.visibility='hidden';" style='width: 50px; height: 50px; margin-right: 5px; float: left;'/>
                     <span style='font-size: 14px; font-weight: bold; display: block; overflow: hidden;'>
                       {{item.title}}
                       {{#if item.author}}{{t "by" key='by'}} {{item.author}}{{/if}}

@@ -467,4 +467,46 @@ describe UserIntegration, :type => :model do
       end
     end
   end
+
+  describe "track_focus" do
+    it "should do nothing without integration defined" do
+      expect(Typhoeus).to_not receive(:post)
+      expect(UserIntegration.track_focus('a', 'b')).to eq(false)
+    end
+
+    it "should POST update if configured" do
+      dk = DeveloperKey.create
+      ui = UserIntegration.create(integration_key: 'communication_workshop')
+      ui.device.developer_key = dk
+      ui.device.save
+      ui.reload
+      ui.device.reload
+      expect(ui.device.developer_key_id).to_not eq(nil)
+      expect(Typhoeus).to receive(:post).with("https://workshop.openaac.org/api/v1/external/focus", body: {
+          integration_id: dk.key,
+          integration_secret: dk.secret,
+          user_id: nil,
+          focus_id: 'focus_id'
+      }, timeout: 10).and_return(OpenStruct.new(body: {}.to_json))
+      expect(UserIntegration.track_focus(nil, 'focus_id')).to eq(false)
+    end
+
+    it "should send anonymized user id if available" do
+      u = User.create
+      dk = DeveloperKey.create
+      ui = UserIntegration.create(integration_key: 'communication_workshop')
+      ui.device.developer_key = dk
+      ui.device.save
+      ui.reload
+      ui.device.reload
+      expect(ui.device.developer_key_id).to_not eq(nil)
+      expect(Typhoeus).to receive(:post).with("https://workshop.openaac.org/api/v1/external/focus", body: {
+          integration_id: dk.key,
+          integration_secret: dk.secret,
+          user_id: u.anonymized_identifier("external_for_#{dk.id}"),
+          focus_id: 'focus_id'
+      }, timeout: 10).and_return(OpenStruct.new(body: {accepted: true}.to_json))
+      expect(UserIntegration.track_focus(u.global_id, 'focus_id')).to eq(true)
+    end
+  end
 end

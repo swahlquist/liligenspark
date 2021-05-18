@@ -255,6 +255,28 @@ class UserIntegration < ActiveRecord::Base
     user.set_cached('integrations_for', res, expires)
     res
   end
+
+  def self.track_focus(user_id, focus_id)
+    ui = UserIntegration.find_by(integration_key: 'communication_workshop')
+    user = User.find_by_global_id(user_id)
+    if ui && ui.device && ui.device.developer_key_id
+      key = ui.device.developer_key
+      user_id = user && user.anonymized_identifier("external_for_#{ui.device.developer_key_id}")
+
+      res = Typhoeus.post("https://workshop.openaac.org/api/v1/external/focus", body: {
+        integration_id: ui.device.developer_key.key,
+        integration_secret: ui.device.developer_key.secret,
+        user_id: user_id,
+        focus_id: focus_id
+      }, timeout: 10)
+
+      json = JSON.parse(res.body) rescue nil
+      if json && json['accepted']
+        return true
+      end
+    end
+    return false
+  end
   
   def self.global_integrations
     expires ||= 30.minutes.to_i
