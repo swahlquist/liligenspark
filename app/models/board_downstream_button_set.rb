@@ -431,7 +431,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
               'sound_id' => button['sound_id'],
               'label' => button['label'],
               'ref_id' => button['ref_id'],
-              'force_vocalize' => button['add_to_vocalization'],
+              'force_vocalize' => button['add_vocalization'] == nil ? button['add_to_vocalization'] : button['add_vocalization'],
               'vocalization' => button['vocalization'],
               'link_disabled' => !!button['link_disabled'],
               'border_color' => button['border_color'],

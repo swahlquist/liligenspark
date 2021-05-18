@@ -1,7 +1,7 @@
 require 'obf'
 
 module Converters::CoughDrop
-  EXT_PARAMS = ['link_disabled', 'add_to_vocalization', 'hide_label', 'home_lock', 'blocking_speech', 'part_of_speech', 'external_id', 'video', 'book']
+  EXT_PARAMS = ['link_disabled', 'add_to_vocalization', 'add_vocalization', 'hide_label', 'home_lock', 'blocking_speech', 'part_of_speech', 'external_id', 'video', 'book']
 
   def self.to_obf(board, dest_path, path_hash=nil)
     json = to_external(board, {})

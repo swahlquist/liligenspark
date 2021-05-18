@@ -22,10 +22,11 @@ class DeletedBoard < ActiveRecord::Base
       board = Board.load_version(version)
       board.key = self.key
       board.load_secure_object if !board.settings || board.settings.is_a?(String)
-      board.instance_variable_set('@buttons_changed', true)
+      board.instance_variable_set('@buttons_changed', 'undeleted')
       board.save!
       self.cleared = true
       self.save
+      return board
     else
       raise "no valid version found"
     end

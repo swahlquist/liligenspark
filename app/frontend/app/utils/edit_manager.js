@@ -1556,7 +1556,20 @@ var editManager = EmberObject.extend({
           } else {
             delete newButton['text_only'];
           }
-          newButton.add_to_vocalization = !!currentButton.add_to_vocalization;
+          if(currentButton.get('talkAction')) {
+            if(currentButton.prevent_adding_to_vocalization == null) {
+              newButton.add_vocalization = true;
+            } else {
+              newButton.add_vocalization = !currentButton.prevent_adding_to_vocalization;
+            }
+          } else {
+            if(currentButton.force_add_to_vocalization == null) {
+              newButton.add_vocalization = !!currentButton.add_to_vocalization;
+            } else {
+              newButton.add_vocalization = !!currentButton.force_add_to_vocalization;
+            }
+
+          }
           if(currentButton.level_style) {
             if(currentButton.level_style == 'none') {
               emberSet(currentButton, 'level_modifications', null);

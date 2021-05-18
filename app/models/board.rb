@@ -484,6 +484,12 @@ class Board < ActiveRecord::Base
     @brand_new = !self.id
     @buttons_changed = true if self.buttons && !self.id
     @button_links_changed = true if (self.buttons || []).any?{|b| b['load_board'] } && !self.id
+    if @buttons_changed.is_a?(String)
+      @edit_description ||= {
+        'timestamp' => Time.now.to_f,
+        'notes' => [@buttons_changed]
+      }
+    end
     if @edit_description
       if self.settings['edit_description'] && self.settings['edit_description']['timestamp'] < @edit_description['timestamp'] - 1
         @edit_description = nil
@@ -1170,7 +1176,7 @@ class Board < ActiveRecord::Base
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
             'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 
-            'level_modifications', 'inflections', 'ref_id', 'rules');
+            'level_modifications', 'inflections', 'ref_id', 'rules', 'add_vocalization');
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
       button.delete('ref_id') if button['ref_id'].blank?
       button.delete('rules') if button['rules'].blank?

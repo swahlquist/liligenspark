@@ -1284,17 +1284,23 @@ class LogSession < ActiveRecord::Base
     if updates.length > 0
       ui = UserIntegration.find_by(integration_key: 'communication_workshop')
       if ui && ui.device && ui.device.developer_key_id
-        user_id = self.user.anonymized_identifier("external_for_#{ui.device.developer_key_id}")
+        key = ui.device.developer_key
+        user_device = self.user.devices.find_by(developer_key_id: key.id)
+        if user_device
+          user_id = self.user.anonymized_identifier("external_for_#{ui.device.developer_key_id}")
 
-        res = Typhoeus.post("https://workshop.openaac.org/api/v1/external", body: {
-          integration_id: ui.device.developer_key.key,
-          integration_token: ui.device.developer_key.secret,
-          user_id: user_id,
-          updates: updates
-        }, timeout: 10)
-        json = JSON.parse(res.body) rescue nil
-        if json && json['accepted']
-          self.save!
+          res = Typhoeus.post("https://workshop.openaac.org/api/v1/external", body: {
+            integration_id: ui.device.developer_key.key,
+            integration_token: ui.device.developer_key.secret,
+            user_id: user_id,
+            updates: updates
+          }, timeout: 10)
+          json = JSON.parse(res.body) rescue nil
+          if json && json['accepted']
+            self.save!
+            return true
+          end
+        else
           return true
         end
       end

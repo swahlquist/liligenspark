@@ -609,9 +609,9 @@ var utterance = EmberObject.extend({
     if(button.sound) {
       var collection_id = null;
       if(button.blocking_speech) {
-        collection_id = Math.round(Math.random() * 99999) + "-" + (new Date()).getTime();
+        collection_id = 'hold-' + button.button_id + "-" + (button.board || {}).id + "-" + Math.round((new Date()).getTime() / 30000);
       }
-      speecher.speak_audio(button.sound, 'text', collection_id, {alternate_voice: alt_voice});
+      speecher.speak_audio(button.sound, 'text', collection_id, {alternate_voice: alt_voice, prevent_repeat: true, prevent_any: app_state.get('referenced_user.preferences.prevent_button_interruptions')});
     } else {
       if(speecher.ready) {
         if(button.vocalization == ":beep") {
@@ -619,7 +619,7 @@ var utterance = EmberObject.extend({
         } else {
           var collection_id = null;
           if(button.blocking_speech) {
-            collection_id = Math.round(Math.random() * 99999) + "-" + (new Date()).getTime();
+            collection_id = 'hold-' + button.button_id + '-' + (button.board || {}).id + '-' + Math.round((new Date()).getTime() / 30000);
           }
           if(button.inline_content) {
             var items = [];
@@ -636,7 +636,7 @@ var utterance = EmberObject.extend({
             speecher.speak_collection(items, collection_id, {alternate_voice: alt_voice});
           } else {
             var text = button.vocalization || button.label;
-            speecher.speak_text(text, collection_id, {alternate_voice: alt_voice});
+            speecher.speak_text(text, collection_id, {alternate_voice: alt_voice, prevent_repeat: true, prevent_any: app_state.get('referenced_user.preferences.prevent_button_interruptions')});
           }
         }
       } else {
@@ -780,6 +780,12 @@ var utterance = EmberObject.extend({
     var list = app_state.get('button_list');
     var text = list.map(function(i) { return i.vocalization || i.label; }).join(' ');
     var items = [];
+    if(speecher.speaking_from_collection && app_state.get('referenced_user.preferences.utterance_interruptions') && (speecher.speaking_from_collection.match(/^utterance-/) || speecher.speaking_from_collection.match(/^hold-/))) {
+      speecher.stop('text');
+      return;
+    } else if(speecher.speaking_from_collection && speecher.speaking_from_collection.match(/^utterance/) && app_state.get('referenced_user.preferences.prevent_utterance_repeat')) {
+      return;
+    }
     for(var idx = 0; idx < list.length; idx++) {
       if(list[idx].inline_content) {
         list[idx].inline_content.forEach(function(content) {
@@ -807,7 +813,8 @@ var utterance = EmberObject.extend({
       buttons: stashes.get('working_vocalization')
     });
     app_state.set('insertion', null);
-    speecher.speak_collection(items, Math.round(Math.random() * 99999) + '-' + (new Date()).getTime(), {override_volume: volume});
+    var collection_id = 'utterance-' + Math.round(Math.random() * 99999) + '-' + (new Date()).getTime();
+    speecher.speak_collection(items, collection_id, {override_volume: volume});
     $("#hidden_input").val("");
     this.set('list_vocalized', true);
   },

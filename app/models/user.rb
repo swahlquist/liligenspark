@@ -268,6 +268,8 @@ class User < ActiveRecord::Base
         'word_suggestion_images' => true,
         'hidden_buttons' => 'grid',
         'symbol_background' => 'clear',
+        'utterance_interruptions' => true,
+        'click_buttons' => true,
         'auto_capitalize' => true,
         'prefer_native_keyboard' => false
       },
@@ -328,12 +330,18 @@ class User < ActiveRecord::Base
         self.settings['preferences']['devices'][key]['utterance_text_only'] = true if self.settings['preferences']['devices'][key]['utterance_text_only'] == nil
       end
     end
+    self.settings['preferences']['auto_capitalize'] ||= false
     if FeatureFlags.user_created_after?(self, 'new_index')
       self.settings['preferences']['new_index'] = true if self.settings['preferences']['new_index'] == nil
     end
     if FeatureFlags.user_created_after?(self, 'click_buttons')
       self.settings['preferences']['click_buttons'] = true if self.settings['preferences']['click_buttons'] == nil
     end
+    self.settings['preferences']['click_buttons'] ||= false
+    if FeatureFlags.user_created_after?(self, 'utterance_interruptions')
+      self.settings['preferences']['utterance_interruptions'] = true if self.settings['preferences']['utterance_interruptions'] == nil
+    end
+    self.settings['preferences']['utterance_interruptions'] ||= false
     if self.settings['preferences']['confirm_external_links']
       self.settings['preferences']['external_links'] = 'confirm_custom'
       self.settings['preferences'].delete('confirm_external_links')
@@ -598,7 +606,8 @@ class User < ActiveRecord::Base
       'hide_pin_hint', 'battery_sounds', 'auto_inflections', 'private_logging',
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept',
       'locale', 'logging_cutoff', 'logging_permissions', 'logging_code',
-      'substitutions', 'substitute_contractions', 'auto_capitalize', 'dim_level']
+      'substitutions', 'substitute_contractions', 'auto_capitalize', 'dim_level',
+      'prevent_button_interruptions', 'utterance_interruptions', 'prevent_utterance_repeat']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
 

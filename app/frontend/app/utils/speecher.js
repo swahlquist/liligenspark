@@ -299,15 +299,20 @@ var speecher = EmberObject.extend({
   speak_id: 0,
   speak_text: function(text, collection_id, opts) {
     opts = opts || {};
+    var already_in_collection = collection_id && this.speaking_from_collection == collection_id;
     if(this.speaking_from_collection && !collection_id) {
       // lets the user start building their next sentence without interrupting the current one
       // TODO: this seems elegant right now, but it is actually a good idea?
       return;
     } else if(this.speaking && opts.interrupt === false) {
       return;
+    } else if(already_in_collection && opts.prevent_repeat) {
+      return;
+    } else if(this.speaking_from_collection && opts.prevent_repeat && opts.prevent_any) {
+      return;
     }
     var interrupted = false;
-    if(collection_id && this.speaking_from_collection == collection_id) {
+    if(already_in_collection) {
     } else {
       interrupted = this.speaking;
       this.stop('text');
@@ -892,10 +897,15 @@ var speecher = EmberObject.extend({
   speak_audio: function(url, type, collection_id, opts) {
     opts = opts || {};
     var _this = this;
+    var already_in_collection = collection_id && this.speaking_from_collection == collection_id;
     if(this.speaking_from_collection && !collection_id) {
       // lets the user start building their next sentence without interrupting the current one
       return;
     } else if(this.speaking && opts.interrupt === false) {
+      return;
+    } else if(already_in_collection && opts.prevent_repeat) {
+      return;
+    } else if(this.speaking_from_collection && opts.prevent_repeat && opts.prevent_any) {
       return;
     }
     if(opts.interrupt !== false && type != 'background') {
@@ -904,7 +914,7 @@ var speecher = EmberObject.extend({
     }
     this.audio = this.audio || {};
     type = type || 'text';
-    if(collection_id && this.speaking_from_collection == collection_id) {
+    if(already_in_collection) {
     } else {
       this.stop(type);
     }

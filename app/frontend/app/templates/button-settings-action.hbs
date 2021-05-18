@@ -583,12 +583,23 @@
       {{/if}}
     {{/if}}
   {{/if}}
-  {{#unless model.talkAction}}
+  {{#if model.talkAction}}
     <div class={{if pending_board "form-group dim" "form-group"}}>
       <div class="col-sm-10">
         <div class="checkbox big_checkbox">
           <label>
-            {{input checked=model.add_to_vocalization type="checkbox"}}
+            {{input checked=model.prevent_adding_to_vocalization type="checkbox"}}
+            {{t "Do not add this button to the vocalization box" key='prevent_adding_to_vocalization'}}
+          </label>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    <div class={{if pending_board "form-group dim" "form-group"}}>
+      <div class="col-sm-10">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input checked=model.force_add_to_vocalization type="checkbox"}}
             {{t "Also add button to the vocalization box" key='add_to_vocalization'}}
           </label>
         </div>
@@ -608,6 +619,6 @@
         </div>
       </div>
     </div>
-  {{/unless}}
+  {{/if}}
 </div>
 </form>

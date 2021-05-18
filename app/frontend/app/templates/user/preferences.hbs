@@ -581,6 +581,33 @@
       </div>
     </div>
     <div class="form-group">
+      <label for="utterance_interruptions" class="col-sm-3 control-label">{{t "Self-Interrupting" key='utterance_interruptions'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.utterance_interruptions id="utterance_interruptions"}}
+            {{t "Interrupt any running speech or audio when the vocalization box is selected" key='enable_utterance_interruptions'}}
+          </label>
+        </div>
+      </div>
+      <div class="col-sm-5 col-sm-offset-3">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.prevent_utterance_repeat id="prevent_utterance_repeat"}}
+            {{t "Don't interrupt the vocalization box when it is hit more than once" key='prevent_utterance_repeat'}}
+          </label>
+        </div>
+      </div>
+      <div class="col-sm-5 col-sm-offset-3">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.prevent_button_interruptions id="prevent_button_interruptions"}}
+            {{t "Don't interrupt held buttons when another held button is selected" key='prevent_button_interruptions'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
       <label for="battery_sounds" class="col-sm-3 control-label">{{t "Battery Alerts" key='battery_alerts'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">

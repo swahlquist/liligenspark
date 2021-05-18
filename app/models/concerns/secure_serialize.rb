@@ -16,9 +16,11 @@ module SecureSerialize
     raise "no old version found for self.class.to_s:#{self.global_id}" if !version
     record = self.class.load_version(version) rescue nil
     raise "version couldn't be loaded" if !record
+
     record.instance_variable_set('@buttons_changed', 'rollback') if record.is_a?(Board)
     record.instance_variable_set('@do_track_boards', true) if record.is_a?(User)
     record.save
+    version.created_at
   end
 
   def mark_as_ss_saving

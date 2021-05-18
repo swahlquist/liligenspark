@@ -65,6 +65,15 @@ var Button = EmberObject.extend({
       }
     }
   ),
+  update_add_vocalization: observer('add_vocalization', 'add_to_vocalization', function() {
+    if(this.get('add_vocalization') !== null) {
+      this.set('prevent_adding_to_vocalization', !this.get('add_vocalization'));
+      this.set('force_add_to_vocalization', !!this.get('add_vocalization'));
+    } else if(this.get('add_to_vocalization') != null) {
+      this.set('prevent_adding_to_vocalization', false);
+      this.set('force_add_to_vocalization', !!this.get('add_to_vocalization'));
+    }
+  }),
   talkAction: computed('buttonAction', function() {
     return this.get('buttonAction') == 'talk';
   }),
@@ -671,6 +680,7 @@ var Button = EmberObject.extend({
 Button.attributes = ['label', 'background_color', 'border_color', 'image_id', 'sound_id', 'load_board',
             'hide_label', 'completion', 'hidden', 'link_disabled', 'vocalization', 'url', 'apps',
             'integration', 'video', 'book', 'part_of_speech', 'external_id', 'add_to_vocalization',
+            'add_vocalization',
             'home_lock', 'blocking_speech', 'level_modifications'];
 
 Button.style = function(style) {
