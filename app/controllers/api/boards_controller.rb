@@ -277,6 +277,28 @@ class Api::BoardsController < ApplicationController
       render json: JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user).to_json
     end
   end
+
+  def rollback
+    board_id = nil
+    board = Board.find_by_path(params['board_id'])
+    deleted_board = DeletedBoard.find_by_path(params['board_id'])
+    return unless exists?(board || deleted_board)
+    allowed = @api_user.allows?(@api_user, 'admin_support_actions')
+    date = Date.parse(params['date']) rescue nil
+    return api_error 400, {error: 'invalid date'} unless date
+    return api_error 400, {error: 'only 6 months history allowed'} unless date > 6.months.ago
+    revert_date = nil
+    restored = false
+    if deleted_board && !board
+      revert_date = deleted_board.updated_at
+      board = deleted_board.restore!
+      restored = true
+    end
+    if board
+      revert_date = board.rollback_to(date)
+    end
+    render json: {board_id: board ? board.global_id : nil, restored: restored, reverted: revert_date.iso8601}
+  end
   
   def share_response
     board = Board.find_by_path(params['board_id'])
