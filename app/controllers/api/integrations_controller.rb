@@ -73,4 +73,9 @@ class Api::IntegrationsController < ApplicationController
   def domain_settings
     render json: @domain_overrides.to_json
   end
+
+  def focus_usage
+    UserIntegration.schedule(:track_focus, @api_user && @api_user.global_id, params['focus_id'])
+    render json: {accepted: true}
+  end
 end
