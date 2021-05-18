@@ -585,7 +585,7 @@ describe Organization, :type => :model do
       o.add_user(u.user_name, false)
       u.reload
       m.reload
-      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
+      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'link_auth' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
       expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true})
       expect(m.permissions_for(u)).to eq({'user_id' => u.global_id, 'view_existence' => true})
     end
@@ -647,8 +647,8 @@ describe Organization, :type => :model do
       o.add_user(u2.user_name, false)
       u2.reload
       
-      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'set_goals' => true})
-      expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
+      expect(u.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'link_auth' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'set_goals' => true})
+      expect(u2.permissions_for(m)).to eq({'user_id' => m.global_id, 'view_existence' => true, 'link_auth' => true, 'view_detailed' => true, 'view_word_map' => true, 'supervise' => true, 'model' => true, 'manage_supervision' => true, 'support_actions' => true, 'admin_support_actions' => true, 'view_deleted_boards' => true, 'edit' => true, 'edit_boards' => true, 'set_goals' => true})
     end
     
     it "should not allow an admin assistant to supervise users" do
@@ -1842,6 +1842,290 @@ describe Organization, :type => :model do
         users << u
       end
       expect(o.extras_users.sort_by(&:id)).to eq(users.sort_by(&:id))
+    end
+  end
+
+  describe "saml" do
+    describe "external_auth_shortcut" do
+      # if params[:external_auth_shortcut]
+      #   key = GoSecure.sha512(params[:external_auth_shortcut], 'external_auth_shortcut')
+      #   current = Organization.find_by(:external_auth_shortcut, key)
+      #   if !current || current.id == self.id
+      #     self.settings['external_auth_shortcut'] = params[:external_auth_shortcut]
+      #     self.external_auth_shortcut = key
+      #   else
+      #     add_processing_error("auth shortcut #{key} is already taken")
+      #     return false
+      #   end
+      # end
+      it "should not allow re-using an auth shortcut" do
+        o = Organization.create
+        u = User.create
+        expect(o.external_auth_shortcut).to eq(nil)
+        res = o.process({
+          :external_auth_shortcut => 'bacon'
+        }, {'updater' => u})
+        expect(res).to eq(true)
+        expect(o.external_auth_shortcut).to_not eq(nil)
+        expect(o.settings['external_auth_shortcut']).to eq('bacon')
+
+        o2 = Organization.create
+        expect(o2.external_auth_shortcut).to eq(nil)
+        res = o2.process({
+          :external_auth_shortcut => 'bacon'
+        }, {'updater' => u})
+        expect(res).to eq(false)
+        expect(o2.processing_errors).to eq(['auth shortcut bacon is already taken'])
+        expect(o2.external_auth_shortcut).to eq(nil)
+        expect(o2.settings['external_auth_shortcut']).to eq(nil)
+      end
+
+      it "should require a minimum length for an auth shortcut" do
+        o2 = Organization.create
+        u = User.create
+        expect(o2.external_auth_shortcut).to eq(nil)
+        res = o2.process({
+          :external_auth_shortcut => 'bb'
+        }, {'updater' => u})
+        expect(res).to eq(false)
+        expect(o2.processing_errors).to eq(['auth shortcut too short'])
+        expect(o2.external_auth_shortcut).to eq(nil)
+        expect(o2.settings['external_auth_shortcut']).to eq(nil)
+      end
+    end
+
+    describe "find_by_saml_issuer" do
+      it "should return nil by default" do
+        expect(Organization.find_by_saml_issuer(nil)).to eq(nil)
+        expect(Organization.find_by_saml_issuer('whatever')).to eq(nil)
+      end
+
+      it "should find org by auth key" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u = User.create
+        expect(o.external_auth_shortcut).to eq(nil)
+        res = o.process({
+          :external_auth_shortcut => 'bacon'
+        }, {'updater' => u})
+        expect(res).to eq(true)
+        expect(o.external_auth_shortcut).to_not eq(nil)
+        expect(o.settings['external_auth_shortcut']).to eq('bacon')
+        expect(Organization.find_by_saml_issuer("https://www.example.com/saml")).to eq(o)
+      end
+
+      it "should find org by auth shortcut" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u = User.create
+        expect(o.external_auth_shortcut).to eq(nil)
+        res = o.process({
+          :external_auth_shortcut => 'bacon'
+        }, {'updater' => u})
+        expect(res).to eq(true)
+        expect(o.external_auth_shortcut).to_not eq(nil)
+        expect(o.settings['external_auth_shortcut']).to eq('bacon')
+        expect(Organization.find_by_saml_issuer("bacon")).to eq(o)
+      end
+    end
+
+    describe "find_saml_user" do
+      it "should return nil by default" do
+        o = Organization.create
+        expect(o.find_saml_user(nil)).to eq(nil)
+        expect(o.find_saml_user('nobody')).to eq(nil)
+      end
+
+      it "should return nil unless org is saml-congifured" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_user(u1.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag'})).to_not eq(false)
+        o.settings['saml_metadata_url'] = nil
+        o.save
+        expect(o.external_auth_key).to eq(nil)
+        expect(o.find_saml_user('wgawgwag')).to eq(nil)
+      end
+
+      it "should return nil for matching user not in the org" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_user(u1.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag'})).to_not eq(false)
+        o.remove_user(u1.user_name)
+        o.reload
+        expect(o.find_saml_user('wgawgwag')).to eq(nil)
+      end
+
+      it "should return a valid communicator from the org" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_user(u1.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag'})).to_not eq(false)
+        expect(o.find_saml_user('wgawgwag')).to eq(u1)
+      end
+
+      it "should return a valid supervisor from the org" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_supervisor(u1.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'supergal'})).to_not eq(false)
+        expect(o.find_saml_user('supergal')).to eq(u1)
+      end
+
+      it "should return a valid admin from the org" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_manager(u1.user_name, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'bossy'})).to_not eq(false)
+        expect(o.find_saml_user('bossy')).to eq(u1)
+      end
+    end
+  
+    describe "link_saml_user" do
+      it "should require saml config on org" do
+        o = Organization.create
+        expect(o.link_saml_user(nil, nil)).to eq(false)
+        u = User.create
+        expect(o.link_saml_user(u, nil)).to eq(false)
+        expect(o.link_saml_user(u, {})).to eq(false)
+        expect(o.link_saml_user(u, {:external_id => 'asdf'})).to eq(false)
+      end
+
+      it "should require external_id" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'asdf'
+        expect(o.link_saml_user(nil, nil)).to eq(false)
+        u = User.create
+        expect(o.link_saml_user(u, nil)).to eq(false)
+        expect(o.link_saml_user(u, {})).to eq(false)
+      end
+
+      it "should generate an external record code and link the user" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'asdf'
+        u = User.create
+        res = o.link_saml_user(u, {:external_id => 'loggy'})
+        expect(res).to_not eq(false)
+        expect(res.record_code).to match(/^ext:/)
+        expect(res.user).to eq(u)
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
+      end
+      
+      it "should set the user as possibly having external auth" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'asdf'
+        u = User.create
+        expect(u.reload.settings['possibly_external_auth']).to eq(nil)
+        res = o.link_saml_user(u, {:external_id => 'loggy'})
+        expect(res).to_not eq(false)
+        expect(res.record_code).to match(/^ext:/)
+        expect(res.user).to eq(u)
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
+        expect(u.reload.settings['possibly_external_auth']).to eq(true)
+      end
+    end
+
+    describe "unlink_saml_user" do
+      it "should require valid parameters" do
+        expect(Organization.unlink_saml_user(nil, nil)).to eq(false)
+        u = User.create
+        expect(Organization.unlink_saml_user(u, nil)).to eq(false)
+        expect(Organization.unlink_saml_user(nil, 'asdf')).to eq(false)
+      end
+      
+      it "should remove matching links" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'asdf'
+        u = User.create
+        link = o.link_saml_user(u, {:external_id => 'loggy'})
+        expect(link).to_not eq(nil)
+        res = Organization.unlink_saml_user(u, link.record_code)
+        expect(res).to eq(true)
+        expect(UserLink.find_by(id: link.id)).to eq(nil)
+        expect(u.reload.settings['possibly_external_auth']).to eq(nil)
+      end
+
+      it "should succeed even if no links found" do
+        expect(Organization.unlink_saml_user(nil, nil)).to eq(false)
+        u = User.create
+        expect(Organization.unlink_saml_user(u, nil)).to eq(false)
+        expect(Organization.unlink_saml_user(u, 'asdf')).to eq(true)
+      end
+    end
+
+    describe "external_auth_for" do
+      # it "should short-circuit if possibly_external_auth not set" do
+      #   o1 = Organization.create
+      #   u = User.create
+      #   expect(UserLink).to_not receive(:links_for)
+      #   expect(Organization.external_auth_for(u)).to eq(nil)
+      # end
+
+      it "should not short-circuit if possibly_external_auth is set" do
+        u2 = User.create
+        u2.settings['possibly_external_auth'] = true
+        u2.save
+        expect(UserLink).to receive(:links_for).with(u2).and_return([])
+        expect(Organization.external_auth_for(u2)).to eq(nil)
+      end
+
+      it "should not return a pending org connection" do
+        u = User.create
+        u.settings['possibly_external_auth'] = true
+        u.save
+        o1 = Organization.create
+        o2 = Organization.create
+        o2.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o2.save
+        o3 = Organization.create
+        o3.settings['saml_metadata_url'] = 'https://www.example.com/saml2'
+        o3.save
+        o1.add_user(u.user_name, false, false)
+        o2.add_user(u.user_name, true, false)
+        expect(Organization.external_auth_for(u)).to eq(nil)
+      end
+
+      it "should return the first saml-configured org found" do
+        u = User.create
+        u.settings['possibly_external_auth'] = true
+        u.save
+        o1 = Organization.create
+        o2 = Organization.create
+        o2.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o2.save
+        o3 = Organization.create
+        o3.settings['saml_metadata_url'] = 'https://www.example.com/saml2'
+        o3.save
+        o1.add_user(u.user_name, false, false)
+        o2.add_user(u.user_name, true, false)
+        o3.add_user(u.user_name, false, false)
+        expect(Organization.external_auth_for(u)).to eq(o3)
+      end
     end
   end
 end

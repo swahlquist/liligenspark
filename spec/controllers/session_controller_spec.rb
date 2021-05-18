@@ -73,6 +73,33 @@ describe SessionController, :type => :controller do
       expect(json['scope']).to eq('read_profile:basic_supervision')
       expect(json['user_id']).to eq(nil)
     end
+
+    it "should restore params from a SAML redirect" do
+      k = DeveloperKey.create(:redirect_uri => DeveloperKey.oob_uri)
+      RedisInit.default.setex("token_tmp_abcdef", 1.hour.to_i, '229yaot8t24ty9')
+      RedisInit.default.setex("oauth_qwerty", 1.hour.to_i, {
+        'client_id' => k.key,
+        'scope' => 'read_profile',
+        'redirect_uri' => DeveloperKey.oob_uri,
+        'device_key' => 'a',
+        'device_name' => 'b',
+        'app_name' => "good app",
+        'app_icon' => "http://www.example.com/icon.png"
+      }.to_json) rescue nil
+      get :oauth, params: {tmp_token: 'abcdef', oauth_code: 'qwerty'}
+      expect(assigns[:error]).to eq(nil)
+      expect(assigns[:code]).to_not eq(nil)
+      expect(assigns[:code]).to_not eq('qwerty')
+      expect(assigns[:config]).to eq({
+        'client_id' => k.key,
+        'scope' => 'read_profile',
+        'redirect_uri' => DeveloperKey.oob_uri,
+        'device_key' => 'a',
+        'device_name' => 'b',
+        'app_name' => "the application",
+        'app_icon' => "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"        
+      })
+    end
   end
   
   def key_with_stash(user=nil, redirect_uri=nil)
@@ -89,7 +116,6 @@ describe SessionController, :type => :controller do
   end
   
   describe "oauth_login" do
-    
     it "should not require api token" do
       key_with_stash
       post :oauth_login, params: {:code => @code, :reject => true}
@@ -191,6 +217,23 @@ describe SessionController, :type => :controller do
       post :oauth_login, params: {:code => @code, :username => u.user_name, :approve_token => token}
       expect(response).to be_redirect
       expect(response.location).to match(/\/oauth2\/token\/status\?code=\w+/)
+    end
+
+    it "should redirect to oauth flow if required for user" do
+      o = Organization.create
+      o.settings['saml_metadata_url'] = 'http://www.example.com/saml/meta'
+      o.save
+      u = User.new
+      u.generate_password("bacon")
+      u.save
+      o.add_user(u.user_name, false, false)
+      o.reload
+      expect(Organization.external_auth_for(u)).to eq(o)
+
+      key_with_stash
+      post :oauth_login, params: {:code => @code, :username => u.user_name, :password => "bacon"}
+      expect(response).to be_redirect
+      expect(response.location).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth&embed=1&oauth_code=abcdefg")
     end
   end
   
@@ -635,7 +678,7 @@ describe SessionController, :type => :controller do
       d2 = Device.find_by_global_id(json['access_token'])
       expect(d2).to eq(d)
       expect(d.reload.token_type).to eq(:browser)
-      expect(d.settings['long_token']).to eq(false)
+      expect(d.settings['long_token']).to eq(nil)
       expect(d.settings['long_token_set']).to eq(nil)
     end
 
@@ -677,7 +720,7 @@ describe SessionController, :type => :controller do
       d2 = Device.find_by_global_id(json['access_token'])
       expect(d2).to eq(d)
       expect(d.reload.token_type).to eq(:app)
-      expect(d.settings['long_token']).to eq(false)
+      expect(d.settings['long_token']).to eq(nil)
       expect(d.settings['long_token_set']).to eq(nil)
     end
 
@@ -1016,6 +1059,781 @@ describe SessionController, :type => :controller do
       expect(response.cookies['admin_token']).to_not eq(nil)
       user_id = Permissable.permissions_redis.get("/admin/auth/#{response.cookies['admin_token']}")
       expect(user_id).to eq(@user.global_id)
+    end
+  end
+
+  describe "saml" do
+    # SAML workflow
+    # 1a. A user tries to authenticate, but saml is required so redirect
+    # 1b. A user enters a saml-configured user name or shortcut, and is redirected
+    # 2. SAML provider POSTs back to /consume with issuer and user identity info
+    # 3. We validate the signature, find the org-issuer and user in that org
+    # 4a. For auth, we generate an auth token and either redirect or window.parent.postMessage
+    # 4b. For linking, we make the connection and redirect to the user's profile page
+
+    describe "auth_lookup" do
+      it "should error on no result" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        u = User.create
+        u.settings['email'] = 'bob@yahoo.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.external_auth_key).to_not eq(nil)
+        expect(Organization.external_auth_for(u)).to eq(o)
+        post :auth_lookup, {params: {ref: 'bobx@yahoo.com'}}
+        json = assert_error("no result found")
+      end
+
+      it "should return an org url by issuer" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        post :auth_lookup, {params: {ref: 'assdf'}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
+      end
+
+      it "should return an org url by issuer shortcut" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        o.process({external_auth_shortcut: 'bacon'}, {updater: User.create})
+        post :auth_lookup, {params: {ref: 'bacon'}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
+      end
+
+      it "should return an org url by global id" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        post :auth_lookup, {params: {ref: o.global_id}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
+      end
+
+      it "should error on org without config" do
+        o = Organization.create
+        post :auth_lookup, {params: {ref: o.global_id}}
+        assert_error("no result found")
+      end
+
+      it "should return an org url by user name" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.external_auth_key).to_not eq(nil)
+        expect(Organization.external_auth_for(u)).to eq(o)
+        post :auth_lookup, {params: {ref: u.user_name}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
+      end
+
+      it "should require a valid user to connect" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        post :auth_lookup, {params: {ref: o.global_id, user_id: 'asdf'}}
+        assert_not_found('asdf')
+      end
+
+      it "should require auth to connect to a user" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        u = User.create
+        post :auth_lookup, {params: {ref: o.global_id, user_id: u.global_id}}
+        assert_unauthorized
+      end
+
+      it "should pass a temporary token to allow connecting to a user" do
+        token_user
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        expect(GoSecure).to receive(:nonce).with('saml_tmp_token').and_return('abcdefg')
+        post :auth_lookup, {params: {ref: o.global_id, user_id: @user.global_id}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth&user_id=#{@user.global_id}&tmp_token=abcdefg")
+      end
+
+      it "should return an org url by user email" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = "assdf"
+        o.save
+        u = User.create
+        u.settings['email'] = 'bob@yahoo.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.external_auth_key).to_not eq(nil)
+        expect(Organization.external_auth_for(u)).to eq(o)
+        post :auth_lookup, {params: {ref: 'bob@yahoo.com'}}
+        json = assert_success_json
+        expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
+      end
+    end
+
+    describe "saml_start" do
+      it "should error without invalid org" do
+        get 'saml_start', params: {}
+        expect(response.body).to eq('Org missing')
+      end
+
+      it "should error without configured org" do
+        o = Organization.create
+        get 'saml_start', params: {org_id: o.global_id}
+        expect(response.body).to eq('Org not set up for external auth')
+      end
+
+      it "should error if invalid user passed" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        get 'saml_start', params: {org_id: o.global_id, user_id: 'asdf'}
+        expect(response.body).to eq('Could not connect external login to user account')
+      end
+
+      it "should error if not allowed to link for user" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        get 'saml_start', params: {org_id: o.global_id, user_id: u.global_id}
+        expect(response.body).to eq('Could not connect external login to user account')
+      end
+
+      it "should redirect on success" do
+        token_user
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        RedisInit.default.setex("token_tmp_abcdefg", 15.minutes.to_i, @device.tokens[0])
+        expect_any_instance_of(SessionController).to receive(:saml_settings).and_return("saml_stuff")
+        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff").and_return("https://www.example.com/saml/auth")
+        get 'saml_start', params: {org_id: o.global_id, user_id: @user.global_id, tmp_token: 'abcdefg'}        
+        expect(response).to be_redirect
+        expect(response.location).to eq("https://www.example.com/saml/auth")
+        expect(assigns[:saml_code]).to_not eq(nil)
+        config = JSON.parse(RedisInit.default.get("saml_#{assigns[:saml_code]}"))
+        expect(config).to_not eq(nil)
+        expect(config).to eq({
+          "device_id" => "unnamed device",
+          "org_id" => o.global_id,
+          "auth_user_id" => @user.global_id,
+          "user_id" => @user.global_id,
+        })
+      end
+
+      it "should store configuration for retrieval" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        expect_any_instance_of(SessionController).to receive(:saml_settings).and_return("saml_stuff")
+        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff").and_return("https://www.example.com/saml/auth")
+        get 'saml_start', params: {org_id: o.global_id, app: '1', embed: '1', oauth_code: 'asdfjkl', device_id: 'my-device'}
+        expect(response).to be_redirect
+        expect(response.location).to eq("https://www.example.com/saml/auth")
+        expect(assigns[:saml_code]).to_not eq(nil)
+        config = JSON.parse(RedisInit.default.get("saml_#{assigns[:saml_code]}"))
+        expect(config).to_not eq(nil)
+        expect(config).to eq({
+          "device_id" => "my-device",
+          "org_id" => o.global_id,
+          'app' => true,
+          'embed' => true,
+          'oauth_code' => 'asdfjkl'
+        })
+      end
+      
+    end
+
+    describe "saml_metadata" do
+      it "should error without org_id" do
+        get 'saml_metadata'
+        expect(response.body).to eq("Error: no org specified")
+      end
+
+      it "should error without configured org" do
+        org = Organization.create
+        get 'saml_metadata', params: {org_id: org.global_id}
+        expect(response.body).to eq("Error: org not configured")
+      end
+
+      it "should return valid xml" do
+        org = Organization.create
+        org.settings['saml_metadata_url'] = 'whatever'
+        org.save
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('whatever').and_return(settings)
+    
+        get 'saml_metadata', params: {org_id: org.global_id}
+        xml = Nokogiri(response.body)
+        expect(xml.css('mdui|DisplayName')[0].content).to eq('CoughDrop')
+        expect(xml.css('md|AssertionConsumerService')[0]['Location']).to eq('http://test.host/saml/consume')
+      end
+    end
+    
+    describe "saml_consume" do
+      it "should error without valid config code" do
+        RedisInit.default.del("saml_watermelon")
+        post 'saml_consume', params: {}
+        expect(assigns[:error]).to eq('Missing auth session code')
+
+        post 'saml_consume', params: {code: 'watermelon'}
+        expect(assigns[:error]).to eq('Auth session lost')
+      end
+
+      it "should require an org that matches the config and issuer" do
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {}.to_json)
+        post 'saml_consume', params: {code: 'watermelon'}
+        expect(assigns[:error]).to eq('Provider not found in the system')
+
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '',
+          issuers: ['http://test.host/saml/meta'],
+        })
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq('Org mismatch')
+      end
+
+      it "should error if trying to connect via unauthorized user" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u2 = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u2.global_id}.to_json)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq('Mismatched user connection')
+      end
+
+      it "should link user if explicitly set and authorized to do so" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u.global_id}.to_json)
+
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(assigns[:error]).to eq(nil)
+      end
+
+
+      it "should error if no coughdrop user matches" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq('User not found in the system, please have your account admin connect your accounts')
+      end
+      
+      it "should link up by user name if possible" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return(u.user_name)
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(response).to be_redirect
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+      end
+
+      it "should link up by email if possible" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u.settings['email'] = 'nunya@example.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('myname')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(response).to be_redirect
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+      end
+
+      it "should error on invalid signature" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        o.link_saml_user(u, {external_id: '123456'})
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(false)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq('Invalid authentication')
+      end
+
+      it "should redirect to oauth flow (with tmp_token correctly set) if specified" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u.settings['email'] = 'nunya@example.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('myname')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, oauth_code: 'abcd'}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(assigns[:temp_token]).to_not eq(nil)
+        expect(response).to be_redirect
+        expect(response.location).to eq("http://test.host/oauth2/token?oauth_code=abcd&tmp_token=#{assigns[:temp_token]}&user_name=no-name")
+      end
+
+      it "should render inline success if specified" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u.settings['email'] = 'nunya@example.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('myname')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, embed: true}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(response).to_not be_redirect
+        expect(assigns[:authenticated_user]).to eq(u)
+        expect(assigns[:saml_data]).to eq({
+          :email => "nunya@example.com",
+          :external_id => "123456",
+          :issuer => "https://www.example.com/saml/meta",
+          :roles => [],
+          :user_name => "myname",          
+        })
+      end
+
+      it "should redirect to the profile page if specified" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u.global_id}.to_json)
+
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(assigns[:error]).to eq(nil)
+        expect(response).to be_redirect
+        expect(response.location).to eq("http://test.host/#{u.user_name}/edit")
+      end
+
+      it "should redirect to the login page (with tmp_token correctly set) by default" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u.settings['email'] = 'nunya@example.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('myname')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(response).to be_redirect
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+      end
+    end
+  
+    # def saml_consume
+    #   config = JSON.parse(RedisInit.default.get("saml_#{params['code']}")) rescue nil
+    #   if !config
+    #     @error = params['code'] ? "Auth session lost" : "Missing auth session code"
+    #     return render
+    #   end
+    #   org = Organization.find_by_global_id(config['org_id'])
+    #   response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], :settings => saml_settings(org, code))
+    #   authenticated_user = nil
+  
+    #   email = response.attributes.fetch('email') || response.attributes['urn:oid:0.9.2342.19200300.100.1.3'] || response.attributes['urn:mace:dir:attribute-def:mail']
+    #   user_name = response.attributes.fetch('uid') || response.attributes['urn:oid:0.9.2342.19200300.100.1.1'] || response.attributes['urn:mace:dir:attribute-def:uid']
+    #   data = {external_id: response.nameid, issuer: response.issuers[0], email: email, user_name: user_name, roles: response.attributes.multi(:role)}
+    #   if config['user_id']
+    #     existing_user = User.find_by_global_id(config['user_id']) 
+    #     if !existing_user || !existing_user.allows(@api_user, 'link_auth')
+    #       @error = "Mismatched user connection" 
+    #       return render
+    #     end
+    #     org.link_saml_user(existing_user, data)
+    #     authenticated_user = existing_user
+    #   else
+    #     if !org || org != Organization.find_by_saml_issuer(data[:issuer])
+    #       @error = org ? "Org mismatch" : "Provider not found in the system" 
+    #       return render
+    #     end
+    #     authenticated_user = org.find_saml_user(data[:external_id])
+    #     if !authenticated_user
+    #       @error = "User not found in the system" 
+    #       return render
+    #     end
+    #   end
+    #   # We validate the SAML Response and check if the user already exists in the system
+    #   if response.is_valid? && authenticated_user
+    #     RedisInit.default.del("saml_#{params['code']}")
+    #     device = Device.find_or_create_by(:user_id => authenticated_user.global_id, :developer_key_id => 0, :device_key => config['device_id'])
+    #     if config['oauth_code']
+    #       # Redirect back to authorization for oauth flow
+    #       RedisInit.default.del("saml_#{config['oauth_code']}")
+    #       device.settings['auth_device'] = true
+    #       device.save
+    #       token = device.generate_token!(false)
+    #       nonce = GoSecure.nonce('oauth_access_token')
+    #       RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, token)
+    #       redirect_to oauth_url(tmp_token: nonce, user_name: authenticated_user.user_name, oauth_code: config['oauth_code'])
+    #     elsif config['embed']
+    #       # For embed flow, show success and post it to the parent window
+    #       assert_session_device(device, authenticated_user, config['app'])
+    #       @saml_data = data
+    #       @authenticated_user = authenticated_user
+    #       render
+    #     elsif config['user_id']
+    #       # For connection flow, redirect back to the user's profile page, all is done
+    #       redirect_to "/#{authenticated_user.user_name}/edit"
+    #     else
+    #       # For standard flow, redirect to login page with temporary auth token
+    #       nonce = GoSecure.nonce('saml_tmp_token')
+    #       assert_session_device(device, authenticated_user, config['app'])
+    #       access, refresh = device.tokens
+    #       RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, accesss)
+    #       redirect_to "/login?auth-#{tmp_token}"
+    #     end
+    #   else
+    #     @error = authenticated_user ? "Invalid authentication" : "No user found"
+    #     return render
+    #   end    
+    # end
+  
+    describe "saml_idp_logout_request" do
+      it "should error on invalid signature" do
+        get 'saml_idp_logout_request', params: {SAMLRequest: 'abc', RelayState: 'qwer'}
+        expect(response.body).to eq("Error: Invalid logout request")
+      end
+
+      it "should redirect to the correct endpoint" do
+        org = Organization.create
+        org.settings['saml_metadata_url'] = 'http://test.host/saml/meta'
+        org.save
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta').and_return(settings)
+
+
+        obj = {}
+        expect(OneLogin::RubySaml::SloLogoutrequest).to receive(:new).with('abc').and_return(obj)
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:id).and_return('zyxwv')
+        expect(obj).to receive(:issuer).and_return('http://test.host/saml/meta').at_least(1).times
+        expect(obj).to receive(:name_id).and_return('bob').at_least(1).times
+        expect_any_instance_of(OneLogin::RubySaml::SloLogoutresponse).to receive(:create).with(settings, 'zyxwv', nil, :RelayState => 'qwer').and_return("https://www.example.com/saml/logout")
+        get 'saml_idp_logout_request', params: {SAMLRequest: 'abc', RelayState: 'qwer'}
+        expect(response).to be_redirect
+        expect(response.location).to eq("https://www.example.com/saml/logout")
+      end
+
+      it "should clear only saml device tokens" do
+        org = Organization.create
+        org.settings['saml_metadata_url'] = 'http://test.host/saml/meta'
+        org.save
+        u = User.create
+        org.add_user(u.user_name, false, false)
+        expect(org.link_saml_user(u, {external_id: 'bob'})).to_not eq(false)
+        d1 = u.devices.create
+        d1.generate_token!
+        d2 = u.devices.create
+        d2.settings['used_for_saml'] = true
+        d2.save
+        d2.generate_token!
+        d3 = u.devices.create
+        d3.generate_token!
+        d4 = u.devices.create
+        d4.settings['used_for_saml'] = true
+        d4.save
+        d4.generate_token!
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta').and_return(settings)
+
+
+        obj = {}
+        expect(OneLogin::RubySaml::SloLogoutrequest).to receive(:new).with('abc').and_return(obj)
+        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:id).and_return('zyxwv')
+        expect(obj).to receive(:issuer).and_return('http://test.host/saml/meta').at_least(1).times
+        expect(obj).to receive(:name_id).and_return('bob').at_least(1).times
+        expect_any_instance_of(OneLogin::RubySaml::SloLogoutresponse).to receive(:create).with(settings, 'zyxwv', nil, :RelayState => 'qwer').and_return("https://www.example.com/saml/logout")
+        get 'saml_idp_logout_request', params: {SAMLRequest: 'abc', RelayState: 'qwer'}
+        expect(response).to be_redirect
+        expect(response.location).to eq("https://www.example.com/saml/logout")
+
+        expect(d1.reload.settings['keys'].length).to eq(1)
+        expect(d2.reload.settings['keys'].length).to eq(0)
+        expect(d3.reload.settings['keys'].length).to eq(1)
+        expect(d4.reload.settings['keys'].length).to eq(0)
+      end
     end
   end
 end

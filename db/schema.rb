@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210319214253) do
+ActiveRecord::Schema.define(version: 20210514201733) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -321,8 +321,12 @@ ActiveRecord::Schema.define(version: 20210319214253) do
     t.datetime "updated_at"
     t.integer  "parent_organization_id"
     t.boolean  "custom_domain"
+    t.string   "external_auth_key"
+    t.string   "external_auth_shortcut"
     t.index ["admin"], name: "index_organizations_on_admin", unique: true, using: :btree
     t.index ["custom_domain"], name: "index_organizations_on_custom_domain", using: :btree
+    t.index ["external_auth_key"], name: "index_organizations_on_external_auth_key", unique: true, using: :btree
+    t.index ["external_auth_shortcut"], name: "index_organizations_on_external_auth_shortcut", unique: true, using: :btree
     t.index ["parent_organization_id"], name: "index_organizations_on_parent_organization_id", using: :btree
   end
 

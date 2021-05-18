@@ -1268,7 +1268,6 @@ class LogSession < ActiveRecord::Base
     updates = []
 
     user_id = GoSecure.hmac("#{self.user.global_id}:#{self.user.created_at.iso8601}", Digest::MD5.hexdigest(self.global_id), 1)[0, 10]
-    # TODO: should we anonymize the user id and provide it in the login process to match it up?
     self.assert_extra_data
     (self.data['events'] || []).each do |event|
       if !event['external_processed']

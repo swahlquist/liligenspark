@@ -190,6 +190,7 @@ class Webhook < ActiveRecord::Base
   
   def self.find_record(record_code)
     return nil unless record_code
+    return nil if record_code.match(/^ext:/)
     klass, global_id = record_code.split(/:/)
     klass = klass.constantize
     klass.respond_to?(:find_by_global_id) ? klass.find_by_global_id(global_id) : klass.find_by(:id => global_id)

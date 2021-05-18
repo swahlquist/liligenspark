@@ -104,6 +104,7 @@ describe Api::UsersController, :type => :controller do
         "view_existence"=>true, 
         "view_detailed"=>true,
         "view_deleted_boards"=>true, 
+        'link_auth' => false,
         'view_word_map' => true,
         "supervise"=>false, 
         "model"=>false,

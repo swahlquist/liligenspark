@@ -78,6 +78,18 @@ describe ApplicationController, :type => :controller do
       expect(assigns[:true_user]).to eq(u)
       expect(response).to be_successful
     end
+
+    it "should allow tmp_token for specific routes" do
+      u = User.create
+      d = Device.create(:user => u)
+      token = RedisInit.default.setex("token_tmp_qwerty", 1.hour.to_i, d.tokens[0])
+      get :index, params: {:tmp_token => "qwerty", :check_token => true}
+      expect(assigns[:tmp_token]).to eq(true)
+      expect(assigns[:token]).to eq(d.tokens[0])
+      expect(assigns[:api_user]).to eq(u)
+      expect(assigns[:api_device_id]).to eq(d.global_id)
+      expect(response).to be_successful
+    end
     
     it "should set user from X-As-User-Id if org admin" do
       o = Organization.create(:admin => true)

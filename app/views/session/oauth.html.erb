@@ -103,6 +103,9 @@
   var auth = null;
   try {
     auth = JSON.parse(localStorage['cdStash-auth_settings']);
+    <% if @access_token %>
+      auth = <%= {access_token: @access_token, user_name: @user_name}.to_json.html_safe %>;
+    <% end %>
   } catch(e) { }
   if(auth && auth.user_name && auth.access_token && document.getElementById('oauth_login') && !document.getElementById('invalid_attempt')) {
     var xhr = new XMLHttpRequest();

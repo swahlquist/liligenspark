@@ -13,6 +13,11 @@ export default Route.extend({
         controller.set('login_password', parts[1].replace(/-/, '?:#'));
         history.replaceState({}, null, "/login");
       }
+    } else if(location.search && location.search.match(/^\?auth-/)) {
+      var tmp_token = decodeURIComponent(location.search.replace(/^\?auth-/, ''));
+      controller.set('tmp_token', tmp_token);
+      // TODO: auto-check token from redirect
+      history.replaceState({}, null, "/login");
     }
     if(session.get('isAuthenticated')) {
       debugger

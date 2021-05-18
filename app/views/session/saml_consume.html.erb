@@ -1,0 +1,29 @@
+<div id='small_header'><%= render 'shared/static_header' %></div>
+<div id="content" style="width: 400px; margin: 50px auto 0 auto;">
+      <div style="margin: 20px;">
+        <% if @error %>
+          <h2>Authorization Failed</h2>
+          <p>The application requesting authorization
+           should automatically handle
+          the following message, <pre><%= params['error'] %></pre>
+          </p>
+        <% else if @no_parent %>
+          <h2>Authorization Success</h2>
+          <p><b><%= @authenticated_user.user_name %></p>
+          <p>Please return to the application to finish
+            the authentication process.
+          </p>
+        <% else %>
+          <h2>Authorization Success</h2>
+          <p><b><%= @authenticated_user.user_name %></p>
+          <p>The application requesting authorization 
+          should automatically handle
+          processing the success code, <pre><%= @saml_data[:external_id] %></pre>
+          </p>
+        <% end %>
+      </div>
+</div>
+<script>
+  <% hash = {:type => "saml_status", :data => @saml_data, :error => @error} %>
+  window.parent.postMessage(<%= hash.to_json.html_safe %>, '*');
+</script>

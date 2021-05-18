@@ -376,6 +376,7 @@ describe Utterance, :type => :model do
         'user_id' => u2.global_id,
         'text' => 'hat cat scat',
         'utterance_id' => u.global_id,
+        'share_index' => nil,
         'reply_id' => nil,
         'reply_url' => "#{JsonApi::Json.current_host}/u/#{u.reply_nonce}A"
       })
@@ -420,6 +421,7 @@ describe Utterance, :type => :model do
         'cell_phone' => '5558675309',
         'reply_id' => Webhook.get_record_code(session),
         'utterance_id' => utterance.global_id,
+        'share_index' => 0,
         'reply_url' => "#{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}#{Utterance.to_alpha_code(0)}",
         'text' => 'hat cat scat',
       }, u)

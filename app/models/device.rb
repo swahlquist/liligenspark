@@ -24,7 +24,7 @@ class Device < ActiveRecord::Base
   def token_timeout
     long_token = self.settings['long_token'] == nil ? true : self.settings['long_token']
     # force a logout for tokens that have been used for an extended period of time
-    if self.settings['temporary_device']
+    if self.settings['temporary_device'] || self.settings['auth_device']
       30.minutes.to_i
     elsif self.settings['valet']
       24.hours.to_i

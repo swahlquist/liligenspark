@@ -197,7 +197,7 @@ describe Uploader do
       bucket = OpenStruct.new({
         objects: objects
       })
-      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
+      expect(object).to receive(:copy).with(:acl=>"public-read", :key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
       buckets = OpenStruct.new
       expect(buckets).to receive(:find).and_return(bucket)
       service = OpenStruct.new({
@@ -214,7 +214,7 @@ describe Uploader do
       bucket = OpenStruct.new({
         objects: objects
       })
-      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_raise("bacon")
+      expect(object).to receive(:copy).with(:acl=>"public-read", :key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_raise("bacon")
       buckets = OpenStruct.new
       expect(buckets).to receive(:find).and_return(bucket)
       service = OpenStruct.new({
@@ -247,7 +247,7 @@ describe Uploader do
       bucket = OpenStruct.new({
         objects: objects
       })
-      expect(object).to receive(:copy).with(:key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
+      expect(object).to receive(:copy).with(:acl=>"public-read", :key => 'images/abcdefg/asdf-asdf.asdf', :bucket => bucket).and_return(true)
       buckets = OpenStruct.new
       expect(buckets).to receive(:find).and_return(bucket)
       service = OpenStruct.new({

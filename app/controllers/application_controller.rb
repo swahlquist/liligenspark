@@ -36,7 +36,7 @@ class ApplicationController < ActionController::Base
   end
   
   def check_api_token
-    return true unless request.path.match(/^\/api/) || request.path.match(/^\/oauth2/) || params['check_token'] || request.headers['Check-Token']
+    return true unless request.path.match(/^\/api/) || request.path.match(/^\/oauth2/) || request.path.match(/^\/saml/) || request.path.match(/^\/auth/) || params['check_token'] || request.headers['Check-Token']
     if request.path.match(/^\/api\/v1\/.+\/simple\.obf/)
       headers['Access-Control-Allow-Origin'] = '*'
       headers['Access-Control-Allow-Methods'] = 'GET'
@@ -51,7 +51,10 @@ class ApplicationController < ActionController::Base
     Time.zone = nil
     token = params['access_token']
     PaperTrail.request.whodunnit = nil
-    if !token && request.headers['Authorization']
+    if !token && params['tmp_token'] && (request.path.match(/^\/(auth|saml)\//) || (params['check_token'] && Rails.env.test?))
+      @tmp_token = true
+      token = RedisInit.default.get("token_tmp_#{params['tmp_token']}")
+    elsif !token && request.headers['Authorization']
       match = request.headers['Authorization'].match(/^Bearer ([\w\-_\~]+)$/)
       token = match[1] if match
     end

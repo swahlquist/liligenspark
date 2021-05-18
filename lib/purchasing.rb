@@ -1064,7 +1064,7 @@ module Purchasing
       customer_subs = customer['subscriptions'].to_a.select{|s| ((s['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop' }
       if !user && cancels[customer['id']].blank? && !customer_subs.blank?
         problems << "#{customer['id']} no user found"
-        output "\tuser not found"
+        output "\tuser not found #{user_id} (ROGUE SUBSCRIPTION??)"
         next
       end
 

@@ -51,9 +51,26 @@ class UserLink < ApplicationRecord
     res.data['state'] ||= {}
     res
   end
+
+  def self.generate_external(user, record_code, type, state=nil)
+    links = UserLink.where(user_id: user.id, record_code: "ext:#{record_code}")
+    res = links.detect{|l| l.data['type'] == type}
+    res ||= UserLink.new
+    res.user = user
+    res.record_code = "ext:#{record_code}"
+    res.data ||= {}
+    res.data['external'] = true
+    res.data['type'] = type
+    res.data['state'] = state if state
+    res.data['state'] ||= {}
+    res
+  end
   
   def self.remove(user, record, type)
-    record_code = Webhook.get_record_code(record)
+    record_code = record
+    if !record.is_a?(String)
+      record_code = Webhook.get_record_code(record)
+    end
     links = UserLink.where(user_id: user.id, record_code: record_code)
     links = links.select{|l| l.data['type'] == type }
     links.each{|l| l.destroy }
@@ -73,7 +90,7 @@ class UserLink < ApplicationRecord
     cache_key = "links/for/#{record_code}/#{timestamp.round(3)}"
     Permissable.permissions_redis.del(cache_key)
   end
-  
+
   def self.links_for(record, force=false)
     return [] unless record && record.id
     record_code = Webhook.get_record_code(record)

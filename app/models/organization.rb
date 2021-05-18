@@ -24,6 +24,11 @@ class Organization < ActiveRecord::Base
   def generate_defaults
     self.settings ||= {}
     self.settings['name'] ||= "Unnamed Organization"
+    if self.settings['saml_metadata_url']
+      self.external_auth_key = GoSecure.sha512(self.settings['saml_metadata_url'], 'external_auth_key')
+    else
+      self.external_auth_key = nil
+    end
     @processed = false
     true
   end
@@ -524,6 +529,7 @@ class Organization < ActiveRecord::Base
     elsif user_type == 'sponsored_user'
       links = links.select{|l| l['type'] == 'org_user' && l['state']['sponsored'] }
     elsif user_type == 'all'
+      links = links.select{|l| ['org_user', 'org_manager', 'org_supervisor'].include?(l['type']) }
     else
       raise "unrecognized type, #{user_type}"
     end
@@ -583,6 +589,68 @@ class Organization < ActiveRecord::Base
 
   def subscriptions
     self.attached_users('subscription')
+  end
+
+  def self.find_by_saml_issuer(eid)
+    return nil unless eid
+    key = GoSecure.sha512(eid, 'external_auth_key')
+    res = Organization.find_by(external_auth_key: key)
+    res ||= Organization.find_by(external_auth_shortcut: GoSecure.sha512(eid, 'external_auth_shortcut'))
+    res
+  end
+
+  def find_saml_user(external_id)
+    return nil unless external_id && self.settings['saml_metadata_url']
+    record_code = "ext:#{GoSecure.sha512(external_id, 'external_auth_user_id')}"
+    links = UserLink.where(record_code: record_code).select{|l| l.data['type'] == 'saml_auth' }
+    return nil if links.empty?
+    # TODO: sharding
+    self.attached_users('all').where(id: links.map(&:user_id)).first
+  end
+
+  def link_saml_user(existing_user, data)
+    return false unless existing_user
+    return false unless self.settings['saml_metadata_url']
+    return false unless data && data[:external_id]
+    record_code = GoSecure.sha512(data[:external_id], 'external_auth_user_id')
+    state = {
+      'org_id' => self.global_id,
+      'external_id' => data[:external_id],
+      'user_name' => data[:user_name],
+      'roles' => data[:roles]
+    }
+    existing_user.settings['possibly_external_auth'] = true
+    existing_user.save
+    ul = UserLink.generate_external(existing_user, record_code, 'saml_auth', state)
+    ul.save
+    ul
+  end
+
+  def self.unlink_saml_user(user, hashed_external_id)
+    return false unless user && hashed_external_id
+    record_code = hashed_external_id
+    UserLink.remove(user, record_code, 'saml_auth')
+    if UserLink.links_for(user).none?{|l| l['type'] == 'saml_auth' }
+      user.settings.delete('possibly_external_auth')
+      user.save
+    end
+    true
+  end
+
+  def self.external_auth_for(user)
+    user = User.find_by_path(user) if user.is_a?(String)
+    return nil unless user
+    org = nil
+#    return nil if !user.settings['possibly_external_auth']
+    links = UserLink.links_for(user).select{|l| !l['state']['pending'] && ['org_user', 'org_supervisor', 'org_manager'].include?(l['type']) }.sort_by{|l| l['record_code'] }
+    org_ids = []
+    links.each do |link|
+      # TODO: Sharding
+      klass, global_id = link['record_code'].split(/:/)
+      org_ids << User.local_ids([global_id])[0] if klass == 'Organization'
+    end
+    orgs = Organization.where(id: org_ids).where('external_auth_key IS NOT NULL').order('id ASC')
+    orgs.detect{|o| o.settings['saml_metadata_url']}
   end
   
   def self.attached_orgs(user, include_org=false)
@@ -789,6 +857,21 @@ class Organization < ActiveRecord::Base
           'updater_id' => non_user_params['updater'].global_id,
           'updater_user_name' => non_user_params['updater'].user_name
         }, false)
+      end
+    end
+    if params[:external_auth_shortcut]
+      if params[:external_auth_shortcut].length < 5
+        add_processing_error("auth shortcut too short")
+        return false
+      end
+      key = GoSecure.sha512(params[:external_auth_shortcut], 'external_auth_shortcut')
+      current = Organization.find_by(external_auth_shortcut: key)
+      if !current || current.id == self.id
+        self.settings['external_auth_shortcut'] = params[:external_auth_shortcut]
+        self.external_auth_shortcut = key
+      else
+        add_processing_error("auth shortcut #{params[:external_auth_shortcut]} is already taken")
+        return false
       end
     end
     if params[:allotted_supervisor_licenses]

@@ -12,7 +12,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'privacy', 'terms', 'hipaa', 'accessibility', 'history',
   'js', 'css', 'scripts', 'script', 'pics', 'images',
   'find', 'unknown', 'nobody', 'goals', 'notes', 'rooms', 'coughdrop', 'cough_drop',
-  'mycoughdrop', 'inflection', 'inflections'
+  'mycoughdrop', 'inflection', 'inflections', 'saml'
 ]
 require 'resque/server'
 require 'admin_constraint'
@@ -50,6 +50,12 @@ Coughdrop::Application.routes.draw do
   post 'api/v1/auth/admin' => 'session#auth_admin'
   delete 'oauth2/token' => 'session#oauth_logout'
   get 'oauth2/token/status' => 'session#oauth_local', :as => 'oauth_local'
+  get 'auth/lookup' => 'session#auth_lookup'
+  get 'saml/init' => 'session#saml_start'
+  get 'saml/metadata' => 'session#saml_metadata'
+  get 'saml/logout' => 'session#saml_idp_logout_request'
+  post 'saml/consume' => 'session#saml_consume'
+
   post 'api/v1/token/refresh' => 'session#oauth_token_refresh'
   post 'token' => 'session#token'
   

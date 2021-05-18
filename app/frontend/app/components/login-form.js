@@ -29,6 +29,9 @@ export default Component.extend({
     persistence.addObserver('browserToken', this.browserTokenChange);
     this.set('long_token', false);
     var token = persistence.get('browserToken');
+    if(this.get('tmp_token')) {
+      this.check_tmp_token(this.get('tmp_token'));
+    }
     if(token) {
       this.set('client_id', 'browser');
       this.set('client_secret', token);
@@ -62,6 +65,35 @@ export default Component.extend({
           _this.check_for_missing_token();
         }, 2000);
       });
+    }
+  },
+  check_tmp_token: function(token) {
+    debugger
+    // token_check?tmp_token=...&include_token=1
+    // session.confirm_authentication(res.token)
+    // then handle_auth(res.token)
+  },
+  handle_auth: function(data) {
+    var _this = this;
+    if(data.missing_2fa) {
+      // TODO: request 2fa, minimize token
+      // access until this is confirmed
+      // will need to re-call handle_auth
+      // after 2fa confirmation
+      // TODO: if data.set_2fa then set & confirm it now
+      // TODO: admin UI for resetting 2fa
+    } else if(data.temporary_device) {
+      _this.send('login_success', false);
+      _this.set('login_single_assertion', true);
+      _this.set('login_followup', false);
+    } else if(!data.long_token) {
+      // follow-up question, is this a shared device?
+      _this.send('login_success', false);
+      _this.set('login_followup', true);
+      _this.set('login_single_assertion', false)
+      _this.set('login_followup_already_long_token', data.long_token_set);
+    } else {
+      _this.send('login_success', true);
     }
   },
   first_login: computed(function() {
@@ -180,19 +212,7 @@ export default Component.extend({
         var _this = this;
         _this.set('login_followup_already_long_token', false);
         session.authenticate(data).then(function(data) {
-          if(data.temporary_device) {
-            _this.send('login_success', false);
-            _this.set('login_single_assertion', true);
-            _this.set('login_followup', false);
-          } else if(!data.long_token) {
-            // follow-up question, is this a shared device?
-            _this.send('login_success', false);
-            _this.set('login_followup', true);
-            _this.set('login_single_assertion', false)
-            _this.set('login_followup_already_long_token', data.long_token_set);
-          } else {
-            _this.send('login_success', true);
-          }
+          _this.handle_auth(data);
         }, function(err) {
           err = err || {};
           _this.set('logging_in', false);
