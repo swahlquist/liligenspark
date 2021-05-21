@@ -299,6 +299,7 @@ class Api::UsersController < ApplicationController
     return api_error(400, {'flushed' => 'false'}) unless user.user_name == params['user_name'] && user.global_id == params['confirm_user_id']
     user.schedule_deletion_at = 36.hours.from_now
     user.save
+    Purchasing.cancel_other_subscriptions(user, 'all')
     SubscriptionMailer.deliver_message(:account_deleted, user.global_id)
     AdminMailer.schedule_delivery(:opt_out, user.global_id, 'deleted')
     render json: {flushed: 'pending'}
