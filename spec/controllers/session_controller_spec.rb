@@ -222,6 +222,7 @@ describe SessionController, :type => :controller do
     it "should redirect to oauth flow if required for user" do
       o = Organization.create
       o.settings['saml_metadata_url'] = 'http://www.example.com/saml/meta'
+      o.settings['saml_enforced'] = true
       o.save
       u = User.new
       u.generate_password("bacon")
@@ -393,7 +394,7 @@ describe SessionController, :type => :controller do
       k = DeveloperKey.create
       token, refresh = @device.tokens
       post :oauth_token_refresh, params: {'access_token' => 'asdf', 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
-      assert_error('Invalid token')
+      assert_error('Missing user')
     end
 
     it "should error on invalid refresh token" do
@@ -1075,6 +1076,7 @@ describe SessionController, :type => :controller do
       it "should error on no result" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         u = User.create
         u.settings['email'] = 'bob@yahoo.com'
@@ -1090,6 +1092,7 @@ describe SessionController, :type => :controller do
       it "should return an org url by issuer" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         post :auth_lookup, {params: {ref: 'assdf'}}
         json = assert_success_json
@@ -1099,8 +1102,10 @@ describe SessionController, :type => :controller do
       it "should return an org url by issuer shortcut" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
-        o.process({external_auth_shortcut: 'bacon'}, {updater: User.create})
+        o.process({external_auth_shortcut: 'bacon', 'saml_metadata_url' => 'aassdf'}, {updater: User.create})
+        expect(Organization.find_by_saml_issuer('bacon')).to eq(o)
         post :auth_lookup, {params: {ref: 'bacon'}}
         json = assert_success_json
         expect(json['url']).to eq("http://test.host/saml/init?org_id=#{o.global_id}&device_id=saml_auth")
@@ -1109,6 +1114,7 @@ describe SessionController, :type => :controller do
       it "should return an org url by global id" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         post :auth_lookup, {params: {ref: o.global_id}}
         json = assert_success_json
@@ -1124,6 +1130,7 @@ describe SessionController, :type => :controller do
       it "should return an org url by user name" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         u = User.create
         o.add_user(u.user_name, false, false)
@@ -1138,6 +1145,7 @@ describe SessionController, :type => :controller do
       it "should require a valid user to connect" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         post :auth_lookup, {params: {ref: o.global_id, user_id: 'asdf'}}
         assert_not_found('asdf')
@@ -1146,6 +1154,7 @@ describe SessionController, :type => :controller do
       it "should require auth to connect to a user" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         u = User.create
         post :auth_lookup, {params: {ref: o.global_id, user_id: u.global_id}}
@@ -1156,6 +1165,7 @@ describe SessionController, :type => :controller do
         token_user
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         expect(GoSecure).to receive(:nonce).with('saml_tmp_token').and_return('abcdefg')
         post :auth_lookup, {params: {ref: o.global_id, user_id: @user.global_id}}
@@ -1166,6 +1176,7 @@ describe SessionController, :type => :controller do
       it "should return an org url by user email" do
         o = Organization.create
         o.settings['saml_metadata_url'] = "assdf"
+        o.settings['saml_enforced'] = true
         o.save
         u = User.create
         u.settings['email'] = 'bob@yahoo.com'
@@ -1215,8 +1226,9 @@ describe SessionController, :type => :controller do
         o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
         o.save
         RedisInit.default.setex("token_tmp_abcdefg", 15.minutes.to_i, @device.tokens[0])
+        expect(GoSecure).to receive(:nonce).with('saml_session_code').and_return('baconator')
         expect_any_instance_of(SessionController).to receive(:saml_settings).and_return("saml_stuff")
-        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff").and_return("https://www.example.com/saml/auth")
+        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff", :RelayState => 'baconator').and_return("https://www.example.com/saml/auth")
         get 'saml_start', params: {org_id: o.global_id, user_id: @user.global_id, tmp_token: 'abcdefg'}        
         expect(response).to be_redirect
         expect(response.location).to eq("https://www.example.com/saml/auth")
@@ -1236,7 +1248,8 @@ describe SessionController, :type => :controller do
         o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
         o.save
         expect_any_instance_of(SessionController).to receive(:saml_settings).and_return("saml_stuff")
-        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff").and_return("https://www.example.com/saml/auth")
+        expect(GoSecure).to receive(:nonce).with('saml_session_code').and_return('baconator')
+        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff", :RelayState => 'baconator').and_return("https://www.example.com/saml/auth")
         get 'saml_start', params: {org_id: o.global_id, app: '1', embed: '1', oauth_code: 'asdfjkl', device_id: 'my-device'}
         expect(response).to be_redirect
         expect(response.location).to eq("https://www.example.com/saml/auth")
@@ -1276,7 +1289,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('whatever').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('whatever', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
     
         get 'saml_metadata', params: {org_id: org.global_id}
         xml = Nokogiri(response.body)
@@ -1291,13 +1304,13 @@ describe SessionController, :type => :controller do
         post 'saml_consume', params: {}
         expect(assigns[:error]).to eq('Missing auth session code')
 
-        post 'saml_consume', params: {code: 'watermelon'}
+        post 'saml_consume', params: {RelayState: 'watermelon'}
         expect(assigns[:error]).to eq('Auth session lost')
       end
 
       it "should require an org that matches the config and issuer" do
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {}.to_json)
-        post 'saml_consume', params: {code: 'watermelon'}
+        post 'saml_consume', params: {RelayState: 'watermelon'}
         expect(assigns[:error]).to eq('Provider not found in the system')
 
         o = Organization.create
@@ -1309,7 +1322,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
@@ -1320,9 +1333,10 @@ describe SessionController, :type => :controller do
           issuers: ['http://test.host/saml/meta'],
         })
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         expect(assigns[:error]).to eq('Org mismatch')
       end
 
@@ -1340,7 +1354,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
@@ -1351,9 +1365,10 @@ describe SessionController, :type => :controller do
           issuers: ['https://www.example.com/saml/meta'],
         })
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u2.global_id}.to_json)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         expect(assigns[:error]).to eq('Mismatched user connection')
       end
 
@@ -1370,7 +1385,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
@@ -1380,14 +1395,14 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u.global_id}.to_json)
 
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(assigns[:error]).to eq(nil)
@@ -1407,7 +1422,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
@@ -1418,10 +1433,11 @@ describe SessionController, :type => :controller do
           issuers: ['https://www.example.com/saml/meta'],
         })
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
-        expect(assigns[:error]).to eq('User not found in the system, please have your account admin connect your accounts')
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq("User not found in the system, please have your account admin connect your accounts (user_name)")
       end
       
       it "should link up by user name if possible" do
@@ -1437,7 +1453,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return(u.user_name)
@@ -1447,17 +1463,17 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(response).to be_redirect
-        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}_#{u.user_name}")
       end
 
       it "should link up by email if possible" do
@@ -1475,7 +1491,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('myname')
@@ -1485,17 +1501,17 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(response).to be_redirect
-        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}_#{u.user_name}")
       end
 
       it "should error on invalid signature" do
@@ -1512,11 +1528,8 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
-        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
-        expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
-        expect(attrs).to receive(:multi).with(:role).and_return([])
         obj = OpenStruct.new({
           attributes: attrs,
           name_id: '123456',
@@ -1526,8 +1539,8 @@ describe SessionController, :type => :controller do
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
-        expect(assigns[:error]).to eq('Invalid authentication')
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
+        expect(assigns[:error]).to eq('Authenticator signature failed')
       end
 
       it "should redirect to oauth flow (with tmp_token correctly set) if specified" do
@@ -1545,7 +1558,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('myname')
@@ -1555,13 +1568,13 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, oauth_code: 'abcd'}.to_json)
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(assigns[:temp_token]).to_not eq(nil)
@@ -1584,7 +1597,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('myname')
@@ -1594,13 +1607,13 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, embed: true}.to_json)
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(response).to_not be_redirect
@@ -1627,7 +1640,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('user_name')
@@ -1637,19 +1650,19 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, user_id: u.global_id, auth_user_id: u.global_id}.to_json)
 
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(assigns[:error]).to eq(nil)
         expect(response).to be_redirect
-        expect(response.location).to eq("http://test.host/#{u.user_name}/edit")
+        expect(response.location).to eq("http://test.host/#{u.user_name}")
       end
 
       it "should redirect to the login page (with tmp_token correctly set) by default" do
@@ -1667,7 +1680,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
         attrs = {}
         expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
         expect(attrs).to receive(:fetch).with('uid').and_return('myname')
@@ -1677,87 +1690,19 @@ describe SessionController, :type => :controller do
           name_id: '123456',
           issuers: ['https://www.example.com/saml/meta'],
         })
-        expect(obj).to receive(:is_valid?).and_return(true)
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
         expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
 
         RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id}.to_json)
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
-        post 'saml_consume', params: {code: 'watermelon', SAMLResponse: "ressy"}
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
         links = UserLink.links_for(u.reload)
         expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
         expect(response).to be_redirect
-        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}")
+        expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}_#{u.user_name}")
       end
     end
-  
-    # def saml_consume
-    #   config = JSON.parse(RedisInit.default.get("saml_#{params['code']}")) rescue nil
-    #   if !config
-    #     @error = params['code'] ? "Auth session lost" : "Missing auth session code"
-    #     return render
-    #   end
-    #   org = Organization.find_by_global_id(config['org_id'])
-    #   response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], :settings => saml_settings(org, code))
-    #   authenticated_user = nil
-  
-    #   email = response.attributes.fetch('email') || response.attributes['urn:oid:0.9.2342.19200300.100.1.3'] || response.attributes['urn:mace:dir:attribute-def:mail']
-    #   user_name = response.attributes.fetch('uid') || response.attributes['urn:oid:0.9.2342.19200300.100.1.1'] || response.attributes['urn:mace:dir:attribute-def:uid']
-    #   data = {external_id: response.nameid, issuer: response.issuers[0], email: email, user_name: user_name, roles: response.attributes.multi(:role)}
-    #   if config['user_id']
-    #     existing_user = User.find_by_global_id(config['user_id']) 
-    #     if !existing_user || !existing_user.allows(@api_user, 'link_auth')
-    #       @error = "Mismatched user connection" 
-    #       return render
-    #     end
-    #     org.link_saml_user(existing_user, data)
-    #     authenticated_user = existing_user
-    #   else
-    #     if !org || org != Organization.find_by_saml_issuer(data[:issuer])
-    #       @error = org ? "Org mismatch" : "Provider not found in the system" 
-    #       return render
-    #     end
-    #     authenticated_user = org.find_saml_user(data[:external_id])
-    #     if !authenticated_user
-    #       @error = "User not found in the system" 
-    #       return render
-    #     end
-    #   end
-    #   # We validate the SAML Response and check if the user already exists in the system
-    #   if response.is_valid? && authenticated_user
-    #     RedisInit.default.del("saml_#{params['code']}")
-    #     device = Device.find_or_create_by(:user_id => authenticated_user.global_id, :developer_key_id => 0, :device_key => config['device_id'])
-    #     if config['oauth_code']
-    #       # Redirect back to authorization for oauth flow
-    #       RedisInit.default.del("saml_#{config['oauth_code']}")
-    #       device.settings['auth_device'] = true
-    #       device.save
-    #       token = device.generate_token!(false)
-    #       nonce = GoSecure.nonce('oauth_access_token')
-    #       RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, token)
-    #       redirect_to oauth_url(tmp_token: nonce, user_name: authenticated_user.user_name, oauth_code: config['oauth_code'])
-    #     elsif config['embed']
-    #       # For embed flow, show success and post it to the parent window
-    #       assert_session_device(device, authenticated_user, config['app'])
-    #       @saml_data = data
-    #       @authenticated_user = authenticated_user
-    #       render
-    #     elsif config['user_id']
-    #       # For connection flow, redirect back to the user's profile page, all is done
-    #       redirect_to "/#{authenticated_user.user_name}/edit"
-    #     else
-    #       # For standard flow, redirect to login page with temporary auth token
-    #       nonce = GoSecure.nonce('saml_tmp_token')
-    #       assert_session_device(device, authenticated_user, config['app'])
-    #       access, refresh = device.tokens
-    #       RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, accesss)
-    #       redirect_to "/login?auth-#{tmp_token}"
-    #     end
-    #   else
-    #     @error = authenticated_user ? "Invalid authentication" : "No user found"
-    #     return render
-    #   end    
-    # end
   
     describe "saml_idp_logout_request" do
       it "should error on invalid signature" do
@@ -1775,7 +1720,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
 
 
         obj = {}
@@ -1815,7 +1760,7 @@ describe SessionController, :type => :controller do
         settings.sp_entity_id                   = "http://test.host/saml/metadata"
         settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
         settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta').and_return(settings)
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('http://test.host/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
 
 
         obj = {}
@@ -1834,6 +1779,22 @@ describe SessionController, :type => :controller do
         expect(d3.reload.settings['keys'].length).to eq(1)
         expect(d4.reload.settings['keys'].length).to eq(0)
       end
+    end
+  end
+
+  describe "saml_tmp_token" do
+    it "should require an active session" do
+      post 'saml_tmp_token'
+      assert_error('no token available')
+    end
+    
+    it "should generate a temp token and map it to the session token" do
+      token_user
+      post 'saml_tmp_token'
+      json = assert_success_json
+      expect(json['tmp_token']).to_not eq(nil)
+      expect(json['tmp_token']).to_not eq(@device.tokens[0])
+      expect(RedisInit.default.get("token_tmp_#{json['tmp_token']}")).to eq(@device.tokens[0])
     end
   end
 end

@@ -219,7 +219,7 @@ class SessionController < ApplicationController
       uiinf << desc
       uiinf << logo
       ext << uiinf
-      elem << ext
+      elem.prepend_child(ext)
     end
     render :xml => xml.to_s, :content_type => "application/samlmetadata+xml"
   end
@@ -230,7 +230,7 @@ class SessionController < ApplicationController
     if !org
       user = User.find_by_path(params['ref']) 
       user ||= User.find_by_email(params['ref'])[0]
-      org = Organization.external_auth_for(user) if user
+      org = Organization.external_auth_for(user, true) if user
     end
     if org && org.settings['saml_metadata_url']
       url = "#{request.protocol}#{request.host_with_port}/saml/init?org_id=#{org.global_id}&device_id=#{params['device_id'] || 'saml_auth'}"
@@ -248,13 +248,22 @@ class SessionController < ApplicationController
     end
   end
 
+  def saml_tmp_token
+    if !@token
+      return api_error 400, {error: 'no token available'}
+    end
+    nonce = GoSecure.nonce('saml_tmp_token')
+    RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, @token)
+    render json: {tmp_token: nonce}
+  end
+
   def saml_start
     org = Organization.find_by_global_id(params['org_id'])
     return render inline: "Org missing" unless org
     return render inline: "Org not set up for external auth" unless org.settings['saml_metadata_url']
 
     return_params = {}
-    if params['user_id'] 
+    if params['user_id']
       user = User.find_by_path(params['user_id'])
       if @api_user && user && user.allows?(@api_user, 'link_auth')
         return_params['user_id'] = user.global_id
@@ -277,14 +286,15 @@ class SessionController < ApplicationController
 
     request = OneLogin::RubySaml::Authrequest.new
     settings = saml_settings(org, code)
-    redirect_to(request.create(settings))
+    redirect_to(request.create(settings, :RelayState => code))
   end
 
   def saml_consume
     @error = nil
-    config = JSON.parse(RedisInit.default.get("saml_#{params['code']}")) rescue nil
+    code = params['code'] || params['RelayState']
+    config = JSON.parse(RedisInit.default.get("saml_#{code}")) rescue nil
     if !config
-      @error = params['code'] ? "Auth session lost" : "Missing auth session code"
+      @error = code ? "Auth session lost" : "Missing auth session code"
       return render
     end
     org = Organization.find_by_global_id(config['org_id'])
@@ -292,8 +302,12 @@ class SessionController < ApplicationController
       @error = "Provider not found in the system" 
       return render
     end
-    response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], :settings => saml_settings(org, params['code']))
+    response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], :settings => saml_settings(org, code))
     authenticated_user = nil
+    if !response.is_valid?
+      @error = "Authenticator signature failed"
+      return render
+    end
 
     email = response.attributes.fetch('email') || response.attributes['urn:oid:0.9.2342.19200300.100.1.3'] || response.attributes['urn:mace:dir:attribute-def:mail']
     user_name = response.attributes.fetch('uid') || response.attributes['urn:oid:0.9.2342.19200300.100.1.1'] || response.attributes['urn:mace:dir:attribute-def:uid']
@@ -316,25 +330,26 @@ class SessionController < ApplicationController
       if !authenticated_user
         # If user isn't already connected, see if you can auto-connect by user name or email
         attached = org.attached_users('all')
-        un = attached.find_by(user_name: user_name)
-        if !un
+        fallback_user = org.find_saml_alias(data[:user_name], data[:email])
+        fallback_user ||= attached.find_by(user_name: user_name)
+        if !fallback_user
           emails = attached.where(email_hash: User.generate_email_hash(data[:email]))
-          un = emails[0] if emails.count == 1
+          fallback_user = emails[0] if emails.count == 1
         end
-        if un
-          org.link_saml_user(un, data)
-          authenticated_user = un
+        if fallback_user
+          org.link_saml_user(fallback_user, data)
+          authenticated_user = fallback_user
         end
       end
       if !authenticated_user
-        @error = "User not found in the system, please have your account admin connect your accounts" 
+        @error = "User not found in the system, please have your account admin connect your accounts (#{data[:user_name]})" 
         return render
       end
     end
     # We validate the SAML Response and check if the user already exists in the system
     if response.is_valid? && authenticated_user
-      RedisInit.default.del("saml_#{params['code']}")
-      device = Device.find_or_create_by(:user_id => authenticated_user.global_id, :developer_key_id => 0, :device_key => config['device_id'] || 'unnamed device')
+      RedisInit.default.del("saml_#{code}")
+      device = Device.find_or_create_by(:user_id => authenticated_user.id, :developer_key_id => 0, :device_key => config['device_id'] || 'unnamed device')
       if config['oauth_code']
         # Redirect back to authorization for oauth flow
         RedisInit.default.del("saml_#{config['oauth_code']}")
@@ -354,7 +369,7 @@ class SessionController < ApplicationController
         render
       elsif config['user_id']
         # For connection flow, redirect back to the user's profile page, all is done
-        redirect_to "/#{authenticated_user.user_name}/edit"
+        redirect_to "/#{authenticated_user.user_name}"
       else
         device.settings['used_for_saml'] = true
         # For standard flow, redirect to login page with temporary auth token
@@ -363,7 +378,7 @@ class SessionController < ApplicationController
         access, refresh = device.tokens
         @temp_token = nonce
         RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, access)
-        redirect_to "/login?auth-#{nonce}"
+        redirect_to "/login?auth-#{nonce}_#{authenticated_user.user_name}"
       end
     else
       @error = authenticated_user ? "Invalid authentication" : "No user found"
@@ -401,8 +416,7 @@ class SessionController < ApplicationController
       pending_u = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'], true)
       auth_org = Organization.external_auth_for(params['username'])
       if auth_org
-        redirect_to "/saml/init?org_id=#{auth_org.global_id}&device_id=#{params['device_id']}"
-        return
+        return render json: {auth_redirect: "#{request.protocol}#{request.host_with_port}/saml/init?org_id=#{auth_org.global_id}&device_id=#{params['device_id']}"}
       end
       u = nil
       if params['client_id'] == 'browser' && GoSecure.valid_browser_token?(params['client_secret'])
@@ -446,6 +460,7 @@ class SessionController < ApplicationController
     # TODO: if missing_2fa then don't confirm token unless retrieving from tmp_token
     missing_2fa = false
     if @api_user && (!missing_2fa || @tmp_token)
+      params['access_token'] = @token if @token && @tmp_token
       device = Device.find_by_global_id(@api_device_id)
       valid = device && device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
       expired = device && (device.instance_variable_get('@expired_keys') || {})[params['access_token']]
@@ -513,7 +528,10 @@ class SessionController < ApplicationController
     if org
       idp_metadata_parser = OneLogin::RubySaml::IdpMetadataParser.new
       # Returns OneLogin::RubySaml::Settings prepopulated with idp metadata
-      settings = idp_metadata_parser.parse_remote(org.settings['saml_metadata_url'])
+      settings = idp_metadata_parser.parse_remote(org.settings['saml_metadata_url'], {
+        :sso_binding => ['urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect'],
+        :slo_binding => ['urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect']
+      })
       # settings.idp_entity_id                  = "https://app.onelogin.com/saml/metadata/#{OneLoginAppId}"
       # settings.idp_sso_service_url             = "https://app.onelogin.com/trust/saml2/http-post/sso/#{OneLoginAppId}"
       # settings.idp_slo_service_url             = "https://app.onelogin.com/trust/saml2/http-redirect/slo/#{OneLoginAppId}"
@@ -524,9 +542,10 @@ class SessionController < ApplicationController
     end
   
     url = "#{request.protocol}#{request.host_with_port}/saml/consume"
-    url += (url.match(/\?/) ? '&' : '?') + "code=#{code}" if code
+    # url += (url.match(/\?/) ? '&' : '?') + "code=#{code}" if code
     settings.assertion_consumer_service_url = url
     meta_url = "#{request.protocol}#{request.host_with_port}/saml/metadata"
+    meta_url += "?org_id=#{org.global_id}" if org
     settings.issuer = meta_url
     settings.sp_entity_id                   = meta_url
     # settings.logo = "http"

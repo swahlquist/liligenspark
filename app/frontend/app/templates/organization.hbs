@@ -65,6 +65,13 @@
               <button class="btn btn-default" {{action "find_board"}} style='width: 110px;'>{{t "find board" key='find_board_lower'}}</button>
             </span>
           {{/if}}
+        {{else}}
+          {{#if model.permissions.edit}}
+            <span class="btn btn-default">
+              {{input value=search_user enter=(action 'find_user') placeholder="user name/email" class="form-control inline inline-masquerade"}}
+              <button class="btn btn-default" {{action "find_user"}} style='width: 110px;'>{{t "find user" key='find_user'}}</button>
+            </span>
+          {{/if}}
         {{/if}}
       </div>
     {{/if}}

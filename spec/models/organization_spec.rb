@@ -2006,6 +2006,73 @@ describe Organization, :type => :model do
       end
     end
   
+    describe "find_saml_alias" do
+      it "should return nil without a parameter" do
+        o = Organization.create
+        expect(UserLink).to_not receive(:where)
+        expect(o.find_saml_alias(nil, nil)).to eq(nil)
+      end
+
+      it "should return nil without org saml config" do
+        o = Organization.create
+        expect(UserLink).to_not receive(:where)
+        expect(o.find_saml_alias('a', 'b')).to eq(nil)
+      end
+
+      it "should find a uid alias" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        u.reload
+        o.reload
+        o.link_saml_alias(u, 'cheddar')
+        expect(o.find_saml_alias('cheddar', nil)).to eq(u)
+        expect(o.find_saml_alias('cheddar', 'bacon')).to eq(u)
+      end
+
+      it "should find an email alias" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        u.reload
+        o.reload
+        o.link_saml_alias(u, 'bacon')
+        expect(o.find_saml_alias('cheddar', nil)).to eq(nil)
+        expect(o.find_saml_alias('cheddar', 'bacon')).to eq(u)
+        expect(o.find_saml_alias(nil, 'bacon')).to eq(u)
+      end
+
+      it "should return nil for no aliases" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        u.reload
+        o.reload
+        o.link_saml_alias(u, 'bacon')
+        expect(o.find_saml_alias('cheddar', nil)).to eq(nil)
+      end
+
+      it "should return nil for an alias that doesn't match any org users" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        u.reload
+        o.reload
+        o.link_saml_alias(u, 'bacon')
+        o.remove_user(u.user_name)
+        o.reload
+        expect(o.find_saml_alias('bacon', nil)).to eq(nil)
+      end
+    end   
+
     describe "link_saml_user" do
       it "should require saml config on org" do
         o = Organization.create
@@ -2033,7 +2100,7 @@ describe Organization, :type => :model do
         expect(res).to_not eq(false)
         expect(res.record_code).to match(/^ext:/)
         expect(res.user).to eq(u)
-        expect(res.data['state']).to eq({'external_id' => 'loggy', 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
       end
       
       it "should set the user as possibly having external auth" do
@@ -2045,8 +2112,31 @@ describe Organization, :type => :model do
         expect(res).to_not eq(false)
         expect(res.record_code).to match(/^ext:/)
         expect(res.user).to eq(u)
-        expect(res.data['state']).to eq({'external_id' => 'loggy', 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
         expect(u.reload.settings['possibly_external_auth']).to eq(true)
+      end
+
+      it "should remove any existing connections for the org for that external_id" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'asdf'
+        u = User.create
+        expect(u.reload.settings['possibly_external_auth']).to eq(nil)
+        res = o.link_saml_user(u, {:external_id => 'loggy'})
+        expect(res).to_not eq(false)
+        expect(res.record_code).to match(/^ext:/)
+        expect(res.user).to eq(u)
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'email' => nil, 'roles' => nil})
+        expect(u.reload.settings['possibly_external_auth']).to eq(true)
+        expect(UserLink.links_for(u.reload).detect{|l| l['type'] == 'saml_auth'}).to_not eq(nil)
+
+        u2 = User.create
+        res = o.link_saml_user(u2, {:external_id => 'loggy'})
+        expect(res).to_not eq(false)
+        expect(res.record_code).to match(/^ext:/)
+        expect(res.user).to eq(u2)
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'email' => nil, 'roles' => nil})
+        expect(UserLink.links_for(u.reload).detect{|l| l['type'] == 'saml_auth'}).to eq(nil)
+        expect(UserLink.links_for(u2.reload).detect{|l| l['type'] == 'saml_auth'}).to_not eq(nil)
       end
     end
 
@@ -2075,6 +2165,123 @@ describe Organization, :type => :model do
         u = User.create
         expect(Organization.unlink_saml_user(u, nil)).to eq(false)
         expect(Organization.unlink_saml_user(u, 'asdf')).to eq(true)
+      end
+    end
+
+    describe "link_saml_alias" do
+      it "should require user" do
+        o = Organization.create
+        expect(GoSecure).to_not receive(:sha512)
+        expect(o.link_saml_alias(nil, nil)).to eq(false)
+      end
+
+      it "should require configured org" do
+        o = Organization.create
+        u = User.create
+        expect(GoSecure).to_not receive(:sha512)
+        expect(o.link_saml_alias(u, nil)).to eq(false)
+      end
+
+      it "should remove any other aliases for the user on the org" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(o.link_saml_alias(u, 'cheddar')).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['cheddar'])
+      end
+
+      it "should remove the same alias from another user if it's attached" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u1 = User.create
+        u2 = User.create
+        o.add_user(u1.user_name, false, false)
+        o.add_user(u2.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u1, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u1.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(UserLink.links_for(u2.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
+        expect(o.link_saml_alias(u2, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u1.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
+        expect(UserLink.links_for(u2.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+      end
+
+      it "should return the existing link if already linked" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        a = o.link_saml_alias(u, 'bacon')
+        expect(a).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        b = o.link_saml_alias(u, 'bacon')
+        expect(b).to_not eq(false)
+        expect(b).to eq(a)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+      end
+
+      it "should not delete priors or add alias if clear_existing=false" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(o.link_saml_alias(u, 'cheddar', false)).to eq(nil)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+      end
+
+      it "should not delete from others or add alias if clear_existing=false" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u1 = User.create
+        u2 = User.create
+        o.add_user(u1.user_name, false, false)
+        o.add_user(u2.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u1, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u1.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(UserLink.links_for(u2.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
+        expect(o.link_saml_alias(u2, 'bacon', false)).to eq(nil)
+        expect(UserLink.links_for(u1.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(UserLink.links_for(u2.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
+      end
+
+      it "should delete any existing alias if current is an empty string" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(o.link_saml_alias(u, '')).to eq(true)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
+      end
+
+      it "should delete any existing alias if current is nil" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'whatever'
+        o.save
+        u = User.create
+        o.add_user(u.user_name, false, false)
+        o.reload
+        expect(o.link_saml_alias(u, 'bacon')).to_not eq(false)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq(['bacon'])
+        expect(o.link_saml_alias(u, nil)).to eq(true)
+        expect(UserLink.links_for(u.reload).select{|l| l['type'] == 'saml_alias'}.map{|l| l['state']['alias']}).to eq([])
       end
     end
 
@@ -2124,8 +2331,117 @@ describe Organization, :type => :model do
         o1.add_user(u.user_name, false, false)
         o2.add_user(u.user_name, true, false)
         o3.add_user(u.user_name, false, false)
+        expect(Organization.external_auth_for(u)).to eq(nil)
+      end
+
+      it "should require saml_enforced to return results" do
+        u = User.create
+        u.settings['possibly_external_auth'] = true
+        u.save
+        o1 = Organization.create
+        o2 = Organization.create
+        o2.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o2.settings['saml_enforced'] = 'https://www.example.com/saml2'
+        o2.save
+        o3 = Organization.create
+        o3.settings['saml_metadata_url'] = 'https://www.example.com/saml2'
+        o3.settings['saml_enforced'] = 'https://www.example.com/saml2'
+        o3.save
+        o1.add_user(u.user_name, false, false)
+        o2.add_user(u.user_name, true, false)
+        o3.add_user(u.user_name, false, false)
         expect(Organization.external_auth_for(u)).to eq(o3)
       end
+    end
+  end
+
+  describe "attached_orgs" do
+    it "should return an empty list without a user" do
+      expect(Organization.attached_orgs(nil)).to eq([])
+    end
+
+    it "should return the orgs for the user, if any" do
+      o1 = Organization.create
+      o2 = Organization.create
+      o3 = Organization.create
+      o4 = Organization.create
+      u1 = User.create
+      u2 = User.create
+      o1.add_user(u1.user_name, false, false)
+      o2.add_supervisor(u1.user_name, false, false);
+      o3.add_manager(u1.user_name, true)
+      o3.add_manager(u2.user_name, false)
+      expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
+        {
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name']
+        }, {
+          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name']
+        }, {
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name']        
+        }
+      ])
+      expect(Organization.attached_orgs(u2).map{|o| o.except('added')}).to eq([
+        {
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => false, 'name' => o1.settings['name']          
+        }
+      ])
+    end
+
+    it "should include org records if specified" do
+      o1 = Organization.create
+      o2 = Organization.create
+      o3 = Organization.create
+      o4 = Organization.create
+      u1 = User.create
+      u2 = User.create
+      o1.add_user(u1.user_name, false, false)
+      o2.add_supervisor(u1.user_name, false, false);
+      o3.add_manager(u1.user_name, true)
+      o3.add_manager(u2.user_name, false)
+      expect(Organization.attached_orgs(u1, true).map{|o| o.except('added')}.map{|o| o['org'] }).to eq([
+        o1, o2, o3
+      ])
+      expect(Organization.attached_orgs(u2, true).map{|o| o.except('added')}.map{|o| o['org'] }).to eq([
+        o3
+      ])
+    end
+
+    it "should include saml settings if available" do
+      o1 = Organization.create
+      o1.settings['saml_metadata_url'] = 'whatever'
+      o1.save
+      o2 = Organization.create
+      o2.settings['saml_metadata_url'] = 'whatever2'
+      o2.save
+      o3 = Organization.create
+      o3.settings['saml_metadata_url'] = 'whatever3'
+      o3.save
+      o4 = Organization.create
+      o4.settings['saml_metadata_url'] = 'whatever4'
+      o4.save
+      u1 = User.create
+      o1.add_user(u1.user_name, false, false)
+      o1.reload
+      o1.link_saml_user(u1, {:external_id => 'sekrit', :email => 'bob@example.com'})
+      u1.reload
+      o2.add_supervisor(u1.user_name, false, false);
+      o2.reload
+      o2.link_saml_user(u1.reload, {:external_id => 'sekrit2', :user_name => 'bob'})
+      o3.add_manager(u1.user_name, true)
+      o3.reload
+      o3.link_saml_alias(u1.reload, 'bobby@example.com')
+      expect(Organization.attached_orgs(u1.reload).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
+        {
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name'],
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com'
+        }, {
+          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name'],
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob'
+        }, {
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],
+          'external_auth' => true, 'external_auth_alias' => 'bobby@example.com'
+        }
+      ])
     end
   end
 end

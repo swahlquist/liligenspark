@@ -311,6 +311,24 @@ class Api::OrganizationsController < ApplicationController
     render json: {cells: Setting.blocked_cells}
   end
 
+  def alias
+    return unless allowed?(@org, 'edit')
+    user = @org.attached_users('all').find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    # if !@org.settings['saml_metadata_url']
+    #   return allowed?(@org, 'never_allowed')
+    # end
+    external_alias = params['alias']
+    return api_error(400, {error: 'invalid alias'}) if external_alias.blank? || external_alias.length < 3
+    return api_error(400, {error: 'org not configured for external auth'}) unless @org.settings['saml_metadata_url']
+    res = @org.link_saml_alias(user, external_alias)
+    if res
+      render json: {linked: true, alias: external_alias, user_id: user.global_id}
+    else
+      api_error 400, {error: 'link failed'}
+    end
+  end
+
   def extra_action
     if !@org.admin
       return allowed?(@org, 'never_allowed')

@@ -16,14 +16,44 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="name" class="col-sm-3 control-label">{{t "Home Board" key='home_board'}}</label>
+        <label for="board" class="col-sm-3 control-label">{{t "Home Board" key='home_board'}}</label>
         <div class="col-sm-7">
-          {{input value=model.org.home_board_key class="form-control" id="name" placeholder="board key or URL"}}
+          {{input value=model.org.home_board_key class="form-control" id="boardboard" placeholder="board key or URL"}}
           <div class='text-muted'>
             <em>{{t "any users you add that don't have a home board set will be automatically set with this board" key='default_home_board_explainer'}}</em>
           </div>
         </div>
       </div>
+      {{#if model.org.permissions.delete}}
+        <div class="form-group">
+          <label for="external_auth" class="col-sm-3 control-label">{{t "Authentication" key='authentication'}}</label>
+          <div class="col-sm-7">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input checked=external_auth type="checkbox"}}
+                {{t "Enable external authentication (beta)" key='enable_external_auth'}}
+              </label>
+            </div>
+          </div>
+          {{#if external_auth}}
+            <div class="col-sm-7 col-sm-offset-3" style='margin-top: 5px;'>
+              {{input value=model.org.saml_metadata_url class="form-control" id="metadata_url" placeholder="SAML Metadata URL"}}
+            </div>
+            <div class="col-sm-7 col-sm-offset-3" style='margin-top: 5px;'>
+              {{input value=model.org.saml_sso_url class="form-control" id="sso_url" placeholder="SSO URL Override (optional)"}}
+            </div>
+            <div class="col-sm-7 col-sm-offset-3" style='margin-top: 5px;'>
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input checked=model.org.saml_enforced type="checkbox"}}
+                  {{t "Require all org users to log in using external authentication" key='require_external_auth'}}
+                </label>
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
       {{#if model.org.custom_domain}}
         <div class="form-group">
           <div class="col-sm-7 col-sm-offset-3">
@@ -151,7 +181,7 @@
               {{t "Update Organization" key='update_org'}}
             {{/if}}
           </button>
-          <button class='btn btn-default' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+          <button type='button' class='btn btn-default' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
           {{#if error}}
             <p class='text-danger'>{{t "There was an unexpected error while updating the organization" key='error_updating_org'}}</p>
           {{/if}}

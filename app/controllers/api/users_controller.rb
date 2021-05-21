@@ -139,7 +139,13 @@ class Api::UsersController < ApplicationController
   end
   
   def index
-    if !Organization.admin_manager?(@api_user)
+    lookup = User
+    org = nil
+    if params['org_id']
+      org = Organization.find_by_global_id(params['org_id'])
+      return unless allowed?(org, 'edit')
+      lookup = org.attached_users('all')
+    elsif !Organization.admin_manager?(@api_user)
       return api_error 400, {error: 'admins only'}
     end
     if !params['q']
@@ -147,13 +153,19 @@ class Api::UsersController < ApplicationController
     end
     query = params['q'].downcase
     users = []
-    if query.match(/@/)
-      users = User.find_by_email(query)
-    else
-      users = User.where(:user_name => query)
-      users = [User.find_by_global_id(query)].compact if users.count == 0 && query.match(/^\d+_\d+$/)
-      if users.count == 0
-        users = User.where(["user_name ILIKE ?", "%#{query}%"]).order('user_name')
+    if org && org.settings['saml_metadata_url']
+      user = org.find_saml_alias(params['q'], params['q'].downcase)
+      users = [user] if user
+    end
+    if users.empty?
+      if query.match(/@/)
+        users = lookup.find_by_email(query)
+      else
+        users = lookup.where(:user_name => query)
+        users = [lookup.find_by_global_id(query)].compact if users.count == 0 && query.match(/^\d+_\d+$/)
+        if users.count == 0
+          users = lookup.where(["user_name ILIKE ?", "%#{query}%"]).order('user_name')
+        end
       end
     end
     render json: JsonApi::User.paginate(params, users)

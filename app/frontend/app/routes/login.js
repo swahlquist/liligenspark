@@ -14,9 +14,11 @@ export default Route.extend({
         history.replaceState({}, null, "/login");
       }
     } else if(location.search && location.search.match(/^\?auth-/)) {
-      var tmp_token = decodeURIComponent(location.search.replace(/^\?auth-/, ''));
+      var parts = location.search.replace(/^\?auth-/, '').split(/_/);
+      var un = parts[1];
+      var tmp_token = parts[0];
+      controller.set('login_id', un);
       controller.set('tmp_token', tmp_token);
-      // TODO: auto-check token from redirect
       history.replaceState({}, null, "/login");
     }
     if(session.get('isAuthenticated')) {

@@ -13,6 +13,7 @@ import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import RSVP from 'rsvp';
 
 export default Component.extend({
   willInsertElement: function() {
@@ -68,10 +69,34 @@ export default Component.extend({
     }
   },
   check_tmp_token: function(token) {
-    debugger
-    // token_check?tmp_token=...&include_token=1
-    // session.confirm_authentication(res.token)
-    // then handle_auth(res.token)
+    var _this = this;
+    var url = '/api/v1/token_check?tmp_token=' + token + "&include_token=1&rnd=" + Math.round(Math.random() * 999999);
+    return persistence.ajax(url, {
+      type: 'GET'
+    }).then(function(data) {
+      if(data.authenticated && data.token) {
+        return session.confirm_authentication(data.token).then(function() {
+          _this.handle_auth(data.token);
+        }, function(err) {
+          return RSVP.reject(err);
+        });
+      }
+    });
+  },
+  redirect_login: function(url) {
+    var _this = this;
+    _this.set('redirecting', true);
+    if(!url.match(/device_id=/)) {
+      url = url + "&device_id=" + capabilities.device_id();
+    }
+    if(capabilities.installed_app) {
+      window.open(url, '_blank');
+    } else {
+      location.href = url;
+    }
+    setTimeout(function() {
+      _this.set('redirecting', false);
+    }, 5000);
   },
   handle_auth: function(data) {
     var _this = this;
@@ -120,8 +145,8 @@ export default Component.extend({
   browserless: computed(function() {
     return capabilities.browserless;
   }),
-  noSubmit: computed('logging_in', 'logged_in', 'noSecret', function() {
-    return this.get('noSecret') || this.get('logging_in') || this.get('logged_in') || this.get('login_followup');
+  noSubmit: computed('logging_in', 'logged_in', 'noSecret', 'redirecting', function() {
+    return this.get('noSecret') || this.get('redirecting') || this.get('logging_in') || this.get('logged_in') || this.get('login_followup');
   }),
   noSecret: computed('client_secret', function() {
     return !this.get('client_secret');
@@ -202,6 +227,7 @@ export default Component.extend({
       this.set('logging_in', true);
       app_state.set('logging_in', true);
       this.set('login_error', null);
+      var _this = this;
       var data = this.getProperties('identification', 'password', 'client_secret', 'long_token', 'browserless');
       if(capabilities.browserless || capabilities.installed_app) {
         data.long_token = true;
@@ -209,10 +235,13 @@ export default Component.extend({
       }
       if (!isEmpty(data.identification) && !isEmpty(data.password)) {
         this.set('password', null);
-        var _this = this;
         _this.set('login_followup_already_long_token', false);
         session.authenticate(data).then(function(data) {
-          _this.handle_auth(data);
+          if(data.redirect) {
+            _this.redirect_login(data.redirect);
+          } else {
+            _this.handle_auth(data);
+          }
         }, function(err) {
           err = err || {};
           _this.set('logging_in', false);
@@ -228,8 +257,23 @@ export default Component.extend({
           }
         });
       } else {
-        this.set('login_error', i18n.t('login_required', "Username and password are both required"));
-        this.set('logging_in', false);
+        var err = function() {
+          _this.set('login_error', i18n.t('login_required', "Username and password are both required"));
+          _this.set('logging_in', false);  
+        };
+        if(!isEmpty(data.identification)) {
+          persistence.ajax('/auth/lookup', {type: 'POST', data: {ref: data.identification}}).then(function(res) {
+            if(res && res.url) {
+              _this.redirect_login(res.url);
+            } else {
+              err();
+            }
+          }, function(error) {
+            err();
+          });
+        } else {
+          err();
+        }
       }
     }
   }

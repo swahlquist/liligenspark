@@ -2,13 +2,13 @@
 <div id="content" style="width: 400px; margin: 50px auto 0 auto;">
       <div style="margin: 20px;">
         <% if @error %>
-          <h2>Authorization Failed</h2>
-          <p>The application requesting authorization
-           should automatically handle
-          the following message, <pre><%= params['error'] %></pre>
+          <h2>Authentication Failed</h2>
+          <p>There was an unexpected issue during
+          the authentication process: 
+          <pre style='white-space: pre-line; word-break: break-word;'><%= @error %></pre>
           </p>
-        <% else if @no_parent %>
-          <h2>Authorization Success</h2>
+        <% elsif @no_parent %>
+          <h2>Authentication Success</h2>
           <p><b><%= @authenticated_user.user_name %></p>
           <p>Please return to the application to finish
             the authentication process.

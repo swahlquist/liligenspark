@@ -1244,4 +1244,75 @@ describe Api::OrganizationsController, :type => :controller do
       expect(json['meta']['next_url']).to eq(nil)
     end
   end
+
+  describe "alias" do
+    it "should require a valid token" do
+      post 'alias', params: {organization_id: '1_1'}
+      assert_missing_token
+    end
+
+    it "should require authorization" do
+      token_user
+      o = Organization.create
+      post 'alias', params: {organization_id: o.global_id}
+      assert_unauthorized
+    end
+
+    it "should require a valid user on the org" do
+      o = Organization.create(:admin => true)
+      token_user
+      o.add_manager(@user.user_name, true)
+      u = User.create
+      post 'alias', params: {organization_id: o.global_id, user_id: u.global_id}
+      assert_not_found(u.global_id)
+    end
+
+    it "should require a valid user on the org" do
+      o = Organization.create(:admin => true)
+      token_user
+      o.add_manager(@user.user_name, true)
+      u = User.create
+      post 'alias', params: {organization_id: o.global_id, user_id: u.global_id}
+      assert_not_found(u.global_id)
+    end
+
+    it "should require an alias" do
+      o = Organization.create(:admin => true)
+      token_user
+      o.add_manager(@user.user_name, true)
+      post 'alias', params: {organization_id: o.global_id, user_id: @user.global_id}
+      assert_error('invalid alias')
+    end
+
+    it "should require a minimum-length alias" do
+      o = Organization.create(:admin => true)
+      token_user
+      o.add_manager(@user.user_name, true)
+      post 'alias', params: {organization_id: o.global_id, user_id: @user.global_id, alias: 'a'}
+      assert_error('invalid alias')
+    end
+
+    it "should link the alias for an admin" do
+      o = Organization.create(:admin => true)
+      token_user
+      o.add_manager(@user.user_name, true)
+      post 'alias', params: {organization_id: o.global_id, user_id: @user.global_id, alias: 'clementine'}
+      assert_error('org not configured for external auth')
+    end
+
+    it "should link the alias for an admin" do
+      o = Organization.create(:admin => true)
+      o.settings['saml_metadata_url'] = 'whatever'
+      o.save
+      token_user
+      o.add_manager(@user.user_name, true)
+      post 'alias', params: {organization_id: o.global_id, user_id: @user.global_id, alias: 'clementine'}
+      json = assert_success_json
+      expect(json).to eq({'linked' => true, 'alias' => 'clementine', 'user_id' => @user.global_id})
+      link = UserLink.links_for(@user.reload).detect{|l| l['type'] == 'saml_alias'}
+      expect(link).to_not eq(nil)
+      expect(link['state']['alias']).to eq('clementine')
+      expect(link['state']['org_id']).to eq(o.global_id)
+    end
+  end
 end

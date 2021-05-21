@@ -92,9 +92,13 @@ var session = EmberObject.extend({
         };
   
         persistence.ajax('/token', {method: 'POST', data: data}).then(function(response) {
-          session.confirm_authentication(response).then(function() {
-            resolve(response);
-          });
+          if(response && response.auth_redirect) {
+            return resolve({redirect: response.auth_redirect});
+          } else {
+            session.confirm_authentication(response).then(function() {
+              resolve(response);
+            });  
+          }
         }, function(data) {
           var xhr = data.fakeXHR || {};
           run(function() {

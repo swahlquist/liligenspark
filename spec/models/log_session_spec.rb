@@ -3795,7 +3795,7 @@ describe LogSession, :type => :model do
       user_id = token['anonymized_user_id']
       expect(Typhoeus).to receive(:post).with("https://workshop.openaac.org/api/v1/external", body: {
         integration_id: dk.key,
-        integration_token: dk.secret,
+        integration_secret: dk.secret,
         user_id: user_id,
         updates: [{
           action: 'asdf',
@@ -3848,7 +3848,7 @@ describe LogSession, :type => :model do
       user_id = user.anonymized_identifier("external_for_#{device.developer_key_id}")
       expect(Typhoeus).to receive(:post).with("https://workshop.openaac.org/api/v1/external", body: {
         integration_id: dk.key,
-        integration_token: dk.secret,
+        integration_secret: dk.secret,
         user_id: user_id,
         updates: [{
           action: 'asdf',
@@ -3878,7 +3878,7 @@ describe LogSession, :type => :model do
       user_id = user.anonymized_identifier("external_for_#{device.developer_key_id}")
       expect(Typhoeus).to receive(:post).with("https://workshop.openaac.org/api/v1/external", body: {
         integration_id: dk.key,
-        integration_token: dk.secret,
+        integration_secret: dk.secret,
         user_id: user_id,
         updates: [{
           action: 'asdf',

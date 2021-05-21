@@ -608,6 +608,21 @@ class Organization < ActiveRecord::Base
     self.attached_users('all').where(id: links.map(&:user_id)).first
   end
 
+  def find_saml_alias(uid, email)
+    return nil unless uid || email
+    return nil unless self.settings['saml_metadata_url']
+    codes = []
+    codes << "ext:#{GoSecure.sha512(uid, "external_alias_for_#{self.global_id}")}" if uid
+    codes << "ext:#{GoSecure.sha512(email, "external_alias_for_#{self.global_id}")}" if email
+    user_ids = UserLink.where(record_code: codes).select{|l| l.data['type'] == 'saml_alias' }.map(&:user_id)
+    # if user_ids.empty?
+    #   user_ids = UserLink.links_for()  
+    # end
+    return nil if user_ids.empty?
+    # TODO: sharding
+    self.attached_users('all').where(id: user_ids).first
+  end
+
   def link_saml_user(existing_user, data)
     return false unless existing_user
     return false unless self.settings['saml_metadata_url']
@@ -616,14 +631,59 @@ class Organization < ActiveRecord::Base
     state = {
       'org_id' => self.global_id,
       'external_id' => data[:external_id],
+      'email' => data[:email],
       'user_name' => data[:user_name],
       'roles' => data[:roles]
     }
     existing_user.settings['possibly_external_auth'] = true
     existing_user.save
+    # TODO: sharding
+    UserLink.where(record_code: "ext:#{record_code}").where(['user_id != ?', existing_user.id]).each do |link|
+      # ensure auth is tied to only one user at a time
+      if link.data['state']['org_id'] == self.global_id && link.data['type'] == 'saml_auth'
+        link.destroy
+      end
+    end
     ul = UserLink.generate_external(existing_user, record_code, 'saml_auth', state)
     ul.save
+    link_saml_alias(existing_user, data[:user_name] || data[:email], false) if data[:user_name] || data[:email]
     ul
+  end
+
+  def link_saml_alias(user, external_alias, clear_existing=true)
+    return false unless user
+    return false unless self.settings['saml_metadata_url']
+    record_code = GoSecure.sha512(external_alias, "external_alias_for_#{self.global_id}")
+    found = nil
+    skip_add = false
+    UserLink.links_for(user).select{|l| l['type'] == 'saml_alias' && l['state']['org_id'] == self.global_id }.each do |link|
+      if link['record_code'] != "ext:#{record_code}"
+        if clear_existing || external_alias.blank?
+          UserLink.remove(user, link['record_code'], 'saml_alias') 
+        else
+          skip_add = true
+        end
+      else
+      end
+    end
+    UserLink.where(record_code: "ext:#{record_code}").select do |link|
+      if link.data['type'] == 'saml_alias' && link.data['state']['org_id'] == self.global_id
+        if link.user == user
+          found = link
+        elsif clear_existing || external_alias.blank?
+          link.destroy
+        else
+          skip_add = true
+        end
+      end
+    end
+    if external_alias.blank?
+      return true
+    elsif !found && !skip_add
+      found = UserLink.generate_external(user, record_code, 'saml_alias', {'org_id' => self.global_id, 'alias' => external_alias})
+      found.save
+    end
+    found
   end
 
   def self.unlink_saml_user(user, hashed_external_id)
@@ -637,7 +697,7 @@ class Organization < ActiveRecord::Base
     true
   end
 
-  def self.external_auth_for(user)
+  def self.external_auth_for(user, allow_unenforced=false)
     user = User.find_by_path(user) if user.is_a?(String)
     return nil unless user
     org = nil
@@ -650,15 +710,25 @@ class Organization < ActiveRecord::Base
       org_ids << User.local_ids([global_id])[0] if klass == 'Organization'
     end
     orgs = Organization.where(id: org_ids).where('external_auth_key IS NOT NULL').order('id ASC')
-    orgs.detect{|o| o.settings['saml_metadata_url']}
+    orgs.detect{|o| o.settings['saml_metadata_url'] && (o.settings['saml_enforced'] || allow_unenforced) }
   end
   
   def self.attached_orgs(user, include_org=false)
+    return [] unless user
     links = UserLink.links_for(user)
     org_ids = []
+    alias_hash = {}
+    auth_hash = {}
     links.each do |link|
       if link['type'] == 'org_user' || link['type'] == 'org_manager' || link['type'] == 'org_supervisor'
         org_ids << link['record_code'].split(/:/)[1]
+      end
+      if link['type'] == 'saml_alias'
+        alias_hash[link['state']['org_id']] ||= []
+        alias_hash[link['state']['org_id']] << link['state']['alias']
+      end
+      if link['type'] == 'saml_auth'
+        auth_hash[link['state']['org_id']] = true
       end
     end
     res = []
@@ -677,6 +747,9 @@ class Organization < ActiveRecord::Base
           'pending' => !!link['state']['pending'],
           'sponsored' => !!link['state']['sponsored']
         }
+        e['external_auth'] = true if org.settings['saml_metadata_url']
+        e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
+        e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_manager' && org
@@ -688,6 +761,9 @@ class Organization < ActiveRecord::Base
           'full_manager' => !!link['state']['full_manager'],
           'admin' => !!org.admin
         }
+        e['external_auth'] = true if org.settings['saml_metadata_url']
+        e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
+        e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_supervisor' && org
@@ -698,6 +774,9 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
+        e['external_auth'] = true if org.settings['saml_metadata_url']
+        e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
+        e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['org'] = org if include_org
         res << e
       end
@@ -929,6 +1008,9 @@ class Organization < ActiveRecord::Base
       time = Time.parse(params[:licenses_expire])
       self.settings['licenses_expire'] = time.iso8601
     end
+    self.settings['saml_metadata_url'] = params['saml_metadata_url']
+    self.settings['saml_sso_url'] = params['saml_sso_url']
+    self.settings['saml_enforced'] = params['saml_sso_url']
 
     if params[:host_settings]
       self.settings['host_settings'] ||= {}

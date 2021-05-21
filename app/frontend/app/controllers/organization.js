@@ -61,7 +61,11 @@ export default Controller.extend({
       var q = this.get('search_user');
       var _this = this;
       if(q) {
-        CoughDrop.store.query('user', {q: q}).then(function(res) {
+        var opts = {q: q};
+        if(!this.get('model.admin')) {
+          opts.org_id = this.get('model.id');
+        }
+        CoughDrop.store.query('user', opts).then(function(res) {
           if(res.content.length === 0) {
             modal.warning(i18n.t('no_user_result', "No results found for \"%{q}\"", {q: q}));
           } else if(res.content.length == 1) {

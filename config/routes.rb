@@ -50,8 +50,9 @@ Coughdrop::Application.routes.draw do
   post 'api/v1/auth/admin' => 'session#auth_admin'
   delete 'oauth2/token' => 'session#oauth_logout'
   get 'oauth2/token/status' => 'session#oauth_local', :as => 'oauth_local'
-  get 'auth/lookup' => 'session#auth_lookup'
+  post 'auth/lookup' => 'session#auth_lookup'
   get 'saml/init' => 'session#saml_start'
+  post 'saml/tmp_token' => 'session#saml_tmp_token'
   get 'saml/metadata' => 'session#saml_metadata'
   get 'saml/logout' => 'session#saml_idp_logout_request'
   post 'saml/consume' => 'session#saml_consume'
@@ -255,6 +256,7 @@ Coughdrop::Application.routes.draw do
       get 'blocked_emails'
       get 'blocked_cells'
       post 'extra_action'
+      post 'alias'
     end
     
     resources :utterances do

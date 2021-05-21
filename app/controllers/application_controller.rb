@@ -51,7 +51,7 @@ class ApplicationController < ActionController::Base
     Time.zone = nil
     token = params['access_token']
     PaperTrail.request.whodunnit = nil
-    if !token && params['tmp_token'] && (request.path.match(/^\/(auth|saml)\//) || (params['check_token'] && Rails.env.test?))
+    if !token && params['tmp_token'] && (request.path.match(/^\/(auth|saml)\//) || request.path.match(/^\/api\/v1\/token_check/) || (params['check_token'] && Rails.env.test?))
       @tmp_token = true
       token = RedisInit.default.get("token_tmp_#{params['tmp_token']}")
     elsif !token && request.headers['Authorization']

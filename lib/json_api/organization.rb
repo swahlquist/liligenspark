@@ -22,6 +22,9 @@ module JsonApi::Organization
         json['hosts'] = org.settings['hosts'] || []
         json['host_settings'] = org.settings['host_settings'] || {}
       end
+      json['saml_metadata_url'] = org.settings['saml_metadata_url']
+      json['saml_sso_url'] = org.settings['saml_sso_url']
+
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0
       json['allotted_supervisor_licenses'] = org.settings['total_supervisor_licenses'] || 0

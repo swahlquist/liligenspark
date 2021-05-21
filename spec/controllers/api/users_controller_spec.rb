@@ -276,6 +276,82 @@ describe Api::UsersController, :type => :controller do
       expect(json['user'][3]['id']).to eq(us[11].global_id)
       expect(json['user'][4]['id']).to eq(us[12].global_id)
     end
+
+    it "should allow org admins to search their own orgs" do
+      u1 = User.create(:user_name => 'bob@example.com')
+      u2 = User.create(:user_name => 'franny', :settings => {'email' => 'fran@example.com'})
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name, false)
+      o.add_user(u1.user_name, false, false)
+      o.add_supervisor(u2.user_name, false, false)
+      get :index, params: {org_id: o.global_id, q: 'bob'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(1)
+      expect(json['user'][0]['id']).to eq(u1.global_id)
+
+      get :index, params: {org_id: o.global_id, q: 'fran@example.com'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(1)
+      expect(json['user'][0]['id']).to eq(u2.global_id)
+    end
+
+    it "should not allow org admins to search outisde their orgs" do
+      u1 = User.create(:user_name => 'bob@example.com')
+      u2 = User.create(:user_name => 'franny', :settings => {'email' => 'fran@example.com'})
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name, false)
+      get :index, params: {org_id: o.global_id, q: 'bob'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(0)
+
+      get :index, params: {org_id: o.global_id, q: 'fran@example.com'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(0)
+    end
+
+    it "should not allow non-org-admins to search an org" do
+      u1 = User.create(:user_name => 'bob@example.com')
+      u2 = User.create(:user_name => 'franny', :settings => {'email' => 'fran@example.com'})
+      token_user
+      o = Organization.create
+      o.add_user(u1.user_name, false, false)
+      o.add_supervisor(u2.user_name, false, false)
+      get :index, params: {org_id: o.global_id, q: 'bob'}
+      assert_unauthorized
+
+      get :index, params: {org_id: o.global_id, q: 'fran@example.com'}
+      assert_unauthorized
+    end
+
+    it "should allow searching an org by email" do
+      u1 = User.create(:user_name => 'bob@example.com')
+      u2 = User.create(:user_name => 'franny', :settings => {'email' => 'fran@example.com'})
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name, false)
+      get :index, params: {org_id: o.global_id, q: 'fran@example.com'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(0)
+    end
+
+    it "should allow searching an org by saml alias" do
+      u1 = User.create(:user_name => 'bob@example.com')
+      u2 = User.create(:user_name => 'franny', :settings => {'email' => 'fran@example.com'})
+      token_user
+      o = Organization.create
+      o.settings['saml_metadata_url'] = 'whatever'
+      o.save
+      o.add_manager(@user.user_name, false)
+      o.reload
+      @user.reload
+      o.link_saml_alias(@user, 'broadly')
+      get :index, params: {org_id: o.global_id, q: 'broadly'}
+      json = assert_success_json
+      expect(json['user'].length).to eq(1)
+      expect(json['user'][0]['id']).to eq(@user.global_id)
+    end
   end
   
   describe "update" do

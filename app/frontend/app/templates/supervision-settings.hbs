@@ -24,7 +24,7 @@
         {{/if}}
         {{#each model.managing_supervision_orgs as |org|}}
           <tr>
-            <td style="text-align: center; vertical-align: middle; font-size: 40px;">
+            <td style="width: 60px; text-align: center; vertical-align: middle; font-size: 40px;">
               <span class="glyphicon glyphicon-paperclip"></span>
             </td>
             <td>
@@ -75,6 +75,59 @@
       {{/if}}
       {{#if add_supervisee_hit}}
         <p class='text-info'><em>{{t "For security reasons, communicators must add you as a supervisor from their account. On the communicator's device or account, enter your user name to add yourself as a supervisor." key='supervisor_adding_explainer'}}</em></p>
+      {{/if}}
+    {{/if}}
+    {{#if aliasable_orgs}}
+      {{#if model.permissions.link_auth}}
+        <h3>{{t "Externally-Authenticated Orgs" key='external_auth_orgs'}}</h3>
+        <table class='table table-hover'>
+          <tbody>
+            {{#each aliasable_orgs as |org|}}
+              <tr>
+                <td style="width: 60px; text-align: center; vertical-align: middle; font-size: 40px;">
+                  <span class="glyphicon glyphicon-paperclip"></span>
+                </td>
+                <td>
+                  <div style="font-size: 20px;">{{org.name}}</div>
+                  <form {{action 'update_alias' org on='submit'}}>
+                    {{t "Alias" key='alias'}}
+                    {{#if org.aliasable}}
+                      <div style='display: inline-block; width: 200px;'>
+                        {{input type='text' class='form-control' value=org.external_auth_alias placeholder='external login id or email'}}
+                      </div>
+                      <button type='submit' disabled={{org.alias_state.updating}} class='btn btn-default'>
+                        {{#if org.alias_state.updating}}
+                          {{t "updating..." key='updating'}}
+                        {{else if org.alias_state.error}}
+                          {{t "error updating" key='error_updating'}}
+                        {{else if org.alias_state.updated}}
+                          {{t "updated!" key='updated'}}
+                        {{else}}
+                          {{t "update alias" key='update_alias'}}
+                        {{/if}}
+                      </button>
+                    {{else if org.external_auth_alias}}
+                      <b>{{ org.external_auth_alias }}</b>
+                    {{else}}
+                      <span class='text-muted'>{{t "none set" key='none_set'}}</span>
+                    {{/if}}
+                    <button class='btn btn-default' disabled={{org.alias_state.temping}} type='button' {{action 'link_auth' org}}>
+                      {{#if org.alias_state.temping}}
+                        {{t "configuring..." key='configuring'}}
+                      {{else if org.alias_state.temp_error}}
+                        {{t "error" key='error'}}
+                      {{else if org.alias_state.temp_go}}
+                        {{t "redirecting..." key='redirecting'}}
+                      {{else}}
+                        {{t "re-link account"}}
+                      {{/if}}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
       {{/if}}
     {{/if}}
     {{#if show_supervisees}}
