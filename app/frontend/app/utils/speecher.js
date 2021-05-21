@@ -706,56 +706,54 @@ var speecher = EmberObject.extend({
       return RSVP.reject({error: "beep sound not saved: " + attr});
     }
   },
-  play_audio: function(elem) {
+  play_audio: function(ref) {
     // the check for lastListener is weird, but there was a lag where if you played
     // the same audio multiple times in a row then it would trigger an 'ended' event
     // on the newly-attached listener. This approach tacks on a new audio element
     // if that's likely to happen. The "throwaway" class and the setTimeouts in here
     // are all to help with that purpose.
-    if(elem.lastListener || (capabilities.mobile && capabilities.browser == "Safari")) {
-      var audio = elem.cloneNode();
-//      var audio = document.createElement('audio');
-      audio.style.display = "none";
-//      audio.src = elem.src;
-//      audio.preload = 'auto';
-      document.body.appendChild(audio);
-//      audio.load();
-      audio.speak_id = elem.speak_id;
+    console.log("PLAY", ref);
+    var audio = ref.audio;
+    if(audio.lastListener || (capabilities.mobile && capabilities.browser == "Safari")) {
+      console.log("CLONE!");
+      audio = audio.cloneNode();
       audio.className = 'throwaway';
-      elem = audio;
     }
 
-    elem.pause();
-    if(elem.media) { elem.media.pause(); }
-    elem.currentTime = 0;
+    audio.pause();
+    if(audio.media) { audio.media.pause(); }
+    audio.currentTime = 0;
     var _this = this;
-    var speak_id = elem.speak_id;
-    if(elem.lastListener) {
-      var ll = elem.lastListener;
-      elem.removeEventListener('ended', elem.lastListener);
-      elem.removeEventListener('pause', elem.lastListener);
-      elem.removeEventListener('abort', elem.lastListener);
-      elem.removeEventListener('error', elem.lastListener);
+    var speak_id = ref.speak_id;
+    if(audio.lastListener) {
+      var ll = audio.lastListener;
+      audio.removeEventListener('ended', audio.lastListener);
+      audio.removeEventListener('pause', audio.lastListener);
+      audio.removeEventListener('abort', audio.lastListener);
+      audio.removeEventListener('error', audio.lastListener);
       // see above for justification of the timeout
       setTimeout(function() {
-        if(elem.lastListener == ll) {
-          elem.lastListener = null;
+        if(audio.lastListener == ll) {
+          audio.lastListener = null;
         }
       }, 50);
     }
     var audio_status = {init: (new Date()).getTime()};
+    audio.speak_id = speak_id;
     var handler = function(event) {
-      if(audio_status.handled) { return; }
-      audio_status.handled = true;
-      elem.pause();
-      elem.currentTime = 0;
-      if(elem.media) {
-        elem.media.pause();
+      if(ref.speak_id == speak_id) {
+        if(audio_status.handled) { return; }
+        audio_status.handled = true;
+        audio.pause();
+        audio.currentTime = 0;
+        if(audio.media) {
+          audio.media.pause();
+        }
+        _this.speak_end_handler(speak_id);    
       }
-      _this.speak_end_handler(speak_id);
     };
-    elem.lastListener = handler;
-    var src = (elem.src || '');
+    audio.lastListener = handler;
+    var src = (audio.src || '');
     if(false && capabilities.mobile && capabilities.installed_app && window.Media && !src.match(/http:\/\/localhost/)) {
       // console.log("using native media playback!");
       // iOS media plugin can't handle file:/// paths, so we strip it off and things work fine
@@ -773,7 +771,7 @@ var speecher = EmberObject.extend({
           handler();
         }
       });
-      elem.media = media;
+      audio.media = media;
       try {
         media.play();
       } catch(e) {
@@ -781,12 +779,12 @@ var speecher = EmberObject.extend({
         handler();
       }
     } else {
-      elem.addEventListener('ended', handler);
-      elem.addEventListener('pause', handler);
-      elem.addEventListener('abort', handler);
-      elem.addEventListener('error', handler);
+      audio.addEventListener('ended', handler);
+      audio.addEventListener('pause', handler);
+      audio.addEventListener('abort', handler);
+      audio.addEventListener('error', handler);
       runLater(function() {
-        var promise = elem.play();
+        var promise = audio.play();
         if(promise && promise.then) {
           promise.then(function(res) {
             return true;
@@ -798,8 +796,8 @@ var speecher = EmberObject.extend({
       }, 10);
     }
     var check_status = function() {
-      if(handler == elem.lastListener && !audio_status.handled) {
-        if(audio_status.last_time && audio_status.last_time == elem.currentTime) {
+      if(handler == audio.lastListener && !audio_status.handled) {
+        if(audio_status.last_time && audio_status.last_time == audio.currentTime) {
           audio_status.stucks = (audio_status.stucks || 0) + 1;
           if(audio_status.stucks > 10) {
             // if we've been stuck for a full second, go ahead and call it quits
@@ -818,7 +816,7 @@ var speecher = EmberObject.extend({
             var now = (new Date()).getTime();
             // if we've waited 3 times as long as the duration of the audio file and it's still
             // not done, go ahead and call it quits
-            if((now - audio_status.init) / 1000 > (elem.duration * 3)) {
+            if((now - audio_status.init) / 1000 > (audio.duration * 3)) {
               handler();
               return;
             }
@@ -831,11 +829,11 @@ var speecher = EmberObject.extend({
             runLater(check_status, 100);
           }
         };
-        if(elem.media) {
-          elem.media.duration = elem.media.getDuration();
-          elem.media.getCurrentPosition(function(pos) {
+        if(audio.media) {
+          audio.media.duration = audio.media.getDuration();
+          audio.media.getCurrentPosition(function(pos) {
             handle_audio_status({
-              duration: elem.media.duration,
+              duration: audio.media.duration,
               pos: pos
             });
           }, function(err) {
@@ -843,29 +841,38 @@ var speecher = EmberObject.extend({
           });
         } else {
           handle_audio_status({
-            ended: elem.ended,
-            error: elem.error,
-            duration: elem.duration,
-            pos: elem.currentTime
+            ended: audio.ended,
+            error: audio.error,
+            duration: audio.duration,
+            pos: audio.currentTime
           });
         }
       }
     };
     runLater(check_status, 100);
-    return elem;
+    return audio;
+  },
+  assert_audio: function(url) {
+    speecher.sounds = speecher.sounds || {};
+    var now = (new Date()).getTime();
+    if(!speecher.sounds[url]) {
+      var audio = new Audio();
+      audio.src = url;
+      audio.load();
+      speecher.sounds[url] = {
+        audio: audio,
+        updated: now
+      };
+    }
+    var ref = speecher.sounds[url];
+    if(ref) {
+      ref.audio.loop = false;
+    }
+    return ref;
   },
   beep: function(opts) {
     opts = opts || {};
-    var beep = document.getElementById('beep');
-    if(!beep) {
-      var audio = document.createElement('audio');
-      audio.style.display = "none";
-      audio.src = speecher.beep_url;
-      audio.id = 'beep';
-      document.body.appendChild(audio);
-      audio.load();
-      beep = audio;
-    }
+    var beep = speecher.assert_audio(speecher.beep_url);
     if(beep) {
       this.play_audio(beep);
       stashes.log({
@@ -878,16 +885,7 @@ var speecher = EmberObject.extend({
   },
   click: function(click_type) {
     click_type = click_type || 'click';
-    var click = document.getElementById("click_" + click_type);
-    if(!click) {
-      var audio = document.createElement('audio');
-      audio.style.display = "none";
-      audio.src = speecher[click_type + '_url'] || speecher.click_url;
-      audio.id = 'click_' + click_type;
-      document.body.appendChild(audio);
-      audio.load();
-      click = audio;
-    }
+    var click = speecher.assert_audio(speecher[click_type + '_url'] || speecher.click_url); 
     if(click) {
       this.play_audio(click);
     } else {
@@ -919,11 +917,10 @@ var speecher = EmberObject.extend({
       this.stop(type);
     }
 
-    var $audio = this.find_or_create_element(url);
-    if($audio.length) {
-      $audio[0].loop = !!opts.loop;
+    var audio = this.assert_audio(url);
+    if(audio) {
+      audio.audio.loop = !!opts.loop;
       var playAudio = function() {
-        var audio = $audio[0];
         if(type == 'text') {
           var speak_id = _this.speak_id++;
           _this.last_speak_id = speak_id;
