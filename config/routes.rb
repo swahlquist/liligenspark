@@ -163,6 +163,7 @@ Coughdrop::Application.routes.draw do
       post 'swap_images' => 'boards#swap_images'
       post 'privacy' => 'boards#update_privacy'
       post 'tag' => 'boards#tag'
+      post 'rollback' => 'boards#rollback'
     end
 
     resources :tags

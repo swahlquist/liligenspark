@@ -103,6 +103,9 @@ def assert_unauthorized
 end
 
 def assert_success_json
+  if !response.successful?
+    expect(response.body).to eq("success")
+  end
   expect(response).to be_successful
   json = JSON.parse(response.body)
 end

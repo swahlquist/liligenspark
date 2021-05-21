@@ -282,16 +282,19 @@ class Api::BoardsController < ApplicationController
     board_id = nil
     board = Board.find_by_path(params['board_id'])
     deleted_board = DeletedBoard.find_by_path(params['board_id'])
-    return unless exists?(board || deleted_board)
+    return unless exists?(board || deleted_board, params['board_id'])
     allowed = @api_user.allows?(@api_user, 'admin_support_actions')
     date = Date.parse(params['date']) rescue nil
     return api_error 400, {error: 'invalid date'} unless date
     return api_error 400, {error: 'only 6 months history allowed'} unless date > 6.months.ago
     revert_date = nil
     restored = false
-    if deleted_board && !board
+    if board
+      return unless allowed || allowed?(board, 'edit')
+    elsif deleted_board && deleted_board.user
+      return unless allowed || allowed?(deleted_board.user, 'view_deleted_boards')
       revert_date = deleted_board.updated_at
-      board = deleted_board.restore!
+      board = deleted_board.restore! rescue nil
       restored = true
     end
     if board
