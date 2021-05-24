@@ -347,7 +347,7 @@ var capabilities;
                   if(context && !context.flipped) {
                     context.flipped = true;
                     context.translate(canvas.width, 0);
-                    context.setScale(-1, 1);
+                    context.scale(-1, 1);
                     context.drawImage(frame.image, 0, 0);  
                   }
                 },
@@ -385,8 +385,9 @@ var capabilities;
       },
       head_tracking: {
         listen: function(opts) {
+          opts = opts || {};
           if(window.weblinger) {
-            var opts_string = "head" + "_" + !!opts.head_pointing + "_" + opts.tilt;
+            var opts_string = "head" + "_" + !!opts.head_pointing + "_" + (opts.tilt || 1.0);
             var start = function() {
               window.weblinger.start_options = opts_string;
               var native_canvas = capabilities.tracking.setup_canvas();
