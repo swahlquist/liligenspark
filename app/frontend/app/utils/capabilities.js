@@ -247,10 +247,14 @@ var capabilities;
             var start = function() {            
               window.weblinger.start_options = "gaze";
               var native_canvas = capabilities.tracking.setup_canvas();
+              var prefix = "https://app.covidspeak.org/weblinger.js/";
+              if(capabilities.installed_app) {
+                prefix = "weblinger/";
+              }
               window.weblinger.start({
-                webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
-                weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
-                weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                webgazer_source: prefix + "lib/webgazer.js/webgazer.js",
+                weboji_source: prefix + "lib/jeelizWeboji/jeelizFaceTransfer.js",
+                weboji_nnc_source: prefix + "lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
                 canvas: native_canvas,
                 source: 'gaze',
                 selection_type: expression_watch ? 'expression' : 'none',
@@ -376,10 +380,14 @@ var capabilities;
             var start = function() {
               window.weblinger.start_options = opts_string;
               var native_canvas = capabilities.tracking.setup_canvas();
+              var prefix = "https://app.covidspeak.org/weblinger.js/";
+              if(capabilities.installed_app) {
+                prefix = "weblinger/";
+              }
               window.weblinger.start({
-                webgazer_source: "https://app.covidspeak.org/weblinger.js/lib/webgazer.js/webgazer.js",
-                weboji_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransfer.js",
-                weboji_nnc_source: "https://app.covidspeak.org/weblinger.js/lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                webgazer_source: prefix + "lib/webgazer.js/webgazer.js",
+                weboji_source: "lib/jeelizWeboji/jeelizFaceTransfer.js",
+                weboji_nnc_source: "lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
                 canvas: native_canvas,
                 source: 'head',
                 tilt_sensitivity: opts.tilt || 1.0,
