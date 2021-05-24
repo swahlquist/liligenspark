@@ -314,7 +314,6 @@ var capabilities;
         setup_canvas: function() {
           if(window.cordova && window.plugin && window.plugin.CanvasCamera) {
             var canvas = capabilities.head_tracking.native_canvas;
-            var canvas2 = capabilities.head_tracking.native_flipped_canvas;
             if(!canvas) {
               canvas = document.createElement('canvas');
               canvas.id = 'head_tracking_render_canvas';
@@ -328,19 +327,6 @@ var capabilities;
               canvas.style.right = 0;  
               document.body.appendChild(canvas);   
               capabilities.head_tracking.native_canvas = canvas;
-
-              canvas2 = document.createElement('canvas');
-              canvas2.id = 'head_tracking_flipped_canvas';
-              canvas2.style.width = '300px';
-              canvas2.style.height = '225px';
-              canvas2.width = 640;
-              canvas2.height = 480;
-              canvas2.style.position = 'absolute';
-              canvas2.style.display = 'none';
-              canvas2.style.top = 0;
-              canvas2.style.right = 0;  
-              document.body.appendChild(canvas2);   
-              capabilities.head_tracking.native_flipped_canvas = canvas2;
             }
             if(canvas && !canvas.drawing) {
               window.plugin.CanvasCamera.initialize(canvas);
@@ -355,23 +341,6 @@ var capabilities;
                   width: 640,
                   height: 480
                 },
-                onBeforeDraw: function(frame) {
-                  var context = canvas2.getContext('2d');
-                  context.drawImage(frame.element, canvas2.width, canvas2.height, 0-canvas2.width, 0-canvas2.height);
-                  // var dx = frame.dx;
-                  // frame.dx = frame.dWidth;
-                  // frame.dWidth = dx - frame.dWidth;
-                  // var canvas = frame.element; // rendered canvas
-                  // var context = frame.context || ((window.plugin.CanvasCamera.canvas || {}).fullsize || {}).context;
-                  // if(context && !context.flipped) {
-                  //   context.flipped = true;
-                  //   context.translate(canvas.width, 0);
-                  //   context.scale(-1, 1);
-                  // }
-                  // if(context) {
-                  //   context.drawImage(frame.image, 0, 0);  
-                  // }
-                },
                 fps: 15,
                 use: 'data',
                 flashMode: false,
@@ -380,7 +349,7 @@ var capabilities;
               });
             }
             canvas.drawing = true;
-            return canvas2;
+            return canvas;
           }
         },
         stop_canvas: function() {
