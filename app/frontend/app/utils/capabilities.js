@@ -341,6 +341,16 @@ var capabilities;
                   width: 640,
                   height: 480
                 },
+                onBeforeDraw: function(frame) {
+                  var canvas = frame.element; // rendered canvas
+                  var context = frame.context;
+                  if(!context.flipped) {
+                    context.flipped = true;
+                    context.translate(canvas.width, 0);
+                    context.setScale(-1, 1);
+                    context.drawImage(frame.image, 0, 0);  
+                  }
+                },
                 fps: 30,
                 use: 'data',
                 flashMode: false,
