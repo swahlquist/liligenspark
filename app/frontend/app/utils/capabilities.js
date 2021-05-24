@@ -343,8 +343,8 @@ var capabilities;
                 },
                 onBeforeDraw: function(frame) {
                   var canvas = frame.element; // rendered canvas
-                  var context = frame.context;
-                  if(!context.flipped) {
+                  var context = frame.context || ((window.plugin.CanvasCamera.canvas || {}).fullsize || {}).context;
+                  if(context && !context.flipped) {
                     context.flipped = true;
                     context.translate(canvas.width, 0);
                     context.setScale(-1, 1);
