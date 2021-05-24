@@ -341,6 +341,11 @@ var capabilities;
                   width: 640,
                   height: 480
                 },
+                onBeforeDraw: function(frame) {
+                  if(!frame.flipped) {
+                    frame.renderer.context.scale(1,-1);
+                  }
+                },
                 fps: 15,
                 use: 'data',
                 flashMode: false,

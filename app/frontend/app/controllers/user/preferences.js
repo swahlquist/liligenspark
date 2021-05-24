@@ -204,7 +204,7 @@ export default Controller.extend({
     ];
     if(this.get('head_tracking_capable')) {
       if(this.get('model.feature_flags.ios_head_tracking') && (capabilities.default_orientation == 'horizontal' || this.get('model.feature_flags.vertical_ios_head_tracking'))) {
-        if(capabilities.system == 'iOS' && this.get('eyegaze_capable')) {
+        if(capabilities.system == 'iOS' && this.get('native_eyegaze_capable')) {
           var eyes = res.find(function(i) { return i.id == 'eyegaze'; })
           if(eyes) {
             eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
