@@ -341,17 +341,20 @@ var capabilities;
                   width: 640,
                   height: 480
                 },
-                onAfterDraw: function(frame) {
-                  var canvas = frame.element; // rendered canvas
-                  var context = frame.context || ((window.plugin.CanvasCamera.canvas || {}).fullsize || {}).context;
-                  if(context && !context.flipped) {
-                    context.flipped = true;
-                    context.translate(canvas.width, 0);
-                    context.scale(-1, 1);
-                  }
-                  if(context) {
-                    context.drawImage(frame.image, 0, 0);  
-                  }
+                onBeforeDraw: function(frame) {
+                  var dx = frame.dx;
+                  frame.dx = frame.dWidth;
+                  frame.dWidth = dx - frame.dWidth;
+                  // var canvas = frame.element; // rendered canvas
+                  // var context = frame.context || ((window.plugin.CanvasCamera.canvas || {}).fullsize || {}).context;
+                  // if(context && !context.flipped) {
+                  //   context.flipped = true;
+                  //   context.translate(canvas.width, 0);
+                  //   context.scale(-1, 1);
+                  // }
+                  // if(context) {
+                  //   context.drawImage(frame.image, 0, 0);  
+                  // }
                 },
                 fps: 30,
                 use: 'data',
