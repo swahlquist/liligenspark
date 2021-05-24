@@ -386,8 +386,8 @@ var capabilities;
               }
               window.weblinger.start({
                 webgazer_source: prefix + "lib/webgazer.js/webgazer.js",
-                weboji_source: "lib/jeelizWeboji/jeelizFaceTransfer.js",
-                weboji_nnc_source: "lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
+                weboji_source: prefix + "lib/jeelizWeboji/jeelizFaceTransfer.js",
+                weboji_nnc_source: prefix + "lib/jeelizWeboji/jeelizFaceTransferNNC.json.js",
                 canvas: native_canvas,
                 source: 'head',
                 tilt_sensitivity: opts.tilt || 1.0,
