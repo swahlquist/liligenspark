@@ -330,21 +330,21 @@ var capabilities;
               capabilities.head_tracking.native_canvas = canvas;
 
               canvas2 = document.createElement('canvas');
-              canvas2.id = 'head_tracking_render_canvas';
+              canvas2.id = 'head_tracking_render_canvas2';
               canvas2.style.width = '300px';
               canvas2.style.height = '225px';
               canvas2.width = 640;
               canvas2.height = 480;
-              canvas2.style.position = 'fixed';
-              canvas2.style.zIndex = 999999;
+              canvas2.style.position = 'absolute';
+              canvas2.style.display = 'none';
               canvas2.style.top = 0;
-              canvas2.style.opacity = 0.3;
               canvas2.style.right = 0;  
-              document.body.appendChild(canvas);   
+              document.body.appendChild(canvas2);
               capabilities.head_tracking.native_canvas2 = canvas2;
             }
             if(canvas && !canvas.drawing) {
               window.plugin.CanvasCamera.initialize(canvas);
+              
               window.plugin.CanvasCamera.start({
                 width: 640,
                 height: 480,
@@ -357,17 +357,17 @@ var capabilities;
                   height: 480
                 },
                 onAfterDraw: function(frame) {
-                  canvas2.style.width = e.element.style.width;
-                  canvas2.style.height = e.element.style.height;
-                  canvas2.width = e.element.width;
-                  canvas2.height = e.element.height;
+                  canvas2.style.width = frame.element.style.width;
+                  canvas2.style.height = frame.element.style.height;
+                  canvas2.width = frame.element.width;
+                  canvas2.height = frame.element.height;
                   var context = canvas2.getContext('2d');
-                  context.translate( window.canvas2.width, 0);
+                  context.translate(canvas2.width, 0);
                   context.scale(-1, 1);
-                  context.drawImage(e.element, 0, 0, e.element.width, e.element.height, 0, 0, canvas2.width, canvas2.height);
+                  context.drawImage(frame.element, 0, 0, frame.element.width, frame.element.height, 0, 0, canvas2.width, canvas2.height);
                 },
-                fps: 15,
-                use: 'data',
+                fps: 30,
+                use: 'file',
                 flashMode: false,
                 thumbnailRatio: 1/6,
                 cameraFacing: 'front'

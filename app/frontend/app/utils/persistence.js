@@ -957,14 +957,15 @@ var persistence = EmberObject.extend({
                 xhr_reject({cors: true, error: 'URL lookup failed with ' + xhr.status});
               }
             });
-            xhr.addEventListener('error', function() {
-              xhr_reject({cors: true, error: 'URL lookup error'});
+            xhr.addEventListener('error', function(e) {
+              xhr_reject({e:e, cors: true, error: 'URL lookup error'});
             });
             xhr.addEventListener('abort', function() { xhr_reject({cors: true, error: 'URL lookup aborted'}); });
 //            console.log("trying CORS request for " + url);
             // Adding the query parameter because I suspect that if a URL has already
             // been retrieved by the browser, it's not sending CORS headers on the
             // follow-up request, maybe?
+            xhr.url = url;
             xhr.open('GET', url + (url.match(/\?/) ? '&' : '?') + "cr=1");
             xhr.responseType = 'blob';
             xhr.send(null);
