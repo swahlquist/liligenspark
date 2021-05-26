@@ -241,6 +241,21 @@ var capabilities;
         }
         return promise;
       },
+      launch_rating: function() {
+        if(capabilities.installed_app && capabilities.mobile && capabilities.subsystem != 'Kindle') {
+          if(window.LaunchReview) {
+            if(window.LaunchReview.isRatingSupported()){
+              window.LaunchReview.rating(function(state) {
+              }, function(err) {
+              });
+            } else{
+              window.LaunchReview.launch();
+            }    
+            return true;
+          }
+        }
+        return false;
+      },
       eye_gaze: { 
         listen: function(listen_level, expression_watch) {
           if(window.weblinger) {

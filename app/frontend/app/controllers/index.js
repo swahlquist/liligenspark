@@ -415,6 +415,19 @@ export default Controller.extend({
       }
     }
   }),
+  rating_allowed: computed('app_state.sessionUser', function() {
+    if(capabilities.installed_app && capabilities.mobile && capabilities.subsystem != 'Kindle') {
+      var progress = app_state.get('sessionUser.preferences.progress') || {};
+      if(progress.rated) {
+        return false;
+      }
+      if(app_state.get('sessionUser.joined') && app_state.get('sessionUser.joined') < window.moment().add(-14, 'day')) {
+        // show prompt a week at a time, every 4 weeks
+        return (Math.round(app_state.get('sessionUser.joined').getTime() / 1000 / 60 / 60 / 24 / 7) % 4) == 0;
+      }
+    }
+    return false;
+  }),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);
@@ -587,6 +600,17 @@ export default Controller.extend({
     },
     update_evaluation: function(action) {
       modal.open('modals/eval-status', {action: action, user: app_state.get('sessionUser')});
+    },
+    launch_rating: function() {
+      var user = app_state.get('sessionUser');
+      if(user) {
+        var progress = user.get('preferences.progress') || {};
+
+        progress.rated = (new Date()).getTime();
+        user.set('preferences.progress', progress);
+        user.save().then(null, function() { });
+      }
+      capabilities.launch_rating();
     },
     modeling_ideas: function(user_name) {
       var users = [];

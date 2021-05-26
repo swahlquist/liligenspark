@@ -483,6 +483,15 @@
           <div>
             {{badge-earned badge=model.earned_badge big=true}}
           </div>
+        {{else if rating_allowed}}
+          <div>
+            <button {{action 'launch_rating'}} class='purchase_link' style='font-size: 20px;'>
+              <span style='color: #fff;'>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                {{t "Rate the %app_name% App" key='rate_the_app'}}
+              </span>
+            </button>
+          </div>
         {{else if app_state.currentUser.subscription.eval_expires}}
           <div class='alert alert-info'>
             {{t "This is an evaluation account, and will run through " key='eval_ending_date'}}
