@@ -345,15 +345,20 @@ export default modal.ModalController.extend({
       find_routes.then(function(res) {
         console.log(res);
         res.found.forEach(function(btn) {
+          var last_button = btn;
           [btn].concat(btn.sequence.buttons).forEach(function(btn) {
+            var last = (last_button == btn);
             var style = "position: relative; display: inline-block; border-radius: 5px; height: 70px; text-align: center; min-width: 75px; max-width: 100px; overflow: hidden; font-size: 12px;";
-            var big_style = "position: relative; display: inline-block; border-radius: 5px; height: 100px; text-align: center; min-width: 100px; max-width: 120px; overflow: hidden; font-size: 16px;";
+            var big_style = "vertical-align: middle; position: relative; display: inline-block; border-radius: 5px; height: 100px; text-align: center; min-width: 100px; max-width: 120px; overflow: hidden; font-size: 16px;";
             var mini_style = "display: inline-block; padding: 5px 10px; border: 1px solid #888; border-radius: 5px; font-weight: bold; margin-right: 5px; min-width: 30px; text-align: center;"
             var print_style = "position: absolute; top: 0; left: 0; width: 100%;"
             style = style + "background: " + Button.clean_text(btn.background_color || '#fff') + "; ";
             style = style + "border: 2px solid " + Button.clean_text(btn.border_color || '#ccc') + "; ";
             big_style = big_style + "background: " + Button.clean_text(btn.background_color || '#fff') + "; ";
-            big_style = big_style + "border: 2px solid " + Button.clean_text(btn.border_color || '#ccc') + "; ";
+            big_style = big_style + "border: " + (last ? 4 : 2) + "px solid " + Button.clean_text(btn.border_color || '#ccc') + "; ";
+            if(!last) {
+              big_style = big_style + "opacity: 0.9; ";
+            }
             print_style = print_style + " border-bottom: 100px solid " + Button.clean_text(btn.background_color || '#fff') + ";";
             mini_style = mini_style + "background: " + Button.clean_text(btn.background_color || '#fff') + "; ";
             mini_style = mini_style + "border: 1px solid " + Button.clean_text(btn.border_color || '#ccc') + "; ";
@@ -365,6 +370,7 @@ export default modal.ModalController.extend({
               big_style = big_style + 'color: ' + text_color + ';';
               mini_style = mini_style + 'color: ' + text_color + ';';
             }
+            emberSet(btn, 'more_sequence', !last);  
             emberSet(btn, 'style', htmlSafe(style));  
             emberSet(btn, 'big_style', htmlSafe(big_style));
             emberSet(btn, 'mini_style', htmlSafe(mini_style));
