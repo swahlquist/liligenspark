@@ -1568,7 +1568,6 @@ var editManager = EmberObject.extend({
             } else {
               newButton.add_vocalization = !!currentButton.force_add_to_vocalization;
             }
-
           }
           if(currentButton.level_style) {
             if(currentButton.level_style == 'none') {

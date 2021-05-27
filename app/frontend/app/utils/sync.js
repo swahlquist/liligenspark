@@ -3,6 +3,7 @@ import EmberObject from '@ember/object';
 import stashes from './_stashes';
 import persistence from './persistence';
 import app_state from './app_state';
+import editManager from './edit_manager';
 import modal from './modal';
 import speecher from './speecher';
 import utterance from './utterance';
@@ -16,7 +17,6 @@ import {
   later as runLater,
   cancel as runCancel,
 } from '@ember/runloop';
-import editManager from './edit_manager';
 var sync = EmberObject.extend({
   subscribe: function(opts) {
     if(!sync.con) {
@@ -442,11 +442,18 @@ var sync = EmberObject.extend({
           if(extra && extra.utterance) {
             update.utterance = extra.utterance;
           }
+          if(extra && extra.assertion)  {
+            update.assertion = extra.assertion;
+          }
           if(!extra || extra.button) {
             update.board_state = {
               id: app_state.get('currentBoardState.id'),
+              show_all: !!stashes.get('all_buttons_enabled'),
               level: app_state.get('currentBoardState.level'),
-            };  
+            };
+            if(app_state.get('focus_words.list') && app_state.get('focus_words.user_id') == app_state.get('sessionUser.id')) {
+              update.board_state.focus_words = app_state.get('focus_words.list');
+            }
           }
         }
         if(app_state.get('pairing') && sync.current_pairing) {
@@ -792,13 +799,58 @@ var sync = EmberObject.extend({
               }
             }
             if(message.data.board_state) {
+              // TODO: handle level, show_all, and focus_words
               CoughDrop.store.findRecord('board', message.data.board_state.id).then(function(board) {
                 sync.handle_action({type: 'board_assertion', board: board});
                 if(message.data.current_action) {
                   console.log("OTHER PERSON HIT A BUTTON", message.data);
                   sync.handle_action(message.data.current_action);
                 }
+                var update_render = false;
+                if(app_state.get('pairing.partner')) {
+                  if(message.data.board_state.level) {
+                    stashes.persist('board_level', message.data.board_state.level);
+                    editManager.controller.set('preview_level', message.data.board_state.level);
+                    editManager.controller.set('model.display_level', message.data.board_state.level);
+                    update_render = true;
+                  }
+                  if(message.data.board_state.show_all != null) {
+                    stashes.persist('all_buttons_enabled', (message.data.board_state.show_all ? true : null));  
+                    update_render = true;
+                  }
+                  if(message.data.board_state.focus_words) {
+                    if(message.data.board_state.focus_words.length > 0) {
+                      app_state.set('focus_words', {list: message.data.board_state.focus_words, focus_id: Math.random()});
+                      editManager.controller.model.set('focus_id', 'force_refresh');
+                      update_render = true;
+                    } else {
+                      app_state.set('focus_words', null);
+                      editManager.controller.model.set('focus_id', 'blank');
+                    }
+                  } 
+                }
+                if(update_render) {
+                  editManager.process_for_displaying();
+                }
               });
+            }
+            if(app_state.get('pairing')) {
+              // communicator should handle force settings when paired
+              if(message.data.assertion) {
+                if(message.data.assertion.show_all != null) {
+                  stashes.persist('all_buttons_enabled', (message.data.assertion.show_all ? true : null));
+                  update_render = true;
+                } else if(message.data.assertion.focus_words != null) {
+                  if(message.data.assertion.focus_words.length > 0) {
+                    app_state.set('focus_words', {list: message.data.assertion.focus_words, focus_id: Math.random()});
+                    editManager.controller.model.set('focus_id', 'force_refresh');
+                    update_render = true;
+                  } else {
+                    app_state.set('focus_words', null);
+                    editManager.controller.model.set('focus_id', 'blank');
+                  }  
+                }
+              }
             }
           }
         } else if(message.type == 'pair_end') {

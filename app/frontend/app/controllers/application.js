@@ -24,6 +24,7 @@ import { htmlSafe } from '@ember/string';
 import { inject } from '@ember/controller';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import sync from '../utils/sync';
 
 export default Controller.extend({
   board: inject('board.index'),
@@ -323,14 +324,19 @@ export default Controller.extend({
       var state = stashes.get('all_buttons_enabled');
       if(state) {
         stashes.persist('all_buttons_enabled', null);
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {show_all: false}});
       } else {
         stashes.persist('all_buttons_enabled', true);
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {show_all: true}});
       }
     },
     toggle_focus: function() {
       if(app_state.get('focus_words')) {
         app_state.set('focus_words', null);
         editManager.controller.model.set('focus_id', 'blank');
+        if(app_state.get('pairing')) {
+          sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {focus_words: []}});
+        }
       } else {
         modal.open('modals/focus-words', {user: app_state.get('sessionUser'), root_board_id: stashes.get('root_board_state.id'), inactivity_timeout: true});
       }

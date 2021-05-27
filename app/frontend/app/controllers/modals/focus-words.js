@@ -12,6 +12,7 @@ import utterance from '../../utils/utterance';
 import i18n from '../../utils/i18n';
 import persistence from '../../utils/persistence';
 import editManager from '../../utils/edit_manager';
+import sync from '../../utils/sync';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -317,6 +318,9 @@ export default modal.ModalController.extend({
       editManager.controller.model.set('focus_id', 'force_refresh');
       modal.close();
       editManager.process_for_displaying();
+      if(app_state.get('pairing')) {
+        sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {focus_words: words}});
+      }
     },
     analyze_focus_words: function() {
       var _this = this;
