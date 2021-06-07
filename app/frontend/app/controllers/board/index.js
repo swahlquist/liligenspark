@@ -606,7 +606,7 @@ export default Controller.extend({
             image_height: image_height,
             image_width: image_width,
             font_family: style.font_family,
-            image_square: Math.min(image_height, image_width),
+            image_square: Math.max(Math.min(image_height, image_width), 0),
             image_top_margin: top_margin,
             border: inner_pad
           });
