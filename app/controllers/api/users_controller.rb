@@ -740,6 +740,29 @@ class Api::UsersController < ApplicationController
     progress = Progress.schedule(user, :reset_eval, @api_device_id, opts)
     render json: JsonApi::Progress.as_json(progress, :wrapper => true)
   end
+
+  def update_2fa
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'edit')
+    if params['action_2fa'] == 'enable' || (params['action_2fa'] == 'reset' && (user.settings['2fa'] || user.settings['tmp_2fa']))
+      user.assert_2fa!(user.global_id == @api_user.global_id)
+    elsif params['action_2fa'] == 'disable'
+      user.settings.delete('2fa')
+      user.settings.delete('tmp_2fa')
+      user.save
+    elsif params['action_2fa'] == 'confirm'
+      ts = user.valid_2fa?(params['code_2fa'])
+      return api_error 400, {error: "invalid code: #{params['code_2fa']}"} unless ts
+    else
+      return api_error 400, {error: "unregognized action: #{params['action_2fa']}"}
+    end
+    res = {updated: true, state: user.state_2fa}
+    if (user.settings || {})['tmp_2fa']
+      res[:uri] = user.uri_2fa 
+    end
+    render json: res
+  end
   
   protected
   def grab_url(url)

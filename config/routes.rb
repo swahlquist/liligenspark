@@ -209,6 +209,7 @@ Coughdrop::Application.routes.draw do
       get 'word_activities' => 'users#word_activities'
       post 'evals/transfer' => 'users#transfer_eval'
       post 'evals/reset' => 'users#reset_eval'
+      post '2fa' => 'users#update_2fa'
     end
     
     resources :images do

@@ -232,14 +232,58 @@
       <a href="https://www.gravatar.com" target="_blank" style="display: none;">{{t "Change your avatar at Gravatar.com" key='change_at_gravatar'}}</a>
     </div>
   </div>
+  {{#if model.state_2fa.required}}
+    <div class='form-group'>
+      <label for='2fa' class='col-sm-3 control-label'>{{t "2-Factor Authentication" key='2fa'}}</label>
+      <div class='col-sm-8'>
+        {{#if status_2fa.loading}}
+          <p>{{t "Updating..." key='updating'}}</p>
+        {{else if status_2fa.uri}}
+          <p style='max-width: 300px;'>{{t "To complete two-factor authentication setup, scan the code into your authentication app and enter the generated code to confirm:" key='confirm_2fa_code'}}</p>
+          <div style='width: 300px'>
+          {{qr-code text=status_2fa.uri size=300}}
+          </div>
+          <span style='display: inline-block; width: 200px;'>
+            {{input type='number' class='form-control' value=code_2fa placeholder='# # # # # #'}}
+          </span>
+          {{#if status_2fa.error}}
+            <p class='text-danger'>{{t "Invalid code, please check again" key='invalid_code_please_try_again'}}</p>
+          {{/if}}
+          <button class='btn btn-default' {{action 'update_2fa' 'confirm'}}>{{t "Confirm" key='confirm'}}</button>
+        {{else}}
+          {{#if model.permissions.edit}}
+            {{#if model.state_2fa.required}}
+              {{#if model.state_2fa.mandatory}}
+                {{t "Required for This Account" key='required_for_this_account'}}
+              {{else}}
+                {{t "Currently Enabled" key='currently_enabled'}}
+              {{/if}}
+              {{#unless model.state_2fa.mandatory}}
+                <button class='btn btn-default' {{action 'update_2fa' 'disable'}}>{{t "Disable" key='disable_2fa'}}</button>
+              {{/unless}}
+              <button class='btn btn-default' {{action 'update_2fa' 'reset'}}>{{t "Reset" key='reset_2fa'}}</button>
+            {{else}}
+              {{t "Ensure you have the latest app versions before enabling!" key='ensure_latest_app_versions'}}
+              <button class='btn btn-default' {{action 'update_2fa' 'enable'}}>{{t "Enable Two-Factor Authentication" key='enable_2fa'}}</button>
+            {{/if}}
+          {{/if}}
+          {{#if status_2fa.error}}
+            <p class='text-danger'>{{t "Error updating two-factor authentication" key='error_updating_2fa'}}</p>
+          {{else if status_2fa.success}}
+            <p class='text-success'>{{t "Two-factor authentcation successfully updated!" key='success_2fa'}}</p>
+          {{/if}}
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
   {{#if tools}}
     <div class="form-group">
       <label for="location" class="col-sm-3 control-label">{{t "Installed Tools" key='installed_tools'}}</label>
       <div class="col-sm-5">
         {{#each tools as |tool|}}
           <div style='float: left; cursor: pointer;' {{action 'integration_details' tool}}>
-            <img src={{tool.icon_url}} alt={{tool.name}} title={{tool.name}} style='max-height: 30px;'/>
-          </div>
+            <img src={{tool.icon_url}} alt={{tool.name}} title={{tool.name}} style='height: 50px; width: 50px; object-fit: contain; border: 1px solid #ccc; border-radius: 3px; padding: 5px; margin-right: 5px;'/>
+          </div> 
         {{/each}}
         <div style='clear: left;'></div>
         {{#unless model.currently_premium_or_premium_supporter}}

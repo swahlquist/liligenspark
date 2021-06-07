@@ -2602,4 +2602,147 @@ describe User, :type => :model do
 
     end
   end
+
+  describe "2fa" do
+    describe "assert_2fa!" do
+      it "should allow asserting" do
+        u = User.create
+        expect(ROTP::Base32).to receive(:random).and_return('abcdefg')
+        expect(u.assert_2fa!).to eq(true)
+        expect(u.settings['2fa']).to_not eq(nil)
+        expect(u.settings['2fa']['secret']).to eq('abcdefg')
+      end
+
+      it "should allow resettings" do
+        u = User.create
+        expect(ROTP::Base32).to receive(:random).and_return('abcdefg')
+        expect(u.assert_2fa!).to eq(true)
+        expect(u.settings['2fa']).to_not eq(nil)
+        expect(u.settings['2fa']['secret']).to eq('abcdefg')
+        expect(ROTP::Base32).to receive(:random).and_return('qwerty')
+        expect(u.assert_2fa!).to eq(true)
+        expect(u.settings['2fa']).to_not eq(nil)
+        expect(u.settings['2fa']['secret']).to eq('qwerty')
+      end
+
+      it "should allow setting a pending config without clearing the existing one" do
+        u = User.create
+        expect(ROTP::Base32).to receive(:random).and_return('abcdefg')
+        expect(u.assert_2fa!).to eq(true)
+        expect(u.settings['2fa']).to_not eq(nil)
+        expect(u.settings['2fa']['secret']).to eq('abcdefg')
+        expect(ROTP::Base32).to receive(:random).and_return('qwerty')
+        expect(u.assert_2fa!(true)).to eq(true)
+        expect(u.settings['2fa']).to_not eq(nil)
+        expect(u.settings['2fa']['secret']).to eq('abcdefg')
+        expect(u.settings['tmp_2fa']).to_not eq(nil)
+        expect(u.settings['tmp_2fa']['secret']).to eq('qwerty')
+        expect(u.settings['tmp_2fa']['expires']).to be > 5.hours.from_now.to_i
+        expect(u.settings['tmp_2fa']['expires']).to be < 7.hours.from_now.to_i
+      end
+    end
+
+    describe "state_2fa" do
+      it "should be required for admins" do
+        u = User.create
+        expect(u.state_2fa).to eq({required: false})
+      end
+
+      it "should be required for admins" do
+        u = User.create
+        o = Organization.create(admin: true)
+        o.add_manager(u.user_name, true)
+        u.reload
+        expect(Organization.admin_manager?(u)).to eq(true)
+        expect(u.state_2fa).to eq({required: true, verified: false, mandatory: true})
+      end
+
+      it "should be required if explicitly set" do
+        u = User.create
+        u.assert_2fa!
+        expect(u.state_2fa).to eq({required: true, verified: false})
+      end
+
+      it "should only set verified if secret has ever been confirmed" do
+        u = User.create
+        u.assert_2fa!
+        secret = u.settings['2fa']['secret']
+        totp = ROTP::TOTP.new(secret)
+        ts = totp.now
+        expect(u.state_2fa).to eq({required: true, verified: false})
+        res = u.valid_2fa?(ts)
+        expect(res).to_not eq(false)
+        expect(res).to be > 60.seconds.ago.to_i
+        expect(res).to be < 60.seconds.from_now.to_i
+        expect(u.state_2fa).to eq({required: true, verified: true})
+        expect(u.valid_2fa?(ts)).to eq(false)
+      end
+    end
+  
+    describe "uri_2fa" do
+      it "should return a provisioning URI if secret is set" do
+        u = User.create
+        u.assert_2fa!
+        expect(u.uri_2fa).to eq("otpauth://totp/CoughDrop:#{u.user_name}:?secret=#{u.settings['2fa']['secret']}&issuer=CoughDrop")
+        u.assert_2fa!(true)
+        expect(u.uri_2fa).to eq("otpauth://totp/CoughDrop:#{u.user_name}:?secret=#{u.settings['tmp_2fa']['secret']}&issuer=CoughDrop")
+      end
+
+      it "should return nil without a secret" do
+        u = User.create
+        expect(u.uri_2fa).to eq(nil)
+      end
+    end
+  
+    describe "valid_2fa?" do
+      it "should return false without 2fa settings" do
+        u = User.new
+        expect(u.valid_2fa?('asdf')).to eq(false)
+        u.settings = {'2fa' => {}}
+        expect(u.valid_2fa?('123456')).to eq(false)
+        u.settings = {'2fa' => {'secret' => 'asdf'}}
+        expect(u.valid_2fa?('123456')).to eq(false)
+      end
+
+      it "should return true for a valid code" do
+        u = User.create(settings: {'2fa' => {'secret' => 'asdf'}})
+        totp = ROTP::TOTP.new('asdf', issuer: "CoughDrop")  
+        code = totp.at(Time.now)
+        expect(u.settings['2fa']['last_otp']).to eq(nil)
+        ts = u.valid_2fa?(code)
+        expect(ts).to_not eq(false)
+        expect(ts).to be > 30.seconds.ago.to_i
+        expect(ts).to be < 30.seconds.from_now.to_i
+        expect(u.settings['2fa']['last_otp']).to_not eq(nil)
+      end
+
+      it "should return false for an old code" do
+        u = User.create(settings: {'2fa' => {'secret' => 'asdf'}})
+        totp = ROTP::TOTP.new('asdf', issuer: "CoughDrop")  
+        code = totp.at(90.seconds.ago)
+        ts = u.valid_2fa?(code)
+        expect(ts).to eq(false)
+      end
+
+      it "should return false for a code older than the last one" do
+        u = User.create(settings: {'2fa' => {'secret' => 'asdf', 'last_otp' => 60.seconds.from_now.to_i}})
+        totp = ROTP::TOTP.new('asdf', issuer: "CoughDrop")  
+        code = totp.at(Time.now)
+        ts = u.valid_2fa?(code)
+        expect(ts).to eq(false)
+      end
+
+      it "should return false for a replayed code" do
+        u = User.create(settings: {'2fa' => {'secret' => 'asdf'}})
+        totp = ROTP::TOTP.new('asdf', issuer: "CoughDrop")  
+        code = totp.at(Time.now)
+        ts = u.valid_2fa?(code)
+        expect(ts).to_not eq(false)
+        expect(ts).to be > 30.seconds.ago.to_i
+        expect(ts).to be < 30.seconds.from_now.to_i
+        ts = u.valid_2fa?(code)
+        expect(ts).to eq(false)
+      end
+    end
+  end
 end

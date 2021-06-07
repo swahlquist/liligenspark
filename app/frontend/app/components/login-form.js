@@ -22,6 +22,8 @@ export default Component.extend({
     this.set('checking_for_secret', false);
     this.set('login_followup', null);
     this.set('login_single_assertion', null);
+    this.set('status_2fa', null);
+    this.set('prompt_2fa', null);
     this.browserTokenChange = function() {
       _this.set('client_id', 'browser');
       _this.set('client_secret', persistence.get('browserToken'));
@@ -68,9 +70,12 @@ export default Component.extend({
       });
     }
   },
-  check_tmp_token: function(token) {
+  check_tmp_token: function(token, code_2fa) {
     var _this = this;
     var url = '/api/v1/token_check?tmp_token=' + token + "&include_token=1&rnd=" + Math.round(Math.random() * 999999);
+    if(code_2fa) {
+      url = url + "&2fa_code=" + encodeURIComponent(code_2fa);
+    }
     return persistence.ajax(url, {
       type: 'GET'
     }).then(function(data) {
@@ -80,6 +85,8 @@ export default Component.extend({
         }, function(err) {
           return RSVP.reject(err);
         });
+      } else {
+        return RSVP.reject({error: 'no token found'});
       }
     });
   },
@@ -101,11 +108,14 @@ export default Component.extend({
   handle_auth: function(data) {
     var _this = this;
     if(data.missing_2fa) {
-      // TODO: request 2fa, minimize token
-      // access until this is confirmed
-      // will need to re-call handle_auth
-      // after 2fa confirmation
-      // TODO: if data.set_2fa then set & confirm it now
+      _this.set('prompt_2fa', {needed: true, token: data.access_token});
+      if(data.set_2fa) {
+        _this.set('prompt_2fa.uri', data.set_2fa);
+        // 2fa secret is new, so show the QR code
+        // in addition to the 2fa code prompt
+      }
+      _this.set('status_2fa', null);
+      _this.set('code_2fa', null);
       // TODO: admin UI for resetting 2fa
     } else if(data.temporary_device) {
       _this.send('login_success', false);
@@ -222,6 +232,28 @@ export default Component.extend({
     },
     logout: function() {
       session.invalidate(true);
+    },
+    confirm_2fa: function() {
+      var _this = this;
+      var url = '/api/v1/token_check?access_token=' + _this.get('prompt_2fa.token') + "&include_token=1&rnd=" + Math.round(Math.random() * 999999);
+      url = url + "&2fa_code=" + encodeURIComponent(_this.get('code_2fa'));
+      _this.set('status_2fa', {loading: true});
+      persistence.ajax(url, {
+        type: 'GET'
+      }).then(function(data) {
+        if(data.authenticated && data.token && data.valid_2fa) {
+          session.confirm_authentication(data.token).then(function() {
+            _this.set('status_2fa', {confirmed: true});
+            _this.handle_auth(data.token);
+          }, function(err) {
+            _this.set('status_2fa', {error: true});
+          });
+        } else {
+          _this.set('status_2fa', {error: true});
+        }
+      }, function(err) {
+        _this.set('status_2fa', {error: true});
+      });
     },
     authenticate: function() {
       this.set('logging_in', true);

@@ -53,4 +53,44 @@ describe JsonApi::Token do
       expect(hash['long_token_set']).to eq(true)
     end
   end
+
+  describe "2fa" do
+    it "should specify if missing_2fa" do
+      u = User.create
+      u.assert_2fa!
+      d = Device.create(user: u)
+      d.generate_token!
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['missing_2fa']).to eq(true)
+      u.settings.delete('2fa')
+      u.save
+      d.user.reload
+      d.generate_token!
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['missing_2fa']).to eq(nil)
+      expect(hash['set_2fa']).to eq(nil)
+    end
+
+    it "should send the 2fa uri if not verified" do
+      u = User.create
+      u.assert_2fa!
+      d = Device.create(user: u)
+      d.generate_token!
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['missing_2fa']).to eq(true)
+      expect(hash['set_2fa']).to_not eq(nil)
+    end
+
+    it "should send the cooldown timestamp if set" do
+      u = User.create
+      u.assert_2fa!
+      d = Device.create(user: u)
+      d.generate_token!
+      d.settings['2fa']['cooldown'] = 12345
+      d.save
+      hash = JsonApi::Token.as_json(u, d)
+      expect(hash['missing_2fa']).to eq(true)
+      expect(hash['cooldown_2fa']).to eq(12345)
+    end
+  end
 end

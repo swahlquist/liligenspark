@@ -4,12 +4,21 @@ class SessionController < ApplicationController
   def oauth
     error = nil
     response.headers.except! 'X-Frame-Options'
+    authorized_user_id = nil
     if params['tmp_token']
       # Restoring code state after going through SAML auth process
       @access_token = RedisInit.default.get("token_tmp_#{params['tmp_token']}")
       config = JSON.parse(RedisInit.default.get("oauth_#{params['oauth_code']}")) rescue nil
       if @access_token && config
+        user = config['authorized_user_id'] && User.find_by_path(config['authorized_user_id'])
+        if user && user.state_2fa[:required]
+          @code_plus_2fa = params['oauth_code']
+        end
+
+        # TODO: retrieve device for access token and check if it needs 2fa - 
+        #       if so, include form as part of submission
         @user_name = params['user_name']
+        authorized_user_id = config['authorized_user_id']
         params['redirect_uri'] = config['redirect_uri']
         params['scope'] = config['scope']
         params['device_key'] = config['device_key']
@@ -40,6 +49,7 @@ class SessionController < ApplicationController
         'redirect_uri' => params['redirect_uri'] || key.redirect_uri,
         'device_key' => params['device_key'],
         'device_name' => params['device_name'],
+        'authorized_user_id' => authorized_user_id,
         'app_name' => @app_name,
         'app_icon' => @app_icon
       }
@@ -57,6 +67,7 @@ class SessionController < ApplicationController
   def oauth_login
     error = nil
     user = nil
+    authorized_user = nil
     response.headers.except! 'X-Frame-Options'
     config = JSON.parse(RedisInit.default.get("oauth_#{params['code']}")) rescue nil
     if !config
@@ -71,24 +82,38 @@ class SessionController < ApplicationController
         end
         return
       end
-      auth_org = Organization.external_auth_for(params['username'])
-      if auth_org
-        # SAML auth required for this user
-        redirect_to "/saml/init?org_id=#{auth_org.global_id}&device_id=saml_auth&embed=1&oauth_code=#{params['code']}"
-        return
-      end
-      user = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'])
-
-      if user && user.valet_mode?
-        error = 'invalid_login'
-      elsif user && params['approve_token']
-        id = params['approve_token'].split(/~/)[0]
-        device = Device.find_by_global_id(id)
-        if !device || !device.valid_token?(params['approve_token']) || !device.permission_scopes.include?('full')
-          error = 'invalid_token'
+      authorized_user = User.find_by_path(config['authorized_user_id']) if config['authorized_user_id'] && params['resume']
+      user = authorized_user
+      if !user
+        auth_org = Organization.external_auth_for(params['username'])
+        if auth_org
+          # SAML auth required for this user
+          redirect_to "/saml/init?org_id=#{auth_org.global_id}&device_id=saml_auth&embed=1&oauth_code=#{params['code']}"
+          return
         end
-      elsif !user || !user.valid_password?(params['password'])
-        error = 'invalid_login'
+        user = User.find_for_login(params['username'], (@domain_overrides || {})['org_id'], params['password'])
+
+        if user && user.valet_mode?
+          error = 'invalid_login'
+        elsif user && params['approve_token']
+          id = params['approve_token'].split(/~/)[0]
+          device = Device.find_by_global_id(id)
+          if !device || !device.valid_token?(params['approve_token']) || !device.permission_scopes.include?('full')
+            error = 'invalid_token'
+          end
+        elsif !user || !user.valid_password?(params['password'])
+          error = 'invalid_login'
+        end
+      end
+    end
+    if params['2fa_code']
+      if user.valid_2fa?(params['2fa_code'])
+        @valid_2fa = true
+      else
+        @code_plus_2fa = params['code']
+        @invalid_2fa = true
+        render :oauth, :status => 400
+        return
       end
     end
     if error
@@ -98,10 +123,21 @@ class SessionController < ApplicationController
       @error = error
       render :oauth, :status => 400
     else
-      user.password_used!
+      do_render = false
+      if !@valid_2fa && user.state_2fa[:required]
+        # If the user is authenticated but missing 2fa, show the prompt
+        config['authorized_user_id'] = user.global_id
+        @code_plus_2fa = params['code']
+        do_render
+      end
+      if !params['resume']
+        user.password_used!
+      end
       config['user_id'] = user.id.to_s
       RedisInit.default.setex("oauth_#{params['code']}", 1.hour.to_i, config.to_json)
-      if config['redirect_uri'] == DeveloperKey.oob_uri
+      if do_render
+        render :oauth
+      elsif config['redirect_uri'] == DeveloperKey.oob_uri
         redirect_to oauth_local_url(:code => params['code'])
       else
         redirect_to paramified_redirect + "code=#{params['code']}"
@@ -140,6 +176,9 @@ class SessionController < ApplicationController
         device.settings['permission_scopes'].push(scope) if Device::VALID_API_SCOPES[scope]
       end
       device.generate_token!
+      if device.settings['2fa'] && device.settings['2fa']['pending']
+        # TODO: if 2fa is required, reject the token unless a valid 2fa code is included
+      end
       render json: JsonApi::Token.as_json(device.user, device, :include_refresh => true).to_json
     end
   end
@@ -457,9 +496,7 @@ class SessionController < ApplicationController
   
   def token_check
     set_browser_token_header
-    # TODO: if missing_2fa then don't confirm token unless retrieving from tmp_token
-    missing_2fa = false
-    if @api_user && (!missing_2fa || @tmp_token)
+    if @api_user
       params['access_token'] = @token if @token && @tmp_token
       device = Device.find_by_global_id(@api_device_id)
       valid = device && device.valid_token?(params['access_token'], request.headers['X-CoughDrop-Version'])
@@ -478,6 +515,11 @@ class SessionController < ApplicationController
         ws_url: ENV['CDWEBSOCKET_URL'],
         global_integrations: UserIntegration.global_integrations.keys,
       }
+      if params['2fa_code']
+        json['valid_2fa'] = !!device.confirm_2fa!(params['2fa_code'])
+        json[:scopes] = device.permission_scopes
+        json['cooldown_2fa'] = device.settings['2fa']['cooldown'] if (device.settings['2fa'] || {})['cooldown']
+      end
       if params['include_token']
         json[:token] = JsonApi::Token.as_json(@api_user, device)
       end

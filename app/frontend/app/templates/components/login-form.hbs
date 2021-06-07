@@ -18,6 +18,30 @@
       <p>{{t "This account is only allowed to log in to one dedicated device at a time. If you log in on this device it will force a log out on your other device. How would you like to proceed?" key='confirm_device_force_logout'}}</p>
       <button {{action 'login_force_logut' true}} class='btn btn-default' style='width: 100%;'><div style='font-size: 25px;'>{{t "Log In on this Device" key='log_in_on_this_device'}}</div>{{t "Any other device will be logged out" key='other_device_logged_out'}}</button>
       <button {{action 'login_force_logut' false}} class='btn btn-default' style='width: 100%; margin-top: 10px;'><div style='font-size: 25px;'>{{t "Never Mind, Don't Log In" key='do_not_log_in'}}</div>{{t "Keep me logged in on the other device" key='keep_logged_in'}}</button>
+    {{else if prompt_2fa}}
+      <h2>{{t "Confirm Login" key='confirm_login'}}</h2>
+      {{#if prompt_2fa.uri}}
+        <p>{{t "Your account requires two-factor authentication. Please scan the QR code in your authenticator app and enter the generated code to continue." key='required_code_for_2fa'}}</p>
+        {{qr-code text=prompt_2fa.uri size=300}}
+      {{else}}
+        <p>{{t "Please enter the confirmation code provided by your two-factor authentication app:" key='enter_2fa_code'}}</p>
+      {{/if}}
+      <div style='margin-bottom: 10px;'>
+        {{input type='number' class='form-control input-lg' value=code_2fa placeholder='# # # # # #' style='text-align: center;'}}
+      </div>
+      <button {{action 'confirm_2fa'}} disabled={{status_2fa.loading}} class='btn btn-primary' style='width: 100%;'>
+        <div style='font-size: 25px;'>
+          {{#if status_2fa.loading}}
+            {{t "Checking..." key='checking'}}
+          {{else if status_2fa.error}}
+            {{t "Code not Accepted" key='code_not_accepted'}}
+          {{else if status_2fa.confirmed}}
+            {{t "Confirmed!" key='confirmed'}}
+          {{else}}
+            {{t "Confirm Login" key='confirm_login'}}
+          {{/if}}
+        </div>
+      </button>
     {{else if stashes.enabled}}
       <form {{action "authenticate" on='submit'}} autocomplete="off" class="form-horizontal" id="login_form">
         {{#unless prompt}}

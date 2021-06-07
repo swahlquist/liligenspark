@@ -15,6 +15,10 @@
               Unexpected error: <%= @error %>
             <% end %>
           </div>
+        <% else if @code_plus_2fa %>
+          <form action="/oauth2/token/login" id='oauth_login' method='POST' autocomplete="off">
+            <input type="hidden" name='code' value='<%= @code_plus_2fa %>'/>
+          </form>
         <% else %>
           <form action="/oauth2/token/login" id='oauth_login' method='POST' autocomplete="off">
             <input type="hidden" name='code' value='<%= @code %>'/>

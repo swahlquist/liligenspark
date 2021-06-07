@@ -85,9 +85,37 @@ class Device < ActiveRecord::Base
     GoSecure.lite_hmac("#{self.global_id}:#{self.created_at.iso8601}", self.settings['anonymized_identifier'], 1)
   end
 
+  def missing_2fa?
+    return !!(self.settings && self.settings['2fa'] && self.settings['2fa']['pending'])
+  end
+
+  def confirm_2fa!(code)
+    ts = self.user && self.user.valid_2fa?(code)
+    recent_fails = ((self.settings['2fa'] || {})['fails'] || []).select{|s| s > 10.minutes.ago.to_i }
+    if recent_fails.length > 10
+      self.settings['2fa'] ||= {}
+      self.settings['2fa']['cooldown'] = 10.minutes.from_now.to_i
+      self.save
+    elsif ts
+      self.settings['2fa'] ||= {}
+      self.settings['2fa']['last_otp'] = ts
+      self.settings['2fa'].delete('pending')
+      self.settings['2fa'].delete('cooldown')
+      self.settings['2fa'].delete('fails')
+      self.save
+      return true
+    else
+      self.settings['2fa'] ||= {}
+      self.settings['2fa']['fails'] ||= []
+      self.settings['2fa']['fails'] << Time.now.to_i
+      self.save
+    end    
+    false
+  end
+
   def permission_scopes
-    if disabled?
-      []
+    if disabled? || missing_2fa?
+      ['none']
     elsif self.user_integration_id
       (self.settings && self.settings['permission_scopes']) || []
     elsif self.developer_key_id && self.developer_key_id != 0
@@ -130,9 +158,22 @@ class Device < ActiveRecord::Base
 #      long_token = !!long_token
 #      self.settings['long_token_set'] = true
     end
+    # If the user requires 2fa then check if this device needs re-approval
+    if self.user && self.user.state_2fa[:required]
+      if self.settings['long_token'] && self.settings['2fa'] && (self.settings['2fa']['last_otp'] || 0) > 30.days.ago.to_i
+      elsif self.token_type == :app # TODO: remove this after mobile apps support 2fa
+      else
+        self.settings['2fa'] ||= {}
+        self.settings['2fa']['pending'] = true
+      end
+    else
+      self.settings.delete('2fa')
+    end
+
     self.settings['long_token'] = long_token if long_token != nil
     key = new_access_token
-    
+
+  
     # Keep track of which devices were used most recently/frequently to help
     # display most-relevant ones in the UI under "user devices".
     self.settings['token_history'] ||= []

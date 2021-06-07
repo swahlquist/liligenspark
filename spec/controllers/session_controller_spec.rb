@@ -1034,6 +1034,41 @@ describe SessionController, :type => :controller do
       expect(json['scopes']).to eq(['full', 'modeling'])
       expect(json['modeling_session']).to eq(true)
     end
+
+    it "should retrieve a tmp_token correctly" do
+      @tmp_token = true
+      token_user
+      token = RedisInit.default.setex("token_tmp_2387yt78iy78tay24", 10.minutes.to_i, @device.tokens[0])
+      get :token_check, params: {:tmp_token => '2387yt78iy78tay24'}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(true)
+      expect(json['scopes']).to eq(['full'])
+    end
+
+    it "should send the 2fa URI if 2fa is required but not yet confirmed" do
+      token_user
+      @user.assert_2fa!
+      expect(@user.reload.state_2fa).to eq({required: true, verified: false})
+      @device.generate_token!(true)
+      get :token_check, params: {:access_token => @device.tokens[0], '2fa_code' => 'abcdefg', :include_token => true}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(true)
+      expect(json['scopes']).to eq(['none'])
+      expect(json['valid_2fa']).to eq(false)
+      expect(json['token']).to_not eq(nil)
+      expect(json['token']['set_2fa']).to eq("otpauth://totp/CoughDrop:#{@user.user_name}:?secret=#{@user.settings['2fa']['secret']}&issuer=CoughDrop")
+
+      totp = ROTP::TOTP.new(@user.settings['2fa']['secret'], issuer: 'CoughDrop')
+      code = totp.at(Time.now)
+      get :token_check, params: {:access_token => @device.tokens[0], '2fa_code' => code, :include_token => true}
+      json = assert_success_json
+      expect(json['authenticated']).to eq(true)
+      expect(json['valid_2fa']).to eq(true)
+      expect(@device.reload.missing_2fa?).to eq(false)
+      expect(json['scopes']).to eq(['full'])
+      expect(json['token']).to_not eq(nil)
+      expect(json['token']['set_2fa']).to eq(nil)
+    end
   end
 
   describe "auth_admin" do

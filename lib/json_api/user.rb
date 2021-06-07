@@ -37,6 +37,9 @@ module JsonApi::User
       else
         json['vocalizations'] = json['vocalizations'].select{|v| v['category'] != 'journal' }
       end
+      if json['permissions']['supervise']
+        json['state_2fa'] = user.state_2fa
+      end
       json['contacts'] = user.settings['contacts'] || []
       json['global_integrations'] = UserIntegration.global_integrations
       json['preferences'] = {}

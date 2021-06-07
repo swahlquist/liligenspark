@@ -32,6 +32,7 @@ class User < ActiveRecord::Base
   # - a supervisor is added or removed
   # super-fast lookups, already have the data
   add_permissions('view_existence', ['*']) { true } # anyone can get basic information
+  add_permissions('view_existence', ['none']) { true } # anyone can get basic information
   add_permissions('view_existence', 'view_detailed', 'view_deleted_boards', 'view_word_map', ['*']) {|user| user.id == self.id && !user.valet_mode? }
   add_permissions('view_existence', 'view_detailed', 'model', 'supervise', 'edit', 'edit_boards', 'manage_supervision', 'delete', 'view_deleted_boards', 'link_auth') {|user| user.id == self.id && !user.valet_mode? }
   add_permissions('view_existence', 'view_detailed', 'view_word_map', 'model', ['modeling']) {|user| user.id == self.id && user.valet_mode? }

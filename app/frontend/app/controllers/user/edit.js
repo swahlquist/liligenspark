@@ -56,8 +56,31 @@ export default Controller.extend({
   load_integrations: observer('model.id', function(reload) {
     var _this = this;
     this.get('model').check_integrations(reload);
+    this.set('status_2fa', null);
   }),
   actions: {
+    update_2fa: function(action) {
+      var _this = this;
+      var uri = _this.get('status_2fa.uri');
+      _this.set('status_2fa', {loading: true, uri: uri});
+      var opts = {action_2fa: action};
+      if(action == 'confirm') {
+        opts.code_2fa = _this.get('code_2fa');
+      }
+      persistence.ajax('/api/v1/users/' + _this.get('model.id') + '/2fa', {
+        type: 'POST',
+        data: opts
+      }).then(function(res) {
+        if(res.uri) {
+          _this.set('code_2fa', '');
+          _this.set('status_2fa', {uri: res.uri});
+        } else {
+          _this.set('status_2fa', {success: true});
+        }
+      }, function(err) {
+        _this.set('status_2fa', {error: true, uri: uri});
+      });
+    },
     pick_avatar: function() {
       var _this = this;
       modal.open('pick-avatar', {user: this.get('model')}).then(function(res) {

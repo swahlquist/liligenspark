@@ -50,6 +50,7 @@ gem 'permissable-coughdrop'
 gem 'boy_band'
 gem 'ttfunk', '1.5.1'
 gem 'ruby-saml'
+gem 'rotp'
 
 gem 'ar-octopus', require: 'octopus', git: 'https://github.com/whitmer/octopus'
 # TODO: getting errors on load for rails 5, so pinned to beta, this isn't actually a core dependency

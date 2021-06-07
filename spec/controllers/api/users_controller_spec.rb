@@ -122,6 +122,69 @@ describe Api::UsersController, :type => :controller do
       expect(json['user']['supervisees']).to eq(nil)
     end
     
+    it "should not return any information with a 2fa-missing api scope" do
+      token_user
+      @device.developer_key_id = 1
+      @device.settings['permission_scopes'] = ['none']
+      @device.save
+      u = User.create
+      u.permission_scopes = @device.permission_scopes
+      
+      User.link_supervisor_to_user(@user, u)
+      expect(u.permission_scopes).to eq(['none'])
+      expect(u.permissions_for(u, [])).to eq({
+        "user_id"=>u.global_id, 
+        "view_existence"=>true, 
+        "view_detailed"=>true,
+        "view_deleted_boards"=>true, 
+        'link_auth' => false,
+        'view_word_map' => true,
+        "supervise"=>false, 
+        "model"=>false,
+        "edit"=>false, 
+        'edit_boards' => false,
+        "manage_supervision"=>false, 
+        'set_goals' => false,
+        "delete"=>false
+      })
+      expect(u.permissions_for(u, ['full'])).to eq({
+        "user_id"=>u.global_id, 
+        "view_existence"=>true, 
+        "view_detailed"=>true,
+        "view_deleted_boards"=>true, 
+        'link_auth' => true,
+        'view_word_map' => true,
+        "supervise"=>true, 
+        "model"=>true,
+        "edit"=>true, 
+        'edit_boards' => true,
+        "manage_supervision"=>true, 
+        'set_goals' => true,
+        "delete"=>true
+      })
+      expect(u.permissions_for(u, u.permission_scopes)).to eq({
+        "user_id"=>u.global_id, 
+        "view_existence"=>true, 
+        "view_detailed"=>false,
+        "view_deleted_boards"=>false, 
+        'link_auth' => false,
+        'view_word_map' => false,
+        "supervise"=>false, 
+        "model"=>false,
+        "edit"=>false, 
+        'edit_boards' => false,
+        "manage_supervision"=>false, 
+        'set_goals' => false,
+        "delete"=>false
+      })
+
+      get :show, params: {:id => 'self'}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user']['id']).to eq(@user.global_id)
+      expect(json['user']['supervisees']).to eq(nil)
+    end
+
     it "should not allow looking up supervisees with a limited api scope" do
       token_user
       @device.developer_key_id = 1
@@ -2497,6 +2560,170 @@ describe Api::UsersController, :type => :controller do
       @user.save
       get :valet_credentials, :params => {user_id: @user.global_id}
       assert_unauthorized
+    end
+  end
+
+  describe "update_2fa" do
+    it "should require an access token" do
+      post :update_2fa, params: {'user_id' => 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      post :update_2fa, params: {'user_id' => 'asdf'}
+      assert_not_found('asdf')
+    end
+
+
+    # def update_2fa
+    #   user = User.find_by_path(params['user_id'])
+    #   return unless exists?(user, params['user_id'])
+    #   return unless allowed?(user, 'edit')
+    #   if params['action_2fa'] == 'enable' || (params['action_2fa'] == 'reset' && (user.settings['2fa'] || user.settings['tmp_2fa']))
+    #     user.assert_2fa!(user.global_id == @api_user.global_id)
+    #   elsif params['action_2fa'] == 'disable'
+    #     user.settings.delete('2fa')
+    #     user.settings.delete('tmp_2fa')
+    #     user.save
+    #   elsif params['action_2fa'] == 'confirm'
+    #     ts = user.valid_2fa?(params['code_2fa'])
+    #     return api_error 400, {error: "invalid code: #{params['code_2fa']}"} unless ts
+    #   else
+    #     return api_error 400, {error: "unregognized action: #{params['action_2fa']}"}
+    #   end
+    #   res = {updated: true, state: user.state_2fa}
+    #   res[:uri] = user.uri_2fa if (user.settings || {})['tmp_2fa']
+    #   render json: res
+    # end
+    it "should require edit permission on the user" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u, nil, false)
+      post :update_2fa, params: {'user_id' => u.global_id}
+      assert_unauthorized
+    end
+
+    it "should allow enabling" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u, nil, true)
+      post :update_2fa, params: {'user_id' => u.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => true, 'verified' => false})
+      expect(json['uri']).to eq(nil)
+    end
+    
+    it "should allow resetting" do
+      token_user
+      @user.assert_2fa!
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'reset'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => true, 'verified' => false})
+      expect(json['uri']).to_not eq(nil)
+    end
+
+    it "should not allow resetting if not already set" do
+      token_user
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'reset'}
+      assert_error('unregognized action: reset')
+    end
+
+    it "should send a config URI if there is a temp config" do
+      token_user
+      u = User.create
+      User.link_supervisor_to_user(@user, u, nil, true)
+      post :update_2fa, params: {'user_id' => u.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => true, 'verified' => false})
+      expect(json['uri']).to eq(nil)
+    end
+
+    it "should not set enablement as required without code confirmation" do
+      token_user
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => false})
+      expect(json['uri']).to_not eq(nil)
+    end
+
+    it "should allow disabling" do
+      token_user
+      @user.assert_2fa!
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'disable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => false})
+      expect(json['uri']).to eq(nil)
+    end
+
+    it "should allow confirming a temp config" do
+      token_user
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => false})
+      expect(json['uri']).to_not eq(nil)
+
+      @user.reload
+      expect(@user.settings['tmp_2fa']).to_not eq(nil)
+      expect(@user.settings['2fa']).to eq(nil)
+      totp = ROTP::TOTP.new(@user.settings['tmp_2fa']['secret'], issuer: 'CoughDrop')
+      code = totp.at(Time.now)
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'confirm', 'code_2fa' => code}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      @user.reload
+      expect(@user.settings['2fa']).to_not eq(nil)
+      expect(@user.settings['tmp_2fa']).to eq(nil)
+    end
+
+    it "should error in incorrect temp config confirmation" do
+      token_user
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => false})
+      expect(json['uri']).to_not eq(nil)
+
+      @user.reload
+      expect(@user.settings['tmp_2fa']).to_not eq(nil)
+      expect(@user.settings['2fa']).to eq(nil)
+      totp = ROTP::TOTP.new(@user.settings['tmp_2fa']['secret'], issuer: 'CoughDrop')
+      code = totp.at(Time.now)
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'confirm', 'code_2fa' => '0000009'}
+      assert_error("invalid code: 0000009")
+      @user.reload
+      expect(@user.settings['tmp_2fa']).to_not eq(nil)
+      expect(@user.settings['2fa']).to eq(nil)
+    end
+
+    it "should persist the temp config as permanent if confirmed" do
+      token_user
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'enable'}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      expect(json['state']).to eq({'required' => false})
+      expect(json['uri']).to_not eq(nil)
+
+      @user.reload
+      expect(@user.settings['tmp_2fa']).to_not eq(nil)
+      expect(@user.settings['2fa']).to eq(nil)
+      secret = @user.settings['tmp_2fa']['secret']
+      totp = ROTP::TOTP.new(secret, issuer: 'CoughDrop')
+      code = totp.at(Time.now)
+      post :update_2fa, params: {'user_id' => @user.global_id, 'action_2fa' => 'confirm', 'code_2fa' => code}
+      json = assert_success_json
+      expect(json['updated']).to eq(true)
+      @user.reload
+      expect(@user.settings['2fa']).to_not eq(nil)
+      expect(@user.settings['tmp_2fa']).to eq(nil)
+      expect(@user.settings['2fa']['secret']).to eq(secret)
+      expect(@user.settings['2fa']['last_otp']).to_not eq(nil)
     end
   end
 end

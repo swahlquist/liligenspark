@@ -10,6 +10,16 @@ module JsonApi::Token
     json['user_name'] = user.user_name
     json['user_id'] = user.global_id
     json['modeling_session'] = user.valet_mode?
+    json['missing_2fa'] = true if (device.settings['2fa'] || {})['pending']
+    if json['missing_2fa']
+      state = user.state_2fa
+      if state[:required] && !state[:verified]
+        json['set_2fa'] = user.uri_2fa
+      end
+    end
+    if (device.settings['2fa'] || {})['cooldown']
+      json['cooldown_2fa'] = device.settings['2fa']['cooldown'] 
+    end
     # the anonymized user id should be consistent for the external tool
     dev_key = device.developer_key_id == 0 ? device.id : device.developer_key_id
     json['anonymized_user_id'] = user.anonymized_identifier("external_for_#{dev_key}")

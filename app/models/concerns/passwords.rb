@@ -47,6 +47,89 @@ module Passwords
     self.settings['password_resets'] ||= []
     self.settings['password_resets'].select!{|r| r['timestamp'] > now - (60 * 60 * 3) }
   end
+  
+  def assert_2fa!(temp=false)
+    if temp
+      self.settings['tmp_2fa'] = {
+        'secret' => self.random_2fa,
+        'expires' => 6.hours.from_now.to_i
+      }
+    else
+      self.settings['2fa'] = {
+        'secret' => self.random_2fa
+      }
+      self.settings.delete('tmp_2fa')
+    end
+    self.save!
+  end
+
+  def random_2fa
+    ROTP::Base32.random
+  end
+
+  def state_2fa
+    state = {}
+    state[:required] = !!self.settings['2fa']
+    if ((self.settings['tmp_2fa'] || {})['expires'] || 0) < Time.now.to_i
+      self.settings.delete('tmp_2fa')
+      self.save
+    end
+    if Organization.admin_manager?(self)
+      state[:required] = true
+      state[:mandatory] = true
+      self.assert_2fa! if !self.settings['2fa'] && !self.settings['tmp_2fa']
+    end
+    if state[:required]
+      state[:verified] = !!(self.settings['2fa'] || {})['last_otp']
+    end
+    state
+  end
+
+  def uri_2fa
+    secret = ((self.settings || {})['tmp_2fa'] || {})['secret']
+    secret ||= ((self.settings || {})['2fa'] || {})['secret']
+    return nil unless secret
+    totp = ROTP::TOTP.new(secret, issuer: "CoughDrop")  
+    totp.provisioning_uri(self.user_name).sub(/\?/, ':?')
+  end
+
+  def valid_2fa?(code)
+    valid_type = nil
+    secret = ((self.settings || {})['2fa'] || {})['secret']
+    tmp_secret = ((self.settings || {})['tmp_2fa'] || {})['secret']
+    return false unless secret || tmp_secret
+    ts = nil
+    if secret
+      totp = ROTP::TOTP.new(secret, issuer: "CoughDrop")  
+      now = Time.now.to_i
+      totp.at(now)
+      ts = totp.verify(code, drift_behind: 15)
+      valid_type = :default if ts
+    end
+    if tmp_secret && !ts
+      totp = ROTP::TOTP.new(tmp_secret, issuer: "CoughDrop")  
+      now = Time.now.to_i
+      totp.at(now)
+      ts = totp.verify(code, drift_behind: 15)
+      valid_type = :temp if ts
+    end
+    last_otp = ((self.settings || {})['2fa'] || {})['last_otp'] || 0
+    if ts && valid_type == :temp
+      self.settings.delete('tmp_2fa')
+      self.settings['2fa'] = {
+        'secret' => tmp_secret,
+        'last_otp' => ts
+      }
+      self.save
+    elsif ts && ts > last_otp
+      self.settings.delete('tmp_2fa')
+      self.settings['2fa']['last_otp'] = ts
+      self.save
+      ts
+    else
+      false
+    end
+  end
 
   def valet_mode?
     !!@valet_mode

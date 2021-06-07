@@ -721,4 +721,113 @@ describe Device, :type => :model do
       expect(d.settings['keys'].length).to eq(1)
     end
   end
+
+  describe "2fa" do
+    describe "missing_2fa?" do
+      it "should return a correct value" do
+        d = Device.new
+        expect(d.missing_2fa?).to eq(false)
+        d.settings = {}
+        expect(d.missing_2fa?).to eq(false)
+        d.settings['2fa'] = {}
+        expect(d.missing_2fa?).to eq(false)
+        d.settings['2fa']['pending'] = true
+        expect(d.missing_2fa?).to eq(true)
+      end
+
+      it "should change when generate_token! is called" do
+        u = User.create
+        d = Device.create(user: u)
+        expect(d.missing_2fa?).to eq(false)
+        expect(d.user).to receive(:state_2fa).and_return(required: true)
+        expect(d.missing_2fa?).to eq(false)
+        d.generate_token!
+        expect(d.missing_2fa?).to eq(true)
+      end
+
+      it "should not require 2fa when long_token was already set and code was recently confirmed" do
+        u = User.create
+        d = Device.create(user: u)
+        d.settings['long_token'] = true
+        d.settings['2fa'] = {'last_otp' => 15.days.ago.to_i}
+        d.save
+        expect(d.missing_2fa?).to eq(false)
+        expect(d.user).to receive(:state_2fa).and_return(required: true).at_least(1).times
+        expect(d.missing_2fa?).to eq(false)
+        d.generate_token!
+        expect(d.missing_2fa?).to eq(false)
+
+        d.settings['2fa'] = {'last_otp' => 45.days.ago.to_i}
+        d.save
+        d.generate_token!
+        expect(d.missing_2fa?).to eq(true)
+      end
+
+      it "should require 2fa when long_token was not already set and code was recently confirmed" do
+        u = User.create
+        d = Device.create(user: u)
+        d.settings['2fa'] = {'last_otp' => 15.days.ago.to_i}
+        d.save
+        expect(d.missing_2fa?).to eq(false)
+        expect(d.user).to receive(:state_2fa).and_return(required: true).at_least(1).times
+        expect(d.missing_2fa?).to eq(false)
+        d.generate_token!
+        expect(d.missing_2fa?).to eq(true)
+      end
+    end
+
+    describe "confirm_2fa!" do
+      it "should track recent fails" do
+        u = User.create
+        d = Device.create(user: u)
+        expect(d.user).to receive(:valid_2fa?).with('code').and_return(false)
+        res = d.confirm_2fa!('code')
+        expect(res).to eq(false)
+        expect(d.settings['2fa']['fails']).to_not eq(nil)
+        expect(d.settings['2fa']['fails'].length).to eq(1)
+      end
+
+      it "should store cooldown with too many fails" do
+        u = User.create
+        d = Device.create(user: u)
+        expect(d.user).to receive(:valid_2fa?).with('code').and_return(false).at_least(1).times
+        11.times do |i|
+          res = d.confirm_2fa!('code')
+          expect(res).to eq(false)
+          expect(d.settings['2fa']['fails']).to_not eq(nil)
+          expect(d.settings['2fa']['fails'].length).to eq(i + 1)
+        end
+        d.settings['2fa']['fails'] << 123
+        d.save
+        res = d.confirm_2fa!('code')
+        expect(res).to eq(false)
+        expect(d.settings['2fa']['fails']).to_not eq(nil)
+        expect(d.settings['2fa']['fails'].length).to eq(12)
+        expect(d.settings['2fa']['cooldown']).to_not eq(nil)
+        expect(d.settings['2fa']['cooldown']).to be > 9.minutes.from_now.to_i
+        expect(d.settings['2fa']['cooldown']).to be < 11.minutes.from_now.to_i
+    end
+
+      it "should clear cooldown and fails on success" do
+        u = User.create
+        d = Device.create(user: u)
+        d.settings['2fa'] = {'cooldown' => true, 'pending' => true}
+        d.save
+        expect(d.user).to receive(:valid_2fa?).with('code').and_return(false).at_least(1).times
+        7.times do |i|
+          res = d.confirm_2fa!('code')
+          expect(res).to eq(false)
+          expect(d.settings['2fa']['fails']).to_not eq(nil)
+          expect(d.settings['2fa']['fails'].length).to eq(i + 1)
+        end
+        expect(d.settings['2fa']['cooldown']).to_not eq(nil)
+        expect(d.user).to receive(:valid_2fa?).with('winner').and_return(true)
+        res = d.confirm_2fa!('winner')
+        expect(res).to eq(true)
+        expect(d.settings['2fa']['pending']).to eq(nil)
+        expect(d.settings['2fa']['cooldown']).to eq(nil)
+        expect(d.settings['2fa']['fails']).to eq(nil)
+      end
+    end
+  end
 end
