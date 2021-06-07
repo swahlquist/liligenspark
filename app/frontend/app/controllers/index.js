@@ -417,11 +417,13 @@ export default Controller.extend({
   }),
   rating_allowed: computed('app_state.sessionUser', function() {
     if(capabilities.installed_app && capabilities.mobile && capabilities.subsystem != 'Kindle') {
+      // TODO: try to check for engagement
       var progress = app_state.get('sessionUser.preferences.progress') || {};
       if(progress.rated) {
         return false;
       }
-      if(app_state.get('sessionUser.joined') && app_state.get('sessionUser.joined') < window.moment().add(-14, 'day')) {
+      // Wait 4 weeks before inviting to rate
+      if(app_state.get('sessionUser.joined') && app_state.get('sessionUser.joined') < window.moment().add(-28, 'day')) {
         // show prompt a week at a time, every 4 weeks
         return (Math.round(app_state.get('sessionUser.joined').getTime() / 1000 / 60 / 60 / 24 / 7) % 4) == 0;
       }
