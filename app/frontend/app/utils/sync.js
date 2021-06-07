@@ -798,6 +798,7 @@ var sync = EmberObject.extend({
                 }, function(err) { });
               }
             }
+            var update_render = false;
             if(message.data.board_state) {
               // TODO: handle level, show_all, and focus_words
               CoughDrop.store.findRecord('board', message.data.board_state.id).then(function(board) {
@@ -806,7 +807,6 @@ var sync = EmberObject.extend({
                   console.log("OTHER PERSON HIT A BUTTON", message.data);
                   sync.handle_action(message.data.current_action);
                 }
-                var update_render = false;
                 if(app_state.get('pairing.partner')) {
                   if(message.data.board_state.level) {
                     stashes.persist('board_level', message.data.board_state.level);
@@ -829,9 +829,6 @@ var sync = EmberObject.extend({
                     }
                   } 
                 }
-                if(update_render) {
-                  editManager.process_for_displaying();
-                }
               });
             }
             if(app_state.get('pairing')) {
@@ -851,6 +848,9 @@ var sync = EmberObject.extend({
                   }  
                 }
               }
+            }
+            if(update_render) {
+              editManager.process_for_displaying();
             }
           }
         } else if(message.type == 'pair_end') {
