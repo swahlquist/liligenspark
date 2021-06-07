@@ -2435,6 +2435,7 @@ var app_state = EmberObject.extend({
         apps: null,
         url: null,
         video: null,
+        add_vocalization: true,
         load_board: null,
         user_integration: null
       })

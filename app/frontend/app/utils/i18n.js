@@ -370,12 +370,12 @@ var i18n = EmberObject.extend({
     } else if(check.length > 3 && this.vowels.indexOf(check[check.length - 3]) >= 0) {
       vowel_cons = false;
     }
-    var syllables = this.syllables(str);
+    var syllables = this.syllables(check);
     var ending_stress = true; // TODO: this will be a hard one, methinks
     if(check.match(/^[eiouy]/)) {
       ending_stress = false;
     }
-    var sub = this.substitutions.tenses[str];
+    var sub = this.substitutions.tenses[check];
     // https://www.grammarly.com/blog/verb-tenses/
     // infinitive: to laugh
     // simple present: laugh/laughs
