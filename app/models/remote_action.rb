@@ -1,0 +1,2 @@
+class RemoteAction < ApplicationRecord
+end
