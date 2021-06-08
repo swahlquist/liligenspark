@@ -13,7 +13,7 @@ module Uploader
       res = check_existing_upload(remote_path, checksum)
       if res[:url]
         remote_touch(remote_path)
-        return {url: url, path: remote_path}
+        return {url: res[:url], path: remote_path}
       elsif res[:mismatch]
         # If something is already there and it's not identical, change to a different url
         remote_path = remote_path.sub(/.*\K\//, "/#{checksum[0, 5]}/")
