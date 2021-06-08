@@ -711,8 +711,59 @@ describe WeeklyStatsSummary, :type => :model do
       expect(res[:modeled_percent]).to eq((7.0 / (8 + 11).to_f * 10.0).round(1) / 10.0 * 100.0)
       expect(res[:total_session_seconds]).to eq(123+456)
       expect(res[:words_per_minute]).to eq(((2+12+12+6).to_f / (123+456).to_f * 60.0).round(1))
-      expect(res[:total_users]).to eq(5)
-      expect(res[:total_sessions]).to eq(9)
+      expect(res[:total_users]).to eq(nil)
+      expect(res[:total_sessions]).to eq(nil)
+      expect(res[:sessions_per_user]).to eq(9.0 / 5.0)
+      expect(res[:total_words]).to eq(32)
+      json = JSON.parse(Permissable.permissions_redis.get('global/stats/trends'))
+      expect(json['admin']).to_not eq(nil)
+      expect(json['admin']['total_users']).to eq(5)
+      expect(json['admin']['total_sessions']).to eq(9)
+    end
+
+    it 'should cache admin data but not include it in the results' do
+      start = 1.month.ago.to_date
+      cweek = start.beginning_of_week(:sunday).cweek
+      cwyear = start.beginning_of_week(:sunday).cwyear
+      cw1 = (cwyear * 100) + cweek
+      cw2 = (cwyear * 100) + cweek + 1
+      
+      sum1 = WeeklyStatsSummary.create(:user_id => 0, :weekyear => cw1, :data => {
+        'totals' => {
+          'total_modeled_buttons' => 5,
+          'total_buttons' => 8,
+          'total_core_words' => 4,
+          'total_words' => 14,
+          'total_modeled_words' => 12,
+          'total_session_seconds' => 123,
+          'total_sessions' => 6
+        },
+        'user_ids' => ['a', 'b', 'c']
+      })
+      sum3 = WeeklyStatsSummary.create(:user_id => 0, :weekyear => cw2, :data => {
+        'totals' => {
+          'total_modeled_buttons' => 2,
+          'total_buttons' => 11,
+          'total_core_words' => 5,
+          'total_words' => 18,
+          'total_modeled_words' => 6,
+          'total_session_seconds' => 456,
+          'total_sessions' => 3
+        },
+        'user_ids' => ['a', 'c', 'd', 'e']
+      })
+  
+      res = WeeklyStatsSummary.trends()
+      expect(res[:admin]).to eq(nil)
+      json = JSON.parse(Permissable.permissions_redis.get('global/stats/trends'))
+      expect(json['admin']).to_not eq(nil)
+      expect(json['admin']['total_users']).to eq(5)
+      expect(json['admin']['total_sessions']).to eq(9)
+      expect(res).to_not eq(nil)
+      expect(res[:core_percent]).to eq((9.0 / (14+18).to_f * 10.0).round(1) * 10.0)
+      expect(res[:modeled_percent]).to eq((7.0 / (8 + 11).to_f * 10.0).round(1) / 10.0 * 100.0)
+      expect(res[:total_session_seconds]).to eq(123+456)
+      expect(res[:words_per_minute]).to eq(((2+12+12+6).to_f / (123+456).to_f * 60.0).round(1))
       expect(res[:sessions_per_user]).to eq(9.0 / 5.0)
       expect(res[:total_words]).to eq(32)
     end

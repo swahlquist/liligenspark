@@ -140,7 +140,8 @@ module ExtraData
 
   def clear_extra_data
     if self.data && self.data['extra_data_nonce']
-      self.class.schedule(:clear_extra_data, self.data['extra_data_nonce'], self.global_id, self.data['extra_data_version'] || 0)
+      paths = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, self.data['extra_data_version'] || 0)
+      self.class.schedule(:clear_extra_data, self.global_id, paths)
     end
     true
   end
@@ -174,12 +175,14 @@ module ExtraData
       [private_path, public_path]
     end
 
-    def clear_extra_data(nonce, global_id, version)
+    def clear_extra_data(global_id, paths)
       obj = self.find_by_global_id(global_id)
-      private_path, public_path = extra_data_remote_paths(nonce, obj, version)
+      private_path, public_path = paths #extra_data_remote_paths(nonce, obj, version)
       # Uploader.invalidate_cdn(private_path)
-      obj.data.delete('extra_data_private_path')
-      obj.save
+      if obj
+        obj.data.delete('extra_data_private_path')
+        obj.save
+      end
       Uploader.remote_remove(private_path)
       # Uploader.invalidate_cdn(public_path)
       Uploader.remote_remove(public_path)

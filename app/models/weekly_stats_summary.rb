@@ -851,6 +851,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # TODO: devices per communicator, supervisors per communicator, goals set, badges earned, most common badges
     
     Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
+    res.delete(:admin)
     res
   end
   

@@ -720,36 +720,65 @@ describe Api::LogsController, :type => :controller do
     end
   end
   
+  # def trends
+  #   extra_data = !!(@api_user && @api_user.allows?(@api_user, 'admin_support_actions'))
+  #   res = JSON.parse(Permissable.permissions_redis.get('global/stats/trends')) rescue nil
+  #   if !res #|| extra_data
+  #     progress = Progress.schedule(WeeklyStatsSummary, :trends)
+  #     res = JsonApi::Progress.as_json(progress, :wrapper => true)
+  #   end
+  #   res.delete(:admin) unless extra_data
+    
+  #   render json: res
+  # end
+
   describe "trends" do
+    after(:each) do
+      Permissable.permissions_redis.del('global/stats/trends')
+    end
+
     it "should not require an api token" do
-      expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
-      expect(WeeklyStatsSummary).to receive(:trends).with(false).and_return({a: 1})
+      expect(Permissable.permissions_redis).to receive(:get).with('global/stats/trends').and_return({'a' => 1, 'admin' => 'asdf'}.to_json)
       get 'trends'
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'a' => 1})
     end
     
-    it "should return trend data" do
+    it "should return a progress object if no data cached" do
       expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
-      expect(WeeklyStatsSummary).to receive(:trends).with(false).and_return({a: 1})
       get 'trends'
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'a' => 1})
+      expect(json['progress']).to_not eq(nil)
+      expect(json['progress']['id']).to_not eq(nil)
+      expect(Worker.scheduled_for?('priority', Progress, 'perform_action', Progress.last.id)).to eq(true)
+    end
+
+    it "should return trend data" do
+      expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
+      get 'trends'
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['progress']).to_not eq(nil)
+      expect(json['progress']['id']).to_not eq(nil)
+      expect(Worker.scheduled_for?('priority', Progress, 'perform_action', Progress.last.id)).to eq(true)
+      p = Progress.last
+      expect(p.settings['class']).to eq('WeeklyStatsSummary')
+      expect(p.settings['method']).to eq('trends')
+      expect(p.settings['arguments']).to eq([])
     end
     
     it "should return additional data for admins" do
+      Permissable.permissions_redis.set('global/stats/trends', {'a' => 1, 'admin' => 'asdf'}.to_json)
       o = Organization.create(:admin => true)
       token_user
       o.add_manager(@user.user_name, true)
 
-      expect(Permissable.permissions_redis).to receive(:get).and_return(nil).at_least(1).times
-      expect(WeeklyStatsSummary).to receive(:trends).with(true).and_return({a: 1})
       get 'trends'
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'a' => 1})
+      expect(json).to eq({'a' => 1, 'admin' => 'asdf'})
     end
   end
   

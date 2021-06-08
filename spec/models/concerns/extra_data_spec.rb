@@ -263,8 +263,10 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(data: {'extra_data_nonce' => 'whatever'}, user: u, author: u, device: d)
+
+      paths = LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s, s.data['extra_data_version'] || 0)
       s.clear_extra_data
-      expect(Worker.scheduled?(LogSession, :perform_action, {'method' => 'clear_extra_data', 'arguments' => ['whatever', s.global_id, 0]})).to eq(true)
+      expect(Worker.scheduled?(LogSession, :perform_action, {'method' => 'clear_extra_data', 'arguments' => [s.global_id, paths]})).to eq(true)
     end
 
     it 'should not schedule clearing if no nonce is set' do
@@ -279,10 +281,10 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create!(user: u, author: u, device: d, data: {})
-      expect(LogSession).to receive(:extra_data_remote_paths).with('nonce', s, 1).and_return(['a', 'b'])
+      expect(LogSession).to_not receive(:extra_data_remote_paths)
       expect(Uploader).to receive(:remote_remove).with('a')
       expect(Uploader).to receive(:remote_remove).with('b')
-      LogSession.clear_extra_data('nonce', s.global_id, 1)
+      LogSession.clear_extra_data(s.global_id, ['a', 'b'])
     end
   end
 

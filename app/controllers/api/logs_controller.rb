@@ -254,7 +254,10 @@ class Api::LogsController < ApplicationController
       progress = Progress.schedule(WeeklyStatsSummary, :trends)
       res = JsonApi::Progress.as_json(progress, :wrapper => true)
     end
-    res.delete(:admin) unless extra_data
+    if !extra_data
+      res.delete(:admin) 
+      res.delete('admin') 
+    end
     
     render json: res
   end
