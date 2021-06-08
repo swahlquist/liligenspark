@@ -16,7 +16,7 @@ module ExtraData
         if self.data['extra_data_revision'] == self.data['full_set_revision']
           private_path = self.extra_data_private_url
           private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
-          url = Uploader.check_existing_upload(private_path)
+          url = (Uploader.check_existing_upload(private_path) || {})[:url]
           # If we've already uploaded this exact revision, don't bother
           # re-uploading and risking a SlowDown error
           return true if url
@@ -33,9 +33,8 @@ module ExtraData
         # for logs, pull out self.data['events']
         extra_data = self.data[extra_data_attribute]
         return false if extra_data == nil
-
         extra_data_version = 2
-        private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, extra_data_version)
+        private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, extra_data_version)
         public_extra_data = extra_data && self.class.extra_data_public_transform(extra_data)
         if public_extra_data && false
           self.data['extra_data_public'] = true
@@ -43,7 +42,7 @@ module ExtraData
           json = public_extra_data.to_json
           file.write(json)
           file.close
-          Uploader.invalidate_cdn(public_path)
+          # Uploader.invalidate_cdn(public_path)
           Uploader.remote_upload(public_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
         end
         # upload to "/extras/<global_id>/<nonce>/<global_id>.json"
@@ -51,8 +50,12 @@ module ExtraData
         json = extra_data.to_json
         file.write(json)
         file.close
-        Uploader.invalidate_cdn(private_path)
+        # Uploader.invalidate_cdn(private_path)
         res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+        if res && res[:path] && res[:path] != private_path
+          Uploader.remote_remove_later(private_path)
+          self.data['extra_data_private_path'] = res[:path]
+        end
         if res && self.is_a?(BoardDownstreamButtonSet)
           self.data['extra_data_revision'] = self.data['full_set_revision']
         end
@@ -79,14 +82,14 @@ module ExtraData
 
   def extra_data_public_url
     return nil unless self.data && self.data['extra_data_nonce'] && self.data['extra_data_public']
-    path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, self.data['extra_data_version'] || 0)[1]
+    path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, self.data['extra_data_version'] || 0)[1]
     "#{ENV['UPLOADS_S3_CDN']}/#{path}"
   end
 
   def extra_data_private_url
     return nil unless self.data && self.data['extra_data_nonce']
     return nil if self.is_a?(BoardDownstreamButtonSet) && self.data['source_id']
-    path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self.global_id, self.data['extra_data_version'] || 0)[0]
+    path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, self.data['extra_data_version'] || 0)[0]
     "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/#{path}"
   end
 
@@ -158,24 +161,27 @@ module ExtraData
       nil
     end
   
-    def extra_data_remote_paths(nonce, global_id, version=2)
+    def extra_data_remote_paths(nonce, obj, version=2)
       private_key = GoSecure.hmac(nonce, 'extra_data_private_key', 1)
       if version == 2
-        dir = "extras#{nonce[0,5]}/#{self.to_s}/#{global_id}/#{nonce}/"
+        dir = "extras#{nonce[0,5]}/#{self.to_s}/#{obj.global_id}/#{nonce}/"
       else
-        dir = "extras#{nonce[0]}/#{self.to_s}/#{global_id}/#{nonce}/"
+        dir = "extras#{nonce[0]}/#{self.to_s}/#{obj.global_id}/#{nonce}/"
       end
       dir = "/" + dir if version==0
-      public_path = dir + "data-#{global_id}.json"
-      private_path = dir + "data-#{private_key}.json"
+      public_path = dir + "data-#{obj.global_id}.json"
+      private_path = (obj.data || {})['extra_data_private_path'] || (dir + "data-#{private_key}.json")
       [private_path, public_path]
     end
 
     def clear_extra_data(nonce, global_id, version)
-      private_path, public_path = extra_data_remote_paths(nonce, global_id, version)
-      Uploader.invalidate_cdn(private_path)
+      obj = self.find_by_global_id(global_id)
+      private_path, public_path = extra_data_remote_paths(nonce, obj, version)
+      # Uploader.invalidate_cdn(private_path)
+      obj.data.delete('extra_data_private_path')
+      obj.save
       Uploader.remote_remove(private_path)
-      Uploader.invalidate_cdn(public_path)
+      # Uploader.invalidate_cdn(public_path)
       Uploader.remote_remove(public_path)
       # remove them both
     end

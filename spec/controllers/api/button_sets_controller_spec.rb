@@ -104,7 +104,7 @@ describe Api::ButtonSetsController, :type => :controller do
       bs = b.board_downstream_button_set
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:extra_data_private_url).and_return("asdf").at_least(1).times
-      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return('jkl')
+      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return({url: 'jkl'})
       post :generate, params: {'id' => b.global_id}
       json = assert_success_json
       expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'jkl'})
@@ -124,7 +124,7 @@ describe Api::ButtonSetsController, :type => :controller do
       bs.save
       expect(b).to receive(:board_downstream_button_set).and_return(bs).at_least(1).times
       expect(bs).to receive(:extra_data_private_url).and_return("asdf").at_least(1).times
-      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return('jkl')
+      expect(Uploader).to receive(:check_existing_upload).with('asdf').and_return({url: 'jkl'})
       post :generate, params: {'id' => b.global_id}
       json = assert_success_json
       expect(json).to eq({'exists' => true, 'id' => b.global_id, 'url' => 'jklo'})

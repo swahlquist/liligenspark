@@ -26,9 +26,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(false)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
         else
           expect('path').to eq('wrong')
@@ -36,7 +36,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times
+      end.exactly(1).times.and_return(nil)
       s.detach_extra_data('force')
       expect(paths).to eq(['private'])
     end
@@ -50,6 +50,31 @@ describe ExtraData, :type => :model do
       s.detach_extra_data('force')
     end
 
+    it 'should not re-upload for a different revision hash but same checksum' do
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf', 'events' => [{'a' => 1}, {'b' => 2}]})
+      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      res = {}
+      expect(Uploader).to receive(:remote_upload) do |path|
+        res[:path] = path
+      end.and_return(res)
+      s.data['full_set_revision'] = 'asdfjkl'
+      s.detach_extra_data('force')
+      expect(s.data['extra_data_private_path']).to eq(nil)
+    end
+    
+    it 'should upload to a different path if the checksum does not match the existing upload' do
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf', 'events' => [{'a' => 1}, {'b' => 2}]})
+      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(Uploader).to receive(:remote_upload).and_return({path: 'a/b/c/d'})
+      s.data['full_set_revision'] = 'asdfjkl'
+      s.detach_extra_data('force')
+      expect(s.data['extra_data_private_path']).to eq('a/b/c/d')
+    end
+
     it 'should upload if no extra_data_nonce defined and data too big' do
       u = User.create
       d = Device.create(user: u)
@@ -57,9 +82,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(true)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
         else
           expect('path').to eq('wrong')
@@ -67,7 +92,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times
+      end.exactly(1).times.and_return(nil)
       s.detach_extra_data(true)
       expect(paths).to eq(['private'])
     end
@@ -80,9 +105,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(true)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
         else
           expect('path').to eq('wrong')
@@ -90,7 +115,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end
+      end.and_return(nil)
       s.detach_extra_data(true)
       expect(paths).to eq(['private'])
     end
@@ -102,9 +127,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(false)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
         else
           expect('path').to eq('wrong')
@@ -112,7 +137,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times
+      end.exactly(1).times.and_return(nil)
       s.detach_extra_data('force')
       expect(paths).to eq(['private'])   
     end
@@ -130,9 +155,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(false)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
           json = JSON.parse(File.read(local))
           expect(json).to eq([
@@ -147,7 +172,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times
+      end.exactly(1).times.and_return(nil)
       s.detach_extra_data('force')
       expect(paths).to eq(['private'])   
     end
@@ -165,9 +190,9 @@ describe ExtraData, :type => :model do
       expect(s).to receive(:extra_data_too_big?).and_return(false)
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
-        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[0]
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
-        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s.global_id)[1]
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
         else
           expect('path').to eq('wrong')
@@ -175,7 +200,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times
+      end.exactly(1).times.and_return(nil)
       s.detach_extra_data('force')
       expect(paths).to eq(['private']) 
       expect(s.data['events']).to eq(nil)
@@ -251,23 +276,27 @@ describe ExtraData, :type => :model do
     end
 
     it 'should clear public and private URLs' do
-      expect(LogSession).to receive(:extra_data_remote_paths).with('nonce', 'global_id', 1).and_return(['a', 'b'])
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create!(user: u, author: u, device: d, data: {})
+      expect(LogSession).to receive(:extra_data_remote_paths).with('nonce', s, 1).and_return(['a', 'b'])
       expect(Uploader).to receive(:remote_remove).with('a')
       expect(Uploader).to receive(:remote_remove).with('b')
-      LogSession.clear_extra_data('nonce', 'global_id', 1)
+      LogSession.clear_extra_data('nonce', s.global_id, 1)
     end
   end
 
   describe "extra_data_remote_paths" do
     it 'should return the correct paths' do
       private_key = GoSecure.hmac('nonce', 'extra_data_private_key', 1)
-      expect(LogSession.extra_data_remote_paths('nonce', 'global_id')).to eq(
+      obj = OpenStruct.new(global_id: 'global_id', data: {})
+      expect(LogSession.extra_data_remote_paths('nonce', obj)).to eq(
         [
           "extrasnonce/LogSession/global_id/nonce/data-#{private_key}.json",
           "extrasnonce/LogSession/global_id/nonce/data-global_id.json"
         ]
       )
-      expect(LogSession.extra_data_remote_paths('nonce', 'global_id', 0)).to eq(
+      expect(LogSession.extra_data_remote_paths('nonce', obj, 0)).to eq(
         [
           "/extrasn/LogSession/global_id/nonce/data-#{private_key}.json",
           "/extrasn/LogSession/global_id/nonce/data-global_id.json"

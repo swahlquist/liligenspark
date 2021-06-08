@@ -35,7 +35,7 @@ describe Uploader do
       res = OpenStruct.new(:success? => true)
       f = Tempfile.new("stash")
       expect(Typhoeus).to receive(:post).and_return(res)
-      expect(Uploader.remote_upload("bacon", f.path, "text/plaintext")).to eq("http://www.upload.com/bacon")
+      expect(Uploader.remote_upload("bacon", f.path, "text/plaintext")).to eq({url: "http://www.upload.com/bacon", path: 'bacon'})
       f.unlink
     end
 
@@ -1042,7 +1042,7 @@ describe Uploader do
     it "should return the known url if known" do
       hash = Digest::MD5.hexdigest([].to_json)
       key = GoSecure.sha512(hash, 'url_list')
-      expect(Uploader).to receive(:check_existing_upload).with("downloads/#{key}/zippy.zip").and_return('http://www.example.com/zip.zip')
+      expect(Uploader).to receive(:check_existing_upload).with("downloads/#{key}/zippy.zip").and_return({url: 'http://www.example.com/zip.zip'})
       res = Uploader.generate_zip([], 'zippy.zip')
       expect(res).to eq('http://www.example.com/zip.zip')
     end
@@ -1050,7 +1050,7 @@ describe Uploader do
     it "should add urls to the zip" do
       zipper = TestZipper.new
       expect(OBF::Utils).to receive(:build_zip).and_yield(zipper)
-      expect(Uploader).to receive(:remote_upload).and_return('http://www.example.com/import.zip')
+      expect(Uploader).to receive(:remote_upload).and_return({url: 'http://www.example.com/import.zip'})
       expect(OBF::Utils).to receive(:get_url).with('http://www.example.com/pic.png').and_return({'data' => 'data:image/png;base64,R0lGODdh'})
       res = Uploader.generate_zip([
         {
@@ -1282,6 +1282,47 @@ describe Uploader do
       expect(Uploader.sanitize_url("http://www.yahoo.com/?asdf=1")).to eq("http://www.yahoo.com/?asdf=1")
       expect(Uploader.sanitize_url("http://13.142.13.1512:12345/?asdf=1")).to eq("http://13.142.13.1512:12345/?asdf=1")
       expect(Uploader.sanitize_url("http://username:password@example.com")).to eq("http://example.com")
+    end
+  end
+
+  describe "remote_remove_later" do
+    it "should create a remove action" do
+      expect(RemoteAction.count).to eq(0)
+      Uploader.remote_remove_later('asdf')
+      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.last.act_at).to be > 23.hours.from_now
+      expect(RemoteAction.last.path).to eq('asdf')
+      expect(RemoteAction.last.action).to eq('delete')
+    end
+
+    describe "remote_remove_batch" do
+      it "should schedule remove actions" do
+        10.times do |i|
+          Uploader.remote_remove_later("file/#{i}/pic.png")
+        end
+        expect(RemoteAction.count).to eq(10)
+        expect(Uploader.remote_remove_batch).to eq(0)
+        expect(Worker.scheduled_actions).to eq([])
+        expect(RemoteAction.count).to eq(10)
+        RemoteAction.update_all(act_at: 6.hours.ago)
+        expect(Uploader.remote_remove_batch).to eq(10)
+        expect(RemoteAction.count).to eq(0)
+        expect(Worker.scheduled_actions).to eq([])
+      end
+
+      it "should return the count of actions cleared" do
+        10.times do |i|
+          Uploader.remote_remove_later("file/#{i}/pic.png")
+        end
+        expect(RemoteAction.count).to eq(10)
+        expect(Uploader.remote_remove_batch).to eq(0)
+        expect(Worker.scheduled_actions).to eq([])
+        expect(RemoteAction.count).to eq(10)
+        RemoteAction.update_all(act_at: 6.hours.ago)
+        expect(Uploader.remote_remove_batch).to eq(10)
+        expect(RemoteAction.count).to eq(0)
+        expect(Worker.scheduled_actions).to eq([])
+      end
     end
   end
 end

@@ -22,7 +22,7 @@ describe SentencePic do
     expect(SentencePic).to receive(:'`').with("montage -label \"hat\" pic1.png -label \"cat\" pic1.png -label \"scat\" pic2.png -tile 3x1 -shadow -pointsize 16 -geometry 140x140+3+10 -border 2 -bordercolor \"#888\" /tmp/montage.png").and_return(nil)
     expect(SentencePic).to receive(:'`').with("convert /tmp/montage.png -gravity center -extent 500x240 /tmp/preview.png")
     key = GoSecure.sha512(u.id.to_s, 'utterance_id')[0, 25]
-    expect(Uploader).to receive(:remote_upload).with("sentences/#{u.id}/#{key}/preview.png", "/tmp/preview.png", "image/png").and_return("http://www.example.com/pid.png")
+    expect(Uploader).to receive(:remote_upload).with("sentences/#{u.id}/#{key}/preview.png", "/tmp/preview.png", "image/png").and_return({url: "http://www.example.com/pid.png"})
     res = SentencePic.generate(u)
     expect(res).to eq("http://www.example.com/pid.png")
   end

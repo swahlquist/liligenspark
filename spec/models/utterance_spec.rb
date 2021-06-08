@@ -460,7 +460,7 @@ describe Utterance, :type => :model do
           'sentence' => 'hat cat scat',
           'author_ids' => [contact_id],
           'reply_ids' => {'0' => Webhook.get_record_code(session)},
-          'share_user_ids' => [u.global_id]
+          'share_user_ids' => [contact_id]
         })
 
         res = utterance.deliver_to({'sharer_id' => u.global_id, 'user_id' => contact_id, 'share_index' => 0})

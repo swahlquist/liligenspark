@@ -530,7 +530,6 @@ class SessionController < ApplicationController
         authenticated: false, 
         sale: ENV['CURRENT_SALE'],
         ws_url: ENV['CDWEBSOCKET_URL'],
-        missing_2fa: missing_2fa,
         global_integrations: UserIntegration.global_integrations.keys
       }.to_json
     end

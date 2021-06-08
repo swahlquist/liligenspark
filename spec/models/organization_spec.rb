@@ -1905,12 +1905,16 @@ describe Organization, :type => :model do
         o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
         o.save
         expect(o.external_auth_key).to_not eq(nil)
+        expect(o.settings['saml_metadata_url']).to eq('https://www.example.com/saml')
         u = User.create
         expect(o.external_auth_shortcut).to eq(nil)
         res = o.process({
-          :external_auth_shortcut => 'bacon'
+          :external_auth_shortcut => 'bacon',
+          :saml_metadata_url => 'https://www.example.com/saml'
         }, {'updater' => u})
         expect(res).to eq(true)
+        expect(o.settings['saml_metadata_url']).to eq('https://www.example.com/saml')
+        expect(o.external_auth_key).to_not eq(nil)
         expect(o.external_auth_shortcut).to_not eq(nil)
         expect(o.settings['external_auth_shortcut']).to eq('bacon')
         expect(Organization.find_by_saml_issuer("https://www.example.com/saml")).to eq(o)

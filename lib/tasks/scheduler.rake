@@ -22,6 +22,7 @@ end
 task :push_remote_logs => :environment do
   puts "Finding and pushing remote logs..."
   res = LogSession.push_logs_remotely
+  Uploader.remote_remove_batch
   puts "done. updated #{res} logs"
 end
 

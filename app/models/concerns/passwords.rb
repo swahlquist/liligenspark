@@ -71,8 +71,10 @@ module Passwords
     state = {}
     state[:required] = !!self.settings['2fa']
     if ((self.settings['tmp_2fa'] || {})['expires'] || 0) < Time.now.to_i
-      self.settings.delete('tmp_2fa')
-      self.save
+      if self.settings['tmp_2fa']
+        self.settings.delete('tmp_2fa')
+        self.save
+      end
     end
     if Organization.admin_manager?(self)
       state[:required] = true

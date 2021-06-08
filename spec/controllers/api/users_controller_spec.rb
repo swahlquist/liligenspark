@@ -1002,7 +1002,7 @@ describe Api::UsersController, :type => :controller do
 
     it "should cancel all subscriptions" do
       token_user
-      expect(Purchasing).to receive(:cancel_other_subscriptions).with(user, 'all')
+      expect(Purchasing).to receive(:cancel_other_subscriptions).with(@user, 'all')
       post :flush_user, params: {:user_id => @user.global_id, :confirm_user_id => @user.global_id, :user_name => @user.user_name}
       expect(response).to be_successful
       json = JSON.parse(response.body)

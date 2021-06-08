@@ -95,6 +95,7 @@ describe SessionController, :type => :controller do
         'scope' => 'read_profile',
         'redirect_uri' => DeveloperKey.oob_uri,
         'device_key' => 'a',
+        "authorized_user_id" => nil,
         'device_name' => 'b',
         'app_name' => "the application",
         'app_icon' => "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"        
@@ -394,7 +395,7 @@ describe SessionController, :type => :controller do
       k = DeveloperKey.create
       token, refresh = @device.tokens
       post :oauth_token_refresh, params: {'access_token' => 'asdf', 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
-      assert_error('Missing user')
+      assert_error('Invalid token')
     end
 
     it "should error on invalid refresh token" do

@@ -909,7 +909,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['full_set_revision'] = 'aha'
       expect(u).to receive(:private_viewable_board_ids).and_return(['3', '4'])
       expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
-      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
       expect(bs.url_for(u, 'aha')).to eq('zxcv')
     end
 
@@ -919,7 +919,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'aha'
       expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
-      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
       expect(bs.url_for(nil, 'aha')).to eq('zxcv')
     end
 
@@ -953,7 +953,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['public_board_ids'] = ['1', '2']
       bs.data['board_ids'] = ['1', '2', '3', '4']
       bs.data['full_set_revision'] = 'abc'
-      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
       expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
       expect(bs.url_for(u, 'abc')).to eq('zxcv')
       expect(bs.data['private_cdn_url']).to eq("zxcv")
@@ -972,7 +972,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to_not receive(:schedule_once).with(:touch_remote, hash)
       bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 6.months.from_now.to_i}
 
-      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return("https://www.example.com/zxcv")
+      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return({url: "https://www.example.com/zxcv"})
 
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
@@ -990,7 +990,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['remote_paths'] = {}
       expect(bs).to receive(:schedule_once).with(:touch_remote, hash)
       bs.data['remote_paths'][hash] = {'path' => 'zxcv', 'generated' => 6.hours.ago.to_i, 'expires' => 1.hour.from_now.to_i}
-      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return("https://www.example.com/zxcv")
+      expect(Uploader).to receive(:check_existing_upload).with('zxcv').and_return({url: "https://www.example.com/zxcv"})
 
       expect(u).to receive(:private_viewable_board_ids).and_return(['3'])
       expect(bs).to_not receive(:extra_data_private_url)
@@ -1028,7 +1028,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs2.data['linked_board_ids']).to eq(['1', '2', '3', '4', '1_9'])
       bs.data['source_id'] = bs2.global_id
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs2.global_id).and_return(bs2)
-      expect(Uploader).to receive(:check_existing_upload).with(nil).and_return('zxcv')
+      expect(Uploader).to receive(:check_existing_upload).with(nil).and_return({url: 'zxcv'})
       expect(bs.url_for(nil, 'abc')).to eq('zxcv')
     end
 
@@ -1052,7 +1052,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs.data['private_cdn_url'] = 'tyuui'
       bs.data['private_cdn_revision'] = 'ahaaa'
       expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
-      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return('zxcv')
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
       expect(bs.url_for(nil, 'aha')).to eq('zxcv')
     end
   end
@@ -1230,7 +1230,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(json[0]['label']).to eq('hat')
         expect(json[1]['label']).to eq('rat')
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
-      end
+      end.and_return({url: "https://dc5pvf6xvgi7y.cloudfront.net/false"})
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
       expect(bs.data['remote_paths'][hash]['path']).to_not eq(nil)
       expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
@@ -1299,7 +1299,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(json[0]['label']).to eq('hat')
         expect(json[1]['label']).to eq('rat')
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
-      end
+      end.and_return({url: "#{ENV['UPLOADS_S3_CDN']}/bacon"})
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
     end
  end

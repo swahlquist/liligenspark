@@ -79,6 +79,26 @@ CoughDrop.Buttonset = DS.Model.extend({
       var hash_mismatch = bs.get('buttons_loaded_hash') && bs.get('full_set_revision') != bs.get('buttons_loaded_hash');
       if(hash_mismatch) { force = true; }
       if(bs.get('root_url') && (!bs.get('buttons_loaded') || hash_mismatch || (force && !bs.get('buttons_force_loaded')))) {
+        var regenerate = function(missing) {
+          return persistence.ajax('/api/v1/buttonsets/' + bs.get('id') + '/generate', {
+            type: 'POST',
+            data: (missing ? { missing: true } : {})
+          }).then(function(data) {
+            if(data.exists && data.url) {
+              return RSVP.resolve(data.url);
+            } else {
+              return new RSVP.Promise(function(gen_res, gen_rej) {
+                progress_tracker.track(data.progress, function(event) {
+                  if(event.status == 'errored') {
+                    gen_rej({error: 'error while generating button set'});
+                  } else if(event.status == 'finished') {
+                    gen_res(event.result.url);
+                  }
+                });  
+              });
+            }
+          });
+        };
         var process_buttons = function(buttons) {
           if(buttons && buttons.find) {
             bs.set('buttons_loaded', true);
@@ -91,10 +111,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           } else if(buttons && !buttons.find) {
             if(!bs.get('buttons')) {
               bs.set('buttons', []);
-              persistence.ajax('/api/v1/buttonsets/' + bs.get('id') + '/generate', {
-                type: 'POST',
-                data: { }
-              });
+              regenerate();
             }
             CoughDrop.track_error("buttons has no find ", buttons);
             return reject({error: "not a valid buttonset result"});
@@ -105,17 +122,30 @@ CoughDrop.Buttonset = DS.Model.extend({
           persistence.store_json(bs.get('root_url')).then(function(res) {
             process_buttons(res);
           }, function(err) {
-            if(already_tried_local) {
-              reject(err);
-            } else {
-              // Something local is better than nothing,
-              // even if we suspect it is out of date
-              persistence.find_json(bs.get('root_url')).then(function(buttons) {
-                process_buttons(buttons);
-              }, function() {
+            var fallback = function() {
+              if(already_tried_local) {
                 reject(err);
+              } else {
+                // Something local is better than nothing,
+                // even if we suspect it is out of date
+                persistence.find_json(bs.get('root_url')).then(function(buttons) {
+                  process_buttons(buttons);
+                }, function() {
+                  reject(err);
+                });
+              }  
+            };
+            // Try re-generating before giving up
+            regenerate(true).then(function(url) {
+              bs.set('root_url', url)
+              persistence.store_json(url).then(function(res) {
+                process_buttons(res);
+              }, function(err) {
+                fallback();
               });
-            }
+            }, function(err) {
+              fallback();
+            });
           });
         };
         if(force) {

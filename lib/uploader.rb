@@ -6,12 +6,17 @@ module Uploader
   CONTENT_LENGTH_RANGE=200.megabytes.to_i
   
   def self.remote_upload(remote_path, local_path, content_type, checksum=nil)
+    # NOTE: if you specify checksum, you may get back a different
+    # remote path than you sent, but if checksum=nil then remote_path won't change
     if checksum
-      # Don't upload (just touch) if it's identical to what's already there
-      url = check_existing_upload(remote_path, checksum)
-      if url
+      # If something is there and it's identical, just touch and return it
+      res = check_existing_upload(remote_path, checksum)
+      if res[:url]
         remote_touch(remote_path)
-        return url 
+        return {url: url, path: remote_path}
+      elsif res[:mismatch]
+        # If something is already there and it's not identical, change to a different url
+        remote_path = remote_path.sub(/.*\K\//, "/#{checksum[0, 5]}/")
       end
     end
     params = remote_upload_params(remote_path, content_type)
@@ -22,7 +27,7 @@ module Uploader
     # upload to s3 from tempfile
     res = Typhoeus.post(params[:upload_url], body: post_params)
     if res.success?
-      return params[:upload_url] + remote_path
+      return {url: params[:upload_url] + remote_path, path: remote_path}
     else
       if res.body && res.body.match(/SlowDown/)
         raise "throttled uploading to #{remote_path}"
@@ -68,7 +73,7 @@ module Uploader
   end
   
   def self.check_existing_upload(remote_path, checksum=nil)
-    return nil unless remote_path
+    return {found: false} unless remote_path
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
     if remote_path.match(/^\//)
@@ -78,16 +83,16 @@ module Uploader
     object = bucket.objects.find(remote_path) rescue nil
     if object
       req = object.send(:object_request, :head, {})
-      return nil if checksum && req['etag'] && checksum != req['etag'].gsub(/\"/, '')
+      return {found: true, mismatch: true} if checksum && req['etag'] && checksum != req['etag'].gsub(/\"/, '')
       exp = ((req['x-amz-expiration'] || "").match(/expiry-date="([^"]+)"/) || [])[1]
       exp = Time.parse(exp) rescue nil
       if exp && exp < 48.hours.from_now
-        return nil
+        return {found: true, expired: true}
       else
-        return "#{ENV['UPLOADS_S3_CDN']}/#{remote_path}"
+        return {found: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{remote_path}"}
       end
     end
-    return nil
+    return {found: false}
   end
 
   def self.remote_touch(path)
@@ -101,6 +106,24 @@ module Uploader
     return false unless object
     res = object.copy(:key => path, :bucket => bucket, :acl => 'public-read') rescue nil
     !!res
+  end
+
+  def self.remote_remove_later(path)
+    RemoteAction.create(path: path, act_at: 24.hours.from_now, action: 'delete')
+  end
+
+  def self.remote_remove_batch
+    updated_ids = []
+    RemoteAction.where(['act_at < ?', Time.now]).find_in_batches(batch_size: 100) do |batch|
+      batch.each do |ra|
+        updated_ids << ra.id
+        if ra.action == 'delete'
+          Worker.schedule_for(:slow, Uploader, :remote_remove, ra.path)
+        end
+      end
+    end
+    RemoteAction.where(id: updated_ids).delete_all
+    updated_ids.length
   end
 
   def self.remote_remove(url)
@@ -222,7 +245,7 @@ module Uploader
     hash = Digest::MD5.hexdigest(urls.to_json)
     key = GoSecure.sha512(hash, 'url_list')
     remote_path = "downloads/#{key}/#{filename}"
-    url = Uploader.check_existing_upload(remote_path)
+    url = Uploader.check_existing_upload(remote_path)[:url]
     return url if url
     Progress.update_current_progress(0.3, :zipping_files)
     
@@ -243,7 +266,7 @@ module Uploader
       end
     end
     Progress.update_current_progress(0.9, :uploading_file)
-    url = Uploader.remote_upload(remote_path, path, content_type)
+    url = (Uploader.remote_upload(remote_path, path, content_type) || {})[:url]
     raise "File not uploaded" unless url
     File.unlink(path) if File.exist?(path)
     return url

@@ -160,10 +160,10 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       private_path = button_set.extra_data_private_url
       private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
-      url = Uploader.check_existing_upload(private_path)
+      url = (Uploader.check_existing_upload(private_path) || {})[:url]
       if !url && button_set.data['buttons'] && allow_detach
         button_set.detach_extra_data('force')
-        url = Uploader.check_existing_upload(private_path)
+        url = Uploader.check_existing_upload(private_path)[:url]
       end
       if url
         button_set.data['private_cdn_url'] = url
@@ -183,14 +183,16 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
 
     @remote_hash = GoSecure.sha512(@unviewable_ids.sort.to_json, button_set.data['remote_salt'])
+    @remote_path = nil
     if revision_match && (((button_set.data['remote_paths'] || {})[@remote_hash] || {})['expires'] || 0) > Time.now.to_i
+      @remote_path = ((button_set.data['remote_paths'] || {})[@remote_hash] || {})['path']
       if button_set.data['remote_paths'][@remote_hash]['expires'] < 2.weeks.from_now.to_i
         button_set.schedule_once(:touch_remote, @remote_hash)
       end
-      url = Uploader.check_existing_upload(button_set.data['remote_paths'][@remote_hash]['path'])
+      url = Uploader.check_existing_upload(button_set.data['remote_paths'][@remote_hash]['path'])[:url]
       return url if url
     end
-    @remote_path = "extras-cache#{button_set.global_id[-5,5]}/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
+    @remote_path ||= "extras-cache#{button_set.global_id[-5,5]}/button_set_cache/#{button_set.global_id}/#{@remote_hash}.json"
     return nil
   end
 
@@ -263,10 +265,15 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     button_set.data['remote_paths'][remote_hash] = {'generated' => Time.now.to_i, 'path' => path, 'expires' => 5.months.from_now.to_i}
     begin
       file = Tempfile.new("stash")
-      file.write(available_buttons.to_json)
+      json = available_buttons.to_json
+      file.write(json)
       file.close
-      Uploader.invalidate_cdn(remote_path)
-      Uploader.remote_upload(remote_path, file.path, 'text/json')
+      # Uploader.invalidate_cdn(remote_path)
+      res = Uploader.remote_upload(remote_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+      if res && res[:path] && res[:path] != remote_path
+        Upload.remote_remove_later(remote_path)
+        button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
+      end
     rescue => e
       button_set.data['remote_paths'][remote_hash]['path'] = false
       button_set.data['remote_paths'][remote_hash]['error'] = e.message
@@ -284,7 +291,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         bs.data['remote_paths'].each do |hash, obj|
           if obj['generated'] < timestamp && obj['path']
             path = obj['path']
-            Uploader.invalidate_cdn(path)            
+            # Uploader.invalidate_cdn(path)            
             Uploader.remote_remove(path)
             bs.data['remote_paths'].delete(hash)
           end

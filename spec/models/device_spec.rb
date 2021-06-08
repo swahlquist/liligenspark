@@ -382,9 +382,9 @@ describe Device, :type => :model do
     it "should return nothing if disabled" do
       d = Device.new
       d.settings = {'disabled' => true}
-      expect(d.permission_scopes).to eq([])
+      expect(d.permission_scopes).to eq(['none'])
       d.settings['permission_scopes'] = ['a', 'b', 'c']
-      expect(d.permission_scopes).to eq([])
+      expect(d.permission_scopes).to eq(['none'])
     end
     
     it "should return 'full' if not an integration" do
@@ -596,13 +596,14 @@ describe Device, :type => :model do
       u = User.create
       d = Device.create(user: u, settings: {'permission_scopes' => ['a', 'b']}, user_integration_id: 9)
       expect(Device).to receive(:find_by_global_id).with(d.global_id).and_return(d)
+      token = d.tokens[0]
       expect(RedisInit.permissions).to receive(:setex) do |key, ts, val|
-        expect(key).to eq("user_token/#{d.tokens[0]}")
+        expect(key).to eq("user_token/#{token}")
         expect(ts).to be > (12.hours.to_i - 100)
         expect(ts).to be < (12.hours.to_i + 100)
         expect(val).to eq("#{u.global_id}::#{d.global_id}::a,b::false")
       end
-      res = Device.check_token(d.tokens[0], '1.2.3')
+      res = Device.check_token(token, '1.2.3')
       expect(res[:user]).to eq(u)
       expect(res[:device_id]).to eq(d.global_id)
       expect(res[:error]).to eq(nil)

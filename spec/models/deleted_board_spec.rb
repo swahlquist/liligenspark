@@ -132,7 +132,7 @@ describe DeletedBoard, :type => :model do
       db = DeletedBoard.find_by(board_id: b.id)
       expect(DeletedBoard.find_by(key: key)).to eq(db)
       res = db.restore!
-      expect(res).to eq('test')
+      expect(res).to eq(b)
       expect(Board.find_by_path(key)).to_not eq(nil)
       expect(Board.find_by(id: b.id)).to_not eq(nil)
       

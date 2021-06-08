@@ -46,7 +46,7 @@ module SentencePic
     end
     key = GoSecure.sha512(utterance.id.to_s, 'utterance_id')[0, 25]
     remote_path = "sentences/#{utterance.id}/#{key}/preview.png"
-    url = Uploader.remote_upload(remote_path, preview, 'image/png')
+    url = (Uploader.remote_upload(remote_path, preview, 'image/png') || {})[:url]
     url
   end
 end

@@ -58,7 +58,7 @@ module Converters::Utils
     
     filename = "board_" + board.current_revision + opts_hash + "." + file_type.to_s
     remote_path = "downloads/#{key}/#{filename}"
-    url = Uploader.check_existing_upload(remote_path)
+    url = Uploader.check_existing_upload(remote_path)[:url]
     return url if url
     Progress.update_current_progress(0.3, :converting_file)
     
@@ -87,7 +87,7 @@ module Converters::Utils
       end
     end
     Progress.update_current_progress(0.9, :uploading_file)
-    url = Uploader.remote_upload(remote_path, path, content_type)
+    url = (Uploader.remote_upload(remote_path, path, content_type) || {})[:url]
     raise "File not uploaded" unless url
     File.unlink(path) if File.exist?(path)
     return url
