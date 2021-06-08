@@ -5,6 +5,7 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { assign as emberAssign } from '@ember/polyfills';
 import { computed } from '@ember/object';
+import utterance from './utterance';
 
 Ember.templateHelpers = Ember.templateHelpers || {};
 Ember.templateHelpers.date = function(date, precision) {
@@ -410,6 +411,10 @@ var i18n = EmberObject.extend({
     }
 
     if(res) {
+      // Re-capitalize if we started that way
+      if(str == utterance.capitalize(str)) {
+        res = utterance.capitalize(res);
+      }
     } else if(options.infinitive) {
       res = "to " + str;
     } else if(check[check.length - 1] == 'e') {
