@@ -99,6 +99,8 @@ class Device < ActiveRecord::Base
     elsif ts
       self.settings['2fa'] ||= {}
       self.settings['2fa']['last_otp'] = ts
+
+      self.invalidate_cached_keys
       self.settings['2fa'].delete('pending')
       self.settings['2fa'].delete('cooldown')
       self.settings['2fa'].delete('fails')
