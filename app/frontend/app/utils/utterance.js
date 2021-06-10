@@ -604,6 +604,53 @@ var utterance = EmberObject.extend({
     }
 
   },
+  contraction: function() {
+    var buttons = app_state.get('button_list').slice(-2);
+    var str_2 = buttons.map(function(b) { return b.label; }).join(' ');
+    var str_1 = buttons[buttons.length - 1].label;
+    var res = null;
+    for(var words in i18n.substitutions.contractions) {
+      if(!res) {
+        var words_minus_last = words.split(/\s+/).slice(0, -1).join(' ');
+        if(words.length > 0 && str_2 == words) {
+          res = {lookback: words.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+        } else if(words_minus_last.length > 0 && str_1 == words_minus_last) {
+          res = {lookback: words_minus_last.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+        }
+      }
+    }
+    if(!res) {
+      var last = buttons.slice(-1)[0];
+      if(last && last.part_of_speech == 'noun') {
+        res = {lookback: 1, label: last.label + "'s"};
+      }
+    }
+    return res;
+  },
+  apply_contraction: function(contraction) {
+    var rawList = utterance.get('rawButtonList');
+    var to_remove = [];
+    if(contraction.lookback > 0) {
+      var buttons = app_state.get('button_list').slice(0 - contraction.lookback);
+      var last = buttons[buttons.length - 1] || {};
+      last = last.modifications ? (last.modifications[last.modifications.length - 1].raw_index) : last.raw_index;
+      var first = buttons[0] || {};
+      first = first.modifications ? (first.modifications[0].raw_index) : first.raw_index;
+      var count  =  (last - first) + 1;
+      to_remove = rawList.slice(0 - count);
+      rawList = rawList.slice(0, 0 - count);
+      utterance.set('rawButtonList', rawList);
+    }
+    app_state.activate_button({label: contraction.label}, {
+      label: contraction.label,
+      prevent_return: true,
+      button_id: null,
+      pre_substitution: to_remove,
+      source: 'speak_menu',
+      board: {id: 'speak_menu', key: 'core/speak_menu'},
+      type: 'speak'
+    });
+  },
   speak_button: function(button) {
     var alt_voice = speecher.alternate_voice && speecher.alternate_voice.enabled && speecher.alternate_voice.for_buttons === true;
     if(button.sound) {
@@ -709,6 +756,7 @@ var utterance = EmberObject.extend({
       app_state.set('reply_note', null);
     }
     app_state.set('insertion', null);
+    var prior_list = this.get('rawButtonList') || [];
     this.set('rawButtonList', []);
     var audio = [];
     if(document.getElementById('button_list')) {
@@ -717,7 +765,26 @@ var utterance = EmberObject.extend({
     for(var idx = audio.length - 1; idx >= 0; idx--) {
       audio[idx].parentNode.removeChild(audio[idx]);
     }
-    $("#button_list audio")
+    if(prior_list.length > 0 && app_state.get('referenced_user.preferences.recent_cleared_phrases')) {
+      var now = (new Date()).getTime();
+      var priors = (stashes.get('prior_utterances') || []).filter(function(p) { return p.cleared > (now - (24 * 60 * 60 * 1000))} );
+      var sentence = utterance.sentence(prior_list);
+      var found = false;
+      priors.forEach(function(p) {
+        if(utterance.sentence(p.vocalizations) == sentence) {
+          found = true;
+        }
+      });
+      if(!found) {
+        priors.push({
+          user_id: app_state.get('referenced_user.id'),
+          cleared: now,
+          vocalizations: prior_list
+        });
+      }
+      stashes.persist('prior_utterances', priors);
+    }
+
     if(!opts.skip_logging) {
       stashes.log({
         action: 'clear',

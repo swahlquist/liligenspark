@@ -1674,6 +1674,7 @@ var capabilities;
         var fit_increment = fit_max;
         var res = {any_fit: true};
         var box_max = str.length == 1 ? 0.8 : 0.65;
+        while(str.length < 5) { str = str + "gh"; }
         while(!res.size && fit_increment >= min_size) {
           ctx.font = fit_increment + "px " + font;
           var measure = ctx.measureText(str);

@@ -446,6 +446,15 @@ export default Controller.extend({
       }
     },
     run_eval: function(user) {
+      if(user == 'pick') {
+        if(app_state.get('currentUser.supporter_role')) {
+          var prompt = i18n.t('select_user_for_eval', "Select User for Evaluation");
+          app_state.controller.send('switch_communicators', {stay: true, modeling: false, skip_me: !app_state.get('currentUser.subscription.premium_supporter_plus_communicator'), header: prompt, eval: true});
+          return;
+        } else {
+          user = app_state.get('currentUser');
+        }
+      }
       if(user.premium || emberGet(user, 'currently_premium')) {
         app_state.set_speak_mode_user(emberGet(user, 'id'), false, false, 'obf/eval');
       } else {

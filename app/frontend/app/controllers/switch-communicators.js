@@ -46,6 +46,8 @@ export default modal.ModalController.extend({
           modal.close();
           modal.error(i18n.t('error_loading_user_details', "There was an unexpected error loading the user's details"));
         });
+      } else if(this.get('model.eval')) {
+        app_state.set_speak_mode_user(board_for_user_id, false, false, 'obf/eval');
       } else {
         app_state.set_speak_mode_user(board_for_user_id, jump_home, keep_as_self);
       }

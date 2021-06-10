@@ -611,10 +611,10 @@
               </button>
             </div>
             <div class='col-md-3 col-xs-4 big_button_holder'>
-              {{#link-to 'user.recordings' app_state.currentUser.user_name class='btn big_button btn-default bottom_row'}}
-                <span class='glyphicon glyphicon-bullhorn'></span>
-                {{t "Recordings" key='recordings'}}
-              {{/link-to}}
+              <button class='btn big_button btn-default bottom_row' {{action 'run_eval' 'pick'}}>
+                <span class='glyphicon glyphicon-list-alt'></span>
+                {{t "Run Evaluation" key='run_eval'}}
+              </button>
             </div>
           {{/unless}}
           {{#if app_state.currentUser.permissions.delete}}

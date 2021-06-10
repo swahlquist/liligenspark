@@ -850,6 +850,17 @@
         </div>
       </div>
       <div class="form-group">
+        <label for="recent_cleared_phrases" class="col-sm-3 control-label">{{t "Save Cleared Phrases" key='recent_cleared_phrases'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=pending_preferences.recent_cleared_phrases id="recent_cleared_phrases"}}
+              {{t "Save recently-cleared phrases to the 'Recents' phrase type" key='save_recent_cleared_phrases'}}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
         <label for="dwell_modeling" class="col-sm-3 control-label">{{t "Modeling" key='modeling'}}</label>
         <div class="col-sm-5">
           <div class="checkbox big_checkbox">

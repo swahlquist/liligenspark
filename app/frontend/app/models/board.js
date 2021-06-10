@@ -355,7 +355,7 @@ CoughDrop.Board = DS.Model.extend({
     var res = this.translated_buttons(label_locale, vocalization_locale);
     var _this = this;
     if(label_locale) {
-      var trans = this.get('translations') || {};
+      var trans = Object.assign({}, this.get('translations') || {});
       trans.board_name = trans.board_name || {};
       trans.board_name[this.get('locale')] = trans.board_name[this.get('locale')] || this.get('name');
       if(trans.board_name[label_locale]) {

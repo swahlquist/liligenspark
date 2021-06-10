@@ -70,6 +70,7 @@ var stashes = EmberObject.extend({
     }
     var defaults = {
       'working_vocalization': [],
+      'prior_utterances': [],
       'current_mode': 'default',
       'usage_log': [],
       'daily_use': [],

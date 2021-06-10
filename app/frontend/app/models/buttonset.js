@@ -244,7 +244,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     }
     return sequences.filter(function(s) { return s.done; }).sort(function(a, b) { return b.steps - a.steps; })[0];
   },
-  board_map: function(button_sets) {
+  board_map: function(button_sets, locale) {
     var _this = this;
     if(_this.last_board_map) {
       if(_this.last_board_map.list == button_sets) {
@@ -261,6 +261,13 @@ CoughDrop.Buttonset = DS.Model.extend({
         button_set_buttons = _this.redepth(bs.get('id'));
       }
       (button_set_buttons || []).forEach(function(button) {
+        if(button && locale && button.locale && button.locale.split(/-|_/)[0] != locale.split(/-|_/)[0]) {
+          if(button.tr && button.tr[locale]) {
+            button = Object.assign({}, button);
+            button.label = button.tr[locale].label;
+            button.vocalization = button.tr[locale].vocalization;
+          }
+        }
         var ref_id = button.id + ":" + button.board_id;
         if(!buttons_hash['all'][ref_id]) {
           all_buttons.push(button);
@@ -328,7 +335,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     var board_map = null;
 
     var build_board_map = RSVP.all_wait(lookups).then(function() {
-      var res = _this.board_map(button_sets);
+      var res = _this.board_map(button_sets, locale);
       buttons = res.buttons;
       buttons.forEach(function(b) {
         b.lookup_parts = b.lookup_parts || [

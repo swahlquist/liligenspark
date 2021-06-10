@@ -608,7 +608,8 @@ class User < ActiveRecord::Base
       'remote_modeling', 'remote_modeling_auto_follow', 'remote_modeling_auto_accept',
       'locale', 'logging_cutoff', 'logging_permissions', 'logging_code',
       'substitutions', 'substitute_contractions', 'auto_capitalize', 'dim_level',
-      'prevent_button_interruptions', 'utterance_interruptions', 'prevent_utterance_repeat']
+      'prevent_button_interruptions', 'utterance_interruptions', 'prevent_utterance_repeat',
+      'recent_cleared_phrases']
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
 

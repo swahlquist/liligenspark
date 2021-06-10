@@ -462,6 +462,13 @@ var editManager = EmberObject.extend({
     if(button.inflection_defaults && button.inflection_defaults.types && button.inflection_defaults.types[0] != button.part_of_speech) {
       ignore_defaults = true;
     }
+    if(voc == ':native-keyboard') {
+      list.push({location: 'n', label: '?', vocalization: '+?'});
+      list.push({location: 's', label: '.', vocalization: '+.'});
+      list.push({location: 'e', label: '.', vocalization: '+.'});
+      list.push({location: 'w', label: ',', vocalization: '+,'});
+      list.push({location: 'nw', label: '!', vocalization: '+!'});
+    }
     if(button.inflections || trans || button.inflection_defaults) {
       if(button.inflection_defaults) {
         base_label = button.inflection_defaults['base'] || button.inflection_defaults['c'] || button.inflection_defaults['src'] || button.label;
@@ -615,6 +622,9 @@ var editManager = EmberObject.extend({
   //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
         ]);
       }
+      res = res.concat([
+        {location: 'se', label: i18n.negation(base_label)},
+      ]);
     }
     var final = [];
     var seen_locations = {};

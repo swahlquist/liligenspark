@@ -1038,7 +1038,7 @@ var buttonTracker = EmberObject.extend({
             if(swipe_direction == 'w') {
               // comma
               utterance.add_button({label: ",", vocalization: "+,"});
-            } else if(swipe_direction == 'e') {
+            } else if(swipe_direction == 'e' || swipe_direction == 'n') {
               // question
               app_state.activate_button({vocalization: '+?'}, {
                 label: '?',
@@ -1060,6 +1060,12 @@ var buttonTracker = EmberObject.extend({
                 board: {id: 'speak_menu', key: 'core/speak_menu'},
                 type: 'speak'
               });
+            }
+
+          } else if(elem_wrap.dom.id == 'backspace_button' && swipe_direction && buttonTracker.activation_location == 'swipe' && ['w'].indexOf(swipe_direction) != -1) {
+            var contraction = utterance.contraction();
+            if(contraction) {
+              utterance.apply_contraction(contraction);
             }
           } else if(elem_wrap.dom.id == 'identity' || elem_wrap.dom.id == 'identity_button') {
             event.preventDefault();
@@ -2465,3 +2471,28 @@ document.addEventListener('selectionchange', function(event) {
 window.buttons = buttonTracker;
 
 export default buttonTracker;
+
+/* Swipe targets
+    backspace: 
+      w - apply contraction
+    speak menu: 
+      w - comma
+      e - question mark
+      s - period
+    keyboard button: 
+      w - comma
+      nw - exclamation
+      n - question mark
+      e - period
+      s - period
+    speak menu period: 
+      w - comma
+      n - question mark
+      e - exclamation
+      s - period
+    repairs menu button: 
+      w - quieter
+      e - louder
+      n - flip text
+      s - share big button
+*/
