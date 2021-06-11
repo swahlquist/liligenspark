@@ -34,7 +34,7 @@ module ExtraData
         extra_data = self.data[extra_data_attribute]
         return false if extra_data == nil
         extra_data_version = 2
-        private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, extra_data_version)
+        private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, extra_data_version, true)
         public_extra_data = extra_data && self.class.extra_data_public_transform(extra_data)
         if public_extra_data && false
           self.data['extra_data_public'] = true
@@ -162,7 +162,7 @@ module ExtraData
       nil
     end
   
-    def extra_data_remote_paths(nonce, obj, version=2)
+    def extra_data_remote_paths(nonce, obj, version=2, original_only=false)
       private_key = GoSecure.hmac(nonce, 'extra_data_private_key', 1)
       if version == 2
         dir = "extras#{nonce[0,5]}/#{self.to_s}/#{obj.global_id}/#{nonce}/"
@@ -171,7 +171,7 @@ module ExtraData
       end
       dir = "/" + dir if version==0
       public_path = dir + "data-#{obj.global_id}.json"
-      private_path = (obj.data || {})['extra_data_private_path'] || (dir + "data-#{private_key}.json")
+      private_path = (original_only ? nil : (obj.data || {})['extra_data_private_path']) || (dir + "data-#{private_key}.json")
       [private_path, public_path]
     end
 
