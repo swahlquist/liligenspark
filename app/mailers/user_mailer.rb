@@ -239,7 +239,9 @@ class UserMailer < ActionMailer::Base
   def organization_unassigned(user_id, org_id)
     @user = User.find_by_global_id(user_id)
     @org = Organization.find_by_global_id(org_id)
-    mail_message(@user, "Organization Sponsorship Removed") if @user && @org
+    if !UserLink.links_for(@user).detect{|l| l['type'] == 'org_user' && l['record_code'] == Webhook.get_record_code(@org)}
+      mail_message(@user, "Organization Sponsorship Removed") if @user && @org
+    end
   end
 
   def valet_password_enabled(user_id)

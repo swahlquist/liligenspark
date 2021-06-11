@@ -104,7 +104,7 @@ module Subscription
         sponsor = links.detect{|l| l['type'] == 'org_user' && l['user_id'] == self.global_id && l['state']['sponsored'] }
         sponsor_id = sponsor && sponsor['record_code'].split(/:/)[1]
         if sponsor_id == new_org.global_id
-          UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
+          RemoteAction.create(path: "#{self.global_id}::#{prior_org && prior_org.global_id}", act_at: 12.hours.from_now, action: 'notify_unassigned')
           self.clear_existing_subscription(:allow_grace_period => true)
         end
       end
@@ -155,7 +155,7 @@ module Subscription
           removed_links = UserLink.links_for(self).select{|l| l['record_code'] == org_code && l['type'] == 'org_user' && l['state']['sponsored'] && l['state']['added'] }
           org_to_remove.detach_user(self, 'user')
           self.log_subscription_event(:log => 'org removed user', :args => {was_sponsored: was_sponsored})
-          UserMailer.schedule_delivery(:organization_unassigned, self.global_id, prior_org && prior_org.global_id)
+          RemoteAction.create(path: "#{self.global_id}::#{prior_org && prior_org.global_id}", act_at: 12.hours.from_now, action: 'notify_unassigned')
         end
       end
       self.using(:master).reload

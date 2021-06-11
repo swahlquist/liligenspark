@@ -119,6 +119,9 @@ module Uploader
         updated_ids << ra.id
         if ra.action == 'delete'
           Worker.schedule_for(:slow, Uploader, :remote_remove, ra.path)
+        elsif ra.action == 'notify_unassigned'
+          user_id, org_id = ra.path.split(/::/, 2)
+          UserMailer.schedule_delivery(:organization_unassigned, user_id, org_id)
         end
       end
     end
