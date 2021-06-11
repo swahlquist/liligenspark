@@ -205,6 +205,13 @@ class Organization < ActiveRecord::Base
   end
   
   def reject_supervisor(user)
+    # If subscription_id == free_auto_adjusted:#{self.global_id} then remove premium status
+    if user.billing_state == :org_supporter && (user.settings['subscription'] || {})['subscription_id'] == "free_auto_adjusted:#{self.global_id}"
+      user.update_subscription({
+        'unsubscribe' => true,
+        'subscription_id' => "free_auto_adjusted:#{self.global_id}"
+      })
+    end
     UserLink.remove(user, self, 'org_supervisor')
     self.schedule(:org_assertions, user.global_id, 'supervisor')
 #     if user.settings['supervisor_for'] && user.settings['supervisor_for'][self.global_id]
@@ -228,6 +235,13 @@ class Organization < ActiveRecord::Base
         end
       end
       user.save
+      # If subscription_id == free_auto_adjusted:#{self.global_id} then remove premium status
+      if user.billing_state == :org_supporter && (user.settings['subscription'] || {})['subscription_id'] == "free_auto_adjusted:#{self.global_id}"
+        user.update_subscription({
+          'unsubscribe' => true,
+          'subscription_id' => "free_auto_adjusted:#{self.global_id}"
+        })
+      end
     end
     self.detach_user(user, 'supervisor')
 

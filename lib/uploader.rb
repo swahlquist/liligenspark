@@ -16,7 +16,7 @@ module Uploader
         return {url: res[:url], path: remote_path}
       elsif res[:mismatch]
         # If something is already there and it's not identical, change to a different url
-        remote_path = remote_path.sub(/.*\K\//, "/#{checksum[0, 5]}/")
+        remote_path = remote_path.sub(/\/chksm[^\/]+/, '').sub(/.*\K\//, "/chksm#{checksum[0, 5]}/")
       end
     end
     params = remote_upload_params(remote_path, content_type)

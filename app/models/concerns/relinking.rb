@@ -26,6 +26,9 @@ module Relinking
     # TODO: start creating content offload whenever a board is copied,
     # either on the frontend or backend
     return nil unless user
+    if !self.board_content_id
+      # TODO: BoardContent.generate_from(self)
+    end
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)
     board.key = board.generate_board_key(self.key.split(/\//)[1])
     board.settings['copy_id'] = copy_id

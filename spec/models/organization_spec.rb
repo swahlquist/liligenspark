@@ -141,8 +141,28 @@ describe Organization, :type => :model do
 
       o.approve_supervisor(u1)
       expect(u1.reload.billing_state).to eq(:org_supporter)
+      expect(u1.settings['subscription']['subscription_id']).to eq("free_auto_adjusted:#{o.global_id}")
+      o.remove_supervisor(u1.user_name)
+      expect(u1.reload.billing_state).to eq(:grace_period_supporter)
+      expect(u1.settings['subscription']['subscription_id']).to eq(nil)
     end
-    
+
+    it "should allow rejecting a pending supervisor" do
+      o = Organization.create(settings: {'total_licenses' => 5})
+      u1 = User.create(:settings => {:preferences => {role: 'supporter'}})
+      u1.settings['preferences']['role'] = 'supporter'
+      u1.save
+      expect(u1.reload.billing_state).to eq(:trialing_supporter)
+      Worker.process_queues
+      o.add_supervisor(u1.user_name, true)
+      Worker.process_queues
+      expect(u1.reload.billing_state).to eq(:trialing_supporter)
+
+      o.reject_supervisor(u1)
+      expect(u1.reload.billing_state).to eq(:trialing_supporter)
+      expect(u1.settings['subscription']['subscription_id']).to eq(nil)
+    end
+
     it "should error adding a null user as a supervisor" do
       o = Organization.create
       u = User.create
@@ -2129,7 +2149,7 @@ describe Organization, :type => :model do
         expect(res).to_not eq(false)
         expect(res.record_code).to match(/^ext:/)
         expect(res.user).to eq(u)
-        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'email' => nil, 'roles' => nil})
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
         expect(u.reload.settings['possibly_external_auth']).to eq(true)
         expect(UserLink.links_for(u.reload).detect{|l| l['type'] == 'saml_auth'}).to_not eq(nil)
 
@@ -2138,7 +2158,7 @@ describe Organization, :type => :model do
         expect(res).to_not eq(false)
         expect(res.record_code).to match(/^ext:/)
         expect(res.user).to eq(u2)
-        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'email' => nil, 'roles' => nil})
+        expect(res.data['state']).to eq({'external_id' => 'loggy', 'email' => nil, 'org_id' => o.global_id, 'user_name' => nil, 'roles' => nil})
         expect(UserLink.links_for(u.reload).detect{|l| l['type'] == 'saml_auth'}).to eq(nil)
         expect(UserLink.links_for(u2.reload).detect{|l| l['type'] == 'saml_auth'}).to_not eq(nil)
       end
