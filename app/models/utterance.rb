@@ -66,6 +66,21 @@ class Utterance < ActiveRecord::Base
     end
     true
   end
+
+  def accessible_for?(reply_code, allow_public)
+    return true if !self.data['private_only'] && allow_public
+    if reply_code
+      match = reply_code.match(/^([0-9a-f]+)([A-Z]+)$/)
+      reply_nonce = match && match[1]
+      if !self.reply_nonce || self.reply_nonce != reply_nonce
+        reply_code = nil
+      end
+    end
+    if !reply_code
+      return false
+    end
+    return true
+  end
   
   def share_with(params, sharer, author_id=nil)
     sharer = User.find_by_path(sharer) if sharer.is_a?(String)

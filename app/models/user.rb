@@ -325,6 +325,11 @@ class User < ActiveRecord::Base
     if !FeatureFlags.user_created_after?(self, 'battery_sounds')
       self.settings['preferences']['battery_sounds'] = true if self.settings['preferences']['battery_sounds'] == nil
     end
+    if FeatureFlags.user_created_after?(self, 'utterance_core_access')
+      self.settings['preferences']['utterance_core_access'] = true if self.settings['preferences']['utterance_core_access'] == nil
+    end
+    self.settings['preferences']['utterance_core_access'] = true if self.settings['preferences']['utterance_core_access'] == nil && self.settings['preferences']['logging']
+    self.settings['preferences']['utterance_core_access'] ||= false
     if !FeatureFlags.user_created_after?(self, 'auto_capitalize')
       self.settings['preferences']['auto_capitalize'] = true if self.settings['preferences']['auto_capitalize'] == nil
       self.settings['preferences']['devices'].each do |key, hash|

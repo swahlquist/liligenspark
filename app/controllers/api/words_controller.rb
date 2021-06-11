@@ -11,6 +11,23 @@ class Api::WordsController < ApplicationController
     end
     render json: JsonApi::Word.paginate(params, words)
   end
+
+  def reachable_core
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    if user.settings['preferences']['utterance_core_access'] != false && params['utterance_id']
+      utterance_id, reply_code = params['utterance_id'].split(/x/)
+      utterance = Utterance.find_by_global_id(utterance_id)
+      return unless exists?(utterance, utterance_id)
+      return unless allowed?(utterance, 'view')
+      if !utterance.accessible_for?(reply_code, false)
+        return allowed?(utterance, 'never_allow')
+      end
+    else
+      return unless allowed?(user, 'supervise')
+    end
+    render json: {words: WordData.reachable_core_list_for(user)}
+  end
   
   def update
     word = WordData.find_by_global_id(params['id'])

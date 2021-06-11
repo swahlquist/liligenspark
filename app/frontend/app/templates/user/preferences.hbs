@@ -677,6 +677,17 @@
       </div>
     </div>
     <div class="form-group">
+      <label for="utterance_core_access" class="col-sm-3 control-label">{{t "Sharing Core Access" key='utterance_core_access'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.utterance_core_access id="utterance_core_access"}}
+            {{t "Allow messaging recipients to compare their replies to the list of core words available for this user" key='allow_core_access_via_utterance_shares'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
       <label for="auto_capitalize" class="col-sm-3 control-label">{{t "Auto-Capitalize" key='auto_capitalize'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">

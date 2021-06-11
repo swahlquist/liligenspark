@@ -168,8 +168,9 @@ Coughdrop::Application.routes.draw do
     end
 
     resources :tags
-    resources :words
-    
+    resources :words do
+      get 'reachable_core' => 'words#reachable_core', on: :collection
+    end
     
     resources :users do
       get 'stats/daily' => 'users#daily_stats'

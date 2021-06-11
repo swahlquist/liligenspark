@@ -7,14 +7,7 @@ class Api::UtterancesController < ApplicationController
     return unless exists?(utterance, utterance_id)
     return unless allowed?(utterance, 'view')
 
-    if reply_code
-      match = reply_code.match(/^([0-9a-f]+)([A-Z]+)$/)
-      reply_nonce = match && match[1]
-      if !utterance.reply_nonce || utterance.reply_nonce != reply_nonce
-        reply_code = nil
-      end
-    end
-    if !reply_code && utterance.data['private_only']
+    if !utterance.accessible_for?(reply_code, true)
       return allowed?(utterance, 'never_allow')
     end
 

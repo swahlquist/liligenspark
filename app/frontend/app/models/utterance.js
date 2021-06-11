@@ -2,7 +2,7 @@ import { later as runLater } from '@ember/runloop';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import persistence from '../utils/persistence';
-import { computed } from '@ember/object';
+import { computed, set as emberSet } from '@ember/object';
 
 CoughDrop.Utterance = DS.Model.extend({
   button_list: DS.attr('raw'),
@@ -32,7 +32,7 @@ CoughDrop.Utterance = DS.Model.extend({
     }
     (this.get('button_list') || []).forEach(function(btn) {
       if(btn.image && !CoughDrop.remote_url(!btn.image)) {
-        btn.image = find_remote(btn.image);
+        emberSet(btn, 'image', find_remote(btn.image));
       }
     });
   },

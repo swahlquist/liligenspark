@@ -6,6 +6,7 @@ import persistence from '../utils/persistence';
 import modal from '../utils/modal';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
   title: computed('model.sentence', 'model.show_user', 'model.user', function() {
@@ -15,6 +16,62 @@ export default Controller.extend({
     } else {
       return "Someone said: \"" + sentence + "\"";
     }
+  }),
+  check_reachable_core: observer('model.permissions.reply', 'model.id', function() {
+    var _this = this;
+    if(_this.get('model.permissions.reply') && !_this.get('reachable_core')) {
+      _this.set('reachable_core', {pending: true});
+      persistence.ajax("/api/v1/words/reachable_core?user_id=" + _this.get('model.user.id') + "&utterance_id=" + _this.get('model.id'), {type: 'GET'}).then(function(res) {
+        _this.set('reachable_core', res.words.sort());
+      }, function(err) { 
+        _this.set('reachable_core', null);
+      });
+    }
+  }),
+  spaced_core_dom: computed('reachable_core', function() {
+    var dom = document.createElement('span');
+    if(!this.get('reachable_core').length) { return null; }
+    (this.get('reachable_core') || []).forEach(function(str) {
+      var span = document.createElement('span');
+      span.innerText = str;
+      span.word = str;
+      dom.appendChild(span);
+      dom.append(" ");
+    });
+    return dom;
+  }),
+  used_core: computed('reachable_core', 'message', function() {
+    var _this = this;
+    var words = {};
+    if(!_this.get('reachable_core').length) { return ""; }
+    (_this.get('message') || '').split(/[^\w]+/).forEach(function(w) { words[w.toLowerCase()] = true; });
+    var dom = document.createElement('span');
+    (_this.get('reachable_core') || []).forEach(function(str) {
+      if(words[str.toLowerCase()]) {
+        var span = document.createElement('span');
+        span.innerText = str;
+        dom.appendChild(span);
+        dom.append(" ");
+      }
+    });
+    return htmlSafe(dom.innerHTML);
+  }),
+  update_spaced_core: observer('reachable_core', 'spaced_core_dom', 'message', function() {
+    var _this = this;
+    var dom = _this.get('spaced_core_dom');
+    if(!dom) { return; }
+    var words = {};
+    (_this.get('message') || '').split(/[^\w]+/).forEach(function(w) { words[w.toLowerCase()] = true; });
+    Array.from(dom.children).forEach(function(span) {
+      if(words[span.word.toLowerCase()]) {
+        span.style.fontWeight = 'bold';
+        span.style.color = '#000';
+      } else {
+        span.style.fontWeight = 'normal';
+        span.style.color = '#888';
+      }
+    });
+    _this.set('spaced_core', htmlSafe(dom.innerHTML));
   }),
   image_url: computed('model.image_url', 'model.large_image_url', 'image_index', function() {
     var index = this.get('image_index');
@@ -64,7 +121,7 @@ export default Controller.extend({
       }, function(err) {
         _this.set('reply_status', {error: true});
       });
-  },
+    },
     show_attribution: function() {
       this.set('model.show_attribution', true);
     },
@@ -72,6 +129,9 @@ export default Controller.extend({
       if(speecher.ready) {
         utterance.speak_text(this.get('model.sentence'));
       }
+    },
+    expand_core: function() {
+      this.set('expanded_list', !this.get('expanded_list'));
     },
     change_image: function(direction) {
       var index = this.get('image_index');

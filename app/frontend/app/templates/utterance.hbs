@@ -47,6 +47,20 @@
         {{#if model.private_only}}{{t "Write a Message" key='write_a_message'}}{{else}}{{t "Write a Reply" key='write_a_reply'}}{{/if}}{{#if model.user.name}} {{t "to" key='to'}} {{model.user.name}}{{/if}}{{t ":" key='colon'}}
       </h3>
       <div style='margin: -5px 0 30px;'>
+        {{#if reachable_core}}
+          {{#if reachable_core.length}}
+            <span class='text-muted'>{{t "%{n} high-frequency words in the user's vocabulary" n=reachable_core.length key='n_core_words'}}</span>
+            {{#if expanded_list}}
+               - {{spaced_core}}
+            {{else}}
+              <a href="#" {{action 'expand_core'}}>{{t "show all" key='show_all'}}</a>
+              <div class='text-muted'>
+                {{t "Used vocabulary words: " key='used_words'}}
+                <span style='color: #000;'>{{used_core}}</span>
+              </div>
+            {{/if}}
+          {{/if}}
+        {{/if}}
         {{textarea value=message class='form-control' id='utterance_reply'}}
         <button class='btn btn-lg btn-primary' {{action 'reply'}} disabled={{reply_status.loading}}>
           {{#if reply_status.loading}}

@@ -10,6 +10,7 @@ var board_ids = {};
 export default Component.extend({
   didInsertElement: function() {
     var _this = this;
+    _this.set('active_tracking', true);
     $(window).on('resize orientationchange', function() {
       runLater(function() {
         // on mobile devices, keyboard popup shouldn't trigger a redraw
@@ -17,10 +18,15 @@ export default Component.extend({
           // TODO: do we need to force scrolltop to 0?
           return;
         }
-        _this.sendAction('compute_height', true);
+        if(_this.get('active_tracking')) {
+          _this.sendAction('compute_height', true);      
+        }
       }, 100);
     });
     _this.sendAction('compute_height');
+  },
+  willDestroyElement: function() {
+    this.set('active_tracking', false);
   },
   buttonId: function(event) {
     var $button = $(event.target).closest('.button');
