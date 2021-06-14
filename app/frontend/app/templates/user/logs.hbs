@@ -113,14 +113,16 @@
     <button class="btn btn-default" {{action "exportLogs"}}>{{t "Export Logs" key='export_logs'}}</button>
     -->
     {{#if model.permissions.edit}}
-      {{#unless model.supporter_role}}
+      {{#if model.currently_premium_or_premium_supporter}}
         <div class="btn-group dropup">
           <button class='btn btn-default dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
             {{t "Add..." key='add_ellipses'}} <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="#" {{action 'recordNote'}}><strong>{{t "New Note" key='new_note'}}</strong></a></li>
-            <li><a href="#" {{action 'quick_assessment'}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
+            {{#unless model.supporter_role}}
+              <li><a href="#" {{action 'recordNote'}}><strong>{{t "New Note" key='new_note'}}</strong></a></li>
+              <li><a href="#" {{action 'quick_assessment'}}>{{t "Quick Assessment" key='quick_assessment'}}</a></li>
+            {{/unless}}
             <li><a href="#" {{action 'generate'}}>{{t "Manually Add Session" key='manually_add_session'}}</a></li>
             <li style='position: relative;'>
               <a href="#" {{action 'import_session'}}>
@@ -130,7 +132,7 @@
             </li>
           </ul>
         </div>
-      {{/unless}}
+      {{/if}}
     {{/if}}
     <button type="button" {{action "obl_export"}} class='btn btn-default'>{{t "Download Log File" key='download_log_file'}}</button>
     <button class="btn btn-default" {{action "clearLogs"}}>{{t "Clear All Logs" key='clear_all_logs'}}</button>
