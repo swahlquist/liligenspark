@@ -2427,6 +2427,9 @@ var app_state = EmberObject.extend({
       }
     }
 
+    if(obj.vocalization == ':predict' || obj.vocalization == ':complete') {
+    }
+
     app_state.set('last_activation', now);
     // update button attributes preemptively
     if(button.link_disabled) {

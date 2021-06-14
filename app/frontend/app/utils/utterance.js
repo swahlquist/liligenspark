@@ -108,10 +108,10 @@ var utterance = EmberObject.extend({
         } 
       }
       
-      
       // Combine raw list into actual buttons/words
       for(var idx = 0; idx < rawList.length; idx++) {
         var button = rawList[idx];
+        button.modifications = null;
         emberSet(button, 'auto_substitute', false);
         button.raw_index = idx;
         last_append = null;
@@ -542,15 +542,22 @@ var utterance = EmberObject.extend({
     }
     // add button to the raw button list
     var list = this.get('rawButtonList');
+    var rendered_list = app_state.get('button_list');
     var idx = app_state.get('insertion.index');
     var possibly_capitalize = function(b, prior) {
       var prior = prior || {};
       var prior_text = prior.vocalization || prior.label || "";
+      var prior_rendered = rendered_list.find(function(b) { return b.raw_index == prior.raw_index || (b.modifications || []).find(function(m) { return m.raw_index == prior.raw_index; }); });
+      if(prior_rendered) { prior_text = prior_rendered.vocalization || prior_rendered.label || prior_text; }
       var do_capitalize = false;
       if(!prior_text) {
         do_capitalize = true;
       } else if(app_state.get('shift')) {
-        do_capitalize = true;
+        do_capitalize = 'force';
+      } else if(b.vocalization == ':complete' && utterance.capitalize(prior_text) == prior_text) {
+        do_capitalize = 'force';
+      } else if(b.vocalization == ':complete' && prior_text.length > 1 && prior_text.toUpperCase() == prior_text) {
+        do_capitalize = 'caps';
       } else if(prior_text.match(punctuation_ending_sentence)) {
         if(!button.unshifted) {
           var do_capitalize = false;
@@ -562,12 +569,20 @@ var utterance = EmberObject.extend({
           });
         }
       }
-      if(do_capitalize && app_state.get('shift') !== false && app_state.get('sessionUser.preference.auto_capitalize') !== false) {
+      if(do_capitalize == 'force' || (do_capitalize && app_state.get('shift') !== false && app_state.get('sessionUser.preference.auto_capitalize') !== false)) {
         if(b.vocalization) {
           b.vocalization = utterance.capitalize(b.vocalization);
         }
         b.label = utterance.capitalize(b.label);
         b.capitalized = true;
+        if(b.completion) { b.completion = utterance.capitalize(b.completion); }
+      } else if(do_capitalize == 'caps') {
+        if(b.vocalization) {
+          b.vocalization = b.vocalization.toUpperCase();
+        }
+        b.label = b.label.toUpperCase();
+        b.capitalized = true;
+        if(b.completion) { b.completion = b.completion.toUpperCase(); }
       }
       return do_capitalize;
     }

@@ -5,6 +5,8 @@ import $ from 'jquery';
 import RSVP from 'rsvp';
 import persistence from './persistence';
 import capabilities from './capabilities';
+import utterance from './utterance';
+import app_state from './app_state';
 import Utils from './misc';
 import i18n from './i18n';
 import CoughDrop from '../app';
@@ -181,6 +183,7 @@ var word_suggestions = EmberObject.extend({
 //  find_buttons: function(str, from_board_id, user, include_home_and_sidebar) {
     var _this = this;
     return this.load().then(function() {
+      var last_shift = app_state.get('shift');
       var last_finished_word = options.last_finished_word;
       if(last_finished_word) { last_finished_word = last_finished_word.replace(/\s+$/, ''); }
       var second_to_last_word = options.second_to_last_word;
@@ -189,8 +192,10 @@ var word_suggestions = EmberObject.extend({
       if(word_in_progress) { word_in_progress = word_in_progress.replace(/\s+$/, ''); }
       var max_results = options.max_results || _this.max_results;
       var result = [];
-      if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress || _this.second_to_last_word != second_to_last_word) {
+      var do_cap = app_state.get('shift') || (word_in_progress && utterance.capitalize(word_in_progress) == word_in_progress);
+      if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress || _this.second_to_last_word != second_to_last_word || _this.last_shift != last_shift) {
         _this.last_finished_word = last_finished_word;
+        _this.last_shift = last_shift;
         _this.second_to_last_word = second_to_last_word;
         // TODO: is there an easy way to include two prior words?
         _this.word_in_progress = word_in_progress;
@@ -202,12 +207,13 @@ var word_suggestions = EmberObject.extend({
             var str = list[idx];
             if(typeof(str) != 'string') { str = str[0]; }
             if(!_this.filtered_words[str.toLowerCase()]) {
+              var word_string = do_cap ? utterance.capitalize(list[idx][0]) : list[idx][0];
               if(word_in_progress) {
                 if(str.substring(0, word_in_progress.length) == word_in_progress) {
-                  result.push({word: list[idx][0]});
+                  result.push({word: word_string});
                 }
               } else if(str[0] != "<") {
-                result.push({word: list[idx][0]});
+                result.push({word: word_string});
               }
             }
           }
@@ -239,7 +245,8 @@ var word_suggestions = EmberObject.extend({
           }).slice(0, max_results);
           edits.forEach(function(e) {
             if(result.length < max_results) {
-              result.push({word: e[0]});
+              var word_string = do_cap ? utterance.capitalize(e[0]) : e[0];
+              result.push({word: word_string});
             }
           });
         }
