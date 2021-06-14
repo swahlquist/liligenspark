@@ -803,6 +803,7 @@ CoughDrop.Buttonset = DS.Model.extend({
   
       buttons.forEach(function(button, idx) {
         // TODO: optionally show buttons on link-disabled boards
+        // TODO: include link board where add_vocalization=true
         if(!button.hidden || all_buttons_enabled) {
           var match_level = (button.label && button.label.match(re) && 3);
           match_level = match_level || (button.vocalization && button.vocalization.match(re) && 2);
