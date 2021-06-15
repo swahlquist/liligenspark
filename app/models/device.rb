@@ -89,8 +89,9 @@ class Device < ActiveRecord::Base
     return !!(self.settings && self.settings['2fa'] && self.settings['2fa']['pending'])
   end
 
-  def confirm_2fa!(code)
-    ts = self.user && self.user.valid_2fa?(code)
+  def confirm_2fa!(code, manually_approve=false)
+    ts = Time.now.to_i if code == :approve && manually_approve
+    ts ||= self.user && self.user.valid_2fa?(code)
     recent_fails = ((self.settings['2fa'] || {})['fails'] || []).select{|s| s > 10.minutes.ago.to_i }
     if recent_fails.length > 10
       self.settings['2fa'] ||= {}

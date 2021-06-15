@@ -15,8 +15,6 @@ class SessionController < ApplicationController
           @code_plus_2fa = params['oauth_code']
         end
 
-        # TODO: retrieve device for access token and check if it needs 2fa - 
-        #       if so, include form as part of submission
         @user_name = params['user_name']
         authorized_user_id = config['authorized_user_id']
         params['redirect_uri'] = config['redirect_uri']
@@ -109,16 +107,24 @@ class SessionController < ApplicationController
     if params['2fa_code']
       if user.valid_2fa?(params['2fa_code'])
         @valid_2fa = true
+        config['approved_2fa'] = true
       else
         @code_plus_2fa = params['code']
         @invalid_2fa = true
+        @app_name = (config && config['app_name']) || 'the application'
+        @app_icon = (config && config['app_icon']) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
+        @scope_descriptors = (config['scope'] || '').split(/:/).uniq.map{|s| Device::VALID_API_SCOPES[s] }.compact.join("\n")
+        @scope_descriptors = "no permissions requested" if @scope_descriptors.blank?
         render :oauth, :status => 400
         return
       end
     end
     if error
+      config ||= {}
       @app_name = (config && config['app_name']) || 'the application'
       @app_icon = (config && config['app_icon']) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
+      @scope_descriptors = (config['scope'] || '').split(/:/).uniq.map{|s| Device::VALID_API_SCOPES[s] }.compact.join("\n")
+      @scope_descriptors = "no permissions requested" if @scope_descriptors.blank?
       @code = params['code']
       @error = error
       render :oauth, :status => 400
@@ -128,7 +134,7 @@ class SessionController < ApplicationController
         # If the user is authenticated but missing 2fa, show the prompt
         config['authorized_user_id'] = user.global_id
         @code_plus_2fa = params['code']
-        do_render
+        do_render = true
       end
       if !params['resume']
         user.password_used!
@@ -136,6 +142,10 @@ class SessionController < ApplicationController
       config['user_id'] = user.id.to_s
       RedisInit.default.setex("oauth_#{params['code']}", 1.hour.to_i, config.to_json)
       if do_render
+        @app_name = (config && config['app_name']) || 'the application'
+        @app_icon = (config && config['app_icon']) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
+        @scope_descriptors = (config['scope'] || '').split(/:/).uniq.map{|s| Device::VALID_API_SCOPES[s] }.compact.join("\n")
+        @scope_descriptors = "no permissions requested" if @scope_descriptors.blank?
         render :oauth
       elsif config['redirect_uri'] == DeveloperKey.oob_uri
         redirect_to oauth_local_url(:code => params['code'])
@@ -177,7 +187,9 @@ class SessionController < ApplicationController
       end
       device.generate_token!
       if device.settings['2fa'] && device.settings['2fa']['pending']
-        # TODO: if 2fa is required, reject the token unless a valid 2fa code is included
+        if config['approved_2fa']
+          device.confirm_2fa!(:approve, true)
+        end
       end
       render json: JsonApi::Token.as_json(device.user, device, :include_refresh => true).to_json
     end
