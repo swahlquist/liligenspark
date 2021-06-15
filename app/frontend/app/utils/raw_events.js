@@ -495,6 +495,7 @@ var buttonTracker = EmberObject.extend({
       var priors = [window.screenInnerOffsetX, window.screenInnerOffsetY];
       window.screenInnerOffsetY = event.screenY - event.clientY;
       window.screenInnerOffsetX = event.screenX - event.clientX;
+      // TODO: full-screen mode will also change this without a touch event
       if(capabilities.mobile) {
         window.screenInnerOffsetY = 0;
         window.screenInnerOffsetX = 0;
