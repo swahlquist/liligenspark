@@ -3,7 +3,7 @@ class WordData < ActiveRecord::Base
   include Async
   include GlobalId
   include Processable
-  INFLECTIONS_VERSION = 1
+  INFLECTIONS_VERSION = 2
 
   # https://www.enchantedlearning.com/wordlist/opposites.shtml
   # https://www.talkenglish.com/vocabulary/top-50-prepositions.aspx
