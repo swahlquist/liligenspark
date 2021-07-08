@@ -506,15 +506,15 @@ var editManager = EmberObject.extend({
         res = list; 
       }
     }
-    if(voc && voc.vocalization == ':native-keyboard') {
+    if(button && button.vocalization == ':native-keyboard') {
       res.push({location: 'n', label: '?', vocalization: '+?'});
       res.push({location: 's', label: '.', vocalization: '+.'});
       res.push({location: 'e', label: '.', vocalization: '+.'});
       res.push({location: 'w', label: ',', vocalization: '+,'});
       res.push({location: 'nw', label: '!', vocalization: '+!'});
-    } else if(voc && voc.vocalization && voc.vocalization.match(/\+\w/)) {
+    } else if(button && button.vocalization && button.vocalization.match(/\+\w/)) {
       // Keep a list of suggestions for keyboard letters
-      var subs = i18n.completions[voc.vocalization.substring(1)];
+      var subs = i18n.completions[button.vocalization.substring(1)];
       (subs || []).forEach(function(str, idx) {
         if(str && locs[idx]) {
           res.push({location: locs[idx], label: str});

@@ -1065,6 +1065,7 @@ class Board < ActiveRecord::Base
     if self.buttons
       any_changed = false
       trans = BoardContent.load_content(self, 'translations') || {}
+      buttons = self.buttons
       (self.settings['locales'] || [self.settings['locale']]).each do |loc|
         words_to_check = self.buttons.map{|b|
           btn = (trans[b['id'].to_s] || {})[loc] || b
@@ -1073,7 +1074,7 @@ class Board < ActiveRecord::Base
           already_updated ? nil : (btn['vocalization'] || btn['label'])
         }.compact
         inflections = WordData.inflection_locations_for(words_to_check, loc)
-        buttons = self.buttons.map do |button|
+        buttons = buttons.map do |button|
           if loc == self.settings['locale'] || !self.settings['locale']
             # look for part of speech when loading the default locale
             word = button['vocalization'] || button['label']
@@ -1103,7 +1104,7 @@ class Board < ActiveRecord::Base
             # If there are any overrides compared to the javascript defaults,
             # persist them to the button object
             if word && inflections[word] && inflections[word]['v']
-              button['inflection_defaults'] = inflections[word]
+              button['inflection_defaults'] = {}.merge(inflections[word])
               any_changed = true
             end
           end
@@ -1620,7 +1621,8 @@ class Board < ActiveRecord::Base
     }
     words = WordData.where(locale: 'en', word: board.settings['buttons'].map{|b| b['label'] }.compact.uniq)
     changed = false
-    board.settings['buttons'].each do |btn|
+    buttons = board.buttons
+    buttons.each do |btn|
       wrd = words.detect{|w| w.word == btn['label'] }
       if wrd && (wrd.data['types'] || [])[0] != btn['part_of_speech']
         if wrd.data['types'] && btn['background_color']
@@ -1638,6 +1640,7 @@ class Board < ActiveRecord::Base
       end
     end.length
     if changed
+      board.settings['buttons'] = buttons
       board.instance_variable_set('@edit_notes', ["fixed buttons"])
       board.instance_variable_set('@buttons_changed', 'buttons processed')
       board.save
