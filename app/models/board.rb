@@ -1604,4 +1604,45 @@ class Board < ActiveRecord::Base
       {}.to_json
     end
   end
+
+  def correct_parts_of_speech(board, do_update=false)
+    u = User.find_by_path('example')
+    missing = []
+    type_colors = {
+      "rgb(204, 255, 170)" => ['verb'],
+      "rgb(170, 204, 255)" => ['adverb', 'adjective'],
+      "rgb(255, 255, 170)" => ['pronoun'],
+      "rgb(255, 170, 204)" => ['social'],
+      "rgb(204, 170, 136)" => ['adverb'],
+      "rgb(204, 204, 204)" => ['article', 'determiner'],
+      "rgb(255, 255, 255)" => ['verb'],
+      "rgb(255, 204, 170)" => ['noun']
+    }
+    words = WordData.where(locale: 'en', word: board.settings['buttons'].map{|b| b['label'] }.compact.uniq)
+    changed = false
+    board.settings['buttons'].each do |btn|
+      wrd = words.detect{|w| w.word == btn['label'] }
+      if wrd && (wrd.data['types'] || [])[0] != btn['part_of_speech']
+        if wrd.data['types'] && btn['background_color']
+          #puts "#{btn['label']} #{btn['background_color']} #{btn['part_of_speech']} #{wrd.data['types'][0]}"
+          if (type_colors[btn['background_color']] || []).include?(wrd.data['types'][0])
+            if do_update
+              btn['part_of_speech'] = wrd.data['types'][0]
+              changed = true
+            end
+            puts "  #{btn['label']} should be #{(wrd.data['types'] || ['unknown'])[0]} not #{btn['part_of_speech']}?"
+          end
+        else
+          missing << btn['label']
+        end
+      end
+    end.length
+    if changed
+      board.instance_variable_set('@edit_notes', ["fixed buttons"])
+      board.instance_variable_set('@buttons_changed', 'buttons processed')
+      board.save
+      puts "  UPDATED"
+    end
+    missing
+  end
 end
