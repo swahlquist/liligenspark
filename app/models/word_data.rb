@@ -63,7 +63,7 @@ class WordData < ActiveRecord::Base
         if params['inflection_overrides']
           hash = self.data['inflection_overrides'] || {}
           params['inflection_overrides'].each do |key, str|
-            if str == "" || str == nil
+            if str == "" || str == nil || str == 'N/A'
               hash.delete(key)
             else
               hash[key] = str
@@ -747,7 +747,6 @@ class WordData < ActiveRecord::Base
           set_location.call('c', 'present')
           set_location.call('c', 'base')
           locations['c'] = (overrides['present'] || overrides['base']) if locations.keys.length == 0
-          # TODO: "is", "be", "am", "are" need to be smart & use all inflection spaces (ditch "to be")
           if locations['n'] == locations['c']
             if overrides['personal_present']
               locations['n'] = nil
@@ -758,7 +757,7 @@ class WordData < ActiveRecord::Base
           if locations['c'] == 'am' && overrides['base'] != 'am' && locations['e'] == 'to be'
             locations['e'] = 'am'
           end         
-          # if also a noun... (340: bark, invite, kill, shop, worry)
+          # if also a noun... (340: work, bark, invite, kill, shop, worry)
           if types.include?('noun')
             set_location.call('n', 'plural')
             set_location.call('s', 'possessive')

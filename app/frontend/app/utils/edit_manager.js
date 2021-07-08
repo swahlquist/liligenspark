@@ -462,13 +462,6 @@ var editManager = EmberObject.extend({
     if(button.inflection_defaults && button.inflection_defaults.types && button.inflection_defaults.types[0] != button.part_of_speech) {
       ignore_defaults = true;
     }
-    if(voc == ':native-keyboard') {
-      list.push({location: 'n', label: '?', vocalization: '+?'});
-      list.push({location: 's', label: '.', vocalization: '+.'});
-      list.push({location: 'e', label: '.', vocalization: '+.'});
-      list.push({location: 'w', label: ',', vocalization: '+,'});
-      list.push({location: 'nw', label: '!', vocalization: '+!'});
-    }
     if(button.inflections || trans || button.inflection_defaults) {
       if(button.inflection_defaults) {
         base_label = button.inflection_defaults['base'] || button.inflection_defaults['c'] || button.inflection_defaults['src'] || button.label;
@@ -512,6 +505,22 @@ var editManager = EmberObject.extend({
         list.push({location: 'c', label: (lab || {}).label || button.original_label || button.label, vocalization: (voc || {}).label || button.vocalization});
         res = list; 
       }
+    }
+    if(voc && voc.vocalization == ':native-keyboard') {
+      res.push({location: 'n', label: '?', vocalization: '+?'});
+      res.push({location: 's', label: '.', vocalization: '+.'});
+      res.push({location: 'e', label: '.', vocalization: '+.'});
+      res.push({location: 'w', label: ',', vocalization: '+,'});
+      res.push({location: 'nw', label: '!', vocalization: '+!'});
+    } else if(voc && voc.vocalization && voc.vocalization.match(/\+\w/)) {
+      // Keep a list of suggestions for keyboard letters
+      var subs = i18n.completions[voc.vocalization.substring(1)];
+      (subs || []).forEach(function(str, idx) {
+        if(str && locs[idx]) {
+          res.push({location: locs[idx], label: str});
+        }
+      });
+      // TODO: use word suggestions to find most likely next words starting with this letter
     }
     // Only use the fallacks if it's a known locale for label and vocalization,
     // and there are no existing values populated or the default values were used,

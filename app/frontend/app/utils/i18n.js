@@ -1302,6 +1302,35 @@ var i18n = EmberObject.extend({
       'write': ['writes', 'wrote', 'written', 'writing']
     }
   },
+  completions: {
+    'a': ["an", "about", "all", "again", "after", "always", "also"],
+    'b': ["but", "by", "back", "because", "before", "be", "behind"],
+    'c': ["but", "by", "back", "because", "before", "be", "behind"],
+    'd': ["do", "don't", "did", "down", "does", "day", "doing"],
+    'e': ["even", "ever", "everything", "every", "enough", "everyone", "early"],
+    'f': ["for", "from", "food", "first", "fast", "friend", "feel"],
+    'g': ["go", "get", "good", "got", "give", "great", "gone"],
+    'h': ["here", "have", "how", "has", "her", "he", "him"],
+    'i': ["is", "in", "it", "if", "i'm", "it's", "isn't"],
+    'j': ["just", "job", "joke", "joy", "join", "junk", "judge"],
+    'k': ["keep", "know", "kind", "kid", "kiss", "kitchen", "knew"],
+    'l': ["like", "last", "later", "love", "let", "look", "leave"],
+    'm': ["my", "me", "more", "make", "myself", "might", "much"],
+    'n': ["now", "not", "no", "next", "new", "needs", "never"],
+    'o': ["on", "of", "or", "out", "one", "over", "off"],
+    'p': ["please", "people", "party", "person", "pretty", "put", "play"],
+    'q': ["quick", "question", "quickly", "quiet", "quite", "quality", "quote"],
+    'qu': ["quick", "question", "quickly", "quiet", "quite", "quality", "quote"],
+    'r': ["right", "really", "ready", "read", "run", "ride", "rest"],
+    's': ["so", "soon", "some", "she", "should", "something", "said"],
+    't': ["to", "the", "that", "this", "today", "too", "then"],
+    'u': ["up", "until", "us", "use", "under", "understand", "unless"],
+    'v': ["very", "version", "voice", "visit", "vacation", "visiting", "view"],
+    'w': ["with", "will", "was", "when", "what", "would", "we"],
+    'x': ["xbox", "except", "extra", "excited", "exciting", "extremely", "exhausted"],
+    'y': ["you", "your", "yet", "yesterday", "yeah", "yourself", "yes"],
+    'z': ["zero", "zip", "zen", "zoom", "zebra", "zone", "zoo"],
+  },
   core_words: {
     'default': [
       // allow picking from core words (source: http://aac.unl.edu/VLAACCU1.html)
