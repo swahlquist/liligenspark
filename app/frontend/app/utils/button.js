@@ -32,6 +32,7 @@ var clean_text = function(str) {
 var Button = EmberObject.extend({
   init: function() {
     this.updateAction();
+    this.update_add_vocalization();
     this.add_classes();
     this.set_video_url();
     this.findContentLocally();
