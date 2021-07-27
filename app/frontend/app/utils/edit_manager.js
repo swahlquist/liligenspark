@@ -1373,6 +1373,7 @@ var editManager = EmberObject.extend({
     var allButtonsReady = true;
     var _this = this;
     var result = [];
+    result.board_id = board.get('id');
     var pending_buttons = [];
     var used_button_ids = {};
 
@@ -1499,16 +1500,18 @@ var editManager = EmberObject.extend({
         board.set('pending_buttons', pending_buttons);
         board.addObserver('all_ready', function() {
           if(!controller.get('ordered_buttons')) {
-            board.set('pending_buttons', null);
-            controller.set('ordered_buttons',result);
-            CoughDrop.log.track('redrawing if needed');
-            controller.redraw_if_needed();
-            CoughDrop.log.track('done redrawing if needed');
-            resume_scanning();
+            if(controller.get('model.id') == result.board_id) {
+              board.set('pending_buttons', null);
+              controller.set('ordered_buttons',result);
+              CoughDrop.log.track('redrawing if needed');
+              controller.redraw_if_needed();
+              CoughDrop.log.track('done redrawing if needed');
+              resume_scanning();  
+            }
           }
         });
         controller.set('ordered_buttons', null);
-      } else {
+      } else if(controller.get('model.id') == result.board_id) {
         CoughDrop.log.track('buttons did not need waiting');
         controller.set('ordered_buttons', result);
         CoughDrop.log.track('redrawing if needed');
