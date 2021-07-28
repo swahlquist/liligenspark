@@ -67,10 +67,10 @@ var Button = EmberObject.extend({
     }
   ),
   update_add_vocalization: observer('add_vocalization', 'add_to_vocalization', function() {
-    if(this.get('add_vocalization') !== null) {
+    if(this.get('add_vocalization') === true  || this.get('add_vocalization') === false) {
       this.set('prevent_adding_to_vocalization', !this.get('add_vocalization'));
       this.set('force_add_to_vocalization', !!this.get('add_vocalization'));
-    } else if(this.get('add_to_vocalization') != null) {
+    } else if(this.get('add_to_vocalization') !== null) {
       this.set('prevent_adding_to_vocalization', false);
       this.set('force_add_to_vocalization', !!this.get('add_to_vocalization'));
     }
