@@ -135,8 +135,14 @@ class BoardContent < ApplicationRecord
       board.settings['buttons'].each do |btn|
         offload_btn = content.settings['buttons'].detect{|b| b['id'].to_s == btn['id'].to_s }
         if offload_btn
+          full_override = (((board.settings['content_overrides'] || {})['buttons'] || {})[btn['id'].to_s] || {})
+          full_override.each do |key, val|
+            if btn[key] == nil && offloat_btn[key] == nil
+              board.settings['content_overrides']['buttons'][btn['id'].to_s].delete(key)
+            end
+          end
           btn.each do |key, val|
-            current_override = (((board.settings['content_overrides'] || {})['buttons'] || {})[btn['id'].to_s] || {})[key]
+            current_override = full_override[key]
             if val != current_override
               board.settings['content_overrides'] ||= {}
               board.settings['content_overrides']['buttons'] ||= {}

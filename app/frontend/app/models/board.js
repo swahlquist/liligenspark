@@ -1313,7 +1313,7 @@ CoughDrop.Board = DS.Model.extend({
             }
             if(mods.pre) {
               for(var key in mods.pre) {
-                if(!mods.override || !mods.override[key]) {
+                if(!mods.override || mods.override[key] == null) {
                   button[key] = mods.pre[key];
                 }
               }
@@ -1321,7 +1321,7 @@ CoughDrop.Board = DS.Model.extend({
             for(var idx = 1; idx <= level; idx++) {
               if(mods[idx]) {
                 for(var key in mods[idx]) {
-                  if(!mods.override || !mods.override[key]) {
+                  if(!mods.override || mods.override[key] == null) {
                     button[key] = mods[idx][key];
                   }
                 }

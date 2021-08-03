@@ -25,8 +25,11 @@ var clean_url = function(str) {
 };
 var dom = document.createElement('div');
 var clean_text = function(str) {
+  if(str.cleaned) { return str; }
   dom.textContent = str;
-  return dom.innerHTML;
+  var res = new String(dom.innerHTML);
+  res.cleaned = true;
+  return res;
 };
 
 var Button = EmberObject.extend({
@@ -840,7 +843,7 @@ Button.button_styling = function(button, board, pos) {
   res.action_alt = action.action_alt; //"alt"; // TODO
   res.image_holder_style = Button.image_holder_style(pos, emberGet(button, 'text_only'));
   res.image_style = Button.image_style(pos);
-  res.label = clean_text(button.label); // TODO: clean
+  res.label = clean_text(button.label);
 
   return res;
 };
