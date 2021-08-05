@@ -966,7 +966,7 @@ var persistence = EmberObject.extend({
             // been retrieved by the browser, it's not sending CORS headers on the
             // follow-up request, maybe?
             xhr.url = url;
-            xhr.open('GET', url + (url.match(/\?/) ? '&' : '?') + "cr=1");
+            xhr.open('GET', encodeURI(url) + (url.match(/\?/) ? '&' : '?') + "cr=1");
             xhr.responseType = 'blob';
             xhr.send(null);
           });
@@ -1161,6 +1161,25 @@ var persistence = EmberObject.extend({
       persistence.set('sync_progress.canceled', true);
     }
   },
+  time_promise: function(promise, msg, ms) {
+    return new RSVP.Promise(function(resolve, reject) {
+      ms = ms || 30000;
+      var done = false;
+      promise.then(function(res) {
+        done = true;
+        resolve(res);
+      }, function(err) {
+        done = true;
+        reject(err);
+      });
+      setTimeout(function() {
+        if(!done) {
+          CoughDrop.track_error("sync promise took too long:" + msg);
+          reject({error: 'promise timed out:' + msg});
+        }
+      }, ms);  
+    });
+  },
   sync: function(user_id, force, ignore_supervisees, sync_reason) {
     if(!window.coughDropExtras || !window.coughDropExtras.ready) {
       return new RSVP.Promise(function(wait_resolve, wait_reject) {
@@ -1216,7 +1235,7 @@ var persistence = EmberObject.extend({
       // Prime the caches again, only do a hard prime if manually-triggered
       var prime_caches = RSVP.resolve();
       if(!ignore_supervisees) {
-        prime_caches = persistence.prime_caches(sync_reason == 'manual_sync').then(null, function() { return RSVP.resolve(); });
+        prime_caches = persistence.time_promise(persistence.prime_caches(sync_reason == 'manual_sync').then(null, function() { return RSVP.resolve(); }), "priming caches");
       }
 
       var check_first = function(callback) {
@@ -1272,7 +1291,7 @@ var persistence = EmberObject.extend({
       };
       next_eventually();
 
-      var confirm_quota_for_user = find_user.then(check_first(function(user) {
+      var confirm_quota_for_user = persistence.time_promise(find_user.then(check_first(function(user) {
         if(user) {
           persistence.set('online', true);
           if(user.get('preferences.skip_supervisee_sync')) {
@@ -1295,7 +1314,7 @@ var persistence = EmberObject.extend({
           }
         }
         return user;
-      }));
+      })), "confirming quota");
 
       confirm_quota_for_user.then(check_first(function(user) {
         if(user) {
@@ -1352,7 +1371,7 @@ var persistence = EmberObject.extend({
         // http://www.cs.tufts.edu/~nr/pubs/sync.pdf
         if(persistence.get('sync_progress.root_user') == user_id) {
           spread_out(function() {
-            return persistence.sync_changed();
+            return persistence.time_promise(persistence.sync_changed(), "syncing changed");
           });
         }
 
@@ -1361,7 +1380,7 @@ var persistence = EmberObject.extend({
         // Step 2: If online
         // get the latest user profile information and settings
         spread_out(function() {
-          return persistence.sync_user(user, importantIds);
+          return persistence.time_promise(persistence.sync_user(user, importantIds), "sync user data");
         });
 
         // Step 3: If online
@@ -1390,11 +1409,11 @@ var persistence = EmberObject.extend({
 
         // Step 5: Cache needed sound files
         spread_out(function() {
-          return speecher.load_beep().then(null, function(err) {
+          return persistence.time_promise(speecher.load_beep().then(null, function(err) {
             modal.warning(i18n.t('sound_sync_failed', "Sound effects failed to sync"));
             console.error("sound sync error", err);
             return RSVP.resolve();
-          });
+          }), "syncing beep sounds");
         });
 
         // Step 6: Push stored logs
@@ -1541,7 +1560,7 @@ var persistence = EmberObject.extend({
     return sync_promise;
   },
   sync_tags: function(user) {
-    return new RSVP.Promise(function(resolve, reject) {
+    return persistence.time_promise(new RSVP.Promise(function(resolve, reject) {
       var tag_ids = user.get('preferences.tag_ids') || [];
       var next_tag = function() {
         var tag_id = tag_ids.pop();
@@ -1566,12 +1585,12 @@ var persistence = EmberObject.extend({
         }
       };
       runLater(next_tag, 500);
-    });
+    }), "sync tags for " + user.get('user_name'));
   },
   sync_contacts: function(user) {
     var wait = RSVP.resolve();
     if(user.get('all_connections_promise')) {
-      wait = user.get('all_connections_promise');
+      wait = persistence.time_promise(user.get('all_connections_promise'), "waiting for connections for " + user.get('user_name'));
     }
     var retrieve_list = wait.then(null, function() { return RSVP.resolve(); }).then(function() {
       var all_store_images = [];
@@ -1588,11 +1607,11 @@ var persistence = EmberObject.extend({
       return all_store_images;
     });
     return retrieve_list.then(function(list) {
-      return RSVP.all_wait(list);
+      return persistence.time_promise(RSVP.all_wait(list));
     })
   },
   sync_logs: function(user) {
-    return persistence.find('settings', 'bigLogs').then(function(res) {
+    return persistence.time_promise(persistence.find('settings', 'bigLogs').then(function(res) {
       res = res || {};
       var fails = [];
       var log_promises = [];
@@ -1613,7 +1632,7 @@ var persistence = EmberObject.extend({
       });
     }, function(err) {
       return RSVP.resolve([]);
-    });
+    }), "syncing logs");
   },
   sync_buttons: function(synced_boards) {
     return RSVP.resolve();
@@ -1977,7 +1996,7 @@ var persistence = EmberObject.extend({
             var local_full_set_revision = null;
 
             // check if there's a local copy that's already been loaded
-            var find_board = persistence.board_lookup(id, safely_cached_boards, fresh_revisions, sync_id);
+            var find_board = persistence.time_promise(persistence.board_lookup(id, safely_cached_boards, fresh_revisions, sync_id), 'syncing board:' + id);
 
             find_board.then(function(board) {
               local_full_set_revision = board.get('local_full_set_revision');
@@ -2163,7 +2182,7 @@ var persistence = EmberObject.extend({
                 }
               });
 
-              RSVP.all_wait(visited_board_promises).then(function() {
+              persistence.time_promise(RSVP.all_wait(visited_board_promises).then(function() {
                 full_set_revisions[board.get('id')] = board.get('full_set_revision');
                 runLater(function() {
                   nextBoard(defer);
@@ -2182,7 +2201,7 @@ var persistence = EmberObject.extend({
                 runLater(function() {
                   nextBoard(defer);
                 }, 150);
-              });
+              }), 'save board content:' + id, 180000);
             }, function(err) {
               var board_unauthorized = (err && err.error == "Not authorized");
               if(next.link_disabled && board_unauthorized) {

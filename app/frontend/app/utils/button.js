@@ -857,32 +857,64 @@ Button.broken_image = function(image) {
       fallback = image.getAttribute('data-fallback');
     } else {
       image.setAttribute('onerror', '');
+      image.onerror = function() {
+        CoughDrop.track_error("failed to retrieve image:" + image.src);
+      };
     }
     var bad_src = image.src;
     image.src = fallback;
-    persistence.find_url(fallback).then(function(data_uri) {
-      if(image.src == fallback) {
-        image.src = data_uri;
-      }
-    }, function() { });
+    var find_fallback = function() {
+      persistence.find_url(fallback).then(function(data_uri) {
+        if(image.src == fallback) {
+          image.src = data_uri;
+        }
+      }, function() { 
+        image.src == fallback;
+        CoughDrop.track_error("failed to find image fallback:" + image.getAttribute('rel'));
+      });  
+    }
     // try to recover from files disappearing from local storage
     var store_key = function(key) {
       persistence.url_cache[key] = false;
       persistence.store_url(key, 'image', false, true).then(function(data) {
         image.src = data.local_url || data.data_uri;
-      }, function() { });
+      }, function() { 
+        find_fallback();
+      });
     };
-    if(bad_src.match(/^file/)) {
+    if(bad_src.match(/^file/) || bad_src.match(/^localhost/)) {
+      var found = false;
       for(var key in persistence.url_cache) {
         if(bad_src == persistence.url_cache[key] && persistence.get('online')) {
+          image.setAttribute('onerror', '');
+          image.onerror = function() {
+            CoughDrop.track_error("failed to retrieve cached local image:" + image.src);
+          };
           image.src = key;
           store_key(key);
+          found = true;
         }
       }
+      if(!found) {
+        find_fallback();
+      }
     } else {
+      // Look for local references
       persistence.find_url(bad_src).then(function(data_uri) {
-        image.src = data_uri;
-      }, function() { });
+        if(!data_uri) {
+          find_fallback();
+        } else {
+          if(image.getAttribute('rel') == bad_src) {
+            image.setAttribute('onerror', '');
+            image.onerror = function() {
+              CoughDrop.track_error("failed to retrieve cached image:" + image.src);
+            };
+            image.src = data_uri;
+          }
+        }
+      }, function() {
+        find_fallback();
+      });
     }
   }
 };
