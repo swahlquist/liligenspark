@@ -172,6 +172,8 @@
               {{/if}}
               {{#if subscription.user.subscription.started}}
                 <a class='btn btn-default' href="#" {{action 'cancel_subscription'}}>{{t "Cancel my Subscription" key='cancel_my_subscription'}}</a>
+              {{else if subscription.user.subscription.subscribed_as_communicator}}
+                <a class='btn btn-default' href="#" {{action 'cancel_subscription'}}>{{t "Cancel my Subscription" key='cancel_my_subscription'}}</a>
               {{/if}}
               {{#if app_state.domain_settings.full_domain}}
                 {{#unless confirmation}}

@@ -927,6 +927,7 @@ module Subscription
       json['premium_supporter'] = true
       com_billing_state = self.billing_state('communicator')
       json['premium_supporter_plus_communicator'] = true if billing_state == :org_sponsored_supporter || [:never_expires_communicator, :subscribed_communicator, :long_term_active_communicator].include?(com_billing_state)
+      json['subscribed_as_communicator'] = true if [:subscribed_communicator].include?(com_billing_state)
       json['never_expires'] = true if self.settings['subscription']['never_expires']
       json['org_sponsored'] = true if com_billing_state == :org_sponsored_communicator
       json['free_premium'] = json['premium_supporter']

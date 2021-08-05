@@ -137,7 +137,7 @@ class BoardContent < ApplicationRecord
         if offload_btn
           full_override = (((board.settings['content_overrides'] || {})['buttons'] || {})[btn['id'].to_s] || {})
           full_override.each do |key, val|
-            if btn[key] == nil && offloat_btn[key] == nil
+            if btn[key] == nil && offload_btn[key] == nil
               board.settings['content_overrides']['buttons'][btn['id'].to_s].delete(key)
             end
           end
