@@ -431,7 +431,7 @@ var editManager = EmberObject.extend({
       button = editManager.find_button(button_id);
     }
     if(!this.controller || !app_state.controller) { return; }
-    var expected_inflections_version = 1;
+    var expected_inflections_version = 2;
     var board = this.controller.get('model');
     var res = [];
     if(!button) { return null; }
@@ -466,8 +466,8 @@ var editManager = EmberObject.extend({
       if(button.inflection_defaults) {
         base_label = button.inflection_defaults['base'] || button.inflection_defaults['c'] || button.inflection_defaults['src'] || button.label;
       }
+      var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
       for(var idx = 0; idx < 8; idx++) {
-        var for_current_locale = !voc_locale || !app_state.controller.get('model.board.locale') || (voc_locale == lab_locale && voc_locale == app_state.controller.get('model.board.locale'));
         var trans_voc = voc && (voc.inflections || [])[idx];
         if(!ignore_defaults && !trans_voc && voc) {
           trans_voc = (voc.inflection_defaults || {})[locs[idx]]; 
