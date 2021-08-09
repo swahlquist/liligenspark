@@ -2989,13 +2989,18 @@ describe('editManager', function() {
       was: {label: 'was', part_of_speech: 'verb'}, 
       like: {label: 'like', part_of_speech: 'verb'},
       likes: {label: 'likes', part_of_speech: 'verb'},
+      liked: {label: 'liked', part_of_speech: 'verb'},
+      see: {label: 'see', part_of_speech: 'verb'}, 
+      ask: {label: 'ask', part_of_speech: 'verb'}, 
       hate: {label: 'hate', part_of_speech: 'verb'},
       hates: {label: 'hates', part_of_speech: 'verb'},
       thinks: {label: 'thinks', part_of_speech: 'verb'},
       want: {label: 'want', part_of_speech: 'verb'},
       wants: {label: 'wants', part_of_speech: 'verb'},
+      wanted: {label: 'wanted', part_of_speech: 'verb'},
       wanting: {label: 'wanting', part_of_speech: 'verb'},
       looking: {label: 'looking', part_of_speech: 'verb'},
+      helped: {label: 'helped', part_of_speech: 'verb'},
       are: {label: 'are', part_of_speech: 'verb'},
       were: {label: 'were', part_of_speech: 'verb'},
       not: {label: 'not', part_of_speech: 'negation'},
@@ -3103,12 +3108,6 @@ describe('editManager', function() {
     });
 
     it("should handle tenses", function() {
-
-      // TODO:
-      // I want [to eat]
-      // I like [to eat]
-      // He hates [eating] before work
-      // She thinks [eating] is important
       // 
       //   {id: 'does_she_look', type: 'verb', lookback: [{words: ['do', 'does', 'did', 'can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should']}, {words: ["he", "she", "it", "that", "this", "they"]}, {optional: true, type: 'adverb'}], inflection: 'present', location: 'c'},
       check('did she', 'verb', 'present', 'does_she_look');
@@ -3233,16 +3232,31 @@ describe('editManager', function() {
         I have [looked]
         have you [looked]
       */
+      check('I am', 'verb', 'present_participle', 'is_she_looking');
       check('he is', 'verb', 'present_participle', 'is_she_looking');
+      check('he is not', 'verb', 'present_participle', 'is_she_looking');
       check('is she', 'verb', 'present_participle', 'is_she_looking');
       check('I have', 'verb', 'past_participle', 'have_looked');
       check('have you', 'verb', 'past_participle', 'has_she_looked');  
 
       check('I want', 'verb', 'infinitive', 'she_wants_to_look');  
+      check('I wanted', 'verb', 'infinitive', 'she_wants_to_look');  
+      check('he wants', 'verb', 'infinitive', 'she_wants_to_look');  
+      check('he doesn\'t want', 'verb', 'infinitive', 'she_can_want_to_look');  
       check('I want to', 'verb', null);  
       check('I want want', 'verb', null);  
 
-      check('I like', 'verb', 'infinitive', 'she_wants_to_look');  
+      check('I like', 'verb', 'present_participle', 'she_likes_looking');
+      check('he likes', 'verb', 'present_participle', 'she_likes_looking');
+      check('we liked', 'verb', 'present_participle', 'she_likes_looking');
+      check('I don\'t like', 'verb', 'infinitive', 'they_can_like_to_look');
+      check('we didn\'t like', 'verb', 'infinitive', 'they_can_like_to_look');
+      check('he doesn\'t like', 'verb', 'infinitive', 'they_can_like_to_look');
+      // TODO: WordPower does "I like -ing instead of to-"
+      // I have -en/ed
+      // plural noun => is to are
+      // Emojis on repeat buttons (discourage stimming)
+      // TODO: can not => can't https://en.wikipedia.org/wiki/Wikipedia:List_of_English_contractions
       check('he wants', 'verb', 'infinitive', 'she_wants_to_look');  
       check('she thinks', 'verb', 'present_participle', 'she_is_looking');  
       check('he hates', 'verb', 'present_participle', 'she_is_looking');  
@@ -3319,25 +3333,78 @@ describe('editManager', function() {
       expect((res.is || {}).label).toEqual('be');  
 
       var res = editManager.inflection_for_types(sentence('I am'), 'en');
-      expect((res.done || {}).label).toEqual('done');  
+      expect((res.done || {}).label).toEqual('done');
 
       var res = editManager.inflection_for_types(sentence('they'), 'en');
       expect((res.is || {}).label).toEqual('are');  
 
+      // going to [is => be]
+      var res = editManager.inflection_for_types(sentence('to'), 'en');
+      expect((res.is || {}).label).toEqual(undefined);  
+      // TODO:
+      // var res = editManager.inflection_for_types(sentence('going to'), 'en');
+      // expect((res.is || {}).label).toEqual('be');  
+      // are/be going to [is => is]
+      var res = editManager.inflection_for_types(sentence('are going to'), 'en');
+      expect((res.is || {}).label).toEqual(undefined);  
+
+      // I/you [not => am not]
+      // I/you [no => don't]
+      var res = editManager.inflection_for_types(sentence('I'), 'en');
+      expect((res.not || {}).label).toEqual('am not');  
+      expect((res.no || {}).label).toEqual('don\'t');  
+      var res = editManager.inflection_for_types(sentence('he'), 'en');
+      expect((res.not || {}).label).toEqual('isn\'t');  
+      expect((res.no || {}).label).toEqual('doesn\'t');  
+      var res = editManager.inflection_for_types(sentence('we'), 'en');
+      expect((res.not || {}).label).toEqual('aren\'t');  
+      expect((res.no || {}).label).toEqual('don\'t');  
+
+      // those/these/some [is => are]
+      var res = editManager.inflection_for_types(sentence('those'), 'en');
+      expect((res.is || {}).label).toEqual('are');  
+
+
+      // Auto-fill suggestions
+      // is (link to verbs?)
+      // eat, drink, play, read, watch, feel, color, listen [as links? maybe on the actual button]
+      // go, eat at (links to places?)
+      // really (don't auto-home?)
+      // Page for adding personal stories, either save from sentence box or record audio, to a button
+
+
       // we want [him/her/me/you/them] Y
+      check('I want', 'pronoun', 'objective', 'i_like_him');  
       // I don't like [her/him/me] Y
+      check('I don\'t want', 'pronoun', 'objective', 'i_like_him');  
       // Do you think [he]
+      check('do you think', 'pronoun', 'default', 'i_think_he');  
       // am [her/him/me/them]
+      check('I am', 'pronoun', 'objective', 'i_am_him');  
       // are [her/his/my/their]
+      check('they are', 'pronoun', 'possessive_adjective', 'these_are_his');
       // That is/was/are [his/hers/mine/theirs] N
+      check('that was', 'pronoun', 'possessive_adjective', 'it_is_his');
       // That is not [theirs] N
+      check('that is not', 'pronoun', 'possessive_adjective', 'it_is_his');
       // I want to get/have/hold/keep [his/her/my/their]
       // They saw [him/her/me]
+      check('I see', 'pronoun', 'objective', 'i_like_him');
       // Give [him/her/me] the book
+      check('give', 'pronoun', 'objective', 'about_him');
+      check('tell', 'pronoun', 'objective', 'about_him');
+      check('ask', 'pronoun', 'objective', 'i_like_him');
       // Are you talking to [him/her/me]
+      check('are you talking to', 'pronoun', 'objective', 'about_him');
       // I am thinking about [him/her/me]
+      check('I am thinking', 'pronoun', undefined, undefined);
+      check('I am thinking about', 'pronoun', 'objective', 'about_him');
+      check('I am not thinking about', 'pronoun', 'objective', 'about_him');
       // What is with/as/than/before [him/her/me]
+      check('better than', 'pronoun', 'objective', 'with_him');
       // Judy helped [him/her/me]
+      check('she helped', 'pronoun', 'objective', 'i_like_him');
+
     });
   })
 });

@@ -186,9 +186,10 @@ var editManager = EmberObject.extend({
       //     N: she hates [to jump]
       //     N: is there a reason she would want [to jump]
       {id: 'would_she_want_to_look', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should", "do", "does", "don't", "doesn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"]}, {type: 'pronoun'}, {type: 'verb', words: ['like', 'want']}, {optional: true, type: 'adverb'}], inflection: 'infinitive', location: 'e'},
-      {id: 'she_wants_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['like', 'likes', 'want', 'wants']}], inflection: 'infinitive', location: 'e'},
-      {id: 'she_can_want_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should", "do", "does", "don't", "doesn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"], optional: true}, {optional: true, words: ['not']}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['want']}], inflection: 'infinitive', location: 'e'},
-      {id: 'they_can_like_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should', "do", "does", "don't", "doesn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"]}, {optional: true, words: ['not']}, {type: 'verb', words: ['like', 'likes', 'want', 'wants']}], inflection: 'infinitive', location: 'e'},
+      {id: 'she_wants_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['wanted', 'want', 'wants']}], inflection: 'infinitive', location: 'e'},
+      {id: 'she_likes_looking', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['like', 'likes', 'liked']}], inflection: 'present_participle', location: 's'},
+      {id: 'she_can_want_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should", "do", "does", "did", "don't", "doesn't", "didn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"], optional: true}, {optional: true, words: ['not']}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['want']}], inflection: 'infinitive', location: 'e'},
+      {id: 'they_can_like_to_look', type: 'verb', lookback: [{type: 'pronoun'}, {optional: true, type: 'adverb'}, {type: 'verb', words: ['can', 'could', 'will', 'would', 'may', 'might', 'must', 'shall', 'should', "do", "does", "did", "didn't", "don't", "doesn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"]}, {optional: true, words: ['not']}, {type: 'verb', words: ['like', 'likes', 'want', 'wants']}], inflection: 'infinitive', location: 'e'},
       {id: 'have_looked', type: 'verb', lookback: [{optional: true, type: 'pronoun'}, {words: ["being", "doing", "has", "have", "had", "hasn't", "haven't", "hadn't"]}, {type: 'adverb', optional: true}, {words: ["not"], optional: true}], inflection: 'past_participle', location: 'sw'},
       {id: 'should_not_look', type: 'verb', lookback: [{words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should", "do", "does", "don't", "doesn't", "didn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"]}, {words: ['not'], optional: true}, {optional: true, type: 'adverb'}], inflection: 'default', location: 'c'},
       {id: 'she_is_looking', type: 'verb', lookback: [{type: 'pronoun'}, {words: ["can", "could", "will", "would", "may", "might", "must", "shall", "should", "do", "does", "don't", "doesn't", "can't", "couldn't", "won't", "wouldn't", "mayn't", "mightn't", "mustn't", "shan't", "shouldn't"], optional: true}, {type: 'verb'}, {optional: true, type: 'adverb'}], inflection: 'present_participle', location: 's'},
@@ -242,11 +243,12 @@ var editManager = EmberObject.extend({
       //   (at, for, with): objective (n)
       {id: 'with_her', type: 'pronoun', lookback: [{words: ["at", "for", "with"]}], inflection: 'objective', location: 'n'},
 
+      //   pronoun (that, it, this) verb (is, was): objective (n)
+      {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {type: 'adverb', optional: true}, {words: ["is", "was", "be"]}, {words: ["not"], optional: true}], inflection: 'possessive_adjective', location: 'w'},
       // [him/her/me/you/them/us] want, like, to, in, help, tell, near, over, under, for, preposition, give, get, make, not, stop, hello, goodbye, from, feed, bite, suck, hug, kiss, it's, count, around, beneath, among, beyond, visit, bug
       {id: 'about_him', type: 'pronoun', lookback: [{words: ["about", "to", "tell", "for", "give", "get", "make", "not", "from", "among"]}], inflection: 'objective', location: 'n'},
-      //   pronoun (that, it, this) verb (is, was): objective (n)
-      {id: 'it_is_his', type: 'pronoun', lookback: [{words: ["this", "that", "it"]}, {type: 'adverb', optional: true}, {words: ["is", "was", "be"]}], inflection: 'possessive_adjective', location: 'w'},
-      {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those"]}, {type: 'adverb', optional: true}, {words: ["are", "were", "be"]}], inflection: 'possessive_adjective', location: 'w'},
+      {id: 'these_are_his', type: 'pronoun', lookback: [{words: ["these", "those", "they", "we"]}, {type: 'adverb', optional: true}, {words: ["are", "were", "be"]}], inflection: 'possessive_adjective', location: 'w'},
+      {id: 'i_am_him', type: 'pronoun', lookback: [{type: 'verb', words: ['am', 'was', 'were', 'are', 'be', 'been', 'being']}], inflection: 'objective', location: 'n'},
       {id: 'i_think_he', type: 'pronoun', lookback: [{type: 'verb', words: ['think', 'hope', 'wish', 'am', 'was', 'were', 'be', 'been', 'being', 'do', 'does', 'did', 'have', 'has', 'had', 'can', 'could', 'will', 'would' ,'may', 'might', 'must', 'shall', 'should', 'are']}], inflection: 'default', location: 'c'},
       // [his/her/my/your/their/our] eat, on, up, play, drink, off, down, out, is, are, read, use, wear, all, at, of, eat, drink, taste, lick, left, across, into, where's, lost, lower, raise, hide, lose, start, exit, run, turn, return, check, finish, continue, begin, improve, honor, change, reduce, grow, expand, shrink, it's, refill, drink, swallow, feel, communicate, resolve, describe, explain, represent, spray, scrub, wipe, wash, clean, learn, study, cheat, type, become, exercise, play, ponder, 
       {id: 'eat_my', type: 'pronoun', lookback: [{words: ['eat', 'on', 'up', 'off', 'in', 'out', 'down', 
@@ -261,6 +263,7 @@ var editManager = EmberObject.extend({
       {id: 'view_yourself', type: 'pronoun', lookback: [{words: ['view', 'prepare', 'settle', 'repeat', 'defend']}], inflection: 'reflexive', location: 'e'},
       {id: 'near_me', type: 'pronoun', lookback: [{type: 'preposition'}], inflection: 'objective', location: 'n'},
       {id: 'i_like_him', type: 'pronoun', lookback: [{type: 'verb'}], inflection: 'objective', location: 'n'},
+      {id: 'with_him', type: 'pronoun', lookback: [{words: ['than', 'with', 'as', 'before', 'after']}], inflection: 'objective', location: 'n'},
       {id: 'hug_me', type: 'pronoun', lookback: [{type: 'verb'}], inflection: 'objective', location: 'n'},
       {id: 'i_am_his', type: 'pronoun', lookback: [{type: 'pronoun'}, {type: 'adverb', optional: true}, {type: 'verb', words: ["is", "am", "are", "be"]}], inflection: 'possessive_adjective', location: 'w'},
     ];
@@ -312,6 +315,67 @@ var editManager = EmberObject.extend({
       return valid;
     };
     if(history.length > 0) {
+      var helpers = {
+        "I": ['really', 'have', 'did'],
+        "will be": ['ready', 'your'],
+        "have been": ['ready', 'waiting'],
+        "will": ['see'],
+        "my": ['self'],
+        "is": ['she', 'he'],
+        "can": ['she', 'he'],
+        "will": ['she', 'he'],
+        "was": ['she', 'he'],
+        "are": ['they', 'we'],
+        "were": ['they', 'we'],
+        "going": ['to', 'away', 'back'],
+        "to": ['take', 'have', 'give', 'listen', 'see'],
+        "take": ['a break', 'a nap', 'a picture', 'a bath'],
+        "a": ['little', 'lot', '+bout'],
+        "lot": ['of'],
+        "thank you": ['very'],
+        "very": ['much', 'big'],
+        "go": ['away'],
+        "going": ['again', 'before', 'after'],
+        "tell": ['me'],
+        "tell me": ['something', 'a story'],
+        "something": ['about'],
+        "the": ['best'],
+        "somebody": ['else'],
+        "someone": ['else'],
+        "what": ['+ever', 'happened'],
+        "picture": ['of'],
+        "getting": ['tired', 'ready'],
+        "tired": ['of'],
+        "get": ['ready', 'dressed'],
+        "listen to": ['music', 'something'],
+        "feel": ['really', 'good', 'so'],
+        "come": ['here'],
+        "my": ['turn'],
+        "your": ['turn'],
+        "[verb]": [':ed', ':s', ':ing'],
+        "[adjective]": [':er', ':est'],
+        "really": ['good'],
+        "turn": ['over', 'the page'],
+        "to": ['+o'],
+        "too": ['much', 'many'],
+        "this": ['one'],
+        "that": ['one'],
+        "these": ['ones'],
+        "those": ['ones'],
+        "figure": ['it'],
+        "look": ['for', 'at', 'out'],
+        "+er": ['than'],
+        "I don't": ['know', 'get it', 'understand'],
+        "need": ['help', 'a break', 'a hug'],
+        "want": ['some', 'a turn'],
+        "come": ['back', 'here', 'away'],
+        "play": ['again'],
+        "look": ['at'],
+        "stop": ['it'],
+        "put": ['it'],
+        "I am": ['ready'],
+        "for": ['now', 'you'],
+      };
       // TO BE verb overrides
       var overrides = [];
       overrides.push({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
@@ -320,6 +384,8 @@ var editManager = EmberObject.extend({
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
         inflections["were"] = {type:'override', label: "was"};
+        inflections["no"] = {type:'override', label: "don't"};
+        inflections["not"] = {type:'override', label: "am not"};
       }});
       overrides.push({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["is"] = {type:'override', label: "are"};
@@ -327,14 +393,27 @@ var editManager = EmberObject.extend({
         inflections["was"] = {type:'override', label: "were"};
         inflections["does"] = {type:'override', label: "do"};
         inflections["has"] = {type:'override', label: "have"};
+        inflections["no"] = {type:'override', label: "don't"};
+        inflections["not"] = {type:'override', label: "aren't"};
+      }});
+      overrides.push({lookback: [{words: ["those"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
+        inflections["is"] = {type:'override', label: "are"};
+        inflections["am"] = {type:'override', label: "are"};
+        inflections["was"] = {type:'override', label: "were"};
+        inflections["no"] = {type:'override', label: "don't"};
+        inflections["not"] = {type:'override', label: "aren't"};
       }});
       overrides.push({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
+        inflections["no"] = {type:'override', label: "doesn't"};
+        inflections["not"] = {type:'override', label: "isn't"};
       }});
       overrides.push({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
+        inflections["no"] = {type:'override', label: "doesn't"};
+        inflections["not"] = {type:'override', label: "isn't"};
       }});
       overrides.push({lookback: [{words: ["what"]}], callback: function(inflections) {
         inflections["happen"] = {type:'override', label: "happened"};
@@ -387,8 +466,10 @@ var editManager = EmberObject.extend({
     var res = [];
     buttons.forEach(function(button) {
       var updated_button = Object.assign({}, button);
+      // TODO: level should be applied already, but make sure
+      var unlinked = !button.load_board || button.link_disabled;
       // For now, skip if there are manual inflections
-      if(!button.inflections && !button.vocalization && (!button.load_board || button.inflect)) {
+      if(!button.inflections && !button.vocalization && (unlinked || button.inflect)) {
         arr.forEach(function(infl) {
           if(infl.key == "btn" + button.id) {
             updated_button.original_label = button.original_label || button.label;

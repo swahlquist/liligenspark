@@ -53,8 +53,9 @@ export default modal.ModalController.extend({
         }
       }
     }
-    if(this.get('model.user.id') != app_state.get('currentUser.id')) {
-      hash = app_state.get('currentUser.focus_words') || {};
+    // Include modelee's focus words as well if any
+    if(this.get('model.user.id') != app_state.get('referenced_user.id')) {
+      hash = app_state.get('referenced_user.focus_words') || {};
       for(var name in hash) {
         if(hash[name] && hash[name].updated && !hash[name].deleted) {
           if(!found_words[hash[name].words]) {
@@ -141,7 +142,7 @@ export default modal.ModalController.extend({
           res.push(item);
         }
       });
-      persistence.ajax('/api/v1/search/focus?locale=' + (app_state.get('label_locale') || 'en').split(/-|_/)[0](app_state.get('label_locale') || 'en').split(/-|_/)[0] + '&q=' + encodeURIComponent(_this.get('search_term')), {type: 'GET'}).then(function(list) {
+      persistence.ajax('/api/v1/search/focus?locale=' + (app_state.get('label_locale') || 'en').split(/-|_/)[0] + '&q=' + encodeURIComponent(_this.get('search_term')), {type: 'GET'}).then(function(list) {
         _this.set('search.loading', false);
         res = res.concat(list);
         _this.set('search.results', res.slice(0, 20));
