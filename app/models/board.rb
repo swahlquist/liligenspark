@@ -967,6 +967,8 @@ class Board < ActiveRecord::Base
     self.settings['hide_empty'] = params['hide_empty'] if params['hide_empty'] != nil
     self.settings['text_only'] = params['text_only'] if params['text_only'] != nil
     self.settings['never_edited'] = false if self.id
+    button_params = params['buttons']
+    button_params.instance_variable_set('@add_voc_error', non_user_params['add_voc_error'])
     process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author], params['translations']) if params['buttons']
     prior_license = self.settings['license'].to_json
     process_license(params['license']) if params['license']
@@ -1158,6 +1160,7 @@ class Board < ActiveRecord::Base
   end
   
   def process_buttons(buttons, editor, secondary_editor=nil, translations=nil)
+    add_voc_error = buttons.instance_variable_get('@add_voc_error')
     translations ||= {}
     clear_cached("images_and_sounds_with_fallbacks")
     @edit_notes ||= []
@@ -1172,6 +1175,10 @@ class Board < ActiveRecord::Base
       end
     end
     self.settings['buttons'] = buttons.map do |button|
+      if add_voc_error && button['add_vocalization'] == false && !button['load_board']
+        button.delete('add_vocalization')
+        button.delete('add_to_vocalization')
+      end
       trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s] || (BoardContent.load_content(self, 'translations') || {})[button['id'].to_s]
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
