@@ -1423,6 +1423,7 @@ class LogSession < ActiveRecord::Base
                 end
                 if kept_events.length > 0
                   merger.data['events'] = kept_events
+                  merger.instance_variable_set('@skip_split_out_later_sessions', true)
                   merger.save!
                 else
                   # Check for any job_stashes kept events for merger before destroying
