@@ -11,6 +11,21 @@
   </ul>
 {{/if}}
 <p>{{t "Here's a listing of all the times this board has changed, and who made the change:" key='versions_explanation'}}</p>
+{{#if app_state.sessionUser.permissions.admin_support_actions}}
+  <p>
+    {{t "Roll back newest version before (limited to last 6 months):" key='rollback_to_version_before'}}
+    <span style='display: inline-block;'>{{input type='date' class='form-control' value=rollback_date}}</span>
+    <button class='btn btn-default' disabled={{rollback_status.saving}} {{action 'rollback'}}>
+      {{#if rollback_status.saving}}
+        {{t "Rolling back..." key='rolling_back'}}
+      {{else if rollback_status.error}}
+        {{t "Error rolling back" key='error_rolling_back'}}
+      {{else}}
+        {{t "Rollback" key='rollback'}}
+      {{/if}}
+    </button>
+  </p>
+{{/if}}
 {{#if loading}}
   <p>{{t "Loading history..." key='loading_history'}}</p>
 {{else if error}}

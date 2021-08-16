@@ -300,7 +300,7 @@ class Api::BoardsController < ApplicationController
     if board
       revert_date = board.rollback_to(date)
     end
-    render json: {board_id: board ? board.global_id : nil, restored: restored, reverted: revert_date.iso8601}
+    render json: {board_id: board ? board.global_id : nil, key: board ? board.key : nil, restored: restored, reverted: revert_date.iso8601}
   end
   
   def share_response
@@ -356,7 +356,9 @@ class Api::BoardsController < ApplicationController
     if processed_params['button']
       res = board.process_button(processed_params['button'])
     else
-      res = board.process(processed_params['board'], {:user => @api_user, :starrer => @api_user})
+      version_date = Date.parse(request.headers['X-CoughDrop-Version']) rescue nil
+      add_voc_error = version_date && version_date < Date.parse('August 3, 2021')
+      res = board.process(processed_params['board'], {:user => @api_user, :starrer => @api_user, add_voc_error: add_voc_error})
     end
     if res
       render json: JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user).to_json
