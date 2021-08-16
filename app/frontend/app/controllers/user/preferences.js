@@ -68,7 +68,7 @@ export default Controller.extend({
   dimLevelList: [
     {name: i18n.t('default_dimmed', "Default Dimmed"), id: "default_dim"},
     {name: i18n.t('barely_dimmed', "Barely Dimmed"), id: "barely_dim"},
-    {name: i18n.t('semi_dimmed', "Semi-Dimmed"), id: "semi_dim"},
+    {name: i18n.t('semi_dimmed', "Semi-Dimmed"), id: "mid_dim"},
     {name: i18n.t('extra_dimmed', "Extra-Dimmed"), id: "extra_dim"},
   ],
   externalLinksList: [

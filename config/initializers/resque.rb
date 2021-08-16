@@ -24,6 +24,34 @@ module RedisInit
     @permissions = Redis::Namespace.new("coughdrop-permissions#{ns_suffix}", :redis => redis)
     self.cache_token = 'abc'
   end
+
+  def size_check
+    uri = redis_uri
+    redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+    total =  0
+    redis.keys.each do |key|
+      type = redis.type(key)
+      size = 0
+      if type == 'list'
+        len = redis.llen(key)
+        size = redis.lrange(key, 0, len).to_json.length
+      elsif type == 'string'
+        size = redis.get(key).length
+      elsif type == 'none'
+      elsif type == 'set'
+        size = redis.smembers(key).to_json.length
+      elsif type == 'hash'
+        size = redis.hgetall(key).to_json.length
+      else
+        raise "unknown type: #{type}"
+      end
+      total += size
+      if size > 500000
+        puts "#{key}\t#{size}"
+      end
+    end
+    puts "total size\t#{total}"
+  end
   
   def self.default
     @default
