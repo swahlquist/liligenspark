@@ -2709,6 +2709,8 @@ var app_state = EmberObject.extend({
         $clone.find(".button-label").text(label_override);
         if(!button.text_only && $clone[0].querySelector('.symbol')) {
           $clone[0].querySelector('.button-label').style.fontSize = '';
+          var sym = $clone[0].querySelector('.symbol')
+          if(sym) { sym.style.display = ''; }
         }
       }
       var wait_to_fade = 1500;
