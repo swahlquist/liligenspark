@@ -1013,7 +1013,7 @@ CoughDrop.Board = DS.Model.extend({
       lbls.push(lbls_tmp[idx]);
     }
     lbls.forEach(function(lbl) {
-      if(lbl.classList.contains('button-label')) {
+      if(lbl.classList.contains('button-label') && !lbl.closest('.clone')) {
         lbl.innerText = lbl.getAttribute('original-text');
         lbl.classList.remove('tweaked_label');
       }

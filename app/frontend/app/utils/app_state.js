@@ -2859,7 +2859,7 @@ var app_state = EmberObject.extend({
       $clone.addClass('selecting');
       $clone.addClass('clone');
 
-      // Have to reposition of moving to/from keyboard suggestion board
+      // Have to reposition if moving to/from keyboard suggestion board
       var offset_y = $("#word_suggestions").height() || 0;
       var checky = function() {
         if(!$clone.removed) {
