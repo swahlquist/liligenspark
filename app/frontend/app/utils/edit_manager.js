@@ -484,8 +484,6 @@ var editManager = EmberObject.extend({
               updated_button.image = infl.image;
               updated_button.image_id = infl.image_id;
             } else {
-              updated_button.image = null;
-              updated_button.image_id = null;
               updated_button.text_only = true;
             }
             updated_button.tweaked = true;

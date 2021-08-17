@@ -2707,6 +2707,9 @@ var app_state = EmberObject.extend({
       var $clone = $button.clone().addClass('hover_button').addClass('touched');
       if(label_override) {
         $clone.find(".button-label").text(label_override);
+        if(!button.text_only && $clone.querySelector('.symbol')) {
+          $clone.querySelector('.button-label').style.fontSize = '';
+        }
       }
       var wait_to_fade = 1500;
       // TODO: wait_to_fade should be configurable maybe
