@@ -1174,6 +1174,10 @@ CoughDrop.Board = DS.Model.extend({
               if(button.text_only) {
                 var width = parseInt(btn.style.width, 10);
                 var height = parseInt(btn.style.height, 10);
+                var sym = btn.querySelector('.symbol');
+                if(sym) {
+                  sym.style.display = 'none';
+                }
                 var fit = capabilities.fit_text(lbl.innerText, font_family || 'Arial', width, height, 10);
                 if(fit.any_fit) {
                   lbl.style.fontSize = fit.size + "px";
