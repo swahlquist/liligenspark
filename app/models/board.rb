@@ -968,7 +968,7 @@ class Board < ActiveRecord::Base
     self.settings['text_only'] = params['text_only'] if params['text_only'] != nil
     self.settings['never_edited'] = false if self.id
     button_params = params['buttons']
-    button_params.instance_variable_set('@add_voc_error', non_user_params['add_voc_error'])
+    button_params.instance_variable_set('@add_voc_error', non_user_params['add_voc_error']) if button_params
     process_buttons(params['buttons'], non_user_params[:user], non_user_params[:author], params['translations']) if params['buttons']
     prior_license = self.settings['license'].to_json
     process_license(params['license']) if params['license']
