@@ -363,7 +363,7 @@ var editManager = EmberObject.extend({
         "too": ['much', 'many'],
         "this": ['one', 'will', 'can'],
         "that": ['one', 'will', 'can'],
-        "these": ['ones', 'will' 'can'],
+        "these": ['ones', 'will', 'can'],
         "those": ['ones', 'will', 'can'],
         "figure": ['it'],
         "look": ['for', 'at', 'out'],
