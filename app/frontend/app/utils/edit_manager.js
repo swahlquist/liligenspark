@@ -118,16 +118,16 @@ var editManager = EmberObject.extend({
       });
       var parts = line.split(/=/);
       if(parts.length == 2) {
-        var str = parts.pop();
-        var words = parts[0].split(/\s+/);
-        if(words.length > 1) {
-          words.forEach(function(w, idx) {
+        var replacement = parts.pop();
+        var pre_words = parts[0].split(/\s+/);
+        if(pre_words.length > 0) {
+          pre_words.forEach(function(w, idx) {
             if(subs[w]) {
-              words[idx] = subs[w];
+              pre_words[idx] = subs[w];
             }
           });
-          words.push(str);
-          list.push(words);
+          pre_words.push(replacement);
+          list.push(pre_words);
         }
       }
     });
@@ -315,15 +315,18 @@ var editManager = EmberObject.extend({
       return valid;
     };
     if(history.length > 0) {
+      // TODO: use helpers for buttons with a rule for
+      // :helpers, this means the button can be replaced
+      // by these when rules match.
       var helpers = {
-        "I": ['really', 'have', 'did'],
-        "will be": ['ready', 'your'],
-        "have been": ['ready', 'waiting'],
-        "will": ['see'],
-        "my": ['self'],
-        "is": ['she', 'he'],
-        "can": ['she', 'he'],
-        "will": ['she', 'he'],
+        "I": ['really', 'have', 'did', 'will', 'can'],
+        "will be": ['ready', 'your', 'a'],
+        "have been": ['ready', 'waiting', 'a'],
+        "will": ['see', 'we'],
+        "my": ['self', 'will'],
+        "is": ['she', 'he', 'a'],
+        "can": ['she', 'he', 'we', 'a'],
+        "will": ['she', 'he', 'we', 'a'],
         "was": ['she', 'he'],
         "are": ['they', 'we'],
         "were": ['they', 'we'],
@@ -331,18 +334,18 @@ var editManager = EmberObject.extend({
         "to": ['take', 'have', 'give', 'listen', 'see'],
         "take": ['a break', 'a nap', 'a picture', 'a bath'],
         "a": ['little', 'lot', '+bout'],
-        "lot": ['of'],
+        "lot": ['of', 'will', 'can'],
         "thank you": ['very'],
         "very": ['much', 'big'],
         "go": ['away'],
         "going": ['again', 'before', 'after'],
         "tell": ['me'],
         "tell me": ['something', 'a story'],
-        "something": ['about'],
+        "something": ['about', 'we', 'will', 'can'],
         "the": ['best'],
-        "somebody": ['else'],
-        "someone": ['else'],
-        "what": ['+ever', 'happened'],
+        "somebody": ['else', 'will', 'can'],
+        "someone": ['else', 'will', 'can'],
+        "what": ['+ever', 'happened', 'we', 'will', 'can'],
         "picture": ['of'],
         "getting": ['tired', 'ready'],
         "tired": ['of'],
@@ -358,10 +361,10 @@ var editManager = EmberObject.extend({
         "turn": ['over', 'the page'],
         "to": ['+o'],
         "too": ['much', 'many'],
-        "this": ['one'],
-        "that": ['one'],
-        "these": ['ones'],
-        "those": ['ones'],
+        "this": ['one', 'will', 'can'],
+        "that": ['one', 'will', 'can'],
+        "these": ['ones', 'will' 'can'],
+        "those": ['ones', 'will', 'can'],
         "figure": ['it'],
         "look": ['for', 'at', 'out'],
         "+er": ['than'],

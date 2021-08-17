@@ -417,7 +417,7 @@ CoughDrop.Board = DS.Model.extend({
           var inflection_types = editManager.inflection_for_types(history || [], label_locale);
 
           res.forEach(function(button) {
-            var rules = (label_locale && (trans[label_locale] || {}).rules) || button.rules || [];
+            var rules = (label_locale && trans[button.id] && (trans[button.id][label_locale] || {}).rules) || button.rules || [];
             var already_replaced = false;
             if(rules.length > 0 && !already_replaced) {
               var rule = utterance.first_rules(rules, history, true)[0];
