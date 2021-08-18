@@ -2721,11 +2721,11 @@ var app_state = EmberObject.extend({
       $clone.addClass('hover_button').addClass('touched');
       if(label_override) {
         $clone.find(".button-label").text(label_override);
-        if(!button.text_only && $clone[0].querySelector('img.symbol.overridden')) {
-          $clone[0].querySelector('.button-label').style.fontSize = '';
-          var sym = $clone[0].querySelector('.symbol')
-          if(sym) { sym.style.display = ''; }
-        }
+        // if(!button.text_only && !clone[0].querySelector() && $clone[0].querySelector('img.symbol.overridden')) {
+        //   $clone[0].querySelector('.button-label').style.fontSize = '';
+        //   var sym = $clone[0].querySelector('.symbol')
+        //   if(sym) { sym.style.display = ''; }
+        // }
       }
       var wait_to_fade = 1500;
       // TODO: wait_to_fade should be configurable maybe
