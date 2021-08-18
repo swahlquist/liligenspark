@@ -1128,8 +1128,9 @@ var editManager = EmberObject.extend({
         // TODO: code smell, nobody is ever going
         // to remember that this code exists
         res.set('label', trans_button.label);
+        res.set('original_label', res.get('label'));
         res.set('vocalization', trans_button.vocalization);
-        res.set('text_only', trans_button.text_only);
+        res.set('tweaked', true);
       }
       return res;
     }
