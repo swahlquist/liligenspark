@@ -2465,7 +2465,6 @@ var app_state = EmberObject.extend({
       $button_clone = $button.clone();
       $button_clone.clone = true;
     }
-
     // only certain buttons should be added to the sentence box
     var button_to_speak = obj;
     var specialty_button = null;
@@ -2703,9 +2702,10 @@ var app_state = EmberObject.extend({
   },
   highlight_selected_button: function(button, overlay, label_override, $clone) {
     // TODO: ensure you are using the auto-inflected label for the highlight
-    var $button = $clone || $(".button[data-id='" + button.id + "']");
+    var $button = $(".button[data-id='" + button.id + "']");
     if(overlay) {
       $button = $(overlay);
+      $clone = $button;
     }
     if(button.id != -1 && $button.length) {
       var $board = $(".board:first");
@@ -2713,7 +2713,7 @@ var app_state = EmberObject.extend({
       var width = $button.outerWidth();
       var height = $button.outerHeight();
       var offset = $button.offset();
-      var $clone = $button;
+      $clone = $clone || $button;
       if(!$clone.clone) {
         $clone = $clone.clone();
         $clone.clone = true;
