@@ -2584,7 +2584,7 @@ var app_state = EmberObject.extend({
     // highlight the button that if highlights are enabled
     if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode') && !skip_highlight) {
       if(button_added_or_spoken || app_state.get('referenced_user.preferences.highlighted_buttons') == 'all') {
-        app_state.highlight_selected_button(button, overlay, obj.label, clone);
+        app_state.highlight_selected_button(button, overlay, obj.label, $button_clone);
       }
     }
     if(button.board && button.board.prompt) {
