@@ -554,17 +554,20 @@ var Button = EmberObject.extend({
         var vocalization = hash[code].vocalization;
         if(vocalization_locale == code) { vocalization = _this.get('vocalization'); }
         var inflections = hash[code].inflections;
+        var rules = hash[code].rules;
         if(res[idx]) {
           emberSet(res[idx], 'label', label);
           emberSet(res[idx], 'vocalization', vocalization);
           emberSet(res[idx], 'inflections', inflections);
+          emberSet(res[idx], 'rules', inflections);
         } else {
           res.push({
             code: code,
             locale: code,
             label: label,
             inflections: inflections,
-            vocalization: vocalization
+            vocalization: vocalization,
+            rules: rules
           });
         }
         idx++;
