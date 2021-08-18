@@ -480,7 +480,7 @@ var editManager = EmberObject.extend({
             if(infl.board_id) {
               updated_button.load_board = { id: infl.board_id, key: infl.board_key };
             }
-            if(infl.image) {
+            if(infl.image && updated_button.original_label == updated_button.label) {
               updated_button.image = infl.image;
               updated_button.image_id = infl.image_id;
             } else {

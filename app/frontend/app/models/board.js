@@ -1016,6 +1016,11 @@ CoughDrop.Board = DS.Model.extend({
       if(lbl.classList.contains('button-label') && !lbl.closest('.clone')) {
         lbl.innerText = lbl.getAttribute('original-text');
         lbl.classList.remove('tweaked_label');
+        var sym = lbl.closest('.button').querySelector('img.symbol.overridden');
+        if(sym) {
+          sym.style.display = '';
+          lbl.style.fontSize = '';
+        }
       }
     });
   },
@@ -1177,6 +1182,7 @@ CoughDrop.Board = DS.Model.extend({
                 var sym = btn.querySelector('.symbol');
                 if(sym) {
                   sym.style.display = 'none';
+                  sym.classList.add('overridden');
                 }
                 var fit = capabilities.fit_text(lbl.innerText, font_family || 'Arial', width, height, 10);
                 if(fit.any_fit) {
