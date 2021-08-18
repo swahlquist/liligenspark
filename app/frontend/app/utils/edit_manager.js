@@ -1121,9 +1121,15 @@ var editManager = EmberObject.extend({
     var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
     if(res) {
       var trans_button = buttons.find(function(b) { return b.id == id; });
+      // If contextualized button exists, we should
+      // override with that button's display settings
+      // as long as we're not editing the button
       if(trans_button && !emberGet(res, 'user_modified')) {
+        // TODO: code smell, nobody is ever going
+        // to remember that this code exists
         res.set('label', trans_button.label);
         res.set('vocalization', trans_button.vocalization);
+        res.set('text_only', trans_button.text_only);
       }
       return res;
     }

@@ -2457,6 +2457,15 @@ var app_state = EmberObject.extend({
     var overlay = obj.overlay;
     delete obj['overlay'];
 
+    // Clone now, because once you call add_button
+    // then the original button will change.
+    var $button_clone = null;
+    var $button = $(".button[data-id='" + button.id + "']");
+    if(button.id != -1 && $button.length) {
+      $button_clone = $button.clone();
+      $button_clone.clone = true;
+    }
+
     // only certain buttons should be added to the sentence box
     var button_to_speak = obj;
     var specialty_button = null;
@@ -2575,7 +2584,7 @@ var app_state = EmberObject.extend({
     // highlight the button that if highlights are enabled
     if((app_state.get('referenced_user.preferences.highlighted_buttons') || 'none') != 'none' && app_state.get('speak_mode') && !skip_highlight) {
       if(button_added_or_spoken || app_state.get('referenced_user.preferences.highlighted_buttons') == 'all') {
-        app_state.highlight_selected_button(button, overlay, obj.label);
+        app_state.highlight_selected_button(button, overlay, obj.label, clone);
       }
     }
     if(button.board && button.board.prompt) {
@@ -2692,9 +2701,9 @@ var app_state = EmberObject.extend({
     });
     return res;
   },
-  highlight_selected_button: function(button, overlay, label_override) {
+  highlight_selected_button: function(button, overlay, label_override, $clone) {
     // TODO: ensure you are using the auto-inflected label for the highlight
-    var $button = $(".button[data-id='" + button.id + "']");
+    var $button = $clone || $(".button[data-id='" + button.id + "']");
     if(overlay) {
       $button = $(overlay);
     }
@@ -2704,7 +2713,12 @@ var app_state = EmberObject.extend({
       var width = $button.outerWidth();
       var height = $button.outerHeight();
       var offset = $button.offset();
-      var $clone = $button.clone().addClass('hover_button').addClass('touched');
+      var $clone = $button;
+      if(!$clone.clone) {
+        $clone = $clone.clone();
+        $clone.clone = true;
+      }
+      $clone.addClass('hover_button').addClass('touched');
       if(label_override) {
         $clone.find(".button-label").text(label_override);
         if(!button.text_only && $clone[0].querySelector('img.symbol.overridden')) {
