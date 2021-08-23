@@ -907,7 +907,7 @@ class LogSession < ActiveRecord::Base
   end
   
   def split_out_later_sessions(frd=false)
-    return if @skip_split_out_later_sessions 
+    return if @skip_split_out_later_sessions || @skip_extra_data_update
     # Step 1: stash away any just-added events to prevent clobbering
     if @just_added_events && @just_added_events.length > 0
       JobStash.add_events_to(self, @just_added_events, 'initial')
