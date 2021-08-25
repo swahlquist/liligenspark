@@ -10,7 +10,7 @@ export default Component.extend({
   willInsertElement: function() {
     this.set_board_record();
   },
-  set_board_record: observer('board', 'board.key', function() {
+  set_board_record: observer('board', 'board.key', 'board.children', 'board.children.length', function() {
     var board = this.get('board');
     if(board.children) {
       this.set('children', board.children);
