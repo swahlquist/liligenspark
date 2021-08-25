@@ -315,70 +315,6 @@ var editManager = EmberObject.extend({
       return valid;
     };
     if(history.length > 0) {
-      // TODO: use helpers for buttons with a rule for
-      // :helpers, this means the button can be replaced
-      // by these when rules match.
-      var helpers = {
-        "I": ['really', 'have', 'did', 'will', 'can'],
-        "will be": ['ready', 'your', 'a'],
-        "have been": ['ready', 'waiting', 'a'],
-        "will": ['see', 'we'],
-        "my": ['self', 'will'],
-        "is": ['she', 'he', 'a'],
-        "can": ['she', 'he', 'we', 'a'],
-        "will": ['she', 'he', 'we', 'a'],
-        "was": ['she', 'he'],
-        "are": ['they', 'we'],
-        "were": ['they', 'we'],
-        "going": ['to', 'away', 'back'],
-        "to": ['take', 'have', 'give', 'listen', 'see'],
-        "take": ['a break', 'a nap', 'a picture', 'a bath'],
-        "a": ['little', 'lot', '+bout'],
-        "lot": ['of', 'will', 'can'],
-        "thank you": ['very'],
-        "very": ['much', 'big'],
-        "go": ['away'],
-        "going": ['again', 'before', 'after'],
-        "tell": ['me'],
-        "tell me": ['something', 'a story'],
-        "something": ['about', 'we', 'will', 'can'],
-        "the": ['best'],
-        "somebody": ['else', 'will', 'can'],
-        "someone": ['else', 'will', 'can'],
-        "what": ['+ever', 'happened', 'we', 'will', 'can'],
-        "picture": ['of'],
-        "getting": ['tired', 'ready'],
-        "tired": ['of'],
-        "get": ['ready', 'dressed'],
-        "listen to": ['music', 'something'],
-        "feel": ['really', 'good', 'so'],
-        "come": ['here'],
-        "my": ['turn'],
-        "your": ['turn'],
-        "[verb]": [':ed', ':s', ':ing'],
-        "[adjective]": [':er', ':est'],
-        "really": ['good'],
-        "turn": ['over', 'the page'],
-        "to": ['+o'],
-        "too": ['much', 'many'],
-        "this": ['one', 'will', 'can'],
-        "that": ['one', 'will', 'can'],
-        "these": ['ones', 'will', 'can'],
-        "those": ['ones', 'will', 'can'],
-        "figure": ['it'],
-        "look": ['for', 'at', 'out'],
-        "+er": ['than'],
-        "I don't": ['know', 'get it', 'understand'],
-        "need": ['help', 'a break', 'a hug'],
-        "want": ['some', 'a turn'],
-        "come": ['back', 'here', 'away'],
-        "play": ['again'],
-        "look": ['at'],
-        "stop": ['it'],
-        "put": ['it'],
-        "I am": ['ready'],
-        "for": ['now', 'you'],
-      };
       // TO BE verb overrides
       var overrides = [];
       overrides.push({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
@@ -408,12 +344,14 @@ var editManager = EmberObject.extend({
       }});
       overrides.push({lookback: [{words: ["he", "she"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
+        inflections["is"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
         inflections["no"] = {type:'override', label: "doesn't"};
         inflections["not"] = {type:'override', label: "isn't"};
       }});
       overrides.push({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
+        inflections["is"] = {type:'override', label: "is"};
         inflections["were"] = {type:'override', label: "was"};
         inflections["no"] = {type:'override', label: "doesn't"};
         inflections["not"] = {type:'override', label: "isn't"};
