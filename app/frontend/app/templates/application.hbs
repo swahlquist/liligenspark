@@ -382,7 +382,7 @@
           </ul>
         </span>
         <span class="not_really_skinny">
-          <button class="btn btn-primary" {{action "saveBoard"}}><span class="wide">{{t "Save" key="save"}}</span><span class="skinny glyphicon glyphicon-floppy-disk"></span></button>
+          <button class="btn btn-primary" {{action "saveBoard"}}><span class="wide">{{t "Save" key="save"}}{{#if board.model.multiple_locales}}{{#if board.model.button_locale}}<div style='height: 5px; margin-top: -5px; font-style: italic;'>( {{board.model.button_locale}} )</div>{{/if}}{{/if}}</span><span class="skinny glyphicon glyphicon-floppy-disk"></span></button>
           <button class="btn btn-default" {{action "resetBoard"}}><span class="wide">{{t "Cancel" key="cancel"}}</span><span class="skinny glyphicon glyphicon-remove"></span></button>
         </span>
       {{/if}}

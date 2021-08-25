@@ -677,6 +677,11 @@ export default Controller.extend({
     },
     tweakBoard: function(decision) {
       var _this = this;
+      var update_locale = null;
+      if(decision.update_locale) {
+        update_locale = decision.update_locale;
+        decision = null;
+      }
       app_state.check_for_needing_purchase().then(function() {
         app_state.assert_source().then(function() {
           if(app_state.get('edit_mode')) {
@@ -684,10 +689,14 @@ export default Controller.extend({
           }
           _this.copy_board(decision).then(function(board) {
             if(board) {
-              stashes.persist('label_locale', null);
-              stashes.persist('vocalization_locale', null);
-              stashes.persist('override_label_locale', null);
-              stashes.persist('override_vocalization_locale', null);
+              stashes.persist('label_locale', update_locale);
+              stashes.persist('vocalization_locale', update_locale);
+              stashes.persist('override_label_locale', update_locale);
+              stashes.persist('override_vocalization_locale', update_locale);
+              if(update_locale) {
+                app_state.set('label_locale', update_locale);
+                app_state.set('vocalization_locale', update_locale);  
+              }
               app_state.jump_to_board({
                 id: board.id,
                 key: board.key

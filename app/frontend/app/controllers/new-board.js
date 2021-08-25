@@ -293,6 +293,9 @@ export default modal.ModalController.extend({
         this.set('model.categories', cats);
       }
       this.get('model').save().then(function(board) {
+        board.set('button_locale', board.get('locale'));
+        app_state.set('label_locale', board.get('locale'));
+        app_state.set('vocalization_locale', board.get('locale'));
         _this.set('status', null);
         modal.close(true);
         editManager.auto_edit(board.get('id'));

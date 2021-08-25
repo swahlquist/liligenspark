@@ -113,12 +113,14 @@ export default Controller.extend({
     var _this = this;
 
     var button_locale = this.get('model.button_locale') || app_state.get('label_locale');
+    var update_locale = false;
     var needs_redraw = false;
     // If editing for a non-default locale, we
     // will need to revert all the localized values and
     // apply them as a translation instead
     if(button_locale && button_locale != this.get('model.locale')) {
       var changes = this.get('model').changedAttributes();
+      update_locale = button_locale;
       if(changes.name && changes.name[0] != changes.name[1]) {
         var trans = this.get('model.translations') || {};
         trans.board_name = trans.board_name || {};
@@ -176,13 +178,19 @@ export default Controller.extend({
     this.processButtons();
 
     if(app_state.get('currentBoardState.id') && stashes.get('copy_on_save') == app_state.get('currentBoardState.id')) {
-      app_state.controller.send('tweakBoard');
+      app_state.controller.send('tweakBoard', {update_locale: update_locale});
       return;
     }
     app_state.toggle_mode('edit');
 
     var board = this.get('model');
     board.save().then(function(brd) {
+      if(update_locale) {
+        stashes.persist('label_locale', update_locale);
+        app_state.set('label_locale', update_locale);
+        stashes.persist('vocalization_locale', update_locale);
+        app_state.set('vocalization_locale', update_locale);
+      }
       editManager.process_for_displaying();
       if(brd.get('protected_material') && brd.get('visibility') != 'private') {
         modal.notice(i18n.t('remember_fallbacks', "This board has premium content, any users who access it without premium access will see free alternatives instead."), true, false, {timeout: 5000});

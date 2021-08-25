@@ -767,6 +767,8 @@ var app_state = EmberObject.extend({
       if(board.get('locale') && !app_state.get('speak_mode')) {
         stashes.persist('label_locale', board.get('locale'));
         stashes.persist('vocalization_locale', board.get('locale'));
+        app_state.set('label_locale', stashes.get('label_locale'));
+        app_state.set('vocalization_locale', stashes.get('vocalization_locale'));
       }
       if(board.get('editable_source_key')) {
         var load_board = function() {
@@ -959,10 +961,24 @@ var app_state = EmberObject.extend({
       stashes.persist('copy_on_save', null);
     } else {
       if(mode == 'edit') {
-        if(app_state.controller.get('board.model')) {
+        var brd = app_state.controller.get('board.model');
+        if(brd) {
+          var pref_locale = app_state.get('label_locale');
           app_state.controller.set('board.model.button_locale', app_state.controller.get('board.model.locale'));
-          if(app_state.get('label_locale') && app_state.controller.get('board.model.locale') != app_state.get('label_locale')) {
-            app_state.controller.set('board.model.button_locale', app_state.get('label_locale'));
+          if(!brd.get('translated_locales').includes(pref_locale)) {
+            if(brd.get('translated_locales').includes(pref_locale.split(/-|_/)[0])) {
+              pref_locale = pref_locale.split(/-|_/)[0];
+            } else {
+              var found_loc = brd.get('translated_locales').find(function(l) { return pref_locale = l.split(/-|_/)[0]; });
+              if(found_loc) {
+                pref_locale = found_loc;
+              } else {
+                pref_locale = null;
+              }
+            }
+          }
+          if(pref_locale && app_state.controller.get('board.model.locale') != pref_locale) {
+            app_state.controller.set('board.model.button_locale', pref_locale);
           }
         }
         stashes.persist('last_mode', stashes.get('current_mode'));
