@@ -22,6 +22,14 @@ var emergency = {
     obf.emergency = emergency;
   },
 };
+var colors = {
+  'green': {bg: 'rgb(204, 255, 170)', border:  'rgb(102, 221, 0)'},
+  'yellow': {bg: 'rgb(255, 255, 170)', border:  'rgb(221, 221, 0)'},
+  'blue': {bg: 'rgb(170, 204, 255)', border:  'rgb(17, 112, 255)'},
+  'red': {bg: 'rgb(255, 170, 170)', border:  'rgb(255, 17, 17)'},
+  'purple': {bg: 'rgb(204, 170, 255)', border:  'rgb(112, 17, 255)'},
+  'gray': {bg: 'rgb(204, 204, 204)', border:  'rgb(128, 128, 128)'},
+}
 
 var words = {
   "germs": {path: "bacteria.svg", url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Bacteria_480_g.svg", license: {type: "CC-By", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", source_url: "Maxim Kulikov", author_name: "Blair Adams", author_url: "http://thenounproject.com/maxim221"}},
@@ -57,7 +65,7 @@ var words = {
   "shake-hands": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/shake hands.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "shake-hands.png"},
   "smell": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/sense of smell.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "smell.png"},
   "quiet": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Quiet-Space_281_g.svg", license: {type: "public domain", copyright_notice_url: "https://creativecommons.org/publicdomain/zero/1.0/", source_url: "", author_name: "Iconathon", author_url: "http://thenounproject.com/Iconathon1"}, path: "quiet.svg"},
-  "not": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/without.jpg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/4.0/", source_url: "", author_name: "Mada, HMC and University of Southampton", author_url: "http://www.tawasolsymbols.org/"}, path: "not.jpg"},
+  "not": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/former.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "not.png"},
   "leave": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/leave.jpg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/4.0/", source_url: "", author_name: "Mada, HMC and University of Southampton", author_url: "http://www.tawasolsymbols.org/"}, path: "leave.jpg"},
   "noisy": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/noisy.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "noisy.png"},
   "when": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Time-880d4b0e2b.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/", source_url: "http://thenounproject.com/site_media/svg/13234e94-6b08-4d4d-abb8-03c7af444b62.svg", author_name: "Wayne Middleton", author_url: "http://thenounproject.com/Wayne25uk"}, path: "when.svg"},
@@ -107,7 +115,36 @@ var words = {
   "that-was-scary": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Scared_176_320418.svg", license: {type: "CC By", copyright_notice_url: "http://creativecommons.org/licenses/by/3.0/us/", source_url: "", author_name: "Oliviu Stoian", author_url: "http://thenounproject.com/smashicons"}, path: "that-was-scary.svg"},
   "go-home": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/home.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "go-home.png"},
   "miss-friends": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/friends.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "miss-friends.png"},
-};
+  "stop": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/sclera/stop.png", license: {type: "CC BY-NC", copyright_notice_url: "http://creativecommons.org/licenses/by-nc/2.0/", source_url: "", author_name: "Sclera", author_url: "http://www.sclera.be/en/picto/copyright"}, path: "stop.png"},
+  "who": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/who.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "who.png"},
+  "what": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/what.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "what.png"},
+  "where": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/where.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "", author_name: "Paxtoncrafts Charitable Trust ", author_url: "http://straight-street.org/lic.php"}, path: "where.svg"},
+  "can": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/can you see it_1.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "can.png"},
+  "in": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/in.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "", author_name: "Paxtoncrafts Charitable Trust ", author_url: "http://straight-street.org/lic.php"}, path: "in.svg"},
+  "up": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/up.svg", license: {type: "CC BY-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-sa/2.0/uk", source_url: "", author_name: "Paxtoncrafts Charitable Trust ", author_url: "http://straight-street.org/lic.php"}, path: "up.svg"},
+  "she": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/she.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "she.png"},
+  "you": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/you.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "you.png"},
+  "put": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/put in a safe place_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "put.png"},
+  "open": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/open.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "open.png"},
+  "different": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/different.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "different.png"},
+  "good": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/good.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "good.png"},
+  "get": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to receive.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "get.png"},
+  "finished": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/finish.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "finished.png"},
+  "here": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/here_1.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "here.png"},
+  "it": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/that_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "it.png"},
+  "some": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/some_1.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "some.png"},
+  "all": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/all - everything.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "all.png"},
+  "that": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/that_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "that.png"},
+  "same": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/the same_1.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "same.png"},
+  "do": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to do exercise_2.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "do.png"},
+  "he": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/he.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "he.png"},
+  "I": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/I.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "I.png"},
+  "turn": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/turn.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "turn.png"},
+  "go": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to go_3.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "go.png"},
+  "more": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/more_1.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "more.png"},
+  "make": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/make - do - write.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "make.png"},
+  "like": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to like.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "like.png"},
+}
 /*
 require 'typhoeus'
 lines = []
@@ -171,6 +208,10 @@ emergency.callback = function(key) {
         if(words[button.label] || words[button.word]) {
           btn.image = (words[button.label] || words[button.word]);
         }
+        if(button.color && colors[button.color]) {
+          btn.background_color = colors[button.color].bg;
+          btn.border_color = colors[button.color].border;
+        }
         board.add_button(btn, idx, jdx)  
       }
     });
@@ -191,9 +232,9 @@ emergency.callback = function(key) {
   return res;
 };
 
-/*
-locale = 'pl'
-path = 'emergency/ussaac-hand-washing-1'
+/* Load a board, output buttons list and any missing word-symbols
+locale = 'en'
+path = 'wahlquist/projectcore-36universalcore'
 words ||= {}
 brd = Board.find_by_path(path)
 imgs = []
@@ -247,8 +288,17 @@ puts ""; lines.each{|l| puts l}; puts ""
 */
 
 emergency.boards = {
+  // http://www.project-core.com/36-location/
   // https://ussaac.org/news/communication_tools_category/communication-tools/
   en: [
+    {id: 'project-core', name: "36 Location Universal Core Communication Board", rows: 6, cols: 6, key: 'wahlquist/projectcore-36universalcore', starter: true, buttons: [
+      [{label: "like", color: 'green'}, {label: "want", color: 'green'}, {label: "get", color: 'green'}, {label: "make", color: 'green'}, {label: "good", color: 'blue'}, {label: "more", color: 'gray'}],
+      [{label: "not", color: 'red'}, {label: "go", color: 'green'}, {label: "look", color: 'green'}, {label: "turn", color: 'green'}, {label: "help", color: 'green'}, {label: "different", color: 'blue'}],
+      [{label: "I", color: 'yellow'}, {label: "he", color: 'yellow'}, {label: "open", color: 'green'}, {label: "do", color: 'green'}, {label: "put", color: 'green'}, {label: "same", color: 'blue'}],
+      [{label: "you", color: 'yellow'}, {label: "she", color: 'yellow'}, {label: "that", color: 'gray'}, {label: "up", color: 'blue'}, {label: "all", color: 'gray'}, {label: "some", color: 'gray'}],
+      [{label: "it", color: 'yellow'}, {label: "here", color: 'blue'}, {label: "in", color: 'blue'}, {label: "on", color: 'blue'}, {label: "can", color: 'purple'}, {label: "finished", color: 'blue'}],
+      [{label: "where", color: 'purple'}, {label: "what", color: 'purple'}, {label: "why", color: 'purple'}, {label: "who", color: 'purple'}, {label: "when", color: 'purple'}, {label: "stop", color: 'red'}]
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
     {id: 'ussaac-covid-1', name: "USSAAC - Covid General Terms (2 x 4)", rows: 2, cols: 4, key: 'emergency/ussaac-covid-1', starter: true, buttons: [
       [{label: "germs"}, {label: "virus"}, {label: "coronavirus"}, {label: "sick"}],
       [{label: "pandemic"}, {label: "quarantine"}, {label: "stay safe", word: "safe"}, {label: "social distancing", word: "social-distancing"}],
