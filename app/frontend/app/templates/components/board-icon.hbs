@@ -1,6 +1,11 @@
 <a href="/{{board_record.key}}" {{action 'pick_board' board_record}} class={{display_class}}>
   {{#unless noinfo}}
-    <a {{action 'board_preview' board_record bubbles=false}} class='info'><span class='glyphicon glyphicon-info-sign'></span></a>
+    <a {{action 'board_preview' board_record bubbles=false}} class='info'>
+      <span class='glyphicon glyphicon-info-sign'></span>
+      {{#if board_record.grid.rows}}
+        <span class='size'>{{board_record.grid.rows}} x {{board_record.grid.columns}}</span>
+      {{/if}}
+    </a>
   {{/unless}}
   <img src={{board_record.icon_url_with_fallback}} onerror="button_broken_image(this);"/>
   <div class={{if noinfo 'name compact' 'name'}}>

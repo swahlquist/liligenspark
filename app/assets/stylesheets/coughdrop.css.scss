@@ -3046,6 +3046,16 @@ $nav_extras: #eee;
     border-bottom-left-radius: 10px; 
     border-top-right-radius: 15px; 
     background: rgba(255, 255, 255, 0.7); color: #aaa;
+    .size {
+      font-size: 14px;
+      position: absolute;
+      top: 35px;
+      right: 0;
+      color: #777;
+      width: 100%;
+      text-align: center;
+    }
+  
   }
   .name {
     width: 100%; 
@@ -3069,6 +3079,9 @@ $nav_extras: #eee;
     height: 180px;
     font-size: 20px;
     padding: 10px 0;
+    .info .size {
+      top: 30px;
+    }
     img {
       margin-bottom: 5px;
       height: 100px;
@@ -3084,6 +3097,10 @@ $nav_extras: #eee;
     height: 150px;
     font-size: 15px;
     padding: 10px 0;
+    .info .size {
+      top: 24px;
+      font-size: 13px;
+    }
     img {
       margin-bottom: 0px;
       height: 85px;
@@ -3099,6 +3116,10 @@ $nav_extras: #eee;
     height: 120px;
     font-size: 14px;
     padding: 10px 0;
+    .info .size {
+      top: 24px;
+      font-size: 12px;
+    }
     img {
       margin-bottom: 0px;
       height: 60px;
