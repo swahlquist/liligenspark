@@ -622,14 +622,14 @@ var utterance = EmberObject.extend({
   contraction: function() {
     var buttons = app_state.get('button_list').slice(-2);
     var str_2 = buttons.map(function(b) { return b.label; }).join(' ');
-    var str_1 = buttons[buttons.length - 1].label;
+    var str_1 = (buttons[buttons.length - 1] || {}).label;
     var res = null;
     for(var words in i18n.substitutions.contractions) {
       if(!res) {
         var words_minus_last = words.split(/\s+/).slice(0, -1).join(' ');
-        if(words.length > 0 && str_2 == words) {
+        if(words.length > 0 && str_2 && str_2.toLowerCase() == words) {
           res = {lookback: words.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
-        } else if(words_minus_last.length > 0 && str_1 == words_minus_last) {
+        } else if(words_minus_last.length > 0 && str_1 && str_1.toLowerCase() == words_minus_last) {
           res = {lookback: words_minus_last.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
         }
       }
