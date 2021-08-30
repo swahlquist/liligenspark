@@ -994,7 +994,7 @@ CoughDrop.Board = DS.Model.extend({
         } else{
         }
       }
-      var res = CoughDrop.Buttonset.load_button_set(this.get('id'), force).then(function(button_set) {
+      var res = CoughDrop.Buttonset.load_button_set(this.get('id'), force, this.get('full_set_revision')).then(function(button_set) {
         _this.set('button_set', button_set);
         if((_this.get('fresh') || force) && !button_set.get('fresh')) {
           return button_set.reload().then(function(bs) { return bs.load_buttons(force); });

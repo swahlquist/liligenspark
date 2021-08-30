@@ -58,7 +58,7 @@ module ExtraData
           self.data['extra_data_private_path'] = res[:path]
           self.data.delete('private_cdn_url')
           self.data.delete('remote_paths')
-          self.data('private_cdn_revision')
+          self.data.delete('private_cdn_revision')
         end
         if res && self.is_a?(BoardDownstreamButtonSet)
           self.data['extra_data_revision'] = self.data['full_set_revision']

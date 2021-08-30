@@ -1002,7 +1002,7 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
   }
   return RSVP.resolve();
 };
-CoughDrop.Buttonset.load_button_set = function(id, force) {
+CoughDrop.Buttonset.load_button_set = function(id, force, full_set_revision) {
   // use promises to make this call idempotent
   CoughDrop.Buttonset.pending_promises = CoughDrop.Buttonset.pending_promises || {};
   var promise = CoughDrop.Buttonset.pending_promises[id];
@@ -1076,9 +1076,11 @@ CoughDrop.Buttonset.load_button_set = function(id, force) {
 
   var res = CoughDrop.store.findRecord('buttonset', id).then(function(button_set) {
     var reload = RSVP.resolve(button_set);
+    // Force a reload if the revisions don't match
+    var wrong_revision = full_set_revision && button_set.get('full_set_revision') != full_set_revision;
     // try to reload before checking for root_url 
     // to ensure we have the freshest result
-    if(persistence.get('online') && !button_set.get('fresh')) {
+    if(persistence.get('online') && (!button_set.get('fresh') || force || wrong_revision)) {
       reload = button_set.reload().then(null, function(err) {
         return RSVP.resolve(button_set) 
       });
