@@ -303,7 +303,7 @@ CoughDrop.Buttonset = DS.Model.extend({
     from_board_id = from_board_id || app_state.get('currentBoardState.id');
     var button_sets = [_this];
     var lookups = [RSVP.resolve()];
-    var home_board_id = stashes.get('root_board_state.id') || (user && user.get('preferences.home_board.id'));
+    var home_board_id = (app_state.get('speak_mode') && stashes.get('root_board_state.id')) || (user && user.get('preferences.home_board.id'));
     //    var buttons = this.get('buttons') || [];
 
     if(include_home_and_sidebar) {
