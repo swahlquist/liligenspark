@@ -25,7 +25,7 @@ module RedisInit
     self.cache_token = 'abc'
   end
 
-  def size_check
+  def self.size_check
     uri = redis_uri
     redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
     total =  0
