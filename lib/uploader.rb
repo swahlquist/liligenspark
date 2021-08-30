@@ -27,7 +27,7 @@ module Uploader
     # upload to s3 from tempfile
     res = Typhoeus.post(params[:upload_url], body: post_params)
     if res.success?
-      return {url: params[:upload_url] + remote_path, path: remote_path}
+      return {url: params[:upload_url] + remote_path, path: remote_path, uploaded: true}
     else
       if res.body && res.body.match(/SlowDown/)
         raise "throttled uploading to #{remote_path}"
