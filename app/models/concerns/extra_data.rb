@@ -51,10 +51,14 @@ module ExtraData
         file.write(json)
         file.close
         # Uploader.invalidate_cdn(private_path)
+        # TODO: if upload is throttled, flag it as needing cooldown and schedule it for later
         res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
-        if res && res[:path] && res[:path] != private_path
-          Uploader.remote_remove_later(private_path)
+        if res && res[:path] && (res[:path] != private_path || res[:uploaded])
+          Uploader.remote_remove_later(private_path) if res[:path] != private_path
           self.data['extra_data_private_path'] = res[:path]
+          self.data.delete('private_cdn_url')
+          self.data.delete('remote_paths')
+          self.data('private_cdn_revision')
         end
         if res && self.is_a?(BoardDownstreamButtonSet)
           self.data['extra_data_revision'] = self.data['full_set_revision']
