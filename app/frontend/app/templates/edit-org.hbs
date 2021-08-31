@@ -26,6 +26,17 @@
       </div>
       {{#if model.org.permissions.delete}}
         <div class="form-group">
+          <label for="org_access" class="col-sm-3 control-label">{{t "Org Access" key='org_access'}}</label>
+          <div class="col-sm-7">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input checked=model.org.org_access type="checkbox"}}
+                {{t "Allow customer access to the org management tool" key='allow_org_access'}}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
           <label for="external_auth" class="col-sm-3 control-label">{{t "Authentication" key='authentication'}}</label>
           <div class="col-sm-7">
             <div class="checkbox big_checkbox">

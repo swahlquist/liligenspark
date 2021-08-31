@@ -113,7 +113,7 @@ CoughDrop.User = DS.Model.extend({
     return this.get('managed_orgs').length > 1;
   }),
   managed_orgs: computed('organizations', function() {
-    return (this.get('organizations') || []).filter(function(o) { return o.type == 'manager'; });
+    return (this.get('organizations') || []).filter(function(o) { return o.type == 'manager' && o.restricted; });
   }),
   managing_supervision_orgs: computed('organizations', function() {
     return (this.get('organizations') || []).filter(function(o) { return o.type == 'supervisor'; });

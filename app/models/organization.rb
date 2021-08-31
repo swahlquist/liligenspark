@@ -13,11 +13,12 @@ class Organization < ActiveRecord::Base
   # cache should be invalidated if:
   # - a manager/assistant is added or removed
   add_permissions('view') { self.settings && self.settings['public'] == true }
-  add_permissions('view', 'edit') {|user| self.assistant?(user) }
-  add_permissions('view', 'edit', 'manage') {|user| self.manager?(user) }
+  add_permissions('view', 'edit') {|user| self.settings['org_access'] != false && self.assistant?(user) }
+  add_permissions('view', 'edit', 'manage') {|user| self.settings['org_access'] != false && self.manager?(user) }
   add_permissions('view', 'edit', 'manage') {|user| self.upstream_manager?(user) }
   add_permissions('view', 'edit', 'manage', 'update_licenses', 'manage_subscription') {|user| Organization.admin && Organization.admin.manager?(user) }
   add_permissions('view') {|user| self.supervisor?(user) }
+  add_permissions('view') {|user| self.settings['org_access'] == false && self.manager?(user) }
   add_permissions('delete') {|user| Organization.admin && !self.admin && Organization.admin.manager?(user) }
   cache_permissions
 
@@ -295,7 +296,7 @@ class Organization < ActiveRecord::Base
     links = UserLink.links_for(user)
     !!links.detect{|l| l['type'] == 'org_manager' && l['record_code'] == Webhook.get_record_code(self) && l['user_id'] == user.global_id && l['state']['full_manager'] }
   end
-  
+
   def upstream_manager?(user)
     org_record_codes = self.upstream_orgs.map{|o| Webhook.get_record_code(o) }
     links = UserLink.links_for(user)
@@ -778,6 +779,7 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['org']['restricted'] if org.settings['org_access'] == false
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_supervisor' && org
