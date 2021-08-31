@@ -94,9 +94,18 @@ var app_state = EmberObject.extend({
             return;
           }
         }
-        var maybe_sound = function(type) {
+        var maybe_sound = function(type, attempt) {
+          attempt = attempt || 0;
           if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.battery_sounds')) {
-            speecher.click(type);
+            if(speecher.speaking) {
+              if(attempt < 5) {
+                runLater(function() {
+                  maybe_sound(type, attempt + 1);
+                }, 5000);  
+              }
+            } else {
+              speecher.click(type);
+            }
           }
         };
         if(battery.level <= 15 && !battery.charging) {
