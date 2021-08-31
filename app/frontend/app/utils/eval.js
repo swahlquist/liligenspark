@@ -15,8 +15,6 @@ import { set as emberSet, observer } from '@ember/object';
 
 // select language when starting assessment
 
-
-
 var pixels_per_inch = 96;
 window.ppi = window.ppi || 96;
 var evaluation = {
@@ -62,6 +60,7 @@ var evaluation = {
     assessment.label = settings.label;
     assessment.accommodations = settings.accommodations;
     assessment.prompts = settings.prompts;
+    assessment.prompts_delay = settings.prompts_delay || 0;
     assessment.chimes = settings.chimes;
     if(settings.for_user && !assessment.saved) {
       if(settings.for_user.user_id == 'self') {
@@ -879,6 +878,7 @@ evaluation.callback = function(key) {
       ppi: window.ppi,
       prompts: true,
       chimes: true,
+      prompts_delay: 1500,
       default_library: 'default',
       name: 'Unnamed Eval',
     };
@@ -1358,7 +1358,8 @@ evaluation.callback = function(key) {
         board.background.position = board.background.position || "center,0,0,6,1";
       }
       board.background.prompt = {
-        text: prompt_text
+        text: prompt_text,
+        timeout: assessment.prompts_delay
       };
     } else if(step.core) {
       board.background.position = 'center,0,0,10,2';
@@ -1417,13 +1418,15 @@ evaluation.callback = function(key) {
       }
       board.background.prompt = {
         text: bg_prompt,
+        timeout: assessment.prompts_delay,
         loop: true
       };
     }
     if(assessment.prompts === false) {
       if(board.background) {
         delete board.background.prompt;
-        delete board.background.delay_prompts
+        delete board.background.delay_prompts;
+        delete board.background.delay_prompt_timeout;
       }
     }
     var loc = null;

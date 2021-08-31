@@ -37,6 +37,7 @@ var obf = EmberObject.extend({
       position: hash['background']['position'],
       text: hash['background']['text'],
       prompt: hash['background']['prompt'] || hash['background']['prompt_text'],
+      prompt_timeout: hash['background']['prompt_timeout'] || hash['background']['prompt_text'],
       delay_prompts: hash['background']['delay_prompts'] || hash['background']['delayed_prompts'],
       delay_prompt_timeout: hash['background']['delay_prompt_timeout']
     });

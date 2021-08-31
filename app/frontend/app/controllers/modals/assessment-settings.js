@@ -25,6 +25,7 @@ export default modal.ModalController.extend({
     if(settings.for_user.user_id == app_state.get('sessionUser.id')) {
       settings.for_user.user_id = 'self';
     }
+    settings.prompts_delay || '';
     if(settings.name == 'Unnamed Eval') {
       settings.name = "";
     }
@@ -167,6 +168,12 @@ export default modal.ModalController.extend({
     confirm: function() {
       // update assessment settings
       modal.close();
+      if(this.get('settings.prompts_delay')) {
+        var del = parseInt(this.get('settings.prompts_delay'), 10);
+        if(del && del > 0) {
+          this.set('settings.prompts_delay', del);
+        }
+      }
       if(!this.get('settings.name')) {
         this.set('settings.name', this.get('name_placeholder'));
       }

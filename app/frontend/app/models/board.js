@@ -881,6 +881,16 @@ CoughDrop.Board = DS.Model.extend({
       }
     } else {
       var text = _this.get('background.prompt.text');
+      if(_this.get('reprompt_wait')) {
+        runCancel(_this.get('reprompt_wait'));
+        _this.set('reprompt_wait', null);
+      }
+      if(_this.get('background.prompt.timeout') && !action) {
+        _this.set('reprompt_wait', runLater(function() {
+          _this.prompt('start');
+        }, _this.get('background.prompt.timeout')));
+        return;
+      }
       if(action == 'reprompt' && _this.get('background.delay_prompts.length') > 0) {
         var idx = _this.get('prompt_index') || 0;
         text = _this.get('background.delay_prompts')[idx % _this.get('background.delay_prompts.length')];
@@ -894,10 +904,6 @@ CoughDrop.Board = DS.Model.extend({
         speecher.speak_audio(_this.get('background_sound_url_with_fallback'), 'background', false, {loop: _this.get('background.prompt.loop')});
       }
       if(_this.get('background.delay_prompt_timeout') && _this.get('background.delay_prompt_timeout') > 0) {
-        if(_this.get('reprompt_wait')) {
-          runCancel(_this.get('reprompt_wait'));
-          _this.set('reprompt_wait', null);
-        }
         _this.set('reprompt_wait', runLater(function() {
           _this.prompt('reprompt');
         }, _this.get('background.delay_prompt_timeout')));
