@@ -678,7 +678,7 @@ export default Controller.extend({
     tweakBoard: function(decision) {
       var _this = this;
       var update_locale = null;
-      if(decision.update_locale) {
+      if(decision && decision.update_locale) {
         update_locale = decision.update_locale;
         decision = null;
       }
