@@ -326,6 +326,9 @@ var editManager = EmberObject.extend({
         inflections["no"] = {type:'override', label: "don't"};
         inflections["not"] = {type:'override', label: "am not"};
       }});
+      overrides.push({lookback: [{words: ["feel", "feels", "felt", "feeling"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
+        inflections["like"] = {type:'override', label: "like"};
+      }});
       overrides.push({lookback: [{words: ["you", "we", "they"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["is"] = {type:'override', label: "are"};
         inflections["am"] = {type:'override', label: "are"};
@@ -349,6 +352,10 @@ var editManager = EmberObject.extend({
         inflections["no"] = {type:'override', label: "doesn't"};
         inflections["not"] = {type:'override', label: "isn't"};
       }});
+      overrides.push({lookback: [{words: ["can", "will", "could", "should", "would", "may", "might", "must", "shall"]}, {words: ["it", "that", "this", "he", "she", "they", "i", "we"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
+        inflections["am"] = {type:'override', label: "be"};
+        inflections["is"] = {type:'override', label: "be"};
+      }});
       overrides.push({lookback: [{words: ["it", "that", "this"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["am"] = {type:'override', label: "is"};
         inflections["is"] = {type:'override', label: "is"};
@@ -363,7 +370,7 @@ var editManager = EmberObject.extend({
         inflections["am"] = {type:'override', label: "be"};
         inflections["is"] = {type:'override', label: "be"};
       }});
-      overrides.push({lookback: [{words: ["is", "are", "am", "be"]}], callback: function(inflections) {
+      overrides.push({lookback: [{words: ["is", "are", "am", "be"]}, {words: ["she", "he", "i", "they", "we"], optional: true}], callback: function(inflections) {
         inflections["I"] = {type:'override', label: "my"};
         inflections["done"] = {type:'override', label: "done"};
       }});
@@ -583,7 +590,7 @@ var editManager = EmberObject.extend({
 //          {location: 'n', label: i18n.pluralize(button.label)},
           {location: 'ne', label: i18n.comparative(base_label)},
           {location: 'e', label: i18n.superlative(base_label)},
-          {location: 'nw', label: i18n.negation(base_label)},
+          {location: 'se', label: i18n.negation(base_label), opposite: true},
           {location: 'w', label: i18n.negative_comparative(base_label)},
           {location: 'c', label: button.original_label || button.label},
         ]);
@@ -649,7 +656,7 @@ var editManager = EmberObject.extend({
         res = res.concat([
   //        {location: 'n', label: 'ice cream', callback: function() { alert('a'); }},
           {location: 'c', label: button.original_label || button.label},
-          {location: 'se', label: i18n.negation(base_label)},
+          {location: 'se', label: i18n.negation(base_label), opposite: true},
   //        {location: 'se', label: 'bacon', callback: function() { alert('c'); }},
         ]);
       }

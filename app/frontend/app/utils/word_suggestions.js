@@ -56,6 +56,7 @@ var helpers = {
   "these": ['ones'],
   "those": ['ones'],
   "figure": ['it'],
+  "in": ['trouble'],
   "look": ['for', 'at', 'out'],
   // "+er": ['than'],
   // "[adj]": [':er', ':est'],
@@ -74,7 +75,6 @@ var helpers = {
   "put": ['it'],
   "I am": ['ready'],
   "I am not": ['ready'],
-  "I don't": ['know'],
   "for": ['now', 'you'],
 };
 
@@ -257,8 +257,29 @@ var word_suggestions = EmberObject.extend({
       if(second_to_last_word) { second_to_last_word = second_to_last_word.replace(/\s+$/, ''); }
       var word_in_progress = options.word_in_progress;
       if(word_in_progress) { word_in_progress = word_in_progress.replace(/\s+$/, ''); }
+
+      var pre_string = "";
+      if(!word_in_progress) {
+        pre_string = last_finished_word;
+        if(second_to_last_word) {
+          pre_string = second_to_last_word + " " + pre_string;
+        }
+      }
+
       var max_results = options.max_results || _this.max_results;
       var result = [];
+      if(pre_string) {
+        pre_string = pre_string.toLocaleLowerCase();
+        for(var key in helpers) {
+          var ref = pre_string.slice(-1 * key.length);
+          if(ref == key) {
+            helpers[key].forEach(function(wrd) {
+              result.push({word: wrd});
+            })
+          }
+        }
+      }
+
       var do_cap = app_state.get('shift') || (word_in_progress && utterance.capitalize(word_in_progress) == word_in_progress);
       if(_this.last_finished_word != last_finished_word || _this.word_in_progress != word_in_progress || _this.second_to_last_word != second_to_last_word || _this.last_shift != last_shift) {
         _this.last_finished_word = last_finished_word;
