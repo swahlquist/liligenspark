@@ -147,6 +147,7 @@
     xhr.onreadystatechange = function() {
       if(this.readyState == 4 && this.status == 200) {
         res = JSON.parse(this.responseText);
+        // TODO: if access token still needs 2fa, include that in oauth_approve UI
         if(res && res.authenticated && res.scopes && res.scopes.indexOf('full') >= 0 && document.getElementById('oauth_approve')) {
           if(res.avatar_image_url) { document.getElementById('avatar').src = res.avatar_image_url; }
           document.getElementById('user_name').innerText = res.user_name;
