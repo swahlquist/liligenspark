@@ -724,6 +724,74 @@ describe BoardDownstreamButtonSet, :type => :model do
       end
       BoardDownstreamButtonSet.update_for(b2.global_id)
     end
+
+    it "should record known inflections - even if they match the expected default" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings ||= {}
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234', 'inflections' => 
+          ['haaatzch']
+        }
+      ], nil)
+      b.save
+      expect(b.settings['buttons']).not_to eq(nil)
+      expect(b.settings['buttons'].length).to eq(1)
+      bs = BoardDownstreamButtonSet.update_for(b.global_id)
+      expect(bs.data['buttons']).to eq([{"board_id"=>b.global_id,
+        "board_key"=>b.key,
+        "depth"=>0,
+        "hidden"=>true,
+        "hidden_link"=>false,
+        "id"=>"1_2",
+        "infl"=>{"en"=>["haaatzch"]},
+        "label"=>"hat",
+        "link_disabled"=>false,
+        "linked_level"=>1,
+        "locale"=>"en",
+        "visible_level"=>1}])
+    end
+
+    it "should record translations and translated inflections" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings ||= {}
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234', 'translations' => [
+          {'locale' => 'en', 'label' => 'hat'},
+          {'locale' => 'es', 'label' => 'hatzy', 'vocalization' => 'hatz', 'inflections' => ['haaatzch']}
+        ]}
+      ], nil)
+      b.save
+      expect(b.settings['buttons']).not_to eq(nil)
+      expect(b.settings['buttons'].length).to eq(1)
+      expect(b.settings['translations']).to eq({
+        '1_2' => {
+          'en' => {
+            'label' => 'hat'
+          },
+          'es' => {
+            'label' => 'hatzy',
+            'vocalization' => 'hatz',
+            'inflections' => ['haaatzch']
+          }
+        }
+      })
+      bs = BoardDownstreamButtonSet.update_for(b.global_id)
+      expect(bs.data['buttons']).to eq([{"board_id"=>b.global_id,
+        "board_key"=>b.key,
+        "depth"=>0,
+        "hidden"=>true,
+        "hidden_link"=>false,
+        "id"=>"1_2",
+        "infl"=>{"es"=>["haaatzch"]},
+        "label"=>"hat",
+        "link_disabled"=>false,
+        "linked_level"=>1,
+        "locale"=>"en",
+        "tr"=>{"en"=>["hat"], "es"=>["hatzy", "hatz"]},
+        "visible_level"=>1}])
+    end
   end
   
   describe "for_user" do

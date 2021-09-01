@@ -21,7 +21,7 @@ class UserExtra < ApplicationRecord
           existing[name]['updated'] = opts['updated']
           existing[name].delete('deleted')
           existing[name]['words'] = opts['words']
-        elsif opts['deleted'] > existing[name]['updated'] - 60
+        elsif opts['deleted'] && opts['deleted'] > existing[name]['updated'] - 60
           existing[name]['deleted'] = opts['deleted']
         end
       else

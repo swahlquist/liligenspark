@@ -1892,7 +1892,7 @@ describe Api::BoardsController, :type => :controller do
         PaperTrail::Version.where(id: vs[1].id).update_all(created_at: dt)
         post 'rollback', params: {board_id: b.global_id, date: 2.weeks.ago.to_date.iso8601}
         json = assert_success_json
-        expect(json).to eq({'board_id' => b.global_id, 'restored' => false, 'reverted' => dt.iso8601})
+        expect(json).to eq({'board_id' => b.global_id, 'key' => b.key, 'restored' => false, 'reverted' => dt.iso8601})
         expect(b.reload.settings['buttons']).to eq([{'id' => 3}])
       end
 
@@ -1934,7 +1934,7 @@ describe Api::BoardsController, :type => :controller do
         PaperTrail::Version.where(id: vs[1].id).update_all(created_at: dt)
         post 'rollback', params: {board_id: b.global_id, date: 2.weeks.ago.to_date.iso8601}
         json = assert_success_json
-        expect(json).to eq({'board_id' => b.global_id, 'restored' => false, 'reverted' => dt.iso8601})
+        expect(json).to eq({'board_id' => b.global_id, 'key' => b.key, 'restored' => false, 'reverted' => dt.iso8601})
         expect(b.reload.settings['buttons']).to eq([{'id' => 3}])
       end
 
@@ -1975,7 +1975,7 @@ describe Api::BoardsController, :type => :controller do
         PaperTrail::Version.where(id: vs[1].id).update_all(created_at: dt)
         post 'rollback', params: {board_id: b.global_id, date: 2.weeks.ago.to_date.iso8601}
         json = assert_success_json
-        expect(json).to eq({'board_id' => b.global_id, 'restored' => true, 'reverted' => dt.iso8601})
+        expect(json).to eq({'board_id' => b.global_id, 'key' => b.key, 'restored' => true, 'reverted' => dt.iso8601})
         expect(b.reload.settings['buttons']).to eq([{'id' => 3}])
       end
 

@@ -733,24 +733,24 @@ describe Board, :type => :model do
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
       expect(b.settings['revision_hashes'][0][1]).to be > 10.seconds.ago.to_i
       b.generate_defaults
-      expect(b.settings['revision_hashes'].length).to eq(1)
-      expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
-      
-      b.settings['buttons'] = [{'id' => 2, 'label' => 'bob'}]
-      b.generate_defaults
-      expect(b.settings['revision_hashes'].length).to eq(2)
-      expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
-      b.generate_defaults
       expect(b.settings['revision_hashes'].length).to eq(2)
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
       
       b.settings['buttons'] = [{'id' => 2, 'label' => 'bob'}]
       b.generate_defaults
-      expect(b.settings['revision_hashes'].length).to eq(2)
+      expect(b.settings['revision_hashes'].length).to eq(3)
+      expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
+      b.generate_defaults
+      expect(b.settings['revision_hashes'].length).to eq(3)
+      expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
+      
+      b.settings['buttons'] = [{'id' => 2, 'label' => 'bob'}]
+      b.generate_defaults
+      expect(b.settings['revision_hashes'].length).to eq(3)
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
       b.settings['grid']['rows'] = 4
       b.generate_defaults
-      expect(b.settings['revision_hashes'].length).to eq(3)
+      expect(b.settings['revision_hashes'].length).to eq(4)
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
     end
     
@@ -821,6 +821,7 @@ describe Board, :type => :model do
       b3.instance_variable_set('@buttons_changed', true)
       b3.save
       Worker.process_queues
+      rev = b4.current_revision
       hash1 = b1.reload.settings['full_set_revision']
       current1 = b1.current_revision
       hash2 = b2.reload.settings['full_set_revision']
@@ -830,16 +831,18 @@ describe Board, :type => :model do
       b4.settings['buttons'] = [{'id' => 'asdf', 'label' => 'friend'}]
       b4.instance_variable_set('@buttons_changed', true)
       b4.save
+      Board.last_scheduled_stamp = nil
+      expect(b4.current_revision).to_not eq(rev)
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       expect(b1.reload.settings['full_set_revision']).to_not eq(hash1)
       expect(b1.current_revision).to eq(current1)
-      expect(b2.reload.settings['full_set_revision']).to_not eq(hash2)
-      expect(b2.current_revision).to eq(current2)
       expect(b3.reload.settings['full_set_revision']).to_not eq(hash3)
       expect(b3.current_revision).to eq(current3)
+      expect(b2.reload.settings['full_set_revision']).to_not eq(hash2)
+      expect(b2.current_revision).to eq(current2)
     end
     
     it "should not push a revision has change downstream" do
@@ -1255,19 +1258,18 @@ describe Board, :type => :model do
       Worker.process_queues
 
       expect(u.reload.settings['user_notifications'].length).to eq(1)
-      expect(u.reload.settings['user_notifications'][0].except('occurred_at')).to eq({
+      expect(u.reload.settings['user_notifications'][0].except('occurred_at', 'added_at')).to eq({
         'id' => b.global_id,
         'type' => 'board_buttons_changed',
         'for_user' => true,
         'for_supervisees' => [],
         'previous_revision' => b.settings['revision_hashes'][-2][0],
         'name' => b.settings['name'],
-        'key' => b.key,
-        'added_at' => Time.now.utc.iso8601
+        'key' => b.key
       })
       expect(u2.reload.settings['user_notifications']).to eq(nil)
       expect(u3.reload.settings['user_notifications'].length).to eq(1)
-      expect(u3.reload.settings['user_notifications'][0].except('occurred_at')).to eq({
+      expect(u3.reload.settings['user_notifications'][0].except('occurred_at', 'added_at')).to eq({
         'id' => b.global_id,
         'type' => 'board_buttons_changed',
         'for_user' => false,
@@ -1275,7 +1277,6 @@ describe Board, :type => :model do
         'previous_revision' => b.settings['revision_hashes'][-2][0],
         'name' => b.settings['name'],
         'key' => b.key,
-        'added_at' => Time.now.utc.iso8601
       })
     end
     

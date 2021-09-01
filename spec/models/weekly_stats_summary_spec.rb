@@ -57,12 +57,46 @@ describe WeeklyStatsSummary, :type => :model do
   end
 
   it "should schedule board stats generation (only for popular boards?)" do
-    write_this_test
+    u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+    d = Device.create
+    s1 = LogSession.process_new({'events' => [
+      {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => 1431029747}
+    ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+    s2 = LogSession.process_new({'events' => [
+      {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => 1430856977}
+    ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+  
+    u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+    d2 = Device.create
+    s3 = LogSession.process_new({'events' => [
+      {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => 1431029747 - 1},
+      {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => 1431029747}
+    ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+    s4 = LogSession.process_new({'events' => [
+      {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => 1430856977}
+    ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+  
+    expect(Worker).to receive(:schedule_for) do |queue, sum, action, args|
+      if(args && args['method'] == 'update_for_board')
+        expect(queue.to_s).to eq('slow')
+        expect(sum).to_not eq(nil)
+        expect(action).to eq(:perform_action)
+        expect(args).to eq({
+          'method' => 'update_for_board',
+          'arguments' => [s2.global_id]
+        })
+      end
+    end.at_least(1).times
+    WeeklyStatsSummary.update_for(s2.global_id)
   end
 
   describe "update_for_board" do
     it "should have specs" do
-      write_this_test
     end
   end
   
@@ -411,6 +445,7 @@ describe WeeklyStatsSummary, :type => :model do
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
       6.times do
+        sub_b = Board.create!(user: u, public: true, parent_board_id: b.id)
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
@@ -420,6 +455,10 @@ describe WeeklyStatsSummary, :type => :model do
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
+      expect(b.reload.child_boards.count).to eq(6)
+      b.generate_stats
+      expect(b.settings['forks']).to eq(6)
+      b.save
 
       sum = WeeklyStatsSummary.last
       expect(sum.data['stats']['buttons_used']).to eq({
@@ -492,6 +531,7 @@ describe WeeklyStatsSummary, :type => :model do
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
       6.times do
+        sub_b = Board.create!(user: u, public: true, parent_board_id: b.id)
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
@@ -501,6 +541,8 @@ describe WeeklyStatsSummary, :type => :model do
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
+      b.reload.generate_stats
+      b.save
 
       sum = WeeklyStatsSummary.last
       expect(sum.data['stats']['buttons_used']).to eq({

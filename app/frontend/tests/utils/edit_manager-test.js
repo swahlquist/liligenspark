@@ -2999,6 +2999,8 @@ describe('editManager', function() {
       wants: {label: 'wants', part_of_speech: 'verb'},
       wanted: {label: 'wanted', part_of_speech: 'verb'},
       wanting: {label: 'wanting', part_of_speech: 'verb'},
+      feel: {label: 'want', part_of_speech: 'verb'},
+      feels: {label: 'want', part_of_speech: 'verb'},
       looking: {label: 'looking', part_of_speech: 'verb'},
       helped: {label: 'helped', part_of_speech: 'verb'},
       are: {label: 'are', part_of_speech: 'verb'},
@@ -3281,7 +3283,6 @@ describe('editManager', function() {
       check('all by', 'pronoun', 'reflexive', 'all_by_myself');  
       check('he will view', 'pronoun', 'reflexive', 'view_yourself');
 
-
       check('I am going', 'verb', 'infinitive', 'he_is_looking_to_go');  
       check('I am', 'verb', 'present_participle', 'is_she_looking');  
       check('we are on', 'verb', 'present_participle', 'over_laughing');  
@@ -3309,6 +3310,23 @@ describe('editManager', function() {
       var res = editManager.inflection_for_types(sentence('what'), 'en');
       expect((res.happen || {}).label).toEqual('happened');  
       // what happened
+
+      var res = editManager.inflection_for_types(sentence('feel'), 'en');
+      expect(res.like).toEqual(null);  
+      var res = editManager.inflection_for_types(sentence('I feel'), 'en');
+      expect(res.like.label).toEqual('like');  
+      var res = editManager.inflection_for_types(sentence('she feels'), 'en');
+      expect(res.like.label).toEqual('like');  
+      var res = editManager.inflection_for_types(sentence('are you'), 'en');
+      expect(res.done.label).toEqual('done');  
+      var res = editManager.inflection_for_types(sentence('is she'), 'en');
+      expect(res.done.label).toEqual('done');  
+      var res = editManager.inflection_for_types(sentence('she'), 'en');
+      expect(res.done.label).toEqual('does');  
+      var res = editManager.inflection_for_types(sentence('she'), 'en');
+      expect(res.is.label).toEqual('is');  
+      var res = editManager.inflection_for_types(sentence('will she'), 'en');
+      expect(res.is.label).toEqual('be');  
 
       check('he might', 'verb', 'present', 'they_can_look');
       check('I think this could', 'verb', 'present', 'they_can_look');

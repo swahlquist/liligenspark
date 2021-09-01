@@ -55,6 +55,8 @@ RSpec.configure do |config|
     ENV['REMOTE_EXTRA_DATA'] = nil
     Permissable.set_redis(RedisInit.permissions, RedisInit.cache_token)
     RedisInit.default.del('domain_org_ids')
+    Board.last_scheduled_stamp = nil
+    BoardDownstreamButtonSet.last_scheduled_stamp = nil
     WordData.clear_lists
   end
 end

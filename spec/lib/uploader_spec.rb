@@ -35,7 +35,7 @@ describe Uploader do
       res = OpenStruct.new(:success? => true)
       f = Tempfile.new("stash")
       expect(Typhoeus).to receive(:post).and_return(res)
-      expect(Uploader.remote_upload("bacon", f.path, "text/plaintext")).to eq({url: "http://www.upload.com/bacon", path: 'bacon'})
+      expect(Uploader.remote_upload("bacon", f.path, "text/plaintext")).to eq({url: "http://www.upload.com/bacon", path: 'bacon', uploaded: true})
       f.unlink
     end
 
@@ -49,6 +49,52 @@ describe Uploader do
       expect(Typhoeus).to receive(:post).and_return(res)
       expect{ Uploader.remote_upload("bacon", f.path, "text/plaintext") }.to raise_error("nothing")
       f.unlink
+    end
+
+    it "should return existing url if the checksum matches" do
+      f = Tempfile.new("stash")
+      expect(Uploader).to receive(:check_existing_upload).with("a/b/c", "chksum").and_return({url: "https://a.b.c/file.txt"})
+      expect(Uploader.remote_upload("a/b/c", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/b/c", :url=>"https://a.b.c/file.txt"})
+    end
+
+    it "should return an updated path if the checksum is different" do
+      f = Tempfile.new("stash")
+      expect(Uploader).to receive(:check_existing_upload).with("a/b/c", "chksum").and_return({mismatch: true})
+
+      expect(Uploader).to receive(:remote_upload_params).with("a/b/chksmchksu/c", "text/plaintext").and_return({
+        :upload_params => {:a => 1, :b => 2},
+        :upload_url => "http://www.upload.com/"
+      })
+      res = OpenStruct.new(:success? => true)
+      f = Tempfile.new("stash")
+      expect(Typhoeus).to receive(:post) { |url, args|
+        expect(url).to eq("http://www.upload.com/")
+        expect(args[:body][:a]).to eq(1)
+        expect(args[:body][:b]).to eq(2)
+        expect(args[:body][:file].path).to eq(f.path)
+      }.and_return(res)
+
+      expect(Uploader.remote_upload("a/b/c", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/b/chksmchksu/c", :uploaded=>true, :url=>"http://www.upload.com/a/b/chksmchksu/c"})
+    end
+
+    it "should strip the old checksum from the path when updating the path if needed" do
+      f = Tempfile.new("stash")
+      expect(Uploader).to receive(:check_existing_upload).with("a/b/chksm8888", "chksum").and_return({mismatch: true})
+
+      expect(Uploader).to receive(:remote_upload_params).with("a/chksmchksu/b", "text/plaintext").and_return({
+        :upload_params => {:a => 1, :b => 2},
+        :upload_url => "http://www.upload.com/"
+      })
+      res = OpenStruct.new(:success? => true)
+      f = Tempfile.new("stash")
+      expect(Typhoeus).to receive(:post) { |url, args|
+        expect(url).to eq("http://www.upload.com/")
+        expect(args[:body][:a]).to eq(1)
+        expect(args[:body][:b]).to eq(2)
+        expect(args[:body][:file].path).to eq(f.path)
+      }.and_return(res)
+
+      expect(Uploader.remote_upload("a/b/chksm8888", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/chksmchksu/b", :uploaded=>true, :url=>"http://www.upload.com/a/chksmchksu/b"})
     end
   end
 

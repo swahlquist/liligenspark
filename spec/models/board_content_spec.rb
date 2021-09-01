@@ -1089,8 +1089,6 @@ describe BoardContent, :type => :model do
         order: [[1, 3], [2, 4]]
       })
       expect(b1.settings['content_overrides']).to eq({
-        'buttons' => {
-        },
       })
       b1.process(buttons: [
         {id: 1, label: 'bacon', 'hidden' => false},

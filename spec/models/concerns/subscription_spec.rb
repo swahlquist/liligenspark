@@ -695,6 +695,12 @@ describe Subscription, :type => :model do
       u.settings['managed_by'][o.global_id] = {'pending' => false, 'sponsored' => true}
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
       u.update_subscription_organization("r#{o.global_id}")
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
+      expect(ra.action).to eq('notify_unassigned')
+      expect(ra.path).to eq("#{u.global_id}::#{o.global_id}")
+      Uploader.remote_remove_batch
     end
     
     it "should not notify if no org set before or now" do
@@ -714,6 +720,12 @@ describe Subscription, :type => :model do
       expect(Organization.sponsored?(u)).to eq(true)
       u.update_subscription_organization("r#{o.global_id}")
       expect(u.expires_at.to_i).to eq(12.weeks.from_now.to_i)
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
+      expect(ra.action).to eq('notify_unassigned')
+      expect(ra.path).to eq("#{u.global_id}::#{o.global_id}")
+      Uploader.remote_remove_batch
     end
     
     it "should always give at least a grace period when removing from an org" do
@@ -726,6 +738,12 @@ describe Subscription, :type => :model do
       u.update_subscription_organization("r#{o.global_id}")
       expect(u.expires_at.to_i).to be > (2.weeks.from_now.to_i - 10)
       expect(u.expires_at.to_i).to be < (2.weeks.from_now.to_i + 10)
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
+      expect(ra.action).to eq('notify_unassigned')
+      expect(ra.path).to eq("#{u.global_id}::#{o.global_id}")
+      Uploader.remote_remove_batch
     end
     
     it "should update settings when removing from an org" do
@@ -741,6 +759,12 @@ describe Subscription, :type => :model do
       expect(u.expires_at.to_i).to be < (2.weeks.from_now.to_i + 10)
       expect(u.settings['subscription']['started']).to eq(nil)
       expect(u.settings['subscription']['added_to_organization']).to eq(nil)
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
+      expect(ra.action).to eq('notify_unassigned')
+      expect(ra.path).to eq("#{u.global_id}::#{o.global_id}")
+      Uploader.remote_remove_batch
     end
     
     it "should allow adding a a pending user to an org" do
@@ -783,7 +807,8 @@ describe Subscription, :type => :model do
         }
       }])
       expect(u.expires_at).to_not eq(nil)
-      expect(u.settings['subscription']['added_to_organization']).to eql(Time.now.iso8601)
+      expect(u.settings['subscription']['added_to_organization']).to be > (5.seconds.ago.to_time.iso8601)
+      expect(u.settings['subscription']['added_to_organization']).to be < (5.seconds.from_now.to_time.iso8601)
       expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'subscription_token', 'arguments' => ['token', 'unsubscribe']})).to eq(false)
     end
     

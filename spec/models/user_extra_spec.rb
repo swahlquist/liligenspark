@@ -115,4 +115,107 @@ describe UserExtra, type: :model do
       expect(e.settings['board_tags']['broccoli']).to eq(nil)
     end
   end
+
+  describe "process_focus_words" do
+    it "should set new values" do
+      ue = UserExtra.new
+      ue.generate_defaults
+      ue.process_focus_words({'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']}})
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']}
+      })
+      ue.process_focus_words({'chips' => {'updated' => 2, 'words' => ['d', 'e', 'f']}})
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => 2, 'words' => ['d', 'e', 'f']}
+      })
+    end
+
+
+    it "should delete expired values" do
+      ue = UserExtra.new
+      ue.generate_defaults
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'deleted' => 2, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']}
+      })
+    end
+
+    it "should flag values for deletion" do
+      ue = UserExtra.new
+      ue.generate_defaults
+      now = Time.now.to_i
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'deleted' => now, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'deleted' => now, 'words' => ['d', 'e', 'f']}
+      })
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+    end
+
+    it "should only flag for deletion if not recently updated" do
+      ue = UserExtra.new
+      ue.generate_defaults
+      now = Time.now.to_i
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'deleted' => now - 100, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })      
+    end
+
+    it "should update existing values" do
+      ue = UserExtra.new
+      ue.generate_defaults
+      now = Time.now.to_i
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now - 100, 'words' => ['d', 'e', 'f', 'g']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f']}
+      })
+      ue.process_focus_words({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f', 'h']}
+      })
+      expect(ue.settings['focus_words']).to eq({
+        'chocolate' => {'updated' => 1, 'words' => ['a', 'b', 'c']},
+        'chips' => {'updated' => now, 'words' => ['d', 'e', 'f', 'h']}
+      })
+    end
+  end
 end

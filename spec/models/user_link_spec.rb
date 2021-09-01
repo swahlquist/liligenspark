@@ -354,51 +354,6 @@ describe UserLink, :type => :model do
             'user_name' => u4.user_name
           }
         },
-        {
-          'user_id' => u2.global_id,
-          'record_code' => Webhook.get_record_code(b),
-          'type' => 'board_share',
-          'old_school' => true,
-          'state' => {
-            'board_key' => b.key,
-            'sharer_id' => u.global_id,
-            'sharer_user_name' => u.user_name,
-            'include_downstream' => true,
-            'allow_editing' => true,
-            'pending' => true,
-            'user_name' => 'whatever'
-          }
-        },
-        {
-          'user_id' => u3.global_id,
-          'record_code' => Webhook.get_record_code(b),
-          'type' => 'board_share',
-          'old_school' => true,
-          'state' => {
-            'board_key' => b.key,
-            'sharer_id' => u.global_id,
-            'sharer_user_name' => u.user_name,
-            'include_downstream' => false,
-            'allow_editing' => false,
-            'pending' => false,
-            'user_name' => 'bob'
-          }
-        },
-        {
-          'user_id' => '11111',
-          'record_code' => Webhook.get_record_code(b),
-          'type' => 'board_share',
-          'old_school' => true,
-          'state' => {
-            'board_key' => b.key,
-            'sharer_id' => u.global_id,
-            'sharer_user_name' => u.user_name,
-            'include_downstream' => false,
-            'allow_editing' => false,
-            'pending' => false,
-            'user_name' => 'sally'
-          }
-        }
       ])
     end
     

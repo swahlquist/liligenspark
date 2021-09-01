@@ -514,6 +514,8 @@ describe Organization, :type => :model do
       u.reload
       expect(res).to eq(true)
       expect(o.user?(u)).to eq(false)
+      RemoteAction.all.update_all(act_at: 5.seconds.ago)
+      Uploader.remote_remove_batch
     end
     
     it "should error on removing a user that doesn't exist" do

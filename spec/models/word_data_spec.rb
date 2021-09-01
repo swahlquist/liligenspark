@@ -229,10 +229,14 @@ RSpec.describe WordData, :type => :model do
       })
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
-      BoardDownstreamButtonSet.update_for(b.global_id, true)
+      bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
+      expect(bs).to_not eq(nil)
+      expect(bs.data['buttons']).to_not eq(nil)
+      puts "\n\nDOING IT\n\n"
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "you", "like", "he", "think", "favorite", "pretend"])
     end
     
@@ -254,10 +258,12 @@ RSpec.describe WordData, :type => :model do
       })
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       BoardDownstreamButtonSet.update_for(b.global_id, true)
+      WordData.clear_lists
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "you", "like", "he", "think", "favorite", "pretend"])
     end
     
@@ -279,10 +285,12 @@ RSpec.describe WordData, :type => :model do
       })
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       BoardDownstreamButtonSet.update_for(b.global_id, true)
+      WordData.clear_lists
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "like", "no", "yes", "think", "favorite", "pretend"])
     end
     
@@ -304,10 +312,12 @@ RSpec.describe WordData, :type => :model do
       })
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
       BoardDownstreamButtonSet.update_for(b.global_id, true)
+      WordData.clear_lists
       expect(WordData.reachable_core_list_for(u)).to eq(["you", "like", "favorite"])
     end
   end
@@ -681,9 +691,7 @@ RSpec.describe WordData, :type => :model do
       User.link_supervisor_to_user(u, u2)
       res = WordData.activities_for(u.reload, true)
       expect(res.instance_variable_get('@fresh')).to eq(false)
-      expect(res).to eq({
-        'generated' => 3.weeks.ago.iso8601,
-        'checked' => Time.now.iso8601,
+      expect(res.except('generated', 'checked')).to eq({
         'list' => [
           {"id"=>"1", "score"=>11, "user_ids"=>[u.global_id, u2.global_id]}, 
           {"id"=>"5", "score"=>10, "user_ids"=>[u2.global_id]}, 
@@ -698,6 +706,10 @@ RSpec.describe WordData, :type => :model do
           {"word"=>"most", "locale"=>"en", "user_ids"=>[u2.global_id]}
         ]
       })
+      expect(res['generated']).to be > (3.weeks.ago - 5).iso8601
+      expect(res['generated']).to be < (3.weeks.ago + 5).iso8601
+      expect(res['checked']).to be > (Time.now - 5).iso8601
+      expect(res['checked']).to be < (Time.now + 5).iso8601
     end
 
     it 'should not mark as fresh if there is a newer generated set' do

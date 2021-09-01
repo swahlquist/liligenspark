@@ -572,7 +572,7 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
       Worker.process_queues
       expect(u2.reload.private_viewable_board_ids).to eq([b.global_id])
-      expect(u1.reload.private_viewable_board_ids).to eq([])
+      expect(u1.reload.private_viewable_board_ids).to eq([b.global_id])
     end
 
     # if a supervisee has access to a board, so should I (see use cases above)

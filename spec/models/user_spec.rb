@@ -1061,6 +1061,14 @@ describe User, :type => :model do
       expect(u.settings['preferences']['logging_code']).to eq(nil)
       expect(u.settings['preferences']['logging_cutoff']).to eq(nil)
     end
+
+    it "should process focus words when extras is not defined" do
+      u = User.create
+      obj = OpenStruct.new
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u).and_return obj
+      expect(obj).to receive(:process_focus_words).with('aaa')
+      u.process({'focus_words' => 'aaa'})
+    end
   end
   
   describe "logging_cutoff_for" do

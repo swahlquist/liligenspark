@@ -326,6 +326,15 @@ describe UserMailer, :type => :mailer do
       expect(text).to match(/"fred"/)
       expect(text).to match(/"#{o.settings['name']}"/)
     end
+
+    it "should not send the message if the user has been re-assigned to the org" do
+      u = User.create(:settings => {'name' => 'fred', 'email' => 'fred@example.com'})
+      o = Organization.create
+      o.add_user(u.user_name, false, false)
+      
+      m = UserMailer.organization_unassigned(u.global_id, o.global_id)
+      expect(m.to).to eq(nil)
+    end
   end
   
   describe "usage_reminder" do
