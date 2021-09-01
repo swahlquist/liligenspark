@@ -1307,6 +1307,79 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs.data['remote_paths'][hash]['generated']).to be > 10.seconds.ago.to_i
     end
 
+    it "should remote upload only the available boards based on the user" do
+      u = User.create
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
+      hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
+      bs.data['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
+        {'id' => 1, 'label' => 'rat', 'board_id' => '2'},
+        {'id' => 1, 'label' => 'splat', 'board_id' => '3'},
+      ]
+      expect(User).to receive(:find_by_global_id).with(u.global_id).and_return(u)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
+      expect(bs).to receive(:detach_extra_data).at_least(1).times
+      expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
+        expect(type).to eq('text/json')
+        json = JSON.parse(File.read(file_path))
+        expect(json.is_a?(Array)).to eq(true)
+        expect(json.length).to eq(2)
+        expect(json[0]['label']).to eq('hat')
+        expect(json[1]['label']).to eq('rat')
+        expect(path).to eq(bs.data['remote_paths'][hash]['path'])
+      end.and_raise("throttled upload")
+      expect(RemoteAction.count).to eq(0)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(RemoteAction.count).to eq(1)
+      ra = RemoteAction.last
+      expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
+      expect(ra.action).to eq("upload_extra_data")
+      expect(ra.act_at).to be > 4.minutes.from_now
+      expect(bs.data['remote_paths'][hash]['path']).to_not eq(nil)
+      expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['expires']).to be < 6.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be < 10.seconds.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be > 10.seconds.ago.to_i
+    end    
+
+    it "should remote upload only the available boards based on the user" do
+      u = User.create
+      b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})
+      bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['board_ids'] = ['1', '2', '3']
+      bs.data['full_set_revision'] = 'asdf'
+      hash = GoSecure.sha512(['3'].to_json, bs.data['remote_salt'])
+      bs.data['buttons'] = [
+        {'id' => 1, 'label' => 'hat', 'board_id' => '1'},
+        {'id' => 1, 'label' => 'rat', 'board_id' => '2'},
+        {'id' => 1, 'label' => 'splat', 'board_id' => '3'},
+      ]
+      expect(User).to receive(:find_by_global_id).with(u.global_id).and_return(u)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
+      expect(bs).to receive(:detach_extra_data).at_least(1).times
+      expect(Uploader).to_not receive(:remote_upload)
+      expect(RemoteAction.count).to eq(0)
+      ra = RemoteAction.create(path: "#{b.global_id}::#{u.global_id}", action: "upload_extra_data", act_at: 5.minutes.from_now)
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(RemoteAction.count).to eq(1)
+      ra = RemoteAction.last
+      expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
+      expect(ra.action).to eq("upload_extra_data")
+      expect(ra.act_at).to be > 4.minutes.from_now
+      expect(bs.data['remote_paths'][hash]['path']).to_not eq(nil)
+      expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['expires']).to be < 6.months.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be < 10.seconds.from_now.to_i
+      expect(bs.data['remote_paths'][hash]['generated']).to be > 10.seconds.ago.to_i
+    end    
+
     it "should record an error on upload fail" do
       u = User.create
       b = Board.create(user: u, :settings => {'full_set_revision' => 'asdf'})

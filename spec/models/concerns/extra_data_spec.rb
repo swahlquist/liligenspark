@@ -205,6 +205,49 @@ describe ExtraData, :type => :model do
       expect(s.data['events']).to eq(nil)
       expect(s.data['extra_data_nonce']).to_not eq(nil)
     end
+
+    it "should schedule future upload if upload attempt gets throttled" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [{'id' => 1, 'label' => 'cat'}]})
+      Worker.process_queues
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
+      bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
+      expect(bs).to_not eq(nil)
+      expect(bs).to receive(:extra_data_too_big?).and_return(true)
+      paths = []
+      expect(Uploader).to receive(:remote_upload) do |path, local, type|
+        expect(type).to eq('text/json')
+        expect(local).to_not eq(nil)
+        expect(File.exists?(local)).to eq(true)
+      end.and_raise("throttled upload")
+      expect(RemoteAction.count).to eq(0)
+      bs.detach_extra_data(true)
+      expect(RemoteAction.count).to eq(1)
+      ra = RemoteAction.last
+      expect(ra.path).to eq("#{b.global_id}")
+      expect(ra.action).to eq("upload_button_set")
+      expect(ra.act_at).to be > 4.minutes.from_now
+      expect(paths).to eq([])    
+    end
+
+    it "should skip upload attempt if a future one is already scheduled" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [{'id' => 1, 'label' => 'cat'}]})
+      Worker.process_queues
+      BoardDownstreamButtonSet.last_scheduled_stamp = nil
+      bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
+      expect(bs).to_not eq(nil)
+      expect(bs).to receive(:extra_data_too_big?).and_return(true)
+      paths = []
+      expect(Uploader).to_not receive(:remote_upload)
+      expect(RemoteAction.count).to eq(0)
+      ra = RemoteAction.create(path: b.global_id, act_at: 30.seconds.from_now, action: 'upload_button_set')
+      bs.detach_extra_data(true)
+      expect(RemoteAction.count).to eq(1)
+      expect(paths).to eq([])    
+    end
   end
 
   describe "extra_data_attribute" do

@@ -122,10 +122,17 @@ module Uploader
         elsif ra.action == 'notify_unassigned'
           user_id, org_id = ra.path.split(/::/, 2)
           UserMailer.schedule_delivery(:organization_unassigned, user_id, org_id)
+        elsif ra.action == 'upload_button_set'
+          board_id, user_id = ra.path.splt(/::/, 2)
+          BoardDownstreamButtonSet.schedule_for(:slow, :update_for, board_id, true)
+        elsif ra.action == 'upload_extra_data'
+          board_id, user_id = ra.path.splt(/::/, 2)
+          BoardDownstreamButtonSet.schedule_for(:slow, :generate_for, board_id, user_id)
         end
       end
     end
     RemoteAction.where(id: updated_ids).delete_all
+    RemoteAction.where(['created_at < ?', 3.months.ago]).delete_all
     updated_ids.length
   end
 

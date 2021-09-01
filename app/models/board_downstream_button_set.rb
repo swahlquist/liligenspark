@@ -269,10 +269,24 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       file.write(json)
       file.close
       # Uploader.invalidate_cdn(remote_path)
-      res = Uploader.remote_upload(remote_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
-      if res && res[:path] && res[:path] != remote_path
-        Upload.remote_remove_later(remote_path)
-        button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
+      # If upload is throttled, schedule it for later (and don't repeat if already scheduled)
+      if RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').count == 0
+        begin
+          res = Uploader.remote_upload(remote_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+        rescue => e
+          if e.message && e.message.match(/throttled/)
+            res = {error: 'throttled'}
+          else
+            raise e
+          end
+        end
+        if res && res[:error] == 'throttled'
+          RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').delete_all
+          RemoteAction.create(path: "#{board_id}::#{user_id}", act_at: 5.minutes.from_now, action: 'upload_extra_data')
+        elsif res && res[:path] && res[:path] != remote_path
+          Upload.remote_remove_later(remote_path)
+          button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
+        end
       end
     rescue => e
       button_set.data['remote_paths'][remote_hash]['path'] = false
@@ -503,6 +517,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
       set.generate_defaults(true)
+      set.detach_extra_data(true)
       set.save
 
       board_ids_to_flush = [board.global_id]
