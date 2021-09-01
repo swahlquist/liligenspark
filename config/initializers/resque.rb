@@ -25,6 +25,15 @@ module RedisInit
     self.cache_token = 'abc'
   end
 
+  def self.errors
+    uri = RedisInit.redis_uri
+    redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+    key = 'coughdrop:failed'
+    redis.type(key)
+    len = redis.llen(key)
+    puts JSON.pretty_generate(redis.lrange(key, 0, len))
+  end
+
   def self.size_check
     uri = redis_uri
     redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
