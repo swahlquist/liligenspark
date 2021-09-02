@@ -366,7 +366,7 @@ describe WeeklyStatsSummary, :type => :model do
       expect(sum.data['totals']['total_users']).to eq(12)
       expect(sum.data['totals']['total_words']).to eq(18) # not 36
       expect(sum.data['totals']['admin_total_words']).to eq(36)
-      expect(sum.data['user_ids']).to eq(all_user_ids)
+      expect(sum.data['user_ids'].sort).to eq(all_user_ids.sort)
       expect(sum.data['word_counts']).to eq({
         'this' => 6, 'that' => 6, 'then' => 6
       })

@@ -430,8 +430,10 @@ describe SessionController, :type => :controller do
       k = DeveloperKey.create
       token, refresh = @device.tokens
       post :oauth_token_refresh, params: {'access_token' => 'asdf', 'refresh_token' => refresh, 'client_id' => k.key, 'client_secret' => k.secret}
-      assert_error('Missing user')
-#      assert_error('Invalid token')
+
+      expect(response).not_to be_successful
+      json = JSON.parse(response.body)
+      expect(json['error'] == "Missing user" || json['error'] == "Invalid token").to eq(true)
     end
 
     it "should error on invalid refresh token" do

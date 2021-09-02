@@ -2637,12 +2637,14 @@ describe Subscription, :type => :model do
       link.data['state']['added'] = added.iso8601
       link.save
       expect(u.reload.org_sponsored?).to eq(true)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
       expect(Organization.managed?(u)).to eq(true)
       o.reload.remove_user(u.user_name)
       expect(u.reload.org_sponsored?).to eq(false)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
     end
 
@@ -2673,11 +2675,13 @@ describe Subscription, :type => :model do
       expect(u.reload.org_sponsored?).to eq(false)
       expect(u.org_supporter?).to eq(true)
       expect(u.premium_supporter?).to eq(true)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
       o.reload.remove_supervisor(u.user_name)
       expect(u.reload.org_sponsored?).to eq(false)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
       u.settings['preferences']['role'] = 'communicator'
       expect(u.fully_purchased?).to eq(false)
@@ -2710,11 +2714,13 @@ describe Subscription, :type => :model do
       expect(u.reload.org_sponsored?).to eq(false)
       expect(u.org_supporter?).to eq(true)
       expect(u.premium_supporter?).to eq(true)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
       o.reload.remove_supervisor(u.user_name)
       expect(u.reload.org_sponsored?).to eq(false)
-      expect(u.purchase_credit_duration).to eq((Time.now - added).to_i)
+      expect(u.purchase_credit_duration).to be > ((Time.now - added).to_i - 5)
+      expect(u.purchase_credit_duration).to be < ((Time.now - added).to_i + 5)
       expect(u.fully_purchased?).to eq(true)
       u.settings['preferences']['role'] = 'communicator'
       expect(u.fully_purchased?).to eq(false)

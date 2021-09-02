@@ -514,9 +514,7 @@ RSpec.describe WordData, :type => :model do
       u.save!
       res = WordData.activities_for(u)
       expect(res.instance_variable_get('@fresh')).to eq(true)
-      expect(res).to eq({
-        'checked' => Time.now.iso8601,
-        'generated' => Time.now.iso8601,
+      expect(res.except('checked', 'generated')).to eq({
         'list' => [
           {"id"=>"1", "score"=>5, "user_ids"=>[u.global_id]}, 
           {"id"=>"2", "score"=>3, "user_ids"=>[u.global_id]}, 
@@ -528,6 +526,10 @@ RSpec.describe WordData, :type => :model do
           {"word"=>"bad", "locale"=>"en", "user_ids"=>[u.global_id]}
         ]
       })
+      expect(res['checked']).to be > (Time.now - 5).iso8601
+      expect(res['checked']).to be < (Time.now + 5).iso8601
+      expect(res['generated']).to be > (Time.now - 5).iso8601
+      expect(res['generated']).to be < (Time.now + 5).iso8601
     end
 
     it 'should include supervisees if specified' do

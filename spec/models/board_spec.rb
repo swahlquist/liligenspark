@@ -1223,7 +1223,8 @@ describe Board, :type => :model do
       b.save
       Worker.process_queues
 
-      expect(u.reload.settings['user_notifications']).to eq([{
+      expect(u.reload.settings['user_notifications'].length).to eq(1)
+      expect(u.reload.settings['user_notifications'][0].except('occurred_at', 'added_at')).to eq({
         'id' => b.global_id,
         'type' => 'board_buttons_changed',
         'for_user' => true,
@@ -1231,9 +1232,11 @@ describe Board, :type => :model do
         'previous_revision' => b.settings['revision_hashes'][-2][0],
         'name' => b.settings['name'],
         'key' => b.key,
-        'occurred_at' => b.reload.updated_at.iso8601,
-        'added_at' => Time.now.utc.iso8601
-      }])
+      })
+      expect(u.settings['user_notifications'][0]['occurred_at']).to be > (b.reload.updated_at - 5).iso8601
+      expect(u.settings['user_notifications'][0]['occurred_at']).to be < (b.reload.updated_at + 5).iso8601
+      expect(u.settings['user_notifications'][0]['added_at']).to be > (Time.now.utc - 5).iso8601
+      expect(u.settings['user_notifications'][0]['added_at']).to be < (Time.now.utc + 5).iso8601
       expect(u2.reload.settings['user_notifications']).to eq(nil)
     end
     

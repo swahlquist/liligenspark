@@ -14,6 +14,7 @@ describe ExtraData, :type => :model do
     it 'should do nothing if extra_data_too_big? is false' do
       s = LogSession.new(data: {'extra_data_nonce' => 'asdf'})
       expect(s).to receive(:assert_extra_data)
+      expect(Uploader).to receive(:check_existing_upload).and_return(nil)
       expect(Uploader).to_not receive(:remote_upload)
       expect(s).to receive(:extra_data_too_big?).and_return(false)
       s.detach_extra_data(true)
@@ -46,6 +47,7 @@ describe ExtraData, :type => :model do
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf'})
       expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(Uploader).to receive(:check_existing_upload).and_return(nil)
       expect(Uploader).to_not receive(:remote_upload)
       s.detach_extra_data('force')
     end
