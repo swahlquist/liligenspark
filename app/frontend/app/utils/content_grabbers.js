@@ -2336,7 +2336,11 @@ var boardGrabber = EmberObject.extend({
         if(modal.is_open('importing-boards')) {
           modal.close();
         }
-        modal.error(i18n.t('upload_failed', "Upload failed"));
+        if(boards.error && boards.error.protected) {
+          modal.error(i18n.t('protected_import_failed', "Board Import Failed: Protected Materials cannot be imported"));
+        } else {
+          modal.error(i18n.t('board_import_failed', "Board Import failed"));          
+        }
       }
     }, function() {
       if(modal.is_open('importing-boards')) {

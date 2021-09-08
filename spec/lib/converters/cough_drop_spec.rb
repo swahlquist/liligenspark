@@ -340,6 +340,7 @@ describe Converters::CoughDrop do
         'key' => b.key,
         'private' => true,
         'protected' => true,
+        'protected_user_id' => u.global_id,
         'word_suggestions' => false,
         'categories' => nil,
         'home_board' => nil,
@@ -1168,6 +1169,81 @@ describe Converters::CoughDrop do
       expect(board.settings['buttons'].length).to eq(1)
       expect(board.settings['buttons'][0]['label']).to eq('asdf')
       expect(board.settings['buttons'][0]['vocalization']).to eq('I have a good day && :bacon && +wee && :home')
+    end
+
+    it "should use existing images and skip unauthorized protected images" do
+      u = User.create
+      json = {
+        'buttons' => [
+          {'id' => '2', 'label' => 'cat', 'image_id' => '111'},
+          {'id' => '3', 'label' => 'hat', 'image_id' => '222'}
+        ],
+        'images' => [
+          {'id' => '111', 'data' => 'data:text/plaintext;base64,YWJj'},
+          {'id' => '222', 'data' => 'data:text/plaintext;base64,YWJj', 'protected' => true, 'protected_source' => 'symbolstix'},
+        ],
+        'id' => 'asdfasdf'
+      }
+      board = Converters::CoughDrop.from_external(json, {'user' => u})
+      expect(board).to_not eq(nil)
+      expect(board.settings['buttons'].length).to eq(2)
+      expect(board.settings['buttons'][0]['label']).to eq('cat')
+      expect(board.settings['buttons'][0]['image_id']).to_not eq(nil)
+      expect(board.settings['buttons'][1]['label']).to eq('hat')
+      expect(board.settings['buttons'][1]['image_id']).to eq(nil)
+    end
+
+    it "should allow authorized protected images" do
+      u = User.create
+      expect(u).to receive(:enabled_protected_sources).with(true).and_return(['imagey'])
+      json = {
+        'buttons' => [
+          {'id' => '2', 'label' => 'cat', 'image_id' => '111'},
+          {'id' => '3', 'label' => 'hat', 'image_id' => '222'}
+        ],
+        'images' => [
+          {'id' => '111', 'data' => 'data:text/plaintext;base64,YWJj'},
+          {'id' => '222', 'data' => 'data:text/plaintext;base64,YWJj', 'protected' => true, 'protected_source' => 'imagey'},
+        ],
+        'id' => 'asdfasdf'
+      }
+      board = Converters::CoughDrop.from_external(json, {'user' => u})
+      expect(board).to_not eq(nil)
+      expect(board.settings['buttons'].length).to eq(2)
+      expect(board.settings['buttons'][0]['label']).to eq('cat')
+      expect(board.settings['buttons'][0]['image_id']).to_not eq(nil)
+      expect(board.settings['buttons'][1]['label']).to eq('hat')
+      expect(board.settings['buttons'][1]['image_id']).to_not eq(nil)
+    end
+
+    it "should error without a user" do
+      expect{ Converters::CoughDrop.from_external({}, {'user' => nil}) }.to raise_error("user required")
+    end
+
+    it "should error without an id" do
+      u = User.create
+      expect{ Converters::CoughDrop.from_external({}, {'user' => u}) }.to raise_error("missing id")
+    end
+
+    it "should raise an error when importing a protected board for the wrong user" do
+      u = User.create
+      json = {
+        'buttons' => [
+          {'id' => '2', 'label' => 'cat', 'image_id' => '111'},
+          {'id' => '3', 'label' => 'hat', 'image_id' => '222'}
+        ],
+        'images' => [
+          {'id' => '111', 'data' => 'data:text/plaintext;base64,YWJj'},
+          {'id' => '222', 'data' => 'data:text/plaintext;base64,YWJj', 'protected' => true, 'protected_source' => 'imagey'},
+        ],
+        'id' => 'asdfasdf',
+        'ext_coughdrop_settings' => {
+          'protected' => true,
+          'key' => 'nobody/else',
+          'protected_user_id' => '1111'
+        }
+      }
+      expect { Converters::CoughDrop.from_external(json, {'user' => u}) }.to raise_error("can't import protected boards to a different user")
     end
 
     it "should support known boards"
