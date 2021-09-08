@@ -491,6 +491,12 @@ var app_state = EmberObject.extend({
       buttonTracker.transitioning = false;
     }
     if(new_state && (new_state.source == 'sidebar' || new_state.source == 'swipe')) {
+      if(new_state && new_state.locale && stashes.get('override_label_locale') && new_state.locale != stashes.get('override_label_locale')) {
+        stashes.persist('override_label_locale', null);
+      }
+      if(new_state && new_state.locale && stashes.get('override_vocalization_locale') && new_state.locale != stashes.get('override_vocalization_locale')) {
+        stashes.persist('override_vocalization_locale', null);
+      }
       stashes.persist('last_root', new_state);
     }
     var history = this.get_history();
@@ -515,11 +521,17 @@ var app_state = EmberObject.extend({
     if(new_state.locale) {
       stashes.persist('label_locale', new_state.locale);
       stashes.persist('vocalization_locale', new_state.locale);
+      app_state.set('label_locale', new_state.locale);
+      app_state.set('vocalization_locale', new_state.locale);
     }
     this.set('referenced_board', new_state);
     var _this = this;
     var promise = new RSVP.Promise(function(resolve, reject) {
       _this.controller.transitionToRoute('board', new_state.key);
+      if(old_state.key == new_state.key) {
+        // If we are staying on the same board, force a redraw
+        editManager.process_for_displaying();
+      }
       var check = function() {
         check.attempts = (check.attempts || 0);
         if(!buttonTracker.transitioning) { check.attempts++; }
