@@ -780,25 +780,7 @@ var utterance = EmberObject.extend({
     for(var idx = audio.length - 1; idx >= 0; idx--) {
       audio[idx].parentNode.removeChild(audio[idx]);
     }
-    if(prior_list.length > 0 && app_state.get('referenced_user.preferences.recent_cleared_phrases')) {
-      var now = (new Date()).getTime();
-      var priors = (stashes.get('prior_utterances') || []).filter(function(p) { return p.cleared > (now - (24 * 60 * 60 * 1000))} );
-      var sentence = utterance.sentence(prior_list);
-      var found = false;
-      priors.forEach(function(p) {
-        if(utterance.sentence(p.vocalizations) == sentence) {
-          found = true;
-        }
-      });
-      if(!found) {
-        priors.push({
-          user_id: app_state.get('referenced_user.id'),
-          cleared: now,
-          vocalizations: prior_list
-        });
-      }
-      stashes.persist('prior_utterances', priors);
-    }
+    this.remember_utterance(prior_list);
 
     if(!opts.skip_logging) {
       stashes.log({
@@ -816,8 +798,12 @@ var utterance = EmberObject.extend({
   backspace: function(opts) {
     opts = opts || {};
     var list = this.get('rawButtonList');
+    // if buttons are about to be cleared, un-clear them
+    if(app_state.get('clearable_history') > 0) {
+      utterance.check_vocalization_history('reset');
+    }
     // if the list is vocalized, backspace should take it back into building-mode
-    if(!this.get('list_vocalized')) {
+    else if(!this.get('list_vocalized') || !this.get('clear_on_vocalize')) {
       var idx = app_state.get('insertion.index');
       if(app_state.get('insertion') && isFinite(idx)) {
         // insertion.index is for the visual list, which has 
@@ -857,6 +843,82 @@ var utterance = EmberObject.extend({
     this.set('rawButtonList', buttons);
     this.controller.vocalize();
   },
+  remember_utterance: function(list) {
+    if(list.length > 0 && app_state.get('referenced_user.preferences.recent_cleared_phrases')) {
+      var now = (new Date()).getTime();
+      var priors = (stashes.get('prior_utterances') || []).filter(function(p) { return p.cleared > (now - (24 * 60 * 60 * 1000))} );
+      var sentence = utterance.sentence(list);
+      var found = false;
+      priors.forEach(function(p) {
+        if(utterance.sentence(p.vocalizations) == sentence) {
+          found = true;
+        }
+      });
+      if(!found) {
+        priors.push({
+          user_id: app_state.get('referenced_user.id'),
+          cleared: now,
+          vocalizations: list
+        });
+      }
+      stashes.persist('prior_utterances', priors);
+    }
+  },
+  check_vocalization_history: function(allow_clear) {
+    var cutoff_count = 1, cutoff_ts = 0.001;
+    if(app_state.get('currentUser.preferences.clear_vocalization_history')) {
+      cutoff_count = app_state.get('currentUser.preferences.clear_vocalization_history_count') || 0;
+      cutoff_ts = app_state.get('currentUser.preferences.clear_vocalization_history_minutes') || 0;
+    }
+    var prior_list = this.get('rawButtonList') || [];
+    var now = (new Date()).getTime();
+    var new_list = [];
+    var old_count = 0;
+    var do_update = false;
+    prior_list.forEach(function(btn) {
+      if(allow_clear == 'reset') {
+        delete btn.vocalizations;
+        delete btn.history_clearable;
+        delete btn.first_vocalized;
+        do_update = true;
+        new_list.push(btn);
+      } else {
+        btn.vocalizations = (btn.vocalizations || 0);
+        if(btn.history_clearable || (cutoff_count && btn.vocalizations >= cutoff_count && cutoff_ts && btn.first_vocalized < (now - cutoff_ts * 60 * 1000))) {
+          // It's surpassed the cutoff and 
+          // can be auto-cleared or marked as clearable
+          old_count++;
+          do_update = true;
+          if(!btn.history_clearable) {
+            btn.history_clearable = true;
+          }
+        } else {
+          new_list.push(btn);
+        }
+        if(allow_clear) {
+          if(!btn.first_vocalized) {
+            btn.first_vocalized = now;
+          }
+          btn.vocalizations++;
+        }
+      }
+    });
+    if(!allow_clear && old_count > 0) {
+      app_state.set('clearable_history', old_count);      
+    } else {
+      app_state.set('clearable_history', 0);
+    }
+    if((do_update || new_list.length != prior_list.length) && allow_clear) {
+      new_list = [].concat(new_list);
+      if(new_list.length != prior_list.length) {
+        this.remember_utterance(prior_list);
+      }
+      runLater(function() {
+        debugger
+        utterance.set('rawButtonList', new_list);
+      });
+    }
+  },
   vocalize_list: function(volume, opts) {
     opts = opts || {};
     var list = app_state.get('button_list');
@@ -868,6 +930,8 @@ var utterance = EmberObject.extend({
     } else if(speecher.speaking_from_collection && speecher.speaking_from_collection.match(/^utterance/) && app_state.get('referenced_user.preferences.prevent_utterance_repeat')) {
       return;
     }
+    this.check_vocalization_history(true);
+
     for(var idx = 0; idx < list.length; idx++) {
       if(list[idx].inline_content) {
         list[idx].inline_content.forEach(function(content) {

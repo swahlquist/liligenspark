@@ -343,6 +343,9 @@ class User < ActiveRecord::Base
     if FeatureFlags.user_created_after?(self, 'click_buttons')
       self.settings['preferences']['click_buttons'] = true if self.settings['preferences']['click_buttons'] == nil
     end
+    if FeatureFlags.user_created_after?(self, 'recent_cleared_phrases')
+      self.settings['preferences']['recent_cleared_phrases'] = true if self.settings['preferences']['recent_cleared_phrases'] == nil
+    end
     self.settings['preferences']['click_buttons'] ||= false
     if FeatureFlags.user_created_after?(self, 'utterance_interruptions')
       self.settings['preferences']['utterance_interruptions'] = true if self.settings['preferences']['utterance_interruptions'] == nil

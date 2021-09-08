@@ -45,6 +45,8 @@
               <img src={{user.avatar_url}} class='follower' />
             {{/each}}
           </div>
+        {{else if app_state.clearable_history}}
+          <div class='label label-warning over' id='reply_icon' style='width: 60px; margin-right: -65px; border-radius: 10px;'><span class='glyphicon glyphicon-remove'></span> {{app_state.clearable_history}}</div>
         {{/if}}
       {{/unless}}
       <a href='#' tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">
