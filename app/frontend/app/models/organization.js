@@ -25,6 +25,7 @@ CoughDrop.Organization = DS.Model.extend({
   default_home_board: DS.attr('raw'),
   home_board_key: DS.attr('string'),
   admin: DS.attr('boolean'),
+  org_access: DS.attr('boolean'),
   allotted_licenses: DS.attr('number'),
   allotted_eval_licenses: DS.attr('number'),
   allotted_supervisor_licenses: DS.attr('number'),
