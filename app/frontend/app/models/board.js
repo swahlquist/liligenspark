@@ -460,6 +460,7 @@ CoughDrop.Board = DS.Model.extend({
         }
       }
       if(capitalize) {
+        debugger
         // TODO: support capitalization
       }
     }

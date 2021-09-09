@@ -2383,6 +2383,17 @@ describe Board, :type => :model do
       expect(res[1]['id']).to eq(b2.global_id)
       expect(b2.reload.settings['copy_id']).to eq(b.global_id)
     end
+
+    it "should return error hash for protected boards" do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      boards = [b, b2]
+      expect(Converters::Utils).to receive(:remote_to_boards).with(u, 'http://www.example.com/board.obf').and_raise("can't import protected boards to the wrong user")
+      res = Board.import(u.global_id, 'http://www.example.com/board.obf')
+      expect(res).to eq({:error => {:message=>"protected material cannot be imported", :protected=>true}})
+      expect(Board.last).to eq(b2)
+    end
   end
   
   describe "additional_webhook_codes" do

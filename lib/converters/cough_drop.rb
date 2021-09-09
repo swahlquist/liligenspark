@@ -56,8 +56,9 @@ module Converters::CoughDrop
         'text_only' => board.settings['text_only'],
         'hide_empty' => board.settings['hide_empty']
       }
-      if board.protected_material? && board.user
-        res['protected_content_user_identifier'] = board.user.settings['email']
+      if board.unshareable? 
+        res['protected_content_user_identifier'] = board.user ? board.user.settings['email'] : "nobody@example.com"
+        res['ext_coughdrop_settings']['protected_user_id'] = board.user.global_id if board.user
       end
     end
     grid = []
@@ -220,9 +221,14 @@ module Converters::CoughDrop
 
     raise "user required" unless opts['user']
     raise "missing id" unless obj['id']
+    protected_sources = opts['user'] ? opts['user'].enabled_protected_sources(true) : []
     if obj['ext_coughdrop_settings'] && obj['ext_coughdrop_settings']['protected'] && obj['ext_coughdrop_settings']['key']
       user_name = obj['ext_coughdrop_settings']['key'].split(/\//)[0]
-      raise "can't import protected boards to a different user" unless user_name == opts['user'].user_name
+      if user_name != opts['user'].user_name
+        if obj['ext_coughdrop_settings']['protected_user_id'] != opts['user'].global_id
+          raise "can't import protected boards to a different user"
+        end
+      end
     end
 
     hashes = {}
@@ -232,6 +238,11 @@ module Converters::CoughDrop
       (obj[list] || {}).each do |id, item|
         next unless hashes["#{list}_ids"].include?(item['id'])
         record = Converters::Utils.find_by_data_url(item['data_url'])
+        if item['protected'] && item['protected_source'] && !protected_sources.include?(item['protected_source'])
+          # If the image/sound is protected and the user doesn't have permission
+          # to access the source, then skip importing it rather than failing
+          next
+        end
         if record
           obj[list][item['id']]['id'] = record.global_id
           hashes[item['id']] = record.global_id

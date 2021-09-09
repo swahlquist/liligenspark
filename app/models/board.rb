@@ -433,8 +433,16 @@ class Board < ActiveRecord::Base
     boards = []
     user = User.find_by_global_id(user_id)
     Progress.update_current_progress(0.05, :generating_boards)
-    Progress.as_percent(0.05, 0.9) do
-      boards = Converters::Utils.remote_to_boards(user, url)
+    begin
+      Progress.as_percent(0.05, 0.9) do
+        boards = Converters::Utils.remote_to_boards(user, url)
+      end
+    rescue => e
+      if e.message.match(/protected boards/)
+        return {error: {message: "protected material cannot be imported", protected: true}}
+      else
+        raise e
+      end
     end
     boards.each do |board|
       board.settings['copy_id'] = boards[0].global_id
