@@ -431,6 +431,10 @@ var speecher = EmberObject.extend({
   },
   speak_raw_text: function(text, collection_id, opts, callback) {
     var _this = this;
+    if(text.length == 1 && text == text.toUpperCase()) {
+      // On iOS, a single letter is ready "capital B" instead of just "B"
+      text = text.toLowerCase();
+    }
     var current_locale = app_state.get('vocalization_locale');
     if(opts.default_prompt && opts.voiceURI) { current_locale = 'any'; }
     if(opts.alternate_voice) {
