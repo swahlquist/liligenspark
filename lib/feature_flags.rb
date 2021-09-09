@@ -30,7 +30,8 @@ module FeatureFlags
     'battery_sounds' => 'February 25, 2020',
     'auto_capitalize' => 'May 1, 2021',
     'utterance_interruptions' => 'May 15, 2021',
-    'utterance_core_access' => 'May 1, 2021'
+    'utterance_core_access' => 'May 1, 2021',
+    'recent_cleared_phrases' => 'Sep 1, 2021'
   }
   def self.frontend_flags_for(user)
     flags = {}
