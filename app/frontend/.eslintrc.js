@@ -19,6 +19,7 @@ module.exports = {
     'no-unused-vars': 'off',
     'ember/no-function-prototype-extensions': 'off',
     'no-useless-escape': 'off',
+    'no-constant-condition': 'off',
     'no-empty': 'off',
     'no-redeclare': 'off',
     'no-debugger': 'off',

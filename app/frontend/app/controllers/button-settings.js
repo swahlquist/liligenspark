@@ -283,7 +283,9 @@ export default modal.ModalController.extend({
       {name: i18n.t('advanced_levels', "Custom Level Overrides"), id: 'advanced'}
     ];
   }),
-  board_levels: CoughDrop.board_levels,
+  board_levels: computed(function() {
+    return CoughDrop.board_levels;
+  }),
   basic_level_style: computed('model.level_style', function() {
     return this.get('model.level_style') == 'basic';
   }),

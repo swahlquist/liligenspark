@@ -148,6 +148,12 @@ gem install foreman
 foreman start
 ```
 
+or if you have heroku-cli installed:
+
+```
+heroku local
+```
+
 That'll run one instance of each process in the Procfile, which is more than you need
 but it'll work. After you start the ember process, it'll probably take around a minute or so for
 it to compile the javascript for the first time. You should see some notes on the console
@@ -163,6 +169,9 @@ installed in the execution path. There are also a number of server-side integrat
 can install that require secure keys, they are listed in `.env.example` with explanations
 of where they are required. Note that if you're trying to run a production environment, 
 not all functionality will degrade gracefully without these environment variables.
+
+If using Postgres.app on a Mac, you'll want to open the config for the
+db and increase max_connections to, say, 999
 
 There are also some rake tasks you'll want to schedule to run periodically. I use 
 Heroku Scheduler to run them at the specified frequency:
