@@ -4,6 +4,7 @@ import utterance from '../../utils/utterance';
 import RSVP from 'rsvp';
 import stashes from '../../utils/_stashes';
 import { computed } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default modal.ModalController.extend({
   opening: function() {

@@ -142,7 +142,7 @@ export default modal.ModalController.extend({
         translate_locale = this.get('translate_locale');
       }
       var name = this.get('board_name');
-      if(this.get('board_prefix') && !name.indexOf(this.get('board_prefix')) != 0) {
+      if(this.get('board_prefix') && name.indexOf(this.get('board_prefix')) != 0) {
         name = this.get('board_prefix') + " " + name;
       }
       modal.close({action: decision, user: this.get('current_user'), shares: shares, board_name: name, board_prefix: this.get('board_prefix'), make_public: this.get('public'), default_locale: this.get('default_locale'), translate_locale: translate_locale});
