@@ -98,22 +98,6 @@
             </div>
           </div>
         </div>
-        <div class='col-sm-6'>
-          <strong>{{t "Recent Words" key='words'}}</strong>
-          {{#if log_stats.modeleted_word_counts}}
-            <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
-          {{else}}
-            {{stats/word-cloud stats=words_cloud zoom=1}}
-          {{/if}}
-        </div>
-        <div class='col-sm-6'>
-          <strong>{{t "Modeled Words" key='words'}}</strong>
-          {{#if log_stats.modeleted_word_counts}}
-            <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
-          {{else}}
-            {{stats/word-cloud stats=modeled_words_cloud zoom=1}}
-          {{/if}}
-        </div>
       {{/if}}
       {{#if model.permissions.view}}
         <div class='col-sm-6' style='margin-bottom: 10px;'>
@@ -206,6 +190,23 @@
           {{stats/recent-goals total=model.user_counts.total_users goal_set=model.user_counts.goal_set tracked=model.user_counts.goal_recently_logged}}
         </div>
       {{/if}}
+      <div class='col-sm-6' style='clear: both;'>
+        <strong>{{t "Recent Words" key='words'}}</strong>
+        {{#if log_stats.modeleted_word_counts}}
+          <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
+        {{else}}
+          {{stats/word-cloud stats=words_cloud short=true zoom=1}}
+        {{/if}}
+      </div>
+      <div class='col-sm-6'>
+        <strong>{{t "Modeled Words" key='words'}}</strong>
+        {{#if log_stats.modeleted_word_counts}}
+          <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
+        {{else}}
+          {{stats/word-cloud stats=modeled_words_cloud short=true zoom=1}}
+        {{/if}}
+      </div>
+      <div style='clear: both;'></div>
     </div>
   {{/if}}
   <h3>{{t "Supervisors" key='supervisors'}}</h3>

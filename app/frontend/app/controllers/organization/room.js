@@ -27,17 +27,17 @@ export default Controller.extend({
     var res = EmberObject.create({
       words_by_frequency: []
     });
-    var counts = this.get('log_stats.word_count') || {};
+    var counts = this.get('log_stats.word_count') || [];
     counts.forEach(function(w) {
       res.get('words_by_frequency').pushObject({text: w.word, count: w.cnt});
     });
     return res;
   }),
-  modeled_words_cloud: computed('log_stats.modeled_word_count', function() {
+  modeled_words_cloud: computed('log_stats.modeled_word_counts', function() {
     var res = EmberObject.create({
       words_by_frequency: []
     });
-    var counts = this.get('log_stats.modeled_word_count') || {};
+    var counts = this.get('log_stats.modeled_word_counts') || [];
     counts.forEach(function(w) {
       res.get('words_by_frequency').pushObject({text: w.word, count: w.cnt});
     });
