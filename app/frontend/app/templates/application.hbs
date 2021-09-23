@@ -172,7 +172,11 @@
         {{/unless}}
       {{/unless}}
     {{/if}}
-    <h1 class={{app_state.h1_class}}>
+    {{#if app_state.currentUser.single_org.image_url}}
+      <img style="position: absolute; top: 50px; left: 19px; width: 50px; border-radius: 50px;" src={{app_state.currentUser.single_org.image_url}} onerror="this.style.display='none';">
+    {{/if}}
+    <h1 class={{app_state.h1_class}} style='position: relative; z-index: 1;'>
+
       <a href="#" {{action "index"}}>
         <img src={{if app_state.domain_settings.logo_url app_state.domain_settings.logo_url (path 'images/logo-big.png')}} alt="CoughDrop"/>
         <span>

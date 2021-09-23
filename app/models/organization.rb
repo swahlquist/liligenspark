@@ -766,12 +766,14 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['premium'] = true if org.settings['org_access']
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_manager' && org
         e = {
           'id' => org.global_id,
           'name' => org.settings['name'],
+          'image_url' => org.settings['image_url'],
           'type' => 'manager',
           'added' => link['state']['added'],
           'full_manager' => !!link['state']['full_manager'],
@@ -780,13 +782,15 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
-        e['org']['restricted'] if org.settings['org_access'] == false
+        e['premium'] = true if org.settings['org_access']
+        e['restricted'] = true if org.settings['org_access'] == false
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_supervisor' && org
         e = {
           'id' => org.global_id,
           'name' => org.settings['name'],
+          'image_url' => org.settings['image_url'],
           'type' => 'supervisor',
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
@@ -938,6 +942,7 @@ class Organization < ActiveRecord::Base
   def process_params(params, non_user_params)
     self.settings ||= {}
     self.settings['name'] = process_string(params['name']) if params['name']
+    self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]
       total = params[:allotted_licenses].to_i
