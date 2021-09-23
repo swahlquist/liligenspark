@@ -145,6 +145,7 @@ class Api::UnitsController < ApplicationController
     # words set in user goals (ranked by # of users with word)
     user_ids = UserLink.links_for(unit).select{|l| l['type'] == 'org_unit_communicator' }.map{|l| l['user_id'] }
     approved_users = User.find_all_by_global_id(user_ids)
+    user_count = approved_users.count
     
     # This data can't be retrieved historically, so exclude in side-by-side
     goals = UserGoal.where(user_id: approved_users.map(&:id), active: true)
@@ -157,7 +158,7 @@ class Api::UnitsController < ApplicationController
         word_user_ids[str] << goal.user_id if !word_user_ids[str].include?(goal.user_id)
       end
     end
-    word_cutoff = approved_users.count < 5 ? approved_users.count / 3 : 3
+    word_cutoff = user_count < 5 ? user_count / 3 : 3
     goal_word_counts = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}.select{|arr| arr[1] > word_cutoff}[0, 20]
 
     word_counts = {}
@@ -179,17 +180,23 @@ class Api::UnitsController < ApplicationController
       total_seconds += sum.data['stats']['total_session_seconds'] || 0
       (sum.data['stats']['all_word_counts'] || {}).each do |word, cnt|
         total_words += cnt
-        word_counts[word] = (word_counts[word] || 0) + cnt
+        word_counts[word] ||= {user_ids: {}, cnt: 0}
+        word_counts[word][:cnt] += cnt
+        word_counts[word][:user_ids][sum.user_id] = true
       end
       (sum.data['stats']['modeled_word_counts'] || {}).each do |word, cnt|
         total_models += cnt
-        modeled_word_counts[word] = (modeled_word_counts[word] || 0) + cnt
+        modeled_word_counts[word] ||= {user_ids: {}, cnt: 0}
+        modeled_word_counts[word][:cnt] += cnt
+        modeled_word_counts[word][:user_ids][sum.user_id] = true
       end
     end
-    word_counts = word_counts.to_a.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 50]
-    modeled_word_counts = modeled_word_counts.to_a.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 50]
+    minimum_user_count = word_counts.map{|w, h| h[:user_ids].length }.max > 3 ? 2 : 1
+    word_counts = word_counts.to_a.select{|w, h| h[:user_ids].keys.length >= minimum_user_count }.map{|w, h| [w, h[:cnt]] }.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 75]
+    minimum_user_count = modeled_word_counts.map{|w, h| h[:user_ids].length }.max > 2 ? 2 : 1
+    modeled_word_counts = modeled_word_counts.to_a.select{|w, h| h[:user_ids].keys.length >= minimum_user_count }.map{|w, h| [w, h[:cnt]] }.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 75]
     render json: {
-      total_users: approved_users.count,
+      total_users: user_count,
       total_user_weeks: total_user_weeks,
       total_words: total_words,
       total_models: total_models,
