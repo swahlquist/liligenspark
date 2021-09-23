@@ -606,7 +606,7 @@ var stashes = EmberObject.extend({
     stashes.track_daily_use();
     if(obj && obj.button_id) {
       var modeling = false;
-      if(stashes.get('modeling') || (log_event.button && log_event.button.modeling)) {
+      if(stashes.get('modeling') || (obj && obj.modeling)) {
         modeling = true;
       } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > ((new Date()).getTime() - 500)) {
         modeling = true;
