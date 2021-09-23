@@ -243,6 +243,7 @@ Coughdrop::Application.routes.draw do
     
     resources :units do
       get 'stats'
+      get 'log_stats'
       get 'logs'
       post 'note'
     end

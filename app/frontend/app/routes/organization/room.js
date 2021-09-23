@@ -15,6 +15,7 @@ export default Route.extend({
   },
   setupController: function(controller, model) {
     controller.set('model', model);
+    controller.load_stats();
     controller.set('organization', this.modelFor('organization'));
     model.load_data();
     controller.get('organization').load_users();

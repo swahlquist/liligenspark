@@ -133,6 +133,74 @@ class Api::UnitsController < ApplicationController
     render json: res.to_json
   end
 
+  def log_stats
+    unit = OrganizationUnit.find_by_global_id(params['unit_id'])
+    return unless exists?(unit, params['unit_id'])
+    return unless allowed?(unit, 'view_stats')
+    cutoff = 12.weeks.ago # to match /stats data
+    # WeeklyStatsSummaries for unit users
+    # recently-modeled words
+    # words used by multiple users (or common words for single-user room)
+    # total words by all users, avg words per day, avg modeling frequency, avg sessions per user, total time logged
+    # words set in user goals (ranked by # of users with word)
+    user_ids = UserLink.links_for(unit).select{|l| l['type'] == 'org_unit_communicator' }.map{|l| l['user_id'] }
+    approved_users = User.find_all_by_global_id(user_ids)
+    
+    # This data can't be retrieved historically, so exclude in side-by-side
+    goals = UserGoal.where(user_id: approved_users.map(&:id), active: true)
+    word_user_ids = {}
+    goals.each do |goal|
+      words = (goal.settings['assessment_badge'] || {})['words_list'] || []
+      words.each do |word|
+        str = word.downcase
+        word_user_ids[str] ||= []
+        word_user_ids[str] << goal.user_id if !word_user_ids[str].include?(goal.user_id)
+      end
+    end
+    word_cutoff = approved_users.count < 5 ? approved_users.count / 3 : 3
+    goal_word_counts = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}.select{|arr| arr[1] > word_cutoff}[0, 20]
+
+    word_counts = {}
+    total_words = 0
+    total_user_weeks = 0
+    total_models = 0
+    modeled_word_counts = {}
+    total_sessions = 0
+    total_seconds = 0
+    weekyears = []
+    weekdate = cutoff
+    while weekdate <= Time.now
+      weekyears << WeeklyStatsSummary.date_to_weekyear(weekdate)
+      weekdate += 1.week
+    end
+    WeeklyStatsSummary.where(user_id: approved_users.map(&:id), weekyear: weekyears).each do |sum|
+      total_user_weeks += 1
+      total_sessions += sum.data['stats']['total_sessions'] || 0
+      total_seconds += sum.data['stats']['total_session_seconds'] || 0
+      (sum.data['stats']['all_word_counts'] || {}).each do |word, cnt|
+        total_words += cnt
+        word_counts[word] = (word_counts[word] || 0) + cnt
+      end
+      (sum.data['stats']['modeled_word_counts'] || {}).each do |word, cnt|
+        total_models += cnt
+        modeled_word_counts[word] = (modeled_word_counts[word] || 0) + cnt
+      end
+    end
+    word_counts = word_counts.to_a.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 50]
+    modeled_word_counts = modeled_word_counts.to_a.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 50]
+    render json: {
+      total_users: approved_users.count,
+      total_user_weeks: total_user_weeks,
+      total_words: total_words,
+      total_models: total_models,
+      word_count: word_counts,
+      modeled_word_counts: modeled_word_counts,
+      goal_word_counts: goal_word_counts,
+      total_sessions: total_sessions,
+      total_seconds: total_seconds
+    }
+  end
+
   def logs
     unit = OrganizationUnit.find_by_global_id(params['unit_id'])
     return unless exists?(unit, params['unit_id'])
