@@ -4,6 +4,7 @@ import Utils from '../../utils/misc';
 import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import { computed } from '@ember/object';
+import EmberObject from '@ember/object';
 
 export default Controller.extend({
   first_log: computed('model.logs.data', function() {
