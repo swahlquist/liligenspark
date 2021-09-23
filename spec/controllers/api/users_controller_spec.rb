@@ -1866,6 +1866,7 @@ describe Api::UsersController, :type => :controller do
           {'date' => Date.today.iso8601, 'active' => true}
         ]
       }, {:device => d, :user => @user, :author => @user})
+      expect(log).to_not eq(nil)
       get 'daily_use', params: {:user_id => @user.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)

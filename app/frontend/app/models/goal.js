@@ -16,6 +16,10 @@ CoughDrop.Goal = DS.Model.extend({
   has_video: DS.attr('boolean'),
   primary: DS.attr('boolean'),
   active: DS.attr('boolean'),
+  uneditable: DS.attr('boolean'),
+  unit_id: DS.attr('string'),
+  unit_name: DS.attr('string'),
+  unit_org_id: DS.attr('string'),
   template_id: DS.attr('string'),
   template: DS.attr('boolean'),
   template_header: DS.attr('boolean'),
@@ -175,6 +179,15 @@ CoughDrop.Goal = DS.Model.extend({
     } else {
       return i18n.t('no_unit', "No Data");
     }
+  }),
+  duration_diff: computed('started', 'ended', 'active', function() {
+    if(!this.get('active') && this.get('started') && this.get('ended')) {
+      return new Date((new Date()).getTime() - (this.get('ended') - this.get('started')));
+    }
+    return null;
+  }),
+  template_or_unit: computed('template', 'unit_id', function() {
+    return this.get('template') || this.get('unit_id');
   }),
   time_unit_measurements: computed('stats', 'best_time_level', function() {
     return this.get('stats')[this.get('best_time_level')] || {};

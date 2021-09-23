@@ -4,6 +4,7 @@ import $ from 'jquery';
 import CoughDrop from '../../app';
 import i18n from '../../utils/i18n';
 import { computed } from '@ember/object';
+import modal from '../../utils/modal';
 
 export default Component.extend({
   didInsertElement: function() {
@@ -73,6 +74,19 @@ export default Component.extend({
                 level: user_level
               });
             } else if(_this.get('user_type') == 'communicator') {
+              var statuses = (weeks && weeks[stamp] && weeks[stamp].statuses) || [];
+              statuses.forEach(function(s) {
+                if(s.score == 1) {
+                  s.display_class = 'face sad';
+                } else if(s.score == 2) {
+                  s.display_class = 'face neutral';
+                } else if(s.score == 3) {
+                  s.display_class = 'face happy';
+                } else if(s.score == 4) {
+                  s.display_class = 'face laugh';
+                }
+                if(s.from_unit) { s.display_class = s.display_class + ' gray'; }
+              });
               var count = (weeks && weeks[stamp] && weeks[stamp].count) || 0;
               var goals = (weeks && weeks[stamp] && weeks[stamp].goals) || 0;
               var level = Math.round(count / max_count * 10);
@@ -85,6 +99,7 @@ export default Component.extend({
                 count: count,
                 tooltip: str,
                 goals: goals,
+                statuses: statuses,
                 class: 'week level_' + level
               });
             } else {
@@ -203,7 +218,24 @@ export default Component.extend({
     }
     return [];
   }),
+  notable: computed('user_type', 'org', function() {
+    return this.get('org.premium') && this.get('user_type') == 'communicator';
+  }),
   actions: {
+    note: function(user) {
+      var _this = this;
+      CoughDrop.store.findRecord('user', user.id).then(function(user) {
+        var goal_id = 'status';
+        if(_this.get('room_goal_id')) {
+          goal_id = _this.get('room_goal_id');
+        }
+        modal.open('record-note', {note_type: 'text', user: user, goal_id: goal_id}).then(function() {
+          _this.sendAction('refresh');
+        });
+      }, function(err) {
+        modal.error(i18n.t('error_loading_user', "Error Loading User %{un}", {un: user.user_name}));
+      })
+    },
     delete_action: function(id) {
       this.sendAction('delete_user', this.get('unit'), this.get('user_type'), id);
     }

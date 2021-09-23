@@ -29,10 +29,15 @@ module JsonApi::Unit
           hash['org_unit_edit_permission'] = !!(link['state'] && link['state']['edit_permission'])
           json['supervisors'] << hash
         elsif link['type'] == 'org_unit_communicator'
-          json['communicators'] << JsonApi::User.as_json(user, limited_identity: true)
+          json['communicators'] << JsonApi::User.as_json(user, limited_identity: true, include_goal: true)
         end
       end
     end
+    json['goal'] = nil
+    if unit.user_goal
+      json['goal'] = JsonApi::Goal.as_json(unit.user_goal, :lookups => false)
+    end
+    json['prior_goals'] = (unit.settings['goal_assertions'] || {})['prior']
 
     if args.key?(:permissions)
       json['permissions'] = unit.permissions_for(args[:permissions])

@@ -1347,6 +1347,13 @@ var persistence = EmberObject.extend({
         if(CoughDrop.session && !CoughDrop.session.get('invalid_token')) {
           if(persistence.get('sync_progress.root_user') == user_id) {
             CoughDrop.session.check_token(false);
+            if(user.get('single_org.image_url')) {
+              // Store org image url for header rendering
+              persistence.store_url()
+              persistence.store_url(user.get('single_org.image_url'), 'image', false, false).then(function() {
+              }, function() {
+              });
+            }
           }
         }
 

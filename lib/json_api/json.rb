@@ -72,7 +72,9 @@ module JsonApi::Json
   
   def self.set_host(host)
     @@running_hosts ||= {}
-    @@running_hosts.each{|id, hash| @@running_hosts.delete(id) if (hash['timestamp'] || 0) < 1.hour.ago.to_i }
+    hosts = {}
+    @@running_hosts.each{|id, h| hosts[id] = h }
+    hosts.each{|id, hash| @@running_hosts.delete(id) if (hash['timestamp'] || 0) < 1.hour.ago.to_i }
     @@running_hosts[Worker.thread_id] = {'timestamp' => Time.now.to_i, 'host' => host}
   end
   

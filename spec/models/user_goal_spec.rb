@@ -15,6 +15,20 @@ describe UserGoal, type: :model do
     User.link_supervisor_to_user(u2, u, nil, true)
     expect(g.reload.permissions_for(u2.reload)).to eq({'user_id' => u2.global_id, 'view' => true, 'comment' => true, 'edit' => true})
   end
+
+  it "should allow supervisors to see the root goal for a unit" do
+    o = Organization.create
+    ou = OrganizationUnit.create(organization: o)
+    u1 = User.create
+    u2 = User.create
+    o.add_supervisor(u2.user_name, false)
+    ou.reload.add_supervisor(u2.user_name, true)
+    g = UserGoal.create(user: u1)
+    g.settings['organization_unit_id'] = ou.global_id
+    g.save
+    expect(ou.reload.supervisor?(u2)).to eq(true)
+    expect(g.reload.permissions_for(u2.reload)).to eq({'user_id' => u2.global_id, 'view' => true, 'edit' => true, 'comment' => true})
+  end
   
   describe "generate_defaults" do
     it "should generate defaults" do
@@ -103,6 +117,7 @@ describe UserGoal, type: :model do
         'sessions' => 0,
         'badges' => 0,
         'suggested_level' => 'daily',
+        "total_statuses" => 0,
         'weighted_average_status' => 0,
         'weighted_percent_positive' => 0
       })
@@ -327,7 +342,7 @@ describe UserGoal, type: :model do
         template: true,
         sequence_summary: "<script>alert('asdf');</script>something else<br/>",
         sequence_description: "something I <a href='http://www.google.com'>like</a><em>!</em>"
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.active).to eq(true)
       expect(g.summary).to eq("something good")
       expect(g.settings['description']).to eq("a something that is good<br>so there")
@@ -341,7 +356,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header: true,
         next_template_id: '1234'
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.template).to eq(true)
       expect(g.template_header).to eq(true)
       expect(g.settings['next_template_id']).to eq(nil)
@@ -350,7 +365,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header_id: g.global_id,
         next_template_id: g.global_id
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g2.template).to eq(true)
       expect(g2.template_header).to eq(nil)
       expect(g2.settings['next_template_id']).to eq(g.global_id)
@@ -363,7 +378,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header: true,
         next_template_id: '1234'
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.template).to eq(true)
       expect(g.template_header).to eq(true)
       expect(g.settings['next_template_id']).to eq(nil)
@@ -372,7 +387,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header_id: g.global_id,
         next_template_id: g.global_id
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g2.template).to eq(true)
       expect(g2.template_header).to eq(nil)
       expect(g2.settings['next_template_id']).to eq(g.global_id)
@@ -385,7 +400,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header: true,
         next_template_id: '1234'
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.template).to eq(true)
       expect(g.template_header).to eq(true)
       expect(g.settings['next_template_id']).to eq(nil)
@@ -394,7 +409,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header_id: g.global_id,
         next_template_id: g.global_id
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g2.template).to eq(true)
       expect(g2.template_header).to eq(nil)
       expect(g2.settings['next_template_id']).to eq(g.global_id)
@@ -407,7 +422,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header: true,
         next_template_id: '1234'
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.template).to eq(true)
       expect(g.template_header).to eq(true)
       expect(g.settings['next_template_id']).to eq(nil)
@@ -416,7 +431,7 @@ describe UserGoal, type: :model do
         template: true,
         template_header_id: g.global_id,
         next_template_id: g.global_id
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g2.template).to eq(true)
       expect(g2.template_header).to eq(nil)
       expect(g2.settings['next_template_id']).to eq(g.global_id)
@@ -428,7 +443,7 @@ describe UserGoal, type: :model do
       g = UserGoal.process_new({
         template: true,
         advancement: "date: July 1"
-      }, {user: u, author: u})
+      }, {user: u, author: u, allow_global: true})
       expect(g.settings['goal_duration']).to eq(nil)
       expect(g.settings['goal_advances_at']).to eq('July 1')
 
@@ -471,6 +486,46 @@ describe UserGoal, type: :model do
       }, {user: u, author: u})
       expect(g.reload.primary).to eq(true)
       expect(g2.reload.primary).to eq(false)
+    end
+
+    it "should only allow template and global goals if authorized" do
+      u = User.create
+      g = UserGoal.process_new({
+        active: true,
+        global: true,
+        template: true
+      }, {user: u, author: u})
+      expect(g.reload.global).to eq(nil)
+      expect(g.reload.template).to eq(nil)
+
+      g = UserGoal.process_new({
+        active: true,
+        global: true,
+        template: true
+      }, {user: u, author: u, allow_global: true})
+      expect(g.reload.global).to eq(true)
+      expect(g.reload.template).to eq(true)
+    end
+
+    it "should allow attaching a goal to an org unit" do
+      u = User.create
+      o = Organization.create
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(u.user_name)
+      ou.reload.add_supervisor(u.user_name, false)
+      
+      g = UserGoal.process_new({
+        unit_id: ou.global_id,
+      }, {user: u, author: u, allow_global: true})
+      expect(g.template).to eq(true)
+      expect(g.settings['organization_unit_id']).to eq(nil)
+
+      ou.reload.add_supervisor(u.user_name, true)
+      g = UserGoal.process_new({
+        unit_id: ou.global_id,
+      }, {user: u.reload, author: u, allow_global: true})
+      expect(g.template).to eq(true)
+      expect(g.settings['organization_unit_id']).to eq(ou.global_id)
     end
   end
   
@@ -602,6 +657,10 @@ describe UserGoal, type: :model do
         },
         'author_id' => '9876',
         'summary' => 'hey ya',
+        'badges' => {'a' => 1},
+        'assessment_badge' => {'b' => 1},
+        'ref_data' => {'c' => 1},
+        'badge_name' => 'badgey',
         'description' => 'this is a really important thing',
         'next_template_id' => '1234',
         'goal_duration' => 3.weeks.to_i
@@ -618,8 +677,62 @@ describe UserGoal, type: :model do
       expect(g.advance_at.to_i).to eq((Time.now + 3.weeks.to_i).to_i)
       expect(g.settings['author_id']).to eq('12345')
       expect(g.settings['video']).to eq({'id' => '1_123'})
+      expect(g.settings['badges']).to eq(nil)
+      expect(g.settings['assessment_badge']).to eq(nil)
+      expect(g.settings['ref_data']).to eq(nil)
+      expect(g.settings['badge_name']).to eq(nil)
       expect(g.active).to eq(true)
       expect(g.user).to eq(u)
+    end
+
+    it "should include additional settings if complete_goal=true" do
+      template = UserGoal.create(:settings => {
+        'video' => {
+          'id' => '1_123'
+        },
+        'author_id' => '9876',
+        'summary' => 'hey ya',
+        'description' => 'this is a really important thing',
+        'next_template_id' => '1234',
+        'badges' => {'a' => 1},
+        'assessment_badge' => {'b' => 1},
+        'badge_name' => 'badgey',
+        'ref_data' => {'c' => 1},
+        'goal_duration' => 3.weeks.to_i
+      }, :template => true)
+      u = User.create
+      g = UserGoal.new(:settings => {})
+
+      g.build_from_template(template, u, false, true)
+
+      expect(g.settings['template_id']).to eq(template.global_id)
+      expect(g.settings['description']).to eq('this is a really important thing')
+      expect(g.summary).to eq('hey ya')
+      expect(g.advance_at.to_i).to eq((Time.now + 3.weeks.to_i).to_i)
+      expect(g.settings['badges']).to eq({'a' => 1})
+      expect(g.settings['assessment_badge']).to eq({'b' => 1})
+      expect(g.settings['ref_data']).to eq({'c' => 1})
+      expect(g.settings['badge_name']).to eq('badgey')
+      expect(g.settings['author_id']).to eq('9876')
+      expect(g.settings['video']).to eq({'id' => '1_123'})
+      expect(g.active).to eq(true)
+      expect(g.user).to eq(u)
+    end
+  end
+
+  describe "children_goals" do
+    it "should not error on none set" do
+      g = UserGoal.new
+      expect(g.children_goals).to eq([])
+    end
+
+    it "should return a list of copied goals" do
+      u = User.create
+      g1 = UserGoal.create(user: u)
+      g2 = UserGoal.create(user: u)
+      g3 = UserGoal.create(user: u)
+      g1.settings['children_ids'] = [g2.global_id, g3.global_id + '4']
+      expect(g1.children_goals).to eq([g2])
     end
   end
   

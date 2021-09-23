@@ -208,10 +208,12 @@ describe UserMailer, :type => :mailer do
       html = message_body(m, :html)
       expect(html).to match(/just posted a message/)
       expect(html).to match(/you are my friend/)
+      expect(html).to_not match(/No Complaints/)
       
       text = message_body(m, :text)
       expect(text).to match(/just posted a message/)
       expect(text).to match(/you are my friend/)
+      expect(text).to_not match(/No Complaints/)
     end
     
     it "should not email anyone if the email is disabled" do
@@ -222,6 +224,29 @@ describe UserMailer, :type => :mailer do
       u.save
       m = UserMailer.log_message(u.global_id, l.global_id)
       expect(m.subject).to eq(nil)
+    end
+
+    it "should include a status-check footer if specified" do
+      u = User.create(settings: {email: 'test@example.com'})
+      d = Device.create(:user => u)
+      l = LogSession.create(:user => u, :author => u, :device => d)
+      l.data['note'] = {'text' => "you are my friend"}
+      l.data['include_status_footer'] = true
+      l.save
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.log_message(u.global_id, l.global_id)
+      expect(m.subject).to eq("CoughDrop - New Message")
+      expect(m.to).to eq(["bob@example.com"])
+      
+      html = message_body(m, :html)
+      expect(html).to match(/just posted a message/)
+      expect(html).to match(/you are my friend/)
+      expect(html).to match(/No Complaints/)
+      
+      text = message_body(m, :text)
+      expect(text).to match(/just posted a message/)
+      expect(text).to match(/you are my friend/)
+      expect(text).to match(/No Complaints/)
     end
   end
   

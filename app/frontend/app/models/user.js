@@ -115,6 +115,26 @@ CoughDrop.User = DS.Model.extend({
   managed_orgs: computed('organizations', function() {
     return (this.get('organizations') || []).filter(function(o) { return o.type == 'manager' && o.restricted != true; });
   }),
+  single_org: computed('organizations', function() {
+    var org_ids = {};
+    (this.get('organizations') || []).forEach(function(org) {
+      if(org.premium) {
+        if(!org_ids[org.id]) {
+          org_ids[org.id] = org;
+        }
+        if(org.admin) {
+          org_ids[org.id].admin = true;
+        }  
+      }
+    })
+    var res = Object.keys(org_ids).length == 1 ? org_ids[Object.keys(org_ids)[0]] : null;
+    if(res && res.image_url) {
+      persistence.find_url(res.image_url, 'image').then(function(data_uri) {
+        emberSet(res, 'image_url', data_uri);
+      }, function() { });
+    }
+    return (res && !res.admin) ? res : null;
+  }),
   managing_supervision_orgs: computed('organizations', function() {
     return (this.get('organizations') || []).filter(function(o) { return o.type == 'supervisor'; });
   }),

@@ -10,6 +10,7 @@ module JsonApi::Organization
     json['id'] = org.global_id
     json['name'] = org.settings['name']
     json['admin'] = !!org.admin
+    json['premium'] = org.settings['premium'] || json['admin']
     
     if args.key?(:permissions)
       json['permissions'] = org.permissions_for(args[:permissions])

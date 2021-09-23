@@ -508,7 +508,7 @@ export default Controller.extend({
     nothing: function() {
     },
     badge_popup: function(badge) {
-      modal.open('badge-awarded', {badge: badge});
+      modal.open('badge-awarded', {badge: badge, user_id: this.get('model.id')});
     },
     remove_board: function(action, board) {
       var _this = this;

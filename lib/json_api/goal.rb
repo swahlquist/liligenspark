@@ -46,12 +46,21 @@ module JsonApi::Goal
     end
     json['started'] = goal.settings['started_at']
     json['ended'] = goal.settings['ended_at']
+    json['uneditable'] = goal.settings['uneditable']
+    if args[:lookups] != false && goal.settings['organization_unit_id']
+      unit = OrganizationUnit.find_by_global_id(goal.settings['organization_unit_id'])
+      if unit
+        json['unit_id'] = unit.global_id
+        json['unit_name'] = unit.settings['name']
+        json['unit_org_id'] = unit.related_global_id(unit.organization_id)
+      end
+    end
     json['duration'] = goal.settings['goal_duration'] if goal.settings['goal_duration']
     json['advance'] = goal.goal_advance && goal.goal_advance.iso8601
-    if !goal.template && goal.settings['template_id']
+    if !goal.template && goal.settings['template_id'] && goal.settings['next_template_id']
       json['advance'] = goal.advance_at && goal.advance_at.iso8601
     end
-    if !goal.settings['template_id'] && goal.advance_at
+    if (goal.settings['organization_unit_id'] || !goal.settings['template_id']) && goal.advance_at
       json['expires'] = goal.advance_at.iso8601
     end
     

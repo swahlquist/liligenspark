@@ -44,8 +44,20 @@ class Api::UnitsController < ApplicationController
           ts = obj.attributes['date_trunc'].to_time.to_i
           res['user_weeks'][user_id][ts] ||= {
             'count' => obj.attributes['count'] || 0,
-            'goals' => obj.attributes['goals'] || 0
+            'goals' => obj.attributes['goals'] || 0,
           }
+        end
+      end
+    end
+    sessions.where(log_type: 'note').select("id, user_id, goal_id, started_at, score").find_in_batches(batch_size: 50) do |batch|
+      batch.each do |session|
+        if session.started_at && session.score && session.goal_id
+          user_id = unit.related_global_id(session.user_id)
+          from_sup = supervisor_ids.include?(user_id)
+          ts = session.started_at.beginning_of_week(:monday).to_date.to_time(:utc).to_i
+          res['user_weeks'][user_id][ts] ||= {'count' => 0, 'goals' => 0}
+          res['user_weeks'][user_id][ts]['statuses'] ||= []
+          res['user_weeks'][user_id][ts]['statuses'] << {goal_id: session.related_global_id(session.goal_id), score: session.score, from_unit: from_sup}
         end
       end
     end
@@ -57,14 +69,20 @@ class Api::UnitsController < ApplicationController
       user_id = session.related_global_id(session.user_id)
       (session.data['days'] || []).each do |str, day|
         if str > cutoff
-          week = Date.parse(str).beginning_of_week(:sunday)
-          ts = week.to_time.to_i
+          week = Date.parse(str).beginning_of_week(:monday)
+          ts = week.to_time(:utc).to_i
           res['supervisor_weeks'][user_id] ||= {}
           res['supervisor_weeks'][user_id][ts] ||= {
             'actives' => 0,
             'total_levels' => 0,
             'days' => 0
           }
+          LogSession::DAILY_EVENT_TYPES.each do |key|
+            if(day[key])
+              res['supervisor_weeks'][user_id][ts][key] = (res['supervisor_weeks'][user_id][ts][key] || 0) + day[key]
+            end
+          end
+
           res['supervisor_weeks'][user_id][ts]['actives'] += 1 if day['active']
           res['supervisor_weeks'][user_id][ts]['total_levels'] += (day['activity_level'] ? day['activity_level'] : (day['active'] ? 4 : 0))
           res['supervisor_weeks'][user_id][ts]['days'] += 1 if day['active'] || day['activity_level']

@@ -2,14 +2,22 @@
   <tbody>
     {{#each communicators_with_stats as |user|}}
       <tr>
-        <td style='width: 20%; white-space: nowrap;'>
+        <td style='width: 20%; white-space: nowrap; position: relative;'>
           {{#if user.totals}}
             {{t "room activity" key='room_activity'}}
           {{else}}
             {{#link-to 'user' user.user_name}}
-              <img src={{user.avatar_url}} style="height: 30px;"/>
+              <img src={{user.avatar_url}} class='fit_image' style="height: 30px; width: 30px;"/>
               {{user.user_name}}
             {{/link-to}}
+            {{#if user.goal}}
+              <div style="position: absolute; bottom: 5px; left: 50px; color: #888; font-size: 10px; width: calc(100% - 50px); overflow: hidden; text-overflow: ellipsis;">
+                {{user.goal.summary}}
+              </div>
+            {{/if}}
+          {{/if}}
+          {{#if notable}}
+            <button {{action 'note' user}} class='btn btn-default' style='position: absolute; right: 5px;'><span class='glyphicon glyphicon-file'></span><span class='sr-only'>{{t "Record note for %{un}" un=user.user_name key='record_note_for_user'}}</span></button>
           {{/if}}
         </td>
         <td style='padding: 0;'>
@@ -17,10 +25,12 @@
             {{#each user.week_stats as |stat|}}
               <div class={{stat.class}} title={{stat.tooltip}} data-toggle="tooltip" data-placement="top">
                 {{#if stat.goals}}
-                  <span class='glyphicon glyphicon-flag'></span>
-                {{else}}
-                  &nbsp;
+                  <span class='glyphicon glyphicon-flag' style='font-size: 20px;'></span>
                 {{/if}}
+                {{#each stat.statuses as |status|}}
+                  <span class="face_label" style="display: inline-block;margin-right: -8px;"><span class={{status.display_class}}></span></span>
+                {{/each}}
+                &nbsp;
                 <span class='sr-only'>
                   {{stat.count}}
                 </span>

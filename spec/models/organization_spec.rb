@@ -2399,16 +2399,16 @@ describe Organization, :type => :model do
       o3.add_manager(u2.user_name, false)
       expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name']
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name']
+          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name']        
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
         }
       ])
       expect(Organization.attached_orgs(u2).map{|o| o.except('added')}).to eq([
         {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => false, 'name' => o1.settings['name']          
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name']          
         }
       ])
     end
@@ -2424,7 +2424,7 @@ describe Organization, :type => :model do
       o2.add_supervisor(u1.user_name, false, false);
       o3.add_manager(u1.user_name, true)
       o3.add_manager(u2.user_name, false)
-      expect(Organization.attached_orgs(u1, true).map{|o| o.except('added')}.map{|o| o['org'] }).to eq([
+      expect(Organization.attached_orgs(u1, true).map{|o| o.except('added')}.map{|o| o['org'] }.sort_by(&:id)).to eq([
         o1, o2, o3
       ])
       expect(Organization.attached_orgs(u2, true).map{|o| o.except('added')}.map{|o| o['org'] }).to eq([
@@ -2458,13 +2458,13 @@ describe Organization, :type => :model do
       o3.link_saml_alias(u1.reload, 'bobby@example.com')
       expect(Organization.attached_orgs(u1.reload).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name'],
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com'
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name'],
+          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob'
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_alias' => 'bobby@example.com'
         }
       ])

@@ -11,6 +11,7 @@ export default modal.ModalController.extend({
   opening: function() {
     var users = this.get('model.users');
 
+    stashes.track_daily_event('modeling_ideas');
     var any_premium = false;
     (users || []).forEach(function(u) {
       if(emberGet(u, 'premium') || emberGet(u, 'currently_premium')) {

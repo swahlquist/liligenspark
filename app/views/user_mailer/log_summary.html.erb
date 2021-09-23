@@ -108,7 +108,7 @@ updates every <%= @log_period %>.</p>
                 <strong><%= user.primary_goal.summary %></strong>
               </td>
               <td style='border-top: 1px solid #eee; padding: 10px; text-align: right; width: 40%;' colspan='2'>
-                <%= user.primary_goal.settings['stats']['weighted_average_status'] %> weighted status
+                <%= user.primary_goal.settings['stats']['weighted_average_status'].round(1) %> weighted status
               </td>
             </tr>
             <tr>
@@ -122,22 +122,22 @@ updates every <%= @log_period %>.</p>
                   <tbody><tr>
                     <td>
                       <a href="<%= JsonApi::Json.current_host %>/goal_status/<%= user.primary_goal.global_id %>/<%= user.primary_goal.goal_code(@user) %>?status=1" style="display: block; background: #fff; border: 1px solid #ccc; border-radius: 10px; min-width: 100px; text-align: center; padding: 10px 5px; text-decoration: none; color: #444;">
-                        <span style="display: block; font-size: 30px; transform: rotate(90deg); width: 50px; padding-top: 7px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; margin: auto auto 10px;">:-(</span>
+                        <span style="display: block; font-size: 30px; writing-mode: vertical-rl; text-orientation: sideways; width: 50px; padding-top: 1px; padding-bottom: 6px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; background-color: #feffa9; margin: auto auto 10px;">:-(</span>
                         We didn't do it
                       </a>
                     </td><td>
                       <a href="<%= JsonApi::Json.current_host %>/goal_status/<%= user.primary_goal.global_id %>/<%= user.primary_goal.goal_code(@user) %>?status=2" style="display: block; background: #fff; border: 1px solid #ccc; border-radius: 10px; min-width: 100px; text-align: center; padding: 10px 5px; text-decoration: none; color: #444;">
-                        <span style="display: block; font-size: 30px; transform: rotate(90deg); width: 50px; padding-top: 7px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; margin: auto auto 10px;">:-/</span>
+                        <span style="display: block; font-size: 30px; writing-mode: vertical-rl; text-orientation: sideways; width: 50px; padding-top: 1px; padding-bottom: 6px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; background-color: #feffa9; margin: auto auto 10px;">:-/</span>
                         We barely did it
                       </a>
                     </td><td>
                       <a href="<%= JsonApi::Json.current_host %>/goal_status/<%= user.primary_goal.global_id %>/<%= user.primary_goal.goal_code(@user) %>?status=3" style="display: block; background: #fff; border: 1px solid #ccc; border-radius: 10px; min-width: 100px; text-align: center; padding: 10px 5px; text-decoration: none; color: #444;">
-                        <span style="display: block; font-size: 30px; transform: rotate(90deg); width: 50px; padding-top: 7px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; margin: auto auto 10px;">:-)</span>
+                        <span style="display: block; font-size: 30px; writing-mode: vertical-rl; text-orientation: sideways; width: 50px; padding-top: 1px; padding-bottom: 6px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; background-color: #feffa9; margin: auto auto 10px;">:-)</span>
                         We did good!
                       </a>
                     </td><td>
                       <a href="<%= JsonApi::Json.current_host %>/goal_status/<%= user.primary_goal.global_id %>/<%= user.primary_goal.goal_code(@user) %>?status=4" style="display: block; background: #fff; border: 1px solid #ccc; border-radius: 10px; min-width: 100px; text-align: center; padding: 10px 5px; text-decoration: none; color: #444;">
-                        <span style="display: block; font-size: 30px; transform: rotate(90deg); width: 50px; padding-top: 7px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; margin: auto auto 10px;">:-D</span>
+                        <span style="display: block; font-size: 30px; writing-mode: vertical-rl; text-orientation: sideways; width: 50px; padding-top: 1px; padding-bottom: 6px; height: 43px; border-radius: 100px; text-align: center; border: 2px solid #888; color: #444; background-color: #feffa9; margin: auto auto 10px;">:-D</span>
                         We did awesome!
                       </a>
                     </td>

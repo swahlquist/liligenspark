@@ -16,8 +16,12 @@
 
         <br/>
         <span class='text-muted'>
-          {{t "author: " key='author_colon'}}
-          {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
+          {{#if model.unit_name}}
+            <em>{{t "org-created Goal" key='org_created_goal'}}</em>
+          {{else}}
+            {{t "author: " key='author_colon'}}
+            {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
+          {{/if}}
         </span>
       </div>
     </div>
@@ -47,6 +51,10 @@
             {{else if model.expires}}
               {{t "concludes" key='concludes_lower'}}
               {{date model.expires 'short_day'}}
+            {{else if model.duration_diff}}
+              {{date_ago model.duration_diff}}
+            {{else if model.started}}
+              {{date_ago model.started}}
             {{/if}}
             &nbsp;
           </span>
@@ -291,6 +299,10 @@
   <button class='btn btn-default' {{action 'new_note'}}>{{t "New Note" key='new_note'}}</button>
   <button class='btn btn-default' {{action 'quick_assessment'}}>{{t "Quick Assessment" key='quick_assessment'}}</button>
   {{#if model.permissions.edit}}
-    <button class='btn btn-default' {{action 'edit_goal'}}>{{t "Edit Goal" key='edit_goal'}}</button>
+    {{#if model.uneditable}}
+      <p>{{t "This goal was created by a connected organization and can't be edited" key='uneditable_goal'}}</p>
+    {{else}}
+      <button class='btn btn-default' {{action 'edit_goal'}}>{{t "Edit Goal" key='edit_goal'}}</button>
+    {{/if}}
   {{/if}}
 {{/if}}

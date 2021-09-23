@@ -185,8 +185,8 @@ export default Controller.extend({
           };
           var date = res.date;
           var start = date;
-          var timestamp = date.getTime() / 1000;
           var lines = text.split(/\n/);
+          var timestamp = (date.getTime() / 1000) - (5 * lines.length) - 10;
           lines.forEach(function(line) {
             if(line && line.length > 0) {
               json.sessions[0].events.push({

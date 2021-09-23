@@ -34,6 +34,8 @@ class Api::GoalsController < ApplicationController
       if params['template']
         return unless allowed?(user, 'delete')
         goals = goals.where(:template => true)
+      else
+        goals = goals.where({template: [nil, false]})
       end
       goals = goals.order('user_goals.primary DESC, active DESC, id DESC')
     end
@@ -54,12 +56,12 @@ class Api::GoalsController < ApplicationController
     return unless exists?(user, params['goal']['user_id'])
     return unless allowed?(user, 'set_goals')
     
+    admin_org = Organization.admin
     if params['goal']['template_header']
-      admin_org = Organization.admin
       return unless allowed?(admin_org, 'edit')
     end
     
-    goal = UserGoal.process_new(params['goal'], {:user => user, :author => @api_user})
+    goal = UserGoal.process_new(params['goal'], {:user => user, :author => @api_user, :allow_global => admin_org && admin_org.allows?(@api_user, 'edit')})
     if !goal || goal.errored?
       api_error(400, {error: "goal creation failed", errors: goal && goal.processing_errors})
     else
@@ -79,7 +81,8 @@ class Api::GoalsController < ApplicationController
       params['goal'] = new_params
     end
     
-    if goal.process(params['goal'], {:author => @api_user})
+    admin_org = Organization.admin
+    if goal.process(params['goal'], {:author => @api_user, :allow_global => admin_org && admin_org.allows?(@api_user, 'edit')})
       render json: JsonApi::Goal.as_json(goal, :wrapper => true, :permissions => @api_user).to_json
     else
       api_error 400, {error: 'update failed', errors: goal.processing_errors}

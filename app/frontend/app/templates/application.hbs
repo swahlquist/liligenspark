@@ -220,6 +220,8 @@
           {{/if}}
         </span>
       {{/unless}}
+    {{else if app_state.currentUser.single_org}}
+      <div id='org_name'>{{app_state.currentUser.single_org.name}}</div>
     {{/if}}
     {{#if app_state.empty_header}}
       {{#if persistence.online}}

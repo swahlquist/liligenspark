@@ -12,6 +12,7 @@ import CoughDrop from '../app';
 // non-critical, so for example if one attribute got renamed it would not
 // break anything, or affect any other value.
 var memory_stash = {};
+var daily_event_types = ['models', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
 var stash_capabilities = null;
 var stashes = EmberObject.extend({
   connect: function(application) {
@@ -74,6 +75,7 @@ var stashes = EmberObject.extend({
       'current_mode': 'default',
       'usage_log': [],
       'daily_use': [],
+      'daily_events': {},
       'downloaded_voices': [],
       'boardHistory': [],
       'browse_history': [],
@@ -387,6 +389,16 @@ var stashes = EmberObject.extend({
       }, '*');
     }
   },
+  track_daily_event: function(type, n) {
+    if(n == null) { n = 1; }
+    if(daily_event_types.includes(type)) {
+      var events = stashes.get('daily_events') || {};
+      var today = window.moment().toISOString().substring(0, 10);
+      events[today] = events[today] || {};
+      events[today][type] = (events[today][type] || 0) + n;
+      stashes.persist('daily_events', events);
+    }
+  },
   log_event: function(obj, user_id, session_user_id) {
     var timestamp = stashes.current_timestamp();
     var geo = null;
@@ -517,7 +529,18 @@ var stashes = EmberObject.extend({
     var today = window.moment().toISOString().substring(0, 10);
     var daily_use = stashes.get('daily_use') || [];
     var found = false;
+    var daily_events = stashes.get('daily_events') || {}
     daily_use.forEach(function(d) {
+      if(daily_events[d.date]) {
+        daily_event_types.forEach(function(t) {
+          d[t] = daily_events[d.date][t];
+        })
+        for(var key in daily_events[d.date]) {
+          if(daily_events[d.date][key] != null) {
+            d[key] = daily_events[d.date][key];
+          }
+        }
+      }
       if(d.date == today) {
         found = d;
         // if it's been less than 5 minutes since the last event, add the difference
@@ -536,7 +559,7 @@ var stashes = EmberObject.extend({
         date: today,
         last_timestamp: now,
         total_minutes: 0.25,
-        recorded_minutes: 0
+        recorded_minutes: 0,
       });
     }
     stashes.persist('daily_use', daily_use);
@@ -554,11 +577,17 @@ var stashes = EmberObject.extend({
         else if(d.total_minutes >= 15) { level = 3; }
         else if(d.total_minutes >= 5) { level = 2; }
         else if(d.total_minutes > 0) { level = 1; }
-        days.push({
+        var rec = {
           date: d.date,
           activity_level: level,
           active: d.total_minutes >= 30
+        }
+        daily_event_types.forEach(function(t) {
+          if(d[t] != null) {
+            rec[t] = d[t];
+          }
         });
+        days.push(rec);
       });
       // ajax call to push daily_use data
       var log = CoughDrop.store.createRecord('log', {

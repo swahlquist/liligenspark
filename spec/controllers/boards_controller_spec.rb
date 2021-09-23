@@ -35,8 +35,7 @@ describe BoardsController, :type => :controller do
     it "should call process_status_from_code if status set" do
       u = User.create
       g = UserGoal.create(:user => u)
-      expect(UserGoal).to receive(:find_by_global_id).with(g.global_id).and_return(g)
-      expect(g).to receive(:process_status_from_code).with('4', 'asdf').and_return(nil)
+      expect(UserGoal).to receive(:process_status_from_code).with(g.global_id, '4', 'asdf').and_return(nil)
       get "log_goal_status", params: {:goal_id => g.global_id, :goal_code => 'asdf', :status => '4'}
       expect(response).to be_successful
       expect(assigns[:error]).to eq(true)
@@ -58,11 +57,23 @@ describe BoardsController, :type => :controller do
     it "should render with error if status unsuccessfully set" do
       u = User.create
       g = UserGoal.create(:user => u)
-      expect(UserGoal).to receive(:find_by_global_id).with(g.global_id).and_return(g)
-      expect(g).to receive(:process_status_from_code).with('4', 'asdf').and_return(nil)
+      expect(UserGoal).to receive(:process_status_from_code).with(g.global_id, '4', 'asdf').and_return(nil)
       get "log_goal_status", params: {:goal_id => g.global_id, :goal_code => 'asdf', :status => '4'}
       expect(response).to be_successful
       expect(assigns[:error]).to eq(true)
+    end
+
+    it "should allow logging on a user's general status" do
+      u = User.create
+      d = Device.create(:user => u)
+      get "log_goal_status", params: {:goal_id => "status-#{u.global_id}", :goal_code => UserGoal.goal_code('status', u), :status => '3'}
+      expect(response).to be_redirect
+      s = LogSession.last
+      expect(s.user).to eq(u)
+      expect(s.data['goal']['id']).to eq(nil)
+      expect(s.data['goal']['global']).to eq(true)
+      expect(s.data['goal']['status']).to eq(3)
+      expect(response.location).to match(/goal_status\/status-#{u.global_id}\/.+\?log_id=#{s.global_id}\&result_status=3/)
     end
   end
   

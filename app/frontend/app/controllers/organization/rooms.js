@@ -12,7 +12,7 @@ export default Controller.extend({
     Utils.all_pages('unit', {organization_id: this.get('model.id')}, function(list) {
       _this.set('units', list);
       list.forEach(function(unit) {
-        unit.load_data();
+        unit.load_data(true);
       });
     }).then(function(data) {
       _this.set('units', data);
@@ -69,6 +69,9 @@ export default Controller.extend({
       }, function() {
         modal.error(i18n.t('error_adding_user', "There was an unexpected error while trying to add the user"));
       });
+    },
+    refresh: function() {
+      this.refresh_units();
     },
     delete_unit_user: function(unit, user_type, user_id, decision) {
       if(!decision) {

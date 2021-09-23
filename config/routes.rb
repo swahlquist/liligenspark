@@ -138,6 +138,7 @@ Coughdrop::Application.routes.draw do
     
   get 'login' => ember_handler
   get 'organizations/:org_id/:path' => ember_handler
+  get 'organizations/:org_id/rooms/:room_id' => ember_handler
   get ':id/confirm_registration/:key' => ember_handler, :constraints => {:id => user_id_regex}
   get ':id/password_reset/:key' => ember_handler, :constraints => {:id => user_id_regex}
   get 'api/v1/token_check' => 'session#token_check'
@@ -243,6 +244,7 @@ Coughdrop::Application.routes.draw do
     resources :units do
       get 'stats'
       get 'logs'
+      post 'note'
     end
     resources :snapshots
     

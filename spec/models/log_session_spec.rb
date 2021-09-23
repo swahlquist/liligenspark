@@ -1786,6 +1786,87 @@ describe LogSession, :type => :model do
       expect(s2.data['journal']['timestamp']).to be > 10.seconds.ago.to_i
       expect(s2.data['journal']['sentence']).to eq('what now')
     end
+
+    it "should create a note entry" do
+      u1 = User.create
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'type' => 'note',
+        'note' => {'text' => 'bacon', 'timestamp' => Time.parse('2020-01-01').to_i},
+      }, {:user => u1, :device => d, :author => u1})
+      
+      Worker.process_queues
+      s2 = LogSession.last
+      expect(s2.log_type).to eq('note')
+      expect(s2.started_at).to eq(Time.parse('2020-01-01'))
+      expect(s2.data['note']['text']).to eq('bacon')
+    end
+
+    it "should add a manual log entry when submitted with a note" do
+      u1 = User.create
+      d = Device.create(:user => u1)
+      s = LogSession.process_as_follow_on({
+        'type' => 'note',
+        'note' => {'text' => 'bacon', 'log_events_string' => "good\nbad\nugly", 'timestamp' => Time.parse('2020-01-01').to_i},
+      }, {:user => u1, :device => d, :author => u1})
+      s2 = LogSession.last
+      expect(s2.log_type).to eq('note')
+      expect(s2.started_at).to eq(Time.parse('2020-01-01'))
+      expect(s2.data['note']['text']).to eq('bacon')
+      expect(s2.data['note']['log_events_string']).to eq(nil)
+      
+      Worker.process_queues
+      s1 = LogSession.last
+      expect(s1.log_type).to eq('session')
+      expect(s1.started_at).to eq(Time.parse('2020-01-01') - 25)
+      expect(s1.data['events']).to eq([
+        {"button"=>
+          {
+            "button_id"=>"e1577861975",
+            "label"=>"good",
+            "spoken"=>true,
+            "type"=>"speak"
+          },
+          "core_word"=>true,
+          "id"=>1,
+          "parts_of_speech"=>
+          {"types"=>["adjective", "interjection", "noun"], "word"=>"good"},
+          "timestamp"=>1577861975.0,
+          "type"=>"button",
+          "user_id"=>u1.global_id
+        },
+        {"button"=>
+          {
+            "button_id"=>"e1577861980",
+            "label"=>"bad",
+            "spoken"=>true,
+            "type"=>"speak"
+          },
+          "core_word"=>true,
+          "id"=>2,
+          "parts_of_speech"=>
+          {"types"=>["adjective", "noun", "adverb", "verb", "usu participle verb"],
+            "word"=>"bad"},
+          "timestamp"=>1577861980.0,
+          "type"=>"button",
+          "user_id"=>u1.global_id
+        },
+        {"button"=>
+          {
+            "button_id"=>"e1577861985",
+            "label"=>"ugly",
+            "spoken"=>true,
+            "type"=>"speak"
+          },
+          "core_word"=>true,
+          "id"=>3,
+          "parts_of_speech"=>{"types"=>["adjective"], "word"=>"ugly"},
+          "timestamp"=>1577861985.0,
+          "type"=>"button",
+          "user_id"=>u1.global_id
+        }
+      ])
+    end
   end
 
   describe "process_params" do
@@ -1902,6 +1983,54 @@ describe LogSession, :type => :model do
       expect(s.log_type).to eq('note')
       expect(s.data['notify_user']).to eq(true)
       expect(s.data['notify_user_only']).to eq(true)
+      expect(s.data['event_summary']).to eq("Note by #{u.user_name}: ahem")
+      expect(s.data['note']['text']).to eq('ahem')
+      expect(s.instance_variable_get('@pushed_message')).to eq(true)
+    end
+
+    it "should exclude specific supervisors if specified" do
+      u = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u)
+      d = Device.create
+      s = LogSession.process_new({
+        'note' => {
+          'text' => 'ahem',
+          'timestamp' => 1431461182
+        },
+        'notify' => 'true',
+        'notify_exclude_ids' => [u2.global_id]
+      }, {'user' => u, 'author' => u, 'device' => d, 'ip_address' => '1.2.3.4'})
+      expect(s).not_to eq(nil)
+      expect(s.errored?).to eq(false)
+      expect(s.started_at.to_i).to eq(1431461182)
+      expect(s.ended_at.to_i).to eq(1431461182)
+      expect(s.log_type).to eq('note')
+      expect(s.data['notify_exclude_ids']).to eq([u2.global_id])
+      expect(s.data['event_summary']).to eq("Note by #{u.user_name}: ahem")
+      expect(s.data['note']['text']).to eq('ahem')
+      expect(s.instance_variable_get('@pushed_message')).to eq(true)
+    end
+
+    it "should include status-check footer if specified" do
+      u = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u)
+      d = Device.create
+      s = LogSession.process_new({
+        'note' => {
+          'text' => 'ahem',
+          'timestamp' => 1431461182
+        },
+        'notify' => 'true',
+        'include_status_footer' => true
+      }, {'user' => u, 'author' => u, 'device' => d, 'ip_address' => '1.2.3.4'})
+      expect(s).not_to eq(nil)
+      expect(s.errored?).to eq(false)
+      expect(s.started_at.to_i).to eq(1431461182)
+      expect(s.ended_at.to_i).to eq(1431461182)
+      expect(s.log_type).to eq('note')
+      expect(s.data['include_status_footer']).to eq(true)
       expect(s.data['event_summary']).to eq("Note by #{u.user_name}: ahem")
       expect(s.data['note']['text']).to eq('ahem')
       expect(s.instance_variable_get('@pushed_message')).to eq(true)
@@ -2226,6 +2355,7 @@ describe LogSession, :type => :model do
       expect(s.errored?).to eq(false)
       expect(s.started_at.to_i).to eq(1431461182)
       expect(s.ended_at.to_i).to eq(1431461182)
+      expect(s.goal_id).to eq(g.id)
       expect(s.log_type).to eq('note')
       expect(s.data['note']['text']).to eq('ahem')
       expect(s.data['goal']).to eq({
@@ -2234,6 +2364,33 @@ describe LogSession, :type => :model do
         'positives' => 1,
         'status' => 3,
         'summary' => 'user goal'
+      })
+    end
+
+    it "should attach global status goal if specified" do
+      u = User.create
+      d = Device.create
+      s = LogSession.process_new({
+        'note' => {
+          'text' => 'ahem',
+          'timestamp' => 1431461182
+        },
+        'goal_id' => 'status',
+        'goal_status' => 3,
+      }, {'user' => u, 'author' => u, 'device' => d, 'ip_address' => '1.2.3.4'})
+      expect(s).not_to eq(nil)
+      expect(s.errored?).to eq(false)
+      expect(s.started_at.to_i).to eq(1431461182)
+      expect(s.ended_at.to_i).to eq(1431461182)
+      expect(s.goal_id).to eq(0)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('ahem')
+      expect(s.data['goal']).to eq({
+        'negatives' => 0,
+        'positives' => 1,
+        'status' => 3,
+        'summary' => '',
+        'global' => true
       })
     end
     
@@ -2681,6 +2838,36 @@ describe LogSession, :type => :model do
         })
         expect(l.default_listeners('push_message').sort).to eq([u, u3].map(&:record_code).sort)
     end
+
+    it "should exclude specified supervisors" do
+      u = User.create
+      u2 = User.create
+      u3 = User.create
+      User.link_supervisor_to_user(u2, u)
+      User.link_supervisor_to_user(u3, u)
+      u.reload
+    
+      d = Device.create(:user => u)
+      now = 1415689201
+      params = {
+        'note' => {'text' => 'asdf'},
+        'notify' => 'true', 
+        'notify_exclude_ids' => [u3.global_id]
+      }
+      l = LogSession.process_new(params, {
+        :user => u,
+        :author => u,
+        :device => d
+      })
+      expect(l.default_listeners('push_message').sort).to eq([u2].map(&:record_code).sort)
+
+      l = LogSession.process_new(params, {
+        :user => u,
+        :author => u2,
+        :device => d
+      })
+      expect(l.default_listeners('push_message').sort).to eq([u].map(&:record_code).sort)
+  end
   
     it "should notify users when a pushed message is added to their log" do
       u = User.create
@@ -3221,6 +3408,37 @@ describe LogSession, :type => :model do
         '2016-01-01' => {'date' => '2016-01-01', 'active' => true, 'activity_level' => nil},
         '2016-01-03' => {'date' => '2016-01-03', 'active' => true, 'activity_level' => nil},
         '2016-01-05' => {'date' => '2016-01-05', 'active' => false, 'activity_level' => nil}
+      })
+    end
+
+    it "should include daily event types when specified" do
+      u = User.create
+      d = Device.create(:user => u)
+      s = LogSession.process_daily_use({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-01', 'active' => true, 'models' => 3, 'bacon' => 5},
+          {'date' => '2016-01-03', 'active' => false, 'models' => 2, 'goals' => 1}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(s.log_type).to eq('daily_use')
+      expect(s.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true, 'activity_level' => nil, 'bacon' => 5, 'models' => 3},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => false, 'activity_level' => nil, 'models' => 2, 'goals' => 1}
+      })
+      s2 = LogSession.process_daily_use({
+        'type' => 'daily_use',
+        'events' => [
+          {'date' => '2016-01-03', 'active' => true, 'activity_level' => nil, 'focus_words' => 2, 'cheddar' => 9},
+          {'date' => '2016-01-05', 'active' => false, 'activity_level' => nil, 'remote_models' => 15}
+        ]
+      }, {:device => d, :author => u, :user => u})
+      expect(s2).to eq(s)
+      expect(s2.log_type).to eq('daily_use')
+      expect(s2.data['days']).to eq({
+        '2016-01-01' => {'date' => '2016-01-01', 'active' => true, 'activity_level' => nil, 'bacon' => 5, 'models' => 3},
+        '2016-01-03' => {'date' => '2016-01-03', 'active' => true, 'activity_level' => nil, 'models' => 2, 'goals' => 1, 'focus_words' => 2},
+        '2016-01-05' => {'date' => '2016-01-05', 'active' => false, 'activity_level' => nil, 'remote_models' => 15}
       })
     end
   end
@@ -3892,6 +4110,62 @@ describe LogSession, :type => :model do
       }.to_json))
       expect(s).to_not receive(:save!)
       expect(s.process_external_callbacks).to eq(false)
+    end
+  end
+
+  describe "message_all" do
+    it "should require a device and sender" do
+      expect(LogSession.message_all([], {})).to eq(false)
+    end
+
+    it "should return a list of session ids" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      d = Device.create(user: u3)
+      list = LogSession.message_all([u1.global_id, u2.global_id], {
+        'device_id' => d.global_id,
+        'sender_id' => u3.global_id,
+        'message' => "Howdy",
+        'video' => {a: 1},
+        'include_footer' => true,
+        'notify_exclude_ids' => [1,2,3]
+      })
+      expect(list.length).to eq(2)
+      expect(LogSession.find_all_by_global_id(list).length).to eq(2)
+    end
+
+    it "should create a notifying note on each user" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      d = Device.create(user: u3)
+      list = LogSession.message_all([u1.global_id, u2.global_id], {
+        'device_id' => d.global_id,
+        'sender_id' => u3.global_id,
+        'message' => "Howdy",
+        'video' => {a: 1},
+        'include_footer' => true,
+        'notify_exclude_ids' => [1,2,3]
+      })
+      expect(list.length).to eq(2)
+      logs = LogSession.find_all_by_global_id(list)
+      expect(logs.length).to eq(2)
+      expect(logs[0].user).to eq(u1);
+      expect(logs[0].data['note']['text']).to eq('Howdy');
+      expect(logs[0].data['note']['video']).to eq({'a' => 1});
+      expect(logs[0].data['note']['timestamp']).to be > 5.seconds.ago.to_i
+      expect(logs[0].data['note']['timestamp']).to be < 5.seconds.from_now.to_i
+      expect(logs[0].data['include_status_footer']).to eq(true)
+      expect(logs[0].data['notify_exclude_ids']).to eq([1,2,3])
+
+      expect(logs[1].user).to eq(u2);
+      expect(logs[1].data['note']['text']).to eq('Howdy');
+      expect(logs[1].data['note']['video']).to eq({'a' => 1});
+      expect(logs[1].data['note']['timestamp']).to be > 5.seconds.ago.to_i
+      expect(logs[1].data['note']['timestamp']).to be < 5.seconds.from_now.to_i
+      expect(logs[1].data['include_status_footer']).to eq(true)
+      expect(logs[1].data['notify_exclude_ids']).to eq([1,2,3])
     end
   end
 end

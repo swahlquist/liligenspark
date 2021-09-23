@@ -340,6 +340,10 @@
   </div>
   {{#if model.note_type}}
     <div class="panel" style="white-space: pre-line; margin-bottom: 50px;">
+      {{#if model.goal}}
+        <span class='face_icon'><span class={{model.goal_status_class}}></span></span>{{#if model.goal.summary}} - {{model.goal.summary}}{{/if}}
+      {{/if}}
+
       {{model.note.text}}
       {{#if model.video}}
         <div style="margin-top: 10px;">

@@ -37,7 +37,7 @@
                 <li>
                   {{#link-to 'board' fork.key}}
                     {{fork.key}}
-                  {{/link-to}} - {{t "%{fork.uses} uses" }}
+                  {{/link-to}} - {{t "%{n_uses} uses" n_uses=fork.uses key='n_uses' }}
                 </li>
               {{/each}}
               </ul>

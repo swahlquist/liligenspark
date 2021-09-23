@@ -284,7 +284,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').delete_all
           RemoteAction.create(path: "#{board_id}::#{user_id}", act_at: 5.minutes.from_now, action: 'upload_extra_data')
         elsif res && res[:path] && res[:path] != remote_path
-          Upload.remote_remove_later(remote_path)
+          Uploader.remote_remove_later(remote_path)
           button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
         end
       end

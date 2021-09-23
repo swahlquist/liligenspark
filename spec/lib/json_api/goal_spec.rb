@@ -53,6 +53,17 @@ describe JsonApi::Goal do
       json = JsonApi::Goal.build_json(g, :permissions => u)
       expect(json['video']).to eq(v.summary_hash)
     end
+
+    it "should include unit-specific settings" do
+      u = User.new
+      o = Organization.create(settings: {'name' => 'Org 1'})
+      ou = OrganizationUnit.create(organization_id: o.id, settings: {'name' => 'Unit 1'})
+      g = UserGoal.new(:user => u, :settings => {'organization_unit_id' => ou.global_id})
+      json = JsonApi::Goal.build_json(g, :permissions => u)
+      expect(json['unit_id']).to eq(ou.global_id)
+      expect(json['unit_name']).to eq('Unit 1')
+      expect(json['unit_org_id']).to eq(o.global_id)
+    end
     
     it "should include user comments" do
       u = User.create

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210607221222) do
+ActiveRecord::Schema.define(version: 20210916165230) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20210607221222) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -256,6 +256,7 @@ ActiveRecord::Schema.define(version: 20210607221222) do
     t.integer  "goal_id"
     t.boolean  "needs_remote_push"
     t.boolean  "highlighted"
+    t.integer  "score"
     t.index ["device_id", "ended_at"], name: "index_log_sessions_on_device_id_and_ended_at", using: :btree
     t.index ["geo_cluster_id", "user_id"], name: "index_log_sessions_on_geo_cluster_id_and_user_id", using: :btree
     t.index ["ip_cluster_id", "user_id"], name: "index_log_sessions_on_ip_cluster_id_and_user_id", using: :btree
@@ -302,6 +303,7 @@ ActiveRecord::Schema.define(version: 20210607221222) do
     t.integer  "position"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
+    t.integer  "user_goal_id"
     t.index ["organization_id", "position"], name: "index_organization_units_on_organization_id_and_position", using: :btree
   end
 
@@ -323,6 +325,7 @@ ActiveRecord::Schema.define(version: 20210607221222) do
     t.boolean  "custom_domain"
     t.string   "external_auth_key"
     t.string   "external_auth_shortcut"
+    t.integer  "user_goal_id"
     t.index ["admin"], name: "index_organizations_on_admin", unique: true, using: :btree
     t.index ["custom_domain"], name: "index_organizations_on_custom_domain", using: :btree
     t.index ["external_auth_key"], name: "index_organizations_on_external_auth_key", unique: true, using: :btree

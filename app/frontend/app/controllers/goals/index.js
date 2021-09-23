@@ -5,6 +5,7 @@ import i18n from '../../utils/i18n';
 import app_state from '../../utils/app_state';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
+import stashes from '../../utils/_stashes';
 
 export default Controller.extend({
   load_goals: function() {
@@ -44,6 +45,7 @@ export default Controller.extend({
       var goal = this.get('new_goal');
       var _this = this;
       _this.set('status', {saving: true});
+      stashes.track_daily_event('goals');
       goal.save().then(function(goal) {
         _this.set('new_goal', null);
         _this.set('status', null);

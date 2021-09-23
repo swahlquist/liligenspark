@@ -152,11 +152,13 @@
       <form class="form-horizontal">
         <!-- TODO: form should wrap to include submit button, no? -->
         {{#unless goal.id}}
-          <div class="form-group">
-            <div class="col-sm-10 col-sm-offset-2">
-              <a href="#" {{action 'browse_goals'}}>{{t "Not sure what kind of goal to set? Check out our community-built goals!" key='community_goals'}}</a>
+          {{#unless model.unit}}
+            <div class="form-group">
+              <div class="col-sm-10 col-sm-offset-2">
+                <a href="#" {{action 'browse_goals'}}>{{t "Not sure what kind of goal to set? Check out our community-built goals!" key='community_goals'}}</a>
+              </div>
             </div>
-          </div>
+          {{/unless}}
         {{/unless}}
         <div class="form-group">
           <label for="new_goal_type" class="col-sm-2 control-label">{{t "Type" key='type'}}</label>
@@ -197,7 +199,7 @@
             </div>
           {{/if}}
         {{/if}}
-         {{#if goal_type.custom}}
+        {{#if goal_type.custom}}
           <div class="form-group">
             <label for="new_goal_description" class="col-sm-2 control-label">{{t "Description" key='description'}}</label>
             <div class="col-sm-10">
@@ -272,23 +274,25 @@
                 </div>
               </div>
             {{/if}}
-            <div class="form-group">
-              <fieldset>
-                <label class="col-sm-2 control-label">{{t "Primary" key='primary'}}</label>
-                <div class="col-sm-10">
-                  <div class="checkbox big_checkbox">
-                    <label>
-                      {{input type="checkbox" checked=goal.primary id="primary"}}
-                      {{#if model.user.user_goal}}
-                        {{t "Set as the User's New Primary Goal" key='set_as_new_primary_user_goal'}}
-                      {{else}}
-                        {{t "Set as the User's Primary Goal" key='set_as_primary_user_goal'}}
-                      {{/if}}
-                    </label>
+            {{#unless model.unit}}
+              <div class="form-group">
+                <fieldset>
+                  <label class="col-sm-2 control-label">{{t "Primary" key='primary'}}</label>
+                  <div class="col-sm-10">
+                    <div class="checkbox big_checkbox">
+                      <label>
+                        {{input type="checkbox" checked=goal.primary id="primary"}}
+                        {{#if model.user.user_goal}}
+                          {{t "Set as the User's New Primary Goal" key='set_as_new_primary_user_goal'}}
+                        {{else}}
+                          {{t "Set as the User's Primary Goal" key='set_as_primary_user_goal'}}
+                        {{/if}}
+                      </label>
+                    </div>
                   </div>
-                </div>
-              </fieldset>
-            </div>
+                </fieldset>
+              </div>
+            {{/unless}}
           {{/if}}
         {{/if}}
         {{#if goal.simple_type}}

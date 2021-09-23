@@ -1069,6 +1069,16 @@ describe User, :type => :model do
       expect(obj).to receive(:process_focus_words).with('aaa')
       u.process({'focus_words' => 'aaa'})
     end
+
+    it "should set external_device correctly" do
+      u = User.create
+      u.process({'external_device' => {'a' => 1}})
+      expect(u.settings['external_device']).to eq({'a' => 1})
+      u.process({})
+      expect(u.settings['external_device']).to eq({'a' => 1})
+      u.process({'external_device' => nil})
+      expect(u.settings['external_device']).to eq(nil)
+    end
   end
   
   describe "logging_cutoff_for" do
@@ -2279,34 +2289,51 @@ describe User, :type => :model do
     describe "goal_code" do
       it "should raise if no user passed" do
         g = UserGoal.new
+        expect{ g.goal_code(nil) }.to raise_error("goal_id required")
+        g = UserGoal.create
         expect{ g.goal_code(nil) }.to raise_error("user required")
       end
       
       it "should generate a valid code" do
         u = User.create
-        g = UserGoal.new
+        g = UserGoal.create
         res = g.goal_code(u)
         parts = res.split(/-/)
-        expect(parts.length).to eq(4)
-        expect(parts[0]).to be > 5.seconds.ago.to_i.to_s
-        expect(parts[0]).to be < 5.seconds.from_now.to_i.to_s
-        expect(parts[1]).to eq(u.global_id)
-        expect(parts[2].to_i.to_s).to eq(parts[2])
-        expect(parts[3]).to eq(GoSecure.sha512(parts[0] + "_" + parts[1], parts[2])[0, 20])
+        expect(parts.length).to eq(6)
+        expect(parts[0]).to eq('G')
+        expect(parts[1]).to be > 5.seconds.ago.to_i.to_s
+        expect(parts[1]).to be < 5.seconds.from_now.to_i.to_s
+        expect(parts[2]).to eq(g.global_id)
+        expect(parts[3]).to eq(u.global_id)
+        expect(parts[5]).to eq(GoSecure.sha512(parts[1] + "_" + parts[2] + "_" + parts[3], parts[4])[0, 20])
+      end
+
+      it "should generate a valid status code" do
+        u = User.create
+        g = UserGoal.create
+        res = UserGoal.goal_code('status', u)
+        parts = res.split(/-/)
+        expect(parts.length).to eq(6)
+        expect(parts[0]).to eq('G')
+        expect(parts[1]).to be > 5.seconds.ago.to_i.to_s
+        expect(parts[1]).to be < 5.seconds.from_now.to_i.to_s
+        expect(parts[2]).to eq('status')
+        expect(parts[3]).to eq(u.global_id)
+        expect(parts[5]).to eq(GoSecure.sha512(parts[1] + "_" + parts[2] + "_" + parts[3], parts[4])[0, 20])
       end
     end
     
     describe "process_status_from_code" do
       it "should return false if attributes not found" do
         g = UserGoal.new
-        expect(g.process_status_from_code('4', 'asdf')).to eq(false)
+        expect(UserGoal.process_status_from_code('123', '4', 'asdf')).to eq(false)
         u = User.create
-        expect(g.process_status_from_code('3', g.goal_code(u) + "x")).to eq(false)
+        expect(UserGoal.process_status_from_code('123', '3', UserGoal.goal_code('123', u) + "x")).to eq(false)
       end
       
       it "should generate unique codes each time" do
-        g = UserGoal.new
         u = User.create
+        g = UserGoal.create(user: u)
         code1 = g.goal_code(u)
         code2 = g.goal_code(u)
         code3 = g.goal_code(u)
@@ -2321,13 +2348,27 @@ describe User, :type => :model do
         u2 = User.create
         d = Device.create(:user => u2)
         code = g.goal_code(u2)
-        res = g.process_status_from_code('2', code)
+        res = UserGoal.process_status_from_code(g.global_id, '2', code)
         expect(res).to_not eq(nil)
         expect(res.user).to eq(u1)
         expect(res.author).to eq(u2)
         expect(res.data['goal']['id']).to eq(g.global_id)
         expect(res.data['goal']['status']).to eq(2)
-        expect(g.settings['used_codes'][0][0]).to eq(code)
+        expect(g.reload.settings['used_codes'][0][0]).to eq(code)
+      end
+
+      it "should allow processing a general status-check 'goal'" do
+        u1 = User.create
+        u2 = User.create
+        d = Device.create(:user => u2)
+        code = UserGoal.goal_code('status', u2)
+        res = UserGoal.process_status_from_code("status-#{u1.global_id}", '2', code)
+        expect(res).to_not eq(nil)
+        expect(res.user).to eq(u1)
+        expect(res.author).to eq(u2)
+        expect(res.data['goal']['id']).to eq(nil)
+        expect(res.data['goal']['global']).to eq(true)
+        expect(res.data['goal']['status']).to eq(2)
       end
     end
   end

@@ -200,34 +200,47 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # TODO: sharding
     board_ids = LogSessionBoard.where(log_session_id: log_session.id).map(&:board_id).compact.uniq
     Boards.where(id: board_ids).each do |board|
-      # TODO: sharding
-      summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :board_id => board.id)
-      sessions = LogSessionBoard.find_sessions(board.id, {:start_at => start_at, :end_at => end_at})
-      
-
-      start_at = WeeklyStatsSummary.weekyear_to_date(summary.weekyear).beginning_of_week(:sunday)
-      end_at = start_at.end_of_week(:sunday)
-      current_weekyear = WeeklyStatsSummary.date_to_weekyear(Date.today)
-      days = {}
-      total_stats = LogSessionBoard.init_stats(sessions)
-
-      start_at.to_date.upto(end_at.to_date) do |date|
-        day_sessions = sessions.select{|s| s.started_at.to_date == date }
-        day_stats = LogSessionBoard.init_stats(day_sessions)
-        day_stats.merge!(LogSessionBoard.button_stats(day_sessions, board))
-        
-        days[date.to_s] = {
-          'total' => day_stats
-        }
+      summaries = [{board: board}]
+      root_board = board
+      inters = []
+      while root_board.parent_board
+        inters << root_board 
+        root_board = root_board.parent_board
       end
-  
-      total_stats.merge!(LogSessionBoard.button_stats(sessions))
-      total_stats[:days] = days
+      if root_board && root_board != board
+        summaries << {board: root_board, subs: inters}
+      end
+      summaries.each do |sum|
+        # TODO: sharding
+        summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :board_id => sum[:board].id)
+        ids = [sum[:board].id]
+        ids += sum[:subs].map(&:id) if sum[:subs]
+        sessions = LogSessionBoard.find_sessions(ids, {:start_at => start_at, :end_at => end_at})
 
-      summary.data ||= {}
-      summary.data['stats'] = total_stats
-      summary.data['session_ids'] = sessions.map(&:global_id)
-      summary.save
+        start_at = WeeklyStatsSummary.weekyear_to_date(summary.weekyear).beginning_of_week(:sunday)
+        end_at = start_at.end_of_week(:sunday)
+        current_weekyear = WeeklyStatsSummary.date_to_weekyear(Date.today)
+        days = {}
+        total_stats = LogSessionBoard.init_stats(sessions, sum[:board])
+
+        start_at.to_date.upto(end_at.to_date) do |date|
+          day_sessions = sessions.select{|s| s.started_at.to_date == date }
+          day_stats = LogSessionBoard.init_stats(day_sessions, sum[:board])
+          day_stats.merge!(LogSessionBoard.button_stats(day_sessions, sum[:board]))
+          
+          days[date.to_s] = {
+            'total' => day_stats
+          }
+        end
+    
+        total_stats.merge!(LogSessionBoard.button_stats(sessions, sum[:board]))
+        total_stats[:days] = days
+
+        summary.data ||= {}
+        summary.data['stats'] = total_stats
+        summary.data['session_ids'] = sessions.map(&:global_id)
+        summary.save
+      end
     end
   end
   

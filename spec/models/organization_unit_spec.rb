@@ -101,7 +101,44 @@ describe OrganizationUnit, :type => :model do
     it "should sanitize name" do
       o = Organization.create
       ou = OrganizationUnit.process_new({'name' => '<b>Best</b> Room'}, {'organization' => o})
+      expect(ou.organization).to eq(o)
       expect(ou.settings['name']).to eq('Best Room')
+    end
+
+    it "should allow attaching a goal to the org" do
+      o = Organization.create
+      ou = OrganizationUnit.process_new({'name' => '<b>Best</b> Room', 'goal' => {'id' => '1234'}}, {'organization' => o})
+      expect(ou.organization).to eq(o)
+      expect(ou.settings['name']).to eq('Best Room')
+      expect(ou.user_goal).to eq(nil)
+
+      u = User.create
+      ou = OrganizationUnit.create(organization: o)
+      g = UserGoal.create(user: u, settings: {'organization_unit_id' => ou.global_id})
+      ou.process({'name' => '<b>Best</b> Room', 'goal' => {'id' => g.global_id}}, {'organization' => o})
+      expect(ou.organization).to eq(o)
+      expect(ou.settings['name']).to eq('Best Room')
+      expect(ou.user_goal).to eq(g)
+      expect(Worker.scheduled?(OrganizationUnit, :perform_action, {id: ou.id, method: 'assert_goal', arguments: []})).to eq(true)
+    end
+
+    it "should handle removing a goal from the org" do
+      u = User.create
+      o = Organization.create
+      ou = OrganizationUnit.create(organization: o)
+      g = UserGoal.create(user: u, settings: {'organization_unit_id' => ou.global_id})
+      ou.process({'name' => '<b>Best</b> Room', 'goal' => {'id' => g.global_id}}, {'organization' => o})
+      expect(ou.organization).to eq(o)
+      expect(ou.settings['name']).to eq('Best Room')
+      expect(ou.user_goal).to eq(g)
+
+      ou.process({'goal' => nil})
+      expect(ou.user_goal).to eq(g)
+
+      ou.process({'goal' => {'remove' => true}})
+      expect(ou.user_goal).to eq(nil)
+      expect(ou.settings['goal_assertions']['removed_goal_id']).to eq(g.global_id)
+      expect(Worker.scheduled?(OrganizationUnit, :perform_action, {id: ou.id, method: 'assert_goal', arguments: []})).to eq(true)
     end
   end
 
@@ -751,6 +788,212 @@ describe OrganizationUnit, :type => :model do
       expect(ou2.supervisor?(u2)).to eq(false)
       expect(ou2.supervisor?(u3)).to eq(true)
       expect(ou2.communicator?(u2)).to eq(true)
+    end
+  end
+
+  describe "retire_goal_for" do
+    it "should return false on invalid or inactive goal" do
+      ou = OrganizationUnit.new
+      expect(ou.retire_goal_for(nil, nil)).to eq(false)
+      u = User.create
+      g = UserGoal.create(user: u)
+      expect(ou.retire_goal_for(u, g)).to eq(false)
+
+    end
+
+    it "should delete a recently-created goal" do
+      ou = OrganizationUnit.create
+      u = User.create
+      g = UserGoal.create(user: u, active: true)
+      g2 = UserGoal.create(user: u, active: true)
+      g.settings['children_ids'] = [g2.global_id]
+      g.save
+      expect(ou.retire_goal_for(u, g)).to eq(true)
+      expect(UserGoal.find_by(id: g2.id)).to eq(nil)
+    end
+
+    it "should conclude a relatively-new goal" do
+      ou = OrganizationUnit.create
+      u = User.create
+      g = UserGoal.create(user: u, active: true)
+      g2 = UserGoal.create(user: u, active: true)
+      g.settings['children_ids'] = [g2.global_id]
+      g.save
+      UserGoal.where(id: g2.id).update_all(created_at: 5.days.ago)
+      expect(ou.retire_goal_for(u, g)).to eq(true)
+      expect(UserGoal.find_by(id: g2.id)).to_not eq(nil)
+      expect(g2.reload.active).to eq(false)
+    end
+
+    it "should detach a user from the root goal if removed" do
+      ou = OrganizationUnit.create
+      u = User.create
+      g = UserGoal.create(user: u, active: true)
+      g2 = UserGoal.create(user: u, active: true)
+      g.settings['children_ids'] = [g2.global_id]
+      g.save
+      ou.settings['goal_assertions'] = {}
+      ou.settings['goal_assertions'][g.global_id] = {'user_ids' => [u.global_id]}
+      ou.save
+      expect(ou.reload.settings['goal_assertions'][g.global_id]['user_ids']).to eq([u.global_id])
+      UserGoal.where(id: g2.id).update_all(created_at: 5.days.ago)
+      expect(ou.retire_goal_for(u, g)).to eq(true)
+      expect(UserGoal.find_by(id: g2.id)).to_not eq(nil)
+      expect(g2.reload.active).to eq(false)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids']).to eq([])
+    end
+  end
+
+  describe "assert_goal" do
+    it "should remove the previous goal if specified" do
+      o = Organization.create(settings: {total_licenses: 5})
+      s1 = User.create
+      s2 = User.create
+      c1 = User.create
+      c2 = User.create
+      o.add_supervisor(s1.user_name, false)
+      o.reload.add_supervisor(s2.user_name, false)
+      o.reload.add_user(c1.user_name, false, true)
+      o.reload.add_user(c2.user_name, false, true)
+      ou = OrganizationUnit.create(organization: o)
+      ou.reload.add_supervisor(s1.user_name, true)
+      ou.reload.add_communicator(c1.user_name)
+      ou.reload.add_communicator(c2.user_name)
+      g = UserGoal.create(user: s2, active: true)
+      ou.user_goal = g
+      ou.save
+      ou.assert_goal
+      expect(ou.settings['goal_assertions'][g.global_id]).to_not eq(nil)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids'].sort).to eq([c1.global_id, c2.global_id])
+      expect(g.active).to eq(true)
+
+      ou.settings['goal_assertions']['removed_goal_id'] = g.global_id
+      expect(ou).to receive(:retire_goal_for).with(c1, g, nil)
+      expect(ou).to receive(:retire_goal_for).with(c2, g, nil)
+      ou.assert_goal
+      expect(ou.settings['goal_assertions']['removed_goal_id']).to eq(nil)
+      expect(g.reload.active).to eq(false)
+    end
+
+    it "should attach the goal to any unit communicators who have never seen it" do
+      o = Organization.create(settings: {total_licenses: 5})
+      s1 = User.create
+      s2 = User.create
+      c1 = User.create
+      c2 = User.create
+      gc2 = UserGoal.create(user: c2, primary: true, active: true)
+      c2.settings['primary_goal'] = {'id' => gc2.global_id}
+      c2.save
+      o.add_supervisor(s1.user_name, false)
+      o.reload.add_supervisor(s2.user_name, false)
+      o.reload.add_user(c1.user_name, false, true)
+      o.reload.add_user(c2.user_name, false, true)
+      ou = OrganizationUnit.create(organization: o)
+      ou.reload.add_supervisor(s1.user_name, true)
+      ou.reload.add_communicator(c1.user_name)
+      ou.reload.add_communicator(c2.user_name)
+      g = UserGoal.create(user: s2, active: true)
+      ou.user_goal = g
+      ou.save
+      ou.assert_goal
+      expect(ou.settings['goal_assertions'][g.global_id]).to_not eq(nil)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids'].sort).to eq([c1.global_id, c2.global_id])
+      expect(g.reload.active).to eq(true)
+      expect(g.children_goals.length).to eq(2)
+      expect(g.children_goals.sort_by(&:user_id)[0].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].primary).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['organization_unit_id']).to eq(ou.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[1].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[1].primary).to eq(false)
+      expect(g.children_goals.sort_by(&:user_id)[1].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[1].settings['organization_unit_id']).to eq(ou.global_id)
+    end
+
+    it "should not attach to a user who manually deleted the goal themselves" do
+      o = Organization.create(settings: {total_licenses: 5})
+      s1 = User.create
+      s2 = User.create
+      c1 = User.create
+      c2 = User.create
+      gc2 = UserGoal.create(user: c2, primary: true, active: true)
+      c2.settings['primary_goal'] = {'id' => gc2.global_id}
+      c2.save
+      o.add_supervisor(s1.user_name, false)
+      o.reload.add_supervisor(s2.user_name, false)
+      o.reload.add_user(c1.user_name, false, true)
+      o.reload.add_user(c2.user_name, false, true)
+      ou = OrganizationUnit.create(organization: o)
+      ou.reload.add_supervisor(s1.user_name, true)
+      ou.reload.add_communicator(c1.user_name)
+      ou.reload.add_communicator(c2.user_name)
+      g = UserGoal.create(user: s2, active: true)
+      ou.settings['goal_assertions'] = {}
+      ou.settings['goal_assertions'][g.global_id] = {'user_ids' => [c1.global_id]}
+      ou.user_goal = g
+      ou.save
+      ou.assert_goal
+      expect(ou.settings['goal_assertions'][g.global_id]).to_not eq(nil)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids'].sort).to eq([c1.global_id, c2.global_id])
+      expect(g.reload.active).to eq(true)
+      expect(g.children_goals.length).to eq(1)
+      expect(g.children_goals.sort_by(&:user_id)[0].user).to eq(c2)
+      expect(g.children_goals.sort_by(&:user_id)[0].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].primary).to eq(false)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['organization_unit_id']).to eq(ou.global_id)
+    end
+
+    it "should remove from any users who have the goal but have been removed from the unit" do
+      o = Organization.create(settings: {total_licenses: 5})
+      s1 = User.create
+      s2 = User.create
+      c1 = User.create
+      c2 = User.create
+      gc2 = UserGoal.create(user: c2, primary: true, active: true)
+      c2.settings['primary_goal'] = {'id' => gc2.global_id}
+      c2.save
+      o.add_supervisor(s1.user_name, false)
+      o.reload.add_supervisor(s2.user_name, false)
+      o.reload.add_user(c1.user_name, false, true)
+      o.reload.add_user(c2.user_name, false, true)
+      ou = OrganizationUnit.create(organization: o)
+      ou.reload.add_supervisor(s1.user_name, true)
+      ou.reload.add_communicator(c1.user_name)
+      ou.reload.add_communicator(c2.user_name)
+      g = UserGoal.create(user: s2, active: true)
+      ou.user_goal = g
+      ou.save
+      ou.assert_goal
+      expect(ou.settings['goal_assertions'][g.global_id]).to_not eq(nil)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids'].sort).to eq([c1.global_id, c2.global_id])
+      expect(g.reload.active).to eq(true)
+      expect(g.children_goals.length).to eq(2)
+      expect(g.children_goals.sort_by(&:user_id)[0].user).to eq(c1)
+      expect(g.children_goals.sort_by(&:user_id)[0].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].primary).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['organization_unit_id']).to eq(ou.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[1].user).to eq(c2)
+      expect(g.children_goals.sort_by(&:user_id)[1].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[1].primary).to eq(false)
+      expect(g.children_goals.sort_by(&:user_id)[1].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[1].settings['organization_unit_id']).to eq(ou.global_id)
+      gc2 = g.children_goals.sort_by(&:user_id)[1]
+
+      ou.reload.remove_communicator(c2.user_name)
+      ou.assert_goal
+      expect(ou.settings['goal_assertions'][g.global_id]).to_not eq(nil)
+      expect(ou.settings['goal_assertions'][g.global_id]['user_ids'].sort).to eq([c1.global_id])
+      expect(g.reload.active).to eq(true)
+      g.instance_variable_set('@children_goals', nil)
+      expect(g.children_goals.length).to eq(1)
+      expect(g.children_goals.sort_by(&:user_id)[0].user).to eq(c1)
+      expect(g.children_goals.sort_by(&:user_id)[0].active).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].primary).to eq(true)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['template_id']).to eq(g.global_id)
+      expect(g.children_goals.sort_by(&:user_id)[0].settings['organization_unit_id']).to eq(ou.global_id)
+      expect(UserGoal.find_by(id: gc2)).to eq(nil)
     end
   end
 end

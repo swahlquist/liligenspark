@@ -357,6 +357,18 @@ header .btn {
     overflow: hidden; 
     text-overflow: ellipsis;
   }
+  #org_name {
+    font-size: 14px; 
+    position: absolute; 
+    left: 70px; 
+    top: 48px; 
+    font-style: italic;
+    color: #777;
+    max-width: 300px; 
+    white-space: nowrap;
+    overflow: hidden; 
+    text-overflow: ellipsis;
+  }
   &.board_done #board_id {
     left: 120px;
   }
@@ -2326,6 +2338,27 @@ body > .popover.bottom {
     }
     &.sad {
       background-position-x: -59px;
+    }
+    &.gray {
+      filter: grayscale(0.7);
+    }
+  }
+}
+.face_icon {
+  .face {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background-image: url(../images/faces.png);
+    background-size: auto 40px;
+    &.happy {
+      background-position-x: -40px;
+    }
+    &.neutral {
+      background-position-x: -79px;
+    }
+    &.sad {
+      background-position-x: -119px;
     }
   }
 }

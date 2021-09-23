@@ -47,12 +47,49 @@
           </div>
         </div>
       </div>
-      {{#if model.permissions.edit}}
-        <div class='col-sm-12' style='margin-bottom: 10px;'>
+      {{#if model.permissions.view}}
+        <div class='col-sm-6' style='margin-bottom: 10px;'>
+          {{#if organization.premium}}
+            <span class="dropdown">
+              <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                <span class='glyphicon glyphicon-envelope'></span>
+                {{t "Message..." key='message_ellipsis'}}
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#" {{action 'message' 'communicators'}}>{{t "Communicators" key='communicators'}}</a></li>
+                <li><a href="#" {{action 'message' 'supervisors'}}>{{t "Supervisors" key='supervisors'}}</a></li>
+                <li><a href="#" {{action 'message' 'all'}}>{{t "Everyone" key='everyone'}}</a></li>
+              </ul>
+            </span>
+          {{/if}}
           <button class='btn btn-default' {{action 'add_users'}}>{{t "Add Users" key='add_users'}}</button>
           <button class='btn btn-default' {{action 'edit_unit'}}>{{t "Edit Room" key='edit_room'}}</button>
           <button class='btn btn-default' {{action 'delete_unit'}}>{{t "Delete Room" key='delete_room'}}</button>
         </div>
+      {{/if}}
+      <!-- TODO: Only if premium org -->
+      {{#if organization.premium}}
+        <div class="col-sm-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Room Goal" key='room_goal'}}
+            </div>
+            <div class="panel-body">
+              {{#if model.goal}}
+                {{#link-to 'goals.goal' model.goal.id}}{{model.goal.summary}}{{/link-to}}
+              {{else}}
+                {{t "None Set" key='none_set'}}
+              {{/if}}
+              <div style='text-align: right;'>
+                <a href="#" {{action 'set_goal'}} style='font-size: 12px;'>{{t "set room-wide goal" key='set_room_wide_goal'}}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+      <div style='clear: both;'></div>
+      {{#if model.permissions.edit}}
         {{#if model.adding_users}}
           <div class='col-sm-6' style='margin-bottom: 20px;'>
             <span style="display: inline-block; width: 150px;">
@@ -76,6 +113,7 @@
           </div>
         {{/if}}
       {{/if}}
+
       <div class="col-sm-6" style="padding: 0;">
         {{#if model.weekly_stats.loading}}
           {{t "Loading reports..." key='loading_reports'}}
@@ -97,14 +135,14 @@
   {{/if}}
   <h3>{{t "Supervisors" key='supervisors'}}</h3>
   {{#if model.supervisors}}
-    {{stats/user-weeks unit=model user_type='supervisor' users=model.supervisors weeks=model.supervisor_weeks delete_user='delete_unit_user' deletable=model.permissions.edit}}
+    {{stats/user-weeks unit=model user_type='supervisor' users=model.supervisors weeks=model.supervisor_weeks delete_user='delete_unit_user' refresh='refresh' deletable=model.permissions.edit}}
   {{else}}
     <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
   {{/if}}
 
   <h3>{{t "Communicators" key='communicators'}}</h3>
   {{#if model.communicators}}
-    {{stats/user-weeks unit=model user_type='communicator' users=model.communicators weeks=model.user_weeks delete_user='delete_unit_user' deletable=model.permissions.edit max_session_count=model.max_session_count}}
+    {{stats/user-weeks unit=model user_type='communicator' org=organization users=model.communicators weeks=model.user_weeks room_goal_id=model.goal_id delete_user='delete_unit_user' refresh='refresh' deletable=model.permissions.edit max_session_count=model.max_session_count}}
   {{else}}
     <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
   {{/if}}

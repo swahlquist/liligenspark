@@ -161,7 +161,7 @@ export default Controller.extend({
         });
       }
       if(ub) {
-        modal.open('badge-awarded', {badge: ub});
+        modal.open('badge-awarded', {badge: ub, user_id: this.get('user.id')});
       }
     }
   }

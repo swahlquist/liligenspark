@@ -22,6 +22,9 @@ class UserGoal < ActiveRecord::Base
   add_permissions('view', 'comment') {|user| self.user && self.user.allows?(user, 'model') }
   add_permissions('view', ['read_profile']) {|user| self.user && self.user.allows?(user, 'edit') }
   add_permissions('view', 'comment', 'edit') {|user| self.user && self.user.allows?(user, 'edit') }
+  add_permissions('view', 'comment', 'edit') {|user| self.unit_accessible?(user, true) }
+  add_permissions('view', 'comment') {|user| self.unit_accessible?(user) }
+  add_permissions('view', 'comment', 'edit') {|user| (self.global || self.template) && Organization.admin && Organization.admin.manager?(user) }
   cache_permissions
   
   def generate_defaults
@@ -45,6 +48,12 @@ class UserGoal < ActiveRecord::Base
     if !self.active && !self.global && !self.settings['ended_at'] && self.settings['started_at']
       self.settings['ended_at'] = Time.now.iso8601
     end
+  end
+
+  def unit_accessible?(user, allow_edit=false)
+    return false unless self.settings['organization_unit_id']
+    unit = OrganizationUnit.find_by_global_id(self.settings['organization_unit_id'])
+    return !!(unit && unit.allows?(user, allow_edit ? 'edit' : 'view_stats'))
   end
   
   def active_during(start_at, end_at)
@@ -195,6 +204,8 @@ class UserGoal < ActiveRecord::Base
         positive_tally += session.data['goal']['positives'] * mult
       end
     end
+    stats['last_session'] = last_session.iso8601 if last_session
+    stats['total_statuses'] = all_statuses.length
     stats['average_status'] = all_statuses.length > 0 ? all_statuses.sum.to_f / all_statuses.length.to_f : 0
     total_tallies = stats['monthly']['totals']['positives'].to_f + stats['monthly']['totals']['negatives'].to_f
     stats['percent_positive'] = total_tallies > 0 ? (stats['monthly']['totals']['positives'].to_f / total_tallies * 100.0) : 0
@@ -204,32 +215,73 @@ class UserGoal < ActiveRecord::Base
     stats['badges'] = ((self.settings && self.settings['badges']) || []).length
     stats['suggested_level'] = suggested_level
     self.settings ||= {}
+    if self.settings['template_id']
+      # TODO: need any easy way to aggregate stats across copies
+      # total copies, badges earned (vs currently active) graph, dates of template creation, avg goal duration, avg badge earning time (per month?)
+      # positives/negatives graph
+      # for org units show percent of current room users with mastery over time
+      # list of children ids with user names (for org units) so I can generate mini-graphs for each user
+      # average_status, total_statuses, sessions
+      # monthly/weekly/daily stats ?
+    end
     self.settings['stats'] = stats
   end
   
   def goal_code(user)
+    self.class.goal_code(self.global_id, user)
+    # raise "user required" unless user
+    # timestamp = Time.now.to_i.to_s
+    # rnd = rand(9999999).to_s
+    # user_id = user.global_id
+    # str = GoSecure.sha512(timestamp + "_" + user_id, rnd)[0, 20]
+    # timestamp + "-" + user_id + "-" + rnd + "-" + str
+  end
+
+  def self.goal_code(goal_id, user)
+    raise "goal_id required" unless goal_id
     raise "user required" unless user
     timestamp = Time.now.to_i.to_s
     rnd = rand(9999999).to_s
     user_id = user.global_id
-    str = GoSecure.sha512(timestamp + "_" + user_id, rnd)[0, 20]
-    timestamp + "-" + user_id + "-" + rnd + "-" + str
+    str = GoSecure.sha512(timestamp + "_" + goal_id + "_" + user_id, rnd)[0, 20]
+    "G-" + timestamp + "-" + goal_id + "-" + user_id + "-" + rnd + "-" + str
   end
   
-  def process_status_from_code(status, code)
+  def self.process_status_from_code(goal_id, status, code)
+    goal = UserGoal.find_by_global_id(goal_id)
+    target = goal && goal.user
+    if goal_id.match(/^status/)
+      str, user_id = goal_id.split(/-/)
+      goal_id = 'status'
+      target = User.find_by_path(user_id)
+    end
+    return false unless target
+    return false if !goal && goal_id != 'status'
     timestamp, user_id, rnd, hash = code.split(/-/)
+    valid = false
+    if code.match(/^G-/)
+      g, timestamp, code_goal_id, user_id, rnd, hash = code.split(/-/)
+      return false unless code_goal_id == goal_id
+      valid = hash == GoSecure.sha512(timestamp + "_" + goal_id + "_" + user_id, rnd)[0, 20]
+    else
+      # TODO: delete this option after June 2022
+      valid = hash == GoSecure.sha512(timestamp + "_" + user_id, rnd)[0, 20]
+    end
     user = User.find_by_path(user_id)
-    if user && self.user && hash == GoSecure.sha512(timestamp + "_" + user_id, rnd)[0, 20]
-      self.settings['used_codes'] ||= []
-      self.settings['used_codes'] << [code, Time.now.to_i]
-      self.save
+    if user && target && valid
+      if goal_id == 'status'
+      else
+        goal.settings['used_codes'] ||= []
+        goal.settings['used_codes'] << [code, Time.now.to_i]
+        goal.save
+      end
       log = LogSession.process_new({
         note: {
           text: ""
         },
-        goal_id: self.global_id,
+        goal_id: goal_id,
         goal_status: status
-      }, {user: self.user, author: user, device: user.devices.first})
+      }, {user: target, author: user, device: user.devices.first})
       log
     else
       false
@@ -324,16 +376,25 @@ class UserGoal < ActiveRecord::Base
     self.settings ||= {}
     self.settings['author_id'] ||= non_user_params[:author].global_id
     self.active = !!params[:active] if params[:active] != nil
-    self.global = !!params[:global] if params[:global] != nil
+    self.global = !!params[:global] if params[:global] != nil && non_user_params[:allow_global]
     self.settings['summary'] = process_string(params['summary']) if params['summary']
     self.settings['description'] = process_html(params['description']) if params['description']
-    self.template = !!params['template'] if params['template'] != nil
-    self.template_header = !!params['template_header'] if params['template_header'] && self.template_header == nil
+    self.template = !!params['template'] if params['template'] != nil && non_user_params[:allow_global]
+    self.template_header = !!params['template_header'] if params['template_header'] && self.template_header == nil && non_user_params[:allow_global]
     self.settings['badge_name']  = params['badge_name'] if params['badge_name']
+    if params['unit_id'] && self.settings['unit_id'] != params['unit_id']
+      self.template = true
+      unit = OrganizationUnit.find_by_global_id(params['unit_id'])
+      if unit && unit.allows?(non_user_params[:author], 'edit')
+        self.settings['organization_unit_id'] = params['unit_id']
+      end
+    end
     self.settings['ref_data'] = params['ref_data'] if params['ref_data']
     badges = UserBadge.process_goal_badges(params['badges'], params['assessment_badge']) if params['badges'] || params['assessment_badge']
     self.settings['badges'] = badges.select{|b| b['level']} if badges
     self.settings['assessment_badge'] = badges.detect{|b| b['assessment'] } if badges
+    # If badges are created by an external API call, only keep
+    # one around per external_id
     if params['external_id'] && self.settings['external_id'] != params['external_id']
       self.settings['external_id'] = params['external_id'] 
       self.settings['expire_external_id'] = true
@@ -397,7 +458,7 @@ class UserGoal < ActiveRecord::Base
       end
     end
     if params['expires'] && !self.settings['template_id']
-      self.advance_at = current_date_from_template(params['expires'])
+      self.advance_at = self.class.current_date_from_template(params['expires'])
     end
     if params['comment']
       self.settings['comments'] ||= []
@@ -428,6 +489,29 @@ class UserGoal < ActiveRecord::Base
       @set_as_primary = false
     end
 #    self.primary = !!params[:primary] if params[:primary] != nil
+    true
+  end
+
+  def update_local_dups(frd=false)
+    if self.settings['children_ids']
+      if !frd
+        schedule(:update_local_dups, true)
+        return true
+      end
+      goals = UserGoal.find_all_by_global_id(self.settings['children_ids'])
+      goals.each do |goal|
+        if goal.settings['uneditable'] && goal.active
+          goal.settings['video'] = self.settings['video']
+          goal.settings['summary'] = self.settings['summary']
+          goal.settings['description'] = self.settings['description']
+          goal.settings['badges'] = self.settings['badges']
+          goal.settings['assessment_badge'] = self.settings['assessment_badge']
+          goal.settings['badge_name'] = self.settings['badge_name']
+          goal.settings['ref_data'] = self.settings['ref_data']
+          goal.save
+        end
+      end
+    end
     true
   end
   
@@ -495,8 +579,9 @@ class UserGoal < ActiveRecord::Base
     sorted_goals.detect{|g| g.goal_advance > Time.now }
   end
   
-  def build_from_template(template, user, set_as_primary=false)
+  def build_from_template(template, user, set_as_primary=false, complete_goal=false)
     if template.template_header && !self.settings['prior_goal_id']
+      # For a sequenced goal, find the first goal in the sequence with a future advance date
       template = template.current_template || template
     end
     self.settings ||= {}
@@ -505,13 +590,27 @@ class UserGoal < ActiveRecord::Base
     self.user = user
     prior_goal = self.settings['prior_goal_id'] && UserGoal.find_by_global_id(self.settings['prior_goal_id'])
     self.settings['author_id'] = prior_goal && prior_goal.settings['author_id']
-    self.settings['author_id'] ||= user.global_id
     self.settings['video'] = template.settings['video']
     self.settings['summary'] = nil if self.settings['summary'] == 'user goal'
     self.settings['summary'] ||= template.settings['summary']
     self.settings['description'] ||= template.settings['description']
+    if complete_goal
+      self.advance_at ||= template.advance_at
+      self.settings['badges'] ||= template.settings['badges']
+      self.settings['assessment_badge'] ||= template.settings['assessment_badge']
+      self.settings['author_id'] ||= template.settings['author_id']
+      self.settings['badge_name'] ||= template.settings['badge_name']
+      self.settings['ref_data'] ||= template.settings['ref_data']
+    end
+    self.settings['author_id'] ||= user.global_id
     self.active = true
     @set_as_primary = true if set_as_primary
+  end
+
+  def children_goals
+    return @children_goals if @children_goals
+    return [] if !self.settings
+    @children_goals = UserGoal.find_all_by_global_id(self.settings['children_ids'] || [])
   end
   
   def next_template
@@ -569,7 +668,8 @@ class UserGoal < ActiveRecord::Base
   
   def self.advance_goals
     UserGoal.where(['advance_at < ?', Time.now]).each do |goal|
-      goal.schedule(:advance!) if goal.user && goal.user.any_premium_or_grace_period?
+      single_expire = !(goal.settings || {})['template_id']
+      goal.schedule(:advance!) if goal.user && (single_expire || goal.user.any_premium_or_grace_period?)
     end
   end
 end

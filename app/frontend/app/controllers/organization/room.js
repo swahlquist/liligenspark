@@ -14,7 +14,7 @@ export default Controller.extend({
       var _this = this;
       modal.open('edit-unit', {unit: _this.get('model')}).then(function(res) {
         if(res && res.updated) {
-//          _this.refresh_units();
+          _this.get('model').load_data(true);
         }
       });
     },
@@ -49,6 +49,9 @@ export default Controller.extend({
         modal.error(i18n.t('error_adding_user', "There was an unexpected error while trying to add the user"));
       });
     },
+    refresh: function() {
+      this.get('model').load_data(true);
+    },
     delete_unit_user: function(unit, user_type, user_id, decision) {
       if(!decision) {
         var _this = this;
@@ -67,5 +70,32 @@ export default Controller.extend({
         modal.error(i18n.t('error_removing_user', "There was an unexpected error while trying to remove the user"));
       });
     },
+    set_goal: function(decision) {
+      var _this = this;
+      if(_this.get('model.goal') && !decision) {
+        modal.open('modals/confirm-remove-goal', {source_type: 'unit', source: _this.get('model'), goal: _this.get('model.goal')}).then(function(res) {
+          if(res.confirmed) {
+            _this.send('set_goal', 'confirm');
+          }
+        });
+        return;
+      }
+      modal.open('new-goal', {unit: _this.get('model')}).then(function(res) {
+        if(!res || !res.get('id')) { return; }
+        var unit = _this.get('model');
+        unit.set('goal', {id: res.get('id')});
+        unit.save().then(function() {
+          modal.success(i18n.t('goal_added', "Goal successfully linked to this room!"));
+        }, function(err) {
+          modal.error(i18n.t('error_adding_goal', "There was an unexpected error trying to link a new goal for this room"));
+        });
+      });
+    },
+    message: function(target) {
+      // modal for crafting a message
+      // option to include feedback footer for communicators
+      // should send a message to the communicator and all non-org supervisors of that communicator
+      modal.open('modals/message-unit', {unit: this.get('model'), target: target});
+    }
   }
 });

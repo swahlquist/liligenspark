@@ -26,9 +26,13 @@ export default modal.ModalController.extend({
         _this.set('model', u);
       });
     }
-    this.set('goal', this.get('model.goal'));
+    if(this.get('model.goal')) {
+      this.set('goal', this.get('model.goal'));
+      this.set('goal_id', this.get('model.goal.id'));
+    } else if(this.get('model.goal_id')) {
+      this.set('goal_id', this.get('model.goal_id'));
+    }
     this.set('prior', this.get('model.prior'));
-    this.set('goal_id', this.get('model.goal.id'));
     if(this.get('model.note_type')) {
       this.set('note_type', this.get('model.note_type'));
     }
@@ -38,38 +42,41 @@ export default modal.ModalController.extend({
   },
   goal_options: computed('model.active_goals', function() {
     var res = [];
-    if((this.get('model.active_goals') || []).length > 0) {
-      res.push({id: '', name: i18n.t('select_goal', "[ Select to Link this Note to a Goal ]")});
-      this.get('model.active_goals').forEach(function(goal) {
-        res.push({id: goal.get('id'), name: goal.get('summary')});
+    if((this.get('model.active_goals') || []).length > 0 || true) {
+      res.push({id: '', name: i18n.t('select_goal', "[ Select to Update Status or Link this Note to a Goal ]")});
+      res.push({id: 'status', name: i18n.t('overall_status_for_this_user', "Overall Status for this User")});
+      (this.get('model.active_goals') || []).forEach(function(goal) {
+        res.push({id: goal.get('id'), name: i18n.t('goal_dash', "Goal - ") + goal.get('summary')});
       });
-      res.push({id: '', name: i18n.t('no_goal_link', "Don't Link this Note to a Goal")});
+      res.push({id: '', name: i18n.t('no_goal_link', "Don't Link this Note to a Goal or Status")});
     }
     return res;
   }),
-  goal_statuses: computed(function() {
+  goal_statuses: computed('goal_id', function() {
+    var goal_id = this.get('goal_id');
+    var status = goal_id == 'status';
     var res = [];
     res.push({
       id: '1',
-      text: htmlSafe(i18n.t('we_didnt_do_it', "We didn't<br/>do it")),
+      text: htmlSafe(status ? i18n.t('status_going_poorly', "Going<br/>Poorly") : i18n.t('we_didnt_do_it', "We didn't<br/>do it")),
       display_class: 'face sad',
       button_display_class: 'btn btn-default face_button'
     });
     res.push({
       id: '2',
-      text: htmlSafe(i18n.t('we_did_it', "We barely<br/>did it")),
+      text: htmlSafe(status ? i18n.t('status_just_ok', "Just<br/>OK") : i18n.t('we_did_it', "We barely<br/>did it")),
       display_class: 'face neutral',
       button_display_class: 'btn btn-default face_button'
     });
     res.push({
       id: '3',
-      text: htmlSafe(i18n.t('we_did_good', "We did<br/>good!")),
+      text: htmlSafe(status ? i18n.t('status_no_complaints', "No<br/>Complaints") : i18n.t('we_did_good', "We did<br/>good!")),
       display_class: 'face happy',
       button_display_class: 'btn btn-default face_button'
     });
     res.push({
       id: '4',
-      text: htmlSafe(i18n.t('we_did_awesome', "We did<br/>awesome!")),
+      text: htmlSafe(status ? i18n.t('status_great_progress', "Great<br/>Progress!") : i18n.t('we_did_awesome', "We did<br/>awesome!")),
       display_class: 'face laugh',
       button_display_class: 'btn btn-default face_button'
     });
@@ -124,12 +131,16 @@ export default modal.ModalController.extend({
       if(type == 'video' && !this.get('video_id')) { return; }
       var _this = this;
       var note = {
-        text: _this.get('note')
+        text: _this.get('note'),
+        timestamp: (new Date()).getTime() / 1000
       };
       if(_this.get('prior')) {
         note.prior = _this.get('prior.note.text');
         note.prior_contact = _this.get('prior.contact');
         note.prior_record_code = "LogSession:" + _this.get('prior.id');
+      }
+      if(_this.get('log')) {
+        note.log_events_string = _this.get('log');
       }
       var notify = this.get('notify') ? 'true' : null;
       if(this.get('notify_user')) {
@@ -139,9 +150,13 @@ export default modal.ModalController.extend({
           notify = 'user_only';
         }
       }
+      stashes.track_daily_event('notes');
       var fallback = function() {
         stashes.log_event({
           note: note,
+          video_id: _this.get('video_id'),
+          goal_id: _this.get('goal_id'),
+          goal_status: _this.get('goal_status'),
           notify: notify
         }, this.get('model.id'));
         stashes.push_log(true);

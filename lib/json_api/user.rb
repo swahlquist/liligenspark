@@ -223,6 +223,8 @@ module JsonApi::User
           # json['organization_unit_name'] = org_unit.settings['name']
           json['organization_unit_id'] = org_unit.global_id
         end
+      elsif args[:include_goal]
+        json['goal'] = user.settings['primary_goal']
       end
       sub_hash = user.subscription_hash
       json['extras_enabled'] = true if sub_hash['extras_enabled']

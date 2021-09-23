@@ -48,8 +48,7 @@ class BoardsController < ApplicationController
   
   def log_goal_status
     if params['status']
-      goal = UserGoal.find_by_global_id(params['goal_id'])
-      log = goal && goal.process_status_from_code(params['status'], params['goal_code'])
+      log = UserGoal.process_status_from_code(params['goal_id'], params['status'], params['goal_code'])
       if log
         redirect_to action: 'log_goal_status', result_status: params['status'], log_id: log.global_id
         return

@@ -10,6 +10,8 @@ CoughDrop.Unit = DS.Model.extend({
   organization_id: DS.attr('string'),
   name: DS.attr('string'),
   management_action: DS.attr('string'),
+  goal: DS.attr('raw'),
+  prior_goals: DS.attr('raw'),
   supervisors: DS.attr('raw'),
   communicators: DS.attr('raw'),
   permissions: DS.attr('raw'),
@@ -19,8 +21,8 @@ CoughDrop.Unit = DS.Model.extend({
   communicator_count: computed('communicators', function() {
     return (this.get('communicators') || []).length;
   }),
-  load_data: function() {
-    if(this.get('weekly_stats') && !this.get('weekly_stats.error')) {
+  load_data: function(force) {
+    if(!force && this.get('weekly_stats') && !this.get('weekly_stats.error')) {
       return;
     }
     this.refresh_stats();

@@ -757,6 +757,7 @@ class Organization < ActiveRecord::Base
         e = {
           'id' => org.global_id,
           'name' => org.settings['name'],
+          'image_url' => org.settings['image_url'],
           'type' => 'user',
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending'],
@@ -793,6 +794,7 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['premium'] = true if org.settings['org_access']
         e['org'] = org if include_org
         res << e
       end

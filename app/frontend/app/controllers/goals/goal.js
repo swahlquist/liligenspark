@@ -6,6 +6,7 @@ import i18n from '../../utils/i18n';
 import CoughDrop from '../../app';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import app_state from '../../utils/app_state';
 
 export default Controller.extend({
   advance_options: [
@@ -39,13 +40,21 @@ export default Controller.extend({
       return this.get('model.badges');
     }
   }),
+  assessment_badge_description: computed('model.assessment_badge', function() {
+    var ub = CoughDrop.store.createRecord('badge', {
+      name: this.get('model.badge_name') || this.get('model.summary'),
+      level: 0,
+      completion_settings: this.get('model.assessment_badge')
+    });
+    return ub.get('completion_explanation');
+  }),
   load_templates_for_header: observer('model.template_header', function() {
     if(this.get('model.template_header')) {
       this.load_templates();
     }
   }),
   load_templates: function() {
-    if(this.get('model.related.header.id') && this.get('templates_list_for') != this.get('model.related.header.id')) {
+    if(this.get('model.sequence') && this.get('model.related.header.id') && this.get('templates_list_for') != this.get('model.related.header.id')) {
       var _this = this;
       _this.set('status', {loading_templates: true});
       var header_id = _this.get('model.related.header.id');
@@ -114,9 +123,17 @@ export default Controller.extend({
       var _this = this;
       _this.set('status', {deleting: true});
       goal.save().then(function(r) {
-        _this.redirectToRoute('index');
+        _this.transitionToRoute('index');
       }, function(err) {
         _this.set('status', {delete_error: true});
+      });
+    },
+    unlink_goal: function() {
+      var _this = this;
+      modal.open('modals/confirm-remove-goal', {source_type: 'unit', source: {id: _this.get('model.unit_id'), name: _this.get('model.unit_name')}, goal: _this.get('model')}).then(function(res) {
+        if(res.confirmed) {
+          _this.transitionToRoute('organization.room', _this.get('model.unit_org_id'), _this.get('model.unit_id'));
+        }
       });
     },
     remove_badge: function(badge) {
@@ -139,7 +156,7 @@ export default Controller.extend({
         });
       }
       if(ub) {
-        modal.open('badge-awarded', {badge: ub});
+        modal.open('badge-awarded', {badge: ub, user_id: app_state.get('currentUser.id')});
       }
     }
   }

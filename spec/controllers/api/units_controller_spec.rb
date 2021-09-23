@@ -273,6 +273,111 @@ describe Api::UnitsController, :type => :controller do
         'total_users' => 1
       })
     end
+
+    it "should include statuses for communicators" do
+      token_user
+      user = User.create
+      user.settings['primary_goal'] = {
+        'id' => 'asdf',
+        'last_tracked' => Time.now.iso8601
+      }
+      user.save
+      d = Device.create(:user => user)
+      LogSession.create(log_type: 'note', user: user, author: user, device: d, score: 3, started_at: Time.now, goal_id: 7, data: {'note' => {'text' => 'asdf', 'timestamp' => Time.now.to_i}})
+      
+      o = Organization.create
+      u = OrganizationUnit.create(:organization => o)
+      o.add_supervisor(@user.user_name, false)
+      o.add_user(user.user_name, false, false)
+      u.add_supervisor(@user.user_name)
+      expect(u.reload.all_user_ids.length).to eq(1)
+      get :stats, params: {:unit_id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      
+      get :stats, params: {:unit_id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user_weeks'][user.global_id]).to eq(nil)
+      expect(json['user_counts']).to eq({
+        'goal_set' => 0,
+        'goal_recently_logged' => 0, 
+        'recent_session_count' => 0, 
+        'recent_session_user_count' => 0, 
+        'recent_session_seconds' => 0.0,
+        'recent_session_hours' => 0.0,
+        'total_users' => 0
+      })
+      
+      u.add_communicator(user.user_name)
+      expect(u.reload.all_user_ids.length).to eq(2)
+      get :stats, params: {:unit_id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user_weeks'][user.global_id]).to_not eq(nil)
+      expect(json['user_weeks'][user.global_id].keys.length).to eq(1)
+      expect(json['user_weeks'][user.global_id][json['user_weeks'][user.global_id].keys[0]]).to eq({
+        'count' => 1,
+        'goals' => 1,
+        'statuses' => [{"from_unit"=>false, "goal_id"=>"1_7", "score"=>3}]
+      })
+      expect(json['user_counts']).to eq({
+        'goal_set' => 1,
+        'goal_recently_logged' => 1,
+        'recent_session_count' => 0, 
+        'recent_session_user_count' => 0,
+        'recent_session_seconds' => 0.0,
+        'recent_session_hours' => 0.0, 
+        'total_users' => 1
+      })
+    end
+
+    it "should include daily_use event counts for supervisors" do
+      token_user
+      user = User.create
+      d = Device.create(:user => user)
+      o = Organization.create
+      u = OrganizationUnit.create(:organization => o)
+      o.add_user(user.user_name, false, false)
+      o.add_supervisor(@user.user_name, false)
+      u.add_supervisor(@user.user_name)
+      expect(u.reload.all_user_ids.length).to eq(1)
+      get :stats, params: {:unit_id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+
+
+      LogSession.process_daily_use({
+        'events' => [
+          {'date' => "#{2.weeks.ago.to_date.iso8601}", 'active' => true, 'activity_level' => 3, 'models' => 4},
+          {'date' => "#{(2.weeks.ago.to_date + 1).iso8601}", 'active' => true, 'activity_level' => 1, 'models' => 2, 'focus_words' => 1},
+          {'date' => "#{4.weeks.ago.to_date.iso8601}", 'active' => true, 'activity_level' => 5, 'goals' => 1},
+        ]
+      }, {author: @user, device: @user.devices[0]})
+
+      get :stats, params: {:unit_id => u.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['weeks']).to eq([])
+      expect(json['supervisor_weeks']).to_not eq({})
+      expect(json['supervisor_weeks'][@user.global_id]).to_not eq(nil)
+      a = 2.weeks.ago.beginning_of_week(:monday).to_date.to_time(:utc).to_i.to_s
+      b = 4.weeks.ago.beginning_of_week(:monday).to_date.to_time(:utc).to_i.to_s
+      expect(json['supervisor_weeks'][@user.global_id][a]).to eq({
+        'actives' => 2, 'average_level' => 0.8, 'days' => 2, 'focus_words' => 1, 'models' => 6, 'total_levels' => 4
+      })
+      expect(json['supervisor_weeks'][@user.global_id][b]).to eq({
+        'actives' => 1, 'average_level' => 1.0, 'days' => 1, 'goals' => 1, 'total_levels' => 5
+      })
+    end
+  end
+
+  describe "log_stats" do
+    it "should have specs" do
+      write_this_test
+    end
   end
   
   describe "logs" do
@@ -319,6 +424,124 @@ describe Api::UnitsController, :type => :controller do
       expect(json['meta']).not_to eq(nil)
       expect(json['log'].length).to eq(10)
       expect(json['meta']['next_url']).to eq("#{JsonApi::Json.current_host}/api/v1/units/#{unit.global_id}/logs?offset=#{JsonApi::Log::DEFAULT_PAGE}&per_page=#{JsonApi::Log::DEFAULT_PAGE}")
+    end
+  end
+
+  describe "note" do
+    it "should require a valid token" do
+      post :note, params: {unit_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid unit" do
+      token_user
+      post :note, params: {unit_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require authorization" do
+      token_user
+      o = Organization.create
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(@user.user_name)
+      post :note, params: {unit_id: ou.global_id}
+      assert_unauthorized
+    end
+
+    it "should message specified users" do
+      token_user
+      o = Organization.create
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(@user.user_name)
+      ou.add_supervisor(@user.user_name)
+      post :note, params: {unit_id: ou.global_id, note: "Haldo!"}
+      json = assert_success_json
+      expect(json['targets']).to eq(1)
+      Worker.process_queues
+      s = LogSession.last
+      expect(s).to_not eq(nil)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('Haldo!')
+    end
+
+    it "should include video if valid" do
+      token_user
+      u1 = User.create
+      u2 = User.create
+      o = Organization.create(settings: {'total_licenses' => 5})
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(@user.user_name)
+      ou.add_supervisor(@user.user_name)
+      o.add_user(u1.user_name, false, true)
+      ou.add_communicator(u1.user_name)
+      o.add_user(u2.user_name, false, true)
+      ou.add_communicator(u2.user_name)
+      post :note, params: {unit_id: ou.global_id, target: 'communicators', note: "Haldo!", video_id: '111'}
+      json = assert_success_json
+      expect(json['targets']).to eq(2)
+      Worker.process_queues
+      s = LogSession.last
+      expect(s).to_not eq(nil)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('Haldo!')
+      expect(s.data['note']['video']).to eq(nil)
+
+      vid = UserVideo.create(:settings => {duration: 12})
+      post :note, params: {unit_id: ou.global_id, target: 'supervisors', note: "Haldo!", video_id: vid.global_id}
+      json = assert_success_json
+      expect(json['targets']).to eq(1)
+      Worker.process_queues
+      s = LogSession.last
+      expect(s).to_not eq(nil)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('Haldo!')
+      expect(s.data['note']['video']).to eq({'id' => vid.global_id, 'duration' => 12})
+    end
+
+    it "should exclude unit supervisors if sending to just communicators" do
+      token_user
+      u1 = User.create
+      u2 = User.create
+      o = Organization.create(settings: {'total_licenses' => 5})
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(@user.user_name)
+      ou.add_supervisor(@user.user_name)
+      o.add_user(u1.user_name, false, true)
+      ou.add_communicator(u1.user_name)
+      o.add_user(u2.user_name, false, true)
+      ou.add_communicator(u2.user_name)
+      post :note, params: {unit_id: ou.global_id, target: 'communicators', note: "Haldo!"}
+      json = assert_success_json
+      expect(json['targets']).to eq(2)
+      Worker.process_queues
+      s = LogSession.last
+      expect(s).to_not eq(nil)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('Haldo!')
+      expect(s.data['notify_exclude_ids']).to eq([@user.global_id])
+    end
+
+    it "should include footer in email if specified" do
+      token_user
+      u1 = User.create
+      u2 = User.create
+      o = Organization.create(settings: {'total_licenses' => 5})
+      ou = OrganizationUnit.create(organization: o)
+      o.add_supervisor(@user.user_name)
+      ou.add_supervisor(@user.user_name)
+      o.add_user(u1.user_name, false, true)
+      ou.add_communicator(u1.user_name)
+      o.add_user(u2.user_name, false, true)
+      ou.add_communicator(u2.user_name)
+      post :note, params: {unit_id: ou.global_id, note: "Haldo!", include_footer: true}
+      json = assert_success_json
+      expect(json['targets']).to eq(3)
+      Worker.process_queues
+      s = LogSession.last
+      expect(s).to_not eq(nil)
+      expect(s.log_type).to eq('note')
+      expect(s.data['note']['text']).to eq('Haldo!')
+      expect(s.data['include_status_footer']).to eq(true)
     end
   end
 end

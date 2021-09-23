@@ -94,6 +94,7 @@ export default modal.ModalController.extend({
         tallies: this.get('tallies'),
         totals: this.get('totals')
       };
+      stashes.track_daily_event('quick_assessments');
       if(persistence.get('online')) {
         var log = this.store.createRecord('log', {
           user_id: this.get('model.user.id'),

@@ -22,6 +22,8 @@ class LogSession < ActiveRecord::Base
 
   has_paper_trail :on => [:destroy] #:only => [:data, :user_id, :author_id, :device_id]
   secure_serialize :data
+  DAILY_EVENT_TYPES = ['models', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
+
 
   def generate_defaults
     self.data ||= {}
@@ -270,6 +272,7 @@ class LogSession < ActiveRecord::Base
       self.log_type = 'daily_use'
       self.data['events'] = []
     end
+    self.score ||= rand(5) if self.log_type == 'note'
     if self.data['goal']
       if self.data['assessment']
         self.data['goal']['positives'] = self.data['assessment']['totals']['correct']
@@ -278,6 +281,7 @@ class LogSession < ActiveRecord::Base
         self.data['goal']['positives'] = self.data['goal']['status'] > 1 ? 1 : 0
         self.data['goal']['negatives'] = self.data['goal']['status'] <= 1 ? 1 : 0
       end
+      self.score = self.data['goal']['status']
     end
     self.data['event_summary'] = str
     self.highlighted = true if highlight_words.length > 0
@@ -936,11 +940,18 @@ class LogSession < ActiveRecord::Base
                 if event && event['note']
                   note = event['note']
                   note = note['note'] if note['note'].is_a?(Hash)
-                  params = {note: note}
+                  params = {
+                    note: note,
+                    timestamp: event['timestamp'],
+                    notify: event['notify'],
+                    video_id: event['video_id'],
+                    goal_id: event['goal_id'],
+                    goal_status: event['goal_status']
+                  }
                 elsif event && event['assessment']
                   assmnt = event['assessment']
                   assmnt = assmnt['assessment'] if assmnt['assessment'].is_a?(Hash)
-                  params = {assessment: assmnt}
+                  params = {assessment: assmnt, timestamp: event['timestamp']}
                 elsif event && event['eval']
                   evl = event['eval']
                   evl = evl['eval'] if evl['eval'].is_a?(Hash)
@@ -1103,28 +1114,80 @@ class LogSession < ActiveRecord::Base
     }, {'user' => recipient, 'contact' => contact, 'author' => sender, 'device' => device, 'message' => true})
     return session
   end
-  
+
+  def self.message_all(user_ids, opts)
+    users = User.find_all_by_global_id(user_ids)
+    sender = User.find_by_path(opts['sender_id'])
+    device = sender && sender.devices.find_by_global_id(opts['device_id'])
+    return false unless sender && device
+    sessions = []
+    users.each do |user|
+      ses = {
+        'note' => {'text' => opts['message'], 'timestamp' => Time.now.to_i},
+        'notify' => opts['notify'] || 'true',
+        'include_status_footer' => opts['include_footer'],
+        'notify_exclude_ids' => opts['notify_exclude_ids'],
+      }
+      if opts['video']
+        ses['note']['video'] = opts['video']
+      end
+      sessions << LogSession.process_new(ses, {'user' => user, 'author' => sender, 'device' => device, 'message' => true})
+    end
+    sessions.map(&:global_id)
+  end
+
   def self.process_as_follow_on(params, non_user_params)
     raise "user required" if !non_user_params[:user]
     raise "author required" if !non_user_params[:author]
     raise "device required" if !non_user_params[:device]
     # TODO: marrying across devices could be really cool, i.e. teacher is using their phone to
     # track pass/fail while the student uses the device to communicate. WHAAAAT?!
+    stash_params = nil
+    result = nil
     if params['note']
       params['events'] = nil
       Rails.logger.warn('processing note creation in client request')
-      self.process_new(params, non_user_params)
+      if params['note']['log_events_string']
+        # store events string as a new log session
+        stash_params = {
+          'events' => []
+        }
+        lines = params['note']['log_events_string'].split(/\n/)
+        ts = (params['note']['timestamp'] || Time.now.to_i) - (5 * lines.length) - 10
+        lines.each do |line|
+          if line.strip.length > 0
+            stash_params['events'] << {
+              'type' => 'button',
+              'user_id' => non_user_params[:user].global_id,
+              'timestamp' => ts,
+              'button' => {
+                'button_id' => "e#{ts}",
+                'label' => line,
+                'type' => 'speak',
+                'spoken' => true,
+              }
+            }
+            ts += 5
+          end
+        end
+        params['note'].delete('log_events_string')
+      end
+      result = self.process_new(params, non_user_params)
     elsif params['assessment']
       params['events'] = nil
       Rails.logger.warn('processing assessment creation in client request')
-      self.process_new(params, non_user_params)
+      result = self.process_new(params, non_user_params)
     elsif params['type'] == 'daily_use'
       Rails.logger.warn('processing daily_use creation in client request')
-      self.process_daily_use(params, non_user_params)
+      result = self.process_daily_use(params, non_user_params)
     elsif params['type'] == 'journal'
       Rails.logger.warn('processing journal creation in client request')
-      self.process_new(params, non_user_params)
+      result = self.process_new(params, non_user_params)
     else
+      stash_params = params
+    end
+
+    if stash_params
       Rails.logger.warn('generating stash')
       res = LogSession.new(:data => {})
       # background-job it, too much processing for in-request!
@@ -1134,17 +1197,18 @@ class LogSession < ActiveRecord::Base
       non_user_params[:user_id] = user.global_id
       non_user_params[:author_id] = author.global_id
       non_user_params[:device_id] = device.global_id
-      Rails.logger.warn("posted_log_size=#{params.to_json.length} total_events=#{(params['events'] || []).length}")
+      Rails.logger.warn("posted_log_size=#{params.to_json.length} total_events=#{(stash_params['events'] || []).length}")
       stash_data = {
-        'params' => params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params,
+        'params' => stash_params.respond_to?(:to_unsafe_h) ? stash_params.to_unsafe_h : stash_params,
         'non_user_params' => non_user_params
       }
       stash = JobStash.create(data: stash_data)
       Rails.logger.warn('scheduling process')
       schedule(:process_delayed_follow_on, stash.global_id, non_user_params)
       Rails.logger.warn('done with process_as_follow_on')
-      res
+      result ||= res
     end
+    return result
   end
   
   def self.process_delayed_follow_on(params_data, non_user_params)
@@ -1228,6 +1292,9 @@ class LogSession < ActiveRecord::Base
           day = day.to_unsafe_h if day.respond_to?(:to_unsafe_h)
           existing_day ||= day
           existing_day['active'] ||= day['active']
+          DAILY_EVENT_TYPES.each do |type|
+            existing_day[type] = day[type] if day[type]
+          end
           existing_day['activity_level'] = [(existing_day || {})['activity_level'], (day || {})['activity_level']].compact.max
           days[day['date']] = existing_day
         end
@@ -1558,6 +1625,8 @@ class LogSession < ActiveRecord::Base
         @push_message = true
         self.data['notify_user'] = true if params['notify'] == 'user_only' || params['notify'] == 'include_user'
         self.data['notify_user_only'] = true if params['notify'] == 'user_only'
+        self.data['notify_exclude_ids'] = params['notify_exclude_ids']
+        self.data['include_status_footer'] = true if params['include_status_footer']
         self.data['message']= true if non_user_params['message']
         self.data['unread'] = true if self.data['unread'] == nil && self.data['notify_user']
       end
@@ -1572,15 +1641,26 @@ class LogSession < ActiveRecord::Base
         end
       end
       if params['goal_id'] || self.goal_id
-        log_goal = self.goal || UserGoal.find_by_global_id(params['goal_id'])
-        if log_goal && log_goal.user_id == self.user_id
-          self.goal = log_goal
+        if params['goal_id'] == 'status'
+          self.goal_id = 0
           self.data['goal'] = {
-            'id' => log_goal.global_id,
-            'summary' => log_goal.summary
+            'summary' => "",
+            'global' => true
           }
           if params['goal_status'] && params['goal_status'].to_i > 0
             self.data['goal']['status'] = params['goal_status'].to_i
+          end
+        else
+          log_goal = self.goal || UserGoal.find_by_global_id(params['goal_id'])
+          if log_goal && log_goal.user_id == self.user_id
+            self.goal = log_goal
+            self.data['goal'] = {
+              'id' => log_goal.global_id,
+              'summary' => log_goal.summary
+            }
+            if params['goal_status'] && params['goal_status'].to_i > 0
+              self.data['goal']['status'] = params['goal_status'].to_i
+            end
           end
         end
       end
@@ -1673,6 +1753,9 @@ class LogSession < ActiveRecord::Base
       users = [self.user]
       if self.data['notify_user_only'] != true
         users += self.user.supervisors
+      end
+      if self.data['notify_exclude_ids']
+        users = users.select{|u| !self.data['notify_exclude_ids'].include?(u.global_id) }
       end
       users -= [self.author] unless self.user == self.author && self.data['notify_user']
       users.map(&:record_code)

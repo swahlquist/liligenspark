@@ -7,6 +7,7 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import RSVP from 'rsvp';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import stashes from '../utils/_stashes';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -137,7 +138,10 @@ export default modal.ModalController.extend({
     save_goal: function() {
       var _this = this;
       var goal = this.get('goal');
-      var users = [this.get('model.user')];
+      var users = [];
+      if(this.get('model.user')) {
+        users = [this.get('model.user')];
+      }
       if(this.get('model.users')) {
         users = this.get('model.users').filter(function(u) { return emberGet(u, 'add_goal'); });
       }
@@ -198,12 +202,20 @@ export default modal.ModalController.extend({
         }
       }
       goal.set('active', true);
+      if(goal.get('expires')) {
+        goal.set('expires', window.moment(goal.get('expires'))._d);
+      }
+      stashes.track_daily_event('goals');
       var promises = [];
       users.forEach(function(u) {
         var g = _this.store.createRecord('goal', goal.toJSON());
         g.set('user_id', emberGet(u, 'id'));
         promises.push(g.save());
       });
+      if(_this.get('model.unit')) {
+        goal.set('unit_id', _this.get('model.unit.id'));
+        promises.push(goal.save());
+      }
       goal.set('user_id', this.get('model.user.id'));
       // TODO: something about attaching the video
       _this.set('saving', true);

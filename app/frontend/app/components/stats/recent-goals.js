@@ -10,7 +10,7 @@ export default Component.extend({
   draw: observer('total', 'recent', function() {
     var total = this.get('total'); // all users
     var tracked = this.get('tracked'); // having goal set that has been tracked recently
-    var untracked = this.get('set') - tracked; // having goal set but not tracked recently
+    var untracked = this.get('goal_set') - tracked; // having goal set but not tracked recently
     var elem = this.get('element').getElementsByClassName('recent_goals')[0];
 
     CoughDrop.Visualizations.wait('pie-chart', function() {
