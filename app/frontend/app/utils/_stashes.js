@@ -604,6 +604,15 @@ var stashes = EmberObject.extend({
   },
   log: function(obj) {
     stashes.track_daily_use();
+    if(ob && obj.button_id) {
+      var modeling = false;
+      if(stashes.get('modeling') || (log_event.button && log_event.button.modeling)) {
+        modeling = true;
+      } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > ((new Date()).getTime() - 500)) {
+        modeling = true;
+      }
+      stashes.track_daily_event('models');
+    }
     if(!stashes.get('history_enabled')) { return null; }
     if(!stashes.get('logging_enabled')) { return null; }
     if(window.app_state && window.app_state.get('eval_mode')) { return null; }

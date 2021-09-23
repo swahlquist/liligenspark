@@ -539,6 +539,7 @@ var sync = EmberObject.extend({
         sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {button: obj});
       }, 500);
       modal.highlight($button, {clear_overlay: true, highlight_type: 'model', icon: 'send' }).then(function(highlight) {
+        stashes.track_daily_event('remote_models');
         model_handled = true;
         if(highlight && highlight.pending) {
           highlight.pending();
