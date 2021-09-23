@@ -191,9 +191,9 @@ class Api::UnitsController < ApplicationController
         modeled_word_counts[word][:user_ids][sum.user_id] = true
       end
     end
-    minimum_user_count = word_counts.map{|w, h| h[:user_ids].length }.max > 3 ? 2 : 1
+    minimum_user_count = (word_counts.map{|w, h| h[:user_ids].length }.max || 0) > 3 ? 2 : 1
     word_counts = word_counts.to_a.select{|w, h| h[:user_ids].keys.length >= minimum_user_count }.map{|w, h| [w, h[:cnt]] }.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 75]
-    minimum_user_count = modeled_word_counts.map{|w, h| h[:user_ids].length }.max > 2 ? 2 : 1
+    minimum_user_count = (modeled_word_counts.map{|w, h| h[:user_ids].length }.max || 0) > 2 ? 2 : 1
     modeled_word_counts = modeled_word_counts.to_a.select{|w, h| h[:user_ids].keys.length >= minimum_user_count }.map{|w, h| [w, h[:cnt]] }.sort_by{|w, c| 0 - c}.select{|w, c| c > user_ids.length }[0, 75]
     render json: {
       total_users: user_count,
