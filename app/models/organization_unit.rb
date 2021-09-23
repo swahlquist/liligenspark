@@ -169,7 +169,7 @@ class OrganizationUnit < ActiveRecord::Base
   def self.supervised_units(user)
     return [] unless user
     links = UserLink.links_for(user).select{|l| l['type'] == 'org_unit_supervisor' }
-    ids = links.select{|l| l['user_id'] == user.global_id }.map{|l| ['record_code'].split(/:/)[1] }
+    ids = links.select{|l| l['user_id'] == user.global_id }.map{|l| l['record_code'].split(/:/)[1] }
     OrganizationUnit.find_all_by_global_id(ids).uniq
   end
 

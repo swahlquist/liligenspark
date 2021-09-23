@@ -49,23 +49,27 @@
       </div>
       {{#if model.permissions.view}}
         <div class='col-sm-6' style='margin-bottom: 10px;'>
-          {{#if organization.premium}}
-            <span class="dropdown">
-              <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                <span class='glyphicon glyphicon-envelope'></span>
-                {{t "Message..." key='message_ellipsis'}}
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#" {{action 'message' 'communicators'}}>{{t "Communicators" key='communicators'}}</a></li>
-                <li><a href="#" {{action 'message' 'supervisors'}}>{{t "Supervisors" key='supervisors'}}</a></li>
-                <li><a href="#" {{action 'message' 'all'}}>{{t "Everyone" key='everyone'}}</a></li>
-              </ul>
-            </span>
+          {{#if model.permissions.edit}}
+            {{#if organization.premium}}
+              <span class="dropdown">
+                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  <span class='glyphicon glyphicon-envelope'></span>
+                  {{t "Message..." key='message_ellipsis'}}
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                  <li><a href="#" {{action 'message' 'communicators'}}>{{t "Communicators" key='communicators'}}</a></li>
+                  <li><a href="#" {{action 'message' 'supervisors'}}>{{t "Supervisors" key='supervisors'}}</a></li>
+                  <li><a href="#" {{action 'message' 'all'}}>{{t "Everyone" key='everyone'}}</a></li>
+                </ul>
+              </span>
+            {{/if}}
+            <button class='btn btn-default' {{action 'add_users'}}>{{t "Add Users" key='add_users'}}</button>
+            <button class='btn btn-default' {{action 'edit_unit'}}>{{t "Edit Room" key='edit_room'}}</button>
           {{/if}}
-          <button class='btn btn-default' {{action 'add_users'}}>{{t "Add Users" key='add_users'}}</button>
-          <button class='btn btn-default' {{action 'edit_unit'}}>{{t "Edit Room" key='edit_room'}}</button>
-          <button class='btn btn-default' {{action 'delete_unit'}}>{{t "Delete Room" key='delete_room'}}</button>
+          {{#if model.permissions.delete}}
+            <button class='btn btn-default' {{action 'delete_unit'}}>{{t "Delete Room" key='delete_room'}}</button>
+          {{/if}}
         </div>
       {{/if}}
       {{#if organization.premium}}
@@ -80,9 +84,11 @@
               {{else}}
                 {{t "None Set" key='none_set'}}
               {{/if}}
-              <div style='text-align: right;'>
-                <a href="#" {{action 'set_goal'}} style='font-size: 12px;'>{{t "set room-wide goal" key='set_room_wide_goal'}}</a>
-              </div>
+              {{#if model.permissions.edit}}
+                <div style='text-align: right;'>
+                  <a href="#" {{action 'set_goal'}} style='font-size: 12px;'>{{t "set room-wide goal" key='set_room_wide_goal'}}</a>
+                </div>
+              {{/if}}
             </div>
           </div>
         </div>

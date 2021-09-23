@@ -437,8 +437,11 @@ export default Controller.extend({
     reload: function() {
       location.reload();
     },
+    searchBoards: function() {
+      this.transitionToRoute('search', 'any', encodeURIComponent('_'));
+    },
     quick_assessment: function(user) {
-      if(user.premium || emberGet(user, 'currently_premium')) {
+      if(emberGet(user, 'premium') || emberGet(user, 'currently_premium')) {
         var _this = this;
         modal.open('quick-assessment', {user: user});
       } else {

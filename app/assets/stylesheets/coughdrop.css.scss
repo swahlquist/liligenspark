@@ -2952,7 +2952,7 @@ $nav_primary: #337ab7;
 $nav_secondary: #fffbbc;
 $nav_secondary_bottom_row: #ffd7a8;
 $nav_secondary_middle_row: #eac8ff;
-$nav_secondary_emergency: #ff7a88;
+$nav_secondary_emergency: #90ff7a;
 $nav_tertiary: #d1efbc;
 $nav_extras: #eee;
 .secondary_button {
@@ -2970,7 +2970,7 @@ $nav_extras: #eee;
   }
 }
 .emergency_button {
-  border-color: #690000 !important;
+  border-color: #0c6900 !important;
   background: $nav_secondary_emergency !important;
   &.less_important {
     color: #444;

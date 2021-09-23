@@ -283,6 +283,8 @@
           {{else}}
             {{t "No recent sessions" key='no_recent_sessions'}}
           {{/if}}
+        {{else if app_state.currentUser.supporter_role}}
+            {{t "No session data" key='no_session_data'}}
         {{/if}}
         </span>
       </a>
@@ -564,6 +566,12 @@
                   {{t "Learn<br/>and Setup" key='learn_and_setup'}}
                 </button>
               </div>
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
+                  <img src={{path 'images/new.svg'}} />
+                  {{t "New Board" key='new_board'}}
+                </button>
+              </div>
             {{else}}
               <div class='col-md-3 col-xs-4 big_button_holder'>
                 <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
@@ -571,13 +579,13 @@
                   {{t "New Board" key='new_board'}}
                 </button>
               </div>
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button class='btn big_button btn-default middle_row' {{action "searchBoards"}}>
+                <span class='glyphicon glyphicon-search'></span>
+                  {{t "Search Boards" key='search_boards'}}
+                </button>
+              </div>
             {{/if}}
-            <div class='col-md-3 col-xs-4 big_button_holder'>
-              <button class='btn big_button btn-default middle_row' {{action "newBoard"}}>
-                <img src={{path 'images/new.svg'}} />
-                {{t "New Board" key='new_board'}}
-              </button>
-            </div>
           {{/unless}}
           {{#if app_state.currentUser.permissions.delete}}
             <div class='col-md-3 col-xs-4 big_button_holder'>
