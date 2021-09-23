@@ -24,6 +24,45 @@ class Api::UnitsController < ApplicationController
     end
   end
 
+  def note
+    unit = OrganizationUnit.find_by_global_id(params['unit_id'])
+    return unless exists?(unit, params['unit_id'])
+    return unless allowed?(unit, 'view_stats')
+
+    video = nil
+    if params['video_id']
+      vid = UserVideo.find_by_global_id(params['video_id'])
+      if vid
+        video = {
+          'id' => params['video_id'],
+          'duration' => vid.settings['duration']
+        }
+      end
+    end
+
+    user_ids = UserLink.links_for(unit).select{|l| l['type'] == 'org_unit_communicator' }.map{|l| l['user_id'] }
+    supervisor_ids = UserLink.links_for(unit).select{|l| l['type'] == 'org_unit_supervisor' }.map{|l| l['user_id'] }.compact.uniq
+    targets = []
+    if params['target'] == 'communicators'
+      params['notify_exclude_ids'] = supervisor_ids
+      targets = user_ids
+    elsif params['target'] == 'supervisors'
+      targets = supervisor_ids
+    else
+      targets = (user_ids + supervisor_ids).uniq
+    end
+    LogSession.schedule_for(:priority, :message_all, targets, {
+      sender_id: @api_user.global_id,
+      device_id: @api_device_id,
+      message: params['note'],
+      video: video,
+      include_footer: params['include_footer'],
+      notify_exclude_ids: params['notify_exclude_ids'],
+      notify: params['notify_user'] ? 'include_user' : 'true'
+    })
+    render json: {targets: targets.length}
+  end
+
   def stats
     unit = OrganizationUnit.find_by_global_id(params['unit_id'])
     return unless exists?(unit, params['unit_id'])
