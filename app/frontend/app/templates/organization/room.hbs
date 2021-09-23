@@ -98,6 +98,22 @@
             </div>
           </div>
         </div>
+        <div class='col-sm-3 col-xs-6'>
+          <strong>{{t "Recent Words" key='words'}}</strong>
+          {{#if log_stats.modeleted_word_counts}}
+            <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
+          {{else}}
+            {{stats/word-cloud stats=words_cloud zoom=1}}
+          {{/if}}
+        </div>
+        <div class='col-sm-3 col-xs-6'>
+          <strong>{{t "Modeled Words" key='words'}}</strong>
+          {{#if log_stats.modeleted_word_counts}}
+            <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
+          {{else}}
+            {{stats/word-cloud stats=modeled_words_cloud zoom=1}}
+          {{/if}}
+        </div>
       {{/if}}
       {{#if model.permissions.view}}
         <div class='col-sm-6' style='margin-bottom: 10px;'>

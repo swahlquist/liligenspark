@@ -22,6 +22,26 @@ export default Controller.extend({
       _this.set('log_stats', {error: true});
     });
   },
+  words_cloud: computed('log_stats.word_count', function() {
+    var res = EmberObject.create({
+      words_by_frequency: []
+    });
+    var counts = this.get('log_stats.word_count') || {};
+    for(var idx in counts) {
+      res.get('words_by_frequency').pushObject({text: idx, count: counts[idx]});
+    }
+    return res;
+  }),
+  modeled_words_cloud: computed('log_stats.modeled_word_count', function() {
+    var res = EmberObject.create({
+      words_by_frequency: []
+    });
+    var counts = this.get('log_stats.modeled_word_count') || {};
+    for(var idx in counts) {
+      res.get('words_by_frequency').pushObject({text: idx, count: counts[idx]});
+    }
+    return res;
+  }),
   actions: {
     edit_unit: function() {
       var _this = this;
