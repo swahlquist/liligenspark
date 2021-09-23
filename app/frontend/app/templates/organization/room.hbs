@@ -63,7 +63,7 @@
         <div class="col-sm-3 col-xs-6">
           <div class="panel panel-default summary smaller">
             <div class="panel-heading">
-              {{t "Recent Words per Day" key='words_per_day'}}
+              {{t "Recent Avg. Words per Day" key='words_per_day'}}
             </div>
             <div class="panel-body">
               {{log_stats.avg_words_per_day}}
@@ -173,7 +173,7 @@
         {{/if}}
       {{/if}}
 
-      <div class="col-sm-6" style="padding: 0;">
+      <div class="col-sm-6" style="padding: 0; page-break-inside: avoid;">
         {{#if model.weekly_stats.loading}}
           {{t "Loading reports..." key='loading_reports'}}
         {{else if model.weekly_stats.error}}
@@ -182,11 +182,11 @@
           {{stats/sessions-per-week weekly_stats=model.weekly_stats}}
         {{/if}}
       </div>
-      <div class="col-sm-3" style="padding: 0;">
+      <div class="col-sm-3 col-xs-6" style="padding: 0;">
         {{stats/recent-sessions total=model.user_counts.total_users recent=model.user_counts.recent_session_user_count}}
       </div>
       {{#if model.user_counts}}
-        <div class="col-sm-3" style="padding: 0;">
+        <div class="col-sm-3 col-xs-6" style="padding: 0;">
           {{stats/recent-goals total=model.user_counts.total_users goal_set=model.user_counts.goal_set tracked=model.user_counts.goal_recently_logged}}
         </div>
       {{/if}}

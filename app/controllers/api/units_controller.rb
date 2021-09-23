@@ -137,7 +137,7 @@ class Api::UnitsController < ApplicationController
     unit = OrganizationUnit.find_by_global_id(params['unit_id'])
     return unless exists?(unit, params['unit_id'])
     return unless allowed?(unit, 'view_stats')
-    cutoff = 12.weeks.ago # to match /stats data
+    cutoff = 8.weeks.ago # TODO: doesn't match /stats but maybe that's ok
     # WeeklyStatsSummaries for unit users
     # recently-modeled words
     # words used by multiple users (or common words for single-user room)
