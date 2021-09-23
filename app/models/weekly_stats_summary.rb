@@ -185,7 +185,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     log_session = LogSession.find_by_global_id(log_session_id)
     return unless log_session && log_session.log_type == 'session'
     
-    return # for now
+    return # for now, maybe start allowing quick core boards and copies through
     # TODO: stats should have some data on downstream boards, since one of the questions we
     # want to answer is, are there buttons on sub-boards that are used more often than
     # buttons on the main board, because if so then they should probably be moved

@@ -3,18 +3,19 @@ class LogSessionBoard < ActiveRecord::Base
   belongs_to :log_session
   include Replicate
 
-  def self.find_sessions(board_id, options)
+  def self.find_sessions(board_ids, options)
     Stats.sanitize_find_options!(options)
-    user = board_id && Board.find_by_global_id(board_id)
+    board = board_ids[0] && Board.find_by_global_id(board_ids[0])
     raise(Stats.StatsError, "board not found") unless board
     # TODO: sharding
-    session_ids = LogSessionBoard.where(board_id: board.id).map(&:log_session_id)
+    session_ids = LogSessionBoard.where(board_id: board_ids).map(&:log_session_id)
     sessions = LogSession.where(['started_at > ? AND started_at < ?', options[:start_at], options[:end_at]])
     sessions = sessions.where(id: session_ids).select('id, log_type, started_at')
   end
 
-  def self.init_stats(sessions)
+  def self.init_stats(sessions, board)
     stats = {}
+    # TODO: separate out actual board sessions from copied board sessions
     stats[:total_sessions] = sessions.select{|s| s.log_type == 'session' }.length
     
     stats
@@ -56,7 +57,7 @@ class LogSessionBoard < ActiveRecord::Base
       stats[:boards][board_id][:buttons][button_id][:travel_sum] += event['button']['percent_travel'] || 0
       if event['button']['prior_percent_x'] && event['button']['first_on_board']
         stats[:boards][board_id][:start_locations] ||= []
-        stats[:boards][board_id][:start_locations] << [event['button']['prior_percent_x'], event['button']['prior_percent_x']]
+        stats[:boards][board_id][:start_locations] << [event['button']['prior_percent_x'], event['button']['prior_percent_y']]
       end
     end
   end
