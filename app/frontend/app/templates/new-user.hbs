@@ -22,23 +22,78 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="email" class="col-sm-3 control-label">{{t "Email" key='email'}}</label>
+        <label for="email" class="col-sm-4 control-label">{{t "Email" key='email'}}</label>
         <div class="col-sm-6">
           {{input value=model.user.email class="form-control" placeholder="Email address"}}
         </div>
       </div>
       <div class="form-group">
-        <label for="name" class="col-sm-3 control-label">{{t "Password" key='password'}}</label>
+        <label for="name" class="col-sm-4 control-label">{{t "Password" key='password'}}</label>
         <div class="col-sm-6">
           {{input type='password' value=model.user.password class="form-control" placeholder="Password"}}
         </div>
       </div>
       <div class="form-group">
-        <label for="user_type" class="col-sm-3 control-label">{{t "User Type" key='user_type'}}</label>
+        <label for="user_type" class="col-sm-4 control-label">{{t "User Type" key='user_type'}}</label>
         <div class="col-sm-6">
           {{bound-select select_class="form-control" select_id="user_type" content=user_types selection=model.user.org_management_action action=(action (mut model.user.org_management_action)) }}
         </div>
       </div>
+      {{#if communicator_new_user}}
+        {{#if board_options}}
+        {{/if}}
+      {{else if third_party_new_user}}
+        <div class="form-group">
+          <label for="locale" class="col-sm-4 control-label">{{t "Preferred Language" key='preferred_language'}}</label>
+          <div class="col-sm-6">
+            {{bound-select select_class="form-control" select_id="locale" content=locale_list selection=model.user.preferences.locale action=(action (mut model.user.preferences.locale)) }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="device_type" class="col-sm-4 control-label">{{t "App/Device" key='app_device'}}</label>
+          <div class="col-sm-6">
+            {{input value=external_device class="form-control" id="device_type" placeholder="third-party app or device name"}}
+          </div>
+          <div class="col-sm-1" style='margin-left: -35px;'>
+            <div class='btn-group dropup'>
+              <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {{t "Device" key='device'}} <span class="caret"></span>
+              </button>
+              <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left; max-height: 183px; overflow: auto;">
+                {{#each device_options as |option|}}
+                  <li><a href='#' {{action 'set_device' option}}>{{option.name}}</a></li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {{#if external_device.name}}
+          <div class="form-group">
+            <label for="vocabulary_type" class="col-sm-4 control-label">{{t "Vocabulary" key='vocabulary'}}</label>
+            <div class="col-sm-6">
+              {{input value=external_vocab class="form-control" id="vocabulary_type" placeholder="vocabulary used"}}
+            </div>
+            <div class="col-sm-1" style='margin-left: -35px;'>
+              <div class='btn-group dropup' style='max-height: 183px;'>
+                <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{t "Vocab" key='vocab'}} <span class="caret"></span>
+                </button>
+                <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left; max-height: 183px; overflow: auto;">
+                  {{#each vocab_options as |option|}}
+                    <li><a href='#' {{action 'set_vocab' option}}>{{option.name}}</a></li>
+                  {{/each}}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="vocab_size" class="col-sm-4 control-label">{{t "Vocab Size" key='vocab_size'}}</label>
+            <div class="col-sm-6">
+              {{input type='number' value=external_vocab_size class="form-control" id="vocab_size" placeholder="typical buttons per page/view"}}
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
       <div class="form-group">
         <div class="col-sm-9 col-sm-offset-3">
           <button type="submit" class='btn btn-primary' disabled={{linking_or_exists}}>

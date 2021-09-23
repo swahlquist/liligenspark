@@ -641,6 +641,11 @@ class User < ActiveRecord::Base
       end
       self.settings['avatar_url'] = params['avatar_url']
     end
+    if params['external_device']
+      self.settings['external_device'] = params['external_device']
+    elsif params.has_key?('external_device')
+      self.settings.delete('external_device')
+    end
     new_email = params['email'] && params['email'].gsub(/\s/, '')
     if new_email && new_email != self.settings['email']
       if self.settings['email']

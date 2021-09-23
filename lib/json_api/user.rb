@@ -28,6 +28,9 @@ module JsonApi::User
       json['unread_messages'] = user.settings['unread_messages'] || 0
       json['unread_alerts'] = user.settings['unread_alerts'] || 0
       json['user_token'] = user.user_token
+      if user.settings['external_device']
+        json['external_device'] = user.settings['external_device']
+      end
       journal_cutoff = 2.weeks.ago.to_i
       json['vocalizations'] = (user.settings['vocalizations'] || []).select{|v| v['category'] != 'journal' || (v['ts'] && v['ts'] > journal_cutoff) }
       if json['permissions']['delete']

@@ -1084,7 +1084,7 @@ class Organization < ActiveRecord::Base
       begin
         if action == 'add_user'
           self.add_user(key, true, true, false)
-        elsif action == 'add_unsponsored_user'
+        elsif action == 'add_unsponsored_user' || action == 'add_external_user'
           self.add_user(key, true, false, false)
         elsif action == 'add_eval'
           self.add_user(key, true, true, true)
