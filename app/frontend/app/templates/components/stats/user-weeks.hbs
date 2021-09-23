@@ -26,6 +26,11 @@
               <div class={{stat.class}} title={{stat.tooltip}} data-toggle="tooltip" data-placement="top">
                 {{#if stat.goals}}
                   <span class='glyphicon glyphicon-flag' style='font-size: 20px;'></span>
+                {{else if stat.models.low}}
+                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
+                {{else if stat.models.mid}}
+                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
+                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
                 {{/if}}
                 {{#each stat.statuses as |status|}}
                   <span class="face_label" style="display: inline-block;margin-right: -8px;"><span class={{status.display_class}}></span></span>

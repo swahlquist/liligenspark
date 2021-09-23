@@ -104,10 +104,19 @@ export default Component.extend({
               });
             } else {
               var level = weeks && weeks[stamp] && (Math.round(weeks[stamp].average_level * 10) / 10);
+              var models = weeks && weeks[stamp] && weeks[stamp].models;
+              if(models > 5) {
+                level = Math.max(level + 1, 10);
+              }
               level = level || 0;
-              var str = i18n.t('week_activity_level', "week's activity level: ") + level;
+              var str = i18n.t('week_activity_level', "activity level: ") + level;
+              if(models != null) {
+                str = str + i18n.t('comma_space', ", ");
+                str = str + i18n.t('models', ", models: ") + models;
+              }
               user.week_stats.push({
                 count: level,
+                models: (models > 0) ? (models > 5 ? {mid: true} : {low: true}) : {none: true},
                 tooltip: str,
                 class: 'week level_' + Math.round(level * 2)
               });

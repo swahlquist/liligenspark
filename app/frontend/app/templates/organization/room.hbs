@@ -64,7 +64,9 @@
                 </ul>
               </span>
             {{/if}}
-            <button class='btn btn-default' {{action 'add_users'}}>{{t "Add Users" key='add_users'}}</button>
+            {{#if model.permissions.delete}}
+              <button class='btn btn-default' {{action 'add_users'}}>{{t "Add Users" key='add_users'}}</button>
+            {{/if}}
             <button class='btn btn-default' {{action 'edit_unit'}}>{{t "Edit Room" key='edit_room'}}</button>
           {{/if}}
           {{#if model.permissions.delete}}
