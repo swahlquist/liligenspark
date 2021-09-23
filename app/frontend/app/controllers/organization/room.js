@@ -28,9 +28,9 @@ export default Controller.extend({
       words_by_frequency: []
     });
     var counts = this.get('log_stats.word_count') || {};
-    for(var idx in counts) {
-      res.get('words_by_frequency').pushObject({text: idx, count: counts[idx]});
-    }
+    counts.forEach(function(w) {
+      res.get('words_by_frequency').pushObject({text: w.word, count: w.cnt});
+    });
     return res;
   }),
   modeled_words_cloud: computed('log_stats.modeled_word_count', function() {
@@ -38,9 +38,9 @@ export default Controller.extend({
       words_by_frequency: []
     });
     var counts = this.get('log_stats.modeled_word_count') || {};
-    for(var idx in counts) {
-      res.get('words_by_frequency').pushObject({text: idx, count: counts[idx]});
-    }
+    counts.forEach(function(w) {
+      res.get('words_by_frequency').pushObject({text: w.word, count: w.cnt});
+    });
     return res;
   }),
   actions: {
