@@ -127,7 +127,7 @@
       </div>
       {{#if model.user_counts}}
         <div class="col-sm-3" style="padding: 0;">
-          {{stats/recent-goals total=model.user_counts.total_users tracked=model.user_counts.goal_set untracked=model.user_counts.goal_recently_logged}}
+          {{stats/recent-goals total=model.user_counts.total_users goal_set=model.user_counts.goal_set tracked=model.user_counts.goal_recently_logged}}
         </div>
       {{/if}}
     </div>
