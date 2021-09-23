@@ -47,6 +47,58 @@
           </div>
         </div>
       </div>
+      {{#if log_stats.loading}}
+      {{else if log_stats.error}}
+      {{else if log_stats}}
+        <div class="col-sm-3 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Total Recent Words" key='total_words'}}
+            </div>
+            <div class="panel-body">
+              {{delimit log_stats.total_words}}
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Recent Words per Day" key='words_per_day'}}
+            </div>
+            <div class="panel-body">
+              {{log_stats.avg_words_per_day}}
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Recent Sessions per User" key='sessions_per_user'}}
+            </div>
+            <div class="panel-body">
+              {{log_stats.avg_sessions_per_user}}
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Goal Words" key='goal_words'}}
+            </div>
+            <div class="panel-body">
+              {{#if res.goal_word_counts}}
+                {{#each res.goal_word_counts as |wrd|}}
+                  {{wrd.word}} ({{wrd.cnt}})
+                {{/each}}
+              {{else if model.user_counts.goal_set}}
+                <em style='font-size: 12px;'>{{t "No words targeted in user goals" key='no_words_targeted_in_user_goals'}}</em>
+              {{else}}
+                <em style='font-size: 12px;'>{{t "No user goals set" key='no_user_goals_set'}}</em>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      {{/if}}
       {{#if model.permissions.view}}
         <div class='col-sm-6' style='margin-bottom: 10px;'>
           {{#if model.permissions.edit}}

@@ -193,9 +193,9 @@ class Api::UnitsController < ApplicationController
       total_user_weeks: total_user_weeks,
       total_words: total_words,
       total_models: total_models,
-      word_count: word_counts,
-      modeled_word_counts: modeled_word_counts,
-      goal_word_counts: goal_word_counts,
+      word_count: word_counts.map{|w, c| {word: w, cnt: c} },
+      modeled_word_counts: modeled_word_counts.map{|w, c| {word: w, cnt: c} },
+      goal_word_counts: goal_word_counts.map{|w, c| {word: w, cnt: c} },
       total_sessions: total_sessions,
       total_seconds: total_seconds
     }
