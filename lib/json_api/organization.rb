@@ -27,6 +27,7 @@ module JsonApi::Organization
       json['saml_sso_url'] = org.settings['saml_sso_url']
 
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
+      json['image_url'] = org.settings['image_url']
       json['org_access'] = org.settings['org_access']
       json['org_access'] = true if json['org_access'] == nil
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0

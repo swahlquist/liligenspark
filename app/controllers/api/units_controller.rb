@@ -75,7 +75,7 @@ class Api::UnitsController < ApplicationController
 
     res['user_weeks'] = {}
     sessions = LogSession.where(['started_at > ?', 12.weeks.ago]).where(:user_id => approved_users.map(&:id))
-    sessions.group("date_trunc('week', started_at), user_id").select("count(*), date_trunc('week', started_at), user_id, count(goal_id) AS goals").each do |obj|
+    sessions.where(['goal_id != ?', 0]).group("date_trunc('week', started_at), user_id").select("count(*), date_trunc('week', started_at), user_id, count(goal_id) AS goals").each do |obj|
       if obj.attributes['user_id']
         user_id = unit.related_global_id(obj.attributes['user_id'])
         res['user_weeks'][user_id] ||= {}

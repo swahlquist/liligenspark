@@ -44,6 +44,7 @@ CoughDrop.Organization = DS.Model.extend({
   licenses_expire: DS.attr('string'),
   saml_metadata_url: DS.attr('string'),
   saml_sso_url: DS.attr('string'),
+  image_url: DS.attr('string'),
   created: DS.attr('date'),
   children_orgs: DS.attr('raw'),
   management_action: DS.attr('string'),
