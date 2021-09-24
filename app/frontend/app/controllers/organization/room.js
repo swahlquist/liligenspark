@@ -17,7 +17,7 @@ export default Controller.extend({
       res.avg_words_per_day = Math.round(10 * res.total_words / Math.max(1, res.total_user_weeks * 7)) / 10;
       res.avg_words_per_session = Math.round(10 * res.total_words / Math.max(1, res.total_sessions)) / 10;
       res.avg_modeling_per_week = Math.round(10 * res.total_models / Math.max(1, res.total_user_weeks * 7)) / 10;
-      res.avg_sessions_per_user = Math.round(10 * res.total_sessions / Math.max(1, res.total_users)) / 10;
+      res.avg_sessions_per_user_week = Math.round(10 * res.total_sessions / Math.max(1, res.total_user_weeks)) / 10;
       _this.set('log_stats', res);
     }, function(err) {
       _this.set('log_stats', {error: true});

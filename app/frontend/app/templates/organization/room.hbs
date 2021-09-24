@@ -63,20 +63,20 @@
         <div class="col-sm-3 col-xs-6">
           <div class="panel panel-default summary smaller">
             <div class="panel-heading">
-              {{t "Recent Avg. Words per Day" key='words_per_day'}}
+              {{t "Avg. Words per Day" key='words_per_day'}}
             </div>
             <div class="panel-body">
-              {{log_stats.avg_words_per_day}}
+              {{t "word" n=log_stats.avg_words_per_day key='n_words'}}
             </div>
           </div>
         </div>
         <div class="col-sm-3 col-xs-6">
           <div class="panel panel-default summary smaller">
             <div class="panel-heading">
-              {{t "Recent Sessions per User" key='sessions_per_user'}}
+              {{t "Avg. Sessions per Week" key='sessions_per_user'}}
             </div>
             <div class="panel-body">
-              {{log_stats.avg_sessions_per_user}}
+              {{t "session" n=log_stats.avg_sessions_per_user_week key='n_sessions'}}
             </div>
           </div>
         </div>
@@ -192,18 +192,18 @@
       {{/if}}
       <div class='col-sm-6' style='clear: both;'>
         <strong>{{t "Recent Words" key='words'}}</strong>
-        {{#if log_stats.modeleted_word_counts}}
-          <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
-        {{else}}
+        {{#if log_stats.word_counts}}
           {{stats/word-cloud stats=words_cloud short=true zoom=1}}
+        {{else}}
+          <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
         {{/if}}
       </div>
       <div class='col-sm-6'>
         <strong>{{t "Modeled Words" key='words'}}</strong>
-        {{#if log_stats.modeleted_word_counts}}
-          <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
-        {{else}}
+        {{#if log_stats.modeled_word_counts}}
           {{stats/word-cloud stats=modeled_words_cloud short=true zoom=1}}
+        {{else}}
+          <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
         {{/if}}
       </div>
       <div style='clear: both;'></div>
