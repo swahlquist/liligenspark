@@ -13,8 +13,8 @@ export default Component.extend({
     if(this.get('badge')) {
       var _this = this;
       this.set('badge.enable_auto_tracking', !!(this.get('badge.watchlist') || this.get('badge.instance_count') ||this.get('assessment')));
+      if(!this.get('badge.simple_type')) { this.set('badge.simple_type', 'custom'); }
       if(this.get('badge.instance_count')) {
-        if(!this.get('badge.simple_type')) { this.set('badge.simple_type', 'custom'); }
         this.set('badge.tracking_type', 'instance_count');
 
         if(this.get('badge.word_instances')) {

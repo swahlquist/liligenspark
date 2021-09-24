@@ -10,6 +10,9 @@ import { computed } from '@ember/object';
 CoughDrop.Goal = DS.Model.extend({
   didLoad: function() {
     this.check_badges();
+    if(this.get('assessment_badge')) {
+      this.set('auto_assessment', true);
+    }
   },
   user_id: DS.attr('string'),
   video_id: DS.attr('string'),

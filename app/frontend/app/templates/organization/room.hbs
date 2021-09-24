@@ -85,10 +85,11 @@
             <div class="panel-heading">
               {{t "Goal Words" key='goal_words'}}
             </div>
-            <div class="panel-body">
-              {{#if res.goal_word_counts}}
-                {{#each res.goal_word_counts as |wrd|}}
-                  {{wrd.word}} ({{wrd.cnt}})
+            <div class="panel-body" style='max-height: 50px; font-size: 13px; overflow: auto; white-space: normal;'>
+              {{#if log_stats.goal_word_counts}}
+                <div style=
+                {{#each log_stats.goal_word_counts as |wrd|}}
+                  {{wrd.word}}
                 {{/each}}
               {{else if model.user_counts.goal_set}}
                 <em style='font-size: 12px;'>{{t "No words targeted in user goals" key='no_words_targeted_in_user_goals'}}</em>

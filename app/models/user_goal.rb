@@ -594,12 +594,12 @@ class UserGoal < ActiveRecord::Base
     self.settings['summary'] = nil if self.settings['summary'] == 'user goal'
     self.settings['summary'] ||= template.settings['summary']
     self.settings['description'] ||= template.settings['description']
+    self.settings['badges'] ||= template.settings['badges']
+    self.settings['assessment_badge'] ||= template.settings['assessment_badge']
+    self.settings['badge_name'] ||= template.settings['badge_name']
     if complete_goal
       self.advance_at ||= template.advance_at
-      self.settings['badges'] ||= template.settings['badges']
-      self.settings['assessment_badge'] ||= template.settings['assessment_badge']
       self.settings['author_id'] ||= template.settings['author_id']
-      self.settings['badge_name'] ||= template.settings['badge_name']
       self.settings['ref_data'] ||= template.settings['ref_data']
     end
     self.settings['author_id'] ||= user.global_id

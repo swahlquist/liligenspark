@@ -163,7 +163,7 @@ class Api::UnitsController < ApplicationController
       end
     end
     word_cutoff = user_count < 5 ? user_count / 3 : 3
-    goal_word_counts = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}.select{|arr| arr[1] > word_cutoff}[0, 20]
+    goal_word_counts = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}.select{|arr| arr[1] > word_cutoff}[0, 30]
 
     word_counts = {}
     total_words = 0
