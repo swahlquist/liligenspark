@@ -942,6 +942,8 @@ class Organization < ActiveRecord::Base
   def process_params(params, non_user_params)
     self.settings ||= {}
     self.settings['name'] = process_string(params['name']) if params['name']
+    self.settings['premium'] = process_boolean(params['premium']) if params['premium'] != nil
+    self.settings['org_access'] = process_boolean(params['org_access']) if params['premium'] != nil
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]

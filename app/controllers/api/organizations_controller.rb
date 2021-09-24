@@ -378,6 +378,7 @@ class Api::OrganizationsController < ApplicationController
       params['organization'].delete('licenses_expire') 
       params['organization'].delete('include_extras')
       params['organization'].delete('org_access')
+      params['organization'].delete('premium')
     end
     if org.process(params['organization'], {'updater' => @api_user})
       render json: JsonApi::Organization.as_json(org, :wrapper => true, :permissions => @api_user).to_json
