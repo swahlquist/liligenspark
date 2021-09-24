@@ -66,7 +66,7 @@
               {{t "Avg. Words per Day" key='words_per_day'}}
             </div>
             <div class="panel-body">
-              {{t "word" n=log_stats.avg_words_per_day key='n_words'}}
+              {{t "word" count=log_stats.avg_words_per_day key='n_words'}}
             </div>
           </div>
         </div>
@@ -76,7 +76,7 @@
               {{t "Avg. Sessions per Week" key='sessions_per_user'}}
             </div>
             <div class="panel-body">
-              {{t "session" n=log_stats.avg_sessions_per_user_week key='n_sessions'}}
+              {{t "session" count=log_stats.avg_sessions_per_user_week key='n_sessions'}}
             </div>
           </div>
         </div>
@@ -192,10 +192,10 @@
       {{/if}}
       <div class='col-sm-6' style='clear: both;'>
         <strong>{{t "Recent Words" key='words'}}</strong>
-        {{#if log_stats.word_counts}}
+        {{#if log_stats.word_count}}
           {{stats/word-cloud stats=words_cloud short=true zoom=1}}
         {{else}}
-          <em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em>
+          <br/><br/><em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em><br/>
         {{/if}}
       </div>
       <div class='col-sm-6'>
@@ -203,7 +203,7 @@
         {{#if log_stats.modeled_word_counts}}
           {{stats/word-cloud stats=modeled_words_cloud short=true zoom=1}}
         {{else}}
-          <em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em>
+          <br/><br/><em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em><br/>
         {{/if}}
       </div>
       <div style='clear: both;'></div>
