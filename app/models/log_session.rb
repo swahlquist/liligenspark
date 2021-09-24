@@ -22,7 +22,7 @@ class LogSession < ActiveRecord::Base
 
   has_paper_trail :on => [:destroy] #:only => [:data, :user_id, :author_id, :device_id]
   secure_serialize :data
-  DAILY_EVENT_TYPES = ['models', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
+  DAILY_EVENT_TYPES = ['models', 'modeled', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
 
 
   def generate_defaults

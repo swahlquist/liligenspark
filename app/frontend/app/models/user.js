@@ -95,8 +95,8 @@ CoughDrop.User = DS.Model.extend({
   cell_phone: DS.attr('string'),
   next_notification_delay: DS.attr('string'),
   read_notifications: DS.attr('boolean'),
-  supervisors_or_managing_org: computed('supervisors', 'managing_org', function() {
-    return (this.get('supervisors') || []).length > 0 || this.get('managing_org');
+  supervisors_or_managing_org: computed('supervisors', 'managing_org', 'managing_supervision_orgs', function() {
+    return (this.get('supervisors') || []).length > 0 || this.get('managing_org') || this.get('managing_supervision_orgs.length') > 0;
   }),
   has_management_responsibility: computed('managed_orgs', function() {
     return this.get('managed_orgs').length > 0;

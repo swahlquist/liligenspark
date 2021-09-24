@@ -56,7 +56,7 @@
               {{t "Total Recent Words" key='total_words'}}
             </div>
             <div class="panel-body">
-              {{delimit log_stats.total_words}}
+              {{delimit log_stats.total_words}} {{t "words" key='words'}}
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@
       </div>
       <div class='col-sm-6'>
         <strong>{{t "Modeled Words" key='words'}}</strong>
-        {{#if log_stats.modeled_word_counts}}
+        {{#if modeled_words_cloud.words_by_frequency.length}}
           {{stats/word-cloud stats=modeled_words_cloud short=true zoom=1}}
         {{else}}
           <br/><br/><em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em><br/>

@@ -33,11 +33,26 @@ export default Controller.extend({
     });
     return res;
   }),
-  modeled_words_cloud: computed('log_stats.modeled_word_counts', function() {
+  modeled_words_cloud: computed('log_stats.modeled_word_counts', 'model.supervisor_weeks', function() {
     var res = EmberObject.create({
       words_by_frequency: []
     });
     var counts = this.get('log_stats.modeled_word_counts') || [];
+    var weeks = this.get('model.supervisor_weeks') || {};
+    for(var user_id in weeks) {
+      for(var ts in weeks[user_id]) {
+        if(weeks[user_id][ts]['modeled']) {
+          weeks[user_id][ts]['modeled'].forEach(function(w) {
+            var wrd = counts.find(function(ww) { return ww.word == w.toLowerCase()});
+            if(!wrd) {
+              counts.push({word: w, cnt: 1});
+            } else {
+              wrd.cnt++;
+            }
+          });
+        }
+      }
+    }
     counts.forEach(function(w) {
       res.get('words_by_frequency').pushObject({text: w.word, count: w.cnt});
     });

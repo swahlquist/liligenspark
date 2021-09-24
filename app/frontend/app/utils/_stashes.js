@@ -12,7 +12,7 @@ import CoughDrop from '../app';
 // non-critical, so for example if one attribute got renamed it would not
 // break anything, or affect any other value.
 var memory_stash = {};
-var daily_event_types = ['models', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
+var daily_event_types = ['models', 'modeled', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
 var stash_capabilities = null;
 var stashes = EmberObject.extend({
   connect: function(application) {
@@ -395,6 +395,9 @@ var stashes = EmberObject.extend({
       var events = stashes.get('daily_events') || {};
       var today = window.moment().toISOString().substring(0, 10);
       events[today] = events[today] || {};
+      if((type == 'models' || type == 'remote_models') && typeof(n) == 'string') {
+        events[today]['modeled'] = (events[today]['modeled'] || []).concat(n.split(/\s+/));
+      }
       events[today][type] = (events[today][type] || 0) + n;
       stashes.persist('daily_events', events);
     }
@@ -611,7 +614,13 @@ var stashes = EmberObject.extend({
       } else if(stashes.last_selection && stashes.last_selection.modeling && stashes.last_selection.ts > ((new Date()).getTime() - 500)) {
         modeling = true;
       }
-      stashes.track_daily_event('models');
+      var phrase = null;
+      if((obj.add_vocalization || obj.add_vocalization == null) && window.app_state && window.app_state.get('currentUser.supporter_role') && (stashes.get('logging_enabled') || window.app_state.get('currentUser.supervised_units.length'))) {
+        // unit supervisors and those with logging enabled 
+        // with have their models explicitly tracked for reporting
+        phrase = obj.vocalization || obj.label;
+      }
+      stashes.track_daily_event('models', phrase);
     }
     if(!stashes.get('history_enabled')) { return null; }
     if(!stashes.get('logging_enabled')) { return null; }

@@ -539,7 +539,13 @@ var sync = EmberObject.extend({
         sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {button: obj});
       }, 500);
       modal.highlight($button, {clear_overlay: true, highlight_type: 'model', icon: 'send' }).then(function(highlight) {
-        stashes.track_daily_event('remote_models');
+        var phrase = null;
+        if((button.add_vocalization || button.add_vocalization == null) && app_state.get('currentUser.supporter_role') && (stashes.get('logging_enabled') || app_state.get('currentUser.supervised_units.length'))) {
+          // unit supervisors and those with logging enabled 
+          // with have their models explicitly tracked for reporting
+          phrase = button.vocalization || button.label;
+        }
+        stashes.track_daily_event('remote_models', phrase);
         model_handled = true;
         if(highlight && highlight.pending) {
           highlight.pending();
