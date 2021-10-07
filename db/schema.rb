@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210930165637) do
+ActiveRecord::Schema.define(version: 20211007174714) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20210930165637) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -266,6 +266,7 @@ ActiveRecord::Schema.define(version: 20210930165637) do
     t.boolean  "needs_remote_push"
     t.boolean  "highlighted"
     t.integer  "score"
+    t.string   "profile_id"
     t.index ["device_id", "ended_at"], name: "index_log_sessions_on_device_id_and_ended_at", using: :btree
     t.index ["geo_cluster_id", "user_id"], name: "index_log_sessions_on_geo_cluster_id_and_user_id", using: :btree
     t.index ["ip_cluster_id", "user_id"], name: "index_log_sessions_on_ip_cluster_id_and_user_id", using: :btree
@@ -340,6 +341,15 @@ ActiveRecord::Schema.define(version: 20210930165637) do
     t.index ["external_auth_key"], name: "index_organizations_on_external_auth_key", unique: true, using: :btree
     t.index ["external_auth_shortcut"], name: "index_organizations_on_external_auth_shortcut", unique: true, using: :btree
     t.index ["parent_organization_id"], name: "index_organizations_on_parent_organization_id", using: :btree
+  end
+
+  create_table "profile_templates", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "organization_id"
+    t.integer  "parent_id"
+    t.text     "profile"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
   end
 
   create_table "progresses", force: :cascade do |t|
