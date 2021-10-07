@@ -53,7 +53,7 @@ module ExtraData
         # Uploader.invalidate_cdn(private_path)
         # If upload is throttled, schedule it for later. If upload already
         # scheduled, skip upload attempt here
-        if !self.is_a?(BoardDownstreamButtonSet) || RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').count == 0
+        if !self.is_a?(BoardDownstreamButtonSet) || (self.board && RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').count == 0)
           begin
             res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
           rescue => e
