@@ -124,7 +124,7 @@ class Api::UnitsController < ApplicationController
                 res['supervisor_weeks'][user_id][ts][key] = (res['supervisor_weeks'][user_id][ts][key] || []).concat(day[key])
               else
                 if (key == 'models' || key == 'remote_models') && day[key].is_a?(String)
-                  day[key] = day['key'].length / 5
+                  day[key] = day[key].length / 5
                 end
                 res['supervisor_weeks'][user_id][ts][key] = (res['supervisor_weeks'][user_id][ts][key] || 0) + day[key]
               end
