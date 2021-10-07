@@ -97,7 +97,7 @@
                   {{#each cat.history as |hist|}}
                     <div class='bar_holder'>
                       <div class='bar_tip'>{{hist.value}}/{{hist.max}} {{date hist.date 'short_day'}}</div>
-                      <div class='bar prior' style={{cat.prior_bar_style}}>
+                      <div class='bar prior' style={{hist.bar_style}}>
                         <div class='bg' style={{cat.bar_bg_style}}></div>
                       </div>
                     </div>
