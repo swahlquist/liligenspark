@@ -295,7 +295,7 @@ class Api::BoardsController < ApplicationController
       return unless allowed || allowed?(deleted_board.user, 'view_deleted_boards')
       revert_date = deleted_board.updated_at
       board = deleted_board.restore! rescue nil
-      restored = true
+      restored = true if board
     end
     if board
       revert_date = board.rollback_to(date)
@@ -338,7 +338,11 @@ class Api::BoardsController < ApplicationController
         board = Board.new
         board.id = deleted_board.board_id
         board.user = user
-        board.generate_unique_key(deleted_board.key)
+        board.key = deleted_board.key
+        new_key = board.generate_unique_key(deleted_board.key)
+        if new_key != board.key
+          board.rename_to(new_key)
+        end
         board.settings = {}
         board.settings['undeleted'] = true
         board.save
