@@ -865,7 +865,7 @@ var utterance = EmberObject.extend({
     }
   },
   check_vocalization_history: function(allow_clear) {
-    var cutoff_count = 1, cutoff_ts = 0.001;
+    var cutoff_count = 0, cutoff_ts = 0;
     if(app_state.get('currentUser.preferences.clear_vocalization_history')) {
       cutoff_count = app_state.get('currentUser.preferences.clear_vocalization_history_count') || 0;
       cutoff_ts = app_state.get('currentUser.preferences.clear_vocalization_history_minutes') || 0;
