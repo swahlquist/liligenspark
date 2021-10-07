@@ -9,6 +9,18 @@ import profiles from '../utils/profiles';
 import stashes from '../utils/_stashes';
 
 export default Controller.extend({
+  check_prior: function() {
+    var _this = this;
+    _this.set('prior_profile', null);
+    persistence.ajax('/api/v1/profiles/latest?user_id=' + this.get('user.id') + '&profile_id=' + this.get('profile.template.id'), {type: 'GET'}).then(function(res) {
+      if(res[0]) {
+        var prior = profiles.process(res[0].profile)
+        _this.set('prior_profile', prior);
+        prior.set('self_assessment', res[0].author.id == _this.get('user.id'));
+        prior.set('assessor', res[0].author);
+      }
+    }, function(err) { });
+  },
   actions: {
     select: function(question, answer) {
       question.answers.forEach(function(a) {

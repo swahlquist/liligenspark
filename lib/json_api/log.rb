@@ -122,7 +122,7 @@ module JsonApi::Log
       json['log']['evaluation']['stats'] = log.data['stats']
     elsif json['log']['type'] == 'profile'
       history = []
-      priors = LogSession.where(user_id: log.user_id, log_type: 'profile').where(['started_at < ? AND started_at > ?', log.started_at, log.started_at - 3.years]).order('started_at')
+      priors = LogSession.where(user_id: log.user_id, log_type: 'profile', profile_id: log.profile_id).where(['started_at < ? AND started_at > ?', log.started_at, log.started_at - 3.years]).order('started_at')
       priors.find_in_batches(batch_size: 25) do |batch|
         batch.each do |session|
           next if session.id == log.id

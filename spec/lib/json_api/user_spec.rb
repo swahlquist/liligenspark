@@ -202,7 +202,10 @@ describe JsonApi::User do
       u.settings['preferences']['devices']['default'] = {'a' => 1}
       hash = JsonApi::User.build_json(u, permissions: u)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
+      expect(hash['preferences']['device']['a']).to eq(1)
+      expect(hash['preferences']['device']['alternate_voice']).to eq({})
+      expect(hash['preferences']['device']['ever_synced']).to eq(false)
+      expect(hash['preferences']['device']['voice']).to eq({"pitch"=>1.0, "volume"=>1.0})
     end
 
     it "should not error on prefer_native_keyboard" do
@@ -211,7 +214,11 @@ describe JsonApi::User do
       hash = JsonApi::User.build_json(u, permissions: u)
       expect(hash['preferences']).not_to eq(nil)
       expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
-      expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'prefer_native_keyboard' => true})
+      expect(hash['preferences']['device']['a']).to eq(1)
+      expect(hash['preferences']['device']['prefer_native_keyboard']).to eq(true)
+      expect(hash['preferences']['device']['alternate_voice']).to eq({})
+      expect(hash['preferences']['device']['ever_synced']).to eq(false)
+      expect(hash['preferences']['device']['voice']).to eq({"pitch"=>1.0, "volume"=>1.0})
 
       u = User.create
       u.settings['preferences']['devices']['default'] = {'a' => 1}
@@ -219,7 +226,11 @@ describe JsonApi::User do
       hash = JsonApi::User.build_json(u, permissions: u)
       expect(hash['preferences']).not_to eq(nil)
       expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
-      expect(hash['preferences']['device']).to eq({'a' => 1, 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false})
+      expect(hash['preferences']['device']['a']).to eq(1)
+      expect(hash['preferences']['device']['prefer_native_keyboard']).to eq(nil)
+      expect(hash['preferences']['device']['alternate_voice']).to eq({})
+      expect(hash['preferences']['device']['ever_synced']).to eq(false)
+      expect(hash['preferences']['device']['voice']).to eq({"pitch"=>1.0, "volume"=>1.0})
     end
     
     it "should merge device settings with the default settings" do
@@ -229,7 +240,13 @@ describe JsonApi::User do
       u.settings['preferences']['devices'][d.unique_device_key] = {'b' => 3}
       hash = JsonApi::User.build_json(u, permissions: u, device: d)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'long_token' => nil})
+      expect(hash['preferences']['device']['id']).to eq(d.global_id)
+      expect(hash['preferences']['device']['b']).to eq(3)
+      expect(hash['preferences']['device']['name']).to eq('Stubborn Child')
+      expect(hash['preferences']['device']['voice']).to eq({"pitch"=>1.0, "volume"=>1.0})
+      expect(hash['preferences']['device']['alternate_voice']).to eq({})
+      expect(hash['preferences']['device']['ever_synced']).to eq(false)
+      expect(hash['preferences']['device']['long_token']).to eq(nil)
     end
     
     it "should find the most-recent matching device and fall back to those settings rather than default if available" do
@@ -243,7 +260,14 @@ describe JsonApi::User do
       u.settings['preferences']['devices'][d2.unique_device_key] = {'c' => 3}
       hash = JsonApi::User.build_json(u, permissions: u, device: d)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['device']).to eq({'id' => d.global_id, 'c' => 3, 'b' => 3, 'name' => 'Stubborn Child', 'voice' => {}, 'alternate_voice' => {}, 'ever_synced' => false, 'long_token' => nil})
+      expect(hash['preferences']['device']['id']).to eq(d.global_id)
+      expect(hash['preferences']['device']['c']).to eq(3)
+      expect(hash['preferences']['device']['b']).to eq(3)
+      expect(hash['preferences']['device']['name']).to eq('Stubborn Child')
+      expect(hash['preferences']['device']['voice']).to eq({"pitch"=>1.0, "volume"=>1.0})
+      expect(hash['preferences']['device']['alternate_voice']).to eq({})
+      expect(hash['preferences']['device']['ever_synced']).to eq(false)
+      expect(hash['preferences']['device']['long_token']).to eq(nil)
     end
     
     it "should include prior home boards but not the current home board only when edit permission is available" do
@@ -322,6 +346,7 @@ describe JsonApi::User do
         u.reload
         u.settings['subscription']['started'] = 6.months.ago.iso8601
         u.settings['subscription']['plan_id'] = 'monthly_6'
+        u.settings['subscription']['never_expires'] = false
         json = JsonApi::User.build_json(u, permissions: u)
         expect(json['subscription'].except('timestamp')).to eq({
           'billing_state' => :subscribed_communicator,

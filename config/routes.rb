@@ -240,6 +240,10 @@ Coughdrop::Application.routes.draw do
     end
     
     resources :goals
+
+    resources :profiles do
+      get 'latest', on: :collection
+    end
     
     resources :badges
     

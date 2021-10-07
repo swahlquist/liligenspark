@@ -1,14 +1,21 @@
 <h2>{{t "Communicator Profile for %{un}" un=user.user_name key='communicator_profile'}}</h2>
 <div class='profile' style='max-width: 800px; margin: 0 auto;'>
-  <h3>{{profile.template.name}}</h3>
+  <h3><span class='glyphicon glyphicon-lamp'></span> {{profile.template.name}}</h3>
   <div>
-    <em>
-      {{user.user_name}} 
-      {{t "was last assessed" key='was_last_assessed'}}
-      {{date_ago last_profile.created}}
-      {{t "by" key='by'}}
-      _assessor_
-    </em>
+    {{#if prior_profile}}
+      <em>
+        {{user.user_name}}{{t "'s last assessment was" key='possessive last assessment'}}
+
+        {{#if prior_profile.self_assessment}}
+          {{t "a self-assessment" key='a_self_assessment'}}
+          {{date_ago prior_profile.started_at}}
+        {{else}}
+          {{t "by" key='by'}}
+          {{prior_profile.assessor.user_name}}
+          {{date_ago prior_profile.started_at}}
+        {{/if}}
+      </em>
+    {{/if}}
   </div>
   {{#each profile.questions_layout as |question|}}
     {{#if question.header}}

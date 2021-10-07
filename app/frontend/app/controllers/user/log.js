@@ -86,13 +86,13 @@ export default Controller.extend({
         if(profile) {
           processed_profile = profiles.process(profile);
         }
+        var _this = this;
         if(profile && profile.encrypted_results) {
-          var _this = this;
           var nonce = this.get('model.enc_nonce') || (profiles.nonces || {})[profile.encrypted_results.nonce_id];
           if(!nonce && this.get('model.user.id') && this.get('model.id') && !this.get('model.nonce_attempt')) {
             // AJAX call to retrieve nonce referencing log_id
             _this.set('model.nonce_attempt', true);
-            persistence.ajax("/api/v1/users/" + this.get('model.user.id') + "/external_nonce/" + profile.encrypted_results.nonce_id + "?ref_type=log_session&ref_id=" + this.get('model.id'), {type: 'GET'}).then(function(nonce) {
+            persistence.ajax("/api/v1/users/" + this.get('user.id') + "/external_nonce/" + profile.encrypted_results.nonce_id + "?ref_type=log_session&ref_id=" + this.get('model.id'), {type: 'GET'}).then(function(nonce) {
               _this.set('model.enc_nonce', nonce);
             }, function(err) { _this.set('model.nonce_attempt', false); });
           } else if(nonce) {
@@ -102,11 +102,29 @@ export default Controller.extend({
           }
         }
         if(processed_profile) {
+          if(_this.get('history_result.id') != processed_profile.get('template.id')) {
+            _this.set('history_result', {id: processed_profile.get('template.id')});
+            processed_profile.set('history', []);
+            persistence.ajax('/api/v1/profiles/latest?user_id=' + this.get('user.id') + '&profile_id=' + processed_profile.get('template.id'), {type: 'GET'}).then(function(res) {
+              _this.set('history_result', {id: processed_profile.get('template.id'), results: res.map(function(hist) {
+                var res = hist.profile;
+                res.log_id = hist.log_id;
+                return res;
+              })});
+            }, function(err) { });
+          } else {
+            processed_profile.set('history', _this.get('history_result.results'));
+          }
           this.set('processed_profile', processed_profile);
         }
       }
     }
   ),  
+  update_history: observer('history_result', function() {
+    if(this.get('processed_profile')) {
+      this.set('processed_profile.history', this.get('history_result.results'))
+    }
+  }),
   processed_assessment: computed(
     'model.type',
     'model.eval_in_memory',

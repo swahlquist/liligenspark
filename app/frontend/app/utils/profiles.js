@@ -10,7 +10,7 @@ import i18n from './i18n';
 // TODO: place to store translations of labels and prompts and placeholders
 
 var sample_profile = {
-  name: "SAMPLE",
+  name: "Sample Profile",
   id: "sample",
   version: "0.1",
   description: "blah blah blah",
@@ -126,7 +126,8 @@ var sample_profile = {
   report_segments: [
     {
       type: "score",
-      score_category: "total"
+      score_category: "total",
+      summary: true,
     },
     {
       type: "score",
@@ -141,7 +142,7 @@ var sample_profile = {
       label: "A-B Score",
       score_categories: ['a', 'b'],
       border: [255, 91, 172],
-      join: ', '
+      join: '.'
     },
     {
       type: 'table',
@@ -249,8 +250,11 @@ var Profile = EmberObject.extend({
           if(cats[report.score_category].border) {
             data.circle_style = htmlSafe("border-color: rgb(" + cats[report.score_category].border.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
           }
+          if(report.summary) {
+            data.summary = data.summary || data.value;
+          }
         }
-        history.slice(-5).forEach(function(prof) {
+        history.slice(-3).forEach(function(prof) {
           var started = prof.started && window.moment(prof.started * 1000);
           var age_days = (date - started) / 1000 / 60 / 60 / 24;
           var age_class = 'age_recent';
@@ -338,7 +342,11 @@ var Profile = EmberObject.extend({
           data.scores.push(cats[cat].value || "?");
         });
         data.value = data.scores.join(report.join || '-');
-        history.slice(-5).forEach(function(prof) {
+        if(report.summary) {
+          data.summary = data.summary || data.value;
+        }
+
+        history.slice(-3).forEach(function(prof) {
           var started = prof.started && window.moment(prof.started * 1000);
           var age_days = (date - started) / 1000 / 60 / 60 / 24;
           var age_class = 'age_recent';
@@ -361,7 +369,7 @@ var Profile = EmberObject.extend({
           data.history.push({
             age: age_days,
             value: scores.join(report.join || '-'),
-            date: prof.results && prof.results.started && window.moment(prof.results.started * 1000),
+            date: prof.started && window.moment(prof.started * 1000),
             circle_class: "score_circle wide prior " + age_class
           });  
         });
@@ -539,6 +547,13 @@ var Profile = EmberObject.extend({
         }
       }
     });
+    var throwaway = profiles.process(json);
+    throwaway.get('reports_layout').forEach(function(r) { 
+      if(r.summary) {
+        json.summary = json.summary || r.summary;
+      }
+    });
+
 
     var _this = this;
     return new RSVP.Promise(function(resolve, reject) {
@@ -618,17 +633,17 @@ var Profile = EmberObject.extend({
 
 
 var profiles = {
-  template: function() {
-    return profiles.process(sample_profile);
+  template: function(id) {
+    if(id == 'sample') {
+      return profiles.process(sample_profile);
+    }
+    return null;
   },
   process: function(json) {
     if(typeof(json) == 'string') {
       json = JSON.parse(json);
     }
     return Profile.create({template: json});
-  },
-  find: function() {
-    return profiles.process(sample_profile);
   }
 };
 

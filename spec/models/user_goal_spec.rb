@@ -677,10 +677,10 @@ describe UserGoal, type: :model do
       expect(g.advance_at.to_i).to eq((Time.now + 3.weeks.to_i).to_i)
       expect(g.settings['author_id']).to eq('12345')
       expect(g.settings['video']).to eq({'id' => '1_123'})
-      expect(g.settings['badges']).to eq(nil)
-      expect(g.settings['assessment_badge']).to eq(nil)
+      expect(g.settings['badges']).to eq({'a' => 1})
+      expect(g.settings['assessment_badge']).to eq({'b' => 1})
       expect(g.settings['ref_data']).to eq(nil)
-      expect(g.settings['badge_name']).to eq(nil)
+      expect(g.settings['badge_name']).to eq('badgey')
       expect(g.active).to eq(true)
       expect(g.user).to eq(u)
     end

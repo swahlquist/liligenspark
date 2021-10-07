@@ -269,9 +269,11 @@ class LogSession < ActiveRecord::Base
       str = "Profile: by #{self.author ? self.author.user_name : 'user'}: "
       str += self.data['profile']['name'] || "Communication Profile"
       self.started_at = DateTime.strptime(self.data['profile']['started'].to_s, '%s') if self.data['profile']['started']
+      self.started_at ||= self.created_at
       self.ended_at = DateTime.strptime((self.data['profile']['ended'] || self.data['profile']['submitted']).to_s, '%s') if self.data['profile']['ended'] || self.data['profile']['submitted']
       self.data['duration'] = (self.ended_at - self.started_at).to_i rescue nil
       self.data['guid'] = self.data['profile']['guid']
+      self.profile_id = self.data['profile']['id']
     elsif self.data['journal']
       self.log_type = 'journal'
       self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
