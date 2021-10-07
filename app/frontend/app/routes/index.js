@@ -106,6 +106,9 @@ export default Route.extend({
         app_state.home_in_speak_mode();
       }
     },
+    manual_session: function() {
+      CoughDrop.Log.manual_log(app_state.get('currentUser.id'), !!app_state.get('currentUser.external_device'))
+    },
     home_board: function(key) {
       this.transitionTo('board', key);
     },

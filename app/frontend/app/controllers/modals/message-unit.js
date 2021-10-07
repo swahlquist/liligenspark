@@ -58,12 +58,12 @@ export default modal.ModalController.extend({
     video_pending: function() {
       this.set('video_id', false);
     },
-    send_message: function() {
+    send_message: function(type) {
       if(type == 'video' && !this.get('video_id')) { return; }
       var _this = this;
 
       _this.set('status', {sending: true});
-      persistence.ajax('/api/v1/units/' + unit_id + '/note', {
+      persistence.ajax('/api/v1/units/' + _this.get('model.unit.id') + '/note', {
         type: 'POST',
         data: {
           note: _this.get('note'),
