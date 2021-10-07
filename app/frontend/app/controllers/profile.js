@@ -7,6 +7,7 @@ import modal from '../utils/modal';
 import persistence from '../utils/persistence';
 import profiles from '../utils/profiles';
 import stashes from '../utils/_stashes';
+import { computed } from '@ember/object';
 
 export default Controller.extend({
   check_prior: function() {
@@ -21,7 +22,38 @@ export default Controller.extend({
       }
     }, function(err) { });
   },
+  pending_question_ids: computed('profile.questions_layout.@each.answers.@each.selected', 'answer_ts', function() {
+    var qs = [];
+    (this.get('profile.questions_layout') || []).forEach(function(q) {
+      if(q.answers && !q.answer_type.text && !q.question_header) {
+        var found = false;
+        q.answers.forEach(function(a) { if(a.selected) { found = true; }});
+        if(!found) { 
+          qs.push(q.id);
+        }
+      }
+    });
+    return qs;
+  }),
+  missing_responses: computed('pending_question_ids', function() {
+    return (this.get('pending_question_ids') || []).length;
+  }),
   actions: {
+    highlight_blank: function(toggle) {
+      if(toggle) {
+        this.set('do_highlight', !this.get('do_highlight'));
+      }
+      var qs = this.get('profile.questions_layout');
+      var ids = this.get('pending_question_ids');
+      var go = this.get('do_highlight');
+      qs.forEach(function(question) {
+        if(go) {
+          emberSet(question, 'unanswered', ids.includes(question.id));
+        } else {
+          emberSet(question, 'unanswered', false);
+        }
+      });
+    },
     select: function(question, answer) {
       question.answers.forEach(function(a) {
         if(a.id == answer.id && !a.selected) {
@@ -30,6 +62,8 @@ export default Controller.extend({
           emberSet(a, 'selected', false);
         }
       });
+      this.set('answer_ts', (new Date()).getTime());
+      this.send('highlight_blank');
     },
     submit: function() {
       stashes.track_daily_event('profile');

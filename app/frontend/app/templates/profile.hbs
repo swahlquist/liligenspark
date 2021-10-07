@@ -23,8 +23,13 @@
         <b>{{question.label}}</b>
       </div>
     {{else}}
-      <div class='question'>
-        <div class='prompt'>{{question.label}}</div>
+      <div class={{if question.unanswered 'question unanswered' 'question'}}>
+        <div class='prompt'>
+          {{#if question.unanswered}}
+            &nbsp;*&nbsp;
+          {{/if}}
+          {{question.label}}
+        </div>
         {{#if question.answer_type.text}}
           <div style='flex: 1; min-height: 75px;'>
             {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
@@ -46,7 +51,11 @@
     {{/if}}
   {{/each}}
   <div style='margin-top: 50px;'>
-    <p class='text-danger'>Missing 5 responses</p>
+    {{#if missing_responses}}
+      <p>
+        <a class='text-danger' href='#' {{action 'highlight_blank' true}}>{{t "Missing" key='missing'}} {{t "response" count=missing_responses key='n_responses'}}</a>
+      </p>
+    {{/if}}
     <button {{action 'submit'}} class='btn btn-lg btn-primary'>{{t "Finalize Profile" key='finalize_profile'}}</button>
     <button class='btn btn-lg btn-default'>{{t "Save for Later" key='save_for_later'}}</button>
     <button class='btn btn-lg btn-default'>{{t "Cancel Profile" key='cancel_profile'}}</button>

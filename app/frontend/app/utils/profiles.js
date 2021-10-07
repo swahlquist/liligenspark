@@ -297,14 +297,12 @@ var Profile = EmberObject.extend({
           score_cat.bar_style = "";
           var pct = Math.round(cats[cat].value / cats[cat].max * 100);
           score_cat.bar_style = "width: " + pct + "%; ";
-          score_cat.prior_bar_style = "width: calc(" + (pct / 2) + "% - 4px); ";
           score_cat.prior_value = score_cat.value / 2;
           score_cat.prior_max = score_cat.max;
 
           if(cats[cat].border) {
             if(cats[cat].background) {
               score_cat.bar_style = score_cat.bar_style + htmlSafe("border-color: rgb(" + cats[cat].border.map(function(n) { return parseInt(n, 10); }).join(', ') + "); background: rgb(" + cats[cat].background.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
-              score_cat.prior_bar_style = score_cat.prior_bar_style + htmlSafe("border-color: rgb(" + cats[cat].border.map(function(n) { return parseInt(n, 10); }).join(', ') + "); background: rgb(" + cats[cat].background.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
               score_cat.bar_bg_style = htmlSafe("border-top-color: rgb(" + cats[cat].background.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
             }
           }
@@ -319,7 +317,7 @@ var Profile = EmberObject.extend({
             }
             score_cat.history.push({
               value: value,
-              bar_style: "width: calc(" + (pct / 2) + "% - 4px);",
+              bar_style: "width: calc(" + (pct) + "% - 4px);",
               max: max,
               date: started
             });
@@ -636,6 +634,8 @@ var profiles = {
   template: function(id) {
     if(id == 'sample') {
       return profiles.process(sample_profile);
+    } else if(id == 'cole') {
+      return profiles.process(cole_profile);
     }
     return null;
   },
@@ -647,4 +647,842 @@ var profiles = {
   }
 };
 
+var cole_profile = {
+  name: "COLE - LCPS Continuum Of Language Expression",
+  id: "cole",
+  version: "0.1",
+  description: "The Interactive LCPS Continuum Of Language Expression",
+  score_categories: {
+    cole: {
+      label: "COLE Score",
+      function: "sum",
+      border: [166, 83, 98],
+      background: [255, 191, 203]
+    },
+    stage_1: {
+      label: "Stage 1",
+      function: "mastery_cnt",
+      border: [26, 55, 130],
+      background: [171, 194, 255]
+    },
+    stage_2: {
+      label: "Stage 2",
+      function: "mastery_cnt",
+      border: [90, 117, 150],
+      background: [173, 203, 240]
+    },
+    stage_3: {
+      label: "Stage 3",
+      function: "mastery_cnt",
+      border: [103, 161, 184],
+      background: [194, 236, 252]
+    },
+    stage_4: {
+      label: "Stage 4",
+      function: "mastery_cnt",
+      border: [117, 195, 217],
+      background: [196, 242, 255]
+    },
+    stage_5: {
+      label: "Stage 5",
+      function: "mastery_cnt",
+      border: [119, 202, 209],
+      background: [196, 250, 255]
+    },
+    stage_6: {
+      label: "Stage 6",
+      function: "mastery_cnt",
+      border: [124, 217, 207],
+      background: [207, 255, 250]
+    },
+    stage_7: {
+      label: "Stage 7",
+      function: "mastery_cnt",
+      border: [110, 186, 165],
+      background: [188, 245, 229]
+    },
+    stage_8: {
+      label: "Stage 8",
+      function: "mastery_cnt",
+      border: [100, 179, 134],
+      background: [171, 245, 203]
+    },
+    stage_9: {
+      label: "Stage 9",
+      function: "mastery_cnt",
+      border: [83, 181, 108],
+      background: [154, 230, 173]
+    },
+    stage_10: {
+      label: "Stage 10",
+      function: "mastery_cnt",
+      border: [84, 156, 89],
+      background: [162, 224, 166]
+    },
+    stage_11: {
+      label: "Stage 11",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+  },
+  answer_blocks: {
+    frequency: {
+      type: 'multiple_choice',
+      answers: [
+        {id: 'never', label: "Not Observed", score: 0},
+        {id: 'occasionally', label: "Occasionally", score: 1},
+        {id: 'usually', label: "Usually", score: 2, mastery: true},
+        {id: 'always', label: "Always", score: 3, mastery: true}
+      ]
+    },
+    free_response: {
+      type: 'text',
+      hint: "Evidence/Documentation/Notes:"
+    }
+
+  },
+  question_groups: [
+    {
+      id: "stage_1",
+      label: "Stage 1",
+      questions: [
+        {
+          id: "q11",
+          label: "Cries when uncomfortable.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q12",
+          label: "Smiles, coos, giggles, or otherwise shows enjoyment when attention is given.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q13",
+          label: "Glances at a person or visual stimulation for one second.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q14",
+          label: "Shows a physical response to noise (turns head, stops moving, jumps, etc.).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q1text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]      
+    },
+    {
+      id: "stage_2",
+      label: "Stage 2",
+      questions: [
+        {
+          id: "q21",
+          label: "Looks at a person or visual stimulation for a sustained time (3 seconds or more).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q22",
+          label: "Makes one sound besides crying such as producing a vowel-like sound (Ah, Uh, Ee, gurgles, sighs, grunts, squeals).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q23",
+          label: "Imitates a facial expression, such as a smile.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q2text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_3",
+      label: "Stage 3",
+      questions: [
+        {
+          id: "q31",
+          label: "Anticipates what will happen next within a familiar routine (laughs, closes eyes, tenses body, etc.) ",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q32",
+          label: "Protests by gesturing or vocalizing.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q33",
+          label: "Vocalizes at least two different sounds such as /puh/, /guh/, /ee/, /ah/",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q34",
+          label: "Reaches for, touches, or points to what is wanted when only one thing is present.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q35",
+          label: "Imitates some vocalizations.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q3text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_4",
+      label: "Stage 4",
+      questions: [
+        {
+          id: "q41",
+          label: "Gets attention from others using gestures or behaviors (such as leading an adult, purposefully throwing items, pushing an  item to an adult, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q42",
+          label: "Babbles at least two syllables together (not necessarily with meaning) such as /gah gah/, /gah bee",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q43",
+          label: "Takes two turns during playful interactions with another person (peekaboo, knocking blocks down, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q44",
+          label: "Attempts to imitate some single words.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q45",
+          label: "Reaches for, touches, or points to what is wanted when two options are presented (making a choice between two).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q4text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_5",
+      label: "Stage 5",
+      questions: [
+        {
+          id: "q51",
+          label: "Spontaneously produces at least one word (or approximation) with any intent which includes verbalizing pointing at a picture, signing, or using a speech generating device.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q52",
+          label: "Initiates a social exchange (including turn-taking, greetings, chasing games, show objects to others, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q5text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_6",
+      label: "Stage 6",
+      questions: [
+        {
+          id: "q61",
+          label: "Produces a total of three different words (total number of words known in vocabulary/lexicon).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q62",
+          label: "Produces a single word to indicate location (ex. up, there, here, down, on, in).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q63",
+          label: "Produces a single word to ask a question (ex. go? where? mine? more?).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q64",
+          label: "Produces a single word to answer a question (ex. yes, no, here, there, it, mine, that, this).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q65",
+          label: "Produces a single word to make a request (ex. mine, want, help, go, finished, come, look).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q66",
+          label: "Produces a single word to label (ex. it, that, this, you, me).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q67",
+          label: "Produces a single word to indicate ownership (ex. mine, you, your, me).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q68",
+          label: "Produces a single word to protest (ex. no, stop, finished, mine).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q69",
+          label: "Produces a single word to give directions (ex. go, up, down, stop, play, get, read, put).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q6text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_7",
+      label: "Stage 7",
+      questions: [
+        {
+          id: "q71",
+          label: "Produces a total of four to ten different words (total number of words known in vocabulary/lexicon)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_7: 1.0,
+          }
+        },
+        {
+          id: "q7text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_8",
+      label: "Stage 8",
+      questions: [
+        {
+          id: "q81",
+          label: "Produces a total of 11 to 25 different words.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_8: 1.0,
+          }
+        },
+        {
+          id: "q82",
+          label: "Produces a single word to comment on a person, environment, or activity. (ex. good, bad, like, love)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_8: 1.0,
+          }
+        },
+        {
+          id: "q8text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_9",
+      label: "Stage 9",
+      questions: [
+        {
+          id: "q91",
+          label: "Produces a total of 26 to 50 different words.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q92",
+          label: "Produces at least two different single words to indicate location (ex. up, there, here, down, on, in)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q93",
+          label: "Produces a variety of single words to ask a question (ex. go? where? mine? more?) ",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q94",
+          label: "Produces a variety of single words to answer a question (ex. yes, no, here, there, it, mine, that, this)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q95",
+          label: "Produces a variety of single words to make a request (ex. mine, want, help, go, finished, come, look)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q96",
+          label: "Produces a variety of single words to label (ex. it, that, this, you, me) ",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q97",
+          label: "Produces a variety of single words to indicate ownership (ex. mine, you, your, me)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q98",
+          label: "Produces a variety of single words as a greeting",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q99",
+          label: "Produces a variety of single words to protest (ex. no, stop, finished, mine)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q910",
+          label: "Produces a variety of single words to give directions (ex. go, up, down, stop, play, get, read, put)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q911",
+          label: "Produces a variety of single words to comment on a person, environment, or activity. (ex. good, bad, like, love)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_9: 1.0,
+          }
+        },
+        {
+          id: "q9text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_10",
+      label: "Stage 10",
+      questions: [
+        {
+          id: "qa1",
+          label: "Produces a total of more than 50 words.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa2",
+          label: "Combines two words to indicate location (ex. up there, it in, it there, come here, she out)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa3",
+          label: "Combines two words to ask a question (ex. where go?, my turn?, I have?, eat this? drink it?)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa4",
+          label: "Combines two words to answer a question (ex. read more, go fast, its here)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa5",
+          label: "Combines two words to make a request (ex. want more, I have, go slow, you sit, watch me)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa6",
+          label: "Combines two words to label, comment, or describe (ex. that big, it fast, that bad, it good, red one, it blue).",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa7",
+          label: "Combines two words to indicate ownership (ex. it mine, my turn, it hers, it his)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa8",
+          label: "Combines two words to deny, reject, or protest (ex. no go, stop it, stop that, you stop, I finished, not me, not like, that bad, you bad) ",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa9",
+          label: "Combines two words to give directions (ex. put in, you up, go there, eat it, get that, go fast, slow down, you look)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa10",
+          label: "Uses the plural s",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa11",
+          label: "Uses present progressive verb forms - ing (ex. eating, finding, putting, making, looking, loving, helping, going, stopping, turning)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa12",
+          label: "Uses at least three pronouns (ex. I, you, me, my",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa13",
+          label: "Uses words to express quantity (ex. more, big, little, some, a lot, many, all)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qa14",
+          label: "Uses phrases which changes the meaning of the individual words in that phrase (ie, phrasal verbs such as slow down, get out,  go on, I get it!)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_10: 1.0,
+          }
+        },
+        {
+          id: "qatext",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "stage_11",
+      label: "Stage 11",
+      questions: [
+        {
+          id: "qb1",
+          label: "Combines three or more words to indicate location (ex.go up there, it is in, it is there, you come here, she goes out)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb2",
+          label: "Combines three or more words to ask a question (ex. where it go?, it is my turn?, Can I have?, you eat this? Can I drink it?)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb3",
+          label: "Combines three or more words to answer a question (ex. I read more, it goes fast, it is here)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb4",
+          label: "Combines three or more words to make a request (ex. I want more, I have it, I go slow, I sit there, watch me do it)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb5",
+          label: "Combines three or more words to label, comment, or describe (ex. that is big, it is fast, that is bad, it is good, that red one, it is blue)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb6",
+          label: "Combines three or more words to indicate ownership (ex. it is mine, it is my turn, this is hers, that is his)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb7",
+          label: "Combines three or more words to deny, reject, or protest (ex. do not go, you stop it, stop that please, you stop that, I finished it, it is not mine, do not like it, that is bad, you are bad) ",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb8",
+          label: "Combines three or more words to give directions (ex. put it in, you go up, you go there, you eat it, you get that, go there fast, slow it down, you look at it)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb9",
+          label: "Uses two irregular past tense verbs (ex. went, came, heard, felt, did, saw, got, said, thought, made, took, knew)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb10",
+          label: "Uses the possessive s ('s) (ex. his, hers, yours, ours, theirs)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qb11",
+          label: "Uses \"is\" and \"are\" as the main verb (ex. It is there, where is it?, there it is, he is fast, she is big)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_11: 1.0,
+          }
+        },
+        {
+          id: "qbtext",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+  ],
+  report_segments: [
+    {
+      type: "score",
+      score_category: "cole",
+      summary: true,
+    },
+    {
+      type: "weights",
+      score_categories: ["stage_1", "stage_2", "stage_3", "stage_4", "stage_5", "stage_6", "stage_7", "stage_8", "stage_9", "stage_10", "stage_11"]
+    },
+    {
+      type: "raw",
+    }
+  ]
+};
+
 export default profiles;
+

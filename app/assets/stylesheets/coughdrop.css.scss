@@ -3256,6 +3256,10 @@ $nav_extras: #eee;
   .question {
     display: flex; 
     margin: 0 10px;
+    padding-left: 10px;
+    &.unanswered {
+      box-shadow: -7px 0 5px -3px #f00;
+    }
     &.inline {
       display: none;
     }
@@ -3279,6 +3283,7 @@ $nav_extras: #eee;
       border-right: 1px solid #ccc; 
       cursor: pointer;
       position: relative; 
+      padding: 13px 10px;
       overflow: hidden;
       &:hover {
         background: #eee;
@@ -3407,6 +3412,11 @@ $nav_extras: #eee;
     display: flex; 
     margin-bottom: 10px; 
     max-width: 600px;
+    padding: 10px 10px 5px;
+    &:hover {
+      background: #f4f4f4;
+      border-radius: 5px;
+    }
     .bar_holder {
       position: relative;
       .bar_tip {

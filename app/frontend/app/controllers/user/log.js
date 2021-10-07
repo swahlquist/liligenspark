@@ -102,7 +102,7 @@ export default Controller.extend({
           }
         }
         if(processed_profile) {
-          if(_this.get('history_result.id') != processed_profile.get('template.id')) {
+          if(_this.get('model.eval_in_memory') && _this.get('history_result.id') != processed_profile.get('template.id')) {
             _this.set('history_result', {id: processed_profile.get('template.id')});
             processed_profile.set('history', []);
             persistence.ajax('/api/v1/profiles/latest?user_id=' + this.get('user.id') + '&profile_id=' + processed_profile.get('template.id'), {type: 'GET'}).then(function(res) {

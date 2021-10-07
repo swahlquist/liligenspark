@@ -90,7 +90,9 @@
           <div style='margin: 50px 0; page-break-inside: avoid;'>
             {{#each report.categories as |cat|}}
               <div class='category'>
-                <div style='flex: 1;'><h3>{{cat.label}}</h3></div>
+                <div style='flex: 1;'>
+                  <h3 style='margin-top: 0; margin-bottom: 25px;'>{{cat.label}}</h3>
+                </div>
                 <div style='flex: 2; border-right: 1px solid #ddd;'>
                   {{#each cat.history as |hist|}}
                     <div class='bar_holder'>
