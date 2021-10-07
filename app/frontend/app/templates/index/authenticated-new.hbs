@@ -202,12 +202,12 @@
     {{/unless}}
     {{#unless app_state.currentUser.modeling_only}}
       {{#if app_state.currentUser.supervised_units}}
-        <a class="list-group-item half_size">
-          <span>
+        <a class="list-group-item half_size" style='height: auto; line-height: 18px; padding-bottom: 3px;'>
+          <span style='white-space: normal;'>
             <span class='glyphicon glyphicon-education'></span>
             {{t "rooms:" key='rooms_colon'}}
             {{#each app_state.currentUser.supervised_units as |unit|}}
-              <span style='margin-right: 10px;'>
+              <span style='margin-right: 10px; white-space: nowrap;'>
                 {{#link-to 'organization.room' unit.organization_id unit.id}}
                   {{unit.name}}
                 {{/link-to}}
@@ -218,15 +218,17 @@
       {{/if}}
       {{#if app_state.currentUser.has_management_responsibility}}
         {{#if app_state.currentUser.manages_multiple_orgs}}
-          <a class="list-group-item half_size">
+          <a class="list-group-item half_size" style='height: auto; line-height: 18px; padding-bottom: 3px;'>
             <span class="glyphicon glyphicon-paperclip"></span>
-            {{#each app_state.currentUser.managed_orgs as |org|}}
-              <span style="margin-right: 10px;">
-                {{#link-to 'organization' org.id}}
-                  {{org.name}}
-                {{/link-to}}
-              </span>
-            {{/each}}
+            <span style='white-space: normal;'>
+              {{#each app_state.currentUser.managed_orgs as |org|}}
+                <span style="margin-right: 10px; white-space: nowrap;">
+                  {{#link-to 'organization' org.id}}
+                    {{org.name}}
+                  {{/link-to}}
+                </span>
+              {{/each}}
+            </span>
           </a>
         {{else}}
           {{#each app_state.currentUser.managed_orgs as |org|}}
@@ -314,10 +316,10 @@
         {{/unless}}
         <li role="presentation" class={{if index_nav.boards 'active'}}><a href="#" {{action 'set_index_nav' 'boards'}}>{{t "Boards" key='boards'}}</a></li>
         {{#unless app_state.currentUser.modeling_only}}
-          <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}}><a href="#" {{action 'set_index_nav' 'updates'}}>
+          <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}} style='position: relative;'><a href="#" {{action 'set_index_nav' 'updates'}}>
             {{t "Updates" key='updates'}}
             {{#if pending_updates}}
-              <span class="label label-danger unread hidden-xs">
+              <span class="label label-danger unread hidden-xs" style='position: absolute; right: -15px;'>
                 {{#if pending_updates.count}}
                   {{pending_updates.count}}
                 {{else}}
