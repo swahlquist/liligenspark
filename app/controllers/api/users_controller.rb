@@ -763,6 +763,20 @@ class Api::UsersController < ApplicationController
     end
     render json: res
   end
+
+  def external_nonce
+    nonce = ExternalNonce.find_by_global_id(params['nonce_id'])
+    if params['ref_type'] == 'log_session' && params['ref_id']
+      session = LogSession.find_by_global_id(params['ref_id'])
+      # TODO: user/profile preference for whether supervisors can access profile results
+      return unless exists?(session, params['ref_id'])
+      return unless allowed?(session.user, 'supervise')
+    else
+      nonce = nil
+    end
+    return unless exists?(nonce, params['nonce_id'])
+    render json: nonce.encryption_result
+  end
   
   protected
   def grab_url(url)

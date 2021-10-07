@@ -42,6 +42,7 @@ module JsonApi::User
       end
       if json['permissions']['supervise']
         json['state_2fa'] = user.state_2fa
+        json['external_nonce'] = ExternalNonce.for_user(user)
       end
       json['contacts'] = user.settings['contacts'] || []
       json['global_integrations'] = UserIntegration.global_integrations

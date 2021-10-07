@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20210916165230) do
+ActiveRecord::Schema.define(version: 20210930165637) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20210916165230) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -190,6 +190,15 @@ ActiveRecord::Schema.define(version: 20210916165230) do
     t.integer  "developer_key_id"
     t.integer  "user_integration_id"
     t.index ["user_id"], name: "index_devices_on_user_id", using: :btree
+  end
+
+  create_table "external_nonces", force: :cascade do |t|
+    t.string   "purpose"
+    t.string   "nonce"
+    t.string   "transform"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer  "uses"
   end
 
   create_table "gift_purchases", force: :cascade do |t|

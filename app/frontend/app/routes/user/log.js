@@ -17,12 +17,24 @@ export default Route.extend({
       });
       log.set('eval_in_memory', true);
       return log;
+    } else if(params.log_id && params.log_id.match(/^profile-/)) {
+      var log = this.store.createRecord('log', {});
+      log.set('type', 'profile');
+      log.set('user_id', user.get('id'));
+      log.set('author', {
+        id: app_state.get('sessionUser.id'),
+        user_name: app_state.get('sessionUser.user_name')
+      });
+      log.set('guid', params.log_id.replace(/^profile-/, ''));
+      log.set('eval_in_memory', true);
+      return log;
     } else {
       return this.store.findRecord('log', params.log_id);
     }
   },
   setupController: function(controller, model) {
-    if(!model.get('events')) {
+    model.set('nonce_attempt', false);
+    if(!model.get('events') && !model.get('eval_in_memory')) {
       model.reload();
     }
     controller.set('user', this.modelFor('user'));

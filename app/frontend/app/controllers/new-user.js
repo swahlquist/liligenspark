@@ -48,6 +48,9 @@ export default modal.ModalController.extend({
       authored_organization_id: this.get('model.organization_id'),
       org_management_action: 'add_manager'
     });
+    this.set('external_device', null);
+    this.set('external_vocab', null);
+    this.set('external_vocab_size', null);
     this.set('linking', false);
     this.set('error', null);
     user.set('watch_user_name_and_cookies', true);
@@ -108,11 +111,11 @@ export default modal.ModalController.extend({
     return this.get('model.user.org_management_action') == 'add_user' || this.get('model.user.org_management_action') == 'add_unsponsored_user';
   }),
   device_options: computed(function() {
-    return [].concat(devices).concat({id: 'other', name: i18n.t('other', "Other")});
+    return [].concat(CoughDrop.User.devices).concat({id: 'other', name: i18n.t('other', "Other")});
   }),
-  vocab_options: computed('model.user.external_device', function() {
-    var str = this.get('model.user.external_device');
-    var device = devices.find(function(d) { return d.name == str; });
+  vocab_options: computed('external_device', function() {
+    var str = this.get('external_device');
+    var device = CoughDrop.User.devices.find(function(d) { return d.name == str; });
     var res = [];
     if(device && device.vocabs && device.vocabs.length > 0) {
       res = res.concat(device.vocabs);

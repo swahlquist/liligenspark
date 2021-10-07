@@ -212,6 +212,7 @@ Coughdrop::Application.routes.draw do
       post 'evals/transfer' => 'users#transfer_eval'
       post 'evals/reset' => 'users#reset_eval'
       post '2fa' => 'users#update_2fa'
+      get 'external_nonce/:nonce_id' => 'users#external_nonce'
     end
     
     resources :images do
