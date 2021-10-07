@@ -67,7 +67,7 @@
             </div>
           </div>
         </div>
-        {{#if external_device.name}}
+        {{#if external_device}}
           <div class="form-group">
             <label for="vocabulary_type" class="col-sm-4 control-label">{{t "Vocabulary" key='vocabulary'}}</label>
             <div class="col-sm-6">
@@ -88,8 +88,11 @@
           </div>
           <div class="form-group">
             <label for="vocab_size" class="col-sm-4 control-label">{{t "Vocab Size" key='vocab_size'}}</label>
-            <div class="col-sm-6">
+            <div class="col-sm-2">
               {{input type='number' value=external_vocab_size class="form-control" id="vocab_size" placeholder="typical buttons per page/view"}}
+            </div>
+            <div class='col-sm-4'>
+              <p class='form-control-static'>{{t "average buttons per view" key='average_buttons_per_view'}}</p>
             </div>
           </div>
         {{/if}}

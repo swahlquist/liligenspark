@@ -4,8 +4,12 @@ import DS from 'ember-data';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
 import { computed } from '@ember/object';
+import contentGrabbers from '../utils/content_grabbers';
+import modal from '../utils/modal';
+import i18n from '../utils/i18n';
+import RSVP from 'rsvp';
 
-export default DS.Model.extend({
+CoughDrop.Log = DS.Model.extend({
   type: DS.attr('string'),
   message_type: DS.attr('boolean'),
   events: DS.attr('raw'),

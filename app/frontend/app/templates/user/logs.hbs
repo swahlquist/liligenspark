@@ -30,7 +30,24 @@
         {{/if}}
       </span>
     {{/if}}
-
+  {{#if messages_only}}
+  {{else if filtered_results}}
+  {{else if model.external_device}}
+    {{#if model.permissions.supervise}}
+      <div class='row big_buttons' style='margin-top: 20px;'>
+        <div class='col-sm-3 col-xs-6 big_button_holder'>
+          <button class='btn big_button btn-default lesser_button' {{action "generate"}} style='height: 100px;'>
+            Manual Log<br/>Session
+          </button>
+        </div>
+        <div class='col-sm-3 col-xs-6 big_button_holder'>
+          <button class='btn big_button btn-default secondary_button' {{action "recordNote" "text"}} style='height: 100px;'>
+            New Note
+          </button>
+        </div>
+      </div>
+    {{/if}}
+  {{/if}}
   </h2>
   {{#if logs.loading}}
     <p>{{t "Loading..." key='loading...'}}</p>

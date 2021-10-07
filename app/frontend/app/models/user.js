@@ -157,6 +157,20 @@ CoughDrop.User = DS.Model.extend({
   supervisee_names: computed('supervisees', function() {
     return (this.get('supervisees') || []).map(function(u) { return u.name; }).join(", ");
   }),
+  device_image: computed('external_device.device_id', 'external_device.vocab_id', function() {
+    var device_id = this.get('external_device.device_id') || 'na';
+    var vocab_id = this.get('external_device.vocab_id') || 'na';
+    var res = {};
+    var device = CoughDrop.User.devices.find(function(dev) { return dev.id == device_id; });
+    var vocab = ((device || {vocabs: []}).vocabs || []).find(function(voc) { return voc.id == vocab_id; });
+    if(device && device.img) {
+      res.device_url = Ember.templateHelpers.path('alt-aac/' + device.img);
+    }
+    if(vocab && vocab.img) {
+      res.vocab_url = Ember.templateHelpers.path('alt-aac/' + vocab.img);
+    }
+    return res;
+  }),
   notifications: DS.attr('raw'),
   parsed_notifications: computed('notifications', function() {
     var notifs = this.get('notifications') || [];
@@ -1011,5 +1025,100 @@ CoughDrop.User.check_integrations = function(user_name, reload) {
   CoughDrop.User.integrations_for[user_name] = {loading: true, promise: promise};
   return promise;
 };
+
+CoughDrop.User.devices = [
+  {id: 'grid', name: i18n.t('grid', "Grid Pad, Grid for iOS"), img: 'grid-3.png', vocabs: [
+    // podd, supercore, text talker, word power, vocabulary for life, beeline
+    {id: 'supercore_30', name: i18n.t('super_core_30', "Super Core 30"), buttons: 30, img: 'super-core.png'},
+    {id: 'supercore_50', name: i18n.t('super_core_50', "Super Core 50"), buttons: 50, img: 'super-core.png'},
+    {id: 'text_talker', name: i18n.t('text_talker', "Text Talker"), buttons: 46, img: 'text-talker.png'},
+    {id: 'word_power_25', name: i18n.t('word_power_25', "WordPower 25"), buttons: 25, img: 'wordpower.png'},
+    {id: 'word_power_60', name: i18n.t('word_power_60', "WordPower 60"), buttons: 60, img: 'wordpower.png'},
+    {id: 'word_power_100', name: i18n.t('word_power_100', "WordPower 100"), buttons: 100, img: 'wordpower.png'},
+    {id: 'vocab_for_life', name: i18n.t('vocabulary_for_life', "Vocabulary for Life"), buttons: 42, img: 'vocabulary-for-life.png'},
+    {id: 'beeline', name: i18n.t('beeline', "Beeline"), buttons: 88, img: 'beeline.png'},
+    {id: 'custom', name: i18n.t('custom_vocabulary', "Custom Vocabulary")},
+    {id: 'other_grid', name: i18n.t('other_grid_vocabulary', "Other Vocabulary")},
+  ]},
+  {id: 'alpha_core', name: i18n.t('alpha_core', "AlphaCore"), img: 'alpha-core-grid.png', vocabs: [
+    {id: 'alphacore', name: i18n.t('alphacore_keyboard', "AlphaCore Keyboard"), buttons: 168},
+    {id: 'touchtype', name: i18n.t('touchtype keyboard', "TouchType Keyboard"), buttons: 38},
+    {id: 'large', name: i18n.t('large_keyboard', "Large Keyboard"), buttons: 42},
+    {id: 'xlarge', name: i18n.t('extra_large_keyboard', "Extra-Large Keyboard"), buttons: 16},
+    {id: 'custom', name: i18n.t('custom_keyboard', "Custom Keyboard")},
+    // touchtype keyboard (38), large keyboard (6 x 7 42), extra large keyboard (4 x 4 16), alphacore keyboard (12x14 168)
+  ]},
+  {id: 'lamp_wfl', name: i18n.t('lamp_words_for_life', "LAMP Words for Life"), img: 'lamp-wfl.png', vocabs: [
+    {id: 'one_hit', name: i18n.t('one_hit', "One-Hit"), buttons: 84},
+    {id: 'transition', name: i18n.t('transition', "Transition"), buttons: 84},
+    {id: 'full', name: i18n.t('full_vocab', "Full Vocabulary"), buttons: 84},
+    // 1-hit, transition, full vocab
+  ]},
+  {id: 'podd_book', name: i18n.t('podd_book', "PODD Book"), img: 'podd.png', vocabs: [
+    {id: 'printed_podd', name: i18n.t('printed_podd', "Printed PODD Book"), buttons: 60},
+    {id: 'simpodd_15', name: i18n.t('simpodd_15', "simPODD 15"), buttons: 15, img: 'simpodd.png'},
+    {id: 'simpodd_60', name: i18n.t('simpodd_60', "simPODD 60"), buttons: 60, img: 'simpodd.png'},
+    {id: 'podd_app', name: i18n.t('other_podd_software', "Other PODD Software"), buttons: 60},
+  ]},
+  {id: 'prc_accent', name: i18n.t('prc_accent', "PRC Accent Series"), img: 'prc-accent.png', vocabs: [
+    {id: 'unity', name: i18n.t('unity', "Unity"), buttons: 84, img: 'prc-unity.png'},
+    {id: 'wordpower_28', name: i18n.t('wordpower_28', "WordPower 28"), buttons: 28, img: 'wordpower.png'},
+    {id: 'wordpower_36', name: i18n.t('wordpower_36', "WordPower 36"), buttons: 36, img: 'wordpower.png'},
+    {id: 'wordpower_45', name: i18n.t('wordpower_45', "WordPower 45"), buttons: 45, img: 'wordpower.png'},
+    {id: 'wordpower_60', name: i18n.t('wordpower_60', "WordPower 60"), buttons: 60, img: 'wordpower.png'},
+    {id: 'wordpower_84', name: i18n.t('wordpower_84', "WordPower 84"), buttons: 84, img: 'wordpower.png'},
+    {id: 'wordpower_144', name: i18n.t('wordpower_144', "WordPower 144"), buttons: 144, img: 'wordpower.png'},
+    {id: 'essence', name: i18n.t('essence', "Essence"), buttons: 18, img: 'prc-essence.png'},
+    {id: 'empower', name: i18n.t('empower', "Empower"), buttons: 36},
+    {id: 'corescanner', name: i18n.t('corescanner', "CoreScanner"), img: 'prc-core-scanner.png'},
+    // unity, wordpower, essence, scorescanner, wordcore
+  ]},
+  {id: 'assistiveware', name: i18n.t('assistiveware_proloquo', "AssistiveWare (Proloquo, etc.)"), img: 'ipad.png', vocabs: [
+    {id: 'p2g_crescendo', name: i18n.t('proloquo2go_crescendo', "Proloquo2Go Crescendo"), buttons: 77, img: 'proloquo2go.png'},
+    {id: 'p2g_gateway', name: i18n.t('proloquo2go_gateway', "Proloquo2Go Gateway"), buttons: 60, img: 'proloquo2go.png'},
+    {id: 'p4text', name: i18n.t('proloquo4text', "Proloquo4Text"), buttons: 70, img: 'proloquo4text.png'},
+  ]},
+  {id: 'sfy', name: i18n.t('speak_for_yourself', "Speak for Yourself"), img: 'speak-for-yourself.png', vocabs: [
+    {id: 'default', name: i18n.t('default_vocabulary', "Default Vocabulary"), buttons: 120},
+    {id: 'custom', name: i18n.t('custom_vocabulary', "Custom Vocabulary"), buttons: 120},
+    // sfy (120)
+  ]},
+  {id: 'td_snap', name: i18n.t('td_snap', "TD Snap"), img: 'td-snap.png', vocabs: [
+    {id: 'core_first', name: i18n.t('core_first', "Core First"), buttons: 30},
+    {id: 'text', name: i18n.t('td_snap_text', "TD Snap Text"), buttons: 35},
+    {id: 'scanning', name: i18n.t('scanning_page_set', "Scanning Page Set"), buttons: 30},
+    {id: 'podd_15', name: i18n.t('td_podd_15', "TD PODD 15"), buttons: 15},
+    {id: 'podd_60', name: i18n.t('td_podd_60', "TD PODD 60"), buttons: 60},
+    {id: 'gateway', name: i18n.t('gateway', "Gateway"), buttons: 56},
+    {id: 'aphasia', name: i18n.t('aphasia_page_set', "Aphasia Page Set"), buttons: 16},
+    // core first, text, scanning, podd, gateway, aphasia
+    // https://us.tobiidynavox.com/pages/td-snap
+  ]},
+  {id: 'tobii_i', name: i18n.t('tobii_i_series', "Tobii i-Series"), img: 'tobii-i.png', vocabs: [
+    {id: 'snap_core', name: i18n.t('snap_core', "Snap Core"), buttons: 30, img: 'td-snap-core.png'},
+    {id: 'sono_flex', name: i18n.t('sono_flex', "Sono Flex"), buttons: 28, img: 'sono-flex.png'},
+    {id: 'snap_scene', name: i18n.t('snap_scene', "Snap Scene")},
+    {id: 'communicator', name: i18n.t('communicator', "Communicator"), img: 'tobii-communicator.png'},
+    // snap core, sono flex, snap scene, communicator
+  ]},
+  {id: 'go_talk', name: i18n.t('go_talk', "GoTalk Device"), img: 'go-talk.png', vocabs: [
+    {id: 'gotalk_4', name: i18n.t('gotalk_4', "GoTalk 4 (+)"), buttons: 4},
+    {id: 'gotalk_9', name: i18n.t('gotalk_9', "GoTalk 9 (+)"), buttons: 9},
+    {id: 'gotalk_20', name: i18n.t('gotalk_20', "GoTalk 20 (+)"), buttons: 20},
+    {id: 'gotalk_32', name: i18n.t('gotalk_32', "GoTalk 32"), buttons: 32},
+    // 4+, 9+, 20+, 32
+  ]},
+  {id: 'single_switch', name: i18n.t('single_button_message', "Single-Button Switch (eg. BIGmack)"), img: 'bigmack.png', vocabs: [
+    {id: 'single_message', name: i18n.t('single_message', "Single-Message"), buttons: 1},
+    {id: 'multi_message', name: i18n.t('multiple_message_sequence', "Multiple-Message (Seqence)"), buttons: 1},
+  ]},
+  {id: 'e_tran', name: i18n.t('clear_plastic_board_e_tran', "Clear Plastic Board (eg. E-Tran)"), img: 'e-tran.png', vocabs: [
+    {id: 'default', name: i18n.t('default_layout', "Default Layout"), buttons: 8},
+    {id: 'custom', name: i18n.t('custom_layout', "Custom Layout")},
+    // default (8)
+  ]}
+  // avaz, gotalknow, predictable, clicker communicator, 
+];
+
 
 export default CoughDrop.User;

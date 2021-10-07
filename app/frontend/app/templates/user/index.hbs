@@ -73,7 +73,42 @@
   <div class="row big_buttons">
     {{#if app_state.currentUser.preferences.new_index}}
       <div class='col-sm-3 col-xs-6 big_button_holder'>
-        {{#if model.preferences.home_board.key}}
+        {{#if model.external_device}}
+          <a href="#" {{action 'external_device'}} class="btn simple_board_icon btn-default">
+            {{#if model.external_device.size}}
+              <span style='position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; border-radius: 50px; border: 2px solid #ccc; background: rgba(255, 255, 255, 0.7); color: #777; padding-top: 5px; z-index: 2;'>
+                {{model.external_device.size}}
+              </span>
+            {{/if}}
+            {{#if model.device_image.device_url}}
+              {{#if model.device_image.vocab_url}}
+                <img src={{model.device_image.device_url}} onerror="button_broken_image(this);" style='position: absolute; top: 0px; left: 0px; width: 50%;'/>
+                <img src={{model.device_image.vocab_url}} onerror="button_broken_image(this);" style='position: relative;'/>
+              {{else}}
+                <img src={{model.device_image.device_url}} onerror="button_broken_image(this);"/>
+              {{/if}}
+            {{else if model.device_image.vocab_url}}
+              <img src={{model.device_image.vocab_url}} onerror="button_broken_image(this);"/>
+            {{else}}
+              <img src="/images/modeling_ideas.svg" onerror="button_broken_image(this);"/>
+            {{/if}}
+            <div class='name' style='font-size: 17px; line-height: 18px;'>
+              <div>
+                {{#if model.external_device.device_name}}
+                  {{model.external_device.device_name}}
+                {{else}}
+                  {{t "External AAC" key='external_aac'}}
+                {{/if}}
+              </div>
+              {{#if model.external_device.vocab_name}}
+                <div>{{model.external_device.vocab_name}}</div>
+              {{/if}}
+              {{#if model.external_device.size}}
+                <div style='font-size: 14px; font-style: italic;'>{{t "avg size:" key='average_size_colon'}} {{model.external_device.size}}</div>
+              {{/if}}
+            </div>
+          </a>
+        {{else if model.preferences.home_board.key}}
           <div style='position: absolute; z-index: 2; margin: 6px 12px;'><span class='glyphicon glyphicon-home'></span> {{t "Home Board:" key='home_board_colon'}}</div>
           {{board-icon board=model.preferences.home_board localized=true}}
         {{else}}
@@ -108,8 +143,21 @@
         </button>
       </div>
       {{#if model.permissions.supervise}}
+        {{#if model.external_device}}
+          <div class='col-sm-3 col-xs-6 big_button_holder'>
+            <button class='btn big_button btn-default lesser_button' {{action "manual_log"}} style='height: 100px;'>
+              Manual Log<br/>Session
+            </button>
+          </div>
+          <div class='col-sm-3 col-xs-6 big_button_holder'>
+            <button class='btn big_button btn-default secondary_button' {{action "recordNote" "text"}} style='height: 100px;'>
+              New Note
+            </button>
+          </div>
+        {{/if}}
+
         {{#unless app_state.currentUser.modeling_only}}
-          <div class='col-xs-12' style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
+          <div class={{if model.external_device 'col-sm-3 col-sm-offset-3' 'col-xs-12'}} style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
             <div class="btn-group">
               <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='border-width: 3px; background: #eee;'>
                 <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/extra_455_g.svg' style='height: 30px;'/>
@@ -356,7 +404,13 @@
   {{/unless}}
     <div class="row">
       <div class="col-sm-12">
-        <h4>{{t "Available Boards:" key='available_boards_colon'}}</h4>
+        <h4>
+          {{#if model.external_device}}
+            {{t "%app_name% Boards in this Account:" key='boards_in_this_account'}}
+          {{else}}
+            {{t "Available Boards:" key='available_boards_colon'}}
+          {{/if}}
+        </h4>
         <ul class="nav nav-pills" style="margin-top: -5px; margin-bottom: 5px; margin-right: -20px;">
           {{#if model.permissions.edit}}
             <li role="presentation" class={{if mine_selected 'active'}}><a href="#" {{action 'set_selected' 'mine'}}>{{t "Mine" key='mine'}}</a></li>

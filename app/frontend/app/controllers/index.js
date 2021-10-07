@@ -20,8 +20,8 @@ import { computed } from '@ember/object';
 
 export default Controller.extend({
   registration_types: CoughDrop.registrationTypes,
-  sync_able: computed('extras.ready', function() {
-    return this.get('extras.ready');
+  sync_able: computed('extras.ready', 'app_state.currentUser.external_device', function() {
+    return this.get('extras.ready') && !app_state.get('currentUser.external_device');
   }),
   home_board_or_supporter: computed(
     'app_state.currentUser.preferences.home_board.key',

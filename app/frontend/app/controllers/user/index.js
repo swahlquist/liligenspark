@@ -662,6 +662,14 @@ export default Controller.extend({
           _this.set('password.error', true);
         });
       }
+    },
+    external_device: function() {
+      if(this.get('model.permissions.edit')) {
+        modal.notice(i18n.t('device_can_be_changed_on_profile', "User's external device settings can be changed on their profile"));
+      }
+    },
+    manual_log: function() {
+      CoughDrop.Log.manual_log(this.get('model.id'), !!this.get('model.external_device'));
     }
   }
 });

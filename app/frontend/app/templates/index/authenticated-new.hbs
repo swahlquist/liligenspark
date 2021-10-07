@@ -500,12 +500,21 @@
             {{date app_state.currentUser.subscription.eval_expires 'day'}}.
           </div>
         {{/if}}
-        <div class='col-md-3 col-xs-4 big_button_holder'>
-          <button id='nav_primary' class='btn big_button btn-primary' {{action 'homeInSpeakMode'}}>
-            <span class='glyphicon glyphicon-volume-up'></span>
-            {{t "Speak Mode" key='speak_mode'}}
-          </button>
-        </div>
+        {{#if app_state.currentUser.external_device}}
+          <div class='col-md-3 col-xs-4 big_button_holder'>
+            <button id='nav_primary' class='btn big_button btn-default middle_row' {{action 'manual_session'}}>
+              <span class='glyphicon glyphicon-pencil'></span>
+              {{t "Manual Log<br/>Session" key='manual_log_session'}}
+            </button>
+          </div>
+        {{else}}
+          <div class='col-md-3 col-xs-4 big_button_holder'>
+            <button id='nav_primary' class='btn big_button btn-primary' {{action 'homeInSpeakMode'}}>
+              <span class='glyphicon glyphicon-volume-up'></span>
+              {{t "Speak Mode" key='speak_mode'}}
+            </button>
+          </div>
+        {{/if}}
         {{#if app_state.currentUser.modeling_only}}
           {{#if app_state.currentUser.permissions.delete}}
             <div class='col-md-3 col-xs-4 big_button_holder'>
