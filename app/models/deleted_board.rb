@@ -21,7 +21,12 @@ class DeletedBoard < ActiveRecord::Base
     if version
       board = Board.load_version(version)
       board.key = self.key
+      new_key = board.generate_unique_key(self.key)
+      if new_key != board.key
+        board.rename_to(new_key)
+      end
       board.load_secure_object if !board.settings || board.settings.is_a?(String)
+      board.settings['undeleted'] = true
       board.instance_variable_set('@buttons_changed', 'undeleted')
       board.save!
       self.cleared = true
