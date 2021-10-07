@@ -23,7 +23,7 @@
       </li>
       {{#if model.permissions.edit}}
         <li role="presentation">
-          {{#link-to 'user.edit' model.user_name}}{{t "profile" key='profile'}}{{/link-to}}
+          {{#link-to 'user.edit' model.user_name}}{{t "account" key='account'}}{{/link-to}}
         </li>
         <li role="presentation">
           {{#link-to 'user.preferences' model.user_name}}{{t "preferences" key='preferences_lower'}}{{/link-to}}
@@ -54,7 +54,7 @@
         {{#link-to 'user.goals' model.user_name class='btn btn-default'}}{{t "goals" key='goals_lower'}}{{/link-to}}
         {{#link-to 'user.recordings' model.user_name class='btn btn-default'}}{{t "recordings" key='recordings_lower'}}{{/link-to}}
         {{#if model.permissions.edit}}
-          {{#link-to 'user.edit' model.user_name class="btn btn-default"}}{{t "profile" key='profile'}}{{/link-to}}
+          {{#link-to 'user.edit' model.user_name class="btn btn-default"}}{{t "account" key='account'}}{{/link-to}}
           {{#link-to 'user.preferences' model.user_name class="btn btn-default"}}{{t "preferences" key='preferences_lower'}}{{/link-to}}
           {{#if app_state.feature_flags.subscriptions}}
             {{#link-to 'user.subscription' model.user_name class="btn btn-default"}}{{t "billing" key='billing_lower'}}{{/link-to}}

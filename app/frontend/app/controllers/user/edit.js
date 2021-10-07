@@ -36,6 +36,24 @@ export default Controller.extend({
       return "";
     }
   }),
+  set_external_device: observer('model.external_device', function() {
+    this.set('allow_external_device', !!this.get('model.external_device'));
+    this.set('external_device', this.get('model.external_device.device_name'));
+    this.set('external_vocab', this.get('model.external_device.vocab_name'));
+    this.set('external_vocab_size', this.get('model.external_device.size'));
+  }),
+  device_options: computed(function() {
+    return [].concat(CoughDrop.User.devices).concat({id: 'other', name: i18n.t('other', "Other")});
+  }),
+  vocab_options: computed('external_device', function() {
+    var str = this.get('external_device');
+    var device = CoughDrop.User.devices.find(function(d) { return d.name == str; });
+    var res = [];
+    if(device && device.vocabs && device.vocabs.length > 0) {
+      res = res.concat(device.vocabs);
+    }
+    return res.concat([{id: 'custom', name: i18n.t('custom_vocab', "Custom Vocabulary")}]);
+  }),
   load_webhooks: function() {
     var _this = this;
     _this.set('webhooks', {loading: true});
@@ -95,6 +113,15 @@ export default Controller.extend({
     enable_change_password: function() {
       this.set('change_password', true);
     },
+    set_device: function(device) {
+      this.set('external_device', device.name);
+    },
+    set_vocab: function(vocab) {
+      this.set('external_vocab', vocab.name);
+      if(vocab.buttons) {
+        this.set('external_vocab_size', vocab.buttons);
+      }
+    },
     saveProfile: function(action) {
       // TODO: add a "save pending..." status somewhere
       var user = this.get('model');
@@ -109,6 +136,30 @@ export default Controller.extend({
       } else if(user.get('valet_login') && !user.get('valet_password_set') && (user.get('valet_password') || '').length == 0) {
         modal.error(i18n.t('valet_password_required', "Valet Password must be set to enable valet login"));
         return;
+      }
+      if(this.get('allow_external_device')) {
+        var str = this.get('external_device');
+        var device = {device_name: this.get('external_device')};
+        var found_device = CoughDrop.User.devices.find(function(d) { return d.name == str; });
+        if(found_device) {
+          device.device_id = found_device.id;
+        }
+        if(this.get('external_vocab')) {
+          var str = this.get('external_vocab');
+          device.vocab_name = str;
+          var vocabs = (found_device || {vocabs: []}).vocabs || [];
+          var vocab = vocabs.find(function(v) { return v.name == str; });
+          if(vocab) {
+            device.vocab_id = vocab.id;
+          }
+        }
+        if(this.get('external_vocab_size')) {
+          device.size = parseInt(this.get('external_vocab_size'), 10);
+          if(!device.size) { delete device['size']; }
+        }
+        user.set('external_device', device);
+      } else {
+        user.set('external_device', false);
       }
       user.save().then(function(user) {
         user.set('password', null);

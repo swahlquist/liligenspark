@@ -1,5 +1,5 @@
 {{#if model.permissions.edit}}
-  <h2>{{t "Profile for %{term}" key='profile_for' term=model.user_name}}</h2>
+  <h2>{{t "Account Settings for %{term}" key='profile_for' term=model.user_name}}</h2>
   <form class="form-horizontal" {{action "saveProfile" on="submit"}}>
   <div class="form-group">
     <label for="name" class="col-sm-3 control-label">{{t "Name" key='name'}}</label>
@@ -158,6 +158,69 @@
       </div>
     </div>
   {{/unless}}
+  {{#if model.single_org}}
+    <div class="form-group">
+      <label for="third_party" class="col-sm-3 control-label">{{t "Third-Party App" key='third_party_app'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=allow_external_device id="third_party"}}
+            {{t "This user uses a third-party app instead of %app_name% to communicate" key='user_third_party_app'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    {{#if allow_external_device}}
+      <div class="form-group">
+        <label for="device_type" class="col-sm-3 control-label">{{t "App/Device" key='app_device'}}</label>
+        <div class="col-sm-4">
+          {{input value=external_device class="form-control" id="device_type" placeholder="third-party app or device name"}}
+        </div>
+        <div class="col-sm-1" style='margin-left: -35px;'>
+          <div class='btn-group dropdown'>
+            <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{t "Device" key='device'}} <span class="caret"></span>
+            </button>
+            <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left; max-height: 183px; overflow: auto;">
+              {{#each device_options as |option|}}
+                <li><a href='#' {{action 'set_device' option}}>{{option.name}}</a></li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {{#if external_device}}
+        <div class="form-group">
+          <label for="vocabulary_type" class="col-sm-3 control-label">{{t "Vocabulary" key='vocabulary'}}</label>
+          <div class="col-sm-4">
+            {{input value=external_vocab class="form-control" id="vocabulary_type" placeholder="vocabulary used"}}
+          </div>
+          <div class="col-sm-1" style='margin-left: -35px;'>
+            <div class='btn-group dropdown' style='max-height: 183px;'>
+              <button class='btn btn-default dropdown-toggle' style='border-top-left-radius: 0; border-bottom-left-radius: 0;' data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {{t "Vocab" key='vocab'}} <span class="caret"></span>
+              </button>
+              <ul class='dropdown-menu' style="right: 0; left: inherit; text-align: left; max-height: 183px; overflow: auto;">
+                {{#each vocab_options as |option|}}
+                  <li><a href='#' {{action 'set_vocab' option}}>{{option.name}}</a></li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="vocab_size" class="col-sm-3 control-label">{{t "Vocab Size" key='vocab_size'}}</label>
+          <div class="col-sm-2">
+            {{input type='number' value=external_vocab_size class="form-control" id="vocab_size" placeholder="typical buttons per page/view"}}
+          </div>
+          <div class='col-sm-3'>
+            <p class='form-control-static'>{{t "average buttons per view" key='average_buttons_per_view'}}</p>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
+  
+  {{/if}}
   {{#unless app_state.supporter_role}}
     {{#if model.permissions.delete}}
       <div class="form-group">
