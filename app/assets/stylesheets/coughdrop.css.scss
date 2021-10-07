@@ -3239,6 +3239,217 @@ $nav_extras: #eee;
     /* h eight: 79px; */
   }
 }
+.profile {
+  .question_header {
+    padding: 10px 30px; 
+    min-height: 50px; 
+    display: flex; 
+    align-items: center; 
+    background: #cdf; 
+    border: 2px solid rgb(29, 61, 126);
+    border-radius: 5px;
+  }
+  .bottom-hr {
+    border-bottom: 1px solid #aaa; 
+    margin: 0 10px 0 5px;
+  }
+  .question {
+    display: flex; 
+    margin: 0 10px;
+    &.inline {
+      display: none;
+    }
+    &:hover {
+      background: #fafafa;
+    }
+    .prompt {
+      width: 50%; 
+      min-height: 50px; 
+      display: flex;
+      align-items: center; 
+      border-right: 1px solid #ccc;
+    }
+    .answer {
+      flex: 1; 
+      min-height: 50px; 
+      display: flex; 
+      align-items: center; 
+      text-align: center; 
+      justify-content: center; 
+      border-right: 1px solid #ccc; 
+      cursor: pointer;
+      position: relative; 
+      overflow: hidden;
+      &:hover {
+        background: #eee;
+      }
+      &.selected {
+        background: #cdf;
+      }
+      &.selected:hover {
+        background: rgb(182, 198, 231);
+      }
+      .bg {
+        border-top-width: 200px; 
+        border-top-style: solid;
+        position: absolute; 
+        top: 0; 
+        height: 100px; 
+        width: 100%;
+      }
+    }
+    .text_response {
+      border: 0; 
+      width: 100%; 
+      height: 100%; 
+      border-right: 1px solid #ccc; 
+      padding: 5px;
+      white-space: pre-line;
+    }
+
+  }
+  .score_circle {
+    width: 100px; 
+    height: 100px; 
+    border-radius: 100px; 
+    border-width: 5px;
+    border-style: solid;
+    display: flex; 
+    align-items: center; 
+    place-content: center; 
+    float: left;
+    margin-left: 10px;
+    font-size: 25px; 
+    background: #fff; 
+    box-shadow: 1px 1px 5px #888, -1px 1px 5px #888, -1px -1px 5px #888, 1px -1px 5px #888; 
+    position: relative; 
+    overflow: hidden;
+    &.wide {
+      width: auto;
+      min-width: 100px;
+      transform: rotate(-15deg);
+      padding: 10px;
+      display: inline-flex;
+      white-space: nowrap;
+      &.prior {
+        min-width: 80px;
+      }
+    }
+    &:hover {
+      z-index: 2;
+    }
+    &.prior {
+      opacity: 0.8;
+      box-shadow: none; 
+      width: 80px; 
+      height: 80px; 
+      border-radius: 80px; 
+      margin-left: 10px; 
+      margin-top: 10px; 
+      border-width: 2px; 
+      font-size: 22px; 
+      margin-right: -25px; 
+      float: left; 
+      .date {
+        font-size: 13px;
+      }
+      &:hover {
+        opacity: 0.9;
+      }
+      &.age_twoyear {
+        filter: grayscale(1);
+        opacity: 0.5;
+      }
+      &.age_year {
+        filter: grayscale(0.6);
+        opacity: 0.6;
+      }
+      &.age_halfyear {
+        opacity: 0.7;
+      }
+      &.age_twomonth {
+        opacity: 0.75;
+      }
+      &.age_month {
+        opacity: 0.8;
+      }
+    }
+    .date {
+      position: absolute;
+      bottom: 10px;
+      color: #888;
+      font-size: 14px;
+      font-style:italic;
+      visibility: hidden;
+      white-space: nowrap;
+    }
+    .pre_value {
+      position: absolute;
+      top: 10px;
+      color: #888;
+      font-size: 14px;
+      font-style:italic;
+      visibility: hidden;
+      white-space: nowrap;
+    }
+    &:hover {
+      .date, .pre_value {
+        visibility: visible;
+      }
+    }
+    .bg {
+      border-top: 100px solid #fff; 
+      position: absolute; 
+      width: 100%;
+    }
+  }
+  .category {
+    display: flex; 
+    margin-bottom: 10px; 
+    max-width: 600px;
+    .bar_holder {
+      position: relative;
+      .bar_tip {
+        display: none;
+        position: absolute; 
+        margin-top: -25px; 
+        margin-left: 20px; 
+        z-index: 2; 
+        background: #fff; 
+        opacity: 0.8; 
+        border: 1px solid #888; 
+        border-radius: 5px;
+        padding: 5px 10px;
+      }
+      &:hover {
+        z-index: 2;
+        .bar_tip {
+          display: block;
+        }
+      }
+      .bar {
+        height: 35px;
+        border-width: 3px;
+        border-style: solid;
+        box-shadow: 1px 1px 2px #888, -1px 1px 2px #888, -1px -1px 2px #888, 1px -1px 2px #888; 
+        overflow: hidden;
+        &.prior {
+          height: 30px;
+          opacity: 0.8;
+          box-shadow: none; 
+          margin-left: 2px; 
+          border-width: 1px; 
+          margin-bottom: -10px; 
+          overflow: hidden;
+        }
+        .bg {
+          border-top-width: 30px;
+          border-top-style: solid;
+        }
+      }  
+    }
+  }  
+}
 @media (max-width: 1450px) {
   @media (min-width: 1200px) {
     .big_buttons {

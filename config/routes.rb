@@ -124,6 +124,7 @@ Coughdrop::Application.routes.draw do
   # end
   
   get 'profile' => ember_handler
+  get 'profile/:user_id/:profile_id' => ember_handler
   get 'search/:query' => ember_handler
   get 'search/:locale/:query' => ember_handler
   get 'u/:reply_code' => 'boards#utterance_redirect'

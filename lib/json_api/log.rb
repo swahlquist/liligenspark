@@ -20,6 +20,9 @@ module JsonApi::Log
     json['ended_at'] = log.ended_at.iso8601 if log.ended_at
     json['time_id'] = (log.started_at || 0).to_i
     json['imported'] = !!log.data['imported']
+    if log.data['guid']
+      json['guid'] = log.data['guid']
+    end
     if log.author
       json['author'] = {
         'id' => log.author.global_id,
@@ -62,6 +65,8 @@ module JsonApi::Log
     elsif log.data['assessment']
       json['percent'] = log.data['stats']['percent_correct']
       json['assessment'] = log.data['assessment']
+    elsif log.data['profile']
+      json['profile'] = log.data['profile']
     elsif log.data['journal']
       json['journal'] = log.data['journal'].slice('vocalization', 'sentence', 'timestamp', 'id')
     elsif log.data['eval']
@@ -115,6 +120,20 @@ module JsonApi::Log
       json['log']['assessment']['stats'] = log.data['stats']
     elsif json['log']['type'] == 'eval'
       json['log']['evaluation']['stats'] = log.data['stats']
+    elsif json['log']['type'] == 'profile'
+      history = []
+      priors = LogSession.where(user_id: log.user_id, log_type: 'profile').where(['started_at < ? AND started_at > ?', log.started_at, log.started_at - 3.years]).order('started_at')
+      priors.find_in_batches(batch_size: 25) do |batch|
+        batch.each do |session|
+          next if session.id == log.id
+          if session.data['profile']['id'] == log.data['profile']['id']
+            prof = session.data['profile'].except('results', 'encrypted_results')
+            prof['log_id'] = session.global_id
+            history.push(prof)
+          end
+        end
+      end
+      json['log']['profile']['history'] = history.last(5)
     end
     
     if json['log']['goal'] && json['log']['goal']['id']

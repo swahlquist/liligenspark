@@ -5,6 +5,8 @@
   <h2>{{t "Assessment Details" key='assessment_details'}}</h2>
 {{else if model.journal_type}}
   <h2>{{t "Journal Entry" key='journal_entry'}}</h2>
+{{else if model.profile_type}}
+  <h2>{{t "Communication Profile" key='communication_profile'}}</h2>
 {{else if processed_assessment}}
   <h2>{{t "Assessment Results" key='assessment_results'}}
     {{#if processed_assessment.label}} - {{processed_assessment.label}}{{/if}}
@@ -12,6 +14,7 @@
 {{else}}
   <h2>{{t "Log Entry Details" key='log_entry_details'}}</h2>
 {{/if}}
+<div class='visible-print-block' style='margin-top: -10px; margin-bottom: 10px;'>{{user.name}} - {{user.user_name}}</div>
 {{#if processed_assessment}}
   {{#if processed_assessment.date}}
     <div class="row" style='page-break-inside: avoid;'>
@@ -283,6 +286,8 @@
   {{else}}
     <p>{{t "No data found for this evaluation" key='no_data_for_evaluation'}}</p>
   {{/if}}
+{{else if model.profile_type}}
+  {{partial "user/profile-log"}}
 {{else}}
   {{#if model.imported}}
     {{t "NOTE: This log entry was imported from an outside source" key='data_imported'}}

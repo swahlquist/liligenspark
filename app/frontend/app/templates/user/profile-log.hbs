@@ -1,0 +1,143 @@
+{{#if processed_profile}}
+  <div class="row">
+    <div class="col-sm-4">
+      <div class="panel panel-default summary smaller">
+        <div class="panel-heading">{{t "Date" key='date'}}</div>
+        <div class="panel-body">
+          {{date processed_profile.started_at}}
+          </div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="panel panel-default summary smaller">
+        <div class="panel-heading">{{t "Duration" key='duration'}}</div>
+        <div class="panel-body">
+          {{#if processed_profile.results.submitted}}
+            {{t "minute" key='minute' count=processed_profile.minutes}}
+          {{else}}
+            {{t "not available" key='not_available'}}
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="panel panel-default summary smaller">
+        <div class="panel-heading">{{t "Assessor" key='assessor'}}</div>
+        <div class="panel-body">
+          {{#link-to 'user' model.author.user_name}}{{model.author.user_name}}{{/link-to}}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='profile'>
+    {{#each processed_profile.reports_layout as |report|}}
+      <div style='margin-bottom: 30px;'>
+        {{#if report.score}}
+          <div style='page-break-inside: avoid;'>
+            <h3>{{report.label}}</h3>
+            <div>
+              {{#each report.history as |hist|}}
+                <div class={{hist.circle_class}} style={{report.circle_style}}>
+                  <div class='bg'></div>
+                  {{#if hist.pre_value}}
+                    <div class='pre_value'>{{hist.pre_value}}</div>
+                  {{/if}}
+                  <div style='position: relative;'>{{hist.value}}</div>
+                  <div class='date'>{{date hist.date 'tiny_day'}}</div>
+                </div>
+              {{/each}}
+              <div class='score_circle' style={{report.circle_style}}>
+                <div class='bg'></div>
+                {{#if report.pre_value}}
+                  <div class='pre_value'>{{report.pre_value}}</div>
+                {{/if}}
+                <div style='position: relative;'>{{report.value}}</div>
+                <div class='date'>{{date report.date 'tiny_day'}}</div>
+              </div>
+              <div style='clear: left;'></div>
+            </div>
+          </div>
+        {{else if report.weights}}
+          <div style='margin: 50px 0; page-break-inside: avoid;'>
+            {{#each report.categories as |cat|}}
+              <div class='category'>
+                <div style='flex: 1;'><h3>{{cat.label}}</h3></div>
+                <div style='flex: 2; border-right: 1px solid #ddd;'>
+                  {{#each cat.history as |hist|}}
+                    <div class='bar_holder'>
+                      <div class='bar_tip'>{{hist.value}}/{{hist.max}} {{date hist.date 'short_day'}}</div>
+                      <div class='bar prior' style={{cat.prior_bar_style}}>
+                        <div class='bg' style={{cat.bar_bg_style}}></div>
+                      </div>
+                    </div>
+                  {{/each}}
+                  <div class='bar_holder'>
+                    <div class='bar_tip'>{{cat.value}}/{{cat.max}} {{date processed_profile.started_at 'short_day'}}</div>
+                    <div class='bar' style={{cat.bar_style}}>
+                      <div class='bg' style={{cat.bar_bg_style}}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else if report.concat}}
+          <div style=' page-break-inside: avoid;'>
+            <h3>{{report.label}}</h3>
+            <div style='margin: 40px 0;'>
+              {{#each report.history as |hist|}}
+                <div class={{hist.circle_class}} style={{report.border_style}}>
+                  <div class='bg'></div>
+                  <div style='position: relative;'>{{hist.value}}</div>
+                  <div class='date'>{{date hist.date 'tiny_day'}}</div>
+                </div>
+              {{/each}}
+              <div class='score_circle wide' style={{report.border_style}}>
+                <div class='bg'></div>
+                <div style='position: relative;'>{{report.value}}</div>
+                <div class='date'>{{date report.date 'tiny_day'}}</div>
+              </div>
+              <div style='clear: left;'></div>
+            </div>
+          </div>
+        {{else if report.raw}}
+            <h3>{{t "Responses" key='responses'}}</h3>
+          {{#if processed_profile.results}}
+            {{#each report.questions as |question|}}
+              {{#if question.header}}
+                <div class='question_header'>
+                  <b>{{question.label}}</b>
+                </div>
+              {{else}}
+                <div class='question'>
+                  <div class='prompt'>{{question.label}}</div>
+                  {{#if question.answer_type.text}}
+                    <div class='text_response' style='flex: 1; font-style: italic;'>{{question.text_response}}</div>
+                  {{else}}
+                    {{#each question.answers as |answer|}}
+                      <div class={{if answer.selected 'answer selected' 'answer'}}>
+                        {{#if answer.selected}}
+                          <div class='bg' style='border-top-color: #cdf;'></div>
+                          <div style='position: relative;'>
+                            <b>{{answer.label}}</b>
+                          </div>
+                        {{else}}
+                          {{answer.label}}
+                        {{/if}}
+                      </div>
+                    {{/each}}
+                  {{/if}}
+                </div>
+                <div class='bottom-hr'></div>
+              {{/if}}
+            {{/each}}
+          {{else}}
+            <p>{{t "Raw results could not be decrypted" key='results_decryption_failed'}}</p>
+          {{/if}}
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  {{t "No data available" key='no_data_available'}}
+{{/if}}

@@ -40,6 +40,8 @@ export default DS.Model.extend({
   goal_status: DS.attr('string'),
   goal: DS.attr('raw'),
   journal: DS.attr('raw'),
+  profile: DS.attr('raw'),
+  guid: DS.attr('string'),
   video: DS.attr('raw'),
   evaluation: DS.attr('raw'),
   nonce: DS.attr('string'),
@@ -61,6 +63,9 @@ export default DS.Model.extend({
   }),
   journal_type: computed('type', function() {
     return this.get('type') == 'journal';
+  }),
+  profile_type: computed('type', function() {
+    return this.get('type') == 'profile';
   }),
   eval_type: computed('type', function() {
     return this.get('type') == 'eval';
@@ -243,3 +248,73 @@ export default DS.Model.extend({
     this.set('events', events);
   }
 });
+
+CoughDrop.Log.manual_log = function(user_id, external_device) {
+  modal.open('modals/manual-log', {external_device: external_device}).then(function(res) {
+    if(res && res.words && res.words.length > 0 && res.date) {
+      var file = CoughDrop.Log.generate_obf(res.words, res.date);
+
+      var log_type = 'unspecified';
+      CoughDrop.Log.import(file, log_type, user_id).then(function(logs) {
+        modal.success(i18n.t('log_imported', "Your log session has been imported!"));
+      }, function(err) {
+        modal.error(i18n.t('log_import_failed', "There was an unexpected error importing the specified logs"));
+      });
+    }
+  }, function() { });
+};
+
+CoughDrop.Log.generate_obf = function(text, date) {
+  // manual-entered data by a user, one button label per line, with a date and time field
+  // convert it to obl and import it, yo
+  var json = {
+    format: 'open-board-log-0.1',
+    source: 'user-entry',
+    locale: 'en',
+    sessions: [{
+      id: 'session1',
+      type: 'log',
+      events: []
+    }]
+  };
+  var lines = text.split(/\n/);
+  var timestamp = (date.getTime() / 1000) - (5 * lines.length) - 10;
+  var start = new Date(timestamp * 1000);
+  lines.forEach(function(line) {
+    if(line && line.length > 0) {
+      json.sessions[0].events.push({
+        id: "e" + timestamp,
+        type: 'button',
+        label: line,
+        spoken: true,
+        timestamp: (new Date(timestamp * 1000)).toISOString()
+      })
+      timestamp = timestamp + 5;
+    }
+  });
+  var end = new Date(timestamp * 1000);
+  json.sessions[0].started = start.toISOString();
+  json.sessions[0].ended = end.toISOString();
+  var str = btoa(JSON.stringify(json));
+  var file = contentGrabbers.data_uri_to_blob("data:text/plain;base64," + str);
+  return file;
+};
+
+CoughDrop.Log.import = function(file, log_type, user_id) {
+  return new RSVP.Promise(function(resolve, reject) {
+    var progressor = EmberObject.create();
+    modal.open('modals/importing-logs', progressor);
+    // do the hard stuff
+    var progress = contentGrabbers.upload_for_processing(file, '/api/v1/logs/import', {type: log_type, user_id: user_id}, progressor);
+
+    progress.then(function(logs) {
+      modal.close('importing-logs');
+      resolve(logs);
+    }, function(err) { 
+      reject(err);
+    });
+  });
+
+};
+
+export default CoughDrop.Log;

@@ -22,7 +22,7 @@ class LogSession < ActiveRecord::Base
 
   has_paper_trail :on => [:destroy] #:only => [:data, :user_id, :author_id, :device_id]
   secure_serialize :data
-  DAILY_EVENT_TYPES = ['models', 'modeled', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals'];
+  DAILY_EVENT_TYPES = ['models', 'modeled', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals', 'profile'];
 
 
   def generate_defaults
@@ -264,6 +264,14 @@ class LogSession < ActiveRecord::Base
         self.data['prior_evals'] = existing_evals
       end
       self.data['duration'] = (self.ended_at - self.started_at).to_i rescue nil
+    elsif self.data['profile']
+      self.log_type = 'profile'
+      str = "Profile: by #{self.author ? self.author.user_name : 'user'}: "
+      str += self.data['profile']['name'] || "Communication Profile"
+      self.started_at = DateTime.strptime(self.data['profile']['started'].to_s, '%s') if self.data['profile']['started']
+      self.ended_at = DateTime.strptime((self.data['profile']['ended'] || self.data['profile']['submitted']).to_s, '%s') if self.data['profile']['ended'] || self.data['profile']['submitted']
+      self.data['duration'] = (self.ended_at - self.started_at).to_i rescue nil
+      self.data['guid'] = self.data['profile']['guid']
     elsif self.data['journal']
       self.log_type = 'journal'
       self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
@@ -891,10 +899,11 @@ class LogSession < ActiveRecord::Base
     self.assert_extra_data
     (self.data['events'] || []).each do |event|
       stamp = event['timestamp'] || last_stamp
-      # when the user_id changes or there's a long delay, split out into another session
-      if event['note'] || event['assessment'] || event['share'] || event['alert'] || event['eval']
+      if event['note'] || event['assessment'] || event['share'] || event['alert'] || event['eval'] || event['profile']
+        # certain events are always in their own session
         more_sessions << [event]
       elsif (!stamp || !last_stamp || stamp - last_stamp < cutoff) && (!current_user_id || event['user_id'] == current_user_id)
+        # when the user_id changes or there's a long delay, split out into another session
         current_session << event
       else
         sessions << current_session if current_session.length > 0
@@ -952,6 +961,9 @@ class LogSession < ActiveRecord::Base
                   assmnt = event['assessment']
                   assmnt = assmnt['assessment'] if assmnt['assessment'].is_a?(Hash)
                   params = {assessment: assmnt, timestamp: event['timestamp']}
+                elsif event && event['profile']
+                  prof = event['profile']
+                  params = {profile: prof}
                 elsif event && event['eval']
                   evl = event['eval']
                   evl = evl['eval'] if evl['eval'].is_a?(Hash)
@@ -1667,6 +1679,7 @@ class LogSession < ActiveRecord::Base
       @goal_clustering_scheduled = true if self.goal_id
       self.data['assessment'] = params['assessment'] if params['assessment']
       self.data['eval'] = params['eval'] if params['eval']
+      self.data['profile'] = params['profile'] if params['profile']
       if self.data['assessment']
         if non_user_params[:automatic_assessment]
           self.data['assessment']['manual'] = false

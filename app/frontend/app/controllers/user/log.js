@@ -9,6 +9,8 @@ import app_state from '../../utils/app_state';
 import evaluation from '../../utils/eval';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import profiles from '../../utils/profiles';
+import persistence from '../../utils/persistence';
 
 export default Controller.extend({
   title: computed('model.user_name', function() {
@@ -54,10 +56,62 @@ export default Controller.extend({
         });
     }
   }),
+  update_processed_profile: observer(
+    'model.type',
+    'model.eval_in_memory',
+    'model.profile',
+    'model.enc_nonce',
+    function() {
+      if(this.get('model.type') == 'profile') {
+        var profile = this.get('model.profile');
+        if(this.get('model.guid') && this.get('processed_profile.guid') == this.get('model.guid') && !this.get('model.nonce_attempt')) {
+          return;  
+        }
+        if(this.get('model.eval_in_memory')) {
+          profiles.recent = profiles.recent || {};
+          var now = (new Date()).getTime();
+          for(var key in profiles.recent) {
+            if(profiles.recent[key] && profiles.recent[key].added < now - (12 * 60 * 60 * 1000)) {
+              delete profiles.recent[key];
+            }
+          }
+          if(profiles.recent[this.get('model.guid')]) {
+            profile = profiles.recent[this.get('model.guid')].profile;
+            profiles.nonces = profiles.nonces || {};
+            var nonce = profiles.recent[this.get('model.guid')].nonce;
+            profiles.nonces[nonce.id] = nonce;
+          }
+        }
+        var processed_profile = null;
+        if(profile) {
+          processed_profile = profiles.process(profile);
+        }
+        if(profile && profile.encrypted_results) {
+          var _this = this;
+          var nonce = this.get('model.enc_nonce') || (profiles.nonces || {})[profile.encrypted_results.nonce_id];
+          if(!nonce && this.get('model.user.id') && this.get('model.id') && !this.get('model.nonce_attempt')) {
+            // AJAX call to retrieve nonce referencing log_id
+            _this.set('model.nonce_attempt', true);
+            persistence.ajax("/api/v1/users/" + this.get('model.user.id') + "/external_nonce/" + profile.encrypted_results.nonce_id + "?ref_type=log_session&ref_id=" + this.get('model.id'), {type: 'GET'}).then(function(nonce) {
+              _this.set('model.enc_nonce', nonce);
+            }, function(err) { _this.set('model.nonce_attempt', false); });
+          } else if(nonce) {
+            // decrypt using the available nonce
+            processed_profile.decrypt_results(nonce);
+
+          }
+        }
+        if(processed_profile) {
+          this.set('processed_profile', processed_profile);
+        }
+      }
+    }
+  ),  
   processed_assessment: computed(
     'model.type',
     'model.eval_in_memory',
     'model.evaluation',
+    'model.profile',
     'user.id',
     function() {
       if(this.get('model.type') == 'eval') {

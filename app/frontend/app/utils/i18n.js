@@ -22,6 +22,8 @@ Ember.templateHelpers.date = function(date, precision) {
     return moment.format('MMMM Do YYYY');
   } else if(precision == 'short_day') {
     return moment.format('MMM Do YYYY');
+  } else if(precision == 'tiny_day') {
+    return moment.format('MMM D, YY');
   } else if(precision == 'abbrev') {
     return moment.format('MMM Do YYYY, h:mm a');
   } else {

@@ -1,0 +1,47 @@
+<h2>{{t "Communicator Profile for %{un}" un=user.user_name key='communicator_profile'}}</h2>
+<div class='profile' style='max-width: 800px; margin: 0 auto;'>
+  <h3>{{profile.template.name}}</h3>
+  <div>
+    <em>
+      {{user.user_name}} 
+      {{t "was last assessed" key='was_last_assessed'}}
+      {{date_ago last_profile.created}}
+      {{t "by" key='by'}}
+      _assessor_
+    </em>
+  </div>
+  {{#each profile.questions_layout as |question|}}
+    {{#if question.header}}
+      <div class='question_header'>
+        <b>{{question.label}}</b>
+      </div>
+    {{else}}
+      <div class='question'>
+        <div class='prompt'>{{question.label}}</div>
+        {{#if question.answer_type.text}}
+          <div style='flex: 1; min-height: 75px;'>
+            {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
+          </div>
+        {{else}}
+          {{#each question.answers as |answer|}}
+            <div {{action 'select' question answer}} class={{if answer.selected 'answer selected' 'answer'}}>
+              {{#if answer.selected}}
+                <div class='bg' style='border-top-color: #cdf;'></div>
+              {{/if}}
+              <div style='position: relative;'>
+                {{answer.label}}
+              </div>
+            </div>
+          {{/each}}
+        {{/if}}
+      </div>
+      <div class='bottom-hr'></div>
+    {{/if}}
+  {{/each}}
+  <div style='margin-top: 50px;'>
+    <p class='text-danger'>Missing 5 responses</p>
+    <button {{action 'submit'}} class='btn btn-lg btn-primary'>{{t "Finalize Profile" key='finalize_profile'}}</button>
+    <button class='btn btn-lg btn-default'>{{t "Save for Later" key='save_for_later'}}</button>
+    <button class='btn btn-lg btn-default'>{{t "Cancel Profile" key='cancel_profile'}}</button>
+  </div>
+</div>
