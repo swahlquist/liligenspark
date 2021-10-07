@@ -94,6 +94,7 @@ class Api::UnitsController < ApplicationController
           user_id = unit.related_global_id(session.user_id)
           from_sup = supervisor_ids.include?(user_id)
           ts = session.started_at.beginning_of_week(:monday).to_date.to_time(:utc).to_i
+          res['user_weeks'][user_id] ||= {}
           res['user_weeks'][user_id][ts] ||= {'count' => 0, 'goals' => 0}
           res['user_weeks'][user_id][ts]['statuses'] ||= []
           res['user_weeks'][user_id][ts]['statuses'] << {goal_id: session.related_global_id(session.goal_id), score: session.score, from_unit: from_sup}
@@ -116,11 +117,15 @@ class Api::UnitsController < ApplicationController
             'total_levels' => 0,
             'days' => 0
           }
+
           LogSession::DAILY_EVENT_TYPES.each do |key|
             if(day[key])
               if(key == 'modeled') 
                 res['supervisor_weeks'][user_id][ts][key] = (res['supervisor_weeks'][user_id][ts][key] || []).concat(day[key])
               else
+                if (key == 'models' || key == 'remote_models') && day[key].is_a?(String)
+                  day[key] = day['key'].length / 5
+                end
                 res['supervisor_weeks'][user_id][ts][key] = (res['supervisor_weeks'][user_id][ts][key] || 0) + day[key]
               end
             end
