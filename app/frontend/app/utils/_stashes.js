@@ -397,6 +397,7 @@ var stashes = EmberObject.extend({
       events[today] = events[today] || {};
       if((type == 'models' || type == 'remote_models') && typeof(n) == 'string') {
         events[today]['modeled'] = (events[today]['modeled'] || []).concat(n.split(/\s+/));
+        n = 1;
       }
       events[today][type] = (events[today][type] || 0) + n;
       stashes.persist('daily_events', events);
