@@ -348,6 +348,7 @@ export default Controller.extend({
         var org = this.store.createRecord('organization');
         org.set('name', this.get('org_org_name'));
         org.set('org_access', true);
+        org.set('premium', true);
         org.save().then(function() {
           if(user_name) {
             org.set('management_action', 'add_manager-' + user_name);
