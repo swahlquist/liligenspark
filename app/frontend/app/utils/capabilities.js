@@ -1304,6 +1304,12 @@ var capabilities;
             return url;
           }
           var prefix = window.cordova.file.dataDirectory;
+          var suffix = null;
+          if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
+            prefix = prefix.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
+            suffix = prefix.split(/\//).slice(-2).join('/');
+          }
+
           if(url.match(/^cdvfile/)) {
             url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
           }
@@ -1317,6 +1323,23 @@ var capabilities;
               url = url.replace(re, prefix_sub[0]);
             }
             fixed_url = url;
+            if(suffix && url.match(suffix)) {
+              // on iOS it's possible there are other directory changes
+              // that have happened from an app upgrade,
+              // try to account for those
+              var partial_pre = prefix.split(suffix)[0];
+              var url_post = fixed_url.split(suffix).pop();
+              fixed_url = partial_pre + suffix + url_post;
+            }
+            if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
+              // on iOS follow the directory conventions and use the
+              // prefix if the path matches conventions
+              var fn = fixed_url.split(/\//).pop();
+              var expected = fn.match(/(image|sound|json)\/\w\w\w\w\/[^\/]+$/);
+              if(expected) {
+                fixed_url = prefix + expected[0];
+              }
+            }
           }
           // TODO: when iOS 11 is our lowest supported version,
           // we can implement https://github.com/apache/cordova-ios/issues/415

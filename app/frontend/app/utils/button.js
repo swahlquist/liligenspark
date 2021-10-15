@@ -349,7 +349,7 @@ var Button = EmberObject.extend({
 
       res = res + "<span style='" + this.get('image_holder_style') + "'>";
       if(!app_state.get('currentUser.hide_symbols') && this.get('local_image_url') && !this.get('board.text_only') && !this.get('text_only')) {
-        res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol" + (this.get('hc_image') ? ' hc' : '') + "' />";
+        res = res + "<img src=\"" + clean_url(this.get('local_image_url')) + "\" rel=\"" + clean_url(this.get('original_image_url') || this.get('image.url')) + "\" onerror='button_broken_image(this);' draggable='false' style='" + this.get('image_style') + "' class='symbol" + (this.get('hc_image') ? ' hc' : '') + "' />";
       }
       res = res + "</span>";
       if(this.get('sound')) {
@@ -442,6 +442,7 @@ var Button = EmberObject.extend({
     if(image && image.get('hc')) { _this.set('hc_image', true); }
     var check_image = function(image) {
       _this.set('local_image_url', image.get('best_url'));
+      _this.set('original_image_url', image.get('url'));
       if(image.get('hc')) { _this.set('hc_image', true); }
       return image.checkForDataURL().then(function() {
         _this.set('local_image_url', image.get('best_url'));
@@ -857,12 +858,22 @@ Button.broken_image = function(image) {
     console.log("bad image url: " + image.src);
     image.setAttribute('rel', image.src);
     if(image.getAttribute('data-fallback')) {
+      var original_fallback = fallback;
       fallback = image.getAttribute('data-fallback');
+      image.setAttribute('onerror', '');
+      image.onerror = function() {
+        CoughDrop.track_error("failed to retrieve defined fallback:" + fallback);
+        image.src = original_fallback;
+        find_fallback();
+      };
     } else {
       image.setAttribute('onerror', '');
       image.onerror = function() {
-        CoughDrop.track_error("failed to retrieve image:" + image.src);
+        CoughDrop.track_error("failed to retrieve image:" + fallback + " - " + image.src);
       };
+    }
+    if(window.cordova && window.cordova.file && window.cordova.file.dataDirectory) {
+      CoughDrop.track_error("image failure on app, current directory:" + window.cordova.file.dataDirectory);
     }
     var bad_src = image.src;
     image.src = fallback;
@@ -875,6 +886,14 @@ Button.broken_image = function(image) {
         image.src == fallback;
         CoughDrop.track_error("failed to find image fallback:" + image.getAttribute('rel'));
       });  
+    }
+    if(!(bad_src || '').match(/^http/) && (image.getAttriute('data-fallback') || '').match(/^http/)) {
+      image.setAttribute('onerror', '');
+      image.onerror = function() {
+        CoughDrop.track_error("failed to load remote alternate after local version failed");
+        image.src = fallback;
+      }
+      image.src = image.getAttribute('data-fallback');
     }
     // try to recover from files disappearing from local storage
     var store_key = function(key) {
@@ -891,7 +910,9 @@ Button.broken_image = function(image) {
         if(bad_src == persistence.url_cache[key] && persistence.get('online')) {
           image.setAttribute('onerror', '');
           image.onerror = function() {
-            CoughDrop.track_error("failed to retrieve cached local image:" + image.src);
+            CoughDrop.track_error("failed to retrieve cached local image:" + image.src + " or remote source:" + key);
+            image.src = fallback;
+            find_fallback();            
           };
           image.src = key;
           store_key(key);
@@ -905,7 +926,7 @@ Button.broken_image = function(image) {
       // Look for local references
       persistence.find_url(bad_src).then(function(data_uri) {
         if(!data_uri) {
-          find_fallback();
+          store_key(key);
         } else {
           if(image.getAttribute('rel') == bad_src) {
             image.setAttribute('onerror', '');

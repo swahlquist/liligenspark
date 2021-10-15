@@ -1316,7 +1316,18 @@ var persistence = EmberObject.extend({
         return user;
       })), "confirming quota");
 
-      confirm_quota_for_user.then(check_first(function(user) {
+      // Ensure the image filename cache is up-to-date
+      var prime_image_cache = persistence.time_promise(confirm_quota_for_user.then(check_first(function(user) {
+        return capabilities.storage.list_files('image').then(function(images) {
+          persistence.image_filename_cache = {};
+          images.forEach(function(image) {
+            persistence.image_filename_cache[image] = true;
+          });
+          return user;
+        });
+      })), "re-priming image cache");
+
+      prime_image_cache.then(check_first(function(user) {
         if(user) {
           var old_user_id = user_id;
           user_id = user.get('id');
@@ -2060,7 +2071,6 @@ var persistence = EmberObject.extend({
               }
 
               board.map_image_urls(all_image_urls).forEach(function(image) {
-//               board.get('local_images_with_license').forEach(function(image) {
                 importantIds.push("image_" + image.id);
                 var keep_big = !!(board.get('grid.rows') < 3 || board.get('grid.columns') < 6);
                 if(CoughDrop.remote_url(image.url)) {
@@ -2076,8 +2086,25 @@ var persistence = EmberObject.extend({
                     })
                  /*})*/);
                   importantIds.push("dataCache_" + image.url);
+                } else {
+                  // If the device thinks the image is stored locally but
+                  // it isn't, then go ahead and re-download it
+                  var image_filename = image.url && image.url.split(/\/|\\/).pop();
+                  if(!persistence.image_filename_cache[image_filename]) {
+                    visited_board_promises.push(
+                      persistence.store_url(image.url, 'image', keep_big, force, sync_id).then(null, function() {
+                        return RSVP.reject({error: "missing button image failed to sync, " + image.url});
+                      })
+                   );
+                  }
                 }
               });
+              if(board.get('image_urls')) {
+                var urls = board.get('image_urls');
+                for(var image_id in urls) {
+                  all_image_urls[image_id] = urls[image_id];
+                }
+              }
               board.map_sound_urls(all_sound_urls).forEach(function(sound) {
 //               board.get('local_sounds_with_license').forEach(function(sound) {
                 importantIds.push("sound_" + sound.id);
@@ -2626,9 +2653,10 @@ document.addEventListener('offline', function() {
   persistence.set('online', false);
 });
 setInterval(function() {
-  if(navigator.onLine === true && persistence.get('online') === false) {
+  var online = navigator.online_override || navigator.onLine;
+  if(online === true && persistence.get('online') === false) {
     persistence.set('online', true);
-  } else if(navigator.onLine === false && persistence.get('online') === true) {
+  } else if(online === false && persistence.get('online') === true) {
     persistence.set('online', false);
   } else if(persistence.get('online') === false) {
     // making an AJAX call when offline should have very little overhead

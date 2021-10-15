@@ -1267,6 +1267,7 @@ CoughDrop.Board = DS.Model.extend({
     var button_html = function(button, pos) {
       var res = "";
 
+      var original_image_url = (_this.get('image_urls') || {})[button.image_id];
       var local_image_url = persistence.url_cache[(_this.get('image_urls') || {})[button.image_id] || 'none'] || (_this.get('image_urls') || {})[button.image_id] || 'none';
       var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
@@ -1281,7 +1282,7 @@ CoughDrop.Board = DS.Model.extend({
 
       res = res + "<span style='" + opts.image_holder_style + "'>";
       if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only') && !button.text_only) {
-        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
+        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" rel=\"" + Button.clean_url(original_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
       }
       res = res + "</span>";
       if(button.sound_id && local_sound_url && local_sound_url != 'none') {
