@@ -78,7 +78,7 @@ export default Controller.extend({
     {name: i18n.t('prevent_external_buttons', "Do Not Allow Opening Externally-Linked Buttons"), id: "prevent"}
   ],
   cutoffsList: [
-    {name: i18n.t('limit_logging_by_cutoff', "[ Limit Log Access By Time ]"), id: "none"},
+    {name: i18n.t('limit_logging_by_cutoff', "[ Limit Log Access By Time ]"), id: ""},
     {name: i18n.t('', "Don't Show Any Logs"), id: "0"},
     {name: i18n.t('', "Show the Last 12 Hours of Logs"), id: "12"},
     {name: i18n.t('', "Show the Last 24 Hours of Logs"), id: "24"},
@@ -537,7 +537,7 @@ export default Controller.extend({
     return res;
   }),
   set_limited_logging: observer('model.has_logging_code', 'pending_preferences.logging_cutoff', 'pending_preferences.private_logging', function() {
-    if(this.get('model.has_logging_code') || this.get('pending_preferences.logging_cutoff') || this.get('pending_preferences.private_logging')) {
+    if(this.get('model.has_logging_code') || ((this.get('pending_preferences.logging_cutoff') || 'none') != 'none') || this.get('pending_preferences.private_logging')) {
       this.set('limited_logging', true);
     }
   }),
