@@ -377,7 +377,7 @@ export default Controller.extend({
     if(!_this.get('selected') && model) {
       default_key = model.get('permissions.supervise') ? 'mine' : 'public';
     }
-    this.set('other_selected', this.get('selected') && ['mine', 'public', 'root', 'liked'].indexOf(this.get('selected')) == -1);
+    this.set('other_selected', this.get('selected') && ['mine', 'public', 'root', 'liked', 'starred'].indexOf(this.get('selected')) == -1);
     ['mine', 'public', 'private', 'starred', 'shared', 'prior_home', 'root', 'tagged'].forEach(function(key, idx) {
       if(_this.get('selected') == key || key == default_key) {
         _this.set(key + '_selected', true);
