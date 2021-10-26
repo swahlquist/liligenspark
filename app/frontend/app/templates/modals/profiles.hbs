@@ -1,0 +1,142 @@
+{{#modal-dialog action="close" opening='opening' closing='closing'}}
+  <div class="modal-header">
+    <button type="button" class="close" {{action 'close'}}>&times;</button>
+    <h3><span class='glyphicon glyphicon-lamp'></span> {{t "Communication Profiles for %{un}" un=model.user.user_name key='communication_profiles_for'}}
+    </h3>
+  </div>
+  <div class="modal-body">
+    {{#if model.profile_id}}
+      <div>
+        {{#if profile.loading}}
+          {{t "Loading profile details..." key='loading_profile_details'}}
+        {{else if profile.error}}
+          {{t "Error loading profile details" key='error_loading_profile_details'}}
+        {{else}}
+          <h3 style='margin-top: 0;'>{{profile.name}}</h3>
+        {{/if}}
+      </div>
+      {{#if profile.date}}
+        <div style='margin: 10px 0 20px;'>
+          <div {{action 'review_profile' profile.log_id}} class='profile_modal_circle' style={{profile.circle_style}}>
+            {{#if profile.summary}}
+              {{profile.summary}}
+            {{else}}
+              {{date profile.date 'tiny_day'}}
+            {{/if}}
+          </div>
+          {{#if profile.author}}
+            {{t "completed by <b>%{un}</b>" un=profile.author.user_name key='completed_by_user'}}
+          {{/if}}
+          <div style='font-style: italic; margin-left: 30px;'>{{date profile.date}}</div>
+          <a {{action 'review_profile' profile.log_id}} href="#">{{t "review details" key='review_details'}}</a>
+        </div>
+        {{#if profile.priors}}
+          Additional profiles:<br/>
+          <div style='margin-left: 15px; color: #888;'>
+            {{#each profile.priors as |prior|}}
+              {{date prior.date}}<br/>
+            {{/each}}
+          </div>
+        {{/if}}
+      {{else if profile.name}}
+        <div style='margin: 20px 0;'>
+          {{t "No data recorded for this profile type" key='no_data_for_profile_type'}}
+        </div>
+      {{/if}}
+      <div style='margin-top: 20px;'>
+        <a href="#" {{action 'clear_profile'}}>{{t "See other profile results" key='see_other_profile_results'}}</a>
+      </div>
+    {{else}}
+      {{#if profiles.loading}}
+        <p>{{t "Loading profile data..." key='loading_profile_data'}}</p>
+      {{else if profiles.error}}
+        <p>{{t "Error loading profile data" key='error_loading_profile_data'}}</p>
+      {{else if profiles}}
+        <!-- single list with both suggested (by org or defaults) and then recents that weren't suggested -->
+        <table>
+          <tbody>
+            {{#each profiles as |prof|}}
+              <tr style='border-bottom: 1px solid #ccc;'>
+                {{#if prof.date}}
+                  <td style='height: 80px;'>
+                    <div {{action 'review_profile'  prof.log_id}} class='profile_modal_circle' style={{prof.circle_style}}>
+                      {{#if prof.summary}}
+                        {{prof.summary}}
+                      {{else}}
+                        {{date prof.date 'tiny_day'}}
+                      {{/if}}
+                    </div>
+                  </td>
+                  <td style='width: 100%;'>
+                    <div style='font-size: 16px; font-weight: bold;'>{{prof.name}}</div>
+                    <div style='font-style: italic;'>{{prof.author.user_name}} {{date prof.date}}</div>
+                  </td>
+                  <td style='padding: 0 5px;'>
+                    <button {{action 'review_profile' prof.log_id}} class='btn btn-default'>{{t "review" key='review_details'}}</button>
+                  </td>
+                  <td style='padding: 0 5px;'>
+                    <button {{action 'run_profile' prof.profile_id}} class={{prof.button_class}} style='width: 90px;'>{{t "repeat" key='review_details'}}</button>
+                  </td>
+                  <!-- profile with results -->
+                {{else}}
+                  <!-- profile template -->
+                  <td style='height: 80px;'>
+                    <div {{action 'review_profile'}} class='profile_modal_circle' style='opacity: 0.8;'>
+                    </div>
+                  </td>
+                  <td style='width: 100%;'>
+                    <div style='font-size: 16px; font-weight: bold;'>{{prof.name}}</div>
+                    <div style='font-style: italic; max-width: 275px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;'>{{prof.description}}</div>
+                  </td>
+                  <td style='padding: 0 5px;'>
+                  </td>
+                  <td style='padding: 0 5px;'>
+                    <button {{action 'run_profile' prof.profile_id}} class={{prof.button_class}} style='width: 90px;'>{{t "run" key='run'}}</button>
+                  </td>
+                {{/if}}
+              </tr>
+            {{/each}}
+          </tbody>          
+        </table>
+        <div class='row' style='margin: 15px 0;'>
+          <div class='col-sm-5' style='padding-right: 0;'>
+            {{input type='text' class='form-control' enter=(action 'lookup') value=find_profile_id placeholder='Look up profile by ID'}}
+          </div>
+          <div class='col-sm-2' style='padding-left: 3px;'>
+            <button class='btn btn-default' {{action 'lookup'}}>{{t "Go" key='go'}}</button>
+          </div>
+        </div>
+        {{#if lookup_state}}
+          <div style='margin-top: -10px; font-style: italic; margin-left: 20px;'>
+            {{#if lookup_state.loading}}
+              {{t "Loading profile..." key='loading_profile'}}
+            {{else if lookup_state.error}}
+              {{t "Error loading profile" key='error_loading_profile'}}
+            {{else}}
+              {{t "No results found" key='no_results_found'}}
+            {{/if}}
+          </div>
+        {{/if}}
+
+        <!-- TODO: other possible profiles - popular (collapsed if anything above) -->
+      {{else}}
+        {{t "No data available" key='no_data_available'}}
+      {{/if}}
+    {{/if}}
+  </div>
+  <div class="modal-footer">
+    {{#if profile.date}}
+      <button {{action 'review_profile' profile.log_id}} class='btn btn-lg btn-default'>{{t "Review Results" key='review_profile'}}</button>
+    {{/if}}
+    {{#if model.profile_id}}
+      <button {{action 'run_profile' model.profile_id}} class={{repeat_button_class}}>
+        {{#if profile.date}}
+          {{t "Repeat Profile" key='repeat_profile'}}
+        {{else}}
+          {{t "Run Profile" key='run_profile'}}
+        {{/if}}
+      </button>
+    {{/if}}
+    <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Close" key='close'}}</button>
+  </div>
+{{/modal-dialog}}

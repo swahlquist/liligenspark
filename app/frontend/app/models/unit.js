@@ -15,6 +15,9 @@ CoughDrop.Unit = DS.Model.extend({
   supervisors: DS.attr('raw'),
   communicators: DS.attr('raw'),
   permissions: DS.attr('raw'),
+  org_supervisor_profile: DS.attr('boolean'),
+  org_communicator_profile: DS.attr('boolean'),
+  org_profile: DS.attr('boolean'),
   supervisor_count: computed('supervisors', function() {
     return (this.get('supervisors') || []).length;
   }),

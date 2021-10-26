@@ -105,11 +105,13 @@ CoughDrop.Buttonset = DS.Model.extend({
             if(force) { bs.set('buttons_force_loaded', true); }
             bs.set('buttons_loaded_hash', bs.get('full_set_revision'));
             bs.set('buttons', buttons);
-            if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
+            if(!buttons.find(function(b) { return b.board_id == board_id; })) {
+              regenerate();
+            } else if(!buttons.find(function(b) { return b.board_id == board_id && b.depth == 0; })) {
               bs.set('buttons', bs.redepth(board_id));
             }
           } else if(buttons && !buttons.find) {
-            if(!bs.get('buttons')) {
+            if(!bs.get('buttons') || bs.get('buttons.length') == 0) {
               bs.set('buttons', []);
               regenerate();
             }

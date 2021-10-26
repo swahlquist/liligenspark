@@ -47,6 +47,7 @@ CoughDrop.User = DS.Model.extend({
   avatar_url: DS.attr('string'),
   fallback_avatar_url: DS.attr('string'),
   prior_avatar_urls: DS.attr('raw'),
+  last_profile: DS.attr('raw'),
   location: DS.attr('string'),
   permissions: DS.attr('raw'),
   external_nonce: DS.attr('raw'),
@@ -156,6 +157,39 @@ CoughDrop.User = DS.Model.extend({
   }),
   supervisee_names: computed('supervisees', function() {
     return (this.get('supervisees') || []).map(function(u) { return u.name; }).join(", ");
+  }),
+  profile_class: computed('last_profile', 'profile_due', 'app_state.refresh_stamp', function() {
+    var res = 'profile_circle';
+    if(this.get('profile_due.overdue') || !this.get('last_profile_date')) {
+      res = res + ' overdue';
+    } else if(this.get('profile_due.soon') || this.get('profile_due.encouraged')) {
+      res = res + ' due_soon';
+    }
+    return res;
+  }),
+  last_profile_date: computed('last_profile', function() {
+    if(!this.get('last_profile')) { return null; }
+    var date = window.moment(this.get('last_profile.added') * 1000);
+    return date;
+  }),
+  profile_due: computed('last_profile_date', 'app_state.refresh_stamp', function() {
+    var res = {};
+    var date = this.get('last_profile_date');
+    var now = window.moment();
+    var org_cutoff = this.get('last_profile.expected');
+    if(org_cutoff) {
+      var cutoff = window.moment(org_cutoff * 1000);
+      if(date < cutoff.add(1, 'month')) {
+        res.soon = true;
+      } else if(date < cutoff) {
+        res.overdue = true;
+      }
+    } else {
+      if(date < now.add(-8, 'month')) {
+        res.encouraged = true;
+      }
+    }
+    return res;
   }),
   device_image: computed('external_device.device_id', 'external_device.vocab_id', function() {
     var device_id = this.get('external_device.device_id') || 'na';

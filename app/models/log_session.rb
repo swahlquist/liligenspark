@@ -18,6 +18,7 @@ class LogSession < ActiveRecord::Base
   after_save :schedule_summary
   after_save :push_notification
   after_save :update_board_connections
+  after_save :update_profile_summaries
   include Replicate
 
   has_paper_trail :on => [:destroy] #:only => [:data, :user_id, :author_id, :device_id]
@@ -273,7 +274,9 @@ class LogSession < ActiveRecord::Base
       self.ended_at = DateTime.strptime((self.data['profile']['ended'] || self.data['profile']['submitted']).to_s, '%s') if self.data['profile']['ended'] || self.data['profile']['submitted']
       self.data['duration'] = (self.ended_at - self.started_at).to_i rescue nil
       self.data['guid'] = self.data['profile']['guid']
-      self.profile_id = self.data['profile']['id']
+      if self.data['profile']['type'] != 'funding'
+        self.profile_id = self.data['profile']['id']
+      end
     elsif self.data['journal']
       self.log_type = 'journal'
       self.started_at ||= Time.at(self.data['journal']['timestamp'] || Time.now.to_i)
@@ -852,7 +855,19 @@ class LogSession < ActiveRecord::Base
     end
     true
   end
-  
+
+  def update_profile_summaries(frd=false)
+    if self.log_type == 'profile' && self.data['profile'] && self.profile_id && self.user
+      if !frd
+        self.schedule(:update_profile_summaries, true)
+        return
+      end
+      ue = UserExtra.find_or_create_by(user: self.user)
+      ue.process_profile(self.profile_id, self.data['profile']['template_id'])
+    end
+    true
+  end
+
   def update_board_connections(frd=false)
     return true if @skip_extra_data_update
     board_ids = []

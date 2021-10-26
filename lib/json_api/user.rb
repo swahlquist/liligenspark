@@ -150,11 +150,22 @@ module JsonApi::User
         }
       }
 
-      extra = user.user_extra
-      if extra && !args[:paginated]
-        tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
-        json['board_tags'] = tags if !tags.blank?
-        json['focus_words'] = extra.active_focus_words
+      if !args[:paginated]
+        extra = user.user_extra
+        if extra
+          tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
+          json['board_tags'] = tags if !tags.blank?
+          json['focus_words'] = extra.active_focus_words
+          if json['permissions']['supervise']
+            soonest = nil
+            (extra.settings['recent_profiles'] || {}).each do |profile_id, list|
+              if !soonest || list[-1]['added'] > soonest['added']
+                soonest = {'profile_id' => profile_id}.merge(list[-1])
+              end
+            end
+            json['last_profile'] = soonest
+          end
+        end
       end
       
       supervisors = user.supervisors

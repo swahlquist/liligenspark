@@ -83,6 +83,39 @@
           {{/if}}
         </div>
       {{/if}}
+      {{#if app_state.feature_flags.profiles}}
+        <div class="form-group">
+          <label for="comm_prof_id" class="col-sm-3 control-label">{{t "Profiles" key='profiling'}}</label>
+          <div class="col-sm-5" style='margin-bottom: 5px;'>
+            {{input value=model.org.communicator_profile_id class="form-control" id="comm_prof_id" placeholder="ID of default for communicators"}}
+          </div>
+          <div class='col-sm-4' style='margin-bottom: 5px;'>
+            <p class='form-control-static'>{{t "for communicators" key='for_communicators'}}</p>
+          </div>
+          {{#unless no_communicator_profile}}
+            <div class="col-sm-2 col-sm-offset-3">
+              {{input value=model.org.communicator_profile_frequency class="form-control" id="comm_prof_freq" placeholder="##"}}
+            </div>
+            <div class='col-sm-5'>
+              <p class='form-control-static'>{{t "months until next profile due" key='days_until_next_profile_due'}}</p>
+            </div>
+          {{/unless}}
+          <div class="col-sm-5 col-sm-offset-3" style='margin-top: 5px; margin-bottom: 5px;'>
+            {{input value=model.org.supervisor_profile_id class="form-control" id="comm_sup_id" placeholder="ID of default for supervisors"}}
+          </div>
+          <div class='col-sm-4' style='margin-top: 5px; margin-bottom: 5px;'>
+            <p class='form-control-static'>{{t "for supervisors" key='for_supervisors'}}</p>
+          </div>
+          {{#unless no_supervisor_profile}}
+            <div class="col-sm-2 col-sm-offset-3">
+              {{input value=model.org.supervisor_profile_frequency class="form-control" id="comm_sup_freq" placeholder="##"}}
+            </div>
+            <div class='col-sm-5'>
+              <p class='form-control-static'>{{t "months until next profile due" key='days_until_next_profile_due'}}</p>
+            </div>
+          {{/unless}}
+        </div>
+      {{/if}}
 
       {{#if model.org.custom_domain}}
         <div class="form-group">
@@ -207,6 +240,8 @@
           <button class='btn btn-primary' type='submit' disabled={{status.saving}}>
             {{#if status.saving}}
               {{t "Updating Organization..." key='updating_org'}}
+            {{else if status.error}}
+              {{t "Error Updating Organization" key='error_updating_organization'}}
             {{else}}
               {{t "Update Organization" key='update_org'}}
             {{/if}}

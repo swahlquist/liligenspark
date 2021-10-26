@@ -5,6 +5,7 @@ import { computed } from '@ember/object';
 import RSVP from 'rsvp';
 import { htmlSafe } from '@ember/string';
 import i18n from './i18n';
+import CoughDrop from '../app';
 
 // TODO: track locale of response
 // TODO: place to store translations of labels and prompts and placeholders
@@ -176,9 +177,23 @@ var Profile = EmberObject.extend({
     var results = (this.get('results') || {}).responses || {};
     var show_results = Object.keys(results).length > 0;
     this.get('template.question_groups').forEach(function(group) {
+      var style = "";
+      if(group.border) {
+        var rgb = group.border.map(function(n) { return parseInt(n, 10); }).join(', ');
+        style = style + "border-color: rgb(" + rgb + "); ";
+      }
+      if(group.background) {
+        var rgb = group.background.map(function(n) { return parseInt(n, 10); }).join(', ');
+        style = style + "background-color: rgb(" + rgb + "); ";
+        var avg = (group.background[0] + group.background[1] + group.background[2]) / 3;
+        if(avg < 150) {
+          style = style + "color: #fff; ";
+        }
+      }
       list.push({
         id: group.id,
         header: true,
+        hader_style: htmlSafe(style),
         label: group.label
       });
       group.questions.forEach(function(question) {
@@ -248,7 +263,9 @@ var Profile = EmberObject.extend({
           data.value = cats[report.score_category].value;
           data.pre_value = cats[report.score_category].pre_value;
           if(cats[report.score_category].border) {
-            data.circle_style = htmlSafe("border-color: rgb(" + cats[report.score_category].border.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
+            var rgb = cats[report.score_category].border.map(function(n) { return parseInt(n, 10); }).join(', ');
+            data.circle_style = htmlSafe("border-color: rgb(" + rgb + ");");
+            data.summary_color = cats[report.score_category].border;
           }
           if(report.summary) {
             data.summary = data.summary || data.value;
@@ -334,13 +351,15 @@ var Profile = EmberObject.extend({
           date: date
         };
         if(report.border) {
-          data.border_style = htmlSafe("border-color: rgb(" + report.border.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
+          var rgb = report.border.map(function(n) { return parseInt(n, 10); }).join(', ');
+          data.border_style = htmlSafe("border-color: rgb(" + rgb + ");");
         }
         (report.score_categories || []).forEach(function(cat) {
           data.scores.push(cats[cat].value || "?");
         });
         data.value = data.scores.join(report.join || '-');
         if(report.summary) {
+          data.summary_color = report.border;
           data.summary = data.summary || data.value;
         }
 
@@ -547,8 +566,9 @@ var Profile = EmberObject.extend({
     });
     var throwaway = profiles.process(json);
     throwaway.get('reports_layout').forEach(function(r) { 
-      if(r.summary) {
+      if(r.summary && !json.summary) {
         json.summary = json.summary || r.summary;
+        json.summary_color = r.summary_color;
       }
     });
 
@@ -632,12 +652,19 @@ var Profile = EmberObject.extend({
 
 var profiles = {
   template: function(id) {
-    if(id == 'sample') {
-      return profiles.process(sample_profile);
-    } else if(id == 'cole') {
-      return profiles.process(cole_profile);
-    }
-    return null;
+    return new RSVP.Promise(function(resolve, reject) {
+      if(id == 'sample') {
+        resolve(profiles.process(sample_profile));
+      } else if(id == 'cole') {
+        resolve(profiles.process(cole_profile));
+      } else {
+        CoughDrop.store.findRecord('profile', id).then(function(prof) {
+          resolve(profiles.process(prof.get('template')));
+        }, function(err) {
+          reject(err);
+        })
+      }
+    });
   },
   process: function(json) {
     if(typeof(json) == 'string') {
@@ -746,6 +773,8 @@ var cole_profile = {
     {
       id: "stage_1",
       label: "Stage 1",
+      border: [26, 55, 130],
+      background: [171, 194, 255],
       questions: [
         {
           id: "q11",
@@ -793,6 +822,8 @@ var cole_profile = {
     {
       id: "stage_2",
       label: "Stage 2",
+      border: [90, 117, 150],
+      background: [173, 203, 240],
       questions: [
         {
           id: "q21",
@@ -831,6 +862,8 @@ var cole_profile = {
     {
       id: "stage_3",
       label: "Stage 3",
+      border: [103, 161, 184],
+      background: [194, 236, 252],
       questions: [
         {
           id: "q31",
@@ -887,6 +920,8 @@ var cole_profile = {
     {
       id: "stage_4",
       label: "Stage 4",
+      border: [117, 195, 217],
+      background: [196, 242, 255],
       questions: [
         {
           id: "q41",
@@ -943,6 +978,8 @@ var cole_profile = {
     {
       id: "stage_5",
       label: "Stage 5",
+      border: [119, 202, 209],
+      background: [196, 250, 255],
       questions: [
         {
           id: "q51",
@@ -972,6 +1009,8 @@ var cole_profile = {
     {
       id: "stage_6",
       label: "Stage 6",
+      border: [124, 217, 207],
+      background: [207, 255, 250],
       questions: [
         {
           id: "q61",
@@ -1064,6 +1103,8 @@ var cole_profile = {
     {
       id: "stage_7",
       label: "Stage 7",
+      border: [110, 186, 165],
+      background: [188, 245, 229],
       questions: [
         {
           id: "q71",
@@ -1084,6 +1125,8 @@ var cole_profile = {
     {
       id: "stage_8",
       label: "Stage 8",
+      border: [100, 179, 134],
+      background: [171, 245, 203],
       questions: [
         {
           id: "q81",
@@ -1113,6 +1156,8 @@ var cole_profile = {
     {
       id: "stage_9",
       label: "Stage 9",
+      border: [83, 181, 108],
+      background: [154, 230, 173],
       questions: [
         {
           id: "q91",
@@ -1223,6 +1268,8 @@ var cole_profile = {
     {
       id: "stage_10",
       label: "Stage 10",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
       questions: [
         {
           id: "qa1",
@@ -1360,6 +1407,8 @@ var cole_profile = {
     {
       id: "stage_11",
       label: "Stage 11",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
       questions: [
         {
           id: "qb1",

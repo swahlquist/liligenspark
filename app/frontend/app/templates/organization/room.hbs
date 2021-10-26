@@ -211,14 +211,14 @@
   {{/if}}
   <h3>{{t "Supervisors" key='supervisors'}}</h3>
   {{#if model.supervisors}}
-    {{stats/user-weeks unit=model user_type='supervisor' users=model.supervisors weeks=model.supervisor_weeks delete_user='delete_unit_user' refresh='refresh' deletable=model.permissions.edit}}
+    {{stats/user-weeks unit=model user_type='supervisor' users=model.supervisors weeks=model.supervisor_weeks delete_user='delete_unit_user' user_profile='supervisor_profile' refresh='refresh' deletable=model.permissions.edit profiles=model.org_profile show_profiles=model.org_supervisor_profile}}
   {{else}}
     <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
   {{/if}}
 
   <h3>{{t "Communicators" key='communicators'}}</h3>
   {{#if model.communicators}}
-    {{stats/user-weeks unit=model user_type='communicator' org=organization users=model.communicators weeks=model.user_weeks room_goal_id=model.goal_id delete_user='delete_unit_user' refresh='refresh' deletable=model.permissions.edit max_session_count=model.max_session_count}}
+    {{stats/user-weeks unit=model user_type='communicator' org=organization users=model.communicators weeks=model.user_weeks room_goal_id=model.goal_id delete_user='delete_unit_user' user_profile='communicator_profile' refresh='refresh' deletable=model.permissions.edit max_session_count=model.max_session_count profiles=model.org_profile show_profiles=model.org_communicator_profile}}
   {{else}}
     <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
   {{/if}}

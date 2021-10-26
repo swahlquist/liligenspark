@@ -113,8 +113,10 @@ module Uploader
   end
 
   def self.remote_remove_batch
-    updated_ids = []
+    total = 0
     RemoteAction.where(['act_at < ?', Time.now]).find_in_batches(batch_size: 100) do |batch|
+      updated_ids = []
+      puts "#{batch[0].id}..."
       batch.each do |ra|
         updated_ids << ra.id
         if ra.action == 'delete'
@@ -123,17 +125,18 @@ module Uploader
           user_id, org_id = ra.path.split(/::/, 2)
           UserMailer.schedule_delivery(:organization_unassigned, user_id, org_id)
         elsif ra.action == 'upload_button_set'
-          board_id, user_id = ra.path.splt(/::/, 2)
+          board_id, user_id = ra.path.split(/::/, 2)
           BoardDownstreamButtonSet.schedule_for(:slow, :update_for, board_id, true)
         elsif ra.action == 'upload_extra_data'
-          board_id, user_id = ra.path.splt(/::/, 2)
+          board_id, user_id = ra.path.split(/::/, 2)
           BoardDownstreamButtonSet.schedule_for(:slow, :generate_for, board_id, user_id)
         end
       end
+      RemoteAction.where(id: updated_ids).delete_all
+      total += updated_ids.length
     end
-    RemoteAction.where(id: updated_ids).delete_all
     RemoteAction.where(['created_at < ?', 3.months.ago]).delete_all
-    updated_ids.length
+    total
   end
 
   def self.remote_remove(url)

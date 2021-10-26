@@ -407,6 +407,52 @@ describe JsonApi::User do
         json = JsonApi::User.build_json(u, :include_subscription => true)
         expect(json['subscription']).not_to eq(nil)
       end
+
+      it "should include last profile run if supervise permission is set" do
+        u = User.create
+        d = Device.create(user: u)
+        s = LogSession.create(data: {
+          'profile' => {
+            'id' => 'mmm',
+            'summary' => 12,
+            'started' => Time.parse('June 1, 2000').to_i
+          }
+        }, user: u, author: u, device: d)
+
+        json = JsonApi::User.build_json(u, permissions: u)
+        expect(json['last_profile']).to eq(nil)
+
+        Worker.process_queues
+        json = JsonApi::User.build_json(u.reload, permissions: u)
+        expect(json['last_profile']).to eq({
+          "added" => 959839200,
+          "expected" => 990943200,
+          "log_id" => s.global_id,
+          "profile_id" => "mmm",
+          "summary" => 12,
+          "summary_color" => nil,
+          "template_id" => nil,          
+        })
+
+        s = LogSession.create(data: {
+          'profile' => {
+            'id' => 'vvv',
+            'summary' => 123,
+            'started' => Time.parse('June 1, 2005').to_i
+          }
+        }, user: u, author: u, device: d)
+        Worker.process_queues
+        json = JsonApi::User.build_json(u.reload, permissions: u)
+        expect(json['last_profile']).to eq({
+          "added" => 1117605600,
+          "expected" => 1148709600,
+          "log_id" => s.global_id,
+          "profile_id" => "vvv",
+          "summary" => 123,
+          "summary_color" => nil,
+          "template_id" => nil,          
+        })
+      end
     end
     
     describe "sidebar_boards" do

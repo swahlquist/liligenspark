@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20211007174714) do
+ActiveRecord::Schema.define(version: 20211015180928) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20211007174714) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -347,9 +347,11 @@ ActiveRecord::Schema.define(version: 20211007174714) do
     t.integer  "user_id"
     t.integer  "organization_id"
     t.integer  "parent_id"
-    t.text     "profile"
-    t.datetime "created_at",      null: false
-    t.datetime "updated_at",      null: false
+    t.datetime "created_at",        null: false
+    t.datetime "updated_at",        null: false
+    t.text     "settings"
+    t.string   "public_profile_id"
+    t.index ["public_profile_id"], name: "index_profile_templates_on_public_profile_id", unique: true, using: :btree
   end
 
   create_table "progresses", force: :cascade do |t|

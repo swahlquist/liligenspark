@@ -42,6 +42,16 @@ module JsonApi::Organization
       json['total_supervisors'] = 0
       json['used_extras'] = org.extras_users.count || 0
       json['include_extras'] = org.settings['include_extras']
+      json['supervisor_profile_id'] = (org.settings['supervisor_profile'] || {})['profile_id'] || 'default'
+      if json['supervisor_profile_id'] == 'default'
+        json['supervisor_profile_id'] = ProfileTemplate.default_profile_id('supervisor')
+      end
+      json['supervisor_profile_frequency'] = (((org.settings['supervisor_profile'] || {})['frequency'] || 12.months.to_i).to_f / 1.month.to_f).round(2)
+      json['communicator_profile_id'] = (org.settings['communicator_profile'] || {})['profile_id'] || 'default'
+      if json['communicator_profile_id'] == 'default'
+        json['communicator_profile_id'] = ProfileTemplate.default_profile_id('communicator')
+      end
+      json['communicator_profile_frequency'] = (((org.settings['communicator_profile'] || {})['frequency'] || 12.months.to_i).to_f / 1.month.to_f).round(2)
       user_ids = []
       UserLink.links_for(org).each do |link|
         if link['type'] == 'org_manager'

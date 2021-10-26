@@ -12,7 +12,7 @@ export default Component.extend({
   },
   draw: function() {
     var $elem = $(this.get('element'));
-    $elem.find(".week").tooltip({container: 'body'});
+    $elem.find(".week,.profile_box").tooltip({container: 'body'});
   },
   communicators_with_stats: computed(
     'users',
@@ -124,6 +124,41 @@ export default Component.extend({
           });
           res.push(user);
         });
+        if(_this.get('profiles')) {
+          res.forEach(function(user) {
+            if(user.profile_history && user.profile_history.length > 0) {
+              var prof = null;
+              var now = window.moment();
+              var n_recent = 0;
+              user.profile_history.forEach(function(p) {
+                if(!prof) {
+                  prof = p;
+                  var expected = window.moment(p.expected * 1000);
+                  if(p.expected && expected < now) {
+                    user.profile_class = 'btn btn-default weeks_profile overdue';
+                    user.profile_state = i18n.t('overdue', "overdue");
+                  } else if(p.expected && expected < now.add(-1, 'month')) {
+                    user.profile_class = 'btn btn-default weeks_profile due_soon';
+                    user.profile_state = i18n.t('due_soon', "due soon");
+                  }
+                }
+                var added = window.moment(p.added * 1000);
+                if(added > now.add(-18, 'month')) {
+                  n_recent++;
+                  if(!user.first_profile_history) {
+                    user.first_profile_history = true;
+                  } else if(!user.second_profile_history) {
+                    user.second_profile_history = true;
+                  }
+                }
+              });
+              user.profile_state = user.profile_state || n_recent || i18n.t('none', "none");
+            } else {
+              user.profile_class = 'btn btn-default weeks_profile overdue';
+              user.profile_state = i18n.t('overdue', "overdue");
+            }
+          });  
+        }
         if(_this.get('user_type') == 'total' && res.length > 0) {
           var total_users = res.length;
           var u = res[0];
@@ -247,6 +282,9 @@ export default Component.extend({
     },
     delete_action: function(id) {
       this.sendAction('delete_user', this.get('unit'), this.get('user_type'), id);
+    },
+    user_profile: function(user) {
+      this.sendAction('user_profile', user);
     }
   }
 });

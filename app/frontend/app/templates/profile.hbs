@@ -19,7 +19,7 @@
   </div>
   {{#each profile.questions_layout as |question|}}
     {{#if question.header}}
-      <div class='question_header'>
+      <div class='question_header' style={{question.hader_style}}>
         <b>{{question.label}}</b>
       </div>
     {{else}}

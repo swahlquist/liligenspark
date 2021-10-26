@@ -5,7 +5,12 @@
         <div class="panel-heading">{{t "Date" key='date'}}</div>
         <div class="panel-body">
           {{date processed_profile.started_at}}
-          </div>
+          {{#if expected_profile.state.due_soon}}
+            <br/><button {{action 'repeat_profile'}} class='btn btn-warning'>{{t "Repeat Profile (due soon)" key='repeat_profile_due_soon'}}</button>
+          {{else if expected_profile.overdue}}
+            <br/><button {{action 'repeat_profile'}} class='btn btn-danger'>{{t "Repeat Profile (overdue)" key='repeat_profile_overdue'}}</button>
+          {{/if}}
+        </div>
       </div>
     </div>
     <div class="col-sm-4">
@@ -24,6 +29,7 @@
         </div>
       </div>
     </div>
+    <div style='clear: left;'></div>
     <div class="col-sm-4">
       <div class="panel panel-default summary smaller">
         <div class="panel-heading">{{t "Summary" key='summary'}}</div>

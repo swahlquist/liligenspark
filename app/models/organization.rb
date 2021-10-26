@@ -763,6 +763,7 @@ class Organization < ActiveRecord::Base
           'pending' => !!link['state']['pending'],
           'sponsored' => !!link['state']['sponsored']
         }
+        e['profile'] = org.settings['communicator_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['communicator_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -795,6 +796,7 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
+        e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -938,6 +940,44 @@ class Organization < ActiveRecord::Base
     end
     domains
   end
+
+  def matches_profile_id(type, profile_id, profile_template_id)
+    id = (self.settings["#{type}_profile"] || {})['profile_id']
+    id ||= 'default'
+    return nil if id == 'none' || id == 'blank'
+    if id == 'default'
+      return profile_id == ProfileTemplate.default_profile_id(type)
+    elsif profile_template_id && (self.settings["#{type}_profile"] || {})['template_id']
+      return profile_template_id == (self.settings["#{type}_profile"] || {})['template_id']
+    else
+      return id == profile_id
+    end
+  end
+
+  def profile_frequency(type)
+    seconds = self.settings["#{type}_profile_frequency"]
+    seconds ||= 12.months.to_i
+    seconds
+  end
+
+  def assert_profile(profile_type)
+    template_id = (self.settings[profile_type] || {})['template_id']
+    id = (self.settings[profile_type] || {})['profile_id']
+    return if !id || id == 'none'
+    template = ProfileTemplate.find_by_code(template_id || id)
+    users = []
+    if profile_type == 'supervisor_profile'
+      users = self.attached_users('supervisors')
+    elsif profile_type == 'communicator_profile'
+      users = self.attached_users('approved_users')
+    end
+    users.each do |user|
+      ue = UserExtra.find_or_create_by(user: user)
+      if id
+        ue.process_profile(id, template && template.global_id, self)
+      end
+    end
+  end
   
   def process_params(params, non_user_params)
     self.settings ||= {}
@@ -1054,6 +1094,43 @@ class Organization < ActiveRecord::Base
       end
       if self.settings['host_settings']['twitter_handle']
         self.settings['host_settings']['twitter_handle'] = self.settings['host_settings']['twitter_handle'].sub(/^\@/, '')
+      end
+    end
+
+    ['communicator_profile', 'supervisor_profile'].each do |prof|
+      prof_id = prof + "_id"
+      do_assert = false
+      opts = {'profile_id' => params[prof_id]}
+      if params[prof + "_frequency"].to_i > 0
+        do_assert = (self.settings[prof] || {})['frequency'] != params[prof + "_frequency"].to_i
+        opts['frequency'] = params[prof + "_frequency"].to_f 
+        opts['frequency'] *= 1.month.to_i if opts['frequency'] < 300
+      end
+      if params[prof_id] && (self.settings[prof] || {})['profile_id'] != params[prof_id]
+        valid = false
+        if params[prof_id] == 'default' || params[prof_id] == 'none'
+          valid = true
+        else
+          prof = ProfileTemplate.find_by_code(params[prof_id])
+          if prof
+            if prof.settings['public'] == false && prof.organization != self
+              add_processing_error("#{prof_id} not authorized for this organization")
+              return false
+            end
+            opts['template_id'] = prof.global_id
+            valid = true
+          end
+        end
+        if valid
+          do_assert = true
+        else
+          add_processing_error("#{prof_id} is not valid")
+          return false
+        end
+      end
+      if do_assert
+        self.settings[prof] = opts
+        self.schedule(:assert_profile, prof)
       end
     end
     

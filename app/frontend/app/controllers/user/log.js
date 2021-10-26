@@ -56,6 +56,24 @@ export default Controller.extend({
         });
     }
   }),
+  update_expected_profile: observer('processed_profile.template.id', function() {
+    var _this = this;
+    var template_id = _this.get('processed_profile.template.id');
+    if(template_id && _this.get('expected_profile.id') != template_id) {
+      _this.set('expected_profile', {id: template_id});
+      persistence.ajax('/api/v1/profiles/latest?include_suggestions=1&user_id=' + this.get('user.id') + '&profile_id=' + this.get('processed_profile.template.id'), {type: 'GET'}).then(function(res) {
+        if(res[0] && res[0].expected) {
+          var exp = {id: template_id, state: {}};
+          exp.state[res[0].expected] = true;
+          _this.set('expected_profile', exp);
+        }
+      }, function(err) { 
+        setTimeout(function() {
+          _this.set('expected_profile', null);
+        }, 1000)
+      });
+    }
+  }),
   update_processed_profile: observer(
     'model.type',
     'model.eval_in_memory',
@@ -195,6 +213,11 @@ export default Controller.extend({
     },
     mastery_preview: function() {
       this.set('mastery_preview', !this.get('mastery_preview'));
+    },
+    repeat_profile: function() {
+      if(this.get('processed_profile.template.id')) {
+        this.transitionToRoute('profile', this.get('user.id'), this.get('processed_profile.template.id'));
+      }
     }
   }
 });

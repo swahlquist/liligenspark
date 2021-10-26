@@ -20,7 +20,10 @@ class ExternalNonce < ApplicationRecord
 
   def self.track_usage!(nonce_id)
     nonce = ExternalNonce.find_by_global_id(nonce_id)
-    nonce.increment('uses') if nonce
+    if nonce
+      nonce.increment('uses') 
+      nonce.save
+    end
     !!nonce
   end
 

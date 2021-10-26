@@ -18,20 +18,40 @@ module JsonApi::Unit
       users.each{|u| users_hash[u.global_id] = u }
     end
     
-    links = UserLink.links_for(unit)
     json['supervisors'] = []
     json['communicators'] = []
+    org = unit.organization
+    premium_org = (org.settings['premium'] || org.admin)
+    org_links = UserLink.links_for(org).select{|l| ['org_supervisor', 'org_user'].include?(l['type']) && users_hash[l['user_id']]}
     UserLink.links_for(unit).each do |link|
       user = users_hash[link['user_id']]
       if user
         if link['type'] == 'org_unit_supervisor'
           hash = JsonApi::User.as_json(user, limited_identity: true)
           hash['org_unit_edit_permission'] = !!(link['state'] && link['state']['edit_permission'])
+          org_link = org_links.detect{|l| l['type'] == 'org_supervisor' && l['state']['profile_id'] }
+          if premium_org && org_link && org_link['state']['profile_history'] && org.matches_profile_id('supervisor', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
+            hash['profile_history'] = org_link['state']['profile_history']
+          end
           json['supervisors'] << hash
         elsif link['type'] == 'org_unit_communicator'
-          json['communicators'] << JsonApi::User.as_json(user, limited_identity: true, include_goal: true)
+          hash = JsonApi::User.as_json(user, limited_identity: true, include_goal: true)
+          org_link = org_links.detect{|l| l['type'] == 'org_user' && l['state']['profile_id'] }
+          if premium_org && org_link && org_link['state']['profile_history'] && org.matches_profile_id('communicator', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
+            hash['profile_history'] = org_link['state']['profile_history']
+          end
+          json['communicators'] << hash
         end
       end
+    end
+    if args[:permissions].is_a?(User) && FeatureFlags.feature_enabled_for?('profiles', args[:permissions]) && premium_org
+      prof_id = (org.settings['communicator_profile'] || {'profile_id' => 'none'})['profile_id']
+      prof_id = ProfileTemplate.default_profile_id('communicator') if prof_id == 'default'
+      json['org_communicator_profile'] = !!(prof_id && prof_id != 'none')
+      prof_id = (org.settings['supervisor_profile'] || {'profile_id' => 'none'})['profile_id']
+      prof_id = ProfileTemplate.default_profile_id('supervisor') if prof_id == 'default'
+      json['org_supervisor_profile'] = (org.settings['supervisor_profile'] || {'profile_id' => 'none'})['profile_id'] != 'none'
+      json['org_profile'] = !!(json['org_supervisor_profile'] || json['org_communicator_profile'])
     end
     json['goal'] = nil
     if unit.user_goal

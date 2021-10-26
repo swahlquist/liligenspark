@@ -2,6 +2,7 @@ import CoughDrop from '../app';
 import app_state from '../utils/app_state';
 import contentGrabbers from '../utils/content_grabbers';
 import modal from '../utils/modal';
+import { computed } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -11,6 +12,14 @@ export default modal.ModalController.extend({
       _this.set('external_auth', true);
     }
   },
+  no_communicator_profile: computed('model.org.communicator_profile_id', function() {
+    var id = this.get('model.org.communicator_profile_id');
+    return !!(id == 'none' || id == '' || !id);
+  }),
+  no_supervisor_profile: computed('model.org.supervisor_profile_id', function() {
+    var id = this.get('model.org.supervisor_profile_id');
+    return !!(id == 'none' || id == '' || !id);
+  }),
   actions: {
     close: function() {
       modal.close(false);

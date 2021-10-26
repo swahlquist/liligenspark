@@ -1,18 +1,80 @@
 class Api::ProfilesController < ApplicationController
+  before_action :require_api_token
+
+  def show
+    profile = ProfileTemplate.find_by_code(params['id'])
+    profile ||= ProfileTemplate.static_template(params['id'])
+    return unless exists?(profile, params['id'])
+    return unless allowed?(profile, 'view')
+    render json: JsonApi::Profile.as_json(profile, :wrapper => true, :permissions => @api_user)
+  end
+  
   def latest
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
-    sessions = LogSession.where(user: user, profile_id: params['profile_id']).where('started_at IS NOT NULL').order('started_at DESC').limit(10)
-    return unless exists?(session, params['profile_id'])
+    if params['profile_id']
+      sessions = LogSession.where(user: user, profile_id: params['profile_id']).where('started_at IS NOT NULL').order('started_at DESC').limit(10)
+    else
+      sessions = LogSession.where(user: user, log_type: 'profile').where('profile_id IS NOT NULL AND started_at IS NOT NULL').order('started_at DESC').limit(10)
+    end
+    sessions = sessions.to_a
+    if params['include_suggestions']
+      original_sessions = [] + sessions
+      Organization.attached_orgs(user).each do |org|
+        if org['profile']
+          # For every profile-configured org, check for frequency
+          # and update any actual sessions with frequency data
+          shown_sessions = original_sessions.select{|s| s.profile_id == org['profile']['profile_id'] }
+          org['profile']['frequency'] ||= 12.months.to_i
+          if org['profile']['frequency']
+            shown_sessions.each do |session|
+              session.data['expected'] = [session.data['expected'], session.started_at + org['profile']['frequency']].compact.min
+              puts session.data['expected']
+            end
+          end
+          # If there are no sessions for the org's desired profile,
+          # then return a blank template at the end
+          if shown_sessions.length == 0
+            template = ProfileTemplate.find_by_code(org['profile']['template_id'] || org['profile']['profile_id'])
+            template ||= ProfileTemplate.static_template(org['profile']['profile_id'])
+            template ||= ProfileTemplate.static_template(ProfileTemplate.default_profile_id(org['type'] == 'user' ? 'communicator' : 'supervisor')) if org['profile']['profile_id'] == 'default'
+            template.settings['profile']['from_org'] = true if template
+            sessions << template if template
+          end
+        end
+      end
+      
+      if sessions.count == 0
+        template = ProfileTemplate.static_template(ProfileTemplate.default_profile_id(user.settings['preferences']['role'] == 'communicator' ? 'communicator' : 'supervisor'))
+        sessions << template if template
+      end
+    end
     list = sessions.map do |session|
-      author = session.author
-      {
-        started: session.started_at,
-        log_id: session.global_id,
-        profile: session.data['profile'].except('results', 'encrypted_results'),
-        author: {user_name: author.user_name, id: author.global_id}
-      }
+      if session.respond_to?(:author)
+        # actual session
+        author = session.author
+        expected = nil
+        expected = 'due_soon' if session.data['expected'] && session.data['expected'] < 1.month.from_now
+        expected = 'overdue' if session.data['expected'] && session.data['expected'] < Time.now
+        {
+          started: session.started_at,
+          expected: expected,
+          log_id: session.global_id,
+          profile: session.data['profile'].except('results', 'encrypted_results'),
+          author: {user_name: author.user_name, id: author.global_id}
+        }
+      else
+        prof = session.settings['profile']
+        prof['id'] = session.public_profile_id
+        prof['template_id'] = session.global_id
+        # profile template
+        {
+          id: session.global_id,
+          profile_id: session.public_profile_id,
+          profile: session.settings['profile']
+        }
+      end
     end
     render json: list
   end

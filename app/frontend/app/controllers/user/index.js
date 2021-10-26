@@ -670,6 +670,9 @@ export default Controller.extend({
     },
     manual_log: function() {
       CoughDrop.Log.manual_log(this.get('model.id'), !!this.get('model.external_device'));
+    },
+    profile_preview: function() {
+      modal.open('modals/profiles', {user: this.get('model')});
     }
   }
 });

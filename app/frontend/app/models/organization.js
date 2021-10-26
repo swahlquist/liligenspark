@@ -51,6 +51,10 @@ CoughDrop.Organization = DS.Model.extend({
   recent_session_user_count: DS.attr('number'),
   recent_session_count: DS.attr('number'),
   custom_domain: DS.attr('boolean'),
+  supervisor_profile_id: DS.attr('string'),
+  supervisor_profile_frequency: DS.attr('number'),
+  communicator_profile_id: DS.attr('string'),
+  communicator_profile_frequency: DS.attr('number'),
   hosts: DS.attr('raw'),
   host_settings: DS.attr('raw'),
   update_licenses_expire: function() {

@@ -17,9 +17,35 @@
             {{/if}}
           {{/if}}
           {{#if notable}}
-            <button {{action 'note' user}} class='btn btn-default' style='position: absolute; right: 5px;'><span class='glyphicon glyphicon-file'></span><span class='sr-only'>{{t "Record note for %{un}" un=user.user_name key='record_note_for_user'}}</span></button>
+            <button {{action 'note' user}} class='btn_tooltip btn btn-default' style='position: absolute; right: 5px; width: 30px; padding: 6px 0;'><span class='glyphicon glyphicon-file'></span><span class='sr-only'>{{t "Record note for %{un}" un=user.user_name key='record_note_for_user'}}</span></button>
           {{/if}}
         </td>
+        {{#if profiles}} <!-- if org has default communicator or supporter profile, and org is premium -->
+          <td style='width: 60px; padding-bottom: 0;'>
+            {{#if show_profiles}}
+              <div class='profile_box' title={{t "Communication Profiles (%{state})" state=user.profile_state key='communication_profiles'}} data-toggle="tooltip" data-placement="top">
+                {{#if user.second_profile_history}}
+                  <button class='btn btn-default' {{action 'user_profile' user}} style='position: absolute; margin-left: -3px; margin-top: -3px;'>
+                    <span class='glyphicon glyphicon-lamp'></span>
+                  </button>
+                {{/if}}
+                {{#if user.first_profile_history}}
+                  <button class='btn btn-default' {{action 'user_profile' user}} style='position: absolute; margin-left: 0px; margin-top: 0px;'>
+                    <span class='glyphicon glyphicon-lamp'></span>
+                  </button>
+                {{/if}}
+                <button class={{if user.profile_class user.profile_class 'weeks_profile btn btn-default'}} {{action 'user_profile' user}} style={{if user.first_profile_history 'margin-left: 3px; margin-top: 3px;'}}>
+                  <span class='glyphicon glyphicon-lamp'></span>
+                </button>
+              </div>
+              <!-- don't show the score, that's personal and 
+                  not useful at a glance. Show how many assessments
+                  they've had in the last year (maybe just via visible overlap)
+                  and how due/overdue they are for a repeat assessment
+              -->
+            {{/if}}
+          </td>
+        {{/if}}
         <td style='padding: 0;'>
           <div class='user_weeks'>
             {{#each user.week_stats as |stat|}}
@@ -55,6 +81,9 @@
     {{/each}}
     <tr>
       <td style='width: 20%;' class='text-muted'>{{t "week of" key='week_of'}}</td>
+      {{#if profiles}}
+        <td></td>
+      {{/if}}
       <td style='padding: 5px 0 0;'>
         <div class='user_weeks'>
           {{#each labeled_weeks as |label|}}

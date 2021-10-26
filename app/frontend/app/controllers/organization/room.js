@@ -119,6 +119,14 @@ export default Controller.extend({
         modal.error(i18n.t('error_removing_user', "There was an unexpected error while trying to remove the user"));
       });
     },
+    communicator_profile: function(user) {
+      var profile_id = this.get('organization.communicator_profile_id');
+      modal.open('modals/profiles', {user: user, profile_id: profile_id, type: 'communicator'});
+    },
+    supervisor_profile: function(user) {
+      var profile_id = this.get('organization.supervisor_profile_id');
+      modal.open('modals/profiles', {user: user, profile_id: profile_id, type: 'supervisor'});
+    },
     set_goal: function(decision) {
       var _this = this;
       if(_this.get('model.goal') && !decision) {

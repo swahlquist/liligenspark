@@ -49,7 +49,7 @@ class LibraryCache < ApplicationRecord
     image_id = nil
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |k, h|
-        if h['added'] < 3.months.ago.to_i
+        if h['added'] < 9.months.ago.to_i
           self.data[cat][k].delete('data')
         end
         image_id ||= h['image_id'] if h['image_id'] && h['url'] == word_data['url']
@@ -111,7 +111,7 @@ class LibraryCache < ApplicationRecord
     words.each do |word|
       word = word.downcase
       ['defaults', 'fallbacks'].each do |cat|
-        cutoff = (cat == 'defaults') ? 3.months.ago.to_i : 8.weeks.ago.to_i
+        cutoff = (cat == 'defaults') ? 18.months.ago.to_i : 9.months.ago.to_i
         if !found[word] && self.data[cat][word] && self.data[cat][word]['added'] > cutoff && self.data[cat][word]['data']
           found[word] = {}.merge(self.data[cat][word]['data'])
           found[word]['coughdrop_image_id'] = self.data[cat][word]['image_id']

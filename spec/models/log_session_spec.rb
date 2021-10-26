@@ -441,6 +441,34 @@ describe LogSession, :type => :model do
       expect(s.highlighted).to eq(true)
       expect(s.data['highlight_summary']).to eq('ruxl.. u')
     end
+
+    it "should generate a profile summary" do
+      u = User.create
+      d = Device.create
+      s = LogSession.process_new({'profile' => {
+        'id' => 'aaa'
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      expect(s.log_type).to eq('profile')
+      expect(s.profile_id).to eq('aaa')
+    end
+
+    it "should set profile_id for the appropriate profile-type logs" do
+      u = User.create
+      d = Device.create
+      s = LogSession.process_new({'profile' => {
+        'id' => 'aaa'
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      expect(s.log_type).to eq('profile')
+      expect(s.profile_id).to eq('aaa')
+
+
+      s = LogSession.process_new({'profile' => {
+        'id' => 'aaa',
+        'type' => 'funding'
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      expect(s.log_type).to eq('profile')
+      expect(s.profile_id).to eq(nil)
+    end
   end
   
   describe "generate_stats" do

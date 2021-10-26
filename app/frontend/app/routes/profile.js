@@ -10,14 +10,12 @@ export default Route.extend({
   model: function(params) {
     // look up profile by id, get user as well
     return CoughDrop.store.findRecord('user', params.user_id).then(function(user) {
-      var profile = profiles.template(params.profile_id);
-      if(!profile) {
-        return RSVP.reject({error: 'profile not found'})
-      }
-      return {
-        user: user,
-        profile: profile
-      }
+      return profiles.template(params.profile_id).then(function(profile) {
+        return {
+          user: user,
+          profile: profile
+        }
+      })
     });
   },
   setupController: function(controller, model) {

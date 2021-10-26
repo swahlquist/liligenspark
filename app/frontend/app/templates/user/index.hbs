@@ -143,21 +143,48 @@
         </button>
       </div>
       {{#if model.permissions.supervise}}
+        <div class='col-sm-3 col-xs-6 big_button_holder'>
+          {{#if app_state.feature_flags.profiles}}
+            <button class='btn big_button btn-default' {{action "profile_preview" model}} style='height: 100px; padding-top: 0;'>
+              <div style='font-size: 14px; margin-top: -3px;'>{{t "Latest Communication Profile:" key='latest_profile'}}</div>
+              <div>
+                <div class={{model.profile_class}}>
+                  {{#if model.last_profile}}
+                    {{date model.last_profile_date 'tiny_day'}}
+                  {{else}}
+                    {{t "None" key='none'}}
+                  {{/if}}
+                </div>
+              </div>
+              <div style='font-size: 12px; color: #888; margin-top: -7px;'>
+                {{#if model.profile_due.overdue}}
+                  {{t "overdue" key='overdue'}}
+                {{else if model.profile_due.soon}}
+                  {{t "due soon" key='due_soon'}}
+                {{else if model.profile_due.encouraged}}
+                  {{t "consider updating soon"}}
+                {{/if}}
+              </div>
+            </button>
+          {{/if}}
+        </div>
         {{#if model.external_device}}
           <div class='col-sm-3 col-xs-6 big_button_holder'>
-            <button class='btn big_button btn-default lesser_button' {{action "manual_log"}} style='height: 100px;'>
+            <button class='btn big_button btn-default secondary_button' {{action "manual_log"}} style='height: 100px;'>
               Manual Log<br/>Session
             </button>
           </div>
           <div class='col-sm-3 col-xs-6 big_button_holder'>
-            <button class='btn big_button btn-default secondary_button' {{action "recordNote" "text"}} style='height: 100px;'>
+              <button class='btn big_button btn-default alternate_button' {{action "recordNote" "text"}} style='height: 100px;'>
               New Note
             </button>
           </div>
+        {{else}}
+          <div class='col-sm-6'></div>
         {{/if}}
 
         {{#unless app_state.currentUser.modeling_only}}
-          <div class={{if model.external_device 'col-sm-3 col-sm-offset-3' 'col-xs-12'}} style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
+          <div class='col-sm-3' style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
             <div class="btn-group">
               <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='border-width: 3px; background: #eee;'>
                 <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/extra_455_g.svg' style='height: 30px;'/>

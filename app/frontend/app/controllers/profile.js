@@ -22,7 +22,16 @@ export default Controller.extend({
       }
     }, function(err) { });
   },
-  pending_question_ids: computed('profile.questions_layout.@each.answers.@each.selected', 'answer_ts', function() {
+  all_answers: computed('profile.questions_layout.@each.answers', 'answer_ts', function() {
+    var res = [];
+    this.get('profile.questions_layout').forEach(function(q) {
+      if(q.answers) {
+        res = res.concat(q.answers);
+      }
+    });
+    return res;
+  }),
+  pending_question_ids: computed('all_answers.@each.selected', 'answer_ts', function() {
     var qs = [];
     (this.get('profile.questions_layout') || []).forEach(function(q) {
       if(q.answers && !q.answer_type.text && !q.question_header) {

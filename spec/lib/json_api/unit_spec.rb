@@ -100,6 +100,50 @@ describe JsonApi::Unit do
       expect(json['supervisors'][1]['org_unit_edit_permission']).to eq(true)
       expect(json['supervisors'][0]['org_unit_edit_permission']).to eq(false)
     end
+
+    it "should include for communicators/supervisors, profile history if saved on UserLink records" do
+      u = User.create
+      d = Device.create(user: u)
+      o = Organization.create(settings: {'premium' => true, 'supervisor_profile' => {'profile_id' => 'qqq'}})
+      o.add_supervisor(u.user_name, false)
+      s = LogSession.create!(data: {
+          'profile' => {
+            'id' => 'qqq',
+            'name' => 'Best Profile'
+          },
+        },
+        user: u, author: u, device: d
+      )
+      Worker.process_queues
+      Worker.process_queues
+      links = UserLink.where(user: u.reload)
+      expect(links.length).to eq(1)
+      expect(links[0].data['type']).to eq('org_supervisor')
+      expect(links[0].data['state']).to_not eq(nil)
+      expect(links[0].data['state']['profile_history']).to_not eq(nil)
+      expect(links[0].data['state']['profile_id']).to eq('qqq')
+      expect(links[0].data['state']['profile_history'][0]['log_id']).to eq(s.global_id)
+
+      unit = OrganizationUnit.create(:settings => {'name' => 'Roomy'}, :organization => o)
+      unit.add_supervisor(u.user_name, true)
+      json = JsonApi::Unit.build_json(unit)
+      expect(json['supervisors'].length).to eq(1)
+      expect(json['supervisors'][0]['profile_history']).to_not eq(nil)
+      expect(json['supervisors'][0]['profile_history'][0]['log_id']).to eq(s.global_id)
+    end
+
+    it "should include whether org has profiles defined" do
+      u = User.create
+      u.enable_feature('profiles')
+      u.save
+      d = Device.create(user: u)
+      o = Organization.create(settings: {'premium' => true, 'supervisor_profile' => {'profile_id' => 'qqq'}})
+      unit = OrganizationUnit.create(:settings => {'name' => 'Roomy'}, :organization => o)
+      json = JsonApi::Unit.build_json(unit, permissions: u)
+      expect(json['org_communicator_profile']).to eq(false)
+      expect(json['org_supervisor_profile']).to eq(true)
+      expect(json['org_profile']).to eq(true)
+    end
   end
   
   describe "page_data" do

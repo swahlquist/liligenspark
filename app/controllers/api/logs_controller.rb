@@ -62,10 +62,10 @@ class Api::LogsController < ApplicationController
     if params['type'] == 'journal'
       return unless allowed?(user, 'delete')
     end
-    if params['type'] != 'all' && ['session', 'note', 'assessment', 'eval', 'journal'].include?(params['type'])
+    if params['type'] != 'all' && ['session', 'note', 'assessment', 'eval', 'profile', 'journal'].include?(params['type'])
       logs = logs.where(:log_type => params['type'])
     else
-      logs = logs.where(:log_type => ['session', 'note', 'assessment', 'eval'])
+      logs = logs.where(:log_type => ['session', 'note', 'assessment', 'eval', 'profile'])
     end
     if for_self && user.supporter_role?
       logs = logs.where(:log_type => ['note', 'eval'])
@@ -138,7 +138,7 @@ class Api::LogsController < ApplicationController
     cutoff = user.logging_cutoff_for(@api_user, logging_code_for(user))
     if cutoff && log.started_at < cutoff.hours.ago
       return unless allowed?(user, 'never_allow')
-    end    
+    end
     
     render json: JsonApi::Log.as_json(log, :wrapper => true, :permissions => @api_user).to_json
   end
