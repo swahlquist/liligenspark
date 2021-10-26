@@ -1937,6 +1937,9 @@ var persistence = EmberObject.extend({
     var all_image_urls = {};
     var get_images = get_remote_revisions.then(function() {
       return persistence.queue_sync_action('find_all_image_urls', sync_id, function() {
+        // This will only include images that were loaded
+        // via store.findRecord('image', image_id) not those
+        // fast-loaded from board.image_urls
         return coughDropExtras.storage.find_all('image').then(function(list) {
           list.forEach(function(img) {
             if(img.data && img.data.id && img.data.raw && img.data.raw.url) {

@@ -7,6 +7,8 @@ class BoardContent < ApplicationRecord
   # When making a copy of a board, if there is no content offload
   # or there are measurable changes from the current content offload,
   # create a new content offload and link both old and new to it.
+  # NOTE: If board_content records ever change, then versioning
+  # will break for any boards tied to board_content
 
   def generate_defaults
     # TODO: freeze changed, these should never be updated
