@@ -14,12 +14,17 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data ||= {}
     self.data['remote_salt'] ||= GoSecure.nonce('remote_salt')
     @buttons = nil
+    @cached_extra_data = nil
     if !skip_extra_data_processing? || force
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
       self.data['public_board_ids'] = Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
       self.data['button_count'] = self.buttons.length
       self.data['board_count'] = self.buttons.map{|b| b['board_id'] }.uniq.length
+      if true #(self.data['buttons'] || []).length > 200
+        @cached_extra_data = self.data['buttons']
+        self.data.delete['buttons']
+      end
       self.data.delete('json_response')
     end
     true

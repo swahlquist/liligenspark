@@ -2,6 +2,7 @@ module ExtraData
   extend ActiveSupport::Concern
 
   def detach_extra_data(frd=false)
+    frd = true if @cached_extra_data
     if !frd
       if !skip_extra_data_processing? && extra_data_too_big? && !@already_scheduled_detach_extra_data
         @already_scheduled_detach_extra_data = true
@@ -12,7 +13,7 @@ module ExtraData
     raise "extra_data_attribute not defined" unless self.extra_data_attribute
 
     Octopus.using(:master) do
-      if self.data['extra_data_nonce'] && !self.data[self.extra_data_attribute]
+      if self.data['extra_data_nonce'] && !self.data[self.extra_data_attribute] && !@cached_extra_data
         if self.data['extra_data_revision'] == self.data['full_set_revision']
           private_path = self.extra_data_private_url
           private_path = private_path.sub("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/", "") if private_path
@@ -31,7 +32,7 @@ module ExtraData
         self.data['extra_data_nonce'] ||= GoSecure.nonce('extra_data_storage')
         # for button_sets, pull out self.data['buttons']
         # for logs, pull out self.data['events']
-        extra_data = self.data[extra_data_attribute]
+        extra_data = @cached_extra_data || self.data[extra_data_attribute]
         return false if extra_data == nil
         extra_data_version = 2
         private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, extra_data_version, true)
@@ -116,6 +117,8 @@ module ExtraData
     # but doesn't have the data locally
     if @skip_extra_data_update
       return true
+    elsif @cached_extra_data
+      return false
     elsif self.data && !self.data[extra_data_attribute] && self.data['extra_data_nonce']
       return true
     end
@@ -129,7 +132,7 @@ module ExtraData
       if self.data && self.data['events'] && self.data['events'].length > 5
         return true
       end
-    elsif self.is_a?(BoardDownstreamButtonSet) && self.data['buttons'] && self.data['buttons'].length > 0
+    elsif self.is_a?(BoardDownstreamButtonSet) && (@cached_extra_data || self.data['buttons'] || []).length > 0
       return true
     end
     # default would be to stringify and check length,
@@ -149,6 +152,9 @@ module ExtraData
     # that will end up updating the record, so we can lock it there
     # instead of here?
     url = self.extra_data_private_url
+    if @cached_extra_data
+      self.data[self.extra_data_attribute] = @cached_extra_data
+    end
     if url && !self.data[self.extra_data_attribute]
       req = Typhoeus.get(url, timeout: 10)
       data = JSON.parse(req.body) rescue nil
