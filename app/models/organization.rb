@@ -955,21 +955,22 @@ class Organization < ActiveRecord::Base
   end
 
   def profile_frequency(type)
-    seconds = self.settings["#{type}_profile_frequency"]
+    seconds = (self.settings["#{type}_profile"] || {})["frequency"]
     seconds ||= 12.months.to_i
     seconds
   end
 
   def assert_profile(profile_type)
+    profile_type += "_profile" unless profile_type.match(/_profile/)
     template_id = (self.settings[profile_type] || {})['template_id']
     id = (self.settings[profile_type] || {})['profile_id']
     return if !id || id == 'none'
     template = ProfileTemplate.find_by_code(template_id || id)
     users = []
     if profile_type == 'supervisor_profile'
-      users = self.attached_users('supervisors')
+      users = self.attached_users('supervisor')
     elsif profile_type == 'communicator_profile'
-      users = self.attached_users('approved_users')
+      users = self.attached_users('approved_user')
     end
     users.each do |user|
       ue = UserExtra.find_or_create_by(user: user)
@@ -1110,14 +1111,15 @@ class Organization < ActiveRecord::Base
         valid = false
         if params[prof_id] == 'default' || params[prof_id] == 'none'
           valid = true
+          opts = nil if params[prof_id] == 'none'
         else
-          prof = ProfileTemplate.find_by_code(params[prof_id])
-          if prof
-            if prof.settings['public'] == false && prof.organization != self
+          pt = ProfileTemplate.find_by_code(params[prof_id])
+          if pt
+            if pt.settings['public'] == false && pt.organization != self
               add_processing_error("#{prof_id} not authorized for this organization")
               return false
             end
-            opts['template_id'] = prof.global_id
+            opts['template_id'] = pt.global_id
             valid = true
           end
         end

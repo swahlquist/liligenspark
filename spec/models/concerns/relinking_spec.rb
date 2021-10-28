@@ -78,20 +78,20 @@ describe Relinking, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
-      expect(b.settings['buttons'][0]['load_board']['id']).to eq(b.global_id)
+      expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
       res = b.copy_for(u, true)
-      expect(res.settings['buttons'][0]['load_board']['id']).to eq(res.global_id)
+      expect(res.buttons[0]['load_board']['id']).to eq(res.global_id)
     end
     
     it "should not keep updating parent links if re-added" do
       u = User.create
       b = Board.create(:user => u)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
-      expect(b.settings['buttons'][0]['load_board']['id']).to eq(b.global_id)
+      expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
       res = b.copy_for(u, true)
-      expect(res.settings['buttons'][0]['load_board']['id']).to eq(res.global_id)
+      expect(res.buttons[0]['load_board']['id']).to eq(res.global_id)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
-      expect(b.settings['buttons'][0]['load_board']['id']).to eq(b.global_id)
+      expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
     end
 
     it "should create a new copy of the specified board for the user and clone content" do
@@ -429,13 +429,13 @@ describe Relinking, :type => :model do
       Board.copy_board_links_for(u2, {:starting_old_board => b1, :starting_new_board => b2})
 
       b2.reload
-      expect(b2.settings['buttons'][0]['load_board']['key']).not_to eq(b1a.key)
-      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
-      expect(b2a.settings['buttons'][0]['load_board']['key']).not_to eq(b1b.key)
+      expect(b2.buttons[0]['load_board']['key']).not_to eq(b1a.key)
+      b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
+      expect(b2a.buttons[0]['load_board']['key']).not_to eq(b1b.key)
       expect(b2a.public).to eq(false)
-      b2b = Board.find_by_path(b2a.settings['buttons'][0]['load_board']['key'])
-      expect(b2.settings['buttons'][0]['load_board']).to eq({'key' => b2a.key, 'id' => b2a.global_id})
-      expect(b2a.settings['buttons'][0]['load_board']).to eq({'key' => b2b.key, 'id' => b2b.global_id, 'link_disabled' => true})
+      b2b = Board.find_by_path(b2a.buttons[0]['load_board']['key'])
+      expect(b2.buttons[0]['load_board']).to eq({'key' => b2a.key, 'id' => b2a.global_id})
+      expect(b2a.buttons[0]['load_board']).to eq({'key' => b2b.key, 'id' => b2b.global_id, 'link_disabled' => true})
       expect(b2b.public).to eq(false)
     end
     
@@ -456,9 +456,9 @@ describe Relinking, :type => :model do
       Board.copy_board_links_for(u2, {:valid_ids => [b1.global_id, b1a.global_id], :starting_old_board => b1, :starting_new_board => b2})
 
       b2.reload
-      expect(b2.settings['buttons'][0]['load_board']['key']).not_to eq(b1a.key)
-      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
-      expect(b2a.settings['buttons'][0]['load_board']['key']).to eq(b1b.key)
+      expect(b2.buttons[0]['load_board']['key']).not_to eq(b1a.key)
+      b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
+      expect(b2a.buttons[0]['load_board']['key']).to eq(b1b.key)
     end
     
     it "should not copy explicitly-listed boards unless there's a valid route to the board that makes it happen" do
@@ -478,10 +478,10 @@ describe Relinking, :type => :model do
       Board.copy_board_links_for(u2, {:valid_ids => [b1.global_id, b1b.global_id], :starting_old_board => b1, :starting_new_board => b2})
 
       b2.reload
-      expect(b2.settings['buttons'][0]['load_board']['key']).to eq(b1a.key)
-      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
-      expect(b2a.settings['buttons'][0]['load_board']['key']).to eq(b1b.key)
-      b2b = Board.find_by_path(b2a.settings['buttons'][0]['load_board']['key'])
+      expect(b2.buttons[0]['load_board']['key']).to eq(b1a.key)
+      b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
+      expect(b2a.buttons[0]['load_board']['key']).to eq(b1b.key)
+      b2b = Board.find_by_path(b2a.buttons[0]['load_board']['key'])
     end    
 
     it "should copy downstream boards when supervisor is copying with permission" do
@@ -558,10 +558,10 @@ describe Relinking, :type => :model do
       Board.copy_board_links_for(u2, {:valid_ids => [b1.global_id, b1a.global_id], :starting_old_board => b1, :starting_new_board => b2})
 
       b2.reload
-      expect(b2.settings['buttons'][0]['load_board']['key']).not_to eq(b1a.key)
+      expect(b2.buttons[0]['load_board']['key']).not_to eq(b1a.key)
       expect(b2.settings['copy_id']).to eq(nil)
-      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
-      expect(b2a.settings['buttons'][0]['load_board']['key']).to eq(b1b.key)
+      b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
+      expect(b2a.buttons[0]['load_board']['key']).to eq(b1b.key)
       expect(b2a.settings['copy_id']).to eq(b2.global_id)
     end
 
@@ -589,17 +589,17 @@ describe Relinking, :type => :model do
       Board.copy_board_links_for(u2, {:valid_ids => [b1.global_id, b1a.global_id, b1b.global_id], :starting_old_board => b1, :starting_new_board => b2, :old_default_locale => 'en', :new_default_locale => 'fr'})
 
       b2.reload
-      expect(b2.settings['buttons'][0]['load_board']['key']).not_to eq(b1a.key)
-      expect(b2.settings['buttons'][0]['label']).to eq('car')
+      expect(b2.buttons[0]['load_board']['key']).not_to eq(b1a.key)
+      expect(b2.buttons[0]['label']).to eq('car')
       expect(b2.settings['locale']).to eq('en')
       expect(b2.settings['copy_id']).to eq(nil)
-      b2a = Board.find_by_path(b2.settings['buttons'][0]['load_board']['key'])
-      expect(b2a.settings['buttons'][0]['load_board']['key']).to_not eq(b1b.key)
-      expect(b2a.settings['buttons'][0]['label']).to eq('maison')
+      b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
+      expect(b2a.buttons[0]['load_board']['key']).to_not eq(b1b.key)
+      expect(b2a.buttons[0]['label']).to eq('maison')
       expect(b2a.settings['locale']).to eq('fr')
       expect(b2a.settings['copy_id']).to eq(b2.global_id)
-      b2b = Board.find_by_path(b2a.settings['buttons'][0]['load_board']['key'])
-      expect(b2b.settings['buttons'][0]['label']).to eq('hola')
+      b2b = Board.find_by_path(b2a.buttons[0]['load_board']['key'])
+      expect(b2b.buttons[0]['label']).to eq('hola')
       expect(b2b.settings['locale']).to eq('es')
       expect(b2a.settings['copy_id']).to eq(b2.global_id)
     end
@@ -1214,7 +1214,7 @@ describe Relinking, :type => :model do
       b = Board.find_by_path(u.settings['preferences']['home_board']['id'])
       expect(b).not_to eq(nil)
       expect(b.settings['name']).to eq('voiture')
-      expect(b.settings['buttons'][0].except('load_board')).to eq(
+      expect(b.buttons[0].except('load_board')).to eq(
         {'id' => 1, 'label' => 'oui', 'vocalization' => 'oui bien'}
       )
       expect(b.settings['locale']).to eq('fr')
@@ -1225,7 +1225,7 @@ describe Relinking, :type => :model do
       expect(b).not_to eq(nil)
       expect(b).not_to eq(level1)
       expect(b.settings['name']).to eq('house')
-      expect(b.settings['buttons'][0].except('load_board')).to eq(
+      expect(b.buttons[0].except('load_board')).to eq(
         {'id' => 1, 'label' => 'hola'}
       )
       expect(b.settings['locale']).to eq('es')
@@ -1235,7 +1235,7 @@ describe Relinking, :type => :model do
       b = Board.find_by_path(b.settings['immediately_downstream_board_ids'][0])
       expect(b).not_to eq(nil)
       expect(b.settings['name']).to eq('chaise')
-      expect(b.settings['buttons'][0].except('load_board')).to eq(
+      expect(b.buttons[0].except('load_board')).to eq(
         {'id' => 1, 'label' => 'pourquoi'}
       )
       expect(b.settings['locale']).to eq('fr')

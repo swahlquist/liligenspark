@@ -375,11 +375,132 @@ describe Api::UnitsController, :type => :controller do
   end
 
   describe "log_stats" do
-    it "should have specs" do
-      write_this_test
+    it "should require an access token" do
+      get 'log_stats', params: {unit_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid unit" do
+      token_user
+      get 'log_stats', params: {unit_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require view_stats permission" do
+      token_user
+      o = Organiztion.create
+      ou = OrganizationUnit.create(organization: o)
+      get 'log_stats', params: {unit_id: ou.global_id}
+      assert_unauthorized
+    end
+
+    it "should include words set in any user goals" do
+      token_user
+      u = User.create
+      o = Organization.create(settings: {'total_licenses' => 1})
+      o.add_user(u.user_name, false, true)
+      o.add_supervisor(@user.user_name, false)
+      ou = OrganizationUnit.create(organization: o)
+      ou.add_communicator(u.user_name)
+      ou.add_supervisor(@user.user_name)
+
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        assessment_badge: {'instance_count' => 10, 'watchlist' => true, 'words_list' => ['hat', 'cat', 'sat', 'fat', 'rat']},
+        badges: [
+          {'watchlist' => true, 'words_list' => ['hat', 'cat', 'sat', 'fat', 'rat'], 'watch_type_minimum' => 1, 'watch_type_count' => 2, 'interval' => 'date', 'consecutive_units' => 21},
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+
+      get 'log_stats', params: {unit_id: ou.global_id}
+      json = assert_success_json
+      expect(json['goal_word_counts']).to eq([
+        {'word' => 'cat', 'cnt' => 1},
+        {'word' => 'fat', 'cnt' => 1},
+        {'word' => 'hat', 'cnt' => 1},
+        {'word' => 'rat', 'cnt' => 1},
+        {'word' => 'ssat', 'cnt' => 1},
+      ])
+    end
+
+    it "should not include data from pending users" do
+      token_user
+      u = User.create
+      o = Organization.create(settings: {'total_licenses' => 1})
+      o.add_user(u.user_name, true, true)
+      o.add_supervisor(@user.user_name, false)
+      ou = OrganizationUnit.create(organization: o)
+      ou.add_communicator(u.user_name)
+      ou.add_supervisor(@user.user_name)
+
+      g = UserGoal.process_new({
+        summary: "Good Goal",
+        assessment_badge: {'instance_count' => 10, 'watchlist' => true, 'words_list' => ['hat', 'cat', 'sat', 'fat', 'rat']},
+        badges: [
+          {'watchlist' => true, 'words_list' => ['hat', 'cat', 'sat', 'fat', 'rat'], 'watch_type_minimum' => 1, 'watch_type_count' => 2, 'interval' => 'date', 'consecutive_units' => 21},
+        ],
+        active: true
+      }, {user: u, author: u})
+      g.settings['started_at'] = Time.parse('June 1, 2016').utc.iso8601
+      g.save
+
+      get 'log_stats', params: {unit_id: ou.global_id}
+      json = assert_success_json
+      expect(json['goal_word_counts']).to eq([])
+    end
+
+    it "should include word counts and totals" do
+      token_user
+      u1 = User.create
+      d1 = Device.create(user: u1)
+      u2 = User.create
+      d2 = Device.create(user: u2)
+      o = Organization.create(settings: {'total_licenses' => 2})
+      o.add_user(u1.user_name, false, true)
+      o.add_user(u2.user_name, false, true)
+      o.add_supervisor(@user.user_name, false)
+      ou = OrganizationUnit.create(organization: o)
+      ou.add_communicator(u1.user_name)
+      ou.add_communicator(u2.user_name)
+      ou.add_supervisor(@user.user_name)
+
+      6.times do
+        s1 = LogSession.process_new({'events' => [
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '111'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => '111'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => '111'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+        ]}, {:user => u1, :author => u1, :device => d1, :ip_address => '1.2.3.4'})
+        WeeklyStatsSummary.update_for(s1.global_id)
+      end
+      s2 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '111'}}, 'modeling' => true, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '111'}}, 'modeling' => true, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '111'}}, 'modeling' => true, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'thread', 'button_id' => 4, 'board' => {'id' => '111'}}, 'modeling' => true, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => '111'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => '111'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+      ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+      WeeklyStatsSummary.update_for(s2.global_id)
+
+      get 'log_stats', params: {unit_id: ou.global_id}
+      json = assert_success_json
+      expect(json).to eq({
+        "goal_word_counts" => [],
+        "modeled_word_counts" =>  [{"cnt"=>3, "word"=>"this"}],
+        "total_models" => 4,
+        "total_seconds" => 35.0,
+        "total_sessions" => 7,
+        "total_user_weeks" => 2,
+        "total_users" => 2,
+        "total_words" => 20,
+        "word_count" => [{"cnt"=>7*2, "word"=>"that"}, {"cnt"=>7*2, "word"=>"then"}, {"cnt"=>6, "word"=>"this"}],
+      })
     end
   end
-  
+   
   describe "logs" do
     it "should require api token" do
       get :logs, params: {:unit_id => '1_1234'}

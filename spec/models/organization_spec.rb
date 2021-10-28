@@ -1068,6 +1068,108 @@ describe Organization, :type => :model do
       }, 'updater' => u)
       expect(u.reload.settings['subscription']['extras']['enabled']).to eq(false)
     end
+
+    it "should set profile preferences" do
+      u = User.create
+      o = Organization.create
+      o.add_supervisor(u.user_name, false)
+      o.process({
+        'communicator_profile_id' => 'cole',
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'default',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+
+      expect(o.settings['communicator_profile']).to eq({
+        'profile_id' => 'cole',
+        'frequency' => 7776000.0,
+        'template_id' => nil
+      })
+      expect(o.settings['supervisor_profile']).to eq({
+        'profile_id' => 'default',
+        'frequency' => 500,
+      })
+      o.process({
+        'communicator_profile_id' => 'whatever',
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'none',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+      expect(o.processing_errors).to eq(["communicator_profile_id is not valid"])
+      o = Organization.find(o.id)
+      o.process({
+        'communicator_profile_id' => 'none',
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'none',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+      expect(o.processing_errors).to eq([])
+      expect(o.settings['communicator_profile']).to eq(nil)
+      expect(o.settings['supervisor_profile']).to eq(nil)
+    end   
+    
+    it "should not allow setting profile_id to a private template that isn't attached to the org" do
+      u = User.create
+      o = Organization.create
+      pt = ProfileTemplate.create
+      o.add_supervisor(u.user_name, false)
+      o.process({
+        'communicator_profile_id' => pt.global_id,
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'default',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+      expect(o.processing_errors).to eq(["communicator_profile_id not authorized for this organization"])
+    end
+
+    it "should allow setting profile_id to a private template attached to the org" do
+      u = User.create
+      o = Organization.create
+      pt = ProfileTemplate.create(organization: o)
+      o.add_supervisor(u.user_name, false)
+      o.process({
+        'communicator_profile_id' => pt.global_id,
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'default',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+      expect(o.processing_errors).to eq([])
+      expect(o.settings['communicator_profile']).to eq({
+        'frequency' => 7776000.0,
+        'profile_id' => pt.global_id,
+        'template_id' => pt.global_id
+      })
+    end
+
+    it "should schedule :assert_profile only when changes are made" do
+      u = User.create
+      o = Organization.create
+      pt = ProfileTemplate.create(organization: o)
+      o.add_supervisor(u.user_name, false)
+      expect(o).to receive(:schedule).with(:assert_profile, 'communicator_profile')
+      expect(o).to receive(:schedule).with(:assert_profile, 'supervisor_profile')
+      o.process({
+        'communicator_profile_id' => pt.global_id,
+        'communicator_profile_frequency' => 3,
+        'supervisor_profile_id' => 'default',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+      expect(o.processing_errors).to eq([])
+      expect(o.settings['communicator_profile']).to eq({
+        'frequency' => 7776000.0,
+        'profile_id' => pt.global_id,
+        'template_id' => pt.global_id
+      })      
+
+      o = Organization.find(o.id)
+      expect(o).to_not receive(:schedule)
+      o.process({
+        'communicator_profile_id' => pt.global_id,
+        'communicator_profile_frequency' => 7776000.0,
+        'supervisor_profile_id' => 'default',
+        'supervisor_profile_frequency' => 500,
+      }, 'updater' => u)
+    end
   end
   
   describe "log_sessions" do
@@ -2468,6 +2570,209 @@ describe Organization, :type => :model do
           'external_auth' => true, 'external_auth_alias' => 'bobby@example.com'
         }
       ])
+    end
+
+    it "should include profile settings for org users/supervisors" do
+      o1 = Organization.create
+      o2 = Organization.create
+      o3 = Organization.create
+      o4 = Organization.create
+      u1 = User.create
+      u2 = User.create
+      o1.add_user(u1.user_name, false, false)
+      o2.add_supervisor(u1.user_name, false, false);
+      o3.add_manager(u1.user_name, true)
+      o3.add_manager(u2.user_name, false)
+      o1.settings['communicator_profile'] = {'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000}
+      o1.save
+      o2.settings['supervisor_profile'] = {'profile_id' => 'squib', 'template_id' => '1_22222', 'frequency' => 2000}
+      o2.save
+      expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
+        {
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
+            'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000
+          }
+        }, {
+          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
+            'profile_id' => 'squib', 'template_id' => '1_22222', 'frequency' => 2000
+          }
+        }, {
+          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
+        }
+      ])
+    end
+  end
+  
+  describe "matches_profile_id" do
+    it "should return nil for none-type profile ids" do
+      o = Organization.create
+      o.settings['communicator_profile'] = {'profile_id' => 'none'}
+      expect(o.matches_profile_id('communicator', 'asdf', '1_1111')).to eq(nil)
+      o.settings['communicator_profile'] = {'profile_id' => 'blank'}
+      expect(o.matches_profile_id('communicator', 'asdf', '1_1111')).to eq(nil)
+    end
+
+    it "should compare to the default profile id for the user type if specified" do
+      o = Organization.create
+      expect(o.matches_profile_id('communicator', 'asdf', '1_1111')).to eq(false)
+      expect(ProfileTemplate).to receive(:default_profile_id).with('communicator').and_return('comm').exactly(3).times
+      expect(ProfileTemplate).to receive(:default_profile_id).with('supervisor').and_return('sup').exactly(3).times
+      o.settings['communicator_profile'] = {'profile_id' => 'default'}
+      o.settings['supervisor_profile'] = {'profile_id' => 'default'}
+      expect(o.matches_profile_id('communicator', 'comm', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('communicator', 'sup', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('communicator', 'default', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('supervisor', 'sup', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('supervisor', 'comm', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('supervisor', 'default', '1_1111')).to eq(false)
+    end
+
+    it "should compare to the template_id if there is one" do
+      o = Organization.create
+      o.settings['communicator_profile'] = {'profile_id' => 'whatevs', 'template_id' => '1_1111'}
+      o.settings['supervisor_profile'] = {'profile_id' => 'whatevs', 'template_id' => '1_2222'}
+      expect(o.matches_profile_id('communicator', 'bacon', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('communicator', 'cheddar', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('communicator', 'default', '1_2222')).to eq(false)
+      expect(o.matches_profile_id('supervisor', 'cheddar', '1_2222')).to eq(true)
+      expect(o.matches_profile_id('supervisor', 'bacon', '1_2222')).to eq(true)
+      expect(o.matches_profile_id('supervisor', 'default', '1_1111')).to eq(false)
+    end
+
+    it "should fall back to comparing to the profile_id set for the user type on the org" do
+      o = Organization.create
+      o.settings['communicator_profile'] = {'profile_id' => 'bacon'}
+      o.settings['supervisor_profile'] = {'profile_id' => 'cheddar'}
+      expect(o.matches_profile_id('communicator', 'bacon', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('communicator', 'cheddar', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('communicator', 'default', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('supervisor', 'cheddar', '1_1111')).to eq(true)
+      expect(o.matches_profile_id('supervisor', 'bacon', '1_1111')).to eq(false)
+      expect(o.matches_profile_id('supervisor', 'default', '1_1111')).to eq(false)
+    end  
+  end
+
+  describe "profile_frequency" do
+    it "should return based on the setting and user type" do
+      o = Organization.create
+      o.settings['communicator_profile'] = {'frequency' => 12345}
+      o.settings['supervisor_profile'] = {'frequency' => 98765}
+      expect(o.profile_frequency('communicator')).to eq(12345)
+      expect(o.profile_frequency('supervisor')).to eq(98765)
+    end
+
+    it "should have a fallback" do
+      o = Organization.create
+      expect(o.profile_frequency('communicator')).to eq(12.months.to_i)
+      expect(o.profile_frequency('supervisor')).to eq(12.months.to_i)
+    end
+  end
+
+  describe "assert_profile" do
+    it "should do nothing for none or invalid ids" do
+      o = Organization.create
+      o.settings['supervisor_profile'] = {'profile_id' => 'none'}
+      expect(ProfileTemplate).to_not receive(:find_by_code)
+      o.assert_profile('communicator')
+      o.assert_profile('supervisor')
+    end
+
+    it "should call process_profile for all supervisors if specified" do
+      o = Organization.create(settings: {'total_licenses' => 5})
+      u1 = User.create
+      ue1 = UserExtra.find_or_create_by(user: u1)
+      u2 = User.create
+      ue2 = UserExtra.find_or_create_by(user: u2)
+      u3 = User.create
+      ue3 = UserExtra.find_or_create_by(user: u3)
+      u4 = User.create
+      ue4 = UserExtra.find_or_create_by(user: u4)
+      u5 = User.create
+      ue5 = UserExtra.find_or_create_by(user: u5)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u1).and_return(ue1)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u2).and_return(ue2)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u3).and_return(ue3)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u4).and_return(ue4)
+      expect(UserExtra).to_not receive(:find_or_create_by).with(user: u5)
+      o.add_supervisor(u1.user_name, false)
+      o.add_supervisor(u2.user_name, false)
+      o.add_supervisor(u3.user_name, false)
+      o.add_supervisor(u4.user_name, true)
+      o.add_user(u5.user_name, false, true)
+      o.settings['supervisor_profile'] = {'profile_id' => 'cole'}
+      o.save
+      expect(ue1).to receive(:process_profile).with('cole', nil, o)
+      expect(ue2).to receive(:process_profile).with('cole', nil, o)
+      expect(ue3).to receive(:process_profile).with('cole', nil, o)
+      expect(ue4).to receive(:process_profile).with('cole', nil, o)
+      expect(ue5).to_not receive(:process_profile).with('cole', nil, o)
+      o.assert_profile('supervisor')
+    end
+
+    it "should call process_profile for all communicators if specified" do
+      o = Organization.create(settings: {'total_licenses' => 5})
+      u1 = User.create
+      ue1 = UserExtra.find_or_create_by(user: u1)
+      u2 = User.create
+      ue2 = UserExtra.find_or_create_by(user: u2)
+      u3 = User.create
+      ue3 = UserExtra.find_or_create_by(user: u3)
+      u4 = User.create
+      ue4 = UserExtra.find_or_create_by(user: u4)
+      u5 = User.create
+      ue5 = UserExtra.find_or_create_by(user: u5)
+      expect(UserExtra).to_not receive(:find_or_create_by).with(user: u1)
+      expect(UserExtra).to_not receive(:find_or_create_by).with(user: u2)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u3).and_return(ue3)
+      expect(UserExtra).to_not receive(:find_or_create_by).with(user: u4)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u5).and_return(ue5)
+      o.add_supervisor(u1.user_name, false)
+      o.add_supervisor(u2.user_name, true)
+      o.add_user(u3.user_name, false, false)
+      o.add_user(u4.user_name, true, true)
+      o.add_user(u5.user_name, false, true)
+      pt = ProfileTemplate.create
+      o.settings['communicator_profile'] = {'profile_id' => 'bacon', 'template_id' => pt.global_id}
+      o.save
+      expect(ue1).to_not receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue2).to_not receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue3).to receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue4).to_not receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue5).to receive(:process_profile).with('bacon', pt.global_id, o)
+      o.assert_profile('communicator_profile')
+    end
+
+    it "should pass the template_id if available" do
+      o = Organization.create(settings: {'total_licenses' => 5})
+      u1 = User.create
+      ue1 = UserExtra.find_or_create_by(user: u1)
+      u2 = User.create
+      ue2 = UserExtra.find_or_create_by(user: u2)
+      u3 = User.create
+      ue3 = UserExtra.find_or_create_by(user: u3)
+      u4 = User.create
+      ue4 = UserExtra.find_or_create_by(user: u4)
+      u5 = User.create
+      ue5 = UserExtra.find_or_create_by(user: u5)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u1).and_return(ue1)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u2).and_return(ue2)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u3).and_return(ue3)
+      expect(UserExtra).to receive(:find_or_create_by).with(user: u4).and_return(ue4)
+      expect(UserExtra).to_not receive(:find_or_create_by).with(user: u5)
+      o.add_supervisor(u1.user_name, false)
+      o.add_supervisor(u2.user_name, false)
+      o.add_supervisor(u3.user_name, false)
+      o.add_supervisor(u4.user_name, true)
+      o.add_user(u5.user_name, false, true)
+      pt = ProfileTemplate.create
+      o.settings['supervisor_profile'] = {'profile_id' => 'bacon', 'template_id' => pt.global_id}
+      o.save
+      expect(ue1).to receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue2).to receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue3).to receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue4).to receive(:process_profile).with('bacon', pt.global_id, o)
+      expect(ue5).to_not receive(:process_profile).with('bacon', pt.global_id, o)
+      o.assert_profile('supervisor')
     end
   end
 end

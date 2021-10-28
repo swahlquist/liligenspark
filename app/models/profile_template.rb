@@ -1,6 +1,7 @@
 class ProfileTemplate < ApplicationRecord
   include GlobalId
   include Permissions
+  include Processable
 
   include SecureSerialize
   protect_global_id
@@ -58,11 +59,12 @@ class ProfileTemplate < ApplicationRecord
 
   def self.find_by_code(code)
     res = nil
-    if !code.match(/^\d+_/)
+    if code && !code.match(/^\d+_/)
       res = ProfileTemplate.find_by(public_profile_id: code)
       res = nil if res && res.settings['public'] == false
     end
     res ||= ProfileTemplate.find_by_global_id(code)
+    res ||= ProfileTemplate.static_template(code)
     res
   end
 
@@ -78,11 +80,11 @@ class ProfileTemplate < ApplicationRecord
       if self.settings['public'] == false
         self.public_profile_id = nil
       else
-        prof = ProfileTemplate.find_by(profile_id: params['profile_id'])
+        prof = ProfileTemplate.find_by(public_profile_id: params['profile_id'])
         if !prof || (self.id && prof.id == self.id)
           self.public_profile_id = params['profile_id']
         else
-          add_processing_error("profile_id #{params['profile_id']} already in use")
+          add_processing_error("profile_id \"#{params['profile_id']}\" already in use")
           return false
         end
       end

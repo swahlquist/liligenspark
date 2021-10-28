@@ -1790,6 +1790,34 @@ describe Board, :type => :model do
         '3' => {'en' => {'label' => 'blend'}},
       })
     end
+
+    it "should create a new version when a board is updated" do
+      u = User.create
+      PaperTrail.request.whodunnit = "user:#{u.global_id}"
+      b = Board.create(user: u)
+      expect(Board.user_versions(b.global_id).count).to eq(1)
+      b.process({
+        'buttons' => [{'id' => 1, 'label' => 'risk'}],
+        'background' => {'a' => 1} 
+      }, {'user' => u})
+      expect(Board.user_versions(b.global_id).count).to eq(2)
+    end
+
+    it "should create a new version when a board_content-backed board is updated" do
+      u = User.create
+      PaperTrail.request.whodunnit = "user:#{u.global_id}"
+      b = Board.create(user: u)
+      expect(Board.user_versions(b.global_id).count).to eq(1)
+      BoardContent.generate_from(b)
+      b.process({
+        'buttons' => [{'id' => 1, 'label' => 'risk'}],
+        'background' => {'a' => 1} 
+      }, {'user' => u})
+      expect(Board.user_versions(b.global_id).count).to eq(3)
+      expect(b.buttons).to eq([
+        {'id' => 1, 'label' => 'risk', "part_of_speech"=>"noun", "suggested_part_of_speech"=>"noun"}
+      ])
+    end
   end
 
   it "should securely serialize settings" do

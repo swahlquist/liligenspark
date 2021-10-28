@@ -37,7 +37,7 @@ class UserExtra < ApplicationRecord
   end
   
 
-  def process_profile(profile_id, profile_template_id=nil, org=nil)
+  def process_profile(profile_id, profile_template_id=nil, triggering_org=nil)
     sessions = LogSession.where(log_type: 'profile', profile_id: profile_id).order('started_at DESC').limit(10)
     recents = []
     # If profile_template_id is defined, the first result should match the template_id
@@ -67,28 +67,32 @@ class UserExtra < ApplicationRecord
       # lookup org
       org = orgs.detect{|o| Webhook.get_record_code(o) == link.record_code }
       # if org has comm/sup profile set (even to 'default')
-      if org && (link.data['type'] == 'org_supervisor' && org.matches_profile_id('supervisor', profile_id, profile_template_id)) || (link.data['type'] == 'org_user' && org.matches_profile_id('commnicator', profile_id, profile_template_id))
+      if org && ((link.data['type'] == 'org_supervisor' && org.matches_profile_id('supervisor', profile_id, profile_template_id)) || (link.data['type'] == 'org_user' && org.matches_profile_id('commnicator', profile_id, profile_template_id)))
         org_cutoff = org.profile_frequency(link.data['type'] == 'org_supervisor' ? 'supervisor' : 'communicator')
         if org_cutoff
           soonest_org_cutoff = [soonest_org_cutoff, org_cutoff].compact.min
-          recents[0][:expected] = recents[0][:added] + org_cutoff
+          if recents[0]
+            recents[0][:expected] = recents[0][:added] + org_cutoff
+          end
         end
         link.data['state']['profile_id'] = profile_id
         link.data['state']['profile_template_id'] = profile_template_id
         link.data['state']['profile_history'] = recents
         link.save
-      elsif org && !profile_id
+      elsif triggering_org && org == triggering_org && !profile_id
         link.data['state'].delete('profile_id')
         link.data['state'].delete('profile_template_id')
         link.data['state'].delete('profile_history')
         link.save
       end
     end
-    recents[0].delete(:expected)
-    if soonest_org_cutoff && recents.length > 0
-      recents[0][:expected] = recents[0][:added] + soonest_org_cutoff
+    if recents[0]
+      recents[0].delete(:expected)
+      if soonest_org_cutoff
+        recents[0][:expected] = recents[0][:added] + soonest_org_cutoff
+      end
+      recents[0][:expected] ||= recents[0][:added] + 12.months.to_i
     end
-    recents[0][:expected] ||= recents[0][:added] + 12.months.to_i if recents.length > 0
     self.save
   end
 

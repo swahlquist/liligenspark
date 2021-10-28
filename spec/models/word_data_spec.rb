@@ -236,7 +236,6 @@ RSpec.describe WordData, :type => :model do
       bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(bs).to_not eq(nil)
       expect(bs.data['buttons']).to_not eq(nil)
-      puts "\n\nDOING IT\n\n"
       expect(WordData.reachable_core_list_for(u)).to eq(["i", "you", "like", "he", "think", "favorite", "pretend"])
     end
     

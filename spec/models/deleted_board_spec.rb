@@ -143,5 +143,51 @@ describe DeletedBoard, :type => :model do
           {'id' => 3, 'label' => 'polygon', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
       ])
     end
+
+    it "should restore correctly if the board has board_content and content_overrides" do
+      u = User.create
+      PaperTrail.request.whodunnit = "admin:somebody@example.com"
+      b = Board.create(user: u)
+      b = Board.find(b.id)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'hat'}
+        ]
+      })
+      b = Board.find_by(id: b.id)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'hat'},
+          {'id' => 2, 'label' => 'freedom'}
+        ]
+      })
+      b = Board.find_by(id: b.id)
+      b.process({
+        'buttons' => [
+          {'id' => 1, 'label' => 'hat'},
+          {'id' => 2, 'label' => 'freedom'},
+          {'id' => 3, 'label' => 'polygon'}
+        ]
+      })
+      BoardContent.generate_from(b)
+      key = b.key
+      expect(Board.find_by(id: b.id)).to_not eq(nil)
+      b.destroy
+      expect(Board.find_by(id: b.id)).to eq(nil)
+      db = DeletedBoard.find_by(board_id: b.id)
+      expect(DeletedBoard.find_by(key: key)).to eq(db)
+      res = db.restore!
+      expect(res).to eq(b)
+      expect(Board.find_by_path(key)).to_not eq(nil)
+      expect(Board.find_by(id: b.id)).to_not eq(nil)
+      
+      b = Board.find_by_path(key)
+      expect(b.settings['buttons']).to eq([])
+      expect(b.buttons).to eq([
+          {'id' => 1, 'label' => 'hat', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'},
+          {'id' => 2, 'label' => 'freedom', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'},
+          {'id' => 3, 'label' => 'polygon', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
   end
 end

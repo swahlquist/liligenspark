@@ -276,6 +276,7 @@ class LogSession < ActiveRecord::Base
       self.data['guid'] = self.data['profile']['guid']
       if self.data['profile']['type'] != 'funding'
         self.profile_id = self.data['profile']['id']
+        self.profile_id ||= self.data['profile']['template_id']
       end
     elsif self.data['journal']
       self.log_type = 'journal'

@@ -4196,4 +4196,42 @@ describe LogSession, :type => :model do
       expect(logs[1].data['notify_exclude_ids']).to eq([1,2,3])
     end
   end
+
+  describe "update_profile_summaries" do
+    it "should schedule profile summary updates" do
+      s = LogSession.new
+      s.log_type = 'profile'
+      s.data = {'profile' => {}}
+      s.profile_id = 0
+      s.user = User.new
+      expect(s).to receive(:schedule).with(:update_profile_summaries, true)
+      expect(UserExtra).to_not receive(:find_or_create_by)
+      s.update_profile_summaries
+    end
+
+    it "should not schedule for non-profile-type sessions" do
+      s = LogSession.new
+      s.log_type = 'session'
+      s.data = {'profile' => {}}
+      s.profile_id = 0
+      s.user = User.new
+      expect(s).to_not receive(:schedule).with(:update_profile_summaries, true)
+      expect(UserExtra).to_not receive(:find_or_create_by)
+      s.update_profile_summaries
+    end
+
+    it "should call process_profile for user extras" do
+      u = User.create
+      s = LogSession.new
+      s.log_type = 'profile'
+      s.data = {'profile' => {'template_id' => 'aaa'}}
+      s.profile_id = 0
+      s.user = u
+      ue = UserExtra.find_or_create_by(user: u)
+      expect(s).to_not receive(:schedule).with(:update_profile_summaries, true)
+      expect(UserExtra).to receive(:find_or_create_by).and_return(ue)
+      expect(ue).to receive(:process_profile).with('0', 'aaa')
+      s.update_profile_summaries(true)
+    end
+  end
 end
