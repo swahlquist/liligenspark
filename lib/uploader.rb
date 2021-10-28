@@ -359,7 +359,7 @@ module Uploader
     end
   end
 
-  def self.default_images(library, words, locale, user)
+  def self.default_images(library, words, locale, user, find_missing=true)
     cache = LibraryCache.find_or_create_by(library: library, locale: locale)
     found_words = cache.find_words(words, user) if cache
     if ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)
@@ -375,6 +375,7 @@ module Uploader
       url = "https://www.opensymbols.org/api/v2/repositories/#{library}/defaults"
       res = Typhoeus.post(url, body: {
         words: words - found_words.keys,
+        allow_search: find_missing,
         locale: locale,
         search_token: token
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false)

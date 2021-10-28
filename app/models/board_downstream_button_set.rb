@@ -21,9 +21,9 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
       self.data['button_count'] = self.buttons.length
       self.data['board_count'] = self.buttons.map{|b| b['board_id'] }.uniq.length
-      if true #(self.data['buttons'] || []).length > 200
+      if (self.data['buttons'] || []).length > 200
         @cached_extra_data = self.data['buttons']
-        self.data.delete['buttons']
+        self.data.delete('buttons')
       end
       self.data.delete('json_response')
     end
@@ -93,6 +93,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.assert_extra_data
     if self.data['buttons']
       @buttons = self.data['buttons']
+    elsif @cached_extra_data
+      @buttons = @cached_extra_data
     else
       # If brd.data['source_id'] is defined, that means we got
       # to a dead end, so we should probably schedule .update_for

@@ -20,7 +20,7 @@ describe LibraryCache, :type => :model do
 
     it "should use invalidated caches" do
       cache = LibraryCache.create
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
@@ -146,7 +146,7 @@ describe LibraryCache, :type => :model do
     
     it "should not use expired results" do
       cache = LibraryCache.create
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
@@ -157,7 +157,7 @@ describe LibraryCache, :type => :model do
 
     it "should use invalidated results" do
       cache = LibraryCache.create
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
@@ -169,7 +169,7 @@ describe LibraryCache, :type => :model do
 
     it "should not allow unauthorized access to premium symbols" do
       cache = LibraryCache.create(library: 'pcs')
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
@@ -185,7 +185,7 @@ describe LibraryCache, :type => :model do
 
     it "should return coughdrop_image_id in the results" do
       cache = LibraryCache.create
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)

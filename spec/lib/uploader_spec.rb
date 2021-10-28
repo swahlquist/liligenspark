@@ -812,6 +812,7 @@ describe Uploader do
     it 'should make an API call to look for images' do
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
         words: ['a', 'b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
@@ -829,6 +830,7 @@ describe Uploader do
     it 'should properly format any matching results' do
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
         words: ['a', 'b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
@@ -869,6 +871,7 @@ describe Uploader do
       u = User.create
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/pcs/defaults', body: {
         words: ['a', 'b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
@@ -888,6 +891,7 @@ describe Uploader do
       })
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/pcs/defaults', body: {
         words: ['a', 'b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}:pcs"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
@@ -918,6 +922,7 @@ describe Uploader do
       cache.save!
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
         words: ['b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
@@ -952,6 +957,7 @@ describe Uploader do
     it "should save looked-up results to the library cache" do
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
         words: ['a', 'b', 'c'],
+        allow_search: true,
         locale: 'en',
         search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
