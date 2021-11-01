@@ -81,7 +81,7 @@ module Renaming
       board_ids = record.settings['immediately_upstream_board_ids'] || []
       Board.find_all_by_global_id(board_ids).each do |board|
         changed = false
-        (board.settings['buttons'] || []).each do |button|
+        board.buttons.each do |button|
           if button['load_board'] && button['load_board']['id'] == global_id && button['load_board']['key'] != to_key
             button['load_board']['key'] = to_key
             changed = true

@@ -21,7 +21,7 @@ module JsonApi::Unit
     json['supervisors'] = []
     json['communicators'] = []
     org = unit.organization
-    premium_org = (org.settings['premium'] || org.admin)
+    premium_org = org && ((org.settings || {})['premium'] || org.admin)
     org_links = UserLink.links_for(org).select{|l| ['org_supervisor', 'org_user'].include?(l['type']) && users_hash[l['user_id']]}
     UserLink.links_for(unit).each do |link|
       user = users_hash[link['user_id']]

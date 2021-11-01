@@ -1446,7 +1446,7 @@ class Board < ActiveRecord::Base
         images_hash = {}
         self.button_images.each{|i| images_hash[i.global_id] = i.settings['external_id'] }
         inverted_translations = translations.invert
-        self.settings['buttons'].each do |button|
+        self.buttons.each do |button|
           string_to_track = button['label'] && translations[button['label']]
           string_to_track ||= inverted_translations[button['label']] && button['label']
           if string_to_track && button['image_id'] && images_hash[button['image_id']]
@@ -1636,7 +1636,7 @@ class Board < ActiveRecord::Base
       "rgb(255, 255, 255)" => ['verb'],
       "rgb(255, 204, 170)" => ['noun']
     }
-    words = WordData.where(locale: 'en', word: board.settings['buttons'].map{|b| b['label'] }.compact.uniq)
+    words = WordData.where(locale: 'en', word: board.buttons.map{|b| b['label'] }.compact.uniq)
     changed = false
     buttons = board.buttons
     buttons.each do |btn|

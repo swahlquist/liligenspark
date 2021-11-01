@@ -388,7 +388,7 @@ describe Api::UnitsController, :type => :controller do
 
     it "should require view_stats permission" do
       token_user
-      o = Organiztion.create
+      o = Organization.create
       ou = OrganizationUnit.create(organization: o)
       get 'log_stats', params: {unit_id: ou.global_id}
       assert_unauthorized
