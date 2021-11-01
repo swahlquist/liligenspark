@@ -9,6 +9,7 @@ import i18n from '../utils/i18n';
 import progress_tracker from '../utils/progress_tracker';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import CoughDrop from '../app';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -203,6 +204,7 @@ export default modal.ModalController.extend({
         progress_tracker.track(res.progress, function(event) {
           if(event.status == 'errored' || (event.status == 'finished' && event.result && event.result.translated === false)) {
             _this.set('saving_translations', null);
+            CoughDrop.track_error("translation save fail - " + JSON.stringify(event), event)
             _this.set('error_saving_translations', true);
           } else if(event.status == 'finished') {
             _this.set('saving_translations', null);
@@ -211,6 +213,7 @@ export default modal.ModalController.extend({
           }
         });
       }, function(res) {
+        CoughDrop.track_error("translation fail - " + JSON.stringify(res), res)
         _this.set('saving_translations', null);
         _this.set('error_saving_translations', true);
       });
