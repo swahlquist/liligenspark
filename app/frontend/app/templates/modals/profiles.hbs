@@ -75,7 +75,7 @@
                     <button {{action 'review_profile' prof.log_id}} class='btn btn-default'>{{t "review" key='review_details'}}</button>
                   </td>
                   <td style='padding: 0 5px;'>
-                    <button {{action 'run_profile' prof.profile_id}} class={{prof.button_class}} style='width: 90px;'>{{t "repeat" key='review_details'}}</button>
+                    <button {{action 'run_profile' prof.id}} class={{prof.button_class}} style='width: 90px;'>{{t "repeat" key='review_details'}}</button>
                   </td>
                   <!-- profile with results -->
                 {{else}}
@@ -91,7 +91,7 @@
                   <td style='padding: 0 5px;'>
                   </td>
                   <td style='padding: 0 5px;'>
-                    <button {{action 'run_profile' prof.profile_id}} class={{prof.button_class}} style='width: 90px;'>{{t "run" key='run'}}</button>
+                    <button {{action 'run_profile' prof.id}} class={{prof.button_class}} style='width: 90px;'>{{t "run" key='run'}}</button>
                   </td>
                 {{/if}}
               </tr>

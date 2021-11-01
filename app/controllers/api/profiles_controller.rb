@@ -57,11 +57,13 @@ class Api::ProfilesController < ApplicationController
         expected = nil
         expected = 'due_soon' if session.data['expected'] && session.data['expected'] < 1.month.from_now
         expected = 'overdue' if session.data['expected'] && session.data['expected'] < Time.now
+        profile = session.data['profile'].except('results', 'encrypted_results')
         {
           started: session.started_at,
           expected: expected,
           log_id: session.global_id,
-          profile: session.data['profile'].except('results', 'encrypted_results'),
+          profile: profile,
+          profile_id: profile['id'],
           author: {user_name: author.user_name, id: author.global_id}
         }
       else

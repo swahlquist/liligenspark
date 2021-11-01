@@ -49,7 +49,7 @@ class ProfileTemplate < ApplicationRecord
         'public' => true,
         'profile' => {
           'name' => 'COLE - LCPS Continuum Of Language Expression',
-          'description' => "THE BEST"
+          'description' => "The Interactive Continuum Of Language Expression, created by Chris Bugaj & Loudoun County Public Schools  - Communicators are scored based on 67 criteria in 11 different stages of communication. The COLE is quick to fill out and covers multiple levels of communication proficiency. Numerical summary scores are not useful for comparing across individuals, but can be helpful in tracking progress for a specific individual. Google Sheets version here, https://docs.google.com/spreadsheets/d/1HKXiq6IZN44dHLSBgkY2vuE-bu7FXTXiXOOQkwDzh_A/edit"
         }
       }
       return template
