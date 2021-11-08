@@ -52,6 +52,10 @@
       {{else if profiles.error}}
         <p>{{t "Error loading profile data" key='error_loading_profile_data'}}</p>
       {{else if profiles}}
+        {{#unless any_recorded}}
+          <p>{{t "Communication Profiles are evaluation tools that can be used to assess or monitor a user's communication process. Profiles can target communicators or the people who work with them, and can be run multiple times. They can help with deciding on appropriate goals for a user and can help teams coordinate on effective strategies for support." key='profiles_explainer'}}</p>
+          <p>{{t "NOTE: Profiles should always be run with the user's involvement, even if their participation may be limited. Also, profiles should never be used as \"proof\" that someone shouldn't receive full communication supports or age-appropriate learning experiences." key='profiles_explainer_2'}}</p>
+        {{/unless}}
         <!-- single list with both suggested (by org or defaults) and then recents that weren't suggested -->
         <table>
           <tbody>
@@ -82,6 +86,7 @@
                   <!-- profile template -->
                   <td style='height: 80px;'>
                     <div {{action 'review_profile'}} class='profile_modal_circle' style='opacity: 0.8;'>
+                      -
                     </div>
                   </td>
                   <td style='width: 100%;'>

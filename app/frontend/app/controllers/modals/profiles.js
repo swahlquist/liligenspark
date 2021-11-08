@@ -121,20 +121,14 @@ export default modal.ModalController.extend({
     }, function(err) {
       _this.set('profiles', {error: true});
     });
-
-    // if summary.length > 8, set font-size to 16px
-    // this.set('profiles', [{
-    //   name: 'bacon',
-    //   summary: 123,
-    //   date: window.moment().add(-6, 'hour'),
-    //   button_class: 'btn btn-lg btn-default',
-    //   circle_style: 'max-width: 105px; overflow: hidden;'
-    // }, {
-    //   name: 'cheddar',
-    //   description: "Awggo awgawogwagaw gawiawhui wu awiua iug awiugaewlug liuaw glwheiughw gaiuwglu iaweluhgl ",
-    //   button_class: 'btn btn-lg btn-warning'
-    // }]);
   },
+  any_recorded: computed('profiles', function() {
+    var any = false;
+    (this.get('profiles') || []).forEach(function(prof) {
+      if(prof.log_id) { any = true; }
+    });
+    return any;
+  }),
   repeat_button_class: computed('profile', function() {
     if(this.get('profile.name')) {
       if(this.get('profile.started')) {

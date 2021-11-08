@@ -15,6 +15,7 @@ var sample_profile = {
   id: "sample",
   version: "0.1",
   description: "blah blah blah",
+  type: 'communicator',
   score_categories: {
     total: {
       label: "Total Score",
@@ -501,7 +502,11 @@ var Profile = EmberObject.extend({
       responses: {}
     };
     json.started = this.get('started');
+    json.type = json.type || 'communicator';
     json.guid = nonce.id + "-" + Math.round(json.results.submitted) + "-" + Math.round(999999 * Math.random());
+    if(this.get('with_communicator')) {
+      json.with_communicator = true;
+    }
     var questions = this.get('questions_layout');
     var responses = json.results.responses;
     questions.forEach(function(question) {
@@ -657,6 +662,8 @@ var profiles = {
         resolve(profiles.process(sample_profile));
       } else if(id == 'cole') {
         resolve(profiles.process(cole_profile));
+      } else if(id == 'cpp') {
+        resolve(profiles.process(cpp_profile));
       } else {
         CoughDrop.store.findRecord('profile', id).then(function(prof) {
           resolve(profiles.process(prof.get('template')));
@@ -678,6 +685,7 @@ var cole_profile = {
   name: "COLE - LCPS Continuum Of Language Expression",
   id: "cole",
   version: "0.1",
+  type: 'communicator',
   description: "The Interactive LCPS Continuum Of Language Expression",
   score_categories: {
     cole: {
@@ -1528,6 +1536,610 @@ var cole_profile = {
       score_categories: ["stage_1", "stage_2", "stage_3", "stage_4", "stage_5", "stage_6", "stage_7", "stage_8", "stage_9", "stage_10", "stage_11"]
     },
     {
+      type: "raw",
+    }
+  ]
+};
+
+var cpp_profile = {
+  name: "CPP - Communication Partner Profile",
+  id: "cpp",
+  version: "0.1",
+  type: 'communicator',
+  description: "Communication Partner Profile (CPPv1) AAC-Related Self-Reflection",
+  score_categories: {
+    everywhere: {
+      label: "Communiction Everywhere",
+      function: "mastery_cnt",
+      border: [26, 55, 130],
+      background: [171, 194, 255]
+    },
+    goals: {
+      label: "Setting Goals",
+      function: "mastery_cnt",
+      border: [90, 117, 150],
+      background: [173, 203, 240]
+    },
+    choice: {
+      label: "Communicator Choice",
+      function: "mastery_cnt",
+      border: [103, 161, 184],
+      background: [194, 236, 252]
+    },
+    respect: {
+      label: "Individual Respect",
+      function: "mastery_cnt",
+      border: [117, 195, 217],
+      background: [196, 242, 255]
+    },
+    planning: {
+      label: "Personalization/Planning",
+      function: "mastery_cnt",
+      border: [119, 202, 209],
+      background: [196, 250, 255]
+    },
+    train: {
+      label: "Train Others",
+      function: "mastery_cnt",
+      border: [124, 217, 207],
+      background: [207, 255, 250]
+    },
+    modeling: {
+      label: "Modeling",
+      function: "mastery_cnt",
+      border: [110, 186, 165],
+      background: [188, 245, 229]
+    },
+    vocab: {
+      label: "Expanding Vocabulary",
+      function: "mastery_cnt",
+      border: [100, 179, 134],
+      background: [171, 245, 203]
+    },
+    literacy: {
+      label: "Literacy",
+      function: "mastery_cnt",
+      border: [83, 181, 108],
+      background: [154, 230, 173]
+    },
+    multi_modal: {
+      label: "Mutli-Modal Communication",
+      function: "mastery_cnt",
+      border: [84, 156, 89],
+      background: [162, 224, 166]
+    },
+    social: {
+      label: "Social",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+  },
+  answer_blocks: {
+    frequency: {
+      type: 'multiple_choice',
+      answers: [
+        {id: 'never', label: "Not Observed", score: 0},
+        {id: 'occasionally', label: "Occasionally", score: 1},
+        {id: 'usually', label: "Usually", score: 2, mastery: true},
+        {id: 'always', label: "Always", score: 3, mastery: true}
+      ]
+    },
+    ensure_frequency: {
+      type: 'multiple_choice',
+      answers: [
+        {id: 'forget', label: "I forget about that", score: 0},
+        {id: 'notice', label: "I notice a problem but don’t say anything", score: 0.5},
+        {id: 'sometimes', label: "Sometimes", score: 1},
+        {id: 'usually', label: "Usually", score: 2, mastery: true},
+        {id: 'always', label: "Always", score: 3, mastery: true}
+      ]
+    },
+    setting_frequency: {
+      type: 'multiple_choice',
+      answers: [
+        {id: 'proficient', label: "Currently Proficient", score: 3},
+        {id: 'na', label: "Not Applicable", score: 0, skip: true},
+        {id: 'never', label: "Not Observed", score: 0},
+        {id: 'occasionally', label: "Occasionally", score: 1},
+        {id: 'usually', label: "Usually", score: 2, mastery: true},
+        {id: 'always', label: "Always", score: 3, mastery: true}
+      ]
+    },
+    free_response: {
+      type: 'text',
+      hint: "Evidence/Documentation/Notes:"
+    }
+  },
+  question_groups: [
+    {
+      id: "aac_user",
+      label: "When I am interacting with an AAC user, I make sure that:",
+      border: [26, 55, 130],
+      background: [171, 194, 255],
+      questions: [
+        {
+          id: "q11",
+          label: "I’ve been given permission before touching their device or crowding them",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q12",
+          label: "I respond to all communication attempts, regardless of whether they were on the “desired” device/modality (gestures, sounds, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q13",
+          label: "I model words or phrases at or just beyond their current expressive level",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q14",
+          label: "I have spent time getting to know them so I can better personalize my interactions to their interests and experience",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q15",
+          label: "I am familiar enough with their vocabulary layout to be able to model effectively",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q16",
+          label: "I give them my full attention and avoid interrupting, or wait for them to signal their completion before I respond",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q17",
+          label: "I include them in decision-making that will affect them in the short term (meals or activities, clothing choice, daily schedule, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q18",
+          label: "I include them in decision-making that will affect them in the long term (device layout, medical decisions, topics for study, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q19",
+          label: "I have spent sufficient time reviewing and practicing strategies before trying to implement them in-person",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q110",
+          label: "I avoid too much prompting, or asking for clarification too often",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+        {
+          id: "q111",
+          label: "I avoid withholding desired activities or items as a way to try to “force” communication",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_1: 1.0,
+          }
+        },
+      ]      
+    },
+    {
+      id: "partners",
+      label: "As I observe others interacting with AAC user(s), I ensure that: ",
+      border: [90, 117, 150],
+      background: [173, 203, 240],
+      questions: [
+        {
+          id: "q21",
+          label: "Communicators have access to their personalized communication suite at all times",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q22",
+          label: "Communicators are asked for permission before others touch their device",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q23",
+          label: "Communication partners respond to all communication attempts, regardless of whether they were on the “desired” device/modality (not “if you want that then use your talker to say it”)",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q24",
+          label: "Communicators are shown examples of how to express themselves, using their communication suite or a similar system",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q25",
+          label: "Physical control (i.e. hand-over-hand) is avoided for selection, unless the communicator’s express permission is granted each time",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q26",
+          label: "Dismissive language is avoided about or around the communicator (“you can ignore her”, “he’s just babbling”, “that didn’t mean anything”)",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+        {
+          id: "q27",
+          label: "Communicator’s preference in partner role (where to stand, whether to wait for completion, etc.) is known and respected",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_2: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "team",
+      label: "As I collaborate with other members of the support team, I ensure that:",
+      border: [103, 161, 184],
+      background: [194, 236, 252],
+      questions: [
+        {
+          id: "q31",
+          label: "Communication partners wait sufficient time (5-10 seconds or more) before and between any sort of prompting strategies",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q32",
+          label: "Team members are familiar with the AAC system and have specific examples of concepts they can model for the communicator",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q33",
+          label: "The communicator’s environment is set up to foster diverse and interesting communication opportunities",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q34",
+          label: "All team members understand their opportunity to teach or encourage communication in every environment and context",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q35",
+          label: "All team members have opportunities to review and practice strategies before implementing them in-person",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+        {
+          id: "q35",
+          label: "All team members are aware of goals that have been set with the communicator, and updated on progress being made toward those goals",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_3: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "watch",
+      label: "I pay attention for:",
+      border: [117, 195, 217],
+      background: [196, 242, 255],
+      questions: [
+        {
+          id: "q41",
+          label: "New words or phrases the communicator is starting to use, so I can introduce opportunities to model other examples with the word or phrase",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q42",
+          label: "Communication attempts that others may have missed, and I point them out so everyone can learn to support each unique communicator",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q43",
+          label: "Opportunities to introduce literacy (both reading and writing) learning to communicators who have not yet shown mastery",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q44",
+          label: "New communication partners, and I share with them simple concepts that can help them be a more effective partner (honoring attempts, wait time, eye contact, etc.)",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q45",
+          label: "Success stories that I can share with others to help keep everyone engaged in communicator progress",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "settings",
+      label: "In the following settings, I look for opportunities to encourage (but not force) communication attempts for AAC user(s): (Please mark “not applicable” for contexts where you do not interact with any AAC users)",
+      border: [119, 202, 209],
+      background: [196, 250, 255],
+      questions: [
+        {
+          id: "q51",
+          label: "Instructional Settings",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q52",
+          label: "Shared Reading",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q53",
+          label: "Playing Games",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q54",
+          label: "Meal Time",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q55",
+          label: "Outdoors/Playground",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q56",
+          label: "Leisure/Relaxing/Break Time",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q57",
+          label: "Social Settings",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q58",
+          label: "Church",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q59",
+          label: "Travel/Transit",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q510",
+          label: "Restaurants/Shopping",
+          answer_block: "setting_frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_5: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "goals",
+      label: "I discuss with the whole team -- including the communicator -- goals related to the following aspects of communication:",
+      border: [124, 217, 207],
+      background: [207, 255, 250],
+      questions: [
+        {
+          id: "q61",
+          label: "Linguistic – understanding what words mean, and how to organize and use them",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q62",
+          label: "Literacy (Reading) – learning to read, comprehend and analyze written text",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q63",
+          label: "Literacy (Writing) – learning word sounds, rules of spelling, creative and formal writing, organizing a statement",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q64",
+          label: "Operational – how to navigate the device, switch between apps or pages, use the keyboard or autocomplete, control volume, charge the device, etc.",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q65",
+          label: "Social – following social cues and effectively participating in real-time conversations",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q66",
+          label: "Strategic – getting around the limitations imposed by using a communication device",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+        {
+          id: "q67",
+          label: "Emotional – self-advocacy and resilience",
+          answer_block: "frequency",
+          score_categories: {
+            cole: 1.0,
+            stage_6: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "notes",
+      label: "Notes or observations you would like to remember as part of this profile:",
+      border: [124, 217, 207],
+      background: [207, 255, 250],
+      questions: [
+        {
+          id: "q7text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+  ],
+  report_segments: [
+    {
+      type: "score",
+      score_category: "cole",
+      summary: true,
+    },
+    {
+      type: "weights",
+      score_categories: ["aac_user", "partners", "team", "watch", "settings", "goals", "notes"]
+    },
+    {
+      notes: "What else???",
       type: "raw",
     }
   ]

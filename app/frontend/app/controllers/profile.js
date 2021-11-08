@@ -31,6 +31,9 @@ export default Controller.extend({
     });
     return res;
   }),
+  communicator_type: computed('profile.template.type', function() {
+    return (this.get('profile.template.type') || 'communicator') == 'communicator';
+  }),
   pending_question_ids: computed('all_answers.@each.selected', 'answer_ts', function() {
     var qs = [];
     (this.get('profile.questions_layout') || []).forEach(function(q) {
