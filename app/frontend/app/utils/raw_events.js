@@ -52,7 +52,21 @@ var eat_events = function(event) {
   }
 };
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-var special_keys = ["Unidentified", "Alt", "AltGraph", "CapsLock", "Control", "Fn", "FnLock", "Hyper", "Meta", "NumLock", "ScrollLock", "Shift", "Super", "Symbol", "SymbolLock", "Tab", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home", "PageDown", "PageUp", "Backspace", "Clear", "Copy", "CrSel", "Cut", "Delete", "EraseEof", "ExSel", "Insert", "Paste", "Redo", "Undo", "Accept", "Again", "Attn", "Cancel", "ContextMenu", "Escape", "Execute", "Find", "Finish", "Help", "Pause", "Play", "Props", "Select", "ZoomIn", "ZoomOut", "BrightnessDown", "BrightnessUp", "Eject", "LogOff", "Power", "PowerOff", "PrintScreen", "Hibernate", "Standby", "WakeUp", "HangulMode", "HanjaMode", "JunjaMode", "Eisu", "Hankaku", "Hiragana", "HiraganaKatakana", "KanaMode", "KanjiMode", "Katakana", "Romaji", "Zenkaku", "ZenkakuHanaku"];
+// TODO: 
+var special_keys = ["Unidentified", "Dead", "Alt", "AltGraph", "CapsLock", 
+    "Control", "Fn", "FnLock", "Hyper", "Meta", "NumLock", "ScrollLock", 
+    "Shift", "Super", "Symbol", "SymbolLock", "Tab", "ArrowDown", 
+    "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home", "PageDown", 
+    "PageUp", "Backspace", "Clear", "Copy", "CrSel", "Cut", "Delete", 
+    "EraseEof", "ExSel", "Insert", "Paste", "Redo", "Undo", "Accept", 
+    "Again", "Attn", "Cancel", "ContextMenu", "Escape", "Execute", "Find", 
+    "Finish", "Help", "Pause", "Play", "Props", "Select", "ZoomIn", 
+    "ZoomOut", "BrightnessDown", "BrightnessUp", "Eject", "LogOff", 
+    "Power", "PowerOff", "PrintScreen", "Hibernate", "Standby", "WakeUp", 
+    "HangulMode", "HanjaMode", "JunjaMode", "Eisu", "Hankaku", "Hiragana", 
+    "HiraganaKatakana", "KanaMode", "KanjiMode", "Katakana", "Romaji", 
+    "Zenkaku", "ZenkakuHanaku", "AudioVolumeDown", "AudioVolumeUp",
+    "AudioVolumeMute", "VolumeUp", "VolumeDown", "VolumeMute"];
 window.addEventListener('touchforcechange', function() {
   // alert('uo');
 });
@@ -134,8 +148,9 @@ $(document).on('mousedown touchstart', function(event) {
     if($input[0] && $input[0].type == 'checkbox') {
       $input.val($input.val() + (event.key == 'Enter' ? ' ' : event.key));
     }
-    if(event.key == ' ' || event.key == 'Enter') { key = ':space'; }
-    if((event.code == 'KeyM' || event.keyCode == 77) && (event.altKey || event.ctrlKey)) {
+    else if(event.code && event.code.match(/^Audio/)) { return; }
+    else if(event.key == ' ' || event.key == 'Enter' || event.key == 'Spacebar') { key = ':space'; }
+    else if((event.code == 'KeyM' || event.keyCode == 77) && (event.altKey || event.ctrlKey)) {
       // Toggling modeling, so don't add to the sentence box
       return;
     }
