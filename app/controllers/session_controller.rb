@@ -308,6 +308,13 @@ class SessionController < ApplicationController
     render json: {tmp_token: nonce}
   end
 
+  def saml_redirect
+    org = Organization.find_by_global_id(params['org_id'])
+    if !org || !org.settings['saml_metadata_url']
+    end
+    render
+  end
+
   def saml_start
     org = Organization.find_by_global_id(params['org_id'])
     return render inline: "Org missing" unless org

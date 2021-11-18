@@ -51,6 +51,7 @@ Coughdrop::Application.routes.draw do
   delete 'oauth2/token' => 'session#oauth_logout'
   get 'oauth2/token/status' => 'session#oauth_local', :as => 'oauth_local'
   post 'auth/lookup' => 'session#auth_lookup'
+  get 'saml/init/:org_id' => 'session#saml_redirect'
   get 'saml/init' => 'session#saml_start'
   post 'saml/tmp_token' => 'session#saml_tmp_token'
   get 'saml/metadata' => 'session#saml_metadata'
