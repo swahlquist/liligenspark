@@ -1,6 +1,13 @@
 <h2>{{t "Communicator Profile for %{un}" un=user.user_name key='communicator_profile'}}</h2>
-<div class='profile' style='max-width: 800px; margin: 0 auto;'>
+<div class='profile' style='max-width: 1000px; margin: 0 auto;'>
   <h3><span class='glyphicon glyphicon-lamp'></span> {{profile.template.name}}</h3>
+  {{#if profile.template.instructions}}
+    <div style='margin: 15px 0 30px;'>
+      {{#each profile.template.instructions as |par|}}
+        <p>{{par}}</p>
+      {{/each}}
+    </div>
+  {{/if}}
   <div>
     {{#if prior_profile}}
       <em>
@@ -33,29 +40,45 @@
         <b>{{question.label}}</b>
       </div>
     {{else}}
-      <div class={{if question.unanswered 'question unanswered' 'question'}}>
-        <div class='prompt'>
-          {{#if question.unanswered}}
-            &nbsp;*&nbsp;
-          {{/if}}
-          {{question.label}}
-        </div>
-        {{#if question.answer_type.text}}
-          <div style='flex: 1; min-height: 75px;'>
-            {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
+      <div class='question_holder'>
+        <div class={{if question.unanswered 'question unanswered' 'question'}}>
+          <div class={{question.prompt_class}}>
+            {{#if question.unanswered}}
+              &nbsp;*&nbsp;
+            {{/if}}
+            {{question.label}}
           </div>
-        {{else}}
-          {{#each question.answers as |answer|}}
-            <div {{action 'select' question answer}} class={{if answer.selected 'answer selected' 'answer'}}>
-              {{#if answer.selected}}
-                <div class='bg' style='border-top-color: #cdf;'></div>
-              {{/if}}
-              <div style='position: relative;'>
-                {{answer.label}}
+          <div style='flex: 1;'>
+            {{#if question.answer_type.text}}
+              <div style='min-height: 75px;'>
+                {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
               </div>
-            </div>
-          {{/each}}
-        {{/if}}
+            {{else}}
+              <div style='display: flex; flex-wrap: wrap;'>
+                {{#each question.answers as |answer|}}
+                  <div {{action 'select' question answer}} class={{if answer.selected 'answer selected' 'answer'}}>
+                    {{#if answer.selected}}
+                      <div class='bg' style='border-top-color: #cdf;'></div>
+                    {{/if}}
+                    <div style='position: relative;'>
+                      {{answer.label}}
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if question.manual_selection}}
+              <div class='manual_select'>
+                <div class='checkbox big_checkbox' style='padding-bottom: 8px;'>
+                  <label style='display: block; margin-top: -2px;'>
+                    {{input type='checkbox' checked=question.manual}}
+                    {{question.manual_selection}}
+                  </label>
+                </div>
+              </div>
+            {{/if}}
+          </div>
+        </div>
       </div>
       <div class='bottom-hr'></div>
     {{/if}}

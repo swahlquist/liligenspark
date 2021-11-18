@@ -191,15 +191,24 @@ var Profile = EmberObject.extend({
           style = style + "color: #fff; ";
         }
       }
+      var max_options = 
       list.push({
         id: group.id,
         header: true,
         hader_style: htmlSafe(style),
         label: group.label
       });
+      var max_options = 0;
+      group.questions.forEach(function(question) {
+        var block = blocks[question.answer_block];
+        if(block && block.answers && block.answers.length) {
+          max_options = Math.max(max_options, block.answers.length);
+        }
+      });
       group.questions.forEach(function(question) {
         var block = blocks[question.answer_block];
         var answers = [];
+        if(!block) { debugger; return; }
         (block.answers || []).forEach(function(answer) {
           var ans = {
             id: answer.id,
@@ -207,6 +216,7 @@ var Profile = EmberObject.extend({
             score: answer.score,
             mastery: !!answer.mastery
           };
+          if(answer.skip) { ans.skip = true; }
           if(show_results) {
             if(results[question.id] && results[question.id].answers && results[question.id].answers[answer.id]) {
               ans.selected = true;
@@ -215,6 +225,7 @@ var Profile = EmberObject.extend({
           // ans.selected = true if showing results, or question_group.repeatable
           answers.push(ans);
         });
+        max_options = Math.max(max_options, answers.length || 0);
         var answer_type = {};
         if(block.type == 'text') {
           answer_type.hint = block.hint;
@@ -224,12 +235,17 @@ var Profile = EmberObject.extend({
           id: question.id,
           group_id: group.id,
           label: question.label,
+          manual_selection: block.manual_selection,
+          prompt_class: htmlSafe(max_options > 6 ? 'prompt many' : 'prompt'),
           answer_type: answer_type,
           answers: answers
         }
         if(show_results) {
           if(results[question.id] && results[question.id].text) {
             question_item.text_response = results[question.id].text;
+          }
+          if(results[question.id] && results[question.id].manual) {
+            question_item.manual = true;
           }
         }
         list.push(question_item);
@@ -303,7 +319,8 @@ var Profile = EmberObject.extend({
       } else if(report.type == 'weights') {
         var data = {
           weights: true,
-          categories: []
+          categories: [],
+          date: date
         };
         report.score_categories.forEach(function(cat) {
           var score_cat = {
@@ -313,10 +330,8 @@ var Profile = EmberObject.extend({
             history: []
           };
           score_cat.bar_style = "";
-          var pct = Math.round(cats[cat].value / cats[cat].max * 100);
+          var pct = Math.round(cats[cat].value / (cats[cat].max || 1) * 100);
           score_cat.bar_style = "width: " + pct + "%; ";
-          score_cat.prior_value = score_cat.value / 2;
-          score_cat.prior_max = score_cat.max;
 
           if(cats[cat].border) {
             if(cats[cat].background) {
@@ -328,7 +343,7 @@ var Profile = EmberObject.extend({
           history.slice(-2).forEach(function(prof) {
             var value = ((prof.score_categories || {})[cat] || {}).value;
             var max = ((prof.score_categories || {})[cat] || {}).max;
-            var pct = Math.round(value / max * 100);
+            var pct = Math.round(value / (max || 1) * 100);
             var started = prof.started && window.moment(prof.started * 1000);
             if(value != null) {
               score_cat.prior = value;
@@ -341,6 +356,58 @@ var Profile = EmberObject.extend({
             });
           });
           data.categories.push(score_cat);
+        });
+        res.push(data);
+      } else if(report.type == 'manual_categories') {
+        var data = {
+          manual_categories: true,
+          label: report.label,
+          categories: [],
+          date: date
+        };
+        var max_manuals = 0;
+        report.score_categories.forEach(function(cat) {
+          var something_here = false;
+          var score_cat = {
+            label: cats[cat].label,
+            manuals: cats[cat].manuals || 0,
+            max: cats[cat].max,
+            history: []
+          };
+          max_manuals = Math.max(score_cat.manuals, max_manuals);
+          if(score_cat.manuals > 0) { something_here = true; }
+          score_cat.bar_style = "";
+
+          if(cats[cat].border) {
+            if(cats[cat].background) {
+              score_cat.bar_style = score_cat.bar_style + htmlSafe("border-color: rgb(" + cats[cat].border.map(function(n) { return parseInt(n, 10); }).join(', ') + "); background: rgb(" + cats[cat].background.map(function(n) { return parseInt(n, 10); }).join(', ') + "); ");
+              score_cat.bar_bg_style = htmlSafe("border-top-color: rgb(" + cats[cat].background.map(function(n) { return parseInt(n, 10); }).join(', ') + ");");
+            }
+          }
+  
+          history.slice(-2).forEach(function(prof) {
+            var manuals = ((prof.score_categories || {})[cat] || {}).manuals || 0;
+            max_manuals = Math.max(max_manuals, manuals);
+            var started = prof.started && window.moment(prof.started * 1000);
+            if(manuals > 0) { something_here = true; }
+            score_cat.history.push({
+              manuals: manuals,
+              date: started
+            });
+          });
+          if(something_here) {
+            data.any_categories = true;
+            data.categories.push(score_cat);
+          }
+        });
+        data.categories = data.categories.sortBy('manuals').reverse();
+        data.categories.forEach(function(cat) {
+          var pct = Math.round(cat.manuals / (max_manuals || 1) * 100);
+          cat.bar_style = cat.bar_style + 'width: ' + pct + '%; ';
+          (cat.history || []).forEach(function(hist) {
+            var pct = Math.round(hist.manuals / (max_manuals || 1) * 100);
+            hist.bar_style = 'width: calc(' + (pct) + '% - 4px);';
+          });
         });
         res.push(data);
       } else if(report.type == 'concat') {
@@ -392,7 +459,11 @@ var Profile = EmberObject.extend({
           });  
         });
         res.push(data);
-      } else if(report.type == 'table') {
+      } else if(report.type == 'grid') {
+        // columns - list of column names
+        // rows - list of row names
+        // grid - array of arrays with score_categories in each cell
+        // color rules for each cell should come from score_category's brackets or styling rules
       } else if(report.type == 'raw') {
         res.push({
           raw: true,
@@ -518,6 +589,15 @@ var Profile = EmberObject.extend({
         if(question.text_response) {
           responses[question.id].text = question.text_response;
         }
+        if(question.manual) {
+          responses[question.id].manual = true;
+          for(var cat_id in template_question.score_categories) {
+            var cat = json.score_categories[cat_id];
+            if(cat) {
+              cat.manuals = (cat.manuals || 0) + 1;
+            }
+          }
+        }
         if(question.answers) {
           responses[question.id].answers = {};
           question.answers.forEach(function(answer) {
@@ -528,7 +608,7 @@ var Profile = EmberObject.extend({
             if(answer.selected) {
               responses[question.id].score = (responses[question.id].score || 0) + answer.score;
             }
-            if(answer.selected && template_question.score_categories) {
+            if(answer.selected && !answer.skip && template_question.score_categories) {
               for(var cat_id in template_question.score_categories) {
                 var cat = json.score_categories[cat_id];
                 if(cat) {
@@ -554,15 +634,20 @@ var Profile = EmberObject.extend({
                 cat.max = cat.max / (cat.cnt || 1);
               } else if(cat.function == 'mastery_cnt') {
                 cat.value = cat.mastery_cnt || 0;
-                cat.max = cat.cnt || 1;
+                cat.max = cat.cnt;
+              } else if(cat.function == 'mastery_avg') {
+                cat.value = cat.mastery_cnt / (cat.cnt || 1);
+                cat.max = 1.0;
               }
               if(cat.brackets) {
                 cat.pre_value = cat.value;
                 cat.brackets.forEach(function(b, idx) {
-                  if(idx == 0 || cat.pre_value > b[0]) {
+                  if(idx == 0 || (cat.pre_value / (cat.max || 1)) > b[0]) {
                     cat.value = b[1];
+                    cat.bracket_border = b[2];
+                    cat.bracket_background = b[3];
                   }
-                })
+                });
               }
             }
           }
@@ -664,6 +749,8 @@ var profiles = {
         resolve(profiles.process(cole_profile));
       } else if(id == 'cpp') {
         resolve(profiles.process(cpp_profile));
+      } else if(id == 'csicy') {
+        resolve(profiles.process(csicy_profile));
       } else {
         CoughDrop.store.findRecord('profile', id).then(function(prof) {
           resolve(profiles.process(prof.get('template')));
@@ -2145,5 +2232,1257 @@ var cpp_profile = {
   ]
 };
 
+var csicy_profile = {
+  name: "Communication Supports Inventory-Children and Youth (CSI-CY)",
+  id: "csicy",
+  version: "0.1",
+  type: 'communicator',
+  description: ["Communication Supports Inventory-Children and Youth (CSI-CY) for children who rely on augmentative and alternative communication (AAC), Charity Rowland, Ph. D., Melanie Fried-Oken, Ph. D., CCC-SLP and Sandra A. M. Steiner, M. A., CCC-SLP",
+    "WHAT IS THIS? The Communication Supports Inventory-Children and Youth (CSI-CY ) is a tool designed to make goal writing easier for teachers and speech-language pathologists who work with students who rely on augmentative and alternative communication (AAC) to communicate effectively. It is not an assessment, but a guide to organize your understanding of the impact of a student’s communication strengths and limitations on participation at school and at home. The idea is that you would use the CSI-CY to prepare for the IEP meeting by prioritizing areas that should be targeted in IEP goals related to communication.",
+    "CSI-CY? WHO? Yes, exactly, WHO (the World Health Organization) developed the International Classification of Functioning, Disability and Health-Children and Youth Version (ICF-CY) in 2007 to provide a global common language for describing the impact of health conditions and disabilities on human functioning. The CSI-CY uses that same global common language, deriving most of its items from the ICF-CY. To see exactly what items came from the ICF-CY please look at the “code set” available at http://icfcy.org/aac#ui-tabs-4",
+    "SO, HOW DOES IT WORK? It’s all about the student’s participation in life at school and at home! First, you rate the major areas in which the child’s participation is restricted because of communication limitations. Then you rate the child’s specific communication limitations and functional impairments that affect communication. Then you identify environmental facilitators and barriers that affect communication. After you have rated all of these items, go back through them and use the last column (Prioritize for Instruction) to check off the items that you think should be high priority areas for potential IEP goals.",
+    "This tool is based on the International Classification of Functioning, Disability and Health-Children & Youth Version, or the ICF-CY (World Health Organization, 2007). To view the ICF-CY codes related to each item, please see www.csi-cy.org. We would like to acknowledge the contributions of Gayl Bowser, Dr. Mats Granlund, Dr. Don Lollar, Dr. Randall Phelps and Dr. Rune Simeonsson to the development of this tool."
+  ],
+  instructions: [
+    "SO, HOW DOES IT WORK? It’s all about the student’s participation in life at school and at home! First, you rate the major areas in which the child’s participation is restricted because of communication limitations. Then you rate the child’s specific communication limitations and functional impairments that affect communication. Then you identify environmental facilitators and barriers that affect communication. After you have rated all of these items, go back through them and use the \"Prioritize for Instruction\" checkboxes to check off the items that you think should be high priority areas for potential IEP goals.",
+  ],
+  score_categories: {
+    school: {
+      label: "School Related Activities",
+      function: "mastery_cnt",
+      border: [26, 55, 130],
+      background: [171, 194, 255]
+    },
+    interpersonal: {
+      label: "Interpersonal Interaction and Relationships",
+      function: "mastery_cnt",
+      border: [90, 117, 150],
+      background: [173, 203, 240]
+    },
+    receptive: {
+      label: "Receptive Language and Literacy",
+      function: "mastery_cnt",
+      border: [103, 161, 184],
+      background: [194, 236, 252]
+    },
+    expressive: {
+      label: "Expressive Language and Literacy",
+      function: "mastery_cnt",
+      border: [117, 195, 217],
+      background: [196, 242, 255]
+    },
+    functions: {
+      label: "Functions of Communication",
+      function: "mastery_cnt",
+      border: [119, 202, 209],
+      background: [196, 250, 255]
+    },
+    rules: {
+      label: "Rules of Social Interaction in Conversation",
+      function: "mastery_cnt",
+      border: [124, 217, 207],
+      background: [207, 255, 250]
+    },
+    aac_receptive: {
+      label: "AAC: Receptive Strategies",
+      function: "mastery_cnt",
+      border: [110, 186, 165],
+      background: [188, 245, 229]
+    },
+    aac_expressive: {
+      label: "AAC: Expressive Modes and Strategies",
+      function: "mastery_cnt",
+      border: [100, 179, 134],
+      background: [171, 245, 203]
+    },
+    aac_motor: {
+      label: "AAC: Motor Access",
+      function: "mastery_cnt",
+      border: [83, 181, 108],
+      background: [154, 230, 173]
+    },
+    impairments: {
+      label: "Impairments in Body Functions that Limit Communication",
+      function: "mastery_cnt",
+      border: [84, 156, 89],
+      background: [162, 224, 166]
+    },
+    physical: {
+      label: "Physical Environment",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+    at: {
+      label: "Assistive Technology",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+    people: {
+      label: "People",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+    services: {
+      label: "Services and Policies",
+      function: "mastery_cnt",
+      border: [77, 133, 72],
+      background: [158, 224, 153]
+    },
+  },
+  answer_blocks: {
+    limitations: {
+      type: 'multiple_choice',
+      manual_selection: "Prioritize for Instruction",
+      answers: [
+        {id: 'dunno', label: "Don't Know", score: 0, skip: true},
+        {id: 'na', label: "Not Applicable", score: 0, skip: true},
+        {id: 'above', label: "Skills Above Typical Peer", score: 6, mastery: true},
+        {id: 'none', label: "No Limitation", score: 5, mastery: true},
+        {id: 'mild', label: "Mild Limitation", score: 4, mastery: true},
+        {id: 'moderate', label: "Moderate Limitation", score: 3},
+        {id: 'severe', label: "Severe Limitation", score: 2},
+        {id: 'complete', label: "Complete Limitation", score: 1},
+      ]
+    },
+    help_hindrance: {
+      type: 'multiple_choice',
+      manual_selection: "Prioritize for Instruction",
+      answers: [
+        {id: 'na', label: "Not Applicable", score: 0, skip: true},
+        {id: 'help', label: "Facilitator/Help", score: 1, mastery: true},
+        {id: 'hindrance', label: "Barrier/Hindrance", score: 0},
+      ]
+    },
+    free_response: {
+      type: 'text',
+      manual_selection: "Prioritize for Instruction",
+      hint: "Other examples, and observations"
+    }
+  },
+  question_groups: [
+    {
+      id: "school",
+      label: "School-Related Activities",
+      border: [26, 55, 130],
+      background: [171, 194, 255],
+      header: "Restrictions in Participation Caused by Communication Limitations",
+      header_border: [26, 55, 130],
+      header_background: [171, 194, 255],
+      questions: [
+        {
+          id: "q1",
+          label: "Playing with others as an educational activity",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q2",
+          label: "Classroom activities (eg.,attending classes and interacting appropriately to fulfill the duties of being a student)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q3",
+          label: "Communal activities (classroom games, assemblies, eating in the cafeteria, field trips)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q4",
+          label: "Recreation (physical education, recess, playground games)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q5",
+          label: "Creative activities (art classes, orchestra/band, chorus)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q6",
+          label: "Civic activities (school paper, student government, school club, serving as student aid, safety patrol member)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q7",
+          label: "Other academic activities (computer labs, science labs, library use, gifted/talented classes)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q8",
+          label: "Social activities (school dances, pep rallies, hanging out with friends at school)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q9",
+          label: "Social independence activities (driver's ed., home economics/shop, after school organized sports)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q10",
+          label: "Vocational training (community work experience, community college, community based recreation)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q11",
+          label: "Transition planning (independent living skills practicum, transportation training)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q12",
+          label: "Looking after one's safety at school (avoiding risks that can lead to injury or harm)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q13",
+          label: "Maintaining one's health (caring for oneself by being aware of and doing what is required for one's health)",
+          answer_block: "limitations",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+        {
+          id: "q14",
+          label: "Other school related activities? (describe)",
+          answer_block: "free_response",
+          score_categories: {
+            school: 1.0,
+          }
+        },
+      ]      
+    },
+    {
+      id: "interpersonal",
+      label: "Interpersonal Interaction and Relationships",
+      border: [90, 117, 150],
+      background: [173, 203, 240],
+      questions: [
+        {
+          id: "q15",
+          label: "Relating to teachers and other adults at school",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q16",
+          label: "Relating to peers at school",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q17",
+          label: "Making and maintaining friendships",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q18",
+          label: "Dating or engaging in romantic relationships",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q19",
+          label: "Relating to persons in the home (family or other coinhabitants)",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q20",
+          label: "Relating to new people",
+          answer_block: "limitations",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+        {
+          id: "q21",
+          label: "Other interaction and relationships? (describe)",
+          answer_block: "free_response",
+          score_categories: {
+            interpersonal: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "receptive",
+      label: "Receptive Language and Literacy",
+      border: [103, 161, 184],
+      background: [194, 236, 252],
+      header: "Communication Limitations",
+      header_border: [26, 55, 130],
+      header_background: [171, 194, 255],
+      questions: [
+        {
+          id: "q22",
+          label: "Intentionally attending to human touch, face and/or voice",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q23",
+          label: "Comprehending the meaning of single spoken words",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q24",
+          label: "Comprehending the meaning of 2-3 spoken word phrases",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q25",
+          label: "Comprehending the meaning of spoken sentences",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q26",
+          label: "Comprehending the meaning of a spoken narrative",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q27",
+          label: "Understanding sound/symbol relationships (sounding out letters)",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q28",
+          label: "Comprehending the meaning of single written words",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q29",
+          label: "Comprehending the meaning of written sentences",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q30",
+          label: "Comprehending the meaning of a written narrative",
+          answer_block: "limitations",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+        {
+          id: "q31",
+          label: "Other receptive skills? (describe)",
+          answer_block: "free_response",
+          score_categories: {
+            receptive: 1.0,
+          }
+        },
+      ]
+    },
+    {
+      id: "expressive",
+      label: "Expressive Language and Literacy",
+      border: [117, 195, 217],
+      background: [196, 242, 255],
+      questions: [
+        {
+          id: "q32",
+          label: "Using body language, facial expressions and gestures to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            expressive: 1.0,
+          }
+        },
+        {
+          id: "q33",
+          label: "Using non-speech vocalizations for communication (e.g. laughing, cooing, \"hmmm\")",
+          answer_block: "limitations",
+          score_categories: {
+            expressive: 1.0,
+          }
+        },
+        {
+          id: "q34",
+          label: "Using single spoken words to communicate (includes word approximations)",
+          answer_block: "limitations",
+          score_categories: {
+            expressive: 1.0,
+          }
+        },
+        {
+          id: "q35",
+          label: "Combining spoken words into 2-3 word phrases",
+          answer_block: "limitations",
+          score_categories: {
+            expressive: 1.0,
+          }
+        },
+        {
+          id: "q36",
+          label: "Using sentences with appropriate syntax in spoken communication",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q37",
+          label: "Combining sentences to convey a cohesive topic in spoken communication",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q38",
+          label: "Choosing correct spoken and/or written words",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q39",
+          label: "Demonstrating knowledge of sound/symbol relationships (writing a letter for a given sound)",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q40",
+          label: "Using single written words to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q41",
+          label: "Using written sentences to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q42",
+          label: " Using a written narrative to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q43",
+          label: " Using correct spelling conventions",
+          answer_block: "limitations",
+          score_categories: {
+            cole: 1.0,
+            stage_4: 1.0,
+          }
+        },
+        {
+          id: "q44",
+          label: "Other expressive skills? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "functions",
+      label: "Functions of Communication",
+      border: [119, 202, 209],
+      background: [196, 250, 255],
+      questions: [
+        {
+          id: "q45",
+          label: " Refusing or rejecting something",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q46",
+          label: "Gaining the attention of another person",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q47",
+          label: "Requesting more",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q48",
+          label: "Requesting something specific",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q49",
+          label: " Directing another person's attention",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q50",
+          label: " Using social conventions (e.g., hello, good-bye, polite forms of address, please and thank you)",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q51",
+          label: "Exchanging information (e.g. asking, answering, naming, or commenting)",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q52",
+          label: "Telling someone to do something",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q53",
+          label: "Conveying an abstract idea",
+          answer_block: "limitations",
+          score_categories: {
+            functions: 1.0,
+          }
+        },
+        {
+          id: "q54",
+          label: "Other purposes for communication? (describe)",
+          answer_block: "free_response",
+        },
+      ]
+    },
+    {
+      id: "rules",
+      label: "Rules of Social Interaction in Conversation",
+      border: [124, 217, 207],
+      background: [207, 255, 250],
+      questions: [
+        {
+          id: "q55",
+          label: " Orienting towards communication partner through eye contact or body positioning",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q56",
+          label: " Making and responding to physical contact appropriately",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q57",
+          label: "Keeping socially appropriate distance between oneself and others",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q58",
+          label: "Adjusting language according to one's social role when interacting with others (e.g., \"What's up?\" to a friend versus \"How are you, sir?\" to an authority)",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q59",
+          label: " Starting a conversation appropriately",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q60",
+          label: " Sustaining a conversation appropriately (includes turn taking skills)",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q61",
+          label: " Revising conversation or repairing breakdowns during interaction appropriately (e.g., able to repeat, restate, or explain so as to successfully communicate)",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q62",
+          label: " Ending a conversation appropriately",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q63",
+          label: "Conversing in a group",
+          answer_block: "limitations",
+          score_categories: {
+            rules: 1.0,
+          }
+        },
+        {
+          id: "q64",
+          label: "Other social interaction rules? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "aac_receptive",
+      label: "Augmentation & Alternative Communication: Receptive Strategies",
+      border: [110, 186, 165],
+      background: [188, 245, 229],
+      questions: [
+        {
+          id: "q65",
+          label: " Comprehending the meaning of body gestures (e.g., facial expressions, posture, hand gestures, movements)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_receptive: 1.0,
+          }
+        },
+        {
+          id: "q66",
+          label: "Comprehending 3-dimensional objects/representations used to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_receptive: 1.0,
+          }
+        },
+        {
+          id: "q67",
+          label: "Comprehending the meaning of drawings and photographs used to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_receptive: 1.0,
+          }
+        },
+        {
+          id: "q68",
+          label: "Comprehending the meaning of manual sign language (e.g., ASL, finger spelling, signed English)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_receptive: 1.0,
+          }
+        },
+        {
+          id: "q69",
+          label: "Comprehending the meaning of AAC signs/symbols (e.g., MinSpeak icons, Bliss symbols, Rebus symbols, PECS)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_receptive: 1.0,
+          }
+        },
+        {
+          id: "q70",
+          label: "Other AAC receptive strategies? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "aac_expressive",
+      label: "Augmentative & Alternative Communication: Expressive Modes and Strategies",
+      border: [100, 179, 134],
+      background: [171, 245, 203],
+      questions: [
+        {
+          id: "q71",
+          label: "Using 3-dimensional objects/representations to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q72",
+          label: "Using drawings, pictures or photographs to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q73",
+          label: "Using manual sign language to communicate (e.g., ASL, finger spelling, signed English)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q74",
+          label: "Using Braille to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q75",
+          label: "Using communication devices and technologies",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q76",
+          label: "Using single AAC signs/symbols to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q77",
+          label: "Combining AAC signs/symbols to communicate",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q78",
+          label: "Conveying a cohesive topic with AAC signs/symbols ",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q79",
+          label: "Operating a communication device correctly (e.g., on/off, volume, speed of scanning, rate enhancement)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q80",
+          label: " Knowing how to access needed vocabulary",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q81",
+          label: "Changing communication strategies depending on social and physical environment (e.g., partner feedback and skills; background noise)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q82",
+          label: " Giving partner instructions when necessary",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q83",
+          label: "Expressing the need for additional vocabulary",
+          answer_block: "limitations",
+          score_categories: {
+            aac_expressive: 1.0,
+          }
+        },
+        {
+          id: "q84",
+          label: "Other AAC expressive strategies? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "aac_motor",
+      label: "Augmentative & Alternative Communication: Motor Access",
+      border: [83, 181, 108],
+      background: [154, 230, 173],
+      questions: [
+        {
+          id: "q85",
+          label: "Control of involuntary movements that may interfere with communication such as tremors, tics, stereotypies, motor perseveration, or mannerisms",
+          answer_block: "limitations",
+          score_categories: {
+            aac_motor: 1.0,
+          }
+        },
+        {
+          id: "q86",
+          label: "Maintaining a body position as needed for communication purposes (including head control)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_motor: 1.0,
+          }
+        },
+        {
+          id: "q87",
+          label: " Control of gross motor skills (upper and lower extremities) needed to use a communication device or materials (e.g., carrying, pushing, pulling, kicking, turning or twisting)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_motor: 1.0,
+          }
+        },
+        {
+          id: "q88",
+          label: "Control of fine motor skills needed to use gestures, manual signs or a specific device to communicate (e.g., grasping, manipulating, picking up and releasing)",
+          answer_block: "limitations",
+          score_categories: {
+            aac_motor: 1.0,
+          }
+        },
+        {
+          id: "q89",
+          label: "Using eye gaze for message selection",
+          answer_block: "limitations",
+          score_categories: {
+            aac_motor: 1.0,
+          }
+        },
+        {
+          id: "q90",
+          label: " Other motor access skills? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "impairments",
+      label: "Impairments in Body Functions that Limit Communication",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
+      header: "Impairments in Body Functions that Limit Communication",
+      header_border: [26, 55, 130],
+      header_background: [171, 194, 255],
+      questions: [
+        {
+          id: "q91",
+          label: "Hearing function",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q92",
+          label: "Vision function",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q93",
+          label: "Touch functions (e.g., ability to sense surfaces, their texture or quality; includes numbness, anesthesia, or tingling)",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q94",
+          label: "Oral motor function adequate for intelligible speech, including articulation, fluency, resonance, and rate of speech",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q95",
+          label: "Respiratory function for communication",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q96",
+          label: " Intellectual functions",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q97",
+          label: "General gross and fine motor functions",
+          answer_block: "limitations",
+          score_categories: {
+            impairments: 1.0,
+          }
+        },
+        {
+          id: "q98",
+          label: "Other body functions? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "physical",
+      label: "Physical Environment",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
+      header: "Environmental Factors that Serve as Barriers or Facilitators for Communication",
+      header_border: [26, 55, 130],
+      header_background: [171, 194, 255],
+      questions: [
+        {
+          id: "q99",
+          label: "Sound intensity and/or sound quality",
+          answer_block: "help_hindrance",
+          score_categories: {
+            physical: 1.0,
+          }
+        },
+        {
+          id: "q100",
+          label: "Light intensity or quality",
+          answer_block: "help_hindrance",
+          score_categories: {
+            physical: 1.0,
+          }
+        },
+        {
+          id: "q101",
+          label: "Arrangement of physical space",
+          answer_block: "help_hindrance",
+          score_categories: {
+            physical: 1.0,
+          }
+        },
+        {
+          id: "q102",
+          label: "Level of surrounding activity",
+          answer_block: "help_hindrance",
+          score_categories: {
+            physical: 1.0,
+          }
+        },
+        {
+          id: "q103",
+          label: "Other physical environment factors? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+    {
+      id: "at",
+      label: "Assistive Technology",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
+      questions: [
+        {
+          id: "q104",
+          label: "Adapted or specially designed HIGH tech products/technology developed for the purpose of improving communication (e..g., speech generating device, FM system, specialized writing device)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q105",
+          label: "Adapted or specially designed LOW tech products/technology developed for the purpose of improving communication (e.g., systems that have no electricity/battery requirement, such as a picture communication board)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q106",
+          label: " General products and technology for communication (e.g., computers, telephones) used by the general public",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q107",
+          label: "Assistive products and technology for education (for acquisition of knowledge, expertise or skills)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q108",
+          label: "Assistive products and technology for mobility and transportation",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q109",
+          label: "Assistive products and technology for generalized use in school (e.g., prosthetic and orthotic devices; glasses, hearing aides, cochlear implants)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            at: 1.0,
+          }
+        },
+        {
+          id: "q110",
+          label: "Other assistive technology? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },    {
+      id: "people",
+      label: "People",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
+      questions: [
+        {
+          id: "q111",
+          label: "Providing physical support at school (e.g., supporting body posture appropriately, making glasses available)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q112",
+          label: "Providing emotional support at school",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q113",
+          label: "Having skills needed to support communication in school (e.g., knowing manual sign language, knowing how to use the communication device)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q114",
+          label: "Providing physical support at home",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q115",
+          label: "Providing emotional support at home",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q116",
+          label: "Having skills needed to support communication at home (e.g., knowing manual sign language, knowing how to use the communication device)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            people: 1.0,
+          }
+        },
+        {
+          id: "q117",
+          label: "Other support by people at home or school? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },    {
+      id: "services",
+      label: "Services and Policies",
+      border: [84, 156, 89],
+      background: [162, 224, 166],
+      questions: [
+        {
+          id: "q118",
+          label: "Special education services (includes therapy and providers of services)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q119",
+          label: "Regular education services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q120",
+          label: "School transportation services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q121",
+          label: "School food services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q122",
+          label: "School social services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q123",
+          label: "Before and after school care services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q124",
+          label: "School-based health services",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q125",
+          label: "Special education policies (e.g., school and/or family financial responsabilities for purchasing and maintaining AAC equipment)",
+          answer_block: "help_hindrance",
+          score_categories: {
+            services: 1.0,
+          }
+        },
+        {
+          id: "q126",
+          label: "Other school services and/or policies? (describe)",
+          answer_block: 'free_response'
+        },
+      ]
+    },
+  ],
+  report_segments: [
+    {
+      label: "Prioritized Categories",
+      type: "manual_categories",
+      score_categories: ["school", "interpersonal", "receptive", "expressive", "functions", "rules", "aac_receptive", "aac_expressive", "aac_motor", "impairments", "physical", "at", "people", "services"],
+      summary: true,
+    },
+    {
+      type: "weights",
+      score_categories: ["school", "interpersonal", "receptive", "expressive", "functions", "rules", "aac_receptive", "aac_expressive", "aac_motor", "impairments", "physical", "at", "people", "services"]
+    },
+    {
+      type: "raw",
+    }
+  ]
+};
 export default profiles;
-

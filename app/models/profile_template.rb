@@ -53,6 +53,18 @@ class ProfileTemplate < ApplicationRecord
         }
       }
       return template
+    elsif code == 'cpp'
+    elsif code == 'csicy'
+      template = ProfileTemplate.new
+      template.public_profile_id = code
+      template.settings = {
+        'public' => true,
+        'profile' => {
+          'name' => 'Communication Supports Inventory-Children and Youth (CSI-CY)',
+          'description' => "Communication Supports Inventory-Children and Youth (CSI-CY) for children who rely on augmentative and alternative communication (AAC), Charity Rowland, Ph. D., Melanie Fried-Oken, Ph. D., CCC-SLP and Sandra A. M. Steiner, M. A., CCC-SLP"
+        }
+      }
+      return template
     end
     return nil
   end

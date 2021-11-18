@@ -94,22 +94,27 @@
           </div>
         {{else if report.weights}}
           <div style='margin: 50px 0; page-break-inside: avoid;'>
+            {{#if report.label}}
+              <h3>{{ report.label }}</h3>
+            {{else}}
+              <h3>{{t "Weighted Results" key='weighted_results'}}</h3>
+            {{/if}}
             {{#each report.categories as |cat|}}
               <div class='category'>
                 <div style='flex: 1;'>
-                  <h3 style='margin-top: 0; margin-bottom: 25px;'>{{cat.label}}</h3>
+                  <h4 style='margin-top: 0; margin-bottom: 25px;'>{{cat.label}}</h4>
                 </div>
                 <div style='flex: 2; border-right: 1px solid #ddd;'>
                   {{#each cat.history as |hist|}}
                     <div class='bar_holder'>
-                      <div class='bar_tip'>{{hist.value}}/{{hist.max}} {{date hist.date 'short_day'}}</div>
+                      <div class='bar_tip'>{{hist.value}}/{{#if hist.max}}{{hist.max}}{{else}}0{{/if}} {{date hist.date 'short_day'}}</div>
                       <div class='bar prior' style={{hist.bar_style}}>
                         <div class='bg' style={{cat.bar_bg_style}}></div>
                       </div>
                     </div>
                   {{/each}}
                   <div class='bar_holder'>
-                    <div class='bar_tip'>{{cat.value}}/{{cat.max}} {{date processed_profile.started_at 'short_day'}}</div>
+                    <div class='bar_tip'>{{cat.value}}/{{#if cat.max}}{{cat.max}}{{else}}0{{/if}} {{date processed_profile.started_at 'short_day'}}</div>
                     <div class='bar' style={{cat.bar_style}}>
                       <div class='bg' style={{cat.bar_bg_style}}></div>
                     </div>
@@ -117,6 +122,39 @@
                 </div>
               </div>
             {{/each}}
+          </div>
+        {{else if report.manual_categories}}
+          <div style='margin: 50px 0; page-break-inside: avoid;'>
+            <h3>{{report.label}}</h3>
+            {{#if report.any_categories}}
+              {{#each report.categories as |cat|}}
+                {{#if cat.manuals}}
+                  <div class='category'>
+                    <div style='flex: 1;'>
+                      <h4 style='margin-top: 0; margin-bottom: 25px;'>{{cat.label}}</h4>
+                    </div>
+                    <div style='flex: 2; border-right: 1px solid #ddd;'>
+                      {{#each cat.history as |hist|}}
+                        <div class='bar_holder'>
+                          <div class='bar_tip'>{{hist.manuals}} {{t "items" key='items'}} - {{date hist.date 'short_day'}}</div>
+                          <div class='bar prior' style={{hist.bar_style}}>
+                            <div class='bg' style={{cat.bar_bg_style}}></div>
+                          </div>
+                        </div>
+                      {{/each}}
+                      <div class='bar_holder'>
+                        <div class='bar_tip'>{{cat.manuals}} {{t "items" key='items'}} - {{date processed_profile.started_at 'short_day'}}</div>
+                        <div class='bar' style={{cat.bar_style}}>
+                          <div class='bg' style={{cat.bar_bg_style}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {{/if}}
+              {{/each}}
+            {{else}}
+              {{t "None to show" key='none_to_show'}}
+            {{/if}}
           </div>
         {{else if report.concat}}
           <div style=' page-break-inside: avoid;'>
@@ -146,23 +184,37 @@
                   <b>{{question.label}}</b>
                 </div>
               {{else}}
-                <div class='question'>
-                  <div class='prompt'>{{question.label}}</div>
-                  {{#if question.answer_type.text}}
-                    <div class='text_response' style='flex: 1; font-style: italic;'>{{question.text_response}}</div>
-                  {{else}}
-                    {{#each question.answers as |answer|}}
-                      <div class={{if answer.selected 'answer selected' 'answer'}}>
-                        {{#if answer.selected}}
-                          <div class='bg' style='border-top-color: #cdf;'></div>
-                          <div style='position: relative;'>
-                            <b>{{answer.label}}</b>
-                          </div>
-                        {{else}}
-                          {{answer.label}}
-                        {{/if}}
-                      </div>
-                    {{/each}}
+                <div class='question_holder'>
+                  <div class='question'>
+                    <div class={{question.prompt_class}}>
+                      {{question.label}}
+                    </div>
+                    <div style='flex: 1'>
+                      {{#if question.answer_type.text}}
+                        <div class='text_response' style='flex: 1; font-style: italic;'>{{question.text_response}}</div>
+                      {{else}}
+                        <div style='display: flex; flex-wrap: wrap;'>
+                          {{#each question.answers as |answer|}}
+                            <div class={{if answer.selected 'answer selected' 'answer'}}>
+                              {{#if answer.selected}}
+                                <div class='bg' style='border-top-color: #cdf;'></div>
+                                <div style='position: relative;'>
+                                  <b>{{answer.label}}</b>
+                                </div>
+                              {{else}}
+                                {{answer.label}}
+                              {{/if}}
+                            </div>
+                          {{/each}}
+                        </div>
+                      {{/if}}
+                    </div>
+                  </div>
+                  {{#if question.manual}}
+                    <div style='font-weight: bold; padding-left: 30px; font-style: italic; background: #ffe2e2; margin: 0 10px; box-shadow: 0 -5px 10px -5px #888; position: relative; margin-top: -3px; border-top-left-radius: 3px; border-top-right-radius: 3px;'>
+                      {{t "marked as: " key='marked_as_colon'}}
+                      {{question.manual_selection}}
+                    </div>
                   {{/if}}
                 </div>
                 <div class='bottom-hr'></div>
