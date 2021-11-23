@@ -1581,9 +1581,9 @@ var persistence = EmberObject.extend({
     return sync_promise;
   },
   sync_tags: function(user) {
+    var store_image_promises = [];
     var queue_tags = new RSVP.Promise(function(resolve, reject) {
       var tag_ids = user.get('preferences.tag_ids') || [];
-      var store_image_promises = [];
       var next_tag = function() {
         var tag_id = tag_ids.pop();
         if(tag_id) {
