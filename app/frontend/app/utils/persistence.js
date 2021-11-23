@@ -1467,7 +1467,10 @@ var persistence = EmberObject.extend({
           persistence.refresh_after_eventual_stores();
           sync_reject.apply(null, arguments);
         });
-      }));
+      })).then(null, function() {
+        persistence.refresh_after_eventual_stores();
+        sync_reject(null, arguments);
+      });
 
     }).then(function() {
       // TODO: some kind of alert with a "reload" option, since we potentially
