@@ -1305,6 +1305,7 @@ var capabilities;
           }
           var prefix = window.cordova.file.dataDirectory;
           var suffix = null;
+          var fixed_url = url;
           if(capabilities.system == 'iOS' && capabilities.installed_app && fixed_url.match(/^file/) && location.host.match(/^localhost/)) {
             prefix = prefix.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
             suffix = prefix.split(/\//).slice(-2).join('/');
@@ -1313,7 +1314,6 @@ var capabilities;
           if(url.match(/^cdvfile/)) {
             url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
           }
-          var fixed_url = url;
           if(url.match("^" + prefix)) {
             fixed_url = url;
           } else {

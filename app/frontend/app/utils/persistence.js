@@ -543,6 +543,9 @@ var persistence = EmberObject.extend({
     });
   },
   normalize_url: function(url) {
+    if(url && url.match(/\%2520/)) {
+      url = url.replace(/\%2520/g, '%20');
+    }
     if(url && url.match(/user_token=[\w-]+$/)) {
       return url.replace(/[\?\&]user_token=[\w-]+$/, '');
     } else {
@@ -1398,6 +1401,7 @@ var persistence = EmberObject.extend({
         // Step 2: If online
         // get the latest user profile information and settings
         spread_out(function() {
+          // Timed promised cannot call store_url() which gets queued
           return persistence.time_promise(persistence.sync_user(user, importantIds), "sync user data");
         });
 
