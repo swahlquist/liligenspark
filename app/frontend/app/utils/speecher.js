@@ -691,13 +691,13 @@ var speecher = EmberObject.extend({
           speecher[attr] = data_uri;
           return true;
         } else {
-          return persistence.store_url(speecher[attr], 'sound').then(function(data) {
+          return persistence.store_url_now(speecher[attr], 'sound').then(function(data) {
             speecher[attr] = data.local_url || data.data_uri;
             return true;
           });
         }
       }, function() {
-        return persistence.store_url(speecher[attr], 'sound').then(function(data) {
+        return persistence.store_url_now(speecher[attr], 'sound').then(function(data) {
           speecher[attr] = data.local_url || data.data_uri;
           return true;
         });

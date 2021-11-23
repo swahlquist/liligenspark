@@ -1581,19 +1581,16 @@ var persistence = EmberObject.extend({
     return sync_promise;
   },
   sync_tags: function(user) {
-    return persistence.time_promise(new RSVP.Promise(function(resolve, reject) {
+    var queue_tags = new RSVP.Promise(function(resolve, reject) {
       var tag_ids = user.get('preferences.tag_ids') || [];
+      var store_image_promises = [];
       var next_tag = function() {
         var tag_id = tag_ids.pop();
         if(tag_id) {
           CoughDrop.store.findRecord('tag', tag_id).then(function(tag) {
             if(tag.get('button.image_url')) {
-              persistence.store_url(tag.get('button.image_url'), 'image', false, false).then(function() {
-                runLater(next_tag, 500);
-              }, function() {
-                runLater(next_tag, 500);
-                // TODO: handle tag storage errors as warnings, not failures
-              });
+              store_image_promises.push(persistence.store_url(tag.get('button.image_url'), 'image', false, false));
+              runLater(next_tag, 500);
             } else {
               runLater(next_tag, 500);
             }
@@ -1606,7 +1603,12 @@ var persistence = EmberObject.extend({
         }
       };
       runLater(next_tag, 500);
-    }), "sync tags for " + user.get('user_name'));
+    });
+    return persistence.time_promise(queue_tags, "sync tags for " + user.get('user_name')).then(function() {
+      return RSVP.all_wait(store_image_promises).then(null, function(err) {
+        return RSVP.resolve([]);
+      });
+    });
   },
   sync_contacts: function(user) {
     var wait = RSVP.resolve();
@@ -1627,9 +1629,9 @@ var persistence = EmberObject.extend({
       });
       return all_store_images;
     });
-    return retrieve_list.then(function(list) {
-      return persistence.time_promise(RSVP.all_wait(list));
-    })
+    return persistence.time_promise(retrieve_list, 'syncing contacts').then(function(list) {
+      return RSVP.all_wait(list);
+    });
   },
   sync_logs: function(user) {
     return persistence.time_promise(persistence.find('settings', 'bigLogs').then(function(res) {
@@ -2222,7 +2224,7 @@ var persistence = EmberObject.extend({
                 }
               });
 
-              persistence.time_promise(RSVP.all_wait(visited_board_promises).then(function() {
+              RSVP.all_wait(visited_board_promises).then(function() {
                 full_set_revisions[board.get('id')] = board.get('full_set_revision');
                 runLater(function() {
                   nextBoard(defer);
@@ -2241,7 +2243,7 @@ var persistence = EmberObject.extend({
                 runLater(function() {
                   nextBoard(defer);
                 }, 150);
-              }), 'save board content:' + id, 180000);
+              });
             }, function(err) {
               var board_unauthorized = (err && err.error == "Not authorized");
               if(next.link_disabled && board_unauthorized) {
@@ -2320,11 +2322,17 @@ var persistence = EmberObject.extend({
           }
         }
         var url = user.get('avatar_url');
-        return persistence.store_url(url, 'image');
+        if(url) {
+          return persistence.store_url_now(url, 'image');
+        } else {
+          return RSVO.resolve({});
+        }
       });
 
       save_avatar.then(function(object) {
-        importantIds.push("dataCache_" + object.url);
+        if(object.url) {
+          importantIds.push("dataCache_" + object.url);
+        }
         resolve();
       }, function(err) {
         if(err && err.quota_maxed) {
