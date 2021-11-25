@@ -892,7 +892,7 @@ Button.broken_image = function(image) {
     // TODO: this is extra and shouldn't be necesary but may have broken things
     find_fallback();
 
-    if(!(bad_src || '').match(/^http/) && (image.getAttriute('data-fallback') || '').match(/^http/)) {
+    if(!(bad_src || '').match(/^http/) && (image.getAttribute('data-fallback') || '').match(/^http/)) {
       image.setAttribute('onerror', '');
       image.onerror = function() {
         CoughDrop.track_error("failed to load remote alternate after local version failed");
