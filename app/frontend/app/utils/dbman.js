@@ -617,9 +617,13 @@ var dbman = {
         });
       };
       var open_error = function(err) {
+        debugger
         promise.reject(err);
       };
       var open_args = [{name: key, location: 'default'}, open_success, open_error];
+      if(capabilities.system == 'Android') {
+        open_args[0].androidDatabaseProvider = 'system';
+      }
       if(!window.sqlitePlugin) {
         open_args = ["sqlitex:" + key, '1.0', "CoughDrop db " + key, 10*1024*1024];
       }
