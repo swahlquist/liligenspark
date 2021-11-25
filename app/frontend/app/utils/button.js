@@ -854,14 +854,27 @@ Button.button_styling = function(button, board, pos) {
 
 Button.broken_image = function(image) {
   var fallback = Ember.templateHelpers.path('images/square.svg');
+  var error_listen = function(img, callback) {
+    if(!img) { return; }
+    if(img.error_listener) {
+      img.removeEventListener('error', img.error_listener);
+      img.error_listener = null;
+    }
+    if(callback) {
+      img.error_listener = callback;
+      img.addEventListener('error', img.error_listener);
+    }
+  };
+  error_listen(image, null);
   if(image.src && image.src != fallback && !image.src.match(/^data/)) {
-    console.log("bad image url: " + image.src);
+    var bad_src = image.src;
+    console.log("bad image url: " + bad_src);
     image.setAttribute('rel', image.src);
+    var original_error = function() { };
     if(image.getAttribute('data-fallback')) {
       var original_fallback = fallback;
       fallback = image.getAttribute('data-fallback');
-      image.setAttribute('onerror', '');
-      image.onerror = function() {
+      original_error = function() {
         CoughDrop.track_error("failed to retrieve defined fallback:" + fallback);
         image.src = original_fallback;
         if(find_fallback) {
@@ -869,56 +882,66 @@ Button.broken_image = function(image) {
         }
       };
     } else {
-      image.setAttribute('onerror', '');
-      image.onerror = function() {
+      original_error = function() {
         CoughDrop.track_error("failed to retrieve image:" + fallback + " - " + image.src);
       };
     }
+    error_listen(image, original_error);
     if(window.cordova && window.cordova.file && window.cordova.file.dataDirectory) {
-      CoughDrop.track_error("image failure on app, current directory:" + window.cordova.file.dataDirectory);
+      CoughDrop.track_error("image failure on app, current directory:\n" + window.cordova.file.dataDirectory);
     }
-    var bad_src = image.src;
     image.src = fallback;
     var find_fallback = function() {
+      error_listen(image, null);
+      image.src = fallback;
       persistence.find_url(fallback).then(function(data_uri) {
         if(image.src == fallback) {
+          error_listen(image, function() {
+            CoughDrop.track_error("failed to find local image fallback");
+          });
           image.src = data_uri;
         }
       }, function() { 
-        image.src == fallback;
-        CoughDrop.track_error("failed to find image fallback:" + image.getAttribute('rel'));
+        CoughDrop.track_error("failed to find image fallback:\n" + image.getAttribute('rel'));
       });  
-    }
-    // TODO: this is extra and shouldn't be necesary but may have broken things
-    find_fallback();
+    };
 
     if(!(bad_src || '').match(/^http/) && (image.getAttribute('data-fallback') || '').match(/^http/)) {
-      image.setAttribute('onerror', '');
-      image.onerror = function() {
-        CoughDrop.track_error("failed to load remote alternate after local version failed");
-        image.src = fallback;
-      }
-      image.src = image.getAttribute('data-fallback');
+      var fb = image.getAttribute('data-fallback');
+      error_listen(image, function() {
+        if(image.src == fb) {
+          CoughDrop.track_error("failed to load remote alternate after local version failed");
+          find_fallback();
+        }
+      });
+      image.src = fb;
     }
     // try to recover from files disappearing from local storage
     var store_key = function(key) {
       persistence.url_cache[key] = false;
       persistence.store_url(key, 'image', false, true).then(function(data) {
+        error_listen(image, function() {
+          error_listen(image, original_error);
+          image.src = key;
+        });
         image.src = data.local_url || data.data_uri;
-      }, function() { 
-        find_fallback();
+      }, function() {
+        // Error handling for bad image URLs should be handled
+        // by error catches, this is just to note that the file store failed
+        CoughDrop.track_error("failed to store cached local image:\n" + key);
       });
     };
     if(bad_src.match(/^file/) || bad_src.match(/^localhost/)) {
+      CoughDrop.track_error("missing expected local image:\n" + bad_src);
       var found = false;
       for(var key in persistence.url_cache) {
         if(bad_src == persistence.url_cache[key] && persistence.get('online')) {
-          image.setAttribute('onerror', '');
-          image.onerror = function() {
-            CoughDrop.track_error("failed to retrieve cached local image:" + image.src + " or remote source:" + key);
-            image.src = fallback;
-            find_fallback();            
-          };
+          error_listen(image, function() {
+            if(image.src == key) {
+              CoughDrop.track_error("failed to retrieve cached local image:\n" + key + "\n" + bad_src);
+              find_fallback();
+            }
+          });
           image.src = key;
           store_key(key);
           found = true;
@@ -934,10 +957,10 @@ Button.broken_image = function(image) {
           store_key(key);
         } else {
           if(image.getAttribute('rel') == bad_src) {
-            image.setAttribute('onerror', '');
-            image.onerror = function() {
-              CoughDrop.track_error("failed to retrieve cached image:" + image.src);
-            };
+            error_listen(image, function() {
+              CoughDrop.track_error("failed to retrieve cached image:\n" + image.src + "\n" + bad_src);
+              find_fallback();
+            });
             image.src = data_uri;
           } else {
             find_fallback();

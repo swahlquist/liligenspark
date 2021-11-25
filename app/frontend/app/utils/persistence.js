@@ -562,7 +562,7 @@ var persistence = EmberObject.extend({
           try {
             json = JSON.parse(atob(uri.split(/,/)[1]));
           } catch(e) {
-            CoughDrop.track_error("error parsing JSO data URI", e);
+            CoughDrop.track_error("error parsing JSON data URI", e);
             reject({error: "Error parsing JSON dataURI"});
           }
           if(json) {
@@ -580,7 +580,7 @@ var persistence = EmberObject.extend({
               persistence.remove('dataCache', url);
               persistence.url_cache[url] = null;
             }
-            CoughDrop.track_error("JSON data retrieval error", err);
+            CoughDrop.track_error("JSON data retrieval error", (err || {}).error || err);
             reject(err);
           });
         } else {
@@ -1365,7 +1365,6 @@ var persistence = EmberObject.extend({
             CoughDrop.session.check_token(false);
             if(user.get('single_org.image_url')) {
               // Store org image url for header rendering
-              persistence.store_url()
               persistence.store_url(user.get('single_org.image_url'), 'image', false, false).then(function() {
               }, function() {
               });

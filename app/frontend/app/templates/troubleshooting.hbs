@@ -174,7 +174,7 @@
         <tbody>
           {{#each errors as |error|}}
             <tr>
-              <td style='width: 210px;'><div style='max-width: 200px; overflow: hidden; white-space: nowrap;'>{{error.message}}</div></td>
+              <td style='width: 210px;'><div style='max-width: 200px; overflow: auto; max-height: 100px; white-space: pre-line;'>{{error.message}}</div></td>
               <td>{{date error.date}}</td>
               <td>
                 <div style='max-height: 100px; overflow: auto; white-space: pre-wrap;'>{{#if error.stack}}{{error.stack}}{{else}}{{error.message}}{{/if}}</div>
