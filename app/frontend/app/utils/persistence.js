@@ -544,7 +544,8 @@ var persistence = EmberObject.extend({
   },
   normalize_url: function(url) {
     if(url && url.match(/\%2520/)) {
-      url = url.replace(/\%2520/g, '%20');
+      // TODO: did this bust everyone?
+      // url = url.replace(/\%2520/g, '%20');
     }
     if(url && url.match(/user_token=[\w-]+$/)) {
       return url.replace(/[\?\&]user_token=[\w-]+$/, '');
@@ -969,7 +970,8 @@ var persistence = EmberObject.extend({
             // been retrieved by the browser, it's not sending CORS headers on the
             // follow-up request, maybe?
             xhr.url = url;
-            xhr.open('GET', encodeURI(url) + (url.match(/\?/) ? '&' : '?') + "cr=1");
+            // TODO: xhr.open('GET', encodeURI(url) + (url.match(/\?/) ? '&' : '?') + "cr=1");
+            xhr.open('GET', url + (url.match(/\?/) ? '&' : '?') + "cr=1");
             xhr.responseType = 'blob';
             xhr.send(null);
           });

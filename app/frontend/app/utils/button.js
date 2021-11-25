@@ -864,7 +864,9 @@ Button.broken_image = function(image) {
       image.onerror = function() {
         CoughDrop.track_error("failed to retrieve defined fallback:" + fallback);
         image.src = original_fallback;
-        find_fallback();
+        if(find_fallback) {
+          find_fallback();
+        }
       };
     } else {
       image.setAttribute('onerror', '');
@@ -887,6 +889,9 @@ Button.broken_image = function(image) {
         CoughDrop.track_error("failed to find image fallback:" + image.getAttribute('rel'));
       });  
     }
+    // TODO: this is extra and shouldn't be necesary but may have broken things
+    find_fallback();
+
     if(!(bad_src || '').match(/^http/) && (image.getAttriute('data-fallback') || '').match(/^http/)) {
       image.setAttribute('onerror', '');
       image.onerror = function() {
@@ -934,6 +939,8 @@ Button.broken_image = function(image) {
               CoughDrop.track_error("failed to retrieve cached image:" + image.src);
             };
             image.src = data_uri;
+          } else {
+            find_fallback();
           }
         }
       }, function() {
