@@ -853,9 +853,13 @@ Button.button_styling = function(button, board, pos) {
 };
 
 Button.broken_image = function(image) {
+  image.already_broken = image.already_broken || {};
+  if(image.already_broken[image.src]) { return; }
+  image.already_broken[image.src] = true;
   var fallback = Ember.templateHelpers.path('images/square.svg');
   var error_listen = function(img, callback) {
     if(!img) { return; }
+    img.setAttribute('onerror', '');
     if(img.error_listener) {
       img.removeEventListener('error', img.error_listener);
       img.error_listener = null;
@@ -897,12 +901,12 @@ Button.broken_image = function(image) {
       persistence.find_url(fallback).then(function(data_uri) {
         if(image.src == fallback) {
           error_listen(image, function() {
-            CoughDrop.track_error("failed to find local image fallback");
+            CoughDrop.track_error("failed to render local image fallback");
           });
           image.src = data_uri;
         }
       }, function() { 
-        CoughDrop.track_error("failed to find image fallback:\n" + image.getAttribute('rel'));
+        CoughDrop.track_error("failed to find local image fallback:\n" + image.getAttribute('rel'));
       });  
     };
 
@@ -935,13 +939,15 @@ Button.broken_image = function(image) {
       CoughDrop.track_error("missing expected local image:\n" + bad_src);
       var found = false;
       for(var key in persistence.url_cache) {
-        if(bad_src == persistence.url_cache[key] && persistence.get('online')) {
+        if(!found && bad_src == persistence.url_cache[key] && persistence.get('online')) {
           error_listen(image, function() {
             if(image.src == key) {
-              CoughDrop.track_error("failed to retrieve cached local image:\n" + key + "\n" + bad_src);
+              CoughDrop.track_error("failed on remote source from cached local image:\n" + key + "\n" + bad_src);
               find_fallback();
             }
           });
+          // If the image was local but not found, but you have a remote
+          // URL, then try loading that and then trying to save it locally
           image.src = key;
           store_key(key);
           found = true;
