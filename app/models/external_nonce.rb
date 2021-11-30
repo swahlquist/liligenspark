@@ -59,28 +59,36 @@ class ExternalNonce < ApplicationRecord
     res
   end
 
+  def self.init_client_encryption
+    {
+      'iv' => Base64.encode64(OpenSSL::Cipher.new('aes-256-gcm').random_iv).strip,
+      'key' => GoSecure.sha512(GoSecure.nonce('extra_data_key'), 'extra_data_key')[0, 32],
+      'hash' => GoSecure.nonce('extra_data_auth_data')[0, 16]
+    }
+  end
 
-  #      Base64.decode64(iv_b64)
-  # //   cipher = OpenSSL::Cipher.new('aes-256-gcm')
-  # //   cipher.encrypt
-  # //   cipher.iv = iv
-  # //   cipher.key = key
-  # //   cipher.auth_data = "bacon"
-  # //   cipherText = cipher.update(plainText) + cipher.final
-  # //   Base64.encode64(cipherText + cipher.auth_tag)
+  def self.client_encrypt(obj, opts)
+    cipher = OpenSSL::Cipher.new('aes-256-gcm')
+    cipher.encrypt
+    cipher.iv = Base64.decode64(opts['iv'])
+    cipher.key = opts['key']
+    cipher.auth_data = opts['hash']
+    cipherText = cipher.update(obj.to_json) + cipher.final
+    "aes256-" + Base64.encode64(cipherText + cipher.auth_tag)
+  end
 
-  # bytes = [79, 37, 167, 229, 66, 89, 205, 112, 38, 62, 177, 80, 182, 240, 203, 19, 90, 104, 143, 41, 92, 41, 161, 149].pack('c*')
-  # iv = "npF3oAyHglcNvATX"
-  # msg = "fb4kLUOW5yiZ9FsDgbujqe6tj+vGfn2HPgy4BYK+QDEiNnFRi95A6HKNhlxc/RhbufCDfstG5GkduwDF7cnWa4kfZRHtLvgs1GthGfP/6Yo8YwGjoBaItvoo+Nk+j5WNm7F4bXP+jrBNA1qSvcPjvzMQgZdlOGBeyFjVZ0ipqgePe4AkRgb3Lu3UO9VtGZMthcnEZXzehIaN0QXkBanLUKKllQkszjmTlz2iAHu2nzwdZ4A4ogk/M3DpQG1FHP4kcz5AMd4+6sVsUBneqrtssH+65e3a7Q10IOyyDE36oxY2p4pGtaKxOj1ht8MpavFJkvdrQoQ+x1y7pdcaw5xtHZ56sa+kofSC95XIS9+YeQ=="
-  # bytes = Base64.decode64(msg)
-  # cipherText = bytes[0,bytes.length - 16]
-  # tag = bytes[-16, 16]
-  # cipher = OpenSSL::Cipher.new('aes-256-gcm')
-  # cipher.decrypt
-  # cipher.iv = Base64.decode64(iv)
-  # cipher.key = '12345678901234567890123456789012'
-  # cipher.auth_data = "12345678901234567890123456789012"
-  # cipher.auth_tag = tag
-  # plainText = cipher.update(cipherText) + cipher.final
-  # JSON.parse(plainText)
+  def self.client_decrypt(enc, opts)
+    raise "nope" unless enc.match(/^aes256-/)
+    bytes = Base64.decode64(enc[7..-1])
+    cipherText = bytes[0,bytes.length - 16]
+    tag = bytes[-16, 16]
+    cipher = OpenSSL::Cipher.new('aes-256-gcm')
+    cipher.decrypt
+    cipher.iv = Base64.decode64(opts['iv'])
+    cipher.key = opts['key']
+    cipher.auth_data = opts['hash']
+    cipher.auth_tag = tag
+    plainText = cipher.update(cipherText) + cipher.final
+    JSON.parse(plainText)
+  end
 end

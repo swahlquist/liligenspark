@@ -215,8 +215,8 @@ import app_state from './app_state';
         if(CoughDrop.protected_user || stashes.get('protected_user')) {
           options.headers['X-SILENCE-LOGGER'] = 'true';
         }
-        // TODO: remove this when no longer needed
         options.headers['X-SUPPORTS-REMOTE-BUTTONSET'] = 'true';
+        options.headers['X-SUPPORTS-REMOTE-ENCRYPTION'] = 'true';
         if(CoughDrop.session && CoughDrop.session.get('as_user_id')) {
           options.headers['X-As-User-Id'] = CoughDrop.session.get('as_user_id');
         }

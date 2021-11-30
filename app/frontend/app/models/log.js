@@ -3,13 +3,17 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import DS from 'ember-data';
 import CoughDrop from '../app';
 import { htmlSafe } from '@ember/string';
-import { computed } from '@ember/object';
+import { computed, observer } from '@ember/object';
 import contentGrabbers from '../utils/content_grabbers';
 import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import RSVP from 'rsvp';
+import persistence from '../utils/persistence';
 
 CoughDrop.Log = DS.Model.extend({
+  didLoad: function() {
+    this.check_for_events();
+  },
   type: DS.attr('string'),
   message_type: DS.attr('boolean'),
   events: DS.attr('raw'),
@@ -49,6 +53,8 @@ CoughDrop.Log = DS.Model.extend({
   video: DS.attr('raw'),
   evaluation: DS.attr('raw'),
   nonce: DS.attr('string'),
+  encryption_settings: DS.attr('raw'),
+  data_url: DS.attr('string'),
   event_note_count: DS.attr('number'),
   minutes: computed('duration', function() {
     return Math.round((this.get('duration') || 0) / 60);
@@ -86,6 +92,25 @@ CoughDrop.Log = DS.Model.extend({
       return 'face laugh';
     } else {
       return '';
+    }
+  }),
+  check_for_events: observer('events', 'data_url', 'encryption_settings', function() {
+    var _this = this;
+    if(_this.get('events_state.checking')) { return; }
+    _this.set('events_state', {checking: true});
+    if(!_this.get('events')) {
+      if(_this.get('data_url') && _this.get('encryption_settings')) {
+        persistence.remote_json(_this.get('data_url'), _this.get('encryption_settings')).then(function(data) {
+          _this.set('events', data);
+          _this.set('events_state', {ready: true});
+        }, function() {
+          _this.set('events_state', {error: true});
+        });
+      } else {
+        _this.set('events_state', {empty: true});
+      }
+    } else {
+      _this.set('events_state', {ready: true});
     }
   }),
   processed_events: computed('events', 'toggled_event_ids', function() {

@@ -111,9 +111,13 @@ module JsonApi::Log
       json['log']['daily_use'] = events.sort_by{|e| e['date'] }
     end
 
-    # TODO: this needs to be handled by the local client eventually
-    log.assert_extra_data
-    json['log']['events'] = LogSession.extra_data_public_transform(log.data['events'])
+    if args[:encryption_allowed] && log.data['extra_data_public'] && log.extra_data_public_url && log.data['extra_data_encryption']
+      json['log']['encryption_settings'] = log.data['extra_data_encryption']
+      json['log']['data_url'] = log.extra_data_public_url
+    else
+      log.assert_extra_data
+      json['log']['events'] = LogSession.extra_data_public_transform(log.data['events'])
+    end
     
     if json['log']['type'] == 'assessment'
       json['log']['assessment'] = {}.merge(log.data['assessment'] || {})

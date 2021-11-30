@@ -36,45 +36,16 @@ module ExtraData
         return false if extra_data == nil
         extra_data_version = 2
         private_path, public_path = self.class.extra_data_remote_paths(self.data['extra_data_nonce'], self, extra_data_version, true)
-        public_extra_data = extra_data && self.class.extra_data_public_transform(extra_data)
-        if public_extra_data && false
-          self.data['extra_data_public'] = true
-          file = Tempfile.new("stash")
-          json = public_extra_data.to_json
-          file.write(json)
-          file.close
-          # Uploader.invalidate_cdn(public_path)
-          Uploader.remote_upload(public_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
-        end
-        # upload to "/extras/<global_id>/<nonce>/<global_id>.json"
-        file = Tempfile.new("stash")
-        json = extra_data.to_json
-        file.write(json)
-        file.close
-        # Uploader.invalidate_cdn(private_path)
         # If upload is throttled, schedule it for later. If upload already
         # scheduled, skip upload attempt here
         if !self.is_a?(BoardDownstreamButtonSet) || (self.board && RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').count == 0)
-          begin
-            res = Uploader.remote_upload(private_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
-          rescue => e
-            if e.message && e.message.match(/throttled/) && self.is_a?(BoardDownstreamButtonSet)
-              res = {error: 'throttled'}
-            else
-              raise e
-            end
+          res = upload_remote_data(extra_data, private_path, 'private')
+          public_extra_data = extra_data && self.class.extra_data_public_transform(extra_data)
+          if public_extra_data && res != :throttled && res != :nothing
+            res = upload_remote_data(public_extra_data, public_path, 'public')
           end
-          if res && res[:error] == 'throttled' && self.is_a?(BoardDownstreamButtonSet)
-            RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').delete_all
-            RemoteAction.create(path: self.board.global_id, act_at: 5.minutes.from_now, action: 'upload_button_set')
-          elsif res && res[:path] && (res[:path] != private_path || res[:uploaded])
-            Uploader.remote_remove_later(private_path) if res[:path] != private_path
-            self.data['extra_data_private_path'] = res[:path]
-            self.data.delete('private_cdn_url')
-            self.data.delete('remote_paths')
-            self.data.delete('private_cdn_revision')
-          end
-          if res && self.is_a?(BoardDownstreamButtonSet)
+
+          if res != :nothing && self.is_a?(BoardDownstreamButtonSet)
             self.data['extra_data_revision'] = self.data['full_set_revision']
           end
           # persist the nonce and the url, remove the big-data attribute
@@ -87,6 +58,73 @@ module ExtraData
       end
     end
     true
+  end
+
+  def upload_remote_data(data, path, type)
+    # upload to "/extras/<global_id>/<nonce>/<global_id>.json"
+    file = Tempfile.new("stash")
+    json = self.encrypted_json(data)
+    file.write(json)
+    file.close
+    begin
+      res = Uploader.remote_upload(path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+    rescue => e
+      if e.message && e.message.match(/throttled/) && self.is_a?(BoardDownstreamButtonSet)
+        res = {error: 'throttled'}
+      else
+        raise e
+      end
+    end
+
+    if res && res[:error] == 'throttled' && self.is_a?(BoardDownstreamButtonSet)
+      RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').delete_all
+      RemoteAction.create(path: self.board.global_id, act_at: 5.minutes.from_now, action: 'upload_button_set')
+      return :throttled
+    elsif res && res[:path] && (res[:path] != path || res[:uploaded])
+      Uploader.remote_remove_later(path) if res[:path] != path
+      if type == 'private'
+        self.data['extra_data_private_path'] = res[:path]
+        self.data.delete('private_cdn_url')
+        self.data.delete('remote_paths')
+        self.data.delete('private_cdn_revision')
+      else
+        self.data['extra_data_public_path'] = res[:path]
+        self.data['extra_data_public'] = true
+      end
+      return res[:uploaded] ? :uploaded : :confirmed
+    end
+    return :nothing
+  end
+
+  def allow_encryption?
+    if self.is_a?(LogSession)
+      return true
+    elsif self.is_a?(BoardDownstreamButtonSet) && self.board && self.board.user_id == 2
+      return true
+    end
+    # TODO: enable for all once it has been deployed everywhere for a few months
+    false
+  end
+
+  def encrypted_json(obj)
+    return obj.to_json unless allow_encryption?
+    if !self.data['extra_data_encryption']
+      self.data['extra_data_encryption'] = ExternalNonce.init_client_encryption
+      self.save
+    end
+    ExternalNonce.client_encrypt(obj, self.data['extra_data_encryption'])
+  end
+
+  def decrypted_json(encr)
+    json = nil
+    if encr && encr.match(/^aes256-/)
+      if self.data['extra_data_encryption']
+        json = ExternalNonce.client_decrypt(encr, self.data['extra_data_encryption'])
+      end
+    else
+      json = JSON.parse(encr) rescue nil
+    end
+    json
   end
   
   def extra_data_attribute
@@ -157,7 +195,7 @@ module ExtraData
     end
     if url && !self.data[self.extra_data_attribute]
       req = Typhoeus.get(url, timeout: 10)
-      data = JSON.parse(req.body) rescue nil
+      data = self.decrypted_json(req.body) rescue nil
       self.data[self.extra_data_attribute] = data
     end
   end
@@ -194,7 +232,8 @@ module ExtraData
         dir = "extras#{nonce[0]}/#{self.to_s}/#{obj.global_id}/#{nonce}/"
       end
       dir = "/" + dir if version==0
-      public_path = dir + "data-#{obj.global_id}.json"
+      # public_path = dir + "data-#{obj.global_id}.json"
+      public_path = (original_only ? nil : (obj.data || {})['extra_data_public_path']) || (dir + "data-#{obj.global_id}.json")
       private_path = (original_only ? nil : (obj.data || {})['extra_data_private_path']) || (dir + "data-#{private_key}.json")
       [private_path, public_path]
     end
@@ -205,6 +244,8 @@ module ExtraData
       # Uploader.invalidate_cdn(private_path)
       if obj
         obj.data.delete('extra_data_private_path')
+        obj.data.delete('extra_data_public_path')
+        obj.data.delete('extra_data_public')
         obj.save
       end
       Uploader.remote_remove(private_path)

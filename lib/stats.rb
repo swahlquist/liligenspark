@@ -917,6 +917,7 @@ module Stats
     if current && user
       goals = UserGoal.where(user_id: user.id, active: true)
       goals.each do |goal|
+        next unless goal.settings['assessment_badge'].is_a?(Hash)
         word_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['words_list']
         word_list ||= goal.settings['ref_data'] && goal.settings['ref_data']['words_list']
         modeled_words_list = goal.settings['assessment_badge'] && goal.settings['assessment_badge']['modeled_words_list']

@@ -314,7 +314,7 @@ class UserBadge < ActiveRecord::Base
       end
 
       return nil if earns == 0 && !badge_level
-      break if !badge_level
+      break if !badge_level || !badge_level.is_a?(Hash)
       earned = false
 
       measure = :date

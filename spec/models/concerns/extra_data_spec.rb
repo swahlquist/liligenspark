@@ -24,7 +24,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u)
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
@@ -56,7 +56,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf', 'events' => [{'a' => 1}, {'b' => 2}]})
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
       res = {}
       expect(Uploader).to receive(:remote_upload) do |path|
         res[:path] = path
@@ -70,8 +70,8 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf', 'events' => [{'a' => 1}, {'b' => 2}]})
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
-      expect(Uploader).to receive(:remote_upload).and_return({path: 'a/b/c/d'})
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
+      expect(Uploader).to receive(:remote_upload).and_return({path: 'a/b/c/d'}).at_least(1).times
       s.data['full_set_revision'] = 'asdfjkl'
       s.detach_extra_data('force')
       expect(s.data['extra_data_private_path']).to eq('a/b/c/d')
@@ -81,7 +81,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u)
-      expect(s).to receive(:extra_data_too_big?).and_return(true)
+      expect(s).to receive(:extra_data_too_big?).and_return(true).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
@@ -94,6 +94,7 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
+        expect(s.decrypted_json(File.read(local))).to eq([])
       end.exactly(1).times.and_return(nil)
       s.detach_extra_data(true)
       expect(paths).to eq(['private'])
@@ -103,7 +104,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'bacon', 'events' => [{}, {}]})
-      expect(s).to receive(:extra_data_too_big?).and_return(true)
+      expect(s).to receive(:extra_data_too_big?).and_return(true).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
@@ -125,7 +126,7 @@ describe ExtraData, :type => :model do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u)
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
@@ -143,7 +144,7 @@ describe ExtraData, :type => :model do
       expect(paths).to eq(['private'])   
     end
 
-    it 'should upload a public data version as well if available' do
+    it 'should not upload public data if private upload failed' do
       u = User.create
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u)
@@ -153,15 +154,21 @@ describe ExtraData, :type => :model do
         {'id' => 3},
         {'id' => 4},
       ]
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
+        expect(File.read(local).strip[0]).to_not eq("[")
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
           paths << 'private'
+          expect(s.decrypted_json(File.read(local))).to eq([
+            {'id' => 1, 'secret' => true},
+            {'id' => 2, 'passowrd' => '12345'},
+            {'id' => 3},
+            {'id' => 4},
+          ])
         elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
           paths << 'public'
-          json = JSON.parse(File.read(local))
-          expect(json).to eq([
+          expect(s.decrypted_json(File.read(local))).to eq([
             {"id"=>1, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
             {"id"=>2, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
             {"id"=>3, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
@@ -173,9 +180,49 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times.and_return(nil)
+      end.exactly(1).times.and_return({error: 'throttled'})
       s.detach_extra_data('force')
       expect(paths).to eq(['private'])   
+    end
+    it 'should upload a public data version as well if available' do
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u)
+      s.data['events'] = [
+        {'id' => 1, 'secret' => true},
+        {'id' => 2, 'passowrd' => '12345'},
+        {'id' => 3},
+        {'id' => 4},
+      ]
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
+      paths = []
+      expect(Uploader).to receive(:remote_upload) do |path, local, type|
+        expect(File.read(local).strip[0]).to_not eq("[")
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
+          paths << 'private'
+          expect(s.decrypted_json(File.read(local))).to eq([
+            {'id' => 1, 'secret' => true},
+            {'id' => 2, 'passowrd' => '12345'},
+            {'id' => 3},
+            {'id' => 4},
+          ])
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
+          paths << 'public'
+          expect(s.decrypted_json(File.read(local))).to eq([
+            {"id"=>1, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
+            {"id"=>2, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
+            {"id"=>3, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
+            {"id"=>4, "timestamp"=>nil, "type"=>"other", "summary"=>"unrecognized event"},
+          ])
+        else
+          expect('path').to eq('wrong')
+        end
+        expect(type).to eq('text/json')
+        expect(local).to_not eq(nil)
+        expect(File.exists?(local)).to eq(true)
+      end.exactly(2).times.and_return({path: 'a/b/c.json', uploaded: true})
+      s.detach_extra_data('force')
+      expect(paths).to eq(['private', 'public'])   
     end
 
     it 'should clear the data attribute when uploading remote version' do
@@ -188,7 +235,7 @@ describe ExtraData, :type => :model do
         {'id' => 3},
         {'id' => 4},
       ]
-      expect(s).to receive(:extra_data_too_big?).and_return(false)
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
@@ -216,7 +263,7 @@ describe ExtraData, :type => :model do
       BoardDownstreamButtonSet.last_scheduled_stamp = nil
       bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(bs).to_not eq(nil)
-      expect(bs).to receive(:extra_data_too_big?).and_return(true)
+      expect(bs).to receive(:extra_data_too_big?).and_return(true).at_least(1).times
       paths = []
       expect(Uploader).to receive(:remote_upload) do |path, local, type|
         expect(type).to eq('text/json')
@@ -241,7 +288,7 @@ describe ExtraData, :type => :model do
       BoardDownstreamButtonSet.last_scheduled_stamp = nil
       bs = BoardDownstreamButtonSet.update_for(b.global_id, true)
       expect(bs).to_not eq(nil)
-      expect(bs).to receive(:extra_data_too_big?).and_return(true)
+      expect(bs).to receive(:extra_data_too_big?).and_return(true).at_least(1).times
       paths = []
       expect(Uploader).to_not receive(:remote_upload)
       expect(RemoteAction.count).to eq(0)
@@ -354,6 +401,143 @@ describe ExtraData, :type => :model do
   describe "clear_extra_data_orphans" do
     it 'should have specs' do
       # TODO
+    end
+  end
+
+  describe "upload_remote_data" do
+    it 'should attempt to upload to the specified path' do
+      u = User.create
+      d = Device.create
+      events = [
+        {'type' => 'button', 'button' => {'label' => 'run'}, 'timestamp' => 1444994881}, 
+        {'type' => 'button', 'button' => {'label' => 'cat'}, 'timestamp' => 1444994882}, 
+      ]
+      s = LogSession.process_new({'events' => events}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(s.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return(nil)
+      res = s.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:nothing)
+    end
+
+    it 'should schedule for retry if throttled' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_raise("throttled data")
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:throttled)    
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      expect(ra.path).to eq(b.global_id)
+      expect(ra.action).to eq('upload_button_set')
+    end
+
+    it 'should remove the prior if the stored path changed from the request' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'c/d/e.json', uploaded: true})
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      expect(ra.path).to eq('a/b/c.json')
+      expect(ra.action).to eq('delete')
+      expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+    end
+
+    it 'should update the private/public path' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'c/d/e.json', uploaded: true})
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      expect(ra.path).to eq('a/b/c.json')
+      expect(ra.action).to eq('delete')
+      expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+    end
+  end 
+
+  describe 'allow_encryption?' do
+    it 'should return the correct value for the type' do
+      s = LogSession.new
+      expect(s.allow_encryption?).to eq(true)
+      bs = BoardDownstreamButtonSet.new
+      expect(bs.allow_encryption?).to eq(false)
+      b = Board.new(user_id: 2)
+      bs.board = b
+      expect(bs.allow_encryption?).to eq(true)
+    end
+  end
+
+  describe 'encrypted_json' do
+    it 'should return raw json if encryption not allowed' do
+      l = LogSession.new(data: {})
+      expect(l).to receive(:allow_encryption?).and_return(false)
+      expect(l.encrypted_json({a: 1})).to eq({a: 1}.to_json)
+      expect(l.data['extra_data_encryption']).to eq(nil)
+    end
+
+    it 'should store encryption parameters if not set' do
+      l = LogSession.new(data: {})
+      expect(l.encrypted_json({a: 1})).to_not eq({a: 1}.to_json)
+      expect(l.data['extra_data_encryption']).to_not eq(nil)
+    end
+
+    it 'should not replace encryption parameters' do
+      l = LogSession.new(data: {})
+      enc = ExternalNonce.init_client_encryption
+      l.data['extra_data_encryption'] = enc
+      expect(l.encrypted_json({a: 1})).to_not eq({a: 1}.to_json)
+      expect(l.data['extra_data_encryption']).to_not eq(nil)
+      expect(l.data['extra_data_encryption']).to eq(enc)
+    end
+
+    it 'should encrypt data correctly' do
+      l = LogSession.new(data: {})
+      enc = ExternalNonce.init_client_encryption
+      l.data['extra_data_encryption'] = enc
+      expect(ExternalNonce).to receive(:client_encrypt).with({a: 1}, enc).and_return("abc")
+      expect(l.encrypted_json({a: 1})).to eq("abc")
+      expect(l.data['extra_data_encryption']).to eq(enc)
+    end
+  end
+
+  describe 'decrypted_json' do
+    it 'should return raw json if not encrypted' do
+      l = LogSession.new(data: {})
+      l.data['extra_data_encryption'] = ExternalNonce.init_client_encryption
+      expect(l.decrypted_json({a: 1}.to_json)).to eq({'a' => 1})
+      expect(l.decrypted_json('abc')).to eq(nil)
+    end
+
+    it 'should return nil if encryption parameters are lost' do
+      l = LogSession.new(data: {})
+      enc = ExternalNonce.init_client_encryption
+      str = ExternalNonce.client_encrypt({a: 1}, enc)
+      expect(l.decrypted_json(str)).to eq(nil)
+    end
+
+    it 'should decrypt correctly' do
+      l = LogSession.new(data: {})
+      enc = ExternalNonce.init_client_encryption
+      l.data['extra_data_encryption'] = enc
+      str = ExternalNonce.client_encrypt({a: 1}, enc)
+      expect(l.decrypted_json(str)).to eq({'a' => 1})
     end
   end
 end

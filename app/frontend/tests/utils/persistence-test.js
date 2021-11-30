@@ -2327,6 +2327,27 @@ describe("persistence", function() {
       expect(res).toEqual(true);
     });
   });
+
+  describe("decrypt_json", function() {
+    it("should have specs", function() {
+      expect('test').toEqual('todo');
+    })
+  });
+
+  describe("remote_json", function() {
+    it("should have specs", function() {
+      expect('test').toEqual('todo');
+    });
+  });
+  describe("decrypt_json", function() {
+    it("should have specs", function() {
+      expect('test').toEqual('todo');
+    });
+
+    it("should decrypt encrypted results", function() {
+      expect('test').toEqual('todo');
+    });
+  });
 });
 
 

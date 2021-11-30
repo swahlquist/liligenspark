@@ -316,7 +316,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
         # quick win with some basic, easy data to track
         sum_user = users.detect{|u| u.id == summary.user_id }
         include_word_reports = sum_user && sum_user.settings && sum_user.settings['preferences'] && sum_user.settings['preferences']['allow_log_reports']
-        total.data['totals']['admin_total_words'] += (summary.data['stats']['all_word_counts'] || {}).map(&:last).sum + (summary.data['stats']['modeled_word_counts'] || {}).map(&:last).sum
+        total.data['totals'] ||= {}
+        total.data['totals']['admin_total_words'] += ((summary.data['stats'] || {})['all_word_counts'] || {}).map(&:last).sum + ((summary.data['stats'] || {})['modeled_word_counts'] || {}).map(&:last).sum
         total.data['research_user_ids'] +=  summary.data['research_user_ids'] || []
         total.data['publishing_user_ids'] +=  summary.data['publishing_user_ids'] || []
         next if sum_user && sum_user.created_at < logging_warned && !include_word_reports

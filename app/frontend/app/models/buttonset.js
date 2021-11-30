@@ -25,6 +25,7 @@ CoughDrop.Buttonset = DS.Model.extend({
   remote_enabled: DS.attr('boolean'),
   name: DS.attr('string'),
   full_set_revision: DS.attr('string'),
+  encryption_settings: DS.attr('raw'),
   board_ids: computed('buttons', function() {
     return this.board_ids_for(null);
   }),
@@ -121,7 +122,7 @@ CoughDrop.Buttonset = DS.Model.extend({
           resolve(bs);
         };
         var store_anyway = function(already_tried_local) {
-          persistence.store_json(bs.get('root_url')).then(function(res) {
+          persistence.store_json(bs.get('root_url'), null, bs.get('encryption_settings')).then(function(res) {
             process_buttons(res);
           }, function(err) {
             var fallback = function() {
@@ -140,7 +141,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             // Try re-generating before giving up
             regenerate(true).then(function(url) {
               bs.set('root_url', url)
-              persistence.store_json(url).then(function(res) {
+              persistence.store_json(url, null, bs.get('encryption_settings')).then(function(res) {
                 process_buttons(res);
               }, function(err) {
                 fallback();

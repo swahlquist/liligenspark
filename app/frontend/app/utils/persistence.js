@@ -553,6 +553,51 @@ var persistence = EmberObject.extend({
       return url;
     }
   },
+  decrypt_json: function(str, encryption_settings) {
+    if(str.match(/^aes256-/)) {
+      var te = new TextEncoder();
+      str = str.replace(/^aes256-/, '');
+      return window.crypto.subtle.importKey(
+          "raw",
+          te.encode(encryption_settings.key),
+          { name: "AES-GCM", }, false, ["encrypt", "decrypt"]
+      ).then(function(key) { 
+        var bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+        var iv_arr = Uint8Array.from(atob(encryption_settings.iv), c => c.charCodeAt(0));
+        return window.crypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv: iv_arr,
+            additionalData: te.encode(encryption_settings.hash),
+            tagLength: 128
+          },
+          key,
+          bytes
+        ).then(function(res) {
+          var str = String.fromCharCode.apply(null, new Uint8Array(res));
+          try {
+            return JSON.parse(str);
+          } catch(e) {
+            return RSVP.reject({error: 'JSON parse failed on decrypted content', err: e});
+          }
+        });
+      });
+    } else {
+      try {
+        return RSVP.resolve(JSON.parse(str));
+      } catch(e) {
+        return RSVP.reject({error: 'JSON parse failed', err: e});
+      }
+    }
+  },
+  remote_json: function(url, encryption_settings) {
+    var _this = this;
+    return _this.find_json(url).then(null, function() {
+      return persistence.ajax(url, {type: 'GET', dataType: 'text'}).then(function(data) {
+        return persistence.decrypt_json(data.text, encryption_settings);
+      });
+    });
+  },
   find_json: function(url) {
     var _this = this;
     return new RSVP.Promise(function(resolve, reject) {
@@ -573,9 +618,7 @@ var persistence = EmberObject.extend({
           }
         } else if(typeof(uri) == 'string') {
           var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
-          res.then(function(data) {
-            resolve(data);
-          }, function(err) {
+          res.then(null, function(err) {
             if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
               persistence.remove('dataCache', url);
               persistence.url_cache[url] = null;
@@ -592,13 +635,13 @@ var persistence = EmberObject.extend({
       });
     });
   },
-  store_json: function(url, json) {
+  store_json: function(url, json, encryption_settings) {
     var _this = this;
     if(json && url.match(/^cache:/)) {
       persistence.json_cache = persistence.json_cache || {};
       persistence.json_cache[url] = json;
     }
-    return _this.store_url(url, 'json').then(function(storage) {
+    return _this.store_url(url, 'json', encryption_settings).then(function(storage) {
       var data_uri = storage.data_uri || storage;
       var result = undefined;
       if(typeof(data_uri) == 'string') {
@@ -609,6 +652,7 @@ var persistence = EmberObject.extend({
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
       } else if(!json && storage && storage.local_url) {
+        // Guaranteed to be a local URL, retrieve via AJAX
         return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'json'}).then(null, function(err) {
           if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
             persistence.remove('dataCache', storage.local_url);
@@ -886,6 +930,11 @@ var persistence = EmberObject.extend({
     return defer.promise;
   },
   store_url_now: function(url, type, keep_big, force_reload) {
+    var encryption_settings = null;
+    if(keep_big && keep_big.iv) {
+      encryption_settings = keep_big;
+      keep_big = false;
+    }
     if(!type) { return RSVP.reject('type required for storing'); }
     if(!url) { console.error('url not provided'); return RSVP.reject('url required for storing'); }
     if(!window.coughDropExtras || !window.coughDropExtras.ready || url.match(/^data:/) || url.match(/^file:/) || url.match(/localhost:/) || url.match(/http:\/\/localhost/)) {
@@ -1009,7 +1058,26 @@ var persistence = EmberObject.extend({
         });
       });
 
-      var size_image = fallback.then(function(object) {
+      var decrypt = fallback.then(function(object) {
+        if(encryption_settings && object.content_type.match(/json/)) {
+          var str = object.data_uri.match(/,/) && atob(object.data_uri.split(/,/)[1]);
+          if(str && str.match(/^aes256-/)) {
+            // if it's encrypted, try decrypting it and generating a
+            // new data-uri before continuing
+            return persistence.decrypt_json(str, encryption_settings).then(function(res) {
+              var json_str = JSON.stringify(res);
+              object.data_uri = "data:application/json," + btoa(json_str);
+              return object;
+            });
+          } else {
+            return object;
+          }
+        } else {
+          return object;
+        }
+      });
+
+      var size_image = decrypt.then(function(object) {
         // don't resize already-saved images, non-images, or required-to-be-big images
         if(object.persisted || type != 'image' || capabilities.system != "Android" || keep_big) {
           return object;
@@ -2330,7 +2398,7 @@ var persistence = EmberObject.extend({
         if(url) {
           return persistence.store_url_now(url, 'image');
         } else {
-          return RSVO.resolve({});
+          return RSVP.resolve({});
         }
       });
 

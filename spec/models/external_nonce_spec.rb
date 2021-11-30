@@ -119,4 +119,37 @@ describe ExternalNonce, :type => :model do
       expect(n.purpose).to eq('bacon')
     end
   end
+
+  describe "init_client_encryption" do
+    it "should generate unique values" do
+      a = ExternalNonce.init_client_encryption
+      b = ExternalNonce.init_client_encryption
+      expect(a['iv']).to_not eq(nil)
+      expect(a['key']).to_not eq(nil)
+      expect(a['hash']).to_not eq(nil)
+      expect(a['iv']).to_not eq(b['iv'])
+      expect(a['key']).to_not eq(b['key'])
+      expect(a['hash']).to_not eq(b['hash'])
+    end
+  end
+
+  describe "client_encrypt" do
+    it "should encrypt correctly" do
+      opts = {"iv"=>"jMR4YipAatblyqLN", "key"=>"d1115d86cfdb3cd53706d3dec7132159", "hash"=>"5515fff302e6093a"}
+      expect(ExternalNonce.client_encrypt([], opts)).to eq("aes256-rmHzDC5Uw+gwptw2fwOv8Wo2\n")
+      expect(ExternalNonce.client_encrypt({a: 1}, opts)).to eq("aes256-jh56kAqUf7dnmkAwLlEGzfKhFVIAogc=\n")
+    end
+  end
+
+  describe "client_decrypt" do
+    it "should decrypt correctly" do
+      opts = {"iv"=>"jMR4YipAatblyqLN", "key"=>"d1115d86cfdb3cd53706d3dec7132159", "hash"=>"5515fff302e6093a"}
+      expect(ExternalNonce.client_decrypt("aes256-rmHzDC5Uw+gwptw2fwOv8Wo2\n", opts)).to eq([])
+      expect(ExternalNonce.client_decrypt("aes256-jh56kAqUf7dnmkAwLlEGzfKhFVIAogc=\n", opts)).to eq({'a' => 1})
+
+      opts = ExternalNonce.init_client_encryption
+      expect(ExternalNonce.client_decrypt(ExternalNonce.client_encrypt({a: 1}, opts), opts)).to eq({'a' => 1})
+      expect(ExternalNonce.client_decrypt(ExternalNonce.client_encrypt("super sekrit informayshun", opts), opts)).to eq("super sekrit informayshun")
+    end
+  end
 end

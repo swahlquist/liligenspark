@@ -272,7 +272,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     button_set.data['remote_paths'][remote_hash] = {'generated' => Time.now.to_i, 'path' => path, 'expires' => 5.months.from_now.to_i}
     begin
       file = Tempfile.new("stash")
-      json = available_buttons.to_json
+      json = button_set.encrypted_json(available_buttons)
       file.write(json)
       file.close
       # Uploader.invalidate_cdn(remote_path)
@@ -524,6 +524,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
       set.generate_defaults(true)
+      # Don't ever save data['buttons'] to the db, it's too big
       set.detach_extra_data(true)
       set.save
 

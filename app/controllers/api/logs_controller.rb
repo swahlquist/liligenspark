@@ -139,8 +139,7 @@ class Api::LogsController < ApplicationController
     if cutoff && log.started_at < cutoff.hours.ago
       return unless allowed?(user, 'never_allow')
     end
-    
-    render json: JsonApi::Log.as_json(log, :wrapper => true, :permissions => @api_user).to_json
+    render json: JsonApi::Log.as_json(log, :wrapper => true, :permissions => @api_user, :encryption_allowed => (request.headers["X-SUPPORTS-REMOTE-ENCRYPTION"] == 'true')).to_json
   end
 
   def create

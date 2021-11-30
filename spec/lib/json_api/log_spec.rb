@@ -59,7 +59,53 @@ describe JsonApi::Log do
       json = JsonApi::Log.as_json(l, :wrapper => true)
       expect(json['log']['events']).to eql([])
     end
+
+    it 'should include encryption settings and url if allowed' do
+      l = LogSession.new(data: {'hat' => 'black'}, started_at: Time.now, ended_at: Time.now)
+      l.data['events'] = [
+        {'id' => 1, 'timestamp' => 12345, 'button' => {'spoken' => true, 'label' => 'hat'}, 'parts_of_speech' => {}},
+        {'id' => 2, 'timestamp' => 12346, 'button' => {'label' => 'hat', 'percent_x' => 0.5, 'percent_y' => 0.32, 'board' => {}}, 'parts_of_speech' => {}},
+        {'id' => 3, 'timestamp' => 12347, 'action' => {'action' => 'open_board', 'new_id' => {}}},
+        {'id' => 4, 'timestamp' => 12348, 'action' => {'action' => 'auto_home'}},
+        {'id' => 5, 'timestamp' => 12349, 'utterance' => {'spoken' => true, }},
+        {'id' => 6, 'timestamp' => 12350},
+        {'id' => 7, 'timestamp' => 12351, 'notes' => [
+          {'id' => 1, 'note' => 'happy', 'author' => {}},
+          {'id' => 2, 'note' => 'sad', 'author' => {'id' => '123'}}
+        ]},
+      ]
+      l.data['extra_data_encryption'] = ExternalNonce.init_client_encryption
+      l.data['extra_data_public'] = true
+      l.data['extra_data_nonce'] = 'asdfasdf'
+      json = JsonApi::Log.as_json(l, :wrapper => true, :encryption_allowed => true)
+      expect(json['log']['data_url']).to_not eq(nil)
+      expect(json['log']['encryption_settings']).to eq(l.data['extra_data_encryption'])
+      expect(json['log']['events']).to eq(nil)
+    end
     
+    it 'should not include encryption settings and url if not allowed' do
+      l = LogSession.new(data: {'hat' => 'black'}, started_at: Time.now, ended_at: Time.now)
+      l.data['events'] = [
+        {'id' => 1, 'timestamp' => 12345, 'button' => {'spoken' => true, 'label' => 'hat'}, 'parts_of_speech' => {}},
+        {'id' => 2, 'timestamp' => 12346, 'button' => {'label' => 'hat', 'percent_x' => 0.5, 'percent_y' => 0.32, 'board' => {}}, 'parts_of_speech' => {}},
+        {'id' => 3, 'timestamp' => 12347, 'action' => {'action' => 'open_board', 'new_id' => {}}},
+        {'id' => 4, 'timestamp' => 12348, 'action' => {'action' => 'auto_home'}},
+        {'id' => 5, 'timestamp' => 12349, 'utterance' => {'spoken' => true, }},
+        {'id' => 6, 'timestamp' => 12350},
+        {'id' => 7, 'timestamp' => 12351, 'notes' => [
+          {'id' => 1, 'note' => 'happy', 'author' => {}},
+          {'id' => 2, 'note' => 'sad', 'author' => {'id' => '123'}}
+        ]},
+      ]
+      l.data['extra_data_encryption'] = ExternalNonce.init_client_encryption
+      l.data['extra_data_public'] = true
+      l.data['extra_data_nonce'] = 'asdfasdf'
+      json = JsonApi::Log.as_json(l, :wrapper => true, :encryption_allowed => false)
+      expect(json['log']['data_url']).to eq(nil)
+      expect(json['log']['encryption_settings']).to eq(nil)
+      expect(json['log']['events']).to_not eq(nil)
+    end
+
     it "should include the device" do
       l = LogSession.new(:log_type => 'session', data: {'hat' => 'black'}, started_at: Time.now, ended_at: Time.now)
       json = JsonApi::Log.as_json(l, :wrapper => true)
@@ -84,6 +130,7 @@ describe JsonApi::Log do
         ]},
       ]
       json = JsonApi::Log.as_json(l, :wrapper => true)
+      expect(json['log']['data_url']).to eql(nil)
       expect(json['log']['events'].length).to eql(7)
       expect(json['log']['events'][0]).to eql({
         'id' => 1,

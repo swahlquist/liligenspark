@@ -848,6 +848,57 @@ describe Api::LogsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['log']['id']).to eq(log.global_id)
     end
+
+    it 'should return events data if no encryption header sent' do
+      token_user
+      log = LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      get :show, params: {:id => log.global_id}
+      json = JSON.parse(response.body)
+      expect(json['log']['id']).to eq(log.global_id)
+      expect(json['log']['events']).to eq([{"id"=>1,
+        "parts_of_speech"=>{"types"=>["other"]},
+        "spoken"=>false,
+        "summary"=>"ok",
+        "timestamp"=>4.seconds.ago.to_i,
+        "type"=>"button"},
+      {"id"=>2,
+        "parts_of_speech"=>{"types"=>["other"]},
+        "spoken"=>false,
+        "summary"=>"never mind",
+        "timestamp"=>3.seconds.ago.to_i,
+        "type"=>"button"
+      }])
+      expect(json['log']['data_url']).to eq(nil)
+      expect(json['log']['encryption_settings']).to eq(nil)
+    end
+
+    it 'should return url if encryption header sent' do
+      token_user
+      log = LogSession.process_new({
+        :events => [
+          {'timestamp' => 4.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'ok', 'board' => {'id' => '1_1'}}},
+          {'timestamp' => 3.seconds.ago.to_i, 'type' => 'button', 'button' => {'label' => 'never mind', 'board' => {'id' => '1_1'}}}
+        ]
+      }, {:user => @user, :device => @device, :author => @user})
+      log.data['extra_data_encryption'] = ExternalNonce.init_client_encryption
+      log.data['extra_data_public'] = true
+      log.data['extra_data_nonce'] = 'abcdefg'
+      log.save
+      expect(log.extra_data_public_url).to_not eq(nil)
+      request.headers['X-SUPPORTS-REMOTE-ENCRYPTION'] = 'true'
+      get :show, params: {:id => log.global_id}
+      json = JSON.parse(response.body)
+      expect(json['log']['id']).to eq(log.global_id)
+      expect(json['log']['events']).to eq(nil)
+      expect(json['log']['data_url']).to_not eq(nil)
+      expect(json['log']['encryption_settings']).to_not eq(nil)
+      expect(json['log']['encryption_settings'].keys.sort).to eq(['hash', 'iv', 'key'])
+    end
   end
   
   describe "obl" do

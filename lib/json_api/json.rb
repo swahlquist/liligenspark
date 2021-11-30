@@ -11,7 +11,7 @@ module JsonApi::Json
       new_json[self::TYPE_KEY] = json
       json = new_json
       if self.respond_to?(:extra_includes)
-        json = extra_includes(obj, json, {:permissions => args[:permissions]})
+        json = extra_includes(obj, json, args.except(:wrapper))
       end
       if self.respond_to?(:meta)
         metadata = self.meta(obj)

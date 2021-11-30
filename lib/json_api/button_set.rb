@@ -15,6 +15,8 @@ module JsonApi::ButtonSet
       json['full_set_revision'] = button_set.data['full_set_revision'] || 'none'
       json['root_url'] = button_set.url_for(args[:permissions], board.settings['full_set_revision'])
     end
+    json['encryption_settings'] = button_set.data['extra_data_encryption']
+
     
     json['remote_enabled'] = !!ENV['REMOTE_EXTRA_DATA']
 
