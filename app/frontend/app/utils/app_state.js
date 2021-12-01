@@ -1692,6 +1692,7 @@ var app_state = EmberObject.extend({
     'speak_mode',
     'currentUser.id',
     'currentUser.preferences.logging',
+    'referenced_user.preferences.logging',
     'referenced_user.id',
     function() {
       if(session.get('isAuthenticated') && !app_state.get('currentUser.id')) {
@@ -1699,7 +1700,7 @@ var app_state = EmberObject.extend({
         return;
       }
       if(this.get('speak_mode')) {
-        stashes.set('logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.logging')));
+        stashes.set('logging_enabled', !!(this.get('speak_mode') && (this.get('currentUser.preferences.logging') || this.get('referenced_user.preferences.logging'))));
         stashes.set('geo_logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.geo_logging')));
         stashes.set('speaking_user_id', this.get('currentUser.id'));
         stashes.set('session_user_id', this.get('sessionUser.id'));
