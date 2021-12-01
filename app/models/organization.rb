@@ -767,6 +767,7 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
         e['premium'] = true if org.settings['org_access']
         e['org'] = org if include_org
         res << e
@@ -783,6 +784,7 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
         e['premium'] = true if org.settings['org_access']
         e['restricted'] = true if org.settings['org_access'] == false
         e['org'] = org if include_org
@@ -800,6 +802,7 @@ class Organization < ActiveRecord::Base
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
+        e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
         e['premium'] = true if org.settings['org_access']
         e['org'] = org if include_org
         res << e
@@ -985,6 +988,8 @@ class Organization < ActiveRecord::Base
     self.settings['name'] = process_string(params['name']) if params['name']
     self.settings['premium'] = process_boolean(params['premium']) if params['premium'] != nil
     self.settings['org_access'] = process_boolean(params['org_access']) if params['premium'] != nil
+    self.settings['inactivity_timeout'] = params['inactivity_timeout'].to_i if params['inactivity_timeout']
+    self.settings.delete('inactivity_timeout') if (self.settings['inactivity_timeout'] || 0) < 10
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]

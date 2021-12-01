@@ -244,7 +244,10 @@ describe Device, :type => :model do
     it "should remove old tokens" do
       d = Device.new
       d.settings = {}
-      d.settings['keys'] = [{'value' => 'bob', 'last_timestamp' => 30.days.ago.to_i}, {'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}]
+      d.settings['keys'] = [
+        {'value' => 'bob', 'last_timestamp' => 30.days.ago.to_i}, 
+        {'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}
+      ]
       d.clean_old_keys
       expect(d.settings['keys']).to eq([{'value' => 'fred', 'last_timestamp' => 1.second.ago.to_i}])
     end
@@ -253,9 +256,32 @@ describe Device, :type => :model do
       d = Device.new
       d.settings = {}
       d.settings['long_token'] = false
-      d.settings['keys'] = [{'value' => 'bob', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 25.days.ago.to_i}, {'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}, {'value' => 'sue', 'timestamp' => 30.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i}, {'value' => 'alice', 'timestamp' => 5.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i, 'expire_at' => 5.minutes.ago.to_i}]
+      d.settings['keys'] = [
+        {'value' => 'bob', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 25.days.ago.to_i}, 
+        {'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}, 
+        {'value' => 'sue', 'timestamp' => 30.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i}, 
+        {'value' => 'alice', 'timestamp' => 5.days.ago.to_i, 'last_timestamp' => 1.minute.ago.to_i, 'expire_at' => 5.minutes.ago.to_i}, 
+        {'value' => 'alexis', 'timestamp' => 3.hours.ago.to_i, 'last_timestamp' => 20.minute.ago.to_i, 'timeout' => 10.minutes.to_i}
+      ]
       d.clean_old_keys
       expect(d.settings['keys']).to eq([{'value' => 'fred', 'timestamp' => 25.days.ago.to_i, 'last_timestamp' => 1.hour.ago.to_i}])
+    end
+
+    it "should honor org-configured timeouts" do
+      o = Organization.create
+      u = User.create
+      o.settings['inactivity_timeout'] = 20
+      o.save
+      d = Device.create(user: u, settings: {'browser' => true})
+      expect(d.token_type).to eq(:browser)
+      o.add_manager(u.user_name)
+      d.generate_token!(false)
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['keys'][0]['timeout']).to eq(20.minutes.to_i)
+      d.settings['keys'][0]['timestamp'] = 21.minutes.ago.to_i
+      d.settings['keys'][0]['last_timestamp'] = 21.minutes.ago.to_i
+      d.clean_old_keys
+      expect(d.settings['keys']).to eq([])
     end
   end
 

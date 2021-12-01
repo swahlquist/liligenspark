@@ -182,12 +182,20 @@ class Device < ActiveRecord::Base
     self.settings['token_history'] ||= []
     self.settings['token_history'] << Time.now.to_i
     self.settings['token_history'] = self.settings['token_history'].last(10)
-    self.settings['keys'] << {
+    key = {
       'value' => key,
       'timestamp' => Time.now.to_i,
       'last_timestamp' => Time.now.to_i,
       'refresh' => GoSecure.nonce('device_refresh_token')
     }
+    manual_token = nil
+    if self.token_type == :browser && !long_token && self.user
+      # lookup the managing org(s) and if it has a manual timeout
+      # set then use the shortest one
+      manual_timeout = Organization.attached_orgs(self.user).map{|o| o['login_timeout'] }.compact.max
+      key['timeout'] = manual_timeout.minutes.to_i if manual_timeout
+    end
+    self.settings['keys'] << key
     self.save
   end
   

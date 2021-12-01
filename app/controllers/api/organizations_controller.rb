@@ -378,6 +378,7 @@ class Api::OrganizationsController < ApplicationController
       params['organization'].delete('licenses_expire') 
       params['organization'].delete('include_extras')
       params['organization'].delete('org_access')
+      params['organization'].delete('inactivity_timeout')
       params['organization'].delete('premium')
     end
     if org.process(params['organization'], {'updater' => @api_user})
