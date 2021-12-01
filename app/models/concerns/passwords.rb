@@ -143,7 +143,7 @@ module Passwords
     # the valet password has been triggered and the regular password
     # is subsequently used, the valet password should be de-activated.
     return false if !self.settings || self.settings['valet_password_disabled']
-    return false if self.settings['valet_password_at'] && self.settings['valet_password_at'] < 24.hours.ago.to_i
+    return false if (self.settings['valet_password_at'] && self.settings['valet_password_at'] < 24.hours.ago.to_i) && !self.settings['valet_prevent_disable']
     return false unless self.settings['valet_password']
     return true
   end
@@ -186,6 +186,7 @@ module Passwords
   def valet_password_used!
     # Record the valet password as having been triggered.
     do_notify = !self.settings['valet_password_at'] || self.settings['valet_password_at'] < 30.minutes.ago.to_i
+    self.settings['valet_password_at'] = nil if (self.settings['valet_prevent_disable'] && self.settings['valet_password_at'] < 30.minutes.ago.to_i)
     self.settings['valet_password_at'] ||= Time.now.to_i
     self.save!
     # Notify user that the valet password was used
@@ -196,7 +197,7 @@ module Passwords
     # If the valet password has been triggered, mark it as
     # disabled until the user re-activates it. Also clear
     # the record of the valet password being triggered.
-    if self.settings['valet_password_at'] && !self.valet_mode?
+    if self.settings['valet_password_at'] && !self.valet_mode? && !self.settings['valet_prevent_disable']
       self.settings.delete('valet_password_at')
       self.settings['valet_password_disabled'] = Time.now.to_i
       self.save!

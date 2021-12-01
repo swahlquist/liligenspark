@@ -700,6 +700,8 @@ class User < ActiveRecord::Base
     end
     if params['valet_login']
       self.set_valet_password(params['valet_password'])
+      self.settings['valet_long_term'] = process_boolean(params['valet_long_term']) if params['valet_long_term'] != nil
+      self.settings['valet_prevent_disable'] = process_boolean(params['valet_prevent_disable']) if params['valet_prevent_disable'] != nil
     elsif params['valet_login'] == false
       self.set_valet_password(false)
     end

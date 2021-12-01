@@ -26,7 +26,7 @@ class Device < ActiveRecord::Base
     # force a logout for tokens that have been used for an extended period of time
     if self.settings['temporary_device'] || self.settings['auth_device']
       30.minutes.to_i
-    elsif self.settings['valet']
+    elsif self.settings['valet'] && !self.settings['valet_long_term']
       24.hours.to_i
     elsif self.token_type == :integration || self.token_type == :app || self.token_type == :unknown
       if long_token
@@ -217,7 +217,7 @@ class Device < ActiveRecord::Base
     if self.token_type == :integration
       # integration tokens must be refreshed every 24 hours
       24.hours.to_i
-    elsif self.settings['valet']
+    elsif self.settings['valet'] && !self.settings['valet_long_term']
       20.hours.to_i
     elsif self.settings && self.settings['long_token']
       if self.token_type == :app

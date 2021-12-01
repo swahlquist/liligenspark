@@ -578,8 +578,12 @@ class SessionController < ApplicationController
     d.settings.delete('temporary_device') if u.valet_mode?
     d.settings.delete('auth_device')
     d.settings['valet'] = !!u.valet_mode?
+    d.settings['valet_long_term'] = !!(u.valet_mode? && u.settings['valet_long_term'])
     d.settings['app'] = true if installed_app
-    d.generate_token!(long_token && !u.valet_mode?)
+    if u.valet_mode? && !u.settings['valet_long_term']
+      long_token = false
+    end
+    d.generate_token!(long_token)
   end
 
   def saml_settings(org=nil, code=nil) # TODO: this isn't a controller method

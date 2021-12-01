@@ -280,8 +280,10 @@ describe Device, :type => :model do
       expect(d.settings['keys'][0]['timeout']).to eq(20.minutes.to_i)
       d.settings['keys'][0]['timestamp'] = 21.minutes.ago.to_i
       d.settings['keys'][0]['last_timestamp'] = 21.minutes.ago.to_i
+      d.settings['keys'][0]['needs_refresh'] = nil
       d.clean_old_keys
-      expect(d.settings['keys']).to eq([])
+      expect(d.settings['keys'].length).to eq(1)
+      expect(d.settings['keys'][0]['needs_refresh']).to eq(true)
     end
   end
 
@@ -449,6 +451,22 @@ describe Device, :type => :model do
       d.user_integration_id = nil
       d.settings['valet'] = true
       expect(d.inactivity_timeout).to eq(20.hours.to_i)
+      d.settings['valet_long_term'] = true
+      expect(d.token_type).to eq(:unknown)
+      expect(d.inactivity_timeout).to eq(12.hours.to_i)
+      d.settings['browser'] = true
+      d.settings['long_token'] = true
+      expect(d.token_type).to eq(:browser)
+      expect(d.inactivity_timeout).to eq(28.days.to_i)
+
+      d.settings['browser'] = false
+      d.settings['app'] = true
+      expect(d.token_type).to eq(:app)
+      expect(d.inactivity_timeout).to eq(14.months.to_i)
+      
+      d.settings['app'] = false
+      expect(d.token_type).to eq(:unknown)
+      expect(d.inactivity_timeout).to eq(14.days.to_i)
     end
   end
   
@@ -690,6 +708,8 @@ describe Device, :type => :model do
       expect(d.token_timeout).to eq(28.days.to_i)
       d.settings['valet'] = true
       expect(d.token_timeout).to eq(24.hours.to_i)
+      d.settings['valet_long_term'] = true
+      expect(d.token_timeout).to eq(28.days.to_i)
     end
   end
 

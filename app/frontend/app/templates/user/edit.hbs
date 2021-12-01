@@ -229,7 +229,7 @@
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=model.valet_login id="valet_login"}}
-              {{t "Enable valet login for modeling-only access"}}
+              {{t "Enable valet login for modeling-only access" key='enabled_valed_login'}}
               {{#if model.valet_disabled}}
                 <br/><em class='text-danger'>{{t "(valet login was automatically disabled after being used)" key='valet_login_disabled'}}</em>
               {{/if}}
@@ -266,6 +266,30 @@
             <button type='button' class='btn btn-default' {{action 'generate_qr'}}>{{t "Generate QR Code" key='generate_qr_code'}}</button>
           </div>
         </div>
+
+        <div class="form-group">
+          <label for="valet_long_term" class="col-sm-3 control-label">{{t "Valet Long-Term" key='valet_long_term'}}</label>
+          <div class="col-sm-5">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=model.valet_long_term id="valet_long_term"}}
+                {{t "Allow valet logins to last longer than 24 hours" key='allow_valet_long_term'}}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="valet_prevent_disable" class="col-sm-3 control-label">{{t "Valet Disabling" key='valet_disabling'}}</label>
+          <div class="col-sm-5">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=model.valet_prevent_disable id="valet_prevent_disable"}}
+                {{t "Don't require re-authorization after a valet login is used" key='valet_prevent_disable'}}
+              </label>
+            </div>
+          </div>
+        </div>
+
       {{/if}}
     {{/if}}
   {{/unless}}

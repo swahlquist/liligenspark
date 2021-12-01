@@ -619,7 +619,7 @@ class LogSession < ActiveRecord::Base
       end
       self.data['stats']['duration'] = (self.data['submitted'] || self.ended_at.to_i) - (self.data['started'] || self.started_at.to_i)
       self.data['stats']['questions'] = 0
-      (self.date['profile']['question_groups'] || []).each do |group|
+      (self.data['profile']['question_groups'] || []).each do |group|
         (group['questions'] || []).each do |question|
           self.data['stats']['questions'] += 1
         end

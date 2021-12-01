@@ -118,6 +118,7 @@ export default Component.extend({
       _this.set('code_2fa', null);
       // TODO: admin UI for resetting 2fa
     } else if(data.temporary_device) {
+      // Eval accounts can only have one session at a time
       _this.send('login_success', false);
       _this.set('login_single_assertion', true);
       _this.set('login_followup', false);
