@@ -604,6 +604,27 @@ class LogSession < ActiveRecord::Base
       self.data['stats']['longest_correct_streak'] = biggest_correct_streak
       self.data['stats']['longest_incorrect_streak'] = biggest_incorrect_streak
     end
+    if self.data['profile']
+      # pull out data['profile']['summary'] if available
+      # also pull out mastery_cnt and cnt to get an average mastery %
+      # might as well get a duration as well
+      (self.data['profile']['score_categories'] || {}).each do |id, cat|
+        cat['function'] # ['mastery_cnt', 'sum', 'avg', etc]
+        cat['manuals'] #
+        cat['tally'] #
+        cat['cnt'] #
+        cat['mastery_cnt'] #
+        cat['max'] #
+        cat['value']
+      end
+      self.data['stats']['duration'] = (self.data['submitted'] || self.ended_at.to_i) - (self.data['started'] || self.started_at.to_i)
+      self.data['stats']['questions'] = 0
+      (self.date['profile']['question_groups'] || []).each do |group|
+        (group['questions'] || []).each do |question|
+          self.data['stats']['questions'] += 1
+        end
+      end
+    end
     true
   end
   
