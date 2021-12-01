@@ -269,6 +269,9 @@ var Profile = EmberObject.extend({
     var diff = this.get('results.submitted') - this.get('results.started');
     return Math.round(diff / 60);
   }),
+  communicator_type: computed('template.type', function() {
+    return (this.get('template.type') || 'communicator') == 'communicator';
+  }),
   reports_layout: computed('template.report_segments', 'template.score_categories', 'questions_layout', 'history', 'template.history', 'started_at', function() {
     var reports = this.get('template.report_segments') || [];
     var cats = this.get('template.score_categories') || {};

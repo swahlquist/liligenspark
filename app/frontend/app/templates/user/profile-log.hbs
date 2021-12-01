@@ -65,6 +65,11 @@
     </div>
   </div>
   <div class='profile'>
+    {{#if processed_profile.communicator_type}}
+      {{#unless processed_profile.template.with_communicator}}
+        <p class='text-danger'>{{t "NOTE: This profile was completed without the communicator's participation" key='profile_without_communicator'}}</p>
+      {{/unless}}
+    {{/if}}
     {{#each processed_profile.reports_layout as |report|}}
       <div style='margin-bottom: 30px;'>
         {{#if report.score}}
