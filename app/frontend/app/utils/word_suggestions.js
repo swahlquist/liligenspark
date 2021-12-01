@@ -316,6 +316,10 @@ var word_suggestions = EmberObject.extend({
           var edits = [];
           var min = word_in_progress.length / 2;
           var max = word_in_progress.length * 2;
+          if(word_in_progress.length > 10) { 
+            min = word_in_progress.length - 5;
+            max = word_in_progress.length + 5; 
+          }
           _this.ngrams[''].forEach(function(str) {
             if(str[0] && (str[0].length > min && str[0].length < max)) {
               if(!_this.filtered_words[str[0].toLowerCase()]) {

@@ -1130,7 +1130,7 @@ CoughDrop.Board = DS.Model.extend({
       second_to_last_word: second_to_last_word,
       word_in_progress: in_progress,
       board_ids: board_ids,
-      max_results: suggested_buttons.length * 2
+      max_results: suggested_buttons.length > 5 ? (suggested_buttons.length + 3) : (suggested_buttons.length * 2)
     }).then(function(result) {
       var unique_result = (result || []).filter(function(sugg) { return sugg.word && !skip_labels[sugg.word.toLowerCase()]; });
       result = unique_result.concat(result).uniq();
