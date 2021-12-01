@@ -79,6 +79,32 @@
           {{stats/recent-goals total=model.total_users goal_set=user_counts.goal_set tracked=user_counts.goal_recently_logged}}
         </div>
       {{/if}}
+      <div style='clear: both;'>
+      <div class='col-sm-6' style='clear: both; display: none;'>
+        <strong>{{t "Recent Words" key='words'}}</strong>
+        {{#if user_counts.word_counts.length}}
+          {{stats/word-cloud stats=user_counts.word_counts tiny=true zoom=1}}
+        {{else}}
+          <br/><br/><em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em><br/>
+        {{/if}}
+      </div>
+      <div class='col-sm-6'>
+        <strong>{{t "Recently-Modeled Words" key='words'}}</strong>
+        {{#if combined_models}}
+          {{stats/word-cloud stats=combined_models tiny=true zoom=1}}
+        {{else}}
+          <br/><br/><em>{{t "No modeled words to report" key='no_modeled_words_to_report'}}</em><br/>
+        {{/if}}
+      </div>
+      {{#if app_state.feature_flags.profiles}}
+        <div class="col-sm-3" style="padding: 0;">
+          {{stats/recent-profiles type='communicator' total=user_counts.communicators recent=user_counts.communicator_recent_profiles}}
+        </div>
+        <div class="col-sm-3" style="padding: 0;">
+          {{stats/recent-profiles type='supervisor' total=user_counts.supervisors recent=user_counts.supervisor_recent_profiles}}
+        </div>
+      {{/if}}
+      </div>
     </div>
   {{/if}}
   <ul class='nav nav-pills' style="margin-bottom: 15px; margin-top: 20px;">

@@ -9,13 +9,20 @@ export default Component.extend({
   didInsertElement: function() {
     this.draw();
   },
-  canvas_style: computed('short', function() {
+  canvas_style: computed('short', 'tiny', function() {
     var res = 'width: 100%; height: 400px;';
     if(this.get('short')) { res = "width: 100%; height: 300px;"; }
+    if(this.get('tiny')) { res = "width: 100%; height: 150px;"; }
     return htmlSafe(res);
   }),
   canvas_height: computed('short', function() {
-    return htmlSafe(this.get('short') ? (768 * 2 / 3) : 768);
+    if(this.get('short')) {
+      return (768 * 2 / 3);
+    } else if(this.get('tiny')) {
+      return 768 / 2;
+    } else {
+      return 768;
+    }
   }),
   draw: observer('stats', 'ref_stats', 'zoom', 'word_cloud_id', function() {
     var elem = this.get('element').getElementsByClassName('word_cloud')[0];

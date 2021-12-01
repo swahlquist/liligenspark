@@ -112,6 +112,29 @@ export default Controller.extend({
   no_extras: computed('model.extras_available', function() {
     return !this.get('model.extras_available');
   }),
+  words: computed('user_counts.word_counts', function() {
+    var counts = this.get('user_counts.word_counts') || [];
+    return {
+      words_by_frequency: counts.map(function(w) { return {text: w.word, count: w.cnt }; })
+    };
+  }),
+  combined_models: computed('user_counts.modeled_word_counts', 'user_counts.supervisor_models', function() {
+    var counts = this.get('user_counts.modeled_word_counts') || [];
+    var sup = (this.get('user_counts.supervisor_models') || {});
+    for(var key in sup) {
+      var word = counts.find(function(w) { return w.word == key; });
+      if(!word && !key.match(/^(\+|:)/)) {
+        word = {word: key, cnt: 0};
+        counts.push(word);
+      }
+      if(word) {
+        word.cnt = word.cnt + sup[key];
+      }
+    }
+    return {
+      words_by_frequency: counts.map(function(w) { return {text: w.word, count: w.cnt }; })
+    };
+  }),
   refresh_stats: function() {
     var _this = this;
     _this.set('weekly_stats', null);

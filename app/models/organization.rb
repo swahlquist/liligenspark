@@ -910,7 +910,45 @@ class Organization < ActiveRecord::Base
     res['user_counts']['recent_session_hours'] = (res['user_counts']['recent_session_seconds'] / 3600.0).round(2)
     res['user_counts']['recent_session_user_count'] = recent.distinct.count('user_id')
     res['user_counts']['total_users'] = approved_users.count
-    
+
+    weekyears = []
+    weekdate = 8.weeks.ago
+    while weekdate <= Time.now
+      weekyears << WeeklyStatsSummary.date_to_weekyear(weekdate)
+      weekdate += 1.week
+    end
+    total_user_weeks = 0
+    total_words = 0
+    total_models = 0
+    total_sessions = 0
+    total_seconds = 0
+    words = {}
+    models = {}
+    WeeklyStatsSummary.where(user_id: approved_users.map(&:id), weekyear: weekyears).each do |sum|
+      total_user_weeks += 1
+      total_sessions += sum.data['stats']['total_sessions'] || 0
+      total_seconds += sum.data['stats']['total_session_seconds'] || 0
+      (sum.data['stats']['all_word_counts'] || {}).each do |word, cnt|
+        total_words += cnt
+        words[word] ||= {user_ids: {}, cnt: 0}
+        words[word][:cnt] += cnt
+        words[word][:user_ids][sum.user_id] = true
+      end
+      (sum.data['stats']['modeled_word_counts'] || {}).each do |word, cnt|
+        total_models += cnt
+        models[word] ||= {user_ids: {}, cnt: 0}
+        models[word][:cnt] += cnt
+        models[word][:user_ids][sum.user_id] = true
+      end
+    end
+    res['user_counts']['total_user_weeks'] = total_user_weeks
+    res['user_counts']['total_words'] = total_words
+    res['user_counts']['total_models'] = total_models
+    res['user_counts']['total_sessions'] = total_sessions
+    res['user_counts']['total_seconds'] = total_seconds
+    res['user_counts']['total_user_weeks'] = total_user_weeks
+    res['user_counts']['word_counts'] = words.to_a.sort_by{|w, h| [0 - h[:user_ids].length, 0 - h[:cnt], w] }.map{|w, h| {word: w, cnt: h[:cnt] * h[:user_ids].keys.length} }.select{|w| !w[:word].match(/^\+/) && w[:cnt] > user_ids.length }[0, 75]
+    res['user_counts']['modeled_word_counts'] = models.to_a.sort_by{|w, h| [0 - h[:user_ids].length, 0 - h[:cnt], w] }.map{|w, h| {word: w, cnt: h[:cnt] * h[:user_ids].keys.length} }.select{|w| !w[:word].match(/^\+/) && w[:cnt] > user_ids.length }[0, 75]
     
     sessions.group("date_trunc('week', started_at)").select("date_trunc('week', started_at)", "SUM(EXTRACT(epoch FROM (ended_at - started_at)))", "COUNT(*)").sort_by{|s| s.date_trunc }.each do |s|
       date = s.date_trunc

@@ -65,7 +65,54 @@ class Api::OrganizationsController < ApplicationController
     if approved_users.count == 0
       approved_users += org.downstream_orgs.map{|o| o.approved_users(false) }.flatten
     end
+
     res = Organization.usage_stats(approved_users.uniq, org.admin?)
+    if org.settings['communicator_profile']
+      com_ids = approved_users.uniq.map(&:id)
+      # TODO: sharding
+      com_extras = UserExtra.where(user_id: com_ids)
+      recents = []
+      com_extras.each do |extra|
+        profs = (extra.settings['recent_profiles'] || {})[org.settings['communicator_profile']['profile_id']]
+        recents << profs[-1] if profs[-1]['added'] > 6.months.ago
+      end
+      res['user_counts']['communicators'] = com_ids.length
+      res['user_counts']['communicator_recent_profiles'] = recents.length
+    end
+    if org.settings['supervisor_profile']
+      sup_ids = org.attached_users('supervisor').map(&:id)
+      # TODO: sharding
+      sup_extras = UserExtra.where(user_id: sup_ids)
+      recents = []
+      sup_extras.each do |extra|
+        profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']]
+        recents << profs[-1] if profs[-1]['added'] > 6.months.ago.to_i
+      end
+      res['user_counts']['supervisors'] = sup_ids.length
+      res['user_counts']['supervisor_recent_profiles'] = recents.length
+
+      sessions = LogSession.where(log_type: 'daily_use', user_id:sup_ids)
+      cutoff = 12.weeks.ago.to_date.iso8601
+      models = {}
+      sessions.each do |session|
+        user_id = session.related_global_id(session.user_id)
+        (session.data['days'] || []).each do |str, day|
+          if str > cutoff
+            week = Date.parse(str).beginning_of_week(:monday)
+            ts = week.to_time(:utc).to_i
+            key = 'modeled'
+            if(day[key])
+              if(key == 'modeled') 
+                day[key].each do |word|
+                  models[word] = (models[word] || 0) + 1
+                end
+              end
+            end
+          end
+        end
+      end 
+      res['user_counts']['supervisor_models'] = models     
+    end
     
     render json: res.to_json
   end
