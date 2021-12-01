@@ -590,6 +590,9 @@ var Profile = EmberObject.extend({
     if(this.get('with_communicator')) {
       json.with_communicator = true;
     }
+    if(this.get('feedback')) {
+      json.feedback = this.get('feedback');
+    }
     var questions = this.get('questions_layout');
     var responses = json.results.responses;
     questions.forEach(function(question) {
