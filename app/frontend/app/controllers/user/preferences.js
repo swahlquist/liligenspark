@@ -171,6 +171,22 @@ export default Controller.extend({
     {name: i18n.t('communicator_view', "Communicator View"), id: 'communicator'},
     {name: i18n.t('supporter_view', "Therapist/Parent/Supporter View"), id: 'supporter'}
   ],
+  symbolsList: computed(function() {
+    var list = [
+      {name: i18n.t('original_symbols', "Use the board's original symbols"), id: 'original'},
+      {name: i18n.t('use_opensymbols', "Opensymbols.org free symbol libraries"), id: 'opensymbols'},
+
+      {name: i18n.t('use_lessonpix', "LessonPix symbol library"), id: 'lessonpix'},
+      {name: i18n.t('use_symbolstix', "SymbolStix Symbols"), id: 'symbolstix'},
+      {name: i18n.t('use_pcs', "PCS Symbols by Tobii Dynavox"), id: 'pcs'},
+
+      {name: i18n.t('use_twemoji', "Emoji icons (authored by Twitter)"), id: 'twemoji'},
+      {name: i18n.t('use_noun-project', "The Noun Project black outlines"), id: 'noun-project'},
+      {name: i18n.t('use_arasaac', "ARASAAC free symbols"), id: 'arasaac'},
+      {name: i18n.t('use_tawasol', "Tawasol symbol library"), id: 'tawasol'},
+    ];
+    return list;
+  }),
   localeList: computed(function() {
     var list = i18n.get('locales');
     var res = [{name: i18n.t('english_default', "English (default)"), id: 'en'}];
