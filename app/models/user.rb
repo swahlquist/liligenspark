@@ -734,6 +734,14 @@ class User < ActiveRecord::Base
     PREFERENCE_PARAMS.each do |attr|
       self.settings['preferences'][attr] = params['preferences'][attr] if params['preferences'] && params['preferences'][attr] != nil
     end
+    if params['preferences']
+      self.settings['preferences']['clear_vocalization_history'] = process_boolean(params['preferences']['clear_vocalization_history']) if params['preferences'] && params['preferences']['clear_vocalization_history'] != nil
+      if self.settings['preferences']['clear_vocalization_history']
+        self.settings['preferences']['clear_vocalization_history_minutes'] = params['preferences']['clear_vocalization_history_minutes'].to_i if params['preferences']['clear_vocalization_history_minutes']
+        self.settings['preferences']['clear_vocalization_history_count'] = params['preferences']['clear_vocalization_history_count'].to_i if params['preferences']['clear_vocalization_history_count']
+      end
+    end
+
     if params['preferences'] && (params['preferences']['logging_code'] == false || params['preferences']['logging_code'] == 'false')
       self.settings['preferences'].delete('logging_code')
     end
