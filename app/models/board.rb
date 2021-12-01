@@ -1525,6 +1525,8 @@ class Board < ActiveRecord::Base
       buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
+          # TODO: space these out or batch them up, as right now find_images is hitting
+          # the server pretty hard during this swap process
           image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true) || [])[0]
           bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi
