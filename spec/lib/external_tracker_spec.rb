@@ -57,7 +57,10 @@ describe ExternalTracker do
           {property: 'firstname', value: 'No'},
           {property: 'lastname', value: 'name'},
           {property: 'city', value: nil},
-          {property: 'state', value: nil}
+          {property: 'username', value: u.user_name},
+          {property: 'state', value: nil},
+          {property: 'account_type', value: 'Communicator Account'},
+          {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
         headers: {'Content-Type' => 'application/json'}
       }).and_return(OpenStruct.new(code: '201'))
@@ -68,6 +71,7 @@ describe ExternalTracker do
     it "should check for geo location based on ip address" do
       u = User.create
       u.settings['email'] = 'testing@example.com'
+      u.settings['preferences']['registration_type'] = 'eval'
       u.save
       expect(u.devices.count).to eq(0)
       d = Device.create(:user => u)
@@ -86,7 +90,10 @@ describe ExternalTracker do
           {property: 'firstname', value: 'No'},
           {property: 'lastname', value: 'name'},
           {property: 'city', value: 'Sandy'},
-          {property: 'state', value: 'Utah'}
+          {property: 'username', value: u.user_name},
+          {property: 'state', value: 'Utah'},
+          {property: 'account_type', value: 'AT Specialist/Lending Library'},
+          {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
         headers: {'Content-Type' => 'application/json'}
       }).and_return(OpenStruct.new(code: '201'))
@@ -97,6 +104,7 @@ describe ExternalTracker do
     it "should push to external systems" do
       u = User.create
       u.settings['email'] = 'testing@example.com'
+      u.settings['preferences']['registration_type'] = 'therapist'
       u.save
       expect(u.devices.count).to eq(0)
       d = Device.create(:user => u)
@@ -115,7 +123,10 @@ describe ExternalTracker do
           {property: 'firstname', value: 'No'},
           {property: 'lastname', value: 'name'},
           {property: 'city', value: 'Sandy'},
-          {property: 'state', value: 'Utah'}
+          {property: 'username', value: u.user_name},
+          {property: 'state', value: 'Utah'},
+          {property: 'account_type', value: 'Supervisor Teacher/Speech Path'},
+          {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
         headers: {'Content-Type' => 'application/json'}
       }).and_return(OpenStruct.new(code: '201'))

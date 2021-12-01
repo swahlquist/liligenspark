@@ -30,7 +30,18 @@ module ExternalTracker
       state = location['region_name']
     end
 
-    
+
+    acct = "Communicator Account"
+    if user.supporter_registration?
+      if user.registration_type == 'eval'
+        acct = 'AT Specialist/Lending Library'
+      elsif user.registration_type == 'parent'
+        acct = 'Supervisor Parent Account'
+      else
+        acct = 'Supervisor Teacher/Speech Path'
+      end
+    end
+
     name = (user.settings['name'] || '').split(/\s/, 2)
     json = {
       properties: [
@@ -38,7 +49,11 @@ module ExternalTracker
         {property: 'firstname', value: name[0]},
         {property: 'lastname', value: name[1]},
         {property: 'city', value: city},
-        {property: 'state', value: state}
+        {property: 'username', value: user.user_name},
+        # {property: 'hs_language', value: 'en'},
+        {property: 'state', value: state},
+        {property: 'account_type', value: acct},
+        {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
       ]
     }
     # push to external system
