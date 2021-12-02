@@ -80,14 +80,6 @@
         </div>
       {{/if}}
       <div style='clear: both;'>
-      <div class='col-sm-6' style='clear: both; display: none;'>
-        <strong>{{t "Recent Words" key='words'}}</strong>
-        {{#if user_counts.word_counts.length}}
-          {{stats/word-cloud stats=user_counts.word_counts tiny=true zoom=1}}
-        {{else}}
-          <br/><br/><em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em><br/>
-        {{/if}}
-      </div>
       <div class='col-sm-6'>
         <strong>{{t "Recently-Modeled Words" key='words'}}</strong>
         {{#if combined_models}}
@@ -474,6 +466,14 @@
     {{/if}}
   {{/if}}
   {{#if model.permissions.manage}}
+    <div class='col-sm-6' style='clear: both;'>
+      <strong>{{t "Recent Words" key='words'}}</strong>
+      {{#if user_counts.word_counts.length}}
+        {{stats/word-cloud stats=user_counts.word_counts short=true zoom=1}}
+      {{else}}
+        <br/><br/><em>{{t "No recent words to report" key='no_recent_words_to_report'}}</em><br/>
+      {{/if}}
+    </div>
     <h3 style='margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;'>{{t "Recent Sessions" key='recent_sessions'}}</h3>
     {{#if logs.data}}
       <ul class="list-unstyled">
