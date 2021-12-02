@@ -38,7 +38,7 @@ class UserExtra < ApplicationRecord
   
 
   def process_profile(profile_id, profile_template_id=nil, triggering_org=nil)
-    sessions = LogSession.where(log_type: 'profile', profile_id: profile_id).order('started_at DESC').limit(10)
+    sessions = LogSession.where(user_id: self.user_id, log_type: 'profile', profile_id: profile_id).order('started_at DESC').limit(10)
     recents = []
     # If profile_template_id is defined, the first result should match the template_id
     keep_adding = !profile_template_id

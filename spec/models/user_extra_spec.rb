@@ -301,6 +301,66 @@ describe UserExtra, type: :model do
       expect(link.data['state']['profile_history']).to eq(nil)
     end
 
+    it "should not draw from another user's profiles" do
+      u = User.create
+      u2 = User.create
+      d = Device.create(user: u)
+      ue = UserExtra.find_or_create_by(user: u)
+      ue2 = UserExtra.find_or_create_by(user: u2)
+      o = Organization.create
+      o.add_supervisor(u.user_name, false)
+      ts1 = 6.weeks.ago.to_i
+      s1 = LogSession.process_new({'profile' => {
+        'id' => 'bacon',
+        'started' => ts1,
+        'summary' => 12,
+        'summary_color' => [255, 0, 0]
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      expect(s1.started_at).to eq(Time.at(ts1))
+      ts2 = 4.weeks.ago.to_i
+      s2 = LogSession.process_new({'profile' => {
+        'id' => 'bacon',
+        'started' => ts2,
+        'summary' => 5,
+        'summary_color' => [255, 255, 0]
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      ts3 = 8.weeks.ago.to_i
+      s3 = LogSession.process_new({'profile' => {
+        'id' => 'bacon',
+        'started' => ts3,
+        'summary' => 16,
+        'template_id' => '1_111',
+        'summary_color' => [255, 0, 255]
+      }}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      ue.process_profile('bacon')
+      expect(ue.settings['recent_profiles']['bacon']).to eq([
+        {
+          'added' => ts2,
+          'expected' => ts2 + 12.months.to_i,
+          'log_id' => s2.global_id,
+          'summary' => 5,
+          'summary_color' => [255, 255, 0],
+          'template_id' => nil
+        },
+        {
+          'added' => ts1,
+          'log_id' => s1.global_id,
+          'summary' => 12,
+          'summary_color' => [255, 0, 0],
+          'template_id' => nil
+        },
+        {
+          'added' => ts3,
+          'log_id' => s3.global_id,
+          'summary' => 16,
+          'summary_color' => [255, 0, 255],
+          'template_id' => '1_111'
+        }
+      ])
+      ue2.process_profile('bacon')
+      expect(ue2.settings['recent_profiles']).to eq({'bacon' => []})
+    end
+
     it "should always start with a recent matching the profile_template_id if defined" do
       u = User.create
       d = Device.create(user: u)

@@ -23,7 +23,7 @@ export default Component.extend({
         var data = window.google.visualization.arrayToDataTable(table);
 
         var options = {
-          title: _this.get('type') == 'communicator' ? i18n.t('communicator_profiles', "Communicators Profiles") : i18n.t('supervisor_profiles', "Supervisors Profiles"),
+          title: _this.get('type') == 'communicator' ? i18n.t('communicator_profiles', "Communicator Profiles") : i18n.t('supervisor_profiles', "Supervisor Profiles"),
           legend: {
             position: 'top',
             maxLines: 2
