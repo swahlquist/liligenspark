@@ -74,7 +74,7 @@ class Api::OrganizationsController < ApplicationController
       recents = []
       com_extras.each do |extra|
         profs = (extra.settings['recent_profiles'] || {})[org.settings['communicator_profile']['profile_id']]
-        recents << profs[-1] if profs[-1]['added'] > 6.months.ago
+        recents << profs[-1] if profs[-1]['added'] > 6.months.ago.to_i
       end
       res['user_counts']['communicators'] = com_ids.length
       res['user_counts']['communicator_recent_profiles'] = recents.length
