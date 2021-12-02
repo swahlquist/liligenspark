@@ -66,7 +66,7 @@ module JsonApi::Unit
     json
   end
   
-  def self.page_data(results)
+  def self.page_data(results, args)
     res = {}
     ids = results.map(&:all_user_ids).flatten.uniq
     users = User.find_all_by_global_id(ids)

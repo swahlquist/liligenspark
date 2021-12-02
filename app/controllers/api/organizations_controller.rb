@@ -25,7 +25,7 @@ class Api::OrganizationsController < ApplicationController
     end
     prefix = "/organizations/#{@org.global_id}/users"
     org_manager = @org.allows?(@api_user, 'manage')
-    render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :organization_manager => org_manager})
+    render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :organization_manager => org_manager, :profile_type => 'supervisor'})
   end
 
   def extras
@@ -39,7 +39,8 @@ class Api::OrganizationsController < ApplicationController
     return unless allowed?(@org, 'edit')
     users = @org.supervisors.order('user_name')
     prefix = "/organizations/#{@org.global_id}/supervisors"
-    render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix})
+
+    render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :profile_type => 'supervisor'})
   end
 
   def managers
@@ -74,7 +75,7 @@ class Api::OrganizationsController < ApplicationController
       recents = []
       com_extras.each do |extra|
         profs = (extra.settings['recent_profiles'] || {})[org.settings['communicator_profile']['profile_id']]
-        recents << profs[-1] if profs && profs[-1] && profs[-1]['added'] > 6.months.ago.to_i
+        recents << profs[-1] if profs && profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('communicator')).to_i
       end
       res['user_counts']['communicators'] = com_ids.length
       res['user_counts']['communicator_recent_profiles'] = recents.length
@@ -86,7 +87,7 @@ class Api::OrganizationsController < ApplicationController
       recents = []
       sup_extras.each do |extra|
         profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']]
-        recents << profs[-1] if profs[-1]['added'] > 6.months.ago.to_i
+        recents << profs[-1] if profs[-1]['added'] > (Time.now - org.profile_frequency('supervisor')).to_i
       end
       res['user_counts']['supervisors'] = sup_ids.length
       res['user_counts']['supervisor_recent_profiles'] = recents.length

@@ -122,7 +122,7 @@
             <tr>
               <td style='font-size: 20px;'>
                 {{#link-to 'user' manager.user_name}}
-                  <img src={{manager.avatar_url}} style="height: 30px;"/>
+                  <img src={{manager.avatar_url}} style="height: 30px; width: 30px;" class='fit_image'/>
                   {{manager.user_name}}
                 {{/link-to}}
               </td>
@@ -172,13 +172,18 @@
             <tr>
               <td style='font-size: 20px;'>
                 {{#link-to 'user' user.user_name}}
-                  <img src={{user.avatar_url}} style="height: 30px;"/>
+                  <img src={{user.avatar_url}} style="height: 30px; width: 30px;" class='fit_image'/>
                   {{user.user_name}}
                 {{/link-to}}
                 {{#if user.org_supervision_pending}}
                   <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(pending)" key='pending_paren'}}</span>
                 {{else if user.org_premium_supervisor}}
                   <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(premium)" key='premium'}}</span>
+                {{/if}}
+                {{#if user.recent_org_profile}}
+                  <div style='float: right; font-size: 14px; color: #888;' title={{t "Has a recently-completed profile" key='has_profile'}}>
+                    <span class='glyphicon glyphicon-lamp'></span>
+                  </div>
                 {{/if}}
               </td>
               <td style='font-size: 14px;'>
@@ -233,7 +238,7 @@
             <tr>
               <td>
                 {{#link-to 'user' user.user_name}}
-                  <img src={{user.avatar_url}} style="height: 30px;"/>
+                  <img src={{user.avatar_url}} style="height: 30px; width: 30px;" class='fit_image'/>
                   {{user.user_name}}
                 {{/link-to}}
                 {{#if model.permissions.manage}}
@@ -244,6 +249,11 @@
                 {{/if}}
                 {{#if user.org_sponsored}}
                   <span style="vertical-align: middle;" class="text-muted">{{t "(sponsored)" key='sponsored_paren'}}</span>
+                {{/if}}
+                {{#if user.recent_org_profile}}
+                  <div style='float: right; font-size: 14px; color: #888;' title={{t "Has a recently-completed profile" key='has_profile'}}>
+                    <span class='glyphicon glyphicon-lamp'></span>
+                  </div>
                 {{/if}}
               </td>
               <td>
@@ -292,7 +302,7 @@
             <tr>
               <td>
                 {{#link-to 'user' user.user_name}}
-                  <img src={{user.avatar_url}} style="height: 30px;"/>
+                  <img src={{user.avatar_url}} style="height: 30px; width: 30px;" class='fit_image'/>
                   {{user.user_name}}
                 {{/link-to}}
                 {{#if user.org_pending}}
@@ -346,7 +356,7 @@
             <tr>
               <td>
                 {{#link-to 'user' user.user_name}}
-                  <img src={{user.avatar_url}} style="height: 30px;"/>
+                  <img src={{user.avatar_url}} style="height: 30px; width: 30px;" class='fit_image'/>
                   {{user.user_name}}
                 {{/link-to}}
               </td>

@@ -78,13 +78,16 @@ describe JsonApi::Json do
     end
     
     it "should call page_data if defined" do
-      expect(JsonApi::Unit).to receive(:page_data).and_return({:a => 1})
+      expect(JsonApi::Unit).to receive(:page_data) do |list, args|
+        expect(args[:b]).to eq(1)
+        expect(args[:page_results]).to_not eq(nil)
+      end.and_return({:a => 1})
       ou = OrganizationUnit.create
       expect(JsonApi::Unit).to receive(:build_json){|unit, args|
         expect(unit).to eq(ou)
         expect(args[:page_data]).to eq({:a => 1})
       }.and_return({})
-      res = JsonApi::Unit.paginate({}, OrganizationUnit.all)
+      res = JsonApi::Unit.paginate({}, OrganizationUnit.all, {b: 1})
     end
   end
   

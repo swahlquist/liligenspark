@@ -163,7 +163,7 @@ describe JsonApi::Unit do
       u.add_supervisor(u3.global_id, true)
       u.add_communicator(u3.global_id)
       
-      data = JsonApi::Unit.page_data(OrganizationUnit.all)
+      data = JsonApi::Unit.page_data(OrganizationUnit.all, {})
       expect(data[:users_hash].keys.sort).to eq([u1.global_id, u2.global_id, u3.global_id].sort)
     end
   end

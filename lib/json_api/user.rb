@@ -257,6 +257,15 @@ module JsonApi::User
         sup = links.detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == org_code }
         mngd = !!links.detect{|l| l['type'] == 'org_user' && l['record_code'] == org_code }
     
+        if args[:profile_type]
+          args[:cutoff] ||= args[:organization].profile_frequency(args[:profile_type])          
+          link = links.detect{|l| l['type'] == (args[:profile_type] == 'supervisor' ? 'org_supervisor' : 'org_user') && l['record_code'] == org_code}
+          if link && link['state']['profile_history'] && link['state']['profile_history'][0]
+            if link['state']['profile_history'][0]['added'] > (Time.now - args[:cutoff]).to_i
+              json['recent_org_profile'] = true
+            end
+          end
+        end
         if args[:organization_manager]
           json['goal'] = user.settings['primary_goal']
         end
