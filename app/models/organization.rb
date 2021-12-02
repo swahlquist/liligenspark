@@ -947,6 +947,8 @@ class Organization < ActiveRecord::Base
     res['user_counts']['total_sessions'] = total_sessions
     res['user_counts']['total_seconds'] = total_seconds
     res['user_counts']['total_user_weeks'] = total_user_weeks
+
+    user_ids = approved_users.map(&:global_id)
     res['user_counts']['word_counts'] = words.to_a.sort_by{|w, h| [0 - h[:user_ids].length, 0 - h[:cnt], w] }.map{|w, h| {word: w, cnt: h[:cnt] * h[:user_ids].keys.length} }.select{|w| !w[:word].match(/^\+/) && w[:cnt] > user_ids.length }[0, 75]
     res['user_counts']['modeled_word_counts'] = models.to_a.sort_by{|w, h| [0 - h[:user_ids].length, 0 - h[:cnt], w] }.map{|w, h| {word: w, cnt: h[:cnt] * h[:user_ids].keys.length} }.select{|w| !w[:word].match(/^\+/) && w[:cnt] > user_ids.length }[0, 75]
     
