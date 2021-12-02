@@ -646,7 +646,9 @@ describe Api::OrganizationsController, :type => :controller do
       get :stats, params: {:organization_id => o.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       LogSession.process_new({
         :events => [
@@ -664,7 +666,9 @@ describe Api::OrganizationsController, :type => :controller do
       get :stats, params: {:organization_id => o.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       o.add_user(user.user_name, false, false)
       expect(o.reload.approved_users.length).to eq(1)
@@ -694,7 +698,9 @@ describe Api::OrganizationsController, :type => :controller do
       get :stats, params: {:organization_id => o.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0, 'total_users' => 0}})
+      expect(json).to eq({'weeks' => [], 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       get :stats, params: {:organization_id => o.global_id}
       expect(response).to be_successful
@@ -705,6 +711,13 @@ describe Api::OrganizationsController, :type => :controller do
         'recent_session_count' => 0, 
         'recent_session_user_count' => 0, 
         'recent_session_seconds' => 0.0,
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'recent_session_hours' => 0.0,
         'total_users' => 0
       })
@@ -720,6 +733,13 @@ describe Api::OrganizationsController, :type => :controller do
         'recent_session_count' => 0, 
         'recent_session_user_count' => 0,
         'recent_session_seconds' => 0.0,
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'recent_session_hours' => 0.0,
         'total_users' => 1
       })

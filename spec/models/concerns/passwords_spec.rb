@@ -244,6 +244,24 @@ describe Passwords, :type => :model do
       u.settings['valet_password_at'] = 30.hours.ago.to_i
       expect(u.valet_allowed?).to eq(false)
     end
+
+    it "should allow valet with a used password if valet_prevent_disable is set" do
+      u = User.new
+      expect(u.valet_allowed?).to eq(false)
+      u.settings = {}
+      expect(u.valet_allowed?).to eq(false)
+      u.settings['valet_password'] = {}
+      expect(u.valet_allowed?).to eq(true)
+      u.settings['valet_password_disabled'] = 5.seconds.ago.to_i
+      expect(u.valet_allowed?).to eq(false)
+      u.settings['valet_password_disabled'] = nil
+      u.settings['valet_password_at'] = 10.minutes.ago.to_i
+      expect(u.valet_allowed?).to eq(true)
+      u.settings['valet_password_at'] = 30.hours.ago.to_i
+      expect(u.valet_allowed?).to eq(false)
+      u.settings['valet_prevent_disable'] = true
+      expect(u.valet_allowed?).to eq(true)
+    end
   end
 
   describe "set_valet_password" do
@@ -332,9 +350,18 @@ describe Passwords, :type => :model do
     
     it "should keep the oldest usage stamp" do
       u = User.create
-      u.settings['valet_password_at'] = 123
+      ts = 10.minutes.ago.to_i
+      u.settings['valet_password_at'] = ts
       u.valet_password_used!
-      expect(u.settings['valet_password_at']).to eq(123)
+      expect(u.settings['valet_password_at']).to eq(ts)
+    end
+
+    it "should update the usage stamp after a long enough delay if prevent_disable set" do
+      u = User.create
+      u.settings['valet_password_at'] = 123
+      u.settings['valet_prevent_disable'] = true
+      u.valet_password_used!
+      expect(u.settings['valet_password_at']).to be > 123
     end
 
     it "should notify user if not a repeat use" do
@@ -370,6 +397,20 @@ describe Passwords, :type => :model do
       u.password_used!
       expect(u.settings['valet_password_at']).to eq(nil)
       expect(u.settings['valet_password_disabled']).to be > Time.now.to_i - 5
+    end
+
+    it "should not disable a used valet password if set not to" do
+      u = User.create
+      u.settings['valet_password_at'] = {}
+      expect(u.settings['valet_password_at']).to eq({})
+      expect(u.settings['valet_password_disabled']).to eq(nil)
+      u.settings['valet_password'] = {}
+      expect(u.settings['valet_password_at']).to eq({})
+      expect(u.settings['valet_password_disabled']).to eq(nil)
+      u.settings['valet_prevent_disable'] = true
+      u.password_used!
+      expect(u.settings['valet_password_at']).to eq({})
+      expect(u.settings['valet_password_disabled']).to eq(nil)
     end
   end
 

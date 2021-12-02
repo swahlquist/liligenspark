@@ -1433,7 +1433,10 @@ describe Organization, :type => :model do
       o.add_user(user.user_name, true, false)
       expect(o.reload.approved_users.length).to eq(0)
       json = Organization.usage_stats([])
-      expect(json).to eq({'weeks' => [], 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({
+        'weeks' => [], 
+        'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'modeled_word_counts' => [], 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       LogSession.process_new({
         :events => [
@@ -1472,6 +1475,13 @@ describe Organization, :type => :model do
       expect(json['user_counts']).to eq({
         "goal_set"=>0, 
         "goal_recently_logged"=>0, 
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 461.0,
+        "total_sessions" => 3,
+        "total_user_weeks" => 3,
+        "total_words" => 0,
+        "word_counts" => [],
         "recent_session_count"=>2, 
         "recent_session_user_count"=>1, 
         'recent_session_seconds' => 261.0,

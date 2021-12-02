@@ -23,7 +23,7 @@ describe JsonApi::Json do
       args = {:wrapper => true}
       json = {'b' => 2}
       expect(JsonApi::Board).to receive(:build_json).with(obj, args).and_return(json)
-      expect(JsonApi::Board).to receive(:extra_includes).with(obj, {'board' => json}, {:permissions => nil}).and_return({'board' => json})
+      expect(JsonApi::Board).to receive(:extra_includes).with(obj, {'board' => json}, {}).and_return({'board' => json})
       expect(JsonApi::Board.as_json(obj, args)).to eq({'board' => json})
     end
     it "should call meta if available and wrapper is specified" do

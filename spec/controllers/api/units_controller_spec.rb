@@ -193,7 +193,9 @@ describe Api::UnitsController, :type => :controller do
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       LogSession.process_new({
         :events => [
@@ -211,7 +213,9 @@ describe Api::UnitsController, :type => :controller do
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       expect(u.add_communicator(user.user_name)).to eq(true)
       expect(u.reload.all_user_ids.length).to eq(2)
@@ -243,7 +247,9 @@ describe Api::UnitsController, :type => :controller do
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
@@ -255,6 +261,13 @@ describe Api::UnitsController, :type => :controller do
         'recent_session_user_count' => 0, 
         'recent_session_seconds' => 0.0,
         'recent_session_hours' => 0.0,
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'total_users' => 0
       })
       
@@ -270,6 +283,13 @@ describe Api::UnitsController, :type => :controller do
         'recent_session_user_count' => 0,
         'recent_session_seconds' => 0.0,
         'recent_session_hours' => 0.0, 
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'total_users' => 1
       })
     end
@@ -294,7 +314,9 @@ describe Api::UnitsController, :type => :controller do
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
       
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
@@ -306,6 +328,13 @@ describe Api::UnitsController, :type => :controller do
         'recent_session_count' => 0, 
         'recent_session_user_count' => 0, 
         'recent_session_seconds' => 0.0,
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'recent_session_hours' => 0.0,
         'total_users' => 0
       })
@@ -327,6 +356,13 @@ describe Api::UnitsController, :type => :controller do
         'goal_recently_logged' => 1,
         'recent_session_count' => 0, 
         'recent_session_user_count' => 0,
+        "modeled_word_counts" => [],
+        "total_models" => 0,
+        "total_seconds" => 0,
+        "total_sessions" => 0,
+        "total_user_weeks" => 0,
+        "total_words" => 0,
+        "word_counts" => [],
         'recent_session_seconds' => 0.0,
         'recent_session_hours' => 0.0, 
         'total_users' => 1
@@ -346,7 +382,9 @@ describe Api::UnitsController, :type => :controller do
       get :stats, params: {:unit_id => u.global_id}
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0}})
+      expect(json).to eq({'weeks' => [], 'supervisor_weeks' => {}, 'user_weeks' => {}, 
+        'user_counts' => {"goal_recently_logged"=>0, "goal_set"=>0, "modeled_word_counts"=>[], "recent_session_count"=>0, "recent_session_hours"=>0.0, "recent_session_seconds"=>0.0, "recent_session_user_count"=>0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+      })
 
 
       LogSession.process_daily_use({
@@ -422,7 +460,7 @@ describe Api::UnitsController, :type => :controller do
         {'word' => 'fat', 'cnt' => 1},
         {'word' => 'hat', 'cnt' => 1},
         {'word' => 'rat', 'cnt' => 1},
-        {'word' => 'ssat', 'cnt' => 1},
+        {'word' => 'sat', 'cnt' => 1},
       ])
     end
 
