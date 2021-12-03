@@ -1,5 +1,4 @@
 module JsonApi::Json
-  # TODO: wrapper for common stuff like pagination, permissions?
   def as_json(obj, args={})
     if obj.respond_to?(:cached_json_response) && !args[:nocache]
       res = obj.cached_json_response

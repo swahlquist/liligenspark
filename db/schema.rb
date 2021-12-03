@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20211015180928) do
+ActiveRecord::Schema.define(version: 20211203210410) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -147,7 +147,7 @@ ActiveRecord::Schema.define(version: 20211015180928) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -271,6 +271,7 @@ ActiveRecord::Schema.define(version: 20211015180928) do
     t.index ["geo_cluster_id", "user_id"], name: "index_log_sessions_on_geo_cluster_id_and_user_id", using: :btree
     t.index ["ip_cluster_id", "user_id"], name: "index_log_sessions_on_ip_cluster_id_and_user_id", using: :btree
     t.index ["needs_remote_push"], name: "index_log_sessions_on_needs_remote_push", using: :btree
+    t.index ["started_at", "log_type"], name: "index_log_sessions_on_started_at_and_log_type", using: :btree
     t.index ["user_id", "goal_id"], name: "index_log_sessions_on_user_id_and_goal_id", using: :btree
     t.index ["user_id", "highlighted"], name: "index_log_sessions_on_user_id_and_highlighted", using: :btree
     t.index ["user_id", "started_at"], name: "index_log_sessions_on_user_id_and_started_at", using: :btree

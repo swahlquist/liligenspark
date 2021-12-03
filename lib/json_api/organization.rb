@@ -15,7 +15,6 @@ module JsonApi::Organization
     if args.key?(:permissions)
       json['permissions'] = org.permissions_for(args[:permissions])
     end
-
     
     if json['permissions'] && json['permissions']['edit']
       json['custom_domain'] = !!org.custom_domain
@@ -78,12 +77,6 @@ module JsonApi::Organization
           'name' => org.settings['name']
         }
       end
-      recent_sessions = LogSession.where(['started_at > ?', 2.weeks.ago])
-      if !org.admin?
-        recent_sessions = recent_sessions.where(:user_id => User.local_ids(user_ids))
-      end
-      json['recent_session_count'] = recent_sessions.count
-      json['recent_session_user_count'] = recent_sessions.distinct.count('user_id')
     end
     if json['permissions'] && json['permissions']['edit']
       json['org_subscriptions'] = org.subscriptions.map{|u| JsonApi::User.as_json(u, limited_identity: true, subscription: true) }
