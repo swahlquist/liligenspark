@@ -4,7 +4,7 @@ module JsonApi::Organization
   TYPE_KEY = 'organization'
   DEFAULT_PAGE = 15
   MAX_PAGE = 25
-  
+
   def self.build_json(org, args={})
     json = {}
     json['id'] = org.global_id

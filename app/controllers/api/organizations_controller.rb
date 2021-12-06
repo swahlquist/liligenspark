@@ -117,7 +117,7 @@ class Api::OrganizationsController < ApplicationController
 
     recent_sessions = LogSession.where(log_type: 'session').where(['started_at > ?', 2.weeks.ago])
     if !org.admin?
-      recent_sessions = recent_sessions.where(:user_id => User.local_ids(user_ids))
+      recent_sessions = recent_sessions.where(:user_id => User.local_ids(approved_users.map(&:global_id)))
     end
     res['user_counts']['recent_session_count'] = recent_sessions.count
     res['user_counts']['recent_session_user_count'] = recent_sessions.distinct.count('user_id')
