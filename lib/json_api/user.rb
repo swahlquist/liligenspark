@@ -161,9 +161,9 @@ module JsonApi::User
           if json['permissions']['supervise']
             soonest = nil
             (extra.settings['recent_profiles'] || {}).each do |profile_id, list|
-              if !soonest || list[-1]['added'] > soonest['added']
-                soonest = {'profile_id' => profile_id}.merge(list[-1])
-              end
+              # if !soonest || (list.length > 0 && list[-1]['added'] > soonest['added'])
+              #   soonest = {'profile_id' => profile_id}.merge(list[-1] || {})
+              # end
             end
             json['last_profile'] = soonest
           end
