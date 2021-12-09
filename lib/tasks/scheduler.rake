@@ -37,6 +37,7 @@ task :clean_old_deleted_boards => :environment do
   puts "Cleaning old deleted boards..."
   count = DeletedBoard.flush_old_records
   JobStash.flush_old_records
+  User.schedule_for(:slow, :flush_old_versions)
   puts "done, #{count} deleted."
 end
 
