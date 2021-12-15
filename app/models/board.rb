@@ -920,7 +920,7 @@ class Board < ActiveRecord::Base
       if self.parent_board_id != parent_board.id
         self.parent_board = parent_board
         self.settings['source_board_id'] = parent_board.source_board.global_id
-        BoardContent.apply_clone(parent_board, self) if parent_board.board_content_id
+        BoardContent.apply_clone(parent_board, self)
       end
     end
     self.settings['last_updated'] = Time.now.iso8601
