@@ -10,9 +10,10 @@ export default modal.ModalController.extend({
       this.set('pin', '');
       modal.close({correct_pin: true});
       if(this.get('model.action') == 'none') { return; }
-      app_state.toggle_speak_mode('off');
       if(this.get('model.action') == 'edit') {
         app_state.toggle_edit_mode();
+      } else {
+        app_state.toggle_speak_mode('off');
       }
     } else if(pin && pin.length >= 4) {
       // error message

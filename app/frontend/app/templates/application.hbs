@@ -724,10 +724,19 @@
               <li class="divider"></li>
             {{else}}
               <li role="presentation" class='big' id='exit_speak_mode'>
-                <a href="#" {{action "toggleSpeakMode"}}>
-                  {{t "Exit Speak Mode" key="exit_speak_mode"}}
-                  <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
-                </a>
+                {{#if can_edit_from_speak_mode}}
+                  <a href="#" {{action "toggleSpeakMode"}} style='display: inline-block; width: calc(100% - 40px); overflow: hidden; padding-bottom: 10px; margin-bottom: -10px;'>
+                    {{t "Exit Speak Mode" key="exit_speak_mode"}}
+                    <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
+                  </a><a href='#' {{action 'toggleEditMode'}} style='display: inline-block; width: 40px; overflow: hidden; height: 55px; margin-bottom: -10px; padding-left: 0; padding-right: 0; text-align: center;'>
+                    <span class='glyphicon glyphicon-pencil'></span>
+                  </a>
+                {{else}}
+                  <a href="#" {{action "toggleSpeakMode"}} style='display: inline-block; width: 100%; overflow: hidden; padding-bottom: 10px; margin-bottom: -10px;'>
+                    {{t "Exit Speak Mode" key="exit_speak_mode"}}
+                    <div style='color: #888; font-size: 14px; margin: -5px 0;'>{{t "Settings, Menu, etc." key='settings_etc'}}</div>
+                  </a>
+                {{/if}}
               </li>
               {{#if app_state.embedded}}
                 <li class="divider"></li>

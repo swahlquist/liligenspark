@@ -245,6 +245,16 @@ export default Controller.extend({
       return app_state.get('domain_settings.full_domain') || session.get('isAuthenticated');
     }
   ),
+  can_edit_from_speak_mode: computed('app_state.sessionUser', 'app_state.sessionUser.modeling_only', 'app_state.referenced_user.preferences.speak_mode_edit', 'board.model.permissions.edit', 'board.model.uncopyable', 'board.model.for_sale', function() {
+    if(app_state.get('sessionUser') && !app_state.get('sessionUser.modeling_only') && app_state.get('referenced_user.preferences.speak_mode_edit')) {
+      if(this.get('board.model.permissions.edit')) {
+        return true;
+      } else if(!this.get('board.model.for_sale') && !this.get('board.model.uncopyable')) {
+        return true;    
+      }
+    }
+    return false;
+  }),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);
@@ -616,9 +626,17 @@ export default Controller.extend({
       }, function() { });
     },
     toggleEditMode: function(decision) {
-      app_state.check_for_needing_purchase().then(function() {
-        app_state.toggle_edit_mode(decision);
-      }, function() { });
+      if(!app_state.get('edit_mode')) {
+        if(app_state.get('speak_mode') && app_state.get('currentUser.preferences.require_speak_mode_pin') && app_state.get('currentUser.preferences.speak_mode_pin')) {
+          modal.open('speak-mode-pin', {actual_pin: app_state.get('currentUser.preferences.speak_mode_pin'), action: 'edit', hide_hint: app_state.get('currentUser.preferences.hide_pin_hint')});
+        } else {
+          app_state.toggle_edit_mode(decision);
+        }
+      } else {
+        app_state.check_for_needing_purchase().then(function() {
+          app_state.toggle_edit_mode(decision);
+        }, function() { });
+      }
     },
     editBoardDetails: function() {
       if(!app_state.get('edit_mode')) { return; }

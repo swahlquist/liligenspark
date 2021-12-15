@@ -555,6 +555,17 @@
   {{/preference-box}}
   {{#preference-box title="Startup and Extras" glyph='glyphicon glyphicon-play-circle' title_key='startup_and_extras'}}
     <span style='display: none;'>{{t "Startup and Extras" key='startup_and_extras'}}</span>
+    <div class="form-group">
+      <label for="speak_mode_edit" class="col-sm-3 control-label">{{t "Edit Button in Speak Mode" key='edit_button_in_speak_mode'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.speak_mode_edit id="speak_mode_edit"}}
+            {{t "Show an edit icon in the menu in Speak Mode for editable boards" key='allow_speak_mode_edit'}}
+          </label>
+        </div>
+      </div>
+    </div>
     {{#if fullscreen_capable}}
       <div class="form-group">
         <label for="fullscreen" class="col-sm-3 control-label">{{t "Full Screen" key='full_screen'}}</label>
