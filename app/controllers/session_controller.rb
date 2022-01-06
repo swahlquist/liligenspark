@@ -559,7 +559,7 @@ class SessionController < ApplicationController
     store_user_data = (u.settings['preferences'] || {})['cookies'] != false
     d.settings['ip_address'] = store_user_data ? request.remote_ip : nil
     d.settings['user_agent'] = store_user_data ? request.headers['User-Agent'] : nil
-    d.settings['system'] ||= params['system'],
+    d.settings['system'] ||= params['system']
     d.settings['system_version'] ||= params['system_version']
     d.settings['mobile'] = params['mobile'] == 'true' if params['mobile'] != nil
     d.settings['browser'] = true if request.headers['X-INSTALLED-COUGHDROP'] == 'false'

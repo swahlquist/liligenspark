@@ -134,6 +134,17 @@ class BoardContent < ApplicationRecord
     changed = false
     board.settings ||= {}
     if !board.settings['buttons'].blank? && content.settings['buttons']
+      if !(board.settings['content_overrides'] || {})['buttons'].blank?
+        new_hash = {}
+        board.settings['content_overrides']['buttons'].each do |id, btn|
+          if (board.settings['buttons'] || []).detect{|b| b['id'].to_s == id.to_s }
+            new_hash[id] = btn
+          elsif (content.settings['buttons'] || []).detect{|b| b['id'].to_s == id.to_s }
+            new_hash[id] = btn
+          end
+        end
+        board.settings['content_overrides']['buttons'] = new_hash
+      end
       board.settings['buttons'].each do |btn|
         offload_btn = content.settings['buttons'].detect{|b| b['id'].to_s == btn['id'].to_s }
         if offload_btn
@@ -155,6 +166,8 @@ class BoardContent < ApplicationRecord
                 board.settings['content_overrides']['buttons'][btn['id'].to_s][key] = val
               end
               changed = true
+            elsif ((board.settings['content_overrides'] || {})['buttons'] || {})[btn['id'].to_s] != nil
+              board.settings['content_overrides']['buttons'][btn['id'].to_s].delete(key)
             end
           end
           offload_btn.each do |key, val|
@@ -194,15 +207,20 @@ class BoardContent < ApplicationRecord
             board.settings['content_overrides'][attr] ||= {}
             board.settings['content_overrides'][attr][key] = val
             changed = true
+          elsif (board.settings['content_overrides'] || {})[attr] != nil
+            board.settings['content_overrides'][attr].delete(key)
           end
         end
         content.settings[attr].each do |key, val|
-          if val && !board.settings[attr][key]
+          if val != nil && board.settings[attr][key] == nil
             board.settings['content_overrides'] ||= {}
             board.settings['content_overrides'][attr] ||= {}
             board.settings['content_overrides'][attr][key] = nil
             changed = true
           end
+        end
+        if board.settings['content_overrides'][attr].blank?
+          board.settings['content_overrides'].delete(attr)
         end
         board.settings.delete(attr)
       end
