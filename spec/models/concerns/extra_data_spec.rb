@@ -297,6 +297,72 @@ describe ExtraData, :type => :model do
       expect(RemoteAction.count).to eq(1)
       expect(paths).to eq([])    
     end
+
+    it "should not remove local data if upload failed for a log session" do
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u)
+      s.data['events'] = [
+        {'id' => 1, 'secret' => true},
+        {'id' => 2, 'passowrd' => '12345'},
+        {'id' => 3},
+        {'id' => 4},
+      ]
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
+      paths = []
+      expect(Uploader).to receive(:remote_upload) do |path, local, type|
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
+          paths << 'private'
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
+          paths << 'public'
+        else
+          expect('path').to eq('wrong')
+        end
+        expect(type).to eq('text/json')
+        expect(local).to_not eq(nil)
+        expect(File.exists?(local)).to eq(true)
+      end.exactly(1).times.and_raise("throttled upload")
+      s.detach_extra_data('force')
+      expect(paths).to eq(['private']) 
+      expect(s.data['events']).to_not eq(nil)
+      expect(s.data['extra_data_nonce']).to_not eq(nil)
+    end
+
+    it "should schedule re-upload if throttled for log session record" do
+      u = User.create
+      d = Device.create(user: u)
+      s = LogSession.create(user: u, device: d, author: u)
+      s.data['events'] = [
+        {'id' => 1, 'secret' => true},
+        {'id' => 2, 'passowrd' => '12345'},
+        {'id' => 3},
+        {'id' => 4},
+      ]
+      expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
+      paths = []
+      expect(Uploader).to receive(:remote_upload) do |path, local, type|
+        if path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[0]
+          paths << 'private'
+        elsif path == LogSession.extra_data_remote_paths(s.data['extra_data_nonce'], s)[1]
+          paths << 'public'
+        else
+          expect('path').to eq('wrong')
+        end
+        expect(type).to eq('text/json')
+        expect(local).to_not eq(nil)
+        expect(File.exists?(local)).to eq(true)
+      end.exactly(1).times.and_raise("throttled upload")
+      expect(RemoteAction.count).to eq(0)
+      s.detach_extra_data('force')
+      expect(paths).to eq(['private']) 
+      expect(s.data['events']).to_not eq(nil)
+      expect(s.data['extra_data_nonce']).to_not eq(nil)
+      expect(RemoteAction.count).to eq(1)
+      ra = RemoteAction.last
+      expect(ra.path).to eq("#{s.global_id}")
+      expect(ra.action).to eq("upload_log_session")
+      expect(ra.act_at).to be > 4.minutes.from_now
+    end    
   end
 
   describe "extra_data_attribute" do

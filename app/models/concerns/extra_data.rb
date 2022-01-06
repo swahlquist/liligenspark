@@ -48,9 +48,14 @@ module ExtraData
           if res != :nothing && self.is_a?(BoardDownstreamButtonSet)
             self.data['extra_data_revision'] = self.data['full_set_revision']
           end
+          if self.is_a?(LogSession) && (res == :nothing || res == :throttled)
+            # log sessions should save to the db if upload fails, as there's
+            # no way to regenerate the un-uploaded data
+          else
+            self.data.delete(extra_data_attribute)
+          end
           # persist the nonce and the url, remove the big-data attribute
           self.data['extra_data_version'] = extra_data_version
-          self.data.delete(extra_data_attribute)
           @skip_extra_data_update = true
           self.save
           @skip_extra_data_update = false
@@ -69,7 +74,7 @@ module ExtraData
     begin
       res = Uploader.remote_upload(path, file.path, 'text/json', Digest::MD5.hexdigest(json))
     rescue => e
-      if e.message && e.message.match(/throttled/) && self.is_a?(BoardDownstreamButtonSet)
+      if e.message && e.message.match(/throttled/) && (self.is_a?(BoardDownstreamButtonSet) || self.is_a?(LogSession))
         res = {error: 'throttled'}
       else
         raise e
@@ -79,6 +84,10 @@ module ExtraData
     if res && res[:error] == 'throttled' && self.is_a?(BoardDownstreamButtonSet)
       RemoteAction.where(path: self.board.global_id, action: 'upload_button_set').delete_all
       RemoteAction.create(path: self.board.global_id, act_at: 5.minutes.from_now, action: 'upload_button_set')
+      return :throttled
+    elsif res && res[:error] == 'throttled' && self.is_a?(LogSession)
+      RemoteAction.where(path: self.global_id, action: 'upload_log_session').delete_all
+      RemoteAction.create(path: self.global_id, act_at: 5.minutes.from_now, action: 'upload_log_session')
       return :throttled
     elsif res && res[:path] && (res[:path] != path || res[:uploaded])
       Uploader.remote_remove_later(path) if res[:path] != path

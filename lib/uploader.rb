@@ -99,7 +99,7 @@ module Uploader
     config = remote_upload_config
     service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)    
     bucket = service.buckets.find(config[:bucket_name])
-    if path.match(/^\//)
+    if path && path.match(/^\//)
       path = path[1..-1]
     end
     object = bucket.objects.find(path) rescue nil
@@ -127,6 +127,11 @@ module Uploader
         elsif ra.action == 'upload_button_set'
           board_id, user_id = ra.path.split(/::/, 2)
           BoardDownstreamButtonSet.schedule_for(:slow, :update_for, board_id, true)
+        elsif ra.action == 'upload_log_session'
+          session = LogSession.find_by_global_id(ra.path)
+          if session
+            session.schedule_for(:slow, :detach_extra_data, true)
+          end
         elsif ra.action == 'upload_extra_data'
           board_id, user_id = ra.path.split(/::/, 2)
           BoardDownstreamButtonSet.schedule_for(:slow, :generate_for, board_id, user_id)
