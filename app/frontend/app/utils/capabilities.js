@@ -145,6 +145,7 @@ var capabilities;
     } else if(navigator.userAgent.match(/android/i)) {
       capabilities.mobile = true;
       capabilities.system = "Android";
+      capabilities.system_version = (navigator.userAgent.match(/Android (\d+(?:\.\d+)*)/) || [])[1];
       if(capabilities.installed_app) {
         capabilities.browser = "App";
         if(window.device && window.device.platform && window.device.platform.match(/fireos/i)) {

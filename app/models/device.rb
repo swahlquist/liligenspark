@@ -391,6 +391,28 @@ class Device < ActiveRecord::Base
     [(self.settings['keys'][-1] || {})['value'], (self.settings['keys'][-1] || {})['refresh']]
   end
 
+  def self.with_expired_system_version(system_type, system_version)
+    bads = []
+    Device.where(['updated_at > ?', 6.months.ago]).find_in_batches(batch_size: 100) do |batch|
+      batch.each do |device|
+        if (device.settings['system'] || '').downcase == system_type.downcase && devices.settings['system_version']
+          system_points = system_version.split(/\./).map{|i| i.to_i }
+          device_points = device.settings['system_version'].split(/\./).map{|i| i.to_i }
+          too_low = false
+          if device_points[0] && system_points[0] && device_points[0] < system_points[0]
+            too_low = true
+          elsif device_points[0] == system_points[0]
+            if device_points[1] && system_points[1] && device_points[1] < system_points[1]
+              too_low = true
+            end
+          end
+          bads << device if too_low
+        end
+      end
+    end
+    bads
+  end
+
   def generate_from_refresh_token!(access_token, refresh_token)
     return [nil, nil] unless self.token_type == :integration
     # keep the old key around, but mark it as about to expire,

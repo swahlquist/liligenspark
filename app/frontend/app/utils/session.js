@@ -87,6 +87,8 @@ var session = EmberObject.extend({
           username: credentials.identification,
           password: password,
           device_id: capabilities.device_id(),
+          system_version: capabilities.system_version,
+          system: capabilities.system,
           long_token: credentials.long_token,
           mobile: (!!capabilities.mobile).toString()
         };
