@@ -35,6 +35,8 @@
           </button>
         {{else if app_state.reply_note}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-envelope'></span></div>
+        {{else if app_state.inflection_shift}}
+          <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-adjust'></span></div>
         {{else if app_state.insertion}}
           <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-console'></span></div>
         {{else if app_state.flipped}}
@@ -47,6 +49,8 @@
           </div>
         {{else if app_state.clearable_history}}
           <div class='label label-warning over' id='reply_icon' style='width: 60px; margin-right: -65px; border-radius: 10px;'><span class='glyphicon glyphicon-remove'></span> {{app_state.clearable_history}}</div>
+        {{else if app_state.shift}}
+          <div class='label label-info over' id='reply_icon'><span class='glyphicon glyphicon-font'></span></div>
         {{/if}}
       {{/unless}}
       <a href='#' tabindex="0" id="button_list" class={{button_list_class}} {{ action "vocalize" on="select"}} data-placement="bottom" data-trigger="manual">

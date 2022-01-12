@@ -2583,7 +2583,7 @@ var app_state = EmberObject.extend({
             // don't say it...
             click_sound();
             vibrate();
-          } else if(button.skip_vocalization) {
+          } else if(button.skip_vocalization || (specialty_button && specialty_button.only_action)) {
             // don't say it...
             click_sound();
             vibrate();

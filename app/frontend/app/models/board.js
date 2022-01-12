@@ -351,11 +351,11 @@ CoughDrop.Board = DS.Model.extend({
     });
     return res;
   },
-  contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize) {
+  contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize, inflection_shift) {
     var res = this.translated_buttons(label_locale, vocalization_locale);
     var _this = this;
+    var trans = Object.assign({}, this.get('translations') || {});
     if(label_locale) {
-      var trans = Object.assign({}, this.get('translations') || {});
       trans.board_name = trans.board_name || {};
       trans.board_name[this.get('locale')] = trans.board_name[this.get('locale')] || this.get('name');
       if(trans.board_name[label_locale]) {
@@ -413,8 +413,8 @@ CoughDrop.Board = DS.Model.extend({
             }
           }
         }
-        if(app_state.get('referenced_user.preferences.auto_inflections')) {
-          var inflection_types = editManager.inflection_for_types(history || [], label_locale);
+        if(app_state.get('referenced_user.preferences.auto_inflections') || inflection_shift) {
+          var inflection_types = editManager.inflection_for_types(history || [], label_locale, inflection_shift);
 
           res.forEach(function(button) {
             var rules = (label_locale && trans[button.id] && (trans[button.id][label_locale] || {}).rules) || 
@@ -423,7 +423,7 @@ CoughDrop.Board = DS.Model.extend({
             var already_replaced = false;
             if(rules.length > 0 && !already_replaced) {
               var rule = utterance.first_rules(rules, history, true)[0];
-              if(rule) {
+              if(rule && rule.label) {
                 if(rule.label.match(/^:/)) {
                   var ref_id = rule.label.slice(1);
                   // load button set, look for ref_id
@@ -449,14 +449,20 @@ CoughDrop.Board = DS.Model.extend({
                     }
                   }
                 } else {
-                  inflection_types["btn" + button.id] = {label: rule.label, image: false};
+                  var type = {
+                    label: rule.label,
+                  };
+                  if(rule.label.match(/^_/) || button.text_only) {
+                    type.label = rule.label.substring(1);
+                    type.image = false;
+                  }
+                  inflection_types["btn" + button.id] = type;
                 }
                 already_replaced = true;
               }
             }  
           });
-            
-          res = editManager.update_inflections(res, inflection_types);
+          res = editManager.update_inflections(res, inflection_types, trans, label_locale);
         }
       }
       if(capitalize) {
@@ -1035,7 +1041,7 @@ CoughDrop.Board = DS.Model.extend({
     var history = stashes.get('working_vocalization') || [];
     // TODO: update inflections for linked buttons as well
     // for load_board settings add a new option to support inflections
-    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false);
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false, app_state.get('inflection_shift'));
     var _this = this;
     var trans = this.get('translations') || {};
     var loc = app_state.get('label_locale') == app_state.get('vocalization_locale') ? app_state.get('label_locale') : null;
@@ -1043,7 +1049,8 @@ CoughDrop.Board = DS.Model.extend({
       var cap = app_state.get('shift');
       if((button.vocalization || '').match(/^:/)) {
       } else if(button.tweaked) {
-        var str = (history.length == 0 ? button.original_label : button.label);
+        var revert = (history.length == 0 && !app_state.get('inflection_shift'));
+        var str = revert ? button.original_label : button.label;
         if(cap) {
           str = utterance.capitalize(str);
         }
@@ -1074,7 +1081,7 @@ CoughDrop.Board = DS.Model.extend({
     var inflection_buttons = {};
     var skip_labels = {};
     var history = stashes.get('working_vocalization') || [];
-    var known_buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false) || [];
+    var known_buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), history, false, null) || [];
     var inflections = [];
     CoughDrop.special_actions.forEach(function(act) {
       if(act.types) {
@@ -1221,7 +1228,7 @@ CoughDrop.Board = DS.Model.extend({
   render_fast_html: function(size) {
     CoughDrop.log.track('redrawing');
 
-    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
+    var buttons = this.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false, app_state.get('inflection_shift'));
     var grid = this.get('grid');
     var ob = [];
     for(var idx = 0; idx < grid.rows; idx++) {

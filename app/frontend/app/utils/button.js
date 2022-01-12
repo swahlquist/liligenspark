@@ -1720,6 +1720,24 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':inflection',
+      match: /^:inflection\((\w+)\)/,
+      description: i18n.t('set_inflection', "Set button inflections to match a certain rule"),
+      inline_description: function(match) {
+        var rule = match && match[1];
+        return "update to inflection rule: " + rule;
+      },
+      trigger: function(match) {
+        var rule = match && match[1];
+        if(app_state.get('inflection_shift') == rule) {
+          app_state.set('inflection_shift', false);
+        } else {
+          app_state.set('inflection_shift', rule);
+        }
+        app_state.refresh_suggestions();
+      }
+    },
+    {
       action: ':volume',
       match: /^:volume\((\d+|up|down)\)/,
       description: i18n.t('set_volume', "Set the device volume (up, down, or ##)"),

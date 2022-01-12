@@ -68,6 +68,7 @@ export default Controller.extend({
     'app_state.button_list.[]',
     'app_state.currentUser',
     'app_state.shift',
+    'app_state.inflection_shift',
     function() {
       if(!this.get('model.word_suggestions')) { return; }
       var _this = this;

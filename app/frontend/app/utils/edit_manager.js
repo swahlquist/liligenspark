@@ -153,9 +153,11 @@ var editManager = EmberObject.extend({
     }
     return lines.join("\n");
   },
-  inflection_for_types: function(history, locale) {
-    if(!locale || !locale.match(/^en/) || history.length == 0) {
-      return {};
+  inflection_for_types: function(history, locale, inflection_shift) {
+    if(!inflection_shift) {
+      if(!locale || !locale.match(/^en/) || history.length == 0) {
+        return {};
+      }  
     }
     var inflections = {};
     // Greedy algorithm stops at the first match
@@ -268,7 +270,7 @@ var editManager = EmberObject.extend({
       {id: 'i_am_his', type: 'pronoun', lookback: [{type: 'pronoun'}, {type: 'adverb', optional: true}, {type: 'verb', words: ["is", "am", "are", "be"]}], inflection: 'possessive_adjective', location: 'w'},
     ];
     var matches = function(rule, history) {
-      if(history.length == 0) { return false; }
+      if(history.length == 0 && !inflection_shift) { return false; }
       var history_idx = history.length - 1;
       var valid = true;
       for(var idx = rule.lookback.length - 1; idx >= 0 && valid; idx--) {
@@ -314,7 +316,9 @@ var editManager = EmberObject.extend({
       }
       return valid;
     };
-    if(history.length > 0) {
+    if(inflection_shift) {
+      inflections["*"] = {type: 'override', location: inflection_shift};
+    } else if(history.length > 0) {
       // TO BE verb overrides
       var overrides = [];
       overrides.push({lookback: [{words: ["i"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
@@ -404,22 +408,41 @@ var editManager = EmberObject.extend({
 
     return inflections;
   },
-  update_inflections: function(buttons, inflections_for_type) {
+  update_inflections: function(buttons, inflections_for_type, translations_hash, locale) {
     var arr = [];
     for(var key in inflections_for_type) {
       var ref = inflections_for_type[key];
       ref.key = key;
       arr.push(ref);
     }
+    arr = arr.reverse().sort(function(a, b) { 
+      if(a.key == '*') {
+        return -1;
+      } else if(b.key == '*') {
+        return 1;
+      } else if(a.key.match(/^btn/)) {
+        return -1;
+      } else if(b.key.match(/^btn/)) {
+        return 1;
+      } else if(a.type == 'override') {
+        return -1;
+      } else if(b.type == 'override') {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
     var res = [];
     buttons.forEach(function(button) {
-      var updated_button = Object.assign({}, button);
+      var updated_button = null;
       // TODO: level should be applied already, but make sure
       var unlinked = !button.load_board || button.link_disabled;
       // For now, skip if there are manual inflections
       if(!button.inflections && !button.vocalization && (unlinked || button.inflect)) {
         arr.forEach(function(infl) {
+          if(updated_button) { return; }
           if(infl.key == "btn" + button.id) {
+            updated_button = Object.assign({}, button);
             updated_button.original_label = button.original_label || button.label;
             updated_button.label = infl.label;
             if(infl.board_id) {
@@ -428,15 +451,44 @@ var editManager = EmberObject.extend({
             if(infl.image && updated_button.original_label == updated_button.label) {
               updated_button.image = infl.image;
               updated_button.image_id = infl.image_id;
-            } else {
+            } else if(infl.image === false) {
               updated_button.text_only = true;
+            } else {
+              // Otherwise just use whatever was there before, image-wise
             }
             updated_button.tweaked = true;
+          } else if(infl.key == "*" && infl.location) {
+            var new_label = button.inflection_defaults && button.inflection_defaults[infl.location];
+            if(!new_label) {
+              var grid = editManager.grid_for(button) || [];
+              new_label = (grid.find(function(i) { return i.location == infl.location; }) || {}).label;
+            }
+            var rules = (locale && translations_hash[button.id] && (translations_hash[button.id][locale] || {}).rules) || 
+                        (locale && translations_hash[button.id] && (translations_hash[button.id][locale.split(/-|_/)[0]] || {}).rules) || 
+                        button.rules || [];
+            (rules || []).forEach(function(list) {
+              if(list[0] == ":" + infl.location) {
+                new_label = list[list.length - 1];
+              }
+            });
+            if(new_label) {
+              updated_button = Object.assign({}, button);
+              if(new_label.match(/^_/)) {
+                new_label = new_label.substring(1);
+                updated_button.text_only = true;
+              }
+              updated_button.background_color = '#eee';
+              updated_button.original_label = button.original_label || button.label;
+              updated_button.label = new_label;
+              updated_button.tweaked = true;
+            }
           } else if(infl.key == button.label && infl.type == 'override') {
+            updated_button = Object.assign({}, button);
             updated_button.original_label = button.original_label || button.label;
             updated_button.label = infl.label;
             updated_button.tweaked = true;
           } else if(button.part_of_speech == infl.key && infl.type != 'override') {
+            updated_button = Object.assign({}, button);
             var new_label = button.inflection_defaults && button.inflection_defaults[infl.location];
             if(!new_label) {
               var grid = editManager.grid_for(button) || [];
@@ -450,7 +502,7 @@ var editManager = EmberObject.extend({
           }
         });
       }
-      res.push(updated_button);
+      res.push(updated_button || Object.assign({}, button));
     });
     return res;
   },
@@ -1063,7 +1115,7 @@ var editManager = EmberObject.extend({
       }
     }
     var board = this.controller.get('model');
-    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false, app_state.get('inflection_shift'));
     if(res) {
       var trans_button = buttons.find(function(b) { return b.id == id; });
       // If contextualized button exists, we should
@@ -1403,7 +1455,7 @@ var editManager = EmberObject.extend({
     var board = controller.get('model');
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
     board.set('display_level', board_level);
-    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false);
+    var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false, app_state.get('inflection_shift'));
     var grid = board.get('grid');
     if(!grid) { return; }
     var allButtonsReady = true;

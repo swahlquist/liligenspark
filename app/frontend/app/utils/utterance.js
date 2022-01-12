@@ -464,12 +464,14 @@ var utterance = EmberObject.extend({
       if(mod && mod.length > 0) { vocs.push(mod); }
     });
     var specialty = null;
+    var has_action = false, has_non_action = false;
     vocs.forEach(function(voc) {
       var action = CoughDrop.find_special_action(voc);
       if(action && !action.completion && !action.modifier && !action.inline) {
         if(action.has_sound) {
           button.has_sound = true;
         }
+        has_action = true;
         specialty = button;
         var any_special = true;
       } else if((voc.match(/^\+/) || voc.match(/^:/)) && voc != ':native-keyboard') {
@@ -479,8 +481,10 @@ var utterance = EmberObject.extend({
         } else if(action && action.modifier) {
           button.default_speak = true;
         }
+        has_non_action = true;
         specialty = button;
       } else {
+        has_non_action = true;
         if(button.default_speak) {
           button.default_speak = button.default_speak + " " + voc;
         } else {
@@ -488,6 +492,9 @@ var utterance = EmberObject.extend({
         }
       }
     });
+    if(specialty && has_action && !has_non_action) {
+      specialty.only_action = true;
+    }
     return specialty;
   },
   add_button: function(button, original_button) {
@@ -586,6 +593,7 @@ var utterance = EmberObject.extend({
       }
       return do_capitalize;
     }
+    app_state.set('inflection_shift', null);
     if(app_state.get('insertion') && isFinite(idx)) {
       // insertion.index is for the visual list, which has 
       // different items than the raw list
@@ -767,6 +775,8 @@ var utterance = EmberObject.extend({
   },
   clear: function(opts) {
     opts = opts || {}
+    app_state.set('shift', null);
+    app_state.set('inflection_shift', null);
     if(app_state.get('reply_note') && this.get('rawButtonList.length') == 0) {
       app_state.set('reply_note', null);
     }
@@ -791,12 +801,17 @@ var utterance = EmberObject.extend({
     if(!opts.auto_cleared) {
       speecher.stop('all');
     }
-    app_state.set('shift', null);
     app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },
   backspace: function(opts) {
     opts = opts || {};
+    app_state.set('shift', null);
+    var skip_remove = false;
+    if(app_state.get('inflection_shift')) {
+      skip_remove = true;;
+    }
+    app_state.set('inflection_shift', null);
     var list = this.get('rawButtonList');
     // if buttons are about to be cleared, un-clear them
     if(app_state.get('clearable_history') > 0) {
@@ -805,27 +820,31 @@ var utterance = EmberObject.extend({
     // if the list is vocalized, backspace should take it back into building-mode
     else if(!this.get('list_vocalized') || !this.get('clear_on_vocalize')) {
       var idx = app_state.get('insertion.index');
-      if(app_state.get('insertion') && isFinite(idx)) {
-        // insertion.index is for the visual list, which has 
-        // different items than the raw list
-        var button = app_state.get('button_list')[idx];
-        var raw_index = button && button.raw_index;
-        var move_index = true;
-        if(button) {
-          if(button.modifications) {
-            raw_index = button.modifications[button.modifications.length - 1].raw_index || (raw_index + button.modifications.length);
-            move_index = false;
-          }
-          list.removeAt(raw_index);
-        }
-        if(move_index) {
-          app_state.set('insertion.index', Math.max(-1, idx - 1));
-        }
+      if(skip_remove) {
+        this.set('rawButtonList', [].concat(this.get('rawButtonList') || []));
       } else {
-        var popped = list.popObject();
-        if(popped && popped.pre_substitution) {
-          popped.pre_substitution[popped.pre_substitution.length - 1].auto_substitute = false
-          list.pushObjects(popped.pre_substitution);
+        if(app_state.get('insertion') && isFinite(idx)) {
+          // insertion.index is for the visual list, which has 
+          // different items than the raw list
+          var button = app_state.get('button_list')[idx];
+          var raw_index = button && button.raw_index;
+          var move_index = true;
+          if(button) {
+            if(button.modifications) {
+              raw_index = button.modifications[button.modifications.length - 1].raw_index || (raw_index + button.modifications.length);
+              move_index = false;
+            }
+            list.removeAt(raw_index);
+          }
+          if(move_index) {
+            app_state.set('insertion.index', Math.max(-1, idx - 1));
+          }
+        } else {
+          var popped = list.popObject();
+          if(popped && popped.pre_substitution) {
+            popped.pre_substitution[popped.pre_substitution.length - 1].auto_substitute = false
+            list.pushObjects(popped.pre_substitution);
+          }
         }
       }
     } else {
@@ -835,7 +854,6 @@ var utterance = EmberObject.extend({
       action: 'backspace',
       button_triggered: opts.button_triggered
     });
-    app_state.set('shift', null);
     app_state.refresh_suggestions();
     this.set('list_vocalized', false);
   },

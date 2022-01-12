@@ -219,7 +219,7 @@ class BoardContent < ApplicationRecord
             changed = true
           end
         end
-        if board.settings['content_overrides'][attr].blank?
+        if board.settings['content_overrides'] && board.settings['content_overrides'][attr].blank?
           board.settings['content_overrides'].delete(attr)
         end
         board.settings.delete(attr)
