@@ -1729,11 +1729,13 @@ Button.load_actions = function() {
       },
       trigger: function(match) {
         var rule = match && match[1];
+
         if(app_state.get('inflection_shift') == rule) {
           app_state.set('inflection_shift', false);
         } else {
           app_state.set('inflection_shift', rule);
         }
+        app_state.set('suggestion_id', null);
         app_state.refresh_suggestions();
       }
     },

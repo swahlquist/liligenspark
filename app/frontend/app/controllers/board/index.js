@@ -214,10 +214,12 @@ export default Controller.extend({
     'model.current_revision',
     'model.fast_html.inflection_prefix',
     'app_state.inflection_prefix',
+    'model.fast_html.inflection_shift',
+    'app_state.inflection_shift',
     'model.fast_html.label_locale',
     'app_state.label_locale',
     function() {
-      var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') && this.get('model.fast_html.height') == this.get('height') && this.get('model.current_revision') == this.get('model.fast_html.revision') && this.get('model.fast_html.label_locale') == app_state.get('label_locale') && this.get('model.fast_html.display_level') == this.get('model.display_level') && app_state.get('inflection_prefix') == this.get('model.fast_html.inflection_prefix') && this.get('model.focus_id') == this.get('model.fast_html.focus_id'));
+      var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') && this.get('model.fast_html.height') == this.get('height') && this.get('model.current_revision') == this.get('model.fast_html.revision') && this.get('model.fast_html.label_locale') == app_state.get('label_locale') && this.get('model.fast_html.display_level') == this.get('model.display_level') && app_state.get('inflection_prefix') == this.get('model.fast_html.inflection_prefix') && app_state.get('inflection_shift') == this.get('model.fast_html.inflection_shift') && this.get('model.focus_id') == this.get('model.fast_html.focus_id'));
       return res;
     }
   ),
@@ -236,6 +238,8 @@ export default Controller.extend({
     'model.current_revision',
     'model.fast_html.inflection_prefix',
     'app_state.inflection_prefix',
+    'model.fast_html.inflection_shift',
+    'app_state.inflection_shift',
     'model.fast_html.label_locale',
     'app_state.label_locale',
     function() {
@@ -295,6 +299,7 @@ export default Controller.extend({
     'text_position',
     'stashes.board_level',
     'app_state.inflection_prefix',
+    'app_state.inflection_shift',
     'app_state.flipped',
     function() {
       var inner_width = window.innerWidth;    
@@ -358,7 +363,7 @@ export default Controller.extend({
         'width': width,
         'teaser_description': show_description
       });
-      if(this.get('model.fast_html') && (this.get('model.fast_html.width') != this.get('width') || this.get('model.fast_html.height') != this.get('height') || this.get('model.fast_html.revision') != this.get('model.current_revision') || this.get('model.fast_html.inflection_prefix') != app_state.get('inflection_prefix') || this.get('model.focus_id') != this.get('model.fast_html.focus_id'))) {
+      if(this.get('model.fast_html') && (this.get('model.fast_html.width') != this.get('width') || this.get('model.fast_html.height') != this.get('height') || this.get('model.fast_html.revision') != this.get('model.current_revision') || this.get('model.fast_html.inflection_prefix') != app_state.get('inflection_prefix') || this.get('model.fast_html.inflection_shift') != app_state.get('inflection_shift') || this.get('model.focus_id') != this.get('model.fast_html.focus_id'))) {
         app_state.set('suggestion_id', null);
         this.set('model.fast_html', null);
         editManager.process_for_displaying();

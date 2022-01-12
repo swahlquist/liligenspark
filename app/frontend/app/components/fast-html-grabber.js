@@ -16,6 +16,7 @@ export default Component.extend({
           width: editManager.controller.get('width'),
           height: editManager.controller.get('height'),
           inflection_prefix: app_state.get('inflection_prefix'),
+          inflection_shift: app_state.get('inflection_shift'),
           revision: editManager.controller.get('model.current_revision'),
           html: htmlSafe(elem.innerHTML)
         });

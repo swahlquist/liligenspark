@@ -477,7 +477,6 @@ var editManager = EmberObject.extend({
                 new_label = new_label.substring(1);
                 updated_button.text_only = true;
               }
-              updated_button.background_color = '#eee';
               updated_button.original_label = button.original_label || button.label;
               updated_button.label = new_label;
               updated_button.tweaked = true;
@@ -1508,7 +1507,7 @@ var editManager = EmberObject.extend({
     var need_everything_local = app_state.get('speak_mode') || !persistence.get('online');
     if(app_state.get('speak_mode')) {
       controller.update_button_symbol_class();
-      if(!ignore_fast_html && board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') && board.get('focus_id') == board.get('fast_html.focus_id')) {
+      if(!ignore_fast_html && board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') && board.get('fast_html.inflection_shift') == app_state.get('inflection_shift') && board.get('focus_id') == board.get('fast_html.focus_id')) {
         CoughDrop.log.track('already have fast render');
         resume_scanning();
         return;

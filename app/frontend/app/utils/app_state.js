@@ -1912,16 +1912,16 @@ var app_state = EmberObject.extend({
           app_state.set('suggestion_id', ref);
           app_state.controller.get('board.model').clear_real_time_changes();
           app_state.controller.get('board.model').load_word_suggestions([app_state.get('currentUser.preferences.home_board.id'), stashes.get('temporary_root_board_state.id')]);
-          if(app_state.get('referenced_user.preferences.auto_inflections')) {
+          if(app_state.get('referenced_user.preferences.auto_inflections') || app_state.get('inflection_shift')) {
             app_state.controller.get('board.model').load_real_time_inflections();
           }
         }
       }
     }
   },
-  inflection_prefix: computed('stashes.working_vocalization', 'referenced_user.preferences.auto_inflections', function() {
+  inflection_prefix: computed('stashes.working_vocalization', 'referenced_user.preferences.auto_inflections', 'inflection_shift', function() {
       var sentence = null;
-      if(this.get('referenced_user.preferences.auto_inflections')) {
+      if(this.get('referenced_user.preferences.auto_inflections') || this.get('inflection_shift')) {
         sentence = (stashes.get('working_vocalization') || []).map(function(v) { return v.label; }).join(' ');
       }
       return sentence;
