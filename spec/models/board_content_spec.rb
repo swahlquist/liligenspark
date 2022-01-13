@@ -1117,6 +1117,98 @@ describe BoardContent, :type => :model do
       })
     end
 
+    it "should not clear changed attribute if it matches the prior override but not the original value" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b1.process(buttons: [
+        {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
+        {id: 2, label: 'cheddar'},
+        {id: 3, label: 'broccoli'},
+        {id: 4, label: 'sour cream'},
+      ], grid: {
+        rows: 2,
+        columns: 2,
+        order: [[1, 3], [2, 4]]
+      })
+      BoardContent.generate_from(b1)
+      b1.process(buttons: [
+        {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
+        {id: 2, label: 'house'},
+        {id: 3, label: 'broccoli'},
+        {id: 4, label: 'sour cream'},
+      ], grid: {
+        rows: 2,
+        columns: 2,
+        order: [[1, 3], [4, 2]]
+        }, background: {
+          image: 'pic',
+          prompt: 'hello'
+        }, intro: {
+          sections: ['a', 'b']
+      })
+      expect(b1.settings['buttons']).to eq(nil)
+      expect(b1.settings['grid']).to eq(nil)
+      expect(b1.settings['content_overrides']).to eq({
+        'grid' => {'order' => [[1,3],[4, 2]]},
+        "buttons" => {"2"=>{"label"=>"house"}}
+      })
+      expect(b1.buttons).to eq([{"id"=>1,
+        "label"=>"bacon",
+        "part_of_speech"=>"noun",
+        "suggested_part_of_speech"=>"noun"
+      },{
+        "id"=>2,
+        "label"=>"house",
+        "part_of_speech"=>"noun",
+        "suggested_part_of_speech"=>"noun"
+      }, {
+        "id"=>3,
+        "label"=>"broccoli",
+        "part_of_speech"=>"noun",
+        "suggested_part_of_speech"=>"noun"
+      }, {
+        "id"=>4,
+        "label"=>"sour cream",
+        "part_of_speech"=>"noun",
+        "suggested_part_of_speech"=>"noun"
+      }])
+      expect(BoardContent.load_content(b1, 'grid')).to eq({
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [[1,3],[4, 2]]
+      })
+
+      b1.process(buttons: [
+        {id: 1, label: 'bacon', translations: {'fr' => {'label' => 'oui'}}},
+        {id: 2, label: 'house'},
+        {id: 3, label: 'broccoli'},
+        {id: 4, label: 'sour cream'},
+      ], grid: {
+        rows: 2,
+        columns: 2,
+        order: [[1, 3], [2, 4]]
+        }, background: {
+          image: 'pic',
+          prompt: 'hello'
+        }, intro: {
+          sections: ['a', 'b']
+      })
+      expect(b1.settings['buttons']).to eq(nil)
+      expect(b1.settings['grid']).to eq(nil)
+      expect(b1.settings['intro']).to eq({
+        'sections'=> ['a', 'b']
+      })
+      expect(b1.settings['translations']).to eq(nil)
+      expect(b1.settings['content_overrides']).to eq({
+        "buttons" => {"2"=>{"label"=>"house"}}
+      })
+      expect(BoardContent.load_content(b1, 'grid')).to eq({
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [[1,3],[2, 4]]
+      })
+    end
+
     it "should allow hiding and showing a button" do
       u = User.create
       b1 = Board.create(user: u)
