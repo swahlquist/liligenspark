@@ -13,11 +13,13 @@ module Uploader
       res = check_existing_upload(remote_path, checksum)
       if res[:url]
         remote_touch(remote_path)
+        RemoteAction.where(action: 'delete', path: remote_path).delete_all
         return {url: res[:url], path: remote_path}
       elsif res[:mismatch]
         # If something is already there and it's not identical, change to a different url
         remote_path = remote_path.sub(/\/chksm[^\/]+/, '').sub(/.*\K\//, "/chksm#{checksum[0, 5]}/")
       end
+      RemoteAction.where(action: 'delete', path: remote_path).delete_all
     end
     params = remote_upload_params(remote_path, content_type)
     post_params = params[:upload_params]
@@ -108,8 +110,9 @@ module Uploader
     !!res
   end
 
-  def self.remote_remove_later(path)
-    RemoteAction.create(path: path, act_at: 24.hours.from_now, action: 'delete')
+  def self.remote_remove_later(path, checksum)
+    RemoteAction.where(path: path, action: 'delete', extra: checksum).delete_all
+    RemoteAction.create(path: path, extra: checksum, act_at: 24.hours.from_now, action: 'delete')
   end
 
   def self.remote_remove_batch
@@ -120,7 +123,9 @@ module Uploader
       batch.each do |ra|
         updated_ids << ra.id
         if ra.action == 'delete'
-          Worker.schedule_for(:slow, Uploader, :remote_remove, ra.path)
+          if ra.path && ra.extra
+            Worker.schedule_for(:slow, Uploader, :remote_remove, ra.path, ra.extra)
+          end
         elsif ra.action == 'notify_unassigned'
           user_id, org_id = ra.path.split(/::/, 2)
           UserMailer.schedule_delivery(:organization_unassigned, user_id, org_id)
@@ -144,18 +149,23 @@ module Uploader
     total
   end
 
-  def self.remote_remove(url)
+  def self.remote_remove(url, checksum)
     remote_path = url.sub(/^https:\/\/#{ENV['UPLOADS_S3_BUCKET']}\.s3\.amazonaws\.com\//, '')
     remote_path = remote_path.sub(/^https:\/\/s3\.amazonaws\.com\/#{ENV['UPLOADS_S3_BUCKET']}\//, '')
     remote_path = remote_path.sub(/^#{ENV['UPLOADS_S3_CDN']}/, '')
     remote_path = remote_path.sub(/^\//, '')
-
     raise "scary delete, not a path I'm comfortable deleting: #{remote_path}" unless remote_path.match(/\w+\/.+\/\w+-\w+(\.\w+)?$/) || remote_path.match(/^extras/)
-    config = remote_upload_config
-    service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)
-    bucket = service.buckets.find(config[:bucket_name])
-    object = bucket.objects.find(remote_path) rescue nil
-    object.destroy if object
+
+    if checksum
+      check = check_existing_upload(remote_path, checksum)
+      if check && check[:found] && !check[:mismatch]
+        config = remote_upload_config
+        service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)
+        bucket = service.buckets.find(config[:bucket_name])
+        object = bucket.objects.find(remote_path) rescue nil
+        object.destroy if object
+      end
+    end
   end
   
   def self.fronted_url(url)

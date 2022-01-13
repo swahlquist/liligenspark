@@ -162,7 +162,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     @unviewable_ids = button_set.data['board_ids'].select{|id| !allowed_ids[id] }
     revision_match = full_set_revision && button_set_revision == full_set_revision
     if @unviewable_ids.blank? && revision_match && !button_set.data['source_id']
-      if button_set.data['private_cdn_url'] && button_set.data['private_cdn_revision'] == button_set_revision
+      # Cache the CDN URL for 24 hours
+      if button_set.data['private_cdn_url'] && button_set.data['private_cdn_revision'] == button_set_revision && (button_set.data['private_cdn_url_checked'] || Time.now) < (24.hours.ago.to_i)
         return button_set.data['private_cdn_url']
       end
       private_path = button_set.extra_data_private_url
@@ -174,6 +175,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       if url
         button_set.data['private_cdn_url'] = url
+        button_set.data['private_cdn_url_checked'] = Time.now.to_i
         button_set.data['private_cdn_revision'] = button_set_revision
         button_set.save
         return url
@@ -219,6 +221,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   end
 
   def self.generate_for(board_id, user_id)
+    # Doesn't reprocess the content, just generates the correct file
     board = Board.find_by_global_id(board_id)
     user = user_id && User.find_by_global_id(user_id)
     return {success: false, error: 'missing board or user'} unless board && user
@@ -275,11 +278,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       json = button_set.encrypted_json(available_buttons)
       file.write(json)
       file.close
-      # Uploader.invalidate_cdn(remote_path)
       # If upload is throttled, schedule it for later (and don't repeat if already scheduled)
       if RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').count == 0
+        checksum = Digest::MD5.hexdigest(json)
         begin
-          res = Uploader.remote_upload(remote_path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+          res = Uploader.remote_upload(remote_path, file.path, 'text/json', checksum)
         rescue => e
           if e.message && e.message.match(/throttled/)
             res = {error: 'throttled'}
@@ -291,7 +294,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').delete_all
           RemoteAction.create(path: "#{board_id}::#{user_id}", act_at: 5.minutes.from_now, action: 'upload_extra_data')
         elsif res && res[:path] && res[:path] != remote_path
-          Uploader.remote_remove_later(remote_path)
+          Uploader.remote_remove_later(remote_path, checksum)
           button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
         end
       end

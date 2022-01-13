@@ -71,8 +71,9 @@ module ExtraData
     json = self.encrypted_json(data)
     file.write(json)
     file.close
+    checksum = Digest::MD5.hexdigest(json)
     begin
-      res = Uploader.remote_upload(path, file.path, 'text/json', Digest::MD5.hexdigest(json))
+      res = Uploader.remote_upload(path, file.path, 'text/json', checksum)
     rescue => e
       if e.message && e.message.match(/throttled/) && (self.is_a?(BoardDownstreamButtonSet) || self.is_a?(LogSession))
         res = {error: 'throttled'}
@@ -90,7 +91,7 @@ module ExtraData
       RemoteAction.create(path: self.global_id, act_at: 5.minutes.from_now, action: 'upload_log_session')
       return :throttled
     elsif res && res[:path] && (res[:path] != path || res[:uploaded])
-      Uploader.remote_remove_later(path) if res[:path] != path
+      Uploader.remote_remove_later(path, checksum) if res[:path] != path && res[:uploaded]
       if type == 'private'
         self.data['extra_data_private_path'] = res[:path]
         self.data.delete('private_cdn_url')
