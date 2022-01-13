@@ -117,7 +117,7 @@ var editManager = EmberObject.extend({
         line.replace(quote, "sub__" + idx);
       });
       var parts = line.split(/=/);
-      if(parts.length == 2) {
+      if(parts.length == 2 && parts[0] && parts[0].length > 0 && parts[1] && parts[1].length) {
         var replacement = parts.pop();
         var pre_words = parts[0].split(/\s+/);
         if(pre_words.length > 0) {
@@ -135,7 +135,13 @@ var editManager = EmberObject.extend({
   },
   stringify_rules: function(obj) {
     var lines = [];
+    if(obj && obj.length && !Array.isArray(obj[0])) {
+      // Legacy issue with rules being a single array instead
+      // of an array of arrays
+      obj = [];
+    }
     (obj || []).forEach(function(rule) {
+      if(!rule) { return; }
       var str = rule[rule.length - 1];
       var line = rule.slice(0, -1).map(function(w) { 
         if(w.match(/\s|\=/)) {
@@ -466,6 +472,9 @@ var editManager = EmberObject.extend({
             var rules = (locale && translations_hash[button.id] && (translations_hash[button.id][locale] || {}).rules) || 
                         (locale && translations_hash[button.id] && (translations_hash[button.id][locale.split(/-|_/)[0]] || {}).rules) || 
                         button.rules || [];
+            if(rules && rules.length && !Array.isArray(rules[0])) {
+              rules = [];
+            }
             (rules || []).forEach(function(list) {
               if(list[0] == ":" + infl.location) {
                 new_label = list[list.length - 1];

@@ -560,7 +560,7 @@ var Button = EmberObject.extend({
           emberSet(res[idx], 'label', label);
           emberSet(res[idx], 'vocalization', vocalization);
           emberSet(res[idx], 'inflections', inflections);
-          emberSet(res[idx], 'rules', inflections);
+          emberSet(res[idx], 'rules', rules);
         } else {
           res.push({
             code: code,

@@ -287,7 +287,7 @@ var utterance = EmberObject.extend({
     var res = [];
     var found_types = {};
     (rules || []).forEach(function(rule) {
-      if(!rule.lookback && rule.forEach) {
+      if(rule && !rule.lookback && rule.forEach) {
         var str = rule[rule.length - 1];
         var rule_parts = rule.slice(0, -1);
         rule = {
