@@ -618,7 +618,9 @@ var persistence = EmberObject.extend({
           }
         } else if(typeof(uri) == 'string') {
           var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
-          res.then(null, function(err) {
+          res.then(function(res) {
+            resolve(json);
+          }, function(err) {
             if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
               persistence.remove('dataCache', url);
               persistence.url_cache[url] = null;

@@ -19,11 +19,11 @@ module Uploader
         # If something is already there and it's not identical, change to a different url
         remote_path = remote_path.sub(/\/chksm[^\/]+/, '').sub(/.*\K\//, "/chksm#{checksum[0, 5]}/")
       end
-      RemoteAction.where(action: 'delete', path: remote_path).delete_all
     end
     params = remote_upload_params(remote_path, content_type)
     post_params = params[:upload_params]
     return nil unless File.exist?(local_path)
+    RemoteAction.where(action: 'delete', path: remote_path).delete_all
     post_params[:file] = File.open(local_path, 'rb')
 
     # upload to s3 from tempfile
@@ -111,7 +111,7 @@ module Uploader
   end
 
   def self.remote_remove_later(path, checksum)
-    RemoteAction.where(path: path, action: 'delete', extra: checksum).delete_all
+    RemoteAction.where(path: path, action: 'delete', extra: checksum).delete_all if checksum
     RemoteAction.create(path: path, extra: checksum, act_at: 24.hours.from_now, action: 'delete')
   end
 
@@ -149,22 +149,28 @@ module Uploader
     total
   end
 
-  def self.remote_remove(url, checksum)
+  def self.remote_remove(url, checksum=nil)
     remote_path = url.sub(/^https:\/\/#{ENV['UPLOADS_S3_BUCKET']}\.s3\.amazonaws\.com\//, '')
     remote_path = remote_path.sub(/^https:\/\/s3\.amazonaws\.com\/#{ENV['UPLOADS_S3_BUCKET']}\//, '')
     remote_path = remote_path.sub(/^#{ENV['UPLOADS_S3_CDN']}/, '')
     remote_path = remote_path.sub(/^\//, '')
     raise "scary delete, not a path I'm comfortable deleting: #{remote_path}" unless remote_path.match(/\w+\/.+\/\w+-\w+(\.\w+)?$/) || remote_path.match(/^extras/)
 
+    do_remove = true
     if checksum
       check = check_existing_upload(remote_path, checksum)
-      if check && check[:found] && !check[:mismatch]
-        config = remote_upload_config
-        service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)
-        bucket = service.buckets.find(config[:bucket_name])
-        object = bucket.objects.find(remote_path) rescue nil
-        object.destroy if object
+      if check && (!check[:found] || check[:mismatch])
+        do_remove = false
       end
+    end
+    if do_remove
+      config = remote_upload_config
+      service = S3::Service.new(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3)
+      bucket = service.buckets.find(config[:bucket_name])
+      object = bucket.objects.find(remote_path) rescue nil
+      object.destroy if object
+    else
+      return false
     end
   end
   

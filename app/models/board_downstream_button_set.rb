@@ -163,7 +163,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     revision_match = full_set_revision && button_set_revision == full_set_revision
     if @unviewable_ids.blank? && revision_match && !button_set.data['source_id']
       # Cache the CDN URL for 24 hours
-      if button_set.data['private_cdn_url'] && button_set.data['private_cdn_revision'] == button_set_revision && (button_set.data['private_cdn_url_checked'] || Time.now) < (24.hours.ago.to_i)
+      if button_set.data['private_cdn_url'] && button_set.data['private_cdn_revision'] == button_set_revision && (button_set.data['private_cdn_url_checked'] || Time.now) > (24.hours.ago.to_i)
         return button_set.data['private_cdn_url']
       end
       private_path = button_set.extra_data_private_url

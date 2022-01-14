@@ -96,10 +96,155 @@ describe Uploader do
 
       expect(Uploader.remote_upload("a/b/chksm8888", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/chksmchksu/b", :uploaded=>true, :url=>"http://www.upload.com/a/chksmchksu/b"})
     end
+
+    it "should remove any pending delete remote actions" do
+      expect(Uploader).to receive(:remote_upload_params).with("bacon", "text/plaintext").and_return({
+        :upload_params => {:a => 1, :b => 2},
+        :upload_url => "http://www.upload.com/"
+      })
+      res = OpenStruct.new(:success? => true)
+      f = Tempfile.new("stash")
+      RemoteAction.create(action: 'delete', path: 'bacon', extra: 'chksum')
+      RemoteAction.create(action: 'delete', path: 'radish', extra: 'chksum2')
+      expect(RemoteAction.count).to eq(2)
+      expect(Typhoeus).to receive(:post).and_return(res)
+      expect(Uploader.remote_upload("bacon", f.path, "text/plaintext")).to eq({url: "http://www.upload.com/bacon", path: 'bacon', uploaded: true})
+      f.unlink
+      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.last.path).to eq('radish')
+    end
+
+    it "should remove pending delete remote actions if file already exists" do
+      RemoteAction.create(action: 'delete', path: 'a/b/c', extra: 'chksum')
+      RemoteAction.create(action: 'delete', path: 'a/b/c', extra: 'chksum2')
+      expect(RemoteAction.count).to eq(2)
+      f = Tempfile.new("stash")
+      expect(Uploader).to receive(:check_existing_upload).with("a/b/c", "chksum").and_return({url: "https://a.b.c/file.txt"})
+      expect(Uploader.remote_upload("a/b/c", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/b/c", :url=>"https://a.b.c/file.txt"})
+      expect(RemoteAction.count).to eq(0)
+    end
+
+    it "should remove pending delete remote actions if checksum was appended" do
+      RemoteAction.create(action: 'delete', path: 'a/b/c', extra: 'chksum')
+      RemoteAction.create(action: 'delete', path: 'a/b/chksmchksu/c', extra: 'chksum')
+      expect(RemoteAction.count).to eq(2)
+      f = Tempfile.new("stash")
+      expect(Uploader).to receive(:check_existing_upload).with("a/b/c", "chksum").and_return({mismatch: true})
+
+      expect(Uploader).to receive(:remote_upload_params).with("a/b/chksmchksu/c", "text/plaintext").and_return({
+        :upload_params => {:a => 1, :b => 2},
+        :upload_url => "http://www.upload.com/"
+      })
+      res = OpenStruct.new(:success? => true)
+      f = Tempfile.new("stash")
+      expect(Typhoeus).to receive(:post) { |url, args|
+        expect(url).to eq("http://www.upload.com/")
+        expect(args[:body][:a]).to eq(1)
+        expect(args[:body][:b]).to eq(2)
+        expect(args[:body][:file].path).to eq(f.path)
+      }.and_return(res)
+
+      expect(Uploader.remote_upload("a/b/c", f.path, "text/plaintext", "chksum")).to eq({:path=>"a/b/chksmchksu/c", :uploaded=>true, :url=>"http://www.upload.com/a/b/chksmchksu/c"})
+      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.last.path).to eq('a/b/c')
+    end
   end
 
   describe "check_existing_upload" do
-    it "should do something work speccing"
+    it "should return false without a path" do
+      expect(Uploader.check_existing_upload(nil)).to eq({found: false})
+    end
+
+    it "should return false if the object is not found" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_raise("nope")
+      expect(Uploader.check_existing_upload("a/b/c")).to eq({found: false})
+    end
+
+    it "should strip the leading slash" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_raise("nope")
+      expect(Uploader.check_existing_upload("/a/b/c")).to eq({found: false})
+    end
+
+    it "should strip the leading slash" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_raise("nope")
+      expect(Uploader.check_existing_upload("/a/b/c")).to eq({found: false})
+    end
+
+    it "should return the found record" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_return(bucket)
+      expect(bucket).to receive(:object_request).with(:head, {}).and_return({'etag' => '', 'x-amz-expiration' => "expiry-date=\"#{7.days.from_now.iso8601}\""})
+
+      expect(Uploader.check_existing_upload("/a/b/c")).to eq({found: true, url: "#{ENV['UPLOADS_S3_CDN']}/a/b/c"})
+    end
+
+    it "should return expiration status" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_return(bucket)
+      expect(bucket).to receive(:object_request).with(:head, {}).and_return({'etag' => '', 'x-amz-expiration' => "expiry-date=\"#{7.hours.from_now.iso8601}\""})
+
+      expect(Uploader.check_existing_upload("/a/b/c")).to eq({found: true, expired: true})
+    end
+
+    it "should return mismatch status" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_return(bucket)
+      expect(bucket).to receive(:object_request).with(:head, {}).and_return({'etag' => 'chksum2', 'x-amz-expiration' => "expiry-date=\"#{7.days.from_now.iso8601}\""})
+
+      expect(Uploader.check_existing_upload("/a/b/c", "chksum")).to eq({found: true, mismatch: true})
+    end
+
+    it "should return the found record if checksum matches" do
+      service = OpenStruct.new
+      bucket = OpenStruct.new
+      config = Uploader.remote_upload_config
+      expect(S3::Service).to receive(:new).with(:access_key_id => config[:access_key], :secret_access_key => config[:secret], timeout: 3).and_return(service)
+      expect(service).to receive(:buckets).and_return(service)
+      expect(service).to receive(:find).with(config[:bucket_name]).and_return(bucket)
+      expect(bucket).to  receive(:objects).and_return(bucket)
+      expect(bucket).to receive(:find).with("a/b/c").and_return(bucket)
+      expect(bucket).to receive(:object_request).with(:head, {}).and_return({'etag' => 'chksum', 'x-amz-expiration' => "expiry-date=\"#{7.days.from_now.iso8601}\""})
+
+      expect(Uploader.check_existing_upload("/a/b/c")).to eq({found: true, url: "#{ENV['UPLOADS_S3_CDN']}/a/b/c"})
+    end
   end  
 
   describe "remote_upload_params" do
@@ -233,6 +378,60 @@ describe Uploader do
       expect(res).to eq(nil)
     end
     
+    it "should remove with a nil checksum" do
+      object = OpenStruct.new
+      expect(object).to receive(:destroy).and_return(true)
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(object)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      res = Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf-asdf.asdf")
+      expect(res).to eq(true)
+    end
+
+    it "should not remove with a mismatched checksum" do
+      object = OpenStruct.new
+      expect(object).to receive(:object_request).with(:head, {}).and_return({
+        'etag' => "remote_checksum",
+        'x-amz-expiration' => "expiry-date=\"#{7.days.from_now.iso8601}\""
+      })
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(object)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      res = Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf-asdf.asdf", "bad_chksum")
+      expect(res).to eq(false)
+    end
+
+    it "should not remove if checksum is passed and object is not found" do
+      objects = OpenStruct.new
+      expect(objects).to receive(:find).with('images/abcdefg/asdf-asdf.asdf').and_return(nil)
+      bucket = OpenStruct.new({
+        objects: objects
+      })
+      buckets = OpenStruct.new
+      expect(buckets).to receive(:find).and_return(bucket)
+      service = OpenStruct.new({
+        buckets: buckets
+      })
+      expect(S3::Service).to receive(:new).and_return(service)
+      res = Uploader.remote_remove("https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com/images/abcdefg/asdf-asdf.asdf", "bad_chksum")
+      expect(res).to eq(false)
+    end
   end
 
   describe 'remote_touch' do
@@ -1340,17 +1539,31 @@ describe Uploader do
   describe "remote_remove_later" do
     it "should create a remove action" do
       expect(RemoteAction.count).to eq(0)
-      Uploader.remote_remove_later('asdf')
+      Uploader.remote_remove_later('asdf', 'checksum')
       expect(RemoteAction.count).to eq(1)
       expect(RemoteAction.last.act_at).to be > 23.hours.from_now
       expect(RemoteAction.last.path).to eq('asdf')
+      expect(RemoteAction.last.extra).to eq('checksum')
+      expect(RemoteAction.last.action).to eq('delete')
+    end
+
+    it "should delete any existing remote_remove calls" do
+      expect(RemoteAction.count).to eq(0)
+      RemoteAction.create(action: 'delete', path: 'asdf', extra: 'checksum')
+      RemoteAction.create(action: 'delete', path: 'asdf', extra: 'checksum')
+      RemoteAction.create(action: 'delete', path: 'asdf', extra: 'checksum')
+      Uploader.remote_remove_later('asdf', 'checksum')
+      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.last.act_at).to be > 23.hours.from_now
+      expect(RemoteAction.last.path).to eq('asdf')
+      expect(RemoteAction.last.extra).to eq('checksum')
       expect(RemoteAction.last.action).to eq('delete')
     end
 
     describe "remote_remove_batch" do
       it "should schedule remove actions" do
         10.times do |i|
-          Uploader.remote_remove_later("file/#{i}/pic.png")
+          Uploader.remote_remove_later("file/#{i}/pic.png", "chk#{i}")
         end
         expect(RemoteAction.count).to eq(10)
         expect(Uploader.remote_remove_batch).to eq(0)
@@ -1364,7 +1577,7 @@ describe Uploader do
 
       it "should return the count of actions cleared" do
         10.times do |i|
-          Uploader.remote_remove_later("file/#{i}/pic.png")
+          Uploader.remote_remove_later("file/#{i}/pic.png", "chk#{i}")
         end
         expect(RemoteAction.count).to eq(10)
         expect(Uploader.remote_remove_batch).to eq(0)

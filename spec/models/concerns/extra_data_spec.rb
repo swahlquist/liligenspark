@@ -248,9 +248,9 @@ describe ExtraData, :type => :model do
         expect(type).to eq('text/json')
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
-      end.exactly(1).times.and_return(nil)
+      end.exactly(2).times.and_return({path: "a/b/c/d"})
       s.detach_extra_data('force')
-      expect(paths).to eq(['private']) 
+      expect(paths).to eq(['private', 'public']) 
       expect(s.data['events']).to eq(nil)
       expect(s.data['extra_data_nonce']).to_not eq(nil)
     end

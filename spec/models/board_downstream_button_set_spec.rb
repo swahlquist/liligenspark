@@ -1123,6 +1123,43 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
       expect(bs.url_for(nil, 'aha')).to eq('zxcv')
     end
+
+    it "should check if the private path exists before returning" do
+      u = User.create
+      expect(u).to receive(:possible_admin?).and_return(true)
+      expect(Organization).to receive(:admin_manager?).with(u).and_return(true)
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(bs.url_for(u, 'abc')).to eq('zxcv')
+      expect(bs.data['private_cdn_url']).to eq("zxcv")
+      expect(bs.data['private_cdn_revision']).to eq("abc")
+    end
+
+    it "should cache the private path cdn for 24 hours only" do
+      u = User.create
+      expect(u).to receive(:possible_admin?).and_return(true).at_least(1).times
+      expect(Organization).to receive(:admin_manager?).with(u).and_return(true).at_least(1).times
+      bs = BoardDownstreamButtonSet.create
+      bs.data['public_board_ids'] = ['1', '2']
+      bs.data['board_ids'] = ['1', '2', '3', '4']
+      bs.data['full_set_revision'] = 'abc'
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
+      expect(bs).to receive(:extra_data_private_url).and_return('qwer').at_least(1).times
+      expect(bs.url_for(u, 'abc')).to eq('zxcv')
+      expect(bs.data['private_cdn_url']).to eq("zxcv")
+      expect(bs.data['private_cdn_url_checked']).to be > 5.minutes.ago.to_i
+      expect(bs.data['private_cdn_url_checked']).to be < 5.minutes.from_now.to_i
+      expect(bs.data['private_cdn_revision']).to eq("abc")
+
+      bs.data['private_cdn_url_checked'] = 48.hours.ago.to_i
+      expect(Uploader).to receive(:check_existing_upload).with('qwer').and_return({url: 'zxcv'})
+      bs.save
+      expect(bs.url_for(u, 'abc')).to eq('zxcv')
+    end
   end
 
   describe "touch_remote" do
