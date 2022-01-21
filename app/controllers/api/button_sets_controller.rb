@@ -50,6 +50,10 @@ class Api::ButtonSetsController < ApplicationController
     return unless exists?(board, params['id'])
     button_set = board && board.board_downstream_button_set
     return unless allowed?(board, 'view')
+    if params['missing'] && button_set
+      button_set.settings['private_cdn_url_checked'] = 48.hours.ago.to_i
+      button_set.save
+    end
     download_url = button_set && button_set.url_for(@api_user, board.settings['full_set_revision'])
     if button_set && download_url && !params['missing']
       render json: {exists: true, id: params['id'], url: download_url}

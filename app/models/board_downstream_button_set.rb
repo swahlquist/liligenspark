@@ -248,20 +248,20 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       button_set = board.reload.board_downstream_button_set
     end
     url = button_set.board && button_set.url_for(user, button_set.board.settings['full_set_revision'], true)
-    return {success: true, url: url} if url
+    return {success: true, state: 'url_for', url: url} if url
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
     remote_hash = button_set.instance_variable_get('@remote_hash')
     if !button_set.data['extra_data_nonce'] || just_generated
       # If the button set has never been detached or was just updated, ensure it is detached
       button_set.detach_extra_data(true)
-      return {success: true, url: button_set.extra_data_private_url} if unviewable_ids.blank? && button_set.extra_data_private_url
+      return {success: true, state: 'fresh', url: button_set.extra_data_private_url} if unviewable_ids.blank? && button_set.extra_data_private_url
     end
     button_set.data['remote_paths'] ||= {}
     if button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path'] != false && button_set.data['remote_paths'][remote_hash]['generated'] > 12.hours.ago.to_i
       # Don't allow repeated regeneration attempts to bog things down
       if button_set.data['remote_paths'][remote_hash]['path']
-        return {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
+        return {success: true, state: 'cached', url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
       else
         return {success: false, error: 'button set failed to generate, waiting for cool-down period'}
       end
@@ -307,7 +307,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     button_set.save
     return {success: false, error: 'button set failed to generate'} unless button_set.data && button_set.data['remote_paths'] && button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path']
-    {success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
+    {success: true, state: 'uploaded', url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
   end
 
   def self.flush_caches(board_ids, timestamp)
