@@ -319,7 +319,7 @@
           <li role="presentation" id='nav_updates' class={{if index_nav.updates 'active'}} style='position: relative;'><a href="#" {{action 'set_index_nav' 'updates'}}>
             {{t "Updates" key='updates'}}
             {{#if pending_updates}}
-              <span class="label label-danger unread hidden-xs" style='position: absolute; right: -15px;'>
+              <span class="label label-danger unread hidden-xs" style='position: absolute; right: -15px; top: 9px;'>
                 {{#if pending_updates.count}}
                   {{pending_updates.count}}
                 {{else}}
