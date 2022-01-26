@@ -57,13 +57,17 @@ describe ExtraData, :type => :model do
       d = Device.create(user: u)
       s = LogSession.create(user: u, device: d, author: u, data: {'extra_data_nonce' => 'qwwqtqw', 'extra_data_revision' => 'asdf', 'full_set_revision' => 'asdf', 'events' => [{'a' => 1}, {'b' => 2}]})
       expect(s).to receive(:extra_data_too_big?).and_return(false).at_least(1).times
+      check = {}
+      expect(Uploader).to receive(:check_existing_upload) do |path, checksum|
+        check[:path] = path
+        check[:url] = "http://test/#{path}"
+      end.at_least(1).times.and_return(check)
       res = {}
-      expect(Uploader).to receive(:remote_upload) do |path|
-        res[:path] = path
-      end.and_return(res)
+      expect(Uploader).to_not receive(:remote_upload_params)
       s.data['full_set_revision'] = 'asdfjkl'
       s.detach_extra_data('force')
-      expect(s.data['extra_data_private_path']).to eq(nil)
+      expect(s.data['extra_data_private_path']).to_not eq(nil)
+      expect(s.data['extra_data_private_checksum']).to_not eq(nil)
     end
     
     it 'should upload to a different path if the checksum does not match the existing upload' do
@@ -507,16 +511,16 @@ describe ExtraData, :type => :model do
       u = User.create
       b = Board.create(user: u)
       bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['extra_data_private_path'] = 'a/b/c.json'
+      bs.data['extra_data_private_checksum'] = 'checksm'
+      bs.save
       expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
         str = File.read(local_path)
         expect(bs.decrypted_json(str)).to eq({'a' => 1})
       end.and_return({path: 'c/d/e.json', uploaded: true})
+      expect(Uploader).to receive(:remote_remove_later).with('a/b/c.json', 'checksm')
       res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
       expect(res).to eq(:uploaded)    
-      ra = RemoteAction.last
-      expect(ra).to_not eq(nil)
-      expect(ra.path).to eq('a/b/c.json')
-      expect(ra.action).to eq('delete')
       expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
     end
 
@@ -528,13 +532,85 @@ describe ExtraData, :type => :model do
         str = File.read(local_path)
         expect(bs.decrypted_json(str)).to eq({'a' => 1})
       end.and_return({path: 'c/d/e.json', uploaded: true})
+      checksum = Digest::MD5.hexdigest({a: 1}.to_json)
+      expect(Uploader).to_not receive(:remote_remove_later).with('a/b/c.json', checksum)
       res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
       expect(res).to eq(:uploaded)    
-      ra = RemoteAction.last
-      expect(ra).to_not eq(nil)
-      expect(ra.path).to eq('a/b/c.json')
-      expect(ra.action).to eq('delete')
       expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+      expect(bs.data['extra_data_private_checksum']).to eq(checksum)
+    end
+
+    it "should update the path if it was previously a checksum but now it's the base path" do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['extra_data_private_path'] = 'z/y/x.json'
+      bs.data['extra_data_private_checksum'] = 'checksm'
+      bs.save
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'a/b/c.json', uploaded: true})
+      checksum = Digest::MD5.hexdigest({a: 1}.to_json)
+      expect(Uploader).to receive(:remote_remove_later).with('z/y/x.json', 'checksm')
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      expect(bs.data['extra_data_private_path']).to eq('a/b/c.json')
+      expect(bs.data['extra_data_private_checksum']).to eq(checksum)
+    end
+
+    it 'should not schedule deletion if no previous base path' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'c/d/e.json', uploaded: true})
+      checksum = Digest::MD5.hexdigest({a: 1}.to_json)
+      expect(Uploader).to_not receive(:remote_remove_later).with('a/b/c.json', checksum)
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+      expect(bs.data['extra_data_private_checksum']).to eq(checksum)
+    end
+
+    it 'should schedule deletion of previous base path' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['extra_data_private_path'] = 'a/b/c.json'
+      bs.data['extra_data_private_checksum'] = 'checksm'
+      bs.save
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'c/d/e.json', uploaded: true})
+      checksum = Digest::MD5.hexdigest({a: 1}.to_json)
+      expect(Uploader).to receive(:remote_remove_later).with('a/b/c.json', 'checksm')
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+      expect(bs.data['extra_data_private_checksum']).to eq(checksum)
+    end
+
+    it 'should schedule deletion of previous checksum path' do
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board: b)
+      bs.data['extra_data_private_path'] = 'z/y/x.json'
+      bs.data['extra_data_private_checksum'] = 'checksm'
+      bs.save
+      expect(Uploader).to receive(:remote_upload) do |remote_path, local_path, type, digest|
+        str = File.read(local_path)
+        expect(bs.decrypted_json(str)).to eq({'a' => 1})
+      end.and_return({path: 'c/d/e.json', uploaded: true})
+      checksum = Digest::MD5.hexdigest({a: 1}.to_json)
+      expect(Uploader).to receive(:remote_remove_later).with('z/y/x.json', 'checksm')
+      res = bs.upload_remote_data({a: 1}, 'a/b/c.json', 'private')
+      expect(res).to eq(:uploaded)    
+      expect(bs.data['extra_data_private_path']).to eq('c/d/e.json')
+      expect(bs.data['extra_data_private_checksum']).to eq(checksum)
     end
   end 
 

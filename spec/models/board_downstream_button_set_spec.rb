@@ -1247,7 +1247,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(b).to receive(:board_downstream_button_set).and_return(bs2)
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs.global_id).and_return(bs)
       expect(bs).to receive(:url_for).with(u, nil, true).and_return('asdf')
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'url_for', success: true, url: 'asdf'})
     end
 
     it "should return the existing url if there is one" do
@@ -1257,7 +1257,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return('asdf')
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'url_for', success: true, url: 'asdf'})
     end
 
     it "should generate the default extra_data if there isn't one" do
@@ -1269,7 +1269,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data)
       expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return(nil)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'fresh', success: true, url: 'asdf'})
     end
 
     it "should return the newly-generated default extra_data if it matches for the user" do
@@ -1281,7 +1281,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data)
       expect(bs).to receive(:url_for).with(u, 'asdf', true).and_return(nil)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'fresh', success: true, url: 'asdf'})
     end
 
     it "should return the newly-generated default extra_data if it matches for the user" do
@@ -1292,7 +1292,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(b).to receive(:board_downstream_button_set).and_return(bs)
       expect(bs).to receive(:detach_extra_data)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: 'asdf'})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'fresh', success: true, url: 'asdf'})
     end
 
     it "should not try to generate again less than 12 hours after a failed generation attempt" do
@@ -1336,7 +1336,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(json[1]['label']).to eq('rat')
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
       end.and_return({url: "https://dc5pvf6xvgi7y.cloudfront.net/false"})
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
       expect(bs.data['remote_paths'][hash]['path']).to_not eq(nil)
       expect(bs.data['remote_paths'][hash]['expires']).to be > 3.months.from_now.to_i
       expect(bs.data['remote_paths'][hash]['expires']).to be < 6.months.from_now.to_i
@@ -1371,7 +1371,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
       end.and_raise("throttled upload")
       expect(RemoteAction.count).to eq(0)
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
       expect(RemoteAction.count).to eq(1)
       ra = RemoteAction.last
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
@@ -1404,7 +1404,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(Uploader).to_not receive(:remote_upload)
       expect(RemoteAction.count).to eq(0)
       ra = RemoteAction.create(path: "#{b.global_id}::#{u.global_id}", action: "upload_extra_data", act_at: 5.minutes.from_now)
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
       expect(RemoteAction.count).to eq(1)
       ra = RemoteAction.last
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
@@ -1478,7 +1478,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(json[1]['label']).to eq('rat')
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
       end.and_return({url: "#{ENV['UPLOADS_S3_CDN']}/bacon"})
-      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
+      expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
     end
  end
 

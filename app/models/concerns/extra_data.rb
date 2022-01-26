@@ -71,9 +71,11 @@ module ExtraData
     json = self.encrypted_json(data)
     file.write(json)
     file.close
-    checksum = Digest::MD5.hexdigest(json)
+    new_checksum = Digest::MD5.hexdigest(json)
+    old_path = self.data["extra_data_#{type}_path"]
+    old_checksum = self.data["extra_data_#{type}_checksum"] || new_checksum || 'none'
     begin
-      res = Uploader.remote_upload(path, file.path, 'text/json', checksum)
+      res = Uploader.remote_upload(path, file.path, 'text/json', new_checksum)
     rescue => e
       if e.message && e.message.match(/throttled/) && (self.is_a?(BoardDownstreamButtonSet) || self.is_a?(LogSession))
         res = {error: 'throttled'}
@@ -90,15 +92,16 @@ module ExtraData
       RemoteAction.where(path: self.global_id, action: 'upload_log_session').delete_all
       RemoteAction.create(path: self.global_id, act_at: 5.minutes.from_now, action: 'upload_log_session')
       return :throttled
-    elsif res && res[:path] && (res[:path] != path || res[:uploaded])
-      Uploader.remote_remove_later(path, checksum) if res[:path] != path && res[:uploaded]
+    elsif res && res[:path] && (res[:path] != old_path || res[:path] != path || res[:uploaded])
+      RemoteAction.where(path: res[:path], action: 'delete').delete_all
+      Uploader.remote_remove_later(old_path, old_checksum) if old_path && res[:path] != old_path && res[:uploaded]
+      self.data["extra_data_#{type}_path"] = res[:path]
+      self.data["extra_data_#{type}_checksum"] = new_checksum
       if type == 'private'
-        self.data['extra_data_private_path'] = res[:path]
         self.data.delete('private_cdn_url')
         self.data.delete('remote_paths')
         self.data.delete('private_cdn_revision')
       else
-        self.data['extra_data_public_path'] = res[:path]
         self.data['extra_data_public'] = true
       end
       return res[:uploaded] ? :uploaded : :confirmed

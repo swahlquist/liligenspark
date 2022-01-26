@@ -198,6 +198,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     @remote_path = nil
     if revision_match && (((button_set.data['remote_paths'] || {})[@remote_hash] || {})['expires'] || 0) > Time.now.to_i
       @remote_path = ((button_set.data['remote_paths'] || {})[@remote_hash] || {})['path']
+      @remote_checksum = ((button_set.data['remote_paths'] || {})[@remote_hash] || {})['checksum'] || 'none'
       if button_set.data['remote_paths'][@remote_hash]['expires'] < 2.weeks.from_now.to_i
         button_set.schedule_once(:touch_remote, @remote_hash)
       end
@@ -283,9 +284,11 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       file.close
       # If upload is throttled, schedule it for later (and don't repeat if already scheduled)
       if RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').count == 0
-        checksum = Digest::MD5.hexdigest(json)
+        new_checksum = Digest::MD5.hexdigest(json)
+        old_checksum = button_set.instance_variable_get('@remote_checksum') || new_checksum || 'none'
+
         begin
-          res = Uploader.remote_upload(remote_path, file.path, 'text/json', checksum)
+          res = Uploader.remote_upload(remote_path, file.path, 'text/json', new_checksum)
         rescue => e
           if e.message && e.message.match(/throttled/)
             res = {error: 'throttled'}
@@ -297,8 +300,12 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           RemoteAction.where(path: "#{board_id}::#{user_id}", action: 'upload_extra_data').delete_all
           RemoteAction.create(path: "#{board_id}::#{user_id}", act_at: 5.minutes.from_now, action: 'upload_extra_data')
         elsif res && res[:path] && res[:path] != remote_path
-          Uploader.remote_remove_later(remote_path, checksum)
+          RemoteAction.where(path: res[:path], action: 'delete').delete_all
+          Uploader.remote_remove_later(remote_path, old_checksum)
           button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
+          button_set.data['remote_paths'][remote_hash]['checksum'] = new_checksum
+        elsif res && res[:path]
+          RemoteAction.where(path: res[:path], action: 'delete').delete_all
         end
       end
     rescue => e
