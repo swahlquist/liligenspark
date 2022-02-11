@@ -614,6 +614,7 @@ var pictureGrabber = EmberObject.extend({
 
     this.controller.set('image_preview', {
       url: preview.image_url,
+      save_url: preview.to_save_url,
       search_term: this.controller.get('image_search.term'),
       hc: preview.hc,
       external_id: preview.id,
@@ -657,7 +658,11 @@ var pictureGrabber = EmberObject.extend({
         _this.controller.set('image_search.error', i18n.t('not_online_image_search', "Cannot search, please connect to the Internet first."));
         return;
       }
-      _this.picture_search(this.controller.get('image_library'), text, user_name, locale).then(function(data) {
+      if(this.controller.get('show_library_options')) {
+        var safe = this.controller.get('safe_search');
+        var skin = this.controller.get('skin_preference');
+      }
+      _this.picture_search(this.controller.get('image_library'), text, user_name, locale, null, safe, skin).then(function(data) {
         _this.controller.set('image_search.previews', data);
         _this.controller.set('image_search.previews_loaded', true);
       }, function(err) {
@@ -665,7 +670,7 @@ var pictureGrabber = EmberObject.extend({
       });
     }
   },
-  picture_search: function(library, text, user_name, locale, fallback) {
+  picture_search: function(library, text, user_name, locale, fallback, safe, skin) {
     var _this = this;
     var search = _this.open_symbols_search;
     if(library == 'flickr') {
@@ -688,7 +693,28 @@ var pictureGrabber = EmberObject.extend({
     } else if(library == 'symbolstix') {
       text = text + " premium_repo:symbolstix"
     }
-    return search(text, user_name, locale);
+    return search(text, user_name, locale, safe).then(function(data) {
+      skin = skin || 'default';
+      var which_skin = null;
+      if((skin && skin != 'default') || app_state.get('currentUser.preferences.skin')) {
+        var s = (skin && skin != 'default') ? skin : app_state.get('currentUser.preferences.skin');
+        which_skin = CoughDrop.Board.which_skinner(s);
+      }
+      data.forEach(function(img) {
+        if(img.skins) {
+          if(skin && skin != 'default') {
+            img.image_url = CoughDrop.Board.skinned_url(img.image_url, which_skin);
+          } else if(app_state.get('currentUser.preferences.skin')) {
+            // show the skinned url, but when saving, save the original_url
+            img.to_save_url = img.image_url;
+            img.image_url = CoughDrop.Board.skinned_url(img.image_url, which_skin);
+          }
+          img.thumbnail_url = img.image_url;
+          // show the personalized url
+        }
+      }); 
+      return data;
+    });
   },
   protected_search: function(text, library, user_name, locale, fallback) {
     user_name = user_name || (this.controller && this.controller.get('board.user_name')) || '';
@@ -696,7 +722,7 @@ var pictureGrabber = EmberObject.extend({
     return persistence.ajax('/api/v1/search/protected_symbols?library=' + encodeURIComponent(library) + '&q=' + encodeURIComponent(text) + '&user_name=' + encodeURIComponent(user_name), { type: 'GET'
     }).then(function(data) {
       data.forEach(function(img) {
-        img.image_url = CoughDrop.Image.personalize_url(img.image_url, app_state.get('currentUser.user_token'));
+        img.image_url = CoughDrop.Image.personalize_url(img.image_url, app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'));
       });
       return data;
     }, function(xhr, message) {
@@ -708,10 +734,13 @@ var pictureGrabber = EmberObject.extend({
       }
     });
   },
-  open_symbols_search: function(text, user_name, locale) {
+  open_symbols_search: function(text, user_name, locale, safe) {
     var path = '/api/v1/search/symbols?q=' + encodeURIComponent(text);
     if(user_name) {
       path = path + '&user_name=' + encodeURIComponent(user_name);
+    }
+    if(!safe) { 
+      path = path + '&safe=0';
     }
     path = path + "&locale=" + (locale || 'en');
     return persistence.ajax(path, { type: 'GET'
@@ -990,14 +1019,16 @@ var pictureGrabber = EmberObject.extend({
       i.onerror = function() {
         reject({error: "image calculation failed"});
       };
-      i.src = preview.url;
+
+      i.src = preview.save_url || preview.url;
     });
 
     var button = editManager.find_button(_this.get('model.id'));
     var label = button && button.label;
     var save_image = image_load.then(function(data) {
+      var url = preview.save_url || preview.url;
       var image = CoughDrop.store.createRecord('image', {
-        url: persistence.normalize_url(preview.url),
+        url: persistence.normalize_url(url),
         content_type: preview.content_type,
         width: data.width,
         height: data.height,

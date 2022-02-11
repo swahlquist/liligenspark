@@ -4028,4 +4028,58 @@ describe Board, :type => :model do
 
     end
   end
+  
+  describe "check_for_variants" do
+    it "should return false on not-found board" do
+      expect(Board.check_for_variants('aaa')).to eq(false)
+    end
+
+    it "should have call check_for_variants on all button_images" do
+      board = OpenStruct.new
+      bi1 = OpenStruct.new
+      bi2 = OpenStruct.new
+      expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
+      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(bi1).to receive(:check_for_variants).with(false).and_return(true)
+      expect(bi2).to receive(:check_for_variants).with(false).and_return(true)
+      expect(board).to receive(:touch)
+      expect(Board.check_for_variants('aaa')).to eq(true)
+    end
+
+    it "should update on any change" do
+      board = OpenStruct.new
+      bi1 = OpenStruct.new
+      bi2 = OpenStruct.new
+      expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
+      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(bi1).to receive(:check_for_variants).with(false).and_return(true)
+      expect(bi2).to receive(:check_for_variants).with(false).and_return(true)
+      expect(board).to receive(:touch)
+      expect(Board.check_for_variants('aaa')).to eq(true)
+    end
+
+    it "should for re-check when specified" do
+      board = OpenStruct.new
+      bi1 = OpenStruct.new
+      bi2 = OpenStruct.new
+      expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
+      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(bi1).to receive(:check_for_variants).with(true).and_return(true)
+      expect(bi2).to receive(:check_for_variants).with(true).and_return(true)
+      expect(board).to receive(:touch)
+      expect(Board.check_for_variants('aaa', true)).to eq(true)
+    end
+
+    it "should not update on no change" do
+      board = OpenStruct.new
+      bi1 = OpenStruct.new
+      bi2 = OpenStruct.new
+      expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
+      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(bi1).to receive(:check_for_variants).with(false).and_return(false)
+      expect(bi2).to receive(:check_for_variants).with(false).and_return(false)
+      expect(board).to_not receive(:touch)
+      expect(Board.check_for_variants('aaa')).to eq(false)
+    end
+  end
 end

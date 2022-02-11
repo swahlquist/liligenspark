@@ -137,26 +137,59 @@ CoughDrop.Board = DS.Model.extend({
     });
     return !found_visible;
   }),
-  map_image_urls: function(map) {
+  variant_image_urls: function(skin) {
+    var local_map = this.get('image_urls') || {};
+    if(!skin || skin == 'default') { return local_map; }
+
+    var which_skin = CoughDrop.Board.which_skinner(skin);
+
+    var res = {};
+    for(var key in local_map) {
+      if(key && local_map[key]) {
+        var url = CoughDrop.Board.skinned_url(local_map[key], which_skin);
+        // Use the un-skinned address if it's all that's in the cache
+        if(!persistence.url_cache[url] && persistence.url_cache[local_map[key]] && (!persistence.url_uncache || !persistence.url_uncache[local_map[key]])) {
+          url = local_map[key];
+        }
+        res[key] = url;
+      }
+    }
+    return res;
+  },
+  map_image_urls: function(map, skins) {
+    // TODO: this may need to be done for each user, depending on their skin preferences
     map = map || {};
     var res = [];
-    var locals = this.get('local_images_with_license');
-    var local_map = this.get('image_urls') || {};
-    this.get('used_buttons').forEach(function(button) {
-      if(button && button.image_id) {
-        if(local_map[button.image_id]) {
-          res.push({id: button.image_id, url: local_map[button.image_id]});
-        } else if(map[button.image_id]) {
-          res.push({id: button.image_id, url: map[button.image_id]});
-        } else {
-          var img = locals.find(function(l) { return l.get('id') == button.image_id; });
-          if(img) {
-            res.push({id: button.image_id, url: img.get('url')});
+    var _this = this;
+    var locals = _this.get('local_images_with_license');
+    var added_urls = {};
+    var add_img = function(id, url, skin) {
+      if(!added_urls[url]) {
+        var obj = {id: id, url: url, skins: [skin]};
+        added_urls[url] = obj;
+        res.push(obj);
+      } else {
+        added_urls[url].skins.push(skin);
+      }
+    };
+    skins.forEach(function(skin) {
+      var local_map = _this.variant_image_urls(skin || 'default') || {};
+      _this.get('used_buttons').forEach(function(button) {
+        if(button && button.image_id) {
+          if(local_map[button.image_id]) {
+            add_img(button.image_id, local_map[button.image_id], skin);
+          } else if(map[button.image_id]) {
+            add_img(button.image_id, map[button.image_id], skin);
           } else {
-            res.some_missing = true;
+            var img = locals.find(function(l) { return l.get('id') == button.image_id; });
+            if(img) {
+              add_img(button.image_id, img.get('url'), skin);
+            } else {
+              res.some_missing = true;
+            }
           }
         }
-      }
+      });
     });
     return res;
   },
@@ -431,7 +464,7 @@ CoughDrop.Board = DS.Model.extend({
                     var buttons = _this.get('button_set').redepth(_this.get('id'));
                     var match = buttons.find(function(b) { return b.ref_id == ref_id; });
                     if(match) {
-                      var urls = _this.get('image_urls') || {};
+                      var urls = _this.variant_image_urls(app_state.get('referenced_user.preferences.skin')) || {};
                       // try to find cache of image
                       if(!urls[match.image_id]) {
                         urls[match.image_id] = match.image;
@@ -1274,8 +1307,8 @@ CoughDrop.Board = DS.Model.extend({
     var button_html = function(button, pos) {
       var res = "";
 
-      var original_image_url = (_this.get('image_urls') || {})[button.image_id];
-      var local_image_url = persistence.url_cache[(_this.get('image_urls') || {})[button.image_id] || 'none'] || (_this.get('image_urls') || {})[button.image_id] || 'none';
+      var original_image_url = (_this.variant_image_urls(size.skin) || {})[button.image_id];
+      var local_image_url = persistence.url_cache[original_image_url || 'none'] || original_image_url || 'none';
       var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
       var opts = Button.button_styling(button, _this, pos);
@@ -1482,5 +1515,57 @@ CoughDrop.Board.reopenClass({
     return hash;
   }
 });
+
+var skin_unis = {
+  'light': '1f3fb',
+  'medium-light': '1f3fc',
+  'medium': '1f3fd',
+  'medium-dark': '1f3fe',
+  'dark': '1f3ff',
+};
+CoughDrop.Board.which_skinner = function(skin) {
+  var which_skin = function() { return skin; };
+  if(!skin.match(/light|medium-light|medium|medium-dark|dark/)) {
+    var weights = skin.match(/-(\d)(\d)(\d)(\d)(\d)(\d)$/);
+    var df = weights ? parseInt(weights[1], 10) : 2;
+    var d = weights ? parseInt(weights[2], 10) : 2;
+    var md = weights ? parseInt(weights[3], 10) : 2;
+    var m = weights ? parseInt(weights[4], 10) : 2;
+    var ml = weights ? parseInt(weights[5], 10) : 2;
+    var l = weights ? parseInt(weights[6], 10) : 2;
+    var sum = df + d + md + m + ml + l;
+    df = df / sum * 100;
+    d = d / sum * 100;
+    md = md / sum * 100;
+    m = m / sum * 100;
+    ml = ml / sum * 100;
+    l = l / sum * 100;
+    which_skin = function(url) {
+      var sum = Array.from(url + "::" + skin).map(function(c) { return c.charCodeAt(0); }).reduce(function(a, b) { return a + b; });
+      var mod = sum % 100;
+      if(mod < df) { return 'default'; }
+      else if(mod < df + d) { return 'dark'; }
+      else if(mod < df + d + md) { return 'medium-dark'; }
+      else if(mod < df + d + md + m) { return 'medium'; }
+      else if(mod < df + d + md + m + ml) { return 'medium-light'; }
+      else { return 'light'; }
+    }
+  }
+  return which_skin;
+};
+CoughDrop.Board.skinned_url = function(url, which_skin) {
+  if(url.match(/varianted-skin\.\w+$/)) {
+    return url.replace(/varianted-skin\./, 'variant-' + which_skin(url) + '.');
+  } else if(url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)) {
+    var uni = skin_unis[which_skin(url)];
+    if(uni) {
+      return url.replace(/-var\w+UNI/g, '-' + uni);
+    } else {
+      return url;
+    }
+  } else {
+    return url;
+  }
+};
 
 export default CoughDrop.Board;

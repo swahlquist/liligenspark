@@ -28,6 +28,7 @@ export default modal.ModalController.extend({
     this.set('board', this.get('model.board'));
     this.set('search_locale', this.get('board.locale') || 'en');
     this.set('last_values', null);
+    this.set('safe_search', true);
     this.set('model', button);
     button.set('translations_hash', this.get('board').translations_for_button(button.id));
     this.set('handle_updates', true);
@@ -225,6 +226,17 @@ export default modal.ModalController.extend({
       {name: i18n.t('large_links', "Large navigation links"), id: 'large'},
       {name: i18n.t('huge_links', "Huge navigation links"), id: 'huge'},
       {name: i18n.t('small_links', "Small navigation links"), id: 'small'}
+    ];
+  }),
+  skin_options: computed(function() {
+    return [
+      {name: i18n.t('preferred_skin_color', "[ Skin Tone Preference ]"), id: ''},
+      {name: i18n.t('original_tone', "User-Preferred Tone"), id: 'default'},
+      {name: i18n.t('dark_skin_tone', "🧑🏿 Dark Skin Tone"), id: 'dark'},
+      {name: i18n.t('medium_dark_skin_tone', "🧑🏾 Medium-Dark Skin Tone"), id: 'medium-dark'},
+      {name: i18n.t('medium_skin_tone', "🧑🏽 Medium Skin Tone"), id: 'medium'},
+      {name: i18n.t('medium_light_skin_tone', "🧑🏼 Medium-Light Skin Tone"), id: 'medium-light'},
+      {name: i18n.t('light_skin_tone', "🧑🏻 Light Skin Tone"), id: 'light'},
     ];
   }),
   book_background_options: computed(function() {
@@ -922,6 +934,9 @@ export default modal.ModalController.extend({
     },
     select_image_preview: function(url) {
       contentGrabbers.pictureGrabber.select_image_preview(url);
+    },
+    library_options: function() {
+      this.set('show_library_options', !this.get('show_library_options'));
     },
     testVocalization: function() {
       // TODO: this doesn't handle multi-part vocaliations well

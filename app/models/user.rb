@@ -618,7 +618,7 @@ class User < ActiveRecord::Base
       'substitutions', 'substitute_contractions', 'auto_capitalize', 'dim_level',
       'prevent_button_interruptions', 'utterance_interruptions', 'prevent_utterance_repeat',
       'recent_cleared_phrases', 'clear_vocalization_history', 'clear_vocalization_history_count', 
-      'clear_vocalization_history_minutes', 'speak_mode_edit'
+      'clear_vocalization_history_minutes', 'speak_mode_edit', 'skin'
     ]
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']

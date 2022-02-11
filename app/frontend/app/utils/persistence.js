@@ -2014,6 +2014,7 @@ var persistence = EmberObject.extend({
       });
     }
 
+    // all_image_urls is a hash of base urls, not skinned urls
     var all_image_urls = {};
     var get_images = get_remote_revisions.then(function() {
       return persistence.queue_sync_action('find_all_image_urls', sync_id, function() {
@@ -2153,14 +2154,24 @@ var persistence = EmberObject.extend({
                 importantIds.push("dataCache_" + next.image);
               }
 
-              board.map_image_urls(all_image_urls).forEach(function(image) {
+              // TODO: at this point we need to know all the syncing
+              // users so we can store for all of their skin preferences
+              var all_skins = ['default', user.get('preferences.skin') || 'default'];
+              if(!user.get('preferences.skip_supervisee_sync') && user.get('supervisees')) {
+                user.get('supervisees').forEach(function(sup) {
+                  all_skins.push(sup.skin || 'default');
+                })
+              }
+    
+              var image_map = board.map_image_urls(all_image_urls, all_skins.uniq());
+              image_map.forEach(function(image) {
                 importantIds.push("image_" + image.id);
                 var keep_big = !!(board.get('grid.rows') < 3 || board.get('grid.columns') < 6);
                 if(CoughDrop.remote_url(image.url)) {
                   // TODO: should this be app_state.currentUser instead of the currently-syncing user?
                   var personalized = image.url;
                   if(CoughDrop.Image && CoughDrop.Image.personalize_url) {
-                    personalized = CoughDrop.Image.personalize_url(image.url, user.get('user_token'));
+                    personalized = CoughDrop.Image.personalize_url(image.url, user.get('user_token'), user.get('preferences.skin'));
                   }
 
                   visited_board_promises.push(//persistence.queue_sync_action('store_button_image', sync_id, function() {
@@ -2183,7 +2194,8 @@ var persistence = EmberObject.extend({
                 }
               });
               if(board.get('image_urls')) {
-                var urls = board.get('image_urls');
+                // Includes just the default URLs
+                var urls = board.get('image_urls'); //(user.get('preferences.skin'));
                 for(var image_id in urls) {
                   all_image_urls[image_id] = urls[image_id];
                 }
@@ -2236,13 +2248,20 @@ var persistence = EmberObject.extend({
                       var tmp_board = CoughDrop.store.createRecord('board', $.extend({}, b, {id: null}));
                       var missing_image_ids = [];
                       var missing_sound_ids = [];
-                      var local_image_map = tmp_board.get('image_urls') || {};
+                      // TODO: does this need to be just for the current user, or the whole map?
+                      var local_image_map = tmp_board.variant_image_urls(user.get('preferences.skin')) || {};
                       var local_sound_map = tmp_board.get('sound_urls') || {};
                       tmp_board.get('used_buttons').forEach(function(button) {
                         if(button.image_id) {
                           var valid = false;
-                          var mapped_url = all_image_urls[button.image_id] || local_image_map[button.image_id];
+                          var mapped_url = local_image_map[button.image_id]; // || all_image_urls[button.image_id];
                           if(mapped_url) {
+                            if((persistence.url_cache && persistence.url_cache[mapped_url]) && (!persistence.url_uncache || !persistence.url_uncache[mapped_url])) {
+                              valid = true;
+                            }
+                          } else if(all_image_urls[button.image_id]) {
+                            // If there is at least a default image, you can use that
+                            mapped_url = all_image_urls[button.image_id];
                             if((persistence.url_cache && persistence.url_cache[mapped_url]) && (!persistence.url_uncache || !persistence.url_uncache[mapped_url])) {
                               valid = true;
                             }

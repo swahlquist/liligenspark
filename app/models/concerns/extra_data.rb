@@ -99,7 +99,7 @@ module ExtraData
       self.data["extra_data_#{type}_checksum"] = new_checksum
       if type == 'private'
         self.data.delete('private_cdn_url')
-        self.data.delete('remote_paths')
+        self.data.delete('remote_paths') if old_checksum != new_checksum
         self.data.delete('private_cdn_revision')
       else
         self.data['extra_data_public'] = true

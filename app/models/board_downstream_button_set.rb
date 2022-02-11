@@ -306,6 +306,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           button_set.data['remote_paths'][remote_hash]['checksum'] = new_checksum
         elsif res && res[:path]
           RemoteAction.where(path: res[:path], action: 'delete').delete_all
+          button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
+          button_set.data['remote_paths'][remote_hash]['checksum'] = new_checksum
         end
       end
     rescue => e

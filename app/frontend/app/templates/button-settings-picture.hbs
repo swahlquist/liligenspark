@@ -6,10 +6,13 @@
       <div style='margin-top: -5px; width: 200px; float: left;'>
         {{bound-select select_class="form-control skip_select" select_id="image_library" short=true content=image_libraries selection=image_library action=(action (mut image_library)) }}
       </div>
-      <div style="clear: left;"></div>
     {{else}}
       <div style='float: left; width: 255px; font-size: 12px;'>{{t "Library: opensymbols.org" key='library_open_symbols'}}</div>
     {{/if}}
+    {{#if app_state.feature_flags.skin_tones}}
+      <div style='float: left; width: 50px; margin-top: -5px; margin-left: 5px;'><button class='btn btn-sm btn-default' {{action 'library_options'}} style='height: 25px; padding-top: 3px;'>{{t "options" key='options'}}</button></div>
+    {{/if}}
+    <div style="clear: left;"></div>
     <div style='font-size: 12px; margin-top: 5px;' class='text-muted'>
       <em>{{t "Enter a search term, or paste a URL or file" key='search_or_paste'}}</em>
     </div>
@@ -45,6 +48,19 @@
       </button>
       <input type="file" name="image_upload" id="image_upload" accept="image/*"/>
     </span>
+    {{#if show_library_options}}
+      <div style='margin-top: 3px;'>
+        <div style='width: calc(100% - 170px); float: left;'>
+          {{bound-select select_class="form-control skip_select" select_id="skin_preference" short=true content=skin_options selection=skin_preference action=(action (mut skin_preference)) }}
+        </div>
+        <div style='width: 150px; float: left; margin-left: 5px;'>
+          <div class='checkbox big_checkbox' style='margin-top: -8px; padding-top: 10px;'>
+            <label>{{input type='checkbox' checked=safe_search}} {{t "safe search" key='safe_search'}}</label>
+          </div>
+        </div>
+      </div>
+      <div style='clear: left;'></div>
+    {{/if}}
   </div>
 
   <div style="text-align: center;" class={{if webcam 'shown' 'hidden'}}>

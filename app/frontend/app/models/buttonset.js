@@ -572,7 +572,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             }
             emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('blank.png'));
             if(emberGet(button, 'image') && CoughDropImage.personalize_url) {
-              emberSet(button, 'image', CoughDropImage.personalize_url(button.image, app_state.get('currentUser.user_token')));
+              emberSet(button, 'image', CoughDropImage.personalize_url(button.image, app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin')));
             }
             emberSet(button, 'on_same_board', emberGet(button, 'steps') === 0);
   
@@ -981,7 +981,7 @@ CoughDrop.Buttonset = DS.Model.extend({
 
 CoughDrop.Buttonset.fix_image = function(button, images) {
   if(button.image && CoughDropImage.personalize_url) {
-    button.image = CoughDropImage.personalize_url(button.image, app_state.get('currentUser.user_token'));
+    button.image = CoughDropImage.personalize_url(button.image, app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'));
   }
   var image = images.findBy('id', button.image_id);
   if(image) {

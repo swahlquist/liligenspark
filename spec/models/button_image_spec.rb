@@ -308,4 +308,142 @@ describe ButtonImage, :type => :model do
       expect(BoardButtonImage.where(:button_image_id => s.id).count).to eq(0)
     end
   end
+
+  # def check_for_variants(force=false)
+  #   return false if self.settings['checked_for_variants'] && !force
+  #   if self.url && !self.url.match(/\.varianted-skin\./) && !self.url.match(/-var\w+UNI/)
+  #     if self.url.match(/\/libraries\/twemoji\//) && self.settings['external_id']
+  #       token = ENV['OPENSYMBOLS_TOKEN']
+  #       url = "https://www.opensymbols.org/api/v2/symbols/twemoji/#{self.settings['external_id']}"
+  #       res = Typhoeus.get(url + "?search_token=#{token}", headers: { 'Accept-Encoding' => 'application/json' }, timeout: 10, :ssl_verifypeer => false)
+  #       json = JSON.parse(res.body) rescue nil
+  #       if json && json['symbol'] && json['symbol']['image_url'] && json['symbol']['image_url'] != self.url
+  #         self.settings['pre_variant_url'] = self.url
+  #         self.url = json['symbol']['image_url']
+  #         self.settings['checked_for_variants'] = true
+  #         self.save
+  #         return true
+  #       end
+  #     elsif self.url.match(/\/libraries\//)
+  #       extension = (self.url.split(/\//)[-1] || '').split(/\./)[-1]
+  #       new_url = self.url + '.varianted-skin.' + extension
+  #       req = Typhoeus.head(new_url)
+  #       if req.success?
+  #         self.settings['pre_variant_url'] = self.url
+  #         self.url = new_url
+  #         self.settings['checked_for_variants'] = true
+  #         self.save
+  #         return true
+  #       end
+  #     end
+  #   end
+  #   self.settings['checked_for_variants'] = true
+  #   self.save
+  #   return false
+  # end
+  describe "check_for_variants" do
+    it "should not re-check if already checked and not forced" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/test/pic.png', settings: {'checked_for_variants' => true})
+      expect(Typhoeus).to_not receive(:head)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to_not receive(:save)
+      expect(bi.check_for_variants).to eq(false)
+    end
+
+    it "should re-check if forced, even if already checked" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/test/pic.png', settings: {'checked_for_variants' => true})
+      obj = OpenStruct.new()
+      expect(obj).to receive(:success?).and_return(true)
+      expect(Typhoeus).to receive(:head).with("https://example.com/libraries/test/pic.png.varianted-skin.png").and_return(obj)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants(true)).to eq(true)
+      expect(bi.url).to eq("https://example.com/libraries/test/pic.png.varianted-skin.png")
+      expect(bi.settings['pre_variant_url']).to eq("https://example.com/libraries/test/pic.png")
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+
+    it "should return false if already a known variant url" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/test/pic.png.varianted-skin.png', settings: {})
+      expect(Typhoeus).to_not receive(:head)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants(true)).to eq(false)
+      expect(bi.url).to eq("https://example.com/libraries/test/pic.png.varianted-skin.png")
+      expect(bi.settings['checked_for_variants']).to eq(true)
+      expect(bi.settings['pre_variant_url']).to eq(nil)
+
+      bi = ButtonImage.create(url: 'https://example.com/libraries/twemoji/pic-var12345UNI.svg', settings: {'external_id' => 'asdf'})
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants(true)).to eq(false)
+      expect(bi.url).to eq("https://example.com/libraries/twemoji/pic-var12345UNI.svg")
+      expect(bi.settings['checked_for_variants']).to eq(true)
+      expect(bi.settings['pre_variant_url']).to eq(nil)
+    end
+
+    it "should check twemoji urls with an external id" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/twemoji/pic-cool.svg', settings: {'external_id' => '1188'})
+      obj = OpenStruct.new(body: {}.to_json)
+      expect(Typhoeus).to_not receive(:head)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v2/symbols/twemoji/1188?search_token=#{ENV['OPENSYMBOLS_TOKEN']}", {headers: {'Accept-Encoding' => 'application/json'}, ssl_verifypeer: false, timeout: 10}).and_return(obj)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants).to eq(false)
+      expect(bi.url).to eq("https://example.com/libraries/twemoji/pic-cool.svg")
+      expect(bi.settings['pre_variant_url']).to eq(nil)
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+
+    it "should update twemoji urls if a result is returned" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/twemoji/pic-cool.svg', settings: {'external_id' => '1188'})
+      obj = OpenStruct.new(body: {
+        'symbol' => {
+          'image_url' => 'https://example.com/libraries/twemoji/pic-varfffUNI-cool.svg'
+        }
+      }.to_json)
+      expect(Typhoeus).to_not receive(:head)
+      expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v2/symbols/twemoji/1188?search_token=#{ENV['OPENSYMBOLS_TOKEN']}", {headers: {'Accept-Encoding' => 'application/json'}, ssl_verifypeer: false, timeout: 10}).and_return(obj)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants).to eq(true)
+      expect(bi.url).to eq("https://example.com/libraries/twemoji/pic-varfffUNI-cool.svg")
+      expect(bi.settings['pre_variant_url']).to eq('https://example.com/libraries/twemoji/pic-cool.svg')
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+
+    it "should check libary urls for a varianted url" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/test/pic.png', settings: {})
+      obj = OpenStruct.new()
+      expect(obj).to receive(:success?).and_return(false)
+      expect(Typhoeus).to receive(:head).with("https://example.com/libraries/test/pic.png.varianted-skin.png").and_return(obj)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants).to eq(false)
+      expect(bi.url).to eq("https://example.com/libraries/test/pic.png")
+      expect(bi.settings['pre_variant_url']).to eq(nil)
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+    
+    it "should update library urls if a result is returned" do
+      bi = ButtonImage.create(url: 'https://example.com/libraries/test/pic.png', settings: {})
+      obj = OpenStruct.new()
+      expect(obj).to receive(:success?).and_return(true)
+      expect(Typhoeus).to receive(:head).with("https://example.com/libraries/test/pic.png.varianted-skin.png").and_return(obj)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants).to eq(true)
+      expect(bi.url).to eq("https://example.com/libraries/test/pic.png.varianted-skin.png")
+      expect(bi.settings['pre_variant_url']).to eq("https://example.com/libraries/test/pic.png")
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+
+    it "should not check non-library urls" do
+      bi = ButtonImage.create(url: 'https://example.com/libs/test/pic.png', settings: {})
+      expect(Typhoeus).to_not receive(:head)
+      expect(Typhoeus).to_not receive(:get)
+      expect(bi).to receive(:save)
+      expect(bi.check_for_variants).to eq(false)
+      expect(bi.url).to eq("https://example.com/libs/test/pic.png")
+      expect(bi.settings['pre_variant_url']).to eq(nil)
+      expect(bi.settings['checked_for_variants']).to eq(true)
+    end
+  end
 end

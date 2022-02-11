@@ -112,6 +112,9 @@ export default modal.ModalController.extend({
       var controller = this;
       controller.set('linking', true);
       var user = this.get('model.user');
+      if(!user.get('user_name') || user.get('user_name').length < 2) {
+        return;
+      }
 
       if(this.get('external_device')) {
         var str = this.get('external_device');

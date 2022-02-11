@@ -92,6 +92,58 @@ export default Controller.extend({
     {name: i18n.t('highlight_all', "Highlight All Buttons on Selection"), id: "all"},
     {name: i18n.t('highlight_spoken', "Highlight Spoken Buttons on Selection"), id: "spoken"},
   ],
+  skin_options: computed(function() {
+    return [
+      {label: i18n.t('default_skin_tones', "Original Skin Tone"), id: 'default', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-varxxxUNI-200d-1f9b2.svg'},
+      {label: i18n.t('mix_of_skin_tones', "Mix of Skin Tones"), id: 'mix', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f308.svg'},
+      {label: i18n.t('dark_skin_tone', "Dark Skin Tone"), id: 'dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3ff-200d-1f9b2.svg'},
+      {label: i18n.t('medium_dark_skin_tone', "Medium-Dark Skin Tone"), id: 'medium-dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fe-200d-1f9b2.svg'},
+      {label: i18n.t('medium_skin_tone', "Medium Skin Tone"), id: 'medium', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fd-200d-1f9b2.svg'},
+      {label: i18n.t('medium_light_skin_tone', "Medium-Light Skin Tone"), id: 'medium-light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fc-200d-1f9b2.svg'},
+      {label: i18n.t('light_skin_tone', "Light Skin Tone"), id: 'light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fb-200d-1f9b2.svg'},
+      {label: i18n.t('limit_tones_to', "Limit Tones To..."), id: 'mix_only', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2705.svg'},
+      {label: i18n.t('show_tones_preference_for', "Show Preference For..."), id: 'mix_prefer', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f49f.svg'},
+    ];
+  }),
+  current_skin: computed('pending_preferences.skin', function() {
+    var options = this.get('skin_options');
+    var pref = this.get('pending_preferences.skin') || 'default';
+    var parts = pref.split(/::/);
+    var option = options.find(function(o) { return o.id == parts[0]; });
+    option = option || options[0];
+    var res = {
+      label: option.label,
+      image_urls: [option.image_url]
+    };
+    if(parts[0] == 'mix_only' || parts[0] == 'mix_prefer') {
+      res.options = [
+        {label: i18n.t('default_skin_tones', "Original Skin Tone"), id: 'default', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-varxxxUNI.svg'},
+        {label: i18n.t('dark_skin_tone', "Dark Skin Tone"), id: 'dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3ff.svg'},
+        {label: i18n.t('medium_dark_skin_tone', "Medium-Dark Skin Tone"), id: 'medium_dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fe.svg'},
+        {label: i18n.t('medium_skin_tone', "Medium Skin Tone"), id: 'medium', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fd.svg'},
+        {label: i18n.t('medium_light_skin_tone', "Medium-Light Skin Tone"), id: 'medium_light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fc.svg'},
+        {label: i18n.t('light_skin_tone', "Light Skin Tone"), id: 'light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fb.svg'},
+      ];
+      if(parts[2]) {
+        var rules = parts[2].split(/-/).pop();
+        for(var idx = 0; idx < 6; idx++) {
+          var val =  parseInt(rules[idx] || '0', 10)
+          if(parts[0] == 'mix_only') {
+            res.options[idx].checked = val > 0;
+          } else if(parts[0] == 'mix_prefer') {
+            res.options[idx].checked = val > 1;
+          }
+        }
+      }
+    }
+    return res;
+  }),
+  update_current_skin: observer('current_skin.options.@each.checked', function() {
+    if(this.get('current_skin.options') && this.get('pending_preferences.skin')) {
+      var parts = this.get('pending_preferences.skin').split(/::/);
+      this.send('choose_skin', parts[0]);
+    }
+  }),
   some_highlighted_buttons: computed('pending_preferences.highlighted_buttons', function() {
     return this.get('pending_preferences.highlighted_buttons') && this.get('pending_preferences.highlighted_buttons') != 'none';
   }),
@@ -732,6 +784,23 @@ export default Controller.extend({
         value = "";
       }
       this.set(attribute, value);
+    },
+    choose_skin: function(id) {
+      var skin = id;
+      if(id.match(/^mix/)) {
+        skin = skin + '::' + this.get('model.id');
+      }
+      if(id == 'mix_only' || id == 'mix_prefer') {
+        skin = skin + "::limit-";
+        (this.get('current_skin.options') || []).forEach(function(opt) {
+          if(opt.checked) {
+            skin = skin + (id == 'mix_only' ? '1' : '3');
+          } else {
+            skin = skin + (id == 'mix_only' ? '0' : '1');
+          }
+        });
+      }
+      this.set('pending_preferences.skin', skin);
     },
     phrases: function() {
       this.set('model.preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));

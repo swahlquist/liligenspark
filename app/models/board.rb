@@ -1667,4 +1667,17 @@ class Board < ActiveRecord::Base
     end
     missing
   end
+
+  def self.check_for_variants(board_id, force=false)
+    board = Board.find_by_path(board_id)
+    return false unless board
+    changed = false
+    board.button_images.each do |bi|
+      changed = true if bi.check_for_variants(force)
+    end
+    if changed
+      board.touch
+    end
+    !!changed
+  end
 end

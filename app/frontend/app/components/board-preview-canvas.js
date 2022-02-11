@@ -155,7 +155,7 @@ export default Component.extend({
                 draw_button(button, x, y, true);
 
                 if(show_links && !button.hidden && button.image_id && board.get('image_urls') && board.get('image_urls')[button.image_id]) {
-                  var url = board.get('image_urls')[button.image_id];
+                  var url = board.variant_image_urls(app_state.get('currentUser.preferences.skin'))[button.image_id];
                   (function(button, x, y, url) {
                     var draw = function(url) {
                       var img = new Image();

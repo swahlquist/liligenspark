@@ -1516,7 +1516,16 @@ var editManager = EmberObject.extend({
     var need_everything_local = app_state.get('speak_mode') || !persistence.get('online');
     if(app_state.get('speak_mode')) {
       controller.update_button_symbol_class();
-      if(!ignore_fast_html && board.get('fast_html') && board.get('fast_html.width') == controller.get('width') && board.get('fast_html.height') == controller.get('height') && board.get('current_revision') == board.get('fast_html.revision') && board.get('fast_html.label_locale') == app_state.get('label_locale') && board.get('fast_html.display_level') == board_level && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') && board.get('fast_html.inflection_shift') == app_state.get('inflection_shift') && board.get('focus_id') == board.get('fast_html.focus_id')) {
+      if(!ignore_fast_html && board.get('fast_html') 
+            && board.get('fast_html.width') == controller.get('width') 
+            && board.get('fast_html.height') == controller.get('height') 
+            && board.get('current_revision') == board.get('fast_html.revision') 
+            && board.get('fast_html.label_locale') == app_state.get('label_locale') 
+            && board.get('fast_html.display_level') == board_level 
+            && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') 
+            && board.get('fast_html.inflection_shift') == app_state.get('inflection_shift') 
+            && board.get('fast_html.skin') == app_state.get('referenced_user.preferences.skin') 
+            && board.get('focus_id') == board.get('fast_html.focus_id')) {
         CoughDrop.log.track('already have fast render');
         resume_scanning();
         return;
@@ -1528,6 +1537,7 @@ var editManager = EmberObject.extend({
           label_locale: app_state.get('label_locale'),
           height: controller.get('height'),
           width: controller.get('width'),
+          skin: app_state.get('referenced_user.preferences.skin'),
           extra_pad: controller.get('extra_pad'),
           inner_pad: controller.get('inner_pad'),
           display_level: board_level,
@@ -1553,7 +1563,7 @@ var editManager = EmberObject.extend({
     });
 
 
-    var image_urls = board.get('image_urls');
+    var image_urls = board.variant_image_urls(app_state.get('referenced_user.preferences.skin'));
     var sound_urls = board.get('sound_urls');
     prefetch.then(function() {
       CoughDrop.log.track('creating buttons');
@@ -1815,7 +1825,7 @@ var editManager = EmberObject.extend({
           button.check_for_parts_of_speech();
         }
         var locale = _this.controller.get('model.locale') || 'en';
-        contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), locale, true).then(function(data) {
+        contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), locale, true, true, null).then(function(data) {
           button = _this.find_button(id);
           var image = data[0];
           if(image && button && button.label && (!button.image || force_refresh)) {
@@ -1834,6 +1844,7 @@ var editManager = EmberObject.extend({
               protected: image.protected,
               protected_source: image.protected_source,
               finding_user_name: image.finding_user_name,
+              save_url: image.to_save_url,
               external_id: image.id,
               license: license
             };

@@ -25,7 +25,7 @@
       </div>
       {{#unless save_option}}
         <div class='form-group'>
-          <label class='control-label col-sm-3'>{{t "Promt Symbol(s)" key='prompt_symbols'}}</label>
+          <label class='control-label col-sm-3'>{{t "Prompt Symbol(s)" key='prompt_symbols'}}</label>
           <div class='col-sm-6'>
             {{bound-select select_class="form-control" select_id="default_symbols" content=symbol_libraries selection=settings.default_library action=(action (mut settings.default_library)) }}
           </div>

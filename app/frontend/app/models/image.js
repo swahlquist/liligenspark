@@ -82,7 +82,7 @@ CoughDrop.Image = DS.Model.extend({
     }
   }),
   personalized_url: computed('url', 'app_state.currentUser.user_token', function() {
-    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'));
+    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.sessionUser.preferences.skin'));
   }),
   best_url: computed('personalized_url', 'data_url', function() {
     return this.get('data_url') || this.get('personalized_url') || "";
@@ -110,12 +110,17 @@ CoughDrop.Image = DS.Model.extend({
 });
 
 CoughDrop.Image.reopenClass({
-  personalize_url: function(url, token) {
+  personalize_url: function(url, token, skin) {
     url = url || '';
+    var res = url
     if(url.match(/api\/v1\//) && url.match(/lessonpix/) && token) {
-      return url + "?user_token=" + token;
+      res = url + "?user_token=" + token;
     }
-    return url;
+    if(skin && skin != 'default') {
+      var which_skin = CoughDrop.Board.which_skinner(skin);
+      res = CoughDrop.Board.skinned_url(url, which_skin);
+    }
+    return res;
   },
   mimic_server_processing: function(record, hash) {
     if(record.get('data_url')) {

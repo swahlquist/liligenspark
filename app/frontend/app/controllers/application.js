@@ -1105,7 +1105,7 @@ export default Controller.extend({
       if(image && image.get('personalized_url')) {
         image_url = image.get('personalized_url');
       } else if(button.get('original_image_url') && CoughDropImage.personalize_url) {
-        image_url = CoughDropImage.personalize_url(button.get('original_image_url'), app_state.get('currentUser.user_token'));
+        image_url = CoughDropImage.personalize_url(button.get('original_image_url'), app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'));
       }
       var obj = {
         label: button.label,

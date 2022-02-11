@@ -155,4 +155,37 @@ class ButtonImage < ActiveRecord::Base
     end
     true
   end
+
+  def check_for_variants(force=false)
+    return false if self.settings['checked_for_variants'] && !force
+    if self.url && !self.url.match(/\.varianted-skin\./) && !self.url.match(/-var\w+UNI/)
+      if self.url.match(/\/libraries\/twemoji\//) && self.settings['external_id']
+        token = ENV['OPENSYMBOLS_TOKEN']
+        url = "https://www.opensymbols.org/api/v2/symbols/twemoji/#{self.settings['external_id']}"
+        res = Typhoeus.get(url + "?search_token=#{token}", headers: { 'Accept-Encoding' => 'application/json' }, timeout: 10, :ssl_verifypeer => false)
+        json = JSON.parse(res.body) rescue nil
+        if json && json['symbol'] && json['symbol']['image_url'] && json['symbol']['image_url'] != self.url
+          self.settings['pre_variant_url'] = self.url
+          self.url = json['symbol']['image_url']
+          self.settings['checked_for_variants'] = true
+          self.save
+          return true
+        end
+      elsif self.url.match(/\/libraries\//)
+        extension = (self.url.split(/\//)[-1] || '').split(/\./)[-1]
+        new_url = self.url + '.varianted-skin.' + extension
+        req = Typhoeus.head(new_url)
+        if req.success?
+          self.settings['pre_variant_url'] = self.url
+          self.url = new_url
+          self.settings['checked_for_variants'] = true
+          self.save
+          return true
+        end
+      end
+    end
+    self.settings['checked_for_variants'] = true
+    self.save
+    return false
+  end
 end

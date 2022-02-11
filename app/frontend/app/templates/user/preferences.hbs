@@ -83,6 +83,49 @@
         {{bound-select select_class="form-control" select_id="preferred_symbols" content=symbolsList selection=pending_preferences.preferred_symbols action=(action (mut pending_preferences.preferred_symbols)) }}
       </div>
     </div>
+    {{#if app_state.feature_flags.skin_tones}}
+      <div class="form-group">
+        <label for="preferred_skin" class="col-sm-3 control-label">{{t "Preferred Skin Tone" key='preferred_skin_tone'}}</label>
+        <div class="col-sm-5">
+          <span class="dropdown dropup" style="display: inline-block; width: 100%;">
+            <button class='btn btn-default symbol_target small' data-toggle="dropdown" style='width: 100%; text-align: left; white-space: nowrap; overflow: hidden;'>
+              <span class='text'>
+                {{#each current_skin.image_urls as |url|}}
+                  <img src={{url}} />
+                {{/each}}
+                {{current_skin.label}}
+              </span>
+              <span class='caret' style='position: absolute; right: 5px; top: 15px;'></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style='max-height: 225px; overflow: auto;'>
+              {{#each skin_options as |option|}}
+                <li role="presentation">
+                  <a role="menuitem" class='symbol_target' href="#" tabindex="-1" {{action "choose_skin" option.id}}>
+                    <img src={{option.image_url}} />
+                    {{option.label}}
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </span>
+          {{#if current_skin.options}}
+            <div style='margin-left: 15px;'>
+              {{#each current_skin.options as |option|}}
+                <div>
+                  <div class='checkbox big_checkbox'>
+                    <label>
+                      {{input type='checkbox' checked=option.checked}}
+                      <img src={{option.image_url}} style='width: 30px; height: 30px;'/>
+                      {{option.label}}
+                    </label>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
   {{/preference-box}}
   {{#preference-box title="Styling" glyph='glyphicon glyphicon-picture' title_key='styling'}}
     <span style='display: none;'>{{t "Styling" key='styling'}}</span>
