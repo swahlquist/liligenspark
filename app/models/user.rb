@@ -319,6 +319,9 @@ class User < ActiveRecord::Base
     if !FeatureFlags.user_created_after?(self, 'hidden_buttons')
       self.settings['preferences']['hidden_buttons'] = 'hide' if self.settings['preferences']['hidden_buttons'] == nil
     end
+    if FeatureFlags.user_created_after?(self, 'skin_tones')
+      self.settings['preferences']['skin'] = 'mix#{rand(999)}'
+    end
     if !FeatureFlags.user_created_after?(self, 'symbol_background')
       self.settings['preferences']['symbol_background'] = 'white' if self.settings['preferences']['symbol_background'] == nil
     end
