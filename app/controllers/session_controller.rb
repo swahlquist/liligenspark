@@ -608,6 +608,7 @@ class SessionController < ApplicationController
     end
   
     url = "#{request.protocol}#{request.host_with_port}/saml/consume"
+    url += "?org_id=#{org.global_id}" if org
     # url += (url.match(/\?/) ? '&' : '?') + "code=#{code}" if code
     settings.assertion_consumer_service_url = url
     meta_url = "#{request.protocol}#{request.host_with_port}/saml/metadata"
