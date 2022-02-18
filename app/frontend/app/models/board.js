@@ -1525,7 +1525,9 @@ var skin_unis = {
 };
 CoughDrop.Board.which_skinner = function(skin) {
   var which_skin = function() { return skin; };
-  if(!skin.match(/default|light|medium-light|medium|medium-dark|dark/)) {
+  if(skin == 'original') {
+    which_skin = function() { return 'default'; }
+  } else if(!skin.match(/default|light|medium-light|medium|medium-dark|dark/)) {
     var weights = skin.match(/-(\d)(\d)(\d)(\d)(\d)(\d)$/);
     var df = weights ? parseInt(weights[1], 10) : 2;
     var d = weights ? parseInt(weights[2], 10) : 2;
@@ -1558,6 +1560,8 @@ CoughDrop.Board.skinned_url = function(url, which_skin) {
     var which = which_skin(url);
     if(which != 'default') {
       return url.replace(/varianted-skin\./, 'variant-' + which + '.');
+    } else {
+      return url;
     }
   } else if(url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)) {
     var which = which_skin(url);
