@@ -251,7 +251,7 @@ module Converters::CoughDrop
           item['ref_url'] = item['data']
         elsif item['url']
           record = klass.create(:user => opts['user'])
-          item['ref_url'] = item['url']
+          item['ref_url'] = item['ext_coughdrop_unskinned_url'] || item['url']
         end
         if record && !hashes[item['id']]
           item.delete('data')

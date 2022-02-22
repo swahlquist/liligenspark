@@ -1216,6 +1216,34 @@ describe Converters::CoughDrop do
       expect(board.settings['buttons'][1]['image_id']).to_not eq(nil)
     end
 
+    it "should use the unskinned url if provided" do
+      u = User.create
+      json = {
+        'buttons' => [
+          {'id' => '2', 'label' => 'cat', 'image_id' => '111'},
+          {'id' => '3', 'label' => 'hat', 'image_id' => '222'}
+        ],
+        'images' => [
+          {'id' => '111', 'url' => 'https://www.example.com/pic.png'},
+          {'id' => '222', 'url' => 'https://www.example.com/pic.png', 'ext_coughdrop_unskinned_url' => 'https://www.example.com/pic2.png'},
+        ],
+        'id' => 'asdfasdf'
+      }
+      board = Converters::CoughDrop.from_external(json, {'user' => u})
+      expect(board).to_not eq(nil)
+      expect(board.settings['buttons'].length).to eq(2)
+      expect(board.settings['buttons'][0]['label']).to eq('cat')
+      expect(board.settings['buttons'][0]['image_id']).to_not eq(nil)
+      bi = ButtonImage.find_by_global_id(board.settings['buttons'][0]['image_id'])
+      expect(bi).to_not eq(nil)
+      expect(bi.settings['source_url']).to eq("https://www.example.com/pic.png")
+      expect(board.settings['buttons'][1]['label']).to eq('hat')
+      expect(board.settings['buttons'][1]['image_id']).to_not eq(nil)    
+      bi = ButtonImage.find_by_global_id(board.settings['buttons'][1]['image_id'])
+      expect(bi).to_not eq(nil)
+      expect(bi.settings['source_url']).to eq("https://www.example.com/pic2.png")
+    end
+
     it "should error without a user" do
       expect{ Converters::CoughDrop.from_external({}, {'user' => nil}) }.to raise_error("user required")
     end

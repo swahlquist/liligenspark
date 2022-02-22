@@ -156,11 +156,15 @@ module Uploadable
     end
   end
 
-  def raster_url
+  def raster_url(skinned_url=nil)
     if self.settings && self.settings['rasterized'] == 'from_url' && self.url
-      "#{self.url}.raster.png"
+      "#{skinned_url || self.url}.raster.png"
     elsif self.settings && self.settings['rasterized'] == 'from_filename' && self.full_filename
-      "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com"}/#{self.full_filename}.raster.png"
+      if skinned_url
+        "#{skinned_url}.raster.png"
+      else
+        "#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}.s3.amazonaws.com"}/#{self.full_filename}.raster.png"
+      end
     else
       nil
     end

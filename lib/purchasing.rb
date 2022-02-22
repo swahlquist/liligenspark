@@ -234,7 +234,6 @@ module Purchasing
   end
 
   def self.purchase(user, token, type, discount_code=nil)
-    # TODO: record basic card information ("Visa ending in 4242" for references)
     user && user.log_subscription_event({:log => 'purchase initiated', :token => "#{token['id'][0,3]}..#{token['id'][-3,3]}", :type => type})
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
     if type.match(/^slp_/) && type.match(/free/)

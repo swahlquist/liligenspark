@@ -884,6 +884,20 @@ describe Uploadable, :type => :model do
       expect(bi).to receive(:full_filename).and_return("a/b/c/d.svg").at_least(1).times
       expect(bi.raster_url).to eq("#{ENV['UPLOADS_S3_CDN'] || "https://#{ENV['UPLOADS_S3_BUCKET']}"}/a/b/c/d.svg.raster.png")
     end
+
+    it "should return skinned url if passed" do
+      bi = ButtonImage.new
+      bi.settings = {'rasterized' => 'from_url'}
+      expect(bi.raster_url).to eq(nil)
+      bi.url = "http://www.example.com/pic.svg"
+      expect(bi.raster_url("skinned_url")).to eq("skinned_url.raster.png")
+
+      bi.settings = {'rasterized' => 'from_filename'}
+      expect(bi).to receive(:full_filename).and_return(nil)
+      expect(bi.raster_url('skinned_url')).to eq(nil)
+      expect(bi).to receive(:full_filename).and_return("a/b/c/d.svg").at_least(1).times
+      expect(bi.raster_url('skinned_url')).to eq("skinned_url.raster.png")
+    end
   end
 
   describe "assert_raster" do
