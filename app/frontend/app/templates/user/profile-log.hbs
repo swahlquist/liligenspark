@@ -59,7 +59,7 @@
         <div class="panel-heading">{{t "Type" key='type'}}</div>
         <div class="panel-body">
           <!-- Self-Assessment? Assessment? Communicator/Supervisor? Communicator included -->
-          N/A
+          {{processed_profile.readable_type}}
         </div>
       </div>
     </div>
@@ -109,7 +109,7 @@
                 <div style='flex: 1;'>
                   <h4 style='margin-top: 0; margin-bottom: 25px;'>{{cat.label}}</h4>
                 </div>
-                <div style='flex: 2; border-right: 1px solid #ddd;'>
+                <div style='flex: 2; border-right: 2px solid #ddd;'>
                   {{#each cat.history as |hist|}}
                     <div class='bar_holder'>
                       <div class='bar_tip'>{{hist.value}}/{{#if hist.max}}{{hist.max}}{{else}}0{{/if}} {{date hist.date 'short_day'}}</div>

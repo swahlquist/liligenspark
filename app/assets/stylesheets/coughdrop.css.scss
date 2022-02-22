@@ -3301,6 +3301,8 @@ $nav_extras: #eee;
   .question_holder {
     &:hover {
       background: #fafafa;
+      border-left: 2px solid #888;
+      margin-left: -2px;
     }
   }
   .question {

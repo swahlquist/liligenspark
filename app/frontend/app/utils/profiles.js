@@ -181,6 +181,16 @@ var Profile = EmberObject.extend({
     this.set('encrypted_results', this.get('encrypted_results') || this.get('template.encrypted_results'));
     this.set('history', this.get('history') || this.get('template.history'));
   },
+  readable_type: computed('template.type', function() {
+    var type = this.get('template.type');
+    if(type == 'supervisor') {
+      return i18n.t('supervisor', "Supervisor");
+    } else if(type == 'self_assessment') {
+      return i18n.t('self_assessment', "Self-Assessment");
+    } else {
+      return i18n.t('communicator', "Communicator");
+    }
+  }),
   questions_layout: computed('template.score_categories', 'template.answer_blocks', 'template.question_groups', 'results', function() {
     var list = [];
     var blocks = this.get('template.answer_blocks');
@@ -1646,10 +1656,42 @@ var cole_profile = {
 var cpp_profile = {
   name: "CPP - Communication Partner Profile",
   id: "cpp",
-  version: "0.1",
-  type: 'communicator',
-  description: "Communication Partner Profile (CPPv1) AAC-Related Self-Reflection",
+  version: "1.0",
+  type: 'supervisor',
+  description: ["Communication Partner Profile (CPPv1) AAC-Related Self-Reflection",
+    "This profile should take less than 15 minutes to complete. It is a tool for self-reflection and to help find opportunities for improvement in supporting people who use AAC (AAC users). If you find yourself thinking “that doesn’t apply to me”, please reconsider – AAC users benefit most when their entire circle of support helps them learn to communicate.",
+    "This form is not meant as a metric to compare the performance between multiple communication partners. So no need to feel disappointed if you’re answering “never” in many areas -- don’t worry! Very few of us manage to do all of this all of the time. Just pick a few spots for improvement; don’t try to do everything at once. It’s also worth thinking of communicator profiling forms you may have seen, and how lists of “never” responses affect attitudes towards AAC users and their access to robust systems.",
+  ],
+  instructions: [
+    "For each row, select the option that best matches your experience. This form can be filled out once or on a regular basis, as a tool to help you think about areas where you are doing well or could improve, in supporting, teaching, modeling for, and acting as a communication partner for one or more AAC users.",
+    "The phrase “communication suite”, as used in this form, refers to the full range of communication strategies used by the AAC user. That may include high-tech or paper-based products, but may also include speech or non-verbal actions. Please remember that all of us use multiple modes of communication regularly, and honoring communication in whatever form someone is using helps build the trust, understanding, and motivation needed to continue developing communication skills.",
+    "The phrase “communication partner”, as used in this form, refers to any person who is interacting with or responding to the AAC user, regardless of whether they have received any formal training."
+  ],
   score_categories: {
+    autonomy: {
+      label: "Autonomy",
+      function: 'mastery_cnt',
+      border: [62, 118, 163],
+      background: [122, 195, 255]
+    },
+    skills: {
+      label: "Skills",
+      function: 'mastery_cnt',
+      border: [72, 168, 98],
+      background: [99, 255, 141]
+    },
+    resilience: {
+      label: "Resilience",
+      function: 'mastery_cnt',
+      border: [176, 174, 70],
+      background: [255, 253, 128]
+    },
+    advocacy: {
+      label: "Advocacy",
+      function: 'mastery_cnt',
+      border: [150, 72, 66],
+      background: [255, 136, 128]
+    },
     everywhere: {
       label: "Communiction Everywhere",
       function: "mastery_cnt",
@@ -1721,10 +1763,10 @@ var cpp_profile = {
     frequency: {
       type: 'multiple_choice',
       answers: [
-        {id: 'never', label: "Not Observed", score: 0},
+        {id: 'never', label: "Never", score: 0},
         {id: 'occasionally', label: "Occasionally", score: 1},
         {id: 'usually', label: "Usually", score: 2, mastery: true},
-        {id: 'always', label: "Always", score: 3, mastery: true}
+        {id: 'consistently', label: "Consistently", score: 3, mastery: true}
       ]
     },
     ensure_frequency: {
@@ -1734,7 +1776,7 @@ var cpp_profile = {
         {id: 'notice', label: "I notice a problem but don’t say anything", score: 0.5},
         {id: 'sometimes', label: "Sometimes", score: 1},
         {id: 'usually', label: "Usually", score: 2, mastery: true},
-        {id: 'always', label: "Always", score: 3, mastery: true}
+        {id: 'consistently', label: "Consistently", score: 3, mastery: true}
       ]
     },
     setting_frequency: {
@@ -1742,18 +1784,35 @@ var cpp_profile = {
       answers: [
         {id: 'proficient', label: "Currently Proficient", score: 3},
         {id: 'na', label: "Not Applicable", score: 0, skip: true},
-        {id: 'never', label: "Not Observed", score: 0},
+        {id: 'never', label: "Never", score: 0},
         {id: 'occasionally', label: "Occasionally", score: 1},
         {id: 'usually', label: "Usually", score: 2, mastery: true},
-        {id: 'always', label: "Always", score: 3, mastery: true}
+        {id: 'consistently', label: "Consistently", score: 3, mastery: true}
       ]
     },
     free_response: {
       type: 'text',
-      hint: "Evidence/Documentation/Notes:"
+      hint: "Personal Notes"
+    },
+    user_list: {
+      type: 'text',
+      hint: "List of AAC users (respecting privacy)"
     }
   },
   question_groups: [
+    {
+      id: "preface",
+      label: "Profile Details",
+      border: [67, 30, 148],
+      background: [202, 179, 255],
+      questions: [
+        {
+          id: "q0text",
+          label: "List of all AAC users I'm thinking about (respecting privacy):",
+          answer_block: 'user_list'
+        },
+      ]
+    },
     {
       id: "aac_user",
       label: "When I am interacting with an AAC user, I make sure that:",
@@ -1762,172 +1821,170 @@ var cpp_profile = {
       questions: [
         {
           id: "q11",
-          label: "I’ve been given permission before touching their device or crowding them",
+          label: "I speak naturally and directly to the AAC user, regardless of how or whether they respond.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q12",
-          label: "I respond to all communication attempts, regardless of whether they were on the “desired” device/modality (gestures, sounds, etc.)",
+          label: "I respect AAC user autonomy, and ensure I’ve been given permission before touching their device, providing physical support, or crowding them.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q13",
-          label: "I model words or phrases at or just beyond their current expressive level",
+          label: "I respond to all communication attempts, regardless of whether they were on the “desired” device or style (gestures, sounds, etc.).",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q14",
-          label: "I have spent time getting to know them so I can better personalize my interactions to their interests and experience",
+          label: "I accept that “no response”, or rejection, is a valid way for AAC users to express themselves.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q15",
-          label: "I am familiar enough with their vocabulary layout to be able to model effectively",
+          label: "I give AAC users my full attention & don’t interrupt, or I wait for them to signal completion before I respond.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q16",
-          label: "I give them my full attention and avoid interrupting, or wait for them to signal their completion before I respond",
+          label: "I have spent time getting to know AAC users so I can better personalize my interactions to their experience.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q17",
-          label: "I include them in decision-making that will affect them in the short term (meals or activities, clothing choice, daily schedule, etc.)",
+          label: "I include AAC users in meaningful decision-making that will affect them in the short term (meals or activities, clothing choice, daily schedule, etc.).",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q18",
-          label: "I include them in decision-making that will affect them in the long term (device layout, medical decisions, topics for study, etc.)",
+          label: "I include AAC users in meaningful decision-making that will affect them in the long term (device layout, medical decisions, topics for study, etc.)",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q19",
-          label: "I have spent sufficient time reviewing and practicing strategies before trying to implement them in-person",
+          label: "I am familiar enough with their vocabulary layout to be able to effectively show AAC users how to select different options using their communication suite.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q110",
-          label: "I avoid too much prompting, or asking for clarification too often",
+          label: "I show (or model, on a separate device if possible) examples of words or phrases beyond what the AAC user has already mastered.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q111",
-          label: "I avoid withholding desired activities or items as a way to try to “force” communication",
+          label: "I look for natural communication opportunities instead of expecting a specific “correct” response or withholding activities/items to force communication.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_1: 1.0,
+            resilience: 1.0,
           }
         },
       ]      
     },
     {
       id: "partners",
-      label: "As I observe others interacting with AAC user(s), I ensure that: ",
+      label: "As I observe or coach others interacting with AAC user(s), I ensure that:",
       border: [90, 117, 150],
       background: [173, 203, 240],
       questions: [
         {
           id: "q21",
-          label: "Communicators have access to their personalized communication suite at all times",
+          label: "AAC users receive proper explanations about things that are happening to and around them, and are given opportunities to decide about or to direct those experiences.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q22",
-          label: "Communicators are asked for permission before others touch their device",
+          label: "AAC users have access to their personalized communication suite at all times.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q23",
-          label: "Communication partners respond to all communication attempts, regardless of whether they were on the “desired” device/modality (not “if you want that then use your talker to say it”)",
+          label: "AAC users are asked for permission before others touch their device or adjust settings.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q24",
-          label: "Communicators are shown examples of how to express themselves, using their communication suite or a similar system",
+          label: "AAC user’s preference in partner’s role (where to stand, whether to wait for completion, etc.) is known and respected.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q25",
-          label: "Physical control (i.e. hand-over-hand) is avoided for selection, unless the communicator’s express permission is granted each time",
+          label: "Communication partners respond to all attempts, regardless of whether they were on the “desired” device or style (not “if you want that then use your talker to say it”).",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q26",
-          label: "Dismissive language is avoided about or around the communicator (“you can ignore her”, “he’s just babbling”, “that didn’t mean anything”)",
+          label: "Communication happens naturally, and is not just question-answer sessions or asking for clarification after each comment.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            resilience: 1.0,
           }
         },
         {
           id: "q27",
-          label: "Communicator’s preference in partner role (where to stand, whether to wait for completion, etc.) is known and respected",
+          label: "AAC users are shown examples (on a separate device where possible) of how to express their thoughts and ideas using their communication suite or a similar system.",
           answer_block: "ensure_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_2: 1.0,
+            skills: 1.0,
+          }
+        },
+        {
+          id: "q28",
+          label: "Physical control (i.e. hand-over-hand) is avoided for selection, unless the AAC user’s express permission is given each time",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            autonomy: 1.0,
+          }
+        },
+        {
+          id: "q29",
+          label: "Empowering rather than dismissive language is used about and around the AAC user (not “you can ignore her”, “he’s just babbling”, “that didn’t mean anything”).",
+          answer_block: "ensure_frequency",
+          score_categories: {
+            resilience: 1.0,
           }
         },
       ]
@@ -1940,56 +1997,82 @@ var cpp_profile = {
       questions: [
         {
           id: "q31",
-          label: "Communication partners wait sufficient time (5-10 seconds or more) before and between any sort of prompting strategies",
+          label: "All attempts to use the AAC system are responded to as meaningful communication, including looking at a device, babbling (selecting symbols without clear intent), or using an unexpected symbol.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            autonomy: 1.0,
           }
         },
         {
           id: "q32",
-          label: "Team members are familiar with the AAC system and have specific examples of concepts they can model for the communicator",
+          label: "Communication partners wait sufficient time (5-10 seconds or customized to the AAC user) after and between questions or communication invitations.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            resilience: 1.0,
           }
         },
         {
           id: "q33",
-          label: "The communicator’s environment is set up to foster diverse and interesting communication opportunities",
+          label: "Team members are familiar with the AAC user and their AAC system and have specific examples of concepts they can model for the AAC user.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q34",
-          label: "All team members understand their opportunity to teach or encourage communication in every environment and context",
+          label: "Literacy exposure/learning happens in all settings and at the same time as other communication aspects (not “communication first, literacy later”)",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q35",
-          label: "All team members have opportunities to review and practice strategies before implementing them in-person",
+          label: "The AAC user’s external environment is set up to foster diverse and interesting communication opportunities.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            skills: 1.0,
           }
         },
         {
-          id: "q35",
-          label: "All team members are aware of goals that have been set with the communicator, and updated on progress being made toward those goals",
+          id: "q36",
+          label: "All team members understand their opportunity to teach or encourage communication in every environment and context.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_3: 1.0,
+            skills: 1.0,
+          }
+        },
+        {
+          id: "q37",
+          label: "All team members are given opportunities to review and practice strategies before implementing them in-person.",
+          answer_block: "frequency",
+          score_categories: {
+            skills: 1.0,
+          }
+        },
+        {
+          id: "q38",
+          label: "AAC users are included in decisions about their therapy, development, and learning activities.",
+          answer_block: "frequency",
+          score_categories: {
+            autonomy: 1.0,
+          }
+        },
+        {
+          id: "q39",
+          label: "The goal-setting process includes participation and approval by the AAC user (and their family if desired by the AAC user).",
+          answer_block: "frequency",
+          score_categories: {
+            autonomy: 1.0,
+          }
+        },
+        {
+          id: "q310",
+          label: "All team members are aware of goals that have been set with the AAC user, and are updated on progress being made toward those goals.",
+          answer_block: "frequency",
+          score_categories: {
+            advocacy: 1.0,
           }
         },
       ]
@@ -2002,47 +2085,74 @@ var cpp_profile = {
       questions: [
         {
           id: "q41",
-          label: "New words or phrases the communicator is starting to use, so I can introduce opportunities to model other examples with the word or phrase",
+          label: "New words or phrases the AAC user is starting to use, so I can find opportunities to model other examples with the word or phrase.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_4: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q42",
-          label: "Communication attempts that others may have missed, and I point them out so everyone can learn to support each unique communicator",
+          label: "Communication attempts that others may have missed, and I point them out so everyone can learn to support each unique AAC user.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_4: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q43",
-          label: "Opportunities to introduce literacy (both reading and writing) learning to communicators who have not yet shown mastery",
+          label: "Instances when people talk about the AAC user to caregivers or staff, so I can help them learn to speak directly with the AAC user.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_4: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q44",
-          label: "New communication partners, and I share with them simple concepts that can help them be a more effective partner (honoring attempts, wait time, eye contact, etc.)",
+          label: "Times when AAC user voices aren’t given equal weight or aren’t being included in decisions that affect their lives.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_4: 1.0,
+            advocacy: 1.0,
           }
         },
         {
           id: "q45",
-          label: "Success stories that I can share with others to help keep everyone engaged in communicator progress",
+          label: "Opportunities to introduce literacy (both reading and writing) learning to AAC users who have not yet shown mastery.",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_4: 1.0,
+            skills: 1.0,
+          }
+        },
+        {
+          id: "q46",
+          label: "New communication partners, and I share with those partners simple concepts that can help them be a more effective partner (honoring attempts, wait time, eye contact, etc.).",
+          answer_block: "frequency",
+          score_categories: {
+            advocacy: 1.0,
+          }
+        },
+        {
+          id: "q47",
+          label: "Positive experiences I can point out to AAC users to help them identify their own communication growth.",
+          answer_block: "frequency",
+          score_categories: {
+            resilience: 1.0,
+          }
+        },
+        {
+          id: "q48",
+          label: "Success stories that I can share with others to help keep everyone engaged in AAC users’ progress.",
+          answer_block: "frequency",
+          score_categories: {
+            advocacy: 1.0,
+          }
+        },
+        {
+          id: "q49",
+          label: "Other AAC users that may be a good network or mentor for the AAC users that I work with.",
+          answer_block: "frequency",
+          score_categories: {
+            resilience: 1.0,
           }
         },
       ]
@@ -2055,11 +2165,9 @@ var cpp_profile = {
       questions: [
         {
           id: "q51",
-          label: "Instructional Settings",
+          label: "Learning Settings",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
@@ -2067,8 +2175,6 @@ var cpp_profile = {
           label: "Shared Reading",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
@@ -2076,8 +2182,6 @@ var cpp_profile = {
           label: "Playing Games",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
@@ -2085,8 +2189,6 @@ var cpp_profile = {
           label: "Meal Time",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
@@ -2094,8 +2196,6 @@ var cpp_profile = {
           label: "Outdoors/Playground",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
@@ -2103,51 +2203,55 @@ var cpp_profile = {
           label: "Leisure/Relaxing/Break Time",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
           id: "q57",
-          label: "Social Settings",
+          label: "Entertainment",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
           id: "q58",
-          label: "Church",
+          label: "Social Settings",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
           id: "q59",
-          label: "Travel/Transit",
+          label: "Places of Worship",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
           }
         },
         {
           id: "q510",
+          label: "Travel/Transit",
+          answer_block: "setting_frequency",
+          score_categories: {
+          }
+        },
+        {
+          id: "q511",
           label: "Restaurants/Shopping",
           answer_block: "setting_frequency",
           score_categories: {
-            cole: 1.0,
-            stage_5: 1.0,
+          }
+        },
+        {
+          id: "q512",
+          label: "Arrivals/Departures",
+          answer_block: "setting_frequency",
+          score_categories: {
           }
         },
       ]
     },
     {
       id: "goals",
-      label: "I discuss with the whole team -- including the communicator -- goals related to the following aspects of communication:",
+      label: "I discuss with the whole team -- including the AAC user -- goals related to the following aspects of communication:",
       border: [124, 217, 207],
       background: [207, 255, 250],
       questions: [
@@ -2156,17 +2260,15 @@ var cpp_profile = {
           label: "Linguistic – understanding what words mean, and how to organize and use them",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q62",
-          label: "Literacy (Reading) – learning to read, comprehend and analyze written text",
+          label: "Literacy (Reading) – shared reading, learning to read, comprehend and analyze written text",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
@@ -2174,44 +2276,47 @@ var cpp_profile = {
           label: "Literacy (Writing) – learning word sounds, rules of spelling, creative and formal writing, organizing a statement",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q64",
-          label: "Operational – how to navigate the device, switch between apps or pages, use the keyboard or autocomplete, control volume, charge the device, etc.",
+          label: "Operational – how to navigate the device, switch between apps or pages, use the keyboard or autocomplete, control volume, charge the device, managing switches or other hardware",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q65",
-          label: "Social – following social cues and effectively participating in real-time conversations",
+          label: "Social – following social cues and effectively participating in real-time conversations, staying on topic, keeping listener’s attention, developing relationships through communication, what is appropriate to talk about when",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q66",
-          label: "Strategic – getting around the limitations imposed by using a communication device",
+          label: "Strategic – working around limited available vocabulary, requesting new vocabulary, correcting misunderstandings, getting time to craft a response",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            skills: 1.0,
           }
         },
         {
           id: "q67",
-          label: "Emotional – self-advocacy and resilience",
+          label: "Emotional – self-advocacy and resilience, recognition and regulation of emotions, talking through feelings, confidence in communication, learning from mistakes",
           answer_block: "frequency",
           score_categories: {
-            cole: 1.0,
-            stage_6: 1.0,
+            resilience: 1.0,
+          }
+        },
+        {
+          id: "q68",
+          label: "Mentoring – beneficial communication partners, identifying AAC users who would be good mentors, empowering AAC users to develop their own network",
+          answer_block: "frequency",
+          score_categories: {
+            resilience: 1.0,
           }
         },
       ]
@@ -2219,8 +2324,8 @@ var cpp_profile = {
     {
       id: "notes",
       label: "Notes or observations you would like to remember as part of this profile:",
-      border: [124, 217, 207],
-      background: [207, 255, 250],
+      border: [48, 128, 72],
+      background: [179, 255, 202],
       questions: [
         {
           id: "q7text",
@@ -2229,19 +2334,27 @@ var cpp_profile = {
         },
       ]
     },
+    {
+      id: "personal_goals",
+      label: "Goals you would like to set for yourself after filling out this profile:",
+      border: [48, 128, 72],
+      background: [179, 255, 202],
+      questions: [
+        {
+          id: "q8text",
+          label: "Notes:",
+          answer_block: 'free_response'
+        },
+      ]
+    },
   ],
   report_segments: [
     {
-      type: "score",
-      score_category: "cole",
-      summary: true,
-    },
-    {
       type: "weights",
-      score_categories: ["aac_user", "partners", "team", "watch", "settings", "goals", "notes"]
+      score_categories: ["autonomy", "skills", "resilience", "advocacy"]
     },
     {
-      notes: "What else???",
+      notes: "Responses",
       type: "raw",
     }
   ]
