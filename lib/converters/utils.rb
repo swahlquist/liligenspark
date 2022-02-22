@@ -32,7 +32,7 @@ module Converters::Utils
       elsif opts['font'] == 'comic_sans'
         font = File.expand_path('../../../public/fonts/ComicSans.ttf', __FILE__)
       elsif opts['font'] == 'open_dyslexic'
-        font = File.expand_path('../../../public/fonts/OpenDyslexicAlta-Regular.otf', __FILE__)
+        font = File.expand_path('../../../public/fonts/OpenDyslexicAlta-Regular.ttf', __FILE__)
       elsif opts['font'] == 'architects_daughter'
         font = File.expand_path('../../../public/fonts/ArchitectsDaughter.ttf', __FILE__)
       end
