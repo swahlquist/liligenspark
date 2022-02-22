@@ -193,6 +193,37 @@ var session = EmberObject.extend({
       return RSVP.resolve({success: false, browserToken: persistence.get('browserToken')});
     });
   },
+  wait_for_token: function(popout_id) {
+    return new RSVP.Promise(function(resolve, reject) {
+      var started = (new Date()).getTime();
+      var errors = 0;
+      var check = function() {
+        var now = (new Date()).getTime();
+        if(now - started > (15 * 60 * 1000)) {
+          reject({error: 'timeout'});
+        } else if(errors > 10) {
+          reject({error: 'too many errors'});
+        } else {
+          var data = {
+            popout_id: popout_id
+          }
+          persistence.ajax('/wait/token', {method: 'POST', data: data}).then(function(response) {
+            if(response.error) {
+              setTimeout(check, 500);
+            } else {
+              session.confirm_authentication(response).then(function() {
+                resolve(response);
+              });    
+            }
+          }, function(err) {
+            errors++;
+            setTimeout(check, 2000);
+          });  
+        }
+      }
+      setTimeout(check, 1000);
+    });
+  },
   restore: function(force_check_for_token) {
     if(!stashes.get('enabled')) { return {}; }
     console.debug('COUGHDROP: restoring session data');

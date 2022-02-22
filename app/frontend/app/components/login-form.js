@@ -97,6 +97,18 @@ export default Component.extend({
       url = url + "&device_id=" + capabilities.device_id();
     }
     if(capabilities.installed_app) {
+      var popout_id = (new Date()).getTime() + "T" + Math.round(Math.random() * 999999);
+      url = url + "&popout_id=" + popout_id;
+      session.wait_for_token(popout_id).then(function(res) {
+        _this.handle_auth(res);
+      }, function(err) {
+        _this.set('login_followup', false);
+        _this.set('login_single_assertion', false);
+        app_state.set('logging_in', false);
+        _this.set('logging_in', false);
+        _this.set('logged_in', false);
+        _this.set('login_error', i18n.t('token_not_retrieved', "Authorization never completed, please try again"));
+      });
       window.open(url, '_blank');
     } else {
       location.href = url;

@@ -1338,6 +1338,27 @@ describe SessionController, :type => :controller do
           'oauth_code' => 'asdfjkl'
         })
       end
+
+      it "should include popout_id if defined" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        expect_any_instance_of(SessionController).to receive(:saml_settings).and_return("saml_stuff")
+        expect(GoSecure).to receive(:nonce).with('saml_session_code').and_return('baconator')
+        expect_any_instance_of(OneLogin::RubySaml::Authrequest).to receive(:create).with("saml_stuff", :RelayState => 'baconator').and_return("https://www.example.com/saml/auth")
+        get 'saml_start', params: {org_id: o.global_id, app: '1', popout_id: 'baconator', device_id: 'my-device'}
+        expect(response).to be_redirect
+        expect(response.location).to eq("https://www.example.com/saml/auth")
+        expect(assigns[:saml_code]).to_not eq(nil)
+        config = JSON.parse(RedisInit.default.get("saml_#{assigns[:saml_code]}"))
+        expect(config).to_not eq(nil)
+        expect(config).to eq({
+          "device_id" => "my-device",
+          "org_id" => o.global_id,
+          'popout_id' => 'baconator',
+          'app' => true,
+        })
+      end
       
     end
 
@@ -1776,6 +1797,54 @@ describe SessionController, :type => :controller do
         expect(response).to be_redirect
         expect(response.location).to eq("http://test.host/login?auth-#{assigns[:temp_token]}_#{u.user_name}")
       end
+
+      it "should handle requests with popout_id defined" do
+        o = Organization.create
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml/meta'
+        o.save
+        u = User.create
+        u.settings['email'] = 'nunya@example.com'
+        u.save
+        o.add_user(u.user_name, false, false)
+        o.reload
+
+        settings = OneLogin::RubySaml::Settings.new
+        settings.assertion_consumer_service_url = "http://test.host/saml/consume"
+        settings.sp_entity_id                   = "http://test.host/saml/metadata"
+        settings.idp_sso_service_url             = "https://app.example.com/saml/signon"
+        settings.name_identifier_format         = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+        expect_any_instance_of(OneLogin::RubySaml::IdpMetadataParser).to receive(:parse_remote).with('https://www.example.com/saml/meta', {:slo_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"], :sso_binding=>["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"]}).and_return(settings)
+        attrs = {}
+        expect(attrs).to receive(:fetch).with('email').and_return('nunya@example.com')
+        expect(attrs).to receive(:fetch).with('uid').and_return('myname')
+        expect(attrs).to receive(:multi).with(:role).and_return([])
+        obj = OpenStruct.new({
+          attributes: attrs,
+          name_id: '123456',
+          issuers: ['https://www.example.com/saml/meta'],
+        })
+        expect(obj).to receive(:is_valid?).and_return(true).at_least(1).times
+        expect(OneLogin::RubySaml::Response).to receive(:new).with('ressy', :settings => settings).and_return(obj)
+
+        RedisInit.default.setex("saml_watermelon", 1.hour.to_i, {org_id: o.global_id, popout_id: 'a1b2'}.to_json)
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to eq(nil)
+        post 'saml_consume', params: {RelayState: 'watermelon', SAMLResponse: "ressy"}
+        links = UserLink.links_for(u.reload)
+        expect(links.detect{|l| l['type'] == 'saml_auth' }).to_not eq(nil)
+        expect(response).to_not be_redirect
+        expect(assigns[:authenticated_user]).to eq(u)
+        expect(assigns[:no_parent]).to eq(true)
+        expect(assigns[:saml_data]).to eq({
+          :email => "nunya@example.com",
+          :external_id => "123456",
+          :issuer => "https://www.example.com/saml/meta",
+          :roles => [],
+          :user_name => "myname",          
+        })
+        device = u.devices.last
+        expect(device.settings['used_for_saml']).to eq(true)
+      end
     end
   
     describe "saml_idp_logout_request" do
@@ -1869,6 +1938,48 @@ describe SessionController, :type => :controller do
       expect(json['tmp_token']).to_not eq(nil)
       expect(json['tmp_token']).to_not eq(@device.tokens[0])
       expect(RedisInit.default.get("token_tmp_#{json['tmp_token']}")).to eq(@device.tokens[0])
+    end
+  end
+
+  describe "token_wait" do
+    it "should require popout_id" do
+      post 'token_wait'
+      assert_error('popout_id required')
+    end
+
+    it "should return not found by default" do
+      post 'token_wait', params: {popout_id: 'bacon'}
+      json = assert_success_json
+      expect(json).to eq({'error' => 'not found'})
+    end
+
+    it "should return found token if found" do
+      u = User.create
+      d = Device.create(user: u)
+      expect(RedisInit.default).to receive(:get).and_return(nil)
+      expect(RedisInit.default).to receive(:get).with("token_popout_bacon").and_return({
+        user_id: u.global_id,
+        device_id: d.global_id
+      }.to_json)
+      expect(JsonApi::Token).to receive(:as_json).with(u, d).and_return({a: 1})
+      post 'token_wait', params: {popout_id: 'bacon'}
+      json = assert_success_json
+      expect(json).to eq({'a' => 1})
+    end
+
+    it "should delete the reference once found" do
+      u = User.create
+      d = Device.create(user: u)
+      expect(RedisInit.default).to receive(:get).and_return(nil)
+      expect(RedisInit.default).to receive(:get).with("token_popout_bacon").and_return({
+        user_id: u.global_id,
+        device_id: d.global_id
+      }.to_json)
+      expect(RedisInit.default).to receive(:del).with("token_popout_bacon")
+      expect(JsonApi::Token).to receive(:as_json).with(u, d).and_return({a: 1})
+      post 'token_wait', params: {popout_id: 'bacon'}
+      json = assert_success_json
+      expect(json).to eq({'a' => 1})
     end
   end
 end

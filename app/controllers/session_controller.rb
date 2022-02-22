@@ -335,6 +335,7 @@ class SessionController < ApplicationController
     return_params['device_id'] = params['device_id'] || 'unnamed device'
     return_params['app'] = true if params['app']
     return_params['embed'] = true if params['embed']
+    return_params['popout_id'] = params['popout_id'] if params['popout_id']
 
     code = GoSecure.nonce('saml_session_code')
 
@@ -375,6 +376,7 @@ class SessionController < ApplicationController
       return render
     end
     if config['user_id']
+      # link the user to the external authentication
       auth_user = User.find_by_global_id(config['auth_user_id'])
       existing_user = User.find_by_global_id(config['user_id']) 
       if !existing_user || !existing_user.allows?(auth_user, 'link_auth')
@@ -425,6 +427,16 @@ class SessionController < ApplicationController
         @saml_data = data
         @authenticated_user = authenticated_user
         render
+      elsif config['popout_id']
+        # For popout flow, where a browser window opens to perform the auth,
+        # show a success message and direct the user to return to the app
+        device.settings['used_for_saml'] = true
+        RedisInit.default.setex("token_popout_#{config['popout_id']}", 30.minutes.to_i, {user_id: authenticated_user.global_id, device_id: device.global_id}.to_json)
+        assert_session_device(device, authenticated_user, config['app'])
+        @saml_data = data
+        @authenticated_user = authenticated_user
+        @no_parent = true
+        render
       elsif config['user_id']
         # For connection flow, redirect back to the user's profile page, all is done
         redirect_to "/#{authenticated_user.user_name}"
@@ -466,6 +478,23 @@ class SessionController < ApplicationController
     logout_request_id = logout_request.id
     logout_response = OneLogin::RubySaml::SloLogoutresponse.new.create(settings, logout_request_id, nil, :RelayState => params[:RelayState])
     redirect_to logout_response
+  end
+
+  def token_wait
+    if params['popout_id']
+      json = RedisInit.default.get("token_popout_#{params['popout_id']}")
+      auth = JSON.parse(json) rescue nil
+      user = auth && User.find_by_global_id(auth['user_id'])
+      device = auth && Device.find_by_global_id(auth['device_id'])
+      if user && device && user == device.user
+        RedisInit.default.del("token_popout_#{params['popout_id']}")
+        render json: JsonApi::Token.as_json(user, device).to_json
+      else
+        return render json: {error: 'not found'}
+      end
+    else
+      api_error 400, {error: 'popout_id required'}
+    end
   end
 
   def token

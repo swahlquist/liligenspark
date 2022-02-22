@@ -60,6 +60,7 @@ Coughdrop::Application.routes.draw do
 
   post 'api/v1/token/refresh' => 'session#oauth_token_refresh'
   post 'token' => 'session#token'
+  post 'wait/token' => 'session#token_wait'
   
   # if Rails.env.production?
   # TODO: need to catch the update event to post a note encouraging the user to reload
