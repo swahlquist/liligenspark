@@ -51,7 +51,7 @@ class Api::ButtonSetsController < ApplicationController
     button_set = board && board.board_downstream_button_set
     return unless allowed?(board, 'view')
     if params['missing'] && button_set
-      button_set.settings['private_cdn_url_checked'] = 48.hours.ago.to_i
+      button_set.data['private_cdn_url_checked'] = 48.hours.ago.to_i
       button_set.save
     end
     download_url = button_set && button_set.url_for(@api_user, board.settings['full_set_revision'])
