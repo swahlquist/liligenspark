@@ -37,9 +37,19 @@ module ExternalTracker
         acct = 'AT Specialist/Lending Library'
       elsif user.registration_type == 'parent'
         acct = 'Supervisor Parent Account'
+      elsif user.registration_type == 'teacher'
+        acct = 'Supervisor Teacher'
+      elsif user.registration_type == 'manually-added-supervisor'
+        acct = 'Supervisor Org-Added'
+      elsif user.registration_type == 'other'
+        acct = 'Supervisor Other'
       else
         acct = 'Supervisor Teacher/Speech Path'
       end
+    elsif user.registration_type == 'other'
+      acct = 'Communicator Other'
+    elsif user.registration_type == 'manually-added-org-user'
+      acct = 'Communicator Org-Added'
     end
 
     name = (user.settings['name'] || '').split(/\s/, 2)
