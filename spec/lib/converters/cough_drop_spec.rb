@@ -1405,5 +1405,28 @@ describe Converters::CoughDrop do
       expect(hash['buttons'][0]['actions']).to eq([':back', ':clear', '+a'])
       expect(hash['buttons'][0]['vocalization']).to eq('my my')
     end
+
+    it "should use skinned URLs where appropriate" do
+      u = User.create
+      b = Board.create(:user => u)
+      bi = ButtonImage.create(user: u, board: b, url: "https://www.example.com/pic-varianted-skin.png")
+      u.settings['preferences']['skin'] = 'medium'
+      u.save
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'cat', 'image_id' => bi.global_id},
+      ]
+      b.instance_variable_set('@buttons_changed', true)
+      b.save
+      expect(b.button_images.count).to eq(1)
+      hash = Converters::CoughDrop.to_external(b, {'user' => u})
+      expect(hash['id']).to eq(b.global_id)
+      expect(hash['buttons'].length).to eq(1)
+      expect(hash['buttons'][0]['id']).to eq(1)
+      expect(hash['buttons'][0]['label']).to eq('cat')
+      expect(hash['images'][0]).to_not eq(nil)
+      expect(hash['images'][0]['id']).to eq(bi.global_id)
+      expect(hash['images'][0]['url']).to eq("https://www.example.com/pic-variant-medium.png")
+      expect(hash['images'][0]['ext_coughdrop_unskinned_url']).to eq("https://www.example.com/pic-varianted-skin.png")
+    end
   end
 end

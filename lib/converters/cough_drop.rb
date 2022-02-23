@@ -65,6 +65,7 @@ module Converters::CoughDrop
     res['buttons'] = []
     button_count = board.buttons.length
     locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']
+    which_skinner = ButtonImage.which_skinner(opts['user'] && opts['user'].settings['preferences']['skin'])
     board.buttons.each_with_index do |original_button, idx|
       button = {
         'id' => original_button['id'],
@@ -156,6 +157,7 @@ module Converters::CoughDrop
         image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
         if image
           image_url = image.url_for(opts['user'])
+          skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_url), which_skinner)
           image_record = image
           image = {
             'id' => image.global_id,
@@ -168,13 +170,17 @@ module Converters::CoughDrop
             'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
             'content_type' => image.settings['content_type']
           }
+          if skinned_url && skinned_url != image_url
+            image['ext_coughdrop_unskinned_url'] = image['url']
+            image['url'] = Uploader.fronted_url(skinned_url)
+          end
           if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
             image['url'] += '.png'
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
           elsif opts['for_pdf'] && image_record.raster_url
-            image['url'] = Uploader.fronted_url(image_record.raster_url)
+            image['url'] = Uploader.fronted_url(image_record.raster_url(skinned_url))
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400

@@ -188,4 +188,73 @@ class ButtonImage < ActiveRecord::Base
     self.save
     return false
   end
+
+  SKIN_UNIS = {
+    'light' => '1f3fb',
+    'medium-light' => '1f3fc',
+    'medium' => '1f3fd',
+    'medium-dark' => '1f3fe',
+    'dark' => '1f3ff',
+  }
+
+  def self.which_skinner(skin)
+    which_skin = proc{|url| next skin; }
+    if skin == 'original'
+      which_skin = proc{|url| next 'default'; }
+    elsif !skin.match(/default|light|medium-light|medium|medium-dark|dark/)
+      weights = skin.match(/-(\d)(\d)(\d)(\d)(\d)(\d)$/);
+      df = weights ? weights[1].to_i : 2;
+      d = weights ? weights[2].to_i : 2;
+      md = weights ? weights[3].to_i : 2;
+      m = weights ? weights[4].to_i : 2;
+      ml = weights ? weights[5].to_i : 2;
+      l = weights ? weights[6].to_i : 2;
+      sum = (df + d + md + m + ml + l).to_f;
+      df = df.to_f / sum * 100;
+      d = d.to_f / sum * 100;
+      md = md.to_f / sum * 100;
+      m = m.to_f / sum * 100;
+      ml = ml.to_f / sum * 100;
+      l = l.to_f / sum * 100;
+      which_skin = proc{|url|
+        sum = (url + "::" + skin).each_char.map(&:ord).sum
+        mod = sum % 100;
+        if mod < df
+          next 'default'
+        elsif mod < df + d
+          next 'dark'
+        elsif mod < df + d + md
+          next 'medium-dark'
+        elsif mod < df + d + md + m
+          next 'medium'
+        elsif mod < df + d + md + m + ml
+          next 'medium-light'
+        else
+          next 'light'
+        end
+      }
+    end
+    return which_skin
+  end
+
+  def self.skinned_url(url, which_skin)
+    if url.match(/varianted-skin\.\w+$/)
+      which = which_skin.call(url)
+      if which != 'default' && SKIN_UNIS[which]
+        return url.sub(/varianted-skin\./, 'variant-' + which + '.');
+      else
+        return url
+      end
+    elsif url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)
+      which = which_skin.call(url)
+      uni = SKIN_UNIS[which];
+      if which != 'default' && uni
+        return url.gsub(/-var\w+UNI/, '-' + uni);
+      else
+        return url;
+      end
+    else
+      return url;
+    end
+  end
 end

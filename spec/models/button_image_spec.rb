@@ -446,4 +446,88 @@ describe ButtonImage, :type => :model do
       expect(bi.settings['checked_for_variants']).to eq(true)
     end
   end
+
+  describe "which_skinners" do
+    it "should return the specified skin type" do
+      ['default', 'light', 'medium-light', 'medium', 'medium-dark', 'dark'].each do |skin|
+        which = ButtonImage.which_skinner(skin)
+        10.times do |i|
+          expect(which.call("https://www.example.com/#{i}/pic.png")).to eq(skin)
+        end
+      end
+    end
+
+    it "should repeat the same values for the same urls" do
+      which = ButtonImage.which_skinner('shuffle')
+      which2 = ButtonImage.which_skinner('shufflf')
+      skins = []
+      skins2 = []
+      10.times do |i|
+        skin = which.call("pic#{i}")
+        skins << skin
+        skins2 << which2.call("pic#{i}")
+        5.times{ expect(which.call("pic#{i}")).to eq(skin) }
+      end
+      expect(skins).to_not eq(skins2)
+    end
+
+    it "should honor weights correctly" do
+      which = ButtonImage.which_skinner('pref-000011')
+      skins = []
+      25.times do |i|
+        skins << which.call("pic#{i}")
+        expect(which.call("pic#{i}")).to_not eq('default')
+        expect(which.call("pic#{i}")).to_not eq('dark')
+        expect(which.call("pic#{i}")).to_not eq('medium-dark')
+        expect(which.call("pic#{i}")).to_not eq('medium')
+      end
+      expect(skins.uniq.sort).to eq(['light', 'medium-light'])
+
+      which = ButtonImage.which_skinner('pref-095511')
+      skins = []
+      weights = {}
+      1000.times do |i|
+        skin = which.call("pic#{('a'.ord + i).chr}")
+        weights[skin] ||= 0
+        weights[skin] += 1
+        skins << skin
+        expect(skin).to_not eq('default')
+      end
+      expect(weights['dark']).to be > 400
+      expect(weights['medium-dark']).to be > 200
+      expect(weights['medium-dark']).to be < 300
+      expect(weights['medium']).to be > 200
+      expect(weights['medium']).to be < 300
+      expect(weights['medium-light']).to be > 25
+      expect(weights['medium-light']).to be < 75
+      expect(weights['light']).to be > 25
+      expect(weights['light']).to be < 75
+      expect(skins.uniq.sort).to eq(['dark', 'light', 'medium', 'medium-dark', 'medium-light'])
+    end
+  end
+
+  describe "skinned_url" do
+    it "should return the correct value" do
+      which = proc{|url| next 'medium-dark'; }
+      expect(ButtonImage.skinned_url("https://www.example.com/pic.png", which)).to eq("https://www.example.com/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/pic-varianted-skin.png", which)).to eq("https://www.example.com/pic-variant-medium-dark.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic.png", which)).to eq("https://www.example.com/libraries/twemoji/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png", which)).to eq("https://www.example.com/libraries/twemoji/pic-1f3fe-1f3fe.png")
+      which = proc{|url| next 'light'; }
+      expect(ButtonImage.skinned_url("https://www.example.com/pic.png", which)).to eq("https://www.example.com/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/pic-varianted-skin.png", which)).to eq("https://www.example.com/pic-variant-light.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic.png", which)).to eq("https://www.example.com/libraries/twemoji/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic-var1fffUNI.png", which)).to eq("https://www.example.com/libraries/twemoji/pic-1f3fb.png")
+      which = proc{|url| next 'default'; }
+      expect(ButtonImage.skinned_url("https://www.example.com/pic.png", which)).to eq("https://www.example.com/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/pic-varianted-skin.png", which)).to eq("https://www.example.com/pic-varianted-skin.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic.png", which)).to eq("https://www.example.com/libraries/twemoji/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png", which)).to eq("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png")
+      which = proc{|url| next 'bacon'; }
+      expect(ButtonImage.skinned_url("https://www.example.com/pic.png", which)).to eq("https://www.example.com/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/pic-varianted-skin.png", which)).to eq("https://www.example.com/pic-varianted-skin.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic.png", which)).to eq("https://www.example.com/libraries/twemoji/pic.png")
+      expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png", which)).to eq("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png")
+    end
+  end
 end

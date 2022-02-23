@@ -1565,7 +1565,7 @@ CoughDrop.Board.skinned_url = function(url, which_skin) {
     }
   } else if(url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)) {
     var which = which_skin(url);
-    var uni = skin_unis[which_skin(url)];
+    var uni = skin_unis[which];
     if(which != 'default' && uni) {
       return url.replace(/-var\w+UNI/g, '-' + uni);
     } else {
