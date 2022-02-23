@@ -175,7 +175,14 @@ module Converters::CoughDrop
             image['url'] = Uploader.fronted_url(skinned_url)
           end
           if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
-            image['url'] += '.png'
+            if image['url'].match(/varianted-skin/)
+              image['url'] = image['url'].sub(/varianted-skin\.svg/, '') + '.png'
+            elsif image['url'].match(/variant-/)
+              image['url'] += '.raster.png'
+            else
+              image['url'] += '.png'
+            end
+            image['url'] = image['url']
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
