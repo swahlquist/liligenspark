@@ -86,8 +86,8 @@ class Api::OrganizationsController < ApplicationController
       sup_extras = UserExtra.where(user_id: sup_ids)
       recents = []
       sup_extras.each do |extra|
-        profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']]
-        recents << profs[-1] if profs[-1]['added'] > (Time.now - org.profile_frequency('supervisor')).to_i
+        profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']] || []
+        recents << profs[-1] if profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('supervisor')).to_i
       end
       res['user_counts']['supervisors'] = sup_ids.length
       res['user_counts']['supervisor_recent_profiles'] = recents.length

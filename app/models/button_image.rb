@@ -198,10 +198,10 @@ class ButtonImage < ActiveRecord::Base
   }
 
   def self.which_skinner(skin)
-    which_skin = proc{|url| next skin; }
+    which_skin = proc{|url| next skin || 'default'; }
     if skin == 'original'
       which_skin = proc{|url| next 'default'; }
-    elsif !skin.match(/default|light|medium-light|medium|medium-dark|dark/)
+    elsif skin && !skin.match(/default|light|medium-light|medium|medium-dark|dark/)
       weights = skin.match(/-(\d)(\d)(\d)(\d)(\d)(\d)$/);
       df = weights ? weights[1].to_i : 2;
       d = weights ? weights[2].to_i : 2;

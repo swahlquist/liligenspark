@@ -1389,7 +1389,7 @@ describe SessionController, :type => :controller do
         get 'saml_metadata', params: {org_id: org.global_id}
         xml = Nokogiri(response.body)
         expect(xml.css('mdui|DisplayName')[0].content).to eq('CoughDrop')
-        expect(xml.css('md|AssertionConsumerService')[0]['Location']).to eq('http://test.host/saml/consume')
+        expect(xml.css('md|AssertionConsumerService')[0]['Location']).to eq("http://test.host/saml/consume?org_id=#{org.global_id}")
       end
     end
     

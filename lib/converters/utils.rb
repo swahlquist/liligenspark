@@ -16,6 +16,7 @@ module Converters::Utils
   end
   
   def self.board_to_remote(board, user, opts)
+    user = User.find_by_path(user) if user.is_a?(String)
     file_type = opts['file_type']
     includes = opts['include']
     headerless = opts['headerless'] || false

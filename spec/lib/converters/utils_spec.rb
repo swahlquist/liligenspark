@@ -73,7 +73,7 @@ describe Converters::Utils do
           'text_only' => false,
           'transparent_background' => false,
           'symbol_background' => 'white',
-          'user' => u.global_id
+          'user' => u
         })
         expect(File.exists?(opts['font'])).to eq(true)
       }

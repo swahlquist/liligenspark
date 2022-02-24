@@ -65,7 +65,7 @@ module Converters::CoughDrop
     res['buttons'] = []
     button_count = board.buttons.length
     locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']
-    which_skinner = ButtonImage.which_skinner(opts['user'] && opts['user'].settings['preferences']['skin'])
+    which_skinner = ButtonImage.which_skinner(opts && opts['user'] && opts['user'].settings && opts['user'].settings['preferences']['skin'])
     board.buttons.each_with_index do |original_button, idx|
       button = {
         'id' => original_button['id'],
