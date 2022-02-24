@@ -96,11 +96,11 @@ module Processable
   end
   
   def process_string(str)
-    Sanitize.fragment(str).strip
+    return str; #Sanitize.fragment(str).strip
   end
   
   def process_html(html)
-    Sanitize.fragment(html, Sanitize::Config::RELAXED)
+    return html; #Sanitize.fragment(html, Sanitize::Config::RELAXED)
   end
   
   def process_boolean(bool)
