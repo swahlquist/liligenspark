@@ -53,6 +53,7 @@ module Converters::Utils
     else
       raise "Unrecognized conversion type: #{file_type}"
     end
+    opts['version'] = '1.0'
     key = GoSecure.sha512(board.id.to_s, 'board_id')
     
     opts_hash = Digest::MD5.hexdigest(opts.to_json)[0, 20]
