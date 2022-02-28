@@ -812,7 +812,7 @@ var utterance = EmberObject.extend({
     app_state.set('shift', null);
     var skip_remove = false;
     if(app_state.get('inflection_shift')) {
-      skip_remove = true;;
+      skip_remove = true;
     }
     app_state.set('inflection_shift', null);
     var list = this.get('rawButtonList');

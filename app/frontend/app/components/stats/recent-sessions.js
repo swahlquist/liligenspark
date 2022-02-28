@@ -9,7 +9,7 @@ export default Component.extend({
   },
   draw: observer('total', 'recent', function() {
     var total = this.get('total');
-    var recent = this.get('recent') || 0;
+    var recent = this.get('recent');
     var elem = this.get('element').getElementsByClassName('recent_sessions')[0];
 
     CoughDrop.Visualizations.wait('pie-chart', function() {

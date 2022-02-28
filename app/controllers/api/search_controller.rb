@@ -171,7 +171,20 @@ class Api::SearchController < ApplicationController
   end
   
   def audio
-    req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=en&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
+    req = nil
+    if params['locale'] && params['locale'].match(/^ga/)
+      req = Typhoeus.post("https://abair.ie/aac_irish", body: {text: params['text'], voice: params['voice_id'] || 'irish_1'}, timeout: 5)
+      if req.success?
+        src = Nokogiri(req.body).css('audio source')[0]['src']
+        req = Typhoeus.get("https://abair.ie#{src}")
+      else
+        return api_error 400, {error: 'endpoint failed to respond'}
+        req = nil
+      end
+    else
+      req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=#{params['locale'] || 'en'}&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
+    end
+    return api_error 400, {error: 'remote request failed'} unless req
     response.headers['Content-Type'] = req.headers['Content-Type']
     send_data req.body, :type => req.headers['Content-Type'], :disposition => 'inline'
   end

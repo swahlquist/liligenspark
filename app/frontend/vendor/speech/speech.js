@@ -11,6 +11,58 @@ if(!window.SpeechSynthesisUtterance) {
   }
 }
 
+var cloud_speak = function(utterance) {
+  if(!navigator.onLine) {
+    modal.error(i18n.t('offline_no_speech', "Your browser requires an Internet connection in order to generate speech"));
+    return;
+  }
+  // TODO: make this an ajax call requiring API token instead to prevent abuse
+  var lang = utterance.cloud_lang || utterance.lange;
+  var voice_id = utterance.cloud_voice_id || utterance.voice_id;
+  if(!cloud_speak.audio_elem) {
+    cloud_speak.audio_elem = document.createElement('audio');
+    document.body.appendChild(cloud_speak.audio_elem);
+  }
+  var event_handler = utterance.trigger;
+  var player = cloud_speak.audio_elem;
+  if(player.ready_listener) {
+    player.removeEventListener('canplay', player.ready_listener);
+    player.ready_listener = null;
+  }
+  player.pause();
+  player.ready_listener = function() { player.play(); };
+  player.addEventListener('canplay', player.ready_listener);
+  player.src = "/api/v1/search/audio?text="+encodeURIComponent(utterance.text)+"&locale="+encodeURIComponent(lang)+"&voice_id="+encodeURIComponent(voice_id);
+  
+  if(event_handler) {
+    player.addEventListener('play', function() {
+      if(event_handler.alreadyStarted) {
+        event_handler('resume');
+      } else {
+        event_handler.alreadyStarted = true;
+        event_handler('start');
+      }
+    });
+    player.addEventListener('ended', function() {
+      event_handler('end');
+    });
+    player.addEventListener('pause', function(event) {
+      if(!event.target.ended) {
+        event_handler('pause');
+      }
+    });
+    player.addEventListener('error', function() {
+      event_handler('error');
+    });
+  }
+};
+cloud_speak.stop = function() {
+  if(cloud_speak.audio_elem) {
+    cloud_speak.audio_elem.stop();
+  }
+};
+window.cloud_speak = cloud_speak;
+
 function polyfillSpeechSynthesis(scope) {
   function PolySpeechSynthesis() {
     var speech = this;
@@ -179,39 +231,6 @@ function polyfillSpeechSynthesis(scope) {
   
   var defaultUtteranceHandler = null;
 
-  var cloud_speak = function(utterance) {
-    if(!navigator.onLine) {
-      modal.error(i18n.t('offline_no_speech', "Your browser requires an Internet connection in order to generate speech"));
-      return;
-    }
-    // TODO: make this an ajax call requiring API token instead to prevent abuse
-    document.getElementById("audio").innerHTML=("<audio id=\"player\" src=\"/api/v1/search/audio?text="+encodeURIComponent(utterance.text)+"\">");
-    var event_handler = utterance.trigger;
-    var player = document.getElementById("player");
-    
-    if(event_handler) {
-      player.addEventListener('play', function() {
-        if(event_handler.alreadyStarted) {
-          event_handler('resume');
-        } else {
-          event_handler.alreadyStarted = true;
-          event_handler('start');
-        }
-      });
-      player.addEventListener('ended', function() {
-        event_handler('end');
-      });
-      player.addEventListener('pause', function(event) {
-        if(!event.target.ended) {
-          event_handler('pause');
-        }
-      });
-      player.addEventListener('error', function() {
-        event_handler('error');
-      });
-    }
-    player.play();
-  };
   var wav_audio = {};
   if(window.Audio) {
     wav_audio = new Audio();

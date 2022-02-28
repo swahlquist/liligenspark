@@ -116,6 +116,11 @@ var speecher = EmberObject.extend({
         voiceURI: ""
       });
     }
+    // list.push({
+    //   name: "Irish (Internet Required)",
+    //   lang: 'ga-IE',
+    //   voiceURI: "remote:ga-IE:irish_1"
+    // })
     if(!this.get('voices') || this.get('voices').length === 0) {
       this.set('voices', list);
     }
@@ -432,7 +437,7 @@ var speecher = EmberObject.extend({
   speak_raw_text: function(text, collection_id, opts, callback) {
     var _this = this;
     if(text.length == 1 && text == text.toUpperCase()) {
-      // On iOS, a single letter is ready "capital B" instead of just "B"
+      // On iOS, a single letter is read "capital B" instead of just "B"
       text = text.toLowerCase();
     }
     var current_locale = app_state.get('vocalization_locale');
@@ -550,15 +555,22 @@ var speecher = EmberObject.extend({
           utterance.onerror = handle_callback;
           utterance.onpause = handle_callback;
         }
-        speecher.scope.speechSynthesis.speak(utterance);
+        var extra_delay = 0;
+        if(utterance.cloud_lang && window.cloud_speak) {
+          extra_delay = 5000;
+          window.cloud_speak(utterance);
+        } else {
+          speecher.scope.speechSynthesis.speak(utterance);
+        }
         // assuming 15 characters per second, if the utterance hasn't completed after
         // 4 times the estimated duration, go ahead and assume there was a problem and mark completion
         runLater(function() {
           if(!utterance.handled) {
             speecher.scope.speechSynthesis.cancel();
+            if(window.cloud_speak) { window.cloud_speak.stop(); }
             handle_callback();
           }
-        }, 1000 * Math.ceil(text.length / 15) * 4 / (utterance.rate || 1.0));
+        }, extra_delay + (1000 * Math.ceil(text.length / 15) * 4 / (utterance.rate || 1.0)));
       };
 
       if(voice && voice.voiceURI && voice.voiceURI.match(/^extra:/)) {
@@ -579,6 +591,11 @@ var speecher = EmberObject.extend({
             speak_utterance();
           });
         });
+      } else if(voice && voice.voiceURI && voice.voiceURI.match(/^remote:/) && window.cloud_speak) {
+        var parts = voice.voiceURI.split(/:/);
+        utterance.cloud_lang = parts[1];
+        utterance.cloud_voice_id = parts[2]
+        speak_utterance(utterance);
       } else if(capabilities.system == 'iOS' && window.TTS && (!opts.voiceURI || opts.voiceURI == 'force_default' || opts.voiceURI == 'default' || opts.voiceURI.match(/tts:/))) {
         console.log("using native iOS tts");
         var opts = {
@@ -989,6 +1006,7 @@ var speecher = EmberObject.extend({
       this.speaking_from_collection = false;
       if(type === 'all') { this.speaks = []; }
       speecher.scope.speechSynthesis.cancel();
+      if(window.cloud_speak) { window.cloud_speak.stop(); }
       if(capabilities.system == 'iOS' && window.TTS && window.TTS.stop) {
         window.TTS.stop(function() { }, function() { });
       } else if(capabilities.syste == 'Windows' && window.TTS && window.TTS.stopSpeakingText) {

@@ -155,7 +155,8 @@ var voices = EmberObject.extend({
     "he": "אתה אוהב את הקול שלי? כך אני נשמעת.",
     "id": "Apa kau menyukai suaraku? Ini adalah bagaimana saya terdengar.",
     "mn": "Та миний хоолойд дуртай юу? Энэ бол миний сонсогдож байна.",
-    "th": "คุณชอบเสียงของฉันหรือไม่? นี่คือเสียงของฉัน"
+    "th": "คุณชอบเสียงของฉันหรือไม่? นี่คือเสียงของฉัน",
+    "ga": "An maith leat mo ghlór? Seo mar a chloisim.",
   },
   voices: [
     {
