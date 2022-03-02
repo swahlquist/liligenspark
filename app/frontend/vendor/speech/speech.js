@@ -58,7 +58,7 @@ var cloud_speak = function(utterance) {
 };
 cloud_speak.stop = function() {
   if(cloud_speak.audio_elem) {
-    cloud_speak.audio_elem.stop();
+    cloud_speak.audio_elem.pause();
   }
 };
 window.cloud_speak = cloud_speak;

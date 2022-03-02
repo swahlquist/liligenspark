@@ -116,6 +116,11 @@ var speecher = EmberObject.extend({
         voiceURI: ""
       });
     }
+    list.push({
+      name: "Ukranian Female (Internet Required)",
+      lang: 'uk-UA',
+      voiceURI: "remote:uk-UA:female"
+    });
     // list.push({
     //   name: "Irish (Internet Required)",
     //   lang: 'ga-IE',
@@ -558,6 +563,11 @@ var speecher = EmberObject.extend({
         var extra_delay = 0;
         if(utterance.cloud_lang && window.cloud_speak) {
           extra_delay = 5000;
+          utterance.trigger = function(type) {
+            if(type == 'end' || type == 'error' || type == 'pause') {
+              handle_callback();
+            }
+          };
           window.cloud_speak(utterance);
         } else {
           speecher.scope.speechSynthesis.speak(utterance);

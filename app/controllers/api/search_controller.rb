@@ -181,6 +181,50 @@ class Api::SearchController < ApplicationController
         return api_error 400, {error: 'endpoint failed to respond'}
         req = nil
       end
+    # elsif params['locale'] && params['locale'].match(/^uk/)
+    #   req = Typhoeus.post("https://hf.space/gradioiframe/robinhad/ukrainian-tts/+/api/predict/", body: {data: [params['text'], "uk/mai/vits-tts"]}.to_json, headers: {'Content-Type': 'application/json'})
+    #   json = JSON.parse(req.body) rescue nil
+    #   req = nil
+    #   if json
+    #     req = nil
+    #     pre, data = json['data'][0].split(/,/)
+    #     type = pre.match(/data:([^;]+);/)[1]
+    #     if data && type
+    #       bytes = Base64.decode64(data)
+    #       req = OpenStruct.new(body: bytes, headers: {'Content-Type' => type})
+    #     end
+    #   end
+    elsif ENV['GOOGLE_TTS_TOKEN']
+      cache = RedisInit.permissions.get("google/voices/#{params['locale']}")
+      if cache
+        json = JSON.parse(cache) rescue nil
+      end
+      if !json
+        req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'])}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
+        json = JSON.parse(req.body) rescue nil
+      end
+      req = nil
+      if json && !cache
+        RedisInit.permissions.setex("google/voices/#{params['locale']}", 72.hours.to_i, json.to_json)
+      end
+      if json && json['voices'] && json['voices'][0]
+        gender = params['voice_id'] if ['male', 'female'].include?(params['voice_id'])
+        voice = json['voices'].detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == params['voice_id'].upcase }
+        voice ||= json['voices'][0]
+        # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692
+        res = Typhoeus.post("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: 
+          {
+            audioConfig: {audioEncoding: 'LINEAR16', pitch: 0, speakingRate: 1},
+            input: {text: params['text']},
+            voice: {languageCode: params['locale'], name: voice['name']}
+          }.to_json, headers: {'Content-Type': 'application/json'}
+        )
+        json = JSON.parse(res.body) rescue nil
+        if json && json['audioContent']
+          bytes = Base64.decode64(json['audioContent'])
+          req = OpenStruct.new(body: bytes, headers: {'Content-Type' => 'audio/wav'})
+        end
+      end
     else
       req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=#{params['locale'] || 'en'}&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     end
