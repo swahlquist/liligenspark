@@ -35,12 +35,20 @@ describe UpstreamDownstream, :type => :model do
       b2.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b3.global_id}}
       ]
+      b2.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', nil, nil]]
+      }
       b2.save
       Worker.flush_queues
       b.save
       b.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b2.global_id}}
       ]
+      b.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', nil, nil]]
+      }
       b.save
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)
       Worker.process_queues
@@ -61,6 +69,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 1, 'load_board' => {'id' => '123'}},
         {'id' => 2, 'load_board' => {'id' => '234'}}
       ]
+      b.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', '3']]
+      }
       b.instance_variable_set('@buttons_changed', true)
       b.save
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], true, Time.now.to_i]})).to eq(true)
@@ -75,6 +87,27 @@ describe UpstreamDownstream, :type => :model do
       b.save
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
     end
+
+    it "should not record downstream_board_ids for buttons that aren't part of the grid" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b1.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => b2.global_id}},
+        {'id' => 5, 'load_board' => {'id' => b3.global_id}}
+      ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
+      b1.save
+      Worker.process_queues
+      expect(b1.reload.settings['immediately_downstream_board_ids'].sort).to eq([b2.global_id].sort)
+      expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
+      expect(b2.reload.settings['downstream_board_ids'].sort).to eq([].sort)
+      expect(b1.reload.settings['downstream_board_ids'].sort).to eq([b2.global_id].sort)
+    end
     
     it "should not run through tracking if the board has been tracked since the tracking was scheduled" do
       u = User.create
@@ -86,6 +119,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 1, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
         {'id' => 2, 'load_board' => {'id' => '234'}}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.instance_variable_set('@buttons_changed', true)
       b1.save
       Worker.process_queues
@@ -107,6 +144,10 @@ describe UpstreamDownstream, :type => :model do
       b1.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b2.global_id}}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.save
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
@@ -115,6 +156,10 @@ describe UpstreamDownstream, :type => :model do
       b2.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b3.global_id}}
       ]
+      b2.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b2.save
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
@@ -123,6 +168,10 @@ describe UpstreamDownstream, :type => :model do
       b3.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b1.global_id}}
       ]
+      b3.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b3.save
       Worker.process_queues
       Worker.process_queues
@@ -141,6 +190,10 @@ describe UpstreamDownstream, :type => :model do
       b1.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b2.global_id}}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.save
       Worker.process_queues
       Worker.process_queues
@@ -153,6 +206,10 @@ describe UpstreamDownstream, :type => :model do
       b2.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b3.global_id}}
       ]
+      b2.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b2.save
       Worker.process_queues
       Worker.process_queues
@@ -165,6 +222,10 @@ describe UpstreamDownstream, :type => :model do
       b3.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b1.global_id}}
       ]
+      b3.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b3.save
       Worker.process_queues
       Worker.process_queues
@@ -187,6 +248,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 1, 'load_board' => {'id' => b2.global_id}},
         {'id' => 2}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.save
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
@@ -203,6 +268,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 2},
         {'id' => 3}
       ]
+      b2.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', '3']]
+      }
       b2.save
       Worker.process_queues
       Worker.process_queues
@@ -219,6 +288,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 1, 'load_board' => {'id' => b1.global_id}},
         {'id' => 6}
       ]
+      b3.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', '6']]
+      }
       b3.save
       Worker.process_queues
       Worker.process_queues
@@ -238,6 +311,10 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 4},
         {'id' => 5}
       ]
+      b3.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '4', '5']]
+      }
       b3.instance_variable_set('@buttons_changed', true)
       b3.instance_variable_set('@button_links_changed', true)
       b3.save
@@ -265,6 +342,10 @@ describe UpstreamDownstream, :type => :model do
       b1.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b2.global_id}}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.save
 
       allow(Board).to receive(:find_all_by_global_id).with([b2.global_id]).and_return([b2]).at_least(1).times
@@ -285,6 +366,10 @@ describe UpstreamDownstream, :type => :model do
       b1.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => b2.global_id}}
       ]
+      b1.settings['grid'] = {
+        'rows' => 1, 'columns' => 3,
+        'order' => [['1', '2', nil]]
+      }
       b1.save
       Worker.process_queues
 

@@ -255,8 +255,13 @@ module UpstreamDownstream
   
   def get_immediately_downstream_board_ids
     downs = []
+    grid = BoardContent.load_content(self, 'grid')
+    ids = nil
+    if grid && grid['order']
+      grid['order'].flatten.compact.uniq.each{|id| ids ||= {}; ids[id.to_s] = true }
+    end
     (self.buttons || []).each do |button|
-      if button['load_board'] && button['load_board']['id']
+      if button['load_board'] && button['load_board']['id'] && button['id'] && (!ids || ids[button['id'].to_s])
         downs << button['load_board']['id']
       end
     end
