@@ -901,6 +901,19 @@ class Board < ActiveRecord::Base
   def buttons
     BoardContent.load_content(self, 'buttons')
   end
+
+  def grid_buttons
+    grid = BoardContent.load_content(self, 'grid')
+    ids = nil
+    if grid && grid['order']
+      grid['order'].flatten.compact.uniq.each{|id| ids ||= {}; ids[id.to_s] = true }
+    end
+    res = self.buttons
+    if ids != nil
+      res = res.select{|b| ids[b['id'].to_s] }
+    end
+    res
+  end
   
   def process_params(params, non_user_params)
     raise "user required as board author" unless self.user_id || non_user_params[:user]

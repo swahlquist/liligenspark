@@ -119,6 +119,7 @@ var speecher = EmberObject.extend({
     list.push({
       name: "Ukranian Female (Internet Required)",
       lang: 'uk-UA',
+      remote_voice: true,
       voiceURI: "remote:uk-UA:female"
     });
     // list.push({
@@ -412,7 +413,7 @@ var speecher = EmberObject.extend({
     var language = locale && locale.split(/-/)[0];
     var mapped_lang = i18n.lang_map[language] || language;
     if(locale && voice && voice.lang && locale != 'any') {
-      // If locale is set but the voice doesn't match clear it.
+      // If locale is set but the voice doesn't match, clear it.
       // This is used when we're on a board for a different language
       // than the user's default, but we need to check 
       // the 3-letter language codes as well.
@@ -424,18 +425,19 @@ var speecher = EmberObject.extend({
         locale = ((i18n.langs || {}).preferred || window.navigator.language).toLowerCase().replace(/_/, '-');
         language = locale && locale.split(/-/)[0];    
       }
+      var local_voices = voices.filter(function(v) { return !v.remote_voice });
       // Can't find an exact match? Look for a best match by locale
       // First prioritize Google voices because they sound better
-      voice = voice || voices.find(function(v) { return language && v.name && v.name.match(/^Google/) && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
+      voice = voice || local_voices.find(function(v) { return language && v.name && v.name.match(/^Google/) && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
       // Then look for voices that match the full locale string
-      voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+      voice = voice || local_voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
       // Then look for voices that match the lang portion of the locale string
-      voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
-      // Then try again with matching, since that'll be better than whatever just comse first
+      voice = voice || local_voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
+      // Then try again with matching, since that'll be better than whatever just comes first
       voice = voice || uri_match();
       // Then look for the first default voice
-      voice = voice || voices.find(function(v) { return v['default']; });
-      voice = voice || voices[0];
+      voice = voice || local_voices.find(function(v) { return v['default']; });
+      voice = voice || local_voices[0];
     }
     return voice;
   },
@@ -564,7 +566,10 @@ var speecher = EmberObject.extend({
         if(utterance.cloud_lang && window.cloud_speak) {
           extra_delay = 5000;
           utterance.trigger = function(type) {
-            if(type == 'end' || type == 'error' || type == 'pause') {
+            if(type == 'error') {
+              utterance.cloud_lang = null;
+              speecher.scope.speechSynthesis.speak(utterance);
+            } else if(type == 'end' || type == 'error' || type == 'pause') {
               handle_callback();
             }
           };

@@ -435,14 +435,14 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
           inflections = {}
           (board_to_visit.settings['locales'] || []).each do |loc|
-            words_to_check = board_to_visit.buttons.map{|b|
+            words_to_check = board_to_visit.grid_buttons.map{|b|
               btn = (trans[b['id'].to_s] || {})[loc] || b
               btn['vocalization'] || btn['label']
             }.compact
             inflections[loc] = WordData.inflection_locations_for(words_to_check, loc)
           end
 
-          board_to_visit.buttons.each_with_index do |button, idx|
+          board_to_visit.grid_buttons.each_with_index do |button, idx|
             image = images.detect{|i| button['image_id'] == i.global_id }
             visible_level = 1
             linked_level = 1
