@@ -32,24 +32,27 @@ module ExternalTracker
 
 
     acct = "Communicator Account"
+    # "Supervisor Parent Account", "AT Specialist/Lending Library", "Eval"
+    # "Therapist", "Teacher", "AAC Grad Course", "Org Added Supervisor", 
+    # "Org added Communicator", "Supervisor other", "Communicator other"
     if user.supporter_registration?
       if user.registration_type == 'eval'
         acct = 'AT Specialist/Lending Library'
       elsif user.registration_type == 'parent'
         acct = 'Supervisor Parent Account'
       elsif user.registration_type == 'teacher'
-        acct = 'Supervisor Teacher'
+        acct = 'Teacher'
       elsif user.registration_type == 'manually-added-supervisor'
-        acct = 'Supervisor Org-Added'
+        acct = 'Org Added Supervisor'
       elsif user.registration_type == 'other'
-        acct = 'Supervisor Other'
+        acct = 'Supervisor other'
       else
-        acct = 'Supervisor Teacher/Speech Path'
+        acct = 'Therapist'
       end
     elsif user.registration_type == 'other'
-      acct = 'Communicator Other'
+      acct = 'Communicator other'
     elsif user.registration_type == 'manually-added-org-user'
-      acct = 'Communicator Org-Added'
+      acct = 'Org added Communicator'
     end
 
     name = (user.settings['name'] || '').split(/\s/, 2)
