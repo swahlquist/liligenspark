@@ -87,6 +87,17 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total_stats.merge!(Stats.time_block_use_for_sessions(sessions))
     total_stats.merge!(Stats.parts_of_speech_stats(sessions))
     target_words = Stats.target_words(user, sessions, current_weekyear == summary.weekyear)
+    if target_words[:trend_words] && current_weekyear == summary.weekyear
+      words = target_words[:trend_words]
+      words += total_stats[:all_word_counts].keys
+      total_stats[:word_breadth] = words.uniq.length
+
+      words = target_words[:trend_modeled_words]
+      words += total_stats[:modeled_word_counts].keys
+      total_stats[:modeled_word_breadth] = words.uniq.length
+    end
+    target_words.delete(:trend_words)
+    target_words.delete(:trend_modeled_words)
     total_stats.merge!(target_words)
     
     total_stats[:word_pairs] = Stats.word_pairs(sessions)
@@ -94,6 +105,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total_stats[:locations] = Stats.location_use_for_sessions(sessions)
     total_stats[:goals] = Stats.goals_for_user(user, start_at, end_at)
     total_stats[:buttons_used] = Stats.buttons_used(sessions)
+    if current_weekyear == summary.weekyear
+      total_stats[:word_access] = user.board_set_ids.length
+    end
     
     # TODO: include for the week:
     # - goals set, including name, id, template_id, public template
@@ -273,6 +287,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total.data['modeled_word_counts'] = {}
     total.data['word_travels'] = {}
     total.data['depth_counts'] = {}
+    total.data['modeled_word_breadths'] = []
+    total.data['word_breadths'] = []
+    total.data['word_accesses'] = []
     total.data['user_ids'] = []
     total.data['research_user_ids'] = []
     total.data['publishing_user_ids'] = []
@@ -359,6 +376,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
               total.data['word_counts'][word.downcase] = (total.data['word_counts'][word.downcase] || 0) + cnt 
             end
           end
+          total.data['modeled_word_breadths'] << summary.data['stats']['modeled_word_breadth'] || (summary.data['stats']['modeled_word_counts'] || {}).keys.length
+          total.data['word_accesses'] << summary.data['stats']['word_access'] || (summary.data['stats']['all_word_counts'] || {}).keys.length
+          total.data['word_breadths'] << summary.data['stats']['word_breadth'] || (summary.data['stats']['all_word_counts'] || {}).keys.length
+
           (summary.data['stats']['modeled_word_counts'] || {}).each do |word, cnt|
             if word && valid_words[word.downcase]
               total.data['modeled_word_counts'][word.downcase] = (total.data['modeled_word_counts'][word.downcase] || 0) + cnt 
@@ -543,12 +564,16 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
     User.where(id: ids.uniq)
   end
+
+  def self.trends_duration
+    3.months
+  end
   
   def self.trends(include_admin=false)
     res = {}
     res['weeks'] = {}
     stash = {}
-    start = 3.months.ago.to_date
+    start = self.trends_duration.ago.to_date
     nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
     cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(start)
     stash[:total_session_seconds] = 0
@@ -562,6 +587,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:modeled_sessions] = 0
     stash[:word_counts] = {}
     stash[:modeled_word_counts] = {}
+    stash[:modeled_word_breadths] = []
+    stash[:word_breadths] = []
+    stash[:word_accesses] = []
     stash[:depth_counts] = {}
     stash[:word_travels] = {}
     stash[:board_usages] = {}
@@ -594,6 +622,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
         stash[:total_buttons] += summary.data['totals']['total_buttons']
         stash[:core_words] += summary.data['totals']['total_core_words']
         stash[:total_words] += summary.data['totals']['total_words']
+        stash[:modeled_word_breadths] += summary.data['modeled_word_breadths'] || []
+        stash[:word_breadths] += summary.data['word_breadths'] || []
+        stash[:word_accesses] += summary.data['word_accesses'] || []
         stash[:admin_total_words] += (summary.data['totals']['admin_total_words'] || summary.data['totals']['total_words'])
         stash[:user_ids] += summary.data['user_ids'] || []
         stash[:research_user_ids] += summary.data['research_user_ids'] || []
@@ -717,6 +748,16 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:modeled_percent] = 0.0 if res[:modeled_percent].nan?
     res[:goals_percent] = 100.0 * (stash[:goal_user_ids].uniq.length.to_f / total_users.to_f).round(2) if stash[:goal_user_ids]
     res[:badges_percent] = 100.0 * (stash[:badged_user_ids].uniq.length.to_f / total_users.to_f).round(2) if stash[:badged_user_ids]
+
+    cnt = [stash[:modeled_word_breadths].length.to_f, 1].max
+    tally = [stash[:modeled_word_breadths].compact.sum.to_f, 0].compact.max
+    res[:average_modeled_breadth] = (tally / cnt).round(1)
+    cnt = [stash[:word_breadths].length.to_f, 1].max
+    tally = [stash[:word_breadths].compact.sum.to_f, 0].compact.max
+    res[:average_breadth] = (tally / cnt).round(1)
+    cnt = [stash[:word_accesses].length.to_f, 1].max
+    tally = [stash[:word_accesses].compact.sum.to_f, 0].compact.max
+    res[:average_access] = (tally / cnt).round(1)
 
     res[:core_percent] = 100.0 * (stash[:core_words].to_f / stash[:total_words].to_f * 10.0).round(1) / 10.0
     res[:core_percent] = 0.0 if res[:core_percent].nan?

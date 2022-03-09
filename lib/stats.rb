@@ -962,11 +962,14 @@ module Stats
     end
     
     longview_core_words = {}
+    trend_words = []
     total_weeks = 0
     recent_weeks = 0
     if user && sessions[0]
       min_summary = (sessions[0].started_at - 6.months).to_date
       start_weekyear = WeeklyStatsSummary.date_to_weekyear(min_summary)
+      trend_cutoff = (sessions[0].started_at - WeeklyStatsSummary.trends_duration).to_date
+      trend_weekyear = WeeklyStatsSummary.date_to_weekyear(trend_cutoff)
       recent_cutoff = (sessions[0].started_at - 2.weeks).to_date
       recent_weekyear = WeeklyStatsSummary.date_to_weekyear(recent_cutoff)
       end_weekyear = WeeklyStatsSummary.date_to_weekyear(sessions[0].started_at)
@@ -974,6 +977,20 @@ module Stats
       summaries.find_in_batches(batch_size: 5) do |batch|
         batch.each do |summary|
           total_weeks += 1
+          if current && summary.weekyear >= trend_weekyear && summary.weekyear < end_weekyear
+            # This isn't related to target words, but it's the best
+            # place to look it up because we already have a set of 
+            # prior weekly stats summaries
+            if summary.data['stats'] && summary.data['stats']['all_word_counts']
+              res[:trend_words] ||= []
+              res[:trend_words] += summary.data['stats']['all_word_counts'].keys
+            end
+            if summary.data['stats'] && summary.data['stats']['modeled_word_counts']
+              res[:trend_modeled_words] ||= []
+              res[:trend_modeled_words] += summary.data['stats']['modeled_word_counts'].keys
+            end
+          end
+
           default_core.each do |word|
             if summary.data['stats'] && summary.data['stats']['all_word_counts'] && summary.data['stats']['all_word_counts'][word]
               longview_core_words[word.downcase] ||= 0
