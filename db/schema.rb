@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20220113191315) do
+ActiveRecord::Schema.define(version: 20220301220045) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -98,7 +98,9 @@ ActiveRecord::Schema.define(version: 20220113191315) do
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "boards_search_string", using: :gin
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
+    t.index ["public", "popularity", "home_popularity", "id"], name: "board_index_popularity", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
+    t.index ["user_id", "popularity", "any_upstream", "id"], name: "board_user_index_popularity", using: :btree
   end
 
   create_table "button_images", force: :cascade do |t|
@@ -147,7 +149,7 @@ ActiveRecord::Schema.define(version: 20220113191315) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|

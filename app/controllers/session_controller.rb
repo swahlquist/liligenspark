@@ -583,6 +583,20 @@ class SessionController < ApplicationController
     end
   end
 
+  def heartbeat
+    render json: {active: true}
+  end
+
+  def status
+    last_id = (Board.last || OpenStruct.new(id: 5)).id
+    Board.find_by(id: rand(last_id))
+    user_id = (User.last || OpenStruct.new(id: 9)).id
+    LogSession.where(user_id: user_id).count
+    ids = Board.where(public: true).order('home_popularity DESC').limit(10).map(&:global_id)
+    RedisInit.default.get('trends_tracked_recently')
+    render json: {active: true}
+  end
+
   protected
   def assert_session_device(d, u, installed_app)
     store_user_data = (u.settings['preferences'] || {})['cookies'] != false

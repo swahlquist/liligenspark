@@ -1982,4 +1982,22 @@ describe SessionController, :type => :controller do
       expect(json).to eq({'a' => 1})
     end
   end
+
+  describe "status" do
+    it "should return active" do
+      post 'status'
+      json = assert_success_json
+      expect(json).to eq({'active' => true})
+    end
+    
+    describe "heartbeat" do
+      it "should return active" do
+        get 'heartbeat'
+        json = assert_success_json
+        expect(json).to eq({'active' => true})
+      end
+    end
+
+  end
+
 end

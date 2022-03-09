@@ -144,7 +144,10 @@ Coughdrop::Application.routes.draw do
   get 'organizations/:org_id/rooms/:room_id' => ember_handler
   get ':id/confirm_registration/:key' => ember_handler, :constraints => {:id => user_id_regex}
   get ':id/password_reset/:key' => ember_handler, :constraints => {:id => user_id_regex}
+  post 'api/v1/status' => 'session#status'
+  get 'api/v1/status' => 'session#status'
   get 'api/v1/token_check' => 'session#token_check'
+  get 'api/v1/status/heartbeat' => 'session#heartbeat'
   
   scope 'api/v1', module: 'api' do
     post 'forgot_password' => 'users#forgot_password'

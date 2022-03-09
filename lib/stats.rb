@@ -313,7 +313,7 @@ module Stats
       :utterances_per_minute => 0.0,
       :words_per_utterance => 0.0,
       :buttons_per_utterance => 0.0,
-  }
+    }
     if !brief
       res = res.merge({
         :modeled_session_events => {},
