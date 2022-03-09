@@ -175,14 +175,28 @@ module Converters::CoughDrop
             image['url'] = Uploader.fronted_url(skinned_url)
           end
           if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
+            alt_urls = []
             if image['url'].match(/varianted-skin/)
-              image['url'] = image['url'].sub(/varianted-skin\.svg/, '') + '.png'
+              alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'png'
             elsif image['url'].match(/variant-/)
-              image['url'] += '.raster.png'
+              alt_urls << image['url'] + '.raster.png'
             else
-              image['url'] += '.png'
+              # apparently some are raster.png, some are .png
+              alt_urls << image['url'] + '.raster.png'
+              alt_urls << image['url'] + '.png'
             end
-            image['url'] = image['url']
+            if alt_urls.length > 0
+              found = false
+              alt_urls.each do |alt_url|
+                next if found
+                req = Typhoeus.head(alt_url)
+                if req.success?
+                  image['fallback_url'] ||= image['url']
+                  image['url'] = alt_url
+                  found = true
+                end
+              end
+            end
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
