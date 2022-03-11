@@ -592,7 +592,7 @@ class SessionController < ApplicationController
     Board.find_by(id: rand(last_id))
     user_id = (User.last || OpenStruct.new(id: 9)).id
     LogSession.where(user_id: user_id).count
-    ids = Board.where(public: true).order('home_popularity DESC').limit(10).map(&:global_id)
+    ids = Board.where(public: true).limit(10).map(&:global_id)
     RedisInit.default.get('trends_tracked_recently')
     render json: {active: true}
   end
