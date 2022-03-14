@@ -174,8 +174,8 @@ module Converters::CoughDrop
             image['ext_coughdrop_unskinned_url'] = image['url']
             image['url'] = Uploader.fronted_url(skinned_url)
           end
+          alt_urls = []
           if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
-            alt_urls = []
             if image['url'].match(/varianted-skin/)
               alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'png'
             elsif image['url'].match(/variant-/)
@@ -185,26 +185,23 @@ module Converters::CoughDrop
               alt_urls << image['url'] + '.raster.png'
               alt_urls << image['url'] + '.png'
             end
-            if alt_urls.length > 0
-              found = false
-              alt_urls.each do |alt_url|
-                next if found
-                req = Typhoeus.head(alt_url)
-                if req.success?
-                  image['fallback_url'] ||= image['url']
-                  image['url'] = alt_url
-                  found = true
-                end
+          elsif opts['for_pdf'] && image_record.raster_url
+            alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
+          end
+          if alt_urls.length > 0
+            found = false
+            alt_urls.each do |alt_url|
+              next if found
+              req = Typhoeus.head(alt_url)
+              if req.success?
+                image['fallback_url'] ||= image['url']
+                image['url'] = alt_url
+                image['content_type'] = 'image/png'
+                image['width'] = 400
+                image['height'] = 400
+                found = true
               end
             end
-            image['content_type'] = 'image/png'
-            image['width'] = 400
-            image['height'] = 400
-          elsif opts['for_pdf'] && image_record.raster_url
-            image['url'] = Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
-            image['content_type'] = 'image/png'
-            image['width'] = 400
-            image['height'] = 400
           end
 
           res['images'] << image
