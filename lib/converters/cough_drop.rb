@@ -201,7 +201,7 @@ module Converters::CoughDrop
             image['width'] = 400
             image['height'] = 400
           elsif opts['for_pdf'] && image_record.raster_url
-            image['url'] = Uploader.fronted_url(image_record.raster_url(skinned_url))
+            image['url'] = Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
             image['content_type'] = 'image/png'
             image['width'] = 400
             image['height'] = 400
