@@ -106,7 +106,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total_stats[:goals] = Stats.goals_for_user(user, start_at, end_at)
     total_stats[:buttons_used] = Stats.buttons_used(sessions)
     if current_weekyear == summary.weekyear
-      total_stats[:word_access] = user.board_set_ids.length
+      board_ids = user.board_set_ids
+      total = 0
+      Board.find_batches_by_global_id(board_ids) do |brd|
+        total += brd.grid_buttons.select{|b| !b['hidden'] }.length
+      end
+      total_stats[:word_access] = total
     end
     
     # TODO: include for the week:
