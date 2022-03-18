@@ -26,7 +26,7 @@ export default Controller.extend({
         list.push({id: 'recent_home_boards', name: i18n.t('recent_home_boards', "Most common home boards in the last 3 months")});
         list.push({id: 'current_but_expired', name: i18n.t('current_but_expired', "Used currently but now expired")});
         list.push({id: 'subscriptions', name: i18n.t('subscriptions', "Subscriptions over time") });
-        list.push({id: 'missing_words', name: i18n.t('missing_words', "Button labels that don't have matching parts of speech")});
+        list.push({id: 'missing_words', name: i18n.t('missing_pos_words', "Button labels that don't have matching parts of speech")});
         list.push({id: 'overridden_parts_of_speech', name: i18n.t('overridden_parts_of_speech', "Manually-set parts of speech")});
         list.push({id: 'missing_symbols', name: i18n.t('missing_symbols', "Search terms that don't return any matching symbols")});
         list.push({id: 'premium_voices', name: i18n.t('premium_voice_downloads', "Premium Voice Downloads")});

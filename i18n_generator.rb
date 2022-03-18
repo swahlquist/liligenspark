@@ -1,4 +1,7 @@
 require 'json'
+# To generate translations for a language:
+# nopes = WordData.translate_locale_batch(locale, [])
+# (for repeat calls, pass nopes as 2nd arg to prevent repeating failed attempts)
 files = Dir.glob('app/frontend/app/**/*.js')
 strings = {}
 dups = 0
@@ -221,6 +224,9 @@ end
 puts "TOTAL DUPS #{dups}"
 puts "TOTAL MISSING #{missing}"
 puts "TOTAL STRINGS #{strings.keys.length}"
+# To approve manually-reviewed translations above a specific line number
+# (i.e. to mark them at not computed-generated translations)
+# ruby i18n_generator.rb --confirm [locale] [approve-up-to-line]
 if ARGV.index('--confirm')
   idx = ARGV.index('--confirm')
   locale = ARGV[idx + 1]
@@ -237,6 +243,10 @@ if ARGV.index('--confirm')
   f = File.open("public/locales/#{locale}.json", 'w')
   f.write lines.join("\n")
   f.close
+# To generate a new english strings file:
+# ruby i18n_generator.rb --generate  
+# To merge any new strings from the english file into other locales:
+# ruby i18n_generator.rb --merge
 elsif ARGV.index('--generate') || ARGV.index('--merge')
   if dups > 0 || missing > 0
     puts "FOUND ISSUES, SO NO GENERATION"

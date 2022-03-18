@@ -70,7 +70,7 @@
                   {{#if ideas.saving}}
                     {{t "Saving..." key='saving'}}
                   {{else if ideas.saved}}
-                    {{t "Saved!" key='saved'}}
+                    {{t "Saved!" key='saved_excl'}}
                   {{else if ideas.error}}
                     {{t "Error Saving Words" key='error_saving_words'}}
                   {{else}}
@@ -176,7 +176,7 @@
                   {{/each}}
                 </div>
               {{else}}
-                <p>{{t "No Results Found" key='no_results_found'}}</p>
+                <p>{{t "No results found" key='no_results_found'}}</p>
               {{/if}}
             {{else}}
               <div class='row'>
@@ -207,7 +207,7 @@
                 {{/each}}
               </div>
             {{else}}
-              <p>{{t "No Results Found" key='no_results_found'}}</p>
+              <p>{{t "No results found" key='no_results_found'}}</p>
             {{/if}}
             {{#unless search.loading}}
               <div style='text-align: center; margin-top: 10px;'>

@@ -96,7 +96,7 @@ var scanner = EmberObject.extend({
             'home_button': i18n.t('home', "Home"),
             'back_button': i18n.t('back', "Back"),
             'button_list': i18n.t('speak', "Speak"),
-            'speak_options': i18n.t('options', "Speak Options"),
+            'speak_options': i18n.t('speak_options_upper', "Speak Options"),
             'backspace_button': i18n.t('backspace', "Backspace"),
             'clear_button': i18n.t('clear', "Clear")
           };

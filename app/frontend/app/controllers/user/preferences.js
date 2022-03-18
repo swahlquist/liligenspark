@@ -39,10 +39,10 @@ export default Controller.extend({
     {name: i18n.t('medium_10', "Medium (10px)"), id: "medium"},
     {name: i18n.t('larg_20e', "Large (20px)"), id: "large"},
     {name: i18n.t('huge_45', "Huge (45px)"), id: "huge"},
-    {name: i18n.t('none', "None"), id: "none"}
+    {name: i18n.t('none_upper', "None"), id: "none"}
   ],
   buttonBorderList: [
-    {name: i18n.t('none', "None"), id: "none"},
+    {name: i18n.t('none_upper', "None"), id: "none"},
     {name: i18n.t('small_1', "Small (1px)"), id: "small"},
     {name: i18n.t('medium_2', "Medium (2px)"), id: "medium"},
     {name: i18n.t('thick_5', "Thick (5px)"), id: "large"},

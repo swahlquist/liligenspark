@@ -101,7 +101,7 @@
                         {{else if org.alias_state.error}}
                           {{t "error updating" key='error_updating'}}
                         {{else if org.alias_state.updated}}
-                          {{t "updated!" key='updated'}}
+                          {{t "updated!" key='updated_excl'}}
                         {{else}}
                           {{t "update alias" key='update_alias'}}
                         {{/if}}
@@ -109,7 +109,7 @@
                     {{else if org.external_auth_alias}}
                       <b>{{ org.external_auth_alias }}</b>
                     {{else}}
-                      <span class='text-muted'>{{t "none set" key='none_set'}}</span>
+                      <span class='text-muted'>{{t "none set" key='none_set_lower'}}</span>
                     {{/if}}
                     <button class='btn btn-default' disabled={{org.alias_state.temping}} type='button' {{action 'link_auth' org}}>
                       {{#if org.alias_state.temping}}

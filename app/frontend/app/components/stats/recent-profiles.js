@@ -18,8 +18,8 @@ export default Component.extend({
         var table = [
           ['Type', 'Total']
         ];
-        table.push([i18n.t('goal_tracked', "Has Recent Profile"), recent]);
-        table.push([i18n.t('untracked_goal', "No Recent Profile"), total - recent]);
+        table.push([i18n.t('has_recent_profile', "Has Recent Profile"), recent]);
+        table.push([i18n.t('no_recent_profile', "No Recent Profile"), total - recent]);
         var data = window.google.visualization.arrayToDataTable(table);
 
         var options = {

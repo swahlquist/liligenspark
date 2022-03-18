@@ -97,7 +97,7 @@
               </li>
             {{/each}}
             <li role="presentation">
-              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "hide"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "hide"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide_upper"}}</a>
               <a role="menuitem" href="#" tabindex="-1" {{action "paint" "show"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-ok-sign"></span> {{t "Show" key="show"}}</a>
               <span style="clear: left;"></span>
             </li>
@@ -382,7 +382,7 @@
           <button class='btn btn-default' style="width: 52px;" {{action "stickSidebar"}}><span class="glyphicon glyphicon-pushpin"></span></button>
           <button class='btn btn-default' {{action "toggleSidebar"}}>&times;</button>
         {{else}}
-          <button class='btn btn-default' style="width: 90px;" {{action "toggleSidebar"}}>&times; {{t "Hide" key='hide'}}</button>
+          <button class='btn btn-default' style="width: 90px;" {{action "toggleSidebar"}}>&times; {{t "Hide" key='hide_upper'}}</button>
         {{/if}}
       </span>
     {{/unless}}

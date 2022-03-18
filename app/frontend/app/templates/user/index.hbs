@@ -152,7 +152,7 @@
                   {{#if model.last_profile}}
                     {{date model.last_profile_date 'tiny_day'}}
                   {{else}}
-                    {{t "None" key='none'}}
+                    {{t "None" key='none_upper'}}
                   {{/if}}
                 </div>
               </div>
@@ -221,7 +221,7 @@
               {{#if model.preferences.home_board.key}}
                 {{#link-to 'board' model.preferences.home_board.key}}{{model.preferences.home_board.key}}{{/link-to}}
               {{else}}
-                {{t "None" key='none'}}
+                {{t "None" key='none_upper'}}
               {{/if}}
           </div>
         </div>

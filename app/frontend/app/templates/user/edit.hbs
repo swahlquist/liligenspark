@@ -324,7 +324,7 @@
       <label for='2fa' class='col-sm-3 control-label'>{{t "2-Factor Authentication" key='2fa'}}</label>
       <div class='col-sm-8'>
         {{#if status_2fa.loading}}
-          <p>{{t "Updating..." key='updating'}}</p>
+          <p>{{t "updating..." key='updating'}}</p>
         {{else if status_2fa.uri}}
           <p style='max-width: 300px;'>{{t "To complete two-factor authentication setup, scan the code into your authentication app and enter the generated code to confirm:" key='confirm_2fa_code'}}</p>
           <div style='width: 300px'>

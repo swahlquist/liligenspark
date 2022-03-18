@@ -1638,6 +1638,8 @@ var i18n = EmberObject.extend({
     'en',
     'es*',
     'pl',
+    'pt*',
+    'uk*',
     'zh*',
     'ru*',
     'backwards',
@@ -1647,6 +1649,9 @@ var i18n = EmberObject.extend({
     es: "Español",
     fr: "Français",
     pl: "Polski",
+    pt: "Português",
+    uk: "український",
+    ru: "русский",
     backwards: "Backwards English",
     zh: "中文"
   },

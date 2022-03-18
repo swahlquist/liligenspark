@@ -76,10 +76,10 @@
                     <div style='font-style: italic;'>{{prof.author.user_name}} {{date prof.date}}</div>
                   </td>
                   <td style='padding: 0 5px;'>
-                    <button {{action 'review_profile' prof.log_id}} class='btn btn-default'>{{t "review" key='review_details'}}</button>
+                    <button {{action 'review_profile' prof.log_id}} class='btn btn-default'>{{t "review" key='review'}}</button>
                   </td>
                   <td style='padding: 0 5px;'>
-                    <button {{action 'run_profile' prof.id}} class={{prof.button_class}} style='width: 90px;'>{{t "repeat" key='review_details'}}</button>
+                    <button {{action 'run_profile' prof.id}} class={{prof.button_class}} style='width: 90px;'>{{t "repeat" key='repeat'}}</button>
                   </td>
                   <!-- profile with results -->
                 {{else}}

@@ -37,7 +37,7 @@ export default modal.ModalController.extend({
     }
     res.push({id: 'add_unsponsored_user', name: i18n.t('add_unsponsored_used', "Add this User As an Unsponsored Communicator")});
     if(this.get('model.premium')) {
-      res.push({id: 'add_external_user', name: i18n.t('add_unsponsored_used', "Add this User As an Third-Party App Communicator")});
+      res.push({id: 'add_external_user', name: i18n.t('add_third_party_user', "Add this User As an Third-Party App Communicator")});
     }
     if(this.get('model.no_supervisor_licenses')) {
       res.push({id: 'add_premium_supervisor', disabled: true, name: i18n.t('add_as_premium_supervisor', "Add this User As a Premium Supervisor")});

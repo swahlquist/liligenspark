@@ -53,7 +53,7 @@
         <div class="col-sm-3 col-xs-6">
           <div class="panel panel-default summary smaller">
             <div class="panel-heading">
-              {{t "Total Recent Words" key='total_words'}}
+              {{t "Total Recent Words" key='total_recent_words'}}
             </div>
             <div class="panel-body">
               {{delimit log_stats.total_words}} {{t "words" key='words'}}
@@ -191,7 +191,7 @@
         </div>
       {{/if}}
       <div class='col-sm-6' style='clear: both;'>
-        <strong>{{t "Recent Words" key='words'}}</strong>
+        <strong>{{t "Recent Words" key='recent_words'}}</strong>
         {{#if log_stats.word_count}}
           {{stats/word-cloud stats=words_cloud short=true zoom=1}}
         {{else}}
@@ -199,7 +199,7 @@
         {{/if}}
       </div>
       <div class='col-sm-6'>
-        <strong>{{t "Modeled Words" key='words'}}</strong>
+        <strong>{{t "Modeled Words" key='modeled_words'}}</strong>
         {{#if modeled_words_cloud.words_by_frequency.length}}
           {{stats/word-cloud stats=modeled_words_cloud short=true zoom=1}}
         {{else}}

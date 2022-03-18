@@ -176,10 +176,10 @@ export default modal.ModalController.extend({
     var res = [];
     var text_reasons = {
       fallback: i18n.t('starter_word', "Starter Word"),
-      primary_words: i18n.t('goal_words', "Goal Target"),
-      primary_modeled_words: i18n.t('goal_words', "Goal Target"),
-      secondary_words: i18n.t('goal_words', "Goal Target"),
-      secondary_modeled_words: i18n.t('goal_words', "Goal Target"),
+      primary_words: i18n.t('goal_target', "Goal Target"),
+      primary_modeled_words: i18n.t('goal_target', "Goal Target"),
+      secondary_words: i18n.t('goal_target', "Goal Target"),
+      secondary_modeled_words: i18n.t('goal_target', "Goal Target"),
       popular_modeled_words: i18n.t('frequently_modeled_words', "Frequently-Modeled"),
       infrequent_core_words: i18n.t('infrequent_core', "Rarely-Used Core"),
       emergent_words: i18n.t('emergent', "Emergent Use"),

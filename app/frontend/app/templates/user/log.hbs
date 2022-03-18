@@ -294,7 +294,7 @@
   {{/if}}
   {{#if model.goal.id}}
     <div style='margin: -5px 0 10px; font-size: 16px;'>
-      {{#link-to 'user.goal' user.user_name model.goal.id}}{{t "Goal: " key='goal_colon'}}{{model.goal.summary}}{{/link-to}}
+      {{#link-to 'user.goal' user.user_name model.goal.id}}{{t "Goal:" key='goal_colon'}} {{model.goal.summary}}{{/link-to}}
     </div>
   {{/if}}
   <div class="row">
@@ -445,7 +445,7 @@
           {{#if model.events_state.checking}}
             <tr><td colspan='5'>{{t "Loading..." key='loading'}}</td></tr>
           {{else if model.events_state.error}}
-            <tr><td colspan='5'>{{t "Error Loading Data" key='error_loading_data'}}</td></tr>
+            <tr><td colspan='5'>{{t "Error loading data" key='error_loading_data'}}</td></tr>
           {{else}}
             {{#each model.processed_events as |event|}}
               <tr class={{if event.long_delay 'long_delay'}}>
@@ -557,7 +557,7 @@
           {{#if model.geo}}
             {{t "See map" key='see_map'}}
           {{else}}
-            {{t "Not available" key='not_available'}}
+            {{t "Not Available" key='not_available_upper'}}
           {{/if}}
           {{#if model.geo_cluster_id}}
             <br/>

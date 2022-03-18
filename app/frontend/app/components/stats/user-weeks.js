@@ -277,7 +277,7 @@ export default Component.extend({
           _this.sendAction('refresh');
         });
       }, function(err) {
-        modal.error(i18n.t('error_loading_user', "Error Loading User %{un}", {un: user.user_name}));
+        modal.error(i18n.t('error_loading_user_un', "Error Loading User %{un}", {un: user.user_name}));
       })
     },
     delete_action: function(id) {

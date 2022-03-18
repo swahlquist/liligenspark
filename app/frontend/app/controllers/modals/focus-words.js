@@ -181,22 +181,22 @@ export default modal.ModalController.extend({
     res.push({id: 'shared_reading', title: i18n.t('shared_reading_books', "Shared-Reading Books")});
     res.push({id: 'books', title: i18n.t('core_books', "Popular Core Workshop Books")});
     res.push({id: 'activities', title: i18n.t('context_activities', "Context-Specific Activities")});
-    res.push({id: 'tarheel_Alph', title: i18n.t('tarheel_', "Tarheel Reader Alphabet Books")});
-    res.push({id: 'tarheel_Anim', title: i18n.t('tarheel_', "Tarheel Reader Animals & Nature Books")});
-    res.push({id: 'tarheel_ArtM', title: i18n.t('tarheel_', "Tarheel Reader Art & Music Books")});
-    res.push({id: 'tarheel_Biog', title: i18n.t('tarheel_', "Tarheel Reader Biography Books")});
-    res.push({id: 'tarheel_Fair', title: i18n.t('tarheel_', "Tarheel Reader Fairy & Folk Tale Books")});
-    res.push({id: 'tarheel_Fict', title: i18n.t('tarheel_', "Tarheel Reader Fiction Books")});
-    res.push({id: 'tarheel_Food', title: i18n.t('tarheel_', "Tarheel Reader Food Books")});
-    res.push({id: 'tarheel_Heal', title: i18n.t('tarheel_', "Tarheel Reader Health Books")});
-    res.push({id: 'tarheel_Hist', title: i18n.t('tarheel_', "Tarheel Reader History Books")});
-    res.push({id: 'tarheel_Holi', title: i18n.t('tarheel_', "Tarheel Reader Holiday Books")});
-    res.push({id: 'tarheel_Math', title: i18n.t('tarheel_', "Tarheel Reader Math Books")});
-    res.push({id: 'tarheel_Nurs', title: i18n.t('tarheel_', "Tarheel Reader Nursery Rhyme Books")});
-    res.push({id: 'tarheel_Peop', title: i18n.t('tarheel_', "Tarheel Reader People & Places Books")});
-    res.push({id: 'tarheel_Poet', title: i18n.t('tarheel_', "Tarheel Reader Poetry Books")});
-    res.push({id: 'tarheel_Recr', title: i18n.t('tarheel_', "Tarheel Reader Recreation Books")});
-    res.push({id: 'tarheel_Spor', title: i18n.t('tarheel_', "Tarheel Reader Sports Books")});
+    res.push({id: 'tarheel_Alph', title: i18n.t('tarheel_alphabet', "Tarheel Reader Alphabet Books")});
+    res.push({id: 'tarheel_Anim', title: i18n.t('tarheel_animals', "Tarheel Reader Animals & Nature Books")});
+    res.push({id: 'tarheel_ArtM', title: i18n.t('tarheel_art', "Tarheel Reader Art & Music Books")});
+    res.push({id: 'tarheel_Biog', title: i18n.t('tarheel_biography', "Tarheel Reader Biography Books")});
+    res.push({id: 'tarheel_Fair', title: i18n.t('tarheel_tales', "Tarheel Reader Fairy & Folk Tale Books")});
+    res.push({id: 'tarheel_Fict', title: i18n.t('tarheel_fiction', "Tarheel Reader Fiction Books")});
+    res.push({id: 'tarheel_Food', title: i18n.t('tarheel_food', "Tarheel Reader Food Books")});
+    res.push({id: 'tarheel_Heal', title: i18n.t('tarheel_health', "Tarheel Reader Health Books")});
+    res.push({id: 'tarheel_Hist', title: i18n.t('tarheel_history', "Tarheel Reader History Books")});
+    res.push({id: 'tarheel_Holi', title: i18n.t('tarheel_holiday', "Tarheel Reader Holiday Books")});
+    res.push({id: 'tarheel_Math', title: i18n.t('tarheel_math', "Tarheel Reader Math Books")});
+    res.push({id: 'tarheel_Nurs', title: i18n.t('tarheel_nursery', "Tarheel Reader Nursery Rhyme Books")});
+    res.push({id: 'tarheel_Peop', title: i18n.t('tarheel_people', "Tarheel Reader People & Places Books")});
+    res.push({id: 'tarheel_Poet', title: i18n.t('tarheel_poetry', "Tarheel Reader Poetry Books")});
+    res.push({id: 'tarheel_Recr', title: i18n.t('tarheel_recreation', "Tarheel Reader Recreation Books")});
+    res.push({id: 'tarheel_Spor', title: i18n.t('tarheel_sports', "Tarheel Reader Sports Books")});
     res.push({id: 'other_focus', title: i18n.t('other_focus_sets', "Other Focus Word Sets")});
     return res;
   }),
@@ -266,7 +266,7 @@ export default modal.ModalController.extend({
           _this.set('ideas', {saved: true});
         }, function(err) {
           _this.set('ideas', {error: true});
-          modal.error(i18n.t('error_saving_user', "Requested Ideas failed to save"))        
+          modal.error(i18n.t('error_saving_ideas', "Requested Ideas failed to save"))        
         })  
       }
     },

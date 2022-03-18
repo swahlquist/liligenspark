@@ -30,7 +30,7 @@ export default Component.extend({
     var res = [];
     res.push({name: i18n.t('last_2_months', "Last 2 Months"), id: "last_2_months"});
     res.push({name: i18n.t('2_4_months_ago', "2-4 Months Ago"), id: "2_4_months_ago"});
-    res.push({name: i18n.t('custom', "Custom Filter"), id: "custom"});
+    res.push({name: i18n.t('custom_filter', "Custom Filter"), id: "custom"});
     if(this.get('snapshots')) {
       res.push({name: '----------------', id: '', disabled: true});
       this.get('snapshots').forEach(function(snap) {

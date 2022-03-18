@@ -232,12 +232,12 @@ export default modal.ModalController.extend({
     return [
       {name: i18n.t('preferred_skin_color', "[ Skin Tone Preference ]"), id: ''},
       {name: i18n.t('user_preferred_tone', "User-Preferred Tone"), id: 'default'},
-      {name: i18n.t('original_tone', "🧑 Original Tone"), id: 'original'},
-      {name: i18n.t('dark_skin_tone', "🧑🏿 Dark Skin Tone"), id: 'dark'},
-      {name: i18n.t('medium_dark_skin_tone', "🧑🏾 Medium-Dark Skin Tone"), id: 'medium-dark'},
-      {name: i18n.t('medium_skin_tone', "🧑🏽 Medium Skin Tone"), id: 'medium'},
-      {name: i18n.t('medium_light_skin_tone', "🧑🏼 Medium-Light Skin Tone"), id: 'medium-light'},
-      {name: i18n.t('light_skin_tone', "🧑🏻 Light Skin Tone"), id: 'light'},
+      {name: "🧑 " + i18n.t('original_tone', "Original Tone"), id: 'original'},
+      {name: "🧑🏿 " + i18n.t('dark_skin_tone', "Dark Skin Tone"), id: 'dark'},
+      {name: "🧑🏾 " + i18n.t('medium_dark_skin_tone', "Medium-Dark Skin Tone"), id: 'medium-dark'},
+      {name: "🧑🏽 " + i18n.t('medium_skin_tone', "Medium Skin Tone"), id: 'medium'},
+      {name: "🧑🏼 " + i18n.t('medium_light_skin_tone', "Medium-Light Skin Tone"), id: 'medium-light'},
+      {name: "🧑🏻 " + i18n.t('light_skin_tone', "Light Skin Tone"), id: 'light'},
     ];
   }),
   book_background_options: computed(function() {

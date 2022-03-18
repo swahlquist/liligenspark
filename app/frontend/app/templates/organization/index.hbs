@@ -81,7 +81,7 @@
       {{/if}}
       <div style='clear: both;'>
       <div class='col-sm-6'>
-        <strong>{{t "Recently-Modeled Words" key='words'}}</strong>
+        <strong>{{t "Recently-Modeled Words" key='recently_modeled_words'}}</strong>
         {{#if combined_models.words_by_frequency.length}}
           {{stats/word-cloud stats=combined_models tiny=true zoom=1}}
         {{else}}
@@ -178,7 +178,7 @@
                 {{#if user.org_supervision_pending}}
                   <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(pending)" key='pending_paren'}}</span>
                 {{else if user.org_premium_supervisor}}
-                  <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(premium)" key='premium'}}</span>
+                  <span style="vertical-align: middle; white-space: nowrap;" class="text-muted">{{t "(premium)" key='premium_paren'}}</span>
                 {{/if}}
                 {{#if user.recent_org_profile}}
                   <div style='float: right; font-size: 14px; color: #888;' title={{t "Has a recently-completed profile" key='has_profile'}}>
@@ -478,7 +478,7 @@
   {{#if model.permissions.manage}}
     <div style='margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;'></div>
     <div>
-      <h3>{{t "Recent Words" key='words'}}</h3>
+      <h3>{{t "Recent Words" key='recent_words'}}</h3>
       {{#if user_counts.word_counts.length}}
         {{stats/word-cloud stats=words short=true zoom=1}}
       {{else}}

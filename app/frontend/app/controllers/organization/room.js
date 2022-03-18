@@ -142,7 +142,7 @@ export default Controller.extend({
         var unit = _this.get('model');
         unit.set('goal', {id: res.get('id')});
         unit.save().then(function() {
-          modal.success(i18n.t('goal_added', "Goal successfully linked to this room!"));
+          modal.success(i18n.t('goal_linked', "Goal successfully linked to this room!"));
         }, function(err) {
           modal.error(i18n.t('error_adding_goal', "There was an unexpected error trying to link a new goal for this room"));
         });
