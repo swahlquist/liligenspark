@@ -146,22 +146,7 @@ var words = {
   "like": {url: "https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/to like.png", license: {type: "CC BY-NC-SA", copyright_notice_url: "http://creativecommons.org/licenses/by-nc-sa/3.0/", source_url: "", author_name: "Sergio Palao", author_url: "http://www.catedu.es/arasaac/condiciones_uso.php"}, path: "like.png"},
 }
 /*
-require 'typhoeus'
-lines = []
-words.each do |word, data|
-  if !data[:path] && data[:url]
-    ext = data[:url].split(/\./)[-1]
-    res = Typhoeus.get(URI.encode(data[:url]))
-    if res.success?
-      f = File.open("./public/images/emergency/#{word}.#{ext}", 'wb')
-      f.write(res.body)
-      f.close
-      data[:path] = "#{word}.#{ext}"
-    end
-  end
-  lines << "  \"#{word}\": #{data.to_s.gsub(/\:(\w+)=>/, '\1: ')},"
-end.length
-puts ""; puts ""; lines.each{|l| puts l }; puts ""; puts ""
+  Converters::ObfLocal.save_local to save copies of any added words
 */
 for(var key in words) {
   if(words[key] && words[key].path) {
@@ -233,58 +218,7 @@ emergency.callback = function(key) {
 };
 
 /* Load a board, output buttons list and any missing word-symbols
-locale = 'en'
-path = 'wahlquist/projectcore-36universalcore'
-words ||= {}
-brd = Board.find_by_path(path)
-imgs = []
-lines = []
-grid = BoardContent.load_content(brd, 'grid')
-buttons = brd.buttons.map{|b| {}.merge(b) }
-name = brd.settings['name']
-if brd.settings['locale'] != locale
-  trans = BoardContent.load_content(brd, 'translations') || {}
-  name = (trans['board_name'] || {})[locale] || name
-  buttons.each do  |btn|
-    btn_trans = (trans[btn['id'].to_s] || {})[locale] || {}
-    if btn_trans['label']
-      btn['other_word'] = btn['label']
-      btn['label'] = btn_trans['label']
-      btn['vocalization'] = btn_trans['vocalization']
-      btn['inflections'] = btn_trans['inflections']
-    end
-  end
-end
-lines << "{id: '#{path.split(/\//)[1].gsub(/_/, '-')}-#{locale}', name: '#{name}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
-images = brd.button_images
-word_list = words.to_a
-grid['order'].each do |row|
-  row_content = []
-  row.each do |id|
-    btn = buttons.detect{|b| b['id'].to_s == id.to_s }
-    if btn
-      bi = images.detect{|i| i.global_id == btn['image_id'] }
-      word = bi && word_list.detect{|w| w[1][:url]  == URI.encode(bi.url) || w[1][:url]  == bi.url }
-      if word && (word[0].to_s != btn['label'].to_s)
-        row_content << "{label: \"#{btn['label']}\", word: \"#{word[0]}\"}"
-      else
-        row_content << "{label: \"#{btn['label']}\"}"
-      end
-    else
-      row_content << 'null'
-    end
-  end
-  lines << "  [#{row_content.join(', ')}],";
-end.length
-lines << "], license: {type: '#{brd.settings['license']['type']}', copyright_notice_url: '#{brd.settings['license']['copyright_notice_url']}', author_name: '#{brd.settings['license']['author_name']}', author_url: '#{brd.settings['license']['author_url']}'}},"
-lines << ""
-brd.button_images.each do |bi|
-  btn = brd.buttons.detect{|b| b['image_id'] == bi.global_id }
-  if btn && bi
-    lines << "\"#{btn['label']}\": {url: \"#{bi.url}\", license: {type: '#{bi.settings['license']['type']}', copyright_notice_url: '#{bi.settings['license']['copyright_notice_url']}', source_url: '#{bi.settings['license']['source_url']}', author_name: '#{bi.settings['license']['author_name']}', author_url: '#{bi.settings['license']['author_url']}'}},"
-  end
-end
-puts ""; lines.each{|l| puts l}; puts ""
+Converters::ObfLocal.generate_local(locale, path)
 */
 
 emergency.boards = {
@@ -398,6 +332,35 @@ emergency.boards = {
       [{label: "extraño a mi familia", word: "family"}, {label: "echo de menos a mis amigos", word: "miss-friends"}, {label: "Extraño a mi mascota", word: "pet"}, {label: "Extraño mi cama", word: "bed"}],
       [{label: "Extraño mi casa", word: "house"}, {label: "Extraño mi TV", word: "tv"}, {label: "Extraño mi iPad", word: "ipad"}, null],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+  ],
+  uk: [
+  ],
+  pt: [
+  ],
+  ar: [
+    {id: 'ussaac-covid-1-ar', name: 'العربية - المصطلحات العامة لكوفيد -19', rows: 2, cols: 4, key: 'maram/ussaac-covid-1', starter: true, buttons: [
+      [{label: "جراثيم", word: "germs"}, {label: "فيروس", word: "virus"}, {label: "فيروس كورونا", word: "coronavirus"}, {label: "مريض", word: "sick"}],
+      [{label: "جائحة", word: "pandemic"}, {label: "الحجر الصحي", word: "quarantine"}, {label: "ابق آمنا", word: "safe"}, {label: "التباعد الاجتماعي"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},  
+    {id: 'ussaac-emotions-1-ar', name: 'Arabic USSAAC - Emotions (2 x 4)', rows: 2, cols: 4, key: 'maram/ussaac-emotions-1', starter: true, buttons: [
+      [{label: "أنا غاضب", word: "mad"}, {label: "أنا محبط", word: "frustrated"}, {label: "انا حزين", word: "sad"}, {label: "موافق"}],
+      [{label: "أنا أشعر بالملل", word: "bored"}, {label: "انا خائف", word: "scared"}, {label: "أنا سعيد", word: "happy"}, {label: "أنا متحمس", word: "excited"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+  ],
+  ja: [
+
+  ],
+  vi: [
+
+  ],
+  ur: [
+
+  ],
+  tl: [
+
+  ],
+  ps: [
+
   ],
   pl: [
     {id: 'ussaac-hand-washing-1-pl', name: 'PLAAC - Mycie rąk (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-hand-washing-1', starter: true, buttons: [

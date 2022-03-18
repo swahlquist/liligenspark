@@ -22,18 +22,34 @@ export default Controller.extend({
       var credit = "";
       if(key == 'pl') {
         credit = "Includo AT Poland";
+      } else if(key == 'ar') {
+        credit = "Maram Al Darwish";
+      } else if(key == 'ja') {
+        credit = "AAC Club, CSUF";
       } else if(key == 'es') {
+        credit = "AAC Club, CSUF";
+      } else if(key == 'vi') {
+        credit = "AAC Club, CSUF";
+      } else if(key == 'ur') {
+        credit = "AAC Club, CSUF";
+      } else if(key == 'ps') {
+        credit = "AAC Club, CSUF";
+      } else if(key == 'tl') {
+        credit = "AAC Club, CSUF";
+      } else if(key != 'en') {
         credit = "Google Translate";
       }
-      res.push({
-        locale: key,
-        open: pref == key,
-        boards: starters,
-        tally: i18n.t('n_boards', "board", {count: starters.length}),
-        locale_text: str,
-        credit: credit,
-        icon_class: "glyphicon glyphicon-globe"
-      });
+      if(starters.length > 0) {
+        res.push({
+          locale: key,
+          open: pref == key,
+          boards: starters,
+          tally: i18n.t('n_boards', "board", {count: starters.length}),
+          locale_text: str,
+          credit: credit,
+          icon_class: "glyphicon glyphicon-globe"
+        });  
+      }
     }
     return res;
   }),
