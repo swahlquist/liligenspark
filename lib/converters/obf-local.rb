@@ -130,25 +130,38 @@ module Converters::ObfLocal
       trans = BoardContent.load_content(brd, 'translations') || {}
       name = (trans['board_name'] || {})[locale] || name
       buttons.each do  |btn|
-        btn_trans = (trans[btn['id'].to_s] || {})[locale] || {}
+        bt = (trans[btn['id'].to_s] || {})
+        btn_trans = bt[locale] || {}
         if btn_trans['label']
           btn['other_word'] = btn['label']
           btn['label'] = btn_trans['label']
+          btn['eng_label'] = (bt['en'] || btn['en_US'] || {})['label']
           btn['vocalization'] = btn_trans['vocalization']
           btn['inflections'] = btn_trans['inflections']
         end
       end
     end
+    src = Board.find_by_path("emergency/" + path.split(/\//)[1].gsub(/_\d+/, '').gsub(/_/, '-'))
     lines << "{id: '#{path.split(/\//)[1].gsub(/_/, '-')}-#{locale}', name: '#{name}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
     images = brd.button_images
-    word_list = WORDS.to_a
-    grid['order'].each do |row|
+    word_list = Converters::ObfLocal::WORDS.to_a
+    grid['order'].each_with_index do |row, idx|
       row_content = []
-      row.each do |id|
+      row.each_with_index do |id, jdx|
         btn = buttons.detect{|b| b['id'].to_s == id.to_s }
         if btn
           bi = images.detect{|i| i.global_id == btn['image_id'] }
-          word = bi && word_list.detect{|w| w[1][:url]  == URI.encode(bi.url) || w[1][:url]  == bi.url }
+          word = bi && word_list.detect{|w| w[1][:url] == URI.encode(bi.url) || w[1][:url]  == bi.url }
+          word ||= word_list.detect{|w| btn['eng_label'] && w[0] == btn['eng_label'] }
+          if !word && src
+            grid2 = BoardContent.load_content(src, 'grid')['order'] || []
+            id2 = (grid2[idx] || [])[jdx]
+            btn2 = src.buttons.detect{|b| b['id'].to_s == id.to_s }
+            if btn2
+              bi2 = src.button_images.detect{|i| i.global_id == btn2['image_id']}
+              word = bi2 && word_list.detect{|w| w[1][:url] == URI.encode(bi2.url) || w[1][:url]  == bi2.url }
+            end
+          end
           if word && (word[0].to_s != btn['label'].to_s)
             row_content << "{label: \"#{btn['label']}\", word: \"#{word[0]}\"}"
           else

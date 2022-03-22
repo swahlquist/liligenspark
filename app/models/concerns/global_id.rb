@@ -62,7 +62,7 @@ module GlobalId
       res
     end
     
-    def find_batches_by_global_id(ids, opts, &block)
+    def find_batches_by_global_id(ids, opts={}, &block)
       batch = (opts && opts[:batch_size]) || 10
       return [] if !ids || ids.length == 0
       id_hashes = (ids || []).map{|id| id_pieces(id) }

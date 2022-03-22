@@ -1652,7 +1652,7 @@ var i18n = EmberObject.extend({
     pl: "Polski",
     ps: "پښتو",
     pt: "Português",
-    jp: "日本",
+    ja: "日本",
     uk: "український",
     ur: "اردو",
     ru: "русский",
