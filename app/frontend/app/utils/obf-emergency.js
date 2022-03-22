@@ -406,9 +406,9 @@ emergency.boards = {
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},    
   ],
   ja: [
-    {id: 'ussaac-covid-1-ja', name: 'USSAAC-Covid一般条件（2 x 4）', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-covid-1', starter: true, buttons: [
-      [{label: "バイ菌", word: "germs"}, {label: "ウイルス", word: "virus"}, {label: "コロナウイルス", word: "coronavirus"}, {label: "病気", word: "sick"}],
-      [{label: "パンデミック", word: "pandemic"}, {label: "検疫", word: "quarantine"}, {label: " 安全に気をつけましょう", word: "safe"}, {label: "182 cm 離れましょう", word: "social-distancing"}],
+    {id: 'ussaac-covid-1-ja', name: 'USSAAC-Covid一般条件（2 x 4）', rows: 2, cols: 4, key: 'emergency/ussaac-covid-1', starter: true, buttons: [
+      [{"label":"バイ菌","word":"germs"}, {"label":"ウイルス","word":"virus"}, {"label":"コロナウイルス","word":"coronavirus"}, {"label":"病気","word":"sick"}],
+      [{"label":"パンデミック","word":"pandemic"}, {"label":"検疫","word":"quarantine"}, {"label":" 安全に気をつけましょう","word":"safe"}, {"label":"182 cm 離れましょう","word":"social-distancing"}],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
     {id: 'ussaac-emotions-1-ja', name: 'USSAAC - 感情 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-emotions-1', starter: true, buttons: [
       [{label: "怒っている", word: "mad"}, {label: "イライラしている", word: "frustrated"}, {label: "悲しい", word: "sad"}, {label: "分かった", word: "ok"}],

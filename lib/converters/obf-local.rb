@@ -184,6 +184,29 @@ module Converters::ObfLocal
     puts ""; lines.each{|l| puts l}; puts ""
   end
 
+  def self.ingest_locale(list, locale, overwrite=false)
+    list.each do |brd|
+      copy = brd[:key] && Board.find_by_path(brd[:key])
+      next unless copy
+      source = Board.find_by_path("emergency/#{brd[:key].split(/\//)[1].gsub(/_\d+/, '').gsub(/-#{locale}$/, '')}")
+      if !source || source != copy.parent_board
+        puts "MISSING SOURCE FOR #{brd[:key]}"
+        next
+      end
+      source.import_translation(copy, locale, overwrite)
+      puts "{id: '#{brd[:id]}', name: '#{brd[:name]}', rows: #{brd[:rows]}, cols: #{brd[:cols]}, key: '#{source.key}', starter: #{brd[:starter]}, buttons: ["
+      brd[:buttons].each do |row|
+        btns = []
+        row.each do |btn|
+          btns << btn.to_json
+        end
+        puts "  [#{btns.join(', ')}],"
+      end
+      puts "], license: #{brd[:license].to_json}},"
+    end
+    puts "\n"
+  end
+
   def self.save_local
     lines = []
     WORDS.each do |word, data|
