@@ -372,6 +372,54 @@ emergency.boards = {
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
   ],
   uk: [
+    {id: 'ussaac-covid-1-uk', name: 'USSAAC – Загальні умови Covid (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-covid-1', starter: true, buttons: [
+      [{label: "мікроби", word: "germs"}, {label: "вірус", word: "virus"}, {label: "коронавірус", word: "coronavirus"}, {label: "хворий", word: "sick"}],
+      [{label: "пандемія", word: "pandemic"}, {label: "карантин", word: "quarantine"}, {label: "залишатися в безпеці", word: "safe"}, {label: "соціальне дистанціювання"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-emotions-1-uk', name: 'USSAAC - Емоції (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-emotions-1', starter: true, buttons: [
+      [{label: "я божевільний", word: "mad"}, {label: "Я розчарований", word: "frustrated"}, {label: "мені сумно", word: "sad"}, {label: "гаразд"}],
+      [{label: "мені нудно", word: "bored"}, {label: "я наляканий", word: "scared"}, {label: "я щасливий", word: "happy"}, {label: "я схвильований", word: "excited"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-hand-washing-1-uk', name: 'USSAAC - Ручне прання (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-hand-washing-1', starter: true, buttons: [
+      [{label: "мити руки", word: "wash-hands"}, {label: "20 секунд", word: "20-seconds"}, {label: "сухі руки", word: "dry-hands"}, {label: "чисті руки", word: "clean-hands"}],
+      [{label: "брудні руки", word: "dirty"}, {label: "дезінфікуючий засіб для рук", word: "sanitizer"}, {label: "використовувати мило", word: "soap"}, {label: "не торкайтеся поверхонь", word: "dont-touch"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-needs-1-2-uk', name: 'USSAAC - Потреби (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-needs-1-2', starter: true, buttons: [
+      [{label: "я голодний", word: "hungry"}, {label: " я хочу пити", word: "thirsty"}, {label: "Можна випити?", word: "drink"}, {label: "Можна перекусити?", word: "snak"}],
+      [{label: "я стомився", word: "yawn"}, {label: "Чи можу я лягти?", word: "lay"}, {label: "Мені холодно", word: "cold"}, {label: "Можна мені ковдру?", word: "blanket2"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-mask-1-uk', name: 'USSAAC – Носіння маски (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-mask-1', starter: true, buttons: [
+      [{label: "Де моя маска?", word: "mask"}, {label: "Я не можу дихати", word: "breathe"}, {label: "маска для обличчя", word: "face-mask"}, {label: "на", word: "on"}],
+      [{label: "вимкнено", word: "off"}, {label: "Мені потрібна маска", word: "want"}, {label: "Чи можу я зняти маску?", word: "take-off"}, {label: "Чи потрібна мені маска?", word: "ask2"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-questions-1-uk', name: 'USSAAC - Запитання (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-questions-1', starter: true, buttons: [
+      [{label: "Де мої друзі?", word: "friends"}, {label: "Коли я можу повернутися до школи?", word: "school"}, {label: "Коли ми можемо поїхати додому?", word: "home"}, {label: "Чому я?", word: "dont-know"}],
+      [{label: "Що відбувається?", word: "happening"}, {label: "Чому ми?", word: "why"}, {label: "Що ми будемо робити?", word: "ask"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-red-cross-1-uk', name: 'USSAAC - Червоний Хрест (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-red-cross-1', starter: true, buttons: [
+      [{label: "мені потрібна допомога", word: "help"}, {label: "Мені потрібні гроші", word: "money"}, {label: "мені потрібна їжа", word: "food"}, {label: "Мені потрібна вода", word: "water"}],
+      [{label: "Мені потрібен ліхтарик", word: "flashlight"}, {label: "Мені потрібна ковдра", word: "blanket"}, {label: "У мене закінчилися ліки", word: "medication"}, {label: "Скільки ми будемо в притулку?", word: "when"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-sensory-needs-1-uk', name: 'USSAAC – Сенсорні потреби (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-sensory-needs-1', starter: true, buttons: [
+      [{label: "Мені потрібно заспокоїтися!", word: "calm"}, {label: "Мені потрібно закрити вуха", word: "cover-ears"}, {label: "Мені потрібна обтяжена ковдра", word: "blanket"}, {label: "Мені потрібні навушники з шумопоглинанням", word: "headphones"}],
+      [{label: "Мені потрібен ящик з піском", word: "sand-box"}, {label: "Мені потрібен тихий простір", word: "quiet"}, {label: "мені потрібно", word: "help"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-shelter-sensory-1-uk', name: 'USSAAC - сенсорна дошка для притулку (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-shelter-sensory-1', starter: true, buttons: [
+      [{label: "Це занадто шумно!", word: "noisy"}, {label: "коли ми йдемо?", word: "leave"}, {label: "Я не хочу бути тут!"}, {label: "Мені потрібно тихе місце.", word: "quiet"}],
+      [{label: "Воно пахне.", word: "smell"}, {label: "Жарко!", word: "hot"}, {label: "Холодно!", word: "cold"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-social-distancing-1-uk', name: 'USSAAC – Соціальне дистанціювання (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
+      [{label: "Залишайся вдома", word: "stay-at-home"}, {label: "не тисни руки", word: "shake-hands"}, {label: "6 футів один від одного", word: "apart"}, {label: "немає парку", word: "park"}],
+      [{label: "немає торгового центру", word: "mall"}, {label: "немає театру", word: "theater"}, {label: "носити маску для обличчя", word: "face-mask"}, {label: "залишатися в безпеці", word: "safe"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-statement-after-1-uk', name: 'USSAAC - Заяви після факту (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-after-1', starter: true, buttons: [
+      [{label: "Це було страшно!", word: "that-was-scary"}, {label: "Як ми будемо в безпеці наступного разу?", word: "next-time"}, {label: "Що тепер буде?", word: "look"}, {label: "Іди додому", word: "stay-at-home"}],
+      [{label: "Я не хочу бути тут!"}, {label: "Я буду сміливим!", word: "brave"}, {label: "У нас буде добре!", word: "ok"}, {label: "Залишатись разом", word: "friends"}],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-statement-missing-1-uk', name: 'USSAAC – Заяви про зникнення безвісти (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-statement-missing-1', starter: true, buttons: [
+      [{label: "Я сумую за своєю родиною", word: "family"}, {label: "Я сумую за своїми друзями", word: "miss-friends"}, {label: "Я сумую за своїм вихованцем", word: "pet"}, {label: "Я сумую за своїм ліжком", word: "bed"}],
+      [{label: "Я сумую за своїм домом", word: "house"}, {label: "Я сумую за своїм телевізором", word: "tv"}, {label: "Я сумую за своїм iPad", word: "ipad"}, null],
+    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},                                                
   ],
   pt: [
   ],
@@ -410,50 +458,50 @@ emergency.boards = {
       [{"label":"バイ菌","word":"germs"}, {"label":"ウイルス","word":"virus"}, {"label":"コロナウイルス","word":"coronavirus"}, {"label":"病気","word":"sick"}],
       [{"label":"パンデミック","word":"pandemic"}, {"label":"検疫","word":"quarantine"}, {"label":" 安全に気をつけましょう","word":"safe"}, {"label":"182 cm 離れましょう","word":"social-distancing"}],
     ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-emotions-1-ja', name: 'USSAAC - 感情 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-emotions-1', starter: true, buttons: [
-      [{label: "怒っている", word: "mad"}, {label: "イライラしている", word: "frustrated"}, {label: "悲しい", word: "sad"}, {label: "分かった", word: "ok"}],
-      [{label: "退屈だ。", word: "bored"}, {label: "怖い", word: "scared"}, {label: "嬉しい", word: "happy"}, {label: "ワクワクだ。", word: "excited"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-hand-washing-1-ja', name: 'USSAAC - 手洗い (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-hand-washing-1', starter: true, buttons: [
-      [{label: "手を洗おう", word: "wash-hands"}, {label: "20秒", word: "20-seconds"}, {label: "乾いた手", word: "dry-hands"}, {label: "洗った手", word: "clean-hands"}],
-      [{label: "汚い手", word: "dirty"}, {label: "手の消毒剤・ハンドサニタイザー", word: "sanitizer"}, {label: "石鹸を使おう", word: "soap"}, {label: "表面に触れないでください", word: "dont-touch"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-needs-1-2-ja', name: 'USSAAC - ニーズ (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-needs-1-2', starter: true, buttons: [
-      [{label: "お腹が空いた", word: "hungry"}, {label: " のどが渇いた", word: "thirsty"}, {label: "飲み物を頂けますか？", word: "drink"}, {label: "おやつを頂けますか？", word: "snak"}],
-      [{label: "疲れた", word: "yawn"}, {label: "横になってもいいですか？", word: "lay"}, {label: "寒い", word: "cold"}, {label: "毛布を頂けますか？", word: "blanket2"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-mask-1-ja', name: 'USSAAC - マスク着用 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-mask-1', starter: true, buttons: [
-      [{label: "私のマスクはどこ？", word: "mask"}, {label: "息ができない", word: "breathe"}, {label: "マスク", word: "face-mask"}, {label: "電気を付けよう", word: "on"}],
-      [{label: "電気を消そう", word: "off"}, {label: "マスクを下さい", word: "want"}, {label: "マスクを取っていい？", word: "take-off"}, {label: "マスクは必要ですか？", word: "ask2"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-questions-1-ja', name: 'USSAAC - 質問 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-questions-1', starter: true, buttons: [
-      [{label: "私の友達はどこ？", word: "friends"}, {label: "いつまた学校に行けるの？", word: "school"}, {label: "いつ家に帰れるの？", word: "home"}, {label: "何で私？", word: "dont-know"}],
-      [{label: "何が起こってるの？", word: "happening"}, {label: "何で私達？", word: "why"}, {label: "私たちは何をするの？", word: "ask"}, null],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-red-cross-1-ja', name: 'USSAAC - 赤十字 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-red-cross-1', starter: true, buttons: [
-      [{label: "手伝いがいる", word: "help"}, {label: "お金がいる", word: "money"}, {label: "食べ物がいる", word: "food"}, {label: "水がいる", word: "water"}],
-      [{label: "懐中電灯がいる", word: "flashlight"}, {label: "毛布がいる", word: "blanket"}, {label: "薬がない", word: "medication"}, {label: "どんだけ凌ぎ馬にいる予定なの？", word: "when"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-sensory-needs-1-ja', name: 'USSAAC - 感覚の必要性 (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-sensory-needs-1', starter: true, buttons: [
-      [{label: "私は落ち着かなきゃいけない", name: "calm"}, {label: "耳をふさがなきゃいけない", word: "cover-ears"}, {label: "加重毛布が必要です", word: "blanket"}, {label: "ノイズキャンセリングヘッドホンがいります", word: "headphones"}],
-      [{label: "サンドボックスがいります", word: "sand-box"}, {label: "静かな場所が欲しい", word: "quiet"}, {label: "私はこれがいる", word: "help"}, null],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-shelter-sensory-1-ja', name: 'USSAAC - シェルター感覚ボード (2 x 4)', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-shelter-sensory-1', starter: true, buttons: [
-      [{label: "うるさすぎる", word: "noisy"}, {label: "私達はいつ行くの？", word: "leave"}, {label: "ここにいたくない！", word: "not"}, {label: "静かな場所が必要です。", word: "quiet"}],
-      [{label: "臭い", word: "smell"}, {label: "ここは暑い", word: "hot"}, {label: "寒いです！", word: "cold"}, null],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-social-distancing-1-ja', name: 'USSAAC - 社会距離拡大（2 x 4）', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-social-distancing-1', starter: true, buttons: [
-      [{label: "家にいおう", word: "stay-at-home"}, {label: "握手しないでください", word: "shake-hands"}, {label: "6フィート離れていましょう", word: "apart"}, {label: "公園も我慢", word: "park"}],
-      [{label: "モールは我慢", word: "mall"}, {label: "劇場も我慢", word: "theater"}, {label: "マスクを付けよう", word: "face-mask"}, {label: "げんきでいてね", word: "safe"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-statement-after-1-ja', name: 'USSAAC - 事実後の声明（2 x 4）', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-statement-after-1', starter: true, buttons: [
-      [{label: "あれは怖かった！", word: "that-was-scary"}, {label: "次回はどうやって安全をたもてますか", word: "next-time"}, {label: "今何が起こりますか？", word: "look"}, {label: "家に帰った方がいいよ", word: "stay-at-home"}],
-      [{label: "ここにはいたくない", word: "not"}, {label: "私は勇敢になります！", word: "brave"}, {label: "大丈夫です！", word: "ok"}, {label: "一緒にいましょう", word: "friends"}],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
-    {id: 'ussaac-statement-missing-1-ja', name: 'USSAAC - 欠落しているステートメント（2 x 4）', rows: 2, cols: 4, key: 'angelina-dohr/ussaac-statement-missing-1', starter: true, buttons: [
-      [{label: "家族に会いたい", word: "family"}, {label: "友達が恋しい", word: "miss-friends"}, {label: "ペットが恋しい", word: "pet"}, {label: "ベッドが恋しい", word: "bed"}],
-      [{label: "家が恋しい", word: "house"}, {label: "テレビが恋しい", word: "tv"}, {label: "iPadが恋しい", word: "ipad"}, null],
-    ], license: {type: 'CC By', copyright_notice_url: 'https://creativecommons.org/licenses/by/4.0/', author_name: 'USSAAC', author_url: 'https://ussaac.org/'}},
+    {id: 'ussaac-emotions-1-ja', name: 'USSAAC - 感情 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-emotions-1', starter: true, buttons: [
+      [{"label":"怒っている","word":"mad"}, {"label":"イライラしている","word":"frustrated"}, {"label":"悲しい","word":"sad"}, {"label":"分かった","word":"ok"}],
+      [{"label":"退屈だ。","word":"bored"}, {"label":"怖い","word":"scared"}, {"label":"嬉しい","word":"happy"}, {"label":"ワクワクだ。","word":"excited"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-hand-washing-1-ja', name: 'USSAAC - 手洗い (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-hand-washing-1', starter: true, buttons: [
+      [{"label":"手を洗おう","word":"wash-hands"}, {"label":"20秒","word":"20-seconds"}, {"label":"乾いた手","word":"dry-hands"}, {"label":"洗った手","word":"clean-hands"}],
+      [{"label":"汚い手","word":"dirty"}, {"label":"手の消毒剤・ハンドサニタイザー","word":"sanitizer"}, {"label":"石鹸を使おう","word":"soap"}, {"label":"表面に触れないでください","word":"dont-touch"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-needs-1-2-ja', name: 'USSAAC - ニーズ (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-needs-1-2', starter: true, buttons: [
+      [{"label":"お腹が空いた","word":"hungry"}, {"label":" のどが渇いた","word":"thirsty"}, {"label":"飲み物を頂けますか？","word":"drink"}, {"label":"おやつを頂けますか？","word":"snak"}],
+      [{"label":"疲れた","word":"yawn"}, {"label":"横になってもいいですか？","word":"lay"}, {"label":"寒い","word":"cold"}, {"label":"毛布を頂けますか？","word":"blanket2"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-mask-1-ja', name: 'USSAAC - マスク着用 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-mask-1', starter: true, buttons: [
+      [{"label":"私のマスクはどこ？","word":"mask"}, {"label":"息ができない","word":"breathe"}, {"label":"マスク","word":"face-mask"}, {"label":"電気を付けよう","word":"on"}],
+      [{"label":"電気を消そう","word":"off"}, {"label":"マスクを下さい","word":"want"}, {"label":"マスクを取っていい？","word":"take-off"}, {"label":"マスクは必要ですか？","word":"ask2"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-questions-1-ja', name: 'USSAAC - 質問 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-questions-1', starter: true, buttons: [
+      [{"label":"私の友達はどこ？","word":"friends"}, {"label":"いつまた学校に行けるの？","word":"school"}, {"label":"いつ家に帰れるの？","word":"home"}, {"label":"何で私？","word":"dont-know"}],
+      [{"label":"何が起こってるの？","word":"happening"}, {"label":"何で私達？","word":"why"}, {"label":"私たちは何をするの？","word":"ask"}, null],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-red-cross-1-ja', name: 'USSAAC - 赤十字 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-red-cross-1', starter: true, buttons: [
+      [{"label":"手伝いがいる","word":"help"}, {"label":"お金がいる","word":"money"}, {"label":"食べ物がいる","word":"food"}, {"label":"水がいる","word":"water"}],
+      [{"label":"懐中電灯がいる","word":"flashlight"}, {"label":"毛布がいる","word":"blanket"}, {"label":"薬がない","word":"medication"}, {"label":"どんだけ凌ぎ馬にいる予定なの？","word":"when"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-sensory-needs-1-ja', name: 'USSAAC - 感覚の必要性 (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-sensory-needs-1', starter: true, buttons: [
+      [{"label":"私は落ち着かなきゃいけない","name":"calm"}, {"label":"耳をふさがなきゃいけない","word":"cover-ears"}, {"label":"加重毛布が必要です","word":"blanket"}, {"label":"ノイズキャンセリングヘッドホンがいります","word":"headphones"}],
+      [{"label":"サンドボックスがいります","word":"sand-box"}, {"label":"静かな場所が欲しい","word":"quiet"}, {"label":"私はこれがいる","word":"help"}, null],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-shelter-sensory-1-ja', name: 'USSAAC - シェルター感覚ボード (2 x 4)', rows: 2, cols: 4, key: 'emergency/ussaac-shelter-sensory-1', starter: true, buttons: [
+      [{"label":"うるさすぎる","word":"noisy"}, {"label":"私達はいつ行くの？","word":"leave"}, {"label":"ここにいたくない！","word":"not"}, {"label":"静かな場所が必要です。","word":"quiet"}],
+      [{"label":"臭い","word":"smell"}, {"label":"ここは暑い","word":"hot"}, {"label":"寒いです！","word":"cold"}, null],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-social-distancing-1-ja', name: 'USSAAC - 社会距離拡大（2 x 4）', rows: 2, cols: 4, key: 'emergency/ussaac-social-distancing-1', starter: true, buttons: [
+      [{"label":"家にいおう","word":"stay-at-home"}, {"label":"握手しないでください","word":"shake-hands"}, {"label":"6フィート離れていましょう","word":"apart"}, {"label":"公園も我慢","word":"park"}],
+      [{"label":"モールは我慢","word":"mall"}, {"label":"劇場も我慢","word":"theater"}, {"label":"マスクを付けよう","word":"face-mask"}, {"label":"げんきでいてね","word":"safe"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-statement-after-1-ja', name: 'USSAAC - 事実後の声明（2 x 4）', rows: 2, cols: 4, key: 'emergency/ussaac-statement-after-1', starter: true, buttons: [
+      [{"label":"あれは怖かった！","word":"that-was-scary"}, {"label":"次回はどうやって安全をたもてますか","word":"next-time"}, {"label":"今何が起こりますか？","word":"look"}, {"label":"家に帰った方がいいよ","word":"stay-at-home"}],
+      [{"label":"ここにはいたくない","word":"not"}, {"label":"私は勇敢になります！","word":"brave"}, {"label":"大丈夫です！","word":"ok"}, {"label":"一緒にいましょう","word":"friends"}],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
+    {id: 'ussaac-statement-missing-1-ja', name: 'USSAAC - 欠落しているステートメント（2 x 4）', rows: 2, cols: 4, key: 'emergency/ussaac-statement-missing-1', starter: true, buttons: [
+      [{"label":"家族に会いたい","word":"family"}, {"label":"友達が恋しい","word":"miss-friends"}, {"label":"ペットが恋しい","word":"pet"}, {"label":"ベッドが恋しい","word":"bed"}],
+      [{"label":"家が恋しい","word":"house"}, {"label":"テレビが恋しい","word":"tv"}, {"label":"iPadが恋しい","word":"ipad"}, null],
+    ], license: {"type":"CC By","copyright_notice_url":"https://creativecommons.org/licenses/by/4.0/","author_name":"USSAAC","author_url":"https://ussaac.org/"}},
   ],
   vi: [
     {id: 'ussaac-covid-1-vi', name: 'USSAAC - Điều khoản Chung Covid (2 x 4)', rows: 2, cols: 4, key: 'tiffenyn/ussaac-covid-1', starter: true, buttons: [
