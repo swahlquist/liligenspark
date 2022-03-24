@@ -549,7 +549,7 @@ var Button = EmberObject.extend({
     var hash = _this.get('translations_hash') || {};
     var idx = 0;
     for(var code in hash) {
-      if(Object.keys(hash[code]).length > 0 || !code.match(/-|_/)) {
+      if(Object.keys(hash[code]).length > 0 || !code.match(/-|_/) || code == label_locale) {
         var label = hash[code].label || this.get('label');
         if(label_locale == code) { label = _this.get('label'); }
         var vocalization = hash[code].vocalization;

@@ -727,7 +727,8 @@ CoughDrop.Board = DS.Model.extend({
           if(_this.get('editable_source_key') == key) {
             _this.set('editable_source', board);
           }
-        }, function(err) { });
+        }, function(err) { 
+        });
       }
     }
   }),

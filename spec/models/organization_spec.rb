@@ -1435,7 +1435,7 @@ describe Organization, :type => :model do
       json = Organization.usage_stats([])
       expect(json).to eq({
         'weeks' => [], 
-        'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'modeled_word_counts' => [], 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_users"=>0, "total_words"=>0, "word_counts"=>[]}
+        'user_counts' => {'goal_set' => 0, 'goal_recently_logged' => 0, 'modeled_word_counts' => [], 'recent_session_count' => 0, 'recent_session_user_count' => 0, 'total_users' => 0, 'recent_session_seconds' => 0.0, 'recent_session_hours' => 0.0, "total_models"=>0, "total_seconds"=>0, "total_sessions"=>0, "total_user_weeks"=>0, "total_words"=>0, "word_counts"=>[]}
       })
       
       LogSession.process_new({
