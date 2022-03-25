@@ -1209,6 +1209,7 @@ class Board < ActiveRecord::Base
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
       button.delete('ref_id') if button['ref_id'].blank?
       button.delete('rules') if button['rules'].blank?
+      button['rules'] = button['rules'].compact.select{|r| r.is_a?(Array) } if button['rules']
       if button['level_modifications'] && button['level_modifications']['override']
         button['level_modifications']['override'].each do |attr, val|
           button[attr] = val
@@ -1252,7 +1253,7 @@ class Board < ActiveRecord::Base
             self.settings['translations'][button['id'].to_s][loc]['inflections'][idx] = str.to_s if str
           end
           if tran['rules'] && tran['rules'].length > 0
-            self.settings['translations'][button['id'].to_s][loc]['rules'] = tran['rules']
+            self.settings['translations'][button['id'].to_s][loc]['rules'] = tran['rules'].compact.select{|r| r.is_a?(Array) }
           else
             self.settings['translations'][button['id'].to_s][loc].delete('rules')
           end
