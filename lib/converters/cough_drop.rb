@@ -509,6 +509,7 @@ module Converters::CoughDrop
   end
   
   def self.to_pdf(board, dest_path, opts)
+    # TODO: option to select locale for printing
     json = nil
     Progress.as_percent(0, 0.5) do
       # TODO: break 

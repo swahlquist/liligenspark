@@ -174,6 +174,7 @@ class ButtonImage < ActiveRecord::Base
       elsif self.url.match(/\/libraries\//)
         extension = (self.url.split(/\//)[-1] || '').split(/\./)[-1]
         new_url = self.url + '.varianted-skin.' + extension
+        new_url = URI.encode(new_url) if new_url.match(/\s/)
         req = Typhoeus.head(new_url)
         if req.success?
           self.settings['pre_variant_url'] = self.url

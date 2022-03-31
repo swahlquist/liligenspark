@@ -66,7 +66,7 @@ module JsonApi::User
         json['preferences']['word_suggestion_images'] = true if user.settings['preferences']['word_suggestion_images'] == nil
       end
       if json['preferences']['speak_mode_edit'] == nil
-        json['preferences']['speak_mode_edit'] = true
+        json['preferences']['speak_mode_edit'] = !!user.supporter_role?
       end
       if json['preferences']['symbol_background'] == nil
         json['preferences']['symbol_background'] = FeatureFlags.user_created_after?(user, 'symbol_background') ? 'clear' : 'white'
