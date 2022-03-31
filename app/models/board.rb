@@ -1226,6 +1226,7 @@ class Board < ActiveRecord::Base
       end
       if trans
         self.settings['translations'] = BoardContent.load_content(self, 'translations') || {}
+        has_trans_inflections = false
         trans.each do |loc, tran|
           if loc.is_a?(Hash)
             tran = loc
@@ -1242,6 +1243,10 @@ class Board < ActiveRecord::Base
               end
             end
           end
+          # If inflections are set on translations AND the button, 
+          # then there is a conflict, so remove it on the button
+          has_trans_inflections = true if tran['inflections']
+
           loc = tran['locale'] || loc
           self.settings['translations'][button['id'].to_s] ||= {}
           self.settings['translations'][button['id'].to_s][loc] ||= {}
@@ -1259,6 +1264,7 @@ class Board < ActiveRecord::Base
           end
           # ignore inflection_defaults, those should get re-added on their own
         end
+        button.delete('inflections') if has_trans_inflections
       end
       if button['part_of_speech'] && button['part_of_speech'] == ''
         button.delete('part_of_speech')

@@ -595,6 +595,13 @@ describe Api::UsersController, :type => :controller do
       expect(json['user']['name']).to eq('fred')
     end
     
+    it "should not allow  blank user name" do
+      post :create, params: {:user => {'user_name' => ''}}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['user']['name'].length).to be > 5
+    end
+
     it "should include access token information" do
       post :create, params: {:user => {'name' => 'fred'}}
       expect(response).to be_successful

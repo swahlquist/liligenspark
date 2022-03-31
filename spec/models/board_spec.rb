@@ -1474,13 +1474,14 @@ describe Board, :type => :model do
       b = Board.new
       b.settings ||= {}
       b.process_buttons([
-        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234', 'translations' => [
+        {'id' => '1_2', 'label' => 'hat', 'hidden' => true, 'chicken' => '1234', 'inflections' => ['b', 'c'], 'translations' => [
           {'locale' => 'en', 'label' => 'hat'},
-          {'locale' => 'es', 'label' => 'hatzy', 'vocalization' => 'hatz'}
+          {'locale' => 'es', 'label' => 'hatzy', 'vocalization' => 'hatz', 'inflections' => ['a']}
         ]}
       ], nil)
       expect(b.settings['buttons']).not_to eq(nil)
       expect(b.settings['buttons'].length).to eq(1)
+      expect(b.settings['buttons'][0]['inflections']).to eq(nil)
       expect(b.settings['translations']).to eq({
         '1_2' => {
           'en' => {
@@ -1488,7 +1489,8 @@ describe Board, :type => :model do
           },
           'es' => {
             'label' => 'hatzy',
-            'vocalization' => 'hatz'
+            'vocalization' => 'hatz',
+            'inflections' => ['a']
           }
         }
       })
