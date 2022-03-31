@@ -264,6 +264,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
   end
   
   def self.track_trends(weekyear)
+    # TODO: track user preferences for gaze dwell time, scanning interval,
+    # etc. to get an idea of average durations
+    # TODO: summaries for orientation, ambient light, system volume
     nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
     return unless weekyear <= nowweekyear
     current_trends = weekyear >= nowweekyear

@@ -196,6 +196,7 @@ class Api::SearchController < ApplicationController
     #     end
     #   end
     elsif ENV['GOOGLE_TTS_TOKEN']
+      # TODO: API for getting a list of all available remote languages
       cache = RedisInit.permissions.get("google/voices/#{params['locale']}")
       if cache
         json = JSON.parse(cache) rescue nil
