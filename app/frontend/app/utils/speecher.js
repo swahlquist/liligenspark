@@ -126,7 +126,7 @@ var speecher = EmberObject.extend({
       name: "Irish Female (Internet Required)",
       lang: 'ga-IE',
       remote_voice: true,
-      voiceURI: "remote:ga-IE:Connaught"
+      voiceURI: "remote:ga-IE:Ulster"
     });
     // list.push({
     //   name: "Irish (Internet Required)",
