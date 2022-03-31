@@ -162,8 +162,15 @@ export default modal.ModalController.extend({
           modal.open('modals/inbox', {inactivity_timeout: true, scannable: true});
           click();
         } else if(button == 'menu_repair_button') {
-          modal.open('modals/repairs', {inactivity_timeout: true, scannable: true});
-          click();
+          if(full_event.swipe_direction) {
+            modal.close(true);
+            if(full_event.swipe_direction == 'n') {
+              speecher.oops();
+            }
+          } else {
+            modal.open('modals/repairs', {inactivity_timeout: true, scannable: true});
+            click();  
+          }
         } else if(button == 'menu_contraction_button') {
           var contraction = this.get('contraction');
           if(contraction) {
@@ -234,6 +241,7 @@ export default modal.ModalController.extend({
           }
         } else if(button == 'menu_punctuation_button') {
           this.set('ref', Math.random());
+          this.set('repeat_menu', false);
           this.set('punctuation_menu', !this.get('punctuation_menu'));
           click();
         } else {

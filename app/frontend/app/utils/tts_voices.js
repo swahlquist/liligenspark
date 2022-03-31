@@ -130,6 +130,9 @@ var voices = EmberObject.extend({
   versions: {
     'Windows': '10.000',
   },
+  oops: {
+    "en": "Oops, that's not what I meant.",
+  },
   prompts: {
     "en": "Do you like my voice? This is how I sound.",
     "fr": "Aimez-vous ma voix? C'est comme ça que je sonne.",

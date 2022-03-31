@@ -114,6 +114,9 @@ export default Controller.extend({
     if(all == 0) { all = 1; }
     return Math.round((touch / all) * 1000) / 10;
   }),
+  locales_count: computed('trends.board_locales', function() {
+    return (Object.keys(this.get('trends.board_locales') || {}) || []).length;
+  }),
   systems: computed('trends.device.systems', function() {
     return this.compute_breakdown(this.get('trends.device.systems') || {});
   }),

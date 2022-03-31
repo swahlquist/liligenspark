@@ -128,11 +128,6 @@ var speecher = EmberObject.extend({
       remote_voice: true,
       voiceURI: "remote:ga-IE:Ulster"
     });
-    // list.push({
-    //   name: "Irish (Internet Required)",
-    //   lang: 'ga-IE',
-    //   voiceURI: "remote:ga-IE:irish_1"
-    // })
     if(!this.get('voices') || this.get('voices').length === 0) {
       this.set('voices', list);
     }
@@ -747,6 +742,12 @@ var speecher = EmberObject.extend({
     } else {
       return RSVP.reject({error: "beep sound not saved: " + attr});
     }
+  },
+  oops: function() {
+    var oopses = tts_voices.get('oops');
+    var loc = (app_state.get('vocalization_locale') || 'en').split(/-|_/)[0];
+    var str = oopses[loc] || oopses['en'] || "Oops";
+    speecher.speak_text(str, 'oops', {});
   },
   play_audio: function(ref) {
     // the check for lastListener is weird, but there was a lag where if you played

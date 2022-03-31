@@ -10,6 +10,7 @@ import app_state from '../../utils/app_state';
 import capabilities from '../../utils/capabilities';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import speecher from '../../utils/speecher';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -155,6 +156,9 @@ export default modal.ModalController.extend({
           this.send('select');
         }
       }
+    },
+    oops: function() {
+      speecher.oops();
     },
     remove: function() {
       var buttons = this.get('buttons') || [];
