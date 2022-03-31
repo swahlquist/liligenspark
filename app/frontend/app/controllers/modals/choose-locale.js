@@ -15,6 +15,7 @@ export default modal.ModalController.extend({
       var auto_translated = loc.match(/\*/);
       var loc = loc.replace(/\*/, '');
       var name = i18n.locales_localized[loc] || i18n.locales[loc] || loc;
+      name = name + " (" + loc + ")";
       if(auto_translated) {
         name = name + " (auto-translated)";
       }

@@ -173,11 +173,12 @@ class Api::SearchController < ApplicationController
   def audio
     req = nil
     if params['locale'] && params['locale'].match(/^ga/)
-      req = Typhoeus.post("https://abair.ie/aac_irish", body: {text: params['text'], voice: params['voice_id'] || 'irish_1'}, timeout: 5)
+      req = Typhoeus.post("https://abair.ie/aac_irish", body: {text: params['text'], voice: params['voice_id'] || 'Ulster'}, timeout: 5)
       if req.success?
-        src = Nokogiri(req.body).css('audio source')[0]['src']
-        req = Typhoeus.get("https://abair.ie#{src}")
+        # src = Nokogiri(req.body).css('audio source')[0]['src']
+        # req = Typhoeus.get("https://abair.ie#{src}")
       else
+        raise req.body.to_json
         return api_error 400, {error: 'endpoint failed to respond'}
         req = nil
       end

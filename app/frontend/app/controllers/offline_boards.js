@@ -45,7 +45,7 @@ export default Controller.extend({
           open: pref == key,
           boards: starters,
           tally: i18n.t('n_boards', "board", {count: starters.length}),
-          locale_text: str,
+          locale_text: str + " (" + key + ")",
           credit: credit,
           icon_class: "glyphicon glyphicon-globe"
         });  
