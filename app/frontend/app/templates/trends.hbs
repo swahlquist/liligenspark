@@ -101,6 +101,48 @@
         </div>
       </div>
 
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Avg. Available Words" key='average_access'}}
+          </div>
+          <div class="panel-body">
+            {{delimit trends.average_access}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Avg. Words Used" key='average_breadth'}}
+          </div>
+          <div class="panel-body">
+            {{trends.average_breadth}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Avg. Words Modeled" key='average_modeled_breadth'}}
+          </div>
+          <div class="panel-body">
+            {{trends.average_modeled_breadth}}
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3 col-xs-6">
+        <div class="panel panel-default summary">
+          <div class="panel-heading">
+            {{t "Total Languages" key='total_languages'}}
+          </div>
+          <div class="panel-body">
+            {{locales_count}}
+          </div>
+        </div>
+      </div>
+
+
       {{#if trends.total_users}}
         {{#unless showing_private_info}}
           <div class='col-sm-12' style='margin-bottom: 5px; text-align: right;'>

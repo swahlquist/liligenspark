@@ -426,6 +426,7 @@ var speecher = EmberObject.extend({
         locale = ((i18n.langs || {}).preferred || window.navigator.language).toLowerCase().replace(/_/, '-');
         language = locale && locale.split(/-/)[0];    
       }
+      // Don't use remote voices as fallbacks
       var local_voices = voices.filter(function(v) { return !v.remote_voice });
       // Can't find an exact match? Look for a best match by locale
       // First prioritize Google voices because they sound better
