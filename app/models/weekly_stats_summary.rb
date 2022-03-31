@@ -308,6 +308,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       'badges_earned' => {}
     }
 
+    # TODO: slice by locale
     valid_words = WordData.standardized_words
     board_user_ids = {}
     word_pairs = {}
@@ -772,6 +773,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:core_percent] = res[:core_percent].round(2)
     res[:words_per_minute] = (stash[:total_words].to_f / stash[:total_session_seconds].to_f * 60.0).round(1)
     res[:words_per_minute] = 0.0 if res[:words_per_minute].nan?
+    # TODO: total utterance shares
     res[:admin] = {}
     res[:admin][:research_active_users] = stash[:research_user_ids].uniq.length #if include_admin
     res[:admin][:publishing_active_users] = stash[:publishing_user_ids].uniq.length #if include_admin
@@ -847,6 +849,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
     
     if stash[:available_words]
+      # TODO: slice ids by locale
       stash[:available_words].each do |word, user_ids|
         res[:available_words] ||= {}
         res[:available_words][word] = ((user_ids.uniq.length.to_f / home_board_users * 10.0).round(1) / 10.0).round(2)

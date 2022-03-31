@@ -926,6 +926,7 @@ class Organization < ActiveRecord::Base
     models = {}
     WeeklyStatsSummary.where(user_id: approved_users.map(&:id), weekyear: weekyears).each do |sum|
       total_user_weeks += 1
+      next unless sum.data && sum.data['stats']
       total_sessions += sum.data['stats']['total_sessions'] || 0
       total_seconds += sum.data['stats']['total_session_seconds'] || 0
       (sum.data['stats']['all_word_counts'] || {}).each do |word, cnt|

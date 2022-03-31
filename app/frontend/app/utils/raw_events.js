@@ -13,6 +13,8 @@ import scanner from './scanner';
 import stashes from './_stashes';
 import utterance from './utterance';
 import frame_listener from './frame_listener';
+// TODO: change scanning options to allow multiple buttons
+// for each action if desired
 
 // gotchas:
 // - text boxes in edit mode should be clickable
