@@ -295,7 +295,7 @@ class SessionController < ApplicationController
       end
       render json: {url: url}
     else
-      api_error 400, {error: "no result found"}
+      api_error 400, {error: "no result found", ref: params['ref']}
     end
   end
 
