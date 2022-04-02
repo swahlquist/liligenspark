@@ -385,6 +385,10 @@ CoughDrop.Board = DS.Model.extend({
     return res;
   },
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize, inflection_shift) {
+    var state = JSON.stringify({ll: label_locale, vl: vocalization_locale, h: history, c: capitalize, is: inflection_shift, sp: app_state.get('speak_mode'), fw: app_state.get('focus_words'), uid: app_state.get('sessionUser.id'), ai: app_state.get('referenced_user.preferences.auto_inflections'), sk: app_state.get('referenced_user.preferences.skin')});
+    if(this.get('last_cb.state') == state) {
+      return this.get('last_cb.results');
+    }
     var res = this.translated_buttons(label_locale, vocalization_locale);
     var _this = this;
     var trans = Object.assign({}, this.get('translations') || {});
@@ -503,6 +507,7 @@ CoughDrop.Board = DS.Model.extend({
         // TODO: support capitalization
       }
     }
+    this.set('last_cb', {state: state, results: res});
     return res;
   },
   different_locale: computed('shortened_locale', function() {
@@ -1438,6 +1443,9 @@ CoughDrop.Board = DS.Model.extend({
     return {
       width: size.width,
       height: size.height,
+      inflection_prefix: app_state.get('inflection_prefix'),
+      inflection_shift: app_state.get('inflection_shift'),
+      skin: app_state.get('referenced_user.preferences.skin'),
       label_locale: size.label_locale,
       display_level: size.display_level,
       revision: _this.get('current_revision'),

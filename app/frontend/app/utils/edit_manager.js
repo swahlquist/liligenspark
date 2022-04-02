@@ -1548,7 +1548,11 @@ var editManager = EmberObject.extend({
         });
 
         if(fast && fast.html) {
-          board.set('fast_html', fast);
+          // var prior = JSON.stringify(board.get('fast_html'));
+          // if(prior && prior != JSON.stringify(fast)) {
+            board.set('fast_html', fast);
+          // }
+          // TODO: this repeats too many times
           resume_scanning();
           return;
         }

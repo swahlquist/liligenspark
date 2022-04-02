@@ -18,6 +18,8 @@ export default Component.extend({
           inflection_prefix: app_state.get('inflection_prefix'),
           inflection_shift: app_state.get('inflection_shift'),
           skin: app_state.get('referenced_user.preferences.skin'),
+          label_locale: app_state.get('label_locale'),
+          display_level: board.get('display_level'),
           revision: editManager.controller.get('model.current_revision'),
           html: htmlSafe(elem.innerHTML)
         });
