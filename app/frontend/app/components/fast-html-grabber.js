@@ -12,7 +12,7 @@ export default Component.extend({
       var elem = document.getElementsByClassName('board')[0];
       var board = editManager.controller && editManager.controller.get('model');
       if(board && board.get('id') == elem.getAttribute('data-id')) {
-        board.set('fast_html', {
+        board.set_fast_html({
           width: editManager.controller.get('width'),
           height: editManager.controller.get('height'),
           inflection_prefix: app_state.get('inflection_prefix'),

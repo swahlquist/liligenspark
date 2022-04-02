@@ -21,7 +21,6 @@ import word_suggestions from '../utils/word_suggestions';
 import ButtonSet from '../models/buttonset';
 import Utils from '../utils/misc';
 import { htmlSafe } from '@ember/string';
-import progress_tracker from '../utils/progress_tracker';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
 import utterance from '../utils/utterance';
@@ -1263,6 +1262,20 @@ CoughDrop.Board = DS.Model.extend({
       boundClasses.add_classes(button);
     });
     this.set('classes_added', true);
+  },
+  set_fast_html: function(fast) {
+    if(fast) {
+      var list = ['width', 'height', 'inflection_prefix', 'inflection_shift', 'skin', 'label_locale', 'display_level', 'revision', 'html'];
+      var keys = Object.keys(fast)
+      var missing = list.filter(function(s) { return keys.indexOf(s) < 0; });
+      var extras = keys.filter(function(s) { return list.indexOf(s) < 0; });
+      if(missing.length > 0) {
+        console.error("BAST FAST_HTML, missing:", missing);
+      } else if(extras.length > 0) {
+        console.error("BAST FAST_HTML, unexpected:", missing);        
+      }
+    }
+    this.set('fast_html', fast);
   },
   render_fast_html: function(size) {
     CoughDrop.log.track('redrawing');
