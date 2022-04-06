@@ -20,11 +20,14 @@ module Uploadable
   end
   
   def best_url
+    res = nil
     if self.settings && self.settings['cached_copy_url']
-      self.settings['cached_copy_url']
+      res = self.settings['cached_copy_url']
     else
-      Uploader.fronted_url(self.url)
+      res = Uploader.fronted_url(self.url)
     end
+    res = URI.decode(res) if res.match(/%20/)
+    res
   end
 
   def full_filename
@@ -347,6 +350,7 @@ module Uploadable
       records.each do |record|
         # Retrieve the attributes for the source image
         url = record.is_a?(String) ? record : record.url
+        url = URI.decode(url) if url.match(/%20/)
         ref = self.cached_copy_identifiers(url)
         next unless ref
         if !record.is_a?(String) && record.settings['cached_copy_url']
