@@ -232,6 +232,14 @@ var persistence = EmberObject.extend({
           record.raw.outdated = true;
         }
 
+        if(store == 'dataCache' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.matc(/\%/)) {
+          // URLs are stored unecoded, so they need to be encoded
+          // before being used, and consistently encoded at least
+          // on iOS or they won't be properly double-escaped
+          // if the original filename had escaped characters
+          record.raw.local_url = encodeURI(record.raw.local_url);
+        }
+
         if(record) {
           var result = {};
           if(wrapped) {
@@ -800,6 +808,9 @@ var persistence = EmberObject.extend({
         var promises = [];
         list.forEach(function(item) {
           if(item.data && item.data.raw && item.data.raw.url && item.data.raw.type && item.data.raw.local_filename) {
+            if(item.data.raw.local_filename.match(/\%/)) {
+              item.data.raw.local_url = encodeURI(item.data.raw.local_url);
+            }
             _this.url_cache[item.data.raw.url] = null;
             _this.url_uncache[item.data.raw.url] = null;
             // if the image is found in the local directory listing, it's good
@@ -868,10 +879,8 @@ var persistence = EmberObject.extend({
             if(url) {
               var img = new Image();
               img.onerror = function() { 
-                console.log("trying double-encoding", url)
                 var img2 = new Image();
                 img2.onload = function() {
-                  console.log("success!", img2.src)
                   _this.url_cache[key] = img2.src;
                 }
                 img2.src = encodeURI(url);
@@ -1147,6 +1156,7 @@ var persistence = EmberObject.extend({
               // For some reason, writing to an existing file that is larger than what
               // is to be written doesn't properly end the file at the shorter point. Maybe I'm doing something wrong?
               var then_write = function() {
+                // We remove escapable characters (i.e. %20) from the filename before saving to prevent iOS issues
                 capabilities.storage.write_file(type, local_system_filename, blob).then(function(res) {
                   object.data_uri = null;
                   object.local_filename = local_system_filename;

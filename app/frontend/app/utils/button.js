@@ -905,7 +905,7 @@ Button.broken_image = function(image) {
           });
           image.src = data_uri;
         }
-      }, function() { 
+      }, function() {
         CoughDrop.track_error("failed to find local image fallback:\n" + image.getAttribute('rel'));
       });  
     };
