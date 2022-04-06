@@ -804,7 +804,7 @@ var persistence = EmberObject.extend({
             // if the image is found in the local directory listing, it's good
             if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename]) {
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url, true);
-              fn_cache[item.data.raw.url] = item.data.raw.local_filename;
+              fn_cache[_this.url_cache[item.data.raw.url]] = item.data.raw.local_filename;
             // if the sound is found in the local directory listing, it's good
             } else if(item.data.raw.type == 'sound' && item.data.raw.local_url && _this.sound_filename_cache && _this.sound_filename_cache[item.data.raw.local_filename]) {
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url);
