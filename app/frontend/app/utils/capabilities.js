@@ -1311,6 +1311,11 @@ var capabilities;
             prefix = prefix.replace(/^file:\/\//, location.protocol + "//" + location.host + "/local-filesystem");
             suffix = prefix.split(/\//).slice(-2).join('/');
           }
+          // TODO: if the file name had escaped characters when saved, then the URL should be double-escaped
+          if(url.match(/localhost/) || url.match(/^file/) || url.match(/^cdvfile/)) {
+            // TODO: on iOS add debugger here to see whether all URLs are already escaped
+            // url = encodeURI(url);
+          }
 
           if(url.match(/^cdvfile/)) {
             url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
