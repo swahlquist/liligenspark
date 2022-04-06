@@ -26,7 +26,7 @@ module Uploadable
     else
       res = Uploader.fronted_url(self.url)
     end
-    res = URI.decode(res) if res.match(/%20/)
+    res = URI.decode(res) if res && res.match(/%20/)
     res
   end
 
