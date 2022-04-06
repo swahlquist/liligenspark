@@ -763,6 +763,7 @@ var persistence = EmberObject.extend({
     _this.image_filename_cache = _this.image_filename_cache || {};
     _this.sound_filename_cache = _this.sound_filename_cache || {};
     var fn_cache = {};
+    window.fn_cache = fn_cache;
     var prime_promises = [];
     if(_this.get('local_system.available') && _this.get('local_system.allowed') && stashes.get('auth_settings')) {
     } else {
@@ -803,6 +804,9 @@ var persistence = EmberObject.extend({
             _this.url_uncache[item.data.raw.url] = null;
             // if the image is found in the local directory listing, it's good
             if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename]) {
+              if(item.data.raw.local_filename.match(/\%/)) {
+                item.data.raw.local_url = encodeURI(item.data.raw.local_url);
+              }
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url, true);
               fn_cache[_this.url_cache[item.data.raw.url]] = item.data.raw.local_filename;
             // if the sound is found in the local directory listing, it's good
@@ -867,7 +871,9 @@ var persistence = EmberObject.extend({
             if(url) {
               var img = new Image();
               img.onerror = function() { 
-                console.error("BONK", url, fn_cache[url]);
+                if(fn_cache[url]) {
+                  console.error("BONK", url, fn_cache[url]);
+                }
                 runLater(next, 10); 
               }
               img.onload = function() { runLater(next, 10); }
