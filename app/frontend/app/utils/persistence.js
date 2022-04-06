@@ -803,6 +803,9 @@ var persistence = EmberObject.extend({
             _this.url_uncache[item.data.raw.url] = null;
             // if the image is found in the local directory listing, it's good
             if(item.data.raw.type == 'image' && item.data.raw.local_url && _this.image_filename_cache && _this.image_filename_cache[item.data.raw.local_filename]) {
+              if(item.data.raw.local_filename.match(/%/)) {
+                item.data.raw.local_url = encodeURI(item.data.raw.local_url);
+              }
               _this.url_cache[item.data.raw.url] = capabilities.storage.fix_url(item.data.raw.local_url, true);
             // if the sound is found in the local directory listing, it's good
             } else if(item.data.raw.type == 'sound' && item.data.raw.local_url && _this.sound_filename_cache && _this.sound_filename_cache[item.data.raw.local_filename]) {
@@ -1115,7 +1118,8 @@ var persistence = EmberObject.extend({
               if(!extension && url_extension) {
                 extension = "." + url_extension;
               }
-              var url_piece = pieces.pop();
+              // Strip escape characters before saving
+              var url_piece = decodeURIComponent(pieces.pop());
               if(url_piece.length > 20) {
                 url_piece = url_piece.substring(0, 20);
               }
