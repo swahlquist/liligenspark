@@ -1644,6 +1644,8 @@ var editManager = EmberObject.extend({
   process_for_saving: function() {
     var orderedButtons = this.controller.get('ordered_buttons');
     var priorButtons = this.controller.get('model.buttons');
+    this.controller.set('model.update_hash', Math.random());
+    this.controller.set('model.updated', new Date());
     var gridOrder = [];
     var newButtons = [];
     var maxId = 0;

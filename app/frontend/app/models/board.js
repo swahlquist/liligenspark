@@ -384,7 +384,7 @@ CoughDrop.Board = DS.Model.extend({
     return res;
   },
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize, inflection_shift) {
-    var state = JSON.stringify({ll: label_locale, vl: vocalization_locale, h: history, c: capitalize, is: inflection_shift, sp: app_state.get('speak_mode'), fw: app_state.get('focus_words'), uid: app_state.get('sessionUser.id'), ai: app_state.get('referenced_user.preferences.auto_inflections'), sk: app_state.get('referenced_user.preferences.skin')});
+    var state = JSON.stringify({h: this.get('update_hash'), u: this.get('updated').getTime(), ll: label_locale, vl: vocalization_locale, h: history, c: capitalize, is: inflection_shift, sp: app_state.get('speak_mode'), fw: app_state.get('focus_words'), uid: app_state.get('sessionUser.id'), ai: app_state.get('referenced_user.preferences.auto_inflections'), sk: app_state.get('referenced_user.preferences.skin')});
     if(this.get('last_cb.state') == state) {
       return this.get('last_cb.results');
     }
