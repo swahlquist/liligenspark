@@ -868,8 +868,10 @@ var persistence = EmberObject.extend({
             if(url) {
               var img = new Image();
               img.onerror = function() { 
+                console.log("trying double-encoding", url)
                 var img2 = new Image();
                 img2.onload = function() {
+                  console.log("success!", img2.src)
                   _this.url_cache[key] = img2.src;
                 }
                 img2.src = encodeURI(url);
