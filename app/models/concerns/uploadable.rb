@@ -350,7 +350,7 @@ module Uploadable
       records.each do |record|
         # Retrieve the attributes for the source image
         url = record.is_a?(String) ? record : record.url
-        url = URI.decode(url) if url.match(/%20/)
+        url = URI.decode(url) if url && url.match(/%20/)
         ref = self.cached_copy_identifiers(url)
         next unless ref
         if !record.is_a?(String) && record.settings['cached_copy_url']
