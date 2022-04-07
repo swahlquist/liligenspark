@@ -793,7 +793,7 @@ describe Uploader do
 
     it "should handle giphy searches" do
       ENV['GIPHY_KEY'] = 'giphy'
-      expect(Typhoeus).to receive(:get).with("http://api.giphy.com/v1/gifs/search?q=%23asl+bacon&api_key=giphy", {timeout: 5}).and_return(OpenStruct.new({
+      expect(Typhoeus).to receive(:get).with("http://api.giphy.com/v1/gifs/search?q=%23asl+bacon&api_key=giphy&lang=en&rating=pg13", {timeout: 5}).and_return(OpenStruct.new({
         body: {
           data: [
             {
