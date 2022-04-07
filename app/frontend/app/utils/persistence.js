@@ -232,7 +232,8 @@ var persistence = EmberObject.extend({
           record.raw.outdated = true;
         }
 
-        if(store == 'dataCache' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.matc(/\%/)) {
+        if(store == 'dataCache' && capabilities.system == 'iOS' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.matc(/\%/)) {
+          // Only on iOS:
           // URLs are stored unecoded, so they need to be encoded
           // before being used, and consistently encoded at least
           // on iOS or they won't be properly double-escaped
@@ -808,7 +809,9 @@ var persistence = EmberObject.extend({
         var promises = [];
         list.forEach(function(item) {
           if(item.data && item.data.raw && item.data.raw.url && item.data.raw.type && item.data.raw.local_filename) {
-            if(item.data.raw.local_filename.match(/\%/)) {
+            if(capabilities.system == 'iOS' && item.data.raw.local_filename.match(/\%/)) {
+              // Only on iOS, if the filename has escaped characters, they
+              // need to be double-escaped in the URL
               item.data.raw.local_url = encodeURI(item.data.raw.local_url);
             }
             _this.url_cache[item.data.raw.url] = null;
