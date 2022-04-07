@@ -528,14 +528,21 @@ module Uploader
           }          
         }
       end
-    elsif ['giphy_asl'].include?(library)
-      str = "#asl #{keyword}"
+    elsif ['giphy_asl', 'giphy'].include?(library)
+      str = keyword
+      lang = 'en'
+      rating = 'pg'
+      if library == 'giphy_asl'
+        str = "#asl #{keyword}" 
+        rating = 'pg13'
+      else
+      end
       key = ENV['GIPHY_KEY']
-      res = Typhoeus.get("http://api.giphy.com/v1/gifs/search?q=#{CGI.escape(str)}&api_key=#{key}", timeout: 5)
+      res = Typhoeus.get("http://api.giphy.com/v1/gifs/search?q=#{CGI.escape(str)}&api_key=#{key}&lang=#{lang}&rating=#{rating}", timeout: 5)
       results = JSON.parse(res.body)
       list = []
       results['data'].each do |result|
-        if result['slug'].match(/signwithrobert/) || result['slug'].match(/asl/)
+        if library == 'giphy' || (result['slug'].match(/signwithrobert/) || result['slug'].match(/asl/))
           list << {
             'url' => (result['images']['original']['url'] || '').sub(/^http:/, 'https:'),
             'thumbnail_url' => (result['images']['downsized_still']['url'] || '').sub(/^http:/, 'https:'),
