@@ -614,13 +614,18 @@ class Organization < ActiveRecord::Base
     res
   end
 
-  def find_saml_user(external_id)
+  def find_saml_user(external_id, email=nil)
     return nil unless external_id && self.settings['saml_metadata_url']
-    record_code = "ext:#{GoSecure.sha512(external_id, 'external_auth_user_id')}"
-    links = UserLink.where(record_code: record_code).select{|l| l.data['type'] == 'saml_auth' }
-    return nil if links.empty?
+    codes = ["ext:#{GoSecure.sha512(external_id, 'external_auth_user_id')}"]
+    codes << "ext:#{GoSecure.sha512(email, "external_alias_for_#{self.global_id}")}" if email
+    links = UserLink.where(record_code: codes)
+    auth_links = links.select{|l| l.data['type'] == 'saml_auth' && l.data['state']['org_id'] == self.global_id }
+    alias_links = links.select{|l| l.data['type'] == 'saml_alias' && l.data['state']['org_id'] == self.global_id }
+    return nil if auth_links.empty? && alias_links.empty?
     # TODO: sharding
-    self.attached_users('all').where(id: links.map(&:user_id)).first
+    res = self.attached_users('all').where(id: auth_links.map(&:user_id)).first
+    res ||= self.attached_users('all').where(id: alias_links.map(&:user_id)).first
+    res
   end
 
   def find_saml_alias(uid, email)
@@ -636,6 +641,19 @@ class Organization < ActiveRecord::Base
     return nil if user_ids.empty?
     # TODO: sharding
     self.attached_users('all').where(id: user_ids).first
+  end
+
+  def import_saml_users(csv_str)
+    require 'csv'
+    csv = CSV.parse(csv_str, headers: true)
+    csv.each do |row|
+      if row['email'] && row['role']
+        role = 'communicator'
+        if row['role'] = 'Staff'
+          role = 'supporter'
+        end
+      end
+    end
   end
 
   def link_saml_user(existing_user, data)
@@ -661,7 +679,8 @@ class Organization < ActiveRecord::Base
     end
     ul = UserLink.generate_external(existing_user, record_code, 'saml_auth', state)
     ul.save
-    link_saml_alias(existing_user, data[:user_name] || data[:email], false) if data[:user_name] || data[:email]
+    link_saml_alias(existing_user, data[:user_name], false) if data[:user_name]
+    link_saml_alias(existing_user, data[:email], false) if data[:email]
     ul
   end
 

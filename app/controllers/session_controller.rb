@@ -386,7 +386,7 @@ class SessionController < ApplicationController
       org.link_saml_user(existing_user, data)
       authenticated_user = existing_user
     else
-      authenticated_user = org.find_saml_user(data[:external_id])
+      authenticated_user = org.find_saml_user(data[:external_id], email)
       if !authenticated_user
         # If user isn't already connected, see if you can auto-connect by user name or email
         attached = org.attached_users('all')
