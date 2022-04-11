@@ -1720,6 +1720,20 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':gif-search',
+      description: i18n.t('gif_search_description', "Search online GIFs that match the current contents of the sentence"),
+      trigger: function() {
+        modal.open('modals/gif');
+      }
+    },
+    {
+      action: ':gif-lucky',
+      description: i18n.t('gif_lucky_description', "Show the first online GIF that matches the current contents of the sentence"),
+      trigger: function() {
+        modal.open('modals/gif', {lucky: true});
+      }
+    },
+    {
       action: ':inflection',
       match: /^:inflection\((\w+)\)/,
       description: i18n.t('set_inflection', "Set button inflections to match a certain rule"),

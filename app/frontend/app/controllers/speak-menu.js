@@ -151,6 +151,9 @@ export default modal.ModalController.extend({
         } else if(button == 'menu_repeat_flip') {
           click();
           app_state.flip_text();
+        } else if(button == 'menu_repeat_gif') {
+          click();
+          modal.open('modals/gif');
         } else if(button == 'menu_hold_thought_button') {
           stashes.remember({stash: true});
           utterance.clear();

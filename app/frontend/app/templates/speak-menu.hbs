@@ -24,10 +24,17 @@
               <span class='glyphicon glyphicon-repeat'></span>
               {{t "Flip Text" key='flip_text'}}
             </div>
-            <div class='col-sm-2 col-xs-4 speak_menu_button' id='menu_share_button'>
-              <span class='glyphicon glyphicon-share'></span>
-              {{t "Share" key='share'}}
-            </div>
+            {{#if app_state.referenced_user.preferences.hide_gif}}
+              <div class='col-sm-2 col-xs-4 speak_menu_button' id='menu_share_button'>
+                <span class='glyphicon glyphicon-share'></span>
+                {{t "Share" key='share'}}
+              </div>
+            {{else}}
+              <div class='col-sm-2 col-xs-4 speak_menu_button' id='menu_repeat_gif'>
+                <span class='glyphicon glyphicon-picture'></span>
+                {{t "GIF" key='gif'}}
+              </div>
+            {{/if}}
           {{else if punctuation_menu}}
             <div class='col-sm-2 col-xs-4 speak_menu_button' id='menu_contraction_button'>
               <span style='font-size: 25px; display: block; line-height: 50px'>{{contraction.label}}</span>
