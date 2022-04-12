@@ -232,7 +232,7 @@ var persistence = EmberObject.extend({
           record.raw.outdated = true;
         }
 
-        if(store == 'dataCache' && capabilities.system == 'iOS' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.matc(/\%/)) {
+        if(store == 'dataCache' && capabilities.system == 'iOS' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.match(/\%/)) {
           // Only on iOS:
           // URLs are stored unecoded, so they need to be encoded
           // before being used, and consistently encoded at least
