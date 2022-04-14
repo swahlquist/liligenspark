@@ -1413,7 +1413,7 @@ Button.load_actions = function() {
     },
     {
       action: ':suggestion',
-      description: i18n.t('suggestion', "Show a suggestion word in this button spacee"),
+      description: i18n.t('suggestion', "Show a suggestion word in this button space"),
       trigger: function() {
         return {auto_return_possible: true};
       }
