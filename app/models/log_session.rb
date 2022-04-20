@@ -1457,19 +1457,26 @@ class LogSession < ActiveRecord::Base
         session.schedule_once_for(:slow, :check_for_merger)
       end
       merged_ids = {}
-      LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).each do |merger|
-        merger.started = true
-        merger.save
-        next if merged_ids[merger.log_session_id]
+      handled_ids = []
+      ids = LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).select('id').order('id DESC').limit(500)
+      LogMerger.where(id: ids).find_in_batches(batch_size: 25) do |batch|
+        batch.each do |merger|
+          puts merger.id
+          merger.started = true
+          merger.save
+          handled_ids << merger.id
+          next if merged_ids[merger.log_session_id]
 
-        merged_ids[merger.log_session_id] = true
-        log = LogSession.using(:master).find_by(id: merger.log_session_id)
-        if log
-          log.schedule_once_for(:slow, :check_for_merger, true)
-          log_ids << log.id
+          merged_ids[merger.log_session_id] = true
+          log = LogSession.using(:master).find_by(id: merger.log_session_id)
+          if log
+            log.schedule_once_for(:slow, :check_for_merger, true)
+            log_ids << log.id
+          end
         end
       end
-      LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
+      LogMerger.where(id: handled_ids).delete_all
+      # LogMerger.where(['merge_at < ? AND started = ?', 24.hours.ago, true]).delete_all
 #    end
     log_ids.length
   end
