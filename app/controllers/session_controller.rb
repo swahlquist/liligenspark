@@ -593,6 +593,8 @@ class SessionController < ApplicationController
     user_id = (User.last || OpenStruct.new(id: 9)).id
     LogSession.where(user_id: user_id).count
     ids = Board.where(public: true).limit(10).map(&:global_id)
+    RedisInit.default.incr('status_checks')
+    RedisInit.default.del('status_checks') if RedisInit.default.get('status_checks').to_i > 50000
     RedisInit.default.get('trends_tracked_recently')
     render json: {active: true}
   end

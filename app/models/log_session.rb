@@ -1452,6 +1452,23 @@ class LogSession < ActiveRecord::Base
       ref_ids[r['ref_id']] = true;
       ref_ids[r['log_id']] = true;
     }
+
+    # This will clean up old mergers if the list gets behind
+    # n = 10
+    # n.times do |i|
+    #   puts "batch #{i}..."
+    #   mergers = LogMerger.where(['merge_at < ? AND started != ?', 3.days.ago, true]).select('id, log_session_id').order('id DESC').limit(5000); 0
+    #   session_ids = mergers.map(&:log_session_id)
+    #   session_ids.each do |id|
+    #     Worker.schedule_for(:whenever, LogSession, :perform_action, {
+    #       'id' => id,
+    #       'method' => 'check_for_merger',
+    #       'arguments' => [true]
+    #     })
+    #   end.length
+    #   LogMerger.where(id: mergers.map(&:id)).delete_all
+    # end
+
 #    Octopus.using(:master) do
       LogSession.where(id: log_ids).each do |session|
         session.schedule_once_for(:slow, :check_for_merger)
@@ -1459,9 +1476,8 @@ class LogSession < ActiveRecord::Base
       merged_ids = {}
       handled_ids = []
       ids = LogMerger.where(['merge_at < ? AND started != ?', Time.now, true]).select('id').order('id DESC').limit(500)
-      LogMerger.where(id: ids).find_in_batches(batch_size: 25) do |batch|
+      LogMerger.where(id: ids).find_in_batches(batch_size: 50) do |batch|
         batch.each do |merger|
-          puts merger.id
           merger.started = true
           merger.save
           handled_ids << merger.id
