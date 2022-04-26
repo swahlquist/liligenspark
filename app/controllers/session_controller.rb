@@ -596,6 +596,14 @@ class SessionController < ApplicationController
     RedisInit.default.incr('status_checks')
     RedisInit.default.del('status_checks') if RedisInit.default.get('status_checks').to_i > 50000
     RedisInit.default.get('trends_tracked_recently')
+    if ENV['QUEUE_MAX']
+      ['slow', 'default', 'priority'].each do |q|
+        if Resque.redis.llen("queue:#{q}") > ENV['QUEUE_MAX'].to_i * 2
+          render json: {danger: true, reason: 'queue'}
+          return
+        end
+      end
+    end
     render json: {active: true}
   end
 

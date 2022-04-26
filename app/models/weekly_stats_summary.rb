@@ -10,7 +10,6 @@ class WeeklyStatsSummary < ActiveRecord::Base
   after_save :track_for_trends
   
   def schedule_badge_check
-    # TODO: YES change this to a remote action or something
     return if RedisInit.queue_pressure?
     UserBadge.schedule_once_for('slow', :check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
     true
