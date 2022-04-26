@@ -345,7 +345,7 @@ class Device < ActiveRecord::Base
         user.permission_scopes = scopes
 
         store = [user_id, device_id, scopes.join(','), valet_mode].join("::")
-        RedisInit.permissions.setex("user_token/#{token}", 12.hours.to_i, store) if !res[:error]
+        Permissions.setex(RedisInit.permissions, "user_token/#{token}", 12.hours.to_i, store) if !res[:error]
         res[:user] = user
         user.assert_valet_mode! if valet_mode
         res[:device_id] = device_id

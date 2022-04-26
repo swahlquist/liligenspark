@@ -324,7 +324,7 @@ class UserLink < ApplicationRecord
     end
     
     expires = 72.hours.to_i
-    Permissable.permissions_redis.setex(cache_key, expires, res.to_json)
+    Permissions.setex(Permissable.permissions_redis, cache_key, expires, res.to_json)
     res
   end
   

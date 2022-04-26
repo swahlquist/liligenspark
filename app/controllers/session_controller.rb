@@ -56,7 +56,7 @@ class SessionController < ApplicationController
       @scope_descriptors = "no permissions requested" if @scope_descriptors.blank?
       
       @code = GoSecure.nonce('oauth_code')
-      RedisInit.default.setex("oauth_#{@code}", 1.hour.to_i, config.to_json)
+      Permissions.setex(RedisInit.default, "oauth_#{@code}", 1.hour.to_i, config.to_json, true)
       # render login page
       render
     end
@@ -140,7 +140,7 @@ class SessionController < ApplicationController
         user.password_used!
       end
       config['user_id'] = user.id.to_s
-      RedisInit.default.setex("oauth_#{params['code']}", 1.hour.to_i, config.to_json)
+      Permissions.setex(RedisInit.default, "oauth_#{params['code']}", 1.hour.to_i, config.to_json, true)
       if do_render
         @app_name = (config && config['app_name']) || 'the application'
         @app_icon = (config && config['app_icon']) || "https://opensymbols.s3.amazonaws.com/libraries/arasaac/friends_3.png"
@@ -236,7 +236,7 @@ class SessionController < ApplicationController
     if @api_user && @api_user.admin?
       admin_token = GoSecure.nonce('admin_token')
       cookies[:admin_token] = admin_token
-      Permissable.permissions_redis.setex('/admin/auth/' + admin_token, 2.hours.to_i, @api_user.global_id)
+      Permissions.setex(Permissable.permissions_redis, '/admin/auth/' + admin_token, 2.hours.to_i, @api_user.global_id, true)
       success = true
     end
     render json: {success: success}
@@ -290,7 +290,7 @@ class SessionController < ApplicationController
         return unless exists?(user, params['user_id'])
         return unless allowed?(user, 'link_auth')
         nonce = GoSecure.nonce('saml_tmp_token')
-        RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, @token)
+        Permissions.setex(RedisInit.default, "token_tmp_#{nonce}", 15.minutes.to_i, @token, true)
         url += "&user_id=#{user.global_id}&tmp_token=#{nonce}"
       end
       render json: {url: url}
@@ -304,7 +304,7 @@ class SessionController < ApplicationController
       return api_error 400, {error: 'no token available'}
     end
     nonce = GoSecure.nonce('saml_tmp_token')
-    RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, @token)
+    Permissions.setex(RedisInit.default, "token_tmp_#{nonce}", 15.minutes.to_i, @token, true)
     render json: {tmp_token: nonce}
   end
 
@@ -340,7 +340,7 @@ class SessionController < ApplicationController
     code = GoSecure.nonce('saml_session_code')
 
     return_params['org_id'] = org.global_id
-    RedisInit.default.setex("saml_#{code}", 1.hour.to_i, return_params.to_json)
+    Permissions.setex(RedisInit.default, "saml_#{code}", 1.hour.to_i, return_params.to_json, true)
     @saml_code = code
 
     request = OneLogin::RubySaml::Authrequest.new
@@ -418,7 +418,7 @@ class SessionController < ApplicationController
         token = device.generate_token!(false)
         nonce = GoSecure.nonce('oauth_access_token')
         @temp_token = nonce
-        RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, token)
+        Permissions.setex(RedisInit.default, "token_tmp_#{nonce}", 15.minutes.to_i, token, true)
         redirect_to oauth2_token_url(tmp_token: nonce, user_name: authenticated_user.user_name, oauth_code: config['oauth_code'])
       elsif config['embed']
         # For embed flow, show success and post it to the parent window
@@ -431,7 +431,7 @@ class SessionController < ApplicationController
         # For popout flow, where a browser window opens to perform the auth,
         # show a success message and direct the user to return to the app
         device.settings['used_for_saml'] = true
-        RedisInit.default.setex("token_popout_#{config['popout_id']}", 30.minutes.to_i, {user_id: authenticated_user.global_id, device_id: device.global_id}.to_json)
+        Permissions.setex(RedisInit.default, "token_popout_#{config['popout_id']}", 30.minutes.to_i, {user_id: authenticated_user.global_id, device_id: device.global_id}.to_json, true)
         assert_session_device(device, authenticated_user, config['app'])
         @saml_data = data
         @authenticated_user = authenticated_user
@@ -447,7 +447,7 @@ class SessionController < ApplicationController
         assert_session_device(device, authenticated_user, config['app'])
         access, refresh = device.tokens
         @temp_token = nonce
-        RedisInit.default.setex("token_tmp_#{nonce}", 15.minutes.to_i, access)
+        Permissions.setex(RedisInit.default, "token_tmp_#{nonce}", 15.minutes.to_i, access, true)
         redirect_to "/login?auth-#{nonce}_#{authenticated_user.user_name}"
       end
     else

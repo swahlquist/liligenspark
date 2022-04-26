@@ -282,7 +282,7 @@ class UserIntegration < ActiveRecord::Base
     expires ||= 30.minutes.to_i
 
     cache_key = "global_integrations"
-    cached_val = RedisInit.permissions && RedisInit.permissions.get(cache_key)
+    cached_val = RedisInit.permissions && RedisInit.permissions.get(cache_key) rescue nil
     return JSON.parse(cached_val) if cached_val
     
     res = {}
@@ -291,7 +291,7 @@ class UserIntegration < ActiveRecord::Base
     end
     
     if RedisInit.permissions
-      RedisInit.permissions.setex(cache_key, expires, res.to_json)
+      Permissions.setex(RedisInit.permissions, cache_key, expires, res.to_json)
     end
     res
   end

@@ -10,6 +10,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
   after_save :track_for_trends
   
   def schedule_badge_check
+    # TODO: maybe change this to a remote action or something?
+    return if Resque.redis.llen('queue:slow') > 50000
     UserBadge.schedule_once_for('slow', :check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
     true
   end
@@ -166,6 +168,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     all = false
     log_session = LogSession.find_by_global_id(log_session_id)
     return if !log_session || log_session.log_type != 'session'
+    return if Resque.redis.llen('queue:slow') > 50000
     return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
     # TODO: if log_session.started_at ever gets updated in a way that changes cweek then
     # multiple weeks need to be updated 
@@ -189,7 +192,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     })
     if !already_scheduled
       if !RedisInit.default.get('trends_tracked_recently')
-        RedisInit.default.setex('trends_tracked_recently', 6.hours.to_i, 'true')
+        Permissions.setex(RedisInit.default, 'trends_tracked_recently', 6.hours.to_i, 'true')
         Worker.schedule_for(:slow, self.class, :perform_action, {
           'method' => 'track_trends',
           'arguments' => [self.weekyear]
@@ -916,7 +919,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # also: words available to % of users, most-common home boards
     # TODO: devices per communicator, supervisors per communicator, goals set, badges earned, most common badges
     
-    Permissable.permissions_redis.setex('global/stats/trends', 24.hours.to_i, res.to_json)
+    Permissions.setex(Permissable.permissions_redis, 'global/stats/trends', 24.hours.to_i, res.to_json)
     res.delete(:admin)
     res
   end

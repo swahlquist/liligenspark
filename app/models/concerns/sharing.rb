@@ -103,6 +103,7 @@ module Sharing
     raise "user required" unless user
     user = author if author.id == user.id
     if do_share
+      self.save unless self.id
       link = UserLink.generate(user, self, 'board_share')
       link.data['state']['sharer_id'] = author.global_id
       link.data['state']['sharer_user_name'] = author.user_name
@@ -113,7 +114,7 @@ module Sharing
       link.data['state']['user_name'] = user.user_name
       link.secondary_user_id = author.id
       link.save
-    else
+    elsif self.id
       UserLink.remove(user, self, 'board_share')
       author.settings ||= {}
       if author.settings['boards_i_shared']

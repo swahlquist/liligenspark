@@ -857,7 +857,10 @@ class LogSession < ActiveRecord::Base
       @clustering_scheduled = false
     end
     if @goal_clustering_scheduled
-      UserGoal.schedule_for('slow', :add_log_session, self.global_id)
+      if Resque.redis.llen('queue:slow') > 50000
+      else
+        UserGoal.schedule_for('slow', :add_log_session, self.global_id)
+      end
       @goal_clustering_scheduled = false
     end
     true
@@ -1454,19 +1457,23 @@ class LogSession < ActiveRecord::Base
     }
 
     # This will clean up old mergers if the list gets behind
-    # n = 10
+    # n = 1
+    # merge_log_ids = {}
     # n.times do |i|
     #   puts "batch #{i}..."
-    #   mergers = LogMerger.where(['merge_at < ? AND started != ?', 3.days.ago, true]).select('id, log_session_id').order('id DESC').limit(5000); 0
-    #   session_ids = mergers.map(&:log_session_id)
-    #   session_ids.each do |id|
+    #   mergers = LogMerger.where(['merge_at < ? AND started != ?', 3.days.ago, true]).select('id, log_session_id').order('id DESC').limit(500); 0
+    #   session_ids = mergers.map(&:log_session_id).uniq
+    #   puts "found #{session_ids.length} results"
+    #   session_ids.each_with_index do |id, idx|
+    #     next if merge_log_ids[id]
+    #     merge_log_ids[id] = true
     #     Worker.schedule_for(:whenever, LogSession, :perform_action, {
     #       'id' => id,
     #       'method' => 'check_for_merger',
     #       'arguments' => [true]
     #     })
     #   end.length
-    #   LogMerger.where(id: mergers.map(&:id)).delete_all
+    #   LogMerger.where(log_session_id: session_ids).where(['merge_at < ?', 3.days.ago]).delete_all
     # end
 
 #    Octopus.using(:master) do

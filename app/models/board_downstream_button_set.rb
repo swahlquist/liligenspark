@@ -589,7 +589,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     traversed = JSON.parse(RedisInit.default.get(key)) rescue nil
     traversed ||= []
     traversed += (traversed_ids - [board_id])
-    RedisInit.default.setex(key, 6.hours.to_i, traversed.uniq.to_json)
+    Permissions.setex(RedisInit.default, key, 6.hours.to_i, traversed.uniq.to_json)
     BoardDownstreamButtonSet.schedule_once(:update_for, board_id)
   end
   

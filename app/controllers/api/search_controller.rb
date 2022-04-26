@@ -207,7 +207,7 @@ class Api::SearchController < ApplicationController
       end
       req = nil
       if json && !cache
-        RedisInit.permissions.setex("google/voices/#{params['locale']}", 72.hours.to_i, json.to_json)
+        Permissions.setex(RedisInit.permissions, "google/voices/#{params['locale']}", 72.hours.to_i, json.to_json)
       end
       if json && json['voices'] && json['voices'][0]
         gender = params['voice_id'] if ['male', 'female'].include?(params['voice_id'])

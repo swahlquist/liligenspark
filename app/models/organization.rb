@@ -87,7 +87,7 @@ class Organization < ActiveRecord::Base
     if user_type == 'manager'
       user = User.find_by_path(user_id)
       if user && user.org_supporter?(true)
-        user.settings['possibly_premium_supporter'] = true if premium
+        user.settings['possibly_premium_supporter'] = true
         user.settings['pending'] = false
         user.save
       end
@@ -457,7 +457,7 @@ class Organization < ActiveRecord::Base
     # TODO: sharding
     res = Organization.where(parent_organization_id: self.id).count > 0
     expires = 72.hours.to_i
-    Permissable.permissions_redis.setex(cache_key, expires, {result: res}.to_json)
+    Permissions.setex(Permissable.permissions_redis, cache_key, expires, {result: res}.to_json)
     res
   end
   
@@ -999,7 +999,7 @@ class Organization < ActiveRecord::Base
           end
         end
       end
-      RedisInit.default.setex('domain_org_ids', 72.hours.from_now.to_i, domains.to_json) rescue nil
+      Permissions.setex(RedisInit.default, 'domain_org_ids', 72.hours.from_now.to_i, domains.to_json)
     end
     domains
   end

@@ -31,10 +31,27 @@ module Worker
     # no-op
   end
 
+  def prune_jobs(queue, method)
+    prunes = 0
+    dos = []
+    while Resque.size(queue) > 0 && (prunes + dos.length) < 100000
+      job = Resque.pop(queue)
+      if job
+        if job['args'] && job['args'][2] && job['args'][2]['method'] == method
+          prunes += 1
+        else
+          dos.push(job)
+        end
+      end
+    end
+    dos.each{|job| Resque.enqueue(queue == 'slow' ? SlowWorker : Worker, *job['args']) }; dos.length
+    prunes
+  end
+
   def self.check_for_big_entries
-    lists = [[RedisInit.default, "RedisInit.default"], [RedisInit.permissions, "RedisInit.permissions"], [Resque.redis, "Resque.redis"]]
+    lists = [[RedisInit.default, "RedisInit.default", 10000], [RedisInit.permissions, "RedisInit.permissions", 15000], [Resque.redis, "Resque.redis", 10000]]
     bigs = []
-    lists.each do |queue, name|
+    lists.each do |queue, name, cutoff|
       name ||= queue.inspect
       puts name
       queue.keys.each do |key|
@@ -52,7 +69,7 @@ module Worker
         else
           puts "  UNKNOWN TYPE #{type}"
         end
-        if str.length > 1000
+        if str.length > cutoff
           puts "  #{str.length} #{key} #{name}\n"
           bigs << "#{key}-#{name}"
         end

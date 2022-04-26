@@ -160,6 +160,7 @@ module UpstreamDownstream
   def schedule_update_available_boards(breadth='all', frd=false)
     return true if self.class.add_lumped_trigger({'type' => 'update_available_boards', 'id' => self.global_id, 'breadth' => breadth})
     if !frd
+      return true if Resque.redis.llen('queue:slow') > 50000
       self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
     end

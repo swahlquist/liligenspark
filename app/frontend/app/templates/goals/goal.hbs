@@ -163,8 +163,7 @@
       {{/if}}
       {{#unless model.related.header}}
         {{#unless model.global}}
-          {{#if app_state.currentUser.premissions.admin_support_actions}}
-            <!-- TODO: only show this checkbox for admins -->
+          {{#if app_state.currentUser.permissions.admin_support_actions}}
             <div class="form-group">
               <label for="template_header" class="col-sm-2 control-label">{{t "Template" key='template_header'}}</label>
               <div class="col-sm-5">
