@@ -159,8 +159,8 @@ module UpstreamDownstream
   
   def schedule_update_available_boards(breadth='all', frd=false)
     return true if self.class.add_lumped_trigger({'type' => 'update_available_boards', 'id' => self.global_id, 'breadth' => breadth})
+    return true if RedisInit.queue_pressure?
     if !frd
-      return true if RedisInit.queue_pressure?
       self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
     end
@@ -173,7 +173,8 @@ module UpstreamDownstream
       ids = self.author_ids
     end
     User.find_all_by_global_id(ids).each do |user|
-      user.schedule_once_for(:slow, :update_available_boards)
+      ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'update_available_boards').update_all(act_at: 30.minutes.from_now)
+      RemoteAction.create(path: "#{user.global_id}", act_at: 30.minutes.from_now, action: 'update_available_boards') if ra_cnt == 0
     end
   end
     

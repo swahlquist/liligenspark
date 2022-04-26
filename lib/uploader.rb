@@ -145,6 +145,9 @@ module Uploader
         elsif ra.action == 'weekly_stats_update'
           user_id, weekyear = ra.path.split(/::/, 2)
           WeeklyStatsSummary.schedule(:update_now, user_id, weekyear)
+        elsif ra.action == 'update_available_boards'
+          user = User.find_by_path(ra.path)
+          user.schedule_once_for(:slow, :update_available_boards) if user
         end
       end
       RemoteAction.where(id: updated_ids).delete_all

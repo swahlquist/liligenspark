@@ -629,6 +629,13 @@ class UserGoal < ActiveRecord::Base
     RemoteAction.create(path: "#{user.global_id}", act_at: 5.minutes.from_now, action: 'queued_goals') if ra_cnt == 0
   end
 
+  def self.add_log_session(log_session_id)
+    s = LogSession.find_by_path(log_session_id)
+    if s && s.goal
+      s.goal.update_stats_eventually
+    end
+  end
+
   def self.handle_goals(user_id)
     user = User.find_by_path(user_id)
     extra = user && user.user_extra

@@ -873,10 +873,8 @@ class LogSession < ActiveRecord::Base
   def schedule_summary
     return true if @skip_extra_data_update
     if self.processed && (self.log_type == 'session' || self.goal)
-      if !RedisInit.queue_pressure?
-        WeeklyStatsSummary.schedule_update_for(self)
+      WeeklyStatsSummary.schedule_update_for(self)
 #        WeeklyStatsSummary.schedule_once_for('slow', :update_for, self.global_id)
-      end
     end
     if self.goal && self.goal.primary && self.ended_at
       self.goal.schedule_for('slow', :update_usage, self.ended_at.iso8601)

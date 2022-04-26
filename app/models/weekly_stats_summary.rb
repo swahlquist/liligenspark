@@ -174,10 +174,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
 
     ra_cnt = RemoteAction.where(path: "#{user_id}::#{weekyear}", action: 'weekly_stats_update').update_all(act_at: 2.hours.from_now)
     RemoteAction.create(path: "#{user_id}::#{weekyear}", act_at: 2.hours.from_now, action: 'weekly_stats_update') if ra_cnt == 0
-    Worker.schedule_for(:slow, self, :perform_action, {
-      'method' => 'update_for_board',
-      'arguments' => [log_session.global_id]
-    })
+    if !RedisInit.queue_pressure?
+      Worker.schedule_for(:slow, self, :perform_action, {
+        'method' => 'update_for_board',
+        'arguments' => [log_session.global_id]
+      })
+    end
   end
 
   def self.update_now(user_id, weekyear)
@@ -196,10 +198,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
 
     update_now((all ? 0 : log_session.user_id), weekyear)
-    Worker.schedule_for(:slow, self, :perform_action, {
-      'method' => 'update_for_board',
-      'arguments' => [log_session_id]
-    })
+    if !RedisInit.queue_pressure?
+      Worker.schedule_for(:slow, self, :perform_action, {
+        'method' => 'update_for_board',
+        'arguments' => [log_session_id]
+      })
+    end
   end
 
   def track_for_trends
