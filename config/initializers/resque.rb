@@ -34,6 +34,10 @@ module RedisInit
     puts JSON.pretty_generate(redis.lrange(key, 0, len))
   end
 
+  def self.queue_pressure?
+    ENV['STOP_CACHING'] || RedisInit.permissions.llen('queue:slow') > 50000
+  end
+
   def self.size_check
     uri = redis_uri
     redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)

@@ -620,12 +620,32 @@ class UserGoal < ActiveRecord::Base
     res
   end
   
-  def self.add_log_session(log_id)
-    session = LogSession.find_by_global_id(log_id)
-    goal = session.goal
-    if goal && goal.user_id == session.user_id
-      goal.generate_stats
-      goal.save
+  def update_stats_eventually
+    # TODO: sharding
+    extra = UserExtra.find_or_create_by(user_id: self.user_id)
+    extra.settings['queued_goals'] = ((extra.settings['queued_goals'] || []) + [self.global_id]).uniq
+    extra.save
+    ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'queued_goals').update_all(act_at: 5.minutes.from_now)
+    RemoteAction.create(path: "#{user.global_id}", act_at: 5.minutes.from_now, action: 'queued_goals') if ra_cnt == 0
+  end
+
+  def self.handle_goals(user_id)
+    user = User.find_by_path(user_id)
+    extra = user && user.user_extra
+    if extra && extra.settings['queued_goals']
+      done_goals = []
+      extra.settings['queued_goals'].each do |goal_id|
+        done_goals << goal_id
+        goal = UserGoal.find_by_path(goal_id)
+        if goal && goal.user == user
+          goal.generate_stats
+          goal.save
+        end
+      end
+      extra.reload
+      extra.settings['queued_goals'] -= done_goals
+      extra.settings.delete('queued_goals') if extra.settings['queued_goals'].blank?
+      extra.save
     end
   end
 

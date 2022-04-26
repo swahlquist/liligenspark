@@ -856,10 +856,10 @@ class LogSession < ActiveRecord::Base
       ClusterLocation.schedule(:add_to_cluster, self.global_id)
       @clustering_scheduled = false
     end
-    if @goal_clustering_scheduled
-      if Resque.redis.llen('queue:slow') > 50000
-      else
-        UserGoal.schedule_for('slow', :add_log_session, self.global_id)
+    if @goal_clustering_scheduled && self.goal_id
+      goal = self.goal
+      if goal && goal.user_id == self.user_id
+        goal.update_stats_eventually
       end
       @goal_clustering_scheduled = false
     end
@@ -873,7 +873,10 @@ class LogSession < ActiveRecord::Base
   def schedule_summary
     return true if @skip_extra_data_update
     if self.processed && (self.log_type == 'session' || self.goal)
-      WeeklyStatsSummary.schedule_once_for('slow', :update_for, self.global_id)
+      if !RedisInit.queue_pressure?
+        WeeklyStatsSummary.schedule_update_for(self)
+#        WeeklyStatsSummary.schedule_once_for('slow', :update_for, self.global_id)
+      end
     end
     if self.goal && self.goal.primary && self.ended_at
       self.goal.schedule_for('slow', :update_usage, self.ended_at.iso8601)

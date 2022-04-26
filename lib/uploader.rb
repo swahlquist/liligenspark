@@ -140,6 +140,11 @@ module Uploader
         elsif ra.action == 'upload_extra_data'
           board_id, user_id = ra.path.split(/::/, 2)
           BoardDownstreamButtonSet.schedule_for(:slow, :generate_for, board_id, user_id)
+        elsif ra.action == 'queued_goals'
+          UserGoal.schedule(:handle_goals, ra.path)
+        elsif ra.action == 'weekly_stats_update'
+          user_id, weekyear = ra.path.split(/::/, 2)
+          WeeklyStatsSummary.schedule(:update_now, user_id, weekyear)
         end
       end
       RemoteAction.where(id: updated_ids).delete_all

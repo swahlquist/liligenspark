@@ -10,8 +10,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
   after_save :track_for_trends
   
   def schedule_badge_check
-    # TODO: maybe change this to a remote action or something?
-    return if Resque.redis.llen('queue:slow') > 50000
+    # TODO: YES change this to a remote action or something
+    return if RedisInit.queue_pressure?
     UserBadge.schedule_once_for('slow', :check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
     true
   end
@@ -38,7 +38,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
   
   def update!
     summary = self
-    all = false
+    all = (self.user_id == 0)
     user = User.find_by(id: summary.user_id)
     start_at = WeeklyStatsSummary.weekyear_to_date(summary.weekyear).beginning_of_week(:sunday)
     end_at = start_at.end_of_week(:sunday)
@@ -164,24 +164,43 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # TODO: create board-aligned stat summaries as well
   end
 
-  def self.update_for(log_session_id)
-    all = false
-    log_session = LogSession.find_by_global_id(log_session_id)
+  def self.schedule_update_for(log_session)
     return if !log_session || log_session.log_type != 'session'
-    return if Resque.redis.llen('queue:slow') > 50000
     return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
     # TODO: if log_session.started_at ever gets updated in a way that changes cweek then
     # multiple weeks need to be updated 
     start_at = log_session.started_at.utc.beginning_of_week(:sunday)
-    end_at = log_session.started_at.utc.end_of_week(:sunday)
+    weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
+    user_id = log_session.user_id
+
+    ra_cnt = RemoteAction.where(path: "#{user_id}::#{weekyear}", action: 'weekly_stats_update').update_all(act_at: 2.hours.from_now)
+    RemoteAction.create(path: "#{user_id}::#{weekyear}", act_at: 2.hours.from_now, action: 'weekly_stats_update') if ra_cnt == 0
+    Worker.schedule_for(:slow, self, :perform_action, {
+      'method' => 'update_for_board',
+      'arguments' => [log_session.global_id]
+    })
+  end
+
+  def self.update_now(user_id, weekyear)
+    summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => user_id)
+    summary.update! if summary
+  end
+
+  def self.update_for(log_session_id)
+    all = false
+    log_session = LogSession.find_by_global_id(log_session_id)
+    return if !log_session || log_session.log_type != 'session'
+    return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
+    # TODO: if log_session.started_at ever gets updated in a way that changes cweek then
+    # multiple weeks need to be updated 
+    start_at = log_session.started_at.utc.beginning_of_week(:sunday)
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
 
+    update_now((all ? 0 : log_session.user_id), weekyear)
     Worker.schedule_for(:slow, self, :perform_action, {
       'method' => 'update_for_board',
       'arguments' => [log_session_id]
     })
-    summary = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => (all ? 0 : log_session.user_id))
-    summary.update!
   end
 
   def track_for_trends
