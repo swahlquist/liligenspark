@@ -198,7 +198,7 @@
                       {{#if question.answer_type.text}}
                         <div class='text_response' style='flex: 1; font-style: italic;'>{{question.text_response}}</div>
                       {{else}}
-                        <div style='display: flex; flex-wrap: wrap;'>
+                        <div class='answer_holder'>
                           {{#each question.answers as |answer|}}
                             <div class={{if answer.selected 'answer selected' 'answer'}}>
                               {{#if answer.selected}}

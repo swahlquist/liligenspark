@@ -1,6 +1,13 @@
-<h2>{{t "Communicator Profile for %{un}" un=user.user_name key='communicator_profile'}}</h2>
 <div class='profile' style='max-width: 1000px; margin: 0 auto;'>
-  <h3><span class='glyphicon glyphicon-lamp'></span> {{profile.template.name}}</h3>
+  <h3><span class='glyphicon glyphicon-lamp'></span> {{profile.template.name}} - {{user.user_name}}</h3>
+  {{#if profile.template.description}}
+    <div style='margin: 15px 0 30px;'>
+      {{#each profile.template.description as |par|}}
+        <p>{{par}}</p>
+      {{/each}}
+    </div>
+  {{/if}}
+  <h4>{{t "Instructions" key='instructions'}}</h4>
   {{#if profile.template.instructions}}
     <div style='margin: 15px 0 30px;'>
       {{#each profile.template.instructions as |par|}}
@@ -54,7 +61,7 @@
                 {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
               </div>
             {{else}}
-              <div style='display: flex; flex-wrap: wrap;'>
+              <div class='answer_holder'>
                 {{#each question.answers as |answer|}}
                   <div {{action 'select' question answer}} class={{if answer.selected 'answer selected' 'answer'}}>
                     {{#if answer.selected}}

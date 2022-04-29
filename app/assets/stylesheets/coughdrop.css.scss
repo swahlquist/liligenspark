@@ -3309,6 +3309,7 @@ $nav_extras: #eee;
     display: flex; 
     margin: 0 10px;
     padding-left: 10px;
+    align-items: stretch;
     &.unanswered {
       box-shadow: -7px 0 5px -3px #f00;
     }
@@ -3320,6 +3321,8 @@ $nav_extras: #eee;
       min-height: 50px; 
       display: flex;
       padding-right: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
       align-items: center; 
       border-right: 1px solid #ccc;
       &.many {
@@ -3331,6 +3334,11 @@ $nav_extras: #eee;
       margin: 0; 
       border-top: 1px solid #ccc; 
       border-right: 1px solid #ccc;
+    }
+    .answer_holder {
+      display: flex; 
+      flex-wrap: wrap; 
+      height: 100%;
     }
     .answer {
       flex: 1; 
