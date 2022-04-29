@@ -54,6 +54,16 @@ class ProfileTemplate < ApplicationRecord
       }
       return template
     elsif code == 'cpp'
+      template = ProfileTemplate.new
+      template.public_profile_id = code
+      template.settings = {
+        'public' => true,
+        'profile' => {
+          'name' => 'CPP - Communication Partner Profile',
+          'description' => "Communication Partner Profile (CPPv1) AAC-Related Self-Reflection"
+        }
+      }
+      return template
     elsif code == 'csicy'
       template = ProfileTemplate.new
       template.public_profile_id = code
