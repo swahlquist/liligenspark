@@ -252,11 +252,11 @@ var word_suggestions = EmberObject.extend({
     return this.load().then(function() {
       var last_shift = app_state.get('shift');
       var last_finished_word = options.last_finished_word;
-      if(last_finished_word) { last_finished_word = last_finished_word.replace(/\s+$/, ''); }
+      if(last_finished_word) { last_finished_word = last_finished_word.replace(/\s+$/, '').toLowerCase(); }
       var second_to_last_word = options.second_to_last_word;
-      if(second_to_last_word) { second_to_last_word = second_to_last_word.replace(/\s+$/, ''); }
+      if(second_to_last_word) { second_to_last_word = second_to_last_word.replace(/\s+$/, '').toLowerCase(); }
       var word_in_progress = options.word_in_progress;
-      if(word_in_progress) { word_in_progress = word_in_progress.replace(/\s+$/, ''); }
+      if(word_in_progress) { word_in_progress = word_in_progress.replace(/\s+$/, '').toLowerCase(); }
 
       var pre_string = "";
       if(!word_in_progress) {
