@@ -68,6 +68,126 @@ export default Controller.extend({
       return res;
     }
   ),
+  skin: computed(
+    'fake_user.preferences.skin',
+    'app_state.currentUser.preferences.skin',
+    function() {
+      var res = {};
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      if(user.get('preferences.skin')) {
+        if(['default', 'dark', 'medium-dark', 'medium', 'medium-light', 'light'].indexOf(user.get('preferences.skin')) != -1) {
+          res.value = user.get('preferences.skin');
+          res[res.value] = true
+        } else {
+          var parts = user.get('preferences.skin').split(/::/);
+          if(parts[0] == 'mix_only' || parts[0] == 'mix_prefer') {
+            res.options = [
+              {label: i18n.t('default_skin_tones', "Original Skin Tone"), id: 'default', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-varxxxUNI.svg'},
+              {label: i18n.t('dark_skin_tone', "Dark Skin Tone"), id: 'dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3ff.svg'},
+              {label: i18n.t('medium_dark_skin_tone', "Medium-Dark Skin Tone"), id: 'medium_dark', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fe.svg'},
+              {label: i18n.t('medium_skin_tone', "Medium Skin Tone"), id: 'medium', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fd.svg'},
+              {label: i18n.t('medium_light_skin_tone', "Medium-Light Skin Tone"), id: 'medium_light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fc.svg'},
+              {label: i18n.t('light_skin_tone', "Light Skin Tone"), id: 'light', image_url: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f469-1f3fb.svg'},
+            ];
+            if(parts[2]) {
+              var rules = parts[2].split(/-/).pop();
+              for(var idx = 0; idx < 6; idx++) {
+                var val =  parseInt(rules[idx] || '0', 10)
+                if(parts[0] == 'mix_only') {
+                  res.options[idx].checked = val > 0;
+                } else if(parts[0] == 'mix_prefer') {
+                  res.options[idx].checked = val > 1;
+                }
+              }
+            }
+            if(parts[0] == 'mix_only') {
+              res.limit = true;
+              res.value = 'limit';
+            } else {
+              res.prefer = true;
+              res.value = 'prefer';
+            }
+          } else {
+            res.mix = true;
+            res.value = 'mix';
+          }
+        }
+      } else {
+        res.default = true;
+        res.value = 'default';
+      }
+      console.log("SKIN", res);
+      return res;
+    }
+  ),
+  update_skin_pref: observer(
+    'skin.prefer', 'skin.limit',
+    'skin.options.@each.checked',
+    function() {
+      var opts = this.get('skin.options');
+      if(!opts) { return; }
+      var user = app_state.get('currentUser') || this.get('fake_user');
+      var str = 'mix_only::' + user.get('id') + '::limit-';
+      if(this.get('skin.prefer')) {
+        str = 'mix_prefer::' + user.get('id') + '::limit-';
+      }
+      opts.forEach(function(opt) {
+        str = str + (opt.checked ? '1' : '0');
+      })
+      if(str != user.get('preferences.skin') && user.get('preferences.skin')) {
+        this.send('set_preference', 'skin', str);
+      }
+    }
+  ),
+  hello_skin_url: computed(
+    'symbols', 'skin',
+    function() {
+      var hash = {
+        twemoji: {
+          dark: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-1f3ff.svg',
+          'medium-dark': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-1f3fe.svg',
+          medium: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-1f3fd.svg',
+          'medium-light': 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-1f3fc.svg',
+          light: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-1f3fb.svg',
+          default: 'https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f44b-varxxxUNI.svg'
+        },
+        pcs: {
+          dark: 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.variant-dark.svg',
+          'medium-dark': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.variant-medium-dark.svg',
+          medium: 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.variant-medium.svg',
+          'medium-light': 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.variant-medium-light.svg',
+          light: 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.variant-light.svg',
+          default: 'https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/03601/773cfc7cdbfa6770803a334b3089deff6eafca6d003d81bb21b08ae6ea75665c898bccbb25e46eed03592ca2d9b3e471bcd54fc7b4395e06984357e1a0bd976e/03601.svg.varianted-skin.svg'
+        },
+        symbolstix: {
+          dark: 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.variant-dark.png',
+          'medium-dark': 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.variant-medium-dark.png',
+          medium: 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.variant-medium.png',
+          'medium-light': 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.variant-medium-light.png',
+          light: 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.variant-light.png',
+          default: 'https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00002179/37435d6da02be17899925a5d98edf9e3c1974bb4f1d016ddd548af90d3b071f5a8eca4971ac0d563076ea3f8b205f88b8e5fd818fea4468292da60a4348e8e43/c-communication-greetings_Wrap_ups-hello.png.varianted-skin.png'
+        },
+        other: {
+          dark: 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.variant-dark.png',
+          'medium-dark': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.variant-medium-dark.png',
+          medium: 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.variant-medium.png',
+          'medium-light': 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.variant-medium-light.png',
+          light: 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.variant-light.png',
+          default: 'https://d18vdu4p71yql0.cloudfront.net/libraries/arasaac/hello.png.varianted-skin.png'
+        }
+      };
+      var skin = this.get('skin.value');
+      if(this.get('skin.value') == 'mix') {
+        skin = 'medium';
+      } else if(this.get('skin.limit')) {
+        // which_skinner
+      } else if(this.get('skin.prefer')) {
+
+      }
+      var obj = hash[this.get('symbols.value')] || hash['other'];
+      return obj[skin] || obj['default'];
+    }
+  ),
   image_preview_class: computed(
     'fake_user.preferences.high_contrast',
     'app_state.currentUser.high_contrast',
@@ -151,6 +271,7 @@ export default Controller.extend({
       var user = app_state.get('currentUser') || this.get('fake_user');
       if(user.get('preferences.preferred_symbols')) {
         res[user.get('preferences.preferred_symbols').replace(/-/, '_')] = true;
+        res['value'] = [user.get('preferences.preferred_symbols').replace(/-/, '_')];
       } else {
         res.original = true;
       }

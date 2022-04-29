@@ -9,6 +9,8 @@ import { computed } from '@ember/object';
 export default modal.ModalController.extend({
   opening: function() {
     this.set('status', null);
+    this.set('old_key_value', '');
+    this.set('new_key_value', '');
   },
   old_key: computed('model.board.key', function() {
     return (this.get('model.board.key') || "").split(/\//)[1];

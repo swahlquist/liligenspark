@@ -220,6 +220,92 @@
     {{/if}}
   </div>
 </div>
+{{#if app_state.feature_flags.skin_tones}}
+<div class='row'>
+  <div class='col-sm-5 col-sm-offset-1'>
+    <div class='setup_setting'>
+      <label>{{t "What skin tone(s) would you like to see on people-based pictures?" key='symbol_skin_question'}}</label>
+      <div class="btn-group-vertical" style="width: 100%;">
+        <a href="#" class={{if skin.default 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'default'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-varxxxUNI-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Original Skin Tone" key='default_skin_tones'}}
+        </a>
+        <a href="#" class={{if skin.mix 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'mix'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f308.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Mix of Skin Tones" key='mix_of_skin_tones'}}
+        </a>
+        <a href="#" class={{if skin.dark 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'dark'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3ff-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Dark Skin Tone" key='dark_skin_tone'}}
+        </a>
+        <a href="#" class={{if skin.medium-dark 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'medium-dark'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fe-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Medium-Dark Skin Tone" key='medium_dark_skin_tone'}}
+        </a>
+        <a href="#" class={{if skin.medium 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'medium'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fd-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Medium Skin Tone" key='medium_skin_tone'}}
+        </a>
+        <a href="#" class={{if skin.medium-light 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'medium-light'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fc-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Medium-Light Skin Tone" key='medium_light_skin_tone'}}
+        </a>
+        <a href="#" class={{if skin.light 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'light'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f468-1f3fb-200d-1f9b2.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Light Skin Tone" key='light_skin_tone'}}
+        </a>
+        <a href="#" class={{if skin.limit 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'mix_only::limit-000000'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/2705.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Limit Tones To..." key='limit_tones_to'}}
+        </a>
+        <a href="#" class={{if skin.prefer 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'skin' 'mix_prefer::limit-000000'}} style='text-align: left;'>
+          <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f49f.svg' style='width: 40px; height: 40px; margin: -20px 0;'/>
+          {{t "Show Preference For..." key='show_tones_preference_for'}}
+        </a>
+      </div>
+    </div>
+
+  </div>
+  <div class='col-sm-5' style='padding-top: 50px;'>
+    <div style='width: 200px; height: 200px; border-radius: 10px; border: 3px solid rgb(246, 98, 0); text-align: center; margin: 0 auto; background-color: rgb(255, 189, 144); float: left; margin-right: 15px;'>
+      {{#if text_position.text_only}}
+        <div style='font-size: 25px; text-align: center; margin-top: 80px;'>
+          {{t "hello" key='hello'}}
+        </div>
+      {{else}}
+        {{#if text_position.text_on_top}}
+          <div style='font-size: 25px; text-align: center;'>
+            {{t "hello" key='hello'}}
+          </div>
+        {{/if}}
+        <span class={{image_preview_class}}>
+          <img src={{hello_skin_url}} />
+          {{#if text_position.text_on_bottom}}
+            <div style='font-size: 25px; text-align: center;'>
+              {{t "hello" key='hello'}}
+            </div>
+          {{/if}}
+        </span>
+      {{/if}}
+    </div>
+    {{#if skin.options}}
+      <div style='margin-left: 15px; clear: left;'>
+        {{#each skin.options as |option|}}
+          <div style='margin-bottom: -15px;'>
+            <div class='checkbox big_checkbox'>
+              <label>
+                {{input type='checkbox' checked=option.checked}}
+                <img src={{option.image_url}} style='width: 30px; height: 30px;'/>
+                {{option.label}}
+              </label>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+  </div>
+</div>
+{{/if}}
 <div class='row'>
   <div class='col-sm-5 col-sm-offset-1'>
     <div class='setup_setting'>

@@ -81,8 +81,8 @@ CoughDrop.Image = DS.Model.extend({
       this.set('license.uneditable', true);
     }
   }),
-  personalized_url: computed('url', 'app_state.currentUser.user_token', function() {
-    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.sessionUser.preferences.skin'));
+  personalized_url: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', function() {
+    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.referenced_user.preferences.skin'));
   }),
   best_url: computed('personalized_url', 'data_url', function() {
     return this.get('data_url') || this.get('personalized_url') || "";

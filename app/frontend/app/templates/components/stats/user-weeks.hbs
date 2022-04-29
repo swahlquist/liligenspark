@@ -53,9 +53,8 @@
                 {{#if stat.goals}}
                   <span class='glyphicon glyphicon-flag' style='font-size: 20px;'></span>
                 {{else if stat.models.low}}
-                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
+                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px; opacity: 0.5'></span>
                 {{else if stat.models.mid}}
-                  <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
                   <span class='glyphicon glyphicon-hand-up' style='font-size: 20px;'></span>
                 {{/if}}
                 {{#each stat.statuses as |status|}}
