@@ -57,7 +57,7 @@
           </div>
           <div style='flex: 1;'>
             {{#if question.answer_type.text}}
-              <div style='min-height: 75px;'>
+              <div style='min-height: 75px; height: 100%;'>
                 {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
               </div>
             {{else}}
