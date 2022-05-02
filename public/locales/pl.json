@@ -4663,5 +4663,21 @@
   "message_ellipsis": "Wiadomość... [[ Message...",
   "everyone": "Każdy [[ Everyone",
   "room_goal": "Cel pokoju [[ Room Goal",
-  "set_room_wide_goal": "wyznacz cel dla całego pokoju [[ set room-wide goal"
+  "set_room_wide_goal": "wyznacz cel dla całego pokoju [[ set room-wide goal",
+  "gif_search": "*** GIF Search",
+  "hide_gif_search": "*** Disable GIF Search in Repeats sentence menu",
+  "gif_search_description": "*** Search online GIFs that match the current contents of the sentence",
+  "gif_lucky_description": "*** Show the first online GIF that matches the current contents of the sentence",
+  "instructions": "*** Instructions",
+  "average_access": "*** Avg. Available Words",
+  "average_breadth": "*** Avg. Unique Words Used",
+  "average_modeled_breadth": "*** Avg. Unique Words Modeled",
+  "total_languages": "*** Total Languages",
+  "symbol_skin_question": "*** What skin tone(s) would you like to see on people-based pictures?",
+  "hello": "*** hello",
+  "gif": "*** GIF",
+  "gif_search_for_string": "*** GIF Search for \"%{str}\"",
+  "error_loading_results_not_online": "*** Error loading results, it appears you are not online",
+  "flip_image": "*** Flip Image",
+  "oops_q": "*** oops?"
 }
