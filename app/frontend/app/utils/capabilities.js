@@ -317,6 +317,9 @@ var capabilities;
           if(window.weblinger) {
             window.weblinger.start_options = null;
             window.weblinger.stop({teardown: true});
+            // TODO: this should be fixed by an update to weblinger
+            var ovr = document.querySelector('#weblinger_overlay');
+            if(ovr) { ovr.style.display = 'none'; }
             capabilities.tracking.stop_canvas();
           }
         },

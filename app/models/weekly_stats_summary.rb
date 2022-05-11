@@ -802,7 +802,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:admin] = {}
     res[:admin][:research_active_users] = stash[:research_user_ids].uniq.length #if include_admin
     res[:admin][:publishing_active_users] = stash[:publishing_user_ids].uniq.length #if include_admin
-    res[:research_communicators] = 2500
+    res[:research_communicators] = 3600
     res[:sessions_per_user] = (stash[:total_sessions].to_f / total_users.to_f).round(1)
     res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
     res[:total_words] = stash[:total_words]

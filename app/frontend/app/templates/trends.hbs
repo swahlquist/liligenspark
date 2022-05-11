@@ -51,10 +51,9 @@
             {{t "Total Words" key='total_words'}}
           </div>
           <div class="panel-body">
+            {{delimit trends.total_words}}
             {{#if showing_private_info}}
-              {{delimit trends.admin_total_words}}
-            {{else}}
-              {{delimit trends.total_words}}
+              <span style='font-size: 14px; padding-left: 5px; color: #888;'>({{delimit trends.admin_total_words}})</span>
             {{/if}}
           </div>
         </div>
@@ -114,7 +113,7 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary">
           <div class="panel-heading">
-            {{t "Avg. Words Used" key='average_breadth'}}
+            {{t "Avg. Unique Words Used" key='average_breadth'}}
           </div>
           <div class="panel-body">
             {{trends.average_breadth}}
@@ -124,7 +123,7 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary">
           <div class="panel-heading">
-            {{t "Avg. Words Modeled" key='average_modeled_breadth'}}
+            {{t "Avg. Unique Words Modeled" key='average_modeled_breadth'}}
           </div>
           <div class="panel-body">
             {{trends.average_modeled_breadth}}
