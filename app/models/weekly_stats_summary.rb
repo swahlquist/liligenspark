@@ -338,6 +338,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     board_user_ids = {}
     word_pairs = {}
     home_boards = {}
+    home_board_levels = {}
     device_prefs = {}
     user_ids_with_home_boards = []
     logging_warned = Date.parse('April 18, 2018')
@@ -354,6 +355,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
               root_board = root_board.parent_board
             end
             if root_board
+              if root_board.buttons.any?{|b| b['level_modifications'] } && user.settings['preferences']['home_board']['level']
+                home_board_levels[user.settings['preferences']['home_board']['level'].to_i.to_s] ||= []
+                home_board_levels[user.settings['preferences']['home_board']['level'].to_i.to_s] << user.global_id
+              end
               local_board_id = root_board.id
               board_key = root_board.key || user.settings['preferences']['home_board']['key']
               home_boards[board_key] = (home_boards[board_key] || []) + [user.global_id] if root_board && root_board.public
@@ -555,6 +560,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
           total.data['home_boards'][key] = user_ids
         end
       end
+      total.data['home_board_levels'] = home_board_levels
     end
     
     # safe-ish stats row: total logged time, % modeling, % core words, average words per minute
@@ -715,6 +721,13 @@ class WeeklyStatsSummary < ActiveRecord::Base
             stash[:home_boards][key] += user_ids
           end
         end
+        if summary.data['home_board_levels']
+          stash[:home_board_levels] ||= {}
+          summary.data['home_board_levels'].each do |lvl, user_ids|
+            stash[:home_board_levels][key] ||= []
+            stash[:home_board_levels][key] += user_ids
+          end
+        end
       
         if summary.data['word_pairs']
           stash[:word_pairs] ||= {}
@@ -870,6 +883,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
       stash[:home_boards].each do |key, user_ids|
         res[:home_boards] ||= {}
         res[:home_boards][key] = ((user_ids.uniq.length.to_f / home_board_users * 10.0).round(1) / 10.0).round(2)
+      end
+    end
+    if stash[:home_board_levels]
+      stash[:home_board_levels].each do |key, user_ids|
+        res[:home_board_levels] ||= {}
+        res[:home_board_levels][key] = ((user_ids.uniq.length.to_f / home_board_users * 10.0).round(1) / 10.0).round(2)
       end
     end
     
