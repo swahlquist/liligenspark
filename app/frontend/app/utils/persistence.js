@@ -583,7 +583,8 @@ var persistence = EmberObject.extend({
           key,
           bytes
         ).then(function(res) {
-          var str = String.fromCharCode.apply(null, new Uint8Array(res));
+          var buff = new Uint8Array(res);
+          var str = buff.reduce((acc, i) => acc += String.fromCharCode.apply(null, [i]), '')
           try {
             return JSON.parse(str);
           } catch(e) {
