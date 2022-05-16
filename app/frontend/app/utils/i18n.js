@@ -1646,7 +1646,8 @@ var i18n = EmberObject.extend({
   ],
   locales_localized: {
     ar: "عربي",
-    en: "English",    
+    en: "English",
+    de: "German",    
     es: "Español",
     fr: "Français",
     ga: "Gaeilge",
