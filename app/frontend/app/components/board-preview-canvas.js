@@ -73,6 +73,7 @@ export default Component.extend({
         var image_width = button_width - pad - pad - border_size - border_size;
         context.font = text_height + "px Arial";
         context.textAlign = 'center';
+        var variant_urls = board.variant_image_urls(app_state.get('currentUser.preferences.skin'));
         var handle_button = function(button_id) {
             var button = $.extend({}, buttons[button_id] || {});
             if(!button_id || !buttons[button_id]) {
@@ -155,7 +156,7 @@ export default Component.extend({
                 draw_button(button, x, y, true);
 
                 if(show_links && !button.hidden && button.image_id && board.get('image_urls') && board.get('image_urls')[button.image_id]) {
-                  var url = board.variant_image_urls(app_state.get('currentUser.preferences.skin'))[button.image_id];
+                  var url = variant_urls[button.image_id];
                   (function(button, x, y, url) {
                     var draw = function(url) {
                       var img = new Image();

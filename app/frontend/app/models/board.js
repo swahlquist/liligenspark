@@ -138,6 +138,12 @@ CoughDrop.Board = DS.Model.extend({
   }),
   variant_image_urls: function(skin) {
     var local_map = this.get('image_urls') || {};
+    var unskins = {};
+    this.get('buttons').forEach(function(btn) {
+      if(btn && btn.no_skin && btn.image_id) {
+        unskins[btn.image_id] = true;
+      }
+    });
     if(!skin || skin == 'default') { return local_map; }
 
     var which_skin = CoughDrop.Board.which_skinner(skin);
@@ -151,12 +157,18 @@ CoughDrop.Board = DS.Model.extend({
           url = local_map[key];
         }
         res[key] = url;
+        if(unskins[key]) {
+          url = CoughDrop.Board.skinned_url(local_map[key], which_skin, true);
+          if(!persistence.url_cache[url] && persistence.url_cache[local_map[key]] && (!persistence.url_uncache || !persistence.url_uncache[local_map[key]])) {
+            url = local_map[key];
+          }
+          res['ns_' + key] = url;
+        }
       }
     }
     return res;
   },
   map_image_urls: function(map, skins) {
-    // TODO: this may need to be done for each user, depending on their skin preferences
     map = map || {};
     var res = [];
     var _this = this;
@@ -175,7 +187,9 @@ CoughDrop.Board = DS.Model.extend({
       var local_map = _this.variant_image_urls(skin || 'default') || {};
       _this.get('used_buttons').forEach(function(button) {
         if(button && button.image_id) {
-          if(local_map[button.image_id]) {
+          if(button.no_skin && local_map['ns_' + button.image_id]) {
+            add_img(button.image_id, local_map['ns_' + button.image_id], skin);
+          } else if(local_map[button.image_id]) {
             add_img(button.image_id, local_map[button.image_id], skin);
           } else if(map[button.image_id]) {
             add_img(button.image_id, map[button.image_id], skin);
@@ -1567,7 +1581,8 @@ CoughDrop.Board.which_skinner = function(skin) {
     ml = ml / sum * 100;
     l = l / sum * 100;
     which_skin = function(url) {
-      var sum = Array.from(url + "::" + skin).map(function(c) { return c.charCodeAt(0); }).reduce(function(a, b) { return a + b; });
+      var str = url + "::" + skin;
+      var sum = Array.from(str).map(function(c) { return c.charCodeAt(0); }).reduce(function(a, b) { return a + b; });
       var mod = sum % 100;
       if(mod < df) { return 'default'; }
       else if(mod < df + d) { return 'dark'; }
@@ -1579,16 +1594,30 @@ CoughDrop.Board.which_skinner = function(skin) {
   }
   return which_skin;
 };
-CoughDrop.Board.skinned_url = function(url, which_skin) {
+CoughDrop.Board.is_skinned_url = function(url) {
   if(url.match(/varianted-skin\.\w+$/)) {
-    var which = which_skin(url);
+    return true;
+  } else if(url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)) {
+    return true;
+  } else {
+    return false;
+  }
+};
+CoughDrop.Board.skinned_url = function(url, which_skin, unskin) {
+  var which_override = null;
+  if(unskin) {
+    which_override = "unskinned";
+  }
+  if(!CoughDrop.Board.is_skinned_url(url)) { return url; }
+  if(url.match(/varianted-skin\.\w+$/)) {
+    var which = which_skin(which_override || url);
     if(which != 'default') {
       return url.replace(/varianted-skin\./, 'variant-' + which + '.');
     } else {
       return url;
     }
   } else if(url.match(/\/libraries\/twemoji\//) && url.match(/-var\w+UNI/)) {
-    var which = which_skin(url);
+    var which = which_skin(which_override || url);
     var uni = skin_unis[which];
     if(which != 'default' && uni) {
       return url.replace(/-var\w+UNI/g, '-' + uni);

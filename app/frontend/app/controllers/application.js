@@ -1102,10 +1102,10 @@ export default Controller.extend({
         parent_id: board.get('parent_board_id')
       };
       var image_url = button.image;
-      if(image && image.get('personalized_url')) {
+      if(image && image.get('personalized_url') && !button.no_skin) {
         image_url = image.get('personalized_url');
       } else if(button.get('original_image_url') && CoughDropImage.personalize_url) {
-        image_url = CoughDropImage.personalize_url(button.get('original_image_url'), app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'));
+        image_url = CoughDropImage.personalize_url(button.get('original_image_url'), app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'), button.no_skin);
       }
       var obj = {
         label: button.label,

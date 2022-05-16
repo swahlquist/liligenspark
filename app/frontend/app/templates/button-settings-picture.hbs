@@ -191,6 +191,14 @@
                 <img src={{model.image.best_url}} class="button_image"/>
               </div>
               {{pick-license license=model.image.license}}
+              {{#if model.image.skinned}}
+                <div class="checkbox big_checkbox">
+                  <label>
+                    {{input checked=model.no_skin type="checkbox"}}
+                    {{t "apply clustered skin tone for his button (all clustered images will use the same skin tone)" key='disable_skin_shuffle'}}
+                  </label>
+                </div>
+              {{/if}}
               <div style="margin-top: 10px;">
                 <button type="button" class='btn btn-default' {{action "edit_image"}}>{{t "Edit Image" key='edit_image'}}</button>
                 <button type="button" class='btn btn-default' {{action "clear_image"}}>{{t "Clear Image" key='clear_image'}}</button>

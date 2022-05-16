@@ -1566,7 +1566,12 @@ var editManager = EmberObject.extend({
       return RSVP.resolve();
     });
 
-
+    buttons.forEach(function(btn) {
+      if(btn.no_skin && btn.image_id) {
+        CoughDrop.Image.unskins = CoughDrop.Image.unskins || {};
+        CoughDrop.Image.unskins[btn.image_id] = true
+      }
+    });
     var image_urls = board.variant_image_urls(app_state.get('referenced_user.preferences.skin'));
     var sound_urls = board.get('sound_urls');
     prefetch.then(function() {
@@ -1589,6 +1594,9 @@ var editManager = EmberObject.extend({
               }
               if(image_urls) {
                 more_args.image_url = image_urls[buttons[kdx]['image_id']];
+              }
+              if(buttons[kdx].no_skin) {
+                more_args.image_url = image_urls['ns_' + buttons[kdx]['image_id']];
               }
               if(sound_urls) {
                 more_args.sound_url = sound_urls[buttons[kdx]['sound_id']];
@@ -1689,6 +1697,11 @@ var editManager = EmberObject.extend({
             newButton.text_only = true;
           } else {
             delete newButton['text_only'];
+          }
+          if(currentButton.no_skin) {
+            newButton.no_skin = true;
+          } else {
+            delete newButton['no_skin'];
           }
           if(currentButton.get('talkAction')) {
             if(currentButton.prevent_adding_to_vocalization == null) {

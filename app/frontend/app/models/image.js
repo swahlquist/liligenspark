@@ -45,6 +45,9 @@ CoughDrop.Image = DS.Model.extend({
       return decodeURIComponent(name || 'image');
     }
   }),
+  skinned: computed('url', function() {
+    return CoughDrop.Board.is_skinned_url(this.get('url'));
+  }),
   clean_license: function() {
     var _this = this;
     ['copyright_notice', 'source', 'author'].forEach(function(key) {
@@ -82,7 +85,8 @@ CoughDrop.Image = DS.Model.extend({
     }
   }),
   personalized_url: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', function() {
-    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.referenced_user.preferences.skin'));
+    CoughDrop.Image.unskins = CoughDrop.Image.unskins || {};
+    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.referenced_user.preferences.skin'), CoughDrop.Image.unskins[this.get('id')]);
   }),
   best_url: computed('personalized_url', 'data_url', function() {
     return this.get('data_url') || this.get('personalized_url') || "";
@@ -110,7 +114,7 @@ CoughDrop.Image = DS.Model.extend({
 });
 
 CoughDrop.Image.reopenClass({
-  personalize_url: function(url, token, skin) {
+  personalize_url: function(url, token, skin, unskin) {
     url = url || '';
     var res = url
     if(url.match(/api\/v1\//) && url.match(/lessonpix/) && token) {
@@ -118,7 +122,7 @@ CoughDrop.Image.reopenClass({
     }
     if(skin && skin != 'default') {
       var which_skin = CoughDrop.Board.which_skinner(skin);
-      res = CoughDrop.Board.skinned_url(url, which_skin);
+      res = CoughDrop.Board.skinned_url(url, which_skin, unskin);
     }
     return res;
   },

@@ -688,8 +688,8 @@ var Button = EmberObject.extend({
 Button.attributes = ['label', 'background_color', 'border_color', 'image_id', 'sound_id', 'load_board',
             'hide_label', 'completion', 'hidden', 'link_disabled', 'vocalization', 'url', 'apps',
             'integration', 'video', 'book', 'part_of_speech', 'external_id', 'add_to_vocalization',
-            'add_vocalization',
-            'home_lock', 'blocking_speech', 'level_modifications'];
+            'add_vocalization', 'text_only', 'no_skin',
+            'home_lock', 'blocking_speech', 'level_modifications', 'inflections', 'ref_id', 'rules'];
 
 Button.style = function(style) {
   var res = {};
