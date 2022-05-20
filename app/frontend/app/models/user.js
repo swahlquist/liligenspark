@@ -181,10 +181,10 @@ CoughDrop.User = DS.Model.extend({
     var org_cutoff = this.get('last_profile.expected');
     if(org_cutoff) {
       var cutoff = window.moment(org_cutoff * 1000);
-      if(date < cutoff.add(1, 'month')) {
-        res.soon = true;
-      } else if(date < cutoff) {
+      if(date > cutoff) {
         res.overdue = true;
+      } else if(date > cutoff.subtract(1, 'month')) {
+        res.soon = true;
       }
     } else {
       if(date < now.add(-8, 'month')) {

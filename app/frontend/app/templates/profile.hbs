@@ -57,11 +57,11 @@
           </div>
           <div style='flex: 1;'>
             {{#if question.answer_type.text}}
-              <div style='min-height: 75px; height: 100%;'>
+              <div style={{if question.manual_selection 'min-height: 75px; height: calc(100% - 59px);' 'min-height: 75px; height: 100%;'}}>
                 {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
               </div>
             {{else}}
-              <div class='answer_holder'>
+              <div class={{if question.manual_selection 'answer_holder with_manual' 'answer_holder'}}>
                 {{#each question.answers as |answer|}}
                   <div {{action 'select' question answer}} class={{if answer.selected 'answer selected' 'answer'}}>
                     {{#if answer.selected}}

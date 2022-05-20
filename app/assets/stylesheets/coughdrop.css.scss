@@ -3260,9 +3260,12 @@ $nav_extras: #eee;
   font-size: 18px; 
   font-weight: bold; 
   text-align: center; 
-  padding: 17px 10px; 
+  padding: 7px 10px; 
   cursor: pointer; 
   box-shadow: inset 0 0 5px #888;
+  &.single_row {
+    padding-top: 17px;
+  }
 }
 .profile_circle {
   border: 3px solid #888; 
@@ -3334,11 +3337,15 @@ $nav_extras: #eee;
       margin: 0; 
       border-top: 1px solid #ccc; 
       border-right: 1px solid #ccc;
+      height: 65%;
     }
     .answer_holder {
       display: flex; 
       flex-wrap: wrap; 
       height: 100%;
+      &.with_manual {
+        height: calc(100% - 59px);
+      }
     }
     .answer {
       flex: 1; 

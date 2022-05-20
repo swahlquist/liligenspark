@@ -17,7 +17,7 @@
       </div>
       {{#if profile.date}}
         <div style='margin: 10px 0 20px;'>
-          <div {{action 'review_profile' profile.log_id}} class='profile_modal_circle' style={{profile.circle_style}}>
+          <div {{action 'review_profile' profile.log_id}} class={{if profile.summary 'profile_modal_circle single_row' 'profile_modal_circle'}} style={{profile.circle_style}}>
             {{#if profile.summary}}
               {{profile.summary}}
             {{else}}
@@ -63,7 +63,7 @@
               <tr style='border-bottom: 1px solid #ccc;'>
                 {{#if prof.date}}
                   <td style='height: 80px;'>
-                    <div {{action 'review_profile'  prof.log_id}} class='profile_modal_circle' style={{prof.circle_style}}>
+                    <div {{action 'review_profile'  prof.log_id}} class={{if prof.summary 'profile_modal_circle single_row' 'profile_modal_circle'}} style={{prof.circle_style}}>
                       {{#if prof.summary}}
                         {{prof.summary}}
                       {{else}}
@@ -85,7 +85,7 @@
                 {{else}}
                   <!-- profile template -->
                   <td style='height: 80px;'>
-                    <div {{action 'review_profile'}} class='profile_modal_circle' style='opacity: 0.8;'>
+                    <div {{action 'review_profile'}} class='profile_modal_circle single_row' style='opacity: 0.8;'>
                       -
                     </div>
                   </td>
