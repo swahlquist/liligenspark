@@ -938,6 +938,7 @@ module Subscription
         json['expires'] = self.expires_at && self.expires_at.iso8601
       end
       json['grace_period'] = true if self.grace_period?
+      json['grace_trial_period'] = true if json['grace_period'] && [:trialing_communicator,:trialing_supporter].include?(self.billing_state)
       json['modeling_only'] = true if self.modeling_only?
       if billing_state == :subscribed_communicator
         # active subcsription for a full communicator

@@ -19,7 +19,7 @@
     {{else if subscription.user.subscription.started}}
       {{#if subscription.user_expiring}}
         <span class='glyphicon glyphicon-time' style="float: left; font-size: 30px; margin-right: 10px;"></span>
-        {{t "You were signed up for the monthly subscription plan, <b>%{plan}</b>, but it is no longer in effect, and you should update your subscription. Your premium subscription is set to expire " key='subscription_expires' plan=subscription.subscription_plan_description}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
+        {{t "You were signed up for the monthly subscription plan, <b>%{plan}</b>, but it is no longer in effect, and you should update your subscription. Your premium access is set to expire " key='subscription_expires' plan=subscription.subscription_plan_description}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
       {{else}}
         <span class='glyphicon glyphicon-calendar' style="float: left; font-size: 30px; margin-right: 10px;"></span>
         {{t "You are signed up for the monthly subscription plan, <b>%{plan}</b>. We hope everything is going well for you and %app_name% is making a difference!" key='monthly_plan' plan=subscription.subscription_plan_description}}
@@ -32,9 +32,12 @@
         <span class='glyphicon glyphicon-calendar' style="float: left; font-size: 30px; margin-right: 10px;"></span>
         {{t "You've purchased a %app_name% license, thank you! We hope everything is going well for you and %app_name% is making a difference! You can use %app_name% as long as you like, and in addition you have free access to cloud extras like reporting and team communication through " key='long_term_explanation' plan=subscription.subscription_plan_description}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>
       {{/if}}
+    {{else if subscription.user.subscription.grace_trial_period}}
+      <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
+      {{t "You haven't purchased %app_name% yet. Currently you're running in a free trial, and hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
     {{else if subscription.user.subscription.grace_period}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
-      {{t "You haven't purchased %app_name% yet. Currently you're running a free trial, hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
+      {{t "You haven't purchased a long-term %app_name% license, and don't have an active subscription. Currently you're running in a grace period, and hopefully you've had a positive experience using %app_name%! Your grace period will end and you will need to purchase or subscribe by " key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
     {{else if subscription.user.subscription.lapsed}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
       {{t "Thank you for purchasing %app_name%! You do not currently have an active subscription. Don't worry, you can still use %app_name% as a robust, cloud-based communication system, but the cloud extras are currently disabled for your account. If you need those features please consider purchasing an ongoing subscription." key='lapsed_consider_subscribing'}}
@@ -58,7 +61,7 @@
       {{t "You purchased %app_name% using a premium supporter account, but have currently set it as a communicator role. As such, some features will be limited in this account. You can switch back to a supporter role to remove this notice. If you would like to fully unlock the communicator role, please purchase a full license of %app_name%." key='expired_but_only_as_communicator'}}
     {{else}}
       <span class='glyphicon glyphicon-info-sign' style="float: left; font-size: 30px; margin-right: 10px;"></span>
-      {{t "You haven't purchased %app_name% yet. Currently you're running a free trial, hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
+      {{t "You haven't purchased a long-term %app_name% license, and don't have an active subscription. Currently you're running a free trial, hopefully you're learning a lot and getting excited for what %app_name% can do! Your trial will end" key='trial_ending'}} <span style='white-space: nowrap;'>{{date subscription.user.subscription.expires}}</span>.
     {{/if}}
     {{#if subscription.user.subscription.extras_enabled}}
       <p style='margin-top: 20px;'>{{t "Your account also has access to premium symbols, so you can search through and include additional symbols from SymbolStix, or PCS (BoardMaker) by Tobii Dynavox in your boards." key='premium_symbols_enabled'}}</p>
