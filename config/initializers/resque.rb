@@ -35,7 +35,7 @@ module RedisInit
   end
 
   def self.queue_pressure?
-    ENV['STOP_CACHING'] || (ENV['QUEUE_MAX'] && RedisInit.permissions.llen('queue:slow') > ENV['QUEUE_MAX'].to_i)
+    ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && Resque.redis.llen('queue:slow') > ENV['QUEUE_MAX'].to_i)
   end
 
   def self.size_check
