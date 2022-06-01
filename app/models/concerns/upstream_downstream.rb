@@ -161,7 +161,18 @@ module UpstreamDownstream
     return true if self.class.add_lumped_trigger({'type' => 'update_available_boards', 'id' => self.global_id, 'breadth' => breadth})
     return true if RedisInit.queue_pressure?
     if !frd
-      self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
+      ra = RemoteAction.find_by(path: self.global_id, action: 'schedule_update_available_boards')
+      if ra
+        if ra.extra == breadth
+          # don't need to change same breadth
+          RemoteAction.where(id: ra.id).update_all(act_at: 30.minutes.from_now)
+        else
+          RemoteAction.where(id: ra.id).update_all(act_at: 30.minutes.from_now, extra: 'all')
+        end
+      else
+        RemoteAction.create(path: self.global_id, action: 'schedule_update_available_boards', act_at: 15.minutes.from_now, extra: breadth || 'all')
+      end
+#      self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
     end
     ids = []
@@ -184,7 +195,7 @@ module UpstreamDownstream
     # Step 1: reach in and add to immediately_upstream_board_ids without triggering any background processes
     downs = Board.find_all_by_global_id(self.settings['immediately_downstream_board_ids'] || [])
     downs.each do |board|
-      if board && (!board.settings['immediately_upstream_board_ids'] || !board.settings['immediately_upstream_board_ids'].include?(self.global_id))
+      if board && (notify_upstream_with_visited_ids || !board.settings['immediately_upstream_board_ids'] || !board.settings['immediately_upstream_board_ids'].include?(self.global_id))
         board.add_upstream_board_id!(self.global_id)
       end
     end
@@ -198,11 +209,39 @@ module UpstreamDownstream
             # it is already up-to-date as far as this sequence is concerned, and doesn't need
             # to be re-scheduled
           else
-            board.schedule_once(:track_downstream_boards!, notify_upstream_with_visited_ids, nil, trigger_stamp)
+            board.reload.schedule_track(notify_upstream_with_visited_ids)
+            # board.schedule_once(:track_downstream_boards!, notify_upstream_with_visited_ids, nil, trigger_stamp)
           end
         end
       end
     end
+  end
+
+  def save_subtly
+    was_enabled = PaperTrail.enabled?
+    PaperTrail.enabled = false
+    self.save_without_post_processing
+    PaperTrail.enabled = was_enabled
+  end
+
+  def schedule_track(visited_ids)
+    if !visited_ids.blank?
+      self.settings ||= {}
+      self.settings['tracked_visited_ids'] ||= []
+      self.settings['tracked_visited_ids'] += visited_ids || []
+      self.settings['tracked_visited_ids'].uniq!
+      self.save_subtly
+    end
+    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 15.minutes.from_now)
+    RemoteAction.create(path: self.global_id, act_at: 10.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
+  end
+
+  def track_downstream_with_visited
+    board = self
+    visited_ids = board.settings['tracked_visited_ids'] || []
+    board.settings.delete('tracked_visited_ids')
+    board.save_subtly
+    board.track_downstream_boards!(visited_ids)
   end
   
   def add_upstream_board_id!(id)
@@ -237,7 +276,8 @@ module UpstreamDownstream
     if @track_downstream_boards || @buttons_affecting_upstream_changed
       if trigger_stamp && self.settings['last_tracked'] && self.settings['last_tracked'] > trigger_stamp
       else
-        self.schedule(:track_downstream_boards!, [], @buttons_affecting_upstream_changed, trigger_stamp || Time.now.to_i)
+        self.schedule_track([])
+        # self.schedule(:track_downstream_boards!, [], @buttons_affecting_upstream_changed, trigger_stamp || Time.now.to_i)
       end
       @buttons_affecting_upstream_changed = nil
       @track_downstream_boards = nil

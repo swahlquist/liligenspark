@@ -6,11 +6,16 @@ module Worker
     list = Worker.scheduled_actions(queue); list.length
     methods = {}
     list.each do |job|
-      code = (job['args'][0] || 'Unknown') + "." + (job['args'][2]['method'] || 'unknown')
+      code = (job['args'][0] || 'Unknown') + "." + (job['args'][2]['method'] || 'unknown') rescue 'error'
       methods[code] = (methods[code] || 0) + 1
     end; list.length
     puts JSON.pretty_generate(methods.to_a.sort_by(&:last))
     methods
+  end
+
+  def self.process_queues
+    RemoteAction.process_all
+    super
   end
 
   def self.find_record(klass, id)
@@ -31,13 +36,14 @@ module Worker
     # no-op
   end
 
-  def prune_jobs(queue, method)
+  def self.prune_jobs(queue, method)
     prunes = 0
     dos = []
     while Resque.size(queue) > 0 && (prunes + dos.length) < 100000
       job = Resque.pop(queue)
       if job
-        if job['args'] && job['args'][2] && job['args'][2]['method'] == method
+        is_match = job['args'] && job['args'][2] && job['args'][2]['method'] == method rescue nil
+        if is_match
           prunes += 1
         else
           dos.push(job)

@@ -1390,7 +1390,7 @@ describe Api::BoardsController, :type => :controller do
         b.instance_variable_set('@buttons_changed', true)
         b.save
         Worker.process_queues
-        new_b = b.copy_for(@user)
+        new_b = b.reload.copy_for(@user)
         Worker.process_queues
         
         @user.copy_board_links(old_board_id: b.global_id, new_board_id: new_b.global_id, ids_to_copy: [], user_for_paper_trail: "user:#{@user.global_id}")
