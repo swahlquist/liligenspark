@@ -1459,6 +1459,10 @@ var editManager = EmberObject.extend({
   },
   process_for_displaying: function(ignore_fast_html) {
     CoughDrop.log.track('processing for displaying');
+    if(app_state.get('edit_mode')) {
+      CoughDrop.log.track('will not redraw while in edit mode');
+      return;
+    }
     var controller = this.controller;
     var board = controller.get('model');
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
