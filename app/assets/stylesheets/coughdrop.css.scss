@@ -4620,6 +4620,14 @@ table>tbody>tr.voice_pad>td {
       background: #337AB7;
       color: #fff;
     }
+    &.level_11, &.level_12, &.level_13, &.level_14, &.level_15 {
+      background: #0f6175;
+      color: #fff;
+    }
+    &.level_16, &.level_17, &.level_18, &.level_19, &.level_20 {
+      background: #0c6e49;
+      color: #fff;
+    }
     &:hover {
       border-width: 3px;
       padding: 3px;
