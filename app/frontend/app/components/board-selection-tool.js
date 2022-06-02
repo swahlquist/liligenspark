@@ -65,7 +65,7 @@ export default Component.extend({
       var _this = this;
       var index = 0;
       this.get('sorted_boards').forEach(function(b, idx) {
-        if(b.get('grid.rows') * b.get('grid.columns') > 30 && index === 0) {
+        if(b.get('grid.rows') * b.get('grid.columns') > 40 && index === 0) {
           index = idx;
         } else if(index == 0 && idx == _this.get('sorted_boards').length - 1) {
           index = idx;
@@ -112,7 +112,7 @@ export default Component.extend({
     _this.set('boards', null);
     var canvas = _this.element.getElementsByTagName('canvas')[0];
     if(canvas) { canvas.style.display = 'none'; }
-    CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), per_page: 20, category: 'layout'}).then(function(data) {
+    CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), per_page: 20, category: 'layouts'}).then(function(data) {
       var res = data.map(function(b) { return b; });
       if(res && res.length > 0) {
         _this.set('boards', res);

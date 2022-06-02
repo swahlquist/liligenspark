@@ -1081,6 +1081,7 @@ class Board < ActiveRecord::Base
   def categories
     res = (self.settings['categories'] || [])
     res << 'layout' if self.settings['layout_category']
+    res << 'layouts' if self.settings['layout_category'] || self.settings['secondary_layout_category']
     res
   end
     

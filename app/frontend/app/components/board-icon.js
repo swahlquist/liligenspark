@@ -102,7 +102,7 @@ export default Component.extend({
         modal.board_preview(board, board.preview_locale, this.get('allow_style'), function() {
           _this.sendAction('action', board);
         });
-      } else if(_this.get('allow_style') && _this.get('board_record.style.name')) {
+      } else if(_this.get('allow_style') && _this.get('override_count')) {
         if(_this.get('localized')) {
           board.preview_locale = this.get('board_record.localized_locale');
         }
