@@ -37,9 +37,8 @@ export default Component.extend({
       this.set('board_record', board);
     }
   }),
-  // {{board-icon board=board localized=true allow_style=suggested_selected}}
   best_name: computed('board_record.name', 'board_record.translations.board_name', 'board_record.localized_name', 'localized', 'allow_style', 'board_record.style', function() {
-    if(this.get('allow_style') && this.get('board_record.style.name')) {
+    if(this.get('allow_style') && this.get('board_record.style.options')) {
       return this.get('board_record.style.name');
     } else if(this.get('localized')) {
       if(this.get('board_record.translations')) {

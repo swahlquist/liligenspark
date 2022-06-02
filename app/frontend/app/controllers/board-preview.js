@@ -4,10 +4,10 @@ import { computed, observer } from '@ember/object';
 import EmberObject from '@ember/object';
 
 export default Controller.extend({
-  update_style_needed: observer('model.board.key', 'model.style', 'model.board.style.name', function() {
+  update_style_needed: observer('model.board.key', 'model.style', 'model.board.style.options', function() {
     if(this.get('model.board.key')) {
       this.set('model_key', this.get('model.board.key'));
-      if(this.get('model.style') && this.get('model.board.style.name')) {
+      if(this.get('model.style') && this.get('model.board.style.options')) {
         this.set('style_needed', true);
       } else {
         this.set('style_needed', false);
