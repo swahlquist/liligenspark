@@ -726,7 +726,7 @@
           {{else}}
             {{#each current_boards as |board|}}
               <div class='col-md-3 col-xs-4 big_button_holder'>
-                {{board-icon board=board localized=true}}
+                {{board-icon board=board localized=true allow_style=suggested_selected}}
               </div>
             {{/each}}
             {{#if personal_selected}}

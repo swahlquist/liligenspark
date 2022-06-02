@@ -7,6 +7,11 @@
         {{t "Try This Board" key='try_this_board'}}
       {{/if}}
     </button>
+    {{#if back}}
+      <button class='btn btn-lg btn-default' style='width: 100%; margin-top: 2px;' {{action back}}>
+        {{t "Back to List" key='back_to_list'}}
+      </button>
+    {{/if}}
     {{#if select_option}}
       <button class='btn btn-default' style='width: 100%; margin-top: 2px;' {{action 'close'}}>
         {{t "Cancel" key='cancel'}}

@@ -37,8 +37,11 @@ export default Component.extend({
       this.set('board_record', board);
     }
   }),
-  best_name: computed('board_record.name', 'board_record.translations.board_name', 'board_record.localized_name', 'localized', function() {
-    if(this.get('localized')) {
+  // {{board-icon board=board localized=true allow_style=suggested_selected}}
+  best_name: computed('board_record.name', 'board_record.translations.board_name', 'board_record.localized_name', 'localized', 'allow_style', 'board_record.style', function() {
+    if(this.get('allow_style') && this.get('board_record.style.name')) {
+      return this.get('board_record.style.name');
+    } else if(this.get('localized')) {
       if(this.get('board_record.translations')) {
         var names = this.get('board_record.translations.board_name') || {};
         if(names[this.get('board_record.localized_locale')]) {
@@ -67,6 +70,9 @@ export default Component.extend({
 
     return htmlSafe(res);
   }),
+  override_count: computed('allow_style', 'board_record.style.options', function() {
+    return this.get('allow_style') && (this.get('board_record.style.options') || []).length;
+  }),
   actions: {
     board_preview: function(board) {
       var _this = this;
@@ -74,21 +80,33 @@ export default Component.extend({
       if(_this.get('localized')) {
         board.preview_locale = this.get('board_record.localized_locale');
       }
-      modal.board_preview(board, board.preview_locale, function() {
-        _this.send('pick_board', board);
-      });
+      if(_this.get('action_override')) {
+        _this.sendAction('action_override', this.get('board_record.key'));
+      } else {
+        modal.board_preview(board, board.preview_locale, this.get('allow_style'), function() {
+          _this.send('pick_board', board);
+        });
+      }
     },
     pick_board: function(board) {
-      // TODO: consider whether localized=true
       var _this = this;
-      if(this.get('children')) {
+      if(_this.get('action_override')) {
+        _this.sendAction('action_override', this.get('board_record.key'));
+      } else if(this.get('children')) {
         _this.sendAction('action', this.get('board'));
       } else if(this.get('option') == 'select') {
         board.preview_option = 'select';
         if(_this.get('localized')) {
           board.preview_locale = this.get('board_record.localized_locale');
         }
-        modal.board_preview(board, board.preview_locale, function() {
+        modal.board_preview(board, board.preview_locale, this.get('allow_style'), function() {
+          _this.sendAction('action', board);
+        });
+      } else if(_this.get('allow_style') && _this.get('board_record.style.name')) {
+        if(_this.get('localized')) {
+          board.preview_locale = this.get('board_record.localized_locale');
+        }
+        modal.board_preview(board, board.preview_locale, this.get('allow_style'), function() {
           _this.sendAction('action', board);
         });
       } else {

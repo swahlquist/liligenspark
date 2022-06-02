@@ -163,7 +163,12 @@ export default Controller.extend({
       } else if(this.get('personal_selected')) {
         res = this.get('personalBoards');
       } else if(this.get('suggested_selected')) {
+        // filter out boards that have a style.id but not style.name
         res = this.get('homeBoards');
+        if(res.filter) {
+          res = res.filter(function(b) { return !b.get('style') || b.get('style.name'); }).slice(0, 12);
+        }
+
       } else if(this.get('recent_selected')) {
         res = this.get('recentOfflineBoards');
       }
@@ -227,7 +232,7 @@ export default Controller.extend({
           if(app_state.get('currentUser.preferences.locale')) {
             locale = app_state.get('currentUser.preferences.locale').split(/-/)[0];
           }
-          var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 12, preferred_locale: locale};
+          var opts = {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), sort: 'custom_order', per_page: 20, preferred_locale: locale};
           if(key == 'personal') {
             list = 'personalBoards';
             opts = {user_id: 'self', root: true, per_page: 12};

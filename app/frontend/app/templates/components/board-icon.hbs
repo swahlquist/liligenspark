@@ -1,9 +1,15 @@
 <a href="/{{board_record.key}}" {{action 'pick_board' board_record}} class={{display_class}}>
   {{#unless noinfo}}
     <a {{action 'board_preview' board_record bubbles=false}} class='info'>
-      <span class='glyphicon glyphicon-info-sign'></span>
-      {{#if board_record.grid.rows}}
-        <span class='size'>{{board_record.grid.rows}} x {{board_record.grid.columns}}</span>
+      {{#if override_count}}
+        <span class="label label-default" style='border-radius: 20px;'>
+          {{override_count}}
+        </span>
+      {{else}}
+        <span class='glyphicon glyphicon-info-sign'></span>
+        {{#if board_record.grid.rows}}
+          <span class='size'>{{board_record.grid.rows}} x {{board_record.grid.columns}}</span>
+        {{/if}}
       {{/if}}
     </a>
   {{/unless}}

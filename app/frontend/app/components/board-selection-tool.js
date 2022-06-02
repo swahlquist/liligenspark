@@ -9,8 +9,18 @@ import persistence from '../utils/persistence';
 import i18n from '../utils/i18n';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
+import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+
+var shuffle = function(array) {
+  var array = [].concat(array);
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
 export default Component.extend({
   willInsertElement: function() {
@@ -23,6 +33,7 @@ export default Component.extend({
     this.set('levels', null);
     this.set('current_level', null);
     this.set('base_level', null);
+    this.set('board_style', null);
   },
   didInsertElement: function() {
     this.size_element();
@@ -48,7 +59,7 @@ export default Component.extend({
       }, function() { });
     }
   }),
-  update_current_board: observer('sorted_boards', 'current_index', function() {
+  update_current_board: observer('sorted_boards', 'current_index', 'board_style', function() {
     this.size_element();
     if(this.get('current_index') == undefined && this.get('sorted_boards.length')) {
       var _this = this;
@@ -70,7 +81,7 @@ export default Component.extend({
       });
     }
   }),
-  update_sorted_boards: observer('boards', function() {
+  update_sorted_boards: observer('boards', 'board_style', function() {
     var res = (this.get('boards') || []).sort(function(a, b) {
       var a_size = a.get('grid.rows') * a.get('grid.columns');
       var b_size = b.get('grid.rows') * b.get('grid.columns');
@@ -80,7 +91,20 @@ export default Component.extend({
         return a_size - b_size;
       }
     });
-    this.set('sorted_boards', res);
+    if(this.get('board_style')) {
+      var style = this.get('board_style');
+      res = res.filter(function(b) { 
+        if(!b.get('style') || b.get('style.id') == style) { return true; }
+        return false;
+      });
+      this.setProperties({
+        current_index: null,
+        sorted_boards: res
+      });
+    } else {
+      this.set('sorted_boards', res);
+
+    }
   }),
   load_boards: function() {
     var _this = this;
@@ -88,7 +112,7 @@ export default Component.extend({
     _this.set('boards', null);
     var canvas = _this.element.getElementsByTagName('canvas')[0];
     if(canvas) { canvas.style.display = 'none'; }
-    CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), per_page: 6, category: 'layout'}).then(function(data) {
+    CoughDrop.store.query('board', {public: true, starred: true, user_id: app_state.get('domain_board_user_name'), per_page: 20, category: 'layout'}).then(function(data) {
       var res = data.map(function(b) { return b; });
       if(res && res.length > 0) {
         _this.set('boards', res);
@@ -143,6 +167,32 @@ export default Component.extend({
       }
     }
   ),
+  board_style_available: computed('boards', 'board_styles', function() {
+    return (this.get('board_styles') || []).length > 0;
+  }),
+  board_style_needed: computed('boards', 'board_style', 'board_style_available', 'board_styles', 'base_level', function() {
+    return this.get('base_level') && (!this.get('boards') || this.get('board_style_available')) && !this.get('board_style');
+  }),
+  base_level_and_style: computed('board_style', 'boards', 'board_style_available', 'base_level', function() {
+    return this.get('base_level') && this.get('boards') && (!this.get('board_style_available') || this.get('board_style'));
+  }),
+  board_styles: computed('boards', function() {
+    var styles = [];
+    var style_ids = {};
+    (this.get('boards') || []).forEach(function(b) {
+      if(b.get('style.name')) {
+        if(!style_ids[b.get('style.id')]) {
+          style_ids[b.get('style.id')] = true;
+          styles.push(b.get('style'));
+        }
+      }
+    });
+    styles = shuffle(styles).slice(0, 2);    
+    styles.forEach(function(style) {
+      style.col_class = htmlSafe(styles.length == 2 ? 'col-sm-6' : 'col-sm-4');
+    });
+    return styles;
+  }),
   actions: {
     next: function() {
       if(this.get('level_select')) {
@@ -254,6 +304,10 @@ export default Component.extend({
       runLater(function() {
 //        _this.draw_current_board();
       });
+    },
+    set_board_style: function(style) {
+      this.set('current_index', null);
+      this.set('board_style', style);
     },
     dismiss: function() {
       this.set('prompt', null);
