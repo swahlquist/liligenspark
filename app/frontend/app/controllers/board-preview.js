@@ -6,6 +6,9 @@ import EmberObject from '@ember/object';
 export default Controller.extend({
   update_style_needed: observer('model.board.key', 'model.style', 'model.board.style.options', function() {
     if(this.get('model.board.key')) {
+      if(this.get('model.board.key') != this.get('model_key')) {
+        this.set('model_style', null);
+      }
       this.set('model_key', this.get('model.board.key'));
       if(this.get('model.style') && this.get('model.board.style.options')) {
         this.set('style_needed', true);
@@ -68,6 +71,7 @@ export default Controller.extend({
   }),
   actions: {
     close: function() {
+      this.set('model_style', null);
       modal.close_board_preview();
     },
     preview: function(key) {
