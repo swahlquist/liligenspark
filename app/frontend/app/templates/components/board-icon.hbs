@@ -13,7 +13,11 @@
       {{/if}}
     </a>
   {{/unless}}
-  <img src={{board_record.icon_url_with_fallback}} onerror="button_broken_image(this);"/>
+  {{#if override_count}}
+    <img src={{board_record.style.image_url}} onerror="button_broken_image(this);"/>
+  {{else}}
+    <img src={{board_record.icon_url_with_fallback}} onerror="button_broken_image(this);"/>
+  {{/if}}
   <div class={{if noinfo 'name compact' 'name'}}>
   {{best_name}}
   </div>
