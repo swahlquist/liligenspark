@@ -166,7 +166,13 @@ export default Controller.extend({
         // filter out boards that have a style.id but not style.name
         res = this.get('homeBoards');
         if(res.filter) {
-          res = res.filter(function(b) { return !b.get('style') || b.get('style.options'); }).slice(0, 12);
+          var ids = {};
+          res.forEach(function(b) {
+            if(b.get('style.options')) {
+              ids[b.get('style.id')] = true;
+            }
+          })
+          res = res.filter(function(b) { return !b.get('style') || !ids[b.get('style.id')] || b.get('style.options'); }).slice(0, 12);
         }
 
       } else if(this.get('recent_selected')) {
