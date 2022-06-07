@@ -21,6 +21,7 @@ export default modal.ModalController.extend({
     $("body .tooltip").remove();
     var _this = this;
     _this.set('lookup_state', null);
+    _this.set('browse_state', null);
     if(_this.get('model.profile_id')) {
       _this.set('profile', {loading: true});
       
@@ -162,11 +163,22 @@ export default modal.ModalController.extend({
       $("html,body").scrollTop(0);
       this.transitionToRoute('profile', this.get('model.user.user_name'), profile_id);
     },
+    browse: function() {
+      var _this = this;
+      _this.set('lookup_state', null);
+      _this.set('browse_state', {loading: true});
+      persistence.ajax('/api/v1/profiles/?user_id=' + _this.get('model.user.id'), {type: 'GET'}).then(function(list) {
+        _this.set('browse_state', {list: list.map(function(p) { return p.profile; })});
+      }, function(err) {
+        _this.set('browse_state', {error: true});
+      });
+    },
     lookup: function() {
       var id = this.get('find_profile_id');
       if(id) {
         var _this = this;
         _this.set('lookup_state', {loading: true});
+        _this.set('browse_state', null);
         CoughDrop.store.findRecord('profile', _this.get('find_profile_id')).then(function(pt) {
           _this.set('lookup_state', null);
           _this.transitionToRoute('profile', _this.get('model.user.user_name'), pt.id);

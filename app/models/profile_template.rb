@@ -41,6 +41,14 @@ class ProfileTemplate < ApplicationRecord
   end
 
 
+  def self.static_templates(role)
+    list = ['cpp']
+    if role == 'communicator'
+      list = ['cole', 'csicy']
+    end
+    list.map{|str| static_template(str) }.compact
+  end
+
   def self.static_template(code)
     if code == 'cole'
       template = ProfileTemplate.new
@@ -49,7 +57,7 @@ class ProfileTemplate < ApplicationRecord
         'public' => true,
         'profile' => {
           'name' => 'COLE - LCPS Continuum Of Language Expression',
-          'description' => "The Interactive Continuum Of Language Expression, created by Chris Bugaj & Loudoun County Public Schools  - Communicators are scored based on 67 criteria in 11 different stages of communication. The COLE is quick to fill out and covers multiple levels of communication proficiency. Numerical summary scores are not useful for comparing across individuals, but can be helpful in tracking progress for a specific individual. Google Sheets version here, https://docs.google.com/spreadsheets/d/1HKXiq6IZN44dHLSBgkY2vuE-bu7FXTXiXOOQkwDzh_A/edit"
+          'description' => "The Interactive COLE, created by Chris Bugaj & Loudoun County Public Schools  - Communicators are scored based on 67 criteria in 11 different stages of communication. The COLE is quick to fill out and covers multiple levels of communication proficiency. Numerical summary scores are not useful for comparing across individuals, but can be helpful in tracking progress for a specific individual. Google Sheets version here, https://docs.google.com/spreadsheets/d/1HKXiq6IZN44dHLSBgkY2vuE-bu7FXTXiXOOQkwDzh_A/edit"
         }
       }
       return template
@@ -71,7 +79,7 @@ class ProfileTemplate < ApplicationRecord
         'public' => true,
         'profile' => {
           'name' => 'Communication Supports Inventory-Children and Youth (CSI-CY)',
-          'description' => "Communication Supports Inventory-Children and Youth (CSI-CY) for children who rely on augmentative and alternative communication (AAC), Charity Rowland, Ph. D., Melanie Fried-Oken, Ph. D., CCC-SLP and Sandra A. M. Steiner, M. A., CCC-SLP"
+          'description' => "The Communication Supports Inventory-Children and Youth (CSI-CY ) is a tool designed to make goal writing easier for teachers and speech-language pathologists who work with students who rely on augmentative and alternative communication (AAC) to communicate effectively. It is not an assessment, but a guide to organize your understanding of the impact of a student’s communication strengths and limitations on participation at school and at home. The idea is that you would use the CSI-CY to prepare for the IEP meeting by prioritizing areas that should be targeted in IEP goals related to communication."
         }
       }
       return template

@@ -107,8 +107,9 @@
           <div class='col-sm-5' style='padding-right: 0;'>
             {{input type='text' class='form-control' enter=(action 'lookup') value=find_profile_id placeholder='Look up profile by ID'}}
           </div>
-          <div class='col-sm-2' style='padding-left: 3px;'>
+          <div class='col-sm-3' style='padding-left: 3px;'>
             <button class='btn btn-default' {{action 'lookup'}}>{{t "Go" key='go'}}</button>
+            <button class='btn btn-default' {{action 'browse'}}>{{t "Browse" key='browse'}}</button>
           </div>
         </div>
         {{#if lookup_state}}
@@ -119,6 +120,33 @@
               {{t "Error loading profile" key='error_loading_profile'}}
             {{else}}
               {{t "No results found" key='no_results_found'}}
+            {{/if}}
+          </div>
+        {{else if browse_state}}
+          <div style='margin-top: -10px; font-style: italic; margin-left: 20px;'>
+            {{#if browse_state.loading}}
+              {{t "Loading profiles..." key='loading_profiles'}}
+            {{else if browse_state.error}}
+              {{t "Error loading profiles" key='error_loading_profiles'}}
+            {{else}}
+              <table>
+                <tbody>
+                  {{#each browse_state.list as |prof|}}
+                    <tr style='border-bottom: 1px solid #ccc;'>
+                      <!-- profile template -->
+                      <td style='width: 100%; padding: 25px 0;'>
+                        <div style='font-size: 16px; font-weight: bold;'>{{prof.name}}</div>
+                        <div style='font-style: italic; overflow: hidden; max-height: 100px; text-overflow: ellipsis;'>{{prof.description}}</div>
+                      </td>
+                      <td style='padding: 0 5px;'>
+                      </td>
+                      <td style='padding: 0 5px;'>
+                        <button {{action 'run_profile' prof.id}} class='btn btn-lg btn-default' style='width: 90px;'>{{t "run" key='run'}}</button>
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>          
+              </table>
             {{/if}}
           </div>
         {{/if}}

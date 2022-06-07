@@ -8,6 +8,14 @@ class Api::ProfilesController < ApplicationController
     return unless allowed?(profile, 'view')
     render json: JsonApi::Profile.as_json(profile, :wrapper => true, :permissions => @api_user)
   end
+
+  def index
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    defaults = ProfileTemplate.static_templates(user.settings['preferences']['role'] == 'communicator' ? 'communicator' : 'supervisor')
+    render json: defaults.map{|s| template_or_session(s) }
+  end
   
   def latest
     user = User.find_by_path(params['user_id'])
@@ -50,34 +58,37 @@ class Api::ProfilesController < ApplicationController
         sessions << template if template
       end
     end
-    list = sessions.map do |session|
-      if session.respond_to?(:author)
-        # actual session
-        author = session.author
-        expected = nil
-        expected = 'due_soon' if session.data['expected'] && session.data['expected'] < 1.month.from_now
-        expected = 'overdue' if session.data['expected'] && session.data['expected'] < Time.now
-        profile = session.data['profile'].except('results', 'encrypted_results')
-        {
-          started: session.started_at,
-          expected: expected,
-          log_id: session.global_id,
-          profile: profile,
-          profile_id: profile['id'],
-          author: {user_name: author.user_name, id: author.global_id}
-        }
-      else
-        prof = session.settings['profile']
-        prof['id'] = session.public_profile_id
-        prof['template_id'] = session.global_id
-        # profile template
-        {
-          id: session.global_id,
-          profile_id: session.public_profile_id,
-          profile: session.settings['profile']
-        }
-      end
-    end
+    list = sessions.map{|s| template_or_session(s) }
     render json: list
+  end
+
+  protected
+  def template_or_session(session)
+    if session.respond_to?(:author)
+      # actual session
+      author = session.author
+      expected = nil
+      expected = 'due_soon' if session.data['expected'] && session.data['expected'] < 1.month.from_now
+      expected = 'overdue' if session.data['expected'] && session.data['expected'] < Time.now
+      profile = session.data['profile'].except('results', 'encrypted_results')
+      {
+        started: session.started_at,
+        expected: expected,
+        log_id: session.global_id,
+        profile: profile,
+        profile_id: profile['id'],
+        author: {user_name: author.user_name, id: author.global_id}
+      }
+    else
+      prof = session.settings['profile']
+      prof['id'] = session.public_profile_id
+      prof['template_id'] = session.global_id
+      # profile template
+      {
+        id: session.global_id,
+        profile_id: session.public_profile_id,
+        profile: session.settings['profile']
+      }
+    end
   end
 end
