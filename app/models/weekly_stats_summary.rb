@@ -723,7 +723,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         end
         if summary.data['home_board_levels']
           stash[:home_board_levels] ||= {}
-          summary.data['home_board_levels'].each do |lvl, user_ids|
+          summary.data['home_board_levels'].each do |key, user_ids|
             stash[:home_board_levels][key] ||= []
             stash[:home_board_levels][key] += user_ids
           end
