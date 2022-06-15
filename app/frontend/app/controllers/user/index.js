@@ -152,7 +152,15 @@ export default Controller.extend({
       var board_ids = {};
       var new_list = [];
       if(this.get('parent_object')) {
-        new_list = list;
+        var _this = this;
+        list.forEach(function(ref) {
+          if(ref.board.id == _this.get('parent_object.board.id')) {
+            ref.str = "a " + ref.board.name;
+          } else {
+            ref.str = "b" + parseInt(ref.board.name, 10).toString().padStart(6, '0') + ' ' + ref.board.name.toLowerCase();
+          }
+        });
+        new_list = list.sort(function(a, b) { return a.str.localeCompare(b.str); });
       } else {
         var copies = {};
         var roots = [];
@@ -184,7 +192,8 @@ export default Controller.extend({
           if(cluster_orphans) {
             var obj = {
               board: CoughDrop.store.createRecord('board', {name: "Orphan Boards id:" + id}),
-              children: []
+              children: [],
+              orphan: true
             };
             copies[id].forEach(function(c) { obj.children.push({board: c})});
             new_list.push(obj);  
@@ -218,7 +227,7 @@ export default Controller.extend({
         }
         res.filtered_results = new_list.slice(0, 18);
       }
-      res.filtered_results_key = res.filtered_results.map(function(b) { return b.id || b.board.id; }).join(',');
+      res.filtered_results_key = res.filtered_results.map(function(b) { return (b.id || b.board.id) + (b.children || []).length; }).join(',');
       return res;
     }
   ),
@@ -306,9 +315,8 @@ export default Controller.extend({
         if(!append && prior.length) {
           prior = [];
         }
-        boards.map(function(i) { return i; }).forEach(function(b) {
-          prior.pushObject(b);
-        });
+
+        prior.pushObjects(boards.map(function(i) { return i; }));
 //        var result = prior.concat(boards.map(function(i) { return i; }));
         prior.user_id = _this.get('model.id');
         _this.set(list_name, prior);

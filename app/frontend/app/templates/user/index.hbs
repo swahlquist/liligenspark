@@ -496,7 +496,7 @@
                 {{/each}}
               </ul>
               {{#unless show_all_boards}}
-                <a href="#" {{action "show_more_boards"}}>show more</a>
+                <a href="#" {{action "show_more_boards"}}>{{t "show more" key='show_more'}}</a>
               {{/unless}}
             {{else}}
               {{#if board_list.sub_result}}
@@ -527,6 +527,10 @@
                         {{/if}}
                       </div>
                     {{/unless}}
+                  {{else if board.orphan}}
+                    {{#if board.children}}
+                      {{board-icon board=board noinfo=true action='load_children'}}
+                    {{/if}}
                   {{/if}}
                 {{/each}}
                 {{#unless show_all_boards}}
