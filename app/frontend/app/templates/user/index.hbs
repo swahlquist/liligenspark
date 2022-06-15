@@ -529,7 +529,9 @@
                     {{/unless}}
                   {{else if board.orphan}}
                     {{#if board.children}}
-                      {{board-icon board=board noinfo=true action='load_children'}}
+                      <div class="col-sm-2 col-xs-3 board_with_action simple_board_holder" rel={{board.hidden}} style={{if board.hidden 'position: absolute; left: -1000px; visibility: hidden;' ''}}>
+                        {{board-icon board=board noinfo=true action='load_children'}}
+                      </div>
                     {{/if}}
                   {{/if}}
                 {{/each}}
