@@ -18,6 +18,8 @@ module JsonApi::Board
     ['name', 'prefix', 'description', 'image_url', 'stars', 'forks', 'word_suggestions', 'locale', 'home_board', 'categories'].each do |key|
       json[key] = board.settings[key]
     end
+    json['sort_score'] = ((board.popularity || -1) + 1) * (board.any_upstream ? 1 : 2)
+
     list = [board.settings['locale'] || 'en']
     trans = (BoardContent.load_content(board, 'translations') || {})
     trans.each{|k, h| if h.is_a?(Hash); list += h.keys; end }

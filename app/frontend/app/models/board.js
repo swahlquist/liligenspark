@@ -41,6 +41,7 @@ CoughDrop.Board = DS.Model.extend({
   created: DS.attr('date'),
   updated: DS.attr('date'),
   user_name: DS.attr('string'),
+  sort_score: DS.attr('number'),
   locale: DS.attr('string'),
   localized_name: DS.attr('string'),
   localized_locale: DS.attr('string'),

@@ -157,7 +157,7 @@ export default Controller.extend({
           if(ref.board.id == _this.get('parent_object.board.id')) {
             ref.str = "a " + ref.board.name;
           } else {
-            ref.str = "b" + parseInt(ref.board.name, 10).toString().padStart(6, '0') + ' ' + ref.board.name.toLowerCase();
+            ref.str = "b" + (parseInt(ref.board.name, 10) || 0).toString().padStart(6, '0') + ' ' + ref.board.name.toLowerCase();
           }
         });
         new_list = list.sort(function(a, b) { return a.str.localeCompare(b.str); });
@@ -188,6 +188,17 @@ export default Controller.extend({
           //   new_list.push(obj);
           // }
         });
+        new_list.forEach(function(ref) {
+          if(ref.board && ref.board.sort_score != null) {
+            ref.str = (99999999 - ref.board.sort_score).toString().padStart(8, '0') + ' ';
+            ref.str = ref.str + (parseInt(ref.board.name, 10) || 0).toString().padStart(6, '0') + ' ';
+            ref.str = ref.str + ref.board.name;
+          } else {
+            ref.str = "99999999 " + (ref.board || {}).name;
+          }
+        });
+        new_list = new_list.sort(function(a, b) { return a.str.localeCompare(b.str); });
+        // TODO: sort this list on something better than just id
         for(var id in copies) {
           if(cluster_orphans) {
             var obj = {
