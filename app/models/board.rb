@@ -948,6 +948,14 @@ class Board < ActiveRecord::Base
       end
       self.settings['locale'] = params['locale'] 
     end
+    if params['copy_key']
+      b = Board.find_by_path(params['copy_key'])
+      if b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
+        self.settings['copy_id'] = b.global_id
+      elsif params['copy_key'].blank?
+        self.settings.delete('copy_id')
+      end
+    end
     if !self.id && params['source_id']
       # check if the user has edit permission on the source, and only set this if so
       ref_board = Board.find_by_global_id(params['source_id'])

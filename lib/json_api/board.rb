@@ -84,6 +84,12 @@ module JsonApi::Board
     end
     
     if json['permissions'] && json['permissions']['edit']
+      if board.settings['copy_id']
+        copy = Board.find_by_path(board.settings['copy_id'])
+        if copy
+          json['copy_key'] = copy.key
+        end
+      end
       json['non_author_starred'] = board.non_author_starred?
       self.trace_execution_scoped(['json/board/share_users']) do
         shared_users = board.shared_users
