@@ -950,8 +950,11 @@ class Board < ActiveRecord::Base
     end
     if params['copy_key']
       b = Board.find_by_path(params['copy_key'])
-      if b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
+      if b && b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
         self.settings['copy_id'] = b.global_id
+        subs = Board.find_all_by_global_id(self.settings['downstream_board_ids'] || [])
+        copy_subs = subs.select{|b| b.settings['copy_id'] == self.global_id }
+        copy_subs.each{|brd| brd.settings['copy_id'] = b.global_id; brd.save_subtly }
       elsif params['copy_key'].blank?
         self.settings.delete('copy_id')
       end

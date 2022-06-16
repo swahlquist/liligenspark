@@ -1588,6 +1588,52 @@ describe Board, :type => :model do
       expect(b.name).to eq(nil)
       expect(b.settings['name']).to eq('bacon cheese')
     end
+
+    it "should process copy_key" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u2, public: true)
+      b2.process({'copy_key' => 'asdf'}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(nil)
+      b2.process({'copy_key' => b.key}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(b.global_id)
+      b.process({'copy_key' => b.key}, {'user' => u})
+      expect(b.settings['copy_id']).to eq(nil)
+      b2.process({'copy_key' => b3.key}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(b.global_id)
+      b2.process({'copy_key' => ''}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(nil)
+    end
+
+    it "should update sub-boards to use the copy_id if updated" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u)
+      b3.process({'copy_key' => b2.key}, {'user' => u})
+      expect(b3.reload.settings['copy_id']).to eq(b2.global_id)
+      b2.settings['downstream_board_ids'] = [b3.global_id]
+      b2.process({'copy_key' => b1.key}, {'user' => u})
+      expect(b2.reload.settings['copy_id']).to eq(b1.global_id)
+      expect(b3.reload.settings['copy_id']).to eq(b1.global_id)
+    end
+
+    it "should not update sub-boards if copy_key results in same id as already set" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u)
+      b3.process({'copy_key' => b2.key}, {'user' => u})
+      expect(b3.reload.settings['copy_id']).to eq(b2.global_id)
+      b2.settings['downstream_board_ids'] = [b3.global_id]
+      b2.process({'copy_key' => b1.key}, {'user' => u})
+      expect(b2.reload.settings['copy_id']).to eq(b1.global_id)
+      expect(b3.reload.settings['copy_id']).to eq(b1.global_id)
+      expect(Board).to_not receive(:find_all_by_global_id)
+      b2.process({'copy_key' => b1.key}, {'user' => u})
+    end
     
     it "should set settings" do
       u = User.create
