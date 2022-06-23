@@ -68,7 +68,7 @@ class Api::LogsController < ApplicationController
       logs = logs.where(:log_type => ['session', 'note', 'assessment', 'eval', 'profile'])
     end
     if for_self && user.supporter_role?
-      logs = logs.where(:log_type => ['note', 'eval'])
+      logs = logs.where(:log_type => ['profile', 'note', 'eval'])
     end
     if params['highlighted']
       logs = logs.where(:highlighted => true)

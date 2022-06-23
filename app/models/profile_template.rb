@@ -28,6 +28,8 @@ class ProfileTemplate < ApplicationRecord
     if self.settings['public'] == false
       self.public_profile_id = nil
     end
+    self.communicator = self.settings['profile']['type'] == 'communicator'
+
     true
   end
 
@@ -44,7 +46,7 @@ class ProfileTemplate < ApplicationRecord
   def self.static_templates(role)
     list = ['cpp']
     if role == 'communicator'
-      list = ['cole', 'csicy']
+      list = ['cole']
     end
     list.map{|str| static_template(str) }.compact
   end
@@ -69,6 +71,17 @@ class ProfileTemplate < ApplicationRecord
         'profile' => {
           'name' => 'CPP - Communication Partner Profile',
           'description' => "Communication Partner Profile (CPPv1) AAC-Related Self-Reflection"
+        }
+      }
+      return template
+    elsif code == 'com-ff'
+      template = ProfileTemplate.new
+      template.public_profile_id = code
+      template.settings = {
+        'public' => true,
+        'profile' => {
+          'name' => 'ComFF - Communication Partner Profile',
+          'description' => "COMFF Communication Partner Profile (CPPv1) AAC-Related Self-Reflection"
         }
       }
       return template

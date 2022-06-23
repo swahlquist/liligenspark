@@ -445,7 +445,7 @@ var stashes = EmberObject.extend({
           geo: geo,
           eval: obj
         };
-      } else if(obj.score_categories) {
+      } else if(obj.score_categories || obj.report_segments) {
         log_event = {
           type: 'profile',
           timestamp: timestamp,

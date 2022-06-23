@@ -185,8 +185,8 @@ var Profile = EmberObject.extend({
     var type = this.get('template.type');
     if(type == 'supervisor') {
       return i18n.t('supervisor', "Supervisor");
-    } else if(type == 'self_assessment') {
-      return i18n.t('self_assessment', "Self-Assessment");
+    // } else if(type == 'self_assessment') {
+    //   return i18n.t('self_assessment', "Self-Assessment");
     } else {
       return i18n.t('communicator', "Communicator");
     }
@@ -210,13 +210,16 @@ var Profile = EmberObject.extend({
           style = style + "color: #fff; ";
         }
       }
-      var max_options = 
-      list.push({
+      var item = {
         id: group.id,
         header: true,
-        hader_style: htmlSafe(style),
+        header_style: htmlSafe(style),
         label: group.label
-      });
+      };
+      if(group.sub_label || group.header) {
+        item.sub_label = group.sub_label || group.header
+      }
+      list.push(item);
       var max_options = 0;
       group.questions.forEach(function(question) {
         var block = blocks[question.answer_block];
@@ -254,6 +257,7 @@ var Profile = EmberObject.extend({
           id: question.id,
           group_id: group.id,
           label: question.label,
+          hint: question.hint,
           manual_selection: block.manual_selection,
           prompt_class: htmlSafe(max_options > 6 ? 'prompt many' : 'prompt'),
           answer_type: answer_type,
@@ -774,8 +778,10 @@ var profiles = {
         resolve(profiles.process(cole_profile));
       } else if(id == 'cpp') {
         resolve(profiles.process(cpp_profile));
-      } else if(id == 'csicy') {
-        resolve(profiles.process(csicy_profile));
+      // } else if(id == 'csicy') {
+      //   resolve(profiles.process(csicy_profile));
+      // } else if(id == 'com-ff') {
+      //   resolve(profiles.process(com_forms_funcs));
       } else {
         CoughDrop.store.findRecord('profile', id).then(function(prof) {
           resolve(profiles.process(prof.get('template')));
@@ -2360,6 +2366,157 @@ var cpp_profile = {
   ]
 };
 
+var com_forms_funcs = {
+  name: "Communication Forms and Functions Worksheet",
+  id: "com-ff",
+  version: "0.1",
+  type: "communicator",
+  description: [
+    "Communication Forms and Functions Worksheet can be used to log examples of communication based on different communicative functions. It has been adapted from the work of Amy Weatherby (1995) and Kathleen Quill (1995) by the Bridge School"
+  ],
+  instructions: [
+    "Fill in each section to the best of your ability, including specific examples of communication you have observed. Communication can be accomplished through speech, but also through sounds, guestures, \"behaviors\", refusal to respond, etc.",
+    "Communication *forms* are the behaviors we use to communicate (the \"how\")",
+    "Communication *functions* are the reasons we communicate (the \"why\")",
+    "Communication *partners* are the people we communicate with (the \"who\")",
+    "Communication *contexts* are the places where we communicate (the \"where\")",
+    "Communication *opportunities* are the times we have the chance to communicate (the \"when\")",
+    "Communication *messages* are the meanings in what people communication (the \"what\")"
+  ],
+  answer_blocks: {
+    examples: {
+      type: 'text',
+      hint: "Record what student says/does. Please include information about partners, forms, contexts, messages and opportunities"
+    }
+  },
+  question_groups: [
+    {
+      id: "examples",
+      label: "Examples",
+      border: [26, 55, 130],
+      background: [171, 194, 255],
+      sub_label: "What student says/does. Please include information about partners, forms, contexts, messages and opportunities",
+      header_border: [26, 55, 130],
+      header_background: [171, 194, 255],
+      questions: [
+        {
+          id: "q1",
+          label: "Protest",
+          hint: "Observe opposition when initiating an activity or transition",
+          answer_block: "examples"
+        },
+        {
+          id: "q2",
+          label: "Refuse, Reject",
+          hint: "Offer options or opportunity and wait for expression of choice",
+          answer_block: "examples"
+        },
+        {
+          id: "q3",
+          label: "Request more of an action",
+          hint: "Expectant pause during activity to give requesting opportunity",
+          answer_block: "examples"
+        },
+        {
+          id: "q4",
+          label: "Request a new action",
+          hint: "Shows fatigue or boredom, or actively requests a change",
+          answer_block: "examples"
+        },
+        {
+          id: "q5",
+          label: "Request more of an object",
+          hint: "Guestures, acts or speaks to show desire for more food, game, toy, etc.",
+          answer_block: "examples"
+        },
+        {
+          id: "q6",
+          label: "Communicates a choice between 2 or more",
+          hint: "Partner-assisted scanning or other choice-making opportunities",
+          answer_block: "examples"
+        },
+        {
+          id: "q7",
+          label: "Request new object",
+          hint: "Desire for object out of immediate focus",
+          answer_block: "examples"
+        },
+        {
+          id: "q8",
+          label: "Request absent object",
+          hint: "Asks for object out of sight or vicinity",
+          answer_block: "examples"
+        },
+        {
+          id: "q9",
+          label: "Request attention",
+          hint: "Noises, guestures, speech to draw attention to work, experience, statement, etc.",
+          answer_block: "examples"
+        },
+        {
+          id: "q10",
+          label: "Show affection",
+          hint: "Hugs, kisses, contact, expressions, statements, etc.",
+          answer_block: "examples"
+        },
+        {
+          id: "q11",
+          label: "Greets people",
+          hint: "Clear reaction when a familiar person arrives or leaves",
+          answer_block: "examples"
+        },
+        {
+          id: "q12",
+          label: "Offers, shares",
+          hint: "Clear desire to share something of interest with others",
+          answer_block: "examples"
+        },
+        {
+          id: "q13",
+          label: "Directs attention",
+          hint: "Sees an interesting object or person, or needs help with a task",
+          answer_block: "examples"
+        },
+        {
+          id: "q14",
+          label: "Polite social forms",
+          hint: "Asks permissions, expresses gratitude, takes turns, etc.",
+          answer_block: "examples"
+        },
+        {
+          id: "q15",
+          label: "Answers yes/no questions",
+          hint: "Uses guestures, actions or speech to respond",
+          answer_block: "examples"
+        },
+        {
+          id: "q16",
+          label: "Asks questions",
+          hint: "Expresses interest or curiosity in an object, event or person",
+          answer_block: "examples"
+        },
+        {
+          id: "q17",
+          label: "Names things or people",
+          hint: "Says the names of recognized items or subjects",
+          answer_block: "examples"
+        },
+        {
+          id: "q18",
+          label: "Makes comments",
+          hint: "Additional statements when observies objects, people or actions",
+          answer_block: "examples"
+        },
+      ]
+    }
+  ],
+  report_segments: [
+    {
+      type: "raw",
+    }
+  ]
+}
+/*
 var csicy_profile = {
   name: "Communication Supports Inventory-Children and Youth (CSI-CY)",
   id: "csicy",
@@ -2495,7 +2652,7 @@ var csicy_profile = {
       label: "School-Related Activities",
       border: [26, 55, 130],
       background: [171, 194, 255],
-      header: "Restrictions in Participation Caused by Communication Limitations",
+      sub_label: "Restrictions in Participation Caused by Communication Limitations",
       header_border: [26, 55, 130],
       header_background: [171, 194, 255],
       questions: [
@@ -2682,7 +2839,7 @@ var csicy_profile = {
       label: "Receptive Language and Literacy",
       border: [103, 161, 184],
       background: [194, 236, 252],
-      header: "Communication Limitations",
+      sub_label: "Communication Limitations",
       header_border: [26, 55, 130],
       header_background: [171, 194, 255],
       questions: [
@@ -3283,7 +3440,6 @@ var csicy_profile = {
       label: "Impairments in Body Functions that Limit Communication",
       border: [84, 156, 89],
       background: [162, 224, 166],
-      header: "Impairments in Body Functions that Limit Communication",
       header_border: [26, 55, 130],
       header_background: [171, 194, 255],
       questions: [
@@ -3355,7 +3511,7 @@ var csicy_profile = {
       label: "Physical Environment",
       border: [84, 156, 89],
       background: [162, 224, 166],
-      header: "Environmental Factors that Serve as Barriers or Facilitators for Communication",
+      sub_label: "Environmental Factors that Serve as Barriers or Facilitators for Communication",
       header_border: [26, 55, 130],
       header_background: [171, 194, 255],
       questions: [
@@ -3612,7 +3768,7 @@ var csicy_profile = {
     }
   ]
 };
-
+*/
 var commgrid = {
   name: "CommGrid",
   id: "commgrid",

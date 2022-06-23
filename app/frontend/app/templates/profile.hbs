@@ -43,8 +43,17 @@
   {{/if}}
   {{#each profile.questions_layout as |question|}}
     {{#if question.header}}
-      <div class='question_header' style={{question.hader_style}}>
-        <b>{{question.label}}</b>
+      <div class='question_header' style={{question.header_style}}>
+        {{#if question.sub_label}}
+          <div style='width: 50%; float: left;'>
+            <b>{{question.label}}</b><br/>
+          </div>
+          <div style='flex: 1; padding-left: 10px;'>
+            {{question.sub_label}}
+          </div>
+        {{else}}
+          <b>{{question.label}}</b><br/>
+        {{/if}}
       </div>
     {{else}}
       <div class='question_holder'>
@@ -53,7 +62,16 @@
             {{#if question.unanswered}}
               &nbsp;*&nbsp;
             {{/if}}
-            {{question.label}}
+            {{#if question.hint}}
+              <div>
+                {{question.label}}
+                <div style='padding-left: 30px; color: #888; font-size: 12px; font-style: italic;'>
+                  {{question.hint}}
+                </div>
+              </div>
+            {{else}}
+              {{question.label}}
+            {{/if}}
           </div>
           <div style='flex: 1;'>
             {{#if question.answer_type.text}}
