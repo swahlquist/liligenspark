@@ -15,6 +15,7 @@ class Api::ProfilesController < ApplicationController
     return unless allowed?(user, 'supervise')
     defaults = ProfileTemplate.static_templates(user.settings['preferences']['role'] == 'communicator' ? 'communicator' : 'supervisor')
     global_templates = ProfileTemplate.where(org_id: nil, communicator: user.settings['preferences']['role'] == 'communicator')
+    org_ids = Organization.attached_orgs(user).map{|o| o['id'] }
     org_templates = ProfileTemplate.where(org_id: org_ids, communicator: user.settings['preferences']['role'] == 'communicator')
     list = (org_templates + global_templates + defaults).uniq
     render json: list.map{|s| template_or_session(s) }
