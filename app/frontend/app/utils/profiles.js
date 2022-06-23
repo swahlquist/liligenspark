@@ -781,7 +781,7 @@ var profiles = {
       // } else if(id == 'csicy') {
       //   resolve(profiles.process(csicy_profile));
       // } else if(id == 'com-ff') {
-      //   resolve(profiles.process(com_forms_funcs));
+      //   resolve(profiles.process(com_forms_funcs)); 
       } else {
         CoughDrop.store.findRecord('profile', id).then(function(prof) {
           resolve(profiles.process(prof.get('template')));
