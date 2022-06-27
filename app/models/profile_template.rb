@@ -70,32 +70,21 @@ class ProfileTemplate < ApplicationRecord
         'public' => true,
         'profile' => {
           'name' => 'CPP - Communication Partner Profile',
-          'description' => "Communication Partner Profile (CPPv1) AAC-Related Self-Reflection"
+          'description' => "This form is a self-reflection tool that communication partners can fill out to help look for areas where they may be able to better support AAC users. The questions are based on a collection of research and best practices regarding AAC supports (references included) and feedback from AAC users and practitioners."
         }
       }
       return template
-    elsif code == 'com-ff'
-      template = ProfileTemplate.new
-      template.public_profile_id = code
-      template.settings = {
-        'public' => true,
-        'profile' => {
-          'name' => 'ComFF - Communication Partner Profile',
-          'description' => "COMFF Communication Partner Profile (CPPv1) AAC-Related Self-Reflection"
-        }
-      }
-      return template
-    elsif code == 'csicy'
-      template = ProfileTemplate.new
-      template.public_profile_id = code
-      template.settings = {
-        'public' => true,
-        'profile' => {
-          'name' => 'Communication Supports Inventory-Children and Youth (CSI-CY)',
-          'description' => "The Communication Supports Inventory-Children and Youth (CSI-CY ) is a tool designed to make goal writing easier for teachers and speech-language pathologists who work with students who rely on augmentative and alternative communication (AAC) to communicate effectively. It is not an assessment, but a guide to organize your understanding of the impact of a student’s communication strengths and limitations on participation at school and at home. The idea is that you would use the CSI-CY to prepare for the IEP meeting by prioritizing areas that should be targeted in IEP goals related to communication."
-        }
-      }
-      return template
+    # elsif code == 'csicy'
+    #   template = ProfileTemplate.new
+    #   template.public_profile_id = code
+    #   template.settings = {
+    #     'public' => true,
+    #     'profile' => {
+    #       'name' => 'Communication Supports Inventory-Children and Youth (CSI-CY)',
+    #       'description' => "The Communication Supports Inventory-Children and Youth (CSI-CY ) is a tool designed to make goal writing easier for teachers and speech-language pathologists who work with students who rely on augmentative and alternative communication (AAC) to communicate effectively. It is not an assessment, but a guide to organize your understanding of the impact of a student’s communication strengths and limitations on participation at school and at home. The idea is that you would use the CSI-CY to prepare for the IEP meeting by prioritizing areas that should be targeted in IEP goals related to communication."
+    #     }
+    #   }
+    #   return template
     end
     return nil
   end

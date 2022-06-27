@@ -17,7 +17,7 @@ class Api::ProfilesController < ApplicationController
     global_templates = ProfileTemplate.where(organization_id: nil, communicator: user.settings['preferences']['role'] == 'communicator')
     org_ids = Organization.attached_orgs(user).map{|o| o['id'] }
     org_templates = ProfileTemplate.where(organization_id: org_ids, communicator: user.settings['preferences']['role'] == 'communicator')
-    list = (org_templates + global_templates + defaults).uniq
+    list = (org_templates + defaults + global_templates).uniq
     render json: list.map{|s| template_or_session(s) }
   end
   

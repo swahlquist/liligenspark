@@ -782,6 +782,10 @@ var profiles = {
         resolve(profiles.process(cole_profile));
       } else if(id == 'cpp') {
         resolve(profiles.process(cpp_profile));
+      // } else if(id == 'apsr') {
+      //   resolve(profiles.process(alpha_phon));
+      // } else if(id == 'classchar') {
+      //   resolve(profiles.process(class_char));
       // } else if(id == 'csicy') {
       //   resolve(profiles.process(csicy_profile));
       // } else if(id == 'com-ff') {
@@ -2370,156 +2374,674 @@ var cpp_profile = {
   ]
 };
 
-var com_forms_funcs = {
-  name: "Communication Forms and Functions Worksheet",
-  id: "com-ff",
-  version: "0.1",
-  type: "communicator",
-  description: [
-    "Communication Forms and Functions Worksheet can be used to log examples of communication based on different communicative functions. It has been adapted from the work of Amy Weatherby (1995) and Kathleen Quill (1995) by the Bridge School"
-  ],
-  instructions: [
-    "Fill in each section to the best of your ability, including specific examples of communication you have observed. Communication can be accomplished through speech, but also through sounds, guestures, \"behaviors\", refusal to respond, etc.",
-    "Communication *forms* are the behaviors we use to communicate (the \"how\")",
-    "Communication *functions* are the reasons we communicate (the \"why\")",
-    "Communication *partners* are the people we communicate with (the \"who\")",
-    "Communication *contexts* are the places where we communicate (the \"where\")",
-    "Communication *opportunities* are the times we have the chance to communicate (the \"when\")",
-    "Communication *messages* are the meanings in what people communication (the \"what\")"
-  ],
-  answer_blocks: {
-    examples: {
-      type: 'text',
-      hint: "Record what student says/does. Please include information about partners, forms, contexts, messages and opportunities"
-    }
-  },
-  question_groups: [
-    {
-      id: "examples",
-      label: "Examples",
-      border: [26, 55, 130],
-      background: [171, 194, 255],
-      sub_label: "What student says/does. Please include information about partners, forms, contexts, messages and opportunities",
-      header_border: [26, 55, 130],
-      header_background: [171, 194, 255],
-      questions: [
-        {
-          id: "q1",
-          label: "Protest",
-          hint: "Observe opposition when initiating an activity or transition",
-          answer_block: "examples"
-        },
-        {
-          id: "q2",
-          label: "Refuse, Reject",
-          hint: "Offer options or opportunity and wait for expression of choice",
-          answer_block: "examples"
-        },
-        {
-          id: "q3",
-          label: "Request more of an action",
-          hint: "Expectant pause during activity to give requesting opportunity",
-          answer_block: "examples"
-        },
-        {
-          id: "q4",
-          label: "Request a new action",
-          hint: "Shows fatigue or boredom, or actively requests a change",
-          answer_block: "examples"
-        },
-        {
-          id: "q5",
-          label: "Request more of an object",
-          hint: "Guestures, acts or speaks to show desire for more food, game, toy, etc.",
-          answer_block: "examples"
-        },
-        {
-          id: "q6",
-          label: "Communicates a choice between 2 or more",
-          hint: "Partner-assisted scanning or other choice-making opportunities",
-          answer_block: "examples"
-        },
-        {
-          id: "q7",
-          label: "Request new object",
-          hint: "Desire for object out of immediate focus",
-          answer_block: "examples"
-        },
-        {
-          id: "q8",
-          label: "Request absent object",
-          hint: "Asks for object out of sight or vicinity",
-          answer_block: "examples"
-        },
-        {
-          id: "q9",
-          label: "Request attention",
-          hint: "Noises, guestures, speech to draw attention to work, experience, statement, etc.",
-          answer_block: "examples"
-        },
-        {
-          id: "q10",
-          label: "Show affection",
-          hint: "Hugs, kisses, contact, expressions, statements, etc.",
-          answer_block: "examples"
-        },
-        {
-          id: "q11",
-          label: "Greets people",
-          hint: "Clear reaction when a familiar person arrives or leaves",
-          answer_block: "examples"
-        },
-        {
-          id: "q12",
-          label: "Offers, shares",
-          hint: "Clear desire to share something of interest with others",
-          answer_block: "examples"
-        },
-        {
-          id: "q13",
-          label: "Directs attention",
-          hint: "Sees an interesting object or person, or needs help with a task",
-          answer_block: "examples"
-        },
-        {
-          id: "q14",
-          label: "Polite social forms",
-          hint: "Asks permissions, expresses gratitude, takes turns, etc.",
-          answer_block: "examples"
-        },
-        {
-          id: "q15",
-          label: "Answers yes/no questions",
-          hint: "Uses guestures, actions or speech to respond",
-          answer_block: "examples"
-        },
-        {
-          id: "q16",
-          label: "Asks questions",
-          hint: "Expresses interest or curiosity in an object, event or person",
-          answer_block: "examples"
-        },
-        {
-          id: "q17",
-          label: "Names things or people",
-          hint: "Says the names of recognized items or subjects",
-          answer_block: "examples"
-        },
-        {
-          id: "q18",
-          label: "Makes comments",
-          hint: "Additional statements when observies objects, people or actions",
-          answer_block: "examples"
-        },
-      ]
-    }
-  ],
-  report_segments: [
-    {
-      type: "raw",
-    }
-  ]
-}
+// var class_char = {
+//   name: "Classroom Characteristics Form",
+//   id: "classchar",
+//   version: "0.1",
+//   type: "supervisor",
+//   url: "http://www.project-core.com/instructional-planning-and-reflection/",
+//   description: [
+//     "This form was created for Project Core. The questions are designed to help you and the implementation team consider the characteristics of classrooms and the supports that may be needed to fully implement Project Core and the Universal Core vocabulary. This is not an evaluation of the classroom but a planning tool for support. | www.project-core.com | © 2019 Center for Literacy and Disability Studies, Department of Allied Health Sciences, UNC-Chapel Hill"
+//   ],
+//   instructions: [
+//     "Classroom teachers and other school representatives should complete the following questions.",
+//   ],
+//   answer_blocks: {
+//     status: {
+//       type: 'multiple_choice',
+//       answers: [
+//         {id: 'not_implemented', label: "Not In Place"},
+//         {id: 'partial', label: "Partially In Place"},
+//         {id: 'in_place', label: "In Place"},
+//       ]
+//     },
+//     priority: {
+//       type: 'multiple_choice',
+//       answers: [
+//         {id: 'low', label: "Low Priority", score: 0},
+//         {id: 'medium', label: "Medium Priority", score: 1},
+//         {id: 'hight', label: "High Prioerity", score: 2}
+//       ]
+//     },
+//     notes: {
+//       type: 'text',
+//       hint: "Notes"
+//     },
+//   },
+//   question_groups: [
+//     {
+//       id: "char",
+//       label: "Classroom Characteristics",
+//       border: [84, 156, 89],
+//       background: [162, 224, 166],
+//       header_border: [84, 156, 89],
+//       header_background: [162, 224, 166],
+//       questions: [
+//         {
+//           id: "q1",
+//           has_more: true,
+//           label: "1. The instructional environment gives students interesting things to communicate about.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q1a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q2",
+//           has_more: true,
+//           label: "2. Meaningful, interactive academic instruction is happening in ways that is accessible to all students.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q2a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q3",
+//           has_more: true,
+//           label: "3. The teacher collaborates with other school professionals to plan and implement instruction and assessment.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q3a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q4",
+//           has_more: true,
+//           label: "4. There are regularly scheduled times when professionals meet to discuss student progress and collaborate around next steps and solutions.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q4a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q5",
+//           has_more: true,
+//           label: "5. The teacher has time and administrative support to pursue professional development.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q5a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q6",
+//           has_more: true,
+//           label: "6. The teacher is committed to completing professional development.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q6a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q7",
+//           has_more: true,
+//           label: "7. The teacher believes all students can learn and communicate.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q7a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q8",
+//           has_more: true,
+//           label: "8. The teacher has experience using symbols to support student communication.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q8a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q9",
+//           has_more: true,
+//           label: "9. The teacher has basic background in using the Universal Core vocabulary.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q9a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q10",
+//           has_more: true,
+//           label: "10. The teacher has dedicated time to work with classroom staff.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q10a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q11",
+//           has_more: true,
+//           label: "11. The teacher values support from others to inform instruction and practice.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q11a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q12",
+//           has_more: true,
+//           label: "12. The teacher is willing to implement AAC with all students who require it.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q12a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q13",
+//           has_more: true,
+//           label: "13. The teacher understands that teaching children to communicate is part of his/her job.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q13a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q14",
+//           has_more: true,
+//           label: "14. The teacher knows how to model the use of symbols on communication displays to teach children to communicate.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q14a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q15",
+//           has_more: true,
+//           label: "15. The teacher knows how to respond to students’ (unconventional) attempts to communicate.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q15a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q16",
+//           has_more: true,
+//           label: "16. Tools are provided to students to support their learning and communication.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q16a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q17",
+//           has_more: true,
+//           label: "17. Support is provided to address the vision and hearing needs of students.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q17a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q18",
+//           has_more: true,
+//           label: "18. Support is provided to address the motor and positioning needs of students.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q18a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//         {
+//           id: "q19",
+//           has_more: true,
+//           label: "19. Classroom staff has access to professionals with expertise in assistive technology and computer/AAC system access.",
+//           answer_block: "status"
+//         },
+//         {
+//           id: "q19a",
+//           label: "",
+//           hint: "Priority for Improvement",
+//           answer_block: "priority"
+//         },
+//       ]
+//     },
+//     {
+//       id: "notes",
+//       label: "Notes",
+//       border: [84, 156, 89],
+//       background: [162, 224, 166],
+//       header_border: [84, 156, 89],
+//       header_background: [162, 224, 166],
+//       questions: [
+//         {
+//           id: "comments",
+//           label: "Additional Comments/Questions",
+//           answer_block: "notes"
+//         }
+//       ]
+//     }
+//   ],
+//   report_segments: [
+//     {
+//       type: "raw",
+//     }
+//   ]
+// };
+
+// var alpha_phon = {
+//   name: "Alphabet and Phonological Awareness Self-Reflection and Observation Form",
+//   id: "apasr",
+//   version: "0.1",
+//   type: "supervisor",
+//   url: "http://www.project-core.com/alphabet-and-phonological-awareness-facilitated-module/",
+//   description: [
+//     "This form was created for Project Core, and supports efforts to teach alphabetical and phonological awareness while they are learning to communicate using core vocabulary. Training materials related to this assessment can be found on the web site, http://www.project-core.com/alphabet-and-phonological-awareness-facilitated-module/ | www.project-core.com | © 2019 Center for Literacy and Disability Studies, Department of Allied Health Sciences, UNC-Chapel Hill"
+//   ],
+//   instructions: [
+//     "Observe or reflect on practice with all students for whom AAC is appropriate.",
+//   ],
+//   answer_blocks: {
+//     systems: {
+//       type: 'multiple_choice',
+//       answers: [
+//         {id: 'printed', label: "Printed Core Board"},
+//         {id: '3d', label: "3D Symbols"},
+//         {id: 'app', label: "Communication App or Device"},
+//         {id: 'other', label: "Other"}
+//       ]
+//     },
+//     frequency: {
+//       type: 'multiple_choice',
+//       answers: [
+//         {id: 'consistenly', label: "Consistently", score: 3, mastery: true},
+//         {id: 'occasionally', label: "Occasionally", score: 1, mastery: true},
+//         {id: 'never', label: "Never", score: 0}
+//       ]
+//     },
+//     notes: {
+//       type: 'text',
+//       hint: "Notes"
+//     },
+//     examples: {
+//       type: 'text',
+//       extra: true,
+//       hint: "Comments and Examples"
+//     }
+//   },
+//   question_groups: [
+//     {
+//       id: "preface",
+//       label: "Details",
+//       border: [84, 156, 89],
+//       background: [162, 224, 166],
+//       header_border: [84, 156, 89],
+//       header_background: [162, 224, 166],
+//       questions: [
+//         {
+//           id: "p1",
+//           label: "# of Students",
+//           answer_block: "notes"
+//         },
+//         {
+//           id: "p2",
+//           label: "Brief Description of Activity",
+//           answer_block: "notes"
+//         }
+//       ]
+//     },
+//     {
+//       id: "evidence",
+//       label: "Evidence",
+//       border: [84, 156, 89],
+//       background: [162, 224, 166],
+//       header_border: [84, 156, 89],
+//       header_background: [162, 224, 166],
+//       questions: [
+//         {
+//           id: "q1",
+//           has_more: true,
+//           label: "ALL students have access to their own personal communication system with core vocabulary.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q1a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q2",
+//           has_more: true,
+//           label: "Adults recognize and respond to student’s efforts to communicate.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q2a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q3",
+//           has_more: true,
+//           label: "Adults tell students very clearly what they did to communicate.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q3a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q4",
+//           has_more: true,
+//           label: "Adults show students how to use core vocabulary using each student’s personal communication system (or a system that is very similar).",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q4a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q5",
+//           has_more: true,
+//           label: "Adults encourage students to communicate in any way they can.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q5a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q6",
+//           has_more: true,
+//           label: "Adults invite students to use their core vocabulary system, without requiring use.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q6a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q7",
+//           has_more: true,
+//           label: "Adults provide wait time for students to initiate and respond.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q7a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q8",
+//           has_more: true,
+//           label: "Adults do not provide students with physical support (e.g., hand-over- hand) to communicate.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q8a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q9",
+//           has_more: true,
+//           label: "An adult clearly describes the purpose of the lesson.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q9a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q10",
+//           has_more: true,
+//           label: "The lesson connects to the theme or a topic being studied in some way.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q10a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q11",
+//           has_more: true,
+//           label: "The lesson focuses on alphabet letters in a format that is accessible to ALL students (e.g., high contrast; large print; braille)",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q11a",
+//           label: "",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q12",
+//           has_more: true,
+//           label: "The lesson focuses on letter names, letter sounds, or other aspects of phonological awareness (rhyme, alliteration, segmenting and blending sounds).",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q12a",
+//           label: "",
+//           answer_block: "examples"
+//         },                                                                                    
+//         {
+//           id: "q13",
+//           has_more: true,
+//           label: "Content and complexity of activity is appropriate for age/grade/ability level of students.",
+//           answer_block: "frequency"
+//         },
+//         {
+//           id: "q13a",
+//           label: "",
+//           answer_block: "examples"
+//         },                                                                                    
+//       ]
+//     }
+//   ],
+//   report_segments: [
+//     {
+//       type: "raw",
+//     }
+//   ]
+// }
+
+// var com_forms_funcs = {
+//   name: "Communication Forms and Functions Worksheet",
+//   id: "com-ff",
+//   version: "0.1",
+//   type: "communicator",
+//   description: [
+//     "Communication Forms and Functions Worksheet can be used to log examples of communication based on different communicative functions. It has been adapted from the work of Amy Weatherby (1995) and Kathleen Quill (1995) by the Bridge School"
+//   ],
+//   instructions: [
+//     "Fill in each section to the best of your ability, including specific examples of communication you have observed. Communication can be accomplished through speech, but also through sounds, guestures, \"behaviors\", refusal to respond, etc.",
+//     "Communication *forms* are the behaviors we use to communicate (the \"how\")",
+//     "Communication *functions* are the reasons we communicate (the \"why\")",
+//     "Communication *partners* are the people we communicate with (the \"who\")",
+//     "Communication *contexts* are the places where we communicate (the \"where\")",
+//     "Communication *opportunities* are the times we have the chance to communicate (the \"when\")",
+//     "Communication *messages* are the meanings in what people communication (the \"what\")"
+//   ],
+//   answer_blocks: {
+//     examples: {
+//       type: 'text',
+//       hint: "Record what student says/does. Please include information about partners, forms, contexts, messages and opportunities"
+//     }
+//   },
+//   question_groups: [
+//     {
+//       id: "examples",
+//       label: "Examples",
+//       border: [26, 55, 130],
+//       background: [171, 194, 255],
+//       sub_label: "What student says/does. Please include information about partners, forms, contexts, messages and opportunities",
+//       header_border: [26, 55, 130],
+//       header_background: [171, 194, 255],
+//       questions: [
+//         {
+//           id: "q1",
+//           label: "Protest",
+//           hint: "Observe opposition when initiating an activity or transition",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q2",
+//           label: "Refuse, Reject",
+//           hint: "Offer options or opportunity and wait for expression of choice",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q3",
+//           label: "Request more of an action",
+//           hint: "Expectant pause during activity to give requesting opportunity",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q4",
+//           label: "Request a new action",
+//           hint: "Shows fatigue or boredom, or actively requests a change",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q5",
+//           label: "Request more of an object",
+//           hint: "Guestures, acts or speaks to show desire for more food, game, toy, etc.",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q6",
+//           label: "Communicates a choice between 2 or more",
+//           hint: "Partner-assisted scanning or other choice-making opportunities",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q7",
+//           label: "Request new object",
+//           hint: "Desire for object out of immediate focus",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q8",
+//           label: "Request absent object",
+//           hint: "Asks for object out of sight or vicinity",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q9",
+//           label: "Request attention",
+//           hint: "Noises, guestures, speech to draw attention to work, experience, statement, etc.",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q10",
+//           label: "Show affection",
+//           hint: "Hugs, kisses, contact, expressions, statements, etc.",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q11",
+//           label: "Greets people",
+//           hint: "Clear reaction when a familiar person arrives or leaves",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q12",
+//           label: "Offers, shares",
+//           hint: "Clear desire to share something of interest with others",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q13",
+//           label: "Directs attention",
+//           hint: "Sees an interesting object or person, or needs help with a task",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q14",
+//           label: "Polite social forms",
+//           hint: "Asks permissions, expresses gratitude, takes turns, etc.",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q15",
+//           label: "Answers yes/no questions",
+//           hint: "Uses guestures, actions or speech to respond",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q16",
+//           label: "Asks questions",
+//           hint: "Expresses interest or curiosity in an object, event or person",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q17",
+//           label: "Names things or people",
+//           hint: "Says the names of recognized items or subjects",
+//           answer_block: "examples"
+//         },
+//         {
+//           id: "q18",
+//           label: "Makes comments",
+//           hint: "Additional statements when observies objects, people or actions",
+//           answer_block: "examples"
+//         },
+//       ]
+//     }
+//   ],
+//   report_segments: [
+//     {
+//       type: "raw",
+//     }
+//   ]
+// }
 /*
 var csicy_profile = {
   name: "Communication Supports Inventory-Children and Youth (CSI-CY)",
