@@ -76,7 +76,11 @@
           <div style='flex: 1;'>
             {{#if question.answer_type.text}}
               <div style={{if question.manual_selection 'min-height: 75px; height: calc(100% - 59px);' 'min-height: 75px; height: 100%;'}}>
-                {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
+                {{#if question.answer_type.extra}}
+                  {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response'}}
+                {{else}}
+                  {{textarea placeholder=question.answer_type.hint value=question.text_response class='text_response expected'}}
+                {{/if}}
               </div>
             {{else}}
               <div class={{if question.manual_selection 'answer_holder with_manual' 'answer_holder'}}>

@@ -3388,8 +3388,10 @@ $nav_extras: #eee;
       border-right: 1px solid #ccc; 
       padding: 5px;
       white-space: pre-line;
-      &:placeholder-shown {
-        box-shadow: inset 0px 0px 2px #000;
+      &.expected {
+        &:placeholder-shown {
+          box-shadow: inset 0px 0px 2px #000;
+        }  
       }
     }
 

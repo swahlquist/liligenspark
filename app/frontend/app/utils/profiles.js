@@ -251,6 +251,9 @@ var Profile = EmberObject.extend({
         var answer_type = {};
         if(block.type == 'text') {
           answer_type.hint = block.hint;
+          if(block.extra) {
+            answer_type.extra = true;
+          }
         }
         answer_type[block.type] = true;
         var question_item = {
