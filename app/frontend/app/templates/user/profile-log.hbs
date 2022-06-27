@@ -222,7 +222,7 @@
                     </div>
                   {{/if}}
                 </div>
-                <div class='bottom-hr'></div>
+                <div class={{if question.has_more 'bottom-hr with_more' 'bottom-hr'}}></div>
               {{/if}}
             {{/each}}
           {{else}}

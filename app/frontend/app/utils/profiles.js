@@ -264,6 +264,7 @@ var Profile = EmberObject.extend({
           manual_selection: block.manual_selection,
           prompt_class: htmlSafe(max_options > 6 ? 'prompt many' : 'prompt'),
           answer_type: answer_type,
+          has_more: question.has_more,
           answers: answers
         }
         if(show_results) {

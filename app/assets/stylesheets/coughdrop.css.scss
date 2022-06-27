@@ -3300,6 +3300,11 @@ $nav_extras: #eee;
   .bottom-hr {
     border-bottom: 2px solid #aaa; 
     margin: 0 10px 0 5px;
+    &.with_more {
+      border-bottom-width: 1px;
+      opacity: 0.5;
+      margin-left: 40px;
+    }
   }
   .question_holder {
     &:hover {
