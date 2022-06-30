@@ -15,7 +15,7 @@
 - Translation improvements
 - Track "travel" as level of work for hitting buttons
 - Background images for boards
-- Evalutions (feature flag)
+- Evaluations (feature flag)
 
 
 ### 2019-10-08
