@@ -1256,8 +1256,27 @@ export default Controller.extend({
   toggleMode: function(mode, opts) {
     app_state.toggle_mode(mode, opts);
   },
+  swatch_style: computed('swatches', function() {
+    var swatches = this.get('swatches');
+    var extra_rows = (swatches[1].extras || []).length;
+    var width = 285 + (extra_rows * 60);
+    return htmlSafe('width: ' + width + 'px;');
+  }),
   swatches: computed('app_state.colored_keys', function() {
-    return [].concat(CoughDrop.keyed_colors);
+    var res = [].concat(CoughDrop.keyed_colors);
+    var extras = app_state.get('extra_colored_keys') || [];
+    var extras_per_row = Math.ceil(extras.length / (res.length / 2))
+    res.forEach(function(swatch, idx) {
+      if(idx % 2 == 1 && extras_per_row > 0 && extras.length > 0) {
+        for(var idx = 0; idx < extras_per_row; idx++) {
+          var extra = extras.shift();
+          if(extra) {
+            swatch.extras = (swatch.extras || []).concat([extra]);
+          }
+        }
+      }
+    });
+    return res;
   }),
   show_back: computed(
     'app_state.empty_board_history',

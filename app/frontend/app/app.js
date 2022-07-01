@@ -334,6 +334,34 @@ CoughDrop.keyed_colors = [
   {fill: 'rgb(115, 204, 255)', color: i18n.t('bluish', "Bluish"), hint: i18n.t('other_lower', "other"), types: []},
   {fill: "#000", color: i18n.t('black', "Black"), hint: i18n.t('contrast_lower', "contrast"), types: []}
 ];
+CoughDrop.extra_keyed_colors = [
+  {border: '#1086e9', fill: '#fff', label: 'adj1'},
+  {border: '#1086e9', fill: '#e0edf9', label: 'adj2'},
+  {border: '#1086e9', fill: '#a0cfee', label: 'adjf'},
+  {border: '#b6a39c', fill: '#b6a39c', label: 'adv'},
+  {border: '#b6a39c', fill: '#fff', label: 'conj'},
+  {border: '#fd0000', fill: '#fff', label: 'morph'},
+  {border: '#fd0000', fill: '#fad5d5', label: 'neg'},
+  {border: '#ffa019', fill: '#fff', label: 'noun1'},
+  {border: '#ffa019', fill: '#fff4e4', label: 'noun2'},
+  {border: '#ffa019', fill: '#ffd7a5', label: 'nounf'},
+  {border: '#000', fill: '#fff', label: 'phrs1'},
+  {border: '#000', fill: '#e0edf9', label: 'phrs2'},
+  {border: '#000', fill: '#a0cfee', label: 'phrs3'},
+  {border: '#ffae43', fill: '#ffe1bb', label: 'snd1'},
+  {border: '#ffae43', fill: '#ffe1bb', label: 'snd1'},
+  {border: '#ffcd38', fill: '#feefbf', label: 'prnn'},
+  {border: '#ffcd38', fill: '#fee594', label: 'prnnf'},
+  {border: '#b968ec', fill: '#fff', label: 'qstn1'},
+  {border: '#b968ec', fill: '#f3dafb', label: 'qstn2'},
+  {border: '#b968ec', fill: '#bba4db', label: 'qstnf'},
+  {border: '#ff81de', fill: '#f7b4e0', label: 'prep1'},
+  {border: '#ff81de', fill: '#fde5f5', label: 'prep2'},
+  {border: '#ff81de', fill: '#f7b4e0', label: 'prepf'},
+  {border: '#00c75f', fill: '#b9e7c4', label: 'verb1'},
+  {border: '#00c75f', fill: '#ebf8ed', label: 'verb2'},
+  {border: '#00c75f', fill: '#9ce8a9', label: 'verbf'},
+];
 
 CoughDrop.licenseOptions.license_url = function(id) {
   for(var idx = 0; idx < CoughDrop.licenseOptions.length; idx++) {

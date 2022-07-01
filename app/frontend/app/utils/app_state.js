@@ -1583,6 +1583,17 @@ var app_state = EmberObject.extend({
   monitor_scanning: observer('speak_mode', 'currentBoardState', function() {
     this.check_scanning();
   }),
+  extra_colored_keys: computed('currentUser.preferences.extra_colors', function() {
+    var list = [];
+    if(app_state.get('currentUser.preferences.extra_colors')) {
+      list = CoughDrop.extra_keyed_colors;
+    }
+    list.forEach(function(extra) {
+      extra.style = htmlSafe("width: 40px; border-color: " + extra.border + "; background: " + extra.fill + ";");
+    });
+    return list;
+
+  }),
   get_history: function() {
     if(app_state.get('speak_mode')) {
       return stashes.get('boardHistory');

@@ -297,7 +297,7 @@
               {{board.paintColor}}
             {{/if}}
           </button>
-          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style='width: 285px;'>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" style={{swatch_style}}>
             {{#each swatches as |swatch|}}
               <li role="presentation">
                 <a role="menuitem" href="#" tabindex="-1" {{action "paint" swatch.fill swatch.border swatch.types}} style="float: left; width: 140px; clear: right; padding-top: 3px; padding-bottom: 3px;">
@@ -308,15 +308,29 @@
                   </span>
                 </a>
               </li>
+              {{#if swatch.extras}}
+                <!-- defined in app_state.extra_colored_keys -->
+                {{#each swatch.extras as |extra|}}
+                  <li role="presentation">
+                    <a role="menuitem" href="#" tabindex="-1" {{action "paint" extra.fill extra.border extra.types}} style="float: left; width: 60px; clear: right; padding-left: 10px; padding-right: 10px; padding-top: 3px; padding-bottom: 3px;">
+                      <span class="swatch" style={{extra.style}}></span>
+                      <span class="text-muted" style="display: block; margin-top: -5px; font-size: 14px; vertical-align: top; white-space: nowrap; overflow: hidden; width: 40px;">
+                        {{extra.label}}&nbsp;
+                      </span>
+                    </a>
+                  </li>
+                {{/each}}
+                <div class='clear: left;'></div>
+              {{/if}}
             {{/each}}
             <li role="presentation">
-              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "hide"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide_upper"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "hide"}} style="float: left; width: 140px; clear: both;"><span class="glyphicon glyphicon-minus-sign"></span> {{t "Hide" key="hide_upper"}}</a>
               <a role="menuitem" href="#" tabindex="-1" {{action "paint" "show"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-ok-sign"></span> {{t "Un-Hide" key="unhide"}}</a>
               <span style="clear: left;"></span>
             </li>
             <!-- TODO: painting text-only or w/ image -->
             <li role="presentation" class="text-muted">
-              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "close"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="de_link"}}</a>
+              <a role="menuitem" href="#" tabindex="-1" {{action "paint" "close"}} style="float: left; width: 140px; clear: both;"><span class="glyphicon glyphicon-remove-sign"></span> {{t "De-Link" key="de_link"}}</a>
               <a role="menuitem" href="#" tabindex="-1" {{action "paint" "open"}} style="float: left; width: 140px; clear: right;"><span class="glyphicon glyphicon-plus-sign"></span> {{t "Re-Link" key="re_link"}}</a>
               <span style="clear: left;"></span>
             </li>
