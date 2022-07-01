@@ -183,6 +183,7 @@ export default modal.ModalController.extend({
         delete trans['inflections_suggestions'];
       });
     }
+    editManager.update_color_key_id();
   },
   labelChanged: observer('model.label', function() {
     if(!this.get('handle_updates')) { return; }

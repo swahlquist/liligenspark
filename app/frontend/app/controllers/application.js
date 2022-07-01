@@ -1262,18 +1262,25 @@ export default Controller.extend({
     var width = 285 + (extra_rows * 60);
     return htmlSafe('width: ' + width + 'px;');
   }),
-  swatches: computed('app_state.colored_keys', function() {
+  swatches: computed('app_state.colored_keys', 'app_state.extra_colored_keys', function() {
     var res = [].concat(CoughDrop.keyed_colors);
     var extras = app_state.get('extra_colored_keys') || [];
     var extras_per_row = Math.ceil(extras.length / (res.length / 2))
     res.forEach(function(swatch, idx) {
+      if(idx % 2 == 1) {
+        swatch.right_edge = true;
+      }
       if(idx % 2 == 1 && extras_per_row > 0 && extras.length > 0) {
+        var list = [];
         for(var idx = 0; idx < extras_per_row; idx++) {
           var extra = extras.shift();
           if(extra) {
-            swatch.extras = (swatch.extras || []).concat([extra]);
+            list.push(extra);
           }
         }
+        emberSet(swatch, 'extras', list);
+      } else {
+        emberSet(swatch, 'extras', null);
       }
     });
     return res;

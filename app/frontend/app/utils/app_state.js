@@ -1583,10 +1583,35 @@ var app_state = EmberObject.extend({
   monitor_scanning: observer('speak_mode', 'currentBoardState', function() {
     this.check_scanning();
   }),
-  extra_colored_keys: computed('currentUser.preferences.extra_colors', function() {
+  extra_colored_keys: computed('currentUser.preferences.extra_colors', 'color_key_id', function() {
     var list = [];
     if(app_state.get('currentUser.preferences.extra_colors')) {
       list = CoughDrop.extra_keyed_colors;
+    } else {
+      if(app_state.controller && app_state.controller.get('board.model') && window.tinycolor && editManager.controller.get('ordered_buttons')) {
+        var knowns = {};
+        CoughDrop.keyed_colors.forEach(function(clr) {
+          var a = window.tinycolor(clr.border);
+          var b = window.tinycolor(clr.fill);
+          knowns[clr.border + clr.fill] = true;
+          knowns[a.toString() + b.toString()] = true;
+          knowns[a.toHexString() + b.toHexString()] = true;
+          knowns[a.toRgbString() + b.toRgbString()] = true;
+          console.log("KNOWN", clr.border + clr.fill);
+        });
+        app_state.set('colored_keys', true);
+
+        editManager.controller.get('ordered_buttons').forEach(function(row) {
+          row.forEach(function(button) {
+            var ref = button.get('border_color') + button.get('background_color');
+            if(!knowns[ref] && ref) {
+              console.log("FOUND", ref);
+              knowns[ref] = true;
+              list.push({fill: button.get('background_color'), border: button.get('border_color')});
+            }
+          });
+        });
+      }
     }
     list.forEach(function(extra) {
       extra.style = htmlSafe("width: 40px; border-color: " + extra.border + "; background: " + extra.fill + ";");

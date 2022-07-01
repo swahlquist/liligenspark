@@ -980,6 +980,10 @@ var editManager = EmberObject.extend({
       });
       this.bogus_id_counter = (Math.min.apply(null, neg_ids) || -999);
     }
+    this.update_color_key_id();
+  },
+  update_color_key_id: function() {
+    app_state.set('color_key_id', Math.random() + "." + (new Date()).getTime());
   },
   update_history: observer('history', 'history.[]', 'future', 'future.[]', function() {
     if(this.controller) {
@@ -1037,6 +1041,7 @@ var editManager = EmberObject.extend({
       var currentState = this.clone_state();
       this.get('future').pushObject(currentState);
       this.controller.set('ordered_buttons', lastState);
+      this.update_color_key_id();
     }
   },
   redo: function() {
@@ -1046,6 +1051,7 @@ var editManager = EmberObject.extend({
       var currentState = this.clone_state();
       this.get('history').pushObject(currentState);
       this.controller.set('ordered_buttons', state);
+      this.update_color_key_id();
     }
   },
   bogus_id_counter: 0,
@@ -1105,6 +1111,7 @@ var editManager = EmberObject.extend({
       newState.push(fakeRow);
     }
     if(newState.length === 0) { newState.push(fakeRow); }
+    this.update_color_key_id();
     this.controller.set('ordered_buttons', newState);
   },
   find_button: function(id) {
@@ -1182,6 +1189,7 @@ var editManager = EmberObject.extend({
       }
       emberSet(button, 'user_modified', true);
       this.check_button(id);
+      this.update_color_key_id();
     } else {
       console.log("no button found for: " + id);
     }
@@ -1233,6 +1241,7 @@ var editManager = EmberObject.extend({
       this.apply_stashed_button(id);
     }
     this.controller.set('model.finding_target', false);
+    this.update_color_key_id();
   },
   prep_for_swap: function(id) {
     var button = this.find_button(id);
@@ -1270,6 +1279,7 @@ var editManager = EmberObject.extend({
     buttonb.set('for_swap', false);
     this.swapId = null;
     this.controller.set('ordered_buttons', ob);
+    this.update_color_key_id();
     this.controller.redraw_if_needed();
   },
   move_button: function(a, b, decision) {
@@ -1315,6 +1325,7 @@ var editManager = EmberObject.extend({
     });
 
     return update_buttons.then(function(board) {
+      this.update_color_key_id();
       return RSVP.resolve({visible: board.button_visible(new_id), button: button});
     });
   },
@@ -1393,6 +1404,7 @@ var editManager = EmberObject.extend({
           button.apply_level(level);
         });
       });
+      this.update_color_key_id();
     }
   },
   release_stroke: function() {
@@ -1455,6 +1467,7 @@ var editManager = EmberObject.extend({
         emberSet(button, 'painted_part_of_speech', this.paint_mode.part_of_speech);
       }
     }
+    this.update_color_key_id();
     this.check_button(id);
   },
   process_for_displaying: function(ignore_fast_html) {

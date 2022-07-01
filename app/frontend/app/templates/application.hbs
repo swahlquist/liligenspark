@@ -308,7 +308,7 @@
                   </span>
                 </a>
               </li>
-              {{#if swatch.extras}}
+              {{#if swatch.right_edge}}
                 <!-- defined in app_state.extra_colored_keys -->
                 {{#each swatch.extras as |extra|}}
                   <li role="presentation">
@@ -320,7 +320,7 @@
                     </a>
                   </li>
                 {{/each}}
-                <div class='clear: left;'></div>
+                <div style='clear: left;'></div>
               {{/if}}
             {{/each}}
             <li role="presentation">
