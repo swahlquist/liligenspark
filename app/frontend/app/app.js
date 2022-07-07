@@ -344,7 +344,7 @@ CoughDrop.extra_keyed_colors = [
   {border: '#fd0000', fill: '#fad5d5', label: 'neg'},
   {border: '#ffa019', fill: '#fff', label: 'noun1'},
   {border: '#ffa019', fill: '#fff4e4', label: 'noun2'},
-  {border: 'ff6f00', fill: '#ffe2b9', label: 'noun3'},
+  {border: '#ff6f00', fill: '#ffe2b9', label: 'noun3'},
   {border: '#ffa019', fill: '#ffd7a5', label: 'nounf'},
   {border: '#000', fill: '#fff', label: 'phrs1'},
   {border: '#000', fill: '#e0edf9', label: 'phrs2'},
