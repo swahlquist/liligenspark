@@ -42,7 +42,7 @@ export default {
             error();
           });
         } else {
-          persistence.ajax(path, {type: 'GET'}).then(function(res) {
+          persistence.ajax("/" + path, {type: 'GET'}).then(function(res) {
             i18n.langs[lang] = res;
             success();
           }, function(err) {

@@ -1586,7 +1586,7 @@ var app_state = EmberObject.extend({
   extra_colored_keys: computed('currentUser.preferences.extra_colors', 'color_key_id', function() {
     var list = [];
     if(app_state.get('currentUser.preferences.extra_colors')) {
-      list = CoughDrop.extra_keyed_colors;
+      list = [].concat(CoughDrop.extra_keyed_colors);
     } else {
       if(app_state.controller && app_state.controller.get('board.model') && window.tinycolor && editManager.controller.get('ordered_buttons')) {
         var knowns = {};
@@ -1617,7 +1617,6 @@ var app_state = EmberObject.extend({
       extra.style = htmlSafe("width: 40px; border-color: " + extra.border + "; background: " + extra.fill + ";");
     });
     return list;
-
   }),
   get_history: function() {
     if(app_state.get('speak_mode')) {
