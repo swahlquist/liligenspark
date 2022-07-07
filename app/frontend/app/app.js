@@ -335,8 +335,8 @@ CoughDrop.keyed_colors = [
   {fill: "#000", color: i18n.t('black', "Black"), hint: i18n.t('contrast_lower', "contrast"), types: []}
 ];
 CoughDrop.extra_keyed_colors = [
-  {border: '#1086e9', fill: '#fff', label: 'adj1'},
-  {border: '#1086e9', fill: '#e0edf9', label: 'adj2'},
+  {border: '#0069e7', fill: '#9fceef', label: 'adj1'},
+  {border: '#0069e7', fill: '#e0edf9', label: 'adj2'},
   {border: '#1086e9', fill: '#a0cfee', label: 'adjf'},
   {border: '#b6a39c', fill: '#b6a39c', label: 'adv'},
   {border: '#b6a39c', fill: '#fff', label: 'conj'},
@@ -344,6 +344,7 @@ CoughDrop.extra_keyed_colors = [
   {border: '#fd0000', fill: '#fad5d5', label: 'neg'},
   {border: '#ffa019', fill: '#fff', label: 'noun1'},
   {border: '#ffa019', fill: '#fff4e4', label: 'noun2'},
+  {border: 'ff6f00', fill: '#ffe2b9', label: 'noun3'},
   {border: '#ffa019', fill: '#ffd7a5', label: 'nounf'},
   {border: '#000', fill: '#fff', label: 'phrs1'},
   {border: '#000', fill: '#e0edf9', label: 'phrs2'},
@@ -354,6 +355,7 @@ CoughDrop.extra_keyed_colors = [
   {border: '#ffcd38', fill: '#fee594', label: 'prnnf'},
   {border: '#b968ec', fill: '#fff', label: 'qstn1'},
   {border: '#b968ec', fill: '#f3dafb', label: 'qstn2'},
+  {border: '9e16e8', fill: '#bea3dc', label: 'qstn3'},
   {border: '#b968ec', fill: '#bba4db', label: 'qstnf'},
   {border: '#ff81de', fill: '#f7b4e0', label: 'prep1'},
   {border: '#ff81de', fill: '#fde5f5', label: 'prep2'},
