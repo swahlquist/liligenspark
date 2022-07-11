@@ -1614,7 +1614,7 @@ var app_state = EmberObject.extend({
       }
     }
     list.forEach(function(extra) {
-      extra.style = htmlSafe("width: 40px; border-color: " + extra.border + "; background: " + extra.fill + ";");
+      emberSet(extra, 'style', htmlSafe("width: 40px; border-color: " + extra.border + "; background: " + extra.fill + ";"));
     });
     return list;
   }),
