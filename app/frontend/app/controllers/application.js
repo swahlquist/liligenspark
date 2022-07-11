@@ -50,7 +50,7 @@ export default Controller.extend({
     // ALSO ask if copy should be public, if the source board is public
     var needs_decision = (oldBoard.get('linked_boards') || []).length > 0;
     if(oldBoard.get('protected_material')) {
-      if(oldBoard.get('no_sharing')) {
+      if(oldBoard.get('no_sharing') && oldBoard.get('user_name') != app_state.get('sessionUser.user_name')) {
         modal.error(i18n.t('cant_copy_protected_boards', "This board contains purchased content which can't be copied."));
         return RSVP.reject();
       } else {

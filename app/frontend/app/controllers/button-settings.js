@@ -501,7 +501,7 @@ export default modal.ModalController.extend({
     return res;
   }),
   inflection_overrides_placeholder: computed(function() {
-    return htmlSafe(i18n.t('inflection_overrides_examples', "any inflection overrides, such as:\nI want=something\nhe (verb)=:pointer_id\nI [like|hate]=:favorites_link"));
+    return htmlSafe(i18n.t('inflection_overrides_examples', "any inflection overrides, such as:\nI want=something\nhe (verb)=:pointer_id\nI [like|hate]=:favorites_link\n:rule=manual inflection"));
   }),
   webcam_unavailable: computed(function() {
     return !contentGrabbers.pictureGrabber.webcam_available();
