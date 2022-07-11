@@ -432,6 +432,7 @@ class Api::UsersController < ApplicationController
     new_board = Board.find_by_path(params['new_board_id'])
     return unless exists?(user, params['user_id']) && exists?(old_board, params['old_board_id']) && exists?(new_board, params['new_board_id'])
     return unless allowed?(user, 'edit') && allowed?(old_board, 'view') && allowed?(new_board, 'view')
+    return allowed?(user, 'never_allow') unless new_board.user == user
     
     make_public = params['make_public'] && params['make_public'] == '1' || params['make_public'] == 'true' || params['make_public'] == true
     progress = Progress.schedule(user, :replace_board, {
@@ -454,6 +455,7 @@ class Api::UsersController < ApplicationController
     new_board = Board.find_by_path(params['new_board_id'])
     return unless exists?(user, params['user_id']) && exists?(old_board, params['old_board_id']) && exists?(new_board, params['new_board_id'])
     return unless allowed?(user, 'edit') && allowed?(old_board, 'view') && allowed?(new_board, 'view')
+    return allowed?(user, 'never_allow') unless new_board.user == user
     
     make_public = params['make_public'] && params['make_public'] == '1' || params['make_public'] == 'true' || params['make_public'] == true
     progress = Progress.schedule(user, :copy_board_links, {

@@ -876,14 +876,20 @@ class Board < ActiveRecord::Base
         sources = protected_images.map{|i| i.settings['protected_source'] || 'lessonpix' }
         sources += protected_sounds.map{|s| s.settings['protected_source'] }
         sources = sources.compact.uniq
+        prot = self.settings['protected'] || {}
+        prot['media'] = true
+        prot['media_sources'] = sources
         self.update_setting({
-          'protected' => {'media' => true, 'media_sources' => sources}
+          'protected' => prot
         }, nil, :save_without_post_processing)
       elsif (protected_images + protected_sounds).length == 0 && self.settings['protected'] && self.settings['protected']['media'] == true
         # TODO: race condition?
         if self.settings['protected']
+          prot = self.settings['protected']
+          prot['media'] = false
+          prot['media_sources'] = []
           self.update_setting({
-            'protected' => {'media' => false, 'media_sources' => []}
+            'protected' => prot
           }, nil, :save_without_post_processing)
         end
       end

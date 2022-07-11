@@ -678,6 +678,16 @@ describe Api::UsersController, :type => :controller do
       
       User.link_supervisor_to_user(@user, u, nil, true)
       post :replace_board, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
+      assert_unauthorized
+
+      b1.user = u
+      b1.save
+      post :replace_board, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
+      assert_unauthorized
+
+      b2.user = u
+      b2.save
+      post :replace_board, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
       expect(response).to be_successful
     end
   end
@@ -720,6 +730,16 @@ describe Api::UsersController, :type => :controller do
       expect(response).to be_successful
       
       User.link_supervisor_to_user(@user, u, nil, true)
+      post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
+      assert_unauthorized
+
+      b1.user = u
+      b1.save
+      post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
+      assert_unauthorized
+
+      b2.user = u
+      b2.save
       post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
       expect(response).to be_successful
     end
