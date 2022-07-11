@@ -638,6 +638,36 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board']['user_name']).to eq(com.user_name)
     end
     
+    it "should not allow creating a board from a protected board" do
+      token_user
+      com = User.create
+      bb = Board.create(user: @user)
+      bb.settings['protected'] = {'vocabulary' => true}
+      bb.save
+      b = Board.create(user: @user, parent_board: bb)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      User.link_supervisor_to_user(@user, com, nil, true)
+      post :create, params: {:board => {:name => "my board", :for_user_id => com.global_id, :parent_board_id => b.global_id}}
+      expect(response).to_not be_successful
+      json = JSON.parse(response.body)
+      expect(json['errors']).to eq(["cannot copy protected boards"])
+    end
+
+    it "should allow creating a board for a supervisee from a protected board" do
+      token_user
+      b = Board.create(user: @user)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      com = User.create
+      User.link_supervisor_to_user(@user, com, nil, true)
+      post :create, params: {:board => {:name => "my board", :for_user_id => com.global_id, :parent_board_id => b.global_id}}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['board']['name']).to eq('my board')
+      expect(json['board']['user_name']).to eq(com.user_name)
+    end
+
     it "should allow links if the author can access the links but not the supervisee" do
       token_user
       u = User.create

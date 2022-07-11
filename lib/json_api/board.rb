@@ -114,7 +114,10 @@ module JsonApi::Board
   end
   
   def self.extra_includes(board, json, args={})
-    json['board']['protected_settings'] = board.settings['protected'] if board.protected_material?
+    if board.protected_material?
+      json['board']['protected_settings'] = board.settings['protected'] || {}
+      json['board']['protected_settings']['copyable'] = true if board.copyable_if_authorized?(args[:permissions])
+    end
     self.trace_execution_scoped(['json/board/images_and_sounds']) do
       hash = board.images_and_sounds_for(args[:permissions])
       unless json['board'] && json['board']['simple_refs']

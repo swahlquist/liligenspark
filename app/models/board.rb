@@ -608,6 +608,12 @@ class Board < ActiveRecord::Base
     end
     false
   end
+
+  def copyable_if_authorized?(user)
+    return false if self.parent_board && self.parent_board.unshareable?
+    return true if user && user.id == self.user_id
+    return !self.unshareable?
+  end
   
   def protected_material?
     if self.settings && self.settings['protected']
@@ -941,6 +947,9 @@ class Board < ActiveRecord::Base
       end
       if self.parent_board_id != parent_board.id
         self.parent_board = parent_board
+        if parent_board.settings['protected']
+          self.settings['protected'] = (self.settings['protected'] || {}).merge(parent_board.settings['protected'])
+        end
         self.settings['source_board_id'] = parent_board.source_board.global_id
         BoardContent.apply_clone(parent_board, self)
       end
@@ -1073,6 +1082,12 @@ class Board < ActiveRecord::Base
         self.schedule_update_available_boards('all')
       end
       self.public = !!params['public'] 
+    end
+    if (self.settings['categories'] || []).include?('protected_vocabulary')
+      self.settings['protected'] ||= {}
+      self.settings['protected']['vocabulary'] = true
+    elsif self.public || (self.settings['categories'] || []).include?('unprotected_vocabulary')
+      (self.settings['protected'] || {}).delete('vocabulary')
     end
     if !params['sharing_key'].blank?
       return false unless self.process_share(params['sharing_key'])

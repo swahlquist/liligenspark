@@ -27,6 +27,13 @@ module Relinking
     if !self.board_content_id
       BoardContent.generate_from(self)
     end
+    if self.settings['protected'] && self.settings['protected']['vocabulary']
+      if self.copyable_if_authorized?(self.user)
+        # If the board author isn't allowed to create a copy, then
+        # don't allow it in a batch
+        return nil
+      end
+    end
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)
     board.key = board.generate_board_key(self.key.split(/\//)[1])
     board.settings['copy_id'] = copy_id
@@ -42,6 +49,7 @@ module Relinking
       board.settings['prefix'] = prefix
     end
     board.settings['description'] = self.settings['description']
+    board.settings['protected'] = self.settings['protected']
     board.settings['image_url'] = self.settings['image_url']
     board.settings['locale'] = self.settings['locale']
     board.settings['locales'] = self.settings['locales']

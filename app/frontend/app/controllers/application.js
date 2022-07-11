@@ -50,7 +50,11 @@ export default Controller.extend({
     // ALSO ask if copy should be public, if the source board is public
     var needs_decision = (oldBoard.get('linked_boards') || []).length > 0;
     if(oldBoard.get('protected_material')) {
-      if(oldBoard.get('no_sharing') && oldBoard.get('user_name') != app_state.get('sessionUser.user_name')) {
+      // Protecting boards from being copied is really only a UI constraint,
+      // since the user has all the info they need via the API to create
+      // their own copy. We just don't make it easy but it's totally doable.
+      // As such, there isn't really any protection from this on the backend.
+      if(oldBoard.get('copying_state.none')) {
         modal.error(i18n.t('cant_copy_protected_boards', "This board contains purchased content which can't be copied."));
         return RSVP.reject();
       } else {

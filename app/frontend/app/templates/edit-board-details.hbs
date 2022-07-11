@@ -113,7 +113,7 @@
       <div class="form-group">
         <label for="public" class="col-sm-3 control-label">{{t "Visibility" key='visibility'}}</label>
         <div class="col-sm-9">
-          {{#if model.no_sharing}}
+          {{#if model.copying_state}}
             <em class='form-control-static'>{{t "Boards with protected content can't be made public" key='protected_boards_no_public'}}</em>
           {{else}}
             {{bound-select select_class="form-control" select_id="license" content=public_options selection=model.visibility action=(action (mut model.visibility)) }}
@@ -124,6 +124,16 @@
             {{/unless}}
           {{/if}}
         </div>
+        {{#if model.visibility_setting.private}}
+          <div class="col-sm-9 col-sm-offset-3">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=protected_vocabulary}}
+                {{t "Only the author can make copies of this board, and any copies cannot be re-copied by others" key='protected_vocabulary'}}
+              </label>
+            </div>
+          </div>
+        {{/if}}
       </div>
       {{#if model.home_board}}
         {{#if app_state.feature_flags.find_multiple_buttons}}

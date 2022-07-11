@@ -1006,8 +1006,18 @@ CoughDrop.Board = DS.Model.extend({
       return !!protect;
     }
   ),
-  no_sharing: computed('protected_sources', function() {
-    return !!this.get('protected_sources.board');
+  copying_state: computed('protected_sources', 'protected_settings.copyable', function() {
+    var res = {};
+    if(this.get('protected_sources.board')) {
+      if(this.get('protected_settings.copyable')) {
+        res.limited = true;
+      } else {
+        res.none = true;
+      }
+    } else {
+      res = null;
+    }
+    return res;
   }),
   protected_sources: computed('protected_material', 'protected_settings', function() {
     var res = {};

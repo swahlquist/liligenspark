@@ -17,6 +17,10 @@ export default {
       // to user-translated locales
       if(translated.indexOf(base_lang) != -1) {
         lang = nav_lang;
+      } else if(translated.indexOf(base_lang + '*') != -1) {
+        // Allow an auto-translated language, as it's
+        // better than nothing.
+        lang = nav_lang;
       } else {
         lang = 'en';
       }

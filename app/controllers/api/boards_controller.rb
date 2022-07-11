@@ -270,7 +270,14 @@ class Api::BoardsController < ApplicationController
       return unless allowed?(user, 'edit')
       @board_user = user
     end
-    board = Board.process_new(processed_params['board'], {:user => @board_user, :author => @api_user, :key => params['board']['key']})
+    opts = {:user => @board_user, :author => @api_user, :key => params['board']['key']}
+    if processed_params['board'] && processed_params['board']['parent_board_id']
+      pb = Board.find_by_path(processed_params['board']['parent_board_id'])
+      if pb && pb.copyable_if_authorized?(@api_user)
+        opts[:allow_copying_protected_boards] = true
+      end
+    end
+    board = Board.process_new(processed_params['board'], opts)
     if board.errored?
       api_error(400, {error: "board creation failed", errors: board && board.processing_errors})
     else

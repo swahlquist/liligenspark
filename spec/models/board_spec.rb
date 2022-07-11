@@ -1704,6 +1704,21 @@ describe Board, :type => :model do
       expect(b2.processing_errors).to eq(['cannot copy protected boards'])
     end
 
+    it "should allow referencing a protected boards as parent board if allowed" do
+      u = User.create
+      b = Board.create(:user => u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      b2 = Board.create(:user => u)
+      b2.process({
+        'parent_board_id' => b.global_id
+      }, {:allow_copying_protected_boards => true})
+      expect(b2.errored?).to eq(false)
+      expect(b2.settings['protected']).to eq({'vocabulary' => true})
+      expect(b.copyable_if_authorized?(u)).to eq(true)
+      expect(b2.copyable_if_authorized?(u)).to eq(false)
+    end
+
     it "should allow referencing an allowed board as parent board, and create a clone" do
       u = User.create
       b1 = Board.create(user: u, public: true)
@@ -4128,6 +4143,47 @@ describe Board, :type => :model do
       expect(bi2).to receive(:check_for_variants).with(false).and_return(false)
       expect(board).to_not receive(:touch)
       expect(Board.check_for_variants('aaa')).to eq(false)
+    end
+  end
+
+  describe "copyable_if_authorized" do
+    it "should be true for a public board" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(b.copyable_if_authorized?(nil)).to eq(true)
+      expect(b.copyable_if_authorized?(u)).to eq(true)
+      b.public = true
+      expect(b.copyable_if_authorized?(nil)).to eq(true)
+      expect(b.copyable_if_authorized?(u)).to eq(true)
+    end
+
+    it "should be true for an original protected board only for the author" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      expect(b.copyable_if_authorized?(nil)).to eq(false)
+      expect(b.copyable_if_authorized?(u)).to eq(true)
+      expect(b.copyable_if_authorized?(u2)).to eq(false)
+    end
+
+    it "should be false for the copy of a protected board" do
+      u = User.create
+      u2 = User.create
+      b1 = Board.create(user: u)
+      b1.settings['protected'] = {'vocabulary' => true}
+      b1.save
+      b2 = Board.create(user: u)
+      b2.settings['protected'] = {'vocabulary' => true}
+      b2.parent_board = b1
+      b2.save
+      expect(b1.copyable_if_authorized?(nil)).to eq(false)
+      expect(b1.copyable_if_authorized?(u)).to eq(true)
+      expect(b1.copyable_if_authorized?(u2)).to eq(false)
+      expect(b2.copyable_if_authorized?(nil)).to eq(false)
+      expect(b2.copyable_if_authorized?(u)).to eq(false)
+      expect(b2.copyable_if_authorized?(u2)).to eq(false)
     end
   end
 end

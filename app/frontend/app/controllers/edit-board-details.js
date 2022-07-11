@@ -14,6 +14,7 @@ export default modal.ModalController.extend({
       board.set('button_locale', app_state.get('label_locale') || board.get('locale'));
     }
     this.set('originally_public', board.get('public'));
+    this.set('protected_vocabulary', !!board.get('protected_settings.vocabulary'));
   },
   closing: function() {
     if(this.get('model.translations.board_name') && this.get('model.locale')) {
@@ -21,17 +22,18 @@ export default modal.ModalController.extend({
       trans.board_name[this.get('model.locale')] = this.get('model.name');
       this.set('model.translations', trans);
     }
+    var cats = []
     if(this.get('model.home_board')) {
-      var cats = [];
       (this.get('board_categories') || []).forEach(function(cat) {
         if(cat.selected) {
           cats.push(cat.id);
         }
       });
-      this.set('model.categories', cats);
-    } else {
-      this.set('model.categories', []);
     }
+    if(this.get('model.visibility_settings.private')) {
+      cats.push(this.get('protected_vocabulary') ? 'protected_vocabulary' : 'unprotected_vocabulary')
+    }
+    this.set('model.categories', cats);
     if(this.get('model.intro')) {
       this.set('model.intro.unapproved', false);
     }
