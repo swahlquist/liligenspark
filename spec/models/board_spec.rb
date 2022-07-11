@@ -1719,6 +1719,27 @@ describe Board, :type => :model do
       expect(b2.copyable_if_authorized?(u)).to eq(false)
     end
 
+    it "should allow a board author to un-protect their own board" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      b.process({'categories' => ['unprotected_vocabulary']})
+      expect(b.settings['protected']).to eq({})
+    end
+
+    it "should not allow a protected copy to be un-protected" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      b2 = Board.create(user: u, parent_board: b)
+      b2.settings['protected'] = {'vocabulary' => true}
+      b2.save
+      b2.process({'categories' => ['unprotected_vocabulary']})
+      expect(b2.settings['protected']).to eq({'vocabulary' => true})
+    end
+
     it "should allow referencing an allowed board as parent board, and create a clone" do
       u = User.create
       b1 = Board.create(user: u, public: true)

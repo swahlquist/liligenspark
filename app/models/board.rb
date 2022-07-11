@@ -1048,7 +1048,7 @@ class Board < ActiveRecord::Base
     self.star(non_user_params[:starrer], params['starred']) if params['starred'] != nil
     
     self.settings['grid'] = params['grid'] if params['grid']
-    if params['visibility'] != nil
+    if params['visibility'] != nil && !self.unshareable?
       if params['visibility'] == 'public'
         if !self.public || self.settings['unlisted']
           @edit_notes << "set to public"
@@ -1071,7 +1071,7 @@ class Board < ActiveRecord::Base
         self.public = false
         self.settings['unlisted'] = false
       end
-    elsif params['public'] != nil
+    elsif params['public'] != nil && !self.unshareable?
 #       if self.public != false && params['public'] == false && (!self.user || !self.user.any_premium_or_grace_period?)
 #         add_processing_error("only premium users can make boards private")
 #         return false
@@ -1087,7 +1087,11 @@ class Board < ActiveRecord::Base
       self.settings['protected'] ||= {}
       self.settings['protected']['vocabulary'] = true
     elsif self.public || (self.settings['categories'] || []).include?('unprotected_vocabulary')
-      (self.settings['protected'] || {}).delete('vocabulary')
+      if self.parent_board && self.parent_board.unshareable?
+        # Copies cannot un-protect themselves
+      else
+        (self.settings['protected'] || {}).delete('vocabulary')
+      end
     end
     if !params['sharing_key'].blank?
       return false unless self.process_share(params['sharing_key'])

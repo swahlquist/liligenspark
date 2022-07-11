@@ -30,7 +30,7 @@ export default modal.ModalController.extend({
         }
       });
     }
-    if(this.get('model.visibility_settings.private')) {
+    if(this.get('model.visibility_setting.private')) {
       cats.push(this.get('protected_vocabulary') ? 'protected_vocabulary' : 'unprotected_vocabulary')
     }
     this.set('model.categories', cats);
