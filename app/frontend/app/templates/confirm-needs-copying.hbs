@@ -10,10 +10,10 @@
   </div>
   <div class="modal-header">
     {{#if model.copying_state.none}}
-      <button class='btn btn-primary' {{action 'confirm'}}>{{t "Edit a Copy" key='edit_a_copy'}}</button>
-    {{else}}
       <em>{{t "This board contains purchased content which can't be copied" key='cant_copy_protected_boards'}}</em>
       <br/><br/>
+    {{else}}
+      <button class='btn btn-primary' {{action 'confirm'}}>{{t "Edit a Copy" key='edit_a_copy'}}</button>
     {{/if}}
       <button class='btn btn-default' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
   </div>
