@@ -2,6 +2,7 @@ import Controller from '@ember/controller';
 import modal from '../utils/modal';
 import { computed, observer } from '@ember/object';
 import EmberObject from '@ember/object';
+import app_state from '../utils/app_state';
 
 export default Controller.extend({
   update_style_needed: observer('model.board.key', 'model.style', 'model.board.style.options', function() {
@@ -79,8 +80,14 @@ export default Controller.extend({
       this.set('model_key', key);
     },
     select: function() {
+      var opt = this.get('model_key');
+      var chosen = !this.get('style_missing');
       this.send('close');
-      if(this.get('model.callback')) {
+      if(chosen) {
+        var brd = this.get('style_boards').find(function(b) { return b.key == opt; });
+        var opts = {force_board_state: {key: brd.key, id: brd.id, locale: brd.localized_locale}};
+        app_state.home_in_speak_mode(opts);
+      } else if(this.get('model.callback')) {
         this.get('model.callback')();
       }
     }

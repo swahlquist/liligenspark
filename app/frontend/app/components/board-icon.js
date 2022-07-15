@@ -106,7 +106,7 @@ export default Component.extend({
           board.preview_locale = this.get('board_record.localized_locale');
         }
         modal.board_preview(board, board.preview_locale, this.get('allow_style'), function() {
-          _this.sendAction('action', board);
+          // _this.sendAction('action', board);
         });
       } else {
         var opts = {force_board_state: {key: board.get('key'), id: board.get('id')}};

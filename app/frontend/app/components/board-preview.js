@@ -38,7 +38,7 @@ export default Component.extend({
   }),
   actions: {
     select: function() {
-      this.sendAction();
+      this.sendAction(this.get('option'));
     },
     close: function() {
       modal.close_board_preview();
