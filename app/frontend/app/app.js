@@ -363,6 +363,7 @@ CoughDrop.extra_keyed_colors = [
   {border: '#00c75f', fill: '#b9e7c4', label: 'verb1'},
   {border: '#00c75f', fill: '#ebf8ed', label: 'verb2'},
   {border: '#00c75f', fill: '#9ce8a9', label: 'verbf'},
+  {border: '#ff2f25', fill: '#f3a4a4', label: 'else'}
 ];
 
 CoughDrop.licenseOptions.license_url = function(id) {
