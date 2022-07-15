@@ -781,6 +781,45 @@ describe Api::LogsController, :type => :controller do
       expect(json).to eq({'a' => 1, 'admin' => 'asdf'})
     end
   end
+
+  describe "anonymous_logs" do
+    after(:each) do
+      Permissable.permissions_redis.del('global/anonymous/logs/url')
+    end
+
+    it "should not require an api token" do
+      expect(Permissable.permissions_redis).to receive(:get).with('global/anonymous/logs/url').and_return("http://www.example.com/logs.zip".to_json)
+      get 'anonymous_logs'
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json).to eq("http://www.example.com/logs.zip")
+    end
+    
+    it "should return a progress object if no data cached" do
+      expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
+      get 'anonymous_logs'
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['progress']).to_not eq(nil)
+      expect(json['progress']['id']).to_not eq(nil)
+      expect(Worker.scheduled_for?('priority', Progress, 'perform_action', Progress.last.id)).to eq(true)
+    end
+
+    it "should return trend data" do
+      expect(Permissable.permissions_redis).to receive(:get).and_return(nil)
+      get 'anonymous_logs'
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json['progress']).to_not eq(nil)
+      expect(json['progress']['id']).to_not eq(nil)
+      expect(Worker.scheduled_for?('priority', Progress, 'perform_action', Progress.last.id)).to eq(true)
+      p = Progress.last
+      expect(p.settings['class']).to eq('LogSession')
+      expect(p.settings['method']).to eq('anonymous_logs')
+      expect(p.settings['arguments']).to eq([])
+    end
+
+  end
   
   describe "show" do
     it 'should require an api token' do

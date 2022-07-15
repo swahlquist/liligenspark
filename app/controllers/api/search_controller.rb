@@ -202,7 +202,7 @@ class Api::SearchController < ApplicationController
         json = JSON.parse(cache) rescue nil
       end
       if !json
-        req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'])}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
+        req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'] || 'en')}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
         json = JSON.parse(req.body) rescue nil
       end
       req = nil
@@ -211,7 +211,7 @@ class Api::SearchController < ApplicationController
       end
       if json && json['voices'] && json['voices'][0]
         gender = params['voice_id'] if ['male', 'female'].include?(params['voice_id'])
-        voice = json['voices'].detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == params['voice_id'].upcase }
+        voice = json['voices'].detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase }
         voice ||= json['voices'][0]
         # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692
         res = Typhoeus.post("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: 

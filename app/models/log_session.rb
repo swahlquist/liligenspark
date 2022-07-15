@@ -1960,4 +1960,39 @@ class LogSession < ActiveRecord::Base
     end
     res
   end
+
+  def self.anonymous_logs
+    # Collect all the user_ids who have a weekly_stats_summary from
+    # summary.data['publishing_user_ids'], check the users to see if they
+    # still have user.settings['preferences']['allow_log_reports'] and
+    # user.settings['preferences']['allow_log_publishing'].
+    # For all those users, Exporter.export_logs(user_id, true, zipper)
+    # to package them into a zip file.
+    user_ids = []
+    WeeklyStatsSummary.where(false).find_in_batches(batch_size: 50) do |batch|
+      batch.each do |sum|
+        user_ids += sum.data['publishing_user_ids'] || []
+      end
+    end
+
+    users = []
+    User.find_batches_by_global_id(user_ids.uniq) do |user|
+      users << user if user.settings['preferences']['allow_log_reports'] && user.settings['preferences']['allow_log_publishing']
+    end
+
+    file = Tempfile.new(['user-data', '.zip'])
+    file.close
+    OBF::Utils.build_zip(file.path) do |zipper|
+      zipper.add('README.txt', %{Generated #{Time.now.iso8601}
+
+More information about the file formats being used is available at https://www.openboardformat.org
+})
+      users.each do |user|
+        Exporter.export_logs(user.global_id, true, zipper)
+      end
+    end
+    url = Uploader.remote_upload("downloads/users/#{CGI.escape(Time.now.iso8601[0, 16].sub(/:/, '-'))}/global/coughdrop-obla-export.zip", file.path, "application/zip")
+    Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 14.days.to_i, url.to_json)
+    {url: url}
+  end
 end

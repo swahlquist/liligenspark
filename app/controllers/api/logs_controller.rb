@@ -1,5 +1,5 @@
 class Api::LogsController < ApplicationController
-  before_action :require_api_token, :except => [:lam, :trends]
+  before_action :require_api_token, :except => [:lam, :trends, :anonymous_logs]
   
   def logging_code_for(user)
     request.headers["HTTP_X_LOGGING_CODE_FOR_#{user.global_id}"] || request.headers["X-Logging-Code-For-#{user.global_id}"]
@@ -249,13 +249,27 @@ class Api::LogsController < ApplicationController
   def trends
     extra_data = !!(@api_user && @api_user.allows?(@api_user, 'admin_support_actions'))
     res = JSON.parse(Permissable.permissions_redis.get('global/stats/trends')) rescue nil
-    if !res #|| extra_data
+    if !res
       progress = Progress.schedule(WeeklyStatsSummary, :trends)
       res = JsonApi::Progress.as_json(progress, :wrapper => true)
+      res[:message] = "Data is generating, please check back soon..."
+      Permissions.setex(Permissable.permissions_redis, 'global/stats/trends', 1.hour.to_i, res.to_json)
     end
     if !extra_data
       res.delete(:admin) 
       res.delete('admin') 
+    end
+    
+    render json: res
+  end
+
+  def anonymous_logs
+    res = JSON.parse(Permissable.permissions_redis.get('global/anonymous/logs/url')) rescue nil
+    if !res
+      progress = Progress.schedule(LogSession, :anonymous_logs)
+      res = JsonApi::Progress.as_json(progress, :wrapper => true)
+      res[:message] = "Data is generating, please check back soon..."
+      Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 1.hour.to_i, res.to_json)
     end
     
     render json: res

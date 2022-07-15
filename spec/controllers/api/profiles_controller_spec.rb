@@ -38,6 +38,71 @@ describe Api::ProfilesController, :type => :controller do
     end
   end
 
+  describe "index" do
+    it "should require an api token" do
+      get 'index', params: {user_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      get 'index', params: {user_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require supervision authorization" do
+      token_user
+      u = User.create
+      get 'index', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should return default profiles for the communicator role" do
+      pt = ProfileTemplate.create!(organization_id: nil, public_profile_id: 'aaa', settings: {
+        'public' => true,
+        'profile' =>  {'name' => 'asdf', 'type' => 'communicator'}
+      })
+      token_user
+      get 'index', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json.length).to eq(2)
+      expect(json[0]['profile_id']).to eq('cole')
+      expect(json[-1]['profile_id']).to eq('aaa')
+    end
+
+    it "should return default profiles for the supervisor role" do
+      pt = ProfileTemplate.create!(organization_id: nil, public_profile_id: 'aaa', settings: {
+        'public' => true,
+        'profile' =>  {'name' => 'asdf', 'type' => 'supervisor'}
+      })
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      get 'index', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json.length).to eq(2)
+      expect(json[0]['profile_id']).to eq('cpp')
+      expect(json[-1]['profile_id']).to eq('aaa')
+    end
+
+    it "should include org-attached profiles and give them precedence" do
+      token_user
+      o = Organization.create
+      o.add_user(@user.user_name, false, false)
+      pt = ProfileTemplate.create!(organization_id: o.id, public_profile_id: 'aaa', settings: {
+        'public' => true,
+        'profile' =>  {'name' => 'asdf', 'type' => 'supervisor'}
+      })
+      @user.reload
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      get 'index', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json.length).to eq(2)
+      expect(json[0]['profile_id']).to eq('aaa')
+      expect(json[-1]['profile_id']).to eq('cpp')
+    end
+  end
 
   describe "latest" do
     it "should require an access token" do
