@@ -107,6 +107,45 @@ describe Progress, :type => :model do
     end
   end
 
+  describe "as_percent" do
+    it "should update progresses correctly" do
+      progress = Progress.create
+      Progress.class_variable_set(:@@running_progresses, {})
+
+      hash = {}
+      hash[Worker.thread_id] = progress
+      Progress.class_variable_set(:@@running_progresses, hash)
+
+      Progress.as_percent(0.0, 0.5) do
+        Progress.update_current_progress(0.1, 'bacon')
+        progress.reload
+        expect(progress.settings['percent']).to eq(0.05)
+
+        Progress.update_current_progress(0.8, 'bacon')
+        progress.reload
+        expect(progress.settings['percent']).to eq(0.4)
+
+        Progress.update_current_progress(0.9, 'bacon')
+        progress.reload
+        expect(progress.settings['percent']).to eq(0.45)
+      end
+      progress.reload
+      expect(progress.settings['percent']).to eq(0.5)
+
+      Progress.update_current_progress(0.9, 'bacon')
+      progress.reload
+      expect(progress.settings['percent']).to eq(0.9)
+
+      Progress.update_current_progress(1.0, 'bacon')
+      progress.reload
+      expect(progress.settings['percent']).to eq(1.0)
+    end
+
+    it "should update nested progresses" do
+    end
+  end
+
+
   describe "clear_old_progresses" do
     it "should delete old progresses" do
       Progress.create(:finished_at => 8.days.ago)

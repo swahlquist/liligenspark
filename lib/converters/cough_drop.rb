@@ -4,8 +4,13 @@ module Converters::CoughDrop
   EXT_PARAMS = ['link_disabled', 'add_to_vocalization', 'add_vocalization', 'hide_label', 'home_lock', 'blocking_speech', 'part_of_speech', 'external_id', 'video', 'book']
 
   def self.to_obf(board, dest_path, path_hash=nil)
-    json = to_external(board, {})
-    OBF::External.to_obf(json, dest_path, path_hash)
+    json = nil
+    Progress.as_percent(0, 0.1) do
+      json = to_external(board, {})
+    end
+    Progress.as_percent(0.1, 1.0) do
+      OBF::External.to_obf(json, dest_path, path_hash)
+    end
   end
 
   def self.to_external(board, opts)
@@ -66,170 +71,173 @@ module Converters::CoughDrop
     button_count = board.buttons.length
     locs = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']
     which_skinner = ButtonImage.which_skinner(opts && opts['user'] && opts['user'].settings && opts['user'].settings['preferences']['skin'])
-    board.buttons.each_with_index do |original_button, idx|
-      button = {
-        'id' => original_button['id'],
-        'label' => original_button['label'],
-        'left' => original_button['left'],
-        'top' => original_button['top'],
-        'width' => original_button['width'],
-        'height' => original_button['height'],
-        'border_color' => original_button['border_color'] || "#aaa",
-        'background_color' => original_button['background_color'] || "#fff",
-        'hidden' => original_button['hidden'],
-      }
-      if !opts || !opts['simple']
-        inflection_defaults = nil
-        trans = {}
-        (BoardContent.load_content(board, 'translations') || {}).each do |loc, hash|
-          next unless hash && hash.is_a?(Hash)
-          if hash[original_button['id']]
-            trans[loc] = hash[original_button['id']]
-          end
-        end
-        trans[board.settings['locale']] ||= original_button if original_button['inflections']
-        trans.each do |loc, hash|
-          button['translations'] ||= {}
-          button['translations'][loc] ||= {}
-          button['translations'][loc] ||= {}
-          button['translations'][loc]['label'] = hash['label']
-          button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
-          (hash['inflections'] || []).each_with_index do |str, idx| 
-            next unless str
-            button['translations'][loc]['inflections'] ||= {}
-            button['translations'][loc]['inflections'][locs[idx]] = str
-          end
-          (hash['inflection_defaults'] || []).each do |key, str|
-            if button['translations'][loc]['inflections'][key]
-            elsif locs.include?(key)
-              button['translations'][loc]['inflections'][key] = str
-              button['translations'][loc]['inflections']['ext_coughdrop_defaults'] ||= []
-              button['translations'][loc]['inflections']['ext_coughdrop_defaults'].push(key)
-            end
-          end
-        end
-        if original_button['vocalization']
-          if original_button['vocalization'].match(/^(\:|\+)/) || original_button['vocalization'].match(/&&/)
-            if original_button['vocalization'].match(/&&/)
-              button['actions'] = original_button['vocalization'].split(/&&/).map{|v| v.strip }
-              vocs = button['actions'].select{|a| !a.match(/^(\+|:)/)}
-              button['actions'] -= vocs
-              button['vocalization'] = vocs.join(' ') if vocs.length > 0
-              button['action'] = button['actions'][0]
-            else
-              button['action'] = original_button['vocalization']
-            end
-          else
-            button['vocalization'] = original_button['vocalization']
-          end
-        end
-      end
-        
-      if original_button['load_board']
-        button['load_board'] = {
-          'id' => original_button['load_board']['id'],
-          'url' => "#{JsonApi::Json.current_host}/#{original_button['load_board']['key']}",
-          'data_url' => "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}"
+    Progress.update_current_progress(0.3, "externalizing board #{board.global_id}")
+    Progress.as_percent(0.3, 1.0) do
+      board.buttons.each_with_index do |original_button, idx|
+        button = {
+          'id' => original_button['id'],
+          'label' => original_button['label'],
+          'left' => original_button['left'],
+          'top' => original_button['top'],
+          'width' => original_button['width'],
+          'height' => original_button['height'],
+          'border_color' => original_button['border_color'] || "#aaa",
+          'background_color' => original_button['background_color'] || "#fff",
+          'hidden' => original_button['hidden'],
         }
-        if opts && opts['simple']
-          button['load_board']['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}/simple.obf"
-        end
-      end
-
-      if !opts || !opts['simple']
-        if original_button['url']
-          button['url'] = original_button['url']
-        end
-        EXT_PARAMS.each do |param|
-          if original_button[param]
-            button["ext_coughdrop_#{param}"] = original_button[param]
-          end
-        end
-
-        if original_button['apps']
-          button['ext_coughdrop_apps'] = original_button['apps']
-          if original_button['apps']['web'] && original_button['apps']['web']['launch_url']
-            button['url'] = original_button['apps']['web']['launch_url']
-          end
-        end
-      end
-      if original_button['image_id']
-        image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
-        if image
-          image_url = image.url_for(opts['user'])
-          skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_url), which_skinner)
-          image_record = image
-          image = {
-            'id' => image.global_id,
-            'width' => image.settings['width'],
-            'height' => image.settings['height'],
-            'protected' => image.settings['protected'],
-            'protected_source' => image.settings['protected_source'],
-            'license' => OBF::Utils.parse_license(image.settings['license']),
-            'url' => Uploader.fronted_url(image_url),
-            'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
-            'content_type' => image.settings['content_type']
-          }
-          if skinned_url && skinned_url != image_url
-            image['ext_coughdrop_unskinned_url'] = image['url']
-            image['url'] = Uploader.fronted_url(skinned_url)
-          end
-          alt_urls = []
-          if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
-            if image['url'].match(/varianted-skin/)
-              alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'png'
-            elsif image['url'].match(/variant-/)
-              alt_urls << image['url'] + '.raster.png'
-            else
-              # apparently some are raster.png, some are .png
-              alt_urls << image['url'] + '.raster.png'
-              alt_urls << image['url'] + '.png'
+        if !opts || !opts['simple']
+          inflection_defaults = nil
+          trans = {}
+          (BoardContent.load_content(board, 'translations') || {}).each do |loc, hash|
+            next unless hash && hash.is_a?(Hash)
+            if hash[original_button['id']]
+              trans[loc] = hash[original_button['id']]
             end
-          elsif opts['for_pdf'] && image_record.raster_url
-            alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
           end
-          if alt_urls.length > 0
-            found = false
-            alt_urls.each do |alt_url|
-              next if found
-              req = Typhoeus.head(alt_url)
-              if req.success?
-                image['fallback_url'] ||= image['url']
-                image['url'] = alt_url
-                image['content_type'] = 'image/png'
-                image['width'] = 400
-                image['height'] = 400
-                found = true
+          trans[board.settings['locale']] ||= original_button if original_button['inflections']
+          trans.each do |loc, hash|
+            button['translations'] ||= {}
+            button['translations'][loc] ||= {}
+            button['translations'][loc] ||= {}
+            button['translations'][loc]['label'] = hash['label']
+            button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
+            (hash['inflections'] || []).each_with_index do |str, idx| 
+              next unless str
+              button['translations'][loc]['inflections'] ||= {}
+              button['translations'][loc]['inflections'][locs[idx]] = str
+            end
+            (hash['inflection_defaults'] || []).each do |key, str|
+              if button['translations'][loc]['inflections'][key]
+              elsif locs.include?(key)
+                button['translations'][loc]['inflections'][key] = str
+                button['translations'][loc]['inflections']['ext_coughdrop_defaults'] ||= []
+                button['translations'][loc]['inflections']['ext_coughdrop_defaults'].push(key)
               end
             end
           end
-
-          res['images'] << image
-          button['image_id'] = image['id']
-        end
-      end
-      if !opts || !opts['simple']
-        if original_button['sound_id']
-          sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
-          if sound
-            sound = {
-              'id' => sound.global_id,
-              'duration' => sound.settings['duration'],
-              'protected' => sound.settings['protected'],
-              'protected_source' => sound.settings['protected_source'],
-              'license' => OBF::Utils.parse_license(sound.settings['license']),
-              'url' => sound.url_for(opts['user']),
-              'data_url' => "#{JsonApi::Json.current_host}/api/v1/sounds/#{sound.global_id}",
-              'content_type' => sound.settings['content_type']
-            }
-          
-            res['sounds'] << sound
-            button['sound_id'] = original_button['sound_id']
+          if original_button['vocalization']
+            if original_button['vocalization'].match(/^(\:|\+)/) || original_button['vocalization'].match(/&&/)
+              if original_button['vocalization'].match(/&&/)
+                button['actions'] = original_button['vocalization'].split(/&&/).map{|v| v.strip }
+                vocs = button['actions'].select{|a| !a.match(/^(\+|:)/)}
+                button['actions'] -= vocs
+                button['vocalization'] = vocs.join(' ') if vocs.length > 0
+                button['action'] = button['actions'][0]
+              else
+                button['action'] = original_button['vocalization']
+              end
+            else
+              button['vocalization'] = original_button['vocalization']
+            end
           end
         end
+          
+        if original_button['load_board']
+          button['load_board'] = {
+            'id' => original_button['load_board']['id'],
+            'url' => "#{JsonApi::Json.current_host}/#{original_button['load_board']['key']}",
+            'data_url' => "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}"
+          }
+          if opts && opts['simple']
+            button['load_board']['data_url'] = "#{JsonApi::Json.current_host}/api/v1/boards/#{original_button['load_board']['key']}/simple.obf"
+          end
+        end
+
+        if !opts || !opts['simple']
+          if original_button['url']
+            button['url'] = original_button['url']
+          end
+          EXT_PARAMS.each do |param|
+            if original_button[param]
+              button["ext_coughdrop_#{param}"] = original_button[param]
+            end
+          end
+
+          if original_button['apps']
+            button['ext_coughdrop_apps'] = original_button['apps']
+            if original_button['apps']['web'] && original_button['apps']['web']['launch_url']
+              button['url'] = original_button['apps']['web']['launch_url']
+            end
+          end
+        end
+        if original_button['image_id']
+          image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
+          if image
+            image_url = image.url_for(opts['user'])
+            skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_url), which_skinner)
+            image_record = image
+            image = {
+              'id' => image.global_id,
+              'width' => image.settings['width'],
+              'height' => image.settings['height'],
+              'protected' => image.settings['protected'],
+              'protected_source' => image.settings['protected_source'],
+              'license' => OBF::Utils.parse_license(image.settings['license']),
+              'url' => Uploader.fronted_url(image_url),
+              'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
+              'content_type' => image.settings['content_type']
+            }
+            if skinned_url && skinned_url != image_url
+              image['ext_coughdrop_unskinned_url'] = image['url']
+              image['url'] = Uploader.fronted_url(skinned_url)
+            end
+            alt_urls = []
+            if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
+              if image['url'].match(/varianted-skin/)
+                alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'png'
+              elsif image['url'].match(/variant-/)
+                alt_urls << image['url'] + '.raster.png'
+              else
+                # apparently some are raster.png, some are .png
+                alt_urls << image['url'] + '.raster.png'
+                alt_urls << image['url'] + '.png'
+              end
+            elsif opts['for_pdf'] && image_record.raster_url
+              alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
+            end
+            if alt_urls.length > 0
+              found = false
+              alt_urls.each do |alt_url|
+                next if found
+                req = Typhoeus.head(alt_url)
+                if req.success?
+                  image['fallback_url'] ||= image['url']
+                  image['url'] = alt_url
+                  image['content_type'] = 'image/png'
+                  image['width'] = 400
+                  image['height'] = 400
+                  found = true
+                end
+              end
+            end
+
+            res['images'] << image
+            button['image_id'] = image['id']
+          end
+        end
+        if !opts || !opts['simple']
+          if original_button['sound_id']
+            sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
+            if sound
+              sound = {
+                'id' => sound.global_id,
+                'duration' => sound.settings['duration'],
+                'protected' => sound.settings['protected'],
+                'protected_source' => sound.settings['protected_source'],
+                'license' => OBF::Utils.parse_license(sound.settings['license']),
+                'url' => sound.url_for(opts['user']),
+                'data_url' => "#{JsonApi::Json.current_host}/api/v1/sounds/#{sound.global_id}",
+                'content_type' => sound.settings['content_type']
+              }
+            
+              res['sounds'] << sound
+              button['sound_id'] = original_button['sound_id']
+            end
+          end
+        end
+        res['buttons'] << button
+        Progress.update_current_progress(idx.to_f / button_count.to_f, "hashify button #{button['id']} from #{board.global_id}")
       end
-      res['buttons'] << button
-      Progress.update_current_progress(idx.to_f / button_count.to_f)
     end
     res['grid'] = BoardContent.load_content(board, 'grid')
     res
@@ -425,16 +433,22 @@ module Converters::CoughDrop
   end
   
   def self.to_obz(board, dest_path, opts)
-    content = to_external_nested(board, opts)
-    OBF::External.to_obz(content, dest_path, opts)
+    content = nil
+    Progress.as_percent(0, 0.1) do
+      content = to_external_nested(board, opts)
+    end
+    Progress.as_percent(0.1, 1.0) do
+      OBF::External.to_obz(content, dest_path, opts)
+    end
   end
   
   def self.to_external_nested(board, opts)
     boards = []
     images = []
     sounds = []
-
+    
     board.track_downstream_boards!
+    Progress.update_current_progress(0.1, 'tracked downstreams')
 
     lookup_boards = [board]
     board.settings['downstream_board_ids'].each do |id|
@@ -444,14 +458,19 @@ module Converters::CoughDrop
       end
     end
 
+    incr = (1.0 / lookup_boards.length.to_f) * 0.9
+    tally = 0.1
     lookup_boards.each do |b|
       if b
-        res = to_external(b, opts)
-        images += res['images']
-        res.delete('images')
-        sounds += res['sounds']
-        res.delete('sounds')
-        boards << res
+        Progress.as_percent(tally, tally + incr) do
+          res = to_external(b, opts)
+          images += res['images']
+          res.delete('images')
+          sounds += res['sounds']
+          res.delete('sounds')
+          boards << res
+        end
+        tally += incr
       end
     end
       

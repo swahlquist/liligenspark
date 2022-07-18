@@ -176,7 +176,7 @@ GEM
     notiffany (0.1.3)
       nenv (~> 0.1)
       shellany (~> 0.0)
-    obf (0.9.9.1)
+    obf (0.9.9.2)
       CFPropertyList
       json
       mime-types

@@ -62,14 +62,19 @@ class Progress < ActiveRecord::Base
     Worker.schedule_for(:priority, Progress, :perform_action, progress.id)
     progress
   end
+  # p = Progress.create(settings: {'class' => 'Board', 'id' => Board.find_by_path('example/core-40').id.to_s, 'method' => 'generate_download', 'arguments' => ["1_2", "pdf", {"include"=>"all", "headerless"=>true, "text_on_top"=>true, "transparent_background"=>true, "symbol_background"=>nil, "text_only"=>false, "text_case"=>nil, "font"=>"default"}]}); Progress.perform_action(p.id)
+  # Progress.perform_action(4511932)
   
   def self.as_percent(start_percent, end_percent, &block)
     @@running_progresses ||= {}
     progress = @@running_progresses[Worker.thread_id]
     if progress
+      puts "BLOCK START #{start_percent} #{end_percent}"
       # initialize block
       progress.settings['current_multiplier'] ||= 1.0
-      percent = (end_percent - start_percent)
+      start_percent = [0, start_percent].compact.max.to_f
+      end_percent = [1.0, [start_percent, end_percent].max.to_f].min
+      percent_spread = (end_percent - start_percent)
       percent_tally_addition = start_percent * progress.settings['current_multiplier']
       progress.settings['percent_tallies'] ||= []
       full_percent_tally_addition = end_percent * progress.settings['current_multiplier']
@@ -78,17 +83,25 @@ class Progress < ActiveRecord::Base
       # prep for progress updates
       progress.settings['percent_tallies'] << percent_tally_addition
       progress.settings['percents_before'] ||= []
-      progress.settings['percents_before'] << percent
-      progress.settings['current_multiplier'] = (progress.settings['current_multiplier'] * percent).round(4)
+      progress.settings['percents_before'] << percent_spread.to_f
+      progress.settings['current_multiplier'] = (progress.settings['current_multiplier'] * percent_spread).round(4)
       progress.save
       block.call
       
       # tear-down after progress updates
+      # if full_percent_tally_addition.round(2) < (progress.settings['percent'] || 0)
+      #   puts "WENT BACKWARDS! from #{progress.settings['percent']} to #{full_percent_tally_addition}"
+      #   puts JSON.pretty_generate(progress.settings)
+      #   raise "asdf"
+      # else
+      #   puts "WENT FORWARDS! from #{progress.settings['percent']} to #{full_percent_tally_addition} #{progress.settings['message_key']}"
+      # end
       progress.settings['percent'] = full_percent_tally_addition.round(2)
       progress.settings['percent_tallies'].pop
       progress.settings['percents_before'].pop
-      progress.settings['current_multiplier'] = (progress.settings['current_multiplier'] / percent).round(4)
+      progress.settings['current_multiplier'] = (progress.settings['current_multiplier'] / percent_spread).round(4)
       progress.save
+      puts "BLOCK END"
     else
       block.call
     end
@@ -102,9 +115,20 @@ class Progress < ActiveRecord::Base
         percent *= progress.settings['current_multiplier'] || 1.0
         percent += progress.settings['percent_tallies'].sum
       end
+      percent = [[0.0, percent].max, 1.0].min
+      # if percent.round(2) + 0.1 < (progress.settings['percent'] || 0)
+      #   puts "WENT BACKWARDS from #{progress.settings['percent']} to #{percent}"
+      #   puts JSON.pretty_generate(progress.settings)
+      #   # raise "asdf"
+      # else
+      #   puts "WENT FORWARDS from #{progress.settings['percent']} to #{percent} #{message_key || 'unnamed update'}"
+      # end
       progress.settings['percent'] = percent.round(2)
       progress.settings['message_key'] = message_key.to_s if message_key
-      progress.save
+      if !progress.settings['last_saved_percent'] || progress.settings['last_saved_percent'] < progress.settings['percent'] - 0.3
+        progress.settings['last_saved_percent'] = progress.settings['percent']
+        progress.save
+      end
     else
       false
     end

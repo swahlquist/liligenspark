@@ -38,7 +38,7 @@ module Converters::Utils
         font = File.expand_path('../../../public/fonts/ArchitectsDaughter.ttf', __FILE__)
       end
     end
-    Progress.update_current_progress(0.2, :converting_file)
+    Progress.update_current_progress(0.1, :preconverting_file)
     # TODO: key off just the last change id for the board(s) when building the
     # filename, return existing filename if it exists and isn't about to expire
     path = OBF::Utils.temp_path("stash")
@@ -62,9 +62,9 @@ module Converters::Utils
     remote_path = "downloads/#{key}/#{filename}"
     url = Uploader.check_existing_upload(remote_path)[:url]
     return url if url
-    Progress.update_current_progress(0.3, :converting_file)
+    Progress.update_current_progress(0.2, :converting_file)
     
-    Progress.as_percent(0.3, 0.8) do
+    Progress.as_percent(0.2, 0.9) do
       if file_type == 'obz'
         if includes == 'all'
           Converters::CoughDrop.to_obz(board, path, {'user' => user})
