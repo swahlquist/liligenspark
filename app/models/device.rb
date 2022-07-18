@@ -164,7 +164,9 @@ class Device < ActiveRecord::Base
     # If the user requires 2fa then check if this device needs re-approval
     if self.user && self.user.state_2fa[:required]
       if self.settings['long_token'] && self.settings['2fa'] && (self.settings['2fa']['last_otp'] || 0) > 30.days.ago.to_i
-      elsif self.token_type == :app # TODO: remove this after mobile apps support 2fa
+        # 2fa token is acceptable for 30 days
+      elsif self.settings['valet']
+        # valet logins don't require 2fa
       else
         self.settings['2fa'] ||= {}
         self.settings['2fa']['pending'] = true
