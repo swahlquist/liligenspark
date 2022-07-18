@@ -186,7 +186,7 @@ module Passwords
   def valet_password_used!
     # Record the valet password as having been triggered.
     do_notify = !self.settings['valet_password_at'] || self.settings['valet_password_at'] < 30.minutes.ago.to_i
-    self.settings['valet_password_at'] = nil if (self.settings['valet_prevent_disable'] && self.settings['valet_password_at'] < 30.minutes.ago.to_i)
+    self.settings['valet_password_at'] = nil if (self.settings['valet_prevent_disable'] && self.settings['valet_password_at']  && self.settings['valet_password_at'] < 30.minutes.ago.to_i)
     self.settings['valet_password_at'] ||= Time.now.to_i
     self.save!
     # Notify user that the valet password was used
