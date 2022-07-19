@@ -172,6 +172,14 @@ module Uploadable
       nil
     end
   end
+
+  def possible_raster
+    if self.url && self.url.match(/libraries\/mulberry/) && self.url.match(/\.svg$/)
+      "#{self.url}.raster.png"
+    elsif self.url && self.url.match(/libraries\/noun-project/) && self.url.match(/\.svg$/)
+      "#{self.url}.raster.png"
+    end
+  end
   
   def assert_cached_copy
     self.class.assert_cached_copy(self.url)

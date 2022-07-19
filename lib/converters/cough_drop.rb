@@ -194,6 +194,8 @@ module Converters::CoughDrop
               end
             elsif opts['for_pdf'] && image_record.raster_url
               alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
+            elsif opts['for_pdf'] && image_record.possible_raster
+              alt_urls << Uploader.fronted_url(image_record.possible_raster)
             end
             if alt_urls.length > 0
               found = false
