@@ -83,7 +83,7 @@ export default Controller.extend({
       var opt = this.get('model_key');
       var chosen = !this.get('style_missing');
       this.send('close');
-      if(chosen) {
+      if(chosen && this.get('style_boards.length')) {
         var brd = this.get('style_boards').find(function(b) { return b.key == opt; });
         var opts = {force_board_state: {key: brd.key, id: brd.id, locale: brd.localized_locale}};
         app_state.home_in_speak_mode(opts);
