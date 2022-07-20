@@ -1618,6 +1618,9 @@ var app_state = EmberObject.extend({
     });
     return list;
   }),
+  board_lang: computed('label_locale', function() {
+    return (app_state.get('label_locale') || 'en').split(/-|_/)[0];
+  }),
   get_history: function() {
     if(app_state.get('speak_mode')) {
       return stashes.get('boardHistory');

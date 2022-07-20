@@ -31,6 +31,9 @@ export default {
     i18n.langs.preferred = lang;
     i18n.langs.fallback = base_lang;
     if(lang.match(/^en/)) {
+      if(document.body.parentNode) {
+        document.body.parentNode.setAttribute('lang', 'en');
+      }
       extras.advance('lang');
     } else {
       var try_lang = function(lang, success, error) {
@@ -61,8 +64,14 @@ export default {
       };
       var get_base_lang = function() {
         try_lang(base_lang, function() {
+          if(document.body.parentNode) {
+            document.body.parentNode.setAttribute('lang', base_lang);
+          }
           extras.advance('lang');
         }, function() {
+          if(document.body.parentNode) {
+            document.body.parentNode.setAttribute('lang', 'en');
+          }
           // TODO: make a note somewhere that the lang couldn't load
           extras.advance('lang');
         });

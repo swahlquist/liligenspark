@@ -71,7 +71,7 @@
     </div>
   {{/if}}
   {{#with model as |board|}}
-  <div style={{board_style}} class={{display_class}} data-id={{board.id}}>
+  <div style={{board_style}} class={{display_class}} data-id={{board.id}} lang={{app_state.board_lang}}>
     {{#if board.has_background}}
       <div style={{bg_style}} id='board_bg' class={{bg_class}}>
         {{#if board.background.text}}

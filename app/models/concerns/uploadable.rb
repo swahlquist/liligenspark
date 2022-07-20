@@ -173,12 +173,16 @@ module Uploadable
     end
   end
 
-  def possible_raster
-    if self.url && self.url.match(/libraries\/mulberry/) && self.url.match(/\.svg$/)
-      "#{self.url}.raster.png"
-    elsif self.url && self.url.match(/libraries\/noun-project/) && self.url.match(/\.svg$/)
-      "#{self.url}.raster.png"
+  def possible_raster(skinned_url=nil)
+    url = skinned_url || self.url
+    res = nil
+    if url && url.match(/libraries\/mulberry/) && url.match(/\.svg$/)
+      res = "#{url}.raster.png"
+    elsif url && url.match(/libraries\/noun-project/) && url.match(/\.svg$/)
+      res = "#{url}.raster.png"
     end
+    res = res.sub(/varianted-skin\.svg\./, '')
+    res
   end
   
   def assert_cached_copy
