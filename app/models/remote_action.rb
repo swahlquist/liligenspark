@@ -27,6 +27,9 @@ class RemoteAction < ApplicationRecord
     elsif ra.action == 'update_available_boards'
       user = User.find_by_path(ra.path)
       user.schedule_once_for(:slow, :update_available_boards) if user
+    elsif ra.action == 'badge_check'
+      user_id, summary_id = ra.path.split(/::/, 2)
+      UserBadge.schedule_once_for('slow', :check_for, user_id, summary_id)
     elsif ra.action == 'schedule_update_available_boards'
       board = Board.find_by_path(ra.path)
       board.schedule_once_for(:slow, :schedule_update_available_boards, ra.extra || 'all', true) if board

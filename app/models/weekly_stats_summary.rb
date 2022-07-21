@@ -11,7 +11,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
   
   def schedule_badge_check
     return if RedisInit.queue_pressure?
-    UserBadge.schedule_once_for('slow', :check_for, self.related_global_id(self.user_id), self.global_id) if self.user_id && self.user_id > 0
+    return if !self.user_id || self.user_id <= 0
+    path = "#{self.related_global_id(self.user_id)}::#{self.global_id}"
+    ra_cnt = RemoteAction.where(path: path, action: 'badge_check').update_all(act_at: 1.hour.from_now)
+    RemoteAction.create(path: path, act_at: 30.minutes.from_now, action: 'badge_check') if ra_cnt == 0
     true
   end
   
@@ -229,6 +232,9 @@ class WeeklyStatsSummary < ActiveRecord::Base
     log_session = LogSession.find_by_global_id(log_session_id)
     return unless log_session && log_session.log_type == 'session'
     
+    # NOTE: whenever you enable this, you need to rethink the scheduling
+    # because unless this is very performant it's going to stuff the
+    # worker queues
     return # for now, maybe start allowing quick core boards and copies through
     # TODO: stats should have some data on downstream boards, since one of the questions we
     # want to answer is, are there buttons on sub-boards that are used more often than

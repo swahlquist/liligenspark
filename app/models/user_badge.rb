@@ -184,6 +184,8 @@ class UserBadge < ActiveRecord::Base
   end
   
   def self.check_for(user_id, stats_id=nil, allow_forever_check=false, verbose=false)
+    # TODO: this is sloooow, like 10 minutes to run for some users
+    # and it's definitely getting scheduled multiple times per user
     user = User.find_by_path(user_id)
     stats = WeeklyStatsSummary.find_by_global_id(stats_id) if stats_id
     stats_start = WeeklyStatsSummary.weekyear_to_date(stats.weekyear) if stats

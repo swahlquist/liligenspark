@@ -49,7 +49,7 @@ class LibraryCache < ApplicationRecord
     image_id = nil
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |k, h|
-        if h['added'] < 9.months.ago.to_i
+        if h['added'] < 6.months.ago.to_i
           self.data[cat][k].delete('data')
         end
         image_id ||= h['image_id'] if h['image_id'] && h['url'] == word_data['url']
