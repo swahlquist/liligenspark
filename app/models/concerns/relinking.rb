@@ -23,6 +23,7 @@ module Relinking
   end
   
   def copy_for(user, make_public=false, copy_id=nil, prefix=nil)
+    # TODO: nil return value will cause an exception, is not being caught
     return nil unless user
     if !self.board_content_id
       BoardContent.generate_from(self)

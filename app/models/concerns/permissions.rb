@@ -4,6 +4,7 @@ module Permissions
   extend ActiveSupport::Concern
   include Permissable::InstanceMethods
 
+  # TODO: remove this once you fold it into permissable and update the gem
   def set_cached(prefix, data, expires=nil)
     return false if ENV['STOP_CACHING']
     expires ||= 1800 # 30 minutes

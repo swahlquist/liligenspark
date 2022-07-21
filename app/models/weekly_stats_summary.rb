@@ -99,6 +99,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       words = target_words[:trend_modeled_words]
       words += total_stats[:modeled_word_counts].keys
       total_stats[:modeled_word_breadth] = words.uniq.length
+
     end
     target_words.delete(:trend_words)
     target_words.delete(:trend_modeled_words)
@@ -344,6 +345,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     board_user_ids = {}
     word_pairs = {}
     home_boards = {}
+    grid_sizes = {}
     home_board_levels = {}
     device_prefs = {}
     user_ids_with_home_boards = []
@@ -357,6 +359,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
         if current_trends
           if user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['id']
             root_board = Board.find_by_path(user.settings['preferences']['home_board']['id'])
+            root_grid = BoardContent.load_content(root_board, 'grid') if root_board
+            if root_grid
+              grid_sizes["#{root_grid['rows']}x#{root_grid['columns']}"] ||= []
+              grid_sizes["#{root_grid['rows']}x#{root_grid['columns']}"] << user.global_id
+            end
             while root_board && root_board.parent_board
               root_board = root_board.parent_board
             end
@@ -509,6 +516,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
 
     total.data['research_user_ids'].uniq!
+    total.data['grid_user_ids'] = {}
+    grid_sizes.each do |size, user_ids|
+      total.data['grid_user_ids'][size] = user_ids.uniq
+    end
     total.data['publishing_user_ids'].uniq!
     total.data['totals']['device'] = device_prefs
     total.data['board_usages'] = {}
@@ -643,6 +654,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:research_user_ids] = []
     stash[:publishing_user_ids] = []
     stash[:home_board_user_ids] = []
+    stash[:grid_user_ids] = {}
     stash[:total_summaries] = 0
     stash[:device] = {}
     earliest = nil
@@ -689,6 +701,13 @@ class WeeklyStatsSummary < ActiveRecord::Base
         if summary.data['modeled_word_counts']
           summary.data['modeled_word_counts'].each do |word, cnt|
             stash[:modeled_word_counts][word] = (stash[:modeled_word_counts][word] || 0) + cnt
+          end
+        end
+        
+        if summary.data['grid_user_ids']
+          summary.data['grid_user_ids'].each do |size, user_ids|
+            stash[:grid_user_ids][size] ||= []
+            stash[:grid_user_ids][size] += user_ids
           end
         end
 
@@ -831,6 +850,15 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:admin][:total_sessions] = stash[:total_sessions]
       res[:admin][:modeled_sessions] = stash[:modeled_sessions]
     end
+
+
+    all_grid_user_ids = []
+    res[:grid_sizes] = {}
+    res[:grid_user_ids].each do |size, user_ids|
+      all_grid_user_ids += user_ids
+      res[:grid_sizes][size] = user_ids.uniq.length
+    end
+    res[:admin][:total_grid_users] = all_grid_user_ids.uniq.length
     
     if stash[:board_usages]
       max_usage_count = stash[:board_usages].map(&:last).max || 0.0

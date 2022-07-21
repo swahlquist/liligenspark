@@ -25,7 +25,6 @@ class LogSession < ActiveRecord::Base
   secure_serialize :data
   DAILY_EVENT_TYPES = ['models', 'modeled', 'remote_models', 'focus_words', 'eval', 'modeling_ideas', 'notes', 'quick_assessments', 'goals', 'profile'];
 
-
   def generate_defaults
     self.data ||= {}
     return true if skip_extra_data_processing?
