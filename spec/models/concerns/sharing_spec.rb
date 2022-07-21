@@ -1088,8 +1088,11 @@ describe Sharing, :type => :model do
       b = Board.create(:user => u)
       b2 = Board.create(:user => u2, :public => true)
       b.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b2.global_id}}]
+      b.instance_variable_set('@buttons_changed', true)
       b.save
+      RemoteAction.process_all
       Worker.process_queues
+      b2.reload
       expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([])
       expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([])
       expect(b2.allows?(u, 'view')).to eq(true)
@@ -1098,8 +1101,10 @@ describe Sharing, :type => :model do
       
       # u shares with u2 (pending)
       b.reload.share_with(u2, true, true)
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
+      b2.reload
       expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([b.global_id])
       expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([b.global_id])
       u2.reload
@@ -1110,13 +1115,17 @@ describe Sharing, :type => :model do
 
       # u2 accept share (allowing u downstream access)
       b.reload.update_shares_for(u2.reload, true)
+      RemoteAction.process_all
       Worker.process_queues
+      b2.reload
       expect(Board.all_shared_board_ids_for(u.reload, true)).to eq([b.global_id, b2.global_id])
       expect(Board.all_shared_board_ids_for(u2.reload, true)).to eq([b.global_id, b2.global_id])
       expect(b.reload.shared_with?(u2, true)).to eq(true)
       u2.reload
       u.reload
+      u.update_available_boards
       expect(b2.reload.allows?(u, 'view')).to eq(true)
+      expect(u.can_edit?(b2)).to eq(true)
       expect(b2.allows?(u, 'edit')).to eq(true)
     end
     

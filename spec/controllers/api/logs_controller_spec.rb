@@ -788,11 +788,11 @@ describe Api::LogsController, :type => :controller do
     end
 
     it "should not require an api token" do
-      expect(Permissable.permissions_redis).to receive(:get).with('global/anonymous/logs/url').and_return("http://www.example.com/logs.zip".to_json)
+      expect(Permissable.permissions_redis).to receive(:get).with('global/anonymous/logs/url').and_return({url: "http://www.example.com/logs.zip"}.to_json)
       get 'anonymous_logs'
       expect(response).to be_successful
       json = JSON.parse(response.body)
-      expect(json).to eq("http://www.example.com/logs.zip")
+      expect(json).to eq({'url' => "http://www.example.com/logs.zip"})
     end
     
     it "should return a progress object if no data cached" do

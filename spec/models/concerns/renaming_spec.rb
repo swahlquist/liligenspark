@@ -305,19 +305,26 @@ describe Renaming, :type => :model do
         {'label' => 'fred'},
         {'id' => '1234', 'load_board' => {'id' => b.global_id, 'key' => b.key}}
       ]
+      b2.instance_variable_set('@buttons_changed', true)
       b2.save
       b3 = Board.create(:user => u)
       b3.settings['buttons'] = [
         {},
         {},
-        {'load_board' => {'id' => b.global_id, 'key' => b.key}},
-        {'load_board' => {'id' => b.global_id, 'key' => b2.key}},
-        {'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
-        {'load_board' => {'id' => b2.global_id, 'key' => b.key}}
+        {'id' => '111', 'load_board' => {'id' => b.global_id, 'key' => b.key}},
+        {'id' => '222', 'load_board' => {'id' => b.global_id, 'key' => b2.key}},
+        {'id' => '333', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '444', 'load_board' => {'id' => b2.global_id, 'key' => b.key}}
       ]
+      b3.instance_variable_set('@buttons_changed', true)
       b3.save
+      RemoteAction.process_all
       Worker.process_queues
-      b.reload
+      Worker.process_queues
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids'].sort).to eq([])
+      expect(b2.reload.settings['downstream_board_ids'].sort).to eq([b.global_id])
+      expect(b3.reload.settings['downstream_board_ids'].sort).to eq([b.global_id, b2.global_id])
       old_key = b.key
       new_key = "#{u.user_name}/bambam"
       b.rename_to(new_key)

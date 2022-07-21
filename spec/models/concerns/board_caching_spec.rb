@@ -192,11 +192,7 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
       Worker.process_queues
 
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u3.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.where(action: 'update_available_boards', path: u3.global_id).count).to eq(1)
 
       Worker.process_queues
       expect(u2.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
@@ -223,18 +219,10 @@ describe BoardCaching, :type => :model do
       b.reload.process({'buttons' => [{'id' => 1, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}]}, {:user => u2})
       RedisInit.permissions.keys.each{|k| RedisInit.permissions.del(k) }
 
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u3.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(false)
+      expect(RemoteAction.where(action: 'update_available_boards', path: u3.global_id).count).to eq(0)
       Worker.process_queues
       Worker.process_queues
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u3.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.where(action: 'update_available_boards', path: u3.global_id).count).to eq(1)
       Worker.process_queues
       expect(u2.reload.private_viewable_board_ids.sort).to eq([b.global_id])
       expect(u3.reload.private_viewable_board_ids.sort).to eq([b.global_id])
@@ -444,18 +432,10 @@ describe BoardCaching, :type => :model do
       
       b.process({'buttons' => [{'id' => 1, 'load_board' => {'id' => b2.global_id}}]}, {'user' => u1})
 
-      expect(Worker.scheduled?(User, :perform_action, {
-        'id' => u1.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(false)
       Worker.process_queues
       Worker.process_queues
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u1.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.where(action: 'update_available_boards', path: u1.global_id).count).to eq(1)
+      RemoteAction.process_all
       Worker.process_queues
       
       expect(u1.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])

@@ -185,6 +185,7 @@ module Converters::CoughDrop
             if image['protected_source'] == 'pcs' && image['url'] && image['url'].match(/\.svg$/)
               if image['url'].match(/varianted-skin/)
                 alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'png'
+                alt_urls << image['url'].sub(/varianted-skin\.svg/, '') + 'raster.png'
               elsif image['url'].match(/variant-/)
                 alt_urls << image['url'] + '.raster.png'
               else

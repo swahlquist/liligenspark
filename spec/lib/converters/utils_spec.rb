@@ -6,7 +6,7 @@ describe Converters::Utils do
       u = User.create()
       b = Board.create(:user => u)
       expect(Uploader).to receive(:check_existing_upload).and_return({url: "http://www.example.com/file.obf"})
-      expect(Progress).to receive(:update_current_progress).with(0.2, :converting_file)
+      expect(Progress).to receive(:update_current_progress).with(0.1, :preconverting_file)
       Converters::Utils.board_to_remote(b, u.global_id, {'file_type' => 'obf', 'include' => 'this'})
     end
     

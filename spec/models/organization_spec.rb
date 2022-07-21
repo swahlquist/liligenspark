@@ -2119,6 +2119,51 @@ describe Organization, :type => :model do
         expect(o.find_saml_user('wgawgwag')).to eq(u1)
       end
 
+      it "should not return a matching user if not state['org_id'] matching" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!
+        o.add_user(u1.user_name, false, false)
+        o.reload
+
+        o2 = Organization.create!
+        o2.settings['saml_metadata_url'] = 'https://www.example.com/saml2'
+        o2.save
+        expect(o2.external_auth_key).to_not eq(nil)
+        expect(o2.link_saml_user(u1, {:external_id => 'wgawgwag'})).to_not eq(false)
+        expect(o.find_saml_user('wgawgwag')).to eq(nil)
+      end
+
+      it "should return a matching user if id not found but matched by email" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!(settings: {'email' => 'me@example.com'})
+        o.add_user(u1.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag', :email => 'me@example.com'})).to_not eq(false)
+        expect(o.find_saml_user('aaa', 'me@example.com')).to eq(u1)
+      end
+
+      it "should return a matching user prioritizing email over id" do
+        o = Organization.create!
+        o.settings['saml_metadata_url'] = 'https://www.example.com/saml'
+        o.save
+        expect(o.external_auth_key).to_not eq(nil)
+        u1 = User.create!(settings: {'email' => 'you@example.com'})
+        o.add_user(u1.user_name, false, false)
+        u2 = User.create!(settings: {'email' => 'me@example.com'})
+        o.add_user(u2.user_name, false, false)
+        o.reload
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag', :email => 'you@example.com'})).to_not eq(false)
+        expect(o.link_saml_user(u1, {:external_id => 'wgawgwag2', :email => 'me@example.com'})).to_not eq(false)
+        expect(o.find_saml_user('wgawgwag', 'me@example.com')).to eq(u1)
+        expect(o.find_saml_user('wgawgwag2', 'you@example.com')).to eq(u1)
+      end
+
       it "should return a valid supervisor from the org" do
         o = Organization.create!
         o.settings['saml_metadata_url'] = 'https://www.example.com/saml'

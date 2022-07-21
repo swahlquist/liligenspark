@@ -1428,5 +1428,63 @@ describe Converters::CoughDrop do
       expect(hash['images'][0]['url']).to eq("https://www.example.com/pic-variant-medium.png")
       expect(hash['images'][0]['ext_coughdrop_unskinned_url']).to eq("https://www.example.com/pic-varianted-skin.png")
     end
+
+    it "should use correct raster urls for vector images if available" do
+      res = OpenStruct.new(:success? => true, :body => "abc", :headers => {'Content-Type' => 'text/plaintext'})
+      h = {reqs: []}
+      expect(Typhoeus).to receive(:head).with("http://example.com/pic.png.raster.png").and_return(res)
+      i = ButtonImage.create(:url => "http://example.com/pic.png", :settings => {'content_type' => 'text/plaintext', 'rasterized' => 'from_url'})
+      s = ButtonSound.create(:url => "http://example.com/sound.mp3", :settings => {'content_type' => 'text/plaintext'})
+      u = User.create
+      ref = Board.create(:user => u)
+      b = Board.new(:user => u, :settings => {'name' => 'My Board'})
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'chicken', 'image_id' => i.global_id, 'sound_id' => s.global_id}
+      ]
+      b.settings['grid'] = {
+        'rows' => 2,
+        'columns' => 2,
+        'order' => [[1,nil]]
+      }
+      b.settings['image_url'] = 'http://example.com/pic.png'
+      b.instance_variable_set('@buttons_changed', true)
+      b.save
+      expect(b.button_images.count).to eq(1)
+      expect(b.button_sounds.count).to eq(1)
+      file = Tempfile.new("stash")
+      json = Converters::CoughDrop.to_external(b.reload, {'for_pdf' => true})
+      expect(json['id']).to eq(b.global_id)
+      expect(json['name']).to eq('My Board')
+      expect(json['default_layout']).to eq('landscape')
+      expect(json['url']).to eq("#{JsonApi::Json.current_host}/no-name/my-board")
+      list = []
+      list << {
+        'id' => i.global_id,
+        'height' => 400,
+        'width' => 400,
+        'protected' => nil,
+        'protected_source' => nil,
+        'license' => {'type' => 'private'},
+        'url' => 'http://example.com/pic.png.raster.png',
+        'fallback_url' => 'http://example.com/pic.png',
+        'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{i.global_id}",
+        'content_type' => 'image/png'
+      }
+      expect(json['images']).to eq(list)
+
+      list = []
+      list << {
+        'id' => s.global_id,
+        'license' => {'type' => 'private'},
+        'url' => 'http://example.com/sound.mp3',
+        'data_url' => "#{JsonApi::Json.current_host}/api/v1/sounds/#{s.global_id}",
+        'content_type' => 'text/plaintext',
+        'duration' => nil,
+        'protected' => nil,
+        'protected_source' => nil
+      }
+      expect(json['sounds']).to eq(list)
+    end    
   end
+
 end

@@ -62,14 +62,14 @@ class Progress < ActiveRecord::Base
     Worker.schedule_for(:priority, Progress, :perform_action, progress.id)
     progress
   end
-  # p = Progress.create(settings: {'class' => 'Board', 'id' => Board.find_by_path('example/core-40').id.to_s, 'method' => 'generate_download', 'arguments' => ["1_2", "pdf", {"include"=>"all", "headerless"=>true, "text_on_top"=>true, "transparent_background"=>true, "symbol_background"=>nil, "text_only"=>false, "text_case"=>nil, "font"=>"default"}]}); Progress.perform_action(p.id)
+  # p = Progress.create(settings: {'class' => 'Board', 'id' => Board.find_by_path('example/core-24').id.to_s, 'method' => 'generate_download', 'arguments' => ["1_2", "pdf", {"include"=>"all", "headerless"=>true, "text_on_top"=>true, "transparent_background"=>true, "symbol_background"=>nil, "text_only"=>false, "text_case"=>nil, "font"=>"default"}]}); Progress.perform_action(p.id)
   # Progress.perform_action(4511932)
   
   def self.as_percent(start_percent, end_percent, &block)
     @@running_progresses ||= {}
     progress = @@running_progresses[Worker.thread_id]
     if progress
-      puts "BLOCK START #{start_percent} #{end_percent}"
+      # puts "BLOCK START #{start_percent} #{end_percent}"
       # initialize block
       progress.settings['current_multiplier'] ||= 1.0
       start_percent = [0, start_percent].compact.max.to_f
@@ -101,7 +101,7 @@ class Progress < ActiveRecord::Base
       progress.settings['percents_before'].pop
       progress.settings['current_multiplier'] = (progress.settings['current_multiplier'] / percent_spread).round(4)
       progress.save
-      puts "BLOCK END"
+      # puts "BLOCK END"
     else
       block.call
     end

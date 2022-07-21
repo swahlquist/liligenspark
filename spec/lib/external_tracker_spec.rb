@@ -125,7 +125,7 @@ describe ExternalTracker do
           {property: 'city', value: 'Sandy'},
           {property: 'username', value: u.user_name},
           {property: 'state', value: 'Utah'},
-          {property: 'account_type', value: 'Supervisor Teacher/Speech Path'},
+          {property: 'account_type', value: 'Therapist'},
           {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
         headers: {'Content-Type' => 'application/json'}

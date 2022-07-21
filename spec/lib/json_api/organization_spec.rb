@@ -72,8 +72,6 @@ describe JsonApi::Organization do
       expect(res['total_supervisors']).to eq(0)
       expect(res['total_managers']).to eq(1)
       expect(res['used_licenses']).to eq(2)
-      expect(res['recent_session_count']).to eq(1)
-      expect(res['recent_session_user_count']).to eq(1)
     end
     
     it "should include purchase history if allowed" do

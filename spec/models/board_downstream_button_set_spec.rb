@@ -1370,9 +1370,9 @@ describe BoardDownstreamButtonSet, :type => :model do
         expect(json[1]['label']).to eq('rat')
         expect(path).to eq(bs.data['remote_paths'][hash]['path'])
       end.and_raise("throttled upload")
-      expect(RemoteAction.count).to eq(0)
+      expect(RemoteAction.count).to eq(2)
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
-      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.count).to eq(3)
       ra = RemoteAction.last
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
       expect(ra.action).to eq("upload_extra_data")
@@ -1402,10 +1402,10 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(u).to receive(:private_viewable_board_ids).and_return(['1', '2'])
       expect(bs).to receive(:detach_extra_data).at_least(1).times
       expect(Uploader).to_not receive(:remote_upload)
-      expect(RemoteAction.count).to eq(0)
+      expect(RemoteAction.count).to eq(2)
       ra = RemoteAction.create(path: "#{b.global_id}::#{u.global_id}", action: "upload_extra_data", act_at: 5.minutes.from_now)
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
-      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.count).to eq(3)
       ra = RemoteAction.last
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
       expect(ra.action).to eq("upload_extra_data")

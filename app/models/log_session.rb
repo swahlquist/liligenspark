@@ -1975,11 +1975,6 @@ class LogSession < ActiveRecord::Base
       end
     end
 
-    users = []
-    User.find_batches_by_global_id(user_ids.uniq) do |user|
-      users << user if user.settings['preferences']['allow_log_reports'] && user.settings['preferences']['allow_log_publishing']
-    end
-
     file = Tempfile.new(['user-data', '.zip'])
     file.close
     OBF::Utils.build_zip(file.path) do |zipper|
@@ -1987,8 +1982,11 @@ class LogSession < ActiveRecord::Base
 
 More information about the file formats being used is available at https://www.openboardformat.org
 })
-      users.each do |user|
-        Exporter.export_logs(user.global_id, true, zipper)
+
+      User.find_batches_by_global_id(user_ids.uniq) do |user|
+        if user.settings['preferences']['allow_log_reports'] && user.settings['preferences']['allow_log_publishing']
+          Exporter.export_logs(user.global_id, true, zipper)
+        end
       end
     end
     url = Uploader.remote_upload("downloads/users/#{CGI.escape(Time.now.iso8601[0, 16].sub(/:/, '-'))}/global/coughdrop-obla-export.zip", file.path, "application/zip")

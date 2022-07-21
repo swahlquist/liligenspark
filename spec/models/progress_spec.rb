@@ -127,7 +127,7 @@ describe Progress, :type => :model do
 
         Progress.update_current_progress(0.9, 'bacon')
         progress.reload
-        expect(progress.settings['percent']).to eq(0.45)
+        expect(progress.settings['percent']).to eq(0.4)
       end
       progress.reload
       expect(progress.settings['percent']).to eq(0.5)
@@ -138,7 +138,7 @@ describe Progress, :type => :model do
 
       Progress.update_current_progress(1.0, 'bacon')
       progress.reload
-      expect(progress.settings['percent']).to eq(1.0)
+      expect(progress.settings['percent']).to eq(0.9)
     end
 
     it "should update nested progresses" do
@@ -281,18 +281,20 @@ describe Progress, :type => :model do
       p = Progress.create(:settings => {'method' => 'run', 'class' => 'SimpleNestedProgressor'})
       SimpleNestedProgressor.progress = p
       Progress.perform_action(p.id)
-      expect(SimpleNestedProgressor.percents).to eq([0.15, 0.35, 0.5, 0.5, 0.65, 0.8, 0.8, 1.0, 1.0])
+      expect(SimpleNestedProgressor.percents).to eq([0.15, 0.15, 0.5, 0.5, 0.5, 0.5, 0.8, 1.0, 1.0])
 
       p = Progress.create(:settings => {'method' => 'run', 'class' => 'NestedProgressor'})
       NestedProgressor.progress = p
       Progress.perform_action(p.id)
-      expect(NestedProgressor.percents[0, 4]).to eq([0.15, 0.35, 0.5, 0.53])
-      expect(NestedProgressor.percents[4]).to eq((0.5 + (0.3 * 0.1) + 0.3*0.4*0.33).round(2))
-      expect(NestedProgressor.percents[5]).to eq((0.5 + (0.3 * 0.1) + 0.3*0.4*0.33 + 0.3*0.4*0.33*0.5).round(2))
-      expect(NestedProgressor.percents[6]).to eq((0.5 + (0.3 * 0.1) + 0.3*0.4*0.33 + 0.3*0.4*0.33).round(2))
-      expect(NestedProgressor.percents[7]).to eq(0.5 + (0.3 * 0.1) + 0.3*0.4)
-      expect(NestedProgressor.percents[8]).to eq((0.5 + (0.3 * 0.1) + 0.3*0.4 + 0.3*0.5*0.3).round(2))
-      expect(NestedProgressor.percents[9]).to eq((0.5 + (0.3 * 0.1) + 0.3*0.4 + 0.3*0.5*0.7).round(2))
+      expect(NestedProgressor.percents[0, 4]).to eq([0.15, 0.15, 0.5, 0.5])
+      # Progress doesn't get updated every single time now, only after enough
+      # change, so these values don't work anymore
+      expect(NestedProgressor.percents[4]).to eq(0.53) #(0.5 + (0.1 * 0.1) + 0.3*0.4*0.33).round(2))
+      expect(NestedProgressor.percents[5]).to eq(0.57) # (0.5 + (0.3 * 0.1) + 0.3*0.4*0.33 + 0.3*0.4*0.33*0.5).round(2))
+      expect(NestedProgressor.percents[6]).to eq(0.57) #(0.5 + (0.3 * 0.1) + 0.3*0.4*0.33 + 0.3*0.4*0.33).round(2))
+      expect(NestedProgressor.percents[7]).to eq(0.65) #0.5 + (0.3 * 0.1) + 0.3*0.4)
+      expect(NestedProgressor.percents[8]).to eq(0.65) #(0.5 + (0.3 * 0.1) + 0.3*0.4 + 0.3*0.5*0.3).round(2))
+      expect(NestedProgressor.percents[9]).to eq(0.65) #(0.5 + (0.3 * 0.1) + 0.3*0.4 + 0.3*0.5*0.7).round(2))
       expect(NestedProgressor.percents[10]).to eq(0.8)
       expect(NestedProgressor.percents[11]).to eq(1.0)
       expect(NestedProgressor.percents[12]).to eq(1.0)

@@ -739,11 +739,24 @@ describe UserGoal, type: :model do
   describe "add_log_session" do
     it "should call generate_stats on the goal" do
       u = User.create
+      d = Device.create(user: u)
       g = UserGoal.create(:user => u)
-      ls = LogSession.create(:user => u, :goal => g)
-      expect(g).to receive(:generate_stats).at_least(1).times
-      expect(LogSession).to receive(:find_by_global_id).with(ls.global_id).and_return(ls)
+      ls = LogSession.create!(:user => u, author: u, device: d, :goal => g)
+      expect(ls.goal).to eq(g)
+      expect(ls.reload.goal).to eq(g)
       UserGoal.add_log_session(ls.global_id)
+      expect(RemoteAction.where(action: 'queued_goals', path: u.global_id).count).to eq(1)
+    end
+  end
+
+  describe "update_stats_eventually" do
+    it "should schedule an update" do
+      u = User.create
+      g = UserGoal.create(:user => u)
+      expect(RemoteAction.where(action: 'queued_goals', path: u.global_id).count).to eq(0)
+      g.update_stats_eventually
+      expect(RemoteAction.where(action: 'queued_goals', path: u.global_id).count).to eq(1)
+      expect(u.user_extra.settings['queued_goals']).to be_include(g.global_id)
     end
   end
   

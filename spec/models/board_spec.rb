@@ -794,6 +794,8 @@ describe Board, :type => :model do
       b1.instance_variable_set('@buttons_changed', true)
       b1.save
       Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      expect(b2.reload.settings['immediately_upstream_board_ids']).to eq([b1.global_id])
       hash = b1.reload.settings['full_set_revision']
       current_hash = b1.current_revision
       b2.settings['buttons'] = [{'id' => 1, 'label' => 'feet'}]
@@ -821,6 +823,11 @@ describe Board, :type => :model do
       b3.instance_variable_set('@buttons_changed', true)
       b3.save
       Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids'].sort).to eq([b3.global_id, b4.global_id])
+      expect(b2.reload.settings['downstream_board_ids'].sort).to eq([b3.global_id, b4.global_id])
+      expect(b3.reload.settings['downstream_board_ids']).to eq([b4.global_id])
+      expect(b3.reload.settings['immediately_upstream_board_ids'].sort).to eq([b1.global_id, b2.global_id])
+      expect(b4.reload.settings['immediately_upstream_board_ids'].sort).to eq([b3.global_id])
       rev = b4.current_revision
       hash1 = b1.reload.settings['full_set_revision']
       current1 = b1.current_revision
@@ -854,6 +861,7 @@ describe Board, :type => :model do
       b1.save
       Worker.process_queues
       expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      expect(b2.reload.settings['immediately_upstream_board_ids']).to eq([b1.global_id])
       hash1 = b1.reload.settings['full_set_revision']
       current1 = b1.current_revision
       hash2 = b2.reload.settings['full_set_revision']
@@ -1168,21 +1176,30 @@ describe Board, :type => :model do
       u = User.create
       b = Board.new(:user => u)
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(path: b.global_id, action: 'track_downstream_with_visited').count).to eq(1)
+      RemoteAction.process_all
+      RemoteAction.delete_all
+      expect(Worker.scheduled_for?(:slow, Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_with_visited', 'arguments' => []})).to eq(true)
       Worker.flush_queues
       b.instance_variable_set('@track_downstream_boards', false)
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
+      expect(RemoteAction.where(path: b.global_id, action: 'track_downstream_with_visited').count).to eq(0)
       Worker.flush_queues
       b.instance_variable_set('@buttons_changed', true)
       b.instance_variable_set('@button_links_changed', true)
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], true, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(path: b.global_id, action: 'track_downstream_with_visited').count).to eq(1)
+      RemoteAction.process_all
+      RemoteAction.delete_all
+      expect(Worker.scheduled_for?(:slow, Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_with_visited', 'arguments' => []})).to eq(true)
       Worker.flush_queues
       
       b.instance_variable_set('@track_downstream_boards', true)
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(path: b.global_id, action: 'track_downstream_with_visited').count).to eq(1)
+      RemoteAction.process_all
+      RemoteAction.delete_all
+      expect(Worker.scheduled_for?(:slow, Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_with_visited', 'arguments' => []})).to eq(true)
     end
   end
   

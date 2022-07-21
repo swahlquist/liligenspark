@@ -50,7 +50,8 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', nil, nil]]
       }
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(1)
+      RemoteAction.process_all      
       Worker.process_queues
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
     end
@@ -58,12 +59,15 @@ describe UpstreamDownstream, :type => :model do
     it "should not track downstream boards unless there was a change or it is called manually" do
       u = User.create
       b = Board.create(:user => u)
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(1)
+      RemoteAction.process_all
       Worker.process_queues
       b.save
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(0)
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
       b.settings['name'] = "Cool Board"
       b.save
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(0)
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
       b.settings['buttons'] = [
         {'id' => 1, 'load_board' => {'id' => '123'}},
@@ -75,9 +79,11 @@ describe UpstreamDownstream, :type => :model do
       }
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], true, Time.now.to_i]})).to eq(true)
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(1)
+      RemoteAction.delete_all
       Worker.flush_queues
       b.save
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(0)
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
       b.settings['buttons'] = [
         {'id' => 1},
@@ -85,6 +91,7 @@ describe UpstreamDownstream, :type => :model do
         {'id' => 3, 'load_board' => {'id' => '123'}}
       ]
       b.save
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b.global_id).count).to eq(0)
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
     end
 
@@ -132,8 +139,10 @@ describe UpstreamDownstream, :type => :model do
       b1.save
       b2.complete_stream_checks([], Time.now.to_i - 200)
       expect(Worker.scheduled?(Board, 'perform_action', {'id' => b1.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(false)
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b1.global_id).count).to eq(0)
+      expect(RemoteAction.where(action: 'schedule_update_available_boards', path: b1.global_id).count).to eq(1)
       b2.complete_stream_checks([], Time.now.to_i)
-      expect(Worker.scheduled?(Board, 'perform_action', {'id' => b1.id, 'method' => 'track_downstream_boards!', 'arguments' => [[], nil, Time.now.to_i]})).to eq(true)      
+      expect(RemoteAction.where(action: 'track_downstream_with_visited', path: b1.global_id).count).to eq(1)
     end
     
     it "should push correct list up through all affected boards when there is a change" do
@@ -149,6 +158,7 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', '2', nil]]
       }
       b1.save
+      RemoteAction.process_all
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
       expect(b2.reload.settings['downstream_board_ids'].sort).to eq([].sort)
@@ -161,6 +171,8 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', '2', nil]]
       }
       b2.save
+      RemoteAction.process_all
+      Worker.process_queues
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
       expect(b2.reload.settings['downstream_board_ids'].sort).to eq([b3.global_id].sort)
@@ -253,6 +265,7 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', '2', nil]]
       }
       b1.save
+      RemoteAction.process_all
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
       expect(b3.settings['total_buttons']).to eq(0)
@@ -273,6 +286,7 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', '2', '3']]
       }
       b2.save
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
       expect(b3.reload.settings['downstream_board_ids'].sort).to eq([].sort)
@@ -293,6 +307,7 @@ describe UpstreamDownstream, :type => :model do
         'order' => [['1', '2', '6']]
       }
       b3.save
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
@@ -318,6 +333,7 @@ describe UpstreamDownstream, :type => :model do
       b3.instance_variable_set('@buttons_changed', true)
       b3.instance_variable_set('@button_links_changed', true)
       b3.save
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues

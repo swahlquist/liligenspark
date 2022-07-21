@@ -63,6 +63,7 @@ describe ExtraData, :type => :model do
         check[:url] = "http://test/#{path}"
       end.at_least(1).times.and_return(check)
       res = {}
+      expect(Uploader).to receive(:remote_touch).at_least(1).times
       expect(Uploader).to_not receive(:remote_upload_params)
       s.data['full_set_revision'] = 'asdfjkl'
       s.detach_extra_data('force')
@@ -274,9 +275,9 @@ describe ExtraData, :type => :model do
         expect(local).to_not eq(nil)
         expect(File.exists?(local)).to eq(true)
       end.and_raise("throttled upload")
-      expect(RemoteAction.count).to eq(0)
+      expect(RemoteAction.count).to eq(2)
       bs.detach_extra_data(true)
-      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.count).to eq(3)
       ra = RemoteAction.last
       expect(ra.path).to eq("#{b.global_id}")
       expect(ra.action).to eq("upload_button_set")
@@ -295,10 +296,10 @@ describe ExtraData, :type => :model do
       expect(bs).to receive(:extra_data_too_big?).and_return(true).at_least(1).times
       paths = []
       expect(Uploader).to_not receive(:remote_upload)
-      expect(RemoteAction.count).to eq(0)
+      expect(RemoteAction.count).to eq(2)
       ra = RemoteAction.create(path: b.global_id, act_at: 30.seconds.from_now, action: 'upload_button_set')
       bs.detach_extra_data(true)
-      expect(RemoteAction.count).to eq(1)
+      expect(RemoteAction.count).to eq(3)
       expect(paths).to eq([])    
     end
 
