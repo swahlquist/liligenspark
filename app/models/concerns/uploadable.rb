@@ -181,7 +181,7 @@ module Uploadable
     elsif url && url.match(/libraries\/noun-project/) && url.match(/\.svg$/)
       res = "#{url}.raster.png"
     end
-    res = res.sub(/varianted-skin\.svg\./, '')
+    res = res.sub(/varianted-skin\.svg\./, '') if res
     res
   end
   
