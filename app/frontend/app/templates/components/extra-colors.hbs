@@ -1,0 +1,13 @@
+{{#if colors.length}}
+  {{#each computed_colors as |row|}}
+    <div class='extra_color_row_preview'>
+      <div class='box' style={{row.style}}>
+      </div>
+      {{row.label}}
+    </div>
+  {{/each}}
+  <br/>
+{{else}}
+  {{t "None set" key='none_set'}}
+{{/if}}
+<button class='btn btn-default' {{action 'modify'}}>{{t "Modify" key='modify'}}</button>

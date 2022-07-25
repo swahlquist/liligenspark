@@ -796,6 +796,7 @@ class Organization < ActiveRecord::Base
           'name' => org.settings['name'],
           'image_url' => org.settings['image_url'],
           'type' => 'manager',
+          'extra_colors' => org.settings['extra_colors'],
           'added' => link['state']['added'],
           'full_manager' => !!link['state']['full_manager'],
           'admin' => !!org.admin
@@ -814,6 +815,7 @@ class Organization < ActiveRecord::Base
           'name' => org.settings['name'],
           'image_url' => org.settings['image_url'],
           'type' => 'supervisor',
+          'extra_colors' => org.settings['extra_colors'],
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
@@ -1051,6 +1053,7 @@ class Organization < ActiveRecord::Base
     self.settings['inactivity_timeout'] = params['inactivity_timeout'].to_i if params['inactivity_timeout']
     self.settings.delete('inactivity_timeout') if (self.settings['inactivity_timeout'] || 0) < 10
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
+    self.settings['extra_colors'] = params['extra_colors']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]
       total = params[:allotted_licenses].to_i

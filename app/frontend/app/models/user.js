@@ -536,6 +536,26 @@ CoughDrop.User = DS.Model.extend({
       this.set('preferences.speak_mode_pin', new_pin);
     }
   }),
+  all_extra_colors: computed('preferences.extra_colors', 'organizations.@each.extra_colors', function() {
+    var res = [];
+    var extra = this.get('preferences.extra_colors');
+    if(extra && extra.forEach) {
+      extra.forEach(function(color) {
+        res.push(color);
+      });
+    }
+    var org_ids = {};
+    (this.get('organizations') || []).forEach(function(org) {
+      if(!org_ids[org.id]) {
+        (org.extra_colors || []).forEach(function(color) {
+          org_ids[org.id] = true;
+          res.push(color);
+        });
+      }
+    });
+    if(res.length > 0) { return res; }
+    return null;
+  }),
   needs_speak_mode_intro: computed('joined', function() {
     var joined = window.moment(this.get('joined'));
     var cutoff = window.moment('2018-02-20');

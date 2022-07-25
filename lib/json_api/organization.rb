@@ -17,6 +17,7 @@ module JsonApi::Organization
     end
     
     if json['permissions'] && json['permissions']['edit']
+      json['extra_colors'] = org.settings['extra_colors']
       json['custom_domain'] = !!org.custom_domain
       if json['custom_domain']
         json['hosts'] = org.settings['hosts'] || []

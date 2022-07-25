@@ -410,7 +410,7 @@ export default Controller.extend({
       }
     },
     edit_org: function() {
-      modal.open('edit-org', {org: this.get('model')});
+      this.transitionToRoute('organization.settings', this.get('model.id'));
     },
     toggle_letter: function(letter) {
       emberSet(letter, 'expanded', !emberGet(letter, 'expanded'));

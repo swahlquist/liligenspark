@@ -73,6 +73,7 @@ Router.map(function() {
     this.route('subscription');
     this.route('extras');
     this.route('rooms');
+    this.route('settings');
     this.route('room', { path: '/rooms/:room_id' });
   });
   this.route('goals', { path: '/goals' }, function() {

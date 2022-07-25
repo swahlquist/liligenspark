@@ -2113,10 +2113,29 @@ body > .popover.bottom {
     height: 30px;
   }
 }
+.extra_color_preview {
+  border-radius: 5px;
+  height: 25px;
+  width: 25px;
+  margin-top: 5px;
+  border: 2px solid #888;
+}
+.extra_color_row_preview {
+  display: inline-block;
+  text-align: center;
+  margin: 0 5px;
+  .box {
+    border: 2px solid #888;
+    height: 25px;
+    min-width: 40px;
+    border-radius: 5px;
+  }
+}
 .symbol_preview {
   img {
-    width: 150px;
     height: 150px;
+    object-fit: contain;
+    object-position: center;
   }
   &.white img {
     background: #fff;
