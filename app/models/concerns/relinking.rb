@@ -68,6 +68,9 @@ module Relinking
     board.public = true if make_public
     BoardContent.apply_clone(self, board) if self.board_content_id
     board.save!
+    if !user.instance_variable_get('@already_updating_available_boards')
+      user.update_available_boards
+    end
     board
   end
   
@@ -274,6 +277,8 @@ module Relinking
       end
       boards = Board.find_all_by_path(board_ids)
       pending_replacements = [[starting_old_board, starting_new_board]]
+      puts "starting copies"
+      user.instance_variable_set('@already_updating_available_boards', true)
       boards.each do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
@@ -283,7 +288,10 @@ module Relinking
           pending_replacements << [orig, copy]
         end
       end
+      user.instance_variable_set('@already_updating_available_boards', false)
       boards = [starting_old_board] + boards
+      puts "done with copies"
+
 
       relink_board_for(user, {
         :boards => boards, 
@@ -293,6 +301,8 @@ module Relinking
         :make_public => make_public, 
         :authorized_user => auth_user
       })
+      user.update_available_boards
+      puts "done with relinking"
       @replacement_map
     end
     
@@ -308,6 +318,7 @@ module Relinking
       end
       # for each board that needs replacing...
       boards_to_save = []
+      user.instance_variable_set('@already_updating_available_boards', true)
       while pending_replacements.length > 0
         old_board, new_board = pending_replacements.shift
         # iterate through all the original boards and look for references to the old board
@@ -340,6 +351,8 @@ module Relinking
           end
         end
       end
+      user.instance_variable_set('@already_updating_available_boards', false)
+      user.update_available_boards
       boards_to_save.uniq.each do |brd|
         brd.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
         brd.save
