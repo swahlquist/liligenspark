@@ -539,6 +539,7 @@ class Api::BoardsController < ApplicationController
     return unless allowed?(board, 'edit')
     ids = params['board_ids_to_convert'] || []
     ids << board.global_id
+    ids << "new:#{board.global_id}" if params['include_new']
     progress = Progress.schedule(board, :swap_images, params['library'], @api_user.global_id, ids)
     render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
   end

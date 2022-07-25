@@ -894,6 +894,7 @@ CoughDrop.User = DS.Model.extend({
             type: 'POST',
             data: {
               library: swap_library,
+              include_new: true,
               board_ids_to_convert: board_ids_to_include
             }
           }).then(function(res) {

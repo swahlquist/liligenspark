@@ -1572,13 +1572,15 @@ class Board < ActiveRecord::Base
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
+    copy_id = board_ids.detect{|id| id.match(/^new/)}
+    copy_id = copy_id.split(/:/)[1] if copy_id
     return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
     return {done: true, swapped: false, reason: 'author required'} unless author
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
-    if (board_ids.blank? || board_ids.include?(self.global_id))
+    if (board_ids.blank? || board_ids.include?(self.global_id) || (copy_id && self.settings['copy_id'] == copy_id))
       updated_board_ids << self.global_id
       words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
       defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author)

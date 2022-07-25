@@ -3678,6 +3678,54 @@ describe Board, :type => :model do
       ])
     end
     
+    it 'should include unlisted board ids that match the copy_id' do
+      u = User.create
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b2.settings['copy_id'] = b.global_id
+      b2.save
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([{
+        'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true)
+      res = b.swap_images('bacon', u, [b.global_id, "new:#{b.global_id}"])
+      bis = b.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(1)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, "new:#{b.global_id}"], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(b.reload.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.settings['buttons']).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => bi2.global_id, 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(b3.reload.settings['buttons']).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+
     it 'should stop when the user no longer matches' do
       u = User.create
       u2 = User.create
