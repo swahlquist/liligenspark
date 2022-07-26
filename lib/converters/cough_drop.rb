@@ -161,7 +161,7 @@ module Converters::CoughDrop
           end
         end
         if original_button['image_id']
-          image = board.button_images.detect{|i| i.global_id == original_button['image_id'] }
+          image = board.known_button_images.detect{|i| i.global_id == original_button['image_id'] }
           if image
             image_url = image.url_for(opts['user'])
             skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_url), which_skinner)
@@ -220,7 +220,7 @@ module Converters::CoughDrop
         end
         if !opts || !opts['simple']
           if original_button['sound_id']
-            sound = board.button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
+            sound = board.known_button_sounds.detect{|i| i.global_id == original_button['sound_id'] }
             if sound
               sound = {
                 'id' => sound.global_id,

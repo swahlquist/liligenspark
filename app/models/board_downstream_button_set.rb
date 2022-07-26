@@ -430,7 +430,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         bv = boards_to_visit.shift
         board_to_visit = Board.find_by_global_id(bv[:board_id])
         if board_to_visit
-          images = board_to_visit.button_images
+          images = board_to_visit.known_button_images
           visited_board_ids << board_to_visit.global_id
           # add all buttons
           trans = BoardContent.load_content(board_to_visit, 'translations') || {}

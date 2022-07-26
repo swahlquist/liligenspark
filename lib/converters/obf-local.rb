@@ -143,7 +143,7 @@ module Converters::ObfLocal
     end
     src = Board.find_by_path("emergency/" + path.split(/\//)[1].gsub(/_\d+/, '').gsub(/_/, '-'))
     lines << "{id: '#{path.split(/\//)[1].gsub(/_/, '-')}-#{locale}', name: '#{name}', rows: #{grid['rows'].to_i}, cols: #{grid['columns'].to_i}, key: '#{path}', starter: true, buttons: [";
-    images = brd.button_images
+    images = brd.known_button_images
     word_list = Converters::ObfLocal::WORDS.to_a
     grid['order'].each_with_index do |row, idx|
       row_content = []
@@ -158,7 +158,7 @@ module Converters::ObfLocal
             id2 = (grid2[idx] || [])[jdx]
             btn2 = src.buttons.detect{|b| b['id'].to_s == id.to_s }
             if btn2
-              bi2 = src.button_images.detect{|i| i.global_id == btn2['image_id']}
+              bi2 = src.known_button_images.detect{|i| i.global_id == btn2['image_id']}
               word = bi2 && word_list.detect{|w| w[1][:url] == URI.encode(bi2.url) || w[1][:url]  == bi2.url }
             end
           end
@@ -175,7 +175,7 @@ module Converters::ObfLocal
     end.length
     lines << "], license: {type: '#{brd.settings['license']['type']}', copyright_notice_url: '#{brd.settings['license']['copyright_notice_url']}', author_name: '#{brd.settings['license']['author_name']}', author_url: '#{brd.settings['license']['author_url']}'}},"
     lines << ""
-    brd.button_images.each do |bi|
+    brd.known_button_images.each do |bi|
       btn = brd.buttons.detect{|b| b['image_id'] == bi.global_id }
       if btn && bi
         lines << "\"#{btn['label']}\": {url: \"#{bi.url}\", license: {type: '#{bi.settings['license']['type']}', copyright_notice_url: '#{bi.settings['license']['copyright_notice_url']}', source_url: '#{bi.settings['license']['source_url']}', author_name: '#{bi.settings['license']['author_name']}', author_url: '#{bi.settings['license']['author_url']}'}},"

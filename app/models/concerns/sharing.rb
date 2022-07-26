@@ -120,15 +120,6 @@ module Sharing
       if author.settings['boards_i_shared']
         author.settings['boards_i_shared'] ||= {}
         list = [] + (author.settings['boards_i_shared'][self.global_id] || []).select{|share| share['user_id'] != user.global_id }
-  #       if do_share
-  #         list << {
-  #           'user_id' => user.global_id,
-  #           'user_name' => user.user_name,
-  #           'include_downstream' => include_downstream,
-  #           'allow_editing' => allow_editing,
-  #           'pending' => !!pending
-  #         }
-  #       end
         author.settings['boards_i_shared'][self.global_id] = list
         author.save
       end
@@ -136,15 +127,6 @@ module Sharing
       if user.settings['boards_shared_with_me']
         user.settings ||= {}
         list = [] + (user.settings['boards_shared_with_me'] || []).select{|share| share['board_id'] != self.global_id }
-  #       if do_share
-  #         list << {
-  #           'board_id' => self.global_id,
-  #           'board_key' => self.key,
-  #           'include_downstream' => include_downstream,
-  #           'allow_editing' => allow_editing,
-  #           'pending' => !!pending
-  #         }
-  #       end
         user.settings['boards_shared_with_me'] = list
         user.save_with_sync('share')
       end
@@ -152,6 +134,7 @@ module Sharing
     self.reload
     self.settings['author_ids'] = nil
     self.author_ids(nil)
+    Worker.schedule_for(:priority, User, :perform_action, {'id' => user.id, 'method' => 'update_available_boards', 'arguments' => []})
     self.schedule_update_available_boards('all')
     schedule(:touch_downstreams)
     true

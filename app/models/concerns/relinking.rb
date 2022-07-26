@@ -67,6 +67,10 @@ module Relinking
     board.settings['never_edited'] = true
     board.public = true if make_public
     BoardContent.apply_clone(self, board) if self.board_content_id
+    # board.map_images has to create a record for each image in the
+    # board, and while that is useful for tracking, it's actually redundant
+    # so we can postpone it and save some time for batch copies
+    board.instance_variable_set('@map_later', true)
     board.save!
     if !user.instance_variable_get('@already_updating_available_boards')
       user.update_available_boards

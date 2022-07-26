@@ -548,6 +548,10 @@ class Board < ActiveRecord::Base
       self.settings['revision_hashes'] << @track_revision
       self.current_revision = data_hash
     end
+
+    if @map_later
+      self.settings['images_not_mapped'] = true
+    end
     
     self.settings['license'] ||= {type: 'private'}
     # self.name = self.settings['name']
@@ -842,6 +846,10 @@ class Board < ActiveRecord::Base
   
   def map_images
     return unless @buttons_changed
+    if @map_later
+      self.schedule(:map_images)
+      return
+    end
     @buttons_changed = false
     @button_links_changed = false
 
@@ -851,7 +859,6 @@ class Board < ActiveRecord::Base
       images << {:id => button['image_id'], :label => button['label']} if button['image_id']
       sounds << {:id => button['sound_id']} if button['sound_id']
     end
-    
     found_images = BoardButtonImage.images_for_board(self.id)
     existing_image_ids = found_images.map(&:global_id)
     existing_images = existing_image_ids.map{|id| {:id => id} }
@@ -1363,13 +1370,13 @@ class Board < ActiveRecord::Base
     return res if res
     Rails.logger.warn('start images_and_sounds lookup')
     res = {}
-    bis = self.button_images
+    bis = self.known_button_images
     protected_sources = (user && user.enabled_protected_sources(true)) || []
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
     if (self.buttons || []).detect{|b| b && b['sound_id']}
-      res['sounds'] = self.button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }
+      res['sounds'] = self.known_button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }
     else
       res['sounds'] = []
     end
@@ -1385,6 +1392,26 @@ class Board < ActiveRecord::Base
     Rails.logger.warn('end images_and_sounds lookup')
     set_cached(key, res)
     res
+  end
+
+  def known_button_images
+    if self.settings['images_not_mapped']
+      return @button_images if @button_images
+      image_ids = self.buttons.map{|b| b['image_id'] }.compact.uniq
+      @button_images = ButtonImage.find_all_by_global_id(image_ids)
+    else
+      self.button_images
+    end
+  end
+
+  def known_button_sounds
+    if self.settings['images_not_mapped']
+      return @button_sounds if @button_sounds
+      sound_ids = self.buttons.map{|b| b['sound_id'] }.compact.uniq
+      @button_sounds = ButtonSound.find_all_by_global_id(sound_ids)
+    else
+      self.button_sounds
+    end
   end
 
   def import_translation(translated_copy, locale, overwrite=false)
@@ -1504,7 +1531,7 @@ class Board < ActiveRecord::Base
         # along to opensymbols
         images_to_track = []
         images_hash = {}
-        self.button_images.each{|i| images_hash[i.global_id] = i.settings['external_id'] }
+        self.known_button_images.each{|i| images_hash[i.global_id] = i.settings['external_id'] }
         inverted_translations = translations.invert
         self.buttons.each do |button|
           string_to_track = button['label'] && translations[button['label']]
@@ -1734,7 +1761,7 @@ class Board < ActiveRecord::Base
     board = Board.find_by_path(board_id)
     return false unless board
     changed = false
-    board.button_images.each do |bi|
+    board.known_button_images.each do |bi|
       changed = true if bi.check_for_variants(force)
     end
     if changed

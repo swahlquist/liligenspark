@@ -1008,6 +1008,41 @@ describe Board, :type => :model do
       })
     end
 
+    it "should draw from the button list if not mapped yet" do
+      u = User.create
+      User.purchase_extras({'premium_symbols' => true, 'user_id' => u.global_id})
+      u.reload
+      b = Board.create(user: u)
+      bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
+      bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
+      bs1 = ButtonSound.create(user: u, board: b)
+      b.settings['buttons'] = [
+        {'id' => 'a', 'image_id' => bi1.global_id, 'sound_id' => 'asdf'},
+        {'id' => 'b', 'image_id' => bi2.global_id, 'sound_id' => bs1.global_id}
+      ]
+      b.instance_variable_set('@map_later', true)
+      expect(b.settings['images_not_mapped']).to eq(nil)
+      b.save
+      expect(b.settings['images_not_mapped']).to eq(true)
+      expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
+      expect(b.button_images).to eq([])
+      expect(b.known_button_images).to eq([bi1, bi2])
+      expect(b.button_sounds).to eq([])
+      expect(b.known_button_sounds).to eq([bs1])
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
+      expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
+      expect(b.images_and_sounds_for(u)).to eq({
+        'images' => [
+          {'bi1' => true}, {'bi2' => true}
+        ],
+        'sounds' => [
+          {'bs1' => true}
+        ]
+      })
+    end
+
     it "should allow protected sources used by supervisees" do
       u = User.create
       u2 = User.create
