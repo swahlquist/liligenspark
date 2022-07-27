@@ -1398,7 +1398,7 @@ class Board < ActiveRecord::Base
   end
 
   def known_button_images
-    if self.settings['images_not_mapped']
+    if self.settings && self.settings['images_not_mapped']
       return @button_images if @button_images
       image_ids = self.buttons.map{|b| b['image_id'] }.compact.uniq
       @button_images = ButtonImage.find_all_by_global_id(image_ids)
@@ -1408,7 +1408,7 @@ class Board < ActiveRecord::Base
   end
 
   def known_button_sounds
-    if self.settings['images_not_mapped']
+    if self.settings && self.settings['images_not_mapped']
       return @button_sounds if @button_sounds
       sound_ids = self.buttons.map{|b| b['sound_id'] }.compact.uniq
       @button_sounds = ButtonSound.find_all_by_global_id(sound_ids)
@@ -1602,7 +1602,7 @@ class Board < ActiveRecord::Base
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
-    copy_id = board_ids.detect{|id| id.match(/^new/)}
+    copy_id = (board_ids || []).detect{|id| id.match(/^new/)}
     copy_id = copy_id.split(/:/)[1] if copy_id
     return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?

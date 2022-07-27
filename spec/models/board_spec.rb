@@ -4223,7 +4223,7 @@ describe Board, :type => :model do
       bi1 = OpenStruct.new
       bi2 = OpenStruct.new
       expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
-      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(board).to receive(:known_button_images).and_return([bi1, bi2])
       expect(bi1).to receive(:check_for_variants).with(false).and_return(true)
       expect(bi2).to receive(:check_for_variants).with(false).and_return(true)
       expect(board).to receive(:touch)
@@ -4235,7 +4235,7 @@ describe Board, :type => :model do
       bi1 = OpenStruct.new
       bi2 = OpenStruct.new
       expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
-      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(board).to receive(:known_button_images).and_return([bi1, bi2])
       expect(bi1).to receive(:check_for_variants).with(false).and_return(true)
       expect(bi2).to receive(:check_for_variants).with(false).and_return(true)
       expect(board).to receive(:touch)
@@ -4247,7 +4247,7 @@ describe Board, :type => :model do
       bi1 = OpenStruct.new
       bi2 = OpenStruct.new
       expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
-      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(board).to receive(:known_button_images).and_return([bi1, bi2])
       expect(bi1).to receive(:check_for_variants).with(true).and_return(true)
       expect(bi2).to receive(:check_for_variants).with(true).and_return(true)
       expect(board).to receive(:touch)
@@ -4259,7 +4259,7 @@ describe Board, :type => :model do
       bi1 = OpenStruct.new
       bi2 = OpenStruct.new
       expect(Board).to receive(:find_by_path).with('aaa').and_return(board)
-      expect(board).to receive(:button_images).and_return([bi1, bi2])
+      expect(board).to receive(:known_button_images).and_return([bi1, bi2])
       expect(bi1).to receive(:check_for_variants).with(false).and_return(false)
       expect(bi2).to receive(:check_for_variants).with(false).and_return(false)
       expect(board).to_not receive(:touch)
