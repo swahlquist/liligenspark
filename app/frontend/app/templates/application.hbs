@@ -138,14 +138,16 @@
         {{/if}}
       {{/unless}}
       {{#unless app_state.eval_mode}}
-        <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
-          {{#if app_state.referenced_user.unread_alerts}}
-            <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
-          {{else if app_state.referenced_user.request_alert}}
-            <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>*</span>
-          {{/if}}
-          <span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span>
-        </button>
+        {{#unless app_state.currentUser.preferences.disable_speak_options}}
+          <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
+            {{#if app_state.referenced_user.unread_alerts}}
+              <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
+            {{else if app_state.referenced_user.request_alert}}
+              <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>*</span>
+            {{/if}}
+            <span class="sr-only">{{t "speak options" key='speak_options'}}</span><span class="glyphicon glyphicon-chevron-down"></span>
+          </button>
+        {{/unless}}
       {{/unless}}
       <button class="btn btn-default access skinnier" id="backspace_button" {{action "backspace"}}>
         <span class="sr-only">{{t "backspace" key='backspace_lower'}}</span>
