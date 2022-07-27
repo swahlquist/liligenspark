@@ -564,6 +564,9 @@ class Board < ActiveRecord::Base
         self.public = true
       end
     end
+    if self.settings['name'] && self.settings['name'].match(/LAMP|WFL/)
+      self.public = false
+    end
     UserLink.invalidate_cache_for(self)
           
     self.settings['locale'] ||= 'en'
