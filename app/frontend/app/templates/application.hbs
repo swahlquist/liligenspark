@@ -138,7 +138,7 @@
         {{/if}}
       {{/unless}}
       {{#unless app_state.eval_mode}}
-        {{#unless app_state.currentUser.preferences.disable_speak_options}}
+        {{#unless app_state.currentUser.preferences.device.disable_speak_options}}
           <button class="btn btn-default pass_to_btn_list" {{action "speakOptions"}} id="speak_options">
             {{#if app_state.referenced_user.unread_alerts}}
               <span class='label label-danger' style='position: absolute; top: -5px; right: -5px; border-radius: 10px;'>{{app_state.referenced_user.unread_alerts}}</span>
