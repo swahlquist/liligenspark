@@ -444,7 +444,7 @@ var editManager = EmberObject.extend({
       // TODO: level should be applied already, but make sure
       var unlinked = !button.load_board || button.link_disabled;
       // For now, skip if there are manual inflections
-      if(!button.inflections && !button.vocalization && (unlinked || button.inflect)) {
+      if(!button.inflections && !button.vocalization && (unlinked || button.inflect || button.add_vocalization)) {
         arr.forEach(function(infl) {
           if(updated_button) { return; }
           if(infl.key == "btn" + button.id) {
