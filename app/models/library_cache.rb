@@ -1,6 +1,7 @@
 class LibraryCache < ApplicationRecord
   include GlobalId
   include SecureSerialize
+  include Async
 
   secure_serialize :data
   before_save :generate_defaults
@@ -17,9 +18,7 @@ class LibraryCache < ApplicationRecord
     LibraryCache.update_all(invalidated_at: Time.now)
   end
 
-  def add_word(word, hash, default=false)
-    return nil unless word && hash
-    word = word.downcase
+  def self.normalize(hash)
     word_data = hash.slice('url', 'thumbnail_url', 'content_type', 'name', 'width', 'height', 'external_id', 'public', 'protected', 'protected_source', 'license')
     # Normalize the stored data
     if !word_data['url'] && hash['image_url']
@@ -35,8 +34,15 @@ class LibraryCache < ApplicationRecord
         'uneditable' => true
       }
     end
+    word_data
+  end
+
+  def add_word(word, hash, default=false)
+    return nil unless word && hash
+    word = word.downcase
+    word_data = LibraryCache.normalize(hash)
     return nil unless word_data['url']
-    return nil if word.match(/\s/) && !hash['default'] # (prevent too much stuffing)
+    return nil if word.match(/\s/) && !hash['default'] # (prevent too much stuffing with whitespace words)
     category = hash['default'] ? 'defaults' : 'fallbacks'
     cutoff = hash['default'] ? 2.months.ago.to_i :  4.weeks.ago.to_i
     cutoff = [cutoff, self.invalidated_at.to_i].max
@@ -45,12 +51,14 @@ class LibraryCache < ApplicationRecord
       return self.data[category][word]['image_id']  
     end
     # Try to find any cached record with the same url
-    # Also prune old results at the same time
+    # Also mark old results as needing a refresh
     image_id = nil
+    needs_refresh = false
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |k, h|
-        if h['added'] < 6.months.ago.to_i
-          self.data[cat][k].delete('data')
+        if h['added'] < 6.months.ago.to_i && self.data[cat][k] && !self.data[cat][k]['flagged']
+          self.data[cat][k]['flagged'] = true
+          needs_refresh = true
         end
         image_id ||= h['image_id'] if h['image_id'] && h['url'] == word_data['url']
       end
@@ -72,10 +80,15 @@ class LibraryCache < ApplicationRecord
       'data' => word_data,
       'image_id' => image_id,
       'word' => word,
+      'last' => Time.now.to_i,
       'url' => word_data['url'],
       'added' => Time.now.to_i
     }
     @words_changed = true
+    if needs_refresh
+      ra_cnt = RemoteAction.where(path: "#{self.global_id}", action: 'update_library_cache').count
+      RemoteAction.create(path: "#{self.global_id}", act_at: 4.hours.from_now, action: 'update_library_cache') if ra_cnt == 0
+    end
     return image_id
 
     # hash['url']
@@ -96,6 +109,34 @@ class LibraryCache < ApplicationRecord
     # hash['license']['uneditable']
   end 
 
+  def find_expired_words
+    words = []
+    cache = self
+    ['defaults', 'fallbacks'].each do |cat|
+      cache.data[cat].each do |k, h|
+        if h['added'] < 6.months.ago.to_i || (cache.data[cat][k] && cache.data[cat][k]['flagged'])
+          words << k
+        end
+      end
+    end
+    # batch lookup, and add words
+    tmp_user = OpenStruct.new(subscription_hash: {'extras_enabled' => true, 'skip_cache' => true})
+    words.uniq.each_slice(50) do |list|
+      Uploader.default_images(cache.library, list.uniq, cache.locale, tmp_user, true)
+    end
+
+    cache.reload
+    # remove any flagged words that didn't get updated
+    ['defaults', 'fallbacks'].each do |cat|
+      cache.data[cat].each do |k, h|
+        if cache.data[cat][k]['flagged']
+          cache.data[cat].delete(k)
+        end
+      end
+    end
+    cache.save
+  end
+
   def find_words(words, user)
     found = {}
     no_extras = !user || !user.subscription_hash['extras_enabled']
@@ -108,16 +149,32 @@ class LibraryCache < ApplicationRecord
       return found
     end
 
+    did_update = false
     words.each do |word|
       word = word.downcase
       ['defaults', 'fallbacks'].each do |cat|
         cutoff = (cat == 'defaults') ? 18.months.ago.to_i : 9.months.ago.to_i
-        if !found[word] && self.data[cat][word] && self.data[cat][word]['added'] > cutoff && self.data[cat][word]['data']
+        if !found[word] && self.data[cat][word] && self.data[cat][word]['data'] #&& self.data[cat][word]['added'] > cutoff
+          self.data[cat][word]['last'] ||= Time.now.to_i
+          if self.data[cat][word]['last'] < 2.weeks.ago.to_i
+            self.data[cat][word]['last'] = Time.now.to_i
+            did_update = true
+          end
           found[word] = {}.merge(self.data[cat][word]['data'])
           found[word]['coughdrop_image_id'] = self.data[cat][word]['image_id']
         end
       end
     end
+    ['defaults', 'fallbacks'].each do |cat|
+      self.data[cat].each do |word, hash|
+        if hash['last'] && hash['last'] < 6.months.ago.to_i
+          self.data[cat].delete(word)
+          did_update = true
+        end
+      end
+    end
+    self.save if did_update
+
     found
   end
 

@@ -131,7 +131,20 @@ describe LibraryCache, :type => :model do
       expect(cache.add_word('bacon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq('aaa')
       expect(cache.add_word('bacon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq(nil)
     end
+
+    it "should schedule a batch update if any found words are expired" do
+      cache = LibraryCache.create
+      cache.data['fallbacks']['bacon'] = {'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'url' => 'http://www.example.com/bacon.png'}
+      expect(RemoteAction.count).to eq(0)
+      expect(cache.add_word('bracon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon']['flagged']).to eq(true)
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      expect(ra.action).to eq('update_library_cache')
+      expect(ra.path).to eq(cache.global_id)
+    end
   end
+
   describe "find_words" do
     it "should prefer default words over fallback words" do
       cache = LibraryCache.create
@@ -192,6 +205,56 @@ describe LibraryCache, :type => :model do
       expect(res['bacon']).to_not eq(nil)
       expect(res['bacon']['b']).to eq(1)
       expect(res['bacon']['coughdrop_image_id']).to eq('bbb')
+    end
+
+    it "should pruen words that haven't been searched in a while" do
+      cache = LibraryCache.create
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'last' => 12.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['cheddar'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.months.ago.to_i, 'last' => 12.months.ago.to_i, 'data' => {'b' => 1}}
+      res = cache.find_words(['bacon'], nil)
+      expect(res).to_not eq(nil)
+      expect(res['bacon']).to_not eq(nil)
+      expect(res['bacon']['a']).to eq(1)
+      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
+      expect(cache.data['defaults']['bacon']).to_not eq(nil)
+      expect(cache.data['defaults']['cheddar']).to eq(nil)
+    end
+  end
+
+  describe "find_expired_words" do
+    it "should find all expired words" do
+      cache = LibraryCache.create(library: 'twemoji', locale: 'en')
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['fallbacks']['cheddar'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.months.ago.to_i, 'data' => {'b' => 1}}
+      cache.data['defaults']['whittle'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 3.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.save
+      expect(Uploader).to receive(:default_images) do |lib, list, loc, u, bool|
+        expect(lib).to eq(cache.library)
+        expect(list).to eq(['bacon', 'cheddar'])
+        expect(loc).to eq('en')
+        expect(u.subscription_hash['skip_cache']).to eq(true)
+        expect(bool).to eq(true)
+      end
+      cache.find_expired_words
+    end
+
+    it "should clear flagged words that aren't found" do
+      cache = LibraryCache.create(library: 'twemoji', locale: 'en')
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['fallbacks']['cheddar'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.months.ago.to_i, 'flagged' => true, 'data' => {'b' => 1}}
+      cache.data['defaults']['whittle'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 3.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.save
+      expect(Uploader).to receive(:default_images) do |lib, list, loc, u, bool|
+        expect(lib).to eq(cache.library)
+        expect(list).to eq(['bacon', 'cheddar'])
+        expect(loc).to eq('en')
+        expect(u.subscription_hash['skip_cache']).to eq(true)
+        expect(bool).to eq(true)
+      end
+      cache.find_expired_words
+      expect(cache.data['defaults']['bacon']).to_not eq(nil)
+      expect(cache.data['fallbacks']['cheddar']).to eq(nil)
+      expect(cache.data['defaults']['whittle']).to_not eq(nil)
     end
   end
 

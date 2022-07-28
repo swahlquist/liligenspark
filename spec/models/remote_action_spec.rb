@@ -23,6 +23,9 @@ describe RemoteAction, :type => :model do
       BoardDownstreamButtonSet.schedule_for(:slow, :generate_for, board_id, user_id)
     elsif ra.action == 'queued_goals'
       UserGoal.schedule(:handle_goals, ra.path)
+    elsif ra.action == 'update_library_cache'
+      cache = LibraryCache.find_by_global_id(ra.path)
+      cache.schedule_for(:slow, find_expired_words) if cache
     elsif ra.action == 'weekly_stats_update'
       user_id, weekyear = ra.path.split(/::/, 2)
       WeeklyStatsSummary.schedule(:update_now, user_id, weekyear)
