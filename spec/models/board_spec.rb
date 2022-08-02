@@ -3538,8 +3538,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3555,13 +3555,16 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
       res = b.swap_images('bacon', u, [])
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      b.reload
+      b.instance_variable_set('@map_later', nil)
+      b.save
       img = ButtonImage.last
       expect(b.reload.button_images.to_a).to eq([img])
       expect(b.settings['buttons']).to eq([
@@ -3579,8 +3582,8 @@ describe Board, :type => :model do
       ]
       b.save
       expect(b).to_not receive(:save)
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([])
       res = b.swap_images('bacon', u, [])
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
@@ -3605,14 +3608,14 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:default_images).with('bacon', ['hats', 'cats'], 'en', u).and_return({
+      expect(Uploader).to receive(:default_images).with('bacon', ['hats', 'cats'], 'en', u, true, false).and_return({
         'cats' => {
           'url' => 'http://www.example.com/pic.png',
           'content_type' => 'image/png'
         }
       })
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to_not receive(:find_images).with('cats', 'bacon', 'en', u, nil, true)
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to_not receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [])
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
@@ -3635,11 +3638,11 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       list = [b.global_id, b2.global_id, b3.global_id]
       list.instance_variable_set('@skip_keyboard', true)
       res = b.swap_images('bacon', u, list)
@@ -3653,8 +3656,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3685,14 +3688,15 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
+      Worker.process_queues
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3733,14 +3737,15 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, "new:#{b.global_id}"])
+      Worker.process_queues
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3780,12 +3785,15 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id, b3.global_id])
+      b.reload
+      b.instance_variable_set('@map_later', nil)
+      b.save
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3823,12 +3831,15 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true)
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to_not receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false)
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b3.global_id])
+      b.reload
+      b.instance_variable_set('@map_later', nil)
+      b.save
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3856,8 +3867,8 @@ describe Board, :type => :model do
         {'id' => 2, 'label' => 'cats', 'image_id' => 'another'}
       ]
       b.save
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/pic.png',
         'content_type' => 'image/png'
       }])
@@ -3866,6 +3877,7 @@ describe Board, :type => :model do
       versions = b.versions.count
 
       b.schedule(:swap_images, 'bacon', u.global_id, [])
+      Worker.process_queues
       Worker.process_queues
       expect(b.versions.count).to eq(versions + 1)
       img = ButtonImage.last
@@ -3897,14 +3909,15 @@ describe Board, :type => :model do
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
       
-      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true).and_return([{
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
         'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
       }])
-      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true)
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
+      Worker.process_queues
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3922,6 +3935,40 @@ describe Board, :type => :model do
       ])
       expect(b3.reload.buttons).to eq([
         {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+
+    it "should specify important boards for long-caching results" do
+      u = User.create
+
+      root = Board.create(user: u)
+      ex = User.create(user_name: 'example')
+      root.star(ex, true)
+      root.save
+      expect(root.reload.starred_by?(ex.reload)).to eq(true)
+
+      b = Board.create(:user => u)
+      b.settings['source_board_id'] = root.global_id
+      b.settings['never_edited'] = true
+      b.parent_board = root
+      b.settings['buttons'] = [
+        {'id' => 1, 'label' => 'hats'},
+        {'id' => 2, 'label' => 'cats'}
+      ]
+      b.save
+      expect(b.source_board).to eq(root)
+      
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, true).and_return([])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, true).and_return([{
+        'url' => 'http://www.example.com/pic.png',
+        'content_type' => 'image/png'
+      }])
+      res = b.swap_images('bacon', u, [])
+      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      img = ButtonImage.last
+      expect(b.settings['buttons']).to eq([
+        {'id' => 1, 'label' => 'hats'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end
   end

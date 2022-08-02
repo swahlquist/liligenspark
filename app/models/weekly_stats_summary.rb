@@ -854,7 +854,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
 
     all_grid_user_ids = []
     res[:grid_sizes] = {}
-    res[:grid_user_ids].each do |size, user_ids|
+    stash[:grid_user_ids].each do |size, user_ids|
       all_grid_user_ids += user_ids
       res[:grid_sizes][size] = user_ids.uniq.length
     end

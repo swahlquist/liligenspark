@@ -362,7 +362,7 @@ module Uploader
     end
   end
 
-  def self.default_images(library, words, locale, user, find_missing=true)
+  def self.default_images(library, words, locale, user, find_missing=true, cache_forever=false)
     cache = LibraryCache.find_or_create_by(library: library, locale: locale)
     found_words = {}
     found_words = cache.find_words(words, user) if cache && (!user || !user.subscription_hash['skip_cache'])
@@ -397,7 +397,7 @@ module Uploader
         obj['public'] = true
         obj['protected_source'] = protected_source
         obj['default'] = true
-        image_id = cache.add_word(word, obj)
+        image_id = cache.add_word(word, obj, cache_forever)
         next unless words.include?(word)
         hash[word] = {
           'url' => obj['image_url'],
@@ -428,7 +428,7 @@ module Uploader
     {}
   end
   
-  def self.find_images(keyword, library, locale, user, alt_user=nil, batch=false)
+  def self.find_images(keyword, library, locale, user, alt_user=nil, batch=false, cache_forever=false)
     return false if (keyword || '').strip.blank? || (library || '').strip.blank?
     list = nil
     if library == 'ss'
@@ -448,7 +448,7 @@ module Uploader
       end
       if !valid
         if alt_user && alt_user != user
-          return find_images(keyword, library, locale, alt_user)
+          return find_images(keyword, library, locale, alt_user, nil, batch, cache_forever)
         else
           return false
         end
@@ -592,7 +592,7 @@ module Uploader
       end
     end
     cache = LibraryCache.find_or_create_by(library: library, locale: locale)
-    cache.add_word(keyword, list[0]) if cache && list && list[0]
+    cache.add_word(keyword, list[0], cache_forever) if cache && list && list[0]
     cache.save_if_added
     return list || false
   end

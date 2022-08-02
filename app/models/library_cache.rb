@@ -37,12 +37,12 @@ class LibraryCache < ApplicationRecord
     word_data
   end
 
-  def add_word(word, hash, default=false)
+  def add_word(word, hash, cache_forever=false)
     return nil unless word && hash
     word = word.downcase
     word_data = LibraryCache.normalize(hash)
     return nil unless word_data['url']
-    return nil if word.match(/\s/) && !hash['default'] # (prevent too much stuffing with whitespace words)
+    return nil if word.match(/\s/) && !hash['default'] && !cache_forever # (prevent too much stuffing with whitespace words)
     category = hash['default'] ? 'defaults' : 'fallbacks'
     cutoff = hash['default'] ? 2.months.ago.to_i :  4.weeks.ago.to_i
     cutoff = [cutoff, self.invalidated_at.to_i].max
@@ -54,6 +54,7 @@ class LibraryCache < ApplicationRecord
     # Also mark old results as needing a refresh
     image_id = nil
     needs_refresh = false
+    added = (self.data[category][word] || {})['added']
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |k, h|
         if h['added'] < 6.months.ago.to_i && self.data[cat][k] && !self.data[cat][k]['flagged']
@@ -76,37 +77,21 @@ class LibraryCache < ApplicationRecord
       # end
       image_id = bi.global_id
     end
+    added = [cache_forever ? 10.years.from_now.to_i : Time.now.to_i, added || Time.now.to_i].max
     self.data[category][word] = {
       'data' => word_data,
       'image_id' => image_id,
       'word' => word,
       'last' => Time.now.to_i,
       'url' => word_data['url'],
-      'added' => Time.now.to_i
+      'added' => added
     }
     @words_changed = true
     if needs_refresh
       ra_cnt = RemoteAction.where(path: "#{self.global_id}", action: 'update_library_cache').count
-      RemoteAction.create(path: "#{self.global_id}", act_at: 4.hours.from_now, action: 'update_library_cache') if ra_cnt == 0
+      RemoteAction.create(path: "#{self.global_id}", act_at: 12.hours.from_now, action: 'update_library_cache') if ra_cnt == 0
     end
     return image_id
-
-    # hash['url']
-    # hash['thumbnail_url']
-    # hash['content_type']
-    # hash['name'] # optional
-    # hash['width']
-    # hash['height']
-    # hash['external_id'] # optional
-    # hash['public']
-    # hash['protected'] # optional
-    # hash['protected_source'] #optional string
-    # hash['license']['type']
-    # hash['license']['copyright_notice_url']
-    # hash['license']['source_url']
-    # hash['license']['author_name']
-    # hash['license']['author_url']
-    # hash['license']['uneditable']
   end 
 
   def find_expired_words

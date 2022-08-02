@@ -24,6 +24,7 @@ module Relinking
   
   def copy_for(user, make_public=false, copy_id=nil, prefix=nil)
     # TODO: nil return value will cause an exception, is not being caught
+    # puts "COPYING #{self.global_id}"
     return nil unless user
     if !self.board_content_id
       BoardContent.generate_from(self)
@@ -75,6 +76,7 @@ module Relinking
     if !user.instance_variable_get('@already_updating_available_boards')
       user.update_available_boards
     end
+    # puts "  done COPYING #{self.global_id}"
     board
   end
   
@@ -281,7 +283,7 @@ module Relinking
       end
       boards = Board.find_all_by_path(board_ids)
       pending_replacements = [[starting_old_board, starting_new_board]]
-      puts "starting copies"
+      # puts "starting copies"
       user.instance_variable_set('@already_updating_available_boards', true)
       boards.each do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
@@ -294,7 +296,7 @@ module Relinking
       end
       user.instance_variable_set('@already_updating_available_boards', false)
       boards = [starting_old_board] + boards
-      puts "done with copies"
+      # puts "done with copies"
 
 
       relink_board_for(user, {
@@ -306,7 +308,7 @@ module Relinking
         :authorized_user => auth_user
       })
       user.update_available_boards
-      puts "done with relinking"
+      # puts "done with relinking"
       @replacement_map
     end
     

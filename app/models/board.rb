@@ -709,7 +709,6 @@ class Board < ActiveRecord::Base
     rev = (((self.settings || {})['revision_hashes'] || [])[-2] || [])[0]
     notify('board_buttons_changed', {'revision' => rev, 'reason' => @buttons_changed}) if @buttons_changed && !@brand_new
     content_changed = @button_links_changed || @brand_new || @buttons_changed
-    # Can't be backgrounded because board rendering depends on this
     self.map_images # NOTE: this clears @buttons_changed
     
     if self.settings && self.settings['image_url'] == DEFAULT_ICON && self.settings['default_image_url'] == self.settings['image_url'] && self.settings['name'] && self.settings['name'] != 'Unnamed Board'
@@ -847,10 +846,10 @@ class Board < ActiveRecord::Base
     end
   end
   
-  def map_images
-    return unless @buttons_changed
-    if @map_later
-      self.schedule(:map_images)
+  def map_images(force=false)
+    return unless @buttons_changed || force
+    if @map_later && !force
+      self.schedule(:map_images, true)
       return
     end
     @buttons_changed = false
@@ -909,6 +908,9 @@ class Board < ActiveRecord::Base
           }, nil, :save_without_post_processing)
         end
       end
+    end
+    if self.settings['images_not_mapped']
+      self.update_setting({'images_not_mapped' => false}, nil, :save_without_post_processing)
     end
     @images_mapped_at = Time.now.to_i
   end
@@ -1613,13 +1615,25 @@ class Board < ActiveRecord::Base
     if (board_ids.blank? || board_ids.include?(self.global_id) || (copy_id && self.settings['copy_id'] == copy_id))
       updated_board_ids << self.global_id
       words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
-      defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author)
+      # Important boards (i.e. boards that show up in the suggested list), should
+      # definitely have their swap alternates cached indefinitely
+      important_board = false
+      if self.settings['never_edited'] && self.settings['source_board_id']
+        ref = (self.settings['copy_id'] && Board.find_by_path(self.settings['copy_id'])) || self
+        sb = ref.source_board
+        example_user = library.instance_variable_get('@example_user') || User.find_by_path('example')
+        library.instance_variable_set('@example_user', example_user)
+        if sb && sb != self && sb.starred_by?(example_user)
+          important_board = true
+        end
+      end
+      defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author, true, important_board)
       buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
           # TODO: space these out or batch them up, as right now find_images is hitting
           # the server pretty hard during this swap process
-          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true) || [])[0]
+          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
           bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi
             button['image_id'] = bi.global_id
@@ -1637,6 +1651,7 @@ class Board < ActiveRecord::Base
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
       if @buttons_changed
         self.settings['buttons'] = buttons
+        @map_later = true
         self.save 
       end
       PaperTrail.request.whodunnit = whodunnit

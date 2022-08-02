@@ -2558,14 +2558,14 @@ describe Organization, :type => :model do
         {
           'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
+          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
         }
       ])
       expect(Organization.attached_orgs(u2).map{|o| o.except('added')}).to eq([
         {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name']          
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name']          
         }
       ])
     end
@@ -2618,10 +2618,10 @@ describe Organization, :type => :model do
           'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com'
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
+          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob'
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],"image_url"=>nil,
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_alias' => 'bobby@example.com'
         }
       ])
@@ -2648,11 +2648,11 @@ describe Organization, :type => :model do
             'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000
           }
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
+          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squib', 'template_id' => '1_22222', 'frequency' => 2000
           }
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
         }
       ])
     end

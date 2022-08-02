@@ -26,8 +26,8 @@ describe LibraryCache, :type => :model do
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
       expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['b']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('bbb')
+      expect(res['bacon']['a']).to eq(1)
+      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
   end
 
@@ -78,7 +78,15 @@ describe LibraryCache, :type => :model do
       expect(cache.data['defaults']['bacon master']['url']).to eq('http://www.example.com/bacon.png')
     end
 
-    it "should prune outdated results when adding" do
+    it "should add words with spaces if they are 'important' words" do
+      cache = LibraryCache.create
+      expect(cache.add_word('bacon master', {'url' => 'http://www.example.com/bacon.png'}, true)).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon master']['url']).to eq('http://www.example.com/bacon.png')
+      expect(cache.data['fallbacks']['bacon master']['added']).to be > 5.years.from_now.to_i
+      expect(cache.data['fallbacks']['bacon master']['data']).to_not eq(nil)
+    end
+
+    it "should flag outdated results when adding" do
       cache = LibraryCache.create
       cache.data['defaults']['chocolate'] = {'added' => 0, 'data' => {'a' => 1}}
       res = cache.add_word('bacon', {'default' => true, 'url' => 'http://www.example.com/bacon.png'})
@@ -87,7 +95,8 @@ describe LibraryCache, :type => :model do
       expect(cache.data['defaults']['bacon']['url']).to eq('http://www.example.com/bacon.png')
       expect(cache.data['defaults']['bacon']['data']).to_not eq(nil)
       expect(cache.data['defaults']['chocolate']).to_not eq(nil)
-      expect(cache.data['defaults']['chocolate']['data']).to eq(nil)
+      expect(cache.data['defaults']['chocolate']['data']).to eq({'a' => 1})
+      expect(cache.data['defaults']['chocolate']['flagged']).to eq(true)
     end
 
     it "should create a button_image record if not already available" do
@@ -143,6 +152,42 @@ describe LibraryCache, :type => :model do
       expect(ra.action).to eq('update_library_cache')
       expect(ra.path).to eq(cache.global_id)
     end
+
+    it "should not re-schedule after expired words are addressed, even if they aren't found" do
+      cache = LibraryCache.create(library: 'twemoji', locale: 'en')
+      cache.data['fallbacks']['bacon'] = {'image_id' => 'aaa', 'added' => 12.months.ago.to_i, 'url' => 'http://www.example.com/bacon.png'}
+      expect(RemoteAction.count).to eq(0)
+      expect(cache.add_word('bracon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon']['flagged']).to eq(true)
+      cache.save
+      ra = RemoteAction.last
+      expect(ra).to_not eq(nil)
+      expect(ra.action).to eq('update_library_cache')
+      expect(ra.path).to eq(cache.global_id)
+      expect(Uploader).to receive(:default_images) do |lib, list, loc, usr, bool|
+        expect(lib).to eq(cache.library)
+        expect(list).to eq(['bacon'])
+        expect(loc).to eq(cache.locale)
+        expect(usr.subscription_hash['skip_cache']).to eq(true)
+        expect(bool).to eq(true)
+      end
+      ra.process_action
+      ra.destroy
+      Worker.process_queues
+      cache.reload
+      expect(cache.add_word('bracon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon']).to eq(nil)
+      expect(cache.data['fallbacks']['bracon']).to_not eq(nil)
+      expect(RemoteAction.count).to eq(0)
+    end
+
+    it "should cache long-term if specified" do
+      cache = LibraryCache.create
+      expect(cache.add_word('bacon master', {'url' => 'http://www.example.com/bacon.png'}, true)).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon master']['url']).to eq('http://www.example.com/bacon.png')
+      expect(cache.data['fallbacks']['bacon master']['added']).to be > 5.years.from_now.to_i
+      expect(cache.data['fallbacks']['bacon master']['data']).to_not eq(nil)
+    end
   end
 
   describe "find_words" do
@@ -157,15 +202,15 @@ describe LibraryCache, :type => :model do
       expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
     
-    it "should not use expired results" do
+    it "should use expired results" do
       cache = LibraryCache.create
       cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
       expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['b']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('bbb')
+      expect(res['bacon']['a']).to eq(1)
+      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
 
     it "should use invalidated results" do
@@ -176,8 +221,8 @@ describe LibraryCache, :type => :model do
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
       expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['b']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('bbb')
+      expect(res['bacon']['a']).to eq(1)
+      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
 
     it "should not allow unauthorized access to premium symbols" do
@@ -203,8 +248,8 @@ describe LibraryCache, :type => :model do
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
       expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['b']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('bbb')
+      expect(res['bacon']['a']).to eq(1)
+      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
 
     it "should pruen words that haven't been searched in a while" do

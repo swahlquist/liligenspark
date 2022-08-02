@@ -229,7 +229,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     board = Board.find_by_global_id(board_id)
     user = user_id && User.find_by_global_id(user_id)
     # User's just-copied boards mightn't be here yet
-    user.update_available_boards
+    user.update_available_boards if user
     return {success: false, error: 'missing board or user'} unless board && user
     button_set = board.board_downstream_button_set
     just_generated = false

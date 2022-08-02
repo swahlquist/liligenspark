@@ -63,8 +63,11 @@ describe Relinking, :type => :model do
       u = User.create
       b = Board.create(:user => u, :settings => {'hat' => true, 'image_url' => 'bob', 'buttons' => []})
       res = b.copy_for(u)
-      expect(res.instance_variable_get('@images_mapped_at')).not_to eq(nil)
-      expect(res.instance_variable_get('@images_mapped_at')).to be > Time.now.to_i - 5
+      expect(res.instance_variable_get('@map_later')).to eq(true)
+      expect(res.settings['images_not_mapped']).to eq(true)
+      Worker.process_queues
+      res.reload
+      expect(res.settings['images_not_mapped']).to eq(false)
     end
     
     it "should make public if specified" do
