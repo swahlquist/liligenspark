@@ -852,6 +852,7 @@ class Board < ActiveRecord::Base
       self.schedule(:map_images, true)
       return
     end
+    puts "ACTUALLY MAPPING"
     @buttons_changed = false
     @button_links_changed = false
 
@@ -1602,6 +1603,8 @@ class Board < ActiveRecord::Base
   end
   
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
+    # TODO: update progress
+    puts "SWAPPING #{self.key}"
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
     copy_id = (board_ids || []).detect{|id| id.match(/^new/)}
@@ -1633,6 +1636,7 @@ class Board < ActiveRecord::Base
           image_data = defaults[button['label'] || button['vocalization']]
           # TODO: space these out or batch them up, as right now find_images is hitting
           # the server pretty hard during this swap process
+          puts "CACHE MISS #{button['label']}" if !image_data
           image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
           bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi

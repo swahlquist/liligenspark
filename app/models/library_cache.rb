@@ -10,6 +10,7 @@ class LibraryCache < ApplicationRecord
     self.data ||= {}
     self.data['defaults'] ||= {}
     self.data['fallbacks'] ||= {}
+    self.data['missing'] ||= {}
     @words_changed = false
     true
   end
@@ -38,6 +39,7 @@ class LibraryCache < ApplicationRecord
   end
 
   def add_word(word, hash, cache_forever=false)
+    puts "ADDING WORD #{word} #{self.library}"
     return nil unless word && hash
     word = word.downcase
     word_data = LibraryCache.normalize(hash)
@@ -62,6 +64,16 @@ class LibraryCache < ApplicationRecord
           needs_refresh = true
         end
         image_id ||= h['image_id'] if h['image_id'] && h['url'] == word_data['url']
+      end
+    end
+    if self.data['missing'] && self.data['missing'][word.downcase]
+      self.data['missing'].delete(word.downcase)
+      @words_changed = true
+    end
+    (self.data['missing'] || {}).each do |k, h|
+      if h['added'] < 6.months.ago.to_i && !h['flagged']
+        self.data['missing'][k]['flagged'] = true
+        needs_refresh = true
       end
     end
     image_id = nil if !ButtonImage.select('id, nonce').find_by_global_id(image_id)
@@ -94,6 +106,17 @@ class LibraryCache < ApplicationRecord
     return image_id
   end 
 
+  def add_missing_word(word, cache_forever=false)
+    return false unless word
+    self.data['missing'] ||= {}
+    if self.data['missing'][word.downcase] && self.data['missing'][word.downcase]['added'] > 2.weeks.ago.to_i
+      true
+    else
+      self.data['missing'][word.downcase] = {'added' => cache_forever ? 6.months.from_now : Time.now.to_i}
+      @words_changed = true
+    end
+  end
+
   def find_expired_words
     words = []
     cache = self
@@ -103,6 +126,9 @@ class LibraryCache < ApplicationRecord
           words << k
         end
       end
+    end
+    (cache.data['missing'] || {}).each do |word, hash|
+      words << word
     end
     # batch lookup, and add words
     tmp_user = OpenStruct.new(subscription_hash: {'extras_enabled' => true, 'skip_cache' => true})
@@ -149,7 +175,11 @@ class LibraryCache < ApplicationRecord
           found[word]['coughdrop_image_id'] = self.data[cat][word]['image_id']
         end
       end
+      if self.data['missing'][word.downcase] && !found[word]
+        found[word] = {'missing' => true}        
+      end
     end
+    # Prune out cached words that aren't getting accessed often enough
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |word, hash|
         if hash['last'] && hash['last'] < 6.months.ago.to_i

@@ -61,6 +61,16 @@ describe LibraryCache, :type => :model do
       expect(cache.data['fallbacks']['bacon']['data']).to_not eq(nil)
     end
 
+    it "should remove as missing words" do
+      cache = LibraryCache.create
+      cache.data['missing']['bacon'] = {'added' => Time.now.to_i}
+      cache.save
+      expect(cache.data['missing']['bacon']).to_not eq(nil)
+      expect(cache.add_word('bacon', {'url' => 'http://www.example.com/bacon.png'})).to_not eq('aaa')
+      expect(cache.data['fallbacks']['bacon']['url']).to eq('http://www.example.com/bacon.png')
+      expect(cache.data['missing']['bacon']).to eq(nil)
+    end
+
     it "should overwrite recent-but-invalidated words" do
       cache = LibraryCache.create
       cache.data['fallbacks']['bacon'] = {'image_id' => 'aaa', 'added' => 6.hours.ago.to_i, 'url' => 'http://www.example.com/bacon.png'}
@@ -89,6 +99,7 @@ describe LibraryCache, :type => :model do
     it "should flag outdated results when adding" do
       cache = LibraryCache.create
       cache.data['defaults']['chocolate'] = {'added' => 0, 'data' => {'a' => 1}}
+      cache.data['missing']['whickle'] = {'added' => 6.months.ago}
       res = cache.add_word('bacon', {'default' => true, 'url' => 'http://www.example.com/bacon.png'})
       expect(res).to_not eq(nil)
       expect(cache.data['defaults']['bacon']).to_not eq(nil)
@@ -97,6 +108,7 @@ describe LibraryCache, :type => :model do
       expect(cache.data['defaults']['chocolate']).to_not eq(nil)
       expect(cache.data['defaults']['chocolate']['data']).to eq({'a' => 1})
       expect(cache.data['defaults']['chocolate']['flagged']).to eq(true)
+      expect(cache.data['missing']['whickle']['flagged']).to eq(true)
     end
 
     it "should create a button_image record if not already available" do
@@ -190,6 +202,39 @@ describe LibraryCache, :type => :model do
     end
   end
 
+  describe "add_missing_word" do
+    it "should return false on no word" do
+      cache = LibraryCache.create
+      expect(cache.add_missing_word(nil, true)).to eq(false)
+    end
+
+    it "should not update if already marked as missing" do
+      cache = LibraryCache.create
+      cache.data['missing']['bacon'] = {'added' => 6.hours.ago.to_i}
+      expect(cache.add_missing_word('Bacon')).to eq(true)
+      expect(cache.data['missing']['Bacon']).to eq(nil)
+      expect(cache.data['missing']['bacon']['added']).to be < 1.hour.ago.to_i
+      expect(cache.instance_variable_get('@words_changed')).to eq(false)
+    end
+
+    it "should mark as changed if old" do
+      cache = LibraryCache.create
+      cache.data['missing']['bacon'] = {'added' => 6.months.ago.to_i}
+      expect(cache.add_missing_word('Bacon')).to eq(true)
+      expect(cache.data['missing']['Bacon']).to eq(nil)
+      expect(cache.data['missing']['bacon']['added']).to be > 8.hours.ago.to_i
+      expect(cache.instance_variable_get('@words_changed')).to eq(true)
+    end
+
+    it "should mark as changed if new word" do
+      cache = LibraryCache.create
+      expect(cache.add_missing_word('Bacon')).to eq(true)
+      expect(cache.data['missing']['Bacon']).to eq(nil)
+      expect(cache.data['missing']['bacon']['added']).to be > 8.hours.ago.to_i
+      expect(cache.instance_variable_get('@words_changed')).to eq(true)
+    end
+  end
+
   describe "find_words" do
     it "should prefer default words over fallback words" do
       cache = LibraryCache.create
@@ -272,10 +317,11 @@ describe LibraryCache, :type => :model do
       cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['cheddar'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.months.ago.to_i, 'data' => {'b' => 1}}
       cache.data['defaults']['whittle'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 3.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['missing']['scarble'] = {'added' => 6.months.ago.to_i}
       cache.save
       expect(Uploader).to receive(:default_images) do |lib, list, loc, u, bool|
         expect(lib).to eq(cache.library)
-        expect(list).to eq(['bacon', 'cheddar'])
+        expect(list).to eq(['bacon', 'cheddar', 'scarble'])
         expect(loc).to eq('en')
         expect(u.subscription_hash['skip_cache']).to eq(true)
         expect(bool).to eq(true)
@@ -288,10 +334,11 @@ describe LibraryCache, :type => :model do
       cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['cheddar'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.months.ago.to_i, 'flagged' => true, 'data' => {'b' => 1}}
       cache.data['defaults']['whittle'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 3.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['missing']['flugly'] = {'added' => 6.years.ago.to_i, 'flagged' => true}
       cache.save
       expect(Uploader).to receive(:default_images) do |lib, list, loc, u, bool|
         expect(lib).to eq(cache.library)
-        expect(list).to eq(['bacon', 'cheddar'])
+        expect(list).to eq(['bacon', 'cheddar', 'flugly'])
         expect(loc).to eq('en')
         expect(u.subscription_hash['skip_cache']).to eq(true)
         expect(bool).to eq(true)
@@ -300,6 +347,7 @@ describe LibraryCache, :type => :model do
       expect(cache.data['defaults']['bacon']).to_not eq(nil)
       expect(cache.data['fallbacks']['cheddar']).to eq(nil)
       expect(cache.data['defaults']['whittle']).to_not eq(nil)
+      expect(cache.data['missing']['flugly']).to_not eq(nil)
     end
   end
 

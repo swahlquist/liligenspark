@@ -385,7 +385,10 @@ module Uploader
       }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false)
       results = {}
       results = JSON.parse(res.body) unless res.code >= 400
-      hash = found_words || {}
+      hash = {}
+      found_words.each do |word, h|
+        hash[word] = h if !h['missing']
+      end
       results.each do |word, result|
         if result['extension']
           type = MIME::Types.type_for(result['extension'])[0]
@@ -423,7 +426,11 @@ module Uploader
       cache.save_if_added
       return hash
     elsif found_words
-      return found_words
+      res = {}
+      found_words.each do |word, hash|
+        res[word] = hash if !hash['missing']
+      end
+      return res
     end
     {}
   end
@@ -592,7 +599,12 @@ module Uploader
       end
     end
     cache = LibraryCache.find_or_create_by(library: library, locale: locale)
-    cache.add_word(keyword, list[0], cache_forever) if cache && list && list[0]
+    if cache && list && list[0]
+      cache.add_word(keyword, list[0], cache_forever)
+    else
+      # Only cache missing words if they're on an "important" board (for now)
+      cache.add_missing_word(keyword, cache_forever) if cache_forever
+    end
     cache.save_if_added
     return list || false
   end

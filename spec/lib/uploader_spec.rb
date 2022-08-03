@@ -1055,6 +1055,33 @@ describe Uploader do
       expect(cache.data['fallbacks']['cheddar']['added']).to be > 5.years.from_now.to_i
       expect(cache.data['fallbacks']['cheddar']['data']).to_not eq(nil)
     end
+
+    it "should cache as missing to the library if long-term" do
+      expect(Uploader).to receive(:lessonpix_credentials).with(nil).and_return(nil)
+      expect(Uploader.find_images('bacon', 'lessonpix', 'en', nil)).to eq(false)
+      
+      u = User.create
+      u2 = User.create
+      expect(Uploader).to receive(:lessonpix_credentials).with(u).and_return({
+        'username' => 'pocatello',
+        'pid' => '99999',
+        'token' => 'for_the_team'
+      }).exactly(1).times
+      expect(Uploader).to receive(:lessonpix_credentials).with(u2).and_return({
+        'username' => 'nimue',
+        'pid' => '88888',
+        'token' => 'i_got_wet'
+      }).exactly(1).times
+
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=99999&username=pocatello&token=for_the_team&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: "Token Mismatch"))
+      expect(Typhoeus).to receive(:get).with("https://lessonpix.com/apiKWSearch.php?pid=88888&username=nimue&token=i_got_wet&word=cheddar&fmt=json&allstyles=n&limit=30", {timeout: 5, followlocation: true}).and_return(OpenStruct.new(body: [].to_json))
+      expect(Uploader.find_images('cheddar', 'lessonpix', 'en', u, u2, false, true)).to eq([
+      ])
+      cache = LibraryCache.find_by(library: 'lessonpix', locale: 'en')
+      expect(cache).to_not eq(nil)
+      expect(cache.data['fallbacks']['cheddar']).to eq(nil)
+      expect(cache.data['missing']['cheddar']).to_not eq(nil)
+    end    
   end
 
   describe 'default_images' do
@@ -1305,6 +1332,55 @@ describe Uploader do
       expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
       expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
       expect(cache.data['defaults']['b']['added']).to be > 5.years.ago.to_i
+    end
+
+    it "should not try to find images that are known as missing" do
+      cache = LibraryCache.create(library: 'arasaac', locale: 'en')
+      cache.data['defaults']['a'] = {
+        'url' => 'http://www.example.com/pic3.png',
+        'data' =>  {
+          'url' => 'http://www.example.com/pic3.png',
+          'content_type' => 'image/png',
+          'width' => 200,
+          'height' => 200,
+        },
+        'added' => 1.hour.ago.to_i,
+        'image_id' => 'aaa'
+      }
+      cache.data['missing']['water'] = {'added' => Time.now.to_i}
+      cache.save!
+      expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
+        words: ['b', 'c'],
+        allow_search: true,
+        locale: 'en',
+        search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
+      }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
+        body: {
+          'b' => {
+            'image_url' => 'http://www.example.com/pic2.png',
+            'extension' => '.png',
+            'width' => 300,
+            'height' => 300,
+            'id' => 'bbbb'
+          },
+          'd' => {}
+         }.to_json,
+        code: 200
+      }))
+      res = Uploader.default_images('arasaac', ['a', 'b', 'c', 'water'], 'en', nil)
+      bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
+      expect(res).to eq({
+        'a' => {"url"=>"http://www.example.com/pic3.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200, "content_type" => 'image/png'},
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+      })
+      expect(cache).to_not eq(nil)
+      cache.reload
+      expect(cache.data['defaults']['a']).to_not eq(nil)
+      expect(cache.data['defaults']['a']['url']).to eq('http://www.example.com/pic3.png')
+      expect(cache.data['defaults']['a']['image_id']).to eq('aaa')
+      expect(cache.data['defaults']['b']).to_not eq(nil)
+      expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
+      expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
     end
   end
 

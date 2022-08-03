@@ -439,12 +439,23 @@ var editManager = EmberObject.extend({
       }
     });
     var res = [];
+    translations_hash = translations_hash || {};
     buttons.forEach(function(button) {
       var updated_button = null;
       // TODO: level should be applied already, but make sure
       var unlinked = !button.load_board || button.link_disabled;
-      // For now, skip if there are manual inflections
-      if(!button.inflections && !button.vocalization && (unlinked || button.inflect || button.add_vocalization)) {
+      // For now, skip if there are manual inflections because we
+      // don't know for sure if those inflections match
+      // the auto-location rules
+      var trans_btn = (locale && translations_hash[button.id] && (translations_hash[button.id][locale] || {})) || 
+          (locale && translations_hash[button.id] && (translations_hash[button.id][locale.split(/-|_/)[0]] || {})) || 
+          button;
+      var rules = trans_btn.rules || [];
+      if(rules && rules.length && !Array.isArray(rules[0])) {
+        rules = [];
+      }
+      var possible_auto_inflects = (!button.inflections && !trans_btn.inflections) || rules.length > 0;
+      if(possible_auto_inflects && !button.vocalization && (unlinked || button.inflect || button.add_vocalization)) {
         arr.forEach(function(infl) {
           if(updated_button) { return; }
           if(infl.key == "btn" + button.id) {
@@ -468,12 +479,6 @@ var editManager = EmberObject.extend({
             if(!new_label) {
               var grid = editManager.grid_for(button) || [];
               new_label = (grid.find(function(i) { return i.location == infl.location; }) || {}).label;
-            }
-            var rules = (locale && translations_hash[button.id] && (translations_hash[button.id][locale] || {}).rules) || 
-                        (locale && translations_hash[button.id] && (translations_hash[button.id][locale.split(/-|_/)[0]] || {}).rules) || 
-                        button.rules || [];
-            if(rules && rules.length && !Array.isArray(rules[0])) {
-              rules = [];
             }
             (rules || []).forEach(function(list) {
               if(list[0] == ":" + infl.location) {
