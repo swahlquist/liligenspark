@@ -363,7 +363,9 @@ module Uploader
   end
 
   def self.default_images(library, words, locale, user, find_missing=true, cache_forever=false)
-    cache = LibraryCache.find_or_create_by(library: library, locale: locale)
+    cache = library.instance_variable_get('@library_cache')
+    cache ||= LibraryCache.find_or_create_by(library: library, locale: locale)
+    library.instance_variable_set('@library_cache', cache)
     found_words = {}
     found_words = cache.find_words(words, user) if cache && (!user || !user.subscription_hash['skip_cache'])
     if ['noun-project', 'sclera', 'arasaac', 'mulberry', 'tawasol', 'twemoji', 'opensymbols', 'pcs', 'symbolstix'].include?(library)

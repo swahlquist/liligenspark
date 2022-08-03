@@ -852,7 +852,6 @@ class Board < ActiveRecord::Base
       self.schedule(:map_images, true)
       return
     end
-    puts "ACTUALLY MAPPING"
     @buttons_changed = false
     @button_links_changed = false
 
@@ -1604,7 +1603,6 @@ class Board < ActiveRecord::Base
   
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
     # TODO: update progress
-    puts "SWAPPING #{self.key}"
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
     copy_id = (board_ids || []).detect{|id| id.match(/^new/)}
@@ -1635,10 +1633,9 @@ class Board < ActiveRecord::Base
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
           if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
-            puts "CACHE MISS #{button['label']}" 
             image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
           end
-          bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
+          bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi
             button['image_id'] = bi.global_id
             @buttons_changed = 'swapped images'

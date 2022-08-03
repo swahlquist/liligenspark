@@ -39,7 +39,6 @@ class LibraryCache < ApplicationRecord
   end
 
   def add_word(word, hash, cache_forever=false)
-    puts "ADDING WORD #{word} #{self.library}"
     return nil unless word && hash
     word = word.downcase
     word_data = LibraryCache.normalize(hash)
@@ -162,6 +161,7 @@ class LibraryCache < ApplicationRecord
 
     did_update = false
     words.each do |word|
+      orig = word
       word = word.downcase
       ['defaults', 'fallbacks'].each do |cat|
         cutoff = (cat == 'defaults') ? 18.months.ago.to_i : 9.months.ago.to_i
@@ -171,12 +171,12 @@ class LibraryCache < ApplicationRecord
             self.data[cat][word]['last'] = Time.now.to_i
             did_update = true
           end
-          found[word] = {}.merge(self.data[cat][word]['data'])
-          found[word]['coughdrop_image_id'] = self.data[cat][word]['image_id']
+          found[orig] = {}.merge(self.data[cat][word]['data'])
+          found[orig]['coughdrop_image_id'] = self.data[cat][word]['image_id']
         end
       end
-      if (self.data['missing'] || {})[word.downcase] && !found[word]
-        found[word] = {'missing' => true}        
+      if (self.data['missing'] || {})[word] && !found[orig]
+        found[orig] = {'missing' => true}        
       end
     end
     # Prune out cached words that aren't getting accessed often enough

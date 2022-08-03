@@ -1236,6 +1236,55 @@ describe Uploader do
       expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
     end
 
+    it "should use library cache with different case if available" do
+      cache = LibraryCache.create(library: 'arasaac', locale: 'en')
+      cache.data['defaults']['a'] = {
+        'url' => 'http://www.example.com/pic3.png',
+        'data' =>  {
+          'url' => 'http://www.example.com/pic3.png',
+          'content_type' => 'image/png',
+          'width' => 200,
+          'height' => 200,
+        },
+        'added' => 1.hour.ago.to_i,
+        'image_id' => 'aaa'
+      }
+      cache.save!
+      expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
+        words: ['b', 'c'],
+        allow_search: true,
+        locale: 'en',
+        search_token: "#{ENV['OPENSYMBOLS_TOKEN']}"
+      }.to_json, headers: { 'Accept-Encoding' => 'application/json', 'Content-Type' => 'application/json' }, timeout: 10, :ssl_verifypeer => false).and_return(OpenStruct.new({
+        body: {
+          'b' => {
+            'image_url' => 'http://www.example.com/pic2.png',
+            'extension' => '.png',
+            'width' => 300,
+            'height' => 300,
+            'id' => 'bbbb'
+          },
+          'd' => {}
+         }.to_json,
+        code: 200
+      }))
+      res = Uploader.default_images('arasaac', ['A', 'b', 'c'], 'en', nil)
+      bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
+      expect(res).to eq({
+        'A' => {"url"=>"http://www.example.com/pic3.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200, "content_type" => 'image/png'},
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}},
+        '_missing' => []
+      })
+      expect(cache).to_not eq(nil)
+      cache.reload
+      expect(cache.data['defaults']['a']).to_not eq(nil)
+      expect(cache.data['defaults']['a']['url']).to eq('http://www.example.com/pic3.png')
+      expect(cache.data['defaults']['a']['image_id']).to eq('aaa')
+      expect(cache.data['defaults']['b']).to_not eq(nil)
+      expect(cache.data['defaults']['b']['url']).to eq('http://www.example.com/pic2.png')
+      expect(cache.data['defaults']['b']['image_id']).to eq(bi2.global_id)
+    end    
+
     it "should save looked-up results to the library cache" do
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/arasaac/defaults', body: {
         words: ['a', 'b', 'c'],
