@@ -1634,10 +1634,10 @@ class Board < ActiveRecord::Base
       buttons = self.buttons.map do |button|
         if button['label'] || button['vocalization']
           image_data = defaults[button['label'] || button['vocalization']]
-          # TODO: space these out or batch them up, as right now find_images is hitting
-          # the server pretty hard during this swap process
-          puts "CACHE MISS #{button['label']}" if !image_data
-          image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
+          if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
+            puts "CACHE MISS #{button['label']}" 
+            image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
+          end
           bi = ButtonImage.find_by(id: image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
           if bi
             button['image_id'] = bi.global_id

@@ -388,6 +388,8 @@ module Uploader
       hash = {}
       found_words.each do |word, h|
         hash[word] = h if !h['missing']
+        hash['_missing'] ||= []
+        hash['_missing'] << word if h['missing']
       end
       results.each do |word, result|
         if result['extension']

@@ -112,7 +112,7 @@ class LibraryCache < ApplicationRecord
     if self.data['missing'][word.downcase] && self.data['missing'][word.downcase]['added'] > 2.weeks.ago.to_i
       true
     else
-      self.data['missing'][word.downcase] = {'added' => cache_forever ? 6.months.from_now : Time.now.to_i}
+      self.data['missing'][word.downcase] = {'added' => cache_forever ? 6.months.from_now.to_i : Time.now.to_i}
       @words_changed = true
     end
   end
@@ -175,7 +175,7 @@ class LibraryCache < ApplicationRecord
           found[word]['coughdrop_image_id'] = self.data[cat][word]['image_id']
         end
       end
-      if self.data['missing'][word.downcase] && !found[word]
+      if (self.data['missing'] || {})[word.downcase] && !found[word]
         found[word] = {'missing' => true}        
       end
     end
