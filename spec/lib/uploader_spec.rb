@@ -1224,7 +1224,8 @@ describe Uploader do
       bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
       expect(res).to eq({
         'a' => {"url"=>"http://www.example.com/pic3.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200, "content_type" => 'image/png'},
-        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}},
+         '_missing' => []
       })
       expect(cache).to_not eq(nil)
       cache.reload
@@ -1420,7 +1421,8 @@ describe Uploader do
       bi2 = ButtonImage.find_by(url: 'http://www.example.com/pic2.png')
       expect(res).to eq({
         'a' => {"url"=>"http://www.example.com/pic3.png", "coughdrop_image_id" =>  "aaa", "width"=>200, "height"=>200, "content_type" => 'image/png'},
-        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}}
+        'b' => {"url"=>"http://www.example.com/pic2.png", "coughdrop_image_id" => bi2.global_id, "thumbnail_url"=>"http://www.example.com/pic2.png", "content_type"=>"image/png", "width"=>300, "height"=>300, "external_id"=>"bbbb", "public"=>true, "protected"=>false, "protected_source"=>nil, "license"=>{"type"=>nil, "copyright_notice_url"=>nil, "source_url"=>nil, "author_name"=>nil, "author_url"=>nil, "uneditable"=>true}},
+        '_missing' => ['water']
       })
       expect(cache).to_not eq(nil)
       cache.reload

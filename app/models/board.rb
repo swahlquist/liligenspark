@@ -1613,8 +1613,15 @@ class Board < ActiveRecord::Base
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
+    is_root = visited_board_ids.blank?
+    # puts "SWAPPING FOR #{self.key} #{is_root}"
+    cache = library.instance_variable_get('@library_cache')
+    cache ||= LibraryCache.find_or_create_by(library: library, locale: self.settings['locale'] || 'en')
+    library.instance_variable_set('@library_cache', cache)
+    cache.instance_variable_set('@ease_saving', true) if is_root
     if (board_ids.blank? || board_ids.include?(self.global_id) || (copy_id && self.settings['copy_id'] == copy_id))
       updated_board_ids << self.global_id
+      # puts " checking if important"
       words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
       # Important boards (i.e. boards that show up in the suggested list), should
       # definitely have their swap alternates cached indefinitely
@@ -1622,17 +1629,28 @@ class Board < ActiveRecord::Base
       if self.settings['never_edited'] && self.settings['source_board_id']
         ref = (self.settings['copy_id'] && Board.find_by_path(self.settings['copy_id'])) || self
         sb = ref.source_board
-        example_user = library.instance_variable_get('@example_user') || User.find_by_path('example')
-        library.instance_variable_set('@example_user', example_user)
-        if sb && sb != self && sb.starred_by?(example_user)
+        important_user = library.instance_variable_get('@important_user') || User.find_by_path('important_stars')
+        library.instance_variable_set('@important_user', important_user)
+        if sb && sb != self && sb.starred_by?(important_user)
           important_board = true
         end
       end
+      # puts " checking for default images"
+      # TODO: don't replace user-uploaded images
       defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author, true, important_board)
+      # puts " mapping buttons"
+      image_urls = 
+      bis = self.known_button_images
       buttons = self.buttons.map do |button|
-        if button['label'] || button['vocalization']
+        # skip buttons that don't currently have an image
+        next button unless button['image_id']
+        bi = bis.detect{|i| i.global_id == button['image_id'] }
+        # skip buttons that have manually-uploaded image
+        if bi && bi.url && bi.url.match(/coughdrop-usercontent/)
+        elsif (button['label'] || button['vocalization'])
           image_data = defaults[button['label'] || button['vocalization']]
           if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
+            # puts " SEARCHING FOR #{button['label']}"
             image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
           end
           bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
@@ -1640,6 +1658,7 @@ class Board < ActiveRecord::Base
             button['image_id'] = bi.global_id
             @buttons_changed = 'swapped images'
           elsif image_data
+            # puts " GENERATING BUTTONIMAGE"
             image_data['button_label'] = button['label']
             bi = ButtonImage.process_new(image_data, {user: author})
             button['image_id'] = bi.global_id
@@ -1648,6 +1667,7 @@ class Board < ActiveRecord::Base
         end
         button
       end
+      # puts " saving"
       whodunnit = PaperTrail.request.whodunnit
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
       if @buttons_changed
@@ -1669,6 +1689,10 @@ class Board < ActiveRecord::Base
         brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
       end
       visited_board_ids << brd.global_id
+    end
+    if is_root
+      cache.instance_variable_set('@ease_saving', false)
+      cache.save_if_added 
     end
     {done: true, library: library, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
   end  

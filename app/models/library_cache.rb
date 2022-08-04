@@ -40,6 +40,8 @@ class LibraryCache < ApplicationRecord
 
   def add_word(word, hash, cache_forever=false)
     return nil unless word && hash
+    # puts "  ADDING found word: #{word} #{cache_forever}"
+    # puts hash.to_json
     word = word.downcase
     word_data = LibraryCache.normalize(hash)
     return nil unless word_data['url']
@@ -98,6 +100,11 @@ class LibraryCache < ApplicationRecord
       'added' => added
     }
     @words_changed = true
+    # puts "   check"
+    if @ease_saving
+      @save_counter ||= 0
+      @save_counter += 1
+    end
     if needs_refresh
       ra_cnt = RemoteAction.where(path: "#{self.global_id}", action: 'update_library_cache').count
       RemoteAction.create(path: "#{self.global_id}", act_at: 12.hours.from_now, action: 'update_library_cache') if ra_cnt == 0
@@ -107,6 +114,7 @@ class LibraryCache < ApplicationRecord
 
   def add_missing_word(word, cache_forever=false)
     return false unless word
+    puts "  ADDING missing word: #{word}"
     self.data['missing'] ||= {}
     if self.data['missing'][word.downcase] && self.data['missing'][word.downcase]['added'] > 2.weeks.ago.to_i
       true
@@ -188,13 +196,27 @@ class LibraryCache < ApplicationRecord
         end
       end
     end
-    self.save if did_update
+    if did_update
+      if @ease_saving
+        @words_changed = true
+      else
+        self.save 
+      end
+    end
 
     found
   end
 
   def save_if_added
-    self.save if @words_changed
-    @words_changed = false
+    @save_counter ||= 0
+    if @words_changed && (!@ease_saving || @save_counter > 25)
+      @save_counter = nil
+      # puts "  ** SAVING #{@save_counter}"
+      self.save
+      self.reload if @ease_saving
+      @words_changed = false
+    elsif @ease_saving
+      # puts "  WAITING #{@words_changed} #{@save_counter}"
+    end
   end
 end

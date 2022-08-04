@@ -3626,13 +3626,13 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u, :key => "#{u.user_name}/keyboard")
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ]}, {user: u})
       b2.process({'buttons' => [
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
       ]}, {user: u})
       b3.process({'buttons' => [
-        {'id' => 3, 'label' => 'flats'}
+        {'id' => 3, 'label' => 'flats', 'image_id' => 'asdf'}
       ]}, {user: u})
       Worker.process_queues
       expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
@@ -3652,8 +3652,8 @@ describe Board, :type => :model do
       u = User.create
       b = Board.create(:user => u)
       b.settings['buttons'] = [
-        {'id' => 1, 'label' => 'hats'},
-        {'id' => 2, 'label' => 'cats'}
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => 'asdf'}
       ]
       b.save
       expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
@@ -3665,7 +3665,7 @@ describe Board, :type => :model do
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
-        {'id' => 1, 'label' => 'hats'},
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end
@@ -3676,10 +3676,10 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u)
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ]}, {user: u})
       b2.process({'buttons' => [
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
       ]}, {user: u})
       b3.process({'buttons' => [
         {'id' => 3, 'label' => 'flats'}
@@ -3723,10 +3723,10 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u)
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ]}, {user: u})
       b2.process({'buttons' => [
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
       ]}, {user: u})
       b2.settings['copy_id'] = b.global_id
       b2.save
@@ -3773,10 +3773,10 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u2)
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}, 'image_id' => 'asdf'}
       ]}, {user: u2})
       b2.process({'buttons' => [
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}, 'image_id' => 'asdf'}
       ]}, {user: u})
       b3.process({'buttons' => [
         {'id' => 3, 'label' => 'flats'}
@@ -3794,6 +3794,7 @@ describe Board, :type => :model do
       b.reload
       b.instance_variable_set('@map_later', nil)
       b.save
+      expect(b.reload.known_button_images.length).to eq(1)
       bis = b.reload.button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
@@ -3806,7 +3807,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
       expect(b2.reload.settings['buttons']).to eq([
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
       ])
       expect(b3.reload.settings['buttons']).to eq([
         {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
@@ -3819,7 +3820,7 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u)
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ]}, {user: u})
       b2.process({'buttons' => [
         {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
@@ -3894,11 +3895,11 @@ describe Board, :type => :model do
       b2 = Board.create(:user => u)
       b3 = Board.create(:user => u)
       b.process({'buttons' => [
-        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ]}, {user: u})
       bc = BoardContent.generate_from(b)
       b2.process({'buttons' => [
-        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
       ]}, {user: u})
       bc2 = BoardContent.generate_from(b2)
       b3.process({'buttons' => [
@@ -3942,7 +3943,7 @@ describe Board, :type => :model do
       u = User.create
 
       root = Board.create(user: u)
-      ex = User.create(user_name: 'example')
+      ex = User.create(user_name: 'important_stars')
       root.star(ex, true)
       root.save
       expect(root.reload.starred_by?(ex.reload)).to eq(true)
@@ -3952,8 +3953,8 @@ describe Board, :type => :model do
       b.settings['never_edited'] = true
       b.parent_board = root
       b.settings['buttons'] = [
-        {'id' => 1, 'label' => 'hats'},
-        {'id' => 2, 'label' => 'cats'}
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
+        {'id' => 2, 'label' => 'cats', 'image_id' => 'asdf'}
       ]
       b.save
       expect(b.source_board).to eq(root)
@@ -3967,7 +3968,7 @@ describe Board, :type => :model do
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
-        {'id' => 1, 'label' => 'hats'},
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end
