@@ -1644,6 +1644,7 @@ class Board < ActiveRecord::Base
       buttons = self.buttons.map do |button|
         # skip buttons that don't currently have an image
         next button unless button['image_id']
+        next button if button['label'] && button['label'].match(/CoughDrop/)
         bi = bis.detect{|i| i.global_id == button['image_id'] }
         # skip buttons that have manually-uploaded image
         if bi && bi.url && bi.url.match(/coughdrop-usercontent/)
