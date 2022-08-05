@@ -414,7 +414,11 @@
                       <td style='font-size: 20px;'>
                         {{#link-to 'organization' org.id}}
                           <span class='glyphicon glyphicon-paperclip' style="font-size: 25px; vertical-align: middle;"></span>
-                          {{org.name}}
+                          {{#if org.premium}}
+                            <b>{{org.name}}</b>
+                          {{else}}
+                            {{org.name}}
+                          {{/else}}
                         {{/link-to}}
                       </td>
                       <td>
