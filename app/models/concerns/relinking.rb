@@ -23,17 +23,15 @@ module Relinking
   end
   
   def copy_for(user, make_public=false, copy_id=nil, prefix=nil)
-    # TODO: nil return value will cause an exception, is not being caught
-    # puts "COPYING #{self.global_id}"
-    return nil unless user
+    raise "missing user" unless user
     if !self.board_content_id
       BoardContent.generate_from(self)
     end
     if self.settings['protected'] && self.settings['protected']['vocabulary']
-      if self.copyable_if_authorized?(self.user)
+      if !self.copyable_if_authorized?(self.user)
         # If the board author isn't allowed to create a copy, then
         # don't allow it in a batch
-        return nil
+        raise "not authorized to copy #{self.global_id} by #{self.user.global_id}"
       end
     end
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)

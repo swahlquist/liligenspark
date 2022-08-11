@@ -105,6 +105,7 @@ var BoardHierarchy = EmberObject.extend({
       this.set('tried_button_set_reload', true);
       var _this = this;
       board.load_button_set(true).then(function() {
+        _this.set('boards_missing', null);
         _this.load_boards();
       });
     }
