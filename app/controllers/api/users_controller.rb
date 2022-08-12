@@ -443,6 +443,9 @@ class Api::UsersController < ApplicationController
       ids_to_copy: params['ids_to_copy'], 
       copy_prefix: params['copy_prefix'],
       update_inline: params['update_inline'], 
+      copier_id: @api_user && @api_user.global_id,
+      new_owner: params['new_owner'],
+      disconnect: params['disconnect'],
       make_public: make_public,
       user_for_paper_trail: user_for_paper_trail
     })
@@ -466,6 +469,9 @@ class Api::UsersController < ApplicationController
         ids_to_copy: params['ids_to_copy'], 
         copy_prefix: params['copy_prefix'],
         make_public: make_public, 
+        copier_id: @api_user && @api_user.global_id,
+        new_owner: params['new_owner'],
+        disconnect: params['disconnect'],
         user_for_paper_trail: user_for_paper_trail,
         swap_library: params['swap_library']      
     })

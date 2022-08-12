@@ -3665,7 +3665,7 @@ describe Board, :type => :model do
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
-        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'gi},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end

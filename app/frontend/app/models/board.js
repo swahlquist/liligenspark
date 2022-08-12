@@ -52,6 +52,8 @@ CoughDrop.Board = DS.Model.extend({
   copy_id: DS.attr('string'),
   sort_score: DS.attr('number'),
   copy_key: DS.attr('string'),
+  new_owner: DS.attr('boolean'),
+  disconnect: DS.attr('boolean'),
   source_id: DS.attr('string'),
   image_urls: DS.attr('raw'),
   sound_urls: DS.attr('raw'),
@@ -779,7 +781,8 @@ CoughDrop.Board = DS.Model.extend({
       locale: this.get('locale'),
       translated_locales: this.get('locales'),
       for_user_id: (user && user.get('id')),
-      translations: this.get('translations')
+      translations: this.get('translations'),
+      new_owner: false
     });
     if(this.get('default_locale') && this.get('default_locale') != this.get('locale')) {
       // If setting a new default locale, do it here

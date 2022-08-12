@@ -16,6 +16,8 @@ export default modal.ModalController.extend({
     this.set('sidebar_board', null);
     this.set('in_board_set', null);
     this.set('in_sidebar_set', null);
+    this.set('disconnect', null);
+    this.set('new_owner', null);
     this.set('default_locale', app_state.get('label_locale') || this.get('model.board.locale'));
     this.set('home_board', null);
     var user_name = this.get('model.selected_user_name');
@@ -145,7 +147,18 @@ export default modal.ModalController.extend({
       if(this.get('board_prefix') && name.indexOf(this.get('board_prefix')) != 0) {
         name = this.get('board_prefix') + " " + name;
       }
-      modal.close({action: decision, user: this.get('current_user'), shares: shares, board_name: name, board_prefix: this.get('board_prefix'), make_public: this.get('public'), default_locale: this.get('default_locale'), translate_locale: translate_locale});
+      modal.close({
+        action: decision, 
+        user: this.get('current_user'), 
+        shares: shares, 
+        board_name: name, 
+        board_prefix: this.get('board_prefix'), 
+        disconnect: this.get('disconnect'),
+        new_owner: this.get('new_owner'),
+        make_public: this.get('public'), 
+        default_locale: this.get('default_locale'), 
+        translate_locale: translate_locale
+      });
     },
     close: function() {
       modal.close(false);

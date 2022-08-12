@@ -76,6 +76,24 @@
         &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards_to_language'}}
       </label>
     </div>
+    {{#if model.board.copying_state.limited}}
+      {{#if model.board.permissions.edit}}
+        <div class="row" style='margin-top: 20px;'>
+          <label style='font-weight: normal; color: #888;' class="col-sm-12">
+            {{input type='checkbox' checked=new_owner}}
+            &nbsp;&nbsp;{{t "Allow this user to make copies of the protected board for others" key='allow_sub_copies'}}
+          </label>
+        </div>
+      {{/if}}
+    {{/if}}
+    {{#if model.board.permissions.edit}}
+      <div class="row" style='margin-top: 20px;'>
+        <label style='font-weight: normal; color: #888;' class="col-sm-12">
+          {{input type='checkbox' checked=disconnect}}
+          &nbsp;&nbsp;{{t "Mark this copy as unrelated to the original" key='disconnect_from_original'}}
+        </label>
+      </div>
+    {{/if}}
     {{#if translate}}
       <div class="row">
         <label class="col-sm-4 control-label" for="translate_locale">

@@ -743,6 +743,206 @@ describe Api::UsersController, :type => :controller do
       post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1.global_id, :new_board_id => b2.global_id, :access_token => @device.tokens[0], :check_token => true}
       expect(response).to be_successful
     end
+    
+    it "should set vocabulary_owner_id for protected boards" do
+      u = User.create
+      token_user
+      User.link_supervisor_to_user(@user, u, nil, true)
+
+      b1a = Board.create(:user => @user.reload)
+      b1a.settings['protected'] = {'vocabulary' => true}
+
+      b1a.save
+      b1b = Board.create(user: @user)
+      b1b.settings['protected'] = {'vocabulary' => true}
+      b1b.save
+
+      
+      b1a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b1a.instance_variable_set('@buttons_changed', true)
+      b1a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+      b2a = Board.create(:user => u)
+      b2a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b2a.instance_variable_set('@buttons_changed', true)
+      b2a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      
+      post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1a.global_id, :new_board_id => b2a.global_id, :ids_to_copy => []}
+      expect(response).to be_successful      
+      json = JSON.parse(response.body)
+      expect(json['progress']['id']).not_to eq(nil)
+      progress = Progress.find_by_global_id(json['progress']['id'])
+      Progress.perform_action(progress.id)
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      b2a.reload
+      expect(b2a.reload.settings['downstream_board_ids'].length).to eq(1)
+      b2b = Board.find_by_path(b2a.settings['downstream_board_ids'][0])
+      expect(b2b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2b.parent_board).to eq(b1b)
+    end
+
+    it "should assign new protected vocabulary owner if specified" do
+      u = User.create
+      token_user
+      User.link_supervisor_to_user(@user, u, nil, true)
+
+      b1a = Board.create(:user => @user.reload)
+      b1a.settings['protected'] = {'vocabulary' => true}
+
+      b1a.save
+      b1b = Board.create(user: @user)
+      b1b.settings['protected'] = {'vocabulary' => true}
+      b1b.save
+
+      
+      b1a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b1a.instance_variable_set('@buttons_changed', true)
+      b1a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+      b2a = Board.create(:user => u)
+      b2a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b2a.instance_variable_set('@buttons_changed', true)
+      b2a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      
+      post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1a.global_id, :new_board_id => b2a.global_id, :ids_to_copy => [], :new_owner => true}
+      expect(response).to be_successful      
+      json = JSON.parse(response.body)
+      expect(json['progress']['id']).not_to eq(nil)
+      progress = Progress.find_by_global_id(json['progress']['id'])
+      Progress.perform_action(progress.id)
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      b2a.reload
+      expect(b2a.reload.settings['downstream_board_ids'].length).to eq(1)
+      b2b = Board.find_by_path(b2a.settings['downstream_board_ids'][0])
+      expect(b2b.reload.settings['protected']['vocabulary_owner_id']).to eq(u.global_id)
+      expect(b2b.reload.settings['protected']['sub_owner']).to eq(true)
+    end
+
+    it "should not allow new_owner if already a sub_owner" do
+      u = User.create
+      token_user
+      User.link_supervisor_to_user(@user, u, nil, true)
+
+      b1a = Board.create(:user => @user.reload)
+      b1a.settings['protected'] = {'vocabulary' => true}
+
+      b1a.save
+      b1b = Board.create(user: @user)
+      b1b.settings['protected'] = {'vocabulary' => true, 'sub_owner' => true}
+      b1b.save
+
+      
+      b1a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b1a.instance_variable_set('@buttons_changed', true)
+      b1a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+      b2a = Board.create(:user => u)
+      b2a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b2a.instance_variable_set('@buttons_changed', true)
+      b2a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      
+      post :copy_board_links, params: {:user_id => u.global_id, :old_board_id => b1a.global_id, :new_board_id => b2a.global_id, :ids_to_copy => [], :new_owner => true}
+      expect(response).to be_successful      
+      json = JSON.parse(response.body)
+      expect(json['progress']['id']).not_to eq(nil)
+      progress = Progress.find_by_global_id(json['progress']['id'])
+      Progress.perform_action(progress.id)
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      b2a.reload
+      expect(b2a.reload.settings['downstream_board_ids'].length).to eq(1)
+      b2b = Board.find_by_path(b2a.settings['downstream_board_ids'][0])
+      expect(b2b.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b2b.reload.settings['protected']['sub_owner']).to eq(true)
+    end
+
+    # TODO: when a board is copied with a new_owner, it should be marked
+    # so that even though it can be copied to other people, those copies
+    # can't be copies with new_owner
+
+    it "should not assign new protected vocabulary owner if specified but not authorized" do
+      u = User.create
+      u2 = User.create
+      token_user
+
+      b1a = Board.create(:user => @user.reload, public: true)
+      b1a.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => @user.global_id}
+      b1a.save
+
+      b1b = Board.create(user: u, public: true)
+      b1b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id}
+      b1b.save
+      
+      b1a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b1a.instance_variable_set('@buttons_changed', true)
+      b1a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+      b2a = Board.create(:user => @user)
+      b2a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
+      b2a.instance_variable_set('@buttons_changed', true)
+      b2a.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b2a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(u.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      
+      post :copy_board_links, params: {:user_id => @user.global_id, :old_board_id => b1a.global_id, :new_board_id => b2a.global_id, :ids_to_copy => [], :new_owner => true}
+      expect(response).to be_successful      
+      json = JSON.parse(response.body)
+      expect(json['progress']['id']).not_to eq(nil)
+      progress = Progress.find_by_global_id(json['progress']['id'])
+      Progress.perform_action(progress.id)
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1a.reload.settings['protected']['vocabulary_owner_id']).to eq(@user.global_id)
+      expect(b1b.reload.settings['protected']['vocabulary_owner_id']).to eq(u.global_id)
+      expect(b2a.reload.settings['protected']).to eq(nil)
+      expect(b2a.reload.settings['downstream_board_ids'].length).to eq(1)
+      expect(b2a.reload.settings['downstream_board_ids']).to eq([b1b.global_id])
+    end
   end
   
   describe "hide_device" do

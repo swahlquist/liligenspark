@@ -1424,7 +1424,10 @@ class User < ActiveRecord::Base
       :copy_prefix => opts[:copy_prefix],
       :valid_ids => valid_ids, 
       :update_inline => update_inline, 
+      :copier => User.find_by_path(opts[:copier_id]),
       :make_public => make_public, 
+      :new_owner => opts[:new_owner],
+      :disconnect => opts[:disconnect],
       :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
     })
     ids = [starting_old_board_id]
@@ -1462,7 +1465,10 @@ class User < ActiveRecord::Base
       :new_default_locale => opts[:new_default_locale],
       :copy_prefix => opts[:copy_prefix],
       :valid_ids => valid_ids, 
+      :copier => User.find_by_path(opts[:copier_id]),
       :make_public => make_public, 
+      :new_owner => opts[:new_owner],
+      :disconnect => opts[:disconnect],
       :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
     }) || {}
     updated_ids = [starting_new_board_id]

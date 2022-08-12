@@ -1956,7 +1956,7 @@ var editManager = EmberObject.extend({
       this.badgeEditingCallback(data);
     }
   },
-  copy_board: function(old_board, decision, user, make_public, swap_library) {
+  copy_board: function(old_board, decision, user, make_public, swap_library, new_owner, disconnect) {
     return new RSVP.Promise(function(resolve, reject) {
       var ids_to_copy = old_board.get('downstream_board_ids_to_copy') || [];
       var prefix = old_board.get('copy_prefix');
@@ -2032,6 +2032,8 @@ var editManager = EmberObject.extend({
               new_default_locale: old_board.get('default_locale') || old_board.get('locale'),
               swap_library: swap_library,
               ids_to_copy: ids_to_copy.join(','),
+              new_owner: new_owner,
+              disconnect: disconnect,
               copy_prefix: prefix,
               make_public: make_public
             }

@@ -564,6 +564,9 @@ class Board < ActiveRecord::Base
         self.public = true
       end
     end
+    if self.settings['protected'] && self.settings['protected']['vocabulary'] && !self.parent_board_id
+      self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
+    end
     if self.settings['name'] && self.settings['name'].match(/LAMP|WFL/)
       self.public = false
     end
@@ -617,8 +620,11 @@ class Board < ActiveRecord::Base
   end
 
   def copyable_if_authorized?(user)
-    return false if self.parent_board && self.parent_board.unshareable?
-    return true if user && user.id == self.user_id
+    return true if self.settings && self.settings['protected'] && self.settings['protected']['vocabulary_owner_id'] == user.global_id
+    if !(self.settings['protected'] || {})['vocabulary_owner_id']
+      return false if self.parent_board && self.parent_board.unshareable?
+      return true if user && user.id == self.user_id
+    end
     return !self.unshareable?
   end
   
@@ -948,6 +954,7 @@ class Board < ActiveRecord::Base
     self.user ||= non_user_params[:user] if non_user_params[:user]
     
     self.settings ||= {}
+    ref_user = non_user_params[:author] || non_user_params[:user]
     if !params['parent_board_id'].blank? && !self.parent_board_id
       parent_board = Board.find_by_global_id(params['parent_board_id'])
       if !parent_board
@@ -961,10 +968,39 @@ class Board < ActiveRecord::Base
         self.parent_board = parent_board
         if parent_board.settings['protected']
           self.settings['protected'] = (self.settings['protected'] || {}).merge(parent_board.settings['protected'])
+          # TODO: specs to make sure sub-owners can't set new new_owners
+          if params['new_owner'] && self.settings['protected']['vocabulary'] && !self.settings['protected']['sub_owner']
+            if parent_board.allows?(ref_user, 'edit') && parent_board.copyable_if_authorized?(ref_user)
+              self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
+              self.settings['protected']['sub_owner'] = parent_board.settings['protected']['sub_owner'] || parent_board.user != self.user
+            end
+          end
         end
         self.settings['source_board_id'] = parent_board.source_board.global_id
         BoardContent.apply_clone(parent_board, self)
       end
+    end
+    if params['disconnect'] && self.parent_board
+      if self.parent_board.allows?(ref_user, 'edit')
+        self.settings['copy_parent_board_id'] = self.parent_board.global_id
+        self.parent_board_id = nil
+      end
+    end
+    if params['protected_settings'] && params['protected_settings']['action']
+      if self.copyable_if_authorized?(ref_user)
+        if params['protected_settings']['action'] == 'protect'
+          self.settings['protected'] ||= {}
+          self.settings['protected']['vocabulary'] = true
+          self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
+          self.settings['protected'].delete('sub_owner')
+        elsif params['protected_settings']['action'] == 'unprotect' && !self.settings['protected']['sub_owner']
+          self.settings['protected'] ||= {}
+          self.settings['protected'].delete('vocabulary')
+          self.settings['protected'].delete('vocabulary_owner_id')
+          self.settings['protected'].delete('sub_owner')
+        end
+      end
+
     end
     self.settings['last_updated'] = Time.now.iso8601
 

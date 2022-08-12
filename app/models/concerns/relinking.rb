@@ -22,7 +22,14 @@ module Relinking
     return !self.public && self.for_user?(user) && !self.shared_by?(user)
   end
   
-  def copy_for(user, make_public=false, copy_id=nil, prefix=nil)
+  def copy_for(user, opts)
+    make_public = opts[:make_public] || false
+    copy_id = opts[:copy_id]
+    prefix = opts[:prefix]
+    new_owner = opts[:new_owner] || false
+    disconnect = opts[:disconnect] || false
+    copier = opts[:copier]
+
     raise "missing user" unless user
     if !self.board_content_id
       BoardContent.generate_from(self)
@@ -36,6 +43,12 @@ module Relinking
     end
     board = Board.new(:user_id => user.id, :parent_board_id => self.id)
     board.key = board.generate_board_key(self.key.split(/\//)[1])
+    disconnected = false
+    if disconnect && copier && self.allows?(copier, 'edit')
+      board.settings['copy_parent_board_id'] = self.global_id
+      board.parent_board_id = nil
+      disconnected = true
+    end
     board.settings['copy_id'] = copy_id
     board.settings['source_board_id'] = self.source_board.global_id
     board.settings['name'] = self.settings['name']
@@ -50,6 +63,18 @@ module Relinking
     end
     board.settings['description'] = self.settings['description']
     board.settings['protected'] = self.settings['protected']
+    if board.settings['protected'] && board.settings['protected']['vocabulary']
+      if new_owner && self.allows?(copier, 'edit') && !self.settings['protected']['sub_owner']
+        # copyable_if_authorized is already checked above
+        # also ensure that new_owners can't create more new_owners
+        board.settings['protected']['vocabulary_owner_id'] = user.global_id
+        board.settings['protected']['sub_owner'] = self.settings['protected']['sub_owner'] || self.user.global_id != user.global_id
+        board.settings['protected']['sub_owner'] = false if disconnected
+      else
+        board.settings['protected']['vocabulary_owner_id'] = self.settings['protected']['vocabulary_owner_id'] || self.user.global_id
+        board.settings['protected']['sub_owner'] = self.settings['protected']['sub_owner'] || self.user.global_id != user.global_id
+      end
+    end
     board.settings['image_url'] = self.settings['image_url']
     board.settings['locale'] = self.settings['locale']
     board.settings['locales'] = self.settings['locales']
@@ -230,8 +255,11 @@ module Relinking
         :old_default_locale => opts[:old_default_locale],
         :new_default_locale => opts[:new_default_locale],
         :pending_replacements => pending_replacements, 
+        :copy_prefix => opts[:copy_prefix],
         :update_preference => (update_inline ? 'update_inline' : nil), 
         :make_public => make_public, 
+        :new_owner => opts[:new_owner],
+        :disconnect => opts[:disconnect],
         :authorized_user => auth_user
       })
       sidebar_changed = false
@@ -287,7 +315,7 @@ module Relinking
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
-          copy = orig.copy_for(user, make_public, starting_new_board.global_id, opts[:copy_prefix])
+          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig, copy]
         end
@@ -303,7 +331,12 @@ module Relinking
         :pending_replacements => pending_replacements, 
         :update_preference => 'update_inline', 
         :make_public => make_public, 
-        :authorized_user => auth_user
+        :copy_prefix => opts[:copy_prefix],
+        :new_owner => opts[:new_owner],
+        :disconnect => opts[:disconnect],
+        :authorized_user => auth_user,
+        :old_default_locale => opts[:old_default_locale],
+        :new_default_locale => opts[:new_default_locale]
       })
       user.update_available_boards
       # puts "done with relinking"
@@ -340,7 +373,7 @@ module Relinking
             elsif !board.just_for_user?(user)
               # if it's not already private for the user, make a private copy for the user 
               # and add to list of replacements to handle.
-              copy = board.copy_for(user, opts[:make_public], opts[:copy_id], opts[:copy_prefix])
+              copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
               copy.replace_links!(old_board, new_board)
               boards_to_save << copy
               replacement_map[board.global_id] = copy
