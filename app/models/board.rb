@@ -986,22 +986,6 @@ class Board < ActiveRecord::Base
         self.parent_board_id = nil
       end
     end
-    if params['protected_settings'] && params['protected_settings']['action']
-      if self.copyable_if_authorized?(ref_user)
-        if params['protected_settings']['action'] == 'protect'
-          self.settings['protected'] ||= {}
-          self.settings['protected']['vocabulary'] = true
-          self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
-          self.settings['protected'].delete('sub_owner')
-        elsif params['protected_settings']['action'] == 'unprotect' && !self.settings['protected']['sub_owner']
-          self.settings['protected'] ||= {}
-          self.settings['protected'].delete('vocabulary')
-          self.settings['protected'].delete('vocabulary_owner_id')
-          self.settings['protected'].delete('sub_owner')
-        end
-      end
-
-    end
     self.settings['last_updated'] = Time.now.iso8601
 
     old_name = nil
@@ -1131,16 +1115,26 @@ class Board < ActiveRecord::Base
       end
       self.public = !!params['public'] 
     end
-    if (self.settings['categories'] || []).include?('protected_vocabulary')
-      self.settings['protected'] ||= {}
-      self.settings['protected']['vocabulary'] = true
-    elsif self.public || (self.settings['categories'] || []).include?('unprotected_vocabulary')
-      if self.parent_board && self.parent_board.unshareable?
-        # Copies cannot un-protect themselves
-      else
-        (self.settings['protected'] || {}).delete('vocabulary')
+    if self.copyable_if_authorized?(ref_user)
+      if (self.settings['categories'] || []).include?('protected_vocabulary')
+        self.settings['protected'] ||= {}
+        if !self.settings['protected']['vocabulary']
+          self.settings['protected']['vocabulary'] = true
+          self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
+          self.settings['protected'].delete('sub_owner')
+        end
+      elsif self.public || (self.settings['categories'] || []).include?('unprotected_vocabulary')
+        self.settings['protected'] ||= {}
+        if (self.parent_board && self.parent_board.unshareable?) || self.settings['protected']['sub_owner']
+          # Copies cannot un-protect themselves
+        else
+          self.settings['protected'].delete('vocabulary')
+          self.settings['protected'].delete('vocabulary_owner_id')
+          self.settings['protected'].delete('sub_owner')
+        end
       end
     end
+
     if !params['sharing_key'].blank?
       return false unless self.process_share(params['sharing_key'])
     end

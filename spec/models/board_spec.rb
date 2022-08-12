@@ -1771,6 +1771,15 @@ describe Board, :type => :model do
       expect(b2.copyable_if_authorized?(u)).to eq(false)
     end
 
+    it "should allow a board author to protect their own board" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['protected'] = {'vocabulary' => true}
+      b.save
+      b.process({'categories' => ['protected_vocabulary']})
+      expect(b.settings['protected']).to eq({'vocabulary' => true})
+    end
+
     it "should allow a board author to un-protect their own board" do
       u = User.create
       b = Board.create(user: u)
