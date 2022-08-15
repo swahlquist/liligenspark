@@ -67,7 +67,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     while brd && brd.data['source_id'] && !visited_sources.include?(brd.global_id)
       visited_sources << brd.global_id
       bs = BoardDownstreamButtonSet.find_by_global_id(brd.data['source_id'])
-      if bs && !bs.data['source_id']
+      if bs && bs.board && !bs.data['source_id']
         if bs.data['linked_board_ids'].include?(self.related_global_id(self.board_id))
           bs.assert_extra_data
           @buttons = bs.buttons_starting_from(self.related_global_id(self.board_id))
@@ -147,6 +147,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
       button_set ||= original
     end
+    @linked_encryption_settings = button_set.data['extra_data_encryption'] if button_set != original
+
     public_board_ids = button_set.data['public_board_ids'] || Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
     public_board_ids.each{|id| allowed_ids[id] = true }
     if user
@@ -241,9 +243,14 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     button_set_revision = button_set && button_set.data['full_set_revision']
     if button_set && button_set.data['source_id']
-      button_set = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+      bs = BoardDownstreamButtonSet.find_by_global_id(button_set.data['source_id'])
+      if bs && bs.board
+        button_set = bs
+      else
+        button_set.data['source_id'] = nil
+      end
     end
-    return {success: false, error: 'could not generate button set'} unless button_set
+    return {success: false, error: 'could not generate button set'} unless button_set && button_set.board
     if button_set_revision != board.settings['full_set_revision'] && !just_generated
       # Force-update the button set if it's stale
       just_generated = true
