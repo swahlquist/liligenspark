@@ -2001,6 +2001,109 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'risk', "part_of_speech"=>"noun", "suggested_part_of_speech"=>"noun"}
       ])
     end
+
+    it "should allow setting new_owner if authorized" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, settings: {
+        'protected' => {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      })
+      User.link_supervisor_to_user(u2, u1)
+      Worker.process_queues
+
+      b2 = Board.process_new({
+        'buttons' => [{'id' => 12, 'label' => 'cart'}],
+        'parent_board_id' => b1.global_id,
+        'new_owner' => true
+      }, {'user' => u2.reload, 'author' => u1.reload, 'allow_copying_protected_boards' => true})
+
+      expect(b2.settings['protected']['vocabulary']).to eq(true)
+      expect(b2.settings['protected']['vocabulary_owner_id']).to eq(u2.global_id)
+      expect(b2.settings['protected']['sub_owner']).to eq(true)
+    end
+
+    it "should not allow setting new_owner if not authorized" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, settings: {
+        'protected' => {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      })
+      Worker.process_queues
+
+      b2 = Board.process_new({
+        'buttons' => [{'id' => 12, 'label' => 'cart'}],
+        'parent_board_id' => b1.global_id,
+        'new_owner' => true
+      }, {'user' => u2.reload, 'allow_copying_protected_boards' => true})
+
+      expect(b2.settings['protected']['vocabulary']).to eq(true)
+      expect(b2.settings['protected']['vocabulary_owner_id']).to eq(u1.global_id)
+      expect(b2.settings['protected']['sub_owner']).to eq(true)
+    end
+
+    it "should allow disconnecting if authorized" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, settings: {
+        'protected' => {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      })
+      User.link_supervisor_to_user(u2, u1)
+      Worker.process_queues
+
+      b2 = Board.process_new({
+        'buttons' => [{'id' => 12, 'label' => 'cart'}],
+        'parent_board_id' => b1.global_id,
+        'disconnect' => true
+      }, {'user' => u2.reload, 'author' => u1.reload, 'allow_copying_protected_boards' => true})
+
+      expect(b2.settings['protected']['vocabulary']).to eq(true)
+      expect(b2.settings['protected']['vocabulary_owner_id']).to eq(u1.global_id)
+      expect(b2.settings['protected']['sub_owner']).to eq(nil)
+      expect(b2.settings['copy_parent_board_id']).to eq(b1.global_id)
+      expect(b2.parent_board).to eq(nil)
+    end
+
+    it "should not allow disconnecting if not authorized" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, settings: {
+        'protected' => {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      })
+      Worker.process_queues
+
+      b2 = Board.process_new({
+        'buttons' => [{'id' => 12, 'label' => 'cart'}],
+        'parent_board_id' => b1.global_id,
+        'disconnect' => true
+      }, {'user' => u2.reload, 'allow_copying_protected_boards' => true})
+
+      expect(b2.settings['protected']['vocabulary']).to eq(true)
+      expect(b2.settings['protected']['vocabulary_owner_id']).to eq(u1.global_id)
+      expect(b2.settings['protected']['sub_owner']).to eq(nil)
+      expect(b2.settings['copy_parent_board_id']).to eq(nil)
+      expect(b2.parent_board).to eq(b1)
+    end
+
+    it "should set sub_owner to false if disconnect AND new_owner" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, settings: {
+        'protected' => {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      })
+      User.link_supervisor_to_user(u2, u1)
+      Worker.process_queues
+
+      b2 = Board.process_new({
+        'buttons' => [{'id' => 12, 'label' => 'cart'}],
+        'parent_board_id' => b1.global_id,
+        'new_owner' => true,
+        'disconnect' => true
+      }, {'user' => u2.reload, 'author' => u1.reload, 'allow_copying_protected_boards' => true})
+
+      expect(b2.settings['protected']['vocabulary']).to eq(true)
+      expect(b2.settings['protected']['vocabulary_owner_id']).to eq(u2.global_id)
+      expect(b2.settings['protected']['sub_owner']).to eq(false)
+    end
   end
 
   it "should securely serialize settings" do
@@ -3674,7 +3777,7 @@ describe Board, :type => :model do
       expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
-        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'gi},
+        {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
       ])
     end

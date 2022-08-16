@@ -24,7 +24,7 @@ export default Component.extend({
   }),
   fill_color: computed('row.fill', function() {
     var fill = (this.get('row.fill') || '').sub(/^\s+/, '').sub(/\s+$/, '');
-    if(border.match(/^#[0-9abdef]{3}$/) || fill.match(/^#[0-9abdef]{6}$/) || fill.match(/^#[0-9abdef]{8}$/))  {
+    if(fill.match(/^#[0-9abdef]{3}$/) || fill.match(/^#[0-9abdef]{6}$/) || fill.match(/^#[0-9abdef]{8}$/))  {
       return fill;
     } else if(fill.match(/^rgb\(\d+\s*,\s*\d+\s*,\s*\d+\)$/)) {
       return fill;

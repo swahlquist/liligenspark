@@ -29,7 +29,7 @@ export default Controller.extend({
       this.setProperties({
         name: app_state.get('currentUser.name'),
         email: app_state.get('currentUser.email'),
-        recipient: 'general info',
+        recipient: this.get('to') || 'general info',
         subject: '',
         message: ''
       });

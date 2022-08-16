@@ -565,7 +565,7 @@ class Board < ActiveRecord::Base
       end
     end
     if self.settings['protected'] && self.settings['protected']['vocabulary'] && !self.parent_board_id
-      self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
+      self.settings['protected']['vocabulary_owner_id'] ||= self.user.global_id
     end
     if self.settings['name'] && self.settings['name'].match(/LAMP|WFL/)
       self.public = false
@@ -968,11 +968,13 @@ class Board < ActiveRecord::Base
         self.parent_board = parent_board
         if parent_board.settings['protected']
           self.settings['protected'] = (self.settings['protected'] || {}).merge(parent_board.settings['protected'])
-          # TODO: specs to make sure sub-owners can't set new new_owners
           if params['new_owner'] && self.settings['protected']['vocabulary'] && !self.settings['protected']['sub_owner']
             if parent_board.allows?(ref_user, 'edit') && parent_board.copyable_if_authorized?(ref_user)
               self.settings['protected']['vocabulary_owner_id'] = self.user.global_id
               self.settings['protected']['sub_owner'] = parent_board.settings['protected']['sub_owner'] || parent_board.user != self.user
+              self.settings['protected']['sub_owner'] = false if params['disconnect']
+            else
+              self.settings['protected']['sub_owner'] = true
             end
           end
         end
