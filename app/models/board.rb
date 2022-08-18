@@ -1079,7 +1079,7 @@ class Board < ActiveRecord::Base
         end
       end
     end
-    self.star(non_user_params[:starrer], params['starred']) if params['starred'] != nil
+    self.star(non_user_params[:updater], params['starred']) if params['starred'] != nil
     
     self.settings['grid'] = params['grid'] if params['grid']
     if params['visibility'] != nil && !self.unshareable?
@@ -1138,7 +1138,8 @@ class Board < ActiveRecord::Base
     end
 
     if !params['sharing_key'].blank?
-      return false unless self.process_share(params['sharing_key'])
+      updater = non_user_params[:updater] || non_user_params[:author]
+      return false unless self.process_share(params['sharing_key'], updater && updater.global_id)
     end
     non_user_params[:key] = nil if non_user_params[:key].blank?
     if non_user_params[:key]

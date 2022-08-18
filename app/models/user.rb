@@ -1054,7 +1054,7 @@ class User < ActiveRecord::Base
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     elsif board && non_user_params['updater'] && board.allows?(non_user_params['updater'], 'share')
       if non_user_params['async']
-        board.schedule(:process_share, "add_deep-#{self.global_id}")
+        board.schedule(:process_share, "add_deep-#{self.global_id}", non_user_params['updater'].global_id)
       else
         board.share_with(self, true)
       end

@@ -374,7 +374,7 @@ class Api::BoardsController < ApplicationController
     else
       version_date = Date.parse(request.headers['X-CoughDrop-Version']) rescue nil
       add_voc_error = version_date && version_date < Date.parse('August 3, 2021')
-      res = board.process(processed_params['board'], {:user => @api_user, :starrer => @api_user, add_voc_error: add_voc_error})
+      res = board.process(processed_params['board'], {:user => @api_user, :updater => @api_user, add_voc_error: add_voc_error})
     end
     if res
       render json: JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user).to_json

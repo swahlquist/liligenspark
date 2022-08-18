@@ -1,14 +1,14 @@
 module Sharing
   extend ActiveSupport::Concern
   
-  def process_share(sharing_key)
+  def process_share(sharing_key, updater_id)
+    updater = User.find_by_path(updater_id)
     action, user_name = sharing_key.split(/-/, 2)
     user = User.find_by_path(user_name)
     if !user
       add_processing_error("user #{user_name} not found while trying to share")
       return false
-    elsif self.unshareable?
-      # TODO: if sharing with a supervisor, it's ok
+    elsif self.unshareable? && !self.copyable_if_authorized?(updater)
       add_processing_error("user #{user_name} does not have access to the protected material on this board")
       return false
       sources = self.settings['protected']['media_sources'] || ['lessonpix']
