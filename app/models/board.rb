@@ -458,6 +458,10 @@ class Board < ActiveRecord::Base
     res = {}
     user = User.find_by_global_id(user_id)
     Progress.update_current_progress(0.03, :generating_files)
+    grid = BoardContent.load_content(self, 'grid') || {}
+    cells = (grid['rows'] || 3) * (grid['columns'] || 4)
+    approx_cells = cells * ((self.settings['downstream_board_ids'] || []).length + 1)
+    Progress.update_minutes_estimate(approx_cells * 0.09 / 60)
     Progress.as_percent(0.03, 0.9) do
       if ['obz', 'obf', 'pdf'].include?(type.to_s)
         url = Converters::Utils.board_to_remote(self, user, {

@@ -101,6 +101,9 @@ export default modal.ModalController.extend({
   errored: computed('progress.status', function() {
     return this.get('progress.status') == 'errored';
   }),
+  minutes_estimate: computed('progress.minutes_estimate', function() {
+    return this.get('progress.minutes_estimate') || 5;
+  }),
   status_message: computed('progress.status', 'progress.sub_status', function() {
     return progress_tracker.status_text(this.get('progress.status'), this.get('porgress.sub_status'));
   }),

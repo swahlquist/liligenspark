@@ -106,6 +106,15 @@ class Progress < ActiveRecord::Base
       block.call
     end
   end
+
+  def self.update_minutes_estimate(minutes)
+    @@running_progresses ||= {}
+    progress = @@running_progresses[Worker.thread_id]
+    if progress && progress.settings['minutes_estimate'] != minutes
+      progress.settings['minutes_estimate'] = minutes
+      progress.save
+    end
+  end
   
   def self.update_current_progress(percent, message_key=nil)
     @@running_progresses ||= {}

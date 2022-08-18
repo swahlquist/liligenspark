@@ -25,6 +25,12 @@
           <div class='alert alert-danger'>{{status_message}}</div>
         {{else}}
           {{#if progress}}
+            {{#if pdf_download}}
+              {{t "Generating PDF for download. This could take around %{n} minutes." n=minutes_estimate key='print_board_generating'}}
+            {{else}}
+              {{t "Generating file for download This could take around %{n} minutes." n=minutes_estimate key='download_board_generating'}}
+            {{/if}}
+
             <div class='alert alert-info'>{{status_message}}</div>
             {{#if progress.percent}}
               <div class="progress">
