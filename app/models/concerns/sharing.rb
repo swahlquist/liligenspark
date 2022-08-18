@@ -1,7 +1,7 @@
 module Sharing
   extend ActiveSupport::Concern
   
-  def process_share(sharing_key, updater_id)
+  def process_share(sharing_key, updater_id=nil)
     updater = User.find_by_path(updater_id)
     action, user_name = sharing_key.split(/-/, 2)
     user = User.find_by_path(user_name)

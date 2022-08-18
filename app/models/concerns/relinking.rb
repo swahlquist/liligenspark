@@ -22,7 +22,8 @@ module Relinking
     return !self.public && self.for_user?(user) && !self.shared_by?(user)
   end
   
-  def copy_for(user, opts)
+  def copy_for(user, opts=nil)
+    opts ||= {}
     make_public = opts[:make_public] || false
     copy_id = opts[:copy_id]
     prefix = opts[:prefix]

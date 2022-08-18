@@ -1766,7 +1766,7 @@ describe Board, :type => :model do
         'parent_board_id' => b.global_id
       }, {:allow_copying_protected_boards => true})
       expect(b2.errored?).to eq(false)
-      expect(b2.settings['protected']).to eq({'vocabulary' => true})
+      expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u.global_id})
       expect(b.copyable_if_authorized?(u)).to eq(true)
       expect(b2.copyable_if_authorized?(u)).to eq(false)
     end
@@ -1777,7 +1777,7 @@ describe Board, :type => :model do
       b.settings['protected'] = {'vocabulary' => true}
       b.save
       b.process({'categories' => ['protected_vocabulary']})
-      expect(b.settings['protected']).to eq({'vocabulary' => true})
+      expect(b.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u.global_id})
     end
 
     it "should allow a board author to un-protect their own board" do
@@ -1785,6 +1785,7 @@ describe Board, :type => :model do
       b = Board.create(user: u)
       b.settings['protected'] = {'vocabulary' => true}
       b.save
+      expect(b.copyable_if_authorized?(u)).to eq(true)
       b.process({'categories' => ['unprotected_vocabulary']})
       expect(b.settings['protected']).to eq({})
     end

@@ -73,7 +73,7 @@ describe Relinking, :type => :model do
     it "should make public if specified" do
       u = User.create
       b = Board.create(:user => u, :settings => {'hat' => true, 'image_url' => 'bob', 'buttons' => []})
-      res = b.copy_for(u, true)
+      res = b.copy_for(u, make_public: true)
       expect(res.public).to eq(true)
     end
     
@@ -82,7 +82,7 @@ describe Relinking, :type => :model do
       b = Board.create(:user => u)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
       expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
-      res = b.copy_for(u, true)
+      res = b.copy_for(u, make_public: true)
       expect(res.buttons[0]['load_board']['id']).to eq(res.global_id)
     end
     
@@ -91,7 +91,7 @@ describe Relinking, :type => :model do
       b = Board.create(:user => u)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
       expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
-      res = b.copy_for(u, true)
+      res = b.copy_for(u, make_public: true)
       expect(res.buttons[0]['load_board']['id']).to eq(res.global_id)
       b.process({'buttons' => [{'id' => '1', 'load_board' => {'id' => b.global_id, 'key' => b.key}}]}, {'user' => u})
       expect(b.buttons[0]['load_board']['id']).to eq(b.global_id)
@@ -127,7 +127,7 @@ describe Relinking, :type => :model do
       b = Board.create(user: u)
       b.settings['name'] = "Bacon"
       b.save
-      res = b.copy_for(u, false, nil, "Cooked")
+      res = b.copy_for(u, make_public: false, copy_id: nil, prefix: "Cooked")
       expect(res.settings['name']).to eq("Cooked Bacon")
       expect(res.settings['prefix']).to eq("Cooked")
     end
@@ -137,13 +137,13 @@ describe Relinking, :type => :model do
       b = Board.create(user: u)
       b.settings['name'] = "Bacon"
       b.save
-      res = b.copy_for(u, false, nil, "Cooked")
+      res = b.copy_for(u, make_public: false, copy_id: nil, prefix: "Cooked")
       expect(b.settings['name']).to eq("Bacon")
       expect(b.settings['prefix']).to eq(nil)
       expect(res.settings['name']).to eq("Cooked Bacon")
       expect(res.settings['prefix']).to eq("Cooked")
 
-      res2 = res.copy_for(u, false, nil, "Frozen")
+      res2 = res.copy_for(u, make_public: false, copy_id: nil, prefix: "Frozen")
       expect(b.settings['name']).to eq("Bacon")
       expect(b.settings['prefix']).to eq(nil)
       expect(res.settings['name']).to eq("Cooked Bacon")
@@ -157,7 +157,7 @@ describe Relinking, :type => :model do
       b = Board.create(user: u)
       b.settings['name'] = "Bacon"
       b.save
-      res = b.copy_for(u, false, nil, "Cooked")
+      res = b.copy_for(u, make_public: false, copy_id: nil, prefix: "Cooked")
       expect(b.settings['name']).to eq("Bacon")
       expect(b.settings['prefix']).to eq(nil)
       expect(res.settings['name']).to eq("Cooked Bacon")
@@ -166,7 +166,7 @@ describe Relinking, :type => :model do
       res.settings['name'] = "Bacon"
       res.save
 
-      res2 = res.copy_for(u, false, nil, "Frozen")
+      res2 = res.copy_for(u, make_public: false, copy_id: nil, prefix: "Frozen")
       expect(b.settings['name']).to eq("Bacon")
       expect(b.settings['prefix']).to eq(nil)
       expect(res.settings['name']).to eq("Bacon")

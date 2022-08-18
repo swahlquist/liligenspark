@@ -620,7 +620,7 @@ class Board < ActiveRecord::Base
   end
 
   def copyable_if_authorized?(user)
-    return true if self.settings && self.settings['protected'] && self.settings['protected']['vocabulary_owner_id'] == user.global_id
+    return true if self.settings && self.settings['protected'] && user && self.settings['protected']['vocabulary_owner_id'] == user.global_id
     if !(self.settings['protected'] || {})['vocabulary_owner_id']
       return false if self.parent_board && self.parent_board.unshareable?
       return true if user && user.id == self.user_id
@@ -954,7 +954,7 @@ class Board < ActiveRecord::Base
     self.user ||= non_user_params[:user] if non_user_params[:user]
     
     self.settings ||= {}
-    ref_user = non_user_params[:author] || non_user_params[:user]
+    ref_user = non_user_params[:author] || non_user_params[:user] || self.user
     if !params['parent_board_id'].blank? && !self.parent_board_id
       parent_board = Board.find_by_global_id(params['parent_board_id'])
       if !parent_board
