@@ -111,7 +111,7 @@ class Progress < ActiveRecord::Base
     @@running_progresses ||= {}
     progress = @@running_progresses[Worker.thread_id]
     if progress && progress.settings['minutes_estimate'] != minutes
-      progress.settings['minutes_estimate'] = minutes
+      progress.settings['minutes_estimate'] = minutes.round
       progress.save
     end
   end

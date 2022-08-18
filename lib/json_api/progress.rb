@@ -22,7 +22,7 @@ module JsonApi::Progress
     end
     json['percent'] = progress.settings['percent'] if progress.settings['percent']
     json['sub_status'] = progress.settings['message_key'] if progress.settings['message_key']
-    json['minutes_estimate'] = progress.settings['minutes_estimate']
+    json['minutes_estimate'] = progress.settings['minutes_estimate'].round if progress.settings['minutes_estimate']
     json
   end
 end
