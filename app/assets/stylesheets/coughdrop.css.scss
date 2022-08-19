@@ -4682,6 +4682,16 @@ table tr.long_delay td {
 .small-placeholder:placeholder-shown {
   font-size: 12px;
 }
+.btn  {
+  .sub_note {
+    color: #a65151; font-size: 12px; margin-left: 55px; height: 0; margin-top: -2px; height: 2px; font-style: italic;  
+  }
+  &.active, &:focus, &.btn-primary {
+    .sub_note {
+      color: #ff9a9a;
+    }
+  }  
+}
 .setup_setting {
   margin: 20px 0 30px;
   label {

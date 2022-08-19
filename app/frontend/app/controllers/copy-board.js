@@ -18,6 +18,7 @@ export default modal.ModalController.extend({
     this.set('in_sidebar_set', null);
     this.set('disconnect', null);
     this.set('new_owner', null);
+    this.set('show_more_options', false);
     this.set('default_locale', app_state.get('label_locale') || this.get('model.board.locale'));
     this.set('home_board', null);
     var user_name = this.get('model.selected_user_name');
@@ -124,6 +125,9 @@ export default modal.ModalController.extend({
     }
   }),
   actions: {
+    more_options: function() {
+      this.set('show_more_options', !this.get('show_more_options'));
+    },
     tweakBoard: function(decision) {
       if(this.get('model.known_supervisees').length > 0) {
         if(!this.get('currently_selected_id')) {

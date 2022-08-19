@@ -2794,4 +2794,60 @@ describe User, :type => :model do
       end
     end
   end
+
+  describe "audit_protected_sources" do
+    it "should update any missing protected sources" do
+      u = User.create
+      b = Board.create(:user => u, :public => true)
+      i = ButtonImage.new(settings: {
+        'search_term' => 'bacon',
+        'label' => 'pig',
+        'external_id' => '12356',
+        'protected_source' => 'bacon'
+      }, user: u, board: b)
+      i.save
+      b.settings['buttons'] = [
+        {'label' => 'a', 'image_id' => i.global_id}
+      ]
+      b.instance_variable_set('@buttons_changed', true)
+      b.map_images(true)
+      b.save
+
+      b.reload
+      expect(b.button_images.to_a).to eq([i])
+      expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
+
+      expect(u).to receive(:track_protected_source).with('bacon')
+      u.audit_protected_sources
+    end
+
+    it "should track unauthored board sets when set as home" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(:user => u, :public => true)
+      i = ButtonImage.new(settings: {
+        'search_term' => 'bacon',
+        'label' => 'pig',
+        'external_id' => '12356',
+        'protected_source' => 'bacon'
+      }, user: u, board: b)
+      i.save
+      b.settings['buttons'] = [
+        {'label' => 'a', 'image_id' => i.global_id}
+      ]
+      b.instance_variable_set('@buttons_changed', true)
+      b.map_images(true)
+      b.save
+
+      b.reload
+      expect(b.button_images.to_a).to eq([i])
+      expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
+
+      u2.process({'preferences' => {'home_board' => {'id' => b.global_id, 'key' => b.key}}})
+      expect(Worker.scheduled?(User, :perform_action, {id: u2.id, method: 'audit_protected_sources', arguments: []})).to eq(true)
+      
+      expect(u2).to receive(:track_protected_source).with('bacon')
+      u2.audit_protected_sources
+    end
+  end
 end

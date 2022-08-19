@@ -112,7 +112,7 @@ export default Component.extend({
               var str = i18n.t('week_activity_level', "activity level: ") + level;
               if(models != null) {
                 str = str + i18n.t('comma_space', ", ");
-                str = str + i18n.t('models', ", models: ") + models;
+                str = str + i18n.t('models', "models: ") + models;
               }
               user.week_stats.push({
                 count: level,

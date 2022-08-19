@@ -13,6 +13,13 @@
       <div style='float: left; width: 50px; margin-top: -5px; margin-left: 5px;'><button class='btn btn-sm btn-default' {{action 'library_options'}} style='height: 25px; padding-top: 3px;'>{{t "options" key='options'}}</button></div>
     {{/if}}
     <div style="clear: left;"></div>
+    {{#if premium_symbol_library}}
+      {{#if app_state.currentUser.subscription.grace_trial_period}}
+        <div class='text-danger'>
+          {{t "(requires extra fee after trial period)" key='extra_fee_at_purchase'}}            
+        </div>
+      {{/if}}
+    {{/if}}
     <div style='font-size: 12px; margin-top: 5px;' class='text-muted'>
       <em>{{t "Enter a search term, or paste a URL or file" key='search_or_paste'}}</em>
     </div>

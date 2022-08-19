@@ -138,6 +138,9 @@ export default Controller.extend({
     }
     return res;
   }),
+  premium_symbol_library: computed('pending_preferences.preferred_symbols', function() {
+    return ['lessonpix', 'pcs', 'symbolstix'].indexOf(this.get('pending_preferences.preferred_symbols')) != -1;
+  }),
   update_current_skin: observer('current_skin.options.@each.checked', function() {
     if(this.get('current_skin.options') && this.get('pending_preferences.skin')) {
       var parts = this.get('pending_preferences.skin').split(/::/);

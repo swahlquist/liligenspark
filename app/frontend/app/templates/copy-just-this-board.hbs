@@ -4,7 +4,18 @@
       {{t "Other" key='other'}} <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
-      <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{#if home_board}}
+        <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{else if sidebar_board}}
+        <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{else if in_board_set}}
+        <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{else if in_sidebar_set}}
+        <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{else if linked}}
+      {{else}}
+        <li><a href="#" {{action 'tweakBoard' "links_copy"}}><strong>{{t "Copy Everything" key='copy_everything'}}</strong></a></li>
+      {{/if}}
       <li><a href="#" {{action 'tweakBoard' "remove_links"}}><strong>{{t "Copy Just this Board, Removing Links" key='remove_links_while_copying'}}</strong></a></li>
       <li><a href="#" {{action 'tweakBoard' "keep_links"}}>{{t "Copy Just this Board, with Links from the Original" key='copy_as_is'}}</a></li>
     </ul>

@@ -166,9 +166,50 @@ class User < ActiveRecord::Base
     self.save
   end
 
+  def audit_protected_sources
+    found_sources = []
+    # Check home board
+    # Chack any user-authored boards
+    if self.settings['preferences']['home_board']
+      board_ids = []
+      b = Board.find_by_path(self.settings['preferences']['home_board']['id'])
+      board_ids << b.global_id
+      board_ids += b.settings['downstream_board_ids'] || []
+      Board.find_batches_by_global_id(board_ids) do |brd|
+        brd.button_images.each do |bi|
+          if bi.settings && bi.settings['protected_source']
+            if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
+              found_sources << bi.settings['protected_source']
+              found_sources.uniq!
+            end
+          end
+        end
+      end
+    end
+    self.boards.find_in_batches(batch_size: 25) do |batch|
+      batch.each do |brd|
+        brd.button_images.each do |bi|
+          if bi.settings && bi.settings['protected_source']
+            if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
+              found_sources << bi.settings['protected_source']
+              found_sources.uniq!
+            end
+          end
+        end
+      end
+    end
+    found_sources.uniq.each do |source|
+      self.track_protected_source(source)
+    end
+  end
+
   def track_protected_source(source_id)
     self.reload.settings['activated_sources'] ||= []
-    if !self.settings['activated_sources'].include?(source_id)
+    # The first time a user leverages a third-party symbol library by 
+    # saving a board with an image, log it as activated (unless it happens)
+    # during the free trial, in which case it needs to be tracked at
+    # purchase.
+    if !self.settings['activated_sources'].include?(source_id) && !self.subscription_hash['grace_trial_period']
       log_activation = true
       if source_id == 'lessonpix'
         template = UserIntegration.find_by(template: true, integration_key: 'lessonpix')
@@ -1069,6 +1110,7 @@ class User < ActiveRecord::Base
     end
     if (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json != json
       notify('home_board_changed')
+      self.schedule(:audit_protected_sources)
     end
   end
   

@@ -81,6 +81,13 @@
       <label for="preferred_symbols" class="col-sm-3 control-label">{{t "Preferred Symbols" key='preferred_symbols'}}</label>
       <div class="col-sm-5">
         {{bound-select select_class="form-control" select_id="preferred_symbols" content=symbolsList selection=pending_preferences.preferred_symbols action=(action (mut pending_preferences.preferred_symbols)) }}
+        {{#if premium_symbol_library}}
+          {{#if app_state.currentUser.subscription.grace_trial_period}}
+            <div class='text-danger'>
+              {{t "(requires extra fee after trial period)" key='extra_fee_at_purchase'}}            
+            </div>
+          {{/if}}
+        {{/if}}
       </div>
     </div>
     {{#if app_state.feature_flags.skin_tones}}

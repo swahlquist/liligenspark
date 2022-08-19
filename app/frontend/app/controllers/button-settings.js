@@ -737,6 +737,9 @@ export default modal.ModalController.extend({
   multi_locales: computed('locales', function() {
     return (this.get('locales') || []).length > 1;
   }),
+  premium_symbol_library: computed('image_library', function() {
+    return ['lessonpix', 'pcs', 'symbolstix'].indexOf(this.get('image_library')) != -1;
+  }),
   show_libraries: computed(
     'image_search.previews',
     'image_search.previews_loaded',

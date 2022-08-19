@@ -49,6 +49,9 @@ export default modal.ModalController.extend({
     }
     return res;
   }),
+  premium_symbol_library: computed('library', function() {
+    return ['lessonpix', 'pcs', 'symbolstix'].indexOf(this.get('library')) != -1;
+  }),
   actions: {
     swap: function() {
       var _this = this;
