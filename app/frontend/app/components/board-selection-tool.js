@@ -34,6 +34,7 @@ export default Component.extend({
     this.set('current_level', null);
     this.set('base_level', null);
     this.set('board_style', null);
+    this.set('app_state', app_state);
   },
   didInsertElement: function() {
     this.size_element();
@@ -252,6 +253,11 @@ export default Component.extend({
     advanced: function() {
       this.sendAction('advanced');
     },
+    mine: function() {
+      if(this.get('mine')) {
+        this.sendAction('mine');
+      }
+    },
     select: function() {
       var _this = this;
       var user = app_state.get('currentUser');
@@ -306,8 +312,12 @@ export default Component.extend({
       });
     },
     set_board_style: function(style) {
+      if(!style || !style.id) {
+        console.error("Board style id missing");
+        return;
+      }
       this.set('current_index', null);
-      this.set('board_style', style);
+      this.set('board_style', style.id);
     },
     dismiss: function() {
       this.set('prompt', null);

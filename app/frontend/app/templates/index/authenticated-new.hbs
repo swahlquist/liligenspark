@@ -372,18 +372,27 @@
                 {{/if}}
               </div>
             </div>
-            <button class='btn btn-primary' style='overflow: hidden; margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'homeInSpeakMode' supervisee.id true}}>
-              <span class='glyphicon glyphicon-hand-up' style='font-size: 30px;'></span><br/>
-              <div style='line-height: 14px;'>
-                {{t "Model for" key='model_for'}}<br/>{{supervisee.user_name}}
-              </div>
-            </button>
-            <button class='btn btn-default modeling_button less_important' style='overflow: hidden; margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'homeInSpeakMode' supervisee.id}}>
-              <span class='glyphicon glyphicon-volume-up' style='font-size: 30px;'></span><br/>
-              <div style='line-height: 14px;'>
-                {{t "Speak as" key='speak_as'}}<br/>{{supervisee.user_name}}
-              </div>
-            </button>
+            {{#if supervisee.home_board_key}}
+              <button class='btn btn-primary' style='overflow: hidden; margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'homeInSpeakMode' supervisee.id true}}>
+                <span class='glyphicon glyphicon-hand-up' style='font-size: 30px;'></span><br/>
+                <div style='line-height: 14px;'>
+                  {{t "Model for" key='model_for'}}<br/>{{supervisee.user_name}}
+                </div>
+              </button>
+              <button class='btn btn-default modeling_button less_important' style='overflow: hidden; margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'homeInSpeakMode' supervisee.id}}>
+                <span class='glyphicon glyphicon-volume-up' style='font-size: 30px;'></span><br/>
+                <div style='line-height: 14px;'>
+                  {{t "Speak as" key='speak_as'}}<br/>{{supervisee.user_name}}
+                </div>
+              </button>
+            {{else}}
+              <button class='btn btn-default button_row_wrap attention_button less_important' style='margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'intro' supervisee.id}}>
+                <img src={{path 'images/learn.png'}}/>
+                <div style='line-height: 14px;'>
+                  {{t "Setup" key='setup'}}<br/>{{t "User" key='user'}}
+                </div>
+              </button>
+            {{/if}}
             {{#if app_state.currentUser.modeling_only}}
               <button class='btn btn-default button_row_mini_wrap secondary_button less_important' style='margin-bottom: 5px; width: 88px; border-width: 2px;' {{action 'home_board' supervisee.home_board_key}}>
                 <span class='glyphicon glyphicon-th' style='font-size: 30px;'></span><br/>

@@ -259,6 +259,13 @@ export default Controller.extend({
       return app_state.get('domain_settings.full_domain') || session.get('isAuthenticated');
     }
   ),
+  setup_for_other: computed('app_state.currentUser.id', 'setup_user_id', function() {
+    if(this.get('setup_user_id') && this.get('setup_user_id') != app_state.get('currentUser.id')) {
+      return CoughDrop.store.peekRecord('user', this.get('setup_user_id'));
+    } else {
+      return null;
+    }
+  }),
   can_edit_from_speak_mode: computed('app_state.sessionUser', 'app_state.sessionUser.modeling_only', 'app_state.referenced_user.preferences.speak_mode_edit', 'board.model.permissions.edit', 'board.model.uncopyable', 'board.model.for_sale', function() {
     if(app_state.get('sessionUser') && !app_state.get('sessionUser.modeling_only') && app_state.get('referenced_user.preferences.speak_mode_edit')) {
       if(this.get('board.model.permissions.edit')) {
@@ -434,8 +441,17 @@ export default Controller.extend({
         });
       }
     },
-    setAsHome: function(option) {
+    setAsHome: function(option, user) {
       var _this = this;
+      user = user || app_state.get('currentUser');
+      if(option == 'starting' && app_state.controller.get('setup_user_id') && app_state.controller.get('setup_user_id') != 'self' && user != 'skip_lookup') {
+        CoughDrop.store.findRecord('user', app_state.controller.get('setup_user_id')).then(function(u) {
+          _this.send('setAsHome', option, u);
+        }, function(err) {
+          _this.send('setAsHome', option, 'skip_lookup');
+        });
+        return;
+      }
       app_state.check_for_needing_purchase().then(function() {
         app_state.assert_source().then(function() {
           var board = _this.get('board.model');
@@ -443,8 +459,8 @@ export default Controller.extend({
             board = stashes.get('root_board_state') || _this.get('board').get('model');
           }
           var board_user_name = emberGet(board, 'key').split(/\//)[1];
-          var preferred_symbols = app_state.get('currentUser.preferences.preferred_symbols') || 'original';
-          var needs_confirmation = app_state.get('currentUser.supervisees') || preferred_symbols != 'original' || board_user_name != app_state.get('currentUser.user_name');
+          var preferred_symbols = user.get('preferences.preferred_symbols') || 'original';
+          var needs_confirmation = user.get('supervisees') || preferred_symbols != 'original' || board_user_name != user.get('user_name');
           var done = function(sync) {
             if(sync && persistence.get('online') && persistence.get('auto_sync')) {
               _this.set('simple_board_header', false);
@@ -466,13 +482,12 @@ export default Controller.extend({
             }
           }
           if(needs_confirmation && !option) {
-            modal.open('set-as-home', {board: board}).then(function(res) {
+            modal.open('set-as-home', {board: board, user_id: _this.get('setup_user_id')}).then(function(res) {
               if(res && res.updated) {
                 done(true);
               }
             }, function() { });
           } else {
-            var user = app_state.get('currentUser');
             if(user) {
               if(option == 'starting') {
                 user.copy_home_board(board, true).then(function() { }, function() {
@@ -1074,7 +1089,12 @@ export default Controller.extend({
       }
       var _this = this;
       wait.then(function() {
-        _this.transitionToRoute('setup', {queryParams: {page: order[current_index]}});
+        var params = {page: order[current_index]}
+        var user_id = _this.get('setup_user_id');
+        if(user_id) {
+          params.user_id = user_id;
+        }
+        _this.transitionToRoute('setup', {queryParams: params});
       }, function() { });
     },
     speak_mode_notification: function() {

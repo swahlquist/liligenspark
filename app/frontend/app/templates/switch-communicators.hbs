@@ -34,7 +34,7 @@
         </button>
       </div>
     {{/unless}}
-    {{user-select select_id="currently_selected_id" skip_me=model.skip_me allow_all=true buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
+    {{user-select select_id="currently_selected_id" skip_me=model.skip_me allow_all=allow_all buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
   </div>
   <div class="modal-footer">
     <button {{action "close"}} class="btn btn-default">{{t "Cancel" key='cancel'}}</button>

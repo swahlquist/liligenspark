@@ -7,12 +7,15 @@
       <button class='btn btn-default btn-lg' {{action 'done'}}>{{t "Skip For Now, Return<br/>to the Dashboard" key='skip_to_dashboard'}}</button>
     </div>
   {{else}}
-    <div style='margin-bottom: 40px;'>
-      <button class='btn btn-default btn-lg' {{action 'choose_board'}} style='font-size: 22px;'>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
-    </div>
+    {{#if for_self}}
+      <div style='margin-bottom: 40px;'>
+        <button class='btn btn-default btn-lg' {{action 'choose_board'}} style='font-size: 22px;'>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
+      </div>
+    {{/if}}
   {{/if}}
-  {{#if app_state.currentUser.user_name}}
-    <p class='prompt'>{{t "First, remember your username (<b>%{un}</b>), you can use it to log in when you download the free app. You can also edit boards, practice and view reports from any computer with a web browser!" un=app_state.currentUser.user_name key='intro_3'}}</p>
+  {{#if setup_user.user_name}}
+    <img src={{setup_user.avatar_url_with_fallback}} onerror='button_broken_image(this);' style='float: left; width: 50px; height: 50px; margin-right: 10px; object-fit: contain;'/>
+    <p class='prompt'>{{t "First, remember your username (<b>%{un}</b>), you can use it to log in when you download the free app. You can also edit boards, practice and view reports from any computer with a web browser!" un=setup_user.user_name key='intro_3'}}</p>
   {{/if}}
   <p class='prompt'>{{t "Next we'd like to teach just a little about AAC (Augmentative and Alternative Communication), and then help make sure you've got %app_name% set up correctly. Hit \"Next\" in the bottom corner to get started." key='intro_2'}}</p>
   <div style='float: right;'>

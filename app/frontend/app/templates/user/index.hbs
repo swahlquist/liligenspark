@@ -203,7 +203,8 @@
                 {{#if model.subscription.eval_expires}}
                   <li><a href="#" {{action 'eval_settings'}}>Eval Status</a></li>
                 {{/if}}
-                {{#if model.permissions.delete}}
+                {{#if model.permissions.edit}}
+                  <!-- allow supervisors to run setup for a supervisee -->
                   <li><a href="#" {{action 'setup'}}>{{t "Getting Started Wizard" key='getting_started_wizard'}}</a></li>
                 {{/if}}
               </ul>
@@ -321,7 +322,7 @@
             {{/if}}
           </div>
       {{/if}}
-      {{#if model.permissions.delete}}
+      {{#if model.permissions.edit}}
         <div class='col-xs-12' style='margin-top: 10px; margin-bottom: 15px;'>
           <a href="#" {{action 'setup'}} class='btn btn-default'>{{t "Launch the Getting Started Wizard Again" key='launch_setup'}}</a>
         </div>

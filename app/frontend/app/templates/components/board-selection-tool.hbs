@@ -48,6 +48,11 @@
           <button class='btn btn-primary btn-lg' {{action 'select'}} style='box-shadow: 0 5px 10px #000; position: relative; height: 70px; margin-bottom: -20px; border-width: 4px;'>{{t "Select This Layout" key='select_this_layout'}}</button>
         {{/if}}
         <button class='btn btn-default btn-sm' {{action 'advanced'}}>{{t "Let Me Browse On My Own" key='browse_on_my_own'}}</button>
+        {{#if app_state.currentUser.supporter_role}}
+          {{#if mine}}
+            <button class='btn btn-default btn-sm' {{action 'mine'}}>{{t "Choose From My Home Boards" key='choose_from_mine'}}</button>
+          {{/if}}
+        {{/if}}
       {{/if}}
     </div>
   {{else}}
@@ -91,7 +96,7 @@
       {{#if board_style_needed}}
         {{#each board_styles as |style|}}
           <div class={{style.col_class}}>
-            <button class='btn btn-default' {{action 'set_board_style' style.id}}>
+            <button class='btn btn-default' {{action 'set_board_style' style}}>
               {{style.name}}<br/>
               ({{style.description}})
               <img src={{style.image_url}} />

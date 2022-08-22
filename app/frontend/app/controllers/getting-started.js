@@ -63,7 +63,7 @@ export default modal.ModalController.extend({
         window.ga('send', 'event', 'Setup', 'launch', 'Setup started');
       }
       app_state.set('auto_setup', false);
-      this.transitionToRoute('setup');
+      this.transitionToRoute('setup', {queryParams: {user_id: null}});
       modal.close();
     },
     app_install: function() {

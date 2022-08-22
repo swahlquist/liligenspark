@@ -545,12 +545,20 @@ export default Controller.extend({
       }
       modal.open('inline-video', {video: {type: 'youtube', id: id}, hide_overlay: true});
     },
-    intro: function() {
+    intro: function(user_id) {
       if(window.ga) {
         window.ga('send', 'event', 'Setup', 'start', 'Setup started');
       }
       app_state.set('auto_setup', false);
-      this.transitionToRoute('setup');
+
+      if(user_id) {
+        this.transitionToRoute('setup', {queryParams: {user_id: user_id, page: null}});
+      } else if(app_state.get('currentUser.permissions.delete') && (app_state.get('currentUser.supervisees') || []).length > 0) {
+        var prompt = i18n.t('setup_which_user', "Select User to Run Setup");
+        app_state.controller.send('switch_communicators', {stay: true, modeling: false, setup: true, skip_me: false, header: prompt});
+      } else {
+        this.transitionToRoute('setup', {queryParams: {user_id: null, page: null}});
+      }
     },
     opening_index: function() {
       app_state.set('index_view', true);

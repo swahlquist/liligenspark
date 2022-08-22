@@ -805,7 +805,7 @@ var app_state = EmberObject.extend({
             if(board.get('editable_source')) {
               return load_board();
             } else {
-              return RSVP.reject({error: ' ditable source never loaded for local board'});
+              return RSVP.reject({error: ' editable source never loaded for local board'});
             }
           }, 2000);
         }

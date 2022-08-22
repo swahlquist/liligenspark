@@ -11,7 +11,7 @@ export default modal.ModalController.extend({
         user.save().then(function() {
           _this.send('close');
           app_state.set('auto_setup', true);
-          _this.transitionToRoute('setup');
+          _this.transitionToRoute('setup', {queryParams: {user_id: null, page: null}});
         }, function() {
           _this.set('agree_error', true);
         });

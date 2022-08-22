@@ -49,6 +49,7 @@ CoughDrop.User = DS.Model.extend({
   prior_avatar_urls: DS.attr('raw'),
   last_profile: DS.attr('raw'),
   location: DS.attr('string'),
+  home_board_key: DS.attr('string'),
   permissions: DS.attr('raw'),
   external_nonce: DS.attr('raw'),
   state_2fa: DS.attr('raw'),

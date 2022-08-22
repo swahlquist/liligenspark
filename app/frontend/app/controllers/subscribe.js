@@ -22,7 +22,7 @@ export default modal.ModalController.extend({
         window.ga('send', 'event', 'Setup', 'launch', 'Setup started');
       }
       app_state.get('auto_setup', true);
-      this.transitionToRoute('setup');
+      this.transitionToRoute('setup', {queryParams: {user_id: null, page: null}});
     },
     subscription_error: function(err) {
       this.set('error', err);
@@ -30,7 +30,7 @@ export default modal.ModalController.extend({
     subscription_success: function(msg) {
       modal.close();
       app_state.get('auto_setup', true);
-      this.transitionToRoute('setup');
+      this.transitionToRoute('setup', {queryParams: {user_id: null, page: null}});
       modal.success(msg);
     }
   }

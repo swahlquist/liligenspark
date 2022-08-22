@@ -21,7 +21,7 @@ export default Controller.extend({
   title: computed(function() {
     return i18n.t('account_setup', "Account Setup");
   }),
-  queryParams: ['page', 'finish'],
+  queryParams: ['page', 'finish', 'user_id'],
   order: order,
   extra_order: extra_order,
   partial: computed('page', function() {
@@ -38,10 +38,10 @@ export default Controller.extend({
   }),
   utterance_layout: computed(
     'fake_user.preferences.device.utterance_text_only',
-    'app_state.currentUser.preferences.device.utterance_text_only',
+    'setup_user.preferences.device.utterance_text_only',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.device.utterance_text_only')) {
         res.text_only = true;
       } else {
@@ -52,10 +52,10 @@ export default Controller.extend({
   ),
   text_position: computed(
     'fake_user.preferences.device.button_text_position',
-    'app_state.currentUser.preferences.device.button_text_position',
+    'setup_user.preferences.device.button_text_position',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.device.button_text_position') == 'top') {
         res.text_on_top = true;
       } else if(user.get('preferences.device.button_text_position') == 'bottom') {
@@ -70,10 +70,10 @@ export default Controller.extend({
   ),
   skin: computed(
     'fake_user.preferences.skin',
-    'app_state.currentUser.preferences.skin',
+    'setup_user.preferences.skin',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.skin')) {
         if(['default', 'dark', 'medium-dark', 'medium', 'medium-light', 'light'].indexOf(user.get('preferences.skin')) != -1) {
           res.value = user.get('preferences.skin');
@@ -126,7 +126,7 @@ export default Controller.extend({
     function() {
       var opts = this.get('skin.options');
       if(!opts) { return; }
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       var str = 'mix_only::' + user.get('id') + '::limit-';
       if(this.get('skin.prefer')) {
         str = 'mix_prefer::' + user.get('id') + '::limit-';
@@ -190,11 +190,11 @@ export default Controller.extend({
   ),
   image_preview_class: computed(
     'fake_user.preferences.high_contrast',
-    'app_state.currentUser.high_contrast',
+    'setup_user.high_contrast',
     'background',
     function() {
       var res = 'symbol_preview ';
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.high_contrast')) {
         res = res + 'high_contrast ';
       }
@@ -208,12 +208,12 @@ export default Controller.extend({
   ),
   background: computed(
     'fake_user.preferences.device.symbol_background',
-    'app_state.currentUser.preferences.device.symbol_background',
+    'setup_user.preferences.device.symbol_background',
     'fake_user.preferences.high_contrast',
-    'app_state.currentUser.high_contrast',
+    'setup_user.high_contrast',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.device.symbol_background') == 'clear') {
         res.clear = true;
       } else if(user.get('preferences.device.symbol_background') == 'white') {
@@ -233,12 +233,12 @@ export default Controller.extend({
   ),
   access: computed(
     'fake_user.preferences.device.dwell',
-    'app_state.currentUser.preferences.device.dwell',
+    'setup_user.preferences.device.dwell',
     'fake_user.preferences.device.scanning',
-    'app_state.currentUser.preferences.device.scanning',
+    'setup_user.preferences.device.scanning',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.device.dwell')) {
         res.dwell = true;
       } else if(user.get('preferences.device.scanning')) {
@@ -251,10 +251,10 @@ export default Controller.extend({
   ),
   home_return: computed(
     'fake_user.preferences.auto_home_return',
-    'app_state.currentUser.preferences.auto_home_return',
+    'setup_user.preferences.auto_home_return',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.auto_home_return')) {
         res.auto_return = true;
       } else {
@@ -265,10 +265,10 @@ export default Controller.extend({
   ),
   symbols: computed(
     'fake_user.preferences.preferred_symbols',
-    'app_state.currentUser.preferences.preferred_symbols',
+    'setup_user.preferences.preferred_symbols',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.preferred_symbols')) {
         res[user.get('preferences.preferred_symbols').replace(/-/, '_')] = true;
         res['value'] = [user.get('preferences.preferred_symbols').replace(/-/, '_')];
@@ -279,11 +279,11 @@ export default Controller.extend({
     }
   ),
   premium_but_not_allowed: computed(
-    'app_state.currentUser.subscription.extras_enabled',
+    'setup_user.subscription.extras_enabled',
     'symbols.pcs',
     'symbols.symbolstix',
     function() {
-      return (this.get('symbols.pcs') || this.get('symbols.symbolstix')) && !this.get('app_state.currentUser.subscription.extras_enabled');
+      return (this.get('symbols.pcs') || this.get('symbols.symbolstix')) && !this.get('setup_user.subscription.extras_enabled');
     }
   ),
   lessonpix_but_not_allowed: computed('symbols.lessonpix', 'lessonpix_enabled', function() {
@@ -304,12 +304,12 @@ export default Controller.extend({
   ),
   notification: computed(
     'fake_user.preferences.notification_frequency',
-    'app_state.currentUser.preferences.notification_frequency',
+    'setup_user.preferences.notification_frequency',
     'fake_user.preferences.share_notifications',
-    'app_state.currentUser.preferences.share_notifications',
+    'setup_user.preferences.share_notifications',
     function() {
       var res = {};
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(user.get('preferences.notification_frequency') == '1_week') {
         res['1_week'] = true;
       } else if(user.get('preferences.notification_frequency') == '2_weeks') {
@@ -334,13 +334,13 @@ export default Controller.extend({
   update_cell: observer(
     'cell',
     'fake_user.cell_phone',
-    'app_state.currentUser.cell_phone',
+    'setup_user.cell_phone',
     function(o, change) {
       if(!app_state.controller.get('setup_footer')) { return; }
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(!this.get('cell') && user.get('cell_phone')) {
         this.set('cell', user.get('cell_phone'));
-      } else if(change == 'app_state.currentUser.cell_phone') {
+      } else if(change == 'setup_user.cell_phone') {
         this.set('cell', user.get('cell_phone'));
       } else if(this.get('cell')) {
         user.set('cell_phone', this.get('cell'));
@@ -351,15 +351,15 @@ export default Controller.extend({
   update_pin: observer(
     'pin',
     'fake_user.preferences.require_speak_mode_pin',
-    'app_state.currentUser.preferences.require_speak_mode_pin',
+    'setup_user.preferences.require_speak_mode_pin',
     'fake_user.preferences.speak_mode_pin',
-    'app_state.currentUser.preferences.speak_mode_pin',
+    'setup_user.preferences.speak_mode_pin',
     function(o, change) {
       if(!app_state.controller.get('setup_footer')) { return; }
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(!this.get('pin') && user.get('preferences.speak_mode_pin') && user.get('preferences.require_speak_mode_pin')) {
         this.set('pin', user.get('preferences.speak_mode_pin') || "");
-      } else if(change == 'app_state.currentUser.preferences.speak_mode_pin') {
+      } else if(change == 'setup_user.preferences.speak_mode_pin') {
         this.set('pin', user.get('preferences.speak_mode_pin') || "");
       } else {
         var pin = (parseInt(this.get('pin'), 10) || "").toString().substring(0, 4);
@@ -380,13 +380,13 @@ export default Controller.extend({
   ),
   update_checkbox_preferences: observer(
     'fake_user.preferences.vocalize_buttons',
-    'app_state.currentUser.preferences.vocalize_buttons',
+    'setup_user.preferences.vocalize_buttons',
     'vocalize_buttons',
     'fake_user.preferences.vocalize_linked_buttons',
-    'app_state.currentUser.preferences.vocalize_linked_buttons',
+    'setup_user.preferences.vocalize_linked_buttons',
     'vocalize_linked_buttons',
     'fake_user.preferences.auto_home_return',
-    'app_state.currentUser.preferences.auto_home_return',
+    'setup_user.preferences.auto_home_return',
     'auto_home_return',
     function(a, b, c) {
       if(!app_state.controller.get('setup_footer')) { return; }
@@ -394,9 +394,9 @@ export default Controller.extend({
       var _this = this;
       if(_this.get('ignore_update')) { return; }
 
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       ['vocalize_buttons', 'vocalize_linked_buttons', 'auto_home_return'].forEach(function(pref) {
-        if(b && b.match(/fake_user|currentUser/) /*_this.get(pref) == null*/ && user.get('preferences.' + pref) != null) {
+        if(b && b.match(/fake_user|setup_user/) /*_this.get(pref) == null*/ && user.get('preferences.' + pref) != null) {
           _this.set('ignore_update', true);
           _this.set(pref, user.get('preferences.' + pref));
           _this.set('ignore_update', false);
@@ -413,13 +413,13 @@ export default Controller.extend({
   ),
   user_voice_list: computed(
     'speecher.voiceList',
-    'app_state.currentUser.premium_voices.claimed',
+    'setup_user.premium_voices.claimed',
     'fake_user.preferences.device.voice.voice_uri',
-    'app_state.currentUser.preferences.device.voice.voice_uris',
+    'setup_user.preferences.device.voice.voice_uris',
     function() {
       var list = speecher.get('voiceList');
       var result = [];
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       var premium_voice_ids = (user.get('premium_voices.claimed') || []).map(function(id) { return "extra:" + id; });
       var voice_uri = user.get('preferences.device.voice.voice_uri');
       var found = false;
@@ -445,9 +445,13 @@ export default Controller.extend({
       return result;
     }
   ),
-  update_on_page_change: observer('page', function() {
-    if(!this.get('fake_user')) {
-      this.set('fake_user', EmberObject.create({
+  for_self: computed('app_state.currentUser.id', 'setup_user.id', function() {
+    return this.get('setup_user') && this.get('setup_user.id') == app_state.get('currentUser.id');
+  }),
+  update_on_page_change: observer('page', 'user_id', function() {
+    var _this = this;
+    if(!_this.get('fake_user')) {
+      _this.set('fake_user', EmberObject.create({
         preferences:
         {
           device: {voice: {}},
@@ -456,15 +460,36 @@ export default Controller.extend({
         }
       }));
     }
-    var _this = this;
-    if(app_state.get('currentUser')) {
-      this.set('cell', app_state.get('currentUser.cell_phone'));
+    app_state.controller.set('setup_user_id', _this.get('user_id'));
+    if(_this.get('user_id')) {
+      if(_this.get('user_id') != _this.get('setup_user.id')) {
+        _this.set('other_user', {loading: true});
+        _this.set('setup_user', null);
+        CoughDrop.store.findRecord('user', _this.get('user_id')).then(function(user) {
+          if(user.get('permissions.edit')) {
+            _this.set('other_user', null);
+            _this.set('setup_user', user);  
+          } else {
+            app_state.controller.set('setup_user_id', null);
+            _this.set('other_user', {error: true, user_id: _this.get('user_id')});  
+          }
+        }, function(err) {
+          app_state.controller.set('setup_user_id', null);
+          _this.set('other_user', {error: true, user_id: _this.get('user_id')});
+        });  
+      }
+    } else {
+      _this.set('other_user', null);
+      _this.set('setup_user', app_state.get('currentUser') || _this.get('fake_user'));
+    }
+    if(this.get('setup_user')) {
+      this.set('cell', this.get('setup_user.cell_phone'));
       ['vocalize_buttons', 'vocalize_linked_buttons', 'auto_home_return'].forEach(function(pref) {
-        _this.set(pref, app_state.get('currentUser.preferences.' + pref));
+        _this.set(pref, _this.get('setup_user.preferences.' + pref));
       });
 
       if(this.get('page') == 'symbols') {
-        app_state.get('currentUser').find_integration('lessonpix').then(function(res) {
+        this.get('setup_user').find_integration('lessonpix').then(function(res) {
           _this.set('lessonpix_enabled', true);
         }, function(err) { });
       }
@@ -513,7 +538,7 @@ export default Controller.extend({
   },
   actions: {
     set_preference: function(preference, value) {
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       if(preference == 'access') {
         if(value == 'touch') {
           user.set('preferences.device.dwell', false);
@@ -551,8 +576,8 @@ export default Controller.extend({
         user.set('preferences.' + preference, value);
       }
       var _this = this;
-      if(preference == 'logging' && value === true && app_state.get('currentUser')) {
-        modal.open('enable-logging', {save: true, user: app_state.get('currentUser')});
+      if(preference == 'logging' && value === true && _this.get('setup_user')) {
+        modal.open('enable-logging', {save: true, user: _this.get('setup_user')});
       }
       if(user.save) {
         app_state.controller.set('footer_status', {message: i18n.t('updating_user', "Updating User...")});
@@ -591,16 +616,16 @@ export default Controller.extend({
       }
     },
     test_voice: function() {
-      var user = app_state.get('currentUser') || this.get('fake_user');
+      var user = this.get('setup_user') || this.get('fake_user');
       var voice_uri = user.get('preferences.device.voice.voice_uri');
-      utterance.test_voice(voice_uri, app_state.get('currentUser.preferences.device.voice.rate'), app_state.get('currentUser.preferences.device.voice.pitch'), app_state.get('currentUser.preferences.device.voice.volume'));
+      utterance.test_voice(voice_uri, this.get('setup_user.preferences.device.voice.rate'), this.get('setup_user.preferences.device.voice.pitch'), this.get('setup_user.preferences.device.voice.volume'));
     },
     manage_supervision: function() {
-      modal.open('supervision-settings', {user: app_state.get('currentUser')});
+      modal.open('supervision-settings', {user: this.get('setup_user')});
     },
     premium_voices: function() {
       var _this = this;
-      modal.open('premium-voices', {user: app_state.get('currentUser')});
+      modal.open('premium-voices', {user: this.get('setup_user')});
     },
     extra: function() {
       app_state.controller.set('setup_order', order.concat(extra_order));
@@ -621,6 +646,11 @@ export default Controller.extend({
       this.transitionToRoute('index');
     },
     show_advanced: function() {
+      this.set('advanced_mine', false);
+      this.set('advanced', true);
+    },
+    show_mine: function() {
+      this.set('advanced_mine', true);
       this.set('advanced', true);
     },
     select_board: function(board) {

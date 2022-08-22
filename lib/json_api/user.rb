@@ -56,6 +56,7 @@ module JsonApi::User
       json['preferences'].delete('logging_code')
       json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
       json['preferences']['home_board'] = user.settings['preferences']['home_board']
+      json['home_board_key'] = user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['key']
       json['preferences']['skin'] = user.settings['preferences']['skin'] || 'default'
       json['preferences']['progress'] = user.settings['preferences']['progress']
       json['preferences']['protected_usage'] = !user.external_email_allowed?

@@ -25,6 +25,9 @@ export default modal.ModalController.extend({
   modeling_choice: computed('model.modeling', function() {
     return this.get('model.modeling') !== undefined && this.get('model.modeling') != 'ask';
   }),
+  allow_all: computed('model.setup', function() {
+    return !this.get('model.setup');
+  }),
   actions: {
     select: function(board_for_user_id) {
       var jump_home = this.get('model.jump_home');
@@ -48,6 +51,12 @@ export default modal.ModalController.extend({
         });
       } else if(this.get('model.eval')) {
         app_state.set_speak_mode_user(board_for_user_id, false, false, 'obf/eval');
+      } else if(this.get('model.setup')) {
+        var params = {page: null, user_id: null};
+        if(board_for_user_id != 'self') {
+          params.user_id = board_for_user_id;
+        }
+        this.transitionToRoute('setup', {queryParams: params});
       } else {
         app_state.set_speak_mode_user(board_for_user_id, jump_home, keep_as_self);
       }

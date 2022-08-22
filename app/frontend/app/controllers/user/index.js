@@ -440,7 +440,7 @@ export default Controller.extend({
         window.ga('send', 'event', 'Setup', 'start', 'Setup started');
       }
       app_state.set('auto_setup', false);
-      this.transitionToRoute('setup');
+      this.transitionToRoute('setup', {queryParams: {page: null, user_id: this.get('model.id')}});
     },
     quick_assessment: function() {
       var _this = this;

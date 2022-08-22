@@ -6,9 +6,9 @@
 </div>
 <div class='col-sm-5'>
   <p class='prompt'>{{t "%app_name% has powerful built-in reporting tools that allow caregivers, therapists and supporters to see things like what time of day the device is being used, most common words and progress toward goals. To use these helpful features, just enable logging." key='logging_reports_1'}}</p>
-  {{#if app_state.currentUser}}
+  {{#if setup_user}}
     <p style='margin-top: 20px;'><button class='btn btn-default btn-lg' {{action 'set_preference' 'logging' true}}>
-      {{#if app_state.currentUser.preferences.logging}}
+      {{#if setup_user.preferences.logging}}
         {{t "Logging is Enabled" key='logging_is_enabled'}}
       {{else}}
         {{t "Enable Logging" key='enable_logging'}}
@@ -20,7 +20,7 @@
   <h4>{{t "Reporting Notifications" key='reporting_notifications'}}</h4>
 </div>
 <div class='col-sm-5 col-sm-offset-1'>
-  {{#if app_state.currentUser.supporter_role}}
+  {{#if setup_user.supporter_role}}
     <p class='prompt'>{{t "As a supervisor, you'll have access to boards and usage reports for the communicators you work with. If you'd like, you can also turn on notifications, and receive regular updates on communicator progress, or even opt-in to receiving text messages from communicators that have added you as a supervisor." key='notifications_settings'}}</p>
   {{else}}
     <p class='prompt'>{{t "When logging is enabled, you can opt to receive regular emails with details on communication over time, including current goals and word usage. This can help keep everyone on the same page and can be a valuable tool is helping communicators make continual progress." key='communicator_notifications'}}</p>
@@ -37,7 +37,7 @@
       <a href="#" class={{if notification.none 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'notification_frequency' ''}}>{{t "Never" key='never'}}</a>
     </div>
   </div>
-  {{#if app_state.currentUser.supporter_role}}
+  {{#if setup_user.supporter_role}}
     <div class='setup_setting'>
       <label>{{t "How would you like communicators to message you?" key='comm_preference'}}</label>
       <div class="btn-group-vertical" style="width: 100%;">

@@ -3008,6 +3008,12 @@ $nav_extras: #eee;
     color: #444;
   }
 }
+.attention_button {
+  background-color: #ccffcc; border-color: #33b73a; 
+  &.less_important {
+    color: #666;  
+  }
+}
 #new_right {
   background: #fff; 
 /*  overflow: auto; */
