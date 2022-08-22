@@ -39,11 +39,12 @@ describe Relinking, :type => :model do
   end
   
   describe "copy_for" do
-    it "should fail gracefully if no user provided" do
+    it "should error no user provided" do
       u = User.create
       b = Board.create(:user => u)
-      expect(b.copy_for(nil)).to eq(nil)
+      expect {b.copy_for(nil)}.to raise_error('missing user')
     end
+
     it "should create a new copy of the specified board for the user" do
       u = User.create
       b = Board.create(:user => u, :settings => {'hat' => true, 'image_url' => 'bob'})
@@ -180,11 +181,64 @@ describe Relinking, :type => :model do
       b = Board.create(user: u)
       b.settings['name'] = "Bacon"
       b.save
-      res = b.copy_for(u, false, nil, "")
+      res = b.copy_for(u, make_public: false, copy_id: nil, prefix: "")
       expect(res.settings['name']).to eq("Bacon")
       expect(res.settings['prefix']).to eq(nil)
     end
 
+    it "should allow setting new_owner if authorized" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b2 = b.copy_for(u2, copier: u1, new_owner: true)
+      expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id, 'sub_owner' => true})
+    end
+
+    it "should not allow setting new_owner if not authorized" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b2 = b.copy_for(u2, copier: u2, new_owner: true)
+      expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id, 'sub_owner' => true})
+    end
+
+    it "should allow disconnecting if authorized" do
+      u1 = User.create
+      b = Board.create(user: u1, parent_board_id: 1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b2 = b.copy_for(u2, copier: u1, disconnect: true)
+      expect(b2.settings['copy_parent_board_id']).to eq(b.global_id)
+      expect(b2.parent_board_id).to eq(nil)
+    end
+
+    it "should not allow disconnecting if not authorized" do
+      u1 = User.create
+      b = Board.create(user: u1, parent_board_id: 1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b2 = b.copy_for(u2, copier: u2, disconnect: true)
+      expect(b2.settings['copy_parent_board_id']).to eq(nil)
+      expect(b2.parent_board_id).to eq(b.id)
+    end
+
+    it "should set sub_owner to false if disconnect AND new_owner" do
+      u1 = User.create
+      b = Board.create(user: u1, parent_board_id: 1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b2 = b.copy_for(u2, copier: u1, new_owner: true, disconnect: true)
+      expect(b2.settings['copy_parent_board_id']).to eq(b.global_id)
+      expect(b2.parent_board_id).to eq(nil)
+      expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id, 'sub_owner' => false})
+    end
   end
 
   describe "update_default_locale!" do
@@ -593,8 +647,8 @@ describe Relinking, :type => :model do
 
       b2.reload
       expect(b2.buttons[0]['load_board']['key']).not_to eq(b1a.key)
-      expect(b2.buttons[0]['label']).to eq('car')
-      expect(b2.settings['locale']).to eq('en')
+      expect(b2.buttons[0]['label']).to eq('voiture')
+      expect(b2.settings['locale']).to eq('fr')
       expect(b2.settings['copy_id']).to eq(nil)
       b2a = Board.find_by_path(b2.buttons[0]['load_board']['key'])
       expect(b2a.buttons[0]['load_board']['key']).to_not eq(b1b.key)
@@ -605,6 +659,45 @@ describe Relinking, :type => :model do
       expect(b2b.buttons[0]['label']).to eq('hola')
       expect(b2b.settings['locale']).to eq('es')
       expect(b2a.settings['copy_id']).to eq(b2.global_id)
+    end
+
+    it "should not allow sneaking new_owner onto someone else's board by linking to it from one of their own" do
+      u1 = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u2, u1, nil, false)
+      b1 = Board.create(user: u1, public: true)
+      b1.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b1.save
+      b2 = Board.create(user: u2)
+      b2a = Board.create(user: u2)
+      b2a.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id}
+      b2a.save
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'a', 'load_board' => {'key' => b2a.key, 'id' => b2a.global_id}}
+      ]}, {'author' => u2})
+      expect(b2.buttons[0]).to_not eq(nil)
+      expect(b2.buttons[0]['load_board']['key']).to eq(b2a.key)
+      Worker.process_queues
+      b2a.process({'buttons' => [
+        {'id' => '1', 'label' => 'b', 'load_board' => {'key' => b1.key, 'id' => b1.global_id}}
+      ]}, {'author' => u1})
+      expect(b2a.buttons[0]).to_not eq(nil)
+      expect(b2a.buttons[0]['load_board']['key']).to eq(b1.key)
+      b2.reload.track_downstream_boards!
+      Worker.process_queues
+      Worker.process_queues
+      b2.reload.track_downstream_boards!
+      expect(b2.reload.settings['downstream_board_ids'].sort).to eq([b1.global_id, b2a.global_id].sort)
+      u3 = User.create
+      b3 = b2.copy_for(u3, copier: u2, new_owner: true)
+      res = Board.copy_board_links_for(u3, {:starting_old_board => b2, starting_new_board: b3, :valid_ids => [b1.global_id, b2.global_id, b2a.global_id], :copier => u2, :authorized_user => u2, :new_owner => true})
+      b3.reload
+      expect(b3.buttons[0]['load_board']['key']).to_not eq(b2a.key)
+      b3a = Board.find_by_path(b3.buttons[0]['load_board']['key'])
+      expect(b3a.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u3.global_id, 'sub_owner' => true})
+      expect(b3a.buttons[0]['load_board']['key']).to_not eq(b1.key)
+      b3b = Board.find_by_path(b3a.buttons[0]['load_board']['key'])
+      expect(b3b.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id, 'sub_owner' => true})
     end
   end
  

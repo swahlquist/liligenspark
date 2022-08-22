@@ -2601,6 +2601,9 @@ describe User, :type => :model do
   describe "track_protected_source" do
     it "should track novel usage" do
       u = User.create
+      u.settings['subscription'] = {'expiration_source' => 'cool stuff'}
+      u.save
+      expect(u.subscription_hash['grace_trial_period']).to eq(nil)
       expect(u.settings['activated_sources']).to eq(nil)
       u.track_protected_source('bacon')
       expect(u.reload.settings['activated_sources']).to eq(['bacon'])
@@ -2610,8 +2613,29 @@ describe User, :type => :model do
       expect(ae.data['source']).to eq('bacon')
     end
 
+    it "should not track usage during the trial period" do
+      u = User.create
+      expect(u.subscription_hash['grace_trial_period']).to eq(true)
+      u.save
+      expect(u.settings['activated_sources']).to eq(nil)
+      u.track_protected_source('bacon')
+      expect(u.reload.settings['activated_sources']).to eq(nil)
+      expect(AuditEvent.count).to eq(0)
+
+      u.track_protected_source('cheddar')
+      expect(u.reload.settings['activated_sources']).to eq(nil)
+      expect(AuditEvent.count).to eq(0)
+
+      u.track_protected_source('cheddar')
+      expect(u.reload.settings['activated_sources']).to eq(nil)
+      expect(AuditEvent.count).to eq(0)
+    end
+
     it "should not re-track tracked usage" do
       u = User.create
+      u.settings['subscription'] = {'expiration_source' => 'cool stuff'}
+      u.save
+      expect(u.subscription_hash['grace_trial_period']).to eq(nil)
       expect(u.settings['activated_sources']).to eq(nil)
       u.settings['activated_sources'] = ['bacon']
       u.save
@@ -2845,7 +2869,7 @@ describe User, :type => :model do
 
       u2.process({'preferences' => {'home_board' => {'id' => b.global_id, 'key' => b.key}}})
       expect(Worker.scheduled?(User, :perform_action, {id: u2.id, method: 'audit_protected_sources', arguments: []})).to eq(true)
-      
+
       expect(u2).to receive(:track_protected_source).with('bacon')
       u2.audit_protected_sources
     end

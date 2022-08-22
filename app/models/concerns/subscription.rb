@@ -185,7 +185,7 @@ module Subscription
       end
     end
     user.expires_at = self.expires_at
-    user.settings['activated_sources'] = ((user.settings['activated_sources'] || []) + self.settings['activated_sources'] || []).uniq
+    user.settings['activated_sources'] = ((user.settings['activated_sources'] || []) + (self.settings['activated_sources'] || [])).uniq
     self.settings['activated_sources'] = []
     self.expires_at = Date.today + 60
     self.settings['subscription']['expiration_source'] = 'grace_period'
@@ -970,7 +970,7 @@ module Subscription
     json['free_premium'] = true if self.legacy_free_premium?
     json['extras_enabled'] = true if self.settings['subscription']['extras'] && self.settings['subscription']['extras']['enabled']
     # Allow premium symbols during the free trial, with a note about temporary status
-    json['extras_enabled'] = true if json['grace_trial_period']
+    json['extras_enabled'] = true if json['grace_trial_period'] && !self.settings['extras_disabled']
     json
   end
   

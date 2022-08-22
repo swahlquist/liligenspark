@@ -1037,6 +1037,8 @@ describe Organization, :type => :model do
 
     it "should allow adding extras to a user" do
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       expect(u.reload.subscription_hash['extras_enabled']).to eq(nil)
       o = Organization.create
       o.settings['total_extras'] = 10
@@ -1701,76 +1703,102 @@ describe Organization, :type => :model do
     it "should get scheduled when new user is added" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_user(u1.user_name, false, true)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'user']})).to eq(true)
       Worker.process_queues
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:org_sponsored_communicator)
     end
 
     it "should get scheduled on a new supervisor" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_supervisor(u1.user_name, false)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'supervisor']})).to eq(true)
       Worker.process_queues
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:org_supporter)
     end
 
     it "should get scheduled on a new admin" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_manager(u1.user_name, true)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'manager']})).to eq(true)
       Worker.process_queues
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:premium_supporter)
     end
 
     it "should not get scheduled for a pending user" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_user(u1.user_name, true, true)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'user']})).to eq(true)
       Worker.process_queues
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:org_sponsored_communicator)
     end
 
     it "should get scheduled when a pending user finally accepts" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_user(u1.user_name, true, true)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'user']})).to eq(true)
       Worker.process_queues
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:org_sponsored_communicator)
 
       u1.reload.process({'supervisor_key' => "approve-org"})
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'user']})).to eq(true)
       Worker.process_queues
+      expect(u1.reload.billing_state).to eq(:org_sponsored_communicator)
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
     end
 
     it "should not get scheduled for a pending supervisor" do
       o = Organization.create(settings: {'total_licenses' => 5})
       u1 = User.create
+      u1.settings['extras_disabled'] = true
+      u1.save
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       Worker.process_queues
       o.add_supervisor(u1.user_name, true)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'supervisor']})).to eq(true)
       Worker.process_queues
+      expect(u1.reload.billing_state).to eq(:trialing_communicator)
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
 
       o.approve_supervisor(u1)
       expect(Worker.scheduled?(Organization, :perform_action, {id: o.id, method: 'org_assertions', arguments: [u1.global_id, 'supervisor']})).to eq(true)
       Worker.process_queues
+      expect(u1.reload.billing_state).to eq(:org_supporter)
       expect(u1.reload.subscription_hash['extras_enabled']).to eq(nil)
     end
   end

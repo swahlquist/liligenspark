@@ -196,7 +196,8 @@ describe Purchasing do
           }
         }
         u.reload
-        expect(u.subscription_hash['extras_enabled']).to eq(nil)
+        expect(u.billing_state).to eq(:trialing_communicator)
+        expect(u.settings['subscription']['extras']).to eq(nil)
         expect(res[:data][:valid]).to eq(false)
       end
 
@@ -242,7 +243,8 @@ describe Purchasing do
         }
         u.reload
         expect(u.premium_supporter_grants).to eq(0)
-        expect(u.subscription_hash['extras_enabled']).to eq(nil)
+        expect(u.billing_state).to eq(:trialing_communicator)
+        expect(u.settings['subscription']['extras']).to eq(nil)
         expect(res[:data]).to eq({:extras => true, :purchase_id => '12345', :valid => true})
       end
 
@@ -1313,7 +1315,6 @@ describe Purchasing do
           'id' => '23456',
           'customer' => '45678'
         })
-        expect(User).to receive(:subscription_event)
         Purchasing.purchase(u, {'id' => 'token'}, 'long_term_200_plus_5_supporters')
         Worker.process_queues
         expect(u.reload.subscription_hash['extras_enabled']).to eq(nil)

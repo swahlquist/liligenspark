@@ -325,7 +325,6 @@ module Relinking
       boards = [starting_old_board] + boards
       # puts "done with copies"
 
-
       relink_board_for(user, {
         :boards => boards, 
         :copy_id => starting_new_board.global_id, 

@@ -1768,7 +1768,7 @@ describe Board, :type => :model do
       expect(b2.errored?).to eq(false)
       expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u.global_id})
       expect(b.copyable_if_authorized?(u)).to eq(true)
-      expect(b2.copyable_if_authorized?(u)).to eq(false)
+      expect(b2.copyable_if_authorized?(u)).to eq(true)
     end
 
     it "should allow a board author to protect their own board" do
@@ -3703,6 +3703,8 @@ describe Board, :type => :model do
 
     it 'should do nothing when asking for premium images but not enabled' do
       u = User.create
+      u.settings['extras_disabled'] = true;
+      u.save
       b = Board.create(:user => u)
       b.settings['buttons'] = [
         {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},

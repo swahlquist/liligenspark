@@ -866,7 +866,9 @@ describe BoardDownstreamButtonSet, :type => :model do
   
   describe "buttons" do
     it "should retrieve from the correct source" do
-      bs = BoardDownstreamButtonSet.new(board_id: 1, data: {})
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.new(board_id: b.id, data: {})
       bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_2'}]
       expect(bs.buttons.length).to eq(2)
       bs.save
@@ -879,7 +881,9 @@ describe BoardDownstreamButtonSet, :type => :model do
     end
 
     it "should recurse through multiple levels if needed" do
-      bs = BoardDownstreamButtonSet.create(board_id: 1)
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board_id: b.id)
       bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}]
       bs.save
       expect(bs.buttons).to eq([{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}])
@@ -896,7 +900,9 @@ describe BoardDownstreamButtonSet, :type => :model do
     end
 
     it "should update the source_id if mismatched" do
-      bs = BoardDownstreamButtonSet.create(board_id: 1)
+      u = User.create
+      b = Board.create(user: u)
+      bs = BoardDownstreamButtonSet.create(board_id: b.id)
       bs.data['buttons'] = [{'id' => 1, 'board_id' => '1_1', 'linked_board_id' => '1_2'}, {'id' => 2, 'board_id' => '1_2', 'linked_board_id' => '1_3'}, {'id' => 3, 'board_id' => '1_3'}]
       bs.save
       expect(bs.buttons).to eq([{"id"=>1, "board_id"=>"1_1", 'linked_board_id' => '1_2'}, {"id"=>2, "board_id"=>"1_2", 'linked_board_id' => '1_3'}, {"id"=>3, "board_id"=>"1_3"}])

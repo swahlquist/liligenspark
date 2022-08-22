@@ -42,4 +42,22 @@ describe JsonApi::Progress do
       expect(hash['result']['error']).to eq('progress job is taking too long, possibly crashed')
     end
   end
+
+  describe "update_minutes_estimate" do
+    it "should update if found" do
+      p = Progress.create
+      h = {}
+      h[Worker.thread_id] = p
+      Progress.class_variable_set(:@@running_progresses, h)
+      Progress.update_minutes_estimate(12)
+      expect(p.reload.settings['minutes_estimate']).to eq(12)
+      Progress.update_minutes_estimate(99)
+      expect(p.reload.settings['minutes_estimate']).to eq(99)
+    end
+
+    it "should not error if not found" do
+      Progress.class_variable_set(:@@running_progresses, {})
+      Progress.update_minutes_estimate(12)
+    end
+  end
 end

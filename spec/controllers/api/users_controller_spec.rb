@@ -908,7 +908,7 @@ describe Api::UsersController, :type => :controller do
       b1a.save
 
       b1b = Board.create(user: u, public: true)
-      b1b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id}
+      b1b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u.global_id}
       b1b.save
       
       b1a.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b1b.global_id}}]
@@ -1478,6 +1478,8 @@ describe Api::UsersController, :type => :controller do
     it "should let admins add premium extras" do
       token_user
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
       o.add_manager(@user.user_name, true)
 

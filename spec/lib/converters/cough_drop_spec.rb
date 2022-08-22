@@ -1173,6 +1173,8 @@ describe Converters::CoughDrop do
 
     it "should use existing images and skip unauthorized protected images" do
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       json = {
         'buttons' => [
           {'id' => '2', 'label' => 'cat', 'image_id' => '111'},

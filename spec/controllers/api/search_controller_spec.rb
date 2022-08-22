@@ -53,6 +53,8 @@ describe Api::SearchController, :type => :controller do
 
     it 'should not allow searching for pcs symbols if not allowed' do
       token_user
+      @user.settings['extras_disabled'] = true
+      @user.save
       list = [
         {'extension' => 'png', 'name' => 'bob'},
         {'extension' => 'gif', 'name' => 'fred'}
@@ -82,6 +84,8 @@ describe Api::SearchController, :type => :controller do
 
     it 'should not allow searching for symbolstix symbols if not allowed' do
       token_user
+      @user.settings['extras_disabled'] = true
+      @user.save
       list = [
         {'extension' => 'png', 'name' => 'bob'},
         {'extension' => 'gif', 'name' => 'fred'}

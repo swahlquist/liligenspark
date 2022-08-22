@@ -547,6 +547,8 @@ describe Uploader do
       res = OpenStruct.new(body: [
       ].to_json)
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', 'en', u)
       expect(images).to eq([])
@@ -602,6 +604,8 @@ describe Uploader do
       u.reload
       u2.reload
 
+      u.settings['extras_disabled'] = true
+      u.save
       expect(Typhoeus).to receive(:get).with("https://www.opensymbols.org/api/v1/symbols/search?q=bacon+repo%3Apcs&search_token=#{ENV['OPENSYMBOLS_TOKEN']}", timeout: 5, :ssl_verifypeer => false).and_return(res)
       images = Uploader.find_images('bacon', 'pcs', 'en', u)
       expect(images).to eq([])
@@ -1151,6 +1155,8 @@ describe Uploader do
 
     it 'should not send premium library token if not enabled' do
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       expect(Typhoeus).to receive(:post).with('https://www.opensymbols.org/api/v2/repositories/pcs/defaults', body: {
         words: ['a', 'b', 'c'],
         allow_search: true,
@@ -1457,6 +1463,8 @@ describe Uploader do
       })
       template = UserIntegration.create(template: true, integration_key: 'lessonpix')
       u = User.create
+      u.settings['extras_disabled'] = true
+      u.save
       ui = UserIntegration.create(user: u, template_integration: template)
       secret, salt = GoSecure.encrypt('secretss', 'integration_password')
 
