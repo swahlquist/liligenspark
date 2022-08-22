@@ -284,7 +284,7 @@ class Api::OrganizationsController < ApplicationController
     #   end
     #   stats.each{|k, v| stats[k] = stats[k].join(',') }
     elsif params['report'] == 'premium_voices'
-      voices = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'voice_added'])
+      voices = AuditEvent.where(['created_at > ? AND event_type = ?', 8.months.ago, 'voice_added'])
       stats = {}
       voices.each do |event|
         str = "#{event.created_at.strftime('%m-%Y')} #{event.data['voice_id']} #{event.data['system'] || 'iOS'}"
@@ -292,7 +292,7 @@ class Api::OrganizationsController < ApplicationController
         stats[str] += 1
       end
     elsif params['report'] == 'extras'
-      extras = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'extras_added'])
+      extras = AuditEvent.where(['created_at > ? AND event_type = ?', 8.months.ago, 'extras_added'])
       stats = {}
       extras.each do |event|
         str = "#{event.created_at.strftime('%m-%Y')} #{event.data['source']}"
@@ -300,7 +300,7 @@ class Api::OrganizationsController < ApplicationController
         stats[str] += 1
       end
     elsif params['report'] == 'protected_sources'
-      extras = AuditEvent.where(['created_at > ? AND event_type = ?', 6.months.ago, 'source_activated'])
+      extras = AuditEvent.where(['created_at > ? AND event_type = ?', 8.months.ago, 'source_activated'])
       stats = {}
       extras.each do |event|
         str = "#{event.created_at.strftime('%m-%Y')} #{event.data['source']}"
