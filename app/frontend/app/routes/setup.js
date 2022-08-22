@@ -19,6 +19,5 @@ export default Route.extend({
   },
   deactivate: function() {
     speecher.stop('all');
-    app_state.controller.set('setup_user_id', null);
   }
 });
