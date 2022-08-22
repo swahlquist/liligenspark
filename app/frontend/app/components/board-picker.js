@@ -46,7 +46,7 @@ export default Component.extend({
       this.set('category_boards', {loading: true});
       var _this = this;
       if(str == 'mine') {
-        CoughDrop.store.query('board', {user_id: app_state.get('domain_board_user_name'), sort: 'home_popularity', per_page: 9}).then(function(data) {
+        CoughDrop.store.query('board', {user_id: app_state.get('domain_board_user_name'), include_shared: 1, sort: 'home_popularity', per_page: 9}).then(function(data) {
           _this.set('category_boards', data);
         }, function(err) {
           _this.set('category_boards', {error: true});
