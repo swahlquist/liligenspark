@@ -33,7 +33,7 @@ var speecher = EmberObject.extend({
   },
   refresh_voices: function() {
     var list = [];
-    var voices = speecher.scope.speechSynthesis.getVoices();
+    var voices = speecher.scope.speechSynthesis.getVoices() || [];
     if(capabilities.system == 'iOS' && capabilities.installed_app) {
       // iOS has such strict rules around not abusing speechSynthesis
       // that is basically unusable, despite my best efforts.
@@ -44,7 +44,7 @@ var speecher = EmberObject.extend({
     }
     var _this = this;
     if(capabilities.system == 'iOS' && window.TTS && window.TTS.checkLanguage) {
-      var browser_voices = speecher.scope.speechSynthesis.getVoices();
+      var browser_voices = speecher.scope.speechSynthesis.getVoices() || [];
       window.TTS.checkLanguage().then(function(list) {
         if(list && list.split) {
           var voices = _this.get('voices');
@@ -116,6 +116,13 @@ var speecher = EmberObject.extend({
         voiceURI: ""
       });
     }
+    // Need a remote English voice for low-cost Kindles
+    list.push({
+      name: "English Female (Internet Required)",
+      lang: 'en-US',
+      remote_voice: true,
+      voiceURI: "remote:en-US:female"
+    });
     list.push({
       name: "Ukranian Female (Internet Required)",
       lang: 'uk-UA',
@@ -440,6 +447,11 @@ var speecher = EmberObject.extend({
       // Then look for the first default voice
       voice = voice || local_voices.find(function(v) { return v['default']; });
       voice = voice || local_voices[0];
+      // Finally use a remote voice if it's all there is
+      voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+      voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
+      voice = voice || voices.find(function(v) { return v['default']; });
+      voice = voice || voices[0];
     }
     return voice;
   },

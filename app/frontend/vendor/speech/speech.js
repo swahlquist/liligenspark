@@ -1,4 +1,5 @@
 // first draft of web speech synthesis polyfill
+
 // https://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html#tts-section
 window.originalSpeechSynthesis = window.speechSynthesis;
 window.originalSpeechSynthesisUtterance = window.SpeechSynthesisUtterance;
@@ -17,7 +18,7 @@ var cloud_speak = function(utterance) {
     return;
   }
   // TODO: make this an ajax call requiring API token instead to prevent abuse
-  var lang = utterance.cloud_lang || utterance.lange;
+  var lang = utterance.cloud_lang || utterance.lang || navigator.language.toLowerCase().split(/-|_/)[0] || 'en';
   var voice_id = utterance.cloud_voice_id || utterance.voice_id;
   if(!cloud_speak.audio_elem) {
     cloud_speak.audio_elem = document.createElement('audio');
@@ -32,7 +33,11 @@ var cloud_speak = function(utterance) {
   player.pause();
   player.ready_listener = function() { player.play(); };
   player.addEventListener('canplay', player.ready_listener);
-  player.src = "/api/v1/search/audio?text="+encodeURIComponent(utterance.text)+"&locale="+encodeURIComponent(lang)+"&voice_id="+encodeURIComponent(voice_id);
+  var src = "/api/v1/search/audio?text="+encodeURIComponent(utterance.text)+"&locale="+encodeURIComponent(lang)+"&voice_id="+encodeURIComponent(voice_id)
+  if(window.capabilities && window.capabilities.api_host) {
+    src = window.capabilities.api_host + src;
+  }
+  player.src = src;
   
   if(event_handler) {
     player.addEventListener('play', function() {

@@ -1789,6 +1789,9 @@ var app_state = EmberObject.extend({
           if(this.get('currentBoardState.has_fallbacks')) {
             modal.notice(i18n.t('board_using_fallbacks', "This board uses premium assets which you don't have access to so you will see free images and sounds which may not perfectly match the author's intent"), true);
           }
+          if(!(speecher.get('voices') || []).find(function(v) { return !v.remote_voice; })) {
+            modal.warning(i18n.t('no_local_voices', "This device doesn't have any local voices, so an Internet connection will be required for any speech output until you download a premium voice"), true);
+          }
           if(!capabilities.mobile && this.get('currentUser.preferences.device.fullscreen')) {
             capabilities.fullscreen(true).then(null, function() {
               if(!noticed) {

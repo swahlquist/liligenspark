@@ -58,7 +58,7 @@ export default Controller.extend({
   run_speech_synthesis_voices_test: function(test) {
     if(speecher.scope.speechSynthesis) {
       if(speecher.scope.speechSynthesis.getVoices) {
-        var voices = speecher.scope.speechSynthesis.getVoices();
+        var voices = speecher.scope.speechSynthesis.getVoices() || [];
         if(voices.length > 0) {
           var voice_names = [];
           for(var idx = 0; idx < voices.length; idx++) {
