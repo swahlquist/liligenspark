@@ -12,6 +12,13 @@ import Utils from './misc';
 import CoughDrop from '../app';
 import { computed } from '@ember/object';
 
+var cloud_locales = ["af-ZA:f","ar-XA:fm","bg-BG:f","bn-IN:fm","ca-ES:f",
+  "cmn-CN:fm","cmn-TW:fm","cs-CZ:f","da-DK:fm","de-DE:fm","el-GR:f","en-AU:fm","en-GB:fm",
+  "en-IN:fm","en-US:fm","es-ES:fm","es-US:fm","fi-FI:f","fil-PH:fm","fr-CA:fm","fr-FR:fm",
+  "gu-IN:fm","hi-IN:fm","hu-HU:f","id-ID:fm","is-IS:f","it-IT:fm","ja-JP:fm","kn-IN:fm","ko-KR:fm",
+  "lv-LV:m","ml-IN:fm","ms-MY:fm","nb-NO:fm","nl-BE:fm","nl-NL:fm","pa-IN:fm","pl-PL:fm","pt-BR:fm",
+  "pt-PT:fm","ro-RO:f","ru-RU:fm","sk-SK:f","sr-RS:f","sv-SE:fm","ta-IN:fm","te-IN:fm","th-TH:f",
+  "tr-TR:fm","uk-UA:f","vi-VN:fm","yue-HK:fm"];
 var speecher = EmberObject.extend({
   beep_url: "https://d18vdu4p71yql0.cloudfront.net/beep.mp3",
   chimes_url: "https://d18vdu4p71yql0.cloudfront.net/chimes.mp3",
@@ -110,6 +117,13 @@ var speecher = EmberObject.extend({
       voices = Utils.uniq(voices, function(v) { return v.voiceURI; });
       _this.set('voices', voices);
     }, function() { });
+    if(window.speak) {
+      list.push({
+        name: "English Low-Quality Male Voice",
+        lang: 'en-US',
+        voiceURI: "speak_js:en-US"
+      });
+    }
     if(list.length === 0) {
       list.push({
         name: "Default Voice",
@@ -117,20 +131,50 @@ var speecher = EmberObject.extend({
       });
     }
     // Need a remote English voice for low-cost Kindles
-    list.push({
-      name: "English Female (Internet Required)",
-      lang: 'en-US',
-      remote_voice: true,
-      voiceURI: "remote:en-US:female"
+    if(!navigator.language.match(/en/)) {
+      list.push({
+        name: "English Female (Internet Required)",
+        lang: 'en-US',
+        remote_voice: true,
+        voiceURI: "remote:en-US:female"
+      });  
+    }
+    var match = cloud_locales.find(function(loc) { return loc.match(navigator.language); });
+    var same = cloud_locales.filter(function(loc) { return loc.indexOf(navigator.language.split(/-|_/)[0]) == 0; });
+    if(match) {
+      same = [match];
+    }
+    same.forEach(function(match) {
+      var parts = match.split(':');
+      var loc = i18n.locales[parts[0].replace(/-/, '_')] || i18n.other_locales[parts[0].replace(/-/, '_')] || i18n.locales[parts[0].split(/-|_/)[0]];
+      if(parts[1].match(/f/)) {
+        list.push({
+          name: loc + i18n.t('female_internet_required', " Female *Internet Required*"),
+          lang: parts[0],
+          remote_voice: true,
+          voiceURI: "remote:" + parts[0] + ":female"
+        })
+      }
+      if(parts[1].match(/m/)) {
+        list.push({
+          name: loc + i18n.t('male_internet_required', " Male *Internet Required*"),
+          lang: parts[0],
+          remote_voice: true,
+          voiceURI: "remote:" + parts[0] + ":male"
+        })
+      }
     });
+
+    if(!navigator.language.match(/uk/)) {
+      list.push({
+        name: "Ukranian Female *Internet Required*",
+        lang: 'uk-UA',
+        remote_voice: true,
+        voiceURI: "remote:uk-UA:female"
+      });
+    }
     list.push({
-      name: "Ukranian Female (Internet Required)",
-      lang: 'uk-UA',
-      remote_voice: true,
-      voiceURI: "remote:uk-UA:female"
-    });
-    list.push({
-      name: "Irish Female (Internet Required)",
+      name: "Irish Female *Internet Required*",
       lang: 'ga-IE',
       remote_voice: true,
       voiceURI: "remote:ga-IE:Ulster"
@@ -446,11 +490,14 @@ var speecher = EmberObject.extend({
       voice = voice || uri_match();
       // Then look for the first default voice
       voice = voice || local_voices.find(function(v) { return v['default']; });
-      voice = voice || local_voices[0];
       // Finally use a remote voice if it's all there is
-      voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
-      voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
-      voice = voice || voices.find(function(v) { return v['default']; });
+      if(persistence.get('online')) {
+        voice = voice || voices.find(function(v) { return locale && locale.match(/-|_/) && v.lang && (v.lang.toLowerCase().replace(/_/, '-') == locale || v.lang.toLowerCase().replace(/-/, '_') == locale); });
+        voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
+        voice = voice || voices.find(function(v) { return v['default']; });
+      }
+      // TODO: if none found, consider returning a temporary voice
+      // from the cloud_locales list
       voice = voice || voices[0];
     }
     return voice;
@@ -588,6 +635,9 @@ var speecher = EmberObject.extend({
             }
           };
           window.cloud_speak(utterance);
+        } else if(voice && voice.voiceURI && voice.voiceURI.match(/speak_js/)) {
+          extra_delay = 2000;
+          window.speak(text, {pitch: utterance.pitch * 50, amplitude: utterance.volume * 100, speed: utterance.rate * 175});
         } else {
           speecher.scope.speechSynthesis.speak(utterance);
         }

@@ -1663,6 +1663,15 @@ var i18n = EmberObject.extend({
     backwards: "Backwards English",
     zh: "中文"
   },
+  other_locales: {
+    ar_XA: "Arabic (Standard)",
+    bg_BG: "Bulgarian (Bulgaria)",
+    cmn_CN: "Mandarin Chinese",
+    cmn_TW: "Mandarin Chinese",
+    pa_IN: "Punjabi (India)",
+    sr_RS: "Serbian (Cyrillic)",
+    yue_HK: "Chinese (Hong Kong)"
+  },
   locales: {
     af_NA: "Afrikaans (Namibia)",
     af_ZA: "Afrikaans (South Africa)",

@@ -3,7 +3,11 @@ var speakWorker;
 function speak(text, args) {
   // lazy load worker
   try {
-    speakWorker = speakWorker || (new Worker('/speak_js/speakWorker.js'));
+    var src = '/speak_js/speakWorker.js'
+    if(window.capabilities && window.capabilities.installed_app) {
+      src = 'speak_js/speakWorder.js';
+    }
+    speakWorker = speakWorker || (new Worker(src));
   } catch(e) {
     console.log('speak.js warning: no worker support');
   }
