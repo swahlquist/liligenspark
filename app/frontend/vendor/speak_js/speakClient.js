@@ -5,7 +5,7 @@ function speak(text, args) {
   try {
     var src = '/speak_js/speakWorker.js'
     if(window.capabilities && window.capabilities.installed_app) {
-      src = 'speak_js/speakWorder.js';
+      src = 'speak_js/speakWorker.js';
     }
     speakWorker = speakWorker || (new Worker(src));
   } catch(e) {

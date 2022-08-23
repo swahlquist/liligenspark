@@ -147,7 +147,7 @@ var speecher = EmberObject.extend({
     same.forEach(function(match) {
       var parts = match.split(':');
       var loc = i18n.locales[parts[0].replace(/-/, '_')] || i18n.other_locales[parts[0].replace(/-/, '_')] || i18n.locales[parts[0].split(/-|_/)[0]];
-      if(parts[1].match(/f/)) {
+      if(parts[1].match(/f/) && loc) {
         list.push({
           name: loc + i18n.t('female_internet_required', " Female *Internet Required*"),
           lang: parts[0],
@@ -155,7 +155,7 @@ var speecher = EmberObject.extend({
           voiceURI: "remote:" + parts[0] + ":female"
         })
       }
-      if(parts[1].match(/m/)) {
+      if(parts[1].match(/m/) && loc) {
         list.push({
           name: loc + i18n.t('male_internet_required', " Male *Internet Required*"),
           lang: parts[0],
@@ -496,8 +496,24 @@ var speecher = EmberObject.extend({
         voice = voice || voices.find(function(v) { return language && v.lang && [language, mapped_lang].indexOf(v.lang.toLowerCase().split(/[-_]/)[0]) != -1; });
         voice = voice || voices.find(function(v) { return v['default']; });
       }
-      // TODO: if none found, consider returning a temporary voice
-      // from the cloud_locales list
+      // If none found, return a temporary voice from the cloud_locales list
+      if(!voice && persistence.get('online')) {
+        var remote = cloud_locales.find(function(loc) { return loc.toLowerCase().replace(/-/, '_') == locale; });
+        remote = remote || cloud_locales.find(function(loc) { return loc.split(/-|_/)[0] == mapped_lang; });
+        if(remote) {
+          var parts = remote.split(/:/)[0]
+          var loc = i18n.locales[parts[0].replace(/-/, '_')] || i18n.other_locales[parts[0].replace(/-/, '_')] || i18n.locales[parts[0].split(/-|_/)[0]];
+          if(parts[1].match(/f/) && loc) {
+            voice = {
+              name: loc + i18n.t('female_internet_required', " Female *Internet Required*"),
+              lang: parts[0],
+              remote_voice: true,
+              voiceURI: "remote:" + parts[0] + ":female"
+            };
+          }
+        }
+      }
+      // Finally fall back to something terrible that at least makes noise
       voice = voice || voices[0];
     }
     return voice;
