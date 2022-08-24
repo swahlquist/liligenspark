@@ -117,12 +117,9 @@ var speecher = EmberObject.extend({
       voices = Utils.uniq(voices, function(v) { return v.voiceURI; });
       _this.set('voices', voices);
     }, function() { });
+    var add_low = false;
     if(window.speak) {
-      list.push({
-        name: "English Low-Quality Male Voice",
-        lang: 'en-US',
-        voiceURI: "speak_js:en-US"
-      });
+      add_low = true;
     }
     if(list.length === 0) {
       list.push({
@@ -179,6 +176,13 @@ var speecher = EmberObject.extend({
       remote_voice: true,
       voiceURI: "remote:ga-IE:Ulster"
     });
+    if(add_low) {
+      list.push({
+        name: "English Low-Quality Male Voice",
+        lang: 'en-US',
+        voiceURI: "speak_js:en-US"
+      });
+    }
     if(!this.get('voices') || this.get('voices').length === 0) {
       this.set('voices', list);
     }
