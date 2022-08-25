@@ -413,7 +413,7 @@ class Api::OrganizationsController < ApplicationController
           brd = boards_hash[user.settings['preferences']['home_board']['id']]
           grid = BoardContent.load_content(brd, 'grid')
           devices['CoughDrop'] = (devices['CoughDrop'] || 0) + 1
-          if brd.key.match(/^core-\d/)
+          if brd.key.match(/\/core-\d/)
             vocabs['Quick Core'] = (vocabs['Quick Core'] || 0) + 1
           elsif brd.key.match(/vocal-flair/)
             vocabs['Vocal Flair'] = (vocabs['Vocal Flair'] || 0) + 1

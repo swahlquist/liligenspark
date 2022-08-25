@@ -43,7 +43,6 @@ export default Controller.extend({
         list.push({id: 'unused_3', name: i18n.t('unused_3', "Not used for the last 3 months")});
         list.push({id: 'unused_6', name: i18n.t('unused_6', "Not used for the last 6 months")});
       }
-      list.push({id: 'summaries', name: i18n.t('summaries', "SUMMARIES")});
       return list;
     } else {
       return [];
