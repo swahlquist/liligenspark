@@ -30,7 +30,7 @@ class Api::OrganizationsController < ApplicationController
 
   def set_status
     if !@org.supervisor?(@api_user) && !@org.manager?(@api_user)
-      return allowed?(@api_user, 'never_allow')
+      return unless allowed?(@org, 'manage')
     end
     user = @org.users.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
